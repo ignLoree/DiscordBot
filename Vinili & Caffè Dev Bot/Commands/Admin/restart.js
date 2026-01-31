@@ -18,7 +18,8 @@ module.exports = {
             .setRequired(true)
             .addChoices(
                 { name: 'Ufficiale', value: 'official' },
-                { name: 'Dev', value: 'dev' }
+                { name: 'Dev', value: 'dev' },
+                { name: 'Entrambi', value: 'both' }
             ))
         .addStringOption(opt => opt
             .setName('scope')
@@ -42,16 +43,30 @@ module.exports = {
         try {
             const target = interaction.options.getString('target');
             const scope = interaction.options.getString('scope') || 'full';
-            const flag = FLAG_MAP[target];
-            if (!flag) {
+            if (target !== 'official' && target !== 'dev' && target !== 'both') {
                 return safeReply(interaction, { content: 'Target non valido.', flags: 1 << 6 });
             }
             const isOfficial = process.cwd().toLowerCase().includes('ufficiale');
             const currentTarget = isOfficial ? 'official' : 'dev';
             if (scope === 'full') {
-                const flagPath = path.resolve(process.cwd(), '..', flag);
-                fs.writeFileSync(flagPath, `${new Date().toISOString()} | ${interaction.user.id}\n`, 'utf8');
+                const targets = target === 'both' ? ['official', 'dev'] : [target];
+                for (const t of targets) {
+                    const flagPath = path.resolve(process.cwd(), '..', FLAG_MAP[t]);
+                    fs.writeFileSync(flagPath, `${new Date().toISOString()} | ${interaction.user.id}\n`, 'utf8');
+                }
                 return safeReply(interaction, { content: `Riavvio ${target} richiesto.`, flags: 1 << 6 });
+            }
+
+            if (target === 'both') {
+                const otherTarget = currentTarget === 'official' ? 'dev' : 'official';
+                const remoteFlag = path.resolve(process.cwd(), '..', `reload_${otherTarget}.json`);
+                fs.writeFileSync(remoteFlag, JSON.stringify({
+                    scope,
+                    by: interaction.user.id,
+                    at: new Date().toISOString()
+                }, null, 2), 'utf8');
+                await interaction.client.reloadScope(scope);
+                return safeReply(interaction, { content: `Reload ${scope} completato per entrambi.`, flags: 1 << 6 });
             }
 
             if (target !== currentTarget) {
