@@ -12,6 +12,7 @@ const { restorePendingReminders } = require('../Services/Disboard/disboardRemind
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
+const cron = require('node-cron');
 
 module.exports = {
     name: 'clientReady',
@@ -95,6 +96,16 @@ module.exports = {
         };
         await engagementTick();
         setInterval(engagementTick, 60 * 1000);
+        try {
+            cron.schedule("0 0 1 * *", async () => {
+                const channelId = "1442569130573303898";
+                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+                if (!channel) return;
+                await channel.send("https://images-ext-1.discordapp.net/external/6WZ1rWZjMQsXvGB9EG8OxXp16Gyxj59KSFfR6r0m1R4/https/media.tenor.com/crZirRXKLuQAAAPo/manhdz2k9.mp4");
+            }, { timezone: "Europe/Rome" });
+        } catch (err) {
+            global.logger.error('[MONTHLY GIF] Failed to schedule', err);
+        }
         if (logOnce) {
             client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
         }
