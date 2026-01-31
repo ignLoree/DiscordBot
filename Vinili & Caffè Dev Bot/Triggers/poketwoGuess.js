@@ -7,7 +7,7 @@ const path = require('path');
 const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
-const cacheKeyVersion = 'v6';
+const cacheKeyVersion = 'v7';
 const cacheTtlMs = 1000 * 60 * 10; // 10 min
 const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
 const lockTtlMs = 1000 * 60 * 10;
@@ -255,7 +255,9 @@ async function fetchAltNamesByName(name) {
         if (!speciesUrl) return [];
         const sRes = await axios.get(speciesUrl, { timeout: 8000 });
         const names = Array.isArray(sRes?.data?.names)
-            ? sRes.data.names.map((n) => n?.name).filter(Boolean)
+            ? sRes.data.names
+                .map((n) => ({ name: n?.name, lang: n?.language?.name }))
+                .filter((n) => n?.name && n?.lang)
             : [];
         altNameCache.set(key, { at: now, names });
         return names;
@@ -267,19 +269,36 @@ async function fetchAltNamesByName(name) {
 function pickRandomAltName(names, baseName) {
     if (!Array.isArray(names) || !names.length) return null;
     const base = String(baseName || '').toLowerCase();
-    const filtered = names.filter((n) => String(n).toLowerCase() !== base);
+    const filtered = names.filter((n) => String(n?.name).toLowerCase() !== base);
     if (!filtered.length) return null;
     return filtered[Math.floor(Math.random() * filtered.length)];
 }
 
-async function buildNameCard(name, altName) {
+function getLangFlag(code) {
+    const map = {
+        ja: '🇯🇵',
+        it: '🇮🇹',
+        en: '🇬🇧',
+        de: '🇩🇪',
+        fr: '🇫🇷',
+        es: '🇪🇸',
+        ko: '🇰🇷',
+        zh: '🇨🇳',
+        ru: '🇷🇺'
+    };
+    return map[code] || '';
+}
+
+async function buildNameCard(name, altNameObj) {
     ensureFont();
     const height = 94;
     const paddingLeft = 18;
     const paddingRight = 12;
     const gap = 10;
     const label = name.toUpperCase();
-    const altLabel = altName ? String(altName).trim() : null;
+    const altLabel = altNameObj?.name ? String(altNameObj.name).trim() : null;
+    const altLang = altNameObj?.lang || null;
+    const altFlag = altLang ? getLangFlag(altLang) : '';
 
     // Load sprite first to compute size
     let sprite = null;
@@ -307,10 +326,11 @@ async function buildNameCard(name, altName) {
     tmpCtx.font = `900 ${fontSize}px Mojangles, sans-serif`;
     const textWidth = tmpCtx.measureText(label).width;
     let altTextWidth = 0;
-    const altFontSize = 16;
+    const altFontSize = 14;
     if (altLabel) {
         tmpCtx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
-        altTextWidth = tmpCtx.measureText(altLabel).width;
+        const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
+        altTextWidth = tmpCtx.measureText(altFull).width;
     }
 
     const maxTextWidth = Math.max(textWidth, altTextWidth);
@@ -331,7 +351,9 @@ async function buildNameCard(name, altName) {
     ctx.fillText(label, paddingLeft + 0.5, textY);
     if (altLabel) {
         ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
-        ctx.fillText(altLabel, paddingLeft, height - altFontSize - 8);
+        const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
+        const altX = paddingLeft + (maxTextWidth - altTextWidth) / 2;
+        ctx.fillText(altFull, altX, height - altFontSize - 8);
     }
 
     // Sprite next to text
