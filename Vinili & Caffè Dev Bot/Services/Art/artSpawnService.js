@@ -117,39 +117,57 @@ async function spawnArtIfPossible(channel, client, options = {}) {
   });
   if (active) return { ok: false, reason: 'active' };
 
-  const rarity = pickRarity(config.rarityWeights);
-  const art = await fetchArtImage(config);
-  const cardId = art.id || hashId(art.url);
+  let card = null;
+  let rarity = null;
+  let art = null;
+  let alreadyClaimed = false;
+  const attempts = options.force ? 3 : 6;
+  const baseWeights = config.rarityWeights || {};
+  const boostedWeights = options.force
+    ? baseWeights
+    : {
+        common: Math.max(0, (baseWeights.common ?? 70) - 15),
+        rare: (baseWeights.rare ?? 20) + 8,
+        epic: (baseWeights.epic ?? 8) + 5,
+        legendary: (baseWeights.legendary ?? 2) + 2
+      };
+  for (let i = 0; i < attempts; i += 1) {
+    rarity = pickRarity(boostedWeights);
+    art = await fetchArtImage(config);
+    const cardId = art.id || hashId(art.url);
+    const existing = await ArtCard.findOne({ cardId });
+    alreadyClaimed = Boolean(existing?.catchCount);
+    if (!options.force && alreadyClaimed) continue;
+    card = existing || await ArtCard.findOneAndUpdate(
+      { cardId },
+      {
+        $setOnInsert: {
+          cardId,
+          url: art.url,
+          source: art.source || '',
+          artist: art.artist || '',
+          tags: art.tags || [],
+          rarity
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    break;
+  }
+  if (!card) return { ok: false, reason: 'no_card' };
 
-  const card = await ArtCard.findOneAndUpdate(
-    { cardId },
-    {
-      $setOnInsert: {
-        cardId,
-        url: art.url,
-        source: art.source || '',
-        artist: art.artist || '',
-        tags: art.tags || [],
-        rarity
-      }
-    },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
+  const originText = card.source || card.artist || 'Unknown origin';
+  let description = `**${originText}**\nReact with any emoji to claim!`;
+  if (alreadyClaimed) {
+    description = `**${originText}**\nAlready claimed.\nReact with any emoji to claim!`;
+  }
 
   const embed = new EmbedBuilder()
     .setColor(getRarityColor(card.rarity))
-    .setTitle('✨ Un\'illustrazione è apparsa!')
-    .setDescription(`Reagisci con ${config.catchEmoji || '🎴'} per collezionarla.`)
-    .setImage(card.url)
-    .addFields(
-      { name: 'Rarità', value: card.rarity.toUpperCase(), inline: true },
-      { name: 'Fonte', value: card.source || 'Sconosciuta', inline: true }
-    );
+    .setDescription(description)
+    .setImage(card.url);
 
   const msg = await channel.send({ embeds: [embed] });
-  if (config.catchEmoji) {
-    await msg.react(config.catchEmoji).catch(() => {});
-  }
 
   const expiresAt = new Date(Date.now() + (config.spawnExpireMinutes || 20) * 60 * 1000);
   await ArtSpawn.create({

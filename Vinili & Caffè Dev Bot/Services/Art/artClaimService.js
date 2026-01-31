@@ -2,7 +2,7 @@ const ArtSpawn = require('../../Schemas/Art/artSpawnSchema');
 const ArtCard = require('../../Schemas/Art/artCardSchema');
 const ArtUser = require('../../Schemas/Art/artUserSchema');
 
-async function claimArtFromMessage({ messageId, userId, guildId }) {
+async function claimArtFromMessage({ messageId, userId, guildId, cooldownHours = 3 }) {
   const spawn = await ArtSpawn.findOne({ messageId });
   if (!spawn) return { ok: false, reason: 'not_found' };
   if (spawn.expiresAt && spawn.expiresAt.getTime() < Date.now()) {
@@ -10,6 +10,20 @@ async function claimArtFromMessage({ messageId, userId, guildId }) {
   }
   if (spawn.claimedBy) {
     return { ok: false, reason: 'claimed', claimedBy: spawn.claimedBy };
+  }
+
+  const user = await ArtUser.findOneAndUpdate(
+    { guildId, userId },
+    { $setOnInsert: { guildId, userId, total: 0, unique: 0, cards: [] } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  if (user.lastClaimAt && cooldownHours > 0) {
+    const diffMs = Date.now() - user.lastClaimAt.getTime();
+    if (diffMs < cooldownHours * 60 * 60 * 1000) {
+      const remainingMs = cooldownHours * 60 * 60 * 1000 - diffMs;
+      return { ok: false, reason: 'cooldown', remainingMs };
+    }
   }
 
   spawn.claimedBy = userId;
@@ -22,12 +36,6 @@ async function claimArtFromMessage({ messageId, userId, guildId }) {
     await card.save();
   }
 
-  const user = await ArtUser.findOneAndUpdate(
-    { guildId, userId },
-    { $setOnInsert: { guildId, userId, total: 0, unique: 0, cards: [] } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
-  );
-
   const existing = user.cards.find((c) => c.cardId === spawn.cardId);
   if (existing) {
     existing.count += 1;
@@ -36,6 +44,7 @@ async function claimArtFromMessage({ messageId, userId, guildId }) {
     user.unique += 1;
   }
   user.total += 1;
+  user.lastClaimAt = new Date();
   await user.save();
 
   return { ok: true, spawn, card, user };

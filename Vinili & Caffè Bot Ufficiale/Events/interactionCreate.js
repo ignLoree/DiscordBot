@@ -1,4 +1,6 @@
 const { InteractionType } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const { handleAutocomplete, handleSlashCommand } = require('./interaction/commandHandlers');
 const { handleButtonInteraction } = require('./interaction/buttonHandlers');
 const { handlePartnerModal } = require('./interaction/partnerModal');
@@ -15,6 +17,24 @@ module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         if (!interaction) return;
+        // Cross-process dedupe to avoid double-handling the same interaction.
+        try {
+            const lockDir = path.join(path.dirname(process.cwd()), '.interaction_locks');
+            const lockKey = interaction.id || `${interaction.guildId || 'dm'}_${Date.now()}`;
+            const lockPath = path.join(lockDir, `${lockKey}.lock`);
+            if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
+            if (fs.existsSync(lockPath)) {
+                const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+                if (age < 1000 * 60 * 10) return;
+                fs.unlinkSync(lockPath);
+            }
+            fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
+            setTimeout(() => {
+                try { fs.unlinkSync(lockPath); } catch {}
+            }, 1000 * 60 * 10);
+        } catch {
+            // best-effort
+        }
         try {
             if (await handlePassNav(interaction)) return;
             if (await handleClaimNode(interaction)) return;

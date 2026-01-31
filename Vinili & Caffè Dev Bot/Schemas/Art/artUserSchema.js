@@ -12,7 +12,8 @@ const artUserSchema = new Schema(
         count: { type: Number, default: 1 },
         firstAt: { type: Date, default: Date.now }
       }
-    ]
+    ],
+    lastClaimAt: { type: Date, default: null }
   },
   { timestamps: true }
 );

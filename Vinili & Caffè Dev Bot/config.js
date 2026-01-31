@@ -134,9 +134,29 @@ module.exports = {
     catchEmoji: "🎴",
     rollCommand: "artroll",
     rollAliases: ["rollart", "roll"],
+    rollLimitPerDay: 10,
+    claimCooldownHours: 3,
     source: {
       provider: "waifu-im",
-      tags: ["waifu", "neko", "maid", "uniform", "street", "magic", "fantasy", "dark"],
+      tags: [
+        "waifu",
+        "neko",
+        "maid",
+        "uniform",
+        "street",
+        "magic",
+        "fantasy",
+        "dark",
+        "sci-fi",
+        "cyberpunk",
+        "retro",
+        "goth",
+        "vintage",
+        "samurai",
+        "mecha",
+        "sport",
+        "school"
+      ],
       nsfw: false
     },
     rarityWeights: {

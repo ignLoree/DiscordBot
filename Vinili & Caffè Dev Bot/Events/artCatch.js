@@ -20,37 +20,44 @@ module.exports = {
       const config = client?.config2?.artRift;
       if (!config?.enabled) return;
 
-      const expectedId = normalizeEmojiId(config.catchEmoji);
-      const isMatch = expectedId
-        ? reaction.emoji?.id === expectedId
-        : reaction.emoji?.name === config.catchEmoji;
-      if (!isMatch) return;
-
       const result = await claimArtFromMessage({
         messageId: message.id,
         userId: user.id,
-        guildId: message.guild.id
+        guildId: message.guild.id,
+        cooldownHours: config.claimCooldownHours || 3
       });
 
       if (!result.ok) {
         if (result.reason === 'claimed') {
           await message.channel.send({
-            content: `<@${user.id}> Questa card è già stata presa.`
+            content: `<@${user.id}> This character is already claimed.`
           }).then((m) => setTimeout(() => m.delete().catch(() => {}), 5000));
+        }
+        if (result.reason === 'cooldown') {
+          const remainingMin = Math.max(1, Math.ceil(result.remainingMs / 60000));
+          const line = `@! ${user.username}, For this server, you can claim once per interval of 3h. The next interval begins in ${remainingMin} min.`;
+          await message.channel.send({ content: line });
         }
         return;
       }
 
       const card = result.card;
-      const shortId = card?.cardId ? card.cardId.slice(0, 6).toUpperCase() : 'CARD';
-      const rarity = (result.spawn?.rarity || 'common').toUpperCase();
       const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({ name: user.username, iconURL: user.displayAvatarURL() })
-        .setDescription(`Hai collezionato **${shortId}** · ${rarity}`)
+        .setDescription(`💖 ${user.username} and Claudia Hortensia are now married! 💖`)
         .setImage(card?.url || null);
 
       await message.channel.send({ embeds: [embed] });
+
+      // Update original spawn embed to show ownership
+      const original = message.embeds?.[0];
+      if (original) {
+        const updated = EmbedBuilder.from(original)
+          .setColor('#b00020')
+          .setFooter({ text: `belongs to ${user.username}`, iconURL: user.displayAvatarURL() });
+        await message.edit({ embeds: [updated] }).catch(() => {});
+      }
     } catch (err) {
       if (client?.logs?.error) {
         client.logs.error('[ART CATCH]', err);
