@@ -128,8 +128,8 @@ module.exports = (client) => {
 
             for (const file of Array.from(allFiles).sort()) {
                 const key = `${folder}/${file}`;
-                const currentStatus = statusMap.get(key) || (isOfficial ? (uffFiles.has(file) ? "Present" : "-") : (devFiles.has(file) ? "Present" : "-"));
-                const otherStatus = isOfficial ? (devFiles.has(file) ? "Present" : "-") : (uffFiles.has(file) ? "Present" : "-");
+                const currentStatus = statusMap.get(key) || (isOfficial ? (uffFiles.has(file) ? "Loaded" : "-") : (devFiles.has(file) ? "Loaded" : "-"));
+                const otherStatus = isOfficial ? (devFiles.has(file) ? "Loaded" : "-") : (uffFiles.has(file) ? "Loaded" : "-");
 
                 if (isOfficial) {
                     unified.addRow(folder, file, currentStatus, otherStatus);

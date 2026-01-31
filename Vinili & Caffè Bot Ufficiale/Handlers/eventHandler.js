@@ -123,8 +123,8 @@ module.exports = (client) => {
             const folder = path.dirname(rel).replace(/\\/g, '/');
             const file = path.basename(rel);
             const folderLabel = folder === "." ? "root" : folder;
-            const currentStatus = statusMap.get(rel) || (isOfficial ? (uffFiles.has(rel) ? "Present" : "-") : (devFiles.has(rel) ? "Present" : "-"));
-            const otherStatus = isOfficial ? (devFiles.has(rel) ? "Present" : "-") : (uffFiles.has(rel) ? "Present" : "-");
+            const currentStatus = statusMap.get(rel) || (isOfficial ? (uffFiles.has(rel) ? "Loaded" : "-") : (devFiles.has(rel) ? "Loaded" : "-"));
+            const otherStatus = isOfficial ? (devFiles.has(rel) ? "Loaded" : "-") : (uffFiles.has(rel) ? "Loaded" : "-");
             if (isOfficial) {
                 unified.addRow(folderLabel, file, currentStatus, otherStatus);
             } else {
