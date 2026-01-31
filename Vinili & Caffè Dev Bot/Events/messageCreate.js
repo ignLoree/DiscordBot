@@ -10,7 +10,6 @@ const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
-const { recordMessage } = require('../Services/Stats/statsService');
 
 module.exports = {
     name: "messageCreate",
@@ -29,7 +28,7 @@ module.exports = {
             }
             fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
             setTimeout(() => {
-                try { fs.unlinkSync(lockPath); } catch {}
+                try { fs.unlinkSync(lockPath); } catch { }
             }, 1000 * 60 * 10);
         } catch {
             // If lock fails, continue (best-effort).
@@ -42,11 +41,6 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
-        try {
-            await recordMessage(message);
-        } catch (error) {
-            logEventError(client, 'STATS MESSAGE ERROR', error);
-        }
         try {
             await handleAfk(message);
         } catch (error) {
@@ -65,6 +59,17 @@ module.exports = {
         const defaultPrefix = guildSettings.Prefix || client.config2.prefix;
         const musicPrefix = client.config2.musicPrefix || defaultPrefix;
         const verifyPrefix = 'w!';
+        let overrideCommand = null;
+        let overridePrefix = null;
+
+        for (const cmd of client.pcommands.values()) {
+            if (!cmd.prefixOverride) continue;
+            if (message.content.startsWith(cmd.prefixOverride)) {
+                overrideCommand = cmd;
+                overridePrefix = cmd.prefixOverride;
+                break;
+            }
+        }
         try {
             await handleTtsMessage(message, client, defaultPrefix);
         } catch (error) {
@@ -80,16 +85,28 @@ module.exports = {
             if (!shouldDeleteCommandMessage) return;
             await message.delete().catch(() => { });
         };
-        if (!startsWithMusic && !startsWithDefault && !startsWithMod && !startsWithVerify) return;
-        const usedPrefix = startsWithVerify
-            ? verifyPrefix
-            : startsWithMod
-                ? modPrefix
-                : startsWithMusic
-                    ? musicPrefix
-                    : defaultPrefix;
+        if (
+            !overridePrefix &&
+            !startsWithMusic &&
+            !startsWithDefault &&
+            !startsWithMod &&
+            !startsWithVerify
+        ) return;
+
+        const usedPrefix = overridePrefix
+            || (startsWithVerify
+                ? verifyPrefix
+                : startsWithMod
+                    ? modPrefix
+                    : startsWithMusic
+                        ? musicPrefix
+                        : defaultPrefix);
+
         const args = message.content.slice(usedPrefix.length).trim().split(/\s+/);
-        const cmd = args.shift()?.toLowerCase();
+        const cmd = overrideCommand
+            ? overrideCommand.name
+            : args.shift()?.toLowerCase();
+
         if (!cmd) return;
         if (startsWithMusic && cmd !== "login" && cmd !== "help") {
             const lastfmUser = await LastFmUser.findOne({ discordId: message.author.id });
@@ -98,7 +115,10 @@ module.exports = {
                 return;
             }
         }
-        let command = client.pcommands.get(cmd) || client.pcommands.get(client.aliases.get(cmd));
+        let command = overrideCommand
+            || client.pcommands.get(cmd)
+            || client.pcommands.get(client.aliases.get(cmd));
+            
         if (!command) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
@@ -120,9 +140,9 @@ module.exports = {
         const enqueueCommand = async () => {
             const emoji = message.client?.emojis?.cache?.get('1443934440614264924');
             if (emoji) {
-                await message.react(emoji).catch(() => {});
+                await message.react(emoji).catch(() => { });
             } else {
-                await message.react('<a:VC_Loading:1462504528774430962>').catch(() => {});
+                await message.react('<a:VC_Loading:1462504528774430962>').catch(() => { });
             }
             if (!client.prefixCommandQueue.has(userId)) {
                 client.prefixCommandQueue.set(userId, []);
@@ -162,13 +182,13 @@ module.exports = {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
                     .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
-            await deleteCommandMessage();
+                await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
                 return;
             }
         }
-if (command.adminOnly) {
+        if (command.adminOnly) {
             const adminRoleIds = Array.isArray(client.config?.adminRoleIds)
                 ? client.config.adminRoleIds
                 : [];
@@ -178,7 +198,7 @@ if (command.adminOnly) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
                     .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
-            await deleteCommandMessage();
+                await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
                 return;
@@ -217,54 +237,54 @@ if (command.adminOnly) {
             try {
                 await execCommand.execute(execMessage, execArgs, client);
             } catch (error) {
-            logEventError(client, 'PREFIX COMMAND ERROR', error);
-            const channelID = client.config2.commandErrorChannel;
-            const errorChannel = client.channels.cache.get(channelID);
-            if (!errorChannel) {
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
-                return;
-            }
-            const errorEmbed = new EmbedBuilder()
-                .setColor("#6f4e37")
-                .addFields(
-                    { name: '<:dot:1443660294596329582> Comando', value: `\`${cmd}\`` },
-                    { name: '<:dot:1443660294596329582> Utente', value: `${message.author.tag}` },
-                    { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${error}\`\`\`` }
-                );
-            const pendingBtn = new ButtonBuilder()
-                .setCustomId('error_pending')
-                .setLabel('In risoluzione')
-                .setStyle(ButtonStyle.Primary);
-            const solvedBtn = new ButtonBuilder()
-                .setCustomId('error_solved')
-                .setLabel('Risolto')
-                .setStyle(ButtonStyle.Success);
-            const unsolvedBtn = new ButtonBuilder()
-                .setCustomId('error_unsolved')
-                .setLabel('Irrisolto')
-                .setStyle(ButtonStyle.Danger);
-            const row = new ActionRowBuilder().addComponents(pendingBtn, solvedBtn, unsolvedBtn);
-            const sentError = await errorChannel.send({ embeds: [errorEmbed], components: [row] });
-            const collector = sentError.createMessageComponentCollector({ time: 1000 * 60 * 60 * 24 });
-            collector.on("collect", async (btn) => {
-                if (!["error_pending", "error_solved", "error_unsolved"].includes(btn.customId)) return;
-                if (btn.customId === "error_pending") {
-                    errorEmbed.setColor("Yellow");
-                    await btn.reply({ content: "In risoluzione.", flags: 1 << 6 });
+                const channelID = client.config2.commandErrorChannel;
+                const errorChannel = client.channels.cache.get(channelID);
+                if (!errorChannel) {
+                    logEventError(client, 'PREFIX COMMAND ERROR', error);
+                    return;
                 }
-                if (btn.customId === "error_solved") {
-                    errorEmbed.setColor("Green");
-                    await btn.reply({ content: "Risolto.", flags: 1 << 6 });
-                }
-                if (btn.customId === "error_unsolved") {
-                    errorEmbed.setColor("Red");
-                    await btn.reply({ content: "Irrisolto.", flags: 1 << 6 });
-                }
-                await msg.edit({ embeds: [errorEmbed], components: [row] });
-            });
-            const feedback = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
+                const errorEmbed = new EmbedBuilder()
+                    .setColor("#6f4e37")
+                    .addFields(
+                        { name: '<:dot:1443660294596329582> Comando', value: `\`${cmd}\`` },
+                        { name: '<:dot:1443660294596329582> Utente', value: `${message.author.tag}` },
+                        { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${error}\`\`\`` }
+                    );
+                const pendingBtn = new ButtonBuilder()
+                    .setCustomId('error_pending')
+                    .setLabel('In risoluzione')
+                    .setStyle(ButtonStyle.Primary);
+                const solvedBtn = new ButtonBuilder()
+                    .setCustomId('error_solved')
+                    .setLabel('Risolto')
+                    .setStyle(ButtonStyle.Success);
+                const unsolvedBtn = new ButtonBuilder()
+                    .setCustomId('error_unsolved')
+                    .setLabel('Irrisolto')
+                    .setStyle(ButtonStyle.Danger);
+                const row = new ActionRowBuilder().addComponents(pendingBtn, solvedBtn, unsolvedBtn);
+                const sentError = await errorChannel.send({ embeds: [errorEmbed], components: [row] });
+                const collector = sentError.createMessageComponentCollector({ time: 1000 * 60 * 60 * 24 });
+                collector.on("collect", async (btn) => {
+                    if (!["error_pending", "error_solved", "error_unsolved"].includes(btn.customId)) return;
+                    if (btn.customId === "error_pending") {
+                        errorEmbed.setColor("Yellow");
+                        await btn.reply({ content: "In risoluzione.", flags: 1 << 6 });
+                    }
+                    if (btn.customId === "error_solved") {
+                        errorEmbed.setColor("Green");
+                        await btn.reply({ content: "Risolto.", flags: 1 << 6 });
+                    }
+                    if (btn.customId === "error_unsolved") {
+                        errorEmbed.setColor("Red");
+                        await btn.reply({ content: "Irrisolto.", flags: 1 << 6 });
+                    }
+                    await msg.edit({ embeds: [errorEmbed], components: [row] });
+                });
+                const feedback = new EmbedBuilder()
+                    .setColor("Red")
+                    .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
             } finally {
@@ -421,7 +441,7 @@ async function handleDisboardBump(message, client) {
         }
         fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
         setTimeout(() => {
-            try { fs.unlinkSync(lockPath); } catch {}
+            try { fs.unlinkSync(lockPath); } catch { }
         }, 1000 * 60 * 10);
     } catch {
         return true;
@@ -450,6 +470,3 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
-
-
-

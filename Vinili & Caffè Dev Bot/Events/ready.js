@@ -101,7 +101,15 @@ module.exports = {
                 const channelId = "1442569130573303898";
                 const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
                 if (!channel) return;
-                await channel.send("https://images-ext-1.discordapp.net/external/6WZ1rWZjMQsXvGB9EG8OxXp16Gyxj59KSFfR6r0m1R4/https/media.tenor.com/crZirRXKLuQAAAPo/manhdz2k9.mp4");
+                await channel.send({
+                    content: "@everyone",
+                    files: [
+                        {
+                            attachment: "https://media.tenor.com/crZirRXKLuQAAAPo/manhdz2k9.mp4",
+                            name: "monthly.gif"
+                        }
+                    ]
+                });
             }, { timezone: "Europe/Rome" });
         } catch (err) {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
