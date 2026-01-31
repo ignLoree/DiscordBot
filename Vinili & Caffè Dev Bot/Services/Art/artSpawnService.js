@@ -1,0 +1,170 @@
+const axios = require('axios');
+const crypto = require('crypto');
+const { EmbedBuilder } = require('discord.js');
+const ArtCard = require('../../Schemas/Art/artCardSchema');
+const ArtSpawn = require('../../Schemas/Art/artSpawnSchema');
+
+function pickRarity(weights) {
+  const entries = Object.entries(weights || {});
+  const total = entries.reduce((sum, [, w]) => sum + (Number(w) || 0), 0);
+  if (total <= 0) return 'common';
+  let roll = Math.random() * total;
+  for (const [key, weight] of entries) {
+    roll -= Number(weight) || 0;
+    if (roll <= 0) return key;
+  }
+  return entries[0]?.[0] || 'common';
+}
+
+function hashId(value) {
+  return crypto.createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
+}
+
+function normalizeWaifuImImage(image) {
+  if (!image) return null;
+  const url = image.url || image.image_url || image.source || null;
+  if (!url) return null;
+  const artist = image.artist?.name || image.artist || '';
+  const tags = Array.isArray(image.tags)
+    ? image.tags.map((t) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+    : [];
+  const source = image.source || image.origin || '';
+  const id = image.id || image.signature || hashId(url);
+  return { id, url, artist, tags, source };
+}
+
+async function fetchArtImage(config) {
+  const provider = config?.source?.provider || 'waifu-im';
+  const tags = Array.isArray(config?.source?.tags) ? config.source.tags : [];
+  const nsfw = Boolean(config?.source?.nsfw);
+  let lastError = null;
+
+  if (provider === 'waifu-im') {
+    try {
+      const params = new URLSearchParams();
+      if (tags.length) params.set('included_tags', tags.join(','));
+      params.set('is_nsfw', nsfw ? 'true' : 'false');
+      const url = `https://api.waifu.im/search?${params.toString()}`;
+      const res = await axios.get(url, { timeout: 12000 });
+      const image = res.data?.images?.[0] || res.data?.image || res.data?.items?.[0];
+      const normalized = normalizeWaifuImImage(image);
+      if (normalized) return normalized;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  // Fallback: waifu.pics
+  try {
+    const res = await axios.get('https://api.waifu.pics/sfw/waifu', { timeout: 12000 });
+    const url = res.data?.url;
+    if (url) {
+      return { id: hashId(url), url, artist: '', tags: [], source: 'waifu.pics' };
+    }
+  } catch (err) {
+    lastError = err;
+  }
+
+  throw lastError || new Error('Art API failed');
+}
+
+function getRarityColor(rarity) {
+  const map = {
+    common: '#6f4e37',
+    rare: '#2f80ed',
+    epic: '#9b51e0',
+    legendary: '#f2994a'
+  };
+  return map[rarity] || '#6f4e37';
+}
+
+async function spawnArtIfPossible(channel, client, options = {}) {
+  const config = client?.config2?.artRift;
+  if (!config?.enabled) return { ok: false, reason: 'disabled' };
+  if (!channel?.id) return { ok: false, reason: 'channel' };
+  if (String(config.channelId) !== String(channel.id)) return { ok: false, reason: 'not_target' };
+
+  // Cross-process lock to avoid double spawn
+  const lockDir = require('path').join(require('path').dirname(process.cwd()), '.art_spawn_locks');
+  const lockPath = require('path').join(lockDir, `${channel.id}.lock`);
+  try {
+    const fs = require('fs');
+    if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
+    if (fs.existsSync(lockPath)) {
+      const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+      if (age < 1000 * 30) return { ok: false, reason: 'locked' };
+      fs.unlinkSync(lockPath);
+    }
+    fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
+    setTimeout(() => {
+      try { fs.unlinkSync(lockPath); } catch {}
+    }, 1000 * 30);
+  } catch {
+    // best-effort
+  }
+
+  const now = Date.now();
+  if (!client._artRiftLastSpawn) client._artRiftLastSpawn = new Map();
+  const lastAt = client._artRiftLastSpawn.get(channel.id) || 0;
+  if (!options.force && config.spawnCooldownMs && now - lastAt < config.spawnCooldownMs) {
+    return { ok: false, reason: 'cooldown' };
+  }
+
+  const active = await ArtSpawn.findOne({
+    channelId: channel.id,
+    claimedBy: null,
+    expiresAt: { $gt: new Date() }
+  });
+  if (active) return { ok: false, reason: 'active' };
+
+  const rarity = pickRarity(config.rarityWeights);
+  const art = await fetchArtImage(config);
+  const cardId = art.id || hashId(art.url);
+
+  const card = await ArtCard.findOneAndUpdate(
+    { cardId },
+    {
+      $setOnInsert: {
+        cardId,
+        url: art.url,
+        source: art.source || '',
+        artist: art.artist || '',
+        tags: art.tags || [],
+        rarity
+      }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  const embed = new EmbedBuilder()
+    .setColor(getRarityColor(card.rarity))
+    .setTitle('✨ Un\'illustrazione è apparsa!')
+    .setDescription(`Reagisci con ${config.catchEmoji || '🎴'} per collezionarla.`)
+    .setImage(card.url)
+    .addFields(
+      { name: 'Rarità', value: card.rarity.toUpperCase(), inline: true },
+      { name: 'Fonte', value: card.source || 'Sconosciuta', inline: true }
+    );
+
+  const msg = await channel.send({ embeds: [embed] });
+  if (config.catchEmoji) {
+    await msg.react(config.catchEmoji).catch(() => {});
+  }
+
+  const expiresAt = new Date(Date.now() + (config.spawnExpireMinutes || 20) * 60 * 1000);
+  await ArtSpawn.create({
+    guildId: channel.guild?.id || 'dm',
+    channelId: channel.id,
+    messageId: msg.id,
+    cardId: card.cardId,
+    rarity: card.rarity,
+    source: card.source || '',
+    spawnedBy: options.requestedBy || null,
+    expiresAt
+  });
+
+  client._artRiftLastSpawn.set(channel.id, Date.now());
+  return { ok: true, message: msg, card };
+}
+
+module.exports = { spawnArtIfPossible };

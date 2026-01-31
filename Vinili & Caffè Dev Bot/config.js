@@ -124,5 +124,27 @@ module.exports = {
   render: {
     whoknowsImageCache: 250
   },
+
+  artRift: {
+    enabled: true,
+    channelId: "1466489325440204975",
+    spawnEveryMessages: 25,
+    spawnCooldownMs: 1000 * 60 * 3,
+    spawnExpireMinutes: 20,
+    catchEmoji: "🎴",
+    rollCommand: "artroll",
+    rollAliases: ["rollart", "roll"],
+    source: {
+      provider: "waifu-im",
+      tags: ["waifu", "neko", "maid", "uniform", "street", "magic", "fantasy", "dark"],
+      nsfw: false
+    },
+    rarityWeights: {
+      common: 70,
+      rare: 20,
+      epic: 8,
+      legendary: 2
+    }
+  },
 }
 
