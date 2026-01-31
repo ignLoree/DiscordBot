@@ -17,7 +17,7 @@ const bots = [
         label: "Ufficiale",
         start: "./Vinili & Caffè Bot Ufficiale/shard.js",
         restartFlag: "./restart_official",
-        startupDelayMs: 15000
+        startupDelayMs: 11000
     }
 ];
 
