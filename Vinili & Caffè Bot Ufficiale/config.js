@@ -29,8 +29,8 @@ module.exports = {
     endpoint: "https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025",
     fallbackEndpoints: ["https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025"],
     dedicatedEndpointUrl: "https://jnwx6if5r8srk4zw.eu-west-1.aws.endpoints.huggingface.cloud",
-    provider: "hf-inference",
-    spaceIds: []
+    provider: "auto",
+    spaceIds: ["gbryan/pokemon-classifier"]
   },
 
   debugSpotifyFeatures: true,
