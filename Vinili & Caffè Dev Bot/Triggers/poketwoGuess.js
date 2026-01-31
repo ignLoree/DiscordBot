@@ -137,9 +137,10 @@ async function classifyImage(buffer, client, overrideEndpoint) {
 }
 
 async function classifyWithRetry(buffer, client) {
-    const { fallbackEndpoint, extraFallbacks } = getHfConfig(client);
+    const { fallbackEndpoint, extraFallbacks, endpoint } = getHfConfig(client);
     const tried = new Set();
     const endpoints = [fallbackEndpoint, ...(extraFallbacks || [])].filter(Boolean);
+    const allow404Fallback = String(endpoint || '').includes('endpoints.huggingface.cloud');
 
     // First try primary
     try {
@@ -147,7 +148,9 @@ async function classifyWithRetry(buffer, client) {
     } catch (err) {
         const netCode = err?.code;
         const status = err?.response?.status;
-        if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
+        if (status === 404 && allow404Fallback) {
+            // Dedicated endpoint might require /predict or be temporarily misconfigured.
+        } else if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
             throw err;
         }
     }
@@ -163,6 +166,9 @@ async function classifyWithRetry(buffer, client) {
             } catch (err) {
                 const netCode = err?.code;
                 const status = err?.response?.status;
+                if (status === 404 && allow404Fallback) {
+                    continue;
+                }
                 if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
                     throw err;
                 }
@@ -174,6 +180,9 @@ async function classifyWithRetry(buffer, client) {
         } catch (err) {
             const netCode = err?.code;
             const status = err?.response?.status;
+            if (status === 404 && allow404Fallback) {
+                continue;
+            }
             if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
                 throw err;
             }
@@ -523,7 +532,6 @@ module.exports = {
         }
     }
 };
-
 
 
 
