@@ -385,7 +385,7 @@ async function buildNameCard(name, altNameObj) {
 
     if (altLabel) {
         ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
-        const altY = textY + fontSize - 4;
+        const altY = textY + fontSize - 2;
         const altX = paddingLeft + Math.max(0, (textWidth - altTotalWidth) / 2);
         if (flagImg) {
             ctx.drawImage(flagImg, altX, altY - 1, flagSize, flagSize);
