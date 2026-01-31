@@ -391,7 +391,7 @@ async function buildNameCard(name, altNameObj) {
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
     const contentStartX = Math.round((width - contentWidth) / 2);
     const blockHeight = altLabel ? (fontSize + 2 + altFontSize) : fontSize;
-    const textY = Math.round((height - blockHeight) / 2) + 2.75;
+    const textY = Math.round((height - blockHeight) / 2) + 2.5;
     ctx.fillText(label, contentStartX, textY);
     ctx.fillText(label, contentStartX + 0.5, textY);
 
