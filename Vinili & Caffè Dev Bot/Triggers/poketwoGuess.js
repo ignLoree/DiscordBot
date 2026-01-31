@@ -381,7 +381,8 @@ async function buildNameCard(name, altNameObj) {
     ctx.textBaseline = 'top';
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
     const contentStartX = Math.round((width - contentWidth) / 2);
-    const textY = altLabel ? 14 : Math.round((height - fontSize) / 2);
+    const blockHeight = altLabel ? (fontSize + 2 + altFontSize) : fontSize;
+    const textY = Math.round((height - blockHeight) / 2) + 6;
     ctx.fillText(label, contentStartX, textY);
     ctx.fillText(label, contentStartX + 0.5, textY);
 
@@ -390,7 +391,7 @@ async function buildNameCard(name, altNameObj) {
         const altY = textY + fontSize + 2;
         const altX = contentStartX + Math.max(0, (textWidth - altTotalWidth) / 2);
         if (flagImg) {
-            ctx.drawImage(flagImg, altX, altY - 1, flagSize, flagSize);
+            ctx.drawImage(flagImg, altX, altY, flagSize, flagSize);
             ctx.fillText(altLabel, altX + flagSize + flagGap, altY);
         } else {
             ctx.fillText(altLabel, altX, altY);
