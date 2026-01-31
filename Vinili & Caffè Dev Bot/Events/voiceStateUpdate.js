@@ -1,8 +1,18 @@
 const { leaveTtsGuild } = require('../Services/TTS/ttsService');
+const { handleVoiceStateUpdate } = require('../Services/Stats/statsService');
 
 module.exports = {
     name: 'voiceStateUpdate',
     async execute(oldState, newState, client) {
+        try {
+            await handleVoiceStateUpdate(oldState, newState);
+        } catch (error) {
+            if (client?.logs?.error) {
+                client.logs.error('[STATS VOICE ERROR]', error);
+            } else {
+                console.error('[STATS VOICE ERROR]', error);
+            }
+        }
         if (client?.config2?.tts?.stayConnected) return;
         const guild = newState.guild || oldState.guild;
         if (!guild) return;
