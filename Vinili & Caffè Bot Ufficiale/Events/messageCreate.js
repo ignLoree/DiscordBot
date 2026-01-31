@@ -1,4 +1,6 @@
-﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
@@ -12,6 +14,25 @@ const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
+        // Cross-process dedupe: avoid handling the same message multiple times
+        // if multiple bot processes are accidentally running.
+        try {
+            const lockDir = path.join(path.dirname(process.cwd()), '.message_locks');
+            const lockKey = `${message.guildId || 'dm'}_${message.id}`;
+            const lockPath = path.join(lockDir, `${lockKey}.lock`);
+            if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
+            if (fs.existsSync(lockPath)) {
+                const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+                if (age < 1000 * 60 * 10) return;
+                fs.unlinkSync(lockPath);
+            }
+            fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
+            setTimeout(() => {
+                try { fs.unlinkSync(lockPath); } catch {}
+            }, 1000 * 60 * 10);
+        } catch {
+            // If lock fails, continue (best-effort).
+        }
         try {
             const handledDisboard = await handleDisboardBump(message, client);
             if (handledDisboard) return;
@@ -112,7 +133,7 @@ module.exports = {
         if (disabledPrefixCommands.includes(command.name)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ disabilitato al momento.");
+                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è disabilitato al momento.");
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -134,7 +155,7 @@ module.exports = {
             if (!hasStaffRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
             await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -150,7 +171,7 @@ if (command.adminOnly) {
             if (!hasAdminRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
             await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -237,7 +258,7 @@ if (command.adminOnly) {
             });
             const feedback = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
+                .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
             } finally {
@@ -310,7 +331,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 async function handleCounting(message, client) {
@@ -381,6 +402,24 @@ async function handleDisboardBump(message, client) {
     if (!disboard) return false;
     if (!message.guild) return false;
     if (!message.author || message.author.id !== disboard.botId) return false;
+    // Cross-process dedupe to avoid multi-process double/triple sends.
+    const lockDir = path.join(path.dirname(process.cwd()), '.disboard_locks');
+    const lockKey = `${message.guild.id}_${message.id}`;
+    const lockPath = path.join(lockDir, `${lockKey}.lock`);
+    try {
+        if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
+        if (fs.existsSync(lockPath)) {
+            const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+            if (age < 1000 * 60 * 10) return true;
+            fs.unlinkSync(lockPath);
+        }
+        fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
+        setTimeout(() => {
+            try { fs.unlinkSync(lockPath); } catch {}
+        }, 1000 * 60 * 10);
+    } catch {
+        return true;
+    }
     const patterns = Array.isArray(disboard.bumpSuccessPatterns)
         ? disboard.bumpSuccessPatterns
         : [];
@@ -405,5 +444,6 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
+
 
 
