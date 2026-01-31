@@ -91,7 +91,8 @@ function getHfConfig(client) {
         fallbackEndpoint = fallbackEndpoint.replace('api-inference.huggingface.co', 'router.huggingface.co/hf-inference');
     }
     const token = process.env.HF_TOKEN || process.env.HUGGINGFACE_TOKEN || cfg.hfToken || cfg.token || null;
-    return { model, endpoint, fallbackEndpoint, token };
+    const extraFallbacks = Array.isArray(cfg.fallbackEndpoints) ? cfg.fallbackEndpoints.filter(Boolean) : [];
+    return { model, endpoint, fallbackEndpoint, token, extraFallbacks };
 }
 
 function getSpaceConfig(client) {
@@ -122,27 +123,50 @@ async function classifyImage(buffer, client, overrideEndpoint) {
 }
 
 async function classifyWithRetry(buffer, client) {
-    const { fallbackEndpoint } = getHfConfig(client);
+    const { fallbackEndpoint, extraFallbacks } = getHfConfig(client);
+    const tried = new Set();
+    const endpoints = [fallbackEndpoint, ...(extraFallbacks || [])].filter(Boolean);
+
+    // First try primary
     try {
         return await classifyImage(buffer, client);
     } catch (err) {
         const netCode = err?.code;
         const status = err?.response?.status;
-        if (netCode === 'ENOTFOUND' || netCode === 'EAI_AGAIN') {
-            // Dedicated endpoint DNS not ready -> fallback to router
-            return classifyImage(buffer, client, fallbackEndpoint);
+        if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
+            throw err;
         }
-        if (status === 503 || status === 429 || status === 500) {
-            await new Promise((r) => setTimeout(r, 1200));
+    }
+
+    // Backoff + fallbacks
+    const backoffs = [800, 1500, 3000];
+    for (const delay of backoffs) {
+        for (const ep of endpoints) {
+            if (tried.has(ep)) continue;
+            tried.add(ep);
             try {
-                return await classifyImage(buffer, client);
-            } catch {
-                await new Promise((r) => setTimeout(r, 2200));
-                return classifyImage(buffer, client);
+                return await classifyImage(buffer, client, ep);
+            } catch (err) {
+                const netCode = err?.code;
+                const status = err?.response?.status;
+                if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
+                    throw err;
+                }
             }
         }
-        throw err;
+        await new Promise((r) => setTimeout(r, delay));
+        try {
+            return await classifyImage(buffer, client);
+        } catch (err) {
+            const netCode = err?.code;
+            const status = err?.response?.status;
+            if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
+                throw err;
+            }
+        }
     }
+
+    throw new Error('Inference unavailable after retries');
 }
 
 async function classifyWithSpace(imageUrl, client) {
