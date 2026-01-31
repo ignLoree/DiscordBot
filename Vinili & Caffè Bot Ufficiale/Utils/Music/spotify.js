@@ -2,10 +2,10 @@
 const CONFIG = require("../../config.js");
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
   || CONFIG?.spotifyClientId
-  || "62be99af56be4ea4885b647661fa02da";
+  || "";
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
   || CONFIG?.spotifyClientSecret
-  || "45841beeabbc472a88cb6171e5235cfe";
+  || "";
 const TRACK_CACHE_TTL_MS = Number(process.env.SPOTIFY_TRACK_CACHE_TTL_MS || 24 * 60 * 60 * 1000);
 const trackCache = new Map();
 
