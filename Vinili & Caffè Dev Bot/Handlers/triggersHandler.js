@@ -20,8 +20,9 @@ function listTriggerFiles(root) {
 }
 
 function shouldLogOnce(tag) {
-    const botTag = path.basename(process.cwd()).replace(/\s+/g, '_').toLowerCase();
-    const lockPath = path.join(path.dirname(process.cwd()), `.log_${tag}_${botTag}`);
+    const isPrimary = process.cwd().toLowerCase().includes("ufficiale");
+    if (!isPrimary) return false;
+    const lockPath = path.join(path.dirname(process.cwd()), `.log_${tag}`);
     try {
         if (fs.existsSync(lockPath)) {
             const age = Date.now() - fs.statSync(lockPath).mtimeMs;

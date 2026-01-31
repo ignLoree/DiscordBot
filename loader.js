@@ -15,7 +15,8 @@ const bots = [
         key: "dev",
         label: "Dev",
         start: "./Vinili & Caffè Dev Bot/shard.js",
-        restartFlag: "./restart_dev"
+        restartFlag: "./restart_dev",
+        startupDelayMs: 10000
     }
 ];
 
@@ -29,6 +30,7 @@ function runfile(bot) {
         const working_dir = path.resolve(baseDir, bot.start.split("/").slice(0, -1).join("/"));
         const file = bot.start.split("/")[bot.start.split("/").length - 1];
 
+        const start = () => {
         // Best-effort git pull to fetch updated files before restarting.
         const repoRoot = fs.existsSync(path.join(baseDir, ".git")) ? baseDir : working_dir;
         if (fs.existsSync(path.join(repoRoot, ".git"))) {
@@ -70,6 +72,15 @@ function runfile(bot) {
                     resolve();
                 });
             });
+        };
+
+        const delay = Number(bot.startupDelayMs || 0);
+        if (delay > 0) {
+            console.log(`[Loader] Delaying ${bot.label} startup by ${delay}ms`);
+            setTimeout(start, delay);
+            return;
+        }
+        start();
     });
 }
 
@@ -110,3 +121,6 @@ setInterval(() => {
         }
     }
 }, 5000);
+
+
+
