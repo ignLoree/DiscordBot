@@ -1,0 +1,3856 @@
+﻿[
+    {
+        "id": "eng_quiz_1",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale d'Italia?",
+        "options": [
+            "Milano",
+            "Roma",
+            "Torino",
+            "Napoli"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_2",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale pianeta è il più vicino al Sole?",
+        "options": [
+            "Venere",
+            "Mercurio",
+            "Marte",
+            "Giove"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_3",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quanti giorni ha una settimana?",
+        "options": [
+            "5",
+            "6",
+            "7",
+            "8"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_4",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il simbolo chimico dell'acqua?",
+        "options": [
+            "O2",
+            "H2O",
+            "CO2",
+            "NaCl"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_5",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il continente più grande?",
+        "options": [
+            "Africa",
+            "Asia",
+            "Europa",
+            "America"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_6",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale animale è il re della giungla?",
+        "options": [
+            "Elefante",
+            "Leone",
+            "Tigre",
+            "Giraffa"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_7",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il colore risultante di rosso e blu?",
+        "options": [
+            "Verde",
+            "Viola",
+            "Arancione",
+            "Giallo"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_8",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quanti minuti ci sono in un'ora?",
+        "options": [
+            "30",
+            "45",
+            "60",
+            "90"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_9",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è lo strumento che ha sei corde?",
+        "options": [
+            "Violino",
+            "Chitarra",
+            "Flauto",
+            "Piano"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_10",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è l'oceano più grande?",
+        "options": [
+            "Indiano",
+            "Pacifico",
+            "Atlantico",
+            "Artico"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_11",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Chi ha dipinto la Gioconda?",
+        "options": [
+            "Van Gogh",
+            "Da Vinci",
+            "Monet",
+            "Picasso"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_12",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale della Francia?",
+        "options": [
+            "Parigi",
+            "Lione",
+            "Marsiglia",
+            "Nizza"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_13",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale stagione viene dopo l'estate?",
+        "options": [
+            "Primavera",
+            "Autunno",
+            "Inverno",
+            "Estate"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_14",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale pianeta è noto per gli anelli?",
+        "options": [
+            "Marte",
+            "Saturno",
+            "Venere",
+            "Mercurio"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_15",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale metallo è il più prezioso?",
+        "options": [
+            "Ferro",
+            "Rame",
+            "Oro",
+            "Alluminio"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_16",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quanti continenti ci sono?",
+        "options": [
+            "5",
+            "6",
+            "7",
+            "8"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_17",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale lingua si parla in Brasile?",
+        "options": [
+            "Spagnolo",
+            "Portoghese",
+            "Francese",
+            "Italiano"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_18",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il fiume più lungo al mondo?",
+        "options": [
+            "Nilo",
+            "Po",
+            "Tevere",
+            "Arno"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_19",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il monte più alto al mondo?",
+        "options": [
+            "K2",
+            "Everest",
+            "Kilimangiaro",
+            "Monte Bianco"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_20",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale della Spagna?",
+        "options": [
+            "Madrid",
+            "Barcellona",
+            "Valencia",
+            "Siviglia"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_21",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il pianeta più grande?",
+        "options": [
+            "Giove",
+            "Marte",
+            "Venere",
+            "Mercurio"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_23",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale del Canada?",
+        "options": [
+            "Toronto",
+            "Ottawa",
+            "Vancouver",
+            "Montreal"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_24",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale strumento misura i terremoti?",
+        "options": [
+            "Sismografo",
+            "Barometro",
+            "Termometro",
+            "Altimetro"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_25",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la lingua ufficiale dell'Australia?",
+        "options": [
+            "Francese",
+            "Italiano",
+            "Inglese",
+            "Spagnolo"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_27",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quante sono le corde di un violino?",
+        "options": [
+            "4",
+            "6",
+            "8",
+            "5"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_28",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il simbolo dell'oro?",
+        "options": [
+            "Ag",
+            "Au",
+            "Fe",
+            "Pb"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_29",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale strumento ha sei corde?",
+        "options": [
+            "Violino",
+            "Chitarra",
+            "Flauto",
+            "Piano"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_30",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale del Portogallo?",
+        "options": [
+            "Lisbona",
+            "Porto",
+            "Madrid",
+            "Faro"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_31",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "In che anno è iniziata la Seconda Guerra Mondiale?",
+        "options": [
+            "1914",
+            "1939",
+            "1945",
+            "1929"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_32",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è il numero romano per 50?",
+        "options": [
+            "L",
+            "C",
+            "V",
+            "X"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_33",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è il simbolo del sodio?",
+        "options": [
+            "So",
+            "Na",
+            "S",
+            "Sn"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_34",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale città è famosa per il Colosseo?",
+        "options": [
+            "Roma",
+            "Atene",
+            "Parigi",
+            "Londra"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_35",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è la capitale del Giappone?",
+        "options": [
+            "Osaka",
+            "Kyoto",
+            "Tokyo",
+            "Nagoya"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_36",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è la capitale della Germania?",
+        "options": [
+            "Monaco",
+            "Berlino",
+            "Amburgo",
+            "Colonia"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_37",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è l'organo che pompa il sangue?",
+        "options": [
+            "Polmoni",
+            "Fegato",
+            "Cuore",
+            "Reni"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_38",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è il continente dell'Egitto?",
+        "options": [
+            "Asia",
+            "Europa",
+            "Africa",
+            "America"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_39",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quanti pianeti ha il Sistema Solare?",
+        "options": [
+            "7",
+            "8",
+            "9",
+            "10"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_40",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale strumento misura la temperatura?",
+        "options": [
+            "Barometro",
+            "Termometro",
+            "Altimetro",
+            "Igrometro"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_41",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è la montagna più alta d'Italia?",
+        "options": [
+            "Etna",
+            "Gran Sasso",
+            "Monte Bianco",
+            "Stelvio"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_42",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è il mare di Venezia?",
+        "options": [
+            "Adriatico",
+            "Ionio",
+            "Tirreno",
+            "Egeo"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_43",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale animale fa 'miao'?",
+        "options": [
+            "Cane",
+            "Gatto",
+            "Mucca",
+            "Cavallo"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_50",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale strumento misura la temperatura?",
+        "options": [
+            "Barometro",
+            "Termometro",
+            "Altimetro",
+            "Igrometro"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_51",
+        "type": "quiz",
+        "difficulty": "hard",
+        "question": "Qual è l'elemento con simbolo W?",
+        "options": [
+            "Tungsteno",
+            "Rame",
+            "Zinco",
+            "Ferro"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_52",
+        "type": "quiz",
+        "difficulty": "hard",
+        "question": "Qual è la capitale dell'Islanda?",
+        "options": [
+            "Dublino",
+            "Reykjavik",
+            "Oslo",
+            "Helsinki"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_53",
+        "type": "quiz",
+        "difficulty": "hard",
+        "question": "Qual è il mare tra Italia e Croazia?",
+        "options": [
+            "Tirreno",
+            "Adriatico",
+            "Ionio",
+            "Egeo"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_54",
+        "type": "quiz",
+        "difficulty": "hard",
+        "question": "Qual è la capitale della Mongolia?",
+        "options": [
+            "Ulaanbaatar",
+            "Bishkek",
+            "Astana",
+            "Tashkent"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_55",
+        "type": "quiz",
+        "difficulty": "hard",
+        "question": "Qual è il numero atomico del carbonio?",
+        "options": [
+            "6",
+            "8",
+            "12",
+            "14"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "flag_ag",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ag.png",
+        "answer": "Antigua and Barbuda",
+        "aliases": []
+    },
+    {
+        "id": "flag_bt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bt.png",
+        "answer": "Bhutan",
+        "aliases": []
+    },
+    {
+        "id": "flag_it",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/it.png",
+        "answer": "Italy",
+        "aliases": [
+            "Italia"
+        ]
+    },
+    {
+        "id": "flag_tv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tv.png",
+        "answer": "Tuvalu",
+        "aliases": []
+    },
+    {
+        "id": "flag_ai",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ai.png",
+        "answer": "Anguilla",
+        "aliases": []
+    },
+    {
+        "id": "flag_au",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/au.png",
+        "answer": "Australia",
+        "aliases": []
+    },
+    {
+        "id": "flag_bz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bz.png",
+        "answer": "Belize",
+        "aliases": []
+    },
+    {
+        "id": "flag_vu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/vu.png",
+        "answer": "Vanuatu",
+        "aliases": []
+    },
+    {
+        "id": "flag_by",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/by.png",
+        "answer": "Belarus",
+        "aliases": [
+            "Bielorussia"
+        ]
+    },
+    {
+        "id": "flag_mu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mu.png",
+        "answer": "Mauritius",
+        "aliases": []
+    },
+    {
+        "id": "flag_la",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/la.png",
+        "answer": "Laos",
+        "aliases": []
+    },
+    {
+        "id": "flag_sn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sn.png",
+        "answer": "Senegal",
+        "aliases": []
+    },
+    {
+        "id": "flag_tr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tr.png",
+        "answer": "Turkey",
+        "aliases": [
+            "Turchia"
+        ]
+    },
+    {
+        "id": "flag_bo",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bo.png",
+        "answer": "Bolivia",
+        "aliases": []
+    },
+    {
+        "id": "flag_lk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lk.png",
+        "answer": "Sri Lanka",
+        "aliases": []
+    },
+    {
+        "id": "flag_nf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nf.png",
+        "answer": "Norfolk Island",
+        "aliases": [
+            "Isole Norfolk"
+        ]
+    },
+    {
+        "id": "flag_cn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cn.png",
+        "answer": "China",
+        "aliases": [
+            "Cina"
+        ]
+    },
+    {
+        "id": "flag_bq",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bq.png",
+        "answer": "Caribbean Netherlands",
+        "aliases": []
+    },
+    {
+        "id": "flag_gg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gg.png",
+        "answer": "Guernsey",
+        "aliases": []
+    },
+    {
+        "id": "flag_sd",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sd.png",
+        "answer": "Sudan",
+        "aliases": []
+    },
+    {
+        "id": "flag_yt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/yt.png",
+        "answer": "Mayotte",
+        "aliases": []
+    },
+    {
+        "id": "flag_bl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bl.png",
+        "answer": "Saint-Barthélemy",
+        "aliases": []
+    },
+    {
+        "id": "flag_va",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/va.png",
+        "answer": "Vatican City",
+        "aliases": [
+            "Vaticano",
+            "Città del Vaticano"
+        ]
+    },
+    {
+        "id": "flag_tc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tc.png",
+        "answer": "Turks and Caicos Islands",
+        "aliases": []
+    },
+    {
+        "id": "flag_cw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cw.png",
+        "answer": "Curaçao",
+        "aliases": [
+            "Curacao"
+        ]
+    },
+    {
+        "id": "flag_bw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bw.png",
+        "answer": "Botswana",
+        "aliases": []
+    },
+    {
+        "id": "flag_bj",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bj.png",
+        "answer": "Benin",
+        "aliases": []
+    },
+    {
+        "id": "flag_lt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lt.png",
+        "answer": "Lithuania",
+        "aliases": [
+            "Lituania"
+        ]
+    },
+    {
+        "id": "flag_ms",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ms.png",
+        "answer": "Montserrat",
+        "aliases": []
+    },
+    {
+        "id": "flag_vg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/vg.png",
+        "answer": "British Virgin Islands",
+        "aliases": [
+            "Isole Vergini Britanniche",
+            "Isole Britanniche Vergini"
+        ]
+    },
+    {
+        "id": "flag_bi",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bi.png",
+        "answer": "Burundi",
+        "aliases": []
+    },
+    {
+        "id": "flag_um",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/um.png",
+        "answer": "United States Minor Outlying Islands",
+        "aliases": [
+            "Stati Uniti",
+            "America"
+        ]
+    },
+    {
+        "id": "flag_ie",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ie.png",
+        "answer": "Ireland",
+        "aliases": [
+            "Irlanda"
+        ]
+    },
+    {
+        "id": "flag_sb",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sb.png",
+        "answer": "Solomon Islands",
+        "aliases": [
+            "Isole Solomon"
+        ]
+    },
+    {
+        "id": "flag_bm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bm.png",
+        "answer": "Bermuda",
+        "aliases": []
+    },
+    {
+        "id": "flag_fi",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fi.png",
+        "answer": "Finland",
+        "aliases": [
+            "Finlandia"
+        ]
+    },
+    {
+        "id": "flag_pe",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pe.png",
+        "answer": "Perù",
+        "aliases": []
+    },
+    {
+        "id": "flag_bd",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bd.png",
+        "answer": "Bangladesh",
+        "aliases": []
+    },
+    {
+        "id": "flag_dk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/dk.png",
+        "answer": "Denmark",
+        "aliases": [
+            "Danimarca"
+        ]
+    },
+    {
+        "id": "flag_vc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/vc.png",
+        "answer": "Saint Vincent and the Grenadines",
+        "aliases": []
+    },
+    {
+        "id": "flag_do",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/do.png",
+        "answer": "Dominican Republic",
+        "aliases": [
+            "Repubblica Dominicana"
+        ]
+    },
+    {
+        "id": "flag_md",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/md.png",
+        "answer": "Moldova",
+        "aliases": [
+            "Moldavia"
+        ]
+    },
+    {
+        "id": "flag_bg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bg.png",
+        "answer": "Bulgaria",
+        "aliases": []
+    },
+    {
+        "id": "flag_cr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cr.png",
+        "answer": "Costa Rica",
+        "aliases": []
+    },
+    {
+        "id": "flag_na",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/na.png",
+        "answer": "Namibia",
+        "aliases": []
+    },
+    {
+        "id": "flag_sj",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sj.png",
+        "answer": "Svalbard and Jan Mayen",
+        "aliases": []
+    },
+    {
+        "id": "flag_lu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lu.png",
+        "answer": "Luxembourg",
+        "aliases": [
+            "Lussemburgo"
+        ]
+    },
+    {
+        "id": "flag_ru",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ru.png",
+        "answer": "Russia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ae",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ae.png",
+        "answer": "United Arab Emirates",
+        "aliases": [
+            "Emirati Arabi Uniti",
+            "Emirati Arabi"
+        ]
+    },
+    {
+        "id": "flag_sx",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sx.png",
+        "answer": "Saint Maarten",
+        "aliases": []
+    },
+    {
+        "id": "flag_bs",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bs.png",
+        "answer": "Bahamas",
+        "aliases": []
+    },
+    {
+        "id": "flag_jp",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/jp.png",
+        "answer": "Japan",
+        "aliases": [
+            "Giappone"
+        ]
+    },
+    {
+        "id": "flag_ng",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ng.png",
+        "answer": "Nigeria",
+        "aliases": []
+    },
+    {
+        "id": "flag_gh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gh.png",
+        "answer": "Ghana",
+        "aliases": []
+    },
+    {
+        "id": "flag_sl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sl.png",
+        "answer": "Sierra Leone",
+        "aliases": []
+    },
+    {
+        "id": "flag_pm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pm.png",
+        "answer": "Saint Pierre and Miquelon",
+        "aliases": []
+    },
+    {
+        "id": "flag_al",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/al.png",
+        "answer": "Albania",
+        "aliases": []
+    },
+    {
+        "id": "flag_tk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tk.png",
+        "answer": "Tokelau",
+        "aliases": []
+    },
+    {
+        "id": "flag_sh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sh.png",
+        "answer": "Saint Helena, Ascension and Tristan da Cunha",
+        "aliases": []
+    },
+    {
+        "id": "flag_to",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/to.png",
+        "answer": "Tonga",
+        "aliases": []
+    },
+    {
+        "id": "flag_tm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tm.png",
+        "answer": "Turkmenistan",
+        "aliases": []
+    },
+    {
+        "id": "flag_dj",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/dj.png",
+        "answer": "Djibouti",
+        "aliases": []
+    },
+    {
+        "id": "flag_cf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cf.png",
+        "answer": "Central African Republic",
+        "aliases": [
+            "Repubblica Centro-Africana",
+            "Repubblica Centro Africana"
+        ]
+    },
+    {
+        "id": "flag_lb",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lb.png",
+        "answer": "Lebanon",
+        "aliases": [
+            "Libano"
+        ]
+    },
+    {
+        "id": "flag_lv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lv.png",
+        "answer": "Latvia",
+        "aliases": [
+            "Lettonia"
+        ]
+    },
+    {
+        "id": "flag_cc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cc.png",
+        "answer": "Cocos (Keeling) Islands",
+        "aliases": []
+    },
+    {
+        "id": "flag_gm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gm.png",
+        "answer": "Gambia",
+        "aliases": []
+    },
+    {
+        "id": "flag_hn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/hn.png",
+        "answer": "Honduras",
+        "aliases": []
+    },
+    {
+        "id": "flag_nu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nu.png",
+        "answer": "Niue",
+        "aliases": []
+    },
+    {
+        "id": "flag_mr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mr.png",
+        "answer": "Mauritania",
+        "aliases": []
+    },
+    {
+        "id": "flag_xk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/xk.png",
+        "answer": "Kosovo",
+        "aliases": []
+    },
+    {
+        "id": "flag_wf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/wf.png",
+        "answer": "Wallis and Futuna",
+        "aliases": []
+    },
+    {
+        "id": "flag_gs",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gs.png",
+        "answer": "South Georgia",
+        "aliases": [
+            "Georgia del Sud"
+        ]
+    },
+    {
+        "id": "flag_pf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pf.png",
+        "answer": "French Polynesia",
+        "aliases": [
+            "Polinesia Francese"
+        ]
+    },
+    {
+        "id": "flag_tg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tg.png",
+        "answer": "Togo",
+        "aliases": []
+    },
+    {
+        "id": "flag_be",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/be.png",
+        "answer": "Belgium",
+        "aliases": [
+            "Belgio"
+        ]
+    },
+    {
+        "id": "flag_zm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/zm.png",
+        "answer": "Zambia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ky",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ky.png",
+        "answer": "Cayman Islands",
+        "aliases": [
+            "Isole Cayman"
+        ]
+    },
+    {
+        "id": "flag_pn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pn.png",
+        "answer": "Pitcairn Islands",
+        "aliases": []
+    },
+    {
+        "id": "flag_ck",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ck.png",
+        "answer": "Cook Islands",
+        "aliases": []
+    },
+    {
+        "id": "flag_mg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mg.png",
+        "answer": "Madagascar",
+        "aliases": []
+    },
+    {
+        "id": "flag_me",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/me.png",
+        "answer": "Montenegro",
+        "aliases": []
+    },
+    {
+        "id": "flag_kr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kr.png",
+        "answer": "South Korea",
+        "aliases": [
+            "Corea del Sud"
+        ]
+    },
+    {
+        "id": "flag_et",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/et.png",
+        "answer": "Ethiopia",
+        "aliases": [
+            "Etiopia"
+        ]
+    },
+    {
+        "id": "flag_mn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mn.png",
+        "answer": "Mongolia",
+        "aliases": []
+    },
+    {
+        "id": "flag_sk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sk.png",
+        "answer": "Slovakia",
+        "aliases": [
+            "Slovacchia"
+        ]
+    },
+    {
+        "id": "flag_cu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cu.png",
+        "answer": "Cuba",
+        "aliases": []
+    },
+    {
+        "id": "flag_aq",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/aq.png",
+        "answer": "Antarctica",
+        "aliases": [
+            "Antartica"
+        ]
+    },
+    {
+        "id": "flag_gt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gt.png",
+        "answer": "Guatemala",
+        "aliases": []
+    },
+    {
+        "id": "flag_gf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gf.png",
+        "answer": "French Guiana",
+        "aliases": [
+            "Guyana Francese",
+            "Guiana Francese"
+        ]
+    },
+    {
+        "id": "flag_no",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/no.png",
+        "answer": "Norway",
+        "aliases": [
+            "Norvegia"
+        ]
+    },
+    {
+        "id": "flag_gd",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gd.png",
+        "answer": "Grenada",
+        "aliases": []
+    },
+    {
+        "id": "flag_re",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/re.png",
+        "answer": "Réunion",
+        "aliases": [
+            "Reunion"
+        ]
+    },
+    {
+        "id": "flag_cl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cl.png",
+        "answer": "Chile",
+        "aliases": [
+            "Cile"
+        ]
+    },
+    {
+        "id": "flag_co",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/co.png",
+        "answer": "Colombia",
+        "aliases": []
+    },
+    {
+        "id": "flag_sa",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sa.png",
+        "answer": "Saudi Arabia",
+        "aliases": [
+            "Arabia Saudita"
+        ]
+    },
+    {
+        "id": "flag_de",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/de.png",
+        "answer": "Germany",
+        "aliases": [
+            "Germania"
+        ]
+    },
+    {
+        "id": "flag_nz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nz.png",
+        "answer": "New Zealand",
+        "aliases": [
+            "Nuova Zelanda"
+        ]
+    },
+    {
+        "id": "flag_gl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gl.png",
+        "answer": "Greenland",
+        "aliases": [
+            "Groelandia"
+        ]
+    },
+    {
+        "id": "flag_kg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kg.png",
+        "answer": "Kyrgyzstan",
+        "aliases": []
+    },
+    {
+        "id": "flag_sv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sv.png",
+        "answer": "El Salvador",
+        "aliases": []
+    },
+    {
+        "id": "flag_fo",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fo.png",
+        "answer": "Faroe Islands",
+        "aliases": [
+            "Isole Faroe"
+        ]
+    },
+    {
+        "id": "flag_pw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pw.png",
+        "answer": "Palau",
+        "aliases": []
+    },
+    {
+        "id": "flag_mt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mt.png",
+        "answer": "Malta",
+        "aliases": []
+    },
+    {
+        "id": "flag_sy",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sy.png",
+        "answer": "Syria",
+        "aliases": [
+            "Siria"
+        ]
+    },
+    {
+        "id": "flag_tl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tl.png",
+        "answer": "Timor-Leste",
+        "aliases": [
+            "Timor"
+        ]
+    },
+    {
+        "id": "flag_hr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/hr.png",
+        "answer": "Croatia",
+        "aliases": [
+            "Croazia"
+        ]
+    },
+    {
+        "id": "flag_pg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pg.png",
+        "answer": "Papua New Guinea",
+        "aliases": [
+            "Papa Nuova Guinea"
+        ]
+    },
+    {
+        "id": "flag_nl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nl.png",
+        "answer": "Netherlands",
+        "aliases": [
+            "Olanda",
+            "Paesi Bassi"
+        ]
+    },
+    {
+        "id": "flag_lr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lr.png",
+        "answer": "Liberia",
+        "aliases": []
+    },
+    {
+        "id": "flag_so",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/so.png",
+        "answer": "Somalia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ve",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ve.png",
+        "answer": "Venezuela",
+        "aliases": []
+    },
+    {
+        "id": "flag_ht",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ht.png",
+        "answer": "Haiti",
+        "aliases": []
+    },
+    {
+        "id": "flag_dz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/dz.png",
+        "answer": "Algeria",
+        "aliases": []
+    },
+    {
+        "id": "flag_mp",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mp.png",
+        "answer": "Northern Mariana Islands",
+        "aliases": []
+    },
+    {
+        "id": "flag_mf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mf.png",
+        "answer": "Saint Martin",
+        "aliases": []
+    },
+    {
+        "id": "flag_hm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/hm.png",
+        "answer": "Heard Island and McDonald Islands",
+        "aliases": [
+            "Heart Island",
+            "McDonald Islands"
+        ]
+    },
+    {
+        "id": "flag_aw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/aw.png",
+        "answer": "Aruba",
+        "aliases": []
+    },
+    {
+        "id": "flag_eg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/eg.png",
+        "answer": "Egypt",
+        "aliases": [
+            "Egitto"
+        ]
+    },
+    {
+        "id": "flag_mw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mw.png",
+        "answer": "Malawi",
+        "aliases": []
+    },
+    {
+        "id": "flag_gq",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gq.png",
+        "answer": "Equatorial Guinea",
+        "aliases": [
+            "Guinea Equitoriale"
+        ]
+    },
+    {
+        "id": "flag_vi",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/vi.png",
+        "answer": "United States Virgin Islands",
+        "aliases": [
+            "Isole Vergini Americane"
+        ]
+    },
+    {
+        "id": "flag_ec",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ec.png",
+        "answer": "Ecuador",
+        "aliases": []
+    },
+    {
+        "id": "flag_uz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/uz.png",
+        "answer": "Uzbekistan",
+        "aliases": []
+    },
+    {
+        "id": "flag_ga",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ga.png",
+        "answer": "Gabon",
+        "aliases": []
+    },
+    {
+        "id": "flag_ss",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ss.png",
+        "answer": "South Sudan",
+        "aliases": [
+            "Sudan del Sud",
+            "Sud Sudan"
+        ]
+    },
+    {
+        "id": "flag_ir",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ir.png",
+        "answer": "Iran",
+        "aliases": []
+    },
+    {
+        "id": "flag_kz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kz.png",
+        "answer": "Kazakhstan",
+        "aliases": [
+            "Kazakhistan",
+            "Kazakistan"
+        ]
+    },
+    {
+        "id": "flag_ni",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ni.png",
+        "answer": "Nicaragua",
+        "aliases": []
+    },
+    {
+        "id": "flag_is",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/is.png",
+        "answer": "Iceland",
+        "aliases": [
+            "Islanda"
+        ]
+    },
+    {
+        "id": "flag_si",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/si.png",
+        "answer": "Slovenia",
+        "aliases": []
+    },
+    {
+        "id": "flag_gp",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gp.png",
+        "answer": "Guadeloupe",
+        "aliases": []
+    },
+    {
+        "id": "flag_cm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cm.png",
+        "answer": "Cameroon",
+        "aliases": [
+            "Camerun"
+        ]
+    },
+    {
+        "id": "flag_ar",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ar.png",
+        "answer": "Argentina",
+        "aliases": []
+    },
+    {
+        "id": "flag_az",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/az.png",
+        "answer": "Azerbaijan",
+        "aliases": []
+    },
+    {
+        "id": "flag_ug",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ug.png",
+        "answer": "Uganda",
+        "aliases": []
+    },
+    {
+        "id": "flag_ne",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ne.png",
+        "answer": "Niger",
+        "aliases": []
+    },
+    {
+        "id": "flag_cx",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cx.png",
+        "answer": "Christmas Island",
+        "aliases": [
+            "Isola di Natale"
+        ]
+    },
+    {
+        "id": "flag_mm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mm.png",
+        "answer": "Myanmar",
+        "aliases": []
+    },
+    {
+        "id": "flag_pl",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pl.png",
+        "answer": "Poland",
+        "aliases": [
+            "Polonia"
+        ]
+    },
+    {
+        "id": "flag_jo",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/jo.png",
+        "answer": "Jordan",
+        "aliases": [
+            "Giordania"
+        ]
+    },
+    {
+        "id": "flag_hk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/hk.png",
+        "answer": "Hong Kong",
+        "aliases": []
+    },
+    {
+        "id": "flag_cd",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cd.png",
+        "answer": "DR Congo",
+        "aliases": [
+            "Repubblica Democratica del Congo",
+            "Repubblica del Congo"
+        ]
+    },
+    {
+        "id": "flag_er",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/er.png",
+        "answer": "Eritrea",
+        "aliases": []
+    },
+    {
+        "id": "flag_ki",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ki.png",
+        "answer": "Kiribati",
+        "aliases": []
+    },
+    {
+        "id": "flag_mh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mh.png",
+        "answer": "Marshall Islands",
+        "aliases": [
+            "Isole di Marshall"
+        ]
+    },
+    {
+        "id": "flag_bf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bf.png",
+        "answer": "Burkina Faso",
+        "aliases": []
+    },
+    {
+        "id": "flag_zw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/zw.png",
+        "answer": "Zimbabwe",
+        "aliases": []
+    },
+    {
+        "id": "flag_ke",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ke.png",
+        "answer": "Kenya",
+        "aliases": [
+            "Kenia"
+        ]
+    },
+    {
+        "id": "flag_km",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/km.png",
+        "answer": "Comoros",
+        "aliases": []
+    },
+    {
+        "id": "flag_gi",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gi.png",
+        "answer": "Gibraltar",
+        "aliases": [
+            "Gibilterra"
+        ]
+    },
+    {
+        "id": "flag_bn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bn.png",
+        "answer": "Brunei",
+        "aliases": []
+    },
+    {
+        "id": "flag_se",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/se.png",
+        "answer": "Sweden",
+        "aliases": [
+            "Svezia"
+        ]
+    },
+    {
+        "id": "flag_ls",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ls.png",
+        "answer": "Lesotho",
+        "aliases": []
+    },
+    {
+        "id": "flag_im",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/im.png",
+        "answer": "Isle of Man",
+        "aliases": [
+            "Isola di Man"
+        ]
+    },
+    {
+        "id": "flag_fm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fm.png",
+        "answer": "Micronesia",
+        "aliases": []
+    },
+    {
+        "id": "flag_tz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tz.png",
+        "answer": "Tanzania",
+        "aliases": []
+    },
+    {
+        "id": "flag_cv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cv.png",
+        "answer": "Cape Verde",
+        "aliases": [
+            "Capo Verde"
+        ]
+    },
+    {
+        "id": "flag_af",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Flag_of_the_Taliban.svg/320px-Flag_of_the_Taliban.svg.png",
+        "answer": "Afghanistan",
+        "aliases": []
+    },
+    {
+        "id": "flag_ad",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ad.png",
+        "answer": "Andorra",
+        "aliases": []
+    },
+    {
+        "id": "flag_gr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gr.png",
+        "answer": "Greece",
+        "aliases": [
+            "Grecia"
+        ]
+    },
+    {
+        "id": "flag_vn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/vn.png",
+        "answer": "Vietnam",
+        "aliases": []
+    },
+    {
+        "id": "flag_tf",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tf.png",
+        "answer": "French Southern and Antarctic Lands",
+        "aliases": []
+    },
+    {
+        "id": "flag_iq",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/iq.png",
+        "answer": "Iraq",
+        "aliases": []
+    },
+    {
+        "id": "flag_ly",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ly.png",
+        "answer": "Libya",
+        "aliases": [
+            "Libia"
+        ]
+    },
+    {
+        "id": "flag_pt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pt.png",
+        "answer": "Portugal",
+        "aliases": [
+            "Portogallo"
+        ]
+    },
+    {
+        "id": "flag_pk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pk.png",
+        "answer": "Pakistan",
+        "aliases": []
+    },
+    {
+        "id": "flag_mv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mv.png",
+        "answer": "Maldives",
+        "aliases": [
+            "Maldive"
+        ]
+    },
+    {
+        "id": "flag_ma",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ma.png",
+        "answer": "Morocco",
+        "aliases": [
+            "Marocco"
+        ]
+    },
+    {
+        "id": "flag_ba",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ba.png",
+        "answer": "Bosnia and Herzegovina",
+        "aliases": [
+            "Bosnia",
+            "Bosnia Herzegovina"
+        ]
+    },
+    {
+        "id": "flag_ws",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ws.png",
+        "answer": "Samoa",
+        "aliases": []
+    },
+    {
+        "id": "flag_ps",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ps.png",
+        "answer": "Palestine",
+        "aliases": [
+            "Palestina"
+        ]
+    },
+    {
+        "id": "flag_om",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/om.png",
+        "answer": "Oman",
+        "aliases": []
+    },
+    {
+        "id": "flag_bh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bh.png",
+        "answer": "Bahrain",
+        "aliases": []
+    },
+    {
+        "id": "flag_us",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/us.png",
+        "answer": "United States",
+        "aliases": [
+            "America",
+            "Stati Uniti",
+            "Stati Uniti d'America"
+        ]
+    },
+    {
+        "id": "flag_pr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pr.png",
+        "answer": "Puerto Rico",
+        "aliases": [
+            "Porto Rico"
+        ]
+    },
+    {
+        "id": "flag_io",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/io.png",
+        "answer": "British Indian Ocean Territory",
+        "aliases": []
+    },
+    {
+        "id": "flag_je",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/je.png",
+        "answer": "Jersey",
+        "aliases": []
+    },
+    {
+        "id": "flag_mk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mk.png",
+        "answer": "North Macedonia",
+        "aliases": [
+            "Macedonia del Nord"
+        ]
+    },
+    {
+        "id": "flag_tn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tn.png",
+        "answer": "Tunisia",
+        "aliases": []
+    },
+    {
+        "id": "flag_tt",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tt.png",
+        "answer": "Trinidad and Tobago",
+        "aliases": []
+    },
+    {
+        "id": "flag_ee",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ee.png",
+        "answer": "Estonia",
+        "aliases": []
+    },
+    {
+        "id": "flag_sg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sg.png",
+        "answer": "Singapore",
+        "aliases": []
+    },
+    {
+        "id": "flag_pa",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/pa.png",
+        "answer": "Panama",
+        "aliases": []
+    },
+    {
+        "id": "flag_ch",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ch.png",
+        "answer": "Switzerland",
+        "aliases": [
+            "Svizzera"
+        ]
+    },
+    {
+        "id": "flag_uy",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/uy.png",
+        "answer": "Uruguay",
+        "aliases": []
+    },
+    {
+        "id": "flag_tj",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tj.png",
+        "answer": "Tajikistan",
+        "aliases": []
+    },
+    {
+        "id": "flag_tw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/tw.png",
+        "answer": "Taiwan",
+        "aliases": []
+    },
+    {
+        "id": "flag_za",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/za.png",
+        "answer": "South Africa",
+        "aliases": [
+            "Sud Africa"
+        ]
+    },
+    {
+        "id": "flag_li",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/li.png",
+        "answer": "Liechtenstein",
+        "aliases": []
+    },
+    {
+        "id": "flag_br",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/br.png",
+        "answer": "Brazil",
+        "aliases": [
+            "Brasile"
+        ]
+    },
+    {
+        "id": "flag_am",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/am.png",
+        "answer": "Armenia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ge",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ge.png",
+        "answer": "Georgia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ax",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ax.png",
+        "answer": "Åland Islands",
+        "aliases": [
+            "Isole Åland",
+            "Isole di Aland"
+        ]
+    },
+    {
+        "id": "flag_qa",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/qa.png",
+        "answer": "Qatar",
+        "aliases": []
+    },
+    {
+        "id": "flag_dm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/dm.png",
+        "answer": "Dominica",
+        "aliases": []
+    },
+    {
+        "id": "flag_ua",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ua.png",
+        "answer": "Ukraine",
+        "aliases": [
+            "Ucraina"
+        ]
+    },
+    {
+        "id": "flag_gn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gn.png",
+        "answer": "Guinea",
+        "aliases": []
+    },
+    {
+        "id": "flag_mo",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mo.png",
+        "answer": "Macau",
+        "aliases": []
+    },
+    {
+        "id": "flag_eh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/eh.png",
+        "answer": "Western Sahara",
+        "aliases": []
+    },
+    {
+        "id": "flag_cz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cz.png",
+        "answer": "Czechia",
+        "aliases": [
+            "Repubblica Ceca"
+        ]
+    },
+    {
+        "id": "flag_at",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/at.png",
+        "answer": "Austria",
+        "aliases": []
+    },
+    {
+        "id": "flag_kn",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kn.png",
+        "answer": "Saint Kitts and Nevis",
+        "aliases": []
+    },
+    {
+        "id": "flag_lc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/lc.png",
+        "answer": "Saint Lucia",
+        "aliases": []
+    },
+    {
+        "id": "flag_ye",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ye.png",
+        "answer": "Yemen",
+        "aliases": []
+    },
+    {
+        "id": "flag_rw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/rw.png",
+        "answer": "Rwanda",
+        "aliases": []
+    },
+    {
+        "id": "flag_mc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mc.png",
+        "answer": "Monaco",
+        "aliases": [
+            "Principato di Monaco"
+        ]
+    },
+    {
+        "id": "flag_st",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/st.png",
+        "answer": "São Tomé and Príncipe",
+        "aliases": [
+            "Sao Tome e Principe"
+        ]
+    },
+    {
+        "id": "flag_cg",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cg.png",
+        "answer": "Republic of the Congo",
+        "aliases": [
+            "Congo",
+            "Repubblica del Congo"
+        ]
+    },
+    {
+        "id": "flag_py",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/py.png",
+        "answer": "Paraguay",
+        "aliases": []
+    },
+    {
+        "id": "flag_bv",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bv.png",
+        "answer": "Bouvet Island",
+        "aliases": []
+    },
+    {
+        "id": "flag_mz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mz.png",
+        "answer": "Mozambique",
+        "aliases": [
+            "Mozambico"
+        ]
+    },
+    {
+        "id": "flag_fr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fr.png",
+        "answer": "France",
+        "aliases": [
+            "Francia"
+        ]
+    },
+    {
+        "id": "flag_sz",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sz.png",
+        "answer": "Eswatini",
+        "aliases": []
+    },
+    {
+        "id": "flag_bb",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/bb.png",
+        "answer": "Barbados",
+        "aliases": []
+    },
+    {
+        "id": "flag_es",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/es.png",
+        "answer": "Spain",
+        "aliases": [
+            "Spagna"
+        ]
+    },
+    {
+        "id": "flag_th",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/th.png",
+        "answer": "Thailand",
+        "aliases": [
+            "Thailandia"
+        ]
+    },
+    {
+        "id": "flag_gw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gw.png",
+        "answer": "Guinea-Bissau",
+        "aliases": []
+    },
+    {
+        "id": "flag_ao",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ao.png",
+        "answer": "Angola",
+        "aliases": []
+    },
+    {
+        "id": "flag_in",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/in.png",
+        "answer": "India",
+        "aliases": []
+    },
+    {
+        "id": "flag_mq",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mq.png",
+        "answer": "Martinique",
+        "aliases": []
+    },
+    {
+        "id": "flag_nc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nc.png",
+        "answer": "New Caledonia",
+        "aliases": [
+            "Nuova Caledonia"
+        ]
+    },
+    {
+        "id": "flag_sc",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sc.png",
+        "answer": "Seychelles",
+        "aliases": []
+    },
+    {
+        "id": "flag_fk",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fk.png",
+        "answer": "Falkland Islands",
+        "aliases": [
+            "Isole Falkland"
+        ]
+    },
+    {
+        "id": "flag_gb",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gb.png",
+        "answer": "United Kingdom",
+        "aliases": [
+            "Regno Unito"
+        ]
+    },
+    {
+        "id": "flag_fj",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/fj.png",
+        "answer": "Fiji",
+        "aliases": [
+            "Isole Fiji"
+        ]
+    },
+    {
+        "id": "flag_sm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sm.png",
+        "answer": "San Marino",
+        "aliases": [
+            "Città di San Marino"
+        ]
+    },
+    {
+        "id": "flag_ml",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ml.png",
+        "answer": "Mali",
+        "aliases": []
+    },
+    {
+        "id": "flag_ca",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ca.png",
+        "answer": "Canada",
+        "aliases": []
+    },
+    {
+        "id": "flag_jm",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/jm.png",
+        "answer": "Jamaica",
+        "aliases": []
+    },
+    {
+        "id": "flag_nr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/nr.png",
+        "answer": "Nauru",
+        "aliases": []
+    },
+    {
+        "id": "flag_id",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/id.png",
+        "answer": "Indonesia",
+        "aliases": []
+    },
+    {
+        "id": "flag_gu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gu.png",
+        "answer": "Guam",
+        "aliases": []
+    },
+    {
+        "id": "flag_ci",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ci.png",
+        "answer": "Ivory Coast",
+        "aliases": [
+            "Costa D'Avorio"
+        ]
+    },
+    {
+        "id": "flag_kw",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kw.png",
+        "answer": "Kuwait",
+        "aliases": []
+    },
+    {
+        "id": "flag_ph",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ph.png",
+        "answer": "Philippines",
+        "aliases": [
+            "Philippine",
+            "Filippine"
+        ]
+    },
+    {
+        "id": "flag_gy",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/gy.png",
+        "answer": "Guyana",
+        "aliases": []
+    },
+    {
+        "id": "flag_hu",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/hu.png",
+        "answer": "Hungary",
+        "aliases": [
+            "Ungheria"
+        ]
+    },
+    {
+        "id": "flag_mx",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/mx.png",
+        "answer": "Mexico",
+        "aliases": [
+            "Messico"
+        ]
+    },
+    {
+        "id": "flag_kp",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kp.png",
+        "answer": "North Korea",
+        "aliases": [
+            "Corea del Nord"
+        ]
+    },
+    {
+        "id": "flag_ro",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/ro.png",
+        "answer": "Romania",
+        "aliases": []
+    },
+    {
+        "id": "flag_sr",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/sr.png",
+        "answer": "Suriname",
+        "aliases": []
+    },
+    {
+        "id": "flag_as",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/as.png",
+        "answer": "American Samoa",
+        "aliases": []
+    },
+    {
+        "id": "flag_np",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/np.png",
+        "answer": "Nepal",
+        "aliases": []
+    },
+    {
+        "id": "flag_td",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/td.png",
+        "answer": "Chad",
+        "aliases": []
+    },
+    {
+        "id": "flag_rs",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/rs.png",
+        "answer": "Serbia",
+        "aliases": []
+    },
+    {
+        "id": "flag_kh",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/kh.png",
+        "answer": "Cambodia",
+        "aliases": []
+    },
+    {
+        "id": "flag_my",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/my.png",
+        "answer": "Malaysia",
+        "aliases": [
+            "Malasia"
+        ]
+    },
+    {
+        "id": "flag_cy",
+        "type": "flag",
+        "prompt": "Indovina la bandiera",
+        "image": "https://flagcdn.com/w320/cy.png",
+        "answer": "Cyprus",
+        "aliases": [
+            "Cipro"
+        ]
+    },
+    {
+        "id": "eng_scramble_1",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: I C A M U S",
+        "options": [
+            "ICAMUS",
+            "USICAM",
+            "SICAMU",
+            "MUSICA"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_2",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: I L E V I N",
+        "options": [
+            "ILEVIN",
+            "VINILE",
+            "NILEVI",
+            "INILEV"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_3",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: F F E C A",
+        "options": [
+            "CAFFE",
+            "FECAF",
+            "FFECA",
+            "AFFEC"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_4",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: A R R A C H I T",
+        "options": [
+            "ITARRACH",
+            "TARRACHI",
+            "HITARRAC",
+            "CHITARRA"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_5",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: E R I A B A T T",
+        "options": [
+            "ATTERIAB",
+            "BATTERIA",
+            "TERIABAT",
+            "TTERIABA"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_6",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: F O R T E P I A N O",
+        "options": [
+            "IANOFORTEP",
+            "PIANOFORTE",
+            "ANOFORTEPI",
+            "NOFORTEPIA"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_7",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: O F O N O M I C R",
+        "options": [
+            "ICROFONOM",
+            "ROFONOMIC",
+            "MICROFONO",
+            "CROFONOMI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_8",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: E R T O C O N C",
+        "options": [
+            "CONCERTO",
+            "CERTOCON",
+            "NCERTOCO",
+            "ONCERTOC"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_9",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: I V A L F E S T",
+        "options": [
+            "STIVALFE",
+            "FESTIVAL",
+            "ESTIVALF",
+            "TIVALFES"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_10",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: O D I A M E L",
+        "options": [
+            "ELODIAM",
+            "ODIAMEL",
+            "MELODIA",
+            "LODIAME"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_11",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: O N I A A R M",
+        "options": [
+            "ARMONIA",
+            "ONIAARM",
+            "RMONIAA",
+            "MONIAAR"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_12",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: T M O R I",
+        "options": [
+            "ITMOR",
+            "MORIT",
+            "RITMO",
+            "TMORI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_13",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: I S T A B A S S",
+        "options": [
+            "SISTABAS",
+            "SSISTABA",
+            "BASSISTA",
+            "ASSISTAB"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_14",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: A N T E C A N T",
+        "options": [
+            "ANTANTEC",
+            "TANTECAN",
+            "NTANTECA",
+            "CANTANTE"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_15",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: L C O P A",
+        "options": [
+            "ALCOP",
+            "COPAL",
+            "PALCO",
+            "LCOPA"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_16",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: A C O L O S P E T T",
+        "options": [
+            "SPETTACOLO",
+            "PETTACOLOS",
+            "TTACOLOSPE",
+            "ETTACOLOSP"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_17",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: L I S T P L A Y",
+        "options": [
+            "AYLISTPL",
+            "YLISTPLA",
+            "LAYLISTP",
+            "PLAYLIST"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_18",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: T R A C K S O U N D",
+        "options": [
+            "SOUNDTRACK",
+            "OUNDTRACKS",
+            "UNDTRACKSO",
+            "NDTRACKSOU"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_19",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: A L I V O C",
+        "options": [
+            "OCALIV",
+            "VOCALI",
+            "CALIVO",
+            "ALIVOC"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_20",
+        "type": "scramble",
+        "difficulty": "easy",
+        "prompt": "Lettere: D I O S T U",
+        "options": [
+            "UDIOST",
+            "STUDIO",
+            "DIOSTU",
+            "TUDIOS"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_21",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: R A Z I O N E R E G I S T",
+        "options": [
+            "ISTRAZIONEREG",
+            "GISTRAZIONERE",
+            "REGISTRAZIONE",
+            "EGISTRAZIONER"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_22",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: S C O D I",
+        "options": [
+            "DISCO",
+            "CODIS",
+            "SCODI",
+            "ISCOD"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_23",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: B U M A L",
+        "options": [
+            "LBUMA",
+            "BUMAL",
+            "UMALB",
+            "ALBUM"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_24",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: G O L O S I N",
+        "options": [
+            "INGOLOS",
+            "NGOLOSI",
+            "SINGOLO",
+            "GOLOSIN"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_25",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: I S C H I G I R A D",
+        "options": [
+            "ADISCHIGIR",
+            "IRADISCHIG",
+            "GIRADISCHI",
+            "RADISCHIGI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_26",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: O L A R I A U R I C",
+        "options": [
+            "AURICOLARI",
+            "ICOLARIAUR",
+            "URICOLARIA",
+            "RICOLARIAU"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_27",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: F I E C U F",
+        "options": [
+            "FFIECU",
+            "CUFFIE",
+            "UFFIEC",
+            "FIECUF"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_28",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: D I O R A",
+        "options": [
+            "ADIOR",
+            "DIORA",
+            "IORAD",
+            "RADIO"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_29",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: C A S T P O D",
+        "options": [
+            "DCASTPO",
+            "CASTPOD",
+            "ODCASTP",
+            "PODCAST"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_30",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: C E V O",
+        "options": [
+            "VOCE",
+            "CEVO",
+            "EVOC",
+            "OCEV"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_31",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: F O N O S A X O",
+        "options": [
+            "SAXOFONO",
+            "XOFONOSA",
+            "OFONOSAX",
+            "AXOFONOS"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_32",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: M B A T R O",
+        "options": [
+            "TROMBA",
+            "MBATRO",
+            "OMBATR",
+            "ROMBAT"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_33",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: L I N O V I O",
+        "options": [
+            "LINOVIO",
+            "IOLINOV",
+            "VIOLINO",
+            "OLINOVI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_34",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: E S T R A O R C H",
+        "options": [
+            "RCHESTRAO",
+            "CHESTRAOR",
+            "HESTRAORC",
+            "ORCHESTRA"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_35",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: N D B A",
+        "options": [
+            "ANDB",
+            "DBAN",
+            "NDBA",
+            "BAND"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_36",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: J D",
+        "options": [
+            "DJ",
+            "JD",
+            "DJ",
+            "DJ"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_37",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: M I X R E",
+        "options": [
+            "REMIX",
+            "IXREM",
+            "MIXRE",
+            "EMIXR"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_38",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: V E R C O",
+        "options": [
+            "OVERC",
+            "COVER",
+            "ERCOV",
+            "VERCO"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_39",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: U R T O",
+        "options": [
+            "RTOU",
+            "OURT",
+            "TOUR",
+            "URTO"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_40",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: I E T T O B I G L",
+        "options": [
+            "IGLIETTOB",
+            "LIETTOBIG",
+            "BIGLIETTO",
+            "GLIETTOBI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_61",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale sport si gioca con la racchetta e la pallina gialla?",
+        "options": [
+            "Tennis",
+            "Calcio",
+            "Basket",
+            "Nuoto"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_62",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale dell'Argentina?",
+        "options": [
+            "Lima",
+            "Buenos Aires",
+            "Santiago",
+            "Bogota"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_63",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale strumento ha i tasti bianchi e neri?",
+        "options": [
+            "Chitarra",
+            "Pianoforte",
+            "Batteria",
+            "Sax"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_64",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale saga include il personaggio Frodo?",
+        "options": [
+            "Star Wars",
+            "Harry Potter",
+            "Il Signore degli Anelli",
+            "Matrix"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_65",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quanti giocatori ci sono in una squadra di calcio?",
+        "options": [
+            "9",
+            "10",
+            "11",
+            "12"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_66",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è la capitale della Grecia?",
+        "options": [
+            "Atene",
+            "Sparta",
+            "Salonicco",
+            "Patrasso"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_67",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale colore ottieni mescolando blu e giallo?",
+        "options": [
+            "Verde",
+            "Viola",
+            "Arancione",
+            "Rosso"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_68",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale strumento misura la pressione atmosferica?",
+        "options": [
+            "Barometro",
+            "Termometro",
+            "Sismografo",
+            "Altimetro"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_69",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è il pianeta con il grande punto rosso?",
+        "options": [
+            "Marte",
+            "Giove",
+            "Saturno",
+            "Venere"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_70",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il continente dell'Australia?",
+        "options": [
+            "Oceania",
+            "Asia",
+            "Europa",
+            "Africa"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_71",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Chi è il creatore di Minecraft?",
+        "options": [
+            "Notch",
+            "Gabe",
+            "Sid",
+            "Mark"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_72",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Qual è la capitale della Norvegia?",
+        "options": [
+            "Oslo",
+            "Stoccolma",
+            "Copenaghen",
+            "Helsinki"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_73",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale strumento è tipico del jazz?",
+        "options": [
+            "Saxofono",
+            "Arpa",
+            "Oboe",
+            "Flauto"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_74",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è il mare tra Grecia e Turchia?",
+        "options": [
+            "Egeo",
+            "Adriatico",
+            "Ionio",
+            "Tirreno"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_quiz_75",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quale supereroe è noto come l'Uomo Ragno?",
+        "options": [
+            "Batman",
+            "Superman",
+            "Spider-Man",
+            "Hulk"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_76",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale bevanda si ottiene dalla fermentazione dell'uva?",
+        "options": [
+            "Birra",
+            "Vino",
+            "Sidro",
+            "Te"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_77",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale del Messico?",
+        "options": [
+            "Guadalajara",
+            "Monterrey",
+            "Città del Messico",
+            "Cancun"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_quiz_78",
+        "type": "quiz",
+        "difficulty": "medium",
+        "question": "Quanti tasti ha una tastiera standard?",
+        "options": [
+            "88",
+            "61",
+            "49",
+            "101"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_quiz_79",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Qual è la capitale della Svezia?",
+        "options": [
+            "Oslo",
+            "Stoccolma",
+            "Riga",
+            "Helsinki"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_quiz_80",
+        "type": "quiz",
+        "difficulty": "easy",
+        "question": "Quale animale è simbolo dell'Australia?",
+        "options": [
+            "Canguro",
+            "Pinguino",
+            "Lupo",
+            "Orso"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_41",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: O N A T O C A M P I",
+        "options": [
+            "OTANOIPMAC",
+            "AMPIONATOC",
+            "OCAMPIONAT",
+            "CAMPIONATO"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_42",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: I S I O N E T E L E V",
+        "options": [
+            "ENOISIVELET",
+            "TELEVISIONE",
+            "ETELEVISION",
+            "ELEVISIONET"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_43",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: G I O C O V I D E O",
+        "options": [
+            "OVIDEOGIOC",
+            "OCOIGOEDIV",
+            "IDEOGIOCOV",
+            "VIDEOGIOCO"
+        ],
+        "answerIndex": 3
+    },
+    {
+        "id": "eng_scramble_44",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: A V O L O P A L L",
+        "options": [
+            "OLOVALLAP",
+            "PALLAVOLO",
+            "ALLAVOLOP",
+            "OPALLAVOL"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_45",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: T B A L L B A S K E",
+        "options": [
+            "BASKETBALL",
+            "ASKETBALLB",
+            "LBASKETBAL",
+            "LLABTEKSAB"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_46",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: E M A C I N",
+        "options": [
+            "ACINEM",
+            "CINEMA",
+            "INEMAC",
+            "AMENIC"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_47",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: E T T O F U M",
+        "options": [
+            "OFUMETT",
+            "FUMETTO",
+            "UMETTOF",
+            "OTTEMUF"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_48",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: N T A R I O D O C U M E",
+        "options": [
+            "OCUMENTARIOD",
+            "OIRATNEMUCOD",
+            "DOCUMENTARIO",
+            "ODOCUMENTARI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_49",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: C I E N Z A F A N T A S",
+        "options": [
+            "AZNEICSATNAF",
+            "FANTASCIENZA",
+            "AFANTASCIENZ",
+            "ANTASCIENZAF"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_50",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: L L O G I A",
+        "options": [
+            "GIALLO",
+            "OGIALL",
+            "OLLAIG",
+            "IALLOG"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_51",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: G R A F I A C H O R E O",
+        "options": [
+            "ACHOREOGRAFI",
+            "CHOREOGRAFIA",
+            "AIFARGOEROHC",
+            "HOREOGRAFIAC"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_52",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: E G G I O P A L L",
+        "options": [
+            "OPALLEGGI",
+            "ALLEGGIOP",
+            "PALLEGGIO",
+            "OIGGELLAP"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_53",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: A T O R E A L L E N",
+        "options": [
+            "EROTANELLA",
+            "EALLENATOR",
+            "ALLENATORE",
+            "LLENATOREA"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_54",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: B U N A T R I",
+        "options": [
+            "ATRIBUN",
+            "RIBUNAT",
+            "TRIBUNA",
+            "ANUBIRT"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_55",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: I A T O I O S P O G L",
+        "options": [
+            "POGLIATOIOS",
+            "SPOGLIATOIO",
+            "OIOTAILGOPS",
+            "OSPOGLIATOI"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_56",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: S E R I A T I F O",
+        "options": [
+            "IFOSERIAT",
+            "AIRESOFIT",
+            "TIFOSERIA",
+            "ATIFOSERI"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_57",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: L L O N E C A R T E",
+        "options": [
+            "CARTELLONE",
+            "ARTELLONEC",
+            "ECARTELLON",
+            "ENOLLETRAC"
+        ],
+        "answerIndex": 0
+    },
+    {
+        "id": "eng_scramble_58",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: O N I S T A P R O T A G",
+        "options": [
+            "ATSINOGATORP",
+            "PROTAGONISTA",
+            "APROTAGONIST",
+            "ROTAGONISTAP"
+        ],
+        "answerIndex": 1
+    },
+    {
+        "id": "eng_scramble_59",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: I S T A R E G",
+        "options": [
+            "ATSIGER",
+            "EGISTAR",
+            "REGISTA",
+            "AREGIST"
+        ],
+        "answerIndex": 2
+    },
+    {
+        "id": "eng_scramble_60",
+        "type": "scramble",
+        "difficulty": "medium",
+        "prompt": "Lettere: O N N A C O L",
+        "options": [
+            "COLONNA",
+            "ANNOLOC",
+            "OLONNAC",
+            "ACOLONN"
+        ],
+        "answerIndex": 0
+    }
+]

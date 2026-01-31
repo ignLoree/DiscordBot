@@ -1,0 +1,44 @@
+[
+  {
+    "id": "q1",
+    "difficulty": "easy",
+    "question": "Quale pianeta è conosciuto come il Pianeta Rosso?",
+    "options": ["Venere", "Marte", "Giove", "Mercurio"],
+    "answerIndex": 1
+  },
+  {
+    "id": "q2",
+    "difficulty": "easy",
+    "question": "Quanti continenti ci sono sulla Terra?",
+    "options": ["5", "6", "7", "8"],
+    "answerIndex": 2
+  },
+  {
+    "id": "q3",
+    "difficulty": "medium",
+    "question": "Quale linguaggio è usato per scrivere server Node.js?",
+    "options": ["C#", "Java", "JavaScript", "Go"],
+    "answerIndex": 2
+  },
+  {
+    "id": "q4",
+    "difficulty": "medium",
+    "question": "Quale anno segna l'inizio della Seconda Guerra Mondiale?",
+    "options": ["1914", "1939", "1945", "1929"],
+    "answerIndex": 1
+  },
+  {
+    "id": "q5",
+    "difficulty": "hard",
+    "question": "Quale è l'elemento chimico con simbolo 'W'?",
+    "options": ["Tungsteno", "Rame", "Zinco", "Ferro"],
+    "answerIndex": 0
+  },
+  {
+    "id": "q6",
+    "difficulty": "hard",
+    "question": "Qual è la capitale della Mongolia?",
+    "options": ["Ulaanbaatar", "Bishkek", "Astana", "Tashkent"],
+    "answerIndex": 0
+  }
+]

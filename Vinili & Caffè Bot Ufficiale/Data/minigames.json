@@ -1,0 +1,62 @@
+[
+  {
+    "id": "m1",
+    "type": "math",
+    "difficulty": "easy",
+    "title": "Calcolo Lampo",
+    "description": "Scegli il risultato corretto dell'operazione.",
+    "prompt": "Quanto fa 8 + 7?",
+    "options": ["13", "14", "15", "16"],
+    "answerIndex": 2
+  },
+  {
+    "id": "m2",
+    "type": "math",
+    "difficulty": "medium",
+    "title": "Calcolo Lampo",
+    "description": "Scegli il risultato corretto dell'operazione.",
+    "prompt": "Quanto fa 12 * 6?",
+    "options": ["60", "66", "72", "78"],
+    "answerIndex": 2
+  },
+  {
+    "id": "m3",
+    "type": "scramble",
+    "difficulty": "easy",
+    "title": "Parola Misteriosa",
+    "description": "Trova la parola corretta partendo dalle lettere mescolate.",
+    "prompt": "Lettere: A R M E",
+    "options": ["MARE", "REMA", "ARME", "MERA"],
+    "answerIndex": 0
+  },
+  {
+    "id": "m4",
+    "type": "scramble",
+    "difficulty": "medium",
+    "title": "Parola Misteriosa",
+    "description": "Trova la parola corretta partendo dalle lettere mescolate.",
+    "prompt": "Lettere: T A O L V I",
+    "options": ["VOLATI", "TAVOLI", "VIALTO", "OLIVAT"],
+    "answerIndex": 1
+  },
+  {
+    "id": "m5",
+    "type": "logic",
+    "difficulty": "hard",
+    "title": "Logica",
+    "description": "Scegli l'opzione che completa la sequenza.",
+    "prompt": "Sequenza: 2, 4, 8, 16, ?",
+    "options": ["18", "24", "32", "34"],
+    "answerIndex": 2
+  },
+  {
+    "id": "m6",
+    "type": "logic",
+    "difficulty": "hard",
+    "title": "Logica",
+    "description": "Scegli l'opzione che completa la sequenza.",
+    "prompt": "Sequenza: 3, 6, 12, 24, ?",
+    "options": ["30", "36", "48", "60"],
+    "answerIndex": 2
+  }
+]
