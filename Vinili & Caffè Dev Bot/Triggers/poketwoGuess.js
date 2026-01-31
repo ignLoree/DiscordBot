@@ -112,15 +112,28 @@ async function classifyImage(buffer, client, overrideEndpoint) {
         throw new Error('Missing Hugging Face token (set HF_TOKEN in env or poketwo.hfToken in config).');
     }
     const payload = { inputs: buffer.toString('base64') };
-    const res = await axios.post(target, payload, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            Accept: 'application/json'
-        },
-        timeout: 20000
-    });
-    return res.data;
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+    };
+    const base = String(target || '').replace(/\/+$/, '');
+    const candidates = [base];
+    if (base.includes('endpoints.huggingface.cloud')) {
+        candidates.push(`${base}/predict`, `${base}/invocations`);
+    }
+    let lastErr = null;
+    for (const url of candidates) {
+        try {
+            const res = await axios.post(url, payload, { headers, timeout: 20000 });
+            return res.data;
+        } catch (err) {
+            lastErr = err;
+            const status = err?.response?.status;
+            if (status !== 404) throw err;
+        }
+    }
+    throw lastErr || new Error('Inference request failed');
 }
 
 async function classifyWithRetry(buffer, client) {
