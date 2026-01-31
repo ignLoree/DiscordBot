@@ -85,7 +85,8 @@ function runfile(bot, options = {}) {
     });
 }
 
-function restartBot(bot) {
+function restartBot(bot, options = {}) {
+    const respectDelay = Boolean(options.respectDelay);
     if (restarting.get(bot.key)) return;
     restarting.set(bot.key, true);
     const proc = processes.get(bot.key);
@@ -93,18 +94,18 @@ function restartBot(bot) {
         console.log(`[Loader] Restarting ${bot.label}...`);
         proc.once("exit", () => {
             restarting.set(bot.key, false);
-            runfile(bot, { bypassDelay: true });
+            runfile(bot, { bypassDelay: !respectDelay });
         });
         try {
             proc.kill();
         } catch {
             restarting.set(bot.key, false);
-            runfile(bot, { bypassDelay: true });
+            runfile(bot, { bypassDelay: !respectDelay });
         }
         return;
     }
     restarting.set(bot.key, false);
-    runfile(bot, { bypassDelay: true });
+    runfile(bot, { bypassDelay: !respectDelay });
 }
 
 for (const bot of bots) {
@@ -115,13 +116,20 @@ setInterval(() => {
     for (const bot of bots) {
         const flagPath = path.resolve(baseDir, bot.restartFlag);
         if (fs.existsSync(flagPath)) {
+            let respectDelay = false;
+            try {
+                const raw = fs.readFileSync(flagPath, "utf8");
+                const parsed = JSON.parse(raw);
+                respectDelay = Boolean(parsed?.respectDelay);
+            } catch {
+                // Legacy flags are plain text
+            }
             try {
                 fs.unlinkSync(flagPath);
             } catch {}
-            restartBot(bot);
+            restartBot(bot, { respectDelay });
         }
     }
 }, 5000);
-
 
 

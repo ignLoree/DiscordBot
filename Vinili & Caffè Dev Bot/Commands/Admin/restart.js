@@ -52,7 +52,16 @@ module.exports = {
                 const targets = target === 'both' ? ['official', 'dev'] : [target];
                 for (const t of targets) {
                     const flagPath = path.resolve(process.cwd(), '..', FLAG_MAP[t]);
-                    fs.writeFileSync(flagPath, `${new Date().toISOString()} | ${interaction.user.id}\n`, 'utf8');
+                    if (target === 'both') {
+                        fs.writeFileSync(flagPath, JSON.stringify({
+                            respectDelay: true,
+                            by: interaction.user.id,
+                            at: new Date().toISOString(),
+                            target: t
+                        }, null, 2), 'utf8');
+                    } else {
+                        fs.writeFileSync(flagPath, `${new Date().toISOString()} | ${interaction.user.id}\n`, 'utf8');
+                    }
                 }
                 return safeReply(interaction, { content: `Riavvio ${target} richiesto.`, flags: 1 << 6 });
             }
