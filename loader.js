@@ -26,7 +26,7 @@ const restarting = new Map();
 
 console.log(`[Loader] Loading ${bots.length} files`);
 
-function runfile(bot) {
+function runfile(bot, options = {}) {
     return new Promise((resolve) => {
         const working_dir = path.resolve(baseDir, bot.start.split("/").slice(0, -1).join("/"));
         const file = bot.start.split("/")[bot.start.split("/").length - 1];
@@ -75,7 +75,7 @@ function runfile(bot) {
             });
         };
 
-        const delay = Number(bot.startupDelayMs || 0);
+        const delay = options.bypassDelay ? 0 : Number(bot.startupDelayMs || 0);
         if (delay > 0) {
             console.log(`[Loader] Delaying ${bot.label} startup by ${delay}ms`);
             setTimeout(start, delay);
@@ -93,18 +93,18 @@ function restartBot(bot) {
         console.log(`[Loader] Restarting ${bot.label}...`);
         proc.once("exit", () => {
             restarting.set(bot.key, false);
-            runfile(bot);
+            runfile(bot, { bypassDelay: true });
         });
         try {
             proc.kill();
         } catch {
             restarting.set(bot.key, false);
-            runfile(bot);
+            runfile(bot, { bypassDelay: true });
         }
         return;
     }
     restarting.set(bot.key, false);
-    runfile(bot);
+    runfile(bot, { bypassDelay: true });
 }
 
 for (const bot of bots) {
@@ -122,7 +122,6 @@ setInterval(() => {
         }
     }
 }, 5000);
-
 
 
 
