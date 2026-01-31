@@ -77,16 +77,17 @@ module.exports = (client) => {
         const uffFiles = listTriggerFiles(roots.official);
         const devFiles = listTriggerFiles(roots.dev);
         const allFiles = new Set([...uffFiles, ...devFiles]);
-        const unified = new ascii().setHeading("File", "Ufficiale", "Dev");
+        const unified = new ascii().setHeading("Folder", "File", "Ufficiale", "Dev");
         const isOfficial = roots.isOfficial;
 
         for (const file of Array.from(allFiles).sort()) {
+            const folderLabel = "root";
             const currentStatus = statusMap.get(file) || (isOfficial ? (uffFiles.has(file) ? "Present" : "-") : (devFiles.has(file) ? "Present" : "-"));
             const otherStatus = isOfficial ? (devFiles.has(file) ? "Present" : "-") : (uffFiles.has(file) ? "Present" : "-");
             if (isOfficial) {
-                unified.addRow(file, currentStatus, otherStatus);
+                unified.addRow(folderLabel, file, currentStatus, otherStatus);
             } else {
-                unified.addRow(file, otherStatus, currentStatus);
+                unified.addRow(folderLabel, file, otherStatus, currentStatus);
             }
         }
 

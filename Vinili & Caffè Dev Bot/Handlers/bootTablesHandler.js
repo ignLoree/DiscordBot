@@ -33,6 +33,8 @@ function logFileTable(label, baseDir, statusLabel) {
 }
 module.exports = (client) => {
     client.logBootTables = () => {
+        const isPrimary = process.cwd().toLowerCase().includes("ufficiale");
+        if (!isPrimary) return;
         logFileTable('HANDLERS', './Handlers', 'Loaded');
         logFileTable('SERVICES', './Services', 'Loaded');
         logFileTable('UTILS', './Utils', 'Loaded');

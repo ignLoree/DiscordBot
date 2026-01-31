@@ -116,16 +116,19 @@ module.exports = (client) => {
         const uffFiles = listEventFiles(roots.official);
         const devFiles = listEventFiles(roots.dev);
         const allFiles = new Set([...uffFiles, ...devFiles]);
-        const unified = new ascii().setHeading("File", "Ufficiale", "Dev");
+        const unified = new ascii().setHeading("Folder", "File", "Ufficiale", "Dev");
         const isOfficial = roots.isOfficial;
 
         for (const rel of Array.from(allFiles).sort()) {
+            const folder = path.dirname(rel).replace(/\\/g, '/');
+            const file = path.basename(rel);
+            const folderLabel = folder === "." ? "root" : folder;
             const currentStatus = statusMap.get(rel) || (isOfficial ? (uffFiles.has(rel) ? "Present" : "-") : (devFiles.has(rel) ? "Present" : "-"));
             const otherStatus = isOfficial ? (devFiles.has(rel) ? "Present" : "-") : (uffFiles.has(rel) ? "Present" : "-");
             if (isOfficial) {
-                unified.addRow(rel, currentStatus, otherStatus);
+                unified.addRow(folderLabel, file, currentStatus, otherStatus);
             } else {
-                unified.addRow(rel, otherStatus, currentStatus);
+                unified.addRow(folderLabel, file, otherStatus, currentStatus);
             }
         }
 

@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const cron = require("node-cron");

@@ -1,6 +1,6 @@
 const { ClusterManager } = require('discord-hybrid-sharding');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 const config = require('./config.json');
 const logger = require('./Utils/Moderation/logger');
 const manager = new ClusterManager(

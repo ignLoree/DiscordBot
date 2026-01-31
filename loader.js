@@ -16,7 +16,7 @@ const bots = [
         label: "Dev",
         start: "./Vinili & Caffè Dev Bot/shard.js",
         restartFlag: "./restart_dev",
-        startupDelayMs: 10000
+        startupDelayMs: 15000
     }
 ];
 
