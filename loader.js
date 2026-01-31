@@ -34,7 +34,8 @@ function runfile(bot) {
         if (fs.existsSync(path.join(repoRoot, ".git"))) {
             try {
                 console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
-                child_process.spawnSync("git", ["pull", "--ff-only"], { cwd: repoRoot, stdio: "inherit" });
+                const branch = process.env.GIT_BRANCH || "main";
+                child_process.spawnSync("git", ["pull", "origin", branch, "--ff-only"], { cwd: repoRoot, stdio: "inherit" });
                 child_process.spawnSync("git", ["submodule", "update", "--init", "--recursive"], { cwd: repoRoot, stdio: "inherit" });
             } catch (err) {
                 console.log(`[Loader] Git pull failed: ${err?.message || err}`);
