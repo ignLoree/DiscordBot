@@ -35,7 +35,7 @@ module.exports = {
   skipPrefix: false,
   name: "server",
   aliases: ["serverstats", "stats"],
-  prefixOverride: "?",
+  prefixOverride: "s?",
 
   async execute(message) {
     if (!message.guild) {
