@@ -65,6 +65,72 @@ const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOK
 if (envToken) client.config.token = envToken;
 if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
 global.botClient = client;
+client.reloadScope = async (scope) => {
+    const baseDir = process.cwd();
+    const clearCacheByDir = (dirName) => {
+        const abs = path.join(baseDir, dirName);
+        if (!fs.existsSync(abs)) return;
+        for (const key of Object.keys(require.cache)) {
+            if (key.startsWith(abs)) {
+                delete require.cache[key];
+            }
+        }
+    };
+    const reloadCommands = async () => {
+        clearCacheByDir('Commands');
+        const commandFolders = fs.readdirSync(path.join(baseDir, 'Commands'));
+        await client.handleCommands(commandFolders, './Commands');
+    };
+    const reloadPrefix = async () => {
+        clearCacheByDir('Prefix');
+        const folders = fs.readdirSync(path.join(baseDir, 'Prefix'));
+        await client.prefixCommands(folders, './Prefix');
+    };
+    const reloadEvents = () => {
+        clearCacheByDir('Events');
+        client.handleEvents('./Events');
+    };
+    const reloadTriggers = () => {
+        clearCacheByDir('Triggers');
+        const triggerFiles = fs.readdirSync(path.join(baseDir, 'Triggers')).filter((f) => f.endsWith('.js'));
+        client.handleTriggers(triggerFiles, './Triggers');
+    };
+    if (scope === 'commands') await reloadCommands();
+    else if (scope === 'prefix') await reloadPrefix();
+    else if (scope === 'events') reloadEvents();
+    else if (scope === 'triggers') reloadTriggers();
+    else if (scope === 'services') clearCacheByDir('Services');
+    else if (scope === 'utils') clearCacheByDir('Utils');
+    else if (scope === 'schemas') clearCacheByDir('Schemas');
+    else if (scope === 'handlers') {
+        await reloadCommands();
+        await reloadPrefix();
+        reloadEvents();
+        reloadTriggers();
+    } else if (scope === 'all') {
+        clearCacheByDir('Services');
+        clearCacheByDir('Utils');
+        clearCacheByDir('Schemas');
+        await reloadCommands();
+        await reloadPrefix();
+        reloadEvents();
+        reloadTriggers();
+    }
+};
+
+setInterval(async () => {
+    const flagPath = path.resolve(process.cwd(), '..', 'reload_official.json');
+    if (!fs.existsSync(flagPath)) return;
+    try {
+        const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
+        fs.unlinkSync(flagPath);
+        const scope = payload?.scope || 'all';
+        await client.reloadScope(scope);
+        client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
+    } catch (err) {
+        global.logger.error('[RELOAD] Failed to process reload flag:', err);
+    }
+}, 5000);
 client.on("clientReady", async (client) => {
     try {
         client.user.setStatus(client.config2.status);
