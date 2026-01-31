@@ -1,6 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 const ascii = require('ascii-table');
+
+function getBotRoots() {
+    const cwd = process.cwd();
+    const base = path.dirname(cwd);
+    const isOfficial = cwd.toLowerCase().includes('ufficiale');
+    const official = isOfficial ? cwd : path.join(base, 'Vinili & Caffè Bot Ufficiale');
+    const dev = isOfficial ? path.join(base, 'Vinili & Caffè Dev Bot') : cwd;
+    return { official, dev, isOfficial };
+}
+
 function listJsFiles(dir) {
     if (!fs.existsSync(dir)) return [];
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -15,29 +25,43 @@ function listJsFiles(dir) {
     }
     return files;
 }
-function logFileTable(label, baseDir, statusLabel) {
-    const absBase = path.resolve(baseDir);
-    if (!fs.existsSync(absBase)) {
-        global.logger.warn(`[${label}] Directory not found: ${baseDir}`);
-        return;
-    }
-    const files = listJsFiles(absBase);
-    const table = new ascii().setHeading('File Name', 'Status');
-    for (const file of files) {
-        const rel = path.relative(absBase, file).replace(/\\/g, '/');
-        table.addRow(rel, statusLabel);
-    }
-    const verb = 'Loaded';
-    global.logger.info(table.toString());
-    global.logger.info(`[${label}] ${verb} ${files.length} files.`);
+
+function listCategoryFiles(root, categoryDir) {
+    const absBase = path.resolve(root, categoryDir);
+    if (!fs.existsSync(absBase)) return new Set();
+    const files = listJsFiles(absBase).map((file) => {
+        return path.relative(absBase, file).replace(/\\/g, '/');
+    });
+    return new Set(files);
 }
+
 module.exports = (client) => {
     client.logBootTables = () => {
-        const isPrimary = process.cwd().toLowerCase().includes("ufficiale");
+        const isPrimary = process.cwd().toLowerCase().includes('ufficiale');
         if (!isPrimary) return;
-        logFileTable('HANDLERS', './Handlers', 'Loaded');
-        logFileTable('SERVICES', './Services', 'Loaded');
-        logFileTable('UTILS', './Utils', 'Loaded');
-        logFileTable('SCHEMAS', './Schemas', 'Loaded');
+        const roots = getBotRoots();
+        const categories = [
+            { label: 'HANDLERS', dir: 'Handlers' },
+            { label: 'SERVICES', dir: 'Services' },
+            { label: 'UTILS', dir: 'Utils' },
+            { label: 'SCHEMAS', dir: 'Schemas' }
+        ];
+
+        const table = new ascii().setHeading('Folder', 'File', 'Ufficiale', 'Dev');
+        for (const category of categories) {
+            const uffFiles = listCategoryFiles(roots.official, category.dir);
+            const devFiles = listCategoryFiles(roots.dev, category.dir);
+            const allFiles = new Set([...uffFiles, ...devFiles]);
+            for (const rel of Array.from(allFiles).sort()) {
+                const folder = path.dirname(rel).replace(/\\/g, '/');
+                const file = path.basename(rel);
+                const folderLabel = folder === '.' ? category.label : `${category.label}/${folder}`;
+                const uffStatus = uffFiles.has(rel) ? 'Loaded' : '-';
+                const devStatus = devFiles.has(rel) ? 'Loaded' : '-';
+                table.addRow(folderLabel, file, uffStatus, devStatus);
+            }
+        }
+
+        global.logger.info(table.toString());
     };
 };
