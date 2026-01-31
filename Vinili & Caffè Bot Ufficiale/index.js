@@ -6,7 +6,7 @@ const cron = require("node-cron");
 const Logs = require('discord-logs');
 const { ClusterClient } = require('discord-hybrid-sharding');
 const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js"));
-const triggerFiles = fs.readdirSync("./Triggers")
+const triggerFiles = fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
 const pcommandFolders = fs.readdirSync('./Prefix');
 const commandFolders = fs.readdirSync("./Commands");
 const { getActiveSeason } = require('./Services/Pass/seasonService.js');
