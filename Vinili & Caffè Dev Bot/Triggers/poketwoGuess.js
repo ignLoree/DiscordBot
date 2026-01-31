@@ -367,7 +367,8 @@ async function buildNameCard(name, altNameObj) {
     const altTotalWidth = altTextWidth + flagSize + flagGap;
 
     const maxTextWidth = Math.max(textWidth, altTotalWidth);
-    const width = Math.ceil(paddingLeft + maxTextWidth + (sprite ? gap + sw : 0) + paddingRight);
+    const contentWidth = maxTextWidth + (sprite ? gap + sw : 0);
+    const width = Math.ceil(paddingLeft + contentWidth + paddingRight);
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -379,14 +380,15 @@ async function buildNameCard(name, altNameObj) {
     ctx.fillStyle = '#111111';
     ctx.textBaseline = 'top';
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
-    const textY = 14;
-    ctx.fillText(label, paddingLeft, textY);
-    ctx.fillText(label, paddingLeft + 0.5, textY);
+    const contentStartX = Math.round((width - contentWidth) / 2);
+    const textY = altLabel ? 14 : Math.round((height - fontSize) / 2);
+    ctx.fillText(label, contentStartX, textY);
+    ctx.fillText(label, contentStartX + 0.5, textY);
 
     if (altLabel) {
         ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
-        const altY = textY + fontSize - 2;
-        const altX = paddingLeft + Math.max(0, (textWidth - altTotalWidth) / 2);
+        const altY = textY + fontSize + 2;
+        const altX = contentStartX + Math.max(0, (textWidth - altTotalWidth) / 2);
         if (flagImg) {
             ctx.drawImage(flagImg, altX, altY - 1, flagSize, flagSize);
             ctx.fillText(altLabel, altX + flagSize + flagGap, altY);
@@ -397,7 +399,7 @@ async function buildNameCard(name, altNameObj) {
 
     // Sprite next to text
     if (sprite) {
-        const sx = paddingLeft + maxTextWidth + gap;
+        const sx = contentStartX + maxTextWidth + gap;
         const sy = height / 2 - sh / 2;
         ctx.drawImage(sprite, sx, sy, sw, sh);
     }
