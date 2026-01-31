@@ -7,7 +7,7 @@ const path = require('path');
 const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
-const cacheKeyVersion = 'v7';
+const cacheKeyVersion = 'v8';
 const cacheTtlMs = 1000 * 60 * 10; // 10 min
 const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
 const lockTtlMs = 1000 * 60 * 10;
@@ -275,18 +275,22 @@ function pickRandomAltName(names, baseName) {
 }
 
 function getLangFlag(code) {
+    const normalized = String(code || '').toLowerCase();
     const map = {
-        ja: '🇯🇵',
-        it: '🇮🇹',
-        en: '🇬🇧',
-        de: '🇩🇪',
-        fr: '🇫🇷',
-        es: '🇪🇸',
-        ko: '🇰🇷',
-        zh: '🇨🇳',
-        ru: '🇷🇺'
+        'ja': '🇯🇵',
+        'ja-hrkt': '🇯🇵',
+        'it': '🇮🇹',
+        'en': '🇬🇧',
+        'de': '🇩🇪',
+        'fr': '🇫🇷',
+        'es': '🇪🇸',
+        'ko': '🇰🇷',
+        'zh': '🇨🇳',
+        'zh-hans': '🇨🇳',
+        'zh-hant': '🇨🇳',
+        'ru': '🇷🇺'
     };
-    return map[code] || '';
+    return map[normalized] || '';
 }
 
 async function buildNameCard(name, altNameObj) {
@@ -328,7 +332,7 @@ async function buildNameCard(name, altNameObj) {
     let altTextWidth = 0;
     const altFontSize = 14;
     if (altLabel) {
-        tmpCtx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        tmpCtx.font = `700 ${altFontSize}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
         const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
         altTextWidth = tmpCtx.measureText(altFull).width;
     }
@@ -350,7 +354,7 @@ async function buildNameCard(name, altNameObj) {
     ctx.fillText(label, paddingLeft, textY);
     ctx.fillText(label, paddingLeft + 0.5, textY);
     if (altLabel) {
-        ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        ctx.font = `700 ${altFontSize}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
         const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
         const altX = paddingLeft + (maxTextWidth - altTextWidth) / 2;
         ctx.fillText(altFull, altX, height - altFontSize - 8);
