@@ -1,6 +1,7 @@
-﻿const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
+const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const cron = require("node-cron");
@@ -120,7 +121,7 @@ client.reloadScope = async (scope) => {
 };
 
 setInterval(async () => {
-    const flagPath = path.resolve(process.cwd(), '..', 'reload_official.json');
+    const flagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
     if (!fs.existsSync(flagPath)) return;
     try {
         const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
@@ -164,7 +165,7 @@ client.on("clientReady", async (client) => {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
                 const channel = await client.channels.fetch(data.channelID);
-                await channel.send("<:vegacheckmark:1443666279058772028> Il bot Ã¨ stato riavviato con successo!");
+                await channel.send("<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
                 global.logger.error("Errore durante il post-restart:", err);
@@ -472,9 +473,3 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
-
-
-
-
-
-

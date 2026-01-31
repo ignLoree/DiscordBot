@@ -22,6 +22,17 @@ module.exports = {
   filterMessage: "Il tuo messaggio contiene una parola **blacklistata**!",
   botServerInvite: "https://discord.gg/viniliecaffe",
 
+  poketwo: {
+    hfToken: process.env.HF_TOKEN || "",
+    botId: "716390085896962058",
+    model: "skshmjn/Pokemon-classifier-gen9-1025",
+    endpoint: "https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025",
+    fallbackEndpoints: ["https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025"],
+    dedicatedEndpointUrl: "https://jnwx6if5r8srk4zw.eu-west-1.aws.endpoints.huggingface.cloud",
+    provider: "hf-inference",
+    spaceIds: []
+  },
+
   debugSpotifyFeatures: true,
   gamblingCooldownMs: 4000,
 
