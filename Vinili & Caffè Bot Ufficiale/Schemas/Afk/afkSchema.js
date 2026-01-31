@@ -15,4 +15,4 @@ const afkSchema = new mongoose.Schema({
     },
     originalName: String,
 });
-module.exports = mongoose.model('AFK', afkSchema);
+module.exports = mongoose.models.AFK || mongoose.model('AFK', afkSchema);
