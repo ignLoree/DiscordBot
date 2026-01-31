@@ -60,6 +60,10 @@ try {
 client.logs = require('./Utils/Moderation/logs');
 client.config2 = require('./config.js');
 client.config = require('./config.json')
+const isDev = __dirname.toLowerCase().includes('dev bot');
+const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
+if (envToken) client.config.token = envToken;
+if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
 global.botClient = client;
 client.on("clientReady", async (client) => {
     try {

@@ -1,8 +1,8 @@
 const axios = require("axios");
 const crypto = require("crypto");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
-const LASTFM_API_KEY = process.env.LASTFM_API_KEY || "644ee34af30ba6f1dbfba9b811fddb3c";
-const LASTFM_API_SECRET = process.env.LASTFM_API_SECRET || "e4f37b35e4c376db31e3cdb5293d3027";
+const LASTFM_API_KEY = process.env.LASTFM_API_KEY || "";
+const LASTFM_API_SECRET = process.env.LASTFM_API_SECRET || "";
 const LASTFM_RATE_LIMIT_PER_SEC = Number(process.env.LASTFM_RATE_LIMIT_PER_SEC || 4);
 const LASTFM_CACHE_TTL_MS = Number(process.env.LASTFM_CACHE_TTL_MS || 30000);
 const LASTFM_USER_AGENT = process.env.LASTFM_USER_AGENT || "ViniliECaffeBot/1.0 (Last.fm API)";

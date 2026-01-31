@@ -7,8 +7,8 @@ module.exports = {
   eventListeners: 50,
   dev: "lXo",
   devBy: "| Developed by lXo",
-  spotifyClientId: "62be99af56be4ea4885b647661fa02da",
-  spotifyClientSecret: "45841beeabbc472a88cb6171e5235cfe",
+  spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "",
+  spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
   developers: "295500038401163264",
   partnerManager: "1442568905582317740",
   slashCommandLoggingChannel: "1442577274783142039",
@@ -23,7 +23,7 @@ module.exports = {
   botServerInvite: "https://discord.gg/viniliecaffe",
 
   poketwo: {
-    hfToken: "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",
+    hfToken: process.env.HF_TOKEN || "",
     botId: "716390085896962058",
     model: "skshmjn/Pokemon-classifier-gen9-1025",
     endpoint: "https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025",
@@ -124,3 +124,4 @@ module.exports = {
     whoknowsImageCache: 250
   },
 }
+

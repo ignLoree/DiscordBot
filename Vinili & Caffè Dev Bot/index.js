@@ -1,5 +1,7 @@
-﻿const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
+const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
 const fs = require('fs');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const cron = require("node-cron");
@@ -60,6 +62,10 @@ try {
 client.logs = require('./Utils/Moderation/logs');
 client.config2 = require('./config.js');
 client.config = require('./config.json')
+const isDev = __dirname.toLowerCase().includes('dev bot');
+const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
+if (envToken) client.config.token = envToken;
+if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
 global.botClient = client;
 client.on("clientReady", async (client) => {
     try {
@@ -68,7 +74,7 @@ client.on("clientReady", async (client) => {
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "☕📀 discord.gg/viniliecaffe"
+            state: "??? discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
@@ -93,7 +99,7 @@ client.on("clientReady", async (client) => {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
                 const channel = await client.channels.fetch(data.channelID);
-                await channel.send("<:vegacheckmark:1443666279058772028> Il bot Ã¨ stato riavviato con successo!");
+                await channel.send("<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
                 global.logger.error("Errore durante il post-restart:", err);
@@ -371,7 +377,7 @@ async function generateStaffListContent(guild) {
         const member_count = filteredMembers.size;
         const { emoji, number } = ROLE_EMOJIS[roleId];
         const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}Ã¨**<@&${roleId}>?\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
+        staffListContent += `${emoji}・**<@&${roleId}>?\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
     }
     return staffListContent;
 }
@@ -401,9 +407,3 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
-
-
-
-
-
-

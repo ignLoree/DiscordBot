@@ -1,6 +1,6 @@
 {
-    "token": "MTQ2NjQ5NTUyMjQ3NDAzNzQ2Mw.GhxvMn.aYu55pRAVRrhwnuTO2BzuiyEQhVm1FJ6vGMLyw",
-    "mongoURL": "mongodb+srv://ignLoree:MhP006UB1AgnIeOz@purplemoon.zwcrbh1.mongodb.net/?retryWrites=true&w=majority",
+    "token": "",
+    "mongoURL": "",
     "boostChannelId": "1442569123426074736", 
     "clientid": "1466495522474037463",
     "guildid": "1462458562507964584",
@@ -17,3 +17,4 @@
         "set": ["autojoin"]
     }
 }
+

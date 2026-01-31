@@ -7,11 +7,13 @@ const path = require('path');
 const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
-const cacheKeyVersion = 'v5';
+const cacheKeyVersion = 'v6';
 const cacheTtlMs = 1000 * 60 * 10; // 10 min
 const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
 const lockTtlMs = 1000 * 60 * 10;
 const spriteCache = new Map();
+const altNameCache = new Map();
+const altNameTtlMs = 1000 * 60 * 60 * 12; // 12h
 let fontRegistered = false;
 
 function isPoketwoSpawn(message, botId) {
@@ -218,13 +220,42 @@ async function fetchSpriteUrlByName(name) {
     }
 }
 
-async function buildNameCard(name) {
+async function fetchAltNamesByName(name) {
+    const key = name.toLowerCase();
+    const cached = altNameCache.get(key);
+    const now = Date.now();
+    if (cached && now - cached.at < altNameTtlMs) return cached.names;
+    try {
+        const res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${key}`, { timeout: 8000 });
+        const speciesUrl = res?.data?.species?.url;
+        if (!speciesUrl) return [];
+        const sRes = await axios.get(speciesUrl, { timeout: 8000 });
+        const names = Array.isArray(sRes?.data?.names)
+            ? sRes.data.names.map((n) => n?.name).filter(Boolean)
+            : [];
+        altNameCache.set(key, { at: now, names });
+        return names;
+    } catch {
+        return [];
+    }
+}
+
+function pickRandomAltName(names, baseName) {
+    if (!Array.isArray(names) || !names.length) return null;
+    const base = String(baseName || '').toLowerCase();
+    const filtered = names.filter((n) => String(n).toLowerCase() !== base);
+    if (!filtered.length) return null;
+    return filtered[Math.floor(Math.random() * filtered.length)];
+}
+
+async function buildNameCard(name, altName) {
     ensureFont();
     const height = 94;
     const paddingLeft = 18;
     const paddingRight = 12;
     const gap = 10;
     const label = name.toUpperCase();
+    const altLabel = altName ? String(altName).trim() : null;
 
     // Load sprite first to compute size
     let sprite = null;
@@ -251,8 +282,15 @@ async function buildNameCard(name) {
     tmpCtx.textBaseline = 'top';
     tmpCtx.font = `900 ${fontSize}px Mojangles, sans-serif`;
     const textWidth = tmpCtx.measureText(label).width;
+    let altTextWidth = 0;
+    const altFontSize = 16;
+    if (altLabel) {
+        tmpCtx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        altTextWidth = tmpCtx.measureText(altLabel).width;
+    }
 
-    const width = Math.ceil(paddingLeft + textWidth + (sprite ? gap + sw : 0) + paddingRight);
+    const maxTextWidth = Math.max(textWidth, altTextWidth);
+    const width = Math.ceil(paddingLeft + maxTextWidth + (sprite ? gap + sw : 0) + paddingRight);
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -267,10 +305,14 @@ async function buildNameCard(name) {
     const textY = Math.round((height - fontSize) / 2) - 2;
     ctx.fillText(label, paddingLeft, textY);
     ctx.fillText(label, paddingLeft + 0.5, textY);
+    if (altLabel) {
+        ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        ctx.fillText(altLabel, paddingLeft, height - altFontSize - 8);
+    }
 
     // Sprite next to text
     if (sprite) {
-        const sx = paddingLeft + textWidth + gap;
+        const sx = paddingLeft + maxTextWidth + gap;
         const sy = height / 2 - sh / 2;
         ctx.drawImage(sprite, sx, sy, sw, sh);
     }
@@ -347,7 +389,9 @@ module.exports = {
                 if (!best) return null;
 
                 const displayName = formatName(best.label);
-                const cardBuffer = await buildNameCard(displayName);
+                const altNames = await fetchAltNamesByName(displayName);
+                const altName = pickRandomAltName(altNames, displayName);
+                const cardBuffer = await buildNameCard(displayName, altName);
                 const cardAttachment = new AttachmentBuilder(cardBuffer, { name: 'poke-name.png' });
 
                 const embed = new EmbedBuilder()

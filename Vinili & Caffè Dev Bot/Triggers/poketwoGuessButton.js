@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require('discord.js');
+﻿const { Events, EmbedBuilder } = require('discord.js');
 const axios = require('axios');
 
 const SPAWN_RATE_CSV_URL = 'https://gist.githubusercontent.com/WitherredAway/1bc525b05f4cd52555a2a18c331e0cf9/raw/pokemon_chances.csv';
@@ -10,8 +10,8 @@ function normalizePokeName(name) {
     return String(name || '')
         .toLowerCase()
         .trim()
-        .replace(/♀/g, '-f')
-        .replace(/♂/g, '-m')
+        .replace(/â™€/g, '-f')
+        .replace(/â™‚/g, '-m')
         .replace(/[^a-z0-9.\- ]/g, '')
         .replace(/\s+/g, '-')
         .replace(/\.+/g, '')
@@ -86,7 +86,9 @@ function formatStats(stats) {
         ['special-defense', 'Sp. Def'],
         ['speed', 'Speed']
     ];
-    return order.map(([key, label]) => `${label}: ${map.get(key) ?? '—'}`).join('\n');
+    return order
+        .map(([key, label]) => `**${label}:** ${map.get(key) ?? '—'}`)
+        .join('\n');
 }
 
 function formatSpawnrate(raw) {
@@ -213,7 +215,7 @@ module.exports = {
                     { name: 'Spawnrate', value: spawnrate, inline: true },
                     { name: 'Base Stats', value: stats, inline: true },
                     { name: 'Names', value: names, inline: true },
-                    { name: 'Appearance', value: `Height: ${height}\nWeight: ${weight}`, inline: true }
+                    { name: 'Appearance', value: `**Height:** ${height}\n**Weight:** ${weight}`, inline: true }
                 );
             }
         } catch {
@@ -223,3 +225,4 @@ module.exports = {
         await interaction.editReply({ embeds: [infoEmbed] });
     }
 };
+
