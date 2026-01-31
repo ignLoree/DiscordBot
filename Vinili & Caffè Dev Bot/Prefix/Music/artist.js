@@ -2,6 +2,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("
 const axios = require("axios");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, buildArtistUrl, lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
+const { FMBOT_COLORS } = require("../../Utils/Music/fmbotStyle");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
 const { resolveArtistName } = require("../../Utils/Music/lastfmResolvers");
@@ -286,20 +287,22 @@ module.exports = {
     const user = await getLastFmUserForMessageOrUsername(message, target, lastfm);
     if (!user) return;
 
+    let resolvedArtistName = null;
     try {
-      const artistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
-      if (!artistName) {
+      resolvedArtistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
+      if (!resolvedArtistName) {
+        const queryLabel = artistQuery || "that artist";
         return message.channel.send({
           embeds: [
             new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non riesco a trovare un artista valido.")
+              .setColor(FMBOT_COLORS.lastfmRed)
+              .setDescription(`Last.fm did not return a result for ${queryLabel}.`)
           ]
         });
       }
 
       const data = await lastFmRequest("artist.getinfo", {
-        artist: artistName,
+        artist: resolvedArtistName,
         username: user.lastFmUsername,
         autocorrect: noredirect ? 0 : 1
       });
@@ -307,8 +310,8 @@ module.exports = {
       if (!artist) throw new Error("Artist not found");
 
       const [details, mbLinks] = await Promise.all([
-        getMusicBrainzArtistDetails(artist.name || artistName),
-        getMusicBrainzArtistLinks(artist.name || artistName)
+        getMusicBrainzArtistDetails(artist.name || resolvedArtistName),
+        getMusicBrainzArtistLinks(artist.name || resolvedArtistName)
       ]);
       const summaryLine = getSummaryLine(artist?.bio?.summary);
       const summaryFull = cleanSummary(artist?.bio?.summary);
@@ -404,22 +407,22 @@ module.exports = {
         || null;
       let imageSource = image ? "Last.fm" : null;
 
-      const spotifyMeta = await getSpotifyArtistMeta(artist.name || artistName);
+      const spotifyMeta = await getSpotifyArtistMeta(artist.name || resolvedArtistName);
       if (!image && spotifyMeta?.image) {
         image = spotifyMeta.image;
         imageSource = "Spotify";
       }
       if (!image) {
-        image = await getSpotifyArtistImageSmart(artist.name || artistName);
+        image = await getSpotifyArtistImageSmart(artist.name || resolvedArtistName);
         if (image) imageSource = "Spotify";
       }
 
       const spotifyUrl = mbLinks?.spotify
         || spotifyMeta?.url
-        || `https://open.spotify.com/search/${encodeURIComponent(artist.name || artistName)}`;
-      const appleUrl = await getAppleMusicArtistLink(artist.name || artistName)
+        || `https://open.spotify.com/search/${encodeURIComponent(artist.name || resolvedArtistName)}`;
+      const appleUrl = await getAppleMusicArtistLink(artist.name || resolvedArtistName)
         || mbLinks?.appleMusic
-        || `https://music.apple.com/search?term=${encodeURIComponent(artist.name || artistName)}`;
+        || `https://music.apple.com/search?term=${encodeURIComponent(artist.name || resolvedArtistName)}`;
       const instagramUrl = normalizeInstagramProfileUrl(mbLinks?.instagram)
         || normalizeInstagramProfileUrl(getInstagramLink(artist));
       const twitterUrl = normalizeTwitterProfileUrl(mbLinks?.twitter)
@@ -538,6 +541,16 @@ module.exports = {
 
       return;
     } catch (error) {
+      if (String(error?.message || error).includes("Artist not found")) {
+        const queryLabel = artistQuery || resolvedArtistName || "that artist";
+        return message.channel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setColor(FMBOT_COLORS.lastfmRed)
+              .setDescription(`Last.fm did not return a result for ${queryLabel}.`)
+          ]
+        });
+      }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
       return message.channel.send({

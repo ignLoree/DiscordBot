@@ -3,7 +3,7 @@ const { DEFAULT_EMBED_COLOR, buildTrackUrl, formatNumber, lastFmRequest } = requ
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm, splitArtistTitle } = require("../../Utils/Music/lastfmPrefix");
 const { resolveTrackArtist } = require("../../Utils/Music/lastfmResolvers");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendTrackNotFound } = require("../../Utils/Music/lastfmError");
 const { getSpotifyTrackDetails, getDeezerTrackMeta, getItunesTrackMeta } = require("../../Utils/Music/spotify");
 
 function formatDurationMs(durationMs) {
@@ -52,13 +52,7 @@ module.exports = {
     try {
       const resolved = await resolveTrackArtist(user.lastFmUsername, parsed.title, parsed.artist);
       if (!resolved) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non riesco a trovare una traccia valida.")
-          ]
-        });
+        return sendTrackNotFound(message, query);
       }
       const data = await lastFmRequest("track.getinfo", {
         artist: resolved.artist,
@@ -208,6 +202,9 @@ module.exports = {
       });
       return;
     } catch (error) {
+      if (String(error?.message || error).includes("Track not found")) {
+        return sendTrackNotFound(message, query);
+      }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
       return message.channel.send({

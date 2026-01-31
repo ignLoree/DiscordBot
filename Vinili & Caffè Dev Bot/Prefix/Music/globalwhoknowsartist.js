@@ -6,7 +6,7 @@ const { getMusicBrainzArtistImage } = require("../../Utils/Music/musicbrainz");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
 const { extractPagination } = require("../../Utils/Music/lastfmPrefix");
 const { resolveArtistName } = require("../../Utils/Music/lastfmResolvers");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendArtistNotFound } = require("../../Utils/Music/lastfmError");
 let renderWhoKnows = null;
 try {
   renderWhoKnows = require("../../Utils/Render/whoknowsCanvas");
@@ -83,13 +83,7 @@ module.exports = {
     try {
       const artistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
       if (!artistName) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("Non riesco a trovare un artista valido.")
-          ]
-        });
+        return sendArtistNotFound(message, artistQuery);
       }
       const allUsers = await LastFmUser.find({ lastFmUsername: { $exists: true, $ne: "" } });
       const checks = allUsers.map(async doc => {

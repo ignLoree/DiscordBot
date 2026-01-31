@@ -13,6 +13,8 @@ const VERIFY_ROLE_IDS = [
 module.exports = {
   skipPrefix: false,
   name: 'verify',
+  prefixOverride: "w!",
+  
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {

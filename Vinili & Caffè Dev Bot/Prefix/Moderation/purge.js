@@ -5,6 +5,8 @@ const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderat
 module.exports = {
   skipPrefix: false,
   name: 'purge',
+  prefixOverride: "w!",
+  
   async execute(message, args, client) {
     await message.channel.sendTyping();
     const { user } = await resolveTarget(message, args, 1);

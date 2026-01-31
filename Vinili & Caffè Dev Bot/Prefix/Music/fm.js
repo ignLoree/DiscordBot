@@ -115,6 +115,11 @@ async function getTrackPlaycount(username, track) {
     if (!response?.track) return '0';
     return response.track.userplaycount ?? '0';
   } catch (error) {
+    const code = error?.lastfmCode || error?.response?.data?.error;
+    const message = error?.lastfmMessage || error?.response?.data?.message || error?.message;
+    if (code === 6 || String(message || '').toLowerCase().includes('track not found')) {
+      return '0';
+    }
     global.logger.error('Errore track.getInfo:', error?.response?.data || error);
     return '0';
   }
@@ -123,4 +128,3 @@ async function getTrackPlaycount(username, track) {
 function getTrackUrl(track) {
   return `https://www.last.fm/music/${encodeURIComponent(track.artist['#text'])}/_/${encodeURIComponent(track.name)}`;
 }
-

@@ -3,7 +3,7 @@ const { DEFAULT_EMBED_COLOR, buildAlbumUrl, formatNumber, lastFmRequest } = requ
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm, splitArtistTitle } = require("../../Utils/Music/lastfmPrefix");
 const { resolveAlbumArtist } = require("../../Utils/Music/lastfmResolvers");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendAlbumNotFound } = require("../../Utils/Music/lastfmError");
 const { getSpotifyAlbumImageSmart } = require("../../Utils/Music/spotify");
 
 function formatInline(value) {
@@ -62,13 +62,7 @@ module.exports = {
     try {
       const resolved = await resolveAlbumArtist(user.lastFmUsername, parsed.title, parsed.artist);
       if (!resolved) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non riesco a trovare un album valido.")
-          ]
-        });
+        return sendAlbumNotFound(message, query);
       }
 
       const data = await lastFmRequest("album.getinfo", {
@@ -218,6 +212,9 @@ module.exports = {
         expiresAt: Date.now() + 10 * 60 * 1000
       });
     } catch (error) {
+      if (String(error?.message || error).includes("Album not found")) {
+        return sendAlbumNotFound(message, query);
+      }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
       return message.channel.send({

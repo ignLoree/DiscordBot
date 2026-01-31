@@ -2,7 +2,7 @@ const { lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
 const { resolveArtistName } = require("../../Utils/Music/lastfmResolvers");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendArtistNotFound } = require("../../Utils/Music/lastfmError");
 
 function normalizeName(value) {
   return String(value || "")
@@ -43,9 +43,7 @@ module.exports = {
     try {
       const artistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
       if (!artistName) {
-        return message.channel.send({
-          content: "<:vegax:1443934876440068179> Non riesco a trovare un artista valido."
-        });
+        return sendArtistNotFound(message, artistQuery);
       }
       const data = await lastFmRequest("artist.getinfo", {
         artist: artistName,

@@ -3,7 +3,7 @@ const { lastFmRequest, formatNumber, DEFAULT_EMBED_COLOR } = require("../../Util
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { resolveAlbumArtist } = require("../../Utils/Music/lastfmResolvers");
 const { extractTargetUserWithLastfm, splitArtistTitle } = require("../../Utils/Music/lastfmPrefix");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendAlbumNotFound } = require("../../Utils/Music/lastfmError");
 
 function normalizeName(value) {
   return String(value || "")
@@ -54,9 +54,7 @@ module.exports = {
     try {
       const resolved = await resolveAlbumArtist(user.lastFmUsername, parsed.title, parsed.artist);
       if (!resolved) {
-        return message.channel.send({
-          content: "<:vegax:1443934876440068179> Non riesco a trovare un album valido."
-        });
+        return sendAlbumNotFound(message, query);
       }
       const data = await lastFmRequest("album.getinfo", {
         artist: resolved.artist,
@@ -101,6 +99,9 @@ module.exports = {
       const lineTwo = `-# *${formatNumber(lastWeekPlays, user.localization?.numberFormat)} plays last week — ${formatNumber(lastMonthPlays, user.localization?.numberFormat)} plays last month*`;
       return message.channel.send({ content: `${lineOne}\n${lineTwo}` });
     } catch (error) {
+      if (String(error?.message || error).includes("Album not found")) {
+        return sendAlbumNotFound(message, query);
+      }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
       return message.channel.send({

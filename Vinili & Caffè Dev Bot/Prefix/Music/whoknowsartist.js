@@ -8,7 +8,7 @@ const { resolveArtistName } = require("../../Utils/Music/lastfmResolvers");
 const { updateCrown } = require("../../Utils/Music/crowns");
 const { getSpotifyArtistImageSmart } = require("../../Utils/Music/spotify");
 const { getMusicBrainzArtistImage } = require("../../Utils/Music/musicbrainz");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendArtistNotFound } = require("../../Utils/Music/lastfmError");
 function pickLastFmImage(images) {
   if (!Array.isArray(images)) return null;
   return images.find(img => img.size === "extralarge")?.["#text"]
@@ -223,13 +223,7 @@ module.exports = {
         artistName = await resolveArtistName(requester.lastFmUsername, artistQuery || null);
       }
       if (!artistName) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("Non riesco a trovare un artista valido.")
-          ]
-        });
+        return sendArtistNotFound(message, artistQuery);
       }
       if (message.guild.members.cache.size < message.guild.memberCount) {
         try {

@@ -4,7 +4,7 @@ const { DEFAULT_EMBED_COLOR, lastFmRequest, buildTrackUrl, buildUserUrl } = requ
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
 const { resolveTrackArtist } = require("../../Utils/Music/lastfmResolvers");
 const { splitArtistTitle, extractPagination } = require("../../Utils/Music/lastfmPrefix");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendTrackNotFound } = require("../../Utils/Music/lastfmError");
 const { getSpotifyTrackImageSmart } = require("../../Utils/Music/spotify");
 const { getMusicBrainzTrackImage } = require("../../Utils/Music/musicbrainz");
 function pickLastFmImage(images) {
@@ -125,13 +125,7 @@ module.exports = {
     try {
       const resolved = await resolveTrackArtist(requester.lastFmUsername, parsed.title, parsed.artist);
       if (!resolved) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non riesco a trovare una traccia valida.")
-          ]
-        });
+        return sendTrackNotFound(message, rawQuery);
       }
 
       const allUsers = await LastFmUser.find({ lastFmUsername: { $exists: true, $ne: "" } }).lean();

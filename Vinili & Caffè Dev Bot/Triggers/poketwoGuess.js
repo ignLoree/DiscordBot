@@ -7,11 +7,12 @@ const path = require('path');
 const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
-const cacheKeyVersion = 'v8';
+const cacheKeyVersion = 'v9';
 const cacheTtlMs = 1000 * 60 * 10; // 10 min
 const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
 const lockTtlMs = 1000 * 60 * 10;
 const spriteCache = new Map();
+const flagImageCache = new Map();
 const altNameCache = new Map();
 const altNameTtlMs = 1000 * 60 * 60 * 12; // 12h
 let fontRegistered = false;
@@ -269,7 +270,12 @@ async function fetchAltNamesByName(name) {
 function pickRandomAltName(names, baseName) {
     if (!Array.isArray(names) || !names.length) return null;
     const base = String(baseName || '').toLowerCase();
-    const filtered = names.filter((n) => String(n?.name).toLowerCase() !== base);
+    const allowedLangs = new Set(['it', 'en', 'fr', 'de', 'es']);
+    const filtered = names.filter((n) => {
+        const lang = String(n?.lang || '').toLowerCase();
+        if (!allowedLangs.has(lang)) return false;
+        return String(n?.name).toLowerCase() !== base;
+    });
     if (!filtered.length) return null;
     return filtered[Math.floor(Math.random() * filtered.length)];
 }
@@ -277,20 +283,27 @@ function pickRandomAltName(names, baseName) {
 function getLangFlag(code) {
     const normalized = String(code || '').toLowerCase();
     const map = {
-        'ja': '🇯🇵',
-        'ja-hrkt': '🇯🇵',
-        'it': '🇮🇹',
-        'en': '🇬🇧',
-        'de': '🇩🇪',
-        'fr': '🇫🇷',
-        'es': '🇪🇸',
-        'ko': '🇰🇷',
-        'zh': '🇨🇳',
-        'zh-hans': '🇨🇳',
-        'zh-hant': '🇨🇳',
-        'ru': '🇷🇺'
+        it: '1f1ee-1f1f9',
+        en: '1f1ec-1f1e7',
+        de: '1f1e9-1f1ea',
+        fr: '1f1eb-1f1f7',
+        es: '1f1ea-1f1f8'
     };
-    return map[normalized] || '';
+    return map[normalized] || null;
+}
+
+async function loadFlagImage(flagCode) {
+    if (!flagCode) return null;
+    if (flagImageCache.has(flagCode)) return flagImageCache.get(flagCode);
+    const url = `https://twemoji.maxcdn.com/v/latest/72x72/${flagCode}.png`;
+    try {
+        const img = await loadImage(url);
+        flagImageCache.set(flagCode, img);
+        return img;
+    } catch {
+        flagImageCache.set(flagCode, null);
+        return null;
+    }
 }
 
 async function buildNameCard(name, altNameObj) {
@@ -302,7 +315,8 @@ async function buildNameCard(name, altNameObj) {
     const label = name.toUpperCase();
     const altLabel = altNameObj?.name ? String(altNameObj.name).trim() : null;
     const altLang = altNameObj?.lang || null;
-    const altFlag = altLang ? getLangFlag(altLang) : '';
+    const flagCode = altLang ? getLangFlag(altLang) : null;
+    const flagImg = await loadFlagImage(flagCode);
 
     // Load sprite first to compute size
     let sprite = null;
@@ -312,8 +326,8 @@ async function buildNameCard(name, altNameObj) {
     if (spriteUrl) {
         try {
             sprite = await loadImage(spriteUrl);
-            const maxH = 70;
-            const maxW = 70;
+            const maxH = 80;
+            const maxW = 90;
             const scale = Math.min(maxW / sprite.width, maxH / sprite.height, 1);
             sw = sprite.width * scale;
             sh = sprite.height * scale;
@@ -322,22 +336,24 @@ async function buildNameCard(name, altNameObj) {
         }
     }
 
-    // Fixed bold font size, width adapts to name length
     const fontSize = 30;
+    const altFontSize = 14;
     const tmpCanvas = createCanvas(10, 10);
     const tmpCtx = tmpCanvas.getContext('2d');
     tmpCtx.textBaseline = 'top';
     tmpCtx.font = `900 ${fontSize}px Mojangles, sans-serif`;
     const textWidth = tmpCtx.measureText(label).width;
-    let altTextWidth = 0;
-    const altFontSize = 14;
-    if (altLabel) {
-        tmpCtx.font = `700 ${altFontSize}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
-        const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
-        altTextWidth = tmpCtx.measureText(altFull).width;
-    }
 
-    const maxTextWidth = Math.max(textWidth, altTextWidth);
+    let altTextWidth = 0;
+    if (altLabel) {
+        tmpCtx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        altTextWidth = tmpCtx.measureText(altLabel).width;
+    }
+    const flagSize = flagImg ? altFontSize : 0;
+    const flagGap = flagImg ? 6 : 0;
+    const altTotalWidth = altTextWidth + flagSize + flagGap;
+
+    const maxTextWidth = Math.max(textWidth, altTotalWidth);
     const width = Math.ceil(paddingLeft + maxTextWidth + (sprite ? gap + sw : 0) + paddingRight);
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
@@ -350,14 +366,20 @@ async function buildNameCard(name, altNameObj) {
     ctx.fillStyle = '#111111';
     ctx.textBaseline = 'top';
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
-    const textY = Math.round((height - fontSize) / 2) - 2;
+    const textY = 14;
     ctx.fillText(label, paddingLeft, textY);
     ctx.fillText(label, paddingLeft + 0.5, textY);
+
     if (altLabel) {
-        ctx.font = `700 ${altFontSize}px "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
-        const altFull = altFlag ? `${altFlag} ${altLabel}` : altLabel;
-        const altX = paddingLeft + (maxTextWidth - altTextWidth) / 2;
-        ctx.fillText(altFull, altX, height - altFontSize - 8);
+        ctx.font = `700 ${altFontSize}px Mojangles, sans-serif`;
+        const altY = textY + fontSize - 4;
+        const altX = paddingLeft + Math.max(0, (textWidth - altTotalWidth) / 2);
+        if (flagImg) {
+            ctx.drawImage(flagImg, altX, altY - 1, flagSize, flagSize);
+            ctx.fillText(altLabel, altX + flagSize + flagGap, altY);
+        } else {
+            ctx.fillText(altLabel, altX, altY);
+        }
     }
 
     // Sprite next to text
@@ -485,3 +507,7 @@ module.exports = {
         }
     }
 };
+
+
+
+

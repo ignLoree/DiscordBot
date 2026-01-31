@@ -3,7 +3,7 @@ const { DEFAULT_EMBED_COLOR, lastFmRequest, formatNumber } = require("../../Util
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
 const { resolveArtistName } = require("../../Utils/Music/lastfmResolvers");
-const { handleLastfmError } = require("../../Utils/Music/lastfmError");
+const { handleLastfmError, sendArtistNotFound } = require("../../Utils/Music/lastfmError");
 const { buildArtistTopTracksEmbed, buildArtistTracksComponents } = require("./artistoverview");
 
 module.exports = {
@@ -20,13 +20,7 @@ module.exports = {
     try {
       const artistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
       if (!artistName) {
-        return message.channel.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("Non riesco a trovare un artista valido.")
-          ]
-        });
+        return sendArtistNotFound(message, artistQuery);
       }
       const info = await lastFmRequest("artist.getinfo", {
         artist: artistName,
