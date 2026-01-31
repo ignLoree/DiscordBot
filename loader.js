@@ -30,11 +30,12 @@ function runfile(bot) {
         const file = bot.start.split("/")[bot.start.split("/").length - 1];
 
         // Best-effort git pull to fetch updated files before restarting.
-        if (fs.existsSync(path.join(working_dir, ".git"))) {
+        const repoRoot = fs.existsSync(path.join(baseDir, ".git")) ? baseDir : working_dir;
+        if (fs.existsSync(path.join(repoRoot, ".git"))) {
             try {
-                console.log(`[Loader] Pulling latest changes in ${working_dir}`);
-                child_process.spawnSync("git", ["pull", "--ff-only"], { cwd: working_dir, stdio: "inherit" });
-                child_process.spawnSync("git", ["submodule", "update", "--init", "--recursive"], { cwd: working_dir, stdio: "inherit" });
+                console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
+                child_process.spawnSync("git", ["pull", "--ff-only"], { cwd: repoRoot, stdio: "inherit" });
+                child_process.spawnSync("git", ["submodule", "update", "--init", "--recursive"], { cwd: repoRoot, stdio: "inherit" });
             } catch (err) {
                 console.log(`[Loader] Git pull failed: ${err?.message || err}`);
             }
