@@ -6,17 +6,18 @@ const baseDir = __dirname;
 
 const bots = [
     {
-        key: "official",
-        label: "Ufficiale",
-        start: "./Vinili & Caffè Bot Ufficiale/shard.js",
-        restartFlag: "./restart_official"
-    },
-    {
         key: "dev",
         label: "Dev",
         start: "./Vinili & Caffè Dev Bot/shard.js",
         restartFlag: "./restart_dev",
-        startupDelayMs: 17500
+        startupDelayMs: 0
+    },
+    {
+        key: "official",
+        label: "Ufficiale",
+        start: "./Vinili & Caffè Bot Ufficiale/shard.js",
+        restartFlag: "./restart_official",
+        startupDelayMs: 16500
     }
 ];
 
@@ -121,6 +122,7 @@ setInterval(() => {
         }
     }
 }, 5000);
+
 
 
 
