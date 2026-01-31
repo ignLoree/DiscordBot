@@ -17,10 +17,19 @@ module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        const lockPath = path.join(path.dirname(process.cwd()), '.ready_logged');
+        const botTag = path.basename(process.cwd()).replace(/\s+/g, '_').toLowerCase();
+        const lockPath = path.join(path.dirname(process.cwd()), `.ready_logged_${botTag}`);
         let logOnce = false;
         try {
-            if (!fs.existsSync(lockPath)) {
+            if (fs.existsSync(lockPath)) {
+                const age = Date.now() - fs.statSync(lockPath).mtimeMs;
+                if (age < 30000) {
+                    logOnce = false;
+                } else {
+                    fs.writeFileSync(lockPath, `${new Date().toISOString()} | ${client.user?.id || 'unknown'}\n`, 'utf8');
+                    logOnce = true;
+                }
+            } else {
                 fs.writeFileSync(lockPath, `${new Date().toISOString()} | ${client.user?.id || 'unknown'}\n`, 'utf8');
                 logOnce = true;
             }
