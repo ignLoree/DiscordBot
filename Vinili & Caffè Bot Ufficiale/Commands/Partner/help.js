@@ -1,4 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
     data: new SlashCommandBuilder()

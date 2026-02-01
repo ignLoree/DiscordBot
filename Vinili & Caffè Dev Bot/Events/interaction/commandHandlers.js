@@ -213,7 +213,7 @@ async function handleSlashCommand(interaction, client) {
         }
         const userEmbed = new EmbedBuilder()
             .setColor('#e74c3c')
-            .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
+            .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
                 \`\`\`${errorText}\`\`\``);
         await safeReply({
             embeds: [userEmbed],

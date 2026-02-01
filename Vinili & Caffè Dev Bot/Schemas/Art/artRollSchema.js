@@ -4,7 +4,7 @@ const artRollSchema = new Schema(
   {
     guildId: { type: String, required: true, index: true },
     userId: { type: String, required: true, index: true },
-    day: { type: String, required: true, index: true }, // YYYY-MM-DD
+    day: { type: String, required: true, index: true }, YYYY-MM-DD
     count: { type: Number, default: 0 },
     lastAt: { type: Date, default: null }
   },

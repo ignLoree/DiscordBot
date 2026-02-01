@@ -17,7 +17,6 @@ module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         if (!interaction) return;
-        // Cross-process dedupe to avoid double-handling the same interaction.
         try {
             const lockDir = path.join(path.dirname(process.cwd()), '.interaction_locks');
             const lockKey = interaction.id || `${interaction.guildId || 'dm'}_${Date.now()}`;
@@ -33,7 +32,6 @@ module.exports = {
                 try { fs.unlinkSync(lockPath); } catch {}
             }, 1000 * 60 * 10);
         } catch {
-            // best-effort
         }
         try {
             if (await handlePassNav(interaction)) return;

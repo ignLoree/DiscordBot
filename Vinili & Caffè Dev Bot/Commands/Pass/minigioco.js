@@ -53,7 +53,7 @@ module.exports = {
     if (!channelId) return;
     if (client.passGames.has(channelId)) {
       return interaction.reply({
-        content: `âŒ C'Ã¨ giÃ  un gioco attivo in questo canale.`,
+        content: `âŒ C'è già un gioco attivo in questo canale.`,
         flags: 1 << 6
       });
     }
@@ -82,9 +82,9 @@ module.exports = {
     });
     rows.push(new ActionRowBuilder().addComponents(buttons));
     const content =
-      `ðŸŽ² Minigioco (${game.difficulty}) - ${game.title}\n` +
+      `🎲 Minigioco (${game.difficulty}) - ${game.title}\n` +
       `${game.description}\n` +
-      `ðŸ¤– Prompt: ${game.prompt}\n` +
+      `🤖 Prompt: ${game.prompt}\n` +
       game.options.map((o, i) => `${labels[i]}) ${o}`).join('\n');
     await interaction.reply({ content, components: rows });
     const msg = await interaction.fetchReply();
@@ -99,7 +99,7 @@ module.exports = {
           newRow.components = newRow.components.map(b => ButtonBuilder.from(b).setDisabled(true));
           return newRow;
         });
-        await msg.edit({ content: `${content}\n\nâ° Tempo scaduto.`, components: disabled });
+        await msg.edit({ content: `${content}\n\n⌛ Tempo scaduto.`, components: disabled });
       } catch {}
     }, Math.max(10, timeLimit) * 1000);
     client.passGames.set(channelId, {

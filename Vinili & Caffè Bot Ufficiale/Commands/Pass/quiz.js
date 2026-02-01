@@ -53,7 +53,7 @@ module.exports = {
     if (!channelId) return;
     if (client.passGames.has(channelId)) {
       return interaction.reply({
-        content: `âŒ C'Ã¨ giÃ  un gioco attivo in questo canale.`,
+        content: `âŒ C'è già un gioco attivo in questo canale.`,
         flags: 1 << 6
       });
     }
@@ -98,7 +98,7 @@ module.exports = {
           newRow.components = newRow.components.map(b => ButtonBuilder.from(b).setDisabled(true));
           return newRow;
         });
-        await msg.edit({ content: `${content}\n\n â° Tempo scaduto.`, components: disabled });
+        await msg.edit({ content: `${content}\n\n ⌛ Tempo scaduto.`, components: disabled });
       } catch {}
     }, Math.max(10, timeLimit) * 1000);
     client.passGames.set(channelId, {

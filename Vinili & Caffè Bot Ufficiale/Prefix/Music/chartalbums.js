@@ -47,7 +47,7 @@ module.exports = {
     const isAoty = ["aoty", "albumsoftheyear", "albomoftheyear", "albumoftheyear"].includes(invoked);
     const isAotd = ["aotd", "albumsofthedecade", "albomofthedecade", "albumofthedecade"].includes(invoked);
 
-    // Defaults (match fmbot-ish behavior)
+    Defaults (match fmbot-ish behavior)
     let sizeX = 3;
     let sizeY = 3;
     let period = "7day";
@@ -65,7 +65,7 @@ module.exports = {
       const token = raw.toLowerCase().replace(/\/+$/, "").trim();
       if (!token) continue;
 
-      // Size: WidthxHeight (up to 100 total images, each dimension up to 20)
+      Size: WidthxHeight (up to 100 total images, each dimension up to 20)
       if (/^\d{1,2}x\d{1,2}$/.test(token)) {
         const [x, y] = token.split("x").map(Number);
         if (Number.isFinite(x) && Number.isFinite(y) && x >= 2 && y >= 2 && x <= 20 && y <= 20 && (x * y) <= 100) {
@@ -75,60 +75,60 @@ module.exports = {
         continue;
       }
 
-      // Period aliases
+      Period aliases
       if (PERIOD_ALIASES[token]) {
         period = PERIOD_ALIASES[token];
         periodSpecified = true;
         continue;
       }
 
-      // Disable titles
+      Disable titles
       if (token === "notitles" || token === "nt") {
         notitles = true;
         continue;
       }
 
-      // Skip albums with missing/broken images
+      Skip albums with missing/broken images
       if (token === "skipemptyimages" || token === "skipemptyalbums" || token === "skip" || token === "s") {
         skipEmptyImages = true;
         continue;
       }
 
-      // Skip NSFW albums (tag-based best-effort)
+      Skip NSFW albums (tag-based best-effort)
       if (token === "sfw") {
         sfw = true;
         continue;
       }
 
-      // Release year filters
+      Release year filters
       if (token.startsWith("r:") || token.startsWith("released:")) {
         const year = Number(token.split(":")[1]);
         if (Number.isFinite(year)) releaseYear = year;
         continue;
       }
 
-      // Allow bare year (for .aoty 2023 etc.)
+      Allow bare year (for .aoty 2023 etc.)
       if (/^(19|20)\d{2}$/.test(token)) {
         const year = Number(token);
-        // keep it conservative
+        keep it conservative
         if (year >= 1900 && year <= 2100) releaseYear = year;
         continue;
       }
 
-      // Release decade filters
+      Release decade filters
       if (token.startsWith("d:") || token.startsWith("decade:")) {
         const value = token.split(":")[1];
         if (value) releaseDecade = value;
         continue;
       }
 
-      // Target Last.fm username
+      Target Last.fm username
       if (token.startsWith("lfm:")) {
         lfmUsername = raw.slice(4).trim();
         continue;
       }
 
-      // Target user by id
+      Target user by id
       if (/^\d{17,20}$/.test(token)) {
         idToken = token;
         continue;
@@ -144,7 +144,7 @@ module.exports = {
       try {
         await message.guild.members.fetch();
       } catch {
-        // ignore
+        ignore
       }
     }
 
@@ -183,7 +183,7 @@ module.exports = {
       displayName = member?.displayName || message.author.username;
     }
 
-    // If release year/decade filters are used without explicit period, use overall by default
+    If release year/decade filters are used without explicit period, use overall by default
     if (!periodSpecified && (releaseYear || releaseDecade)) {
       period = "overall";
     }
@@ -201,7 +201,7 @@ module.exports = {
     period = resolveChartPeriod(period, "7day");
 
     try {
-      // Total scrobbles (for description like fmbot)
+      Total scrobbles (for description like fmbot)
       let totalScrobbles = null;
       try {
         const info = await lastFmRequest("user.getinfo", { user: lfmUsername });

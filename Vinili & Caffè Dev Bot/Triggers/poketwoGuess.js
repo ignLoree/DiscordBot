@@ -8,13 +8,13 @@ const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
 const cacheKeyVersion = 'v9';
-const cacheTtlMs = 1000 * 60 * 10; // 10 min
-const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
+const cacheTtlMs = 1000 * 60 * 10; 10 min
+const rateLimitMs = 1000 * 6; 1 request every 6s per channel
 const lockTtlMs = 1000 * 60 * 10;
 const spriteCache = new Map();
 const flagImageCache = new Map();
 const altNameCache = new Map();
-const altNameTtlMs = 1000 * 60 * 60 * 12; // 12h
+const altNameTtlMs = 1000 * 60 * 60 * 12; 12h
 let fontRegistered = false;
 
 function isPoketwoSpawn(message, botId) {
@@ -142,20 +142,20 @@ async function classifyWithRetry(buffer, client) {
     const endpoints = [fallbackEndpoint, ...(extraFallbacks || [])].filter(Boolean);
     const allow404Fallback = String(endpoint || '').includes('endpoints.huggingface.cloud');
 
-    // First try primary
+    First try primary
     try {
         return await classifyImage(buffer, client);
     } catch (err) {
         const netCode = err?.code;
         const status = err?.response?.status;
         if (status === 404 && allow404Fallback) {
-            // Dedicated endpoint might require /predict or be temporarily misconfigured.
+            Dedicated endpoint might require /predict or be temporarily misconfigured.
         } else if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
             throw err;
         }
     }
 
-    // Backoff + fallbacks
+    Backoff + fallbacks
     const backoffs = [800, 1500, 3000];
     for (const delay of backoffs) {
         for (const ep of endpoints) {
@@ -340,7 +340,7 @@ async function buildNameCard(name, altNameObj) {
     const flagCode = altLang ? getLangFlag(altLang) : null;
     const flagImg = await loadFlagImage(flagCode);
 
-    // Load sprite first to compute size
+    Load sprite first to compute size
     let sprite = null;
     let sw = 0;
     let sh = 0;
@@ -381,11 +381,11 @@ async function buildNameCard(name, altNameObj) {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background
+    Background
     ctx.fillStyle = '#e8ffd8';
     ctx.fillRect(0, 0, width, height);
 
-    // Text
+    Text
     ctx.fillStyle = '#111111';
     ctx.textBaseline = 'top';
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
@@ -407,7 +407,7 @@ async function buildNameCard(name, altNameObj) {
         }
     }
 
-    // Sprite next to text
+    Sprite next to text
     if (sprite) {
         const sx = contentStartX + maxTextWidth + gap;
         const sy = height / 2 - sh / 2;
@@ -427,7 +427,7 @@ module.exports = {
             const imageUrl = getImageUrl(message);
             if (!imageUrl) return;
 
-            // Cross-process dedupe (same machine)
+            Cross-process dedupe (same machine)
             const lockDir = path.join(process.cwd(), '..', '.poketwo_locks');
             try {
                 if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });

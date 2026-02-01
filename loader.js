@@ -32,7 +32,7 @@ function runfile(bot, options = {}) {
         const file = bot.start.split("/")[bot.start.split("/").length - 1];
 
         const start = () => {
-        // Best-effort git pull to fetch updated files before restarting.
+        Best-effort git pull to fetch updated files before restarting.
         const repoRoot = fs.existsSync(path.join(baseDir, ".git")) ? baseDir : working_dir;
         if (fs.existsSync(path.join(repoRoot, ".git"))) {
             try {
@@ -122,7 +122,7 @@ setInterval(() => {
                 const parsed = JSON.parse(raw);
                 respectDelay = Boolean(parsed?.respectDelay);
             } catch {
-                // Legacy flags are plain text
+                Legacy flags are plain text
             }
             try {
                 fs.unlinkSync(flagPath);
