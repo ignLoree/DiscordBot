@@ -110,56 +110,14 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const baseline = options.baseline || ctx.textBaseline || "alphabetic";
   const color = options.color || ctx.fillStyle;
   const normalFont = fontStack(size, weight);
-  const tibetanFont = fontStackWithPrimary(TIBETAN_FONT, size, weight);
+  const cleaned = value.replace(/[\u0F00-\u0FFF]/g, "");
 
   ctx.save();
   ctx.fillStyle = color;
   ctx.textBaseline = baseline;
-  if (!Array.from(value).some(isTibetanChar)) {
-    ctx.font = normalFont;
-    ctx.textAlign = align;
-    ctx.fillText(value, x, y);
-    ctx.restore();
-    return;
-  }
-
-  const runs = [];
-  let current = "";
-  let currentTibetan = null;
-  for (const char of Array.from(value)) {
-    const tibetan = isTibetanChar(char);
-    if (currentTibetan === null) {
-      currentTibetan = tibetan;
-      current = char;
-      continue;
-    }
-    if (tibetan === currentTibetan) {
-      current += char;
-    } else {
-      runs.push({ text: current, tibetan: currentTibetan });
-      current = char;
-      currentTibetan = tibetan;
-    }
-  }
-  if (current) runs.push({ text: current, tibetan: currentTibetan });
-
-  let totalWidth = 0;
-  for (const run of runs) {
-    ctx.font = run.tibetan ? tibetanFont : normalFont;
-    totalWidth += ctx.measureText(run.text).width;
-  }
-
-  let startX = x;
-  if (align === "center") startX = x - totalWidth / 2;
-  if (align === "right" || align === "end") startX = x - totalWidth;
-
-  let cursor = startX;
-  for (const run of runs) {
-    ctx.font = run.tibetan ? tibetanFont : normalFont;
-    ctx.textAlign = "left";
-    ctx.fillText(run.text, cursor, y);
-    cursor += ctx.measureText(run.text).width;
-  }
+  ctx.font = normalFont;
+  ctx.textAlign = align;
+  ctx.fillText(cleaned, x, y);
   ctx.restore();
 }
 
