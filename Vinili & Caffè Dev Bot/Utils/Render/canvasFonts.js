@@ -9,18 +9,11 @@ const EMOJI_FONT = "Mojangles";
 const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
-const BASE_STACK = [
-  `"${SYMBOLS_FONT}"`,
-  `"${FRAKTUR_FONT}"`,
-  `"${MATH_FONT}"`,
-  `"${FALLBACK_FONT}"`,
-  "\"Segoe UI Symbol\"",
-  "\"Segoe UI Emoji\"",
-  "\"Arial Unicode MS\"",
+const FONT_STACK = [
+  `"${PRIMARY_FONT}"`,
+  "\"Arial\"",
   "sans-serif"
-];
-
-const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
+].join(", ");
 
 let registered = false;
 
@@ -110,14 +103,12 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const baseline = options.baseline || ctx.textBaseline || "alphabetic";
   const color = options.color || ctx.fillStyle;
   const normalFont = fontStack(size, weight);
-  const cleaned = value.replace(/[\u0F00-\u0FFF]/g, "");
-
   ctx.save();
   ctx.fillStyle = color;
   ctx.textBaseline = baseline;
   ctx.font = normalFont;
   ctx.textAlign = align;
-  ctx.fillText(cleaned, x, y);
+  ctx.fillText(value, x, y);
   ctx.restore();
 }
 
