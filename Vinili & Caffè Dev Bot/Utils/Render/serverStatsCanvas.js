@@ -99,7 +99,7 @@ function splitValue(value) {
 
 function drawHashIcon(ctx, x, y, size) {
   ctx.save();
-  ctx.strokeStyle = "#C9CDD3";
+  ctx.strokeStyle = "#D0D4DA";
   ctx.lineWidth = 3;
   const s = size;
   ctx.beginPath();
@@ -117,9 +117,9 @@ function drawHashIcon(ctx, x, y, size) {
 
 function drawSpeakerIcon(ctx, x, y, size) {
   ctx.save();
-  ctx.strokeStyle = "#C9CDD3";
+  ctx.strokeStyle = "#D0D4DA";
   ctx.lineWidth = 3;
-  ctx.fillStyle = "#C9CDD3";
+  ctx.fillStyle = "#D0D4DA";
   ctx.beginPath();
   ctx.moveTo(x, y + size * 0.35);
   ctx.lineTo(x + size * 0.28, y + size * 0.35);
@@ -130,14 +130,14 @@ function drawSpeakerIcon(ctx, x, y, size) {
   ctx.closePath();
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(x + size * 0.68, y + size * 0.5, size * 0.18, -0.6, 0.6);
+  ctx.arc(x + size * 0.7, y + size * 0.5, size * 0.18, -0.6, 0.6);
   ctx.stroke();
   ctx.restore();
 }
 
 function drawUserIcon(ctx, x, y, size) {
   ctx.save();
-  ctx.fillStyle = "#C9CDD3";
+  ctx.fillStyle = "#D0D4DA";
   ctx.beginPath();
   ctx.arc(x + size * 0.5, y + size * 0.32, size * 0.22, 0, Math.PI * 2);
   ctx.fill();
@@ -149,13 +149,27 @@ function drawUserIcon(ctx, x, y, size) {
 
 function drawChevron(ctx, x, y, size) {
   ctx.save();
-  ctx.strokeStyle = "#C9CDD3";
+  ctx.strokeStyle = "#D0D4DA";
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(x, y);
   ctx.lineTo(x + size * 0.5, y + size * 0.6);
   ctx.lineTo(x + size, y);
   ctx.stroke();
+  ctx.restore();
+}
+
+function drawOverviewIcon(ctx, x, y, size) {
+  ctx.save();
+  ctx.fillStyle = "#C7CBD2";
+  const w = size;
+  const h = size * 0.9;
+  drawRoundedRect(ctx, x, y, w * 0.2, h * 0.7, 2);
+  ctx.fill();
+  drawRoundedRect(ctx, x + w * 0.3, y + h * 0.15, w * 0.2, h * 0.55, 2);
+  ctx.fill();
+  drawRoundedRect(ctx, x + w * 0.6, y + h * 0.3, w * 0.2, h * 0.4, 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -178,10 +192,10 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  const cardX = 18;
-  const cardY = 18;
-  const cardW = width - 36;
-  const cardH = height - 36;
+  const cardX = 16;
+  const cardY = 16;
+  const cardW = width - 32;
+  const cardH = height - 32;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.5)";
   ctx.shadowBlur = 28;
@@ -218,13 +232,13 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.font = fontStack(32, "bold");
   ctx.fillStyle = "#F4F6F8";
   ctx.textBaseline = "top";
-  const serverName = fitText(ctx, data.guildName || "Server Overview", 700);
+  const serverName = fitText(ctx, data.guildName || "Server Overview", 720);
   ctx.fillText(serverName, headerOffsetX, headerY + 2);
 
   ctx.font = fontStack(18);
   ctx.fillStyle = "#B8BDC5";
-  ctx.fillText("Server Overview", headerOffsetX + 26, headerY + 40);
-  drawSpeakerIcon(ctx, headerOffsetX - 2, headerY + 40, 18);
+  drawOverviewIcon(ctx, headerOffsetX, headerY + 42, 18);
+  ctx.fillText("Server Overview", headerOffsetX + 24, headerY + 40);
 
   const pillY = headerY + 6;
   const pillH = 40;
@@ -316,13 +330,17 @@ module.exports = async function renderServerStatsCanvas(data) {
         }
       } else {
         ctx.fillStyle = "#E0E3E7";
-        const rowIcon = row.icon ? `${row.icon} ` : "";
         ctx.font = fontStack(16, "bold");
-        ctx.fillText(`${rowIcon}${row.label}`, x + 24, rowY - 2);
+        ctx.fillText(row.label, x + 48, rowY - 2);
         ctx.fillStyle = "#E7EAEE";
         ctx.textAlign = "right";
         ctx.fillText(row.value, x + w - 24, rowY - 2);
         ctx.textAlign = "left";
+
+        const iconX = x + 18;
+        const iconY = rowY - 10;
+        if (row.icon === "hash") drawHashIcon(ctx, iconX, iconY, 22);
+        if (row.icon === "speaker") drawSpeakerIcon(ctx, iconX, iconY + 2, 22);
       }
       rowY += 40;
     }
@@ -353,24 +371,24 @@ module.exports = async function renderServerStatsCanvas(data) {
   const midW = (cardW - 52 - gap) / 2;
   drawStatsBox(headerX, midY, midW, midH, "Top Members", [
     {
-      icon: "#",
+      icon: "hash",
       label: data.top?.messageUser?.label || "-",
       value: `${formatCompact(data.top?.messageUser?.value || 0)} messages`
     },
     {
-      icon: "??",
+      icon: "speaker",
       label: data.top?.voiceUser?.label || "-",
       value: `${formatHours(data.top?.voiceUser?.value || 0)} hours`
     }
   ], "user", "list");
   drawStatsBox(headerX + midW + gap, midY, midW, midH, "Top Channels", [
     {
-      icon: "#",
+      icon: "hash",
       label: data.top?.messageChannel?.label || "-",
       value: `${formatCompact(data.top?.messageChannel?.value || 0)} messages`
     },
     {
-      icon: "??",
+      icon: "speaker",
       label: data.top?.voiceChannel?.label || "-",
       value: `${formatHours(data.top?.voiceChannel?.value || 0)} hours`
     }
