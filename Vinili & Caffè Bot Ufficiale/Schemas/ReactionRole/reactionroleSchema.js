@@ -5,4 +5,4 @@ let reaction = new Schema({
     Emoji: String,
     Role: String
 });
-module.exports = model('rrs', reaction)
+module.exports = mongoose.models.rrs || model('rrs', reaction)

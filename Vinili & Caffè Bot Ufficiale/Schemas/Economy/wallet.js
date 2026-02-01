@@ -6,4 +6,4 @@ const WalletSchema = new mongoose.Schema({
   vinyl: { type: Number, default: 0 }
 }, { timestamps: true });
 WalletSchema.index({ guildId: 1, userId: 1 }, { unique: true });
-module.exports.Wallet = mongoose.model('Wallet', WalletSchema);
+module.exports.Wallet = mongoose.models.Wallet || mongoose.model('Wallet', WalletSchema);

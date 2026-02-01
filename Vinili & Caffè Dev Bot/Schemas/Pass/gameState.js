@@ -7,4 +7,4 @@ const GameStateSchema = new mongoose.Schema({
   usedExternalQuizHashes: { type: [String], default: [] }
 }, { timestamps: true });
 GameStateSchema.index({ guildId: 1, seasonId: 1 }, { unique: true });
-module.exports.GameState = mongoose.model('GameState', GameStateSchema);
+module.exports.GameState = mongoose.models.GameState || mongoose.model('GameState', GameStateSchema);

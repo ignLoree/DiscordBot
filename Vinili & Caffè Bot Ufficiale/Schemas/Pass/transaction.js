@@ -8,4 +8,4 @@ const TransactionSchema = new mongoose.Schema({
   amount: { type: Number, required: true },
   reason: { type: String, default: '' }
 }, { timestamps: true });
-module.exports.Transaction = mongoose.model('Transaction', TransactionSchema);
+module.exports.Transaction = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);

@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 const ModConfigSchema = new Schema({
   guildId: { type: String, required: true, unique: true },
   logChannelId: { type: String, default: null },
@@ -7,4 +8,4 @@ const ModConfigSchema = new Schema({
   exemptRoles: { type: [String], default: [] },
   exemptChannels: { type: [String], default: [] }
 }, { timestamps: true });
-module.exports = model('mod_config', ModConfigSchema);
+module.exports = mongoose.models.mod_config || model('mod_config', ModConfigSchema);

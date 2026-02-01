@@ -16,4 +16,4 @@ let pollschema = new Schema({
     risposta9: String,
     messageId: { type: String, default: null }
 })
-module.exports = model('pollschema', pollschema);
+module.exports = mongoose.models.pollschema || model('pollschema', pollschema);

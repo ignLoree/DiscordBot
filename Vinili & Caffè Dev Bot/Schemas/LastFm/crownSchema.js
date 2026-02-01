@@ -14,4 +14,4 @@ const crownSchema = new Schema({
   history: { type: [crownHistorySchema], default: [] }
 });
 crownSchema.index({ guildId: 1, artistKey: 1 }, { unique: true });
-module.exports = model("LastFmCrown", crownSchema);
+module.exports = mongoose.models.LastFmCrown || model('LastFmCrown', crownSchema);

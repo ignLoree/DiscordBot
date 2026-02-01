@@ -9,4 +9,4 @@ const oneTimeReminderSchema = new Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = model("OneTimeReminder", oneTimeReminderSchema);
+module.exports = mongoose.models.OneTimeReminder || model('OneTimeReminder', oneTimeReminderSchema);

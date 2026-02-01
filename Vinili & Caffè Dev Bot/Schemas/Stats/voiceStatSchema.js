@@ -11,4 +11,4 @@ const voiceStatSchema = new Schema({
 
 voiceStatSchema.index({ guildId: 1, date: 1, channelId: 1, userId: 1 }, { unique: true });
 
-module.exports = model("VoiceStat", voiceStatSchema);
+module.exports = mongoose.models.VoiceStat || model('VoiceStat', voiceStatSchema);

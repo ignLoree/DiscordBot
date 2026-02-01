@@ -9,4 +9,4 @@ const voiceSessionSchema = new Schema({
 
 voiceSessionSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
-module.exports = model("VoiceSession", voiceSessionSchema);
+module.exports = mongoose.models.VoiceSession || model('VoiceSession', voiceSessionSchema);

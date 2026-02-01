@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
 const artSpawnSchema = new Schema(
   {
@@ -16,4 +17,4 @@ const artSpawnSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = model('art_spawns', artSpawnSchema);
+module.exports = mongoose.models.art_spawns || model('art_spawns', artSpawnSchema);

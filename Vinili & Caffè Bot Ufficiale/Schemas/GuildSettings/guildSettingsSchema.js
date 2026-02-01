@@ -10,4 +10,4 @@ const GuildSettingsSchema = new mongoose.Schema({
         default: "!"
     }
 }, { timestamps: true });
-module.exports = mongoose.model('GuildSettings', GuildSettingsSchema);
+module.exports = mongoose.models.GuildSettings || mongoose.model('GuildSettings', GuildSettingsSchema);

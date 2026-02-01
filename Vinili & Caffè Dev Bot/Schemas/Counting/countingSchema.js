@@ -5,4 +5,4 @@ let countschema = new Schema({
     Count: Number,
     LastUser: String,
 })
-module.exports = model('countschema', countschema);
+module.exports = mongoose.models.countschema || model('countschema', countschema);

@@ -6,4 +6,4 @@ const voiceStateSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-module.exports = model("VoiceState", voiceStateSchema);
+module.exports = mongoose.models.VoiceState || model('VoiceState', voiceStateSchema);

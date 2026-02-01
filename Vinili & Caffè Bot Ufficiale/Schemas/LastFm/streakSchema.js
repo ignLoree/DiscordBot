@@ -17,4 +17,4 @@ const lastFmStreakSchema = new Schema({
 
 lastFmStreakSchema.index({ userId: 1, trackKey: 1, startedAt: 1 }, { unique: true });
 
-module.exports = model("LastFmStreak", lastFmStreakSchema);
+module.exports = mongoose.models.LastFmStreak || model('LastFmStreak', lastFmStreakSchema);

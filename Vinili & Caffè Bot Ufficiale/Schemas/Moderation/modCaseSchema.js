@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 const ModCaseSchema = new Schema({
   guildId: { type: String, required: true, index: true },
   caseId: { type: Number, required: true, index: true },
@@ -15,4 +16,4 @@ const ModCaseSchema = new Schema({
   }
 }, { timestamps: true });
 ModCaseSchema.index({ guildId: 1, caseId: 1 }, { unique: true });
-module.exports = model('mod_case', ModCaseSchema);
+module.exports = mongoose.models.mod_case || model('mod_case', ModCaseSchema);

@@ -13,4 +13,4 @@ let lastFmUserSchema = new Schema({
   lastFmTokenCreatedAt: { type: Date, default: null },
   lastFmSessionKey: { type: String, default: null }
 });
-module.exports = model('LastFmUser', lastFmUserSchema);
+module.exports = mongoose.models.LastFmUser || model('LastFmUser', lastFmUserSchema);

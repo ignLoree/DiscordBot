@@ -7,4 +7,4 @@ const EngagementStateSchema = new mongoose.Schema({
   usedItemIds: { type: [String], default: [] }
 }, { timestamps: true });
 EngagementStateSchema.index({ guildId: 1 }, { unique: true });
-module.exports.EngagementState = mongoose.model('EngagementState', EngagementStateSchema);
+module.exports.EngagementState = mongoose.models.EngagementState || mongoose.model('EngagementState', EngagementStateSchema);

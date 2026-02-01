@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 
 const artUserSchema = new Schema(
   {
@@ -20,4 +21,4 @@ const artUserSchema = new Schema(
 
 artUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
-module.exports = model('art_users', artUserSchema);
+module.exports = mongoose.models.art_users || model('art_users', artUserSchema);

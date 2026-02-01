@@ -12,4 +12,4 @@ const MissionSchema = new mongoose.Schema({
   activeTo: { type: Date, required: true }
 }, { timestamps: true });
 MissionSchema.index({ guildId: 1, seasonId: 1, id: 1 }, { unique: true });
-module.exports.Mission = mongoose.model('Mission', MissionSchema);
+module.exports.Mission = mongoose.models.Mission || mongoose.model('Mission', MissionSchema);

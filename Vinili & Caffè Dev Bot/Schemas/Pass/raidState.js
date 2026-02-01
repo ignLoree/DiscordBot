@@ -15,4 +15,4 @@ const RaidStateSchema = new mongoose.Schema({
   rewardsUnlocked: { type: [String], default: [] }
 }, { timestamps: true });
 RaidStateSchema.index({ guildId: 1, seasonId: 1 }, { unique: true });
-module.exports.RaidState = mongoose.model('RaidState', RaidStateSchema);
+module.exports.RaidState = mongoose.models.RaidState || mongoose.model('RaidState', RaidStateSchema);

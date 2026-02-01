@@ -10,4 +10,4 @@ const SeasonSchema = new mongoose.Schema({
   config: { type: Object, default: {} }
 }, { timestamps: true });
 SeasonSchema.index({ guildId: 1, seasonId: 1 }, { unique: true });
-module.exports.Season = mongoose.model('Season', SeasonSchema);
+module.exports.Season = mongoose.models.Season || mongoose.model('Season', SeasonSchema);

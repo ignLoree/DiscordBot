@@ -14,4 +14,4 @@ const NodeSchema = new mongoose.Schema({
   pathTag: { type: String, enum: ['chaos', 'order', 'neutral'], default: 'neutral' }
 }, { timestamps: true });
 NodeSchema.index({ guildId: 1, seasonId: 1, id: 1 }, { unique: true });
-module.exports.NodeModel = mongoose.model('Node', NodeSchema);
+module.exports.NodeModel = mongoose.models.Node || mongoose.model('Node', NodeSchema);

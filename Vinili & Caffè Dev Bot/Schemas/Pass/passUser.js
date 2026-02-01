@@ -35,4 +35,4 @@ const PassUserSchema = new mongoose.Schema({
   lastWeeklyResetAt: Date
 }, { timestamps: true });
 PassUserSchema.index({ guildId: 1, seasonId: 1, userId: 1 }, { unique: true });
-module.exports.PassUser = mongoose.model('PassUser', PassUserSchema);
+module.exports.PassUser = mongoose.models.PassUser || mongoose.model('PassUser', PassUserSchema);

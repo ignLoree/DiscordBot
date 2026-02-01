@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 const StaffSchema = new Schema({
     guildId: { type: String, required: true },
     userId: { type: String, required: true },
@@ -40,4 +41,4 @@ const StaffSchema = new Schema({
         }
     ]
 });
-module.exports = model('Staff', StaffSchema);
+module.exports = mongoose.models.Staff || model('Staff', StaffSchema);

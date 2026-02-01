@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema, model } = mongoose;
 let suggestion = new Schema({
     ChannelID: String,
     GuildID: String,
@@ -11,4 +12,4 @@ let suggestion = new Schema({
     sID: String,
     count: { type: Number, default: 0 }
 });
-module.exports = model('suggestion', suggestion);
+module.exports = mongoose.models.suggestion || model('suggestion', suggestion);

@@ -11,4 +11,4 @@ const messageStatSchema = new Schema({
 
 messageStatSchema.index({ guildId: 1, date: 1, channelId: 1, userId: 1 }, { unique: true });
 
-module.exports = model("MessageStat", messageStatSchema);
+module.exports = mongoose.models.MessageStat || model('MessageStat', messageStatSchema);

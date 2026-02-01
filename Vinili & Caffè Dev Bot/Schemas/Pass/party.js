@@ -12,4 +12,4 @@ const PartySchema = new mongoose.Schema({
   expiresAt: { type: Date, required: true }
 });
 PartySchema.index({ guildId: 1, seasonId: 1, partyId: 1 }, { unique: true });
-module.exports.Party = mongoose.model('Party', PartySchema);
+module.exports.Party = mongoose.models.Party || mongoose.model('Party', PartySchema);

@@ -9,4 +9,4 @@ const EngagementStatsSchema = new mongoose.Schema({
   winsTotal: { type: Number, default: 0 }
 }, { timestamps: true });
 EngagementStatsSchema.index({ guildId: 1, userId: 1 }, { unique: true });
-module.exports.EngagementStats = mongoose.model('EngagementStats', EngagementStatsSchema);
+module.exports.EngagementStats = mongoose.models.EngagementStats || mongoose.model('EngagementStats', EngagementStatsSchema);
