@@ -61,8 +61,14 @@ function trimAudioToSeconds(inputBuffer, seconds) {
       '-t',
       String(seconds),
       '-vn',
+      '-ac',
+      '2',
+      '-ar',
+      '44100',
       '-c:a',
-      'copy',
+      'libmp3lame',
+      '-b:a',
+      '128k',
       '-f',
       'mp3',
       'pipe:1'
@@ -72,6 +78,10 @@ function trimAudioToSeconds(inputBuffer, seconds) {
     const errChunks = [];
     ff.stdout.on('data', (chunk) => chunks.push(chunk));
     ff.stderr.on('data', (chunk) => errChunks.push(chunk));
+    ff.stdin.on('error', (err) => {
+      if (err && err.code === 'EPIPE') return;
+      reject(err);
+    });
     ff.on('error', reject);
     ff.on('close', (code) => {
       if (code !== 0) {
