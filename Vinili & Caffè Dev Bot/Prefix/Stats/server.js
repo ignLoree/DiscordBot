@@ -93,9 +93,6 @@ module.exports = {
     }
 
     const attachment = new AttachmentBuilder(buffer, { name: "server-stats.png" });
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setImage("attachment://server-stats.png");
-    return message.channel.send({ embeds: [embed], files: [attachment] });
+    return message.channel.send({ files: [attachment] });
   }
 };

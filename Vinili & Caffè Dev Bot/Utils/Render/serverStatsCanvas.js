@@ -102,33 +102,33 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   const bg = ctx.createLinearGradient(0, 0, width, height);
   bg.addColorStop(0, "#2b2f35");
-  bg.addColorStop(0.55, "#21252b");
-  bg.addColorStop(1, "#1b1f25");
+  bg.addColorStop(0.55, "#24282e");
+  bg.addColorStop(1, "#1d2127");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  const cardX = 22;
-  const cardY = 22;
-  const cardW = width - 44;
-  const cardH = height - 44;
+  const cardX = 20;
+  const cardY = 20;
+  const cardW = width - 40;
+  const cardH = height - 40;
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.45)";
-  ctx.shadowBlur = 24;
+  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 28;
   ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "rgba(45,49,56,0.98)";
-  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 24);
+  ctx.fillStyle = "rgba(47,51,57,0.98)";
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 26);
   ctx.fill();
   ctx.restore();
   ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.strokeStyle = "rgba(255,255,255,0.03)";
   ctx.lineWidth = 1;
-  drawRoundedRect(ctx, cardX + 0.5, cardY + 0.5, cardW - 1, cardH - 1, 24);
+  drawRoundedRect(ctx, cardX + 0.5, cardY + 0.5, cardW - 1, cardH - 1, 26);
   ctx.stroke();
   ctx.restore();
 
   const headerX = cardX + 26;
-  const headerY = cardY + 18;
-  const iconSize = 64;
+  const headerY = cardY + 16;
+  const iconSize = 68;
   let headerOffsetX = headerX;
   if (data.guildIconUrl) {
     const icon = await loadImageFromUrl(data.guildIconUrl);
@@ -144,60 +144,60 @@ module.exports = async function renderServerStatsCanvas(data) {
     }
   }
 
-  ctx.font = fontStack(30, "bold");
-  ctx.fillStyle = "#F1F3F5";
+  ctx.font = fontStack(32, "bold");
+  ctx.fillStyle = "#F4F6F8";
   ctx.textBaseline = "top";
-  const serverName = fitText(ctx, data.guildName || "Server Overview", 560);
+  const serverName = fitText(ctx, data.guildName || "Server Overview", 620);
   ctx.fillText(serverName, headerOffsetX, headerY + 2);
 
-  ctx.font = fontStack(18);
-  ctx.fillStyle = "#AEB4BC";
-  ctx.fillText("Server Overview", headerOffsetX, headerY + 38);
+  ctx.font = fontStack(19);
+  ctx.fillStyle = "#B2B7BF";
+  ctx.fillText("Server Overview", headerOffsetX, headerY + 40);
 
-  const pillY = headerY + 4;
-  const pillH = 36;
+  const pillY = headerY + 6;
+  const pillH = 40;
   const createdLabel = "Created On";
   const invitedLabel = "Invited Bot On";
   const createdValue = formatDateLabel(data.createdAt);
   const invitedValue = formatDateLabel(data.joinedAt);
-  ctx.font = fontStack(13, "bold");
+  ctx.font = fontStack(12, "bold");
   const createdW = Math.max(160, ctx.measureText(createdLabel).width + 30);
   const invitedW = Math.max(190, ctx.measureText(invitedLabel).width + 30);
   let pillX = cardX + cardW - createdW - invitedW - 26;
 
   const drawPill = (x, label, value, widthPill) => {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.35)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 4;
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 5;
     ctx.fillStyle = "rgba(33,36,41,0.98)";
-    drawRoundedRect(ctx, x, pillY, widthPill, pillH, 11);
+    drawRoundedRect(ctx, x, pillY, widthPill, pillH, 12);
     ctx.fill();
     ctx.restore();
-    ctx.fillStyle = "#C9CDD3";
+    ctx.fillStyle = "#C2C6CD";
     ctx.textBaseline = "top";
     ctx.font = fontStack(12, "bold");
     ctx.fillText(label, x + 12, pillY + 6);
     ctx.font = fontStack(16);
-    ctx.fillStyle = "#E7E9EC";
-    ctx.fillText(value, x + 12, pillY + 18);
+    ctx.fillStyle = "#E7EAEE";
+    ctx.fillText(value, x + 12, pillY + 20);
   };
   drawPill(pillX, createdLabel, createdValue, createdW);
   drawPill(pillX + createdW + 10, invitedLabel, invitedValue, invitedW);
 
   function drawStatsBox(x, y, w, h, title, rows, icon) {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.35)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 5;
+    ctx.shadowColor = "rgba(0,0,0,0.38)";
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 6;
     ctx.fillStyle = "rgba(44,48,54,0.98)";
-    drawRoundedRect(ctx, x, y, w, h, 14);
+    drawRoundedRect(ctx, x, y, w, h, 16);
     ctx.fill();
     ctx.restore();
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.03)";
     ctx.lineWidth = 1;
-    drawRoundedRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 14);
+    drawRoundedRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 16);
     ctx.stroke();
     ctx.restore();
     ctx.font = fontStack(18, "bold");
@@ -212,15 +212,16 @@ module.exports = async function renderServerStatsCanvas(data) {
       ctx.textAlign = "left";
     }
     ctx.font = fontStack(15, "bold");
-    let rowY = y + 48;
+    let rowY = y + 50;
     for (const row of rows) {
       ctx.save();
-      ctx.fillStyle = "rgba(26,29,34,0.95)";
-      drawRoundedRect(ctx, x + 12, rowY - 8, w - 24, 32, 8);
+      ctx.fillStyle = "rgba(27,30,35,0.95)";
+      drawRoundedRect(ctx, x + 12, rowY - 10, w - 24, 34, 9);
       ctx.fill();
       ctx.restore();
-      ctx.fillStyle = "#D4D8DE";
-      ctx.fillText(row.label, x + 26, rowY - 2);
+      ctx.fillStyle = "#E0E3E7";
+      const rowIcon = row.icon ? `${row.icon} ` : "";
+      ctx.fillText(`${rowIcon}${row.label}`, x + 24, rowY - 2);
       ctx.fillStyle = "#E7EAEE";
       ctx.textAlign = "right";
       ctx.fillText(row.value, x + w - 24, rowY - 2);
@@ -229,10 +230,10 @@ module.exports = async function renderServerStatsCanvas(data) {
     }
   }
 
-  const statsY = headerY + 96;
-  const boxW = 360;
-  const boxH = 150;
-  const gap = 18;
+  const statsY = headerY + 98;
+  const boxW = 368;
+  const boxH = 154;
+  const gap = 16;
   drawStatsBox(headerX, statsY, boxW, boxH, "Messages", [
     { label: "1d", value: `${formatCompact(data.totals?.messages?.d1)} messages` },
     { label: "7d", value: `${formatCompact(data.totals?.messages?.d7)} messages` },
@@ -250,24 +251,28 @@ module.exports = async function renderServerStatsCanvas(data) {
   ], "C");
 
   const midY = statsY + boxH + 18;
-  const midH = 122;
+  const midH = 126;
   const midW = (cardW - 52 - gap) / 2;
   drawStatsBox(headerX, midY, midW, midH, "Top Members", [
     {
+      icon: "#",
       label: data.top?.messageUser?.label || "-",
       value: `${formatCompact(data.top?.messageUser?.value || 0)} messages`
     },
     {
+      icon: "??",
       label: data.top?.voiceUser?.label || "-",
       value: `${formatHours(data.top?.voiceUser?.value || 0)} hours`
     }
   ], "M");
   drawStatsBox(headerX + midW + gap, midY, midW, midH, "Top Channels", [
     {
+      icon: "#",
       label: data.top?.messageChannel?.label || "-",
       value: `${formatCompact(data.top?.messageChannel?.value || 0)} messages`
     },
     {
+      icon: "??",
       label: data.top?.voiceChannel?.label || "-",
       value: `${formatHours(data.top?.voiceChannel?.value || 0)} hours`
     }
@@ -278,17 +283,17 @@ module.exports = async function renderServerStatsCanvas(data) {
   const chartW = cardW - 52;
   const chartH = cardH - (chartY - cardY) - 22;
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.35)";
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 5;
+  ctx.shadowColor = "rgba(0,0,0,0.38)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
   ctx.fillStyle = "rgba(44,48,54,0.98)";
-  drawRoundedRect(ctx, chartX, chartY, chartW, chartH, 14);
+  drawRoundedRect(ctx, chartX, chartY, chartW, chartH, 16);
   ctx.fill();
   ctx.restore();
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,0.03)";
   ctx.lineWidth = 1;
-  drawRoundedRect(ctx, chartX + 0.5, chartY + 0.5, chartW - 1, chartH - 1, 14);
+  drawRoundedRect(ctx, chartX + 0.5, chartY + 0.5, chartW - 1, chartH - 1, 16);
   ctx.stroke();
   ctx.restore();
 
@@ -302,7 +307,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const plotW = chartW - 32;
   const plotH = chartH - 96;
 
-  ctx.strokeStyle = "rgba(255,255,255,0.07)";
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i += 1) {
     const y = plotY + (plotH / 4) * i;
@@ -321,7 +326,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const plotLine = (series, maxValue, color) => {
     if (!series.length) return;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
     for (let i = 0; i < series.length; i += 1) {
       const value = series[i] || 0;
@@ -356,7 +361,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const tz = data.timezoneLabel ? `Timezone: ${data.timezoneLabel}` : "Timezone: Local";
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(`Server Lookback: Last 14 days -- ${tz}`, chartX + 16, chartY + chartH - 30);
+  ctx.fillText(`Server Lookback: Last 14 days ? ${tz}`, chartX + 16, chartY + chartH - 30);
   ctx.textAlign = "right";
   ctx.fillText("Powered by Statbot", chartX + chartW - 16, chartY + chartH - 30);
   ctx.textAlign = "left";

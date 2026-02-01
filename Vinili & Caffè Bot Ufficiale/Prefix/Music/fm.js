@@ -2,7 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const LastFmUser = require('../../Schemas/LastFm/lastFmSchema');
 const { getLastFmUserForMessageOrUsername } = require('../../Utils/Music/lastfmContext');
 const { extractTargetUserWithLastfm } = require('../../Utils/Music/lastfmPrefix');
-const { lastFmRequest, LASTFM_API_KEY } = require('../../Utils/Music/lastfm');
+const { lastFmRequest, LASTFM_API_KEY, formatNumber } = require('../../Utils/Music/lastfm');
 const { handleLastfmError } = require('../../Utils/Music/lastfmError');
 const { getSpotifyTrackImageSmart } = require('../../Utils/Music/spotify');
 
@@ -60,7 +60,9 @@ module.exports = {
       if (recentList.length > 0) {
         const currentTrack = recentList[0];
         const trackPlaycount = await getTrackPlaycount(lastFmUsername, currentTrack);
-        const totalScrobbles = userInfoData?.user?.playcount || 0;
+        const totalFromUser = Number(userInfoData?.user?.playcount ?? userInfoData?.user?.playcount?.['#text'] ?? 0);
+        const totalFromRecent = Number(recentTracksData?.recenttracks?.['@attr']?.total ?? 0);
+        const totalScrobbles = Math.max(totalFromUser || 0, totalFromRecent || 0);
         const lastfmImage = currentTrack?.image?.find(img => img.size === 'extralarge')?.['#text']
           || currentTrack?.image?.find(img => img.size === 'large')?.['#text']
           || null;
@@ -76,7 +78,7 @@ module.exports = {
           .setTitle(`**${currentTrack.name}**`)
           .setURL(`${getTrackUrl(currentTrack)}`)
           .setDescription(`**${currentTrack.artist['#text']}** - *${currentTrack.album['#text'] || ''}*`)
-          .setFooter({ text: `${totalScrobbles} ascolti totali` });
+          .setFooter({ text: `${formatNumber(totalScrobbles)} ascolti totali` });
         await message.reply({ embeds: [embed] });
       } else {
         await message.channel.send({
