@@ -594,8 +594,8 @@ module.exports = async function renderServerStatsCanvas(data) {
   const footerY = chartY + chartH + 24;
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(`Server Lookback: Last 14 days — ${tz}`, chartX + 16, footerY);
-  const footerText = "Powered by Vinili & Caffè Bot";
+  ctx.fillText(`Server Lookback: Last 14 days \u2014 ${tz}`, chartX + 16, footerY);
+  const footerText = "Powered by Vinili & Caff\u00e8 Bot";
   ctx.textAlign = "right";
   const statbotTextX = chartX + chartW - 16;
   ctx.fillText(footerText, statbotTextX, footerY);

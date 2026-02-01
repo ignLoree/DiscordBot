@@ -1,21 +1,7 @@
-const fs = require("fs");
-const path = require("path");
 const canvasModule = require("canvas");
+const { registerCanvasFonts, fontStack } = require("./canvasFonts");
 
 const { createCanvas } = canvasModule;
-let fontsRegistered = false;
-
-function registerReceiptFonts() {
-  if (fontsRegistered || !canvasModule?.registerFont) return;
-  const mojanglesPath = path.join(__dirname, "..", "..", "UI", "Fonts", "Mojangles.ttf");
-  if (fs.existsSync(mojanglesPath)) {
-    try {
-      canvasModule.registerFont(mojanglesPath, { family: "Mojangles" });
-    } catch {
-    }
-  }
-  fontsRegistered = true;
-}
 
 function wrapTextToWidth(text, maxWidth, ctx) {
   if (!text) return [""];
@@ -67,7 +53,7 @@ function formatDateLine(date) {
 
 function buildLines({ displayName, monthLabel, tracks, subtotalPlays, totalPlays, orderDate, cardYear }) {
   const lines = [];
-  lines.push({ type: "center", text: "VINILI & CAFFÉ RECEIPT", size: 22 });
+  lines.push({ type: "center", text: "VINILI & CAFF\u00c8 RECEIPT", size: 22 });
   lines.push({ type: "center", text: monthLabel, size: 18 });
   lines.push({ type: "spacer" });
   lines.push({ type: "center", text: `ORDER #1 FOR ${String(displayName || "UNKNOWN").toUpperCase()}` });
@@ -97,7 +83,7 @@ function buildLines({ displayName, monthLabel, tracks, subtotalPlays, totalPlays
 }
 
 function renderReceipt({ displayName, monthLabel, tracks, subtotalPlays, totalPlays, orderDate, cardYear }) {
-  registerReceiptFonts();
+  registerCanvasFonts(canvasModule);
   const lines = buildLines({ displayName, monthLabel, tracks, subtotalPlays, totalPlays, orderDate, cardYear });
   const width = 402;
   const height = 748;
@@ -125,7 +111,7 @@ function renderReceipt({ displayName, monthLabel, tracks, subtotalPlays, totalPl
   const maxTextWidth = width - paddingX * 2;
   const rightX = width - paddingX;
   ctx.fillStyle = "#111";
-  ctx.font = `${fontSize}px Mojangles, Courier New, monospace`;
+  ctx.font = fontStack(fontSize);
   const divider = buildDivider(ctx, maxTextWidth);
 
   let y = paddingTop + offsetY;
@@ -167,15 +153,15 @@ function renderReceipt({ displayName, monthLabel, tracks, subtotalPlays, totalPl
     let size = baseSize;
     ctx.textAlign = "center";
     while (size > 12) {
-      ctx.font = `${size}px Mojangles, Courier New, monospace`;
+      ctx.font = fontStack(size);
       if (ctx.measureText(line.text).width <= maxTextWidth) break;
       size -= 1;
     }
     if (line.size) {
-      ctx.font = `${line.size}px Mojangles, Courier New, monospace`;
+      ctx.font = fontStack(line.size);
     }
     ctx.fillText(line.text, width / 2, y);
-    ctx.font = `${baseSize}px Mojangles, Courier New, monospace`;
+    ctx.font = fontStack(baseSize);
     y += lineHeight;
   });
   return canvas.toBuffer("image/png");
