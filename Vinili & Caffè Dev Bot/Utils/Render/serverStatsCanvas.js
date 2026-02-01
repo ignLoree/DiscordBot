@@ -88,6 +88,15 @@ function formatDateLabel(date) {
   }
 }
 
+function splitValue(value) {
+  const text = String(value || "").trim();
+  const parts = text.split(" ");
+  if (parts.length <= 1) {
+    return { number: text, unit: "" };
+  }
+  return { number: parts[0], unit: parts.slice(1).join(" ") };
+}
+
 module.exports = async function renderServerStatsCanvas(data) {
   if (!canvasModule) return null;
   registerCanvasFonts(canvasModule);
@@ -128,7 +137,7 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   const headerX = cardX + 26;
   const headerY = cardY + 16;
-  const iconSize = 68;
+  const iconSize = 72;
   let headerOffsetX = headerX;
   if (data.guildIconUrl) {
     const icon = await loadImageFromUrl(data.guildIconUrl);
@@ -140,19 +149,26 @@ module.exports = async function renderServerStatsCanvas(data) {
       ctx.clip();
       ctx.drawImage(icon, headerX, headerY, iconSize, iconSize);
       ctx.restore();
-      headerOffsetX += iconSize + 12;
+      ctx.save();
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(headerX + iconSize / 2, headerY + iconSize / 2, iconSize / 2 - 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      headerOffsetX += iconSize + 14;
     }
   }
 
-  ctx.font = fontStack(32, "bold");
+  ctx.font = fontStack(34, "bold");
   ctx.fillStyle = "#F4F6F8";
   ctx.textBaseline = "top";
-  const serverName = fitText(ctx, data.guildName || "Server Overview", 620);
+  const serverName = fitText(ctx, data.guildName || "Server Overview", 640);
   ctx.fillText(serverName, headerOffsetX, headerY + 2);
 
   ctx.font = fontStack(19);
   ctx.fillStyle = "#B2B7BF";
-  ctx.fillText("Server Overview", headerOffsetX, headerY + 40);
+  ctx.fillText("?? Server Overview", headerOffsetX, headerY + 42);
 
   const pillY = headerY + 6;
   const pillH = 40;
@@ -170,7 +186,7 @@ module.exports = async function renderServerStatsCanvas(data) {
     ctx.shadowColor = "rgba(0,0,0,0.4)";
     ctx.shadowBlur = 12;
     ctx.shadowOffsetY = 5;
-    ctx.fillStyle = "rgba(33,36,41,0.98)";
+    ctx.fillStyle = "rgba(36,39,44,0.98)";
     drawRoundedRect(ctx, x, pillY, widthPill, pillH, 12);
     ctx.fill();
     ctx.restore();
@@ -185,7 +201,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   drawPill(pillX, createdLabel, createdValue, createdW);
   drawPill(pillX + createdW + 10, invitedLabel, invitedValue, invitedW);
 
-  function drawStatsBox(x, y, w, h, title, rows, icon) {
+  function drawStatsBox(x, y, w, h, title, rows, icon, mode = "stats") {
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.38)";
     ctx.shadowBlur = 12;
@@ -200,6 +216,7 @@ module.exports = async function renderServerStatsCanvas(data) {
     drawRoundedRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 16);
     ctx.stroke();
     ctx.restore();
+
     ctx.font = fontStack(18, "bold");
     ctx.fillStyle = "#D7DBE2";
     ctx.textBaseline = "top";
@@ -211,7 +228,7 @@ module.exports = async function renderServerStatsCanvas(data) {
       ctx.fillText(icon, x + w - 16, y + 12);
       ctx.textAlign = "left";
     }
-    ctx.font = fontStack(15, "bold");
+
     let rowY = y + 50;
     for (const row of rows) {
       ctx.save();
@@ -219,13 +236,36 @@ module.exports = async function renderServerStatsCanvas(data) {
       drawRoundedRect(ctx, x + 12, rowY - 10, w - 24, 34, 9);
       ctx.fill();
       ctx.restore();
-      ctx.fillStyle = "#E0E3E7";
-      const rowIcon = row.icon ? `${row.icon} ` : "";
-      ctx.fillText(`${rowIcon}${row.label}`, x + 24, rowY - 2);
-      ctx.fillStyle = "#E7EAEE";
-      ctx.textAlign = "right";
-      ctx.fillText(row.value, x + w - 24, rowY - 2);
-      ctx.textAlign = "left";
+
+      if (mode === "stats") {
+        const { number, unit } = splitValue(row.value);
+        ctx.save();
+        ctx.fillStyle = "rgba(18,20,24,0.85)";
+        drawRoundedRect(ctx, x + 20, rowY - 8, 44, 28, 7);
+        ctx.fill();
+        ctx.restore();
+        ctx.fillStyle = "#E6E8EC";
+        ctx.font = fontStack(14, "bold");
+        ctx.fillText(row.label, x + 32, rowY - 2);
+        ctx.fillStyle = "#E7EAEE";
+        ctx.textAlign = "left";
+        ctx.font = fontStack(16, "bold");
+        ctx.fillText(number, x + 76, rowY - 4);
+        if (unit) {
+          ctx.font = fontStack(14);
+          ctx.fillStyle = "#BFC4CB";
+          ctx.fillText(` ${unit}`, x + 76 + ctx.measureText(number).width + 2, rowY - 2);
+        }
+      } else {
+        ctx.fillStyle = "#E0E3E7";
+        const rowIcon = row.icon ? `${row.icon} ` : "";
+        ctx.font = fontStack(16, "bold");
+        ctx.fillText(`${rowIcon}${row.label}`, x + 24, rowY - 2);
+        ctx.fillStyle = "#E7EAEE";
+        ctx.textAlign = "right";
+        ctx.fillText(row.value, x + w - 24, rowY - 2);
+        ctx.textAlign = "left";
+      }
       rowY += 40;
     }
   }
@@ -238,17 +278,17 @@ module.exports = async function renderServerStatsCanvas(data) {
     { label: "1d", value: `${formatCompact(data.totals?.messages?.d1)} messages` },
     { label: "7d", value: `${formatCompact(data.totals?.messages?.d7)} messages` },
     { label: "14d", value: `${formatCompact(data.totals?.messages?.d14)} messages` }
-  ], "#");
+  ], "#", "stats");
   drawStatsBox(headerX + boxW + gap, statsY, boxW, boxH, "Voice Activity", [
     { label: "1d", value: `${formatHours(data.totals?.voiceSeconds?.d1)} hours` },
     { label: "7d", value: `${formatHours(data.totals?.voiceSeconds?.d7)} hours` },
     { label: "14d", value: `${formatHours(data.totals?.voiceSeconds?.d14)} hours` }
-  ], "V");
+  ], "??", "stats");
   drawStatsBox(headerX + (boxW + gap) * 2, statsY, boxW, boxH, "Contributors", [
     { label: "1d", value: `${formatCompact(data.contributors?.d1)} members` },
     { label: "7d", value: `${formatCompact(data.contributors?.d7)} members` },
     { label: "14d", value: `${formatCompact(data.contributors?.d14)} members` }
-  ], "C");
+  ], "??", "stats");
 
   const midY = statsY + boxH + 18;
   const midH = 126;
@@ -264,7 +304,7 @@ module.exports = async function renderServerStatsCanvas(data) {
       label: data.top?.voiceUser?.label || "-",
       value: `${formatHours(data.top?.voiceUser?.value || 0)} hours`
     }
-  ], "M");
+  ], "??", "list");
   drawStatsBox(headerX + midW + gap, midY, midW, midH, "Top Channels", [
     {
       icon: "#",
@@ -276,7 +316,7 @@ module.exports = async function renderServerStatsCanvas(data) {
       label: data.top?.voiceChannel?.label || "-",
       value: `${formatHours(data.top?.voiceChannel?.value || 0)} hours`
     }
-  ], "CH");
+  ], "?", "list");
 
   const chartX = headerX;
   const chartY = midY + midH + 18;
@@ -360,11 +400,18 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   const tz = data.timezoneLabel ? `Timezone: ${data.timezoneLabel}` : "Timezone: Local";
   ctx.font = fontStack(14);
-  ctx.fillStyle = "rgba(255,255,255,0.65)";
-  ctx.fillText(`Server Lookback: Last 14 days ? ${tz}`, chartX + 16, chartY + chartH - 30);
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.fillText(`Server Lookback: Last 14 days — ${tz}`, chartX + 16, chartY + chartH - 30);
   ctx.textAlign = "right";
-  ctx.fillText("Powered by Statbot", chartX + chartW - 16, chartY + chartH - 30);
+  const statbotTextX = chartX + chartW - 16;
+  ctx.fillText("Powered by Statbot", statbotTextX, chartY + chartH - 30);
   ctx.textAlign = "left";
+  ctx.save();
+  ctx.fillStyle = "#2ECC71";
+  ctx.beginPath();
+  ctx.arc(statbotTextX - 140, chartY + chartH - 26, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   return canvas.toBuffer("image/png");
 };
