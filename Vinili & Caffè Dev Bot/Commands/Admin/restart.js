@@ -2,8 +2,19 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/interaction');
 const fs = require('fs');
 const path = require('path');
+const child_process = require('child_process');
 
 const RESTART_FLAG = 'restart.json';
+
+function pullLatest() {
+    try {
+        const repoRoot = path.resolve(process.cwd(), '..');
+        if (!fs.existsSync(path.join(repoRoot, '.git'))) return;
+        const branch = process.env.GIT_BRANCH || 'main';
+        child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
+        child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
+    } catch {}
+}
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -62,9 +73,11 @@ module.exports = {
                 const remoteFlag = path.resolve(process.cwd(), '..', `reload_${otherTarget}.json`);
                 fs.writeFileSync(remoteFlag, JSON.stringify({
                     scope,
+                    gitPull: true,
                     by: interaction.user.id,
                     at: new Date().toISOString()
                 }, null, 2), 'utf8');
+                pullLatest();
                 await interaction.client.reloadScope(scope);
                 return safeReply(interaction, { content: `Reload ${scope} completato per entrambi.`, flags: 1 << 6 });
             }
@@ -73,6 +86,7 @@ module.exports = {
                 const remoteFlag = path.resolve(process.cwd(), '..', `reload_${target}.json`);
                 fs.writeFileSync(remoteFlag, JSON.stringify({
                     scope,
+                    gitPull: true,
                     by: interaction.user.id,
                     at: new Date().toISOString()
                 }, null, 2), 'utf8');
@@ -109,6 +123,7 @@ module.exports = {
                 interaction.client.handleTriggers(triggerFiles, './Triggers');
             };
 
+            pullLatest();
             await interaction.client.reloadScope(scope);
             await safeReply(interaction, { content: `Reload ${scope} completato per ${target}.`, flags: 1 << 6 });
         } catch (error) {

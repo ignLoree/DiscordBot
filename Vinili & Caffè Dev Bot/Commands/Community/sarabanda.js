@@ -9,6 +9,10 @@ const GUESS_WINDOW_MS = 60000;
 const SEARCH_TERMS = [
   'love', 'night', 'baby', 'dance', 'heart', 'dream', 'fire', 'summer', 'moon', 'rain', 'star', 'day'
 ];
+const CHART_CACHE = { items: [], expiresAt: 0 };
+const CHART_CACHE_MS = 6 * 60 * 60 * 1000;
+const DEFAULT_CHART_COUNTRY = 'it';
+const DEFAULT_CHART_LIMIT = 100;
 
 function normalizeText(value) {
   if (!value) return '';
@@ -31,7 +35,62 @@ function isCorrectGuess(guess, title, artist) {
   return false;
 }
 
-async function fetchRandomTrack() {
+function isSameSong(aTitle, aArtist, bTitle, bArtist) {
+  const t1 = normalizeText(aTitle);
+  const t2 = normalizeText(bTitle);
+  const a1 = normalizeText(aArtist);
+  const a2 = normalizeText(bArtist);
+  if (!t1 || !t2) return false;
+  if (t1 !== t2) return false;
+  if (!a1 || !a2) return true;
+  return a1 === a2;
+}
+
+async function fetchChartTracks(country = DEFAULT_CHART_COUNTRY, limit = DEFAULT_CHART_LIMIT) {
+  const now = Date.now();
+  if (CHART_CACHE.items.length && CHART_CACHE.expiresAt > now) {
+    return CHART_CACHE.items;
+  }
+  const url = `https://rss.applemarketingtools.com/api/v2/${country}/music/most-played/${limit}/songs.json`;
+  const res = await axios.get(url, { timeout: 12000 });
+  const items = Array.isArray(res.data?.feed?.results) ? res.data.feed.results : [];
+  CHART_CACHE.items = items;
+  CHART_CACHE.expiresAt = now + CHART_CACHE_MS;
+  return items;
+}
+
+async function fetchPopularTrack(config) {
+  const country = config?.sarabanda?.chartCountry || DEFAULT_CHART_COUNTRY;
+  const limit = config?.sarabanda?.chartLimit || DEFAULT_CHART_LIMIT;
+  const items = await fetchChartTracks(country, limit);
+  if (!items.length) throw new Error('No chart items');
+  const pick = items[Math.floor(Math.random() * items.length)];
+  const term = `${pick.name} ${pick.artistName}`;
+  const res = await axios.get('https://itunes.apple.com/search', {
+    params: {
+      term,
+      media: 'music',
+      entity: 'song',
+      limit: 5,
+      country
+    },
+    timeout: 12000
+  });
+  const results = Array.isArray(res.data?.results) ? res.data.results : [];
+  const usable = results.filter(r => r?.previewUrl && r?.trackName && r?.artistName);
+  if (!usable.length) throw new Error('No preview for chart item');
+  const exact = usable.find(r => isSameSong(r.trackName, r.artistName, pick.name, pick.artistName));
+  return exact || usable[0];
+}
+
+async function fetchRandomTrack(config) {
+  const popularOnly = config?.sarabanda?.popularOnly !== false;
+  if (popularOnly) {
+    try {
+      return await fetchPopularTrack(config);
+    } catch {
+    }
+  }
   const term = SEARCH_TERMS[Math.floor(Math.random() * SEARCH_TERMS.length)];
   const res = await axios.get('https://itunes.apple.com/search', {
     params: {
@@ -187,7 +246,7 @@ module.exports = {
     let track;
     let clipBuffer;
     try {
-      track = await fetchRandomTrack();
+      track = await fetchRandomTrack(client.config2);
       clipBuffer = await buildClip(track.previewUrl);
     } catch (err) {
       global.logger?.error?.('[SARABANDA] Failed to build clip:', err);

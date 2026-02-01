@@ -20,6 +20,7 @@ const { registerProgress } = require('./Services/Pass/objectiveService.js');
 const { registerMissionProgress } = require('./Services/Pass/missionService.js');
 const { updateAutoNodes } = require('./Services/Pass/passProgressService');
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
+const child_process = require('child_process');
 let client;
 
 try {
@@ -67,6 +68,15 @@ const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOK
 if (envToken) client.config.token = envToken;
 if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
 global.botClient = client;
+const pullLatest = () => {
+    try {
+        const repoRoot = path.resolve(process.cwd(), '..');
+        if (!fs.existsSync(path.join(repoRoot, '.git'))) return;
+        const branch = process.env.GIT_BRANCH || 'main';
+        child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
+        child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
+    } catch {}
+};
 client.reloadScope = async (scope) => {
     const baseDir = process.cwd();
     const clearCacheByDir = (dirName) => {
@@ -127,6 +137,7 @@ setInterval(async () => {
         const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
         fs.unlinkSync(flagPath);
         const scope = payload?.scope || 'all';
+        if (payload?.gitPull) pullLatest();
         await client.reloadScope(scope);
         client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
     } catch (err) {
