@@ -1,5 +1,13 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { spawn } = require('child_process');
+const { Readable } = require('stream');
+const {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  StreamType
+} = require('@discordjs/voice');
 const axios = require('axios');
 const { addPoints, getLeaderboard } = require('../../Services/Sarabanda/sarabandaStatsService');
 
@@ -109,7 +117,8 @@ async function fetchRandomTrack(config) {
   return usable[Math.floor(Math.random() * usable.length)];
 }
 
-function trimAudioToSeconds(inputBuffer, seconds) {
+function trimAudioToSeconds(inputBuffer, seconds, format = 'mp3') {
+  const isOgg = format === 'ogg';
   return new Promise((resolve, reject) => {
     const args = [
       '-hide_banner',
@@ -120,17 +129,9 @@ function trimAudioToSeconds(inputBuffer, seconds) {
       '-t',
       String(seconds),
       '-vn',
-      '-ac',
-      '2',
-      '-ar',
-      '44100',
-      '-c:a',
-      'libmp3lame',
-      '-b:a',
-      '128k',
-      '-f',
-      'mp3',
-      'pipe:1'
+      ...(isOgg
+        ? ['-c:a', 'libopus', '-b:a', '96k', '-f', 'ogg', 'pipe:1']
+        : ['-ac', '2', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '128k', '-f', 'mp3', 'pipe:1'])
     ];
     const ff = spawn('ffmpeg', args);
     const chunks = [];
@@ -159,6 +160,12 @@ async function buildClip(previewUrl) {
   const res = await axios.get(previewUrl, { responseType: 'arraybuffer', timeout: 15000 });
   const inputBuffer = Buffer.from(res.data);
   return trimAudioToSeconds(inputBuffer, MAX_CLIP_SECONDS);
+}
+
+async function buildClipOgg(previewUrl) {
+  const res = await axios.get(previewUrl, { responseType: 'arraybuffer', timeout: 15000 });
+  const inputBuffer = Buffer.from(res.data);
+  return trimAudioToSeconds(inputBuffer, MAX_CLIP_SECONDS, 'ogg');
 }
 
 function calcPoints(startAt) {
@@ -245,9 +252,11 @@ module.exports = {
 
     let track;
     let clipBuffer;
+    let clipOgg;
     try {
       track = await fetchRandomTrack(client.config2);
       clipBuffer = await buildClip(track.previewUrl);
+      clipOgg = await buildClipOgg(track.previewUrl);
     } catch (err) {
       global.logger?.error?.('[SARABANDA] Failed to build clip:', err);
       return interaction.editReply({
@@ -256,14 +265,44 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle('Sarabanda')
+      .setTitle('▶ Sarabanda - Play')
       .setDescription('Indovina la canzone! Hai 60 secondi per rispondere.')
       .setColor('#6f4e37');
 
-    const reply = await interaction.editReply({
+    const voiceChannel = interaction.member?.voice?.channel;
+    const listeners = voiceChannel?.members?.filter(m => !m.user.bot) || null;
+    const canPlayInVoice = voiceChannel && listeners && listeners.size > 0;
+
+    await interaction.editReply({
       embeds: [embed],
-      files: [{ attachment: clipBuffer, name: 'sarabanda.mp3' }]
+      files: canPlayInVoice ? [] : [{ attachment: clipBuffer, name: 'sarabanda.mp3' }]
     });
+
+    if (canPlayInVoice) {
+      try {
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: voiceChannel.guild.id,
+          adapterCreator: voiceChannel.guild.voiceAdapterCreator
+        });
+        const player = createAudioPlayer();
+        const resource = createAudioResource(Readable.from(clipOgg), { inputType: StreamType.OggOpus });
+        player.play(resource);
+        connection.subscribe(player);
+        const cleanup = () => {
+          try { connection.destroy(); } catch {}
+        };
+        player.on(AudioPlayerStatus.Idle, cleanup);
+        player.on('error', cleanup);
+      } catch (err) {
+        global.logger?.error?.('[SARABANDA] Voice playback failed:', err);
+        await interaction.followUp({
+          content: '<:vegax:1443934876440068179> Non sono riuscito a riprodurre in vocale. Ecco il file audio.',
+          files: [{ attachment: clipBuffer, name: 'sarabanda.mp3' }],
+          flags: 1 << 6
+        });
+      }
+    }
 
     const startAt = Date.now();
     const endsAt = startAt + GUESS_WINDOW_MS;
