@@ -10,7 +10,6 @@ const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK = [
-  `"${TIBETAN_FONT}"`,
   `"${SYMBOLS_FONT}"`,
   `"${FRAKTUR_FONT}"`,
   `"${MATH_FONT}"`,
