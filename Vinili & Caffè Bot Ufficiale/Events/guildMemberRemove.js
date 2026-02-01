@@ -79,6 +79,28 @@ module.exports = {
             const partnerships = await Staff.find({ managerId: member.id });
             if (partnerships.length > 0) {
                 try {
+                    const partnerLogChannel = guild.channels.cache.get('1467533670129729680');
+                    if (partnerLogChannel) {
+                        for (const doc of partnerships) {
+                            const lastPartner = doc.partnerActions && doc.partnerActions.length
+                                ? doc.partnerActions[doc.partnerActions.length - 1]
+                                : null;
+                            const partnerName = lastPartner?.partner || 'Partner sconosciuta';
+                            const inviteLink = lastPartner?.invite || 'Link non disponibile';
+                            await partnerLogChannel.send({
+                                embeds: [
+                                    new EmbedBuilder()
+                                        .setColor('#6f4e37')
+                                        .setDescription(
+                                            `**<:vegax:1443934876440068179> Manager uscito dal server**\n` +
+                                            `**Utente:** ${member.user}\n` +
+                                            `**Partner:** ${partnerName}\n` +
+                                            `**Invito:** ${inviteLink}`
+                                        )
+                                ]
+                            });
+                        }
+                    }
                     const dmChannel = await member.createDM().catch(() => null);
                     if (dmChannel) {
                         const row = new ActionRowBuilder().addComponents(

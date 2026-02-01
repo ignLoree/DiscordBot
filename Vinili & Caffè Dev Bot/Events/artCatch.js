@@ -50,7 +50,6 @@ module.exports = {
 
       await message.channel.send({ embeds: [embed] });
 
-      // Update original spawn embed to show ownership
       const original = message.embeds?.[0];
       if (original) {
         const updated = EmbedBuilder.from(original)

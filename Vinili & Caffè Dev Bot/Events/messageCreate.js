@@ -14,25 +14,6 @@ const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
-        // Cross-process dedupe: avoid handling the same message multiple times
-        // if multiple bot processes are accidentally running.
-        try {
-            const lockDir = path.join(path.dirname(process.cwd()), '.message_locks');
-            const lockKey = `${message.guildId || 'dm'}_${message.id}`;
-            const lockPath = path.join(lockDir, `${lockKey}.lock`);
-            if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
-            if (fs.existsSync(lockPath)) {
-                const age = Date.now() - fs.statSync(lockPath).mtimeMs;
-                if (age < 1000 * 60 * 10) return;
-                fs.unlinkSync(lockPath);
-            }
-            fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
-            setTimeout(() => {
-                try { fs.unlinkSync(lockPath); } catch { }
-            }, 1000 * 60 * 10);
-        } catch {
-            // If lock fails, continue (best-effort).
-        }
         try {
             const handledDisboard = await handleDisboardBump(message, client);
             if (handledDisboard) return;
@@ -428,24 +409,6 @@ async function handleDisboardBump(message, client) {
     if (!disboard) return false;
     if (!message.guild) return false;
     if (!message.author || message.author.id !== disboard.botId) return false;
-    // Cross-process dedupe to avoid multi-process double/triple sends.
-    const lockDir = path.join(path.dirname(process.cwd()), '.disboard_locks');
-    const lockKey = `${message.guild.id}_${message.id}`;
-    const lockPath = path.join(lockDir, `${lockKey}.lock`);
-    try {
-        if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
-        if (fs.existsSync(lockPath)) {
-            const age = Date.now() - fs.statSync(lockPath).mtimeMs;
-            if (age < 1000 * 60 * 10) return true;
-            fs.unlinkSync(lockPath);
-        }
-        fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
-        setTimeout(() => {
-            try { fs.unlinkSync(lockPath); } catch { }
-        }, 1000 * 60 * 10);
-    } catch {
-        return true;
-    }
     const patterns = Array.isArray(disboard.bumpSuccessPatterns)
         ? disboard.bumpSuccessPatterns
         : [];

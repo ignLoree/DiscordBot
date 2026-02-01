@@ -9,14 +9,12 @@ const bots = [
         key: "dev",
         label: "Dev",
         start: "./Vinili & Caffè Dev Bot/shard.js",
-        restartFlag: "./restart_dev",
         startupDelayMs: 0
     },
     {
         key: "official",
         label: "Ufficiale",
         start: "./Vinili & Caffè Bot Ufficiale/shard.js",
-        restartFlag: "./restart_official",
         startupDelayMs: 11000
     }
 ];
@@ -26,12 +24,41 @@ const restarting = new Map();
 
 console.log(`[Loader] Loading ${bots.length} files`);
 
+function killPidTree(pid) {
+    if (!pid || Number.isNaN(pid)) return;
+    try {
+        if (process.platform === "win32") {
+            child_process.spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { stdio: "ignore" });
+        } else {
+            process.kill(pid, "SIGTERM");
+        }
+    } catch {}
+}
+
+function cleanupStalePid(bot) {
+    const lockPath = path.resolve(baseDir, `.shard_${bot.key}.pid`);
+    if (!fs.existsSync(lockPath)) return;
+    let pid = null;
+    try {
+        pid = Number(fs.readFileSync(lockPath, "utf8").trim());
+    } catch {
+        pid = null;
+    }
+    const proc = processes.get(bot.key);
+    if (proc && pid && proc.pid === pid) return;
+    if (pid && !Number.isNaN(pid)) {
+        killPidTree(pid);
+    }
+    try { fs.unlinkSync(lockPath); } catch {}
+}
+
 function runfile(bot, options = {}) {
     return new Promise((resolve) => {
         const working_dir = path.resolve(baseDir, bot.start.split("/").slice(0, -1).join("/"));
         const file = bot.start.split("/")[bot.start.split("/").length - 1];
 
         const start = () => {
+        cleanupStalePid(bot);
         // Best-effort git pull to fetch updated files before restarting.
         const repoRoot = fs.existsSync(path.join(baseDir, ".git")) ? baseDir : working_dir;
         if (fs.existsSync(path.join(repoRoot, ".git"))) {
@@ -92,7 +119,11 @@ function restartBot(bot, options = {}) {
     const proc = processes.get(bot.key);
     if (proc && !proc.killed) {
         console.log(`[Loader] Restarting ${bot.label}...`);
+        const forceTimer = setTimeout(() => {
+            try { killPidTree(proc.pid); } catch {}
+        }, 8000);
         proc.once("exit", () => {
+            clearTimeout(forceTimer);
             restarting.set(bot.key, false);
             runfile(bot, { bypassDelay: !respectDelay });
         });
@@ -113,23 +144,27 @@ for (const bot of bots) {
 }
 
 setInterval(() => {
+    const flagPath = path.resolve(baseDir, "restart.json");
+    if (!fs.existsSync(flagPath)) return;
+    let payload = null;
+    try {
+        const raw = fs.readFileSync(flagPath, "utf8");
+        payload = JSON.parse(raw);
+    } catch {
+        payload = null;
+    }
+    try {
+        fs.unlinkSync(flagPath);
+    } catch {}
+    const targets = Array.isArray(payload?.targets)
+        ? payload.targets
+        : payload?.target
+            ? [payload.target]
+            : [];
+    const respectDelay = Boolean(payload?.respectDelay);
     for (const bot of bots) {
-        const flagPath = path.resolve(baseDir, bot.restartFlag);
-        if (fs.existsSync(flagPath)) {
-            let respectDelay = false;
-            try {
-                const raw = fs.readFileSync(flagPath, "utf8");
-                const parsed = JSON.parse(raw);
-                respectDelay = Boolean(parsed?.respectDelay);
-            } catch {
-                // Legacy flags are plain text
-            }
-            try {
-                fs.unlinkSync(flagPath);
-            } catch {}
+        if (targets.length === 0 || targets.includes(bot.key)) {
             restartBot(bot, { respectDelay });
         }
     }
 }, 5000);
-
-

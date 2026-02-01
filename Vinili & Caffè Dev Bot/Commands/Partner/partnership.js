@@ -26,13 +26,21 @@ module.exports = {
                 flags: 1 << 6
             });
         }
-        const userRoles = ['1442568949605597264']
-        const hasUserRole = hasAnyRole(interaction.manager, userRoles);
+        const userRoles = ['1442568949605597264'];
+        let managerMember = interaction.guild?.members?.cache?.get(manager.id) || null;
+        if (!managerMember) {
+            try {
+                managerMember = await interaction.guild.members.fetch(manager.id);
+            } catch {
+                managerMember = null;
+            }
+        }
+        const hasUserRole = managerMember ? hasAnyRole(managerMember, userRoles) : false;
         if (!hasUserRole) {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!')
+                        .setDescription("<:vegax:1443934876440068179> Questo utente non e' verificato, fagli effettuare prima la verifica e poi riprova!")
                         .setColor("Red")
                 ],
                 flags: 1 << 6

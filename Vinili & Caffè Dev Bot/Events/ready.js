@@ -18,25 +18,7 @@ module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        const botTag = path.basename(process.cwd()).replace(/\s+/g, '_').toLowerCase();
-        const lockPath = path.join(path.dirname(process.cwd()), `.ready_logged_${botTag}`);
-        let logOnce = false;
-        try {
-            if (fs.existsSync(lockPath)) {
-                const age = Date.now() - fs.statSync(lockPath).mtimeMs;
-                if (age < 30000) {
-                    logOnce = false;
-                } else {
-                    fs.writeFileSync(lockPath, `${new Date().toISOString()} | ${client.user?.id || 'unknown'}\n`, 'utf8');
-                    logOnce = true;
-                }
-            } else {
-                fs.writeFileSync(lockPath, `${new Date().toISOString()} | ${client.user?.id || 'unknown'}\n`, 'utf8');
-                logOnce = true;
-            }
-        } catch {
-            logOnce = true;
-        }
+        let logOnce = true;
         const SEASON_ID = config.passSeasonId;
         const GUILD_ID = config.guildid;
         client.setMaxListeners(client.config2.eventListeners || 20);
@@ -105,7 +87,7 @@ module.exports = {
                     content: "@everyone",
                     files: [
                         {
-                            attachment: "https://media.tenor.com/crZirRXKLuQAAAPo/manhdz2k9.mp4",
+                            attachment: "https://media.tenor.com/crZirRXKLuQAAAAC/manhdz2k9.gif",
                             name: "monthly.gif"
                         }
                     ]

@@ -22,7 +22,7 @@ function formatPeriodLabel(period) {
 
 function pad(str, len) {
   const value = String(str || "");
-  if (value.length >= len) return value.slice(0, len - 1) + "…";
+  if (value.length >= len) return value.slice(0, len - 1) + "ï¿½";
   return value.padEnd(len, " ");
 }
 
@@ -65,7 +65,7 @@ function buildTasteEmbed({
       const a = formatNumber(row.a, numberFormat);
       const b = formatNumber(row.b, numberFormat);
       const arrow = row.a === row.b ? "=" : (row.a > row.b ? ">" : "<");
-      return `${index + 1}. **${row.name}** — ${a} ${arrow} ${b}`;
+      return `${index + 1}. **${row.name}** ï¿½ ${a} ${arrow} ${b}`;
     });
     embed.setDescription([matchText, list.join("\n")].filter(Boolean).join("\n"));
   } else {

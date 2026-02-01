@@ -40,18 +40,6 @@ function listEventFiles(root) {
 }
 
 function shouldLogOnce(tag) {
-    const isPrimary = process.cwd().toLowerCase().includes("ufficiale");
-    if (!isPrimary) return false;
-    const lockPath = path.join(path.dirname(process.cwd()), `.log_${tag}`);
-    try {
-        if (fs.existsSync(lockPath)) {
-            const age = Date.now() - fs.statSync(lockPath).mtimeMs;
-            if (age < 30000) return false;
-        }
-        fs.writeFileSync(lockPath, `${new Date().toISOString()}\n`, 'utf8');
-    } catch {
-        return true;
-    }
     return true;
 }
 

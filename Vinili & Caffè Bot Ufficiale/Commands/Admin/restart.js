@@ -3,10 +3,7 @@ const { safeReply } = require('../../Utils/Moderation/interaction');
 const fs = require('fs');
 const path = require('path');
 
-const FLAG_MAP = {
-    official: 'restart_official',
-    dev: 'restart_dev'
-};
+const RESTART_FLAG = 'restart.json';
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -50,19 +47,13 @@ module.exports = {
             const currentTarget = isOfficial ? 'official' : 'dev';
             if (scope === 'full') {
                 const targets = target === 'both' ? ['official', 'dev'] : [target];
-                for (const t of targets) {
-                    const flagPath = path.resolve(process.cwd(), '..', FLAG_MAP[t]);
-                    if (target === 'both') {
-                        fs.writeFileSync(flagPath, JSON.stringify({
-                            respectDelay: true,
-                            by: interaction.user.id,
-                            at: new Date().toISOString(),
-                            target: t
-                        }, null, 2), 'utf8');
-                    } else {
-                        fs.writeFileSync(flagPath, `${new Date().toISOString()} | ${interaction.user.id}\n`, 'utf8');
-                    }
-                }
+                const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
+                fs.writeFileSync(flagPath, JSON.stringify({
+                    targets,
+                    respectDelay: target === 'both',
+                    by: interaction.user.id,
+                    at: new Date().toISOString()
+                }, null, 2), 'utf8');
                 return safeReply(interaction, { content: `Riavvio ${target} richiesto.`, flags: 1 << 6 });
             }
 

@@ -2,6 +2,21 @@
 const fetch = require('node-fetch');
 const Staff = require('../../Schemas/Staff/staffSchema');
 
+function extractInviteCode(text) {
+    if (!text) return null;
+    const patterns = [
+        /discord\.gg\/([a-zA-Z0-9-]+)/i,
+        /discord\.com\/invite\/([a-zA-Z0-9-]+)/i,
+        /discordapp\.com\/invite\/([a-zA-Z0-9-]+)/i
+    ];
+    for (const pattern of patterns) {
+        const match = String(text).match(pattern);
+        if (match && match[1]) return match[1];
+    }
+    const fallback = String(text).match(/\b([a-zA-Z0-9-]{6,32})\b/);
+    return fallback ? fallback[1] : null;
+}
+
 function extractServerNameFromDescription(description) {
     if (!description) return null;
     const cleaned = String(description)
@@ -60,8 +75,8 @@ async function handlePartnerModal(interaction) {
         });
         return true;
     }
-    const inviteMatch = description.match(/discord(?:\.gg|\.com\/invite)\/([a-zA-Z0-9-]+)/);
-    if (!inviteMatch) {
+    const inviteCode = extractInviteCode(description);
+    if (!inviteCode) {
         await interaction.editReply({
             embeds: [
                 new EmbedBuilder()
@@ -71,9 +86,10 @@ async function handlePartnerModal(interaction) {
         });
         return true;
     }
-    const inviteCode = inviteMatch[1];
     let serverName = 'Server Sconosciuto';
     let serverIcon = null;
+    let serverId = null;
+    const inviteUrl = `https://discord.gg/${inviteCode}`;
     let inviteVerified = true;
     try {
         const res = await fetch(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`);
@@ -128,7 +144,9 @@ async function handlePartnerModal(interaction) {
         staffDoc.managerId = managerId;
         staffDoc.partnerActions.push({
             action: 'create',
-            partner: serverName
+            partner: serverName,
+            invite: inviteUrl,
+            managerId
         });
 
         await staffDoc.save();

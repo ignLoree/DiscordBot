@@ -11,6 +11,15 @@ function hexToInt(hex) {
 function hasFooter(embed) {
   return Boolean(embed?.data?.footer || embed?.footer);
 }
+function getBotIconUrl(guild) {
+  const botUser = guild?.client?.user;
+  if (botUser && typeof botUser.displayAvatarURL === "function") {
+    try {
+      return botUser.displayAvatarURL({ size: 64 });
+    } catch {}
+  }
+  return null;
+}
 function getGuildIconUrl(guild) {
   if (!guild) return null;
   try {
@@ -22,7 +31,7 @@ function getGuildIconUrl(guild) {
 }
 function applyDefaultFooter(embed, guild) {
   if (!embed) return embed;
-  const iconURL = getGuildIconUrl(guild);
+  const iconURL = getBotIconUrl(guild) || getGuildIconUrl(guild);
   if (typeof embed.setFooter === "function") {
     if (!hasFooter(embed)) {
       embed.setFooter({ text: DEFAULT_FOOTER_TEXT, iconURL: iconURL || undefined });

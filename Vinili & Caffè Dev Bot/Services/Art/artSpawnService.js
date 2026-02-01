@@ -54,7 +54,6 @@ async function fetchArtImage(config) {
     }
   }
 
-  // Fallback: waifu.pics
   try {
     const res = await axios.get('https://api.waifu.pics/sfw/waifu', { timeout: 12000 });
     const url = res.data?.url;
@@ -83,25 +82,6 @@ async function spawnArtIfPossible(channel, client, options = {}) {
   if (!config?.enabled) return { ok: false, reason: 'disabled' };
   if (!channel?.id) return { ok: false, reason: 'channel' };
   if (String(config.channelId) !== String(channel.id)) return { ok: false, reason: 'not_target' };
-
-  // Cross-process lock to avoid double spawn
-  const lockDir = require('path').join(require('path').dirname(process.cwd()), '.art_spawn_locks');
-  const lockPath = require('path').join(lockDir, `${channel.id}.lock`);
-  try {
-    const fs = require('fs');
-    if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
-    if (fs.existsSync(lockPath)) {
-      const age = Date.now() - fs.statSync(lockPath).mtimeMs;
-      if (age < 1000 * 30) return { ok: false, reason: 'locked' };
-      fs.unlinkSync(lockPath);
-    }
-    fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
-    setTimeout(() => {
-      try { fs.unlinkSync(lockPath); } catch {}
-    }, 1000 * 30);
-  } catch {
-    // best-effort
-  }
 
   const now = Date.now();
   if (!client._artRiftLastSpawn) client._artRiftLastSpawn = new Map();

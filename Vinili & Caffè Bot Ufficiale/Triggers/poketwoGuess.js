@@ -149,13 +149,11 @@ async function classifyWithRetry(buffer, client) {
         const netCode = err?.code;
         const status = err?.response?.status;
         if (status === 404 && allow404Fallback) {
-            // Dedicated endpoint might require /predict or be temporarily misconfigured.
         } else if (netCode !== 'ENOTFOUND' && netCode !== 'EAI_AGAIN' && ![503, 429, 500].includes(status)) {
             throw err;
         }
     }
 
-    // Backoff + fallbacks
     const backoffs = [800, 1500, 3000];
     for (const delay of backoffs) {
         for (const ep of endpoints) {
@@ -340,7 +338,6 @@ async function buildNameCard(name, altNameObj) {
     const flagCode = altLang ? getLangFlag(altLang) : null;
     const flagImg = await loadFlagImage(flagCode);
 
-    // Load sprite first to compute size
     let sprite = null;
     let sw = 0;
     let sh = 0;
@@ -381,11 +378,9 @@ async function buildNameCard(name, altNameObj) {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
-    // Background
     ctx.fillStyle = '#e8ffd8';
     ctx.fillRect(0, 0, width, height);
 
-    // Text
     ctx.fillStyle = '#111111';
     ctx.textBaseline = 'top';
     ctx.font = `900 ${fontSize}px Mojangles, sans-serif`;
@@ -407,7 +402,6 @@ async function buildNameCard(name, altNameObj) {
         }
     }
 
-    // Sprite next to text
     if (sprite) {
         const sx = contentStartX + maxTextWidth + gap;
         const sy = height / 2 - sh / 2;
@@ -426,27 +420,6 @@ module.exports = {
 
             const imageUrl = getImageUrl(message);
             if (!imageUrl) return;
-
-            // Cross-process dedupe (same machine)
-            const lockDir = path.join(process.cwd(), '..', '.poketwo_locks');
-            try {
-                if (!fs.existsSync(lockDir)) fs.mkdirSync(lockDir, { recursive: true });
-            } catch {}
-            const lockKey = `${message.guildId || 'dm'}_${message.id}`;
-            const lockPath = path.join(lockDir, `${lockKey}.lock`);
-            try {
-                if (fs.existsSync(lockPath)) {
-                    const stats = fs.statSync(lockPath);
-                    if (Date.now() - stats.mtimeMs < lockTtlMs) return;
-                    fs.unlinkSync(lockPath);
-                }
-                fs.writeFileSync(lockPath, `${Date.now()}`, { flag: 'wx' });
-                setTimeout(() => {
-                    try { fs.unlinkSync(lockPath); } catch {}
-                }, lockTtlMs);
-            } catch {
-                return;
-            }
 
             const now = Date.now();
             if (!client._poketwoLastByChannel) client._poketwoLastByChannel = new Map();
@@ -532,6 +505,5 @@ module.exports = {
         }
     }
 };
-
 
 
