@@ -1,4 +1,5 @@
-const { model, Schema } = require("mongoose");
+const mongoose = require('mongoose');
+const { model, Schema } = mongoose;
 const crownHistorySchema = new Schema({
   discordId: { type: String, required: true },
   playcount: { type: Number, default: 0 },

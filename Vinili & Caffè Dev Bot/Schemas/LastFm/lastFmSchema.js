@@ -1,4 +1,5 @@
-const { model, Schema } = require('mongoose');
+const mongoose = require('mongoose');
+const { model, Schema } = mongoose;
 let lastFmUserSchema = new Schema({
   discordId: { type: String, required: true, unique: true },
   lastFmUsername: { type: String, required: true },
