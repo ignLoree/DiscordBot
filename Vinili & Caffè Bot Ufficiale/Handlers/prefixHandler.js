@@ -30,7 +30,7 @@ function listPrefixFiles(root) {
 }
 
 function shouldLogOnce(tag) {
-    return true;
+    return !isDev;
 }
 
 module.exports = (client) => {
