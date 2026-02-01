@@ -79,7 +79,7 @@ function formatDateLabel(date) {
   if (!date) return "-";
   try {
     return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
+      month: "long",
       day: "numeric",
       year: "numeric"
     });
@@ -95,6 +95,68 @@ function splitValue(value) {
     return { number: text, unit: "" };
   }
   return { number: parts[0], unit: parts.slice(1).join(" ") };
+}
+
+function drawHashIcon(ctx, x, y, size) {
+  ctx.save();
+  ctx.strokeStyle = "#C9CDD3";
+  ctx.lineWidth = 3;
+  const s = size;
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.35, y);
+  ctx.lineTo(x + s * 0.2, y + s);
+  ctx.moveTo(x + s * 0.7, y);
+  ctx.lineTo(x + s * 0.55, y + s);
+  ctx.moveTo(x, y + s * 0.35);
+  ctx.lineTo(x + s, y + s * 0.35);
+  ctx.moveTo(x, y + s * 0.7);
+  ctx.lineTo(x + s, y + s * 0.7);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSpeakerIcon(ctx, x, y, size) {
+  ctx.save();
+  ctx.strokeStyle = "#C9CDD3";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#C9CDD3";
+  ctx.beginPath();
+  ctx.moveTo(x, y + size * 0.35);
+  ctx.lineTo(x + size * 0.28, y + size * 0.35);
+  ctx.lineTo(x + size * 0.55, y + size * 0.15);
+  ctx.lineTo(x + size * 0.55, y + size * 0.85);
+  ctx.lineTo(x + size * 0.28, y + size * 0.65);
+  ctx.lineTo(x, y + size * 0.65);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x + size * 0.68, y + size * 0.5, size * 0.18, -0.6, 0.6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawUserIcon(ctx, x, y, size) {
+  ctx.save();
+  ctx.fillStyle = "#C9CDD3";
+  ctx.beginPath();
+  ctx.arc(x + size * 0.5, y + size * 0.32, size * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.roundRect(x + size * 0.15, y + size * 0.55, size * 0.7, size * 0.35, size * 0.18);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawChevron(ctx, x, y, size) {
+  ctx.save();
+  ctx.strokeStyle = "#C9CDD3";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size * 0.5, y + size * 0.6);
+  ctx.lineTo(x + size, y);
+  ctx.stroke();
+  ctx.restore();
 }
 
 module.exports = async function renderServerStatsCanvas(data) {
@@ -116,10 +178,10 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
 
-  const cardX = 20;
-  const cardY = 20;
-  const cardW = width - 40;
-  const cardH = height - 40;
+  const cardX = 18;
+  const cardY = 18;
+  const cardW = width - 36;
+  const cardH = height - 36;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.5)";
   ctx.shadowBlur = 28;
@@ -137,7 +199,7 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   const headerX = cardX + 26;
   const headerY = cardY + 16;
-  const iconSize = 72;
+  const iconSize = 76;
   let headerOffsetX = headerX;
   if (data.guildIconUrl) {
     const icon = await loadImageFromUrl(data.guildIconUrl);
@@ -149,26 +211,20 @@ module.exports = async function renderServerStatsCanvas(data) {
       ctx.clip();
       ctx.drawImage(icon, headerX, headerY, iconSize, iconSize);
       ctx.restore();
-      ctx.save();
-      ctx.strokeStyle = "rgba(0,0,0,0.35)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(headerX + iconSize / 2, headerY + iconSize / 2, iconSize / 2 - 1.5, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-      headerOffsetX += iconSize + 14;
+      headerOffsetX += iconSize + 16;
     }
   }
 
-  ctx.font = fontStack(34, "bold");
+  ctx.font = fontStack(32, "bold");
   ctx.fillStyle = "#F4F6F8";
   ctx.textBaseline = "top";
-  const serverName = fitText(ctx, data.guildName || "Server Overview", 640);
+  const serverName = fitText(ctx, data.guildName || "Server Overview", 700);
   ctx.fillText(serverName, headerOffsetX, headerY + 2);
 
-  ctx.font = fontStack(19);
-  ctx.fillStyle = "#B2B7BF";
-  ctx.fillText("?? Server Overview", headerOffsetX, headerY + 42);
+  ctx.font = fontStack(18);
+  ctx.fillStyle = "#B8BDC5";
+  ctx.fillText("Server Overview", headerOffsetX + 26, headerY + 40);
+  drawSpeakerIcon(ctx, headerOffsetX - 2, headerY + 40, 18);
 
   const pillY = headerY + 6;
   const pillH = 40;
@@ -177,8 +233,8 @@ module.exports = async function renderServerStatsCanvas(data) {
   const createdValue = formatDateLabel(data.createdAt);
   const invitedValue = formatDateLabel(data.joinedAt);
   ctx.font = fontStack(12, "bold");
-  const createdW = Math.max(160, ctx.measureText(createdLabel).width + 30);
-  const invitedW = Math.max(190, ctx.measureText(invitedLabel).width + 30);
+  const createdW = Math.max(170, ctx.measureText(createdLabel).width + 30);
+  const invitedW = Math.max(200, ctx.measureText(invitedLabel).width + 30);
   let pillX = cardX + cardW - createdW - invitedW - 26;
 
   const drawPill = (x, label, value, widthPill) => {
@@ -201,7 +257,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   drawPill(pillX, createdLabel, createdValue, createdW);
   drawPill(pillX + createdW + 10, invitedLabel, invitedValue, invitedW);
 
-  function drawStatsBox(x, y, w, h, title, rows, icon, mode = "stats") {
+  function drawStatsBox(x, y, w, h, title, rows, iconType, mode = "stats") {
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,0.38)";
     ctx.shadowBlur = 12;
@@ -221,12 +277,14 @@ module.exports = async function renderServerStatsCanvas(data) {
     ctx.fillStyle = "#D7DBE2";
     ctx.textBaseline = "top";
     ctx.fillText(title, x + 16, y + 12);
-    if (icon) {
-      ctx.font = fontStack(18, "bold");
-      ctx.fillStyle = "#BFC4CB";
-      ctx.textAlign = "right";
-      ctx.fillText(icon, x + w - 16, y + 12);
-      ctx.textAlign = "left";
+
+    if (iconType) {
+      const ix = x + w - 30;
+      const iy = y + 12;
+      if (iconType === "hash") drawHashIcon(ctx, ix, iy, 18);
+      if (iconType === "speaker") drawSpeakerIcon(ctx, ix, iy, 18);
+      if (iconType === "user") drawUserIcon(ctx, ix, iy, 18);
+      if (iconType === "chevron") drawChevron(ctx, ix, iy + 2, 16);
     }
 
     let rowY = y + 50;
@@ -252,7 +310,7 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.font = fontStack(16, "bold");
         ctx.fillText(number, x + 76, rowY - 4);
         if (unit) {
-          ctx.font = fontStack(14);
+          ctx.font = fontStack(14, "italic");
           ctx.fillStyle = "#BFC4CB";
           ctx.fillText(` ${unit}`, x + 76 + ctx.measureText(number).width + 2, rowY - 2);
         }
@@ -278,17 +336,17 @@ module.exports = async function renderServerStatsCanvas(data) {
     { label: "1d", value: `${formatCompact(data.totals?.messages?.d1)} messages` },
     { label: "7d", value: `${formatCompact(data.totals?.messages?.d7)} messages` },
     { label: "14d", value: `${formatCompact(data.totals?.messages?.d14)} messages` }
-  ], "#", "stats");
+  ], "hash", "stats");
   drawStatsBox(headerX + boxW + gap, statsY, boxW, boxH, "Voice Activity", [
     { label: "1d", value: `${formatHours(data.totals?.voiceSeconds?.d1)} hours` },
     { label: "7d", value: `${formatHours(data.totals?.voiceSeconds?.d7)} hours` },
     { label: "14d", value: `${formatHours(data.totals?.voiceSeconds?.d14)} hours` }
-  ], "??", "stats");
+  ], "speaker", "stats");
   drawStatsBox(headerX + (boxW + gap) * 2, statsY, boxW, boxH, "Contributors", [
     { label: "1d", value: `${formatCompact(data.contributors?.d1)} members` },
     { label: "7d", value: `${formatCompact(data.contributors?.d7)} members` },
     { label: "14d", value: `${formatCompact(data.contributors?.d14)} members` }
-  ], "??", "stats");
+  ], "user", "stats");
 
   const midY = statsY + boxH + 18;
   const midH = 126;
@@ -304,7 +362,7 @@ module.exports = async function renderServerStatsCanvas(data) {
       label: data.top?.voiceUser?.label || "-",
       value: `${formatHours(data.top?.voiceUser?.value || 0)} hours`
     }
-  ], "??", "list");
+  ], "user", "list");
   drawStatsBox(headerX + midW + gap, midY, midW, midH, "Top Channels", [
     {
       icon: "#",
@@ -316,7 +374,7 @@ module.exports = async function renderServerStatsCanvas(data) {
       label: data.top?.voiceChannel?.label || "-",
       value: `${formatHours(data.top?.voiceChannel?.value || 0)} hours`
     }
-  ], "?", "list");
+  ], "chevron", "list");
 
   const chartX = headerX;
   const chartY = midY + midH + 18;
@@ -366,7 +424,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const plotLine = (series, maxValue, color) => {
     if (!series.length) return;
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     for (let i = 0; i < series.length; i += 1) {
       const value = series[i] || 0;
