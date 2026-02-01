@@ -414,21 +414,26 @@ module.exports = async function renderServerStatsCanvas(data) {
         const { number, unit } = splitValue(row.value);
         ctx.save();
         ctx.fillStyle = "#171a1f";
-        drawRoundedRect(ctx, x + 20, rowY - 8, 46, 28, 7);
+        drawRoundedRect(ctx, x + 18, rowY - 8, 44, 28, 7);
         ctx.fill();
         ctx.restore();
         ctx.fillStyle = "#E6E8EC";
         ctx.font = fontStack(14, "bold");
-        ctx.fillText(row.label, x + 33, rowY - 2);
+        ctx.fillText(row.label, x + 30, rowY - 2);
+        ctx.textAlign = "right";
         ctx.fillStyle = "#E7EAEE";
-        ctx.textAlign = "left";
         ctx.font = fontStack(18, "bold");
-        ctx.fillText(number, x + 78, rowY - 5);
+        const valueX = x + w - 24;
+        ctx.fillText(number, valueX, rowY - 5);
         if (unit) {
+          const numWidth = ctx.measureText(number).width;
           ctx.font = fontStack(15, "italic");
           ctx.fillStyle = "#BFC4CB";
-          ctx.fillText(` ${unit}`, x + 78 + ctx.measureText(number).width + 2, rowY - 2);
+          ctx.fillText(` ${unit}`, valueX + 2, rowY - 2);
+          ctx.fillStyle = "#E7EAEE";
+          ctx.font = fontStack(18, "bold");
         }
+        ctx.textAlign = "left";
       } else {
         ctx.fillStyle = "#E0E3E7";
         ctx.font = fontStack(16, "bold");
