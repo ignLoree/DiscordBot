@@ -17,7 +17,6 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply({ flags: 1 << 6 });
         const tipo = interaction.options.getString('tipo') || 'partner manager';
-        const selectedType = tipo === 'partner manager' ? null : tipo;
         const allowedRoles = ['1442568905582317740'];
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
         if (!hasAllowedRole) {
@@ -35,17 +34,16 @@ module.exports = {
             return await interaction.editReply({
                 embeds: [
                     new EmbedBuilder()
-                    .setDescription(`<:vegax:1443934876440068179> Prima devi selezionare quale schermata mostrare!`)
-                    .setColor("Red")
+                        .setDescription(`<:vegax:1443934876440068179> Prima devi selezionare quale schermata mostrare!`)
+                        .setColor("Red")
                 ],
                 flags: 1 << 6
             })
         }
 
-        if(selectedType) {
-            return await interaction.editReply({
-                embeds: [
-                    new EmbedBuilder()
+        return await interaction.editReply({
+            embeds: [
+                new EmbedBuilder()
                     .setDescription(`<:partnermanager:1443651916838998099> Questi sono i comandi che puoi usare da <@&1442568905582317740>:
                     
                     <:dot:1443660294596329582> \`!desc\` - Per inviare direttamente la descrizione (Solo ticket)
@@ -55,8 +53,7 @@ module.exports = {
                     
                     <:attentionfromvega:1443651874032062505> Per segnalare un bug col bot apri un <#1442569095068254219> \`HIGH STAFF\``)
                     .setColor("#6f4e37")
-                ]
-            })
-        }
+            ]
+        })
     }
 }
