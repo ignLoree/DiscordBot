@@ -15,7 +15,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply({ flags: 1 << 6 });
+        await interaction.deferReply();
         const tipo = interaction.options.getString('tipo') || 'partner manager';
         const allowedRoles = ['1442568905582317740'];
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
