@@ -1,13 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { spawn } = require('child_process');
 const { Readable } = require('stream');
-const {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  StreamType
-} = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, StreamType } = require('@discordjs/voice');
 const axios = require('axios');
 const { addPoints, getLeaderboard } = require('../../Services/Sarabanda/sarabandaStatsService');
 
@@ -242,9 +236,11 @@ module.exports = {
     }
 
     const active = ACTIVE_GAMES.get(channelId);
-    if (active && Date.now() < active.endsAt) {
+    const hasActiveInGuild = Array.from(ACTIVE_GAMES.values())
+      .some((g) => g.guildId === interaction.guild.id && Date.now() < g.endsAt);
+    if ((active && Date.now() < active.endsAt) || hasActiveInGuild) {
       return interaction.reply({
-        content: '<:vegax:1443934876440068179> C\'è già una partita in corso in questo canale.',
+        content: '<:vegax:1443934876440068179> C\'?? gi?? una partita in corso in questo canale.',
         flags: 1 << 6
       });
     }
@@ -324,6 +320,7 @@ module.exports = {
     const collector = interaction.channel.createMessageCollector({ time: GUESS_WINDOW_MS });
 
     ACTIVE_GAMES.set(channelId, {
+      guildId: interaction.guild.id,
       endsAt,
       answer: { title: track.trackName, artist: track.artistName },
       collector
