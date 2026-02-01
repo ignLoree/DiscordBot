@@ -1,7 +1,7 @@
 const axios = require("axios");
 const { lastFmRequest } = require("./lastfm");
 const { getSpotifyAlbumImageSmart } = require("./spotify");
-const { registerCanvasFonts, fontStack } = require("../Render/canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("../Render/canvasFonts");
 
 const PERIOD_ALIASES = {
   weekly: "7day",
@@ -277,10 +277,21 @@ function drawOverlayText(ctx, item, x, y, size) {
   ctx.font = fontStack(titleFont, "bold");
   const maxTextWidth = size - padding * 2;
   const title = fitText(ctx, item.title, maxTextWidth);
-  ctx.fillText(title, x + padding, y + size - overlayHeight + padding);
+  drawTextWithSpecialFallback(ctx, title, x + padding, y + size - overlayHeight + padding, {
+    size: titleFont,
+    weight: "bold",
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
   ctx.font = fontStack(artistFont);
   const artist = fitText(ctx, item.artist, maxTextWidth);
-  ctx.fillText(artist, x + padding, y + size - overlayHeight + padding + titleFont + 2);
+  drawTextWithSpecialFallback(ctx, artist, x + padding, y + size - overlayHeight + padding + titleFont + 2, {
+    size: artistFont,
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
 }
 async function renderChartImage({ items, sizeX, sizeY, notitles }) {
   if (!canvasModule) {
@@ -326,7 +337,12 @@ async function renderChartImage({ items, sizeX, sizeY, notitles }) {
       ctx.font = fontStack(14);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(item ? "No image" : "No data", x + cellSize / 2, y + cellSize / 2);
+      drawTextWithSpecialFallback(ctx, item ? "No image" : "No data", x + cellSize / 2, y + cellSize / 2, {
+        size: 14,
+        align: "center",
+        baseline: ctx.textBaseline,
+        color: ctx.fillStyle
+      });
     }
     ctx.strokeStyle = "rgba(0, 0, 0, 0.35)";
     ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
@@ -338,5 +354,4 @@ async function renderChartImage({ items, sizeX, sizeY, notitles }) {
 }
 
 module.exports = { PERIOD_ALIASES, resolveChartPeriod, getChartPeriodLabel, fetchChartAlbums, hasCanvas, renderChartImage };
-
 

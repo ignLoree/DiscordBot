@@ -9,8 +9,7 @@ const EMOJI_FONT = "Mojangles";
 const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
-const FONT_STACK = [
-  `"${PRIMARY_FONT}"`,
+const BASE_STACK = [
   `"${TIBETAN_FONT}"`,
   `"${SYMBOLS_FONT}"`,
   `"${FRAKTUR_FONT}"`,
@@ -19,10 +18,10 @@ const FONT_STACK = [
   "\"Segoe UI Symbol\"",
   "\"Segoe UI Emoji\"",
   "\"Arial Unicode MS\"",
-  `"${COLOR_EMOJI_FONT}"`,
-  `"${EMOJI_FONT}"`,
   "sans-serif"
-].join(", ");
+];
+
+const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
 
 let registered = false;
 
@@ -92,9 +91,62 @@ function fontStack(size, weight) {
   return `${prefix}${size}px ${FONT_STACK}`;
 }
 
+function fontStackWithPrimary(primary, size, weight) {
+  const prefix = weight ? `${weight} ` : "";
+  const stack = [`"${primary}"`, ...BASE_STACK].join(", ");
+  return `${prefix}${size}px ${stack}`;
+}
+
+function isTibetanChar(char) {
+  if (!char) return false;
+  const code = char.codePointAt(0);
+  return code >= 0x0f00 && code <= 0x0fff;
+}
+
+function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
+  const value = text == null ? "" : String(text);
+  const size = options.size || 16;
+  const weight = options.weight || "";
+  const align = options.align || ctx.textAlign || "left";
+  const baseline = options.baseline || ctx.textBaseline || "alphabetic";
+  const color = options.color || ctx.fillStyle;
+  const chars = Array.from(value);
+  const normalFont = fontStack(size, weight);
+  const tibetanFont = fontStackWithPrimary(TIBETAN_FONT, size, weight);
+
+  const widths = [];
+  let totalWidth = 0;
+  for (const char of chars) {
+    const useTibetan = isTibetanChar(char);
+    ctx.font = useTibetan ? tibetanFont : normalFont;
+    const w = ctx.measureText(char).width;
+    widths.push(w);
+    totalWidth += w;
+  }
+
+  let startX = x;
+  if (align === "center") startX = x - totalWidth / 2;
+  if (align === "right" || align === "end") startX = x - totalWidth;
+
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.textBaseline = baseline;
+  let cursor = startX;
+  for (let i = 0; i < chars.length; i += 1) {
+    const char = chars[i];
+    const useTibetan = isTibetanChar(char);
+    ctx.font = useTibetan ? tibetanFont : normalFont;
+    ctx.fillText(char, cursor, y);
+    cursor += widths[i];
+  }
+  ctx.restore();
+}
+
 module.exports = {
   registerCanvasFonts,
   fontStack,
+  fontStackWithPrimary,
+  drawTextWithSpecialFallback,
   PRIMARY_FONT,
   TIBETAN_FONT,
   SYMBOLS_FONT,

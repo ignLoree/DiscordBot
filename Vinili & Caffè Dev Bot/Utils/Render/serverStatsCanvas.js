@@ -6,7 +6,7 @@ try {
   canvasModule = null;
 }
 
-const { registerCanvasFonts, fontStack } = require("./canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
 
 const EMOJI_BASE_URL = "https://cdn.discordapp.com/emojis/";
 
@@ -327,7 +327,13 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.fillStyle = "#F4F6F8";
   ctx.textBaseline = "top";
   const serverName = fitText(ctx, data.guildName || "Server Overview", 720);
-  ctx.fillText(serverName, headerOffsetX, headerY + 2);
+  drawTextWithSpecialFallback(ctx, serverName, headerOffsetX, headerY + 2, {
+    size: 32,
+    weight: "bold",
+    align: "left",
+    baseline: "top",
+    color: "#F4F6F8"
+  });
 
   ctx.font = fontStack(18);
   ctx.fillStyle = "#B8BDC5";
@@ -384,7 +390,7 @@ module.exports = async function renderServerStatsCanvas(data) {
     ctx.font = fontStack(18, "bold");
     ctx.fillStyle = "#D7DBE2";
     ctx.textBaseline = "top";
-    ctx.fillText(title, x + 16, y + 12);
+      ctx.fillText(title, x + 16, y + 12);
 
     if (iconType) {
       const centerX = x + w - 22;
@@ -419,7 +425,13 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.restore();
         ctx.fillStyle = "#E6E8EC";
         ctx.font = fontStack(14, "bold");
-        ctx.fillText(row.label, x + 30, rowY - 2);
+        drawTextWithSpecialFallback(ctx, row.label, x + 30, rowY - 2, {
+          size: 14,
+          weight: "bold",
+          align: "left",
+          baseline: ctx.textBaseline,
+          color: "#E6E8EC"
+        });
         const valueX = x + w - 28;
         const unitText = unit ? ` ${unit}` : "";
         ctx.font = fontStack(15, "italic");
@@ -431,19 +443,43 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.textAlign = "left";
         ctx.fillStyle = "#E7EAEE";
         ctx.font = fontStack(18, "bold");
-        ctx.fillText(number, startX, rowY - 5);
+        drawTextWithSpecialFallback(ctx, number, startX, rowY - 5, {
+          size: 18,
+          weight: "bold",
+          align: "left",
+          baseline: ctx.textBaseline,
+          color: "#E7EAEE"
+        });
         if (unitText) {
           ctx.fillStyle = "#BFC4CB";
           ctx.font = fontStack(15, "italic");
-          ctx.fillText(unitText, startX + numWidth, rowY - 2);
+          drawTextWithSpecialFallback(ctx, unitText, startX + numWidth, rowY - 2, {
+            size: 15,
+            weight: "italic",
+            align: "left",
+            baseline: ctx.textBaseline,
+            color: "#BFC4CB"
+          });
         }
       } else {
         ctx.fillStyle = "#E0E3E7";
         ctx.font = fontStack(16, "bold");
-        ctx.fillText(row.label, x + 54, rowY - 2);
+        drawTextWithSpecialFallback(ctx, row.label, x + 54, rowY - 2, {
+          size: 16,
+          weight: "bold",
+          align: "left",
+          baseline: ctx.textBaseline,
+          color: "#E0E3E7"
+        });
         ctx.fillStyle = "#E7EAEE";
         ctx.textAlign = "right";
-        ctx.fillText(row.value, x + w - 24, rowY - 2);
+        drawTextWithSpecialFallback(ctx, row.value, x + w - 24, rowY - 2, {
+          size: 16,
+          weight: "bold",
+          align: "right",
+          baseline: ctx.textBaseline,
+          color: "#E7EAEE"
+        });
         ctx.textAlign = "left";
 
         const iconCenterX = x + 34;
@@ -594,11 +630,21 @@ module.exports = async function renderServerStatsCanvas(data) {
   const footerY = chartY + chartH + 24;
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(`Server Lookback: Last 14 days \u2014 ${tz}`, chartX + 16, footerY);
+  drawTextWithSpecialFallback(ctx, `Server Lookback: Last 14 days \u2014 ${tz}`, chartX + 16, footerY, {
+    size: 14,
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: "rgba(255,255,255,0.7)"
+  });
   const footerText = "Powered by Vinili & Caff\u00e8 Bot";
   ctx.textAlign = "right";
   const statbotTextX = chartX + chartW - 16;
-  ctx.fillText(footerText, statbotTextX, footerY);
+  drawTextWithSpecialFallback(ctx, footerText, statbotTextX, footerY, {
+    size: 14,
+    align: "right",
+    baseline: ctx.textBaseline,
+    color: "rgba(255,255,255,0.7)"
+  });
   ctx.textAlign = "left";
   if (data.botIconUrl) {
     const botIcon = await loadImageFromUrl(data.botIconUrl);

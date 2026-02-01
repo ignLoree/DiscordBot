@@ -5,7 +5,7 @@ try {
 } catch {
   canvasModule = null;
 }
-const { registerCanvasFonts, fontStack } = require("./canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
 
 const MAX_IMAGE_CACHE = 100;
 const imageCache = new Map();
@@ -165,7 +165,13 @@ module.exports = async function renderTopListCanvas({
   ctx.fillStyle = "#F4F4F4";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(title || "Top List", width / 2, headerY + headerH / 2);
+  drawTextWithSpecialFallback(ctx, title || "Top List", width / 2, headerY + headerH / 2, {
+    size: 26,
+    weight: "bold",
+    align: "center",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
   ctx.textAlign = "left";
 
   const pillY = headerY - 10;
@@ -184,7 +190,13 @@ module.exports = async function renderTopListCanvas({
     ctx.fill();
     ctx.restore();
     ctx.fillStyle = "#ECECEC";
-    ctx.fillText(pillText, headerX + 10, pillY + 14);
+    drawTextWithSpecialFallback(ctx, pillText, headerX + 10, pillY + 14, {
+      size: 14,
+      weight: "bold",
+      align: "left",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
   }
 
   if (periodLabel) {
@@ -201,7 +213,13 @@ module.exports = async function renderTopListCanvas({
     ctx.restore();
     ctx.fillStyle = "#ECECEC";
     ctx.textAlign = "center";
-    ctx.fillText(text, pillX + textWidth / 2, pillY + 14);
+    drawTextWithSpecialFallback(ctx, text, pillX + textWidth / 2, pillY + 14, {
+      size: 14,
+      weight: "bold",
+      align: "center",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.textAlign = "left";
   }
 
@@ -227,16 +245,34 @@ module.exports = async function renderTopListCanvas({
     const lineY = y + i * rowHeight;
     ctx.font = fontStack(17, "bold");
     ctx.fillStyle = "#C6CAD0";
-    ctx.fillText(String(row.rank) + ".", numberX, lineY);
+    drawTextWithSpecialFallback(ctx, String(row.rank) + ".", numberX, lineY, {
+      size: 16,
+      weight: "bold",
+      align: "left",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.font = fontStack(19);
     ctx.fillStyle = "#F1F3F5";
     const maxNameWidth = playsX - nameX - 70;
     const safeName = fitText(ctx, row.label || "", maxNameWidth);
-    ctx.fillText(safeName, nameX, lineY);
+    drawTextWithSpecialFallback(ctx, safeName, nameX, lineY, {
+      size: 18,
+      weight: "bold",
+      align: "left",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.font = fontStack(17, "bold");
     ctx.fillStyle = "#F1F3F5";
     ctx.textAlign = "right";
-    ctx.fillText(String(row.plays || ""), playsX, lineY);
+    drawTextWithSpecialFallback(ctx, String(row.plays || ""), playsX, lineY, {
+      size: 18,
+      weight: "bold",
+      align: "right",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.textAlign = "left";
   }
 
@@ -244,15 +280,30 @@ module.exports = async function renderTopListCanvas({
   ctx.fillStyle = "#B6BCC3";
   const footerY = panelY + panelH - listPadding + 2;
   if (footerLeft) {
-    ctx.fillText(footerLeft, panelX + listPadding, footerY);
+    drawTextWithSpecialFallback(ctx, footerLeft, panelX + listPadding, footerY, {
+      size: 12,
+      align: "left",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
   }
   if (footerRight) {
     ctx.textAlign = "right";
-    ctx.fillText(footerRight, panelX + panelW - listPadding, footerY);
+    drawTextWithSpecialFallback(ctx, footerRight, panelX + panelW - listPadding, footerY, {
+      size: 12,
+      align: "right",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.textAlign = "left";
   }
   ctx.font = fontStack(12);
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fillText("powered by Vinili & Caffè Bot", panelX, height - 8);
+  drawTextWithSpecialFallback(ctx, "powered by Vinili & Caff\u00e8 Bot", panelX, height - 8, {
+    size: 12,
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
   return canvas.toBuffer("image/png");
 };

@@ -1,6 +1,6 @@
 ﻿const axios = require("axios");
 const canvasModule = require("canvas");
-const { registerCanvasFonts, fontStack } = require("./canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
 const CONFIG = require("../../config");
 const ART_BASE_WIDTH = 350;
 const ART_MIN_WIDTH = 280;
@@ -236,14 +236,26 @@ module.exports = async function renderWhoKnows({
   ctx.fill();
   ctx.fillStyle = colors.text;
   ctx.textBaseline = "middle";
-  ctx.fillText(badgeLabel, headerX + 22, badgeY + 16);
+  drawTextWithSpecialFallback(ctx, badgeLabel, headerX + 22, badgeY + 16, {
+    size: 14,
+    weight: "bold",
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
 
   const serverBadge = extractServerLabel(subtitle, serverLabel);
 
   ctx.font = fontStack(34, "bold");
   ctx.fillStyle = colors.text;
   ctx.textAlign = "center";
-  ctx.fillText(title || "", width / 2, headerY + headerHeight / 2 + 2);
+  drawTextWithSpecialFallback(ctx, title || "", width / 2, headerY + headerHeight / 2 + 2, {
+    size: 28,
+    weight: "bold",
+    align: "center",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
   ctx.textAlign = "left";
 
   const contentY = headerY + headerHeight + 24;
@@ -348,7 +360,13 @@ module.exports = async function renderWhoKnows({
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = colors.text;
-    ctx.fillText(labelText, pillX + 12, pillY + 16);
+    drawTextWithSpecialFallback(ctx, labelText, pillX + 12, pillY + 16, {
+      size: 13,
+      weight: "bold",
+      align: "left",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     if (hasGlobe && globeImg) {
       const textWidth = ctx.measureText(labelText).width;
       const globeX = pillX + 12 + textWidth + globeGap;
@@ -371,7 +389,13 @@ module.exports = async function renderWhoKnows({
       const rankText = `${rankValue}.`;
       ctx.font = fontStack(16, "bold");
       ctx.fillStyle = "rgba(255,255,255,0.55)";
-      ctx.fillText(rankText, listX, lineCenter);
+      drawTextWithSpecialFallback(ctx, rankText, listX, lineCenter, {
+        size: 16,
+        weight: "bold",
+        align: "left",
+        baseline: ctx.textBaseline,
+        color: ctx.fillStyle
+      });
     }
     ctx.font = fontStack(22, isHighlight ? "bold" : undefined);
     ctx.fillStyle = colors.text;
@@ -384,15 +408,39 @@ module.exports = async function renderWhoKnows({
         ctx.drawImage(crownImg, crownX, crownY, crownSize, crownSize);
       } else {
         ctx.font = fontStack(22, "bold");
-        ctx.fillText("👑", crownX, lineCenter);
+        drawTextWithSpecialFallback(ctx, "👑", crownX, lineCenter, {
+          size: 16,
+          weight: "bold",
+          align: "left",
+          baseline: ctx.textBaseline,
+          color: ctx.fillStyle
+        });
       }
-      ctx.fillText(row.user || "", listX + crownSize + 10, lineCenter);
+      drawTextWithSpecialFallback(ctx, row.user || "", listX + crownSize + 10, lineCenter, {
+        size: 18,
+        weight: "bold",
+        align: "left",
+        baseline: ctx.textBaseline,
+        color: ctx.fillStyle
+      });
     } else {
-      ctx.fillText(row.user || "", nameX, lineCenter);
+      drawTextWithSpecialFallback(ctx, row.user || "", nameX, lineCenter, {
+        size: 18,
+        weight: "bold",
+        align: "left",
+        baseline: ctx.textBaseline,
+        color: ctx.fillStyle
+      });
     }
     ctx.font = fontStack(22, "bold");
     ctx.textAlign = "right";
-    ctx.fillText(String(row.plays), playsX, lineCenter);
+    drawTextWithSpecialFallback(ctx, String(row.plays), playsX, lineCenter, {
+      size: 18,
+      weight: "bold",
+      align: "right",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.textAlign = "left";
   });
   ctx.textBaseline = "alphabetic";
@@ -401,7 +449,12 @@ module.exports = async function renderWhoKnows({
   const poweredY = contentY + artHeight + 12;
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.55)";
-  ctx.fillText(poweredLabel, leftX + 6, poweredY);
+  drawTextWithSpecialFallback(ctx, poweredLabel, leftX + 6, poweredY, {
+    size: 13,
+    align: "left",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
 
   const stats = extractStats(footer);
   const statText = stats
@@ -426,7 +479,13 @@ module.exports = async function renderWhoKnows({
   ctx.fillStyle = colors.text;
   ctx.font = fontStack(16, "bold");
   ctx.textAlign = "center";
-  ctx.fillText(statText, statsX + statsW / 2, statsY + statsBarHeight / 2 + 1);
+  drawTextWithSpecialFallback(ctx, statText, statsX + statsW / 2, statsY + statsBarHeight / 2 + 1, {
+    size: 16,
+    weight: "bold",
+    align: "center",
+    baseline: ctx.textBaseline,
+    color: ctx.fillStyle
+  });
   ctx.textAlign = "left";
 
   if (crownText) {
@@ -449,12 +508,17 @@ module.exports = async function renderWhoKnows({
     ctx.fillStyle = colors.text;
     ctx.font = fontStack(18, "bold");
     ctx.textAlign = "center";
-    ctx.fillText(crownText, bannerX + bannerW / 2, bannerY + 24);
+    drawTextWithSpecialFallback(ctx, crownText, bannerX + bannerW / 2, bannerY + 24, {
+      size: 18,
+      weight: "bold",
+      align: "center",
+      baseline: ctx.textBaseline,
+      color: ctx.fillStyle
+    });
     ctx.textAlign = "left";
   }
   return canvas.toBuffer("image/png");
 };
-
 
 
 
