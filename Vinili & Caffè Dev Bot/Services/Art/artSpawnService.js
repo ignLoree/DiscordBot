@@ -78,91 +78,108 @@ function getRarityColor(rarity) {
 }
 
 async function spawnArtIfPossible(channel, client, options = {}) {
-  const config = client?.config2?.artRift;
-  if (!config?.enabled) return { ok: false, reason: 'disabled' };
-  if (!channel?.id) return { ok: false, reason: 'channel' };
-  if (String(config.channelId) !== String(channel.id)) return { ok: false, reason: 'not_target' };
+  try {
+    const config = client?.config2?.artRift;
+    if (!config?.enabled) return { ok: false, reason: 'disabled' };
+    if (!channel?.id) return { ok: false, reason: 'channel' };
+    if (String(config.channelId) !== String(channel.id)) return { ok: false, reason: 'not_target' };
 
-  const now = Date.now();
-  if (!client._artRiftLastSpawn) client._artRiftLastSpawn = new Map();
-  const lastAt = client._artRiftLastSpawn.get(channel.id) || 0;
-  if (!options.force && config.spawnCooldownMs && now - lastAt < config.spawnCooldownMs) {
-    return { ok: false, reason: 'cooldown' };
+    const now = Date.now();
+    if (!client._artRiftLastSpawn) client._artRiftLastSpawn = new Map();
+    const lastAt = client._artRiftLastSpawn.get(channel.id) || 0;
+    if (!options.force && config.spawnCooldownMs && now - lastAt < config.spawnCooldownMs) {
+      return { ok: false, reason: 'cooldown' };
+    }
+
+    const active = await ArtSpawn.findOne({
+      channelId: channel.id,
+      claimedBy: null,
+      expiresAt: { $gt: new Date() }
+    });
+    if (active) return { ok: false, reason: 'active' };
+
+    let card = null;
+    let rarity = null;
+    let art = null;
+    let alreadyClaimed = false;
+    let lastError = null;
+    const attempts = options.force ? 3 : 6;
+    const baseWeights = config.rarityWeights || {};
+    const boostedWeights = options.force
+      ? baseWeights
+      : {
+          common: Math.max(0, (baseWeights.common ?? 70) - 15),
+          rare: (baseWeights.rare ?? 20) + 8,
+          epic: (baseWeights.epic ?? 8) + 5,
+          legendary: (baseWeights.legendary ?? 2) + 2
+        };
+    for (let i = 0; i < attempts; i += 1) {
+      rarity = pickRarity(boostedWeights);
+      try {
+        art = await fetchArtImage(config);
+      } catch (err) {
+        lastError = err;
+        continue;
+      }
+      const cardId = art.id || hashId(art.url);
+      const existing = await ArtCard.findOne({ cardId });
+      alreadyClaimed = Boolean(existing?.catchCount);
+      if (!options.force && alreadyClaimed) continue;
+      card = existing || await ArtCard.findOneAndUpdate(
+        { cardId },
+        {
+          $setOnInsert: {
+            cardId,
+            url: art.url,
+            source: art.source || '',
+            artist: art.artist || '',
+            tags: art.tags || [],
+            rarity
+          }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      break;
+    }
+    if (!card) {
+      if (lastError) {
+        global.logger?.error?.('[ART] Failed to fetch art image:', lastError);
+        return { ok: false, reason: 'api_error' };
+      }
+      return { ok: false, reason: 'no_card' };
+    }
+
+    const originText = card.source || card.artist || 'Unknown origin';
+    let description = `**${originText}**\nReact with any emoji to claim!`;
+    if (alreadyClaimed) {
+      description = `**${originText}**\nAlready claimed.\nReact with any emoji to claim!`;
+    }
+
+    const embed = new EmbedBuilder()
+      .setColor(getRarityColor(card.rarity))
+      .setDescription(description)
+      .setImage(card.url);
+
+    const msg = await channel.send({ embeds: [embed] });
+
+    const expiresAt = new Date(Date.now() + (config.spawnExpireMinutes || 20) * 60 * 1000);
+    await ArtSpawn.create({
+      guildId: channel.guild?.id || 'dm',
+      channelId: channel.id,
+      messageId: msg.id,
+      cardId: card.cardId,
+      rarity: card.rarity,
+      source: card.source || '',
+      spawnedBy: options.requestedBy || null,
+      expiresAt
+    });
+
+    client._artRiftLastSpawn.set(channel.id, Date.now());
+    return { ok: true, message: msg, card };
+  } catch (err) {
+    global.logger?.error?.('[ART] spawnArtIfPossible failed:', err);
+    return { ok: false, reason: 'error' };
   }
-
-  const active = await ArtSpawn.findOne({
-    channelId: channel.id,
-    claimedBy: null,
-    expiresAt: { $gt: new Date() }
-  });
-  if (active) return { ok: false, reason: 'active' };
-
-  let card = null;
-  let rarity = null;
-  let art = null;
-  let alreadyClaimed = false;
-  const attempts = options.force ? 3 : 6;
-  const baseWeights = config.rarityWeights || {};
-  const boostedWeights = options.force
-    ? baseWeights
-    : {
-        common: Math.max(0, (baseWeights.common ?? 70) - 15),
-        rare: (baseWeights.rare ?? 20) + 8,
-        epic: (baseWeights.epic ?? 8) + 5,
-        legendary: (baseWeights.legendary ?? 2) + 2
-      };
-  for (let i = 0; i < attempts; i += 1) {
-    rarity = pickRarity(boostedWeights);
-    art = await fetchArtImage(config);
-    const cardId = art.id || hashId(art.url);
-    const existing = await ArtCard.findOne({ cardId });
-    alreadyClaimed = Boolean(existing?.catchCount);
-    if (!options.force && alreadyClaimed) continue;
-    card = existing || await ArtCard.findOneAndUpdate(
-      { cardId },
-      {
-        $setOnInsert: {
-          cardId,
-          url: art.url,
-          source: art.source || '',
-          artist: art.artist || '',
-          tags: art.tags || [],
-          rarity
-        }
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    break;
-  }
-  if (!card) return { ok: false, reason: 'no_card' };
-
-  const originText = card.source || card.artist || 'Unknown origin';
-  let description = `**${originText}**\nReact with any emoji to claim!`;
-  if (alreadyClaimed) {
-    description = `**${originText}**\nAlready claimed.\nReact with any emoji to claim!`;
-  }
-
-  const embed = new EmbedBuilder()
-    .setColor(getRarityColor(card.rarity))
-    .setDescription(description)
-    .setImage(card.url);
-
-  const msg = await channel.send({ embeds: [embed] });
-
-  const expiresAt = new Date(Date.now() + (config.spawnExpireMinutes || 20) * 60 * 1000);
-  await ArtSpawn.create({
-    guildId: channel.guild?.id || 'dm',
-    channelId: channel.id,
-    messageId: msg.id,
-    cardId: card.cardId,
-    rarity: card.rarity,
-    source: card.source || '',
-    spawnedBy: options.requestedBy || null,
-    expiresAt
-  });
-
-  client._artRiftLastSpawn.set(channel.id, Date.now());
-  return { ok: true, message: msg, card };
 }
 
 module.exports = { spawnArtIfPossible };
