@@ -8,6 +8,8 @@ try {
 
 const { registerCanvasFonts, fontStack } = require("./canvasFonts");
 
+const EMOJI_BASE_URL = "https://cdn.discordapp.com/emojis/";
+
 function drawRoundedRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -55,6 +57,17 @@ async function loadImageFromUrl(url) {
       return null;
     }
   }
+}
+
+function getEmojiUrl(id) {
+  return `${EMOJI_BASE_URL}${id}.png?size=64&quality=lossless`;
+}
+
+function drawEmojiImage(ctx, image, x, y, size) {
+  if (!image) return;
+  ctx.save();
+  ctx.drawImage(image, x, y, size, size);
+  ctx.restore();
 }
 
 function formatCompact(value) {
@@ -173,6 +186,58 @@ function drawOverviewIcon(ctx, x, y, size) {
   ctx.restore();
 }
 
+function drawBinocularIcon(ctx, x, y, size) {
+  ctx.save();
+  ctx.fillStyle = "#C7CBD2";
+  ctx.strokeStyle = "#9BA2AC";
+  ctx.lineWidth = 2;
+  const w = size;
+  const h = size * 0.8;
+  const r = w * 0.18;
+  const leftX = x;
+  const rightX = x + w * 0.55;
+  const topY = y + h * 0.1;
+  ctx.beginPath();
+  ctx.roundRect(leftX, topY, w * 0.45, h * 0.75, r);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(rightX, topY, w * 0.45, h * 0.75, r);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(x + w * 0.33, y, w * 0.34, h * 0.35, r);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHexLogo(ctx, x, y, size) {
+  const r = size / 2;
+  ctx.save();
+  ctx.translate(x + r, y + r);
+  ctx.beginPath();
+  for (let i = 0; i < 6; i += 1) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6;
+    const px = Math.cos(angle) * r;
+    const py = Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = "#27C46A";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.45)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#0E1A14";
+  ctx.font = fontStack(10, "bold");
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SB", 0, 1);
+  ctx.restore();
+}
+
 module.exports = async function renderServerStatsCanvas(data) {
   if (!canvasModule) return null;
   registerCanvasFonts(canvasModule);
@@ -184,6 +249,15 @@ module.exports = async function renderServerStatsCanvas(data) {
   const ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
+
+  const emojiHash = await loadImageFromUrl(getEmojiUrl("1443247596922470551"));
+  const emojiVoice = await loadImageFromUrl(getEmojiUrl("1467639623735054509"));
+  const emojiUser = await loadImageFromUrl(getEmojiUrl("1467639483104231434"));
+  const emojiMap = {
+    hash: emojiHash,
+    speaker: emojiVoice,
+    user: emojiUser
+  };
 
   const bg = ctx.createLinearGradient(0, 0, width, height);
   bg.addColorStop(0, "#2b2f35");
@@ -200,7 +274,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.shadowColor = "rgba(0,0,0,0.5)";
   ctx.shadowBlur = 28;
   ctx.shadowOffsetY = 10;
-  ctx.fillStyle = "rgba(47,51,57,0.98)";
+  ctx.fillStyle = "#2f3338";
   drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 26);
   ctx.fill();
   ctx.restore();
@@ -213,11 +287,17 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   const headerX = cardX + 26;
   const headerY = cardY + 16;
-  const iconSize = 76;
+  const iconSize = 80;
   let headerOffsetX = headerX;
   if (data.guildIconUrl) {
     const icon = await loadImageFromUrl(data.guildIconUrl);
     if (icon) {
+      ctx.save();
+      ctx.fillStyle = "#1e2228";
+      ctx.beginPath();
+      ctx.arc(headerX + iconSize / 2, headerY + iconSize / 2, iconSize / 2 + 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
       ctx.save();
       ctx.beginPath();
       ctx.arc(headerX + iconSize / 2, headerY + iconSize / 2, iconSize / 2, 0, Math.PI * 2);
@@ -237,8 +317,8 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   ctx.font = fontStack(18);
   ctx.fillStyle = "#B8BDC5";
-  drawOverviewIcon(ctx, headerOffsetX, headerY + 42, 18);
-  ctx.fillText("Server Overview", headerOffsetX + 24, headerY + 40);
+  drawBinocularIcon(ctx, headerOffsetX, headerY + 42, 18);
+  ctx.fillText("Server Overview", headerOffsetX + 26, headerY + 40);
 
   const pillY = headerY + 6;
   const pillH = 40;
@@ -256,7 +336,7 @@ module.exports = async function renderServerStatsCanvas(data) {
     ctx.shadowColor = "rgba(0,0,0,0.4)";
     ctx.shadowBlur = 12;
     ctx.shadowOffsetY = 5;
-    ctx.fillStyle = "rgba(36,39,44,0.98)";
+    ctx.fillStyle = "#2a2e34";
     drawRoundedRect(ctx, x, pillY, widthPill, pillH, 12);
     ctx.fill();
     ctx.restore();
@@ -273,15 +353,15 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   function drawStatsBox(x, y, w, h, title, rows, iconType, mode = "stats") {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.38)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 6;
-    ctx.fillStyle = "rgba(44,48,54,0.98)";
+    ctx.shadowColor = "rgba(0,0,0,0.4)";
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 7;
+    ctx.fillStyle = "#343a41";
     drawRoundedRect(ctx, x, y, w, h, 16);
     ctx.fill();
     ctx.restore();
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.strokeStyle = "rgba(255,255,255,0.04)";
     ctx.lineWidth = 1;
     drawRoundedRect(ctx, x + 0.5, y + 0.5, w - 1, h - 1, 16);
     ctx.stroke();
@@ -295,38 +375,43 @@ module.exports = async function renderServerStatsCanvas(data) {
     if (iconType) {
       const ix = x + w - 30;
       const iy = y + 12;
-      if (iconType === "hash") drawHashIcon(ctx, ix, iy, 18);
-      if (iconType === "speaker") drawSpeakerIcon(ctx, ix, iy, 18);
-      if (iconType === "user") drawUserIcon(ctx, ix, iy, 18);
-      if (iconType === "chevron") drawChevron(ctx, ix, iy + 2, 16);
+      const emoji = emojiMap[iconType];
+      if (emoji) {
+        drawEmojiImage(ctx, emoji, ix - 2, iy - 2, 20);
+      } else {
+        if (iconType === "hash") drawHashIcon(ctx, ix, iy, 18);
+        if (iconType === "speaker") drawSpeakerIcon(ctx, ix, iy, 18);
+        if (iconType === "user") drawUserIcon(ctx, ix, iy, 18);
+        if (iconType === "chevron") drawChevron(ctx, ix, iy + 2, 16);
+      }
     }
 
     let rowY = y + 50;
     for (const row of rows) {
       ctx.save();
-      ctx.fillStyle = "rgba(27,30,35,0.95)";
-      drawRoundedRect(ctx, x + 12, rowY - 10, w - 24, 34, 9);
+      ctx.fillStyle = "#1f2328";
+      drawRoundedRect(ctx, x + 12, rowY - 10, w - 24, 36, 9);
       ctx.fill();
       ctx.restore();
 
       if (mode === "stats") {
         const { number, unit } = splitValue(row.value);
         ctx.save();
-        ctx.fillStyle = "rgba(18,20,24,0.85)";
-        drawRoundedRect(ctx, x + 20, rowY - 8, 44, 28, 7);
+        ctx.fillStyle = "#171a1f";
+        drawRoundedRect(ctx, x + 20, rowY - 8, 46, 28, 7);
         ctx.fill();
         ctx.restore();
         ctx.fillStyle = "#E6E8EC";
         ctx.font = fontStack(14, "bold");
-        ctx.fillText(row.label, x + 32, rowY - 2);
+        ctx.fillText(row.label, x + 33, rowY - 2);
         ctx.fillStyle = "#E7EAEE";
         ctx.textAlign = "left";
-        ctx.font = fontStack(16, "bold");
-        ctx.fillText(number, x + 76, rowY - 4);
+        ctx.font = fontStack(18, "bold");
+        ctx.fillText(number, x + 78, rowY - 5);
         if (unit) {
-          ctx.font = fontStack(14, "italic");
+          ctx.font = fontStack(15, "italic");
           ctx.fillStyle = "#BFC4CB";
-          ctx.fillText(` ${unit}`, x + 76 + ctx.measureText(number).width + 2, rowY - 2);
+          ctx.fillText(` ${unit}`, x + 78 + ctx.measureText(number).width + 2, rowY - 2);
         }
       } else {
         ctx.fillStyle = "#E0E3E7";
@@ -338,9 +423,14 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.textAlign = "left";
 
         const iconX = x + 18;
-        const iconY = rowY - 10;
-        if (row.icon === "hash") drawHashIcon(ctx, iconX, iconY, 22);
-        if (row.icon === "speaker") drawSpeakerIcon(ctx, iconX, iconY + 2, 22);
+        const iconY = rowY - 11;
+        const rowEmoji = emojiMap[row.icon];
+        if (rowEmoji) {
+          drawEmojiImage(ctx, rowEmoji, iconX - 2, iconY, 22);
+        } else {
+          if (row.icon === "hash") drawHashIcon(ctx, iconX, iconY, 22);
+          if (row.icon === "speaker") drawSpeakerIcon(ctx, iconX, iconY + 2, 22);
+        }
       }
       rowY += 40;
     }
@@ -367,7 +457,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   ], "user", "stats");
 
   const midY = statsY + boxH + 18;
-  const midH = 126;
+  const midH = 130;
   const midW = (cardW - 52 - gap) / 2;
   drawStatsBox(headerX, midY, midW, midH, "Top Members", [
     {
@@ -399,15 +489,15 @@ module.exports = async function renderServerStatsCanvas(data) {
   const chartW = cardW - 52;
   const chartH = cardH - (chartY - cardY) - 22;
   ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.38)";
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetY = 6;
-  ctx.fillStyle = "rgba(44,48,54,0.98)";
+  ctx.shadowColor = "rgba(0,0,0,0.4)";
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 7;
+  ctx.fillStyle = "#343a41";
   drawRoundedRect(ctx, chartX, chartY, chartW, chartH, 16);
   ctx.fill();
   ctx.restore();
   ctx.save();
-  ctx.strokeStyle = "rgba(255,255,255,0.03)";
+  ctx.strokeStyle = "rgba(255,255,255,0.04)";
   ctx.lineWidth = 1;
   drawRoundedRect(ctx, chartX + 0.5, chartY + 0.5, chartW - 1, chartH - 1, 16);
   ctx.stroke();
@@ -423,7 +513,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const plotW = chartW - 32;
   const plotH = chartH - 96;
 
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 1;
   for (let i = 0; i <= 4; i += 1) {
     const y = plotY + (plotH / 4) * i;
@@ -463,13 +553,13 @@ module.exports = async function renderServerStatsCanvas(data) {
   const legendY = chartY + 22;
   ctx.fillStyle = "#49C463";
   ctx.beginPath();
-  ctx.arc(chartX + chartW - 230, legendY + 3, 6, 0, Math.PI * 2);
+  ctx.arc(chartX + chartW - 230, legendY + 3, 7, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#DCE0E4";
   ctx.fillText("Message", chartX + chartW - 214, legendY + 3);
   ctx.fillStyle = "#E25598";
   ctx.beginPath();
-  ctx.arc(chartX + chartW - 128, legendY + 3, 6, 0, Math.PI * 2);
+  ctx.arc(chartX + chartW - 128, legendY + 3, 7, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = "#DCE0E4";
   ctx.fillText("Voice", chartX + chartW - 112, legendY + 3);
@@ -477,17 +567,23 @@ module.exports = async function renderServerStatsCanvas(data) {
   const tz = data.timezoneLabel ? `Timezone: ${data.timezoneLabel}` : "Timezone: Local";
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(`Server Lookback: Last 14 days — ${tz}`, chartX + 16, chartY + chartH - 30);
+  ctx.fillText(`Server Lookback: Last 14 days - ${tz}`, chartX + 16, chartY + chartH - 30);
   ctx.textAlign = "right";
   const statbotTextX = chartX + chartW - 16;
-  ctx.fillText("Powered by Statbot", statbotTextX, chartY + chartH - 30);
+  ctx.fillText("Powered by Vinili & CaffÃ¨ Bot", statbotTextX, chartY + chartH - 30);
   ctx.textAlign = "left";
-  ctx.save();
-  ctx.fillStyle = "#2ECC71";
-  ctx.beginPath();
-  ctx.arc(statbotTextX - 140, chartY + chartH - 26, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
+  if (data.botIconUrl) {
+    const botIcon = await loadImageFromUrl(data.botIconUrl);
+    if (botIcon) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(statbotTextX - 240 + 10, chartY + chartH - 30, 10, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(botIcon, statbotTextX - 240, chartY + chartH - 40, 20, 20);
+      ctx.restore();
+    }
+  }
 
   return canvas.toBuffer("image/png");
 };

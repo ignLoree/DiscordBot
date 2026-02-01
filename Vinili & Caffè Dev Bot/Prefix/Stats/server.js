@@ -66,9 +66,10 @@ module.exports = {
 
     const buffer = await renderServerStatsCanvas({
       guildName: message.guild.name,
-      guildIconUrl: message.guild.iconURL({ size: 128 }),
+      guildIconUrl: message.guild.iconURL({ size: 128, extension: "png" }),
       createdAt: message.guild.createdAt,
       joinedAt: message.guild.members.me?.joinedAt || message.guild.joinedAt,
+      botIconUrl: message.guild.members.me?.user?.displayAvatarURL({ size: 64 }),
       totals: stats.totals,
       contributors: stats.contributors,
       series: {

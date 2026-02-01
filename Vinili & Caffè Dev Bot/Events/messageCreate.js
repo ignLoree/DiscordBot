@@ -10,6 +10,7 @@ const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
+const { recordMessage } = require('../Services/Stats/statsService');
 
 module.exports = {
     name: "messageCreate",
@@ -22,6 +23,11 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
+        try {
+            await recordMessage(message);
+        } catch (error) {
+            logEventError(client, 'STATS MESSAGE ERROR', error);
+        }
         try {
             await handleAfk(message);
         } catch (error) {
