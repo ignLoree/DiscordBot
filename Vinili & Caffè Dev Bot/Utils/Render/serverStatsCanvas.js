@@ -70,6 +70,12 @@ function drawEmojiImage(ctx, image, x, y, size) {
   ctx.restore();
 }
 
+function drawEmojiCentered(ctx, image, cx, cy, size) {
+  if (!image) return;
+  const half = size / 2;
+  drawEmojiImage(ctx, image, cx - half, cy - half, size);
+}
+
 function formatCompact(value) {
   if (value == null) return "0";
   const num = Number(value) || 0;
@@ -192,22 +198,30 @@ function drawBinocularIcon(ctx, x, y, size) {
   ctx.strokeStyle = "#9BA2AC";
   ctx.lineWidth = 2;
   const w = size;
-  const h = size * 0.8;
-  const r = w * 0.18;
+  const h = size * 0.9;
+  const r = w * 0.22;
   const leftX = x;
   const rightX = x + w * 0.55;
-  const topY = y + h * 0.1;
+  const topY = y + h * 0.12;
   ctx.beginPath();
-  ctx.roundRect(leftX, topY, w * 0.45, h * 0.75, r);
+  ctx.roundRect(leftX, topY, w * 0.45, h * 0.78, r);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
-  ctx.roundRect(rightX, topY, w * 0.45, h * 0.75, r);
+  ctx.roundRect(rightX, topY, w * 0.45, h * 0.78, r);
   ctx.fill();
   ctx.stroke();
   ctx.beginPath();
-  ctx.roundRect(x + w * 0.33, y, w * 0.34, h * 0.35, r);
+  ctx.roundRect(x + w * 0.34, y, w * 0.32, h * 0.36, r);
   ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = "#7E8792";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(leftX + w * 0.22, topY + h * 0.62, w * 0.14, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(rightX + w * 0.22, topY + h * 0.62, w * 0.14, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
@@ -373,12 +387,14 @@ module.exports = async function renderServerStatsCanvas(data) {
     ctx.fillText(title, x + 16, y + 12);
 
     if (iconType) {
-      const ix = x + w - 30;
-      const iy = y + 12;
+      const centerX = x + w - 22;
+      const centerY = y + 24;
       const emoji = emojiMap[iconType];
       if (emoji) {
-        drawEmojiImage(ctx, emoji, ix - 2, iy - 2, 20);
+        drawEmojiCentered(ctx, emoji, centerX, centerY, 18);
       } else {
+        const ix = x + w - 30;
+        const iy = y + 12;
         if (iconType === "hash") drawHashIcon(ctx, ix, iy, 18);
         if (iconType === "speaker") drawSpeakerIcon(ctx, ix, iy, 18);
         if (iconType === "user") drawUserIcon(ctx, ix, iy, 18);
@@ -422,12 +438,14 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.fillText(row.value, x + w - 24, rowY - 2);
         ctx.textAlign = "left";
 
-        const iconX = x + 18;
-        const iconY = rowY - 11;
+        const iconCenterX = x + 30;
+        const iconCenterY = rowY + 8;
         const rowEmoji = emojiMap[row.icon];
         if (rowEmoji) {
-          drawEmojiImage(ctx, rowEmoji, iconX - 2, iconY, 22);
+          drawEmojiCentered(ctx, rowEmoji, iconCenterX, iconCenterY, 20);
         } else {
+          const iconX = x + 18;
+          const iconY = rowY - 11;
           if (row.icon === "hash") drawHashIcon(ctx, iconX, iconY, 22);
           if (row.icon === "speaker") drawSpeakerIcon(ctx, iconX, iconY + 2, 22);
         }
@@ -487,7 +505,7 @@ module.exports = async function renderServerStatsCanvas(data) {
   const chartX = headerX;
   const chartY = midY + midH + 18;
   const chartW = cardW - 52;
-  const chartH = cardH - (chartY - cardY) - 22;
+  const chartH = cardH - (chartY - cardY) - 52;
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.4)";
   ctx.shadowBlur = 14;
@@ -565,22 +583,23 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.fillText("Voice", chartX + chartW - 112, legendY + 3);
 
   const tz = data.timezoneLabel ? `Timezone: ${data.timezoneLabel}` : "Timezone: Local";
+  const footerY = chartY + chartH + 24;
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(`Server Lookback: Last 14 days - ${tz}`, chartX + 16, chartY + chartH - 30);
+  ctx.fillText(`Server Lookback: Last 14 days — ${tz}`, chartX + 16, footerY);
   ctx.textAlign = "right";
   const statbotTextX = chartX + chartW - 16;
-  ctx.fillText("Powered by Vinili & Caffè Bot", statbotTextX, chartY + chartH - 30);
+  ctx.fillText("Powered by Vinili & Caffè Bot", statbotTextX, footerY);
   ctx.textAlign = "left";
   if (data.botIconUrl) {
     const botIcon = await loadImageFromUrl(data.botIconUrl);
     if (botIcon) {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(statbotTextX - 240 + 10, chartY + chartH - 30, 10, 0, Math.PI * 2);
+      ctx.arc(statbotTextX - 250 + 10, footerY, 10, 0, Math.PI * 2);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(botIcon, statbotTextX - 240, chartY + chartH - 40, 20, 20);
+      ctx.drawImage(botIcon, statbotTextX - 250, footerY - 10, 20, 20);
       ctx.restore();
     }
   }
