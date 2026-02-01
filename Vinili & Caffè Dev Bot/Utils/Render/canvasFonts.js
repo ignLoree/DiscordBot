@@ -13,14 +13,14 @@ const FONT_STACK = [
   `"${PRIMARY_FONT}"`,
   `"${TIBETAN_FONT}"`,
   `"${SYMBOLS_FONT}"`,
-  `"${COLOR_EMOJI_FONT}"`,
-  `"${EMOJI_FONT}"`,
   `"${FRAKTUR_FONT}"`,
   `"${MATH_FONT}"`,
   `"${FALLBACK_FONT}"`,
   "\"Segoe UI Symbol\"",
   "\"Segoe UI Emoji\"",
   "\"Arial Unicode MS\"",
+  `"${COLOR_EMOJI_FONT}"`,
+  `"${EMOJI_FONT}"`,
   "sans-serif"
 ].join(", ");
 
