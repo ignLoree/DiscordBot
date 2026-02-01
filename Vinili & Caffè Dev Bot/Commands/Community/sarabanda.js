@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { spawn } = require('child_process');
 const { Readable } = require('stream');
 const {
@@ -12,6 +12,7 @@ const axios = require('axios');
 const { addPoints, getLeaderboard } = require('../../Services/Sarabanda/sarabandaStatsService');
 
 const ACTIVE_GAMES = new Map();
+const SARABANDA_AUDIO_CACHE = new Map();
 const MAX_CLIP_SECONDS = 10;
 const GUESS_WINDOW_MS = 60000;
 const SEARCH_TERMS = [
@@ -269,13 +270,26 @@ module.exports = {
       .setDescription('Indovina la canzone! Hai 60 secondi per rispondere.')
       .setColor('#6f4e37');
 
+    const buttonRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`sarabanda_audio_${interaction.id}`)
+        .setLabel('🎧 Ascolta')
+        .setStyle(ButtonStyle.Secondary)
+    );
+
     const voiceChannel = interaction.member?.voice?.channel;
     const listeners = voiceChannel?.members?.filter(m => !m.user.bot) || null;
     const canPlayInVoice = voiceChannel && listeners && listeners.size > 0;
 
-    await interaction.editReply({
+    const response = await interaction.editReply({
       embeds: [embed],
+      components: [buttonRow],
       files: canPlayInVoice ? [] : [{ attachment: clipBuffer, name: 'sarabanda.mp3' }]
+    });
+
+    SARABANDA_AUDIO_CACHE.set(interaction.id, {
+      buffer: clipBuffer,
+      createdAt: Date.now()
     });
 
     if (canPlayInVoice) {
@@ -285,6 +299,7 @@ module.exports = {
           guildId: voiceChannel.guild.id,
           adapterCreator: voiceChannel.guild.voiceAdapterCreator
         });
+        connection.on('error', () => {});
         const player = createAudioPlayer();
         const resource = createAudioResource(Readable.from(clipOgg), { inputType: StreamType.OggOpus });
         player.play(resource);
@@ -341,11 +356,40 @@ module.exports = {
 
     collector.on('end', async (_collected, reason) => {
       ACTIVE_GAMES.delete(channelId);
+      SARABANDA_AUDIO_CACHE.delete(interaction.id);
       if (reason === 'guessed') return;
       const answerText = `**${track.trackName}** — ${track.artistName}`;
       await interaction.channel.send(
         `<:vegax:1443934876440068179> Tempo scaduto! La risposta era: ${answerText}`
       );
+    });
+
+    const buttonCollector = response.createMessageComponentCollector({
+      time: GUESS_WINDOW_MS,
+      filter: (i) => i.customId === `sarabanda_audio_${interaction.id}`
+    });
+    buttonCollector.on('collect', async (btn) => {
+      const cached = SARABANDA_AUDIO_CACHE.get(interaction.id);
+      if (!cached?.buffer) {
+        return btn.reply({ content: '<:vegax:1443934876440068179> Audio non disponibile.', flags: 1 << 6 });
+      }
+      await btn.reply({
+        content: '🎧 Ecco il frammento audio.',
+        files: [{ attachment: cached.buffer, name: 'sarabanda.mp3' }],
+        flags: 1 << 6
+      });
+    });
+    buttonCollector.on('end', async () => {
+      try {
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`sarabanda_audio_${interaction.id}`)
+            .setLabel('🎧 Ascolta')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true)
+        );
+        await response.edit({ components: [row] });
+      } catch {}
     });
   }
 };
