@@ -283,12 +283,12 @@ module.exports = {
 
     const response = await interaction.editReply({
       embeds: [embed],
-      components: [buttonRow],
-      files: canPlayInVoice ? [] : [{ attachment: clipBuffer, name: 'sarabanda.mp3' }]
+      components: [buttonRow]
     });
 
     SARABANDA_AUDIO_CACHE.set(interaction.id, {
       buffer: clipBuffer,
+      ogg: clipOgg,
       createdAt: Date.now()
     });
 
@@ -370,12 +370,12 @@ module.exports = {
     });
     buttonCollector.on('collect', async (btn) => {
       const cached = SARABANDA_AUDIO_CACHE.get(interaction.id);
-      if (!cached?.buffer) {
+      if (!cached?.ogg && !cached?.buffer) {
         return btn.reply({ content: '<:vegax:1443934876440068179> Audio non disponibile.', flags: 1 << 6 });
       }
       await btn.reply({
         content: '🎧 Ecco il frammento audio.',
-        files: [{ attachment: cached.buffer, name: 'sarabanda.mp3' }],
+        files: [{ attachment: cached.ogg || cached.buffer, name: cached.ogg ? 'sarabanda.ogg' : 'sarabanda.mp3' }],
         flags: 1 << 6
       });
     });
