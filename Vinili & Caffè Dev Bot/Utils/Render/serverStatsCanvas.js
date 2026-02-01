@@ -420,20 +420,23 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.fillStyle = "#E6E8EC";
         ctx.font = fontStack(14, "bold");
         ctx.fillText(row.label, x + 30, rowY - 2);
-        ctx.textAlign = "right";
+        const valueX = x + w - 24;
+        const unitText = unit ? ` ${unit}` : "";
+        ctx.font = fontStack(15, "italic");
+        const unitWidth = unitText ? ctx.measureText(unitText).width : 0;
+        ctx.font = fontStack(18, "bold");
+        const numWidth = ctx.measureText(number).width;
+        const totalWidth = numWidth + unitWidth;
+        const startX = valueX - totalWidth;
+        ctx.textAlign = "left";
         ctx.fillStyle = "#E7EAEE";
         ctx.font = fontStack(18, "bold");
-        const valueX = x + w - 24;
-        ctx.fillText(number, valueX, rowY - 5);
-        if (unit) {
-          const numWidth = ctx.measureText(number).width;
-          ctx.font = fontStack(15, "italic");
+        ctx.fillText(number, startX, rowY - 5);
+        if (unitText) {
           ctx.fillStyle = "#BFC4CB";
-          ctx.fillText(` ${unit}`, valueX + 2, rowY - 2);
-          ctx.fillStyle = "#E7EAEE";
-          ctx.font = fontStack(18, "bold");
+          ctx.font = fontStack(15, "italic");
+          ctx.fillText(unitText, startX + numWidth, rowY - 2);
         }
-        ctx.textAlign = "left";
       } else {
         ctx.fillStyle = "#E0E3E7";
         ctx.font = fontStack(16, "bold");
