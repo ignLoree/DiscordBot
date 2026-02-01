@@ -8,10 +8,10 @@ module.exports = {
         .addUserOption(option =>
             option
                 .setName('manager')
-                .setDescription('L’utente con cui stai facendo la partnership')
+                .setDescription('L\'utente con cui stai facendo la partnership.')
                 .setRequired(true)
         ),
-        
+
     async execute(interaction) {
         const manager = interaction.options.getUser('manager');
         const allowedRoles = ['1442568905582317740']
@@ -21,6 +21,18 @@ module.exports = {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
+                        .setColor("Red")
+                ],
+                flags: 1 << 6
+            });
+        }
+        const userRoles = ['1442568949605597264']
+        const hasUserRole = hasAnyRole(interaction.manager, userRoles);
+        if (!hasUserRole) {
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription('<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!')
                         .setColor("Red")
                 ],
                 flags: 1 << 6
