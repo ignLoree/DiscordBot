@@ -331,8 +331,8 @@ module.exports = async function renderServerStatsCanvas(data) {
 
   ctx.font = fontStack(18);
   ctx.fillStyle = "#B8BDC5";
-  drawBinocularIcon(ctx, headerOffsetX, headerY + 42, 18);
-  ctx.fillText("Server Overview", headerOffsetX + 26, headerY + 40);
+  drawBinocularIcon(ctx, headerOffsetX, headerY + 43, 16);
+  ctx.fillText("Server Overview", headerOffsetX + 24, headerY + 40);
 
   const pillY = headerY + 6;
   const pillH = 40;
@@ -420,7 +420,7 @@ module.exports = async function renderServerStatsCanvas(data) {
         ctx.fillStyle = "#E6E8EC";
         ctx.font = fontStack(14, "bold");
         ctx.fillText(row.label, x + 30, rowY - 2);
-        const valueX = x + w - 24;
+        const valueX = x + w - 28;
         const unitText = unit ? ` ${unit}` : "";
         ctx.font = fontStack(15, "italic");
         const unitWidth = unitText ? ctx.measureText(unitText).width : 0;
@@ -440,17 +440,17 @@ module.exports = async function renderServerStatsCanvas(data) {
       } else {
         ctx.fillStyle = "#E0E3E7";
         ctx.font = fontStack(16, "bold");
-        ctx.fillText(row.label, x + 48, rowY - 2);
+        ctx.fillText(row.label, x + 54, rowY - 2);
         ctx.fillStyle = "#E7EAEE";
         ctx.textAlign = "right";
         ctx.fillText(row.value, x + w - 24, rowY - 2);
         ctx.textAlign = "left";
 
-        const iconCenterX = x + 30;
+        const iconCenterX = x + 34;
         const iconCenterY = rowY + 8;
         const rowEmoji = emojiMap[row.icon];
         if (rowEmoji) {
-          drawEmojiCentered(ctx, rowEmoji, iconCenterX, iconCenterY, 20);
+          drawEmojiCentered(ctx, rowEmoji, iconCenterX, iconCenterY, 22);
         } else {
           const iconX = x + 18;
           const iconY = rowY - 11;
@@ -595,19 +595,24 @@ module.exports = async function renderServerStatsCanvas(data) {
   ctx.font = fontStack(14);
   ctx.fillStyle = "rgba(255,255,255,0.7)";
   ctx.fillText(`Server Lookback: Last 14 days — ${tz}`, chartX + 16, footerY);
+  const footerText = "Powered by Vinili & Caffè Bot";
   ctx.textAlign = "right";
   const statbotTextX = chartX + chartW - 16;
-  ctx.fillText("Powered by Vinili & Caffè Bot", statbotTextX, footerY);
+  ctx.fillText(footerText, statbotTextX, footerY);
   ctx.textAlign = "left";
   if (data.botIconUrl) {
     const botIcon = await loadImageFromUrl(data.botIconUrl);
     if (botIcon) {
+      const textWidth = ctx.measureText(footerText).width;
+      const iconSize = 20;
+      const iconX = statbotTextX - textWidth - 8 - iconSize;
+      const iconY = footerY - iconSize + 4;
       ctx.save();
       ctx.beginPath();
-      ctx.arc(statbotTextX - 250 + 10, footerY, 10, 0, Math.PI * 2);
+      ctx.arc(iconX + iconSize / 2, footerY - 2, iconSize / 2, 0, Math.PI * 2);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(botIcon, statbotTextX - 250, footerY - 10, 20, 20);
+      ctx.drawImage(botIcon, iconX, iconY, iconSize, iconSize);
       ctx.restore();
     }
   }

@@ -28,7 +28,12 @@ async function resolveChannelLabel(guild, channelId) {
     }
   }
   if (!channel) return "Unknown";
-  return channel.name ? `#${channel.name}` : "Unknown";
+  if (!channel.name) return "Unknown";
+  return `#${channel.name}`;
+}\\uFE0F]/gu, "")
+    .replace(/\\s{2,}/g, " ")
+    .trim();
+  return cleaned ? `#${cleaned}` : "Unknown";
 }
 
 module.exports = {

@@ -1,13 +1,15 @@
 const fs = require("fs");
 const path = require("path");
 
-const PRIMARY_FONT = "Noto Sans";
+const PRIMARY_FONT = "Mojangles";
+const SECONDARY_FONT = "Noto Sans";
 const SYMBOLS_FONT = "Noto Sans Symbols2";
 const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const FONT_STACK = [
   `"${PRIMARY_FONT}"`,
+  `"${SECONDARY_FONT}"`,
   `"${SYMBOLS_FONT}"`,
   `"${FRAKTUR_FONT}"`,
   `"${MATH_FONT}"`,
@@ -22,14 +24,21 @@ let registered = false;
 
 function registerCanvasFonts(canvasModule) {
   if (registered || !canvasModule?.registerFont) return;
+  const mojanglesPath = path.join(__dirname, "..", "..", "UI", "Fonts", "Mojangles.ttf");
   const notoPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSans-Regular.ttf");
   const symbolsPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSansSymbols2-Regular.ttf");
   const frakturPath = path.join(__dirname, "..", "..", "UI", "Fonts", "UnifrakturMaguntia-Regular.ttf");
   const mathPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSansMath-Regular.ttf");
   const yuPath = path.join(__dirname, "..", "..", "UI", "Fonts", "YuGothR.ttc");
+  if (fs.existsSync(mojanglesPath)) {
+    try {
+      canvasModule.registerFont(mojanglesPath, { family: PRIMARY_FONT });
+    } catch {
+    }
+  }
   if (fs.existsSync(notoPath)) {
     try {
-      canvasModule.registerFont(notoPath, { family: PRIMARY_FONT });
+      canvasModule.registerFont(notoPath, { family: SECONDARY_FONT });
     } catch {
     }
   }
