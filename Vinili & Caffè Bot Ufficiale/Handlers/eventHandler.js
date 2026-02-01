@@ -1,6 +1,7 @@
 ﻿const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
+const isDev = process.cwd().toLowerCase().includes("dev bot");
 
 function getBotRoots() {
     const cwd = process.cwd();
