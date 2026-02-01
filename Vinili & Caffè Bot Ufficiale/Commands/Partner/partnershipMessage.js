@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
+const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nella categoria partnership.')
+                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nella categoria ticket.')
                         .setColor("Red")
                 ],
                 flags: 1 << 6

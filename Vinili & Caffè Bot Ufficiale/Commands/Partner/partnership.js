@@ -16,7 +16,7 @@ module.exports = {
         const manager = interaction.options.getUser('manager');
         const allowedRoles = ['1442568905582317740']
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-        if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        if (!hasAllowedRole) {
             return interaction.reply({
                 embeds: [
                     new EmbedBuilder()

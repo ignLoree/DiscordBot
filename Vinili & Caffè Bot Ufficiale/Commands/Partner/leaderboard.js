@@ -11,7 +11,7 @@ module.exports = {
         await interaction.deferReply()
         const allowedRoles = ['1442568894349840435', '1442568896237277295', '1442568905582317740'];
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-        if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        if (!hasAllowedRole) {
             return await interaction.editReply({
                 embeds: [
                     new EmbedBuilder()
