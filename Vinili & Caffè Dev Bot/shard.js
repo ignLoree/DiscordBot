@@ -16,7 +16,7 @@ try {
         logger.error(`[SHARD LOCK] Another ${botKey} instance is already running (pid ${existingPid}).`);
         process.exit(1);
       } catch {
-        Stale PID file, continue.
+        // Stale PID file, continue.
       }
     }
   }

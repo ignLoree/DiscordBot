@@ -85,7 +85,7 @@ module.exports = {
         .setTitle(`${resolved.artist} - ${album.name}`)
         .setDescription(`Requested by ${displayName}`);
 
-      Build album info embed for back button
+      // Build album info embed for back button
       const releaseRaw = album?.wiki?.published || album?.releasedate || "";
       const releaseDate = formatReleaseDate(releaseRaw) || "No data";
       const label = parseLabel(album?.wiki?.content) || parseLabel(album?.wiki?.summary);

@@ -14,8 +14,8 @@ const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
-        Cross-process dedupe: avoid handling the same message multiple times
-        if multiple bot processes are accidentally running.
+        // Cross-process dedupe: avoid handling the same message multiple times
+        // if multiple bot processes are accidentally running.
         try {
             const lockDir = path.join(path.dirname(process.cwd()), '.message_locks');
             const lockKey = `${message.guildId || 'dm'}_${message.id}`;
@@ -31,7 +31,7 @@ module.exports = {
                 try { fs.unlinkSync(lockPath); } catch { }
             }, 1000 * 60 * 10);
         } catch {
-            If lock fails, continue (best-effort).
+            // If lock fails, continue (best-effort).
         }
         try {
             const handledDisboard = await handleDisboardBump(message, client);
@@ -428,7 +428,7 @@ async function handleDisboardBump(message, client) {
     if (!disboard) return false;
     if (!message.guild) return false;
     if (!message.author || message.author.id !== disboard.botId) return false;
-    Cross-process dedupe to avoid multi-process double/triple sends.
+    // Cross-process dedupe to avoid multi-process double/triple sends.
     const lockDir = path.join(path.dirname(process.cwd()), '.disboard_locks');
     const lockKey = `${message.guild.id}_${message.id}`;
     const lockPath = path.join(lockDir, `${lockKey}.lock`);

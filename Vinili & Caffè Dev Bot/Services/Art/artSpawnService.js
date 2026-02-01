@@ -54,7 +54,7 @@ async function fetchArtImage(config) {
     }
   }
 
-  Fallback: waifu.pics
+  // Fallback: waifu.pics
   try {
     const res = await axios.get('https://api.waifu.pics/sfw/waifu', { timeout: 12000 });
     const url = res.data?.url;
@@ -84,7 +84,7 @@ async function spawnArtIfPossible(channel, client, options = {}) {
   if (!channel?.id) return { ok: false, reason: 'channel' };
   if (String(config.channelId) !== String(channel.id)) return { ok: false, reason: 'not_target' };
 
-  Cross-process lock to avoid double spawn
+  // Cross-process lock to avoid double spawn
   const lockDir = require('path').join(require('path').dirname(process.cwd()), '.art_spawn_locks');
   const lockPath = require('path').join(lockDir, `${channel.id}.lock`);
   try {
@@ -100,7 +100,7 @@ async function spawnArtIfPossible(channel, client, options = {}) {
       try { fs.unlinkSync(lockPath); } catch {}
     }, 1000 * 30);
   } catch {
-    best-effort
+    // best-effort
   }
 
   const now = Date.now();
