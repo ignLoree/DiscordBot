@@ -20,6 +20,15 @@ function getBotIconUrl(guild) {
   }
   return null;
 }
+function getGlobalBotIconUrl() {
+  const botUser = global?.botClient?.user;
+  if (botUser && typeof botUser.displayAvatarURL === "function") {
+    try {
+      return botUser.displayAvatarURL({ size: 64 });
+    } catch {}
+  }
+  return null;
+}
 function getGuildIconUrl(guild) {
   if (!guild) return null;
   try {
@@ -74,8 +83,12 @@ function installEmbedFooterPatch() {
   const originalToJSON = EmbedBuilder.prototype.toJSON;
   EmbedBuilder.prototype.toJSON = function toJSONWithDefaultFooter(...args) {
     const data = originalToJSON.apply(this, args);
+    const iconURL = getGlobalBotIconUrl();
     if (!data.footer) {
       data.footer = { text: DEFAULT_FOOTER_TEXT };
+    }
+    if (iconURL && !data.footer.icon_url) {
+      data.footer.icon_url = iconURL;
     }
     if (!data.color) {
       const colorValue = hexToInt(DEFAULT_COLOR);

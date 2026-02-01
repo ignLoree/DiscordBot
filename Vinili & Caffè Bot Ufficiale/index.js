@@ -202,7 +202,7 @@ if (shouldUseCluster) {
     client.handleTriggers(triggerFiles, "./Triggers")
     await client.handleCommands(commandFolders, "./Commands");
     await client.prefixCommands(pcommandFolders, './Prefix');
-    if (typeof client.logBootTables === 'function') {
+    if (!isDev && typeof client.logBootTables === 'function') {
         client.logBootTables();
     }
     client.login(client.config.token).catch((error) => {
