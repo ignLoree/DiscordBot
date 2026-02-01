@@ -26,6 +26,7 @@ module.exports = {
                 flags: 1 << 6
             });
         }
+        /*
         const userRoles = ['1442568949605597264']
         const hasUserRole = hasAnyRole(interaction.manager, userRoles);
         if (!hasUserRole) {
@@ -38,6 +39,7 @@ module.exports = {
                 flags: 1 << 6
             });
         }
+            */
         const modal = new ModalBuilder()
             .setCustomId(`partnershipModal_${manager.id}`)
             .setTitle('Invia Partnership');
