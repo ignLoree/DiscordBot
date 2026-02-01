@@ -183,7 +183,17 @@ client.pcommands = new Collection();
 client.aliases = new Collection();
 client.buttons = new Collection();
 client.snipes = new Map();
-client.cluster = new ClusterClient(client);
+const shouldUseCluster = Boolean(
+    process.env.CLUSTER_MANAGER_MODE ||
+    process.env.CLUSTER_ID ||
+    process.env.SHARDING_MANAGER ||
+    process.send
+);
+if (shouldUseCluster) {
+    client.cluster = new ClusterClient(client);
+} else {
+    client.cluster = null;
+}
 (async () => {
     for (file of functions) {
         require(`./Handlers/${file}`)(client);
