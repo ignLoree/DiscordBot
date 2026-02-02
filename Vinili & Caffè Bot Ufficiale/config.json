@@ -12,7 +12,8 @@
     "disabledCommands": [],
     "disabledSubcommands": {
         "ticket": ["setup"],
-        "set": ["autojoin"]
+        "set": ["autojoin"],
+        "pause": ["accept"]
     }
 }
 

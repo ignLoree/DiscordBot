@@ -283,14 +283,14 @@ function buildMergedLines(slashCommands, prefixCommands) {
         if (!cmd?.name) continue;
         const prefix = prefixMap.get(cmd.name);
         if (prefix) {
-            lines.push(`� /${cmd.name} � ${cmd.description} (prefix: ${prefix.prefix}${prefix.name})`);
+            lines.push(`• /${cmd.name} • ${cmd.description}︲\`${prefix.prefix}${prefix.name}\``);
             prefixMap.delete(cmd.name);
         } else {
-            lines.push(`� /${cmd.name} � ${cmd.description}`);
+            lines.push(`• /${cmd.name} • ${cmd.description}`);
         }
     }
     for (const cmd of Array.from(prefixMap.values()).sort((a, b) => a.name.localeCompare(b.name))) {
-        lines.push(`� ${cmd.prefix}${cmd.name} � ${cmd.description}`);
+        lines.push(`• ${cmd.prefix}${cmd.name} • ${cmd.description}`);
     }
     return lines;
 }
@@ -315,6 +315,7 @@ function buildPartnerManagerEmbed() {
                     <:dot:1443660294596329582> \`/partnership\` - Per fare una partnership, bisogna inserire il manager (colui con cui state facendo la partner) e premere invio, nel riquadro inserire la descrzione e fare invia. (Solo ticket e <#1442569209849843823>)
                     <:dot:1443660294596329582> \`Partnership\` - Cliccando col tasto destro direttamente sul messaggio con la descrizione da mettere vi uscira "App > Partnership" il bot autocompilera il tutto e a voi bastera premere invio. (Solo ticket)
                     <:dot:1443660294596329582> \`/leaderboard\` - Per mostrare la classifica delle partnership (Sperimentale)
+                    <:dot:1443660294596329582> \`/pausa request\` - Per chiedere una pausa all'High Staff. (In partner chat)
                     
                     <:attentionfromvega:1443651874032062505> Per segnalare un bug col bot apri un <#1442569095068254219> \`HIGH STAFF\``)
         .setColor('#6f4e37');
