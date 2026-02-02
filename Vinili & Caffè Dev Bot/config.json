@@ -1,20 +1,16 @@
 {
-    "token": "",
-    "mongoURL": "",
-    "boostChannelId": "1442569123426074736", 
+    "boostChannelId": "1466489300735492299", 
     "clientid": "1466495522474037463",
     "guildid": "1462458562507964584",
     "devid": "295500038401163264",
     "color": "000000",
     "passSeasonId": "season_1",
-    "staffRoleIds": ["1442568910070349985"],
-    "prefixStaffRoleIds": ["1442568905582317740"],
-    "adminRoleIds": ["1442568894349840435"],
+    "staffRoleIds": ["1466489067914006551"],
+    "prefixStaffRoleIds": ["1466489065804398724"],
+    "adminRoleIds": ["1466489057768116442"],
     "disabledPrefixCommands": [],
     "disabledCommands": [],
     "disabledSubcommands": {
-        "ticket": ["setup"],
-        "set": ["autojoin"]
     }
 }
 

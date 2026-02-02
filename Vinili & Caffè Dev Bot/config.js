@@ -10,13 +10,13 @@ module.exports = {
   spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "",
   spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
   developers: "295500038401163264",
-  partnerManager: "1442568905582317740",
-  slashCommandLoggingChannel: "1442577274783142039",
-  prefixCommandLoggingChannel: "1442577274783142039",
-  commandErrorChannel: "1442577274783142039",
-  passCompleteChannelId: "1442569130573303898",
-  passCompleteRoleId: "1460051416482582628",
-  gamblingLogChannelId: "1442577274783142039",
+  partnerManager: "1466489065804398724",
+  slashCommandLoggingChannel: "1466489404867481802",
+  prefixCommandLoggingChannel: "1466489404867481802",
+  commandErrorChannel: "1466489404867481802",
+  passCompleteChannelId: "1466489288907554817",
+  passCompleteRoleId: "1466489072750166047",
+  gamblingLogChannelId: "1466489404867481802",
   noPermsMessage: `**Non hai** i permessi per fare questo comando!`,
   ownerOnlyCommand: `Questo comando è disponibile **solo** all'owner del bot!`,
   filterMessage: "Il tuo messaggio contiene una parola **blacklistata**!",
@@ -38,15 +38,15 @@ module.exports = {
 
   disboard: {
     botId: "302050872383242240",
-    reminderChannelId: "1442569154950332536",
+    reminderChannelId: "1466489313091916043",
     cooldownMinutes: 120,
     bumpSuccessPatterns: ["Bump done", "Bump successful"]
   },
 
   morningReminder: {
     enabled: true,
-    channelId: "1442569130573303898",
-    roleId: "1442569009567629375",
+    channelId: "1466489288907554817",
+    roleId: "1466489174797324551",
     hour: 9,
     minute: 0,
     questionsFile: "Data/morningQuestions.json"
@@ -54,7 +54,7 @@ module.exports = {
 
   tts: {
     enabled: true,
-    extraTextChannelIds: ["1442569187376763010"],
+    extraTextChannelIds: ["1466489330498535484"],
     lang: "it",
     maxChars: 1000,
     autojoin: true,
@@ -63,8 +63,8 @@ module.exports = {
   },
 
   engagement: {
-    channelId: "1442569130573303898",
-    roleId: "1443955529352478830",
+    channelId: "1466489288907554817",
+    roleId: "1466489180442988699",
     startHour: 8,
     endHour: 24,
     intervalMinutes: 30,
@@ -81,7 +81,7 @@ module.exports = {
   },
   engagementQuizLoop: {
     enabled: true,
-    channelId: "1460292772404920503",
+    channelId: "1466489322902651004",
     intervalMinutes: 10,
     startHour: 0,
     endHour: 24,
@@ -94,7 +94,7 @@ module.exports = {
     energyRefillDaily: 6,
     chatRewardCooldownSec: 60,
     minMsgLen: 4,
-    chatAllowedChannelIds: ["1442569130573303898", "1442569136067575809", "1442569138114662490", "1442569141717438495"],
+    chatAllowedChannelIds: ["1466489288907554817", "1442569136067575809", "1442569138114662490", "1442569141717438495"],
     chatTicketCapPerDay: 10,
     voiceTicketCapPerDay: 10,
     voiceTicketEveryMin: 10,
