@@ -47,7 +47,7 @@ module.exports = {
             <:dot:1443660294596329582> [**Cliccando qua**](https://www.paypal.com/paypalme/lorenzocorvagliaa) potrete **donare** tramite **PayPal**<:paypal:1329524292446191676>
             <:dot:1443660294596329582> Potete **donare** tramite **Nitro Boost** aprendo un <#1442569095068254219> \`HIGH STAFF\` <a:Boost_Cycle:1329504283007385642>
             <:dot:1443660294596329582> Potete **donare** tramite **Bot Premium** aprendo un <#1442569095068254219> \`HIGH STAFF\` <:premiumbot:1443670260216627341>`)
-                .setFooter({ text: `⚠️ Attenzione: Le donazioni non sono rimborsabili` }),
+                .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Le donazioni non sono rimborsabili` }),
 
             new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -196,7 +196,7 @@ module.exports = {
         > <:5751attentionfromvega:1443651874032062505> Per **candidarti** dovrai __cliccare__ il bottone in base al **ruolo** che vuoi __ricoprire__ 
 
         Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
-        <:1_:1444099163116535930> Avere almeno **__14 anni (compiuti)__**
+        <:1_:1444099163116535930> Avere almeno **__14 anni (compiùti)__**
         <:2_:1444099161673826368> Rispettare i **[ToS](https://discord.com/terms)** e le **[Linee Guida](https://discord.com/guidelines)** di **Discord**
         <:3_:1444099160294031471> Essere **maturi** e **attivi**
         <:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`),

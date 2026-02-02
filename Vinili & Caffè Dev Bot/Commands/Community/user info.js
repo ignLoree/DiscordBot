@@ -27,7 +27,7 @@ module.exports = {
     switch (sub) {
       case 'info':
         try {
-          if (!member) return interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`⚠️ Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
+          if (!member) return interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
           const perms = {
             administrator: 'Administrator',
             manageGuild: 'Manage Server',

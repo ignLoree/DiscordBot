@@ -186,7 +186,7 @@ module.exports = {
                     <:dot:1443660294596329582> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
                     <:dot:1443660294596329582> Possibilità di suggerire un **poll** tramite <#1442569095068254219> \`PERKS\`
                     <:dot:1443660294596329582> **Votare** per lo <@&1442568895251611924>`)
-                    .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 1€` }),
+                    .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Per ricevere i perks dovrai donare almeno 1€` }),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`),
@@ -203,7 +203,7 @@ module.exports = {
                     <:dot:1443660294596329582> **Ruolo Custom**
                     <:dot:1443660294596329582> **Stanza Privata**
                     <:dot:1443660294596329582> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**`)
-                    .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 6€` }),
+                    .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Per ricevere i perks dovrai donare almeno 6€` }),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`),

@@ -151,7 +151,7 @@ module.exports = {
     const spent = await spendCurrency({ guildId, userId, currency, amount });
     if (!spent) {
       await getOrCreateWallet({ guildId, userId });
-      return interaction.reply({ content: `❌ Saldo insufficiente per puntare ${amount} ${currencyLabel}.`, ephemeral: true });
+      return interaction.reply({ content: `<:vegax:1443934876440068179> Saldo insufficiente per puntare ${amount} ${currencyLabel}.`, ephemeral: true });
     }
     setCooldown(userId);
     let resultText = 'N/A';
@@ -232,7 +232,7 @@ module.exports = {
       const numero = interaction.options.getInteger('numero');
       if (puntata === 'numero' && (numero === null || typeof numero === 'undefined')) {
         await addCurrency({ guildId, userId, [currency]: amount });
-        return interaction.reply({ content: '❌ Devi specificare un numero (0-36).', ephemeral: true });
+        return interaction.reply({ content: '<:vegax:1443934876440068179> Devi specificare un numero (0-36).', ephemeral: true });
       }
       const reds = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
       const winChance = puntata === 'numero' ? 0.02 : puntata === 'verde' ? 0.04 : 0.42;

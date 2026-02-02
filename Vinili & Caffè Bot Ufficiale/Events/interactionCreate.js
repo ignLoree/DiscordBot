@@ -6,6 +6,7 @@ const { handleButtonInteraction } = require('./interaction/buttonHandlers');
 const { handlePartnerModal } = require('./interaction/partnerModal');
 const { handleSuggestionVote } = require('./interaction/suggestionHandlers');
 const { handleTicketInteraction } = require('./interaction/ticketHandlers');
+const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
 const { handlePassNav, handleClaimNode, handleChoosePath } = require('./interaction/passHandlers');
 const { handlePassGameAnswer } = require('./interaction/passGameHandlers');
 const { handleHelpMenu } = require('./interaction/helpHandlers');
@@ -26,6 +27,7 @@ module.exports = {
             if (await handleHelpMenu(interaction)) return;
             if (await handleLastFmInteraction(interaction)) return;
             if (await handleVerifyInteraction(interaction)) return;
+            if (await handleDmBroadcastModal(interaction, client)) return;
             if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
                 await handleAutocomplete(interaction, client);
                 return;

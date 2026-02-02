@@ -52,9 +52,9 @@ module.exports = {
     const remaining = limit - roll.count;
     if (remaining <= 3 && remaining >= 0 && result.message?.embeds?.[0]) {
       const updated = EmbedBuilder.from(result.message.embeds[0]);
-      updated.setFooter({ text: `⚠️ ${remaining} ROLLS LEFT!` });
+      updated.setFooter({ text: `<:attentionfromvega:1443651874032062505> ${remaining} ROLLS LEFT!` });
       await result.message.edit({ embeds: [updated] }).catch(() => {});
     }
-    return message.react('✅').catch(() => {});
+    return message.react('<:vegacheckmark:1443666279058772028>').catch(() => {});
   }
 };

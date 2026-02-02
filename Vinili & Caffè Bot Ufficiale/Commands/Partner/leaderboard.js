@@ -61,12 +61,12 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('prev')
-                    .setLabel('⬅️️ Precedente')
+                    .setLabel('<a:vegaleftarrow:1462914743416131816>️ Precedente')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === 1),
                 new ButtonBuilder()
                     .setCustomId('next')
-                    .setLabel('Prossima ➡️')
+                    .setLabel('Prossima <a:vegarightarrow:1443673039156936837>')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === totalPages)
             );

@@ -48,7 +48,7 @@ module.exports = {
                 try {
                     user = interaction.options.getMember('user') || interaction.member;
                     const user2 = interaction.options.getUser('user') || interaction.user;
-                    if (user.displayAvatarURL() == user2.displayAvatarURL()) return await interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`⚠️ Non ha un avatar impostato solo per questo server.`)], flags: 1 << 6 });
+                    if (user.displayAvatarURL() == user2.displayAvatarURL()) return await interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non ha un avatar impostato solo per questo server.`)], flags: 1 << 6 });
                     embed = new EmbedBuilder()
                         .setTitle('Server Avatar')
                         .setImage(user.displayAvatarURL({ size: 4096 }))

@@ -60,11 +60,11 @@ module.exports = {
         return interaction.reply({ content: 'Nodo bloccato.', flags: 1 << 6 });
       }
       if (isDone) {
-        return interaction.reply({ content: 'Nodo gia completato.', flags: 1 << 6 });
+        return interaction.reply({ content: 'Nodo già completato.', flags: 1 << 6 });
       }
       if (node.type === 'choice') {
         if (u.path && u.path !== 'none') {
-          return interaction.reply({ content: 'Hai gia scelto un percorso.', flags: 1 << 6 });
+          return interaction.reply({ content: 'Hai già scelto un percorso.', flags: 1 << 6 });
         }
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
@@ -125,7 +125,7 @@ module.exports = {
         return interaction.reply({ content: 'Nodo non completato.', flags: 1 << 6 });
       }
       if (alreadyClaimed) {
-        return interaction.reply({ content: 'Reward gia riscattata.', flags: 1 << 6 });
+        return interaction.reply({ content: 'Reward già riscattata.', flags: 1 << 6 });
       }
       await grantRewards({
         guildId,

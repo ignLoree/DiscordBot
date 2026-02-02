@@ -331,14 +331,14 @@ module.exports = {
       if (!msg.guild || msg.author?.bot) return;
       if (!isCorrectGuess(msg.content, track.trackName, track.artistName)) {
         try {
-          await msg.react('❌');
+          await msg.react('<:vegax:1443934876440068179>');
         } catch {}
         return;
       }
       winner = msg.author;
       collector.stop('guessed');
       try {
-        await msg.react('✅');
+        await msg.react('<:vegacheckmark:1443666279058772028>');
       } catch {}
       const points = calcPoints(startAt);
       await addPoints({

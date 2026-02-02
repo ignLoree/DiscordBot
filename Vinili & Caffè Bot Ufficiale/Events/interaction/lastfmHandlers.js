@@ -559,7 +559,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.trackPreviewStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Preview non piu' disponibile.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Preview non più disponibile.")],
           flags: 1 << 6
         });
         return true;
@@ -629,7 +629,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -706,7 +706,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -749,7 +749,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -994,7 +994,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1035,7 +1035,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1135,7 +1135,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1200,7 +1200,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1267,7 +1267,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistAlbumsStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1309,7 +1309,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistTracksStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' piu' valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
           flags: 1 << 6
         });
         return true;
