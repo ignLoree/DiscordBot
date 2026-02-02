@@ -14,9 +14,13 @@ module.exports = {
             const newBoostTs = newMember.premiumSinceTimestamp || 0;
             const guildId = newMember.guild.id;
             const currentCount = Number(newMember.guild.premiumSubscriptionCount || 0);
-            const prevCount = boostCountCache.get(guildId);
-            const countIncreased = typeof prevCount === 'number' && currentCount > prevCount;
-            const boostDelta = countIncreased ? Math.max(1, currentCount - prevCount) : 0;
+            const oldCountFromEvent = Number(oldMember?.guild?.premiumSubscriptionCount || 0);
+            const prevCount = typeof boostCountCache.get(guildId) === 'number'
+                ? boostCountCache.get(guildId)
+                : oldCountFromEvent;
+            const effectivePrev = oldCountFromEvent > 0 ? oldCountFromEvent : prevCount;
+            const countIncreased = currentCount > effectivePrev;
+            const boostDelta = countIncreased ? Math.max(1, currentCount - effectivePrev) : 0;
             if (newBoostTs && (newBoostTs !== oldBoostTs || countIncreased)) {
                 const boostKey = `${guildId}:${newMember.id}`;
                 const lastAnnouncedCount = boostAnnounceCache.get(boostKey);
@@ -52,4 +56,3 @@ module.exports = {
         }
     }
 };
-
