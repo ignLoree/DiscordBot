@@ -1,6 +1,22 @@
 const { EmbedBuilder } = require("discord.js");
 const { getNoDmSet } = require("../../Utils/noDmList");
 
+const getDevIds = (client) => {
+  const raw =
+    client.config2?.developers ??
+    client.config?.developers ??
+    client.config?.devid ??
+    client.config2?.devid ??
+    "";
+  if (Array.isArray(raw)) {
+    return raw.map((id) => String(id).trim()).filter(Boolean);
+  }
+  return String(raw)
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+};
+
 function splitMessage(text, max = 1900) {
   const chunks = [];
   let current = "";
@@ -48,10 +64,7 @@ async function handleDmBroadcastModal(interaction, client) {
     return true;
   }
 
-  const devIds = String(client.config?.developers || "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean);
+  const devIds = getDevIds(client);
   if (!devIds.includes(interaction.user.id)) {
     await interaction.reply({ content: "<:vegax:1443934876440068179> Comando riservato al developer.", flags: 1 << 6 });
     return true;

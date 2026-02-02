@@ -1,5 +1,21 @@
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 
+const getDevIds = (client) => {
+  const raw =
+    client.config2?.developers ??
+    client.config?.developers ??
+    client.config?.devid ??
+    client.config2?.devid ??
+    "";
+  if (Array.isArray(raw)) {
+    return raw.map((id) => String(id).trim()).filter(Boolean);
+  }
+  return String(raw)
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("dmbroadcast")
@@ -19,10 +35,7 @@ module.exports = {
     ),
 
   async execute(interaction, client) {
-    const devIds = String(client.config?.developers || "")
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
+    const devIds = getDevIds(client);
     if (!devIds.includes(interaction.user.id)) {
       return interaction.reply({
         content: "<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.",
