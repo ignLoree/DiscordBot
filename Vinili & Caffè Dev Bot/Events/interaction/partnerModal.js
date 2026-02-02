@@ -33,6 +33,13 @@ function extractServerNameFromDescription(description) {
     return name || null;
 }
 
+function isValidServerName(name) {
+    if (!name) return false;
+    const trimmed = String(name).replace(/\s+/g, ' ').trim();
+    if (!trimmed) return false;
+    return /[\p{L}\p{N}]/u.test(trimmed);
+}
+
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
     await interaction.deferReply().catch(() => { });
@@ -104,9 +111,8 @@ async function handlePartnerModal(interaction) {
         inviteVerified = false;
         serverName = 'Server Sconosciuto';
     }
-    if (serverName === 'Server Sconosciuto') {
-        const fallbackName = extractServerNameFromDescription(description);
-        if (fallbackName) serverName = fallbackName;
+    if (!isValidServerName(serverName)) {
+        serverName = 'Server Sconosciuto';
     }
     if (inviteCode.toLowerCase().includes('viniliecaffe')) {
         const embed = new EmbedBuilder()
