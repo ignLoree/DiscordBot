@@ -12,10 +12,61 @@ const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 const { recordMessage } = require('../Services/Stats/statsService');
 
+const VOTE_MANAGER_BOT_ID = '959699003010871307';
+const VOTE_CHANNEL_ID = '1442569123426074736';
+const VOTE_ROLE_ID = '1468266342682722679';
+const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
+
+async function handleVoteManagerMessage(message) {
+    if (!message.guild) return false;
+    if (message.author?.id !== VOTE_MANAGER_BOT_ID) return false;
+    if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
+
+    const user = message.mentions?.users?.first();
+    if (!user) {
+        await message.delete().catch(() => {});
+        return true;
+    }
+
+    const embed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 256 }) })
+        .setTitle('Un nuovo voto! 💕')
+        .setDescription([
+            `Grazie ${user} per aver votato su **Discadia** il server! 📌`,
+            '',
+            '**Hai guadagnato:**',
+            '⭐ • **100 EXP** per il tuo voto',
+            `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per **24 ore**`,
+            '💎 • e aura sul server!',
+            '',
+            '⭐ Vota di nuovo tra **24 ore** per ottenere altri exp dal bottone sottostante.',
+            '🌍 Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️'
+        ].join('\n'))
+        .setThumbnail(user.displayAvatarURL({ size: 256 }))
+        .setFooter({ text: 'Grazie per il tuo supporto!' });
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setEmoji('💗')
+            .setLabel('Vota cliccando qui')
+            .setURL(VOTE_URL)
+    );
+
+    await message.channel.send({ content: `${user}`, embeds: [embed], components: [row] }).catch(() => {});
+    await message.delete().catch(() => {});
+    return true;
+}
+
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         try {
+            if (message.author?.id !== client?.user?.id) {
+                const handledVote = await handleVoteManagerMessage(message);
+                if (handledVote) return;
+            }
             const handledDisboard = await handleDisboardBump(message, client);
             if (handledDisboard) return;
         } catch (error) {
@@ -439,5 +490,4 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
-
 
