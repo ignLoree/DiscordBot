@@ -4,6 +4,7 @@ const ROLE_ID = '1442568948271943721';
 const CHANNEL_ID = '1442569123426074736';
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
+const LOG_THROTTLE_MS = 5 * 60 * 1000;
 
 function getCustomStatus(presence) {
     if (!presence?.activities?.length) return '';
@@ -14,6 +15,14 @@ function getCustomStatus(presence) {
 function hasInvite(presence) {
     const status = getCustomStatus(presence).toLowerCase();
     return INVITE_REGEX.test(status);
+}
+
+function maybeLog(userId, message, extra) {
+    const prev = statusCache.get(userId);
+    const now = Date.now();
+    if (prev?.lastLog && now - prev.lastLog < LOG_THROTTLE_MS) return;
+    global.logger.info(message, extra || '');
+    statusCache.set(userId, { ...(prev || {}), lastLog: now });
 }
 
 async function addRoleIfPossible(member) {
@@ -85,6 +94,7 @@ module.exports = {
             }
 
             if (!prevHas && newHas) {
+                maybeLog(userId, '[presenceUpdate] Invite rilevato nello status', { userId });
                 const roleAdded = await addRoleIfPossible(member);
                 if (roleAdded) {
                     const channel = member.guild.channels.cache.get(CHANNEL_ID);
@@ -98,8 +108,9 @@ module.exports = {
                                 '',
                                 `<@${member.id}>, hai sbloccato:`,
                                 `Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
-                                '• Permesso di mandare link e immagini in chat',
-                                '• Possibilità di cambiarti il nickname',
+                                '• x2 di multi in vocale e testuale',
+                                '• Inviare media in ogni chat',
+                                '• Mandare adesivi esterni in qualsiasi chat',
                                 '',
                                 '» Metti `.gg/viniliecaffe` nel tuo status!',
                                 '',
@@ -113,6 +124,7 @@ module.exports = {
             }
 
             if (prevHas && !newHas) {
+                maybeLog(userId, '[presenceUpdate] Invite rimosso dallo status', { userId });
                 await removeRoleIfPossible(member);
                 statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0 });
                 return;
