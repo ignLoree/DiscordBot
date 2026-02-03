@@ -31,7 +31,7 @@ function extractVoteCountFromText(text) {
     if (match) return Number(match[1]);
     const matchHave = (text || '').match(/have\s+(\d+)\s+votes?/i);
     if (matchHave) return Number(matchHave[1]);
-    const matchAlt = (text || '').match(/(\d+)\s+votes?/i);
+    const matchAlt = (text || '').match(/(\d+)\s+(?:votes?|voti)/i);
     if (matchAlt) return Number(matchAlt[1]);
     return null;
 }
@@ -155,6 +155,9 @@ async function handleVoteManagerMessage(message) {
         extractVoteCountFromText(embedTitle) ??
         extractVoteCountFromText(fieldsText) ??
         extractVoteCountFromText(fullText);
+    if (voteCount === null) {
+        global.logger.warn('[VOTE EMBED] Vote count not found. Text:', fullText);
+    }
     const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
     const expValue = getRandomExp();
 
