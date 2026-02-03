@@ -27,11 +27,12 @@ function getRandomExp() {
 }
 
 function extractVoteCountFromText(text) {
-    const match = (text || '').match(/(?:have\s+)?got\s+(\d+)\s+votes?/i);
+    const cleaned = (text || '').replace(/\*\*/g, '');
+    const match = cleaned.match(/(?:have\s+)?got\s+(\d+)\s+votes?/i);
     if (match) return Number(match[1]);
-    const matchHave = (text || '').match(/have\s+(\d+)\s+votes?/i);
+    const matchHave = cleaned.match(/have\s+(\d+)\s+votes?/i);
     if (matchHave) return Number(matchHave[1]);
-    const matchAlt = (text || '').match(/(\d+)\s+(?:votes?|voti)/i);
+    const matchAlt = cleaned.match(/(\d+)\s+(?:votes?|voti)/i);
     if (matchAlt) return Number(matchAlt[1]);
     return null;
 }
