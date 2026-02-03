@@ -5,6 +5,7 @@ const CHANNEL_ID = '1442569123426074736';
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
 const LOG_THROTTLE_MS = 5 * 60 * 1000;
+const RAW_LOG_THROTTLE_MS = 60 * 1000;
 
 function getCustomStatus(presence) {
     if (!presence?.activities?.length) return '';
@@ -23,6 +24,14 @@ function maybeLog(userId, message, extra) {
     if (prev?.lastLog && now - prev.lastLog < LOG_THROTTLE_MS) return;
     global.logger.info(message, extra || '');
     statusCache.set(userId, { ...(prev || {}), lastLog: now });
+}
+
+function maybeLogRaw(userId, payload) {
+    const prev = statusCache.get(userId);
+    const now = Date.now();
+    if (prev?.lastRawLog && now - prev.lastRawLog < RAW_LOG_THROTTLE_MS) return;
+    global.logger.info('[presenceUpdate] RAW', payload);
+    statusCache.set(userId, { ...(prev || {}), lastRawLog: now });
 }
 
 async function addRoleIfPossible(member) {
@@ -85,6 +94,15 @@ module.exports = {
             const prevHas = typeof prev?.hasLink === 'boolean' ? prev.hasLink : hasInvite(oldPresence);
             const newHas = hasInvite(newPresence);
             const isOffline = !newPresence || ['offline', 'invisible'].includes(newPresence.status);
+
+            maybeLogRaw(userId, {
+                status: newPresence?.status || 'none',
+                activities: (newPresence?.activities || []).map((a) => ({
+                    type: a.type,
+                    name: a.name || '',
+                    state: a.state || ''
+                }))
+            });
 
             if (isOffline) {
                 if (!statusCache.has(userId)) {
