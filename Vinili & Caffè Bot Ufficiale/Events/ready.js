@@ -9,6 +9,7 @@ const { PassUser } = require('../Schemas/Pass/passUser');
 const { resetMissionsIfNeeded, refreshMissionWindows } = require('../Services/Pass/missionService');
 const { maybeRunEngagement, maybeRunQuizLoop } = require('../Services/Economy/engagementService');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
+const { restorePendingDiscadiaReminders } = require('../Services/Discadia/discadiaReminderService');
 const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
@@ -46,9 +47,31 @@ module.exports = {
             global.logger.error('[DISBOARD REMINDER ERROR]', err);
         }
         try {
+            await restorePendingDiscadiaReminders(client);
+        } catch (err) {
+            global.logger.error('[DISCADIA REMINDER ERROR]', err);
+        }
+        try {
             await bootstrapSupporter(client);
         } catch (err) {
             global.logger.error('[PRESENCE BOOTSTRAP ERROR]', err);
+        }
+        try {
+            client.inviteCache = new Map();
+            for (const guild of client.guilds.cache.values()) {
+                const invites = await guild.invites.fetch().catch(() => null);
+                if (!invites) continue;
+                const map = new Map();
+                for (const invite of invites.values()) {
+                    map.set(invite.code, {
+                        uses: invite.uses || 0,
+                        inviterId: invite.inviter?.id || null
+                    });
+                }
+                client.inviteCache.set(guild.id, map);
+            }
+        } catch (err) {
+            global.logger.error('[INVITE CACHE] Failed to prime:', err);
         }
         try {
             await restoreTtsConnections(client);

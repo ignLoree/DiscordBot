@@ -15,6 +15,7 @@ const VERIFY_ROLE_IDS = [
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const VERIFY_LOG_CHANNEL_ID = '1442569294796820541';
+const VERIFY_PING_CHANNEL_ID = '1442569115972669541';
 const verifyState = new Map();
 const fontPath = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');
 let captchaFontFamily = 'captcha';
@@ -338,6 +339,13 @@ async function handleVerifyInteraction(interaction) {
                     .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
                 await logChannel.send({ embeds: [logEmbed] });
             }
+            const pingChannel = interaction.guild?.channels?.cache?.get(VERIFY_PING_CHANNEL_ID);
+            if (pingChannel) {
+                const pingMsg = await pingChannel.send({ content: `<@${interaction.user.id}>` }).catch(() => null);
+                if (pingMsg) {
+                    setTimeout(() => pingMsg.delete().catch(() => {}), 1);
+                }
+            }
             if (state.promptMessage) {
                 await state.promptMessage.edit({
                     content: '<:vegacheckmark:1443666279058772028> Verification done.',
@@ -372,7 +380,6 @@ async function handleVerifyInteraction(interaction) {
 }
 
 module.exports = { handleVerifyInteraction };
-
 
 
 

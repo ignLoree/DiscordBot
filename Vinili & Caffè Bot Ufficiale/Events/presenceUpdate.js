@@ -77,6 +77,12 @@ function hasInviteNow(member, userId) {
     return cached?.hasLink === true;
 }
 
+async function hasSupporterRole(member) {
+    if (member.roles?.cache?.has(ROLE_ID)) return true;
+    const fresh = await member.guild.members.fetch(member.id).catch(() => null);
+    return fresh?.roles?.cache?.has(ROLE_ID) || false;
+}
+
 async function clearPending(userId, channel) {
     const pending = pendingChecks.get(userId);
     if (!pending) return;
@@ -242,7 +248,12 @@ module.exports = {
             }
 
             if (!prevHas && newHas) {
-                if (member.roles.cache.has(ROLE_ID)) {
+                if (prev?.lastMessageId) {
+                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                    await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
+                    return;
+                }
+                if (await hasSupporterRole(member)) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0 });
                     await persistStatus(member.guild.id, userId, { hasLink: true });
                     return;

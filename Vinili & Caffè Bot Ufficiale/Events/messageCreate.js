@@ -8,6 +8,7 @@ const LastFmUser = require('../Schemas/LastFm/lastFmSchema');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
+const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 const { recordMessage } = require('../Services/Stats/statsService');
@@ -111,25 +112,26 @@ async function handleVoteManagerMessage(message) {
         || extractNameFromText(fieldsText);
     const nameClean = sanitizeName(nameRaw) || 'Utente';
 
+    const fullText = `${content} ${embedText} ${embedTitle} ${fieldsText}`;
     const voteCount =
         extractVoteCountFromText(content) ??
         extractVoteCountFromText(embedText) ??
         extractVoteCountFromText(embedTitle) ??
-        extractVoteCountFromText(fieldsText);
+        extractVoteCountFromText(fieldsText) ??
+        extractVoteCountFromText(fullText);
     const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
     const expValue = getRandomExp();
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
-            .setTitle('Un nuovo voto! 💕')
+            .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
             .setDescription([
-                `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
+                `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
                 '',
                 '\`Hai guadagnato:\`',
-                `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
-                `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
-                '💎 • e aura sul server!',
+                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `${voteLabel} ` : ''} voto`,
+                `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
                 '',
-                '⭐ Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
+                '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
             .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
 
@@ -165,6 +167,8 @@ module.exports = {
             }
             const handledDisboard = await handleDisboardBump(message, client);
             if (handledDisboard) return;
+            const handledDiscadia = await handleDiscadiaBump(message, client);
+            if (handledDiscadia) return;
         } catch (error) {
             logEventError(client, 'DISBOARD REMINDER ERROR', error);
         }
@@ -584,5 +588,35 @@ async function handleDisboardBump(message, client) {
         bumpMention;
     await message.channel.send({ content: thanksMessage.trim() });
     await recordBump(client, message.guild.id, bumpUserId || null);
+    return true;
+}
+
+async function handleDiscadiaBump(message, client) {
+    const discadia = client?.config2?.discadia;
+    if (!discadia) return false;
+    if (!message.guild) return false;
+    if (!message.author || message.author.id !== discadia.botId) return false;
+    const patterns = Array.isArray(discadia.bumpSuccessPatterns)
+        ? discadia.bumpSuccessPatterns
+        : [];
+    const haystacks = [];
+    if (message.content) haystacks.push(message.content);
+    if (Array.isArray(message.embeds)) {
+        for (const embed of message.embeds) {
+            if (embed?.description) haystacks.push(embed.description);
+            if (embed?.title) haystacks.push(embed.title);
+        }
+    }
+    const isBump = patterns.some((pattern) =>
+        haystacks.some((text) => text.includes(pattern))
+    );
+    if (!isBump) return false;
+    const bumpUserId = message.interaction?.user?.id;
+    const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
+    const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
+        "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" +
+        bumpMention;
+    await message.channel.send({ content: thanksMessage.trim() });
+    await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
     return true;
 }

@@ -4,6 +4,55 @@ function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
 }
 
+const INVITE_LOG_CHANNEL_ID = '1442569130573303898';
+
+async function resolveInviteInfo(member) {
+    const guild = member.guild;
+    const invites = await guild.invites.fetch().catch(() => null);
+    const cache = member.client.inviteCache?.get(guild.id);
+    let usedInvite = null;
+
+    if (invites && cache) {
+        for (const invite of invites.values()) {
+            const cached = cache.get(invite.code);
+            if (cached && typeof invite.uses === 'number' && invite.uses > (cached.uses || 0)) {
+                usedInvite = invite;
+                break;
+            }
+        }
+    }
+
+    if (invites) {
+        const map = new Map();
+        for (const invite of invites.values()) {
+            map.set(invite.code, {
+                uses: invite.uses || 0,
+                inviterId: invite.inviter?.id || null
+            });
+        }
+        member.client.inviteCache?.set(guild.id, map);
+    }
+
+    if (!usedInvite && guild.vanityURLCode) {
+        return {
+            link: `https://discord.gg/${guild.vanityURLCode}`,
+            inviterTag: 'Vanity URL',
+            totalInvites: 0
+        };
+    }
+
+    const link = usedInvite ? `https://discord.gg/${usedInvite.code}` : 'Link non disponibile';
+    const inviterId = usedInvite?.inviter?.id || null;
+    const inviterTag = inviterId ? `<@${inviterId}>` : 'Sconosciuto';
+    let totalInvites = 0;
+    if (invites && inviterId) {
+        totalInvites = invites
+            .filter(inv => inv.inviter?.id === inviterId)
+            .reduce((sum, inv) => sum + (inv.uses || 0), 0);
+    }
+    return { link, inviterTag, totalInvites };
+}
+
 async function addBotRoles(member) {
     const roleIds = ['1329080094206984215', '1442568954181713982'];
     const me = member.guild.members.me;
@@ -143,7 +192,15 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setFooter({ text: `Ora siamo in ${member.guild.memberCount}` });
 
-            await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user}`, embeds: [userEmbed] });
+            await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user} <@&1442568910070349985>`, embeds: [userEmbed] });
+
+            const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
+            if (inviteChannel) {
+                const info = await resolveInviteInfo(member);
+                await inviteChannel.send({
+                    content: `<:VC_Reply:1468262952934314131> è entratx con il link ${info.link},\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                }).catch(() => {});
+            }
         } catch (error) {
             global.logger.error(error);
         }

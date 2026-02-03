@@ -4,6 +4,55 @@ function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
 }
 
+const INVITE_LOG_CHANNEL_ID = '1442569115972669541';
+
+async function resolveInviteInfo(member) {
+    const guild = member.guild;
+    const invites = await guild.invites.fetch().catch(() => null);
+    const cache = member.client.inviteCache?.get(guild.id);
+    let usedInvite = null;
+
+    if (invites && cache) {
+        for (const invite of invites.values()) {
+            const cached = cache.get(invite.code);
+            if (cached && typeof invite.uses === 'number' && invite.uses > (cached.uses || 0)) {
+                usedInvite = invite;
+                break;
+            }
+        }
+    }
+
+    if (invites) {
+        const map = new Map();
+        for (const invite of invites.values()) {
+            map.set(invite.code, {
+                uses: invite.uses || 0,
+                inviterId: invite.inviter?.id || null
+            });
+        }
+        member.client.inviteCache?.set(guild.id, map);
+    }
+
+    if (!usedInvite && guild.vanityURLCode) {
+        return {
+            link: `https://discord.gg/${guild.vanityURLCode}`,
+            inviterTag: 'Vanity URL',
+            totalInvites: 0
+        };
+    }
+
+    const link = usedInvite ? `https://discord.gg/${usedInvite.code}` : 'Link non disponibile';
+    const inviterId = usedInvite?.inviter?.id || null;
+    const inviterTag = inviterId ? `<@${inviterId}>` : 'Sconosciuto';
+    let totalInvites = 0;
+    if (invites && inviterId) {
+        totalInvites = invites
+            .filter(inv => inv.inviter?.id === inviterId)
+            .reduce((sum, inv) => sum + (inv.uses || 0), 0);
+    }
+    return { link, inviterTag, totalInvites };
+}
+
 module.exports = {
     name: "guildMemberAdd",
     async execute(member) {
@@ -16,6 +65,7 @@ module.exports = {
                 }
                 return;
             }
+
             const minimumAgeDays = 3;
             const minAgeMs = minimumAgeDays * 24 * 60 * 60 * 1000;
             const accountAgeMs = Date.now() - member.user.createdAt.getTime();
@@ -36,14 +86,6 @@ module.exports = {
                     );
                 let dmSent = false;
                 try {
-            if (member.user?.bot) {
-                try {
-                    await member.roles.add(['1329080094206984215', '1442568954181713982']);
-                } catch (error) {
-                    global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
-                }
-                return;
-            }
                     await member.send({ embeds: [dmEmbed] });
                     dmSent = true;
                 } catch {
@@ -51,14 +93,6 @@ module.exports = {
                 }
                 let punished = false;
                 try {
-            if (member.user?.bot) {
-                try {
-                    await member.roles.add(['1329080094206984215', '1442568954181713982']);
-                } catch (error) {
-                    global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
-                }
-                return;
-            }
                     await member.kick("Account is too young to be allowed.");
                     punished = true;
                 } catch {
@@ -122,9 +156,19 @@ module.exports = {
                 .setFooter({ text: `Ora siamo in ${member.guild.memberCount}` });
 
             await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user}`, embeds: [userEmbed] });
+
+            const inviteLogChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
+            if (inviteLogChannel) {
+                try {
+                    const inviteInfo = await resolveInviteInfo(member);
+                    const inviteMessage = `<:VC_Reply:1468262952934314131> è entratx con il link ${inviteInfo.link},\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${inviteInfo.inviterTag} che ora ha **${inviteInfo.totalInvites} inviti**.`;
+                    await inviteLogChannel.send({ content: inviteMessage });
+                } catch (error) {
+                    global.logger.error('[guildMemberAdd] Failed to send invite info message:', error);
+                }
+            }
         } catch (error) {
             global.logger.error(error);
         }
     }
 };
-

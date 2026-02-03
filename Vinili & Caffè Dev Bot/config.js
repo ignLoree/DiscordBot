@@ -42,6 +42,12 @@ module.exports = {
     cooldownMinutes: 120,
     bumpSuccessPatterns: ["Bump done", "Bump successful"]
   },
+  discadia: {
+    botId: "1222548162741538938",
+    reminderChannelId: "1466489313091916043",
+    cooldownMinutes: 1440,
+    bumpSuccessPatterns: ["has been successfully bumped"]
+  },
 
   morningReminder: {
     enabled: true,
@@ -167,4 +173,3 @@ module.exports = {
     }
   },
 }
-
