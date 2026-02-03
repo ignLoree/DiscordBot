@@ -207,18 +207,19 @@ function startCleanupClock(client, guildId) {
             if (!shouldCheck) continue;
             const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
             if (!member) continue;
+            if (!member.presence || ['offline', 'invisible'].includes(member.presence.status)) {
+                continue;
+            }
             const hasRole = member.roles.cache.has(ROLE_ID);
             const hasLink = hasInviteNow(member, userId);
             if (pendingChecks.has(userId)) {
                 continue;
             }
-            if (!hasLink || !hasRole) {
+            if (!hasLink) {
                 if (pendingChecks.has(userId)) {
                     await clearPending(userId, channel);
                 }
-                if (hasRole) {
-                    await removeRoleIfPossible(member);
-                }
+                if (hasRole) await removeRoleIfPossible(member);
                 if (info?.lastMessageId && channel) {
                     await channel.messages.delete(info.lastMessageId).catch(() => {});
                 }
