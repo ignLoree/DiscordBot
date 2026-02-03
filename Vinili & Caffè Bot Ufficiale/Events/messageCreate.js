@@ -147,8 +147,16 @@ async function handleVoteManagerMessage(message) {
     );
 
     const mention = user ? `${user}` : '';
-    await message.channel.send({ content: mention, embeds: [embed], components: [row] }).catch(() => {});
-    await message.delete().catch(() => {});
+    let sent = null;
+    try {
+        sent = await message.channel.send({ content: mention, embeds: [embed], components: [row] });
+    } catch (error) {
+        const detail = error?.message || error?.code || error;
+        global.logger.error('[VOTE EMBED] Failed to send embed:', detail);
+    }
+    if (sent) {
+        await message.delete().catch(() => {});
+    }
     return true;
 }
 
