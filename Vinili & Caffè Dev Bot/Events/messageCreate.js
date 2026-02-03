@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
@@ -17,34 +17,82 @@ const VOTE_CHANNEL_ID = '1442569123426074736';
 const VOTE_ROLE_ID = '1468266342682722679';
 const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
 
+function getRandomExp() {
+    const values = [100, 150, 200, 250];
+    return values[Math.floor(Math.random() * values.length)];
+}
+
+function extractVoteCountFromText(text) {
+    const match = (text || '').match(/got\s+(\d+)\s+votes/i);
+    if (match) return Number(match[1]);
+    const matchAlt = (text || '').match(/(\d+)\s+votes/i);
+    if (matchAlt) return Number(matchAlt[1]);
+    return null;
+}
+function extractUserIdFromText(text) {
+    if (!text) return null;
+    const match = text.match(/<@!?(\d+)>/);
+    return match ? match[1] : null;
+}
+
+async function resolveUserFromMessage(message) {
+    const mentioned = message.mentions?.users?.first();
+    if (mentioned) return mentioned;
+
+    const content = message.content || '';
+    const embedText = message.embeds?.[0]?.description || '';
+    const idFromContent = extractUserIdFromText(content) || extractUserIdFromText(embedText);
+    if (idFromContent) {
+        return message.guild.members.fetch(idFromContent).then(m => m.user).catch(() => null);
+    }
+
+    const nameMatch = content.match(/^\s*!?\s*([^\s]+)\s+has voted/i);
+    if (nameMatch?.[1]) {
+        const name = nameMatch[1].toLowerCase();
+        const cached = message.guild.members.cache.find(m =>
+            m.user.username.toLowerCase() === name || m.displayName.toLowerCase() === name
+        );
+        if (cached) return cached.user;
+        const searched = await message.guild.members.fetch({ query: nameMatch[1], limit: 1 }).catch(() => null);
+        return searched?.first()?.user || null;
+    }
+
+    return null;
+}
+
 async function handleVoteManagerMessage(message) {
     if (!message.guild) return false;
     if (message.author?.id !== VOTE_MANAGER_BOT_ID) return false;
     if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
 
-    const user = message.mentions?.users?.first();
-    if (!user) {
-        await message.delete().catch(() => {});
-        return true;
-    }
+    const user = await resolveUserFromMessage(message);
+    if (!user) return false;
+
+    const embedText = message.embeds?.[0]?.description || '';
+    const embedTitle = message.embeds?.[0]?.title || '';
+    const voteCount =
+        extractVoteCountFromText(message.content) ??
+        extractVoteCountFromText(embedText) ??
+        extractVoteCountFromText(embedTitle);
+    const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
+    const expValue = getRandomExp();
 
     const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 256 }) })
         .setTitle('Un nuovo voto! 💕')
         .setDescription([
-            `Grazie ${user} per aver votato su **Discadia** il server! 📌`,
+            `Grazie ${user} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
             '',
-            '**Hai guadagnato:**',
-            '⭐ • **100 EXP** per il tuo voto',
-            `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per **24 ore**`,
+            '\`Hai guadagnato:\`',
+            `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
+            `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
             '💎 • e aura sul server!',
             '',
-            '⭐ Vota di nuovo tra **24 ore** per ottenere altri exp dal bottone sottostante.',
-            '🌍 Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️'
+            '⭐ Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
         ].join('\n'))
         .setThumbnail(user.displayAvatarURL({ size: 256 }))
-        .setFooter({ text: 'Grazie per il tuo supporto!' });
+        .setFooter({ text: '🌍 Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -197,7 +245,7 @@ module.exports = {
         if (disabledPrefixCommands.includes(command.name)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è disabilitato al momento.");
+                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ disabilitato al momento.");
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -219,7 +267,7 @@ module.exports = {
             if (!hasStaffRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -235,7 +283,7 @@ module.exports = {
             if (!hasAdminRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -322,7 +370,7 @@ module.exports = {
                 });
                 const feedback = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
+                    .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
             } finally {
@@ -395,7 +443,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 async function handleCounting(message, client) {
@@ -490,3 +538,5 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
+
+
