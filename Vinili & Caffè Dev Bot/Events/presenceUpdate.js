@@ -1,11 +1,10 @@
 ﻿const { EmbedBuilder, PermissionsBitField, ActivityType } = require('discord.js');
+const { text } = require('express');
 
 const ROLE_ID = '1442568948271943721';
 const CHANNEL_ID = '1442569123426074736';
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
-const LOG_THROTTLE_MS = 5 * 60 * 1000;
-const RAW_LOG_THROTTLE_MS = 60 * 1000;
 
 function getCustomStatus(presence) {
     if (!presence?.activities?.length) return '';
@@ -16,22 +15,6 @@ function getCustomStatus(presence) {
 function hasInvite(presence) {
     const status = getCustomStatus(presence).toLowerCase();
     return INVITE_REGEX.test(status);
-}
-
-function maybeLog(userId, message, extra) {
-    const prev = statusCache.get(userId);
-    const now = Date.now();
-    if (prev?.lastLog && now - prev.lastLog < LOG_THROTTLE_MS) return;
-    global.logger.info(message, extra || '');
-    statusCache.set(userId, { ...(prev || {}), lastLog: now });
-}
-
-function maybeLogRaw(userId, payload) {
-    const prev = statusCache.get(userId);
-    const now = Date.now();
-    if (prev?.lastRawLog && now - prev.lastRawLog < RAW_LOG_THROTTLE_MS) return;
-    global.logger.info('[presenceUpdate] RAW', payload);
-    statusCache.set(userId, { ...(prev || {}), lastRawLog: now });
 }
 
 async function addRoleIfPossible(member) {
@@ -95,15 +78,6 @@ module.exports = {
             const newHas = hasInvite(newPresence);
             const isOffline = !newPresence || ['offline', 'invisible'].includes(newPresence.status);
 
-            maybeLogRaw(userId, {
-                status: newPresence?.status || 'none',
-                activities: (newPresence?.activities || []).map((a) => ({
-                    type: a.type,
-                    name: a.name || '',
-                    state: a.state || ''
-                }))
-            });
-
             if (isOffline) {
                 if (!statusCache.has(userId)) {
                     statusCache.set(userId, { hasLink: prevHas, lastAnnounced: prev?.lastAnnounced || 0 });
@@ -112,29 +86,29 @@ module.exports = {
             }
 
             if (!prevHas && newHas) {
-                maybeLog(userId, '[presenceUpdate] Invite rilevato nello status', { userId });
                 const roleAdded = await addRoleIfPossible(member);
                 if (roleAdded) {
                     const channel = member.guild.channels.cache.get(CHANNEL_ID);
                     if (channel) {
                         const embed = new EmbedBuilder()
                             .setColor('#6f4e37')
-                            .setTitle('Nuovo sostenitore ✨')
+                            .setAuthor({
+                                name: member.user.username,
+                                iconURL: member.user.displayAvatarURL({ size: 256 })
+                            })
+                            .setTitle('Nuovx sostenitore <a:VC_StarPink:1330194976440848500>')
                             .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                             .setDescription([
-                                `**${member.user.username}**`,
+                                `<@${member.id}>, \`hai sbloccato:\``,
+                                `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
+                                '<a:VC_Coffe:1448695567244066827> • \`x2\` di multi in **vocale** e **testuale**',
+                                '<a:VC_Infinity:1448687797266288832> • Inviare **media** in __ogni chat__',
+                                '<a:VC_HeartWhite:1448673535253024860> • Mandare **adesivi** __esterni__ in **qualsiasi chat**',
                                 '',
-                                `<@${member.id}>, hai sbloccato:`,
-                                `Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
-                                '• x2 di multi in vocale e testuale',
-                                '• Inviare media in ogni chat',
-                                '• Mandare adesivi esterni in qualsiasi chat',
-                                '',
-                                '» Metti `.gg/viniliecaffe` nel tuo status!',
-                                '',
-                                'Grazie per il tuo supporto!'
-                            ].join('\n'));
-                        await channel.send({ embeds: [embed] });
+                                '<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status_!☆_',
+                            ].join('\n'))
+                            .setFooter({ text: '☕ Grazie per il tuo supporto!'})
+                        await channel.send({ content: `<@${member.id}>`, embeds: [embed] });
                     }
                     statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now() });
                     return;
@@ -142,7 +116,6 @@ module.exports = {
             }
 
             if (prevHas && !newHas) {
-                maybeLog(userId, '[presenceUpdate] Invite rimosso dallo status', { userId });
                 await removeRoleIfPossible(member);
                 statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0 });
                 return;
