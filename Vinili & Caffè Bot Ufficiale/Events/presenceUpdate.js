@@ -248,6 +248,12 @@ module.exports = {
                 return;
             }
 
+            if (newHas && member.roles.cache.has(ROLE_ID)) {
+                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
+                return;
+            }
+
             if (newHas && await hasSupporterRole(member)) {
                 statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
                 await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
