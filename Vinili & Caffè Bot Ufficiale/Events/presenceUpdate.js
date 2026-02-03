@@ -115,6 +115,7 @@ async function clearPersistedStatus(guildId, userId) {
 
 async function startPendingFlow(member, channel) {
     if (pendingChecks.has(member.id)) return;
+    pendingChecks.set(member.id, { timeout: null, messageId: null, inFlight: true });
     const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({
@@ -147,7 +148,9 @@ async function startPendingFlow(member, channel) {
             await addRoleIfPossible(member);
             pendingChecks.delete(member.id);
         }, PENDING_MS);
-        pendingChecks.set(member.id, { timeout, messageId: sent.id });
+        pendingChecks.set(member.id, { timeout, messageId: sent.id, inFlight: false });
+    } else {
+        pendingChecks.delete(member.id);
     }
 
     statusCache.set(member.id, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: sent?.id || null });
@@ -262,6 +265,7 @@ module.exports = {
 
             if (!prevHas && newHas) {
                 if (pendingChecks.has(userId)) return;
+                if (prev?.lastMessageId) return;
                 if (prev?.lastAnnounced && Date.now() - prev.lastAnnounced < 5000) {
                     return;
                 }
