@@ -19,13 +19,18 @@ const VOTE_ROLE_ID = '1468266342682722679';
 const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
 
 function getRandomExp() {
-    const values = [100, 150, 200, 250];
-    return values[Math.floor(Math.random() * values.length)];
+    const min = 100;
+    const max = 250;
+    const step = 5;
+    const count = Math.floor((max - min) / step) + 1;
+    return min + Math.floor(Math.random() * count) * step;
 }
 
 function extractVoteCountFromText(text) {
     const match = (text || '').match(/(?:have\s+)?got\s+(\d+)\s+votes?/i);
     if (match) return Number(match[1]);
+    const matchHave = (text || '').match(/have\s+(\d+)\s+votes?/i);
+    if (matchHave) return Number(matchHave[1]);
     const matchAlt = (text || '').match(/(\d+)\s+votes?/i);
     if (matchAlt) return Number(matchAlt[1]);
     return null;
@@ -48,16 +53,48 @@ function sanitizeName(name) {
     return name.replace(/^[!@#:_*~\\-\\.]+|[!@#:_*~\\-\\.]+$/g, '');
 }
 
+function flattenEmbedText(embed) {
+    if (!embed) return '';
+    const parts = [];
+    const push = (value) => {
+        if (typeof value === 'string' && value.trim()) parts.push(value);
+    };
+    push(embed.title);
+    push(embed.description);
+    push(embed.url);
+    push(embed.author?.name);
+    push(embed.footer?.text);
+    if (Array.isArray(embed.fields)) {
+        for (const field of embed.fields) {
+            push(field?.name);
+            push(field?.value);
+        }
+    }
+    const data = embed.data || embed._data;
+    if (data) {
+        push(data.title);
+        push(data.description);
+        push(data.url);
+        push(data.author?.name);
+        push(data.footer?.text);
+        if (Array.isArray(data.fields)) {
+            for (const field of data.fields) {
+                push(field?.name);
+                push(field?.value);
+            }
+        }
+    }
+    return parts.join('\n');
+}
+
 function getMessageTextParts(message) {
     const embed = message.embeds?.[0];
-    const fieldsText = Array.isArray(embed?.fields)
-        ? embed.fields.map(f => `${f?.name || ''}\n${f?.value || ''}`).join('\n')
-        : '';
+    const embedText = flattenEmbedText(embed);
     return {
         content: message.content || '',
-        embedText: embed?.description || '',
+        embedText,
         embedTitle: embed?.title || '',
-        fieldsText
+        fieldsText: ''
     };
 }
 
@@ -144,7 +181,7 @@ async function handleVoteManagerMessage(message) {
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setEmoji('💗')
+            .setEmoji('<a:VC_HeartPink:1448673486603292685>')
             .setLabel('Vota cliccando qui')
             .setURL(VOTE_URL)
     );
