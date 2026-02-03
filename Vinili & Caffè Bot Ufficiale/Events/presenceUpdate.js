@@ -6,8 +6,11 @@ const CHANNEL_ID = '1442569123426074736';
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
 const pendingChecks = new Map();
+const removalChecks = new Map();
 const PENDING_MS = 3 * 60 * 1000;
 const CLEANUP_MS = 60 * 1000;
+const LINK_WARMUP_MS = 2 * 60 * 1000;
+const REMOVE_CONFIRM_MS = 2 * 60 * 1000;
 let cleanupInterval = null;
 let bootstrapRan = false;
 const bootstrappedUsers = new Set();
@@ -77,6 +80,11 @@ function hasInviteNow(member, userId) {
     return cached?.hasLink === true;
 }
 
+function recentlyOnline(info) {
+    if (!info?.lastSeenOnlineAt) return false;
+    return Date.now() - info.lastSeenOnlineAt < LINK_WARMUP_MS;
+}
+
 async function hasSupporterRole(member) {
     if (member.roles?.cache?.has(ROLE_ID)) return true;
     const fresh = await member.guild.members.fetch(member.id).catch(() => null);
@@ -91,6 +99,27 @@ async function clearPending(userId, channel) {
         await channel.messages.delete(pending.messageId).catch(() => {});
     }
     pendingChecks.delete(userId);
+}
+
+function scheduleRemovalConfirm(member, channel) {
+    const userId = member.id;
+    if (removalChecks.has(userId)) return;
+    const timeout = setTimeout(async () => {
+        removalChecks.delete(userId);
+        const stillHas = hasInviteNow(member, userId);
+        if (stillHas) return;
+        await removeRoleIfPossible(member);
+        try {
+            await member.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.");
+        } catch {}
+        const info = statusCache.get(userId);
+        if (info?.lastMessageId && channel) {
+            await channel.messages.delete(info.lastMessageId).catch(() => {});
+        }
+        statusCache.set(userId, { hasLink: false, lastAnnounced: info?.lastAnnounced || 0, lastMessageId: null, lastSeenOnlineAt: info?.lastSeenOnlineAt || 0 });
+        await clearPersistedStatus(member.guild.id, userId);
+    }, REMOVE_CONFIRM_MS);
+    removalChecks.set(userId, { timeout });
 }
 
 async function persistStatus(guildId, userId, payload) {
@@ -216,15 +245,13 @@ function startCleanupClock(client, guildId) {
                 continue;
             }
             if (!hasLink) {
+                if (recentlyOnline(info)) {
+                    continue;
+                }
                 if (pendingChecks.has(userId)) {
                     await clearPending(userId, channel);
                 }
-                if (hasRole) await removeRoleIfPossible(member);
-                if (info?.lastMessageId && channel) {
-                    await channel.messages.delete(info.lastMessageId).catch(() => {});
-                }
-                statusCache.set(userId, { hasLink: false, lastAnnounced: info?.lastAnnounced || 0, lastMessageId: null });
-                await clearPersistedStatus(guild.id, userId);
+                scheduleRemovalConfirm(member, channel);
             }
         }
     }, CLEANUP_MS);
@@ -303,17 +330,8 @@ module.exports = {
 
             if (prevHas && !newHas) {
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
-                await removeRoleIfPossible(member);
-                try {
-                    await member.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.");
-                } catch {}
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
-                const lastMessageId = prev?.lastMessageId || null;
-                if (lastMessageId && channel) {
-                    await channel.messages.delete(lastMessageId).catch(() => {});
-                }
-                statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null, lastSeenOnlineAt });
-                await clearPersistedStatus(member.guild.id, userId);
+                scheduleRemovalConfirm(member, channel);
                 return;
             }
 
