@@ -247,19 +247,21 @@ module.exports = {
 
             if (isOffline) {
                 if (!statusCache.has(userId)) {
-                    statusCache.set(userId, { hasLink: prevHas, lastAnnounced: prev?.lastAnnounced || 0 });
+                    statusCache.set(userId, { hasLink: prevHas, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt: prev?.lastSeenOnlineAt || 0 });
                 }
                 return;
             }
 
+            const lastSeenOnlineAt = Date.now();
+
             if (newHas && member.roles.cache.has(ROLE_ID)) {
-                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
                 return;
             }
 
             if (newHas && await hasSupporterRole(member)) {
-                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
                 return;
             }
@@ -271,25 +273,31 @@ module.exports = {
                     return;
                 }
                 if (prev?.lastMessageId) {
-                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                     await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
                     return;
                 }
                 if (await hasSupporterRole(member)) {
-                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0 });
+                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt });
                     await persistStatus(member.guild.id, userId, { hasLink: true });
                     return;
                 }
                 if (wasOffline) {
-                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0 });
+                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt });
                     await persistStatus(member.guild.id, userId, { hasLink: true });
                     return;
                 }
 
-                statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: prev?.lastMessageId || null });
+                statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 if (!channel) return;
                 await startPendingFlow(member, channel);
+                return;
+            }
+
+            if (prevHas && !newHas && wasOffline) {
+                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
+                await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
                 return;
             }
 
@@ -304,12 +312,12 @@ module.exports = {
                 if (lastMessageId && channel) {
                     await channel.messages.delete(lastMessageId).catch(() => {});
                 }
-                statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null });
+                statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null, lastSeenOnlineAt });
                 await clearPersistedStatus(member.guild.id, userId);
                 return;
             }
 
-            statusCache.set(userId, { hasLink: newHas, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+            statusCache.set(userId, { hasLink: newHas, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
             await persistStatus(member.guild.id, userId, { hasLink: newHas, lastMessageId: prev?.lastMessageId || null });
         } catch (error) {
             global.logger.error(error);
