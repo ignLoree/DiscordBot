@@ -114,6 +114,7 @@ async function clearPersistedStatus(guildId, userId) {
 }
 
 async function startPendingFlow(member, channel) {
+    if (pendingChecks.has(member.id)) return;
     const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({
@@ -247,7 +248,17 @@ module.exports = {
                 return;
             }
 
+            if (newHas && await hasSupporterRole(member)) {
+                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+                await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
+                return;
+            }
+
             if (!prevHas && newHas) {
+                if (pendingChecks.has(userId)) return;
+                if (prev?.lastAnnounced && Date.now() - prev.lastAnnounced < 5000) {
+                    return;
+                }
                 if (prev?.lastMessageId) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
                     await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
@@ -264,6 +275,7 @@ module.exports = {
                     return;
                 }
 
+                statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: prev?.lastMessageId || null });
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 if (!channel) return;
                 await startPendingFlow(member, channel);

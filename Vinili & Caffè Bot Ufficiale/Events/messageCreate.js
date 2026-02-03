@@ -161,7 +161,7 @@ async function handleVoteManagerMessage(message) {
     if (voteCount === null) {
         global.logger.warn('[VOTE EMBED] Vote count not found. Text:', fullText);
     }
-    const voteLabel = typeof voteCount === 'number' ? `${voteCount}**°**` : '';
+    const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
     const expValue = getRandomExp();
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
@@ -170,7 +170,7 @@ async function handleVoteManagerMessage(message) {
                 `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
                 '',
                 '\`Hai guadagnato:\`',
-                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel}** ` : ''} **voto**`,
+                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
                 `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',

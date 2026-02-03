@@ -174,7 +174,7 @@ async function handleVoteManagerMessage(message) {
             `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
             '',
             '\`Hai guadagnato:\`',
-            `⭐ • **${expValue} EXP** per ${voteLabel ? `**${voteLabel}** ` : ''}voto`,
+            `⭐ • **${expValue} EXP** per ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
             `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
             '💎 • e aura sul server!',
             '',
