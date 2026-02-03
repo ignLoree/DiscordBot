@@ -9,6 +9,7 @@ const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
 const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderService');
+const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 const { recordMessage } = require('../Services/Stats/statsService');
@@ -173,7 +174,7 @@ async function handleVoteManagerMessage(message) {
             `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
             '',
             '\`Hai guadagnato:\`',
-            `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
+            `⭐ • **${expValue} EXP** per ${voteLabel ? `**${voteLabel}** ` : ''}voto`,
             `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
             '💎 • e aura sul server!',
             '',
@@ -199,6 +200,9 @@ async function handleVoteManagerMessage(message) {
         global.logger.error('[VOTE EMBED] Failed to send embed:', detail);
     }
     if (sent) {
+        if (user?.id && message.guild?.id) {
+            await recordDiscadiaVote(message.guild.id, user.id).catch(() => {});
+        }
         await message.delete().catch(() => {});
     }
     return true;

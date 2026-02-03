@@ -10,6 +10,7 @@ const { resetMissionsIfNeeded, refreshMissionWindows } = require('../Services/Pa
 const { maybeRunEngagement, maybeRunQuizLoop } = require('../Services/Economy/engagementService');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
 const { restorePendingDiscadiaReminders } = require('../Services/Discadia/discadiaReminderService');
+const { startDiscadiaVoteReminderLoop } = require('../Services/Discadia/discadiaVoteReminderService');
 const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
@@ -50,6 +51,11 @@ module.exports = {
             await restorePendingDiscadiaReminders(client);
         } catch (err) {
             global.logger.error('[DISCADIA REMINDER ERROR]', err);
+        }
+        try {
+            startDiscadiaVoteReminderLoop(client);
+        } catch (err) {
+            global.logger.error('[DISCADIA VOTE REMINDER ERROR]', err);
         }
         try {
             await bootstrapSupporter(client);

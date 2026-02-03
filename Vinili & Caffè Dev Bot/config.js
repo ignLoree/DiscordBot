@@ -48,6 +48,12 @@ module.exports = {
     cooldownMinutes: 1440,
     bumpSuccessPatterns: ["has been successfully bumped"]
   },
+  discadiaVoteReminder: {
+    enabled: true,
+    cooldownHours: 24,
+    checkIntervalMinutes: 30,
+    message: "Ciao! Sono passate 24 ore, puoi votare di nuovo su [Discadia](<https://discadia.com/server/viniliecaffe/>) e ottenere XP! Grazie per il supporto!"
+  },
 
   morningReminder: {
     enabled: true,
