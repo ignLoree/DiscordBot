@@ -1,4 +1,5 @@
 ﻿const { EmbedBuilder, PermissionsBitField, ActivityType } = require('discord.js');
+const SupporterStatus = require('../Schemas/Supporter/supporterStatusSchema');
 
 const ROLE_ID = '1442568948271943721';
 const CHANNEL_ID = '1442569123426074736';
@@ -8,6 +9,8 @@ const pendingChecks = new Map();
 const PENDING_MS = 3 * 60 * 1000;
 const CLEANUP_MS = 60 * 1000;
 let cleanupInterval = null;
+let bootstrapRan = false;
+const bootstrappedUsers = new Set();
 
 function getCustomStatus(presence) {
     if (!presence?.activities?.length) return '';
@@ -68,8 +71,10 @@ async function removeRoleIfPossible(member) {
     return true;
 }
 
-function hasInviteNow(member) {
-    return hasInvite(member.presence);
+function hasInviteNow(member, userId) {
+    if (hasInvite(member.presence)) return true;
+    const cached = statusCache.get(userId);
+    return cached?.hasLink === true;
 }
 
 async function clearPending(userId, channel) {
@@ -80,6 +85,105 @@ async function clearPending(userId, channel) {
         await channel.messages.delete(pending.messageId).catch(() => {});
     }
     pendingChecks.delete(userId);
+}
+
+async function persistStatus(guildId, userId, payload) {
+    try {
+        await SupporterStatus.updateOne(
+            { guildId, userId },
+            { $set: payload, $setOnInsert: { guildId, userId } },
+            { upsert: true }
+        );
+    } catch (error) {
+        global.logger.error('[SUPPORTER STATUS] Persist failed:', error);
+    }
+}
+
+async function clearPersistedStatus(guildId, userId) {
+    try {
+        await SupporterStatus.deleteOne({ guildId, userId });
+    } catch (error) {
+        global.logger.error('[SUPPORTER STATUS] Delete failed:', error);
+    }
+}
+
+async function startPendingFlow(member, channel) {
+    const embed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setAuthor({
+            name: member.user.username,
+            iconURL: member.user.displayAvatarURL({ size: 256 })
+        })
+        .setTitle('Nuovx sostenitore <a:VC_StarPink:1330194976440848500>')
+        .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+        .setDescription([
+            `<@${member.id}>, \`hai sbloccato:\``,
+            `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
+            '<a:VC_Coffe:1448695567244066827> • \`x2\` di multi in **vocale** e **testuale**',
+            '<a:VC_Infinity:1448687797266288832> • Inviare **media** in __ogni chat__',
+            '<a:VC_HeartWhite:1448673535253024860> • Mandare **adesivi** __esterni__ in **qualsiasi chat**',
+            '',
+            '<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status _!_ ☆',
+        ].join('\n'))
+        .setFooter({ text: 'Grazie per il tuo supporto!'});
+
+    const sent = await channel.send({ content: `<@${member.id}>`, embeds: [embed] }).catch(() => null);
+    if (sent) {
+        const timeout = setTimeout(async () => {
+            const stillHas = hasInviteNow(member, member.id);
+            if (!stillHas) {
+                await channel.messages.delete(sent.id).catch(() => {});
+                pendingChecks.delete(member.id);
+                statusCache.set(member.id, { hasLink: false, lastAnnounced: statusCache.get(member.id)?.lastAnnounced || 0, lastMessageId: null });
+                return;
+            }
+            await addRoleIfPossible(member);
+            pendingChecks.delete(member.id);
+        }, PENDING_MS);
+        pendingChecks.set(member.id, { timeout, messageId: sent.id });
+    }
+
+    statusCache.set(member.id, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: sent?.id || null });
+    await persistStatus(member.guild.id, member.id, { hasLink: true, lastMessageId: sent?.id || null, lastSentAt: new Date() });
+}
+
+async function bootstrapSupporter(client) {
+    if (bootstrapRan) return;
+    bootstrapRan = true;
+    for (const guild of client.guilds.cache.values()) {
+        const channel = guild.channels.cache.get(CHANNEL_ID);
+        if (!channel) continue;
+        let persisted = [];
+        try {
+            persisted = await SupporterStatus.find({ guildId: guild.id }).lean();
+        } catch (error) {
+            persisted = [];
+        }
+        for (const doc of persisted) {
+            if (doc?.userId) {
+                bootstrappedUsers.add(doc.userId);
+                if (doc.lastMessageId) {
+                    statusCache.set(doc.userId, {
+                        hasLink: Boolean(doc.hasLink),
+                        lastAnnounced: doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : 0,
+                        lastMessageId: doc.lastMessageId
+                    });
+                }
+            }
+        }
+        await guild.members.fetch({ withPresences: true }).catch(() => null);
+        for (const member of guild.members.cache.values()) {
+            if (member.user?.bot) continue;
+            if (!member.presence || ['offline', 'invisible'].includes(member.presence.status)) continue;
+            if (!hasInvite(member.presence)) continue;
+            if (member.roles.cache.has(ROLE_ID)) continue;
+            if (pendingChecks.has(member.id)) continue;
+            const existing = statusCache.get(member.id);
+            if (existing?.lastMessageId) continue;
+            if (bootstrappedUsers.has(member.id)) continue;
+            await startPendingFlow(member, channel);
+        }
+    }
 }
 
 function startCleanupClock(client, guildId) {
@@ -106,6 +210,7 @@ function startCleanupClock(client, guildId) {
                     await channel.messages.delete(info.lastMessageId).catch(() => {});
                 }
                 statusCache.set(userId, { hasLink: false, lastAnnounced: info?.lastAnnounced || 0, lastMessageId: null });
+                await clearPersistedStatus(guild.id, userId);
             }
         }
     }, CLEANUP_MS);
@@ -136,52 +241,18 @@ module.exports = {
             if (!prevHas && newHas) {
                 if (member.roles.cache.has(ROLE_ID)) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0 });
+                    await persistStatus(member.guild.id, userId, { hasLink: true });
                     return;
                 }
                 if (wasOffline) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0 });
+                    await persistStatus(member.guild.id, userId, { hasLink: true });
                     return;
                 }
 
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 if (!channel) return;
-
-                const embed = new EmbedBuilder()
-                    .setColor('#6f4e37')
-                    .setAuthor({
-                        name: member.user.username,
-                        iconURL: member.user.displayAvatarURL({ size: 256 })
-                    })
-                    .setTitle('Nuovx sostenitore <a:VC_StarPink:1330194976440848500>')
-                    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-                    .setDescription([
-                        `<@${member.id}>, \`hai sbloccato:\``,
-                        `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
-                        '<a:VC_Coffe:1448695567244066827> • \`x2\` di multi in **vocale** e **testuale**',
-                        '<a:VC_Infinity:1448687797266288832> • Inviare **media** in __ogni chat__',
-                        '<a:VC_HeartWhite:1448673535253024860> • Mandare **adesivi** __esterni__ in **qualsiasi chat**',
-                        '',
-                        '<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status _!_ ☆',
-                    ].join('\n'))
-                    .setFooter({ text: '☕ Grazie per il tuo supporto!'});
-
-                const sent = await channel.send({ content: `<@${member.id}>`, embeds: [embed] }).catch(() => null);
-                if (sent) {
-                    const timeout = setTimeout(async () => {
-                        const stillHas = hasInviteNow(member);
-                        if (!stillHas) {
-                            await channel.messages.delete(sent.id).catch(() => {});
-                            pendingChecks.delete(userId);
-                            statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null });
-                            return;
-                        }
-                        await addRoleIfPossible(member);
-                        pendingChecks.delete(userId);
-                    }, PENDING_MS);
-                    pendingChecks.set(userId, { timeout, messageId: sent.id });
-                }
-
-                statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: sent?.id || null });
+                await startPendingFlow(member, channel);
                 return;
             }
 
@@ -189,20 +260,19 @@ module.exports = {
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
                 await removeRoleIfPossible(member);
                 statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null });
+                await clearPersistedStatus(member.guild.id, userId);
                 return;
             }
 
             statusCache.set(userId, { hasLink: newHas, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null });
+            await persistStatus(member.guild.id, userId, { hasLink: newHas, lastMessageId: prev?.lastMessageId || null });
         } catch (error) {
             global.logger.error(error);
         }
     }
+    ,
+    bootstrapSupporter
 };
-
-
-
-
-
 
 
 

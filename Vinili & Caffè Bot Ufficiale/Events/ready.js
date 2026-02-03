@@ -9,6 +9,7 @@ const { PassUser } = require('../Schemas/Pass/passUser');
 const { resetMissionsIfNeeded, refreshMissionWindows } = require('../Services/Pass/missionService');
 const { maybeRunEngagement, maybeRunQuizLoop } = require('../Services/Economy/engagementService');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
+const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
@@ -43,6 +44,11 @@ module.exports = {
             await restorePendingReminders(client);
         } catch (err) {
             global.logger.error('[DISBOARD REMINDER ERROR]', err);
+        }
+        try {
+            await bootstrapSupporter(client);
+        } catch (err) {
+            global.logger.error('[PRESENCE BOOTSTRAP ERROR]', err);
         }
         try {
             await restoreTtsConnections(client);

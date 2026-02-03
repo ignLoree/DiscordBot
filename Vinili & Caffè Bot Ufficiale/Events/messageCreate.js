@@ -36,26 +36,61 @@ function extractUserIdFromText(text) {
     return match ? match[1] : null;
 }
 
+function extractNameFromText(text) {
+    if (!text) return null;
+    const match = text.match(/(?:^|[\r\n])\s*!?\s*([^\s]+)\s+has voted/i)
+        || text.match(/!?\s*([^\s]+)\s+has voted/i);
+    return match?.[1] || null;
+}
+
+function sanitizeName(name) {
+    if (!name) return null;
+    return name.replace(/^[!@#:_*`~\\-\\.]+|[!@#:_*`~\\-\\.]+$/g, '');
+}
+
+function getMessageTextParts(message) {
+    const embed = message.embeds?.[0];
+    const fieldsText = Array.isArray(embed?.fields)
+        ? embed.fields.map(f => `${f?.name || ''}\n${f?.value || ''}`).join('\n')
+        : '';
+    return {
+        content: message.content || '',
+        embedText: embed?.description || '',
+        embedTitle: embed?.title || '',
+        fieldsText
+    };
+}
+
 async function resolveUserFromMessage(message) {
     const mentioned = message.mentions?.users?.first();
     if (mentioned) return mentioned;
 
-    const content = message.content || '';
-    const embedText = message.embeds?.[0]?.description || '';
-    const idFromContent = extractUserIdFromText(content) || extractUserIdFromText(embedText);
+    const { content, embedText, embedTitle, fieldsText } = getMessageTextParts(message);
+    const idFromContent = extractUserIdFromText(content)
+        || extractUserIdFromText(embedText)
+        || extractUserIdFromText(fieldsText);
     if (idFromContent) {
         return message.guild.members.fetch(idFromContent).then(m => m.user).catch(() => null);
     }
 
-    const nameMatch = content.match(/^\s*!?\s*([^\s]+)\s+has voted/i);
-    if (nameMatch?.[1]) {
-        const name = nameMatch[1].toLowerCase();
+    const nameRaw = extractNameFromText(content)
+        || extractNameFromText(embedText)
+        || extractNameFromText(embedTitle)
+        || extractNameFromText(fieldsText);
+    const nameClean = sanitizeName(nameRaw);
+    if (nameClean) {
+        const name = nameClean.toLowerCase();
         const cached = message.guild.members.cache.find(m =>
             m.user.username.toLowerCase() === name || m.displayName.toLowerCase() === name
         );
         if (cached) return cached.user;
-        const searched = await message.guild.members.fetch({ query: nameMatch[1], limit: 1 }).catch(() => null);
-        return searched?.first()?.user || null;
+        const searched = await message.guild.members.fetch({ query: nameClean, limit: 5 }).catch(() => null);
+        if (searched?.size) {
+            const exact = searched.find(m =>
+                m.user.username.toLowerCase() === name || m.displayName.toLowerCase() === name
+            );
+            return (exact || searched.first()).user || null;
+        }
     }
 
     return null;
@@ -63,26 +98,35 @@ async function resolveUserFromMessage(message) {
 
 async function handleVoteManagerMessage(message) {
     if (!message.guild) return false;
-    if (message.author?.id !== VOTE_MANAGER_BOT_ID) return false;
     if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
+    const isVoteManagerAuthor = message.author?.id === VOTE_MANAGER_BOT_ID;
+    const { content, embedText, embedTitle, fieldsText } = getMessageTextParts(message);
+    const looksLikeVote = /has voted/i.test(content + ' ' + embedText + ' ' + embedTitle + ' ' + fieldsText);
+    if (!isVoteManagerAuthor && !looksLikeVote) return false;
 
     const user = await resolveUserFromMessage(message);
-    if (!user) return false;
+    const nameRaw = extractNameFromText(content)
+        || extractNameFromText(embedText)
+        || extractNameFromText(embedTitle)
+        || extractNameFromText(fieldsText);
+    const nameClean = sanitizeName(nameRaw) || 'Utente';
 
-    const embedText = message.embeds?.[0]?.description || '';
-    const embedTitle = message.embeds?.[0]?.title || '';
     const voteCount =
-        extractVoteCountFromText(message.content) ??
+        extractVoteCountFromText(content) ??
         extractVoteCountFromText(embedText) ??
-        extractVoteCountFromText(embedTitle);
+        extractVoteCountFromText(embedTitle) ??
+        extractVoteCountFromText(fieldsText);
     const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
     const expValue = getRandomExp();
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
-            .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ size: 256 }) })
+            .setAuthor({
+                name: user?.username || nameClean,
+                iconURL: user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || undefined
+            })
             .setTitle('Un nuovo voto! 💕')
             .setDescription([
-                `Grazie ${user} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
+                `Grazie ${user || nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
                 '',
                 '\`Hai guadagnato:\`',
                 `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
@@ -91,7 +135,7 @@ async function handleVoteManagerMessage(message) {
                 '',
                 '⭐ Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setThumbnail(user.displayAvatarURL({ size: 256 }))
+            .setThumbnail(user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || null)
             .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
 
     const row = new ActionRowBuilder().addComponents(
@@ -102,7 +146,8 @@ async function handleVoteManagerMessage(message) {
             .setURL(VOTE_URL)
     );
 
-    await message.channel.send({ content: `${user}`, embeds: [embed], components: [row] }).catch(() => {});
+    const mention = user ? `${user}` : '';
+    await message.channel.send({ content: mention, embeds: [embed], components: [row] }).catch(() => {});
     await message.delete().catch(() => {});
     return true;
 }
@@ -538,4 +583,3 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
-
