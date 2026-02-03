@@ -296,6 +296,9 @@ module.exports = {
             if (prevHas && !newHas) {
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
                 await removeRoleIfPossible(member);
+                try {
+                    await member.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.");
+                } catch {}
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 const lastMessageId = prev?.lastMessageId || null;
                 if (lastMessageId && channel) {
