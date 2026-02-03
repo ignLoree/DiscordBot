@@ -141,7 +141,7 @@ async function handleVoteManagerMessage(message) {
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setStyle(ButtonStyle.Link)
-            .setEmoji('ðŸ’—')
+            .setEmoji('💗')
             .setLabel('Vota cliccando qui')
             .setURL(VOTE_URL)
     );

@@ -198,7 +198,10 @@ function startCleanupClock(client, guildId) {
             const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
             if (!member) continue;
             const hasRole = member.roles.cache.has(ROLE_ID);
-            const hasLink = hasInvite(member.presence);
+            const hasLink = hasInviteNow(member, userId);
+            if (pendingChecks.has(userId)) {
+                continue;
+            }
             if (!hasLink || !hasRole) {
                 if (pendingChecks.has(userId)) {
                     await clearPending(userId, channel);
