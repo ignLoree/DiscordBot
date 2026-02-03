@@ -262,6 +262,11 @@ module.exports = {
             if (prevHas && !newHas) {
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
                 await removeRoleIfPossible(member);
+                const channel = member.guild.channels.cache.get(CHANNEL_ID);
+                const lastMessageId = prev?.lastMessageId || null;
+                if (lastMessageId && channel) {
+                    await channel.messages.delete(lastMessageId).catch(() => {});
+                }
                 statusCache.set(userId, { hasLink: false, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: null });
                 await clearPersistedStatus(member.guild.id, userId);
                 return;
