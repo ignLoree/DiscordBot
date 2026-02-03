@@ -7,6 +7,7 @@ module.exports = {
 
     async execute(client) {
 
+        const info = client.channels.cache.get('1468229791374249995');
         const canaleregole = client.channels.cache.get('1442569111119990887');
         const verifica = client.channels.cache.get('1442569059983163403');
         const ticket = client.channels.cache.get('1442569095068254219');
@@ -201,7 +202,9 @@ module.exports = {
         <:3_:1444099160294031471> Essere **maturi** e **attivi**
         <:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`),
         ];
-
+            new EmbedBuilder()
+            .setColor('#6f4e37')
+            .setDescription(``)
         const row1 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()

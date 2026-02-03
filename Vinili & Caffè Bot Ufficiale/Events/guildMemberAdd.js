@@ -1,7 +1,45 @@
-﻿const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 
 function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
+}
+
+async function addBotRoles(member) {
+    const roleIds = ['1329080094206984215', '1442568954181713982'];
+    const me = member.guild.members.me;
+
+    if (!me) {
+        global.logger.warn('[guildMemberAdd] Bot member not cached; cannot add bot roles.');
+        return;
+    }
+
+    if (!me.permissions.has(PermissionsBitField.Flags.ManageRoles)) {
+        global.logger.warn('[guildMemberAdd] Missing Manage Roles permission; cannot add bot roles.');
+        return;
+    }
+
+    const roles = roleIds
+        .map(id => member.guild.roles.cache.get(id))
+        .filter(Boolean);
+
+    const missingRoles = roleIds.filter(id => !member.guild.roles.cache.has(id));
+    if (missingRoles.length) {
+        global.logger.warn('[guildMemberAdd] Some bot roles not found:', missingRoles);
+    }
+
+    if (!roles.length) return;
+
+    const highestBotRole = me.roles.highest;
+    const blocked = roles.filter(role => role.position >= highestBotRole.position);
+    if (blocked.length) {
+        global.logger.warn(
+            '[guildMemberAdd] Bot role hierarchy prevents adding roles:',
+            blocked.map(role => role.id)
+        );
+        return;
+    }
+
+    await member.roles.add(roles);
 }
 
 module.exports = {
@@ -10,7 +48,7 @@ module.exports = {
         try {
             if (member.user?.bot) {
                 try {
-                    await member.roles.add(['1329080094206984215', '1442568954181713982']);
+                    await addBotRoles(member);
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
                 }
@@ -36,14 +74,6 @@ module.exports = {
                     );
                 let dmSent = false;
                 try {
-            if (member.user?.bot) {
-                try {
-                    await member.roles.add(['1329080094206984215', '1442568954181713982']);
-                } catch (error) {
-                    global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
-                }
-                return;
-            }
                     await member.send({ embeds: [dmEmbed] });
                     dmSent = true;
                 } catch {
@@ -51,14 +81,6 @@ module.exports = {
                 }
                 let punished = false;
                 try {
-            if (member.user?.bot) {
-                try {
-                    await member.roles.add(['1329080094206984215', '1442568954181713982']);
-                } catch (error) {
-                    global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
-                }
-                return;
-            }
                     await member.kick("Account is too young to be allowed.");
                     punished = true;
                 } catch {
@@ -127,4 +149,3 @@ module.exports = {
         }
     }
 };
-
