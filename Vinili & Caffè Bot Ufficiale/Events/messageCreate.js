@@ -23,9 +23,9 @@ function getRandomExp() {
 }
 
 function extractVoteCountFromText(text) {
-    const match = (text || '').match(/got\s+(\d+)\s+votes/i);
+    const match = (text || '').match(/(?:have\s+)?got\s+(\d+)\s+votes?/i);
     if (match) return Number(match[1]);
-    const matchAlt = (text || '').match(/(\d+)\s+votes/i);
+    const matchAlt = (text || '').match(/(\d+)\s+votes?/i);
     if (matchAlt) return Number(matchAlt[1]);
     return null;
 }
@@ -120,13 +120,9 @@ async function handleVoteManagerMessage(message) {
     const expValue = getRandomExp();
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
-            .setAuthor({
-                name: user?.username || nameClean,
-                iconURL: user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || undefined
-            })
             .setTitle('Un nuovo voto! 💕')
             .setDescription([
-                `Grazie ${user || nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
+                `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
                 '',
                 '\`Hai guadagnato:\`',
                 `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
@@ -135,7 +131,6 @@ async function handleVoteManagerMessage(message) {
                 '',
                 '⭐ Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setThumbnail(user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || null)
             .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
 
     const row = new ActionRowBuilder().addComponents(

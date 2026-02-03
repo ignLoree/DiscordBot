@@ -23,9 +23,9 @@ function getRandomExp() {
 }
 
 function extractVoteCountFromText(text) {
-    const match = (text || '').match(/got\s+(\d+)\s+votes/i);
+    const match = (text || '').match(/(?:have\s+)?got\s+(\d+)\s+votes?/i);
     if (match) return Number(match[1]);
-    const matchAlt = (text || '').match(/(\d+)\s+votes/i);
+    const matchAlt = (text || '').match(/(\d+)\s+votes?/i);
     if (matchAlt) return Number(matchAlt[1]);
     return null;
 }
@@ -126,7 +126,7 @@ async function handleVoteManagerMessage(message) {
         })
         .setTitle('Un nuovo voto! 💕')
         .setDescription([
-            `Grazie ${user || nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
+            `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
             '',
             '\`Hai guadagnato:\`',
             `⭐ • **${expValue} EXP** per ${voteLabel ? `${voteLabel} ` : ''}voto`,
@@ -591,6 +591,4 @@ async function handleDisboardBump(message, client) {
     await recordBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
-
-
 
