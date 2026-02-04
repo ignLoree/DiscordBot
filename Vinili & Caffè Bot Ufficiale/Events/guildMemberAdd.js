@@ -216,7 +216,7 @@ module.exports = {
                 const info = await resolveInviteInfo(member);
                 if (info.isVanity) {
                     await inviteChannel.send({
-                        content: `<:reply:1467582387084067149> L'utente ha usato il link vanity **.gg/ploshin**`
+                        content: `<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**`
                     }).catch(() => {});
                     return;
                 }
