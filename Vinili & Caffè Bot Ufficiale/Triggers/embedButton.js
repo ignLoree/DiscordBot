@@ -18,9 +18,9 @@ module.exports = {
         > I **canali vocali privati** sono ottenibili tramite <#1442569159237177385> o tramite <#1442569148839493775> e hanno bisogno di un **__ruolo custom__**.
         
         <:pinnednew:1443670849990430750> __**REGOLE:**__
-        <:dot:1443660294596329582> Devono essere **attive** almeno **__3 ore a settimana__**;
-        <:dot:1443660294596329582> __Non__ è fatto obbligo di rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887), __tranne__ per i **contenuti** \`NSFW & GORE\`;
-        <:dot:1443660294596329582> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi** esso **__NON__** potrà essere più **richiesto**.`),]
+        <:VC_DoubleReply:1468713981152727120>  Devono essere **attive** almeno **__3 ore a settimana__**;
+        <:VC_DoubleReply:1468713981152727120>  __Non__ è fatto obbligo di rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887), __tranne__ per i **contenuti** \`NSFW & GORE\`;
+        <:VC_Reply:1468262952934314131> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi** esso **__NON__** potrà essere più **richiesto**.`),]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
         if (interaction.customId == 'ruolocustom') {
@@ -32,8 +32,8 @@ module.exports = {
         > I **canali vocali privati** sono ottenibili tramite <#1442569159237177385> o tramite <#1442569148839493775>. A differenza delle **vocali private** essi possono essere ottenuti anche __senza__ l'ausilio di un **canale vocale privato**
         
         <:pinnednew:1443670849990430750> __**REGOLE:**__
-        <:dot:1443660294596329582> Chi **possiede** il __ruolo__ dovrà fare almeno **__100 messaggi__** _a settimana_;
-        <:dot:1443660294596329582> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi**  esso **__NON__** potrà essere più **richiesto**.`),]
+        <:VC_DoubleReply:1468713981152727120>  Chi **possiede** il __ruolo__ dovrà fare almeno **__100 messaggi__** _a settimana_;
+        <:VC_Reply:1468262952934314131> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi**  esso **__NON__** potrà essere più **richiesto**.`),]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
         if (interaction.customId == 'metodi') {
@@ -67,28 +67,28 @@ module.exports = {
                     .setDescription(`<a:Boost_Cycle:1329504283007385642> **Boostando** il server di **__Vinili & Caffè__** accederete a delle ricompense esclusive:
 
             <:1_:1444099163116535930> 
-            ↪ Ruolo <@&1329497467481493607>
+            <:VC_Reply:1468262952934314131> Ruolo <@&1329497467481493607>
 
             <:2_:1444099161673826368> 
-            ↪ \`x3\` di multi in vocale e testuale
+            <:VC_Reply:1468262952934314131> \`x2\` di multi in vocale e testuale
 
             <:3_:1444099160294031471> 
-            ↪ Possibilità di **cambiare** il __nickname__
+            <:VC_Reply:1468262952934314131> Possibilità di **cambiare** il __nickname__
 
             <:4_:1444099158859321435> 
-            ↪ Inviare **media** in **__ogni__ chat**
+            <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
 
             <:5_:1444099157194440884> 
-            ↪ Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
+            <:VC_Reply:1468262952934314131> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
 
             <:6_:1444099156007194887> 
-            ↪ **Ruolo Custom** & **Stanza Privata**
+            <:VC_Reply:1468262952934314131> **Ruolo Custom** & **Stanza Privata**
 
             <:7_:1444099154610618368> 
-            ↪ Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
+            <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
 
             <:8_:1444099153125703690> 
-            ↪ **Votare** per lo <@&1442568895251611924>`),
+            <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`(Il ruolo e la stanza verranno rimossi in caso di rimozione dei boosts o in caso di mancato rinnovo)\`__**`)
@@ -102,16 +102,13 @@ module.exports = {
                     .setDescription(`<:VC_BlackPin:1448687216871084266> **Inserendo** il link __vanity__ **\`(https://discord.gg/viniliecaffe)\`** nello __status__ o nell'__about me__ riceverai il ruolo <@&1442568948271943721>
 
                 <:1_:1444099163116535930>
-                ↪ **Ruolo** esclusivo <@&1442568948271943721>
-
-                <:2_:1444099161673826368> 
-                ↪ \`x2\` di multi in vocale e testuale
+                <:VC_Reply:1468262952934314131> **Ruolo** esclusivo <@&1442568948271943721>
 
                 <:3_:1444099160294031471> 
-                ↪ Inviare **media** in **__ogni__ chat**
+                <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
 
                 <:4_:1444099158859321435> 
-                ↪ Mandare **adesivi** esterni in qualsiasi chat`),
+                <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in qualsiasi chat`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli saranno rimossi\`__**`)
@@ -125,27 +122,27 @@ module.exports = {
                     .setDescription(`<:VC_BlackPin:1448687216871084266> Per **salire** di livello e **ottenere** i ruoli bisogna **messaggiare** in <#1442569130573303898> e stare in **vocale** nei canali dei server. <@339254240012664832> vi avviserà quando salirete di **livello**.
                 
                 <:dot:1443660294596329582> <@&1442568937303707789>
-                    ᲼᲼᲼↪ Cambiarsi il **__nick__**
+                    <:VC_Reply:1468262952934314131> Cambiarsi il **__nick__**
 
                 <:dot:1443660294596329582> <@&1442568936423034940>
-                    ᲼᲼᲼↪ Possibilità di **aggiungere** una __reazione__ ai messaggi
+                    <:VC_Reply:1468262952934314131> Possibilità di **aggiungere** una __reazione__ ai messaggi
 
                 <:dot:1443660294596329582> <@&1442568934510297226>
-                    ᲼᲼᲼↪ Inviare **media** in **__ogni__ chat**
-                    ᲼᲼᲼↪ Mandare **adesivi** esterni in qualsiasi chat
+                    <:VC_DoubleReply:1468713981152727120> Inviare **media** in **__ogni__ chat**
+                    <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in qualsiasi chat
 
                 <:dot:1443660294596329582> <@&1442568933591748688>
-                    ᲼᲼᲼↪ Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-                    ᲼᲼᲼↪ Possibilità di **chiedere** un __poll__ tramite __\`TICKET PERKS\`__
+                    <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
+                    <:VC_Reply:1468262952934314131> Possibilità di **chiedere** un __poll__ tramite __\`TICKET PERKS\`__
 
                 <:dot:1443660294596329582> <@&1442568932136587297>
-                    ᲼᲼᲼↪ Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
+                    <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
 
                 <:dot:1443660294596329582> <@&1442568931326824488>
-                    ᲼᲼᲼↪ **Ruolo Custom** & **Canale Privato**
+                    <:VC_Reply:1468262952934314131> **Ruolo Custom** & **Canale Privato**
 
                 <:dot:1443660294596329582> <@&1442568929930379285>
-                    ᲼᲼᲼↪ **Votare** per lo <@&1442568895251611924>`),
+                    <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli e la stanza saranno rimossi\`__**`)
@@ -159,16 +156,16 @@ module.exports = {
                     .setDescription(`<:VC_BlackPin:1448687216871084266> Il ruolo <@&1442568950805430312> è ottinibile solo essendo **amici** dei __Founder__ oppure **vincendo** __eventi__ o __giveaway__.
                 
                 <:1_:1444099163116535930> 
-                ↪ **Ruolo** esclusivo <@&1442568950805430312>
+                <:VC_Reply:1468262952934314131> **Ruolo** esclusivo <@&1442568950805430312>
 
                 <:2_:1444099161673826368> 
-                ↪ \`x3\` di multi in vocale e testuale
+                <:VC_Reply:1468262952934314131> \`x3\` di multi in vocale e testuale
 
                 <:3_:1444099160294031471>
-                ↪ **Vantaggi** di __tutti__ i ruoli <@&1442568928667631738>
+                <:VC_Reply:1468262952934314131> **Vantaggi** di __tutti__ i ruoli <@&1442568928667631738>
 
                 <:4_:1444099158859321435>
-                ↪ **Votare** per lo <@&1442568895251611924>`),
+                <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli e la stanza saranno rimossi\`__**`)
@@ -180,12 +177,12 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setTitle('<a:ThankYou:1329504268369002507> **__DONAZIONI SOTTO I 5€__**')
-                    .setDescription(`<:dot:1443660294596329582> Ruolo <@&1442568916114346096>
-                    <:dot:1443660294596329582> Inviare **media** in **__ogni__ chat**
-                    <:dot:1443660294596329582> \`x5\` di multi in vocale e testuale
-                    <:dot:1443660294596329582> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-                    <:dot:1443660294596329582> Possibilità di suggerire un **poll** tramite <#1442569095068254219> \`PERKS\`
-                    <:dot:1443660294596329582> **Votare** per lo <@&1442568895251611924>`)
+                    .setDescription(`<:VC_DoubleReply:1468713981152727120> Ruolo <@&1442568916114346096>
+                    <:VC_DoubleReply:1468713981152727120> Inviare **media** in **__ogni__ chat**
+                    <:VC_DoubleReply:1468713981152727120> \`x5\` di multi in vocale e testuale
+                    <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
+                    <:VC_DoubleReply:1468713981152727120> Possibilità di suggerire un **poll** tramite <#1442569095068254219> \`PERKS\`
+                    <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`)
                     .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Per ricevere i perks dovrai donare almeno 1€` }),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
@@ -198,11 +195,11 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setTitle('<a:ThankYou:1329504268369002507> **__DONAZIONI SOPRA I 5€__**')
-                    .setDescription(`<:dot:1443660294596329582> Ruolo <@&1442568916114346096>
-                    <:dot:1443660294596329582> **Vantaggi** del <@&1442568916114346096> sotto i 5€
-                    <:dot:1443660294596329582> **Ruolo Custom**
-                    <:dot:1443660294596329582> **Stanza Privata**
-                    <:dot:1443660294596329582> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**`)
+                    .setDescription(`<:VC_DoubleReply:1468713981152727120> Ruolo <@&1442568916114346096>
+                    <:VC_DoubleReply:1468713981152727120> **Vantaggi** del <@&1442568916114346096> sotto i 5€
+                    <:VC_DoubleReply:1468713981152727120> **Ruolo Custom**
+                    <:VC_DoubleReply:1468713981152727120> **Stanza Privata**
+                    <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**`)
                     .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Per ricevere i perks dovrai donare almeno 6€` }),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
@@ -216,9 +213,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<a:Boost_Cycle:1329504283007385642> **__Classifica globale donatori Vinili & Caffè:__** <:Money:1330544713463500970>
 
-        <:BL_1:1329450491549188197>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_yellow:1330194103564238930>
-        <:BL_2:1329450488768368711>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_darkblue:1330194101886255187>
-        <:BL_3:1329450487174529086>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_white:1330194100162396330>`),
+        <:VC_1:1444099819680563200>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_yellow:1330194103564238930>
+        <:VC_2:1444099781864722535>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_darkblue:1330194101886255187>
+        <:VC_3:1444099746116534282>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_white:1330194100162396330>`),
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
@@ -228,19 +225,19 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.1\`** 
-        ᲼᲼᲼↪ **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/terms) di Discord.
+        <:VC_Reply:1468262952934314131> **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/terms) di Discord.
 
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.2\`** 
-        ᲼᲼᲼↪ **Non discriminare nessuno**, non accettiamo nessuna forma di razzismo, fascismo, omofobia,  __vietato__ **scrivere** o **dire** la \`f-word\` e la \`n-word\`.
+        <:VC_Reply:1468262952934314131> **Non discriminare nessuno**, non accettiamo nessuna forma di razzismo, fascismo, omofobia,  __vietato__ **scrivere** o **dire** la \`f-word\` e la \`n-word\`.
         
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.3\`** 
-        ᲼᲼᲼↪ **Rispettare** gli __utenti__ e lo __staff__ del server.
+        <:VC_Reply:1468262952934314131> **Rispettare** gli __utenti__ e lo __staff__ del server.
         
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.4\`** 
-        ᲼᲼᲼↪ É __vietato__ **auto-promuoversi**.
+        <:VC_Reply:1468262952934314131> É __vietato__ **auto-promuoversi**.
         
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.5\`** 
-        ᲼᲼᲼↪ É __vietato__ **uscire** e **rientrare** continuamente dal server.`),
+        <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dal server.`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__᲼᲼᲼`),
@@ -252,19 +249,19 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:rules:1443307208543703131> **\`REGOLA TESTUALE 2.1\`** 
-                ᲼᲼᲼↪ É __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> É __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.2\`** 
-        ᲼᲼᲼↪ É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.3\`** 
-        ᲼᲼᲼↪ É __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
+        <:VC_Reply:1468262952934314131> É __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.4\`** 
-        ᲼᲼᲼↪ É __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
+        <:VC_Reply:1468262952934314131> É __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.5\`** 
-        ᲼᲼᲼↪ É __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.`),
+        <:VC_Reply:1468262952934314131> É __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__᲼᲼᲼`),
@@ -276,25 +273,25 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:rules:1443307208543703131> **\`REGOLA VOCALE 3.1\`** 
-                ᲼᲼᲼↪ É __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> É __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.2\`** 
-        ᲼᲼᲼↪ É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.3\`** 
-        ᲼᲼᲼↪ É __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
+        <:VC_Reply:1468262952934314131> É __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.4\`** 
-        ᲼᲼᲼↪ É __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
+        <:VC_Reply:1468262952934314131> É __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.5\`** 
-        ᲼᲼᲼↪ É __vietato__ **urlare** o fare **errape** col microfono.
+        <:VC_Reply:1468262952934314131> É __vietato__ **urlare** o fare **errape** col microfono.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.6\`** 
-        ᲼᲼᲼↪ É __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinità**.
+        <:VC_Reply:1468262952934314131> É __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinità**.
         
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.7\`** 
-        ᲼᲼᲼↪ É __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`),
+        <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__᲼᲼᲼`),

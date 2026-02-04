@@ -15,7 +15,7 @@ module.exports = {
             <:dot:1443660294596329582> Ogni <@&1442568897902678038> dovrà __eseguire__ almeno: **\`4 sanzioni\`**
             <:dot:1443660294596329582> Ogni <@&1442568896237277295> dovrà __eseguire__ almeno: **\`4 sanzioni\`**
 
-            ? Chi __rispetterà__ questi limiti riceverà **una valutazione positiva**.`)
+            > Chi __rispetterà__ questi limiti riceverà **una valutazione positiva**.`)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
         if (interaction.customId == 'warnstaff') {
@@ -37,7 +37,7 @@ module.exports = {
                     > Le **valutazioni positive** si possono **__scambiare__** per dei giorni in più di **pausa**.
                     
                     <a:laydowntorest:1444006796661358673> **__VALUTAZIONI NEGATIVE__**
-                    ? Le **valutazioni negative** diminuscono la possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.
+                    > Le **valutazioni negative** diminuscono la possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.
                     
                     > Le **valutazioni negative** possono essere **__rimosse__** completando compiti extra assegnati dall'<@&1442568894349840435> o rinunciando a _almeno_ \`3 o più valutazioni positive\` in base al motivo per cui è stata assegnata la valutazione. `)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
@@ -57,7 +57,7 @@ module.exports = {
             <:dot:1443660294596329582> **1** Gennaio
             <:dot:1443660294596329582> **Pasqua** e **Pasquetta**
             
-            ? Naturalmente per **garantire** al meglio l'attività del server ci sono dei __limiti__ di staffer che possono essere in pausa nello __stesso periodo__
+            > Naturalmente per **garantire** al meglio l'attività del server ci sono dei __limiti__ di staffer che possono essere in pausa nello __stesso periodo__
             <:dot:1443660294596329582> <@&1442568904311570555> <a:vegarightarrow:1443673039156936837> __Nessun limite__
             <:dot:1443660294596329582> <@&1442568901887000618> <a:vegarightarrow:1443673039156936837> __3__ **staffer**
             <:dot:1443660294596329582> <@&1442568897902678038> <a:vegarightarrow:1443673039156936837> __1__ **staffer**
@@ -81,20 +81,20 @@ module.exports = {
                 > <:attentionfromvega:1443651874032062505> **Superare** i limiti di __poco__ potrebbe comportare a un **depex**, mentre **superarli** di __tanto__ **__non garantisce__** un **pex**
             
                 <a:vegarightarrow:1443673039156936837> <@&1442568904311570555> 
-            <:dot:1443660294596329582> **__400__** messaggi
-            <:dot:1443660294596329582> **__3.5h__** in vocale
+            <:VC_DoubleReply:1468713981152727120> **__400__** messaggi
+            <:VC_Reply:1468262952934314131> **__3.5h__** in vocale
 
             <a:vegarightarrow:1443673039156936837> <@&1442568901887000618> 
-            <:dot:1443660294596329582> **__500__** messaggi
-            <:dot:1443660294596329582> **__5h__** in vocale
+            <:VC_DoubleReply:1468713981152727120> **__500__** messaggi
+            <:VC_Reply:1468262952934314131> **__5h__** in vocale
 
             <a:vegarightarrow:1443673039156936837> <@&1442568897902678038> 
-            <:dot:1443660294596329582> **__500__** messaggi
-            <:dot:1443660294596329582> **__4.5h__** in vocale
+            <:VC_DoubleReply:1468713981152727120> **__500__** messaggi
+            <:VC_Reply:1468262952934314131> **__4.5h__** in vocale
 
             <a:vegarightarrow:1443673039156936837> <@&1442568896237277295> 
-            <:dot:1443660294596329582> **__450__** messaggi
-            <:dot:1443660294596329582> **__4h__** in vocale
+            <:VC_DoubleReply:1468713981152727120> **__450__** messaggi
+            <:VC_Reply:1468262952934314131> **__4h__** in vocale
 
             > <:attentionfromvega:1443651874032062505> Verrà **valutato** anche il **modo** in cui questi __limiti__ vengono raggiunti, ovvero se lo **staffer** è stato costante o no. `)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
@@ -123,100 +123,100 @@ module.exports = {
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:rules:1443307208543703131> **__Regola \`1.1\`__**
-                <:dot:1443660294596329582> Sanzione: **Ban**
+                <:VC_Reply:1468262952934314131> Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`1.2\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __2h__**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**
 
                 <:rules:1443307208543703131> **__Regola \`1.3\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __3h__** 
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __6h__**
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __18h__**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__** 
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
 
                 <:rules:1443307208543703131> **__Regola \`1.4\`__**
-                <:dot:1443660294596329582> 1° Sanzione: **Mute __12h__**
-                <:dot:1443660294596329582> 2° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Mute __12h__**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`1.5\`__**
-                <:dot:1443660294596329582> Sanzione: **Ban**`)
+                <:VC_Reply:1468262952934314131> Sanzione: **Ban**`)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
         if (interaction.customId == 'testualimoderazione') {
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:rules:1443307208543703131> **__Regola \`2.1\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Mute __18h__**
-                <:dot:1443660294596329582> 2° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Mute __18h__**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.2\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Warn**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __12h__** 
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __18h__** 
-                <:dot:1443660294596329582> 5° Sanzione: **Mute __24h__**
-                <:dot:1443660294596329582> 6° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Warn**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__** 
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__** 
+                <:VC_Reply:1468262952934314131> 5° Sanzione: **Mute __24h__**
+                <:VC_Reply:1468262952934314131> 6° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.3\`__** 
-                <:dot:1443660294596329582> Sanzione: **Ban**
+                <:VC_Reply:1468262952934314131> Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`2.4\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale** 
-                <:dot:1443660294596329582> 2° Sanzione: **Warn**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __6h__**
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __18h__**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale** 
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Warn**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
 
                 <:rules:1443307208543703131> **__Regola \`2.5\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __2h__**`)
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**`)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
         if (interaction.customId == 'vocalimoderazione') {
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:rules:1443307208543703131> **__Regola \`3.1\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __16h__**
-                <:dot:1443660294596329582> 3° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __16h__**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.2\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __12h__** 
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __18h__** 
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __24h__**
-                <:dot:1443660294596329582> 5° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __12h__** 
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __18h__** 
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __24h__**
+                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.3\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __6h__**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __12h__**                                 
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __24h__**  
-                <:dot:1443660294596329582> 5° Sanzione: **Mute __48h__** 
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __6h__**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**                                 
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __24h__**  
+                <:VC_Reply:1468262952934314131> 5° Sanzione: **Mute __48h__** 
 
                 <:rules:1443307208543703131> **__Regola \`3.4\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __3h__**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __6h__**                                 
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __12h__**
-                <:dot:1443660294596329582> 5° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __6h__**                                 
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __12h__**
+                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**
 
                 <:rules:1443307208543703131> **__Regola \`3.5\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __3h__**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __12h__**
-                <:dot:1443660294596329582> 4° Sanzione: **Ban**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __3h__**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Ban**
                 
                 <:rules:1443307208543703131> **__Regola \`3.6\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __2h__**
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**
                 
                 <:rules:1443307208543703131> **__Regola \`3.7\`__** 
-                <:dot:1443660294596329582> 1° Sanzione: **Richiamo verbale**
-                <:dot:1443660294596329582> 2° Sanzione: **Mute __4h__**
-                <:dot:1443660294596329582> 3° Sanzione: **Mute __12h__**
-                <:dot:1443660294596329582> 4° Sanzione: **Mute __18h__**
-                <:dot:1443660294596329582> 5° Sanzione: **Ban**`)
+                <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
+                <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __4h__**
+                <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
+                <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
+                <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**`)
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
     }
