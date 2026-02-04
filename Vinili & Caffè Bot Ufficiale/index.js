@@ -7,9 +7,9 @@ const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const cron = require("node-cron");
 const Logs = require('discord-logs');
 const { ClusterClient } = require('discord-hybrid-sharding');
-const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js"));
+const functions = fs.readdirSync("./Handlers").filter((file) => file.endsWith(".js"));
 const triggerFiles = fs.existsSync("./Triggers")
-    ? fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
+    ? fs.readdirSync("./Triggers").filter((file) => file.endsWith(".js"))
     : [];
 const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
 const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
@@ -73,6 +73,11 @@ const pullLatest = () => {
         child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
     } catch {}
 };
+const getChannelSafe = async (client, channelId) => {
+    if (!channelId) return null;
+    return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+};
+const reloadFlagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
 client.reloadScope = async (scope) => {
     const baseDir = process.cwd();
     const clearCacheByDir = (dirName) => {
@@ -127,18 +132,17 @@ client.reloadScope = async (scope) => {
 };
 
 setInterval(async () => {
-    const flagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
-    if (!fs.existsSync(flagPath)) return;
+    if (!fs.existsSync(reloadFlagPath)) return;
     try {
-        const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
+        const payload = JSON.parse(fs.readFileSync(reloadFlagPath, 'utf8'));
         if (payload?.target && payload.target !== currentTarget) return;
-        fs.unlinkSync(flagPath);
+        fs.unlinkSync(reloadFlagPath);
         const scope = payload?.scope || 'all';
         if (payload?.gitPull) pullLatest();
         await client.reloadScope(scope);
         client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
         if (payload?.channelId) {
-            const channel = await client.channels.fetch(payload.channelId).catch(() => null);
+            const channel = await getChannelSafe(client, payload.channelId);
             if (channel) {
                 const elapsedMs = payload?.at ? Date.now() - Date.parse(payload.at) : null;
                 const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
@@ -178,7 +182,7 @@ client.on("clientReady", async (client) => {
         if (fs.existsSync(restartNotifyPath)) {
             try {
                 const data = JSON.parse(fs.readFileSync(restartNotifyPath, "utf8"));
-                const channel = data?.channelId ? await client.channels.fetch(data.channelId).catch(() => null) : null;
+                const channel = await getChannelSafe(client, data?.channelId);
                 if (channel) {
                     const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
                     const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
@@ -192,7 +196,7 @@ client.on("clientReady", async (client) => {
         } else if (fs.existsSync("./restart.json")) {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
-                const channel = await client.channels.fetch(data.channelID);
+                const channel = await getChannelSafe(client, data?.channelID);
                 await channel.send("<:vegacheckmark:1443666279058772028> Il bot e' stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
@@ -227,7 +231,7 @@ if (shouldUseCluster) {
         require(`./Handlers/${file}`)(client);
     }
     client.handleEvents("./Events");
-    client.handleTriggers(triggerFiles, "./Triggers")
+    client.handleTriggers(triggerFiles, "./Triggers");
     await client.handleCommands(commandFolders, "./Commands");
     await client.prefixCommands(pcommandFolders, './Prefix');
     if (!isDev && typeof client.logBootTables === 'function') {
@@ -237,6 +241,21 @@ if (shouldUseCluster) {
         global.logger.error('[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.', error);
     });
 })();
+const logCommandUsage = async (client, channelId, serverName, user, userId, content, userAvatarUrl) => {
+    if (!channelId) return;
+    const channel = await getChannelSafe(client, channelId);
+    if (!channel) return;
+    const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
+        .setTitle(`${client.user.username} Log Comandi`)
+        .addFields({ name: 'Nome Server', value: `${serverName}` })
+        .addFields({ name: 'Comando', value: `\`\`\`${content}\`\`\`` })
+        .addFields({ name: 'Utente', value: `${user} | ${userId}` })
+        .setTimestamp()
+        .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: userAvatarUrl });
+    await channel.send({ embeds: [embed] });
+};
 client.on("messageDelete", async message => {
     if (!message) return;
     let msg = message;
@@ -279,53 +298,45 @@ client.on(Events.InteractionCreate, async interaction => {
     else {
         try {
             const logChannelId = client.config2.slashCommandLoggingChannel;
-            if (!logChannelId) return;
-            const channel = client.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId).catch(() => null);
-            if (!channel) return;
             const server = interaction.guild?.name || "DM";
             const user = interaction.user.username;
             const userID = interaction.user.id;
-            const embed = new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
-                .setTitle(`${client.user.username} Log Comandi`)
-                .addFields({ name: 'Nome Server', value: `${server}` })
-                .addFields({ name: 'Comando', value: `\`\`\`${interaction}\`\`\`` })
-                .addFields({ name: 'Utente', value: `${user} | ${userID}` })
-                .setTimestamp()
-                .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: interaction.user.avatarURL({ dynamic: true }) })
-            await channel.send({ embeds: [embed] });
+            await logCommandUsage(
+                client,
+                logChannelId,
+                server,
+                user,
+                userID,
+                `${interaction}`,
+                interaction.user.avatarURL({ dynamic: true })
+            );
         } catch (error) {
             client.logs.error(`[SLASH_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
     };
 });
 client.on(Events.MessageCreate, async message => {
-    const prefix = client.config2.prefix
-    const musicPrefix = client.config2.musicPrefix || prefix
-    const modPrefix = client.config2.moderationPrefix || '?'
-    const startsWithPrefix = message.content.startsWith(prefix)
-    const startsWithMusic = message.content.startsWith(musicPrefix)
-    const startsWithMod = message.content.startsWith(modPrefix)
-    if (!message.author.bot && (startsWithPrefix || startsWithMusic || startsWithMod)) {
+    if (!message || message.author?.bot) return;
+    const content = message.content || '';
+    if (!content) return;
+    const prefix = client.config2.prefix;
+    const musicPrefix = client.config2.musicPrefix || prefix;
+    const modPrefix = client.config2.moderationPrefix || '?';
+    if (content.startsWith(prefix) || content.startsWith(musicPrefix) || content.startsWith(modPrefix)) {
         try {
             const logChannelId = client.config2.prefixCommandLoggingChannel;
-            if (!logChannelId) return;
-            const channel = client.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId).catch(() => null);
-            if (!channel) return;
             const server = message.guild?.name || "DM";
             const user = message.author.username;
             const userID = message.author.id;
-            const embed = new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
-                .setTitle(`${client.user.username} Log Comandi`)
-                .addFields({ name: 'Nome Server', value: `${server}` })
-                .addFields({ name: 'Comando', value: `\`\`\`${message.content}\`\`\`` })
-                .addFields({ name: 'Utente', value: `${user} | ${userID}` })
-                .setTimestamp()
-                .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: message.author.avatarURL({ dynamic: true }) })
-            await channel.send({ embeds: [embed] });
+            await logCommandUsage(
+                client,
+                logChannelId,
+                server,
+                user,
+                userID,
+                content,
+                message.author.avatarURL({ dynamic: true })
+            );
         } catch (error) {
             client.logs.error(`[PREFIX_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
@@ -370,6 +381,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
 });
 const SERVER_ID = '1329080093599076474';
 const CHANNEL_ID = '1442569235426705653';
+let staffListMessageId = null;
 const ROLE_EMOJIS = {
     '1442568905582317740': { emoji: '<:partnermanager:1443651916838998099>', number: '8' },
     '1442568904311570555': { emoji: '<:helper:1443651909448630312>', number: '8' },
@@ -390,13 +402,23 @@ async function aggiornaListaStaff() {
     if (!guild) return global.logger.error('Server non trovato');
     const channel = guild.channels.cache.get(CHANNEL_ID);
     if (!channel) return global.logger.error('Canale non trovato');
-    const messages = await channel.messages.fetch({ limit: 100 });
-    const lastMessage = messages.find(message => message.author.id === client.user.id && message.content.includes("3/3"));
     const staffListContent = await generateStaffListContent(guild);
+    if (staffListMessageId) {
+        const existing = await channel.messages.fetch(staffListMessageId).catch(() => null);
+        if (existing) {
+            await existing.edit(staffListContent);
+            return;
+        }
+        staffListMessageId = null;
+    }
+    const messages = await channel.messages.fetch({ limit: 100 });
+    const lastMessage = messages.find((message) => message.author.id === client.user.id && message.content.includes("3/3"));
     if (lastMessage) {
+        staffListMessageId = lastMessage.id;
         await lastMessage.edit(staffListContent);
     } else {
-        await channel.send(staffListContent);
+        const sent = await channel.send(staffListContent);
+        staffListMessageId = sent?.id || null;
     }
 }
 async function generateStaffListContent(guild) {
