@@ -15,11 +15,14 @@ module.exports = {
       ? await message.channel.messages.fetch(message.reference.messageId).catch(() => null)
       : null;
 
-    const text = referenced?.content
-      ? referenced.content
+    const text = referenced?.cleanContent
+      ? referenced.cleanContent
       : normalize(args.join(" "));
 
     const author = referenced?.author || message.author;
+    const footerText = String(message.client?.config2?.botServerInvite || "")
+      .replace(/^https?:\/\//i, "")
+      .trim();
     const avatarUrl = author.displayAvatarURL({ extension: "png", size: 512 });
     const username = author.username;
 
@@ -31,7 +34,7 @@ module.exports = {
             .setDescription("Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
         ]
       });
-      setTimeout(() => err.delete().catch(() => {}), 30000);
+      setTimeout(() => err.delete().catch(() => {}), 10000);
       return;
     }
 
@@ -43,7 +46,7 @@ module.exports = {
             .setDescription("Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
         ]
       });
-      setTimeout(() => err.delete().catch(() => {}), 30000);
+      setTimeout(() => err.delete().catch(() => {}), 10000);
       return;
     }
 
@@ -52,7 +55,8 @@ module.exports = {
       buffer = await renderQuoteCanvas({
         avatarUrl,
         message: text,
-        username
+        username,
+        footerText
       });
     } catch {
       return message.channel.send({

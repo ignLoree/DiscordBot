@@ -20,7 +20,7 @@ module.exports = {
 
     await interaction.deferReply();
     const targetMessage = interaction.targetMessage;
-    const text = targetMessage?.content || "";
+    const text = targetMessage?.cleanContent || targetMessage?.content || "";
     const author = targetMessage?.author;
     if (!author || !text) {
       return interaction.editReply({
@@ -36,10 +36,14 @@ module.exports = {
     const username = author.username;
     let buffer;
     try {
+      const footerText = String(interaction.client?.config2?.botServerInvite || "")
+        .replace(/^https?:\/\//i, "")
+        .trim();
       buffer = await renderQuoteCanvas({
         avatarUrl,
         message: text,
-        username
+        username,
+        footerText
       });
     } catch {
       return interaction.editReply({
