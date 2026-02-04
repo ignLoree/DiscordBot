@@ -6,6 +6,7 @@ const child_process = require('child_process');
 
 const RESTART_FLAG = 'restart.json';
 const RESTART_NOTIFY_PREFIX = 'restart_notify_';
+const RESTART_WATCH_PREFIX = 'restart_watch_';
 
 function pullLatest() {
     try {
@@ -20,6 +21,13 @@ function pullLatest() {
 function writeRestartNotify(target, payload) {
     try {
         const flagPath = path.resolve(process.cwd(), '..', `${RESTART_NOTIFY_PREFIX}${target}.json`);
+        fs.writeFileSync(flagPath, JSON.stringify(payload, null, 2), 'utf8');
+    } catch {}
+}
+
+function writeRestartWatch(target, payload) {
+    try {
+        const flagPath = path.resolve(process.cwd(), '..', `${RESTART_WATCH_PREFIX}${target}.json`);
         fs.writeFileSync(flagPath, JSON.stringify(payload, null, 2), 'utf8');
     } catch {}
 }
@@ -78,6 +86,14 @@ module.exports = {
                 }, null, 2), 'utf8');
                 for (const t of targets) {
                     writeRestartNotify(t, {
+                        channelId,
+                        by: interaction.user.id,
+                        at: requestedAt,
+                        scope: 'full',
+                        target: t,
+                        requestId
+                    });
+                    writeRestartWatch(t, {
                         channelId,
                         by: interaction.user.id,
                         at: requestedAt,
@@ -166,5 +182,4 @@ module.exports = {
         }
     }
 };
-
 

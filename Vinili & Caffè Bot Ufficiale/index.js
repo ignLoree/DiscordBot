@@ -79,6 +79,8 @@ const getChannelSafe = async (client, channelId) => {
     return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
 };
 const reloadFlagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
+const restartWatchDevPath = path.resolve(process.cwd(), '..', 'restart_watch_dev.json');
+const restartNotifyDevPath = path.resolve(process.cwd(), '..', 'restart_notify_dev.json');
 client.reloadScope = async (scope) => {
     const baseDir = process.cwd();
     const clearCacheByDir = (dirName) => {
@@ -152,6 +154,26 @@ setInterval(async () => {
         }
     } catch (err) {
         global.logger.error('[RELOAD] Failed to process reload flag:', err);
+    }
+}, 5000);
+
+setInterval(async () => {
+    if (currentTarget !== 'official') return;
+    if (!fs.existsSync(restartWatchDevPath)) return;
+    if (fs.existsSync(restartNotifyDevPath)) return;
+    try {
+        const data = JSON.parse(fs.readFileSync(restartWatchDevPath, "utf8"));
+        const channel = await getChannelSafe(client, data?.channelId);
+        if (channel) {
+            const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
+            const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
+            const by = data?.by ? ` (richiesto da <@${data.by}>)` : '';
+            await channel.send(`<:vegacheckmark:1443666279058772028> Bot Dev riavviato con successo${elapsed}.${by}`);
+        }
+    } catch (err) {
+        global.logger.error('[RESTART WATCH] Failed to send dev restart confirmation:', err);
+    } finally {
+        try { fs.unlinkSync(restartWatchDevPath); } catch {}
     }
 }, 5000);
 
