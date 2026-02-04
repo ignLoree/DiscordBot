@@ -71,6 +71,12 @@ function ensureVoiceKeys(doc, now) {
 
 async function recordMessageActivity(message) {
   if (!message?.guild || !message.author || message.author.bot) return;
+  const roleId = '1442568949605597264';
+  const role = message.guild.roles.cache.get(roleId);
+  if (!role) return;
+  const permissions = message.channel?.permissionsFor?.(role);
+  if (!permissions) return;
+  if (!permissions.has(['ViewChannel', 'SendMessages'])) return;
   const now = new Date();
   let doc = await ActivityUser.findOne({ guildId: message.guild.id, userId: message.author.id });
   if (!doc) {
@@ -99,6 +105,13 @@ async function recordVoiceSessionEnd(doc, now, guild) {
   }
 }
 
+function canRoleUseVoiceChannel(channel, role) {
+  if (!channel || !role) return false;
+  const permissions = channel.permissionsFor(role);
+  if (!permissions) return false;
+  return permissions.has(['ViewChannel', 'Connect', 'Speak']);
+}
+
 async function handleVoiceActivity(oldState, newState) {
   const member = newState?.member || oldState?.member;
   if (!member || member.user?.bot) return;
@@ -109,6 +122,9 @@ async function handleVoiceActivity(oldState, newState) {
   const now = new Date();
   const wasInVoice = Boolean(oldState?.channelId);
   const isInVoice = Boolean(newState?.channelId);
+  const roleId = '1442568949605597264';
+  const role = member.guild.roles.cache.get(roleId);
+  if (!role) return;
 
   let doc = await ActivityUser.findOne({ guildId, userId });
   if (!doc) {
@@ -116,19 +132,35 @@ async function handleVoiceActivity(oldState, newState) {
   }
 
   if (wasInVoice && !isInVoice) {
+    const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
+    if (!canRoleUseVoiceChannel(oldChannel, role)) {
+      doc.voice.sessionStartedAt = null;
+      await doc.save();
+      return;
+    }
     await recordVoiceSessionEnd(doc, now, member.guild);
     await doc.save();
     return;
   }
 
   if (wasInVoice && isInVoice && oldState.channelId !== newState.channelId) {
-    await recordVoiceSessionEnd(doc, now, member.guild);
-    doc.voice.sessionStartedAt = now;
+    const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
+    if (canRoleUseVoiceChannel(oldChannel, role)) {
+      await recordVoiceSessionEnd(doc, now, member.guild);
+    } else {
+      doc.voice.sessionStartedAt = null;
+    }
+    const newChannel = newState?.channel || newState?.guild?.channels?.cache?.get(newState.channelId);
+    if (canRoleUseVoiceChannel(newChannel, role)) {
+      doc.voice.sessionStartedAt = now;
+    }
     await doc.save();
     return;
   }
 
   if (!wasInVoice && isInVoice) {
+    const newChannel = newState?.channel || newState?.guild?.channels?.cache?.get(newState.channelId);
+    if (!canRoleUseVoiceChannel(newChannel, role)) return;
     doc.voice.sessionStartedAt = now;
     await doc.save();
   }
