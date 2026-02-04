@@ -9,6 +9,7 @@ const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
+const { startMinigameLoop } = require('../Services/Minigames/minigameService');
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
 
@@ -92,6 +93,11 @@ module.exports = {
         };
         await engagementTick();
         setInterval(engagementTick, 60 * 1000);
+        try {
+            startMinigameLoop(client);
+        } catch (err) {
+            global.logger.error('[MINIGAMES] Failed to start loop', err);
+        }
         try {
             cron.schedule("0 0 1 * *", async () => {
                 const channelId = "1442569130573303898";

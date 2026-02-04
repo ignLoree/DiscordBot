@@ -1,7 +1,14 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+const { handleMinigameButton } = require('../../Services/Minigames/minigameService');
 
 async function handleButtonInteraction(interaction, client) {
     if (!interaction.isButton()) return false;
+    try {
+        const handled = await handleMinigameButton(interaction, client);
+        if (handled) return true;
+    } catch (error) {
+        global.logger.error('[MINIGAME BUTTON ERROR]', error);
+    }
     const button = client.buttons.get(interaction.customId);
     if (!button) return false;
     const color = {

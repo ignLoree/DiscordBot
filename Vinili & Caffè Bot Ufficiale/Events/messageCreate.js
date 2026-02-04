@@ -8,6 +8,8 @@ const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
 const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderService');
 const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
+const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
+const { recordMessageActivity } = require('../Services/Community/activityService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 
@@ -299,6 +301,16 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
+        try {
+            await recordMessageActivity(message);
+        } catch (error) {
+            logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
+        }
+        try {
+            await handleMinigameMessage(message, client);
+        } catch (error) {
+            logEventError(client, 'MINIGAME ERROR', error);
+        }
         try {
             await handleAfk(message);
         } catch (error) {

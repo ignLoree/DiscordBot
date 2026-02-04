@@ -1,0 +1,118 @@
+const { EmbedBuilder } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/message');
+const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { getCurrentWeekKey } = require('../../Services/Community/expService');
+
+const TOP_LIMIT = 10;
+
+function getInvokedCommand(message) {
+  const content = String(message?.content || '').trim();
+  if (!content.startsWith('+')) return '';
+  return content.slice(1).split(/\s+/)[0].toLowerCase();
+}
+
+function formatUserLabel(member, userId) {
+  if (member) {
+    const username = member.user?.username || member.user?.tag || member.displayName || 'utente';
+    return `${member} (${username})`;
+  }
+  return `<@${userId}>`;
+}
+
+async function fetchMembers(guild, userIds) {
+  const unique = Array.from(new Set(userIds));
+  const out = new Map();
+  if (!guild || unique.length === 0) return out;
+  for (const id of unique) {
+    const cached = guild.members.cache.get(id);
+    if (cached) {
+      out.set(id, cached);
+      continue;
+    }
+    const fetched = await guild.members.fetch(id).catch(() => null);
+    if (fetched) out.set(id, fetched);
+  }
+  return out;
+}
+
+async function buildWeeklyEmbed(message) {
+  const weekKey = getCurrentWeekKey();
+  const rows = await ExpUser.find({ guildId: message.guild.id, weeklyKey: weekKey })
+    .sort({ weeklyExp: -1 })
+    .limit(TOP_LIMIT)
+    .lean();
+
+  const members = await fetchMembers(message.guild, rows.map(r => r.userId));
+  const lines = [];
+  rows.forEach((row, index) => {
+    const member = members.get(row.userId);
+    const label = formatUserLabel(member, row.userId);
+    const exp = Number(row.weeklyExp || 0);
+    lines.push(`${index + 1}. ${label}`);
+    lines.push(`<:VC_Reply:1468262952934314131> Weekly <:VC_EXP:1468714279673925883> __${exp}__ EXP`);
+  });
+
+  if (lines.length === 0) {
+    lines.push('Nessun dato disponibile per questa settimana.');
+  }
+
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setAuthor({ name: message.guild.name, iconURL: message.guild.iconURL({ size: 128 }) })
+    .setTitle('Classifica settimanale [Weekly]')
+    .setThumbnail(message.guild.iconURL({ size: 128 }))
+    .setDescription([
+      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana (aggiornata ogni Lunedì)',
+      '',
+      lines.join('\n')
+    ].join('\n'))
+    .setFooter({ text: `⇢  Comando eseguito da: ${message.author.username}` });
+}
+
+async function buildAllTimeEmbed(message) {
+  const rows = await ExpUser.find({ guildId: message.guild.id })
+    .sort({ totalExp: -1 })
+    .limit(TOP_LIMIT)
+    .lean();
+
+  const members = await fetchMembers(message.guild, rows.map(r => r.userId));
+  const lines = [];
+  rows.forEach((row, index) => {
+    const member = members.get(row.userId);
+    const label = formatUserLabel(member, row.userId);
+    const exp = Number(row.totalExp || 0);
+    const level = Number(row.level || 0);
+    lines.push(`${index + 1}. ${label}`);
+    lines.push(`<:VC_Reply:1468262952934314131> Exp: <:VC_EXP:1468714279673925883> __${exp}__ <a:VC_Arrow:1448672967721615452> Livello: ${level}`);
+  });
+
+  if (lines.length === 0) {
+    lines.push('Nessun dato disponibile.');
+  }
+
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setAuthor({ name: message.guild.name, iconURL: message.guild.iconURL({ size: 128 }) })
+    .setTitle('Classifica generale [AllTime]')
+    .setThumbnail(message.guild.iconURL({ size: 128 }))
+    .setDescription([
+      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con il livello più alto nel server.',
+      '',
+      lines.join('\n')
+    ].join('\n'))
+    .setFooter({ text: `⇢ Comando eseguito da: ${message.author.username}` });
+}
+
+module.exports = {
+  name: 'classifica',
+  aliases: ['c', 'cs'],
+  prefixOverride: '+',
+
+  async execute(message) {
+    await message.channel.sendTyping();
+    const invoked = getInvokedCommand(message);
+    const isWeekly = invoked === 'cs';
+    const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
+    await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+  }
+};

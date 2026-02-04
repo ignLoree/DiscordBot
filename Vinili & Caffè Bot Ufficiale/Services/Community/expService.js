@@ -1,0 +1,237 @@
+const ExpUser = require('../../Schemas/Community/expUserSchema');
+const GlobalSettings = require('../../Schemas/Community/globalSettingsSchema');
+
+const TIME_ZONE = 'Europe/Rome';
+const MESSAGE_EXP = 1;
+const VOICE_EXP_PER_MINUTE = 2;
+const DEFAULT_MULTIPLIER = 2;
+const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
+const multiplierCache = new Map();
+const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
+const PERKS_CHANNEL_ID = '1442569159237177385';
+const LEVEL_ROLE_MAP = new Map([
+  [10, '1442568936423034940'],
+  [20, '1442568934510297226'],
+  [30, '1442568933591748688'],
+  [50, '1442568932136587297'],
+  [70, '1442568931326824488'],
+  [100, '1442568929930379285']
+]);
+
+function pad2(value) {
+  return String(value).padStart(2, '0');
+}
+
+function getTimeParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short'
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    weekday: map.weekday
+  };
+}
+
+function getIsoWeekKey(date) {
+  const { year, month, day } = getTimeParts(date);
+  const utcDate = new Date(Date.UTC(year, month - 1, day));
+  const dayNr = (utcDate.getUTCDay() + 6) % 7;
+  utcDate.setUTCDate(utcDate.getUTCDate() - dayNr + 3);
+  const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
+  const weekNr = 1 + Math.round((utcDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+  return `${utcDate.getUTCFullYear()}-W${pad2(weekNr)}`;
+}
+
+function getCurrentWeekKey() {
+  return getIsoWeekKey(new Date());
+}
+
+function getLevelInfo(totalExp) {
+  const exp = Math.max(0, Math.floor(Number(totalExp || 0)));
+  let level = 0;
+  let totalNeeded = 0;
+  let need = 100;
+  while (exp >= totalNeeded + need) {
+    totalNeeded += need;
+    level += 1;
+    need += 50;
+  }
+  const nextLevelExp = totalNeeded + need;
+  const remainingToNext = Math.max(0, nextLevelExp - exp);
+  return { level, nextLevelExp, remainingToNext };
+}
+
+function ensureWeekly(doc, now) {
+  const weekKey = getIsoWeekKey(now);
+  if (doc.weeklyKey !== weekKey) {
+    doc.weeklyKey = weekKey;
+    doc.weeklyExp = 0;
+  }
+}
+
+async function addExp(guildId, userId, amount, applyMultiplier = false) {
+  if (!guildId || !userId || !Number.isFinite(amount)) return null;
+  const now = new Date();
+  let doc = await ExpUser.findOne({ guildId, userId });
+  if (!doc) {
+    doc = new ExpUser({ guildId, userId });
+  }
+  ensureWeekly(doc, now);
+  const multiplier = applyMultiplier ? await getGlobalMultiplier(guildId) : 1;
+  const effective = Math.max(0, Math.floor(amount)) * multiplier;
+  if (effective === 0) return doc;
+  const prevLevel = getLevelInfo(doc.totalExp).level;
+  doc.totalExp = Number(doc.totalExp || 0) + effective;
+  doc.weeklyExp = Number(doc.weeklyExp || 0) + effective;
+  const levelInfo = getLevelInfo(doc.totalExp);
+  doc.level = levelInfo.level;
+  await doc.save();
+  return { doc, prevLevel, levelInfo };
+}
+
+function buildLevelUpEmbed(member, level) {
+  return {
+    embeds: [
+      {
+        color: 0x6f4e37,
+        title: `${member.user.username} leveled up!`,
+        description: [
+          `<a:VC_PandaClap:1331620157398712330> Complimenti ${member}!`,
+          `<:VC_LevelUp:1443701876892762243> Hai appena raggiunto il livello ${level}`,
+          `<a:VC_HelloKittyGift:1329447876857958471> Continua ad essere attivo in chat e in vocale per avanzare di livello!`
+        ].join('\n'),
+      }
+    ]
+  };
+}
+
+async function sendLevelUpMessage(guild, member, level) {
+  if (!guild || !member) return;
+  const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
+  if (!channel) return;
+  const payload = buildLevelUpEmbed(member, level);
+  await channel.send({ content: `${member}`, ...payload }).catch(() => {});
+}
+
+function buildPerksLevelEmbed(member, level, roleId) {
+  return {
+    embeds: [
+      {
+        color: 0x6f4e37,
+        title: `${member.user.username} leveled up!`,
+        description: [
+          `<a:VC_PandaClap:1331620157398712330> Complimenti ${member}!`,
+          `<:VC_LevelUp:1443701876892762243> Hai appena raggiunto il livello ${level}`,
+          `<a:VC_HelloKittyGift:1329447876857958471> Controlla <#${PERKS_CHANNEL_ID}> per sapere i nuovi vantaggi che hai sbloccato!`
+        ].join('\n')
+      }
+    ]
+  };
+}
+
+async function sendPerksLevelMessage(guild, member, level) {
+  const roleId = LEVEL_ROLE_MAP.get(level);
+  if (!guild || !member || !roleId) return;
+  const channel = guild.channels.cache.get(PERKS_CHANNEL_ID) || await guild.channels.fetch(PERKS_CHANNEL_ID).catch(() => null);
+  if (!channel) return;
+  const payload = buildPerksLevelEmbed(member, level, roleId);
+  await channel.send({ content: `${member} <@&${roleId}>`, ...payload }).catch(() => {});
+}
+
+async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
+  if (!guild || !userId) return null;
+  const result = await addExp(guild.id, userId, amount, applyMultiplier);
+  if (!result || !result.levelInfo) return result;
+  if (result.levelInfo.level > (result.prevLevel ?? 0)) {
+    const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
+    if (member) {
+      await sendLevelUpMessage(guild, member, result.levelInfo.level);
+      await sendPerksLevelMessage(guild, member, result.levelInfo.level);
+    }
+  }
+  return result;
+}
+
+async function getGlobalMultiplier(guildId) {
+  if (!guildId) return DEFAULT_MULTIPLIER;
+  const cached = multiplierCache.get(guildId);
+  const now = Date.now();
+  if (cached && (now - cached.at) < MULTIPLIER_CACHE_TTL_MS) {
+    return cached.value;
+  }
+  let value = DEFAULT_MULTIPLIER;
+  try {
+    const doc = await GlobalSettings.findOneAndUpdate(
+      { guildId },
+      { $setOnInsert: { expMultiplier: DEFAULT_MULTIPLIER } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    value = Number(doc?.expMultiplier || DEFAULT_MULTIPLIER);
+  } catch {}
+  if (!Number.isFinite(value) || value <= 0) value = DEFAULT_MULTIPLIER;
+  multiplierCache.set(guildId, { value, at: now });
+  return value;
+}
+
+async function setGlobalMultiplier(guildId, multiplier) {
+  if (!guildId) return DEFAULT_MULTIPLIER;
+  let value = Number(multiplier);
+  if (!Number.isFinite(value) || value <= 0) value = DEFAULT_MULTIPLIER;
+  const doc = await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    { $set: { expMultiplier: value } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+  const stored = Number(doc?.expMultiplier || value);
+  multiplierCache.set(guildId, { value: stored, at: Date.now() });
+  return stored;
+}
+
+async function getUserExpStats(guildId, userId) {
+  const now = new Date();
+  let doc = await ExpUser.findOne({ guildId, userId });
+  if (!doc) {
+    doc = new ExpUser({ guildId, userId });
+  }
+  ensureWeekly(doc, now);
+  const levelInfo = getLevelInfo(doc.totalExp);
+  doc.level = levelInfo.level;
+  await doc.save();
+  return {
+    totalExp: Number(doc.totalExp || 0),
+    weeklyExp: Number(doc.weeklyExp || 0),
+    level: levelInfo.level,
+    nextLevelExp: levelInfo.nextLevelExp,
+    remainingToNext: levelInfo.remainingToNext
+  };
+}
+
+async function getUserRanks(guildId, userId) {
+  const stats = await getUserExpStats(guildId, userId);
+  if (stats.level === 0) {
+    return { stats, weeklyRank: null, allTimeRank: null };
+  }
+  const currentWeekKey = getIsoWeekKey(new Date());
+  const [weeklyHigher, totalHigher] = await Promise.all([
+    ExpUser.countDocuments({ guildId, weeklyKey: currentWeekKey, weeklyExp: { $gt: stats.weeklyExp } }),
+    ExpUser.countDocuments({ guildId, totalExp: { $gt: stats.totalExp } })
+  ]);
+  return {
+    stats,
+    weeklyRank: weeklyHigher + 1,
+    allTimeRank: totalHigher + 1
+  };
+}
+
+module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getGlobalMultiplier, setGlobalMultiplier, getCurrentWeekKey };

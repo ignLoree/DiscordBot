@@ -73,4 +73,29 @@ module.exports = {
   render: {
     whoknowsImageCache: 250
   },
+
+  minigames: {
+    enabled: true,
+    channelId: "1442569130573303898",
+    roleId: "1443955529352478830",
+    intervalMs: 15 * 60 * 1000,
+    activityWindowMs: 15 * 60 * 1000,
+    minMessages: 5,
+    guessNumber: {
+      min: 1,
+      max: 100,
+      durationMs: 3 * 60 * 1000,
+      rewardExp: 100
+    },
+    guessWord: {
+      durationMs: 3 * 60 * 1000,
+      rewardExp: 150,
+      apiUrl: "https://cdn.jsdelivr.net/npm/italian-words-dict@3.4.0/dist/words.json",
+    },
+    findBot: {
+      durationMs: 5 * 60 * 1000,
+      rewardExp: 100,
+      requiredRoleId: "1442568949605597264"
+    }
+  },
 }
