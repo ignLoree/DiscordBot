@@ -24,7 +24,7 @@ async function handleSlashCommand(interaction, client) {
     const subcommand = interaction.options?.getSubcommand?.(false);
     if (disabledCommands.includes(interaction.commandName)) {
         return interaction.reply({
-            content: "<:vegax:1443934876440068179> Questo comando Ã¨ disabilitato al momento.",
+            content: "<:vegax:1443934876440068179> Questo comando è disabilitato al momento.",
             flags: 1 << 6
         });
     }
@@ -43,7 +43,7 @@ async function handleSlashCommand(interaction, client) {
         const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
         if (!interaction.inGuild() || (!hasStaffRole && !isAdmin)) {
             return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando Ã¨ solo per lo Staff.",
+                content: "<:vegax:1443934876440068179> Questo comando è solo per lo Staff.",
                 flags: 1 << 6
             });
         }
@@ -57,7 +57,7 @@ async function handleSlashCommand(interaction, client) {
         const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
         if (!interaction.inGuild() || (!hasPartnerRole && !isAdmin)) {
             return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando Ã¨ solo per i Partner Manager.",
+                content: "<:vegax:1443934876440068179> Questo comando è solo per i Partner Manager.",
                 flags: 1 << 6
             });
         }
@@ -71,7 +71,7 @@ async function handleSlashCommand(interaction, client) {
         const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
         if (!interaction.inGuild() || (!hasAdminRole && !isAdmin)) {
             return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando Ã¨ solo per l'High Staff.",
+                content: "<:vegax:1443934876440068179> Questo comando è solo per l'High Staff.",
                 flags: 1 << 6
             });
         }
@@ -80,7 +80,7 @@ async function handleSlashCommand(interaction, client) {
     if (subcommand && Array.isArray(disabledSubcommands[interaction.commandName])) {
         if (disabledSubcommands[interaction.commandName].includes(subcommand)) {
             return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo subcommand Ã¨ disabilitato al momento.",
+                content: "<:vegax:1443934876440068179> Questo subcommand è disabilitato al momento.",
                 flags: 1 << 6
             });
         }

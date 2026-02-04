@@ -19,6 +19,26 @@ const VOTE_CHANNEL_ID = '1442569123426074736';
 const VOTE_ROLE_ID = '1468266342682722679';
 const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
 
+const MEDIA_BLOCK_ROLE_IDS = [
+    "1442568948271943721",
+    "1329497467481493607",
+    "1442568916114346096",
+    "1442568950805430312",
+    "1442568934510297226"
+];
+
+function hasMediaPermission(member) {
+    return MEDIA_BLOCK_ROLE_IDS.some(roleId => member?.roles?.cache?.has(roleId));
+}
+
+function isMediaMessage(message) {
+    if (message.attachments?.size) return true;
+    const content = String(message.content || "");
+    if (/https?:\/\/\S+/i.test(content)) return true;
+    if (/discord\.gg\/\S+|\.gg\/\S+/i.test(content)) return true;
+    return false;
+}
+
 function getRandomExp() {
     const min = 100;
     const max = 250;
@@ -37,6 +57,7 @@ function extractVoteCountFromText(text) {
     if (matchAlt) return Number(matchAlt[1]);
     return null;
 }
+
 function extractUserIdFromText(text) {
     if (!text) return null;
     const match = text.match(/<@!?(\d+)>/);
@@ -52,7 +73,7 @@ function extractNameFromText(text) {
 
 function sanitizeName(name) {
     if (!name) return null;
-    return name.replace(/^[!@#:_*~\\-\\.]+|[!@#:_*~\\-\\.]+$/g, '');
+    return name.replace(/^[!@#:_*`~\\-\\.]+|[!@#:_*`~\\-\\.]+$/g, '');
 }
 
 function flattenEmbedText(embed) {
@@ -174,26 +195,19 @@ async function handleVoteManagerMessage(message) {
         } catch {}
     }
     const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}°` : '';
-
     const embed = new EmbedBuilder()
-        .setColor('#6f4e37')
-        .setAuthor({
-            name: user?.username || nameClean,
-            iconURL: user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || undefined
-        })
-        .setTitle('Un nuovo voto! 💕')
-        .setDescription([
-            `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! 📌`,
-            '',
-            '\`Hai guadagnato:\`',
-            `⭐ • **${expValue} EXP** per ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
-            `🪪 • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
-            '💎 • e aura sul server!',
-            '',
-            '⭐ Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
-        ].join('\n'))
-        .setThumbnail(user?.displayAvatarURL?.({ size: 256 }) || message.guild.iconURL?.({ size: 256 }) || null)
-        .setFooter({ text: '🌍 Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
+            .setColor('#6f4e37')
+            .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
+            .setDescription([
+                `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
+                '',
+                '\`Hai guadagnato:\`',
+                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
+                `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+                '',
+                '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
+            ].join('\n'))
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -221,6 +235,27 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         try {
+            if (
+                message.guild &&
+                message.member &&
+                !message.author?.bot &&
+                isMediaMessage(message) &&
+                !hasMediaPermission(message.member)
+            ) {
+                await message.delete().catch(() => { });
+                const embed = new EmbedBuilder()
+                    .setColor("#6f4e37")
+                    .setDescription(
+                        [
+                            `<:attentionfromvega:1443651874032062505> ➳ Ciao ${message.author}, __non hai i permessi__ per inviare **FOTO, GIF, LINK, VIDEO O AUDIO** in chat.`,
+                            "",
+                            "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
+                            `<a:VC_Arrow:1448672967721615452> ottieni uno o più di questi ruoli: <@&1329497467481493607>, <@&1442568948271943721>, <@&1442568916114346096>, <@&1442568950805430312>, <@&1442568934510297226>.`
+                        ].join("\n")
+                    );
+                await message.channel.send({ content: `${message.author}`, embeds: [embed] });
+                return;
+            }
             if (message.author?.id !== client?.user?.id) {
                 const handledVote = await handleVoteManagerMessage(message);
                 if (handledVote) return;
@@ -367,7 +402,7 @@ module.exports = {
         if (disabledPrefixCommands.includes(command.name)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ disabilitato al momento.");
+                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è disabilitato al momento.");
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -389,7 +424,7 @@ module.exports = {
             if (!hasStaffRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -405,7 +440,7 @@ module.exports = {
             if (!hasAdminRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando Ã¨ solo per lo staff.");
+                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -492,7 +527,7 @@ module.exports = {
                 });
                 const feedback = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
+                    .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
             } finally {
@@ -565,7 +600,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 async function handleCounting(message, client) {
