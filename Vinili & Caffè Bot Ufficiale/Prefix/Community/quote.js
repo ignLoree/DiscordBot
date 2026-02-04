@@ -71,7 +71,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
+            .setDescription("<:vegax:1443934876440068179> Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
         ]
       });
       setTimeout(() => err.delete().catch(() => {}), 30000);
@@ -83,7 +83,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
+            .setDescription("<:vegax:1443934876440068179> Impossibile eseguire il comando, riprova rispondendo a un messaggio!")
         ]
       });
       setTimeout(() => err.delete().catch(() => {}), 30000);
@@ -118,8 +118,8 @@ module.exports = {
     const attachment = new AttachmentBuilder(buffer, { name: "quote.png" });
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
-      .setDescription(`\u2B50 \u2728 Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
-      .addFields({ name: "\uD83D\uDCF8 Totale immagini generate:", value: String(totalPosts) });
+      .setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
+      .addFields({ name: "📸 Totale immagini generate:", value: String(totalPosts) });
 
     const quoteChannel = message.guild?.channels?.cache?.get(QUOTE_CHANNEL_ID);
     if (quoteChannel) {
