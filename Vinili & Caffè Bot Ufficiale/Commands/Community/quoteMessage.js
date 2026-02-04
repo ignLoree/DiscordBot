@@ -22,6 +22,7 @@ module.exports = {
     const targetMessage = interaction.targetMessage;
     const text = targetMessage?.cleanContent || targetMessage?.content || "";
     const author = targetMessage?.author;
+    const displayName = targetMessage?.member?.displayName || author?.username;
     if (!author || !text) {
       return interaction.editReply({
         embeds: [
@@ -33,7 +34,7 @@ module.exports = {
     }
 
     const avatarUrl = author.displayAvatarURL({ extension: "png", size: 512 });
-    const username = author.username;
+    const username = displayName || author.username;
     let buffer;
     try {
       const footerText = String(interaction.client?.config2?.botServerInvite || "")

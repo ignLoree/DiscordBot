@@ -67,22 +67,24 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#0b0b0d";
+  ctx.fillStyle = "#070707";
   ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = "#0b0b0d";
+  ctx.fillStyle = "#070707";
   ctx.fillRect(leftWidth, 0, width - leftWidth, height);
 
   const avatar = await loadImage(avatarUrl);
   drawImageCover(ctx, avatar, 0, 0, leftWidth, height);
 
-  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(0, 0, leftWidth, height);
-
-  const gradient = ctx.createLinearGradient(leftWidth, 0, width, 0);
-  gradient.addColorStop(0, "rgba(0,0,0,0.4)");
-  gradient.addColorStop(1, "rgba(0,0,0,0.7)");
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = "#070707";
   ctx.fillRect(leftWidth, 0, width - leftWidth, height);
+
+  const gradient = ctx.createLinearGradient(leftWidth - 40, 0, leftWidth + 160, 0);
+  gradient.addColorStop(0, "rgba(0,0,0,0.0)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(leftWidth - 40, 0, 200, height);
 
   const padding = 48;
   const textX = leftWidth + (width - leftWidth) / 2;
@@ -90,34 +92,34 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
 
-  ctx.font = fontStack(20, "italic");
-  drawTextWithSpecialFallback(ctx, username || "", textX, 48, {
-    size: 20,
+  const mainText = String(message || "").toUpperCase();
+  ctx.font = fontStack(30, "600");
+  const lines = wrapLines(ctx, mainText, maxTextWidth, 3);
+  const lineHeight = 38;
+  const blockHeight = lines.length * lineHeight;
+  let y = Math.max(140, (height - blockHeight) / 2);
+
+  ctx.font = fontStack(18, "italic");
+  drawTextWithSpecialFallback(ctx, username || "", textX, y - 36, {
+    size: 18,
     weight: "italic",
     color: "rgba(255,255,255,0.7)"
   });
-
-  const mainText = String(message || "").toUpperCase();
-  ctx.font = fontStack(34, "700");
-  const lines = wrapLines(ctx, mainText, maxTextWidth, 3);
-  const lineHeight = 44;
-  const blockHeight = lines.length * lineHeight;
-  let y = Math.max(120, (height - blockHeight) / 2);
   for (const line of lines) {
     if (y + lineHeight > height - 36) break;
     drawTextWithSpecialFallback(ctx, line, textX, y, {
-      size: 34,
-      weight: "700",
-      color: "#f3f3f3"
+      size: 30,
+      weight: "600",
+      color: "#f7f7f7"
     });
     y += lineHeight;
   }
 
   if (footerText) {
-    ctx.font = fontStack(22, "700");
+    ctx.font = fontStack(20, "700");
     ctx.textAlign = "right";
     drawTextWithSpecialFallback(ctx, footerText, width - 40, height - 40, {
-      size: 22,
+      size: 20,
       weight: "700",
       color: "rgba(255,255,255,0.9)"
     });

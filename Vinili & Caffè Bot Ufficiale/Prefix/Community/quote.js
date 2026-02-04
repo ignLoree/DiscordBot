@@ -20,11 +20,12 @@ module.exports = {
       : normalize(args.join(" "));
 
     const author = referenced?.author || message.author;
+    const displayName = referenced?.member?.displayName || author.username;
     const footerText = String(message.client?.config2?.botServerInvite || "")
       .replace(/^https?:\/\//i, "")
       .trim();
     const avatarUrl = author.displayAvatarURL({ extension: "png", size: 512 });
-    const username = author.username;
+    const username = displayName || author.username;
 
     if (!referenced) {
       const err = await message.channel.send({
