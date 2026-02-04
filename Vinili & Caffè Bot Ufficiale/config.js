@@ -14,7 +14,6 @@ module.exports = {
   slashCommandLoggingChannel: "1442577274783142039",
   prefixCommandLoggingChannel: "1442577274783142039",
   commandErrorChannel: "1442577274783142039",
-  gamblingLogChannelId: "1442577274783142039",
   noPermsMessage: `**Non hai** i permessi per fare questo comando!`,
   ownerOnlyCommand: `Questo comando è disponibile **solo** all'owner del bot!`,
   filterMessage: "Il tuo messaggio contiene una parola **blacklistata**!",
@@ -32,7 +31,6 @@ module.exports = {
   },
 
   debugSpotifyFeatures: true,
-  gamblingCooldownMs: 4000,
 
   disboard: {
     botId: "302050872383242240",

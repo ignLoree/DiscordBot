@@ -331,43 +331,6 @@ client.on(Events.MessageCreate, async message => {
         }
     };
 });
-const reactions = require('./Schemas/ReactionRole/reactionroleSchema.js')
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
-    if (!reaction.message.guildId) return;
-    if (user.bot) return;
-    let cID = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    if (!reaction.emoji.id) cID = reaction.emoji.name;
-    const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
-    if (!data) return
-    const guild = await client.guilds.cache.get(reaction.message.guildId);
-    const member = await guild.members.cache.get(user.id);
-    try {
-        await member.roles.add(data.Role);
-    } catch (e) {
-        global.logger.error(e)
-        return;
-    }
-});
-client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
-    if (!reaction.message.guildId) return;
-    if (user.bot) return;
-    let cID = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    if (!reaction.emoji.id) cID = reaction.emoji.name;
-    const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
-    if (!data) return
-    const guild = await client.guilds.cache.get(reaction.message.guildId);
-    const member = await guild.members.cache.get(user.id);
-    try {
-        await member.roles.remove(data.Role);
-    } catch (e) {
-        global.logger.error(e)
-        return;
-    }
-});
 const SERVER_ID = '1329080093599076474';
 const CHANNEL_ID = '1442569235426705653';
 const ROLE_EMOJIS = {
