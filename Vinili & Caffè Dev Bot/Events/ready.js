@@ -4,10 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const mongodbURL = config.mongoURL;
 const config2 = require('../config.js');
-const { seedPassData } = require('../Services/Pass/passSeedService');
-const { PassUser } = require('../Schemas/Pass/passUser');
-const { resetMissionsIfNeeded, refreshMissionWindows } = require('../Services/Pass/missionService');
-const { maybeRunEngagement, maybeRunQuizLoop } = require('../Services/Economy/engagementService');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
 const { restorePendingDiscadiaReminders } = require('../Services/Discadia/discadiaReminderService');
 const { startDiscadiaVoteReminderLoop } = require('../Services/Discadia/discadiaVoteReminderService');
@@ -16,14 +12,13 @@ const { maybeRunMorningReminder } = require('../Services/Community/morningRemind
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
 const cron = require('node-cron');
+const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
         let logOnce = true;
-        const SEASON_ID = config.passSeasonId;
-        const GUILD_ID = config.guildid;
         client.setMaxListeners(client.config2.eventListeners || 20);
         if (!mongodbURL) {
             client.logs.error('[DATABASE] No MongoDB URL has been provided. Double check your config.json file and make sure it is correct.');
@@ -84,27 +79,8 @@ module.exports = {
         } catch (err) {
             global.logger.error('[TTS RESTORE ERROR]', err);
         }
-        const seedResult = await seedPassData({ guildId: GUILD_ID, seasonId: SEASON_ID });
-        if (logOnce) {
-            client.logs.success(`[SEED] ${seedResult.nodesCount} nodi inseriti, ${seedResult.missionsCount} missioni inserite.`);
-        }
-        const runPassReset = async () => {
-            try {
-                await refreshMissionWindows({ guildId: GUILD_ID, seasonId: SEASON_ID });
-                const users = await PassUser.find({ guildId: GUILD_ID, seasonId: SEASON_ID });
-                for (const u of users) {
-                    await resetMissionsIfNeeded(u);
-                }
-            } catch (err) {
-                global.logger.error(err);
-            }
-        };
-        await runPassReset();
-        setInterval(runPassReset, 60 * 60 * 1000);
         const engagementTick = async () => {
             try {
-                await maybeRunEngagement(client);
-                await maybeRunQuizLoop(client);
                 await maybeRunMorningReminder(client);
                 await runDueOneTimeReminders(client);
             } catch (err) {
@@ -131,43 +107,83 @@ module.exports = {
         } catch (err) {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
-        try {
-            cron.schedule("00 12 * * *", async () => {
-                const channelId = "1442569130573303898";
-                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
-                if (!channel) return;
-                const embed = new (require("discord.js").EmbedBuilder)()
-                    .setColor("#6f4e37")
-                    .setTitle("⭐ Votaci su Discadia!")
-                    .setDescription(
-                        [
-                            "La prima volta otterrai **250 EXP**, le altre volte altri exp!",
-                            "Vota qui: https://discadia.com/vote/https://discadia.com/server/viniliecaffe/",
-                        ].join("\n")
-                    );
-                await channel.send({ embeds: [embed] });
-            }, { timezone: "Europe/Rome" });
-        } catch (err) {
-            global.logger.error('[DISCADIA DAILY] Failed to schedule', err);
-        } try {
-            cron.schedule("30 12 * * *", async () => {
-                const channelId = "1442569130573303898";
-                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
-                if (!channel) return;
-                const embed = new (require("discord.js").EmbedBuilder)()
-                    .setColor("#6f4e37")
-                    .setTitle("⭐ Lascia una recensione su DISBOARD!")
-                    .setDescription(
-                        [
-                            "Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#1442569095068254219> \`HIGH STAFF\` e riceverei **5 livelli**!",
-                            "Recensisci il nostro server qui: https://disboard.org/it/review/update/1019527",
-                        ].join("\n")
-                    );
-                await channel.send({ embeds: [embed] });
-            }, { timezone: "Europe/Rome" });
-        } catch (err) {
-            global.logger.error('[DISBOARD DAILY] Failed to schedule', err);
-        }
+        const REMINDER_CHANNEL_ID = "1442569130573303898";
+        const REMINDER_MIN_MS = 2 * 60 * 60 * 1000;
+        const REMINDER_MAX_MS = 4 * 60 * 60 * 1000;
+        const ACTIVITY_WINDOW_MS = 60 * 60 * 1000;
+
+        const reminderPool = [
+            () => new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setTitle("⭐ Votaci su Discadia!")
+                .setDescription(
+                    [
+                        "La prima volta otterrai **250 EXP**, le altre volte altri exp!",
+                        "Vota qui: https://discadia.com/server/viniliecaffe/"
+                    ].join("\n")
+                ),
+            () => new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setTitle("⭐ Lascia una recensione su DISBOARD!")
+                .setDescription(
+                    [
+                        "Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#1442569095068254219> `HIGH STAFF` e riceverei **5 livelli**!",
+                        "Recensisci il nostro server qui: https://disboard.org/it/review/update/1019527"
+                    ].join("\n")
+                )
+        ];
+
+        let rotationDate = new Date().toDateString();
+        let rotationQueue = [];
+
+        const shuffle = (arr) => {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        };
+
+        const ensureRotation = () => {
+            const today = new Date().toDateString();
+            if (rotationDate !== today || rotationQueue.length === 0) {
+                rotationDate = today;
+                rotationQueue = shuffle(reminderPool);
+            }
+        };
+
+        const hasRecentHumanMessage = async (channel) => {
+            const messages = await channel.messages.fetch({ limit: 20 }).catch(() => null);
+            if (!messages) return false;
+            const now = Date.now();
+            return messages.some(m => !m.author?.bot && (now - m.createdTimestamp) <= ACTIVITY_WINDOW_MS);
+        };
+
+        const sendRotatingReminder = async () => {
+            const channel = client.channels.cache.get(REMINDER_CHANNEL_ID) || await client.channels.fetch(REMINDER_CHANNEL_ID).catch(() => null);
+            if (!channel) return;
+            const isActive = await hasRecentHumanMessage(channel);
+            if (!isActive) return;
+            ensureRotation();
+            const next = rotationQueue.shift();
+            if (!next) return;
+            const embed = next();
+            await channel.send({ embeds: [embed] }).catch(() => {});
+        };
+
+        const scheduleNextReminder = () => {
+            const delay = Math.floor(Math.random() * (REMINDER_MAX_MS - REMINDER_MIN_MS + 1)) + REMINDER_MIN_MS;
+            setTimeout(async () => {
+                try {
+                    await sendRotatingReminder();
+                } finally {
+                    scheduleNextReminder();
+                }
+            }, delay);
+        };
+
+        scheduleNextReminder();
         if (logOnce) {
             client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
         }

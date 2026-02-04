@@ -7,10 +7,7 @@ const { handlePartnerModal } = require('./interaction/partnerModal');
 const { handleSuggestionVote } = require('./interaction/suggestionHandlers');
 const { handleTicketInteraction } = require('./interaction/ticketHandlers');
 const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
-const { handlePassNav, handleClaimNode, handleChoosePath } = require('./interaction/passHandlers');
-const { handlePassGameAnswer } = require('./interaction/passGameHandlers');
 const { handleHelpMenu } = require('./interaction/helpHandlers');
-const { handleEngagementAnswer } = require('./interaction/engagementHandlers');
 const { handleLastFmInteraction } = require('./interaction/lastfmHandlers');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
 
@@ -19,11 +16,6 @@ module.exports = {
     async execute(interaction, client) {
         if (!interaction) return;
         try {
-            if (await handlePassNav(interaction)) return;
-            if (await handleClaimNode(interaction)) return;
-            if (await handleChoosePath(interaction)) return;
-            if (await handlePassGameAnswer(interaction)) return;
-            if (await handleEngagementAnswer(interaction)) return;
             if (await handleHelpMenu(interaction)) return;
             if (await handleLastFmInteraction(interaction)) return;
             if (await handleVerifyInteraction(interaction)) return;

@@ -37,7 +37,8 @@ async function resolveInviteInfo(member) {
         return {
             link: `https://discord.gg/${guild.vanityURLCode}`,
             inviterTag: 'Vanity URL',
-            totalInvites: 0
+            totalInvites: 0,
+            isVanity: true
         };
     }
 
@@ -50,7 +51,7 @@ async function resolveInviteInfo(member) {
             .filter(inv => inv.inviter?.id === inviterId)
             .reduce((sum, inv) => sum + (inv.uses || 0), 0);
     }
-    return { link, inviterTag, totalInvites };
+    return { link, inviterTag, totalInvites, isVanity: false };
 }
 
 async function addBotRoles(member) {
@@ -100,6 +101,22 @@ module.exports = {
                     await addBotRoles(member);
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
+                }
+                const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
+                if (inviteChannel) {
+                    try {
+                        const info = await resolveInviteInfo(member);
+                        if (info.isVanity) {
+                            await inviteChannel.send({
+                                content: `<:reply:1467582387084067149> L'utente ha usato il link vanity **.gg/viniliecaffe**`
+                            }).catch(() => {});
+                        } else {
+                            await inviteChannel.send({
+                                content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                            }).catch(() => {});
+                        }
+                    } catch {
+                    }
                 }
                 return;
             }
@@ -197,8 +214,14 @@ module.exports = {
             const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
             if (inviteChannel) {
                 const info = await resolveInviteInfo(member);
+                if (info.isVanity) {
+                    await inviteChannel.send({
+                        content: `<:reply:1467582387084067149> L'utente ha usato il link vanity **.gg/ploshin**`
+                    }).catch(() => {});
+                    return;
+                }
                 await inviteChannel.send({
-                    content: `<:VC_Reply:1468262952934314131> è entratx con il link ${info.link},\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                    content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                 }).catch(() => {});
             }
         } catch (error) {

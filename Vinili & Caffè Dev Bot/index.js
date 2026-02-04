@@ -11,14 +11,6 @@ const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js
 const triggerFiles = fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
 const pcommandFolders = fs.readdirSync('./Prefix');
 const commandFolders = fs.readdirSync("./Commands");
-const { getActiveSeason } = require('./Services/Pass/seasonService.js');
-const { getOrCreatePassUser } = require('./Services/Pass/passService.js');
-const { grantRewards } = require('./Services/Pass/rewardService.js');
-const { startVoiceTicker } = require('./Services/Pass/voiceService.js');
-const { isGoodMessage } = require('./Utils/Pass/antiSpam.js');
-const { registerProgress } = require('./Services/Pass/objectiveService.js');
-const { registerMissionProgress } = require('./Services/Pass/missionService.js');
-const { updateAutoNodes } = require('./Services/Pass/passProgressService');
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
 const child_process = require('child_process');
 let client;
@@ -156,9 +148,6 @@ client.on("clientReady", async (client) => {
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
         }
-        if (typeof startVoiceTicker === 'function') {
-            startVoiceTicker(client);
-        }
         cron.schedule("0 19 * * *", async () => {
             const guild = client.guilds.cache.get("1329080093599076474");
             if (!guild) return;
@@ -220,76 +209,6 @@ if (shouldUseCluster) {
         global.logger.error('[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.', error);
     });
 })();
-client.on(Events.MessageCreate, async message => {
-    try {
-        if (!message.guild) return;
-        if (message.author.bot) return;
-        const CONFIG = client.config2 || {};
-        const passConfig = CONFIG.pass;
-        if (!passConfig) return;
-        if (!isGoodMessage(message.content, passConfig.minMsgLen)) return;
-        const allowedChatChannels = passConfig.chatAllowedChannelIds || [];
-        if (allowedChatChannels.length > 0 && !allowedChatChannels.includes(message.channel.id)) {
-            return;
-        }
-        const season = await getActiveSeason(message.guild.id);
-        if (!season) return;
-        const u = await getOrCreatePassUser({
-            guildId: message.guild.id,
-            seasonId: season.seasonId,
-            userId: message.author.id
-        });
-        u.stats.chatCountToday += 1;
-        const channelId = message.channel.id;
-        const channelsToday = Array.isArray(u.stats.chatChannelsToday)
-            ? u.stats.chatChannelsToday
-            : [];
-        const isNewChannel = !channelsToday.includes(channelId);
-        if (isNewChannel) channelsToday.push(channelId);
-        u.stats.chatChannelsToday = channelsToday;
-        await u.save();
-        if (isNewChannel) {
-            await registerProgress({
-                guildId: message.guild.id,
-                seasonId: season.seasonId,
-                passUser: u,
-                type: 'chat_variety',
-                amount: 1
-            });
-        }
-        await registerMissionProgress({
-            guildId: message.guild.id,
-            seasonId: season.seasonId,
-            passUser: u,
-            type: 'chat_unique',
-            amount: 1
-        });
-        const now = new Date();
-        if (
-            u.cooldowns.lastChatRewardAt &&
-            now - u.cooldowns.lastChatRewardAt < passConfig.chatRewardCooldownSec * 1000
-        ) return;
-        if (u.stats.chatTicketsToday >= passConfig.chatTicketCapPerDay) return;
-        u.stats.chatTicketsToday += 1;
-        u.cooldowns.lastChatRewardAt = now;
-        await u.save();
-        await updateAutoNodes({
-            guildId: message.guild.id,
-            seasonId: season.seasonId,
-            passUser: u
-        });
-        await grantRewards({
-            guildId: message.guild.id,
-            seasonId: season.seasonId,
-            userId: message.author.id,
-            passUser: u,
-            rewards: { tickets: 1, fragments: { common: 1 } },
-            reason: 'chat_ticket'
-        });
-    } catch (err) {
-        global.logger.error(err);
-    }
-});
 client.on("messageDelete", async message => {
     if (!message) return;
     let msg = message;

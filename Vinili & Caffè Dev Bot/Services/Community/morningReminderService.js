@@ -50,7 +50,7 @@ function getTargetTime(now, hour, minute) {
 async function maybeRunMorningReminder(client) {
   const cfg = CONFIG.morningReminder || {};
   if (!cfg.enabled) return;
-  const channelId = cfg.channelId || CONFIG.engagement?.channelId;
+  const channelId = cfg.channelId;
   if (!channelId) return;
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return;
@@ -62,7 +62,7 @@ async function maybeRunMorningReminder(client) {
   const today = todayKey();
   if (state.lastSentDate === today) return;
   if (now < target) return;
-  const roleId = cfg.roleId || CONFIG.engagement?.roleId;
+  const roleId = cfg.roleId;
   const tag = roleId ? `<@&${roleId}>` : '';
   const question = await pickQuestion(channel.guild.id);
   await channel.send({

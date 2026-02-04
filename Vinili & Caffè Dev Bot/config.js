@@ -14,8 +14,6 @@ module.exports = {
   slashCommandLoggingChannel: "1466489404867481802",
   prefixCommandLoggingChannel: "1466489404867481802",
   commandErrorChannel: "1466489404867481802",
-  passCompleteChannelId: "1466489288907554817",
-  passCompleteRoleId: "1466489072750166047",
   gamblingLogChannelId: "1466489404867481802",
   noPermsMessage: `**Non hai** i permessi per fare questo comando!`,
   ownerOnlyCommand: `Questo comando è disponibile **solo** all'owner del bot!`,
@@ -72,65 +70,6 @@ module.exports = {
     autojoin: true,
     includeUsername: false,
     stayConnected: false
-  },
-
-  engagement: {
-    channelId: "1466489288907554817",
-    roleId: "1466489180442988699",
-    startHour: 8,
-    endHour: 24,
-    intervalMinutes: 30,
-    minMessageLen: 20,
-    maxMessageLen: 200,
-    recentWindowMinutes: 30,
-    minRecentMessages: 5,
-    rewards: {
-      quiz: { coffee: 2, vinyl: 1 },
-      scramble: { coffee: 2, vinyl: 1 },
-      flag: { coffee: 3, vinyl: 1 },
-      player: { coffee: 3, vinyl: 1 }
-    }
-  },
-  engagementQuizLoop: {
-    enabled: true,
-    channelId: "1466489322902651004",
-    intervalMinutes: 10,
-    startHour: 0,
-    endHour: 24,
-    types: ["quiz", "scramble", "flag", "player"],
-    rewards: { coffee: 1, vinyl: 0 }
-  },
-
-  pass: {
-    energyMax: 6,
-    energyRefillDaily: 6,
-    chatRewardCooldownSec: 60,
-    minMsgLen: 4,
-    chatAllowedChannelIds: ["1466489288907554817", "1442569136067575809", "1442569138114662490", "1442569141717438495"],
-    chatTicketCapPerDay: 10,
-    voiceTicketCapPerDay: 10,
-    voiceTicketEveryMin: 10,
-    voiceAllowedChannelIds: ["1442569101225496819", "1442569106514645042", "1442569113108218058", "1442569114785943713", "1442569121350025306", "1442569125753913498", "1442569134532726855", "1442569140077461613", "1442569150575935781", "1442569152614367262", "1442569156695294078"],
-    voiceMinMembers: 2,
-    quizRewards: {
-      easy: { tickets: 1, fragments: { common: 1 } },
-      medium: { tickets: 2, fragments: { common: 2 } },
-      hard: { tickets: 3, fragments: { rare: 1 } }
-    },
-    minigameRewards: {
-      easy: { tickets: 1, fragments: { common: 1 } },
-      medium: { tickets: 2, fragments: { common: 2 } },
-      hard: { tickets: 3, fragments: { rare: 1 } }
-    },
-    eventRewards: { tickets: 2, fragments: { common: 2 } },
-    midseasonRewards: { tickets: 3, fragments: { rare: 1 } },
-    quizExternal: {
-      enabled: true,
-      provider: "opentdb",
-      endpoint: "https://opentdb.com/api.php",
-      category: null
-    },
-    raidActionEnergyCost: 1
   },
 
   render: {
