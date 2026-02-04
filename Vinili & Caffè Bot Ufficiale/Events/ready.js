@@ -150,6 +150,25 @@ module.exports = {
         } catch (err) {
             global.logger.error('[DISCADIA DAILY] Failed to schedule', err);
         }
+        try {
+            cron.schedule("30 12 * * *", async () => {
+                const channelId = "1442569130573303898";
+                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+                if (!channel) return;
+                const embed = new (require("discord.js").EmbedBuilder)()
+                    .setColor("#6f4e37")
+                    .setTitle("⭐ Lascia una recensione su DISBOARD!")
+                    .setDescription(
+                        [
+                            "Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#1442569095068254219> \`HIGH STAFF\` e riceverei **5 livelli**!",
+                            "Recensisci il nostro server qui: https://disboard.org/it/review/update/1019527",
+                        ].join("\n")
+                    );
+                await channel.send({ embeds: [embed] });
+            }, { timezone: "Europe/Rome" });
+        } catch (err) {
+            global.logger.error('[DISBOARD DAILY] Failed to schedule', err);
+        }
         if (logOnce) {
             client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
         }
