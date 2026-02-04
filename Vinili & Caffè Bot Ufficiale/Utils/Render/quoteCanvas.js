@@ -1,26 +1,22 @@
 const canvasModule = require("canvas");
-const { registerCanvasFonts, fontStack } = require("./canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth, maxLines = 2) {
   const lines = [];
-  const paragraphs = String(text || "").split(/\r?\n/);
-  for (const paragraph of paragraphs) {
-    const words = paragraph.split(/\s+/).filter(Boolean);
-    let line = "";
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width <= maxWidth) {
-        line = test;
-      } else {
-        if (line) lines.push(line);
-        line = word;
-      }
-      if (lines.length >= maxLines) break;
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width <= maxWidth) {
+      line = test;
+    } else {
+      if (line) lines.push(line);
+      line = word;
     }
-    if (line && lines.length < maxLines) lines.push(line);
     if (lines.length >= maxLines) break;
   }
+  if (line && lines.length < maxLines) lines.push(line);
   return lines.slice(0, maxLines);
 }
 
@@ -49,16 +45,19 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   ctx.fillRect(0, 0, width, height);
 
   const avatar = await loadImage(avatarUrl);
-  drawImageCover(ctx, avatar, 0, 0, width, height);
+  drawImageCover(ctx, avatar, 0, 0, leftWidth, height);
 
   ctx.fillStyle = "rgba(0,0,0,0.25)";
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, leftWidth, height);
 
-  const gradient = ctx.createLinearGradient(leftWidth - 80, 0, width, 0);
+  ctx.fillStyle = "#070707";
+  ctx.fillRect(leftWidth, 0, width - leftWidth, height);
+
+  const gradient = ctx.createLinearGradient(leftWidth - 120, 0, leftWidth + 120, 0);
   gradient.addColorStop(0, "rgba(0,0,0,0.0)");
-  gradient.addColorStop(1, "rgba(0,0,0,0.85)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.9)");
   ctx.fillStyle = gradient;
-  ctx.fillRect(leftWidth - 80, 0, width - (leftWidth - 80), height);
+  ctx.fillRect(leftWidth - 120, 0, 240, height);
 
   const padding = 48;
   const textX = leftWidth + (width - leftWidth) / 2;
@@ -81,27 +80,32 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   const blockHeight = lines.length * lineHeight;
   let y = Math.max(140, (height - blockHeight) / 2);
 
-  ctx.save();
-  ctx.translate(textX, y - 34);
-  ctx.transform(1, 0, -0.25, 1, 0, 0);
-  ctx.font = fontStack(18, "400");
-  ctx.fillStyle = "rgba(255,255,255,0.7)";
-  ctx.fillText(username || "", 0, 0);
-  ctx.restore();
+  ctx.font = fontStack(18, "italic");
+  drawTextWithSpecialFallback(ctx, username || "", textX, y - 36, {
+    size: 18,
+    weight: "italic",
+    color: "rgba(255,255,255,0.7)"
+  });
 
   ctx.font = fontStack(fontSize, "600");
-  ctx.fillStyle = "#f7f7f7";
   for (const line of lines) {
     if (y + lineHeight > height - 36) break;
-    ctx.fillText(line, textX, y);
+    drawTextWithSpecialFallback(ctx, line, textX, y, {
+      size: fontSize,
+      weight: "600",
+      color: "#f7f7f7"
+    });
     y += lineHeight;
   }
 
   if (footerText) {
     ctx.font = fontStack(20, "700");
     ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.fillText(footerText, width - 40, height - 40);
+    drawTextWithSpecialFallback(ctx, footerText, width - 40, height - 40, {
+      size: 20,
+      weight: "700",
+      color: "rgba(255,255,255,0.9)"
+    });
   }
 
   return canvas.toBuffer("image/png");
