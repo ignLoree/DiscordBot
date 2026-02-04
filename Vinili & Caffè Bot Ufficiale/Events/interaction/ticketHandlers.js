@@ -539,7 +539,7 @@ async function handleTicketInteraction(interaction) {
                 }
             }
             await Ticket.updateOne({ channelId: targetInteraction.channel.id }, { $set: { open: false, transcript: transcriptTXT, claimedBy: ticket.claimedBy || null, closeReason: motivo || null, closedAt: new Date() } }).catch(() => { });
-            await safeEditReply(targetInteraction, { embeds: [new EmbedBuilder().setDescription("🔒 Il ticket verrà chiuso...").setColor('#6f4e37')], flags: 1 << 6 });
+            await safeEditReply(targetInteraction, { embeds: [new EmbedBuilder().setDescription("🔒 Il ticket verrà chiuso...").setColor('#6f4e37')]});
             setTimeout(() => {
                 if (targetInteraction.channel) targetInteraction.channel.delete().catch(() => { });
             }, 2000);

@@ -18,7 +18,7 @@ function normalize(text) {
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione _!_ ✧")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione .ᐟ ✧")
     .setDescription("<:VC_Reply:1468262952934314131> Crea un post rispondendo al messaggio di un utente con <@1329118940110127204> oppure con tasto destro -> App -> Quote ! ✧")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
