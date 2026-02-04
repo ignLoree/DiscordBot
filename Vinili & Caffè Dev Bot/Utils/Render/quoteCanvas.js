@@ -49,18 +49,16 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   ctx.fillRect(0, 0, width, height);
 
   const avatar = await loadImage(avatarUrl);
-  drawImageCover(ctx, avatar, 0, 0, leftWidth, height);
+  drawImageCover(ctx, avatar, 0, 0, width, height);
 
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
-  ctx.fillRect(0, 0, leftWidth, height);
-  ctx.fillStyle = "#070707";
-  ctx.fillRect(leftWidth, 0, width - leftWidth, height);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillRect(0, 0, width, height);
 
-  const gradient = ctx.createLinearGradient(leftWidth - 60, 0, leftWidth + 140, 0);
+  const gradient = ctx.createLinearGradient(leftWidth - 80, 0, width, 0);
   gradient.addColorStop(0, "rgba(0,0,0,0.0)");
-  gradient.addColorStop(1, "rgba(0,0,0,0.55)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.85)");
   ctx.fillStyle = gradient;
-  ctx.fillRect(leftWidth - 60, 0, 200, height);
+  ctx.fillRect(leftWidth - 80, 0, width - (leftWidth - 80), height);
 
   const padding = 48;
   const textX = leftWidth + (width - leftWidth) / 2;
