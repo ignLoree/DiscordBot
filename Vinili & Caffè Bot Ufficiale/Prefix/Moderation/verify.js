@@ -20,6 +20,7 @@ module.exports = {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
       return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
+    await message.delete().catch(() => {});
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {
       return message.reply({ embeds: [buildNoMemberEmbed()] });
@@ -85,8 +86,8 @@ function formatUserList(list) {
   const shown = list.slice(0, maxVisible);
   const lines = shown.map((entry, index) => (
     index === 0
-      ? `<:space:1461733157840621608> ${entry}`
-      : `<:space:1461733157840621608> ${entry}`
+      ? `**${entry}**`
+      : `<:space:1461733157840621608> **${entry}**`
   ));
   const remaining = list.length - shown.length;
   if (remaining > 0) {
