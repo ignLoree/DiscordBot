@@ -8,9 +8,11 @@ const cron = require("node-cron");
 const Logs = require('discord-logs');
 const { ClusterClient } = require('discord-hybrid-sharding');
 const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js"));
-const triggerFiles = fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
-const pcommandFolders = fs.readdirSync('./Prefix');
-const commandFolders = fs.readdirSync("./Commands");
+const triggerFiles = fs.existsSync("./Triggers")
+    ? fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
+    : [];
+const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
+const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
 const child_process = require('child_process');
 let client;
