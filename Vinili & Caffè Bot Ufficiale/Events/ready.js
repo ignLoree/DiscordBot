@@ -142,9 +142,7 @@ module.exports = {
                     .setDescription(
                         [
                             "La prima volta otterrai **250 EXP**, le altre volte altri exp!",
-                            "Vota qui: https://discadia.com/vote/ploshin-italia-social-active-c/",
-                            "",
-                            "discord.gg/ploshin"
+                            "Vota qui: https://discadia.com/vote/https://discadia.com/server/viniliecaffe//",
                         ].join("\n")
                     );
                 await channel.send({ embeds: [embed] });
