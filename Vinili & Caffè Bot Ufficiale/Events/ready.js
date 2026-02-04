@@ -132,7 +132,7 @@ module.exports = {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
         try {
-            cron.schedule("30 11 * * *", async () => {
+            cron.schedule("00 12 * * *", async () => {
                 const channelId = "1442569130573303898";
                 const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
                 if (!channel) return;
@@ -142,7 +142,7 @@ module.exports = {
                     .setDescription(
                         [
                             "La prima volta otterrai **250 EXP**, le altre volte altri exp!",
-                            "Vota qui: https://discadia.com/vote/https://discadia.com/server/viniliecaffe//",
+                            "Vota qui: https://discadia.com/vote/https://discadia.com/server/viniliecaffe/",
                         ].join("\n")
                     );
                 await channel.send({ embeds: [embed] });

@@ -50,14 +50,20 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.fillRect(0, 0, leftWidth, height);
 
-  const gradient = ctx.createLinearGradient(leftWidth - 40, 0, width, 0);
+  const gradient = ctx.createLinearGradient(leftWidth - 140, 0, width, 0);
   gradient.addColorStop(0, "rgba(0,0,0,0.0)");
-  gradient.addColorStop(0.12, "rgba(0,0,0,0.25)");
-  gradient.addColorStop(0.35, "rgba(0,0,0,0.7)");
-  gradient.addColorStop(0.7, "rgba(0,0,0,0.92)");
+  gradient.addColorStop(0.18, "rgba(0,0,0,0.18)");
+  gradient.addColorStop(0.38, "rgba(0,0,0,0.55)");
+  gradient.addColorStop(0.7, "rgba(0,0,0,0.88)");
   gradient.addColorStop(1, "rgba(0,0,0,1)");
   ctx.fillStyle = gradient;
-  ctx.fillRect(leftWidth - 40, 0, width - (leftWidth - 40), height);
+  ctx.fillRect(leftWidth - 140, 0, width - (leftWidth - 140), height);
+
+  const soft = ctx.createRadialGradient(leftWidth - 40, height / 2, 40, leftWidth - 40, height / 2, 260);
+  soft.addColorStop(0, "rgba(0,0,0,0.0)");
+  soft.addColorStop(1, "rgba(0,0,0,0.35)");
+  ctx.fillStyle = soft;
+  ctx.fillRect(leftWidth - 200, 0, 400, height);
 
   const padding = 48;
   const textX = leftWidth + (width - leftWidth) / 2;
