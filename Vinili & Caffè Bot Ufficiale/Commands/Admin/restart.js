@@ -42,7 +42,7 @@ module.exports = {
             .setDescription('Cosa vuoi riavviare')
             .setRequired(false)
             .addChoices(
-                { name: 'Full (riavvia bot)', value: 'full' },
+                { name: 'Full', value: 'full' },
                 { name: 'Handlers (events+triggers+commands+prefix)', value: 'handlers' },
                 { name: 'Commands', value: 'commands' },
                 { name: 'Prefix', value: 'prefix' },
@@ -51,7 +51,7 @@ module.exports = {
                 { name: 'Services', value: 'services' },
                 { name: 'Utils', value: 'utils' },
                 { name: 'Schemas', value: 'schemas' },
-                { name: 'All (tutte le cartelle)', value: 'all' }
+                { name: 'All', value: 'all' }
             ))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
