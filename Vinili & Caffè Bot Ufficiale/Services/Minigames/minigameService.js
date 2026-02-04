@@ -504,19 +504,22 @@ function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
 
-  const tick = async () => {
+  const runForcedCheck = async () => {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
     const now = new Date();
     const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
-    if (shouldForce) {
-      const available = getAvailableGameTypes(cfg);
-      if (available.length === 0) return;
-      const type = available[randomBetween(0, available.length - 1)];
-      pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
-      await maybeStartRandomGame(client, true);
-      return;
-    }
+    if (!shouldForce) return;
+    const available = getAvailableGameTypes(cfg);
+    if (available.length === 0) return;
+    const type = available[randomBetween(0, available.length - 1)];
+    pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+    await maybeStartRandomGame(client, true);
+  };
+
+  const tick = async () => {
+    const cfg = getConfig(client);
+    if (!cfg?.enabled) return;
     if (!pendingGames.has(cfg.channelId)) {
       const available = getAvailableGameTypes(cfg);
       if (available.length === 0) return;
@@ -529,7 +532,9 @@ function startMinigameLoop(client) {
   const cfg = getConfig(client);
   const intervalMs = Math.max(60 * 1000, Number(cfg?.intervalMs || 15 * 60 * 1000));
   tick();
+  runForcedCheck();
   setInterval(tick, intervalMs);
+  setInterval(runForcedCheck, 60 * 1000);
 }
 
 async function awardWinAndReply(message, rewardExp) {

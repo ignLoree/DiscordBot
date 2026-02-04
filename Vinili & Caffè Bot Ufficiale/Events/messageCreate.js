@@ -18,6 +18,8 @@ const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
 const VOTE_ROLE_ID = '1468266342682722679';
 const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
+const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
+const { upsertVoteRole } = require('../Services/Community/voteRoleService');
 const COUNTING_CHANNEL_ID = '1442569179743125554';
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
@@ -230,6 +232,14 @@ async function handleVoteManagerMessage(message) {
             }
             if (count === 1) {
                 expValue = 250;
+            }
+        } catch {}
+        try {
+            const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
+            await upsertVoteRole(message.guild.id, user.id, expiresAt);
+            const member = message.guild.members.cache.get(user.id) || await message.guild.members.fetch(user.id).catch(() => null);
+            if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
+                await member.roles.add(VOTE_ROLE_ID).catch(() => {});
             }
         } catch {}
     }
