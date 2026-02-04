@@ -175,7 +175,7 @@ client.on("clientReady", async (client) => {
             const channel = guild.channels.cache.get("1442569285909217301");
             if (!channel) return;
             await channel.send({
-                content: `<:attentionfromvega:1443651874032062505> ${role} ricordatevi di mettere il poll usando il comando dedicato! </poll create:1445747424843923560>`
+                content: `<:attentionfromvega:1443651874032062505> ${role} ricordatevi di mettere il poll usando il comando dedicato! </poll create:1467597234387419478>`
             });
         }, {
             timezone: "Europe/Rome"
