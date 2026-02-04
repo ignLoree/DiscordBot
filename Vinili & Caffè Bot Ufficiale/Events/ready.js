@@ -1,7 +1,5 @@
 ﻿const config = require('../config.json');
 const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
 const mongodbURL = config.mongoURL;
 const config2 = require('../config.js');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
@@ -112,6 +110,7 @@ module.exports = {
         } catch (err) {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
+
         const REMINDER_CHANNEL_ID = "1442569130573303898";
         const REMINDER_MIN_MS = 1 * 60 * 60 * 1000;
         const REMINDER_MAX_MS = 2 * 60 * 60 * 1000;
@@ -168,7 +167,15 @@ module.exports = {
                         `Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 20.`,
                         `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost & livelli su: <#1442569159237177385>`
                     ].join("\n")
-                )
+                ),
+            () => new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setTitle("<:pokeball:1467091572632850474> Gotta Catch 'Em All!")
+                .setDescription(
+                    [
+                        "Sei un appasionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>"
+                    ].join("\n")
+                ),
         ];
 
         let rotationDate = new Date().toDateString();
@@ -207,7 +214,7 @@ module.exports = {
             const next = rotationQueue.shift();
             if (!next) return;
             const embed = next();
-            await channel.send({ embeds: [embed] }).catch(() => {});
+            await channel.send({ embeds: [embed] }).catch(() => { });
         };
 
         const scheduleNextReminder = () => {

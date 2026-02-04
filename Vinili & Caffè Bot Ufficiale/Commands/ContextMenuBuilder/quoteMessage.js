@@ -14,8 +14,8 @@ const ALLOWED_ROLE_IDS = [
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione _!_ âœ§")
-    .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando `?quote` rispondendo al messaggio di un utente ! âœ§")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione _!_ ✧")
+    .setDescription("<:VC_Reply:1468262952934314131> Crea un post rispondendo al messaggio di un utente con <@1329118940110127204> oppure con tasto destro -> App -> Quote ! ✧")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
       { name: "Creato da:", value: `<@${creatorId}>` }
@@ -106,7 +106,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
-      .addFields({ name: "ðŸ“¸ Totale immagini generate:", value: String(totalPosts) });
+      .addFields({ name: "📸 Totale immagini generate:", value: String(totalPosts) });
 
     const quoteChannel = interaction.guild?.channels?.cache?.get(QUOTE_CHANNEL_ID);
     if (quoteChannel) {
@@ -122,5 +122,3 @@ module.exports = {
     return safeEditReply(interaction, { files: [attachment], embeds: [embed] });
   }
 };
-
-
