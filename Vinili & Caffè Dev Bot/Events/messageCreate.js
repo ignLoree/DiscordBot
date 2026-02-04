@@ -248,6 +248,9 @@ module.exports = {
         const defaultPrefix = guildSettings.Prefix || client.config2.prefix;
         const musicPrefix = client.config2.musicPrefix || defaultPrefix;
         const verifyPrefix = 'w!';
+        const mentionPrefixes = [`<@${client.user.id}>`, `<@!${client.user.id}>`];
+        const mentionPrefix = mentionPrefixes.find(p => message.content.startsWith(p));
+        const startsWithMention = Boolean(mentionPrefix);
         let overrideCommand = null;
         let overridePrefix = null;
 
@@ -279,10 +282,14 @@ module.exports = {
             !startsWithMusic &&
             !startsWithDefault &&
             !startsWithMod &&
-            !startsWithVerify
+            !startsWithVerify &&
+            !startsWithMention
         ) return;
 
         const usedPrefix = overridePrefix
+            || (startsWithMention
+                ? mentionPrefix
+                : null)
             || (startsWithVerify
                 ? verifyPrefix
                 : startsWithMod
@@ -291,10 +298,13 @@ module.exports = {
                         ? musicPrefix
                         : defaultPrefix);
 
-        const args = message.content.slice(usedPrefix.length).trim().split(/\s+/);
-        const cmd = overrideCommand
+        const args = message.content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean);
+        let cmd = overrideCommand
             ? overrideCommand.name
             : args.shift()?.toLowerCase();
+        if (startsWithMention && !cmd) {
+            cmd = "quote";
+        }
 
         if (!cmd) return;
         if (startsWithMusic && cmd !== "login" && cmd !== "help") {
