@@ -58,10 +58,13 @@ module.exports = {
       await i.deferUpdate();
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});
-      await message.channel.send({
+      const resultMsg = await message.channel.send({
         embeds: [buildResultEmbed(message.author.id, message.guild?.ownerId, success, fail)],
         allowedMentions: { users: [] }
       });
+      setTimeout(() => {
+        resultMsg.delete().catch(() => {});
+      }, 5000);
     });
     collector.on('end', async (collected) => {
       if (collected.size > 0) return;
@@ -74,7 +77,11 @@ function formatUserList(list) {
   if (!Array.isArray(list) || list.length === 0) return 'None';
   const maxVisible = 5;
   const shown = list.slice(0, maxVisible);
-  const lines = shown.map((entry) => `<:space:1461733157840621608> ${entry}`);
+  const lines = shown.map((entry, index) => (
+    index === 0
+      ? `\`${entry}\``
+      : `<:space:1461733157840621608> \`${entry}\``
+  ));
   const remaining = list.length - shown.length;
   if (remaining > 0) {
     lines.push(`<:space:1461733157840621608> +${remaining} users`);
