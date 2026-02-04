@@ -41,7 +41,7 @@ module.exports = {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription("<:vegax:1443934876440068179> Questo utente non Ã¨ verificato, fagli effettuare prima la verifica e poi riprova!")
+                        .setDescription("<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!")
                         .setColor("Red")
                 ],
                 flags: 1 << 6

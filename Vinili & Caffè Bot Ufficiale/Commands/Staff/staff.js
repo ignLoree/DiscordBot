@@ -6,7 +6,7 @@ const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('staff')
-        .setDescription('Gestisci lo staff di Vinili & CaffÃ¨ ')
+        .setDescription('Gestisci lo staff di Vinili & Caffè ')
         .addSubcommand(command =>
             command.setName('pex')
                 .setDescription(`Pexa un utente.`)
@@ -63,8 +63,8 @@ module.exports = {
                                 .setDescription('Ore trascorse in vocale in una settimana.')
                                 .setRequired(true))
                         .addStringOption(option =>
-                            option.setName('grado_attivitÃ ')
-                                .setDescription('Seleziona l\'attivitÃ  avuta durante la settimana.')
+                            option.setName('grado_attività')
+                                .setDescription('Seleziona l\'attività avuta durante la settimana.')
                                 .setRequired(true)
                                 .addChoices(
                                     { name: 'Non classificato', value: 'Limiti non rispettati' },
@@ -82,9 +82,9 @@ module.exports = {
                                 .setRequired(true)
                                 .addChoices(
                                     { name: 'Non classificato', value: 'Solo valutazioni negative e 0 positive' },
-                                    { name: 'Insufficiente', value: 'PiÃ¹ valutazioni negative che positive' },
+                                    { name: 'Insufficiente', value: 'Più valutazioni negative che positive' },
                                     { name: 'Sufficiente', value: 'Valutazioni equivalenti/Nessuna valutazione' },
-                                    { name: 'Discreto', value: 'PiÃ¹ valutazioni positive che negative' },
+                                    { name: 'Discreto', value: 'Più valutazioni positive che negative' },
                                     { name: 'Ottimo', value: 'Minimo 3 valutazioni positive e 0 negative' },
                                 )
                         )
@@ -167,7 +167,7 @@ module.exports = {
                     return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} ha giÃ  il ruolo che gli vuoi aggiungere.`)
+                                .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} ha già il ruolo che gli vuoi aggiungere.`)
                                 .setColor("#E74C3C")
                         ],
                         flags: 1 << 6
@@ -181,7 +181,7 @@ ${utentee}
 # BenvenutÉ™ nei Partner Manager <:partneredserverowner:1443651871125409812>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569199229730836>
-__Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:1330194103564238930>`
+__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
                 if (ruoloSuccessivo.id === '1442568904311570555') {
@@ -194,7 +194,7 @@ ${utentee}
 <:dot:1443660294596329582> <#1442569237142044773>
 <:dot:1443660294596329582> <#1442569239063167139>
 <:dot:1443660294596329582> <#1442569243626307634>
-__Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:1330194103564238930>`
+__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
                 if (ruoloSuccessivo.id === '1442568901887000618') {
@@ -265,7 +265,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
                     return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} non ha il ruolo che gli vuoi togliere.`)
+                                .setDescription(`<:vegax:1443934876440068179> L'utente ${utentee} non ha il ruolo che gli vuoi togliere.`)
                                 .setColor("#E74C3C")
                         ],
                         flags: 1 << 6
@@ -352,7 +352,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
                         <:pinnednew:1443670849990430750> __${reason}__
                         <a:loading:1443934440614264924> **ID Valutazione** __\`${Staff.idCount}\`__`)
                     .setColor('#6f4e37')
-                    .setFooter({ text: `Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
+                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 if (warnChannel) {
                     await warnChannel.send({ content: `${utentee}`, embeds: [warnstaff] });
                 }
@@ -376,7 +376,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
                     const azione = interaction.options.getString('azione');
                     const messaggi = interaction.options.getString('messaggi');
                     const oreInVoc = interaction.options.getString('ore');
-                    const grado_attivitÃ  = interaction.options.getString('grado_attivitÃ ');
+                    const grado_attività = interaction.options.getString('grado_attività');
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = '1442568910070349985';
@@ -400,7 +400,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
                         return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
-                                    .setDescription('<:attentionfromvega:1443651874032062505> Puoi selezionare solo uno staffer con il ruolo specificato.')
+                                    .setDescription('<:vegax:1443934876440068179> Puoi selezionare solo uno staffer con il ruolo specificato.')
                                     .setColor("#E74C3C")
                             ],
                             flags: 1 << 6
@@ -422,7 +422,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
 <:dot:1443660294596329582> **Ruolo:** __${ruolo}__
 <:dot:1443660294596329582> **Messaggi in una settimana:** __${messaggi}__
 <:dot:1443660294596329582> **Ore in una settimana:** __${oreInVoc}__
-<:dot:1443660294596329582> **AttivitÃ :** __${grado_attivitÃ }__
+<:dot:1443660294596329582> **Attività:** __${grado_attività}__
 <:dot:1443660294596329582> **Condotta:** __${grado_condotta}__
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`
@@ -466,7 +466,7 @@ __Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:13301941
                         return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
-                                    .setDescription('<:attentionfromvega:1443651874032062505> Puoi selezionare solo uno staffer con il ruolo specificato.')
+                                    .setDescription('<:vegax:1443934876440068179> Puoi selezionare solo uno staffer con il ruolo specificato.')
                                     .setColor("#E74C3C")
                             ],
                             flags: 1 << 6

@@ -16,7 +16,7 @@ module.exports = {
       return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!userId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un utente o ID valido.' });
+    if (!userId) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Specifica un utente o ID valido.' });
     if (member && member.roles.highest.position >= message.member.roles.highest.position) {
       return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non puoi moderare un utente con ruolo uguale o superiore.' });
     }

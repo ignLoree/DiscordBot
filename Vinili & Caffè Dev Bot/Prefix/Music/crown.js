@@ -144,7 +144,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("Questo comando può essere usato solo in un server.")
         ]
       });
     }

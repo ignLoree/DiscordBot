@@ -88,7 +88,7 @@ async function handlePartnerModal(interaction) {
             embeds: [
                 new EmbedBuilder()
                     .setColor('Red')
-                    .setDescription('<:attentionfromvega:1443651874032062505> Devi inserire un link di invito Discord valido.')
+                    .setDescription('<:vegax:1443934876440068179> Devi inserire un link di invito Discord valido.')
             ], flags: 1 << 6
         });
         return true;
@@ -118,7 +118,7 @@ async function handlePartnerModal(interaction) {
         const embed = new EmbedBuilder()
             .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
             .setTitle(`**<:partneredserverowner:1443651871125409812> Partnership con ${serverName} da ${interaction.user.username}**`)
-            .setDescription(`<:attentionfromvega:1443651874032062505> Non puoi fare partner con il tuo server`)
+            .setDescription(`<:vegax:1443934876440068179> Non puoi fare partner con il tuo server`)
             .setFooter({ text: serverName, iconURL: serverIcon })
             .setColor('Red')
             .setTimestamp()

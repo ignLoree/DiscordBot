@@ -392,7 +392,7 @@ module.exports = {
         if (!command) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription(`<:attentionfromvega:1443651874032062505> Il comando che hai provato ad eseguire **non esiste**.`);
+                .setDescription(`<:vegax:1443934876440068179> Il comando che hai provato ad eseguire **non esiste**.`);
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -429,7 +429,7 @@ module.exports = {
         if (disabledPrefixCommands.includes(command.name)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è disabilitato al momento.");
+                .setDescription("<:vegax:1443934876440068179> Questo comando è disabilitato al momento.");
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -451,7 +451,7 @@ module.exports = {
             if (!hasStaffRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
+                    .setDescription("<:vegax:1443934876440068179> Questo comando è solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -467,7 +467,7 @@ module.exports = {
             if (!hasAdminRole && !isAdmin) {
                 const embed = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription("<:attentionfromvega:1443651874032062505> Questo comando è solo per lo staff.");
+                    .setDescription("<:vegax:1443934876440068179> Questo comando è solo per lo staff.");
                 await deleteCommandMessage();
                 const msg = await message.channel.send({ embeds: [embed] });
                 setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -477,7 +477,7 @@ module.exports = {
         if (command?.args && !args.length) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
-                .setDescription(`<:attentionfromvega:1443651874032062505> Non hai **aggiunto** nessun argomento.`);
+                .setDescription(`<:vegax:1443934876440068179> Non hai **aggiunto** nessun argomento.`);
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);

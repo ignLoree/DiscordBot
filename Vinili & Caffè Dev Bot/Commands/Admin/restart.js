@@ -86,7 +86,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -122,7 +122,7 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();

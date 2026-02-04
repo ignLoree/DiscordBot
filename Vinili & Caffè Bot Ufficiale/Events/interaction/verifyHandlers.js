@@ -29,7 +29,8 @@ try {
 function makeExpiredEmbed() {
     return new EmbedBuilder()
         .setColor('Red')
-        .setDescription('<:cancel:1461730653677551691> **Unsuccessful Operation!**\n <:space:1461733157840621608> <:rightSort:1461726104422453298> Your verification has expired, you need to press Verify again.');
+        .setTitle('<:cancel:1461730653677551691> Unsuccessful Operation!')
+        .setDescription('<:space:1461733157840621608> <:rightSort:1461726104422453298> Your verification has expired, you need to press Verify again.');
 }
 function makeWrongAnswerEmbed() {
     return new EmbedBuilder()
@@ -42,7 +43,7 @@ function makeVerifiedEmbed(serverName) {
         .setColor('#57f287')
         .setTitle('**You have been verified!**')
         .setDescription(
-            `<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\` \u00b7 Nitro \u00b7 Tags \u00b7 Social \u00b7 Activity!`
+            `<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\``
         );
 }
 function makeAlreadyVerifiedEmbed() {
@@ -380,8 +381,3 @@ async function handleVerifyInteraction(interaction) {
 }
 
 module.exports = { handleVerifyInteraction };
-
-
-
-
-

@@ -35,7 +35,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Il modulo canvas non Ã¨ installato. Installa 'canvas' per usare .chart.")
+            .setDescription("Il modulo canvas non è installato. Installa 'canvas' per usare .chart.")
         ]
       });
     }

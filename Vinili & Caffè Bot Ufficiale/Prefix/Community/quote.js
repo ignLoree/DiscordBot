@@ -31,7 +31,7 @@ function buildNoPermsEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${ALLOWED_ROLE_IDS[0]}>, <@&${ALLOWED_ROLE_IDS[1]}>, <@&${ALLOWED_ROLE_IDS[2]}>, <@&${ALLOWED_ROLE_IDS[3]}>`

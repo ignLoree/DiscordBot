@@ -81,7 +81,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perchÃ© hai raggiunto il limite di emoji del server.")
+                                .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perchè hai raggiunto il limite di emoji del server.")
                         ],
                         flags: 1 << 6
                     });
@@ -106,14 +106,14 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ uno sticker...`)
+                                .setDescription(`<:vegax:1443934876440068179> Questo non è uno sticker...`)
                         ], flags: 1 << 6
                     })
                     if (sticker.url.endsWith('.json')) return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Non Ã¨ uno sticker valido...`)
+                                .setDescription(`<:vegax:1443934876440068179> Non è uno sticker valido...`)
                         ], flags: 1 << 6
                     })
                     try {
@@ -127,7 +127,7 @@ module.exports = {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('#6f4e37')
-                                    .setDescription(`<:vegacheckmark:1443666279058772028> Lo sticker col nome **${newSticker.name}** Ã¨ stato creato!`)
+                                    .setDescription(`<:vegacheckmark:1443666279058772028> Lo sticker col nome **${newSticker.name}** è stato creato!`)
                             ]
                         })
                     } catch (err) {
@@ -136,7 +136,7 @@ module.exports = {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('Red')
-                                    .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perchÃ© hai raggiunto il limite di sticker del server.")
+                                    .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perchè hai raggiunto il limite di sticker del server.")
                             ], flags: 1 << 6
                         })
                     }

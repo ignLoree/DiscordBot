@@ -14,7 +14,7 @@ module.exports = {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo nella categoria ticket.')
+                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nella categoria ticket.')
                         .setColor("Red")
                 ],
                 flags: 1 << 6

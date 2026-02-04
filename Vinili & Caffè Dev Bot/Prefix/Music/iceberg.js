@@ -266,7 +266,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Il modulo canvas non Ã¨ installato. Installa 'canvas' per usare .iceberg.")
+            .setDescription("<:vegax:1443934876440068179> Il modulo canvas non è installato. Installa 'canvas' per usare .iceberg.")
         ]
       });
     }

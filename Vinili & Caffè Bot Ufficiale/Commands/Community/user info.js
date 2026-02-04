@@ -28,7 +28,7 @@ module.exports = {
     switch (sub) {
       case 'info':
         try {
-          if (!member) return safeEditReply(interaction, { embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
+          if (!member) return safeEditReply(interaction, { embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:vegax:1443934876440068179> Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
           const perms = {
             administrator: 'Administrator',
             manageGuild: 'Manage Server',
@@ -87,10 +87,10 @@ module.exports = {
             }
           }
           if (member.id === client.user.id) {
-            team.push('Vinili & CaffÃ¨ Bot');
+            team.push('Vinili & Caffè Bot');
           }
           if (member.id === '295500038401163264') {
-            extra.push(`Il creatore di Vinili & CaffÃ¨`);
+            extra.push(`Il creatore di Vinili & Caffè`);
           }
           if (member.id === interaction.guild.ownerId) {
             extra.push(`Server Owner`);
@@ -105,7 +105,7 @@ module.exports = {
             embed.fields.push({ name: 'Riconoscimenti', value: extra.join(', '), inline: false });
           }
           if (team.length) {
-            embed.fields.push({ name: 'Vinili & CaffÃ¨ Team', value: `${team.join(', ')}`, inline: false });
+            embed.fields.push({ name: 'Vinili & Caffè Team', value: `${team.join(', ')}`, inline: false });
           }
           embed.fields = embed.fields.map(trimFieldValues);
           await safeEditReply(interaction, { embeds: [embed] })

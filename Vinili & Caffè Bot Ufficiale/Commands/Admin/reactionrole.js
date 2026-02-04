@@ -75,7 +75,7 @@ module.exports = {
                         embed: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Hai giÃ   una reaction attiva con questa ${emoji} su questo messaggio.`)
+                                .setDescription(`<:vegax:1443934876440068179> Hai già una reaction attiva con questa ${emoji} su questo messaggio.`)
                         ], flags: 1 << 6
                     })
                 } else {

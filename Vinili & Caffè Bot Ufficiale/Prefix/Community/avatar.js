@@ -40,7 +40,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ]
       });
     }
@@ -59,7 +59,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
-              .setDescription("<:attentionfromvega:1443651874032062505> Non ha un avatar impostato solo per questo server.")
+              .setDescription("<:vegax:1443934876440068179> Non ha un avatar impostato solo per questo server.")
           ]
         });
       }

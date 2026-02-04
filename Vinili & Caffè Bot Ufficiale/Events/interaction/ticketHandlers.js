@@ -88,7 +88,7 @@ async function handleTicketInteraction(interaction) {
             }
             const userOnlyTickets = ['ticket_perks', 'ticket_partnership', 'ticket_highstaff'];
             if (userOnlyTickets.includes(interaction.customId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:attentionfromvega:1443651874032062505> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
                 return true;
             }
             const ticketConfig = {
@@ -154,7 +154,7 @@ async function handleTicketInteraction(interaction) {
             }
             if (config) {
                 if (['ticket_perks', 'ticket_partnership', 'ticket_highstaff', 'accetta', 'rifiuta', 'unclaim'].includes(interaction.customId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:attentionfromvega:1443651874032062505> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
                     return true;
                 }
                 if (config.requiredRoles?.length > 0) {

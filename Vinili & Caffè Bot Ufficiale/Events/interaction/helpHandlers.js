@@ -1,26 +1,5 @@
-const {
-  TRACKS_DETAILS,
-  TRACKS_ORDER,
-  ALBUMS_DETAILS,
-  ALBUMS_ORDER,
-  ARTISTS_DETAILS,
-  ARTISTS_ORDER,
-  GENRES_DETAILS,
-  GENRES_ORDER,
-  buildOverviewEmbed,
-  buildTracksOverviewEmbed,
-  buildAlbumsOverviewEmbed,
-  buildArtistsOverviewEmbed,
-  buildGenresOverviewEmbed,
-  buildTrackCommandEmbed,
-  buildHelpComponents,
-  buildTrackCommandComponents,
-  buildAlbumCommandComponents,
-  buildArtistCommandComponents,
-  buildGenreCommandComponents,
-  buildStaticSectionEmbed,
-  findStaticSection
-} = require("../../Utils/Help/prefixHelpView");
+const { TRACKS_DETAILS, TRACKS_ORDER, ALBUMS_DETAILS, ALBUMS_ORDER, ARTISTS_DETAILS, ARTISTS_ORDER, GENRES_DETAILS, GENRES_ORDER, buildOverviewEmbed, buildTracksOverviewEmbed, buildAlbumsOverviewEmbed, buildArtistsOverviewEmbed, buildGenresOverviewEmbed, buildTrackCommandEmbed, buildHelpComponents, buildTrackCommandComponents, buildAlbumCommandComponents, buildArtistCommandComponents, buildGenreCommandComponents, buildStaticSectionEmbed, findStaticSection } = require("../../Utils/Help/prefixHelpView");
+
 function isSnowflake(value) {
   return typeof value === "string" && /^\d{5,}$/.test(value);
 }
@@ -46,7 +25,7 @@ async function handleHelpMenu(interaction) {
   const targetUserId = interaction.customId.split(":")[1];
   if (isSnowflake(targetUserId) && interaction.user.id !== targetUserId) {
     await interaction.reply({
-      content: "<:vegax:1443934876440068179> Solo chi ha usato il comando può usare questo menu.",
+      content: "<:vegax:1443934876440068179> Solo chi ha usato il comando può usare questo menù.",
       flags: 1 << 6
     });
     return true;
@@ -80,7 +59,7 @@ async function handleHelpMenu(interaction) {
   if (state.expiresAt && Date.now() > state.expiresAt) {
     stateMap.delete(interaction.message.id);
     await interaction.reply({
-      content: "<:vegax:1443934876440068179> Questo menu e' scaduto.",
+      content: "<:vegax:1443934876440068179> Questo menù e' scaduto.",
       flags: 1 << 6
     });
     return true;

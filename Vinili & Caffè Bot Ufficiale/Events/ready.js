@@ -115,7 +115,7 @@ module.exports = {
         const REMINDER_CHANNEL_ID = "1442569130573303898";
         const REMINDER_MIN_MS = 1 * 60 * 60 * 1000;
         const REMINDER_MAX_MS = 2 * 60 * 60 * 1000;
-        const ACTIVITY_WINDOW_MS = 30 * 60 * 1000;
+        const ACTIVITY_WINDOW_MS = 60 * 60 * 1000;
 
         const reminderPool = [
             () => new EmbedBuilder()

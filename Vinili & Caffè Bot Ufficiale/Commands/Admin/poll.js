@@ -176,7 +176,7 @@ ${answersText}
                 return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) Ã¨ stato rimosso.`)
+                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) è stato rimosso.`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -217,7 +217,7 @@ ${answersText}
                     return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste piÃ¹.`)
+                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste più.`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6

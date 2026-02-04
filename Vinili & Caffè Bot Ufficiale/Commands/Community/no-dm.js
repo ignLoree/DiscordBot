@@ -22,7 +22,7 @@ module.exports = {
     }
     await addNoDm(interaction.guild.id, interaction.user.id);
     return safeReply(interaction, {
-      content: "Ok! **Non riceverai piÃ¹** i DM broadcast. Puoi riattivarli rifacendo /no-dm.",
+      content: "Ok! **Non riceverai più** i DM broadcast. Puoi riattivarli rifacendo /no-dm.",
       flags: 1 << 6
     });
   }

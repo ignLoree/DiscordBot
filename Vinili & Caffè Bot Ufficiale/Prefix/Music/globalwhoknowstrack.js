@@ -203,14 +203,14 @@ module.exports = {
         });
         const imageBuffer = await renderWhoKnows({
           title: `${resolved.track} by ${resolved.artist}`,
-          subtitle: `by ${resolved.artist} in Vinili & CaffÃ¨ Bot`,
+          subtitle: `by ${resolved.artist} in Vinili & Caffè Bot`,
           coverUrl: cover,
           rows,
           footer: `Global track - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg`,
           badgeText: "WhoKnows Track",
-          serverLabel: "in Vinili & CaffÃ¨ Bot ðŸŒ",
+          serverLabel: "in Vinili & Caffè Bot ðŸŒ",
           showCrown: false,
-          poweredByText: "Powered by Vinili & CaffÃ¨ Bot"
+          poweredByText: "Powered by Vinili & Caffè Bot"
         });
         if (imageBuffer) {
           const attachment = new AttachmentBuilder(imageBuffer, { name: "globalwhoknowstrack.png" });

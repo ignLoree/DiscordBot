@@ -33,7 +33,7 @@ module.exports = {
     const devIds = getDevIds(client);
     if (!devIds.includes(interaction.user.id)) {
       return safeReply(interaction, {
-        content: "<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo al developer del bot.",
+        content: "<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.",
         flags: 1 << 6
       });
     }

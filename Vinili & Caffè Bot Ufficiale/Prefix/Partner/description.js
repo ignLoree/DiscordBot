@@ -8,7 +8,7 @@ module.exports = {
         const partnerRole = message.guild.roles.cache.find(r => r.id.toLowerCase() === "1442568905582317740");
 
         if (!message.channel.parent || message.channel.parent.id !== allowedCategoryId) {
-            return safeMessageReply(message, "<:vegax:1443934876440068179> Questo comando puÃ² essere usato **solo nella categoria autorizzata**.");
+            return safeMessageReply(message, "<:vegax:1443934876440068179> Questo comando può essere usato **solo nella categoria autorizzata**.");
         }
 
         if (!partnerRole) {
@@ -22,7 +22,7 @@ module.exports = {
                 `
 \`\`\`
 _ _  
-_ _      â˜•         ð“‚ƒ         **[Vinili & CaffÃ¨](https://discord.gg/viniliecaffe)**      âŸ¢  
+_ _      â˜•         ð“‚ƒ         **[Vinili & Caffè](https://discord.gg/viniliecaffe)**      âŸ¢  
 _ _     ð“Ž¢      **social**       âŠ¹       **italia** **chill**       à­§                                             
                                        **gaming**                      
 -# @everyone & @here _ _

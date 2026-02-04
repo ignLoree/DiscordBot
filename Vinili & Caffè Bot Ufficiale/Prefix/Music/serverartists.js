@@ -84,7 +84,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ]
       });
     }

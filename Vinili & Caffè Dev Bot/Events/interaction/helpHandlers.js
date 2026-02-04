@@ -46,7 +46,7 @@ async function handleHelpMenu(interaction) {
   const targetUserId = interaction.customId.split(":")[1];
   if (isSnowflake(targetUserId) && interaction.user.id !== targetUserId) {
     await interaction.reply({
-      content: "<:vegax:1443934876440068179> Solo chi ha usato il comando può usare questo menu.",
+      content: "<:vegax:1443934876440068179> Solo chi ha usato il comando può usare questo menù.",
       flags: 1 << 6
     });
     return true;
@@ -80,7 +80,7 @@ async function handleHelpMenu(interaction) {
   if (state.expiresAt && Date.now() > state.expiresAt) {
     stateMap.delete(interaction.message.id);
     await interaction.reply({
-      content: "<:vegax:1443934876440068179> Questo menu e' scaduto.",
+      content: "<:vegax:1443934876440068179> Questo menù e' scaduto.",
       flags: 1 << 6
     });
     return true;

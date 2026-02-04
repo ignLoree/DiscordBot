@@ -19,7 +19,7 @@ module.exports = {
             if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription(`<:attentionfromvega:1443651874032062505> Non puoi fare questo comando!`)
+                        .setDescription(`<:vegax:1443934876440068179> Non puoi fare questo comando!`)
                         .setColor("Red")
                 ],
                 flags: 1 << 6

@@ -83,9 +83,9 @@ ${suggestmsg}
                     await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`Hey, ${interaction.user.tag}. Il tuo suggerimento Ã¨ stato inviato nel canale ${suggestionchannel} per essere votato!
+                                .setDescription(`Hey, ${interaction.user.tag}. Il tuo suggerimento è stato inviato nel canale ${suggestionchannel} per essere votato!
 Per favore attendi mentre uno staff lo approva o lo rifiuta.
-Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
+Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                                 .setColor('#6f4e37')
                                 .setTimestamp()
                                 .setFooter({ text: `Guild ID: ${interaction.guild.id} | sID: ${SuggestionID}` })
@@ -147,7 +147,7 @@ Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
                     return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:attentionfromvega:1443651874032062505> Suggerimento con ID ${suggestionId} non trovato.`)
+                                .setDescription(`<:vegax:1443934876440068179> Suggerimento con ID ${suggestionId} non trovato.`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -170,7 +170,7 @@ Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
                     embeds: [
                         new EmbedBuilder()
                             .setColor("Green")
-                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & CaffÃ¨** Ã¨ stato accettato!\n <:pinnednew:1443670849990430750> Motivo: ${reason}`)
+                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & Caffè** è stato accettato!\n <:pinnednew:1443670849990430750> Motivo: ${reason}`)
                     ]
                 });
                 await safeEditReply(interaction, {
@@ -203,7 +203,7 @@ Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
                     return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:attentionfromvega:1443651874032062505> Suggerimento con ID ${rejectSuggestionId} non trovato.`)
+                                .setDescription(`<:vegax:1443934876440068179> Suggerimento con ID ${rejectSuggestionId} non trovato.`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -225,7 +225,7 @@ Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
                     embeds: [
                         new EmbedBuilder()
                             .setColor("Red")
-                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & CaffÃ¨** Ã¨ stato rifiutato.\n <:attentionfromvega:1443651874032062505> Motivo: ${rejectReason}`)
+                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & Caffè** è stato rifiutato.\n <:attentionfromvega:1443651874032062505> Motivo: ${rejectReason}`)
                     ]
                 }).catch((err) => global.logger.info(err));
                 await safeEditReply(interaction, {

@@ -97,7 +97,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ]
       });
     }
@@ -218,7 +218,7 @@ module.exports = {
         .setTitle(`Server neighbors for ${targetName}`)
         .setDescription(lines.join("\n"))
         .setFooter({
-          text: `Page ${page}/${totalPages} - ${allUsers.length} Vinili & CaffÃ¨ Bot members in this server`
+          text: `Page ${page}/${totalPages} - ${allUsers.length} Vinili & Caffè Bot members in this server`
         });
 
       return safeChannelSend(message.channel, { embeds: [embed] });

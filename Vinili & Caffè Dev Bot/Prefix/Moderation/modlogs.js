@@ -16,7 +16,7 @@ module.exports = {
 
     if (sub === 'case') {
       const caseId = Number(args?.[1]);
-      if (!caseId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
+      if (!caseId) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Specifica un case id valido.' });
       const c = await ModCase.findOne({ guildId: message.guild.id, caseId });
       if (!c) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Case non trovato.' });
       const isUserId = /^\d{17,20}$/.test(String(c.userId));
@@ -37,7 +37,7 @@ module.exports = {
     }
 
     const { user } = await resolveTarget(message, args, 0);
-    if (!user) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un utente.' });
+    if (!user) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Specifica un utente.' });
     const cases = await ModCase.find({
       guildId: message.guild.id,
       userId: user.id

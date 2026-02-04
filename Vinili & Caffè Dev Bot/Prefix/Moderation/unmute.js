@@ -34,7 +34,7 @@ module.exports = {
       const dmEmbed = new EmbedBuilder()
         .setColor(client.config2?.embedModLight || '#6f4e37')
         .setTitle('Unmute')
-        .setDescription(`Il tuo mute in **${message.guild.name}** Ã¨ stato rimosso.`)
+        .setDescription(`Il tuo mute in **${message.guild.name}** è stato rimosso.`)
         .addFields({ name: 'Motivo', value: reason });
       await tryDmUser(user, { embeds: [dmEmbed] });
     }

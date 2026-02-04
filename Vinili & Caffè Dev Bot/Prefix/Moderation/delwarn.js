@@ -18,7 +18,7 @@ module.exports = {
       return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!caseId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
+    if (!caseId) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Specifica un case id valido.' });
     const warnCase = await ModCase.findOne({
       guildId: message.guild.id,
       caseId,

@@ -12,7 +12,7 @@ module.exports = {
         const userId = message.author.id;
 
         if (!args || !args.length)
-            return safeMessageReply(message, '<:attentionfromvega:1443651874032062505> Perfavore scrivi un messaggio per impostare il tuo stato AFK.');
+            return safeMessageReply(message, '<:vegax:1443934876440068179> Perfavore scrivi un messaggio per impostare il tuo stato AFK.');
 
         if (afkMessage.includes('@everyone') || afkMessage.includes('@here'))
             return safeMessageReply(message, '<:vegax:1443934876440068179> Non puoi usare @everyone o @here nel messaggio.');

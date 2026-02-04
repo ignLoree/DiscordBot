@@ -26,7 +26,7 @@ module.exports = {
                 .addStringOption(option => option.setName('data_ritorno').setDescription('Data ritorno').setRequired(true))
                 .addRoleOption(option => option.setName('ruolo').setDescription('Ruolo dello staffer').setRequired(true))
                 .addIntegerOption(option => option.setName('staffer_in_pausa').setDescription('Staffer in pausa nello stesso ruolo').setRequired(true))
-                .addIntegerOption(option => option.setName('giorni_usati').setDescription('Giorni giÃ  usati').setRequired(true))
+                .addIntegerOption(option => option.setName('giorni_usati').setDescription('Giorni già usati').setRequired(true))
                 .addIntegerOption(option => option.setName('giorni_aggiuntivi').setDescription('Giorni aggiuntivi').setRequired(true))
         ),
     async execute(interaction) {
@@ -64,7 +64,7 @@ module.exports = {
                 await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa Ã¨ stata inviata all'High Staff")
+                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa è stata inviata all'High Staff")
                             .setColor('#6f4e37')
                     ],
                     flags: 1 << 6
@@ -108,7 +108,7 @@ module.exports = {
                 });
                 await stafferRecord.save();
                 await channel.send({
-                    content: `<:Calendar:1330530097190404106> **\`${ruolo.name}\`** - **${staffer}** Ã¨ in **pausa**! 
+                    content: `<:Calendar:1330530097190404106> **\`${ruolo.name}\`** - **${staffer}** è in **pausa**! 
 <:Clock:1330530065133338685> Dal **\`${dataRichiesta}\`** al **\`${dataRitorno}\`**
 <:pinnednew:1443670849990430750> __\`${giorniUsati}/60\`__ giorni utilizzati - __\`${stafferInPausa}\`__ staffer in pausa in quel ruolo`
                 });

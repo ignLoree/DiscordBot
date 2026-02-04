@@ -1468,7 +1468,7 @@ async function handleLastFmSelectMenu(interaction) {
     const userId = customId.split(":")[1];
     if (interaction.user.id !== userId) {
       await interaction.reply({
-        content: "<:vegax:1443934876440068179> Solo chi ha lanciato il comando può usare questo menu.",
+        content: "<:vegax:1443934876440068179> Solo chi ha lanciato il comando può usare questo menù.",
         flags: 1 << 6
       });
       return true;
@@ -1502,7 +1502,7 @@ async function handleLastFmSelectMenu(interaction) {
     }
     if (interaction.user.id !== state.userId) {
       await interaction.reply({
-        content: "<:vegax:1443934876440068179> Solo chi ha lanciato il comando può usare questo menu.",
+        content: "<:vegax:1443934876440068179> Solo chi ha lanciato il comando può usare questo menù.",
         flags: 1 << 6
       });
       return true;

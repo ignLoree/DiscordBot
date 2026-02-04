@@ -30,7 +30,7 @@ module.exports = {
 
     const amount = Number(args?.[0]);
     if (!amount || amount < 1 || amount > 100) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> QuantitÃ  non valida (1-100).' });
+      await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida (1-100).' });
       return;
     }
 

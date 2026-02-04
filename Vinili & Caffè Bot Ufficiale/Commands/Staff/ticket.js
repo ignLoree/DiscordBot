@@ -60,13 +60,13 @@ module.exports = {
         await interaction.deferReply()
         if (!interaction.inGuild()) {
             return await safeEditReply(interaction, {
-                content: "<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.",
+                content: "<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.",
                 flags: 1 << 6
             });
         }
         if (!interaction.member || !interaction.member.roles) {
             return await safeEditReply(interaction, {
-                content: "<:vegax:1443934876440068179> Si Ã¨ verificato un errore nel recuperare le informazioni del membro.",
+                content: "<:vegax:1443934876440068179> Si è verificato un errore nel recuperare le informazioni del membro.",
                 flags: 1 << 6
             });
         }
@@ -86,19 +86,19 @@ module.exports = {
                 }
                 const ticketChannel = interaction.options.getChannel('canale');
                 const ticketEmbed = new EmbedBuilder()
-                    .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & CaffÃ¨**!
-<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli piÃ¹ __importanti__ sono quelli da usare **raramente**.
+                    .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & Caffè**!
+<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli più __importanti__ sono quelli da usare **raramente**.
 <:dot:1443660294596329582> **__\`PERKS\`__**
-â†ª Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichÃ© sono dati **__automaticamente__**.
+↪ Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichè sono dati **__automaticamente__**.
 <:dot:1443660294596329582> **__\`SUPPORTO\`__**
-â†ª Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
+↪ Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
 <:dot:1443660294596329582> **__\`PARTNERSHIP\`__**
-â†ª Apri questo ticket per richiedere una **partnership**. Se volessi effettuare una **collaborazione/sponsor**, apri un ticket **__\`HIGH STAFF\`__**
+↪ Apri questo ticket per richiedere una **partnership**. Se volessi effettuare una **collaborazione/sponsor**, apri un ticket **__\`HIGH STAFF\`__**
 <:dot:1443660294596329582> **__\`HIGH STAFF\`__**
-â†ª Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterÃ  un **warn**.`)
+↪ Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`)
                     .setColor('#6f4e37')
-                    .setFooter({ text: `Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
+                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 const ticketButtons = new ActionRowBuilder()
                     .addComponents(
                         new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji(`<a:Boost_Cycle:1329504283007385642>`).setStyle(ButtonStyle.Primary),
@@ -124,7 +124,7 @@ module.exports = {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Aggiungi")
-                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato aggiunto a ${interaction.channel}`)
+                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato aggiunto a ${interaction.channel}`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -144,7 +144,7 @@ module.exports = {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Rimuovi")
-                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato rimosso da ${interaction.channel}`)
+                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato rimosso da ${interaction.channel}`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -162,7 +162,7 @@ module.exports = {
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')]
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')]
                     });
                 const closeButton = new ActionRowBuilder()
                     .addComponents(
@@ -201,7 +201,7 @@ module.exports = {
                 const logChannel = interaction.guild?.channels?.cache?.get(LOG_CHANNEL);
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')]
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')]
                     });
                 if (logChannel) {
                     await logChannel.send({
@@ -231,10 +231,9 @@ module.exports = {
                 await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription("ðŸ”’ Il ticket verrÃ  chiusoâ€¦")
+                            .setDescription("🔒 Il ticket verrà chiuso...")
                             .setColor('#6f4e37')
-                    ],
-                    flags: 1 << 6
+                    ]
                 });
                 setTimeout(() => {
                     if (interaction.channel) interaction.channel.delete().catch(() => { });
@@ -253,7 +252,7 @@ module.exports = {
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')],
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')],
                         flags: 1 << 6
                     });
                 if (ticketDoc.claimedBy) {
@@ -261,7 +260,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle("Errore")
-                                .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  stato claimato da <@${ticketDoc.claimedBy}>`)
+                                .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket è già stato claimato da <@${ticketDoc.claimedBy}>`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -282,16 +281,16 @@ module.exports = {
                 }
                 if (!msg) {
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:attentionfromvega:1443651874032062505> Non riesco a trovare il messaggio del ticket.").setColor("Red")],
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Non riesco a trovare il messaggio del ticket.").setColor("Red")],
                         flags: 1 << 6
                     });
                 }
                 const updatedEmbed = EmbedBuilder.from(msg.embeds[0]);
                 const updatedButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId("close_ticket").setLabel("ðŸ”’ Chiudi").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("ðŸ“ Chiudi con motivo").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("unclaim").setLabel("ðŸ”“ Unclaim").setStyle(ButtonStyle.Secondary)
+                        new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("unclaim").setLabel("🔓 Unclaim").setStyle(ButtonStyle.Secondary)
                     );
                 await msg.edit({
                     embeds: [updatedEmbed],
@@ -301,7 +300,7 @@ module.exports = {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Ticket Claimato")
-                            .setDescription(`Il ticket Ã¨ stato preso in carico da <@${ticketDoc.claimedBy}>`)
+                            .setDescription(`Il ticket è stato preso in carico da <@${ticketDoc.claimedBy}>`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -318,12 +317,12 @@ module.exports = {
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket").setColor('#6f4e37')],
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo non è un canale ticket").setColor('#6f4e37')],
                         flags: 1 << 6
                     });
                 if (!ticketDoc.claimedBy) {
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.").setColor("Red")],
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo ticket non è claimato.").setColor("Red")],
                         flags: 1 << 6
                     });
                 }
@@ -346,16 +345,16 @@ module.exports = {
                 }
                 if (!msg) {
                     return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:attentionfromvega:1443651874032062505> Non riesco a trovare il messaggio principale del ticket.").setColor("Red")],
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Non riesco a trovare il messaggio principale del ticket.").setColor("Red")],
                         flags: 1 << 6
                     });
                 }
                 const originalEmbed = EmbedBuilder.from(msg.embeds[0]);
                 const originalButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId("close_ticket").setLabel("ðŸ”’ Chiudi").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("ðŸ“ Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("claim_ticket").setLabel("ðŸ™‹â€â™‚ï¸ Claim").setStyle(ButtonStyle.Success)
+                        new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success)
                     );
                 await msg.edit({
                     embeds: [originalEmbed],
@@ -365,7 +364,7 @@ module.exports = {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Ticket Unclaimato")
-                            .setDescription(`<@${oldClaimer}> non gestisce piÃ¹ il ticket`)
+                            .setDescription(`<@${oldClaimer}> non gestisce più il ticket`)
                             .setColor('#6f4e37')
                     ]
                 })
@@ -373,5 +372,3 @@ module.exports = {
         }
     }
 }
-
-

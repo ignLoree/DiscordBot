@@ -28,7 +28,7 @@ async function handleButtonInteraction(interaction, client) {
         global.logger.error(`${color.red}[${getTimestamp()}] [BUTTON_CREATE]:`, error);
         const channelID = `${client.config2.commandErrorChannel}`;
         const channel = client.channels.cache.get(channelID);
-        if (!channel) return global.logger.error("<:attentionfromvega:1443651874032062505> Errore: Canale errori non trovato!");
+        if (!channel) return global.logger.error("Errore: Canale errori non trovato!");
 
         const embed = new EmbedBuilder()
             .setColor('#6f4e37')

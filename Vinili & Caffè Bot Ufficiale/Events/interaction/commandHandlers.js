@@ -142,7 +142,7 @@ async function handleSlashCommand(interaction, client) {
         const rawErrorText =
             error?.stack?.slice(0, 1900) ||
             error?.message ||
-            '<:attentionfromvega:1443651874032062505> Errore sconosciuto';
+            '<:vegax:1443934876440068179> Errore sconosciuto';
         const errorText =
             rawErrorText.length > 1000 ? `${rawErrorText.slice(0, 1000)}...` : rawErrorText;
         const staffEmbed = new EmbedBuilder()

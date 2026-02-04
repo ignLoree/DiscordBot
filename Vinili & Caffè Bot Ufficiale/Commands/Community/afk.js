@@ -8,7 +8,7 @@ module.exports = {
         .setDescription('Imposta il tuo stato AFK')
         .addStringOption(option =>
             option.setName('message')
-                .setDescription('Il messaggio che il bot invierÃ  quando sarai AFK')
+                .setDescription('Il messaggio che il bot invierà quando sarai AFK')
                 .setRequired(true)
         ),
         

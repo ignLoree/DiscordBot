@@ -27,7 +27,7 @@ function buildNoPermsEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${ALLOWED_ROLE_IDS[0]}>, <@&${ALLOWED_ROLE_IDS[1]}>, <@&${ALLOWED_ROLE_IDS[2]}>, <@&${ALLOWED_ROLE_IDS[3]}>`
@@ -45,7 +45,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ],
         flags: 1 << 6
       });
@@ -67,7 +67,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:attentionfromvega:1443651874032062505> Il messaggio selezionato non ha testo.")
+            .setDescription("<:vegax:1443934876440068179> Il messaggio selezionato non ha testo.")
         ]
       });
     }

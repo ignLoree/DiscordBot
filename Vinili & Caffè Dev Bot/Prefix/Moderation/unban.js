@@ -15,7 +15,7 @@ module.exports = {
       return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!userId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un ID valido.' });
+    if (!userId) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Specifica un ID valido.' });
     const reason = getReason(args, 1);
     try {
       await message.guild.members.unban(userId, reason);

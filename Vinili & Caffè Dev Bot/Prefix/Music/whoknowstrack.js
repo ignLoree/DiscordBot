@@ -111,7 +111,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃƒÂ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ]
       });
     }
@@ -209,7 +209,7 @@ module.exports = {
           badgeText: "WhoKnows Track",
           serverLabel: `in Server di ${requesterName}`,
           showCrown: false,
-          poweredByText: "Powered by Vinili & CaffÃ¨ Bot"
+          poweredByText: "Powered by Vinili & Caffè Bot"
         });
         if (imageBuffer) {
           const attachment = new AttachmentBuilder(imageBuffer, { name: "whoknowstrack.png" });
