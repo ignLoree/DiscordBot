@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
 const { handleLastfmError } = require("../../Utils/Music/lastfmError");
@@ -15,8 +16,8 @@ module.exports = {
         .setColor("#6f4e37")
         .setDescription(
           "Pick which mode you want to modify:\n\n" +
-          "• \`fm\` mode - Changes how your .fm command looks\n" +
-          "• Response mode - changes default response to \`WhoKnows\` and top list commands"
+          "â€¢ \`fm\` mode - Changes how your .fm command looks\n" +
+          "â€¢ Response mode - changes default response to \`WhoKnows\` and top list commands"
         );
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -28,11 +29,11 @@ module.exports = {
           .setLabel("Response mode")
           .setStyle(ButtonStyle.Secondary)
       );
-      return message.channel.send({ embeds: [embed], components: [row] });
+      return safeChannelSend(message.channel, { embeds: [embed], components: [row] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -42,3 +43,5 @@ module.exports = {
     }
   }
 };
+
+

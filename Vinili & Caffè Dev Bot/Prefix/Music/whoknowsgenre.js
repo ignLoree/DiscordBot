@@ -1,4 +1,5 @@
-﻿const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require("discord.js");
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
+const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, buildUserUrl, buildLastFmUrl } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
@@ -140,7 +141,7 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -155,7 +156,7 @@ module.exports = {
     try {
       const artistName = await resolveArtistName(requester.lastFmUsername, artistQuery || null);
       if (!artistName) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -182,7 +183,7 @@ module.exports = {
       }
       const list = genres.length ? genres : fallbackGenres;
       if (!list.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -190,7 +191,7 @@ module.exports = {
           ]
         });
       }
-      const sent = await message.channel.send(buildGenreSelectPayload({
+      const sent = await safeChannelSend(message.channel, buildGenreSelectPayload({
         artistName,
         genres: list,
         image,
@@ -219,7 +220,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -231,3 +232,5 @@ module.exports = {
   buildWhoKnowsGenreEmbed,
   getGenreLeaderboard
 };
+
+

@@ -9,10 +9,13 @@ const EMOJI_FONT = "Mojangles";
 const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
-const FONT_STACK = [
-  `"${PRIMARY_FONT}"`,
+const BASE_STACK = [
   "\"Arial\"",
   "sans-serif"
+];
+const FONT_STACK = [
+  `"${PRIMARY_FONT}"`,
+  ...BASE_STACK
 ].join(", ");
 
 let registered = false;

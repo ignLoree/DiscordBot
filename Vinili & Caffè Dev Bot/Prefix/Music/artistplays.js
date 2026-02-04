@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
@@ -71,13 +72,15 @@ module.exports = {
       const displayLabel = displayName.startsWith("!") ? displayName : `! ${displayName}`;
       const lineOne = `**${displayLabel}** has **${totalPlays}** plays for **${artist.name || artistName}**`;
       const lineTwo = `-# ${formatNumber(lastWeekPlays, user.localization?.numberFormat)} plays last week \u2014 ${formatNumber(lastMonthPlays, user.localization?.numberFormat)} plays last month`;
-      return message.channel.send({ content: `${lineOne}\n${lineTwo}` });
+      return safeChannelSend(message.channel, { content: `${lineOne}\n${lineTwo}` });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il recupero dei dati di Last.fm."
       });
     }
   }
 };
+
+

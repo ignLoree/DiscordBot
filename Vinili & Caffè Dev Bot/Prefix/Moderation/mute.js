@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { resolveTarget, getReason } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase, parseDuration, formatDuration, tryDmUser } = require('../../Utils/Moderation/moderation');
@@ -11,22 +12,22 @@ module.exports = {
     const { user, member } = await resolveTarget(message, args, 0);
     const durationRaw = args?.[1];
     const durationMs = parseDuration(durationRaw);
-    if (durationMs > MAX_TIMEOUT_MS) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Durata massima 28d.' });
+    if (durationMs > MAX_TIMEOUT_MS) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Durata massima 28d.' });
     const reason = getReason(args, 2);
     const config = await getModConfig(message.guild.id);
 
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!user) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Specifica un utente.' });
-    if (!durationRaw) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Specifica una durata (es: 10m, 2h, 1d).' });
-    if (!durationMs) return message.reply({ content: '<:vegax:1443934876440068179> Durata non valida. Usa formato tipo 1s, 3m, 5h, 7d.' });
-    if (!member) return message.reply({ content: '<:vegax:1443934876440068179> Utente non trovato.' });
+    if (!user) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un utente.' });
+    if (!durationRaw) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica una durata (es: 10m, 2h, 1d).' });
+    if (!durationMs) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Durata non valida. Usa formato tipo 1s, 3m, 5h, 7d.' });
+    if (!member) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Utente non trovato.' });
     if (member.roles.highest.position >= message.member.roles.highest.position) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non puoi mutare un utente con ruolo uguale o superiore.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non puoi mutare un utente con ruolo uguale o superiore.' });
     }
-    if (!member.moderatable) return message.reply({ content: '<:vegax:1443934876440068179> Non posso mutare questo utente.' });
+    if (!member.moderatable) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non posso mutare questo utente.' });
     await member.timeout(durationMs, reason);
 
     const { doc } = await createModCase({
@@ -53,6 +54,7 @@ module.exports = {
       .setColor(client.config2?.embedModLight || '#6f4e37')
       .setDescription(`<:vegacheckmark:1443666279058772028> Mute applicato a <@${user.id}> per ${formatDuration(durationMs)}. Case #${doc.caseId}`);
 
-    return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+    return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+

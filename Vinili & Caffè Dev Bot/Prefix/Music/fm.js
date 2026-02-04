@@ -1,3 +1,4 @@
+﻿const { safeMessageReply, safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require('discord.js');
 const LastFmUser = require('../../Schemas/LastFm/lastFmSchema');
 const { getLastFmUserForMessageOrUsername } = require('../../Utils/Music/lastfmContext');
@@ -39,7 +40,7 @@ module.exports = {
 
     const lastFmUsername = user.lastFmUsername;
     if (!LASTFM_API_KEY) {
-      await message.reply({
+      await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
@@ -79,9 +80,9 @@ module.exports = {
           .setURL(`${getTrackUrl(currentTrack)}`)
           .setDescription(`**${currentTrack.artist['#text']}** - *${currentTrack.album['#text'] || ''}*`)
           .setFooter({ text: `${formatNumber(totalScrobbles)} ascolti totali` });
-        await message.reply({ embeds: [embed] });
+        await safeMessageReply(message, { embeds: [embed] });
       } else {
-        await message.channel.send({
+        await safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor('Red')
@@ -92,7 +93,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      await message.reply({
+      await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
@@ -130,3 +131,5 @@ async function getTrackPlaycount(username, track) {
 function getTrackUrl(track) {
   return `https://www.last.fm/music/${encodeURIComponent(track.artist['#text'])}/_/${encodeURIComponent(track.name)}`;
 }
+
+

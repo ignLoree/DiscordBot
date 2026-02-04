@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
@@ -344,7 +345,7 @@ module.exports = {
       if (coverUrl) embed.setThumbnail(coverUrl);
 
 
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -382,7 +383,7 @@ module.exports = {
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -392,6 +393,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

@@ -1,4 +1,5 @@
-﻿const { EmbedBuilder, MessageFlags } = require("discord.js");
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
+const { EmbedBuilder, MessageFlags } = require("discord.js");
 const { lastFmRequest, buildUserUrl } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
@@ -242,7 +243,7 @@ module.exports = {
           numberFormat: user.localization?.numberFormat,
           messageId: "pending"
         });
-        sent = await message.channel.send({ flags: MessageFlags.IsComponentsV2, components });
+        sent = await safeChannelSend(message.channel, { flags: MessageFlags.IsComponentsV2, components });
       } else {
         const embed = buildOverviewEmbed({
           displayName,
@@ -255,7 +256,7 @@ module.exports = {
           avgPlays: state.avgPlays,
           numberFormat: user.localization?.numberFormat
         });
-        sent = await message.channel.send({ embeds: [embed], components: [] });
+        sent = await safeChannelSend(message.channel, { embeds: [embed], components: [] });
       }
       if (!message.client.overviewStates) {
         message.client.overviewStates = new Map();
@@ -294,7 +295,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -307,3 +308,4 @@ module.exports = {
 
 module.exports.buildOverviewState = buildOverviewState;
 module.exports.paginateDays = paginateDays;
+

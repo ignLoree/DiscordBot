@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { resolveTarget } = require('../../Utils/Moderation/prefixModeration');
 const ModCase = require('../../Schemas/Moderation/modCaseSchema');
@@ -9,15 +10,15 @@ module.exports = {
   async execute(message, args, client) {
     await message.channel.sendTyping();
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
     const sub = (args?.[0] || '').toLowerCase();
 
     if (sub === 'case') {
       const caseId = Number(args?.[1]);
-      if (!caseId) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
+      if (!caseId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
       const c = await ModCase.findOne({ guildId: message.guild.id, caseId });
-      if (!c) return message.reply({ content: '<:vegax:1443934876440068179> Case non trovato.' });
+      if (!c) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Case non trovato.' });
       const isUserId = /^\d{17,20}$/.test(String(c.userId));
       const userLabel = isUserId ? `<@${c.userId}>` : String(c.userId);
       const embed = new EmbedBuilder()
@@ -32,16 +33,16 @@ module.exports = {
         .setTimestamp(c.createdAt);
       if (c.durationMs) embed.addFields({ name: 'Durata', value: formatDuration(c.durationMs), inline: true });
       if (c.context?.channelId) embed.addFields({ name: 'Canale', value: `<#${c.context.channelId}>`, inline: true });
-      return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+      return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
     }
 
     const { user } = await resolveTarget(message, args, 0);
-    if (!user) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Specifica un utente.' });
+    if (!user) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un utente.' });
     const cases = await ModCase.find({
       guildId: message.guild.id,
       userId: user.id
     }).sort({ caseId: -1 }).limit(10);
-    if (!cases.length) return message.reply({ content: '<:vegax:1443934876440068179> Nessun case trovato.' });
+    if (!cases.length) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Nessun case trovato.' });
     const lines = cases.map(c => {
       const status = c.active ? '' : ' (chiuso)';
       return `#${c.caseId} - ${c.action}${status} - ${c.reason}`;
@@ -51,6 +52,7 @@ module.exports = {
       .setColor(client.config2?.embedModLight || '#6f4e37')
       .setTitle(`Modlogs di ${user.tag}`)
       .setDescription(lines.join('\n'));
-    return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+    return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+

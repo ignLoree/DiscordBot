@@ -10,7 +10,6 @@ module.exports = {
   spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "",
   spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
   developers: "295500038401163264",
-  partnerManager: "1466489065804398724",
   slashCommandLoggingChannel: "1466489404867481802",
   prefixCommandLoggingChannel: "1466489404867481802",
   commandErrorChannel: "1466489404867481802",

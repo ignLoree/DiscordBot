@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, EmbedBuilder, StringSelectMenuBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
@@ -29,6 +30,8 @@ module.exports = {
       );
 
     const row = new ActionRowBuilder().addComponents(select);
-    return message.channel.send({ embeds: [embed], components: [row] });
+    return safeChannelSend(message.channel, { embeds: [embed], components: [row] });
   }
 };
+
+

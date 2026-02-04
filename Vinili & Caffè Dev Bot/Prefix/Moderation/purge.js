@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { resolveTarget } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
@@ -16,7 +17,7 @@ module.exports = {
 
     const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => { }), 5000);
     const replyTemp = async (payload) => {
-      const msg = await message.channel.send({ ...payload, allowedMentions: { repliedUser: false } });
+      const msg = await safeChannelSend(message.channel, { ...payload, allowedMentions: { repliedUser: false } });
       deleteLater(msg);
       return msg;
     };
@@ -29,7 +30,7 @@ module.exports = {
 
     const amount = Number(args?.[0]);
     if (!amount || amount < 1 || amount > 100) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida (1-100).' });
+      await replyTemp({ content: '<:vegax:1443934876440068179> QuantitÃ  non valida (1-100).' });
       return;
     }
 
@@ -83,3 +84,5 @@ module.exports = {
     return;
   }
 };
+
+

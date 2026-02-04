@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { LASTFM_API_KEY } = require("../../Utils/Music/lastfm");
@@ -19,7 +20,7 @@ module.exports = {
     }
 
     if (!LASTFM_API_KEY) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -29,9 +30,11 @@ module.exports = {
     }
 
     if (user.lastFmSessionKey && user.lastFmUsername && user.lastFmUsername !== "pending") {
-      return message.channel.send(buildAlreadyConnectedPayload());
+      return safeChannelSend(message.channel, buildAlreadyConnectedPayload());
     }
 
-    return message.channel.send(buildWelcomePayload());
+    return safeChannelSend(message.channel, buildWelcomePayload());
   }
 };
+
+

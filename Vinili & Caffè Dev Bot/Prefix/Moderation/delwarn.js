@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const ModCase = require('../../Schemas/Moderation/modCaseSchema');
 const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
@@ -14,17 +15,17 @@ module.exports = {
     const userLabel = targetUser ? targetUser.username : warnCase.userId;
 
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!caseId) return message.reply({ content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
+    if (!caseId) return safeMessageReply(message, { content: '<:attentionfromvega:1443651874032062505> Specifica un case id valido.' });
     const warnCase = await ModCase.findOne({
       guildId: message.guild.id,
       caseId,
       action: 'WARN'
     });
 
-    if (!warnCase) return message.reply({ content: '<:vegax:1443934876440068179> Case non trovato.' });
+    if (!warnCase) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Case non trovato.' });
     warnCase.active = false;
     await warnCase.save();
 
@@ -43,6 +44,7 @@ module.exports = {
       .setColor(client.config2?.embedModLight || '#6f4e37')
       .setDescription(`<:vegacheckmark:1443666279058772028> Warn rimosso: "${warnCase.reason || '<:vegax:1443934876440068179> Nessun motivo fornito'}" per ${userLabel}.`);
 
-    return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+    return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+

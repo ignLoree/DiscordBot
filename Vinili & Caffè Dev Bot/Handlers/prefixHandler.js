@@ -37,8 +37,8 @@ function shouldLogOnce(tag) {
 module.exports = (client) => {
     client.prefixCommands = async (folders) => {
         const disabledPrefixCommands = Array.isArray(config.disabledPrefixCommands)
-            ? config.disabledPrefixCommands
-            : [];
+            ? new Set(config.disabledPrefixCommands)
+            : new Set();
         const statusMap = new Map();
         for (const folder of folders) {
             const folderPath = `./Prefix/${folder}`;
@@ -56,19 +56,19 @@ module.exports = (client) => {
                     statusMap.set(key, "Skipped");
                     continue;
                 }
+                const folderName = String(folder).toLowerCase();
                 command.folder = command.folder || folder;
                 if (typeof command.staffOnly === 'undefined') {
-                    const folderName = String(folder).toLowerCase();
                     command.staffOnly = folderName === 'staff' || folderName === 'moderation';
                 }
                 if (typeof command.adminOnly === 'undefined') {
-                    command.adminOnly = String(folder).toLowerCase() === 'admin';
+                    command.adminOnly = folderName === 'admin';
                 }
-                if (String(folder).toLowerCase() === 'moderation') {
+                if (folderName === 'moderation') {
                     command.prefixOverride = '?';
                 }
                 client.pcommands.set(command.name, command);
-                if (disabledPrefixCommands.includes(command.name)) {
+                if (disabledPrefixCommands.has(command.name)) {
                     statusMap.set(key, "Disabilitato");
                 } else {
                     statusMap.set(key, "Loaded");
@@ -108,6 +108,7 @@ module.exports = (client) => {
             global.logger.info(unified.toString());
             global.logger.info(`[PREFIX_COMMANDS] Loaded ${client.pcommands.size} PrefixCommands.`);
         }
+        client._prefixOverrideCache = null;
         try {
             client.logs.success(`[FUNCTION] Successfully reloaded prefix commands.`);
         } catch (error) {

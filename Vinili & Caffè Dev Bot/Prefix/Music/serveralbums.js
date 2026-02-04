@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { lastFmRequest } = require("../../Utils/Music/lastfm");
@@ -84,11 +85,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -112,7 +113,7 @@ module.exports = {
         lastFmUsername: { $exists: true, $nin: ["", "pending"] }
       });
       if (!allUsers.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -182,7 +183,7 @@ module.exports = {
       }
 
       if (!currentList.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -221,7 +222,7 @@ module.exports = {
         showArtist,
         showListeners
       });
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const components = buildServerAlbumsComponents({
         page,
         totalPages,
@@ -254,7 +255,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -264,3 +265,5 @@ module.exports = {
     }
   }
 };
+
+

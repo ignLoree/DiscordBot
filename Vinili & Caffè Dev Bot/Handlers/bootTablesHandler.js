@@ -42,7 +42,6 @@ module.exports = (client) => {
         const roots = getBotRoots();
         const categories = [
             { label: 'HANDLERS', dir: 'Handlers' },
-            { label: 'SERVICES', dir: 'Services' },
             { label: 'UTILS', dir: 'Utils' },
             { label: 'SCHEMAS', dir: 'Schemas' }
         ];

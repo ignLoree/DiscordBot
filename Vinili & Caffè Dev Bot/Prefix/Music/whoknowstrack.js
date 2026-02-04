@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, buildTrackUrl, buildUserUrl } = require("../../Utils/Music/lastfm");
@@ -106,11 +107,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃƒÂ² essere usato solo in un server.")
         ]
       });
     }
@@ -163,7 +164,7 @@ module.exports = {
       const start = (pagination.page - 1) * pagination.limit;
       const results = fullResults.slice(start, start + pagination.limit);
       if (!results.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -208,11 +209,11 @@ module.exports = {
           badgeText: "WhoKnows Track",
           serverLabel: `in Server di ${requesterName}`,
           showCrown: false,
-          poweredByText: "Powered by Vinili & Caffè Bot"
+          poweredByText: "Powered by Vinili & CaffÃ¨ Bot"
         });
         if (imageBuffer) {
           const attachment = new AttachmentBuilder(imageBuffer, { name: "whoknowstrack.png" });
-          return message.channel.send({ files: [attachment] });
+          return safeChannelSend(message.channel, { files: [attachment] });
         }
       }
       const displayResults = buildDisplayResults(fullResults, results, message.author.id, pagination.limit, pagination.page);
@@ -223,11 +224,11 @@ module.exports = {
         .setURL(trackUrl)
         .setThumbnail(cover)
         .setDescription(lines.join("\n"));
-      return message.channel.send({ embeds: [embed] });
+      return safeChannelSend(message.channel, { embeds: [embed] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -237,4 +238,6 @@ module.exports = {
     }
   }
 };
+
+
 

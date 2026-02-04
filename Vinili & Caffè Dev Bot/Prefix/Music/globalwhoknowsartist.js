@@ -1,4 +1,5 @@
-﻿const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
+const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, buildArtistUrl, buildUserUrl } = require("../../Utils/Music/lastfm");
 const { getSpotifyArtistImageSmart } = require("../../Utils/Music/spotify");
@@ -104,7 +105,7 @@ module.exports = {
       const start = (pagination.page - 1) * pagination.limit;
       const results = fullResults.slice(start, start + pagination.limit);
       if (!results.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -164,7 +165,7 @@ module.exports = {
         });
         if (imageBuffer) {
           const attachment = new AttachmentBuilder(imageBuffer, { name: "globalwhoknowsartist.png" });
-          return message.channel.send({ files: [attachment] });
+          return safeChannelSend(message.channel, { files: [attachment] });
         }
       }
       const embed = new EmbedBuilder()
@@ -174,11 +175,11 @@ module.exports = {
         .setThumbnail(image)
         .setDescription(lines.join("\n"))
         .setFooter({ text: notice + baseFooter });
-      return message.channel.send({ embeds: [embed] });
+      return safeChannelSend(message.channel, { embeds: [embed] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -188,6 +189,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, buildAlbumUrl, formatNumber, lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -154,7 +155,7 @@ module.exports = {
         const missingEmbed = new EmbedBuilder()
           .setColor(DEFAULT_EMBED_COLOR)
           .setDescription("Sorry, no album cover found for this album:\n" + resolved.artist + " - " + album.name + "\n[View on last.fm](" + albumUrl + ")");
-        const sent = await message.channel.send({ embeds: [missingEmbed] });
+        const sent = await safeChannelSend(message.channel, { embeds: [missingEmbed] });
         const row = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId("lfm_cover_back:" + sent.id)
@@ -185,7 +186,7 @@ module.exports = {
       if (coverUrl) infoEmbed.setThumbnail(coverUrl);
 
       const coverAttachment = new AttachmentBuilder(coverUrl, { name: "cover.jpg" });
-      const sent = await message.channel.send({ embeds: [coverEmbed], files: [coverAttachment] });
+      const sent = await safeChannelSend(message.channel, { embeds: [coverEmbed], files: [coverAttachment] });
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("lfm_cover_back:" + sent.id)
@@ -216,7 +217,7 @@ module.exports = {
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -226,3 +227,5 @@ module.exports = {
     }
   }
 };
+
+

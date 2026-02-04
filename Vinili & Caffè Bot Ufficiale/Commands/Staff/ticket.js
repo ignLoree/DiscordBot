@@ -101,10 +101,10 @@ module.exports = {
                     .setFooter({ text: `Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 const ticketButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId('ticket_perks').setLabel('ï¸²PERKS').setEmoji(`<a:Boost_Cycle:1329504283007385642>`).setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId('ticket_supporto').setLabel('ï¸²SUPPORTO').setEmoji(`<:discordstaff:1443651872258003005>`).setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId('ticket_partnership').setLabel('ï¸²PARTNERSHIP').setEmoji(`<:partneredserverowner:1443651871125409812>`).setStyle(ButtonStyle.Success),
-                        new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('ï¸²HIGH STAFF').setEmoji(`<:reportmessage:1443670575376765130>`).setStyle(ButtonStyle.Secondary)
+                        new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji(`<a:Boost_Cycle:1329504283007385642>`).setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji(`<:discordstaff:1443651872258003005>`).setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId('ticket_partnership').setLabel('︲PARTNERSHIP').setEmoji(`<:partneredserverowner:1443651871125409812>`).setStyle(ButtonStyle.Success),
+                        new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji(`<:reportmessage:1443670575376765130>`).setStyle(ButtonStyle.Secondary)
                     );
                 await ticketChannel.send({ embeds: [ticketEmbed], components: [ticketButtons] });
                 return await safeEditReply(interaction, { content: `Pannello inviato nel canale ${ticketChannel}`, flags: 1 << 6 });

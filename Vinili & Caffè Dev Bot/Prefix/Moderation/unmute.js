@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { resolveTarget, getReason } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase, tryDmUser } = require('../../Utils/Moderation/moderation');
@@ -13,11 +14,11 @@ module.exports = {
     const config = await getModConfig(message.guild.id);
 
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!user || !member) return message.reply({ content: '<:vegax:1443934876440068179> Utente non trovato.' });
-    if (!member.moderatable) return message.reply({ content: '<:vegax:1443934876440068179> Non posso smutare questo utente.' });
+    if (!user || !member) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Utente non trovato.' });
+    if (!member.moderatable) return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non posso smutare questo utente.' });
 
     const { doc } = await createModCase({
       guildId: message.guild.id,
@@ -33,7 +34,7 @@ module.exports = {
       const dmEmbed = new EmbedBuilder()
         .setColor(client.config2?.embedModLight || '#6f4e37')
         .setTitle('Unmute')
-        .setDescription(`Il tuo mute in **${message.guild.name}** è stato rimosso.`)
+        .setDescription(`Il tuo mute in **${message.guild.name}** Ã¨ stato rimosso.`)
         .addFields({ name: 'Motivo', value: reason });
       await tryDmUser(user, { embeds: [dmEmbed] });
     }
@@ -42,6 +43,8 @@ module.exports = {
       .setColor(client.config2?.embedModLight || '#6f4e37')
       .setDescription(`<:vegacheckmark:1443666279058772028> Mute rimosso da <@${user.id}>.`);
 
-    return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+    return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+
+

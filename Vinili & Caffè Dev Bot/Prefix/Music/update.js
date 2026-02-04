@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { lastFmRequest, DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
@@ -14,11 +15,11 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(DEFAULT_EMBED_COLOR)
         .setDescription("Dati Last.fm aggiornati.");
-      return message.channel.send({ embeds: [embed] });
+      return safeChannelSend(message.channel, { embeds: [embed] });
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -28,3 +29,5 @@ module.exports = {
     }
   }
 };
+
+

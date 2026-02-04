@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, buildTrackUrl, formatNumber, lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -175,7 +176,7 @@ module.exports = {
         );
       if (image) embed.setThumbnail(image);
       if (playPercentLine) embed.setFooter({ text: playPercentLine });
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const rows = [];
       if (previewUrl) {
         const previewButton = new ButtonBuilder()
@@ -207,7 +208,7 @@ module.exports = {
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -217,6 +218,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

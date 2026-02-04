@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { lastFmRequest, formatNumber, DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -66,7 +67,7 @@ module.exports = {
       const trackListRaw = album?.tracks?.track || [];
       const trackList = Array.isArray(trackListRaw) ? trackListRaw : [trackListRaw];
       if (!trackList.length || !trackList[0]?.name) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor(DEFAULT_EMBED_COLOR)
@@ -96,17 +97,19 @@ module.exports = {
       const totalPlays = formatNumber(totalPlaysRaw, user.localization?.numberFormat);
       const displayLabel = displayName.startsWith("!") ? displayName : `! ${displayName}`;
       const lineOne = `**${displayLabel}** has **${totalPlays}** plays for **${album.name}** by **${resolved.artist}**`;
-      const lineTwo = `-# *${formatNumber(lastWeekPlays, user.localization?.numberFormat)} plays last week — ${formatNumber(lastMonthPlays, user.localization?.numberFormat)} plays last month*`;
-      return message.channel.send({ content: `${lineOne}\n${lineTwo}` });
+      const lineTwo = `-# *${formatNumber(lastWeekPlays, user.localization?.numberFormat)} plays last week â€” ${formatNumber(lastMonthPlays, user.localization?.numberFormat)} plays last month*`;
+      return safeChannelSend(message.channel, { content: `${lineOne}\n${lineTwo}` });
     } catch (error) {
       if (String(error?.message || error).includes("Album not found")) {
         return sendAlbumNotFound(message, query);
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il recupero dei dati di Last.fm."
       });
     }
   }
 };
+
+

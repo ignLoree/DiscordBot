@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getMusicBrainzArtistCountry } = require("../../Utils/Music/musicbrainz");
@@ -264,7 +265,7 @@ module.exports = {
         totalPages
       });
       const components = buildYearComponents({ page, totalPages, messageId: "pending" });
-      const sent = await message.channel.send({ embeds: [embed], components });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed], components });
 
       const newComponents = buildYearComponents({ page, totalPages, messageId: sent.id });
       await sent.edit({ components: newComponents });
@@ -294,7 +295,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor(DEFAULT_EMBED_COLOR)
@@ -304,6 +305,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

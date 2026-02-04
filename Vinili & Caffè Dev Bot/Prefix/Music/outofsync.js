@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
 const { handleLastfmError } = require("../../Utils/Music/lastfmError");
@@ -9,6 +10,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(DEFAULT_EMBED_COLOR)
       .setDescription("Se Last.fm non si aggiorna, verifica l'integrazione con Spotify o prova update.");
-    return message.channel.send({ embeds: [embed] });
+    return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+
+

@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, MessageFlags } = require("discord.js");
 const { lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -81,7 +82,7 @@ module.exports = {
         totalScrobbles = Number(attr.total || 0);
         filteredTracks = allList.filter(t => (t.artist?.["#text"] || t.artist?.name || "").toLowerCase() === artistFilter.toLowerCase());
         if (!filteredTracks.length) {
-          return message.channel.send({
+          return safeChannelSend(message.channel, {
             content: "<:vegax:1443934876440068179> No recent tracks found for this artist.",
           });
         }
@@ -103,7 +104,7 @@ module.exports = {
         totalScrobbles = Number(attr.total || 0);
       }
       if (!list.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -136,7 +137,7 @@ module.exports = {
           messageId: "pending",
           allowNowPlaying: cappedPage === 1
         });
-        sent = await message.channel.send({ flags: MessageFlags.IsComponentsV2, components });
+        sent = await safeChannelSend(message.channel, { flags: MessageFlags.IsComponentsV2, components });
       } else {
         const embed = buildRecentEmbed({
           displayName,
@@ -149,7 +150,7 @@ module.exports = {
           filterText,
           allowNowPlaying: cappedPage === 1
         });
-        sent = await message.channel.send({ embeds: [embed], components: [] });
+        sent = await safeChannelSend(message.channel, { embeds: [embed], components: [] });
       }
       if (totalPages > 1) {
         if (!message.client.recentStates) message.client.recentStates = new Map();
@@ -196,7 +197,7 @@ module.exports = {
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -206,6 +207,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

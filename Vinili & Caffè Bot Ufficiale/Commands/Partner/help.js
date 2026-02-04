@@ -306,7 +306,7 @@ function buildMergedLines(slashCommands, prefixCommands) {
         if (!cmd?.name) continue;
         const prefix = prefixMap.get(cmd.name);
         if (prefix) {
-            lines.push(`â€¢ /${cmd.name} â€¢ ${cmd.description}ï¸²\`${prefix.prefix}${prefix.name}\``);
+            lines.push(`â€¢ /${cmd.name} â€¢ ${cmd.description}︲\`${prefix.prefix}${prefix.name}\``);
             prefixMap.delete(cmd.name);
         } else {
             lines.push(`â€¢ /${cmd.name} â€¢ ${cmd.description}`);

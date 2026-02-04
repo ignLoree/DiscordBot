@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { extractPeriod } = require("../../Utils/Music/lastfmPrefix");
 const { buildFeaturedPayload } = require("../../Utils/Music/lastfmFeatured");
@@ -20,7 +21,7 @@ module.exports = {
         guild: message.guild || null
       });
       if (payload.error) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -28,11 +29,11 @@ module.exports = {
           ]
         });
       }
-      return message.channel.send({ embeds: [payload.embed] });
+      return safeChannelSend(message.channel, { embeds: [payload.embed] });
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -42,3 +43,5 @@ module.exports = {
     }
   }
 };
+
+

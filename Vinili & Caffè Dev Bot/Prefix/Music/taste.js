@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -136,7 +137,7 @@ function slicePage(items, page, perPage) {
 function buildInstructionEmbed() {
   return new EmbedBuilder()
     .setColor(0xF39C12)
-    .setDescription("Please enter a Last.fm username or mention someone to compare yourself to.\nExamples:\n• `.taste Vinili&CaffèBot`\n• `.taste @Vinili&CaffèBot`\n\nPlease note that the other user must also have an Vinili & Caffè Bot account.");
+    .setDescription("Please enter a Last.fm username or mention someone to compare yourself to.\nExamples:\nâ€¢ `.taste Vinili&CaffÃ¨Bot`\nâ€¢ `.taste @Vinili&CaffÃ¨Bot`\n\nPlease note that the other user must also have an Vinili & CaffÃ¨ Bot account.");
 }
 
 module.exports = {
@@ -152,7 +153,7 @@ module.exports = {
     let compareUsername = lastfm;
     let compareUser = target;
     if (!compareUsername && (!parsed.rest || parsed.rest.length === 0)) {
-      return message.channel.send({ embeds: [buildInstructionEmbed()] });
+      return safeChannelSend(message.channel, { embeds: [buildInstructionEmbed()] });
     }
     if (!compareUsername && parsed.rest.length) {
       compareUsername = parsed.rest.join(" ");
@@ -163,7 +164,7 @@ module.exports = {
 
     const compareDoc = await getLastFmUserForMessageOrUsername(message, compareUser, compareUsername);
     if (!compareDoc) {
-      return message.channel.send({ embeds: [buildInstructionEmbed()] });
+      return safeChannelSend(message.channel, { embeds: [buildInstructionEmbed()] });
     }
 
     const baseMember = message.guild?.members.cache.get(message.author.id);
@@ -254,7 +255,7 @@ module.exports = {
         mode: parsed.mode
       });
 
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const components = buildTasteComponents({
         messageId: sent.id,
         page: pageData.page,
@@ -271,7 +272,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -281,3 +282,5 @@ module.exports = {
     }
   }
 };
+
+

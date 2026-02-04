@@ -1,4 +1,5 @@
-﻿const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
+const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const { lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
@@ -153,7 +154,7 @@ module.exports = {
       if (!parsed.date) {
         const label = parsed.label || monthArg || "selected period";
         const embed = buildNoTracksEmbed(displayName, label);
-        return message.channel.send({ embeds: [embed] });
+        return safeChannelSend(message.channel, { embeds: [embed] });
       }
 
       const monthLabel = getMonthLabel(parsed.date);
@@ -161,7 +162,7 @@ module.exports = {
       const tracks = monthly.tracks || [];
       if (!tracks.length) {
         const embed = buildNoTracksEmbed(displayName, monthLabel);
-        return message.channel.send({ embeds: [embed] });
+        return safeChannelSend(message.channel, { embeds: [embed] });
       }
       const totalPlays = Number(monthly.totalPlays || 0);
       const subtotalPlays = tracks.reduce((sum, track) => sum + Number(track.playcount || 0), 0);
@@ -178,16 +179,18 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setDescription(`**Top ${monthLabel} tracks for ${displayName}**`);
-      await message.channel.send({ files: [attachment], embeds: [embed] });
+      await safeChannelSend(message.channel, { files: [attachment], embeds: [embed] });
       return;
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante la generazione della receipt."
       });
     }
   }
 };
+
+
 
 

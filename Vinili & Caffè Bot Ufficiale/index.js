@@ -160,7 +160,7 @@ client.on("clientReady", async (client) => {
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "â˜•ðŸ“€ discord.gg/viniliecaffe"
+            state: "☕📀 discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
@@ -433,7 +433,7 @@ async function generateStaffListContent(guild) {
         const member_count = filteredMembers.size;
         const { emoji, number } = ROLE_EMOJIS[roleId];
         const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}ãƒ»**<@&${roleId}>ï¸²\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
+        staffListContent += `${emoji}・**<@&${roleId}>︲\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
     }
     return staffListContent;
 }
@@ -463,4 +463,3 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
-

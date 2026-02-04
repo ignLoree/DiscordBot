@@ -1,3 +1,4 @@
+﻿const { safeMessageReply, safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const VERIFY_ROLE_IDS = [
@@ -18,16 +19,16 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {
-      return message.reply({ embeds: [buildNoMemberEmbed()] });
+      return safeMessageReply(message, { embeds: [buildNoMemberEmbed()] });
     }
     const yesId = `verify_yes:${message.id}:${message.author.id}`;
     const noId = `verify_no:${message.id}:${message.author.id}`;
     const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
-    const promptMsg = await message.channel.send({
+    const promptMsg = await safeChannelSend(message.channel, {
       embeds: [buildPromptEmbed(targetMentions)],
       components: [buildConfirmRow(yesId, noId)]
     });
@@ -58,7 +59,7 @@ module.exports = {
       await i.deferUpdate();
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});
-      await message.channel.send({
+      await safeChannelSend(message.channel, {
         embeds: [buildResultEmbed(message.author.id, message.guild?.ownerId, success, fail)],
         allowedMentions: { users: [] }
       });
@@ -188,3 +189,5 @@ async function resolveTargetsFlexible(message, args) {
   }
   return member ? [member] : [];
 }
+
+

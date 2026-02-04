@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, buildArtistUrl, lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -306,7 +307,7 @@ module.exports = {
         lastFmUsername: user.lastFmUsername,
         displayName
       });
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const row = buildArtistOverviewButtons(sent.id);
       await sent.edit({ components: [row] });
       if (!message.client.artistStates) message.client.artistStates = new Map();
@@ -323,7 +324,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -335,3 +336,5 @@ module.exports = {
 
   buildArtistOverviewEmbed, buildArtistTopTracksEmbed, buildArtistTopAlbumsEmbed, buildArtistOverviewButtons, buildSimpleArtistEmbed, buildArtistTracksComponents, buildArtistAlbumsComponents
 };
+
+

@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -43,11 +44,11 @@ module.exports = {
           perDay ? { name: "Media giornaliera", value: `${formatNumber(perDay, user.localization?.numberFormat)} plays/giorno`, inline: true } : { name: "Periodo", value: "Alltime", inline: true }
         );
       if (footer) embed.setFooter({ text: footer });
-      return message.channel.send({ embeds: [embed] });
+      return safeChannelSend(message.channel, { embeds: [embed] });
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -57,3 +58,5 @@ module.exports = {
     }
   }
 };
+
+

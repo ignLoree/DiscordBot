@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const { resolveTarget, getReason } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase, tryDmUser } = require('../../Utils/Moderation/moderation');
@@ -12,13 +13,13 @@ module.exports = {
     const config = await getModConfig(message.guild.id);
 
     if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
     }
 
-    if (!user) return message.reply({ content: 'Specifica un utente.' });
-    if (user.id == message.author.id) return message.reply({ content: 'Non puoi warnare te stesso.' });
+    if (!user) return safeMessageReply(message, { content: 'Specifica un utente.' });
+    if (user.id == message.author.id) return safeMessageReply(message, { content: 'Non puoi warnare te stesso.' });
     if (member && member.roles.highest.position >= message.member.roles.highest.position) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non puoi warnare un utente con ruolo uguale o superiore.' });
+      return safeMessageReply(message, { content: '<:vegax:1443934876440068179> Non puoi warnare un utente con ruolo uguale o superiore.' });
     }
 
     const { doc } = await createModCase({
@@ -45,6 +46,7 @@ module.exports = {
       .setColor(client.config2?.embedModLight || '#6f4e37')
       .setDescription(`<:vegacheckmark:1443666279058772028> Warn assegnato a <@${user.id}>.`);
 
-    return message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+    return safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+

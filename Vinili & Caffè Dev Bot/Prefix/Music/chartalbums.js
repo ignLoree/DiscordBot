@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
@@ -30,11 +31,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!hasCanvas()) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Il modulo canvas non è installato. Installa 'canvas' per usare .chart.")
+            .setDescription("Il modulo canvas non Ã¨ installato. Installa 'canvas' per usare .chart.")
         ]
       });
     }
@@ -153,7 +154,7 @@ module.exports = {
     } else if (idToken) {
       userDoc = await LastFmUser.findOne({ discordId: idToken });
       if (!userDoc) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -209,7 +210,7 @@ module.exports = {
       });
 
       if (!results.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -248,11 +249,11 @@ module.exports = {
         embed.setDescription(`${lfmUsername} has ${formatNumber(totalScrobbles)} scrobbles`);
       }
 
-      return message.channel.send({ embeds: [embed], files: [attachment] });
+      return safeChannelSend(message.channel, { embeds: [embed], files: [attachment] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -262,4 +263,6 @@ module.exports = {
     }
   }
 };
+
+
 

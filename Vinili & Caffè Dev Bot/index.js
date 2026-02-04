@@ -4,13 +4,9 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
-const cron = require("node-cron");
 const Logs = require('discord-logs');
 const { ClusterClient } = require('discord-hybrid-sharding');
 const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js"));
-const triggerFiles = fs.existsSync("./Triggers")
-    ? fs.readdirSync("./Triggers").filter(file => file.endsWith(".js"))
-    : [];
 const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
 const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
@@ -73,6 +69,11 @@ const pullLatest = () => {
         child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
     } catch {}
 };
+const getChannelSafe = async (client, channelId) => {
+    if (!channelId) return null;
+    return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+};
+const reloadFlagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
 client.reloadScope = async (scope) => {
     const baseDir = process.cwd();
     const clearCacheByDir = (dirName) => {
@@ -98,16 +99,10 @@ client.reloadScope = async (scope) => {
         clearCacheByDir('Events');
         client.handleEvents('./Events');
     };
-    const reloadTriggers = () => {
-        clearCacheByDir('Triggers');
-        const triggerFiles = fs.readdirSync(path.join(baseDir, 'Triggers')).filter((f) => f.endsWith('.js'));
-        client.handleTriggers(triggerFiles, './Triggers');
-    };
+
     if (scope === 'commands') await reloadCommands();
     else if (scope === 'prefix') await reloadPrefix();
     else if (scope === 'events') reloadEvents();
-    else if (scope === 'triggers') reloadTriggers();
-    else if (scope === 'services') clearCacheByDir('Services');
     else if (scope === 'utils') clearCacheByDir('Utils');
     else if (scope === 'schemas') clearCacheByDir('Schemas');
     else if (scope === 'handlers') {
@@ -116,7 +111,6 @@ client.reloadScope = async (scope) => {
         reloadEvents();
         reloadTriggers();
     } else if (scope === 'all') {
-        clearCacheByDir('Services');
         clearCacheByDir('Utils');
         clearCacheByDir('Schemas');
         await reloadCommands();
@@ -127,18 +121,17 @@ client.reloadScope = async (scope) => {
 };
 
 setInterval(async () => {
-    const flagPath = path.resolve(process.cwd(), '..', 'reload_dev.json');
-    if (!fs.existsSync(flagPath)) return;
+    if (!fs.existsSync(reloadFlagPath)) return;
     try {
-        const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
+        const payload = JSON.parse(fs.readFileSync(reloadFlagPath, 'utf8'));
         if (payload?.target && payload.target !== currentTarget) return;
-        fs.unlinkSync(flagPath);
+        fs.unlinkSync(reloadFlagPath);
         const scope = payload?.scope || 'all';
         if (payload?.gitPull) pullLatest();
         await client.reloadScope(scope);
         client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
         if (payload?.channelId) {
-            const channel = await client.channels.fetch(payload.channelId).catch(() => null);
+            const channel = await getChannelSafe(client, payload.channelId);
             if (channel) {
                 const elapsedMs = payload?.at ? Date.now() - Date.parse(payload.at) : null;
                 const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
@@ -156,29 +149,16 @@ client.on("clientReady", async (client) => {
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "â˜•ðŸ“€ discord.gg/viniliecaffe"
+            state: "☕📀 discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
         }
-        cron.schedule("0 19 * * *", async () => {
-            const guild = client.guilds.cache.get("1329080093599076474");
-            if (!guild) return;
-            const role = guild.roles.cache.find(r => r.id === "1442568889052430609");
-            if (!role) return;
-            const channel = guild.channels.cache.get("1442569285909217301");
-            if (!channel) return;
-            await channel.send({
-                content: `<:attentionfromvega:1443651874032062505> ${role} ricordatevi di mettere il poll usando il comando dedicato! </poll create:1445747424843923560>`
-            });
-        }, {
-            timezone: "Europe/Rome"
-        });
         const restartNotifyPath = path.resolve(process.cwd(), '..', `restart_notify_${currentTarget}.json`);
         if (fs.existsSync(restartNotifyPath)) {
             try {
                 const data = JSON.parse(fs.readFileSync(restartNotifyPath, "utf8"));
-                const channel = data?.channelId ? await client.channels.fetch(data.channelId).catch(() => null) : null;
+                const channel = await getChannelSafe(client, data?.channelId);
                 if (channel) {
                     const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
                     const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
@@ -192,7 +172,7 @@ client.on("clientReady", async (client) => {
         } else if (fs.existsSync("./restart.json")) {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
-                const channel = await client.channels.fetch(data.channelID);
+                const channel = await getChannelSafe(client, data?.channelID);
                 await channel.send("<:vegacheckmark:1443666279058772028> Il bot e' stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
@@ -210,7 +190,6 @@ client.commands = new Collection();
 client.pcommands = new Collection();
 client.aliases = new Collection();
 client.buttons = new Collection();
-client.snipes = new Map();
 const shouldUseCluster = Boolean(
     process.env.CLUSTER_MANAGER_MODE ||
     process.env.CLUSTER_ID ||
@@ -227,7 +206,6 @@ if (shouldUseCluster) {
         require(`./Handlers/${file}`)(client);
     }
     client.handleEvents("./Events");
-    client.handleTriggers(triggerFiles, "./Triggers")
     await client.handleCommands(commandFolders, "./Commands");
     await client.prefixCommands(pcommandFolders, './Prefix');
     if (!isDev && typeof client.logBootTables === 'function') {
@@ -237,158 +215,75 @@ if (shouldUseCluster) {
         global.logger.error('[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.', error);
     });
 })();
-client.on("messageDelete", async message => {
-    if (!message) return;
-    let msg = message;
-    try {
-        if (message.partial) {
-            msg = await message.fetch();
-        }
-    } catch {
-        msg = message;
-    }
-    if (!msg.guild) return;
-    if (msg.author?.bot) return;
-    const channelId = msg.channel?.id || msg.channelId;
+
+const logCommandUsage = async (client, channelId, serverName, user, userId, content, userAvatarUrl) => {
     if (!channelId) return;
-    client.snipes.set(channelId, {
-        content: msg.content || "Nessun contenuto.",
-        authorId: msg.author?.id || null,
-        authorTag: msg.author?.tag || "Sconosciuto",
-        channel: msg.channel?.toString?.() || `<#${channelId}>`,
-        attachment: msg.attachments?.first?.()
-            ? msg.attachments.first().proxyURL
-            : null
-    });
-});
-client.on(Events.ThreadCreate, async thread => {
-    try {
-        if (thread.parent.type !== ChannelType.GuildForum) return;
-        const forumRoleId = "1447597930944008376";
-        await thread.send({
-            content: `<@&${forumRoleId}>`
-        });
-    } catch (error) {
-        global.logger.error(error);
-    }
-},
-)
+    const channel = await getChannelSafe(client, channelId);
+    if (!channel) return;
+    const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
+        .setTitle(`${client.user.username} Log Comandi`)
+        .addFields({ name: 'Nome Server', value: `${serverName}` })
+        .addFields({ name: 'Comando', value: `\`\`\`${content}\`\`\`` })
+        .addFields({ name: 'Utente', value: `${user} | ${userId}` })
+        .setTimestamp()
+        .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: userAvatarUrl });
+    await channel.send({ embeds: [embed] });
+};
+
+
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction) return;
     if (!interaction.isChatInputCommand()) return;
     else {
         try {
             const logChannelId = client.config2.slashCommandLoggingChannel;
-            if (!logChannelId) return;
-            const channel = client.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId).catch(() => null);
-            if (!channel) return;
             const server = interaction.guild?.name || "DM";
             const user = interaction.user.username;
             const userID = interaction.user.id;
-            const embed = new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
-                .setTitle(`${client.user.username} Log Comandi`)
-                .addFields({ name: 'Nome Server', value: `${server}` })
-                .addFields({ name: 'Comando', value: `\`\`\`${interaction}\`\`\`` })
-                .addFields({ name: 'Utente', value: `${user} | ${userID}` })
-                .setTimestamp()
-                .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: interaction.user.avatarURL({ dynamic: true }) })
-            await channel.send({ embeds: [embed] });
+            await logCommandUsage(
+                client,
+                logChannelId,
+                server,
+                user,
+                userID,
+                `${interaction}`,
+                interaction.user.avatarURL({ dynamic: true })
+            );
         } catch (error) {
             client.logs.error(`[SLASH_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
     };
 });
 client.on(Events.MessageCreate, async message => {
-    const prefix = client.config2.prefix
-    const musicPrefix = client.config2.musicPrefix || prefix
-    const modPrefix = client.config2.moderationPrefix || '?'
-    const startsWithPrefix = message.content.startsWith(prefix)
-    const startsWithMusic = message.content.startsWith(musicPrefix)
-    const startsWithMod = message.content.startsWith(modPrefix)
-    if (!message.author.bot && (startsWithPrefix || startsWithMusic || startsWithMod)) {
+    if (!message || message.author?.bot) return;
+    const content = message.content || '';
+    if (!content) return;
+    const prefix = client.config2.prefix;
+    const musicPrefix = client.config2.musicPrefix || prefix;
+    const modPrefix = client.config2.moderationPrefix || '?';
+    if (content.startsWith(prefix) || content.startsWith(musicPrefix) || content.startsWith(modPrefix)) {
         try {
             const logChannelId = client.config2.prefixCommandLoggingChannel;
-            if (!logChannelId) return;
-            const channel = client.channels.cache.get(logChannelId) || await client.channels.fetch(logChannelId).catch(() => null);
-            if (!channel) return;
             const server = message.guild?.name || "DM";
             const user = message.author.username;
             const userID = message.author.id;
-            const embed = new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
-                .setTitle(`${client.user.username} Log Comandi`)
-                .addFields({ name: 'Nome Server', value: `${server}` })
-                .addFields({ name: 'Comando', value: `\`\`\`${message.content}\`\`\`` })
-                .addFields({ name: 'Utente', value: `${user} | ${userID}` })
-                .setTimestamp()
-                .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: message.author.avatarURL({ dynamic: true }) })
-            await channel.send({ embeds: [embed] });
+            await logCommandUsage(
+                client,
+                logChannelId,
+                server,
+                user,
+                userID,
+                content,
+                message.author.avatarURL({ dynamic: true })
+            );
         } catch (error) {
             client.logs.error(`[PREFIX_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
     };
 });
-const SERVER_ID = '1329080093599076474';
-const CHANNEL_ID = '1442569235426705653';
-const ROLE_EMOJIS = {
-    '1442568905582317740': { emoji: '<:partnermanager:1443651916838998099>', number: '8' },
-    '1442568904311570555': { emoji: '<:helper:1443651909448630312>', number: '8' },
-    '1442568901887000618': { emoji: '<:mod:1443651914209165454>', number: '6' },
-    '1442568897902678038': { emoji: '<:coordinator:1443651923168202824>', number: '4' },
-    '1442568896237277295': { emoji: '<:supervisor:1443651907900932157>', number: '4' },
-    '1442568893435478097': { emoji: '<:admin:1443651911059247225>', number: '4' },
-    '1442568891875201066': { emoji: '<:manager:1443651919829536940>', number: '1' },
-    '1442568889052430609': { emoji: '<:cofounder:1443651915752804392>', number: '2' },
-    '1442568886988963923': { emoji: '<:founder:1443651924674216128>', number: '1' },
-}
-const ID_LORE = {
-    '1329080093653471300': ['1442568907801100419'],
-};
-const STAFF_ROLES_ID = Object.keys(ROLE_EMOJIS);
-async function aggiornaListaStaff() {
-    const guild = client.guilds.cache.get(SERVER_ID);
-    if (!guild) return global.logger.error('Server non trovato');
-    const channel = guild.channels.cache.get(CHANNEL_ID);
-    if (!channel) return global.logger.error('Canale non trovato');
-    const messages = await channel.messages.fetch({ limit: 100 });
-    const lastMessage = messages.find(message => message.author.id === client.user.id && message.content.includes("3/3"));
-    const staffListContent = await generateStaffListContent(guild);
-    if (lastMessage) {
-        await lastMessage.edit(staffListContent);
-    } else {
-        await channel.send(staffListContent);
-    }
-}
-async function generateStaffListContent(guild) {
-    const staffRoleIds = Object.keys(ROLE_EMOJIS).reverse();
-    let staffListContent = `<:pinnednew:1443670849990430750> La __**staff list**__ serve per sapere i __**limiti di ogni ruolo**__, per capire __**quanti staffer ci sono**__ e per poter capire a chi __**chiedere assistenza**__.\n\n`;
-    for (const roleId of staffRoleIds) {
-        const role = guild.roles.cache.get(roleId);
-        if (!role) continue;
-        const staffMembers = guild.members.cache.filter(member => member.roles.cache.has(roleId));
-        const excludedMembers = ID_LORE[roleId] || [];
-        const filteredMembers = staffMembers.filter(member => !excludedMembers.includes(member.id));
-        const member_count = filteredMembers.size;
-        const { emoji, number } = ROLE_EMOJIS[roleId];
-        const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}ãƒ»**<@&${roleId}>ï¸²\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
-    }
-    return staffListContent;
-}
-client.on(Events.GuildMemberUpdate, async (membroVecchio, membroNuovo) => {
-    if (membroNuovo.guild.id !== SERVER_ID) return;
-    const ruoliAggiunti = membroNuovo.roles.cache.difference(membroVecchio.roles.cache);
-    const ruoliRimossi = membroVecchio.roles.cache.difference(membroNuovo.roles.cache);
-    const ruoliDiStaffAggiunti = ruoliAggiunti.filter(ruolo => STAFF_ROLES_ID.includes(ruolo.id));
-    const ruoliDiStaffRimossi = ruoliRimossi.filter(ruolo => STAFF_ROLES_ID.includes(ruolo.id));
-    if (ruoliDiStaffAggiunti.size > 0 || ruoliDiStaffRimossi.size > 0) {
-        await aggiornaListaStaff();
-    }
-}
-)
+
 client.on('error', (error) => {
     global.logger.error("[CLIENT ERROR]", error);
 });
@@ -404,4 +299,3 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
-

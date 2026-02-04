@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { lastFmRequest, DEFAULT_EMBED_COLOR, buildAlbumUrl, formatNumber } = require("../../Utils/Music/lastfm");
@@ -188,7 +189,7 @@ module.exports = {
       const trackListRaw = album?.tracks?.track || [];
       const tracks = Array.isArray(trackListRaw) ? trackListRaw : [trackListRaw];
       if (!tracks.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           content: "<:vegax:1443934876440068179> Nessuna traccia trovata per questo album."
         });
       }
@@ -211,7 +212,7 @@ module.exports = {
         totalPages
       });
 
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const row = totalPages > 1
         ? new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -237,13 +238,13 @@ module.exports = {
             new ButtonBuilder()
               .setCustomId("lfm_album_back:" + sent.id)
               .setStyle(ButtonStyle.Secondary)
-                .setEmoji("📀")
+                .setEmoji("ðŸ“€")
           )
         : new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId("lfm_album_back:" + sent.id)
               .setStyle(ButtonStyle.Secondary)
-                .setEmoji("📀")
+                .setEmoji("ðŸ“€")
           );
       await sent.edit({ components: [row] });
 
@@ -273,9 +274,11 @@ module.exports = {
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il recupero dei dati di Last.fm."
       });
     }
   }
 };
+
+
