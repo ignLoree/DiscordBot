@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { getLastFmUserForMessage } = require("../../Utils/Music/lastfmContext");
 const { buildResponseModePayload } = require("../../Utils/Music/lastfmResponseModeUi");
@@ -12,11 +13,11 @@ module.exports = {
     if (!user) return;
     try {
       const payload = buildResponseModePayload(user.responseMode);
-      return message.channel.send(payload);
+      return safeChannelSend(message.channel, payload);
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -26,3 +27,5 @@ module.exports = {
     }
   }
 };
+
+

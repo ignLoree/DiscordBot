@@ -18,6 +18,10 @@ const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
 const VOTE_ROLE_ID = '1468266342682722679';
 const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
+const COUNTING_CHANNEL_ID = '1442569179743125554';
+const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
+const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
+const guildSettingsCache = new Map();
 
 const MEDIA_BLOCK_ROLE_IDS = [
     "1442568948271943721",
@@ -119,6 +123,33 @@ function getMessageTextParts(message) {
         embedTitle: embed?.title || '',
         fieldsText: ''
     };
+}
+function getPrefixOverrideMap(client) {
+    const size = client.pcommands?.size || 0;
+    const cached = client._prefixOverrideCache;
+    if (cached && cached.size === size && cached.map) return cached.map;
+    const map = new Map();
+    for (const cmd of client.pcommands.values()) {
+        if (cmd?.prefixOverride) {
+            map.set(cmd.prefixOverride, cmd);
+        }
+    }
+    client._prefixOverrideCache = { map, size };
+    return map;
+}
+async function getGuildSettingsCached(guildId, defaultPrefix) {
+    const cached = guildSettingsCache.get(guildId);
+    const now = Date.now();
+    if (cached && (now - cached.at) < GUILD_SETTINGS_CACHE_TTL_MS) {
+        return cached.value;
+    }
+    const value = await GuildSettings.findOneAndUpdate(
+        { Guild: guildId },
+        { $setOnInsert: { Prefix: defaultPrefix } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    guildSettingsCache.set(guildId, { value, at: now });
+    return value;
 }
 
 async function resolveUserFromMessage(message) {
@@ -284,11 +315,7 @@ module.exports = {
         } catch (error) {
             logEventError(client, 'COUNTING ERROR', error);
         }
-        const guildSettings = await GuildSettings.findOneAndUpdate(
-            { Guild: message.guild.id },
-            { $setOnInsert: { Prefix: client.config2.prefix } },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
+        const guildSettings = await getGuildSettingsCached(message.guild.id, client.config2.prefix);
         const defaultPrefix = guildSettings.Prefix || client.config2.prefix;
         const musicPrefix = client.config2.musicPrefix || defaultPrefix;
         const verifyPrefix = 'w!';
@@ -298,11 +325,11 @@ module.exports = {
         let overrideCommand = null;
         let overridePrefix = null;
 
-        for (const cmd of client.pcommands.values()) {
-            if (!cmd.prefixOverride) continue;
-            if (message.content.startsWith(cmd.prefixOverride)) {
+        const overrideMap = getPrefixOverrideMap(client);
+        for (const [prefix, cmd] of overrideMap.entries()) {
+            if (message.content.startsWith(prefix)) {
                 overrideCommand = cmd;
-                overridePrefix = cmd.prefixOverride;
+                overridePrefix = prefix;
                 break;
             }
         }
@@ -608,14 +635,13 @@ async function handleCounting(message, client) {
     if (!countdata) return;
     const member = message.member;
     if (!member) return;
-    const countchannel = message.guild.channels.cache.get('1442569179743125554');
+    const countchannel = message.guild.channels.cache.get(COUNTING_CHANNEL_ID);
     if (!countchannel) {
         logEventError(client, 'COUNTING', `Counting channel not found for guild: ${message.guild.id}`);
         return;
     }
     if (message.channel.id !== countchannel.id) return;
-    const regex = /^[0-9+\-*/x:() ]+$/;
-    if (!regex.test(message.content)) {
+    if (!COUNTING_ALLOWED_REGEX.test(message.content)) {
         return message.delete().catch(() => { });
     }
     let messageValue;

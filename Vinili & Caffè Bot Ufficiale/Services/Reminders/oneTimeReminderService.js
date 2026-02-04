@@ -18,7 +18,8 @@ async function runDueOneTimeReminders(client) {
   if (!due.length) return;
   for (const reminder of due) {
     try {
-      const user = await client.users.fetch(reminder.userId).catch(() => null);
+      const user = client.users.cache.get(reminder.userId)
+        || await client.users.fetch(reminder.userId).catch(() => null);
       if (!user) continue;
       await user.send(reminder.message);
       reminder.sentAt = new Date();

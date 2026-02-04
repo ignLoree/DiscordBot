@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
@@ -63,7 +64,7 @@ module.exports = {
 
         const allowedRoles = ['1442568894349840435']
         if (!hasAnyRole(interaction.member, allowedRoles)) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -74,7 +75,7 @@ module.exports = {
         }
 
         if (value < 0)
-            return await interaction.editReply({ content: '<:vegax:1443934876440068179> Il valore deve essere positivo.', flags: 1 << 6 });
+            return await safeEditReply(interaction, { content: '<:vegax:1443934876440068179> Il valore deve essere positivo.', flags: 1 << 6 });
         let staffData = await Staff.findOne({
             guildId: interaction.guild.id,
             userId: utentee.id
@@ -102,7 +103,7 @@ module.exports = {
                 )
                 .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL() })
                 .setTimestamp();
-            return await interaction.editReply({ embeds: [embedAdd] });
+            return await safeEditReply(interaction, { embeds: [embedAdd] });
         }
 
         if (sub === 'remove') {
@@ -126,7 +127,9 @@ module.exports = {
                 });
             }
 
-            return await interaction.editReply({ embeds: [embedRemove] });
+            return await safeEditReply(interaction, { embeds: [embedRemove] });
         }
     }
 }
+
+

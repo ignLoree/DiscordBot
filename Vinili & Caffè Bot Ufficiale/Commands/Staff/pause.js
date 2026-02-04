@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
@@ -25,7 +26,7 @@ module.exports = {
                 .addStringOption(option => option.setName('data_ritorno').setDescription('Data ritorno').setRequired(true))
                 .addRoleOption(option => option.setName('ruolo').setDescription('Ruolo dello staffer').setRequired(true))
                 .addIntegerOption(option => option.setName('staffer_in_pausa').setDescription('Staffer in pausa nello stesso ruolo').setRequired(true))
-                .addIntegerOption(option => option.setName('giorni_usati').setDescription('Giorni già usati').setRequired(true))
+                .addIntegerOption(option => option.setName('giorni_usati').setDescription('Giorni giÃ  usati').setRequired(true))
                 .addIntegerOption(option => option.setName('giorni_aggiuntivi').setDescription('Giorni aggiuntivi').setRequired(true))
         ),
     async execute(interaction) {
@@ -37,7 +38,7 @@ module.exports = {
                 const allowedRoles = ['1442568905582317740', '1442568910070349985'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -60,10 +61,10 @@ module.exports = {
                     status: 'pending'
                 });
                 await stafferDoc.save();
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa è stata inviata all'High Staff")
+                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa Ã¨ stata inviata all'High Staff")
                             .setColor('#6f4e37')
                     ],
                     flags: 1 << 6
@@ -77,7 +78,7 @@ module.exports = {
                 const allowedRoles = ['1442568894349840435'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -107,11 +108,11 @@ module.exports = {
                 });
                 await stafferRecord.save();
                 await channel.send({
-                    content: `<:Calendar:1330530097190404106> **\`${ruolo.name}\`** - **${staffer}** è in **pausa**! 
+                    content: `<:Calendar:1330530097190404106> **\`${ruolo.name}\`** - **${staffer}** Ã¨ in **pausa**! 
 <:Clock:1330530065133338685> Dal **\`${dataRichiesta}\`** al **\`${dataRitorno}\`**
 <:pinnednew:1443670849990430750> __\`${giorniUsati}/60\`__ giorni utilizzati - __\`${stafferInPausa}\`__ staffer in pausa in quel ruolo`
                 });
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -123,3 +124,4 @@ module.exports = {
         }
     }
 }
+

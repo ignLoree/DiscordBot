@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, PermissionFlagsBits } = require('discord.js');
 const { fetchMemberSafe } = require('../../Utils/Moderation/discordFetch');
 
@@ -15,7 +16,7 @@ module.exports = {
     async execute(interaction) {
         try {
             await interaction.deferReply()
-            if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) return await interaction.editReply({
+            if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageNicknames)) return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription(`<:attentionfromvega:1443651874032062505> Non puoi fare questo comando!`)
@@ -26,16 +27,17 @@ module.exports = {
             const user = interaction.options.getUser('user');
             const member = await fetchMemberSafe(interaction.guild, user.id);
             if (!member) {
-                return await interaction.editReply({ content: 'Utente non trovato.', flags: 1 << 6 });
+                return await safeEditReply(interaction, { content: 'Utente non trovato.', flags: 1 << 6 });
             }
             const tagline = Math.floor(Math.random() * 1000) + 1;
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:discordstaff:1443651872258003005> Nickaname di ${user.username} cambiato in Moderated Nickname ${tagline}`);
             await member.setNickname(`Moderated Nickname ${tagline}`);
-            await interaction.editReply({ embeds: [embed], flags: 1 << 6 });
+            await safeEditReply(interaction, { embeds: [embed], flags: 1 << 6 });
         } catch (error) {
             global.logger.error(error)
         }
     }
 }
+

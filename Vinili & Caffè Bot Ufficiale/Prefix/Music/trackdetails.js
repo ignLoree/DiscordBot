@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { lastFmRequest } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -64,7 +65,7 @@ module.exports = {
       if (!query) {
         const recent = await resolveRecentTrack(user.lastFmUsername, { nowPlayingOnly: true });
         if (!recent?.name) {
-          return message.channel.send({
+          return safeChannelSend(message.channel, {
             content: "<:vegax:1443934876440068179> Nessuna traccia in ascolto in questo momento."
           });
         }
@@ -122,7 +123,7 @@ module.exports = {
       ]);
       const content = details ? `${header} ${details}` : header;
 
-      const sent = await message.channel.send({ content });
+      const sent = await safeChannelSend(message.channel, { content });
 
       if (previewUrl) {
         const row = new ActionRowBuilder().addComponents(
@@ -153,9 +154,11 @@ module.exports = {
       }
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il recupero dei dati di Last.fm."
       });
     }
   }
 };
+
+

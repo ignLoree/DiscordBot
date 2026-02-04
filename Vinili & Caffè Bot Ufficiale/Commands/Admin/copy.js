@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, PermissionsBitField } = require('discord.js')
 const { default: axios } = require('axios');
 
@@ -28,7 +29,7 @@ module.exports = {
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await interaction.editReply({
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
             embeds: [
                 new EmbedBuilder()
                     .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
@@ -53,7 +54,7 @@ module.exports = {
                     emoji = `https://cdn.discordapp.com/emojis/${id}.${type}`
                 }
                 if (!emoji.startsWith("http") || !emoji.startsWith("https")) {
-                    return interaction.editReply({
+                    return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
@@ -67,7 +68,7 @@ module.exports = {
                         attachment: emoji,
                         name: name
                     });
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor("#6f4e37")
@@ -76,11 +77,11 @@ module.exports = {
                     });
                 } catch (err) {
                     global.logger.info(err);
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perché hai raggiunto il limite di emoji del server.")
+                                .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perchÃ© hai raggiunto il limite di emoji del server.")
                         ],
                         flags: 1 << 6
                     });
@@ -88,7 +89,7 @@ module.exports = {
             }
 
             case 'sticker':
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setColor('#6f4e37')
@@ -101,18 +102,18 @@ module.exports = {
                 collector.on('collect', async m => {
                     const sticker = m.stickers.first();
                     const { guild } = interaction;
-                    if (m.stickers.size == 0) return await interaction.editReply({
+                    if (m.stickers.size == 0) return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Questo non è uno sticker...`)
+                                .setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ uno sticker...`)
                         ], flags: 1 << 6
                     })
-                    if (sticker.url.endsWith('.json')) return await interaction.editReply({
+                    if (sticker.url.endsWith('.json')) return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Non è uno sticker valido...`)
+                                .setDescription(`<:vegax:1443934876440068179> Non Ã¨ uno sticker valido...`)
                         ], flags: 1 << 6
                     })
                     try {
@@ -122,26 +123,26 @@ module.exports = {
                             tags: sticker.tags,
                             file: sticker.url
                         })
-                        await interaction.editReply({
+                        await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('#6f4e37')
-                                    .setDescription(`<:vegacheckmark:1443666279058772028> Lo sticker col nome **${newSticker.name}** è stato creato!`)
+                                    .setDescription(`<:vegacheckmark:1443666279058772028> Lo sticker col nome **${newSticker.name}** Ã¨ stato creato!`)
                             ]
                         })
                     } catch (err) {
                         global.logger.info(err)
-                        interaction.editReply({
+                        safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setColor('Red')
-                                    .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perché hai raggiunto il limite di sticker del server.")
+                                    .setDescription("<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perchÃ© hai raggiunto il limite di sticker del server.")
                             ], flags: 1 << 6
                         })
                     }
                 })
                 collector.on('end', async reason => {
-                    if (reason === 'time') return await interaction.editReply({
+                    if (reason === 'time') return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
@@ -152,3 +153,4 @@ module.exports = {
         }
     }
 }
+

@@ -1,3 +1,4 @@
+﻿const { safeReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder } = require("discord.js");
 const { getNoDmSet, addNoDm, removeNoDm } = require("../../Utils/noDmList");
 
@@ -9,20 +10,22 @@ module.exports = {
 
   async execute(interaction) {
     if (!interaction.guild) {
-      return interaction.reply({ content: "<:vegax:1443934876440068179> Usa il comando in un server.", flags: 1 << 6 });
+      return safeReply(interaction, { content: "<:vegax:1443934876440068179> Usa il comando in un server.", flags: 1 << 6 });
     }
     const set = await getNoDmSet(interaction.guild.id);
     if (set.has(interaction.user.id)) {
       await removeNoDm(interaction.guild.id, interaction.user.id);
-      return interaction.reply({
+      return safeReply(interaction, {
         content: "Ok! Ora **riceverai** nuovamente i DM broadcast.",
         flags: 1 << 6
       });
     }
     await addNoDm(interaction.guild.id, interaction.user.id);
-    return interaction.reply({
-      content: "Ok! **Non riceverai più** i DM broadcast. Puoi riattivarli rifacendo /no-dm.",
+    return safeReply(interaction, {
+      content: "Ok! **Non riceverai piÃ¹** i DM broadcast. Puoi riattivarli rifacendo /no-dm.",
       flags: 1 << 6
     });
   }
 };
+
+

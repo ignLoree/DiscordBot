@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, buildUserUrl } = require("../../Utils/Music/lastfm");
@@ -82,7 +83,7 @@ function buildAffinityLine(entry, guild) {
   const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
   const profileUrl = entry.lastFmUsername ? buildUserUrl(entry.lastFmUsername) : null;
   const nameLabel = profileUrl ? `[${displayName}](${profileUrl})` : displayName;
-  return `**${entry.score}%** — **${nameLabel}** — \`${entry.artists}%\` artists, \`${entry.genres}%\` genres, \`${entry.countries}%\` countries`;
+  return `**${entry.score}%** â€” **${nameLabel}** â€” \`${entry.artists}%\` artists, \`${entry.genres}%\` genres, \`${entry.countries}%\` countries`;
 }
 
 module.exports = {
@@ -92,11 +93,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -116,7 +117,7 @@ module.exports = {
       ]);
       const targetArtists = Array.from(new Set([...alltimeArtists, ...recentArtists]));
       if (!targetArtists.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -150,7 +151,7 @@ module.exports = {
         lastFmUsername: { $exists: true, $nin: ["", "pending"] }
       });
       if (!allUsers.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -202,7 +203,7 @@ module.exports = {
       const start = (page - 1) * pagination.limit;
       const results = fullResults.slice(start, start + pagination.limit);
       if (!results.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -217,14 +218,14 @@ module.exports = {
         .setTitle(`Server neighbors for ${targetName}`)
         .setDescription(lines.join("\n"))
         .setFooter({
-          text: `Page ${page}/${totalPages} - ${allUsers.length} Vinili & Caffè Bot members in this server`
+          text: `Page ${page}/${totalPages} - ${allUsers.length} Vinili & CaffÃ¨ Bot members in this server`
         });
 
-      return message.channel.send({ embeds: [embed] });
+      return safeChannelSend(message.channel, { embeds: [embed] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -234,6 +235,8 @@ module.exports = {
     }
   }
 };
+
+
 
 
 

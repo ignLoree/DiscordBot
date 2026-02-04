@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 
 function normalize(text) {
@@ -35,11 +36,11 @@ module.exports = {
 
   async execute(message, args) {
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -54,7 +55,7 @@ module.exports = {
       const memberAvatar = member.displayAvatarURL();
       const userAvatar = user.displayAvatarURL();
       if (memberAvatar === userAvatar) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -77,6 +78,8 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor("#6f4e37");
 
-    return message.channel.send({ embeds: [embed] });
+    return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+
+

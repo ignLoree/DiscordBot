@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
@@ -81,15 +82,17 @@ module.exports = {
 
       const mention = target?.id ? `<@${target.id}>` : displayName;
       const line1 = `${mention} My estimate is that you will reach **${formatNumber(goal, user.localization?.numberFormat)}** plays on **${artistName}** on **${eta}**.`;
-      const line2 = `*Based on your average of ${formatDecimal(avg)} plays per day in the last 30 days — ${formatNumber(playsLast30, user.localization?.numberFormat)} plays in this time period — ${formatNumber(total, user.localization?.numberFormat)} alltime*`;
+      const line2 = `*Based on your average of ${formatDecimal(avg)} plays per day in the last 30 days â€” ${formatNumber(playsLast30, user.localization?.numberFormat)} plays in this time period â€” ${formatNumber(total, user.localization?.numberFormat)} alltime*`;
 
-      return message.channel.send({ content: `${line1}\n${line2}` });
+      return safeChannelSend(message.channel, { content: `${line1}\n${line2}` });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il calcolo del pace artista."
       });
     }
   }
 };
+
+

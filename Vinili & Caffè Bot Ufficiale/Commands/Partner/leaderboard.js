@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 const PartnershipCount = require('../../Schemas/Staff/staffSchema');
@@ -12,7 +13,7 @@ module.exports = {
         const allowedRoles = ['1442568894349840435', '1442568896237277295', '1442568905582317740'];
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
         if (!hasAllowedRole) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -24,7 +25,7 @@ module.exports = {
         const partnersPerPage = 10;
         const allPartners = await PartnershipCount.find().sort({ partnerCount: -1 }).lean();
         if (allPartners.length === 0) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setColor('#6f4e37')
@@ -46,7 +47,7 @@ module.exports = {
                     userTag = user.username;
                 } catch {
                 }
-                description += `**${startIndex + i + 1}.** ${userTag} — ⭐ ${partner.partnerCount} partnership\n`;
+                description += `**${startIndex + i + 1}.** ${userTag} â€” â­ ${partner.partnerCount} partnership\n`;
             }
             return new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -61,7 +62,7 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('prev')
-                    .setLabel('<a:vegaleftarrow:1462914743416131816>️ Precedente')
+                    .setLabel('<a:vegaleftarrow:1462914743416131816>ï¸ Precedente')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === 1),
                 new ButtonBuilder()
@@ -70,7 +71,7 @@ module.exports = {
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === totalPages)
             );
-        const message = await interaction.editReply({ embeds: [embed], components: [row] });
+        const message = await safeEditReply(interaction, { embeds: [embed], components: [row] });
         const collector = message.createMessageComponentCollector({ time: 60000 });
         collector.on('collect', async i => {
             if (i.user.id !== interaction.user.id) {
@@ -92,3 +93,4 @@ module.exports = {
         });
     }
 };
+

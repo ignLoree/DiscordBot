@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
 const { extractTargetUserWithLastfm } = require("../../Utils/Music/lastfmPrefix");
@@ -17,7 +18,7 @@ module.exports = {
         numberFormat: user.localization?.numberFormat
       });
       if (payload.error) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -25,14 +26,14 @@ module.exports = {
           ]
         });
       }
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [payload.embed],
         components: payload.components
       });
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -42,3 +43,5 @@ module.exports = {
     }
   }
 };
+
+

@@ -14,6 +14,11 @@ const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminde
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
 
+const getChannelSafe = async (client, channelId) => {
+    if (!channelId) return null;
+    return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+};
+
 module.exports = {
     name: 'clientReady',
     once: true,
@@ -92,7 +97,7 @@ module.exports = {
         try {
             cron.schedule("0 0 1 * *", async () => {
                 const channelId = "1442569130573303898";
-                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+                const channel = await getChannelSafe(client, channelId);
                 if (!channel) return;
                 await channel.send({
                     content: "@everyone",
@@ -194,7 +199,7 @@ module.exports = {
         };
 
         const sendRotatingReminder = async () => {
-            const channel = client.channels.cache.get(REMINDER_CHANNEL_ID) || await client.channels.fetch(REMINDER_CHANNEL_ID).catch(() => null);
+            const channel = await getChannelSafe(client, REMINDER_CHANNEL_ID);
             if (!channel) return;
             const isActive = await hasRecentHumanMessage(channel);
             if (!isActive) return;

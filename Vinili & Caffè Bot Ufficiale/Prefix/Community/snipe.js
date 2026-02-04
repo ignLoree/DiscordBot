@@ -1,4 +1,5 @@
-﻿const { EmbedBuilder } = require("discord.js");
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
+const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
     name: "snipe",
@@ -12,7 +13,7 @@ module.exports = {
         if (!message.guild) return;
 
         if (!snipe) {
-            return message.reply({
+            return safeMessageReply(message, {
                 content: "<:vegax:1443934876440068179> Nessun messaggio eliminato recentemente.",
                 allowedMentions: { repliedUser: false }
             });
@@ -45,9 +46,11 @@ module.exports = {
         if (snipe.attachment) {
             embed.setImage(snipe.attachment);
         }
-        return message.reply({
+        return safeMessageReply(message, {
             embeds: [embed],
             allowedMentions: { repliedUser: false }
         });
     }
 };
+
+

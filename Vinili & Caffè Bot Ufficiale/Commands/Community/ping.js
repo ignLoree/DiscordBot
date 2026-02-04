@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const ping = require('../../Schemas/Ping/pingSchema');
 
@@ -24,7 +25,7 @@ module.exports = {
             const empty = '\u200b';
             const pingEmbed = new EmbedBuilder()
                 .setColor("#6f4e37")
-                .setDescription(`<a:VC_GreenDot:1454118116392042711> Il ping del bot è **\`${ws}ms\`**`)
+                .setDescription(`<a:VC_GreenDot:1454118116392042711> Il ping del bot Ã¨ **\`${ws}ms\`**`)
                 .addFields(
                     { name: `<:Clock:1330530065133338685> **Uptime:** \`${uptimeString}\``, value: empty, inline: true },
                     { name: `<a:VC_Loading:1448687876018540695> **API:** \`${msgEdit}ms\``, value: empty, inline: true },
@@ -33,7 +34,7 @@ module.exports = {
                     { name: `<a:VC_Calendar:1448670320180592724> **Shard:** \`${shardId + 1}/${shardCount}\``, value: empty, inline: true },
                     { name: empty, value: empty, inline: true },
                 )
-            await interaction.editReply({ embeds: [pingEmbed] });
+            await safeEditReply(interaction, { embeds: [pingEmbed] });
         } catch (error) {
             global.logger.error(error);
         }
@@ -46,3 +47,4 @@ function formatUptime(uptime) {
     const days = Math.floor(uptime / (60 * 60 * 24));
     return `${days}d ${hours}h ${minutes}m`;
 }
+

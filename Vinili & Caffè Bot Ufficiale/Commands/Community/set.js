@@ -1,3 +1,4 @@
+﻿const { safeReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -49,7 +50,7 @@ module.exports = {
 
     if (sub === 'autojoin') {
       if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return interaction.reply({
+        return safeReply(interaction, {
           embeds: [
             new EmbedBuilder()
               .setDescription('<:vegax:1443934876440068179> Non hai il permesso per usare questo subcommand.')
@@ -61,7 +62,7 @@ module.exports = {
       const stato = interaction.options.getBoolean('stato', true);
       client.config2.tts.autojoin = stato;
       const label = stato ? 'attivo' : 'disattivato';
-      return interaction.reply({
+      return safeReply(interaction, {
         content: `<:vegacheckmark:1443666279058772028> Autojoin TTS settato su \`${label}\`.`,
       });
     }
@@ -70,9 +71,11 @@ module.exports = {
       const lingua = interaction.options.getString('lingua', true);
       const { setUserTtsLang } = require('../../Services/TTS/ttsService');
       setUserTtsLang(interaction.user.id, lingua);
-      return interaction.reply({
+      return safeReply(interaction, {
         content: `<:vegacheckmark:1443666279058772028> Lingua TTS personale impostata su \`${lingua}\`.`,
       });
     }
   }
 };
+
+

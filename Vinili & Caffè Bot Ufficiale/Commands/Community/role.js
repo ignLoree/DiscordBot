@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js')
 
 module.exports = {
@@ -72,7 +73,7 @@ module.exports = {
                             embed.fields.push({ name: 'Permessi', value: infoPerms.join(', '), inline: false });
                         }
                     }
-                    await interaction.editReply({ embeds: [embed] });
+                    await safeEditReply(interaction, { embeds: [embed] });
                 } catch (error) {
                     global.logger.error(error);
                 }
@@ -106,14 +107,14 @@ module.exports = {
                                 color: 0x6f4e37,
                             };
                         });
-                        await interaction.editReply({ embeds: embeds });
+                        await safeEditReply(interaction, { embeds: embeds });
                     } else {
                         const embed = {
                             title: `Ruoli [${interaction.guild.roles.cache.size}]`,
                             description: `${roles}\n@everyone`,
                             color: 0x6f4e37,
                         }
-                        await interaction.editReply({ embeds: [embed] });
+                        await safeEditReply(interaction, { embeds: [embed] });
                     }
                 } catch (error) {
                     global.logger.error(error);
@@ -122,3 +123,4 @@ module.exports = {
         }
     }
 }
+

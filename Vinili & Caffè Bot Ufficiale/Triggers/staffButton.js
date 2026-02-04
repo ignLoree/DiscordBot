@@ -4,7 +4,7 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.guild) return;
         if (!interaction.message) return;
-        if (!interaction.isButton) return;
+        if (!interaction.isButton()) return;
         if (interaction.customId == 'sanzioni') {
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')

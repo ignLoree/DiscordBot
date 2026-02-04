@@ -1,13 +1,14 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require("discord.js");
 const moment = require('moment');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("user")
-    .setDescription("Mostra le informazioni di unə utente.")
+    .setDescription("Mostra le informazioni di unÉ™ utente.")
     .addSubcommand(command =>
       command.setName('info')
-        .setDescription(`Mostra le informazioni di unə utente.`)
+        .setDescription(`Mostra le informazioni di unÉ™ utente.`)
         .addUserOption((op) =>
           op.setName("user")
             .setDescription("Seleziona l'utente di cui vuoi ricevere le informazioni.")
@@ -27,7 +28,7 @@ module.exports = {
     switch (sub) {
       case 'info':
         try {
-          if (!member) return interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
+          if (!member) return safeEditReply(interaction, { embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non riesco a trovare l'utente ${member}`)], flags: 1 << 6 });
           const perms = {
             administrator: 'Administrator',
             manageGuild: 'Manage Server',
@@ -61,8 +62,8 @@ module.exports = {
             },
             description: `\n<@!${member.id}>`,
             fields: [
-              { name: 'Entratə', value: moment.unix(member.joinedAt / 1000).format('llll'), inline: true },
-              { name: 'Registratə', value: moment.unix(member.user.createdAt / 1000).format('llll'), inline: true },
+              { name: 'EntratÉ™', value: moment.unix(member.joinedAt / 1000).format('llll'), inline: true },
+              { name: 'RegistratÉ™', value: moment.unix(member.user.createdAt / 1000).format('llll'), inline: true },
               { name: `Ruoli [${member.roles.cache.size - 1}]`, value: roles.length > 2048 ? `Troppi ruoli da mostrare.` : roles, inline: false },
             ],
             footer: { text: `ID: ${member.id}` },
@@ -86,10 +87,10 @@ module.exports = {
             }
           }
           if (member.id === client.user.id) {
-            team.push('Vinili & Caffè Bot');
+            team.push('Vinili & CaffÃ¨ Bot');
           }
           if (member.id === '295500038401163264') {
-            extra.push(`Il creatore di Vinili & Caffè`);
+            extra.push(`Il creatore di Vinili & CaffÃ¨`);
           }
           if (member.id === interaction.guild.ownerId) {
             extra.push(`Server Owner`);
@@ -104,13 +105,14 @@ module.exports = {
             embed.fields.push({ name: 'Riconoscimenti', value: extra.join(', '), inline: false });
           }
           if (team.length) {
-            embed.fields.push({ name: 'Vinili & Caffè Team', value: `${team.join(', ')}`, inline: false });
+            embed.fields.push({ name: 'Vinili & CaffÃ¨ Team', value: `${team.join(', ')}`, inline: false });
           }
           embed.fields = embed.fields.map(trimFieldValues);
-          await interaction.editReply({ embeds: [embed] })
+          await safeEditReply(interaction, { embeds: [embed] })
         } catch (error) {
           global.logger.error(error);
         }
     }
   }
 }
+

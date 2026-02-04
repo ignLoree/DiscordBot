@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
@@ -30,11 +31,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Questo comando può essere usato solo in un server.")
+            .setDescription("Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -43,7 +44,7 @@ module.exports = {
     const pagination = extractPagination(args, { defaultLimit: 15, maxLimit: 50 });
     const targetUser = await resolveUserFromArgs(message, pagination.args);
     if (!targetUser) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -59,7 +60,7 @@ module.exports = {
       }
     const crowns = await getCrownsForUser(message.guild.id, targetUser.id);
     if (!crowns.length) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor(DEFAULT_EMBED_COLOR)
@@ -81,6 +82,8 @@ module.exports = {
       .setTitle(`Crowns for ${displayName}`)
       .setDescription(lines.join("\n"))
       .setFooter({ text: `Page ${pagination.page}/${Math.max(1, Math.ceil(crowns.length / pagination.limit))} - ${crowns.length} total crowns` });
-    return message.channel.send({ embeds: [embed] });
+    return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+
+

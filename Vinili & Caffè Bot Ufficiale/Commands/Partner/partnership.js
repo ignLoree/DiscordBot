@@ -1,3 +1,4 @@
+﻿const { safeReply } = require('../../Utils/Moderation/interaction');
 const { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
@@ -17,7 +18,7 @@ module.exports = {
         const allowedRoles = ['1442568905582317740']
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
         if (!hasAllowedRole) {
-            return interaction.reply({
+            return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -37,10 +38,10 @@ module.exports = {
         }
         const hasUserRole = managerMember ? hasAnyRole(managerMember, userRoles) : false;
         if (!hasUserRole) {
-            return interaction.reply({
+            return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription("<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!")
+                        .setDescription("<:vegax:1443934876440068179> Questo utente non Ã¨ verificato, fagli effettuare prima la verifica e poi riprova!")
                         .setColor("Red")
                 ],
                 flags: 1 << 6
@@ -60,3 +61,5 @@ module.exports = {
         await interaction.showModal(modal);
     }
 }
+
+

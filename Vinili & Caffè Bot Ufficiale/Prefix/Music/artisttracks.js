@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const { DEFAULT_EMBED_COLOR, lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
 const { getLastFmUserForMessageOrUsername } = require("../../Utils/Music/lastfmContext");
@@ -41,7 +42,7 @@ module.exports = {
         perPage: 10,
         totalPlays: playsByYou
       });
-      const sent = await message.channel.send({ embeds: [result.embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [result.embed] });
       const components = buildArtistTracksComponents(sent.id, result.page, result.totalPages);
       await sent.edit({ components });
       if (!message.client.artistTracksStates) message.client.artistTracksStates = new Map();
@@ -73,7 +74,7 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor(DEFAULT_EMBED_COLOR)
@@ -83,5 +84,7 @@ module.exports = {
     }
   }
 };
+
+
 
 

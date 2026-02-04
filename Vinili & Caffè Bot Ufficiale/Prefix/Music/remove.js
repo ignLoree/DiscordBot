@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { DEFAULT_EMBED_COLOR } = require("../../Utils/Music/lastfm");
@@ -11,6 +12,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(DEFAULT_EMBED_COLOR)
       .setDescription("Account Last.fm rimosso dal database.");
-    return message.channel.send({ embeds: [embed] });
+    return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+
+

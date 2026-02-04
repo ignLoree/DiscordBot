@@ -7,7 +7,7 @@ module.exports = {
 
         if (!interaction.guild) return;
         if (!interaction.message) return;
-        if (!interaction.isButton) return;
+        if (!interaction.isButton()) return;
 
         if (interaction.customId == 'vocaliprivate') {
             const embeds = [

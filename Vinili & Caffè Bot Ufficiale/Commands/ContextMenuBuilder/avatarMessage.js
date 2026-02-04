@@ -1,3 +1,4 @@
+﻿const { safeReply, safeEditReply } = require('../../Utils/Moderation/interaction');
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = require("discord.js");
 
 module.exports = {
@@ -7,11 +8,11 @@ module.exports = {
 
   async execute(interaction) {
     if (!interaction.inGuild()) {
-      return interaction.reply({
+      return safeReply(interaction, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ],
         flags: 1 << 6
       });
@@ -21,7 +22,7 @@ module.exports = {
     const messageAuthor = interaction.targetMessage?.author;
     const member = interaction.targetMessage?.member;
     if (!messageAuthor) {
-      return interaction.editReply({
+      return safeEditReply(interaction, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -39,6 +40,8 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: messageAuthor.displayAvatarURL() })
       .setColor("#6f4e37");
 
-    return interaction.editReply({ embeds: [embed] });
+    return safeEditReply(interaction, { embeds: [embed] });
   }
 };
+
+

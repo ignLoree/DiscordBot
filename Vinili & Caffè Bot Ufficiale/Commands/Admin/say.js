@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, PermissionsBitField, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
 
 module.exports = {
@@ -24,27 +25,27 @@ module.exports = {
         if (linkMatch) {
             const [, guildId, channelId, msgId] = linkMatch;
             if (interaction.guild?.id !== guildId) {
-                return interaction.editReply({ content: "<:vegax:1443934876440068179> Il link non appartiene a questo server.", flags: 1 << 6 });
+                return safeEditReply(interaction, { content: "<:vegax:1443934876440068179> Il link non appartiene a questo server.", flags: 1 << 6 });
             }
             const targetChannel = await interaction.guild.channels.fetch(channelId).catch(() => null);
             if (!targetChannel || !targetChannel.isTextBased()) {
-                return interaction.editReply({ content: "<:vegax:1443934876440068179> Canale non valido per rispondere.", flags: 1 << 6 });
+                return safeEditReply(interaction, { content: "<:vegax:1443934876440068179> Canale non valido per rispondere.", flags: 1 << 6 });
             }
             const targetMessage = await targetChannel.messages.fetch(msgId).catch(() => null);
             if (!targetMessage) {
-                return interaction.editReply({ content: "<:vegax:1443934876440068179> Messaggio non trovato.", flags: 1 << 6 });
+                return safeEditReply(interaction, { content: "<:vegax:1443934876440068179> Messaggio non trovato.", flags: 1 << 6 });
             }
             channel = targetChannel;
             replyTo = targetMessage;
         } else if (messageId) {
             const targetMessage = await channel.messages.fetch(messageId).catch(() => null);
             if (!targetMessage) {
-                return interaction.editReply({ content: "<:vegax:1443934876440068179> Messaggio non trovato in questo canale.", flags: 1 << 6 });
+                return safeEditReply(interaction, { content: "<:vegax:1443934876440068179> Messaggio non trovato in questo canale.", flags: 1 << 6 });
             }
             replyTo = targetMessage;
         }
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await interaction.editReply({
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
             embeds: [
                 new EmbedBuilder()
                     .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
@@ -52,7 +53,7 @@ module.exports = {
             ]
         });
 
-        await interaction.editReply({ content: `Messaggio inviato`, flags: 1 << 6});
+        await safeEditReply(interaction, { content: `Messaggio inviato`, flags: 1 << 6});
         const payload = { content: `${mensaje}` };
         if (replyTo) {
             payload.reply = { messageReference: replyTo.id, failIfNotExists: false };
@@ -61,3 +62,5 @@ module.exports = {
         await channel.send(payload);
     },
 };
+
+

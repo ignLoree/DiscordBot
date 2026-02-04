@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 module.exports = {
     data: new SlashCommandBuilder()
@@ -39,7 +40,7 @@ module.exports = {
                         .setImage(user.displayAvatarURL({ size: 4096 }))
                         .setAuthor({ name: `${user.user.tag}`, iconURL: user.displayAvatarURL() })
                         .setColor("#6f4e37")
-                    await interaction.editReply({ embeds: [embed] })
+                    await safeEditReply(interaction, { embeds: [embed] })
                 } catch (error) {
                     global.logger.error(error);
                 }
@@ -48,13 +49,13 @@ module.exports = {
                 try {
                     user = interaction.options.getMember('user') || interaction.member;
                     const user2 = interaction.options.getUser('user') || interaction.user;
-                    if (user.displayAvatarURL() == user2.displayAvatarURL()) return await interaction.editReply({ embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non ha un avatar impostato solo per questo server.`)], flags: 1 << 6 });
+                    if (user.displayAvatarURL() == user2.displayAvatarURL()) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setColor('Red').setDescription(`<:attentionfromvega:1443651874032062505> Non ha un avatar impostato solo per questo server.`)], flags: 1 << 6 });
                     embed = new EmbedBuilder()
                         .setTitle('Server Avatar')
                         .setImage(user.displayAvatarURL({ size: 4096 }))
                         .setAuthor({ name: `${user.user.tag}`, iconURL: user.displayAvatarURL() })
                         .setColor("#6f4e37")
-                    await interaction.editReply({ embeds: [embed] })
+                    await safeEditReply(interaction, { embeds: [embed] })
                 } catch (error) {
                     global.logger.error(error);
                 }
@@ -66,10 +67,11 @@ module.exports = {
                         .setImage(user.displayAvatarURL({ size: 4096 }))
                         .setAuthor({ name: `${user.tag}`, iconURL: user.displayAvatarURL() })
                         .setColor("#6f4e37")
-                    await interaction.editReply({ embeds: [embed] })
+                    await safeEditReply(interaction, { embeds: [embed] })
                 } catch (error) {
                     global.logger.error(error);
                 }
         }
     }
 }
+

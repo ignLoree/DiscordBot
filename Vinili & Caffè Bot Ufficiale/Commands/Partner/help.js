@@ -1,9 +1,14 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 const { buildOverviewEmbed } = require('../../Utils/Help/prefixHelpView');
 const fs = require('fs');
 const path = require('path');
 const config = require('../../config.json');
+
+const CACHE_TTL_MS = 60 * 1000;
+const slashCache = new Map();
+const prefixCache = new Map();
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -36,7 +41,7 @@ module.exports = {
         const hasHighStaffRole = hasAnyRole(interaction.member, ROLE_ADMIN) || hasUserRole;
 
         if (tipo === 'partner_manager' && !hasPartnerManagerRole) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per vedere questa schermata!')
@@ -47,7 +52,7 @@ module.exports = {
         }
 
         if (tipo === 'staff' && !hasStaffRole) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per vedere questa schermata!')
@@ -58,7 +63,7 @@ module.exports = {
         }
 
         if (tipo === 'high_staff' && !hasHighStaffRole) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per vedere questa schermata!')
@@ -69,7 +74,7 @@ module.exports = {
         }
 
         if (tipo === 'partner_manager') {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [buildPartnerManagerEmbed()]
             });
         }
@@ -112,7 +117,7 @@ module.exports = {
         }
 
         if (pages.length === 0) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non ci sono schermate disponibili per te.')
@@ -123,7 +128,7 @@ module.exports = {
         }
 
         let pageIndex = 0;
-        await interaction.editReply({
+        await safeEditReply(interaction, {
             embeds: [pages[pageIndex]],
             components: pages.length > 1 ? [buildRow(pageIndex, pages.length, interaction.user.id)] : []
         });
@@ -162,10 +167,27 @@ function getPrefixConfig(client) {
     };
 }
 
+function getCached(cache, key) {
+    const entry = cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.at > CACHE_TTL_MS) {
+        cache.delete(key);
+        return null;
+    }
+    return entry.value;
+}
+
+function setCached(cache, key, value) {
+    cache.set(key, { value, at: Date.now() });
+    return value;
+}
+
 function loadSlashCommandsFromFolder(folderName) {
+    const cached = getCached(slashCache, folderName);
+    if (cached) return cached;
     const commandsRoot = path.join(__dirname, '..');
     const folderPath = path.join(commandsRoot, folderName);
-    if (!fs.existsSync(folderPath)) return [];
+    if (!fs.existsSync(folderPath)) return setCached(slashCache, folderName, []);
     const files = fs.readdirSync(folderPath).filter(f => f.endsWith('.js'));
     const out = [];
     for (const file of files) {
@@ -182,12 +204,16 @@ function loadSlashCommandsFromFolder(folderName) {
         if (!meta.name) continue;
         out.push(meta);
     }
-    return out.sort((a, b) => a.name.localeCompare(b.name));
+    out.sort((a, b) => a.name.localeCompare(b.name));
+    return setCached(slashCache, folderName, out);
 }
 
 function loadPrefixCommandsFromFolder(folderName, prefixes) {
+    const cacheKey = `${folderName}|${prefixes?.defaultPrefix || ''}|${prefixes?.moderationPrefix || ''}|${prefixes?.musicPrefix || ''}`;
+    const cached = getCached(prefixCache, cacheKey);
+    if (cached) return cached;
     const prefixRoot = path.join(__dirname, '..', '..', 'Prefix', folderName);
-    if (!fs.existsSync(prefixRoot)) return [];
+    if (!fs.existsSync(prefixRoot)) return setCached(prefixCache, cacheKey, []);
     const files = fs.readdirSync(prefixRoot).filter(f => f.endsWith('.js'));
     const out = [];
     for (const file of files) {
@@ -206,7 +232,8 @@ function loadPrefixCommandsFromFolder(folderName, prefixes) {
         const prefix = resolvePrefixForCommand(command, folderName, prefixes);
         out.push({ name, description, prefix });
     }
-    return out.sort((a, b) => a.name.localeCompare(b.name));
+    out.sort((a, b) => a.name.localeCompare(b.name));
+    return setCached(prefixCache, cacheKey, out);
 }
 
 function resolvePrefixForCommand(command, folderName, prefixes) {
@@ -279,14 +306,14 @@ function buildMergedLines(slashCommands, prefixCommands) {
         if (!cmd?.name) continue;
         const prefix = prefixMap.get(cmd.name);
         if (prefix) {
-            lines.push(`• /${cmd.name} • ${cmd.description}︲\`${prefix.prefix}${prefix.name}\``);
+            lines.push(`â€¢ /${cmd.name} â€¢ ${cmd.description}ï¸²\`${prefix.prefix}${prefix.name}\``);
             prefixMap.delete(cmd.name);
         } else {
-            lines.push(`• /${cmd.name} • ${cmd.description}`);
+            lines.push(`â€¢ /${cmd.name} â€¢ ${cmd.description}`);
         }
     }
     for (const cmd of Array.from(prefixMap.values()).sort((a, b) => a.name.localeCompare(b.name))) {
-        lines.push(`• ${cmd.prefix}${cmd.name} • ${cmd.description}`);
+        lines.push(`â€¢ ${cmd.prefix}${cmd.name} â€¢ ${cmd.description}`);
     }
     return lines;
 }
@@ -330,3 +357,5 @@ function buildRow(pageIndex, pageCount, userId) {
         .setDisabled(pageIndex >= pageCount - 1);
     return new ActionRowBuilder().addComponents(prev, next);
 }
+
+

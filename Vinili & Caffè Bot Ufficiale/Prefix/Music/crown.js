@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
@@ -139,11 +140,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!message.guild) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("Questo comando può essere usato solo in un server.")
+            .setDescription("Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -206,7 +207,7 @@ module.exports = {
       const start = (pagination.page - 1) * pagination.limit;
       const results = fullResults.slice(start, start + pagination.limit);
       if (!results.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -224,7 +225,7 @@ module.exports = {
       }
       const crown = await getCrownByArtist(message.guild.id, artistName);
       if (!crown) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor(DEFAULT_EMBED_COLOR)
@@ -252,7 +253,7 @@ module.exports = {
       const youLine = requesterEntry
         ? ` - You: ${requesterPlays} plays${requesterRank ? ` (#${requesterRank})` : ""}`
         : "";
-      const footer = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg${youLine} • Pagina: ${pagination.page} • Limite: ${pagination.limit}`;
+      const footer = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg${youLine} â€¢ Pagina: ${pagination.page} â€¢ Limite: ${pagination.limit}`;
       const crownMember = message.guild.members.cache.get(crown.holderId);
       const crownName = crownMember?.displayName || crownMember?.user?.username || "Sconosciuto";
       const crownText = `Crown claimed by ${crownName}`;
@@ -281,7 +282,7 @@ module.exports = {
           const embed = new EmbedBuilder()
             .setColor(DEFAULT_EMBED_COLOR)
             .setImage("attachment://crown.png");
-          return message.channel.send({ files: [attachment], components: [row] });
+          return safeChannelSend(message.channel, { files: [attachment], components: [row] });
         }
       }
       const embed = new EmbedBuilder()
@@ -290,11 +291,11 @@ module.exports = {
         .setThumbnail(image)
         .setDescription(lines.join("\n"))
         .setFooter({ text: `${footer} | ${crownText}` });
-      return message.channel.send({ embeds: [embed], components: [row] });
+      return safeChannelSend(message.channel, { embeds: [embed], components: [row] });
     } catch (error) {
    if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -304,3 +305,5 @@ module.exports = {
     }
   }
 };
+
+

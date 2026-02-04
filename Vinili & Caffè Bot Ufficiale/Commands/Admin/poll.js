@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, PermissionsBitField } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
 
@@ -53,7 +54,7 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand()
         await interaction.deferReply()
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await interaction.editReply({
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
             embeds: [
                 new EmbedBuilder()
                     .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
@@ -88,7 +89,7 @@ module.exports = {
                 for (let i = 2; i < answers.length; i++) {
                     if (!answers[i]) foundEmpty = true;
                     if (foundEmpty && answers[i]) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription(`<:vegax:1443934876440068179> Non puoi inserire la risposta **${i + 1}** senza aver riempito le precedenti!`)
@@ -122,7 +123,7 @@ module.exports = {
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>ï¸²<@&1442569014474965033>`
                 });
 
                 for (const emoji of validReactions) {
@@ -133,7 +134,7 @@ ${answersText}
                 pollCount.messageId = pollMessage.id;
                 await pollCount.save();
 
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#1442569128706838528>!`)
@@ -142,7 +143,7 @@ ${answersText}
                 });
             } catch (err) {
                 global.logger.error(err);
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription("<:vegax:1443934876440068179> Errore durante la creazione del poll.")
@@ -159,7 +160,7 @@ ${answersText}
                 let lastPoll = await poll.findOne().sort({ pollcount: -1 });
 
                 if (!lastPoll || !lastPoll.messageId) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription("<:vegax:1443934876440068179> Nessun poll trovato da rimuovere.")
@@ -172,16 +173,16 @@ ${answersText}
                     await msg.delete();
                 } catch { }
                 await lastPoll.deleteOne();
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) è stato rimosso.`)
+                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) Ã¨ stato rimosso.`)
                             .setColor('#6f4e37')
                     ]
                 });
             } catch (err) {
                 global.logger.error(err);
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription("<:vegax:1443934876440068179> Errore durante la rimozione del poll.")
@@ -200,7 +201,7 @@ ${answersText}
                 let pollMessage;
 
                 if (!pollData) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:vegax:1443934876440068179> Nessun poll con ID **${id}** trovato.`)
@@ -213,10 +214,10 @@ ${answersText}
                 try {
                     pollMessage = await channel.messages.fetch(pollData.messageId);
                 } catch {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste più.`)
+                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste piÃ¹.`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -234,7 +235,7 @@ ${answersText}
                 for (let i = 2; i < answers.length; i++) {
                     if (!answers[i]) foundEmpty = true;
                     if (foundEmpty && answers[i]) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription(`<:vegax:1443934876440068179> Non puoi impostare risposta ${i + 1} senza aver riempito le precedenti!`)
@@ -275,7 +276,7 @@ ${answersText}
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>ï¸²<@&1442569014474965033>`
                 });
                 
                 await pollMessage.reactions.removeAll().catch(() => { });
@@ -283,7 +284,7 @@ ${answersText}
                     const emojiId = reaction.match(/:(\d+)>$/)?.[1];
                     if (emojiId) await pollMessage.react(emojiId);
                 }
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegax:1443934876440068179> Poll **#${id}** aggiornato correttamente!`)
@@ -293,7 +294,7 @@ ${answersText}
                 });
             } catch (err) {
                 global.logger.error(err);
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegax:1443934876440068179> Errore durante la modifica del poll.`)
@@ -305,3 +306,4 @@ ${answersText}
         }
     }
 };
+

@@ -1,3 +1,4 @@
+﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -19,6 +20,7 @@ module.exports = {
             )
             .setTimestamp()
 
-        await message.reply({ embeds: [embed], allowedMentions: { repliedUser: false } });
+        await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
     }
 }
+

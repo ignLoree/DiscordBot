@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
@@ -58,14 +59,14 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand()
         await interaction.deferReply()
         if (!interaction.inGuild()) {
-            return await interaction.editReply({
-                content: "<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.",
+            return await safeEditReply(interaction, {
+                content: "<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.",
                 flags: 1 << 6
             });
         }
         if (!interaction.member || !interaction.member.roles) {
-            return await interaction.editReply({
-                content: "<:vegax:1443934876440068179> Si è verificato un errore nel recuperare le informazioni del membro.",
+            return await safeEditReply(interaction, {
+                content: "<:vegax:1443934876440068179> Si Ã¨ verificato un errore nel recuperare le informazioni del membro.",
                 flags: 1 << 6
             });
         }
@@ -74,7 +75,7 @@ module.exports = {
                 const allowedRoles = ['1442568888096391260'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -85,45 +86,45 @@ module.exports = {
                 }
                 const ticketChannel = interaction.options.getChannel('canale');
                 const ticketEmbed = new EmbedBuilder()
-                    .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & Caffè**!
-<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli più __importanti__ sono quelli da usare **raramente**.
+                    .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & CaffÃ¨**!
+<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli piÃ¹ __importanti__ sono quelli da usare **raramente**.
 <:dot:1443660294596329582> **__\`PERKS\`__**
-↪ Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poiché sono dati **__automaticamente__**.
+â†ª Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichÃ© sono dati **__automaticamente__**.
 <:dot:1443660294596329582> **__\`SUPPORTO\`__**
-↪ Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
+â†ª Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
 <:dot:1443660294596329582> **__\`PARTNERSHIP\`__**
-↪ Apri questo ticket per richiedere una **partnership**. Se volessi effettuare una **collaborazione/sponsor**, apri un ticket **__\`HIGH STAFF\`__**
+â†ª Apri questo ticket per richiedere una **partnership**. Se volessi effettuare una **collaborazione/sponsor**, apri un ticket **__\`HIGH STAFF\`__**
 <:dot:1443660294596329582> **__\`HIGH STAFF\`__**
-↪ Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`)
+â†ª Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterÃ  un **warn**.`)
                     .setColor('#6f4e37')
-                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
+                    .setFooter({ text: `Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 const ticketButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji(`<a:Boost_Cycle:1329504283007385642>`).setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji(`<:discordstaff:1443651872258003005>`).setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId('ticket_partnership').setLabel('︲PARTNERSHIP').setEmoji(`<:partneredserverowner:1443651871125409812>`).setStyle(ButtonStyle.Success),
-                        new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji(`<:reportmessage:1443670575376765130>`).setStyle(ButtonStyle.Secondary)
+                        new ButtonBuilder().setCustomId('ticket_perks').setLabel('ï¸²PERKS').setEmoji(`<a:Boost_Cycle:1329504283007385642>`).setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder().setCustomId('ticket_supporto').setLabel('ï¸²SUPPORTO').setEmoji(`<:discordstaff:1443651872258003005>`).setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId('ticket_partnership').setLabel('ï¸²PARTNERSHIP').setEmoji(`<:partneredserverowner:1443651871125409812>`).setStyle(ButtonStyle.Success),
+                        new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('ï¸²HIGH STAFF').setEmoji(`<:reportmessage:1443670575376765130>`).setStyle(ButtonStyle.Secondary)
                     );
                 await ticketChannel.send({ embeds: [ticketEmbed], components: [ticketButtons] });
-                return await interaction.editReply({ content: `Pannello inviato nel canale ${ticketChannel}`, flags: 1 << 6 });
+                return await safeEditReply(interaction, { content: `Pannello inviato nel canale ${ticketChannel}`, flags: 1 << 6 });
             }
             case 'add': {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('? Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
                         flags: 1 << 6
                     });
                 }
                 const user = interaction.options.getUser('utente');
                 await interaction.channel.permissionOverwrites.edit(user.id, { ViewChannel: true, SendMessages: true });
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Aggiungi")
-                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato aggiunto a ${interaction.channel}`)
+                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato aggiunto a ${interaction.channel}`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -132,18 +133,18 @@ module.exports = {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
                         flags: 1 << 6
                     });
                 }
                 const user = interaction.options.getUser('utente');
                 await interaction.channel.permissionOverwrites.edit(user.id, { ViewChannel: false, SendMessages: false });
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Rimuovi")
-                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato rimosso da ${interaction.channel}`)
+                            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato rimosso da ${interaction.channel}`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -152,7 +153,7 @@ module.exports = {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
                         flags: 1 << 6
                     });
@@ -160,15 +161,15 @@ module.exports = {
                 const reason = interaction.options.getString('reason');
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
-                    return await interaction.editReply({
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')]
+                    return await safeEditReply(interaction, {
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')]
                     });
                 const closeButton = new ActionRowBuilder()
                     .addComponents(
                         new ButtonBuilder().setCustomId('accetta').setEmoji('<:vegacheckmark:1443666279058772028>').setLabel('Accetta e chiudi').setStyle(ButtonStyle.Success),
                         new ButtonBuilder().setCustomId('rifiuta').setEmoji('<:vegax:1443934876440068179>').setLabel('Rifiuta e mantieni aperto').setStyle(ButtonStyle.Secondary)
                     );
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     content: `<@${ticketDoc.userId}>`,
                     embeds: [
                         new EmbedBuilder()
@@ -184,7 +185,7 @@ module.exports = {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
                         flags: 1 << 6
                     });
@@ -199,8 +200,8 @@ module.exports = {
                     : 'Data non disponibile';
                 const logChannel = interaction.guild?.channels?.cache?.get(LOG_CHANNEL);
                 if (!ticketDoc)
-                    return await interaction.editReply({
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')]
+                    return await safeEditReply(interaction, {
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')]
                     });
                 if (logChannel) {
                     await logChannel.send({
@@ -227,10 +228,10 @@ module.exports = {
                     }
                 }
                 await Ticket.updateOne({ channelId: interaction.channel.id }, { $set: { open: false, transcript: transcriptTXT, claimedBy: ticketDoc.claimedBy || null, closeReason: ticketDoc.closeReason || null, closedAt: new Date() } }).catch(() => { });
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription("🔒 Il ticket verrà chiuso…")
+                            .setDescription("ðŸ”’ Il ticket verrÃ  chiusoâ€¦")
                             .setColor('#6f4e37')
                     ],
                     flags: 1 << 6
@@ -244,23 +245,23 @@ module.exports = {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("Red")],
                         flags: 1 << 6
                     });
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
-                    return await interaction.editReply({
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non è un canale ticket`).setColor('#6f4e37')],
+                    return await safeEditReply(interaction, {
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription(`<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket`).setColor('#6f4e37')],
                         flags: 1 << 6
                     });
                 if (ticketDoc.claimedBy) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle("Errore")
-                                .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket è già stato claimato da <@${ticketDoc.claimedBy}>`)
+                                .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  stato claimato da <@${ticketDoc.claimedBy}>`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -280,7 +281,7 @@ module.exports = {
                     msg = fallbackMessages.first();
                 }
                 if (!msg) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:attentionfromvega:1443651874032062505> Non riesco a trovare il messaggio del ticket.").setColor("Red")],
                         flags: 1 << 6
                     });
@@ -288,19 +289,19 @@ module.exports = {
                 const updatedEmbed = EmbedBuilder.from(msg.embeds[0]);
                 const updatedButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("unclaim").setLabel("🔓 Unclaim").setStyle(ButtonStyle.Secondary)
+                        new ButtonBuilder().setCustomId("close_ticket").setLabel("ðŸ”’ Chiudi").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("ðŸ“ Chiudi con motivo").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("unclaim").setLabel("ðŸ”“ Unclaim").setStyle(ButtonStyle.Secondary)
                     );
                 await msg.edit({
                     embeds: [updatedEmbed],
                     components: [updatedButtons]
                 });
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Ticket Claimato")
-                            .setDescription(`Il ticket è stato preso in carico da <@${ticketDoc.claimedBy}>`)
+                            .setDescription(`Il ticket Ã¨ stato preso in carico da <@${ticketDoc.claimedBy}>`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -309,26 +310,26 @@ module.exports = {
                 const allowedRoles = ['1442568910070349985', '1442568905582317740'];
                 const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                 if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("Red")],
                         flags: 1 << 6
                     });
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
-                    return await interaction.editReply({
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo non è un canale ticket").setColor('#6f4e37')],
+                    return await safeEditReply(interaction, {
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket").setColor('#6f4e37')],
                         flags: 1 << 6
                     });
                 if (!ticketDoc.claimedBy) {
-                    return await interaction.editReply({
-                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo ticket non è claimato.").setColor("Red")],
+                    return await safeEditReply(interaction, {
+                        embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.").setColor("Red")],
                         flags: 1 << 6
                     });
                 }
                 const oldClaimer = ticketDoc.claimedBy;
                 if (interaction.user.id !== oldClaimer && !hasAllowedRole) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:vegax:1443934876440068179> Non puoi unclaimare questo ticket.").setColor("Red")],
                         flags: 1 << 6
                     });
@@ -344,7 +345,7 @@ module.exports = {
                     msg = fallback.first();
                 }
                 if (!msg) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [new EmbedBuilder().setTitle("Errore").setDescription("<:attentionfromvega:1443651874032062505> Non riesco a trovare il messaggio principale del ticket.").setColor("Red")],
                         flags: 1 << 6
                     });
@@ -352,19 +353,19 @@ module.exports = {
                 const originalEmbed = EmbedBuilder.from(msg.embeds[0]);
                 const originalButtons = new ActionRowBuilder()
                     .addComponents(
-                        new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
-                        new ButtonBuilder().setCustomId("claim_ticket").setLabel("🙋‍♂️ Claim").setStyle(ButtonStyle.Success)
+                        new ButtonBuilder().setCustomId("close_ticket").setLabel("ðŸ”’ Chiudi").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("ðŸ“ Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+                        new ButtonBuilder().setCustomId("claim_ticket").setLabel("ðŸ™‹â€â™‚ï¸ Claim").setStyle(ButtonStyle.Success)
                     );
                 await msg.edit({
                     embeds: [originalEmbed],
                     components: [originalButtons]
                 });
-                return await interaction.editReply({
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle("Ticket Unclaimato")
-                            .setDescription(`<@${oldClaimer}> non gestisce più il ticket`)
+                            .setDescription(`<@${oldClaimer}> non gestisce piÃ¹ il ticket`)
                             .setColor('#6f4e37')
                     ]
                 })
@@ -372,3 +373,5 @@ module.exports = {
         }
     }
 }
+
+

@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { AttachmentBuilder } = require("discord.js");
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { lastFmRequest, formatNumber } = require("../../Utils/Music/lastfm");
@@ -179,7 +180,7 @@ module.exports = {
         const buffer = await renderTopList({
           title: "Top Artists",
           displayName,
-          periodLabel: `${formatPeriodLabel(period)} · Playcounts`,
+          periodLabel: `${formatPeriodLabel(period)} Â· Playcounts`,
           rows,
           footerLeft: `${formatNumber(totalArtists, user.localization?.numberFormat)} different artists`,
           footerRight: `${formatNumber(totalPlays, user.localization?.numberFormat)} total plays`,
@@ -187,7 +188,7 @@ module.exports = {
         });
         if (buffer) {
           const attachment = new AttachmentBuilder(buffer, { name: "topartists.png" });
-          return message.channel.send({ files: [attachment] });
+          return safeChannelSend(message.channel, { files: [attachment] });
         }
       }
 
@@ -202,7 +203,7 @@ module.exports = {
         numberFormat: user.localization?.numberFormat
       });
 
-      const sent = await message.channel.send({ embeds: [embed] });
+      const sent = await safeChannelSend(message.channel, { embeds: [embed] });
       const components = buildTopArtistsComponents({
         page: pagination.page,
         totalPages,
@@ -231,9 +232,11 @@ module.exports = {
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         content: "<:vegax:1443934876440068179> Errore durante il recupero dei dati di Last.fm."
       });
     }
   }
 };
+
+

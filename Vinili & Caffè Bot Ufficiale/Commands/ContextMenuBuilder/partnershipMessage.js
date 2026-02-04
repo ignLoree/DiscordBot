@@ -1,3 +1,4 @@
+﻿const { safeReply } = require('../../Utils/Moderation/interaction');
 const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
@@ -10,10 +11,10 @@ module.exports = {
         if (!interaction.inGuild()) return;
         const categoryId = interaction.channel?.parentId || interaction.channel?.parent?.id;
         if (categoryId !== '1442569056795230279') {
-            return interaction.reply({
+            return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nella categoria ticket.')
+                        .setDescription('<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo nella categoria ticket.')
                         .setColor("Red")
                 ],
                 flags: 1 << 6
@@ -24,7 +25,7 @@ module.exports = {
         const allowedRoles = ['1442568905582317740'];
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
         if (!hasAllowedRole) {
-            return interaction.reply({
+            return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -56,3 +57,5 @@ module.exports = {
         await interaction.showModal(modal);
     }
 };
+
+

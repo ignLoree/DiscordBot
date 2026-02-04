@@ -52,7 +52,8 @@ async function maybeRunMorningReminder(client) {
   if (!cfg.enabled) return;
   const channelId = cfg.channelId;
   if (!channelId) return;
-  const channel = await client.channels.fetch(channelId).catch(() => null);
+  const channel = client.channels.cache.get(channelId)
+    || await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return;
   const now = new Date();
   const targetHour = Number.isInteger(cfg.hour) ? cfg.hour : 8;

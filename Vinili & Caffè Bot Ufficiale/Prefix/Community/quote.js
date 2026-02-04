@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const renderQuoteCanvas = require("../../Utils/Render/quoteCanvas");
 const { nextQuoteCount } = require("../../Utils/Quote/quoteCounter");
@@ -17,8 +18,8 @@ function normalize(text) {
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione _!_ ✧")
-    .setDescription("<:VC_Reply:1468262952934314131> Crea un post rispondendo al messaggio di un utente con <@1329118940110127204> oppure con tasto destro -> App -> Quote ! ✧")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione _!_ âœ§")
+    .setDescription("<:VC_Reply:1468262952934314131> Crea un post rispondendo al messaggio di un utente con <@1329118940110127204> oppure con tasto destro -> App -> Quote ! âœ§")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
       { name: "Creato da:", value: `<@${creatorId}>` }
@@ -30,7 +31,7 @@ function buildNoPermsEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${ALLOWED_ROLE_IDS[0]}>, <@&${ALLOWED_ROLE_IDS[1]}>, <@&${ALLOWED_ROLE_IDS[2]}>, <@&${ALLOWED_ROLE_IDS[3]}>`
@@ -45,7 +46,7 @@ module.exports = {
   async execute(message, args) {
     const hasRole = message.member?.roles?.cache?.some(role => ALLOWED_ROLE_IDS.includes(role.id));
     if (!hasRole) {
-      const err = await message.channel.send({ embeds: [buildNoPermsEmbed()] });
+      const err = await safeChannelSend(message.channel, { embeds: [buildNoPermsEmbed()] });
       setTimeout(() => err.delete().catch(() => {}), 30000);
       return;
     }
@@ -67,7 +68,7 @@ module.exports = {
     const username = displayName || author.username;
 
     if (!referenced) {
-      const err = await message.channel.send({
+      const err = await safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -79,7 +80,7 @@ module.exports = {
     }
 
     if (!text) {
-      const err = await message.channel.send({
+      const err = await safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -99,7 +100,7 @@ module.exports = {
         footerText
       });
     } catch {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -119,7 +120,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
-      .addFields({ name: "📸 Totale immagini generate:", value: String(totalPosts) });
+      .addFields({ name: "ðŸ“¸ Totale immagini generate:", value: String(totalPosts) });
 
     const quoteChannel = message.guild?.channels?.cache?.get(QUOTE_CHANNEL_ID);
     if (quoteChannel) {
@@ -132,6 +133,8 @@ module.exports = {
       await quoteChannel.send({ files: [postAttachment], embeds: [postEmbed] }).catch(() => {});
     }
 
-    return message.channel.send({ files: [attachment], embeds: [embed] });
+    return safeChannelSend(message.channel, { files: [attachment], embeds: [embed] });
   }
 };
+
+

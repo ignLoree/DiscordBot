@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField } = require('discord.js');
 const SuggestionCount = require('../../Schemas/Suggestion/suggestionSchema');
 
@@ -79,12 +80,12 @@ ${suggestmsg}
                                 .setEmoji('<:vegax:1443934876440068179>')
                                 .setStyle(ButtonStyle.Secondary),
                         );
-                    await interaction.editReply({
+                    await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`Hey, ${interaction.user.tag}. Il tuo suggerimento è stato inviato nel canale ${suggestionchannel} per essere votato!
+                                .setDescription(`Hey, ${interaction.user.tag}. Il tuo suggerimento Ã¨ stato inviato nel canale ${suggestionchannel} per essere votato!
 Per favore attendi mentre uno staff lo approva o lo rifiuta.
-Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
+Il tuo ID Suggerimento (sID) Ã¨ **${SuggestionID}**`)
                                 .setColor('#6f4e37')
                                 .setTimestamp()
                                 .setFooter({ text: `Guild ID: ${interaction.guild.id} | sID: ${SuggestionID}` })
@@ -115,7 +116,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     await thread.send(`Ho creato questo thread per discutere del suggerimento di <@${interaction.user.id}>`);
                 } catch (error) {
                     global.logger.error(error);
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
@@ -127,7 +128,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                 break;
             case 'accept':
                 if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-                    return interaction.editReply({
+                    return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription("<:vegax:1443934876440068179> Non hai i permessi per accettare i suggerimenti.")
@@ -143,7 +144,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     sID: suggestionId
                 });
                 if (!suggestionData) {
-                    return interaction.editReply({
+                    return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:attentionfromvega:1443651874032062505> Suggerimento con ID ${suggestionId} non trovato.`)
@@ -169,10 +170,10 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     embeds: [
                         new EmbedBuilder()
                             .setColor("Green")
-                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & Caffè** è stato accettato!\n <:pinnednew:1443670849990430750> Motivo: ${reason}`)
+                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & CaffÃ¨** Ã¨ stato accettato!\n <:pinnednew:1443670849990430750> Motivo: ${reason}`)
                     ]
                 });
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription("<:vegacheckmark:1443666279058772028> Suggerimento accettato con successo.")
@@ -183,7 +184,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                 break;
             case 'reject':
                 if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-                    return interaction.editReply({
+                    return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription("<:vegax:1443934876440068179> Non hai i permessi per rifiutare i suggerimenti.")
@@ -199,7 +200,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     sID: rejectSuggestionId
                 });
                 if (!rejectSuggestionData) {
-                    return interaction.editReply({
+                    return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:attentionfromvega:1443651874032062505> Suggerimento con ID ${rejectSuggestionId} non trovato.`)
@@ -224,10 +225,10 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     embeds: [
                         new EmbedBuilder()
                             .setColor("Red")
-                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & Caffè** è stato rifiutato.\n <:attentionfromvega:1443651874032062505> Motivo: ${rejectReason}`)
+                            .setDescription(`<a:ThankYou:1329504268369002507> Il tuo suggerimento in **Vinili & CaffÃ¨** Ã¨ stato rifiutato.\n <:attentionfromvega:1443651874032062505> Motivo: ${rejectReason}`)
                     ]
                 }).catch((err) => global.logger.info(err));
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription("<:vegacheckmark:1443666279058772028> Suggerimento rifiutato con successo.")
@@ -239,3 +240,4 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
         }
     }
 }
+

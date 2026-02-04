@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder } = require('discord.js');
 const AFK = require('../../Schemas/Afk/afkSchema');
 
@@ -7,7 +8,7 @@ module.exports = {
         .setDescription('Imposta il tuo stato AFK')
         .addStringOption(option =>
             option.setName('message')
-                .setDescription('Il messaggio che il bot invierà quando sarai AFK')
+                .setDescription('Il messaggio che il bot invierÃ  quando sarai AFK')
                 .setRequired(true)
         ),
         
@@ -17,7 +18,7 @@ module.exports = {
         const member = await interaction.guild.members.fetch(userId).catch(() => null)
         await interaction.deferReply()
         if (afkMessage.includes('@everyone') || afkMessage.includes('@here'))
-            return await interaction.editReply({ content: '<:vegax:1443934876440068179> Non puoi usare @everyone o @here nel messaggio.', flags: 1 << 6 });
+            return await safeEditReply(interaction, { content: '<:vegax:1443934876440068179> Non puoi usare @everyone o @here nel messaggio.', flags: 1 << 6 });
         const originalName = member?.nickname || interaction.user.username;
         try {
             await AFK.findOneAndUpdate(
@@ -28,9 +29,10 @@ module.exports = {
             if (member && !originalName.startsWith("[AFK]")) {
                 await member.setNickname(`[AFK] ${originalName}`).catch(() => { });
             }
-            await interaction.editReply({ content: `<@${userId}> Ho impostato il tuo stato AFK: __${afkMessage}__` });
+            await safeEditReply(interaction, { content: `<@${userId}> Ho impostato il tuo stato AFK: __${afkMessage}__` });
         } catch (error) {
             global.logger.error(error);
         }
     }
 }
+

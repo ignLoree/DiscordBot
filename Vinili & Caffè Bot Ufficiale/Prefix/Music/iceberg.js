@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
@@ -261,11 +262,11 @@ module.exports = {
   async execute(message, args) {
     await message.channel.sendTyping();
     if (!canvasModule) {
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Il modulo canvas non è installato. Installa 'canvas' per usare .iceberg.")
+            .setDescription("<:vegax:1443934876440068179> Il modulo canvas non Ã¨ installato. Installa 'canvas' per usare .iceberg.")
         ]
       });
     }
@@ -296,7 +297,7 @@ module.exports = {
       });
       const artists = data?.topartists?.artist || [];
       if (!artists.length) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -313,7 +314,7 @@ module.exports = {
       const periodLabel = formatPeriodLabel(options.period, options.periodLabel);
       const imageBuffer = await renderIcebergImage(title, periodLabel, rows);
       if (!imageBuffer) {
-        return message.channel.send({
+        return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
               .setColor("Red")
@@ -323,11 +324,11 @@ module.exports = {
       }
 
       const attachment = new AttachmentBuilder(imageBuffer, { name: "iceberg.png" });
-      return message.channel.send({ files: [attachment] });
+      return safeChannelSend(message.channel, { files: [attachment] });
     } catch (error) {
       if (handleLastfmError(message, error)) return;
       global.logger.error(error);
-      return message.channel.send({
+      return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
@@ -337,3 +338,5 @@ module.exports = {
     }
   }
 };
+
+

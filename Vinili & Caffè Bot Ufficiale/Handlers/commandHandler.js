@@ -42,8 +42,8 @@ module.exports = (client) => {
         const statusMap = new Map();
         client.commandArray = [];
         const disabledCommands = Array.isArray(config.disabledCommands)
-            ? config.disabledCommands
-            : [];
+            ? new Set(config.disabledCommands)
+            : new Set();
 
         for (const folder of commandFolders) {
             const commandFiles = fs
@@ -78,7 +78,7 @@ module.exports = (client) => {
                     const commandType = command.data?.type ?? 1;
                     client.commands.set(`${command.data.name}:${commandType}`, command);
 
-                    const isDisabled = disabledCommands.includes(command.data.name);
+                    const isDisabled = disabledCommands.has(command.data.name);
                     if (isDisabled) {
                         statusMap.set(key, "Disabilitato");
                     }

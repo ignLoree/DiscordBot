@@ -1,3 +1,4 @@
+﻿const { safeReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 
 const getDevIds = (client) => {
@@ -31,8 +32,8 @@ module.exports = {
   async execute(interaction, client) {
     const devIds = getDevIds(client);
     if (!devIds.includes(interaction.user.id)) {
-      return interaction.reply({
-        content: "<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.",
+      return safeReply(interaction, {
+        content: "<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo al developer del bot.",
         flags: 1 << 6
       });
     }
@@ -65,3 +66,4 @@ module.exports = {
     await interaction.showModal(modal);
   }
 };
+

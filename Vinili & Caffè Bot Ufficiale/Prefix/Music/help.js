@@ -1,3 +1,4 @@
+﻿const { safeChannelSend } = require('../../Utils/Moderation/message');
 const LastFmUser = require("../../Schemas/LastFm/lastFmSchema");
 const { buildOverviewEmbed, buildHelpComponents } = require("../../Utils/Help/prefixHelpView");
 
@@ -28,7 +29,7 @@ module.exports = {
       userId: message.author.id
     });
 
-    const sent = await message.channel.send({ embeds: [embed], components });
+    const sent = await safeChannelSend(message.channel, { embeds: [embed], components });
     if (!message.client.prefixHelpStates) {
       message.client.prefixHelpStates = new Map();
     }
@@ -38,7 +39,7 @@ module.exports = {
       prefixes,
       color,
       lastFmUsername,
-      commandAliases: buildCommandAliases(client),
+      commandAliases: getCommandAliases(client),
       selectedTrackCommand: null,
       selectedCategory: "general",
       expiresAt: Date.now() + 30 * 60 * 1000
@@ -46,13 +47,18 @@ module.exports = {
   }
 };
 
-function buildCommandAliases(client) {
+function getCommandAliases(client) {
+  const size = client?.pcommands?.size || 0;
+  const cached = client._prefixMusicAliasesCache;
+  if (cached && cached.size === size && cached.aliases) return cached.aliases;
   const commandAliases = {};
   for (const command of client.pcommands.values()) {
     if (!command?.name || String(command.folder || "").toLowerCase() !== "music") continue;
     commandAliases[command.name] = Array.isArray(command.aliases) ? command.aliases : [];
   }
+  client._prefixMusicAliasesCache = { aliases: commandAliases, size };
   return commandAliases;
 }
+
 
 

@@ -10,7 +10,8 @@ function getCooldownMs(client) {
 async function sendReminder(client, guildId) {
     const disboard = client?.config2?.disboard;
     if (!disboard?.reminderChannelId) return;
-    const channel = await client.channels.fetch(disboard.reminderChannelId).catch(() => null);
+    const channel = client.channels.cache.get(disboard.reminderChannelId)
+        || await client.channels.fetch(disboard.reminderChannelId).catch(() => null);
     if (!channel) return;
     const embedColor = client?.config2?.embedInfo || "#6f4e37";
     await channel.send({

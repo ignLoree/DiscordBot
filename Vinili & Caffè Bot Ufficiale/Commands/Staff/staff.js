@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
@@ -5,7 +6,7 @@ const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('staff')
-        .setDescription('Gestisci lo staff di Vinili & Caffè ')
+        .setDescription('Gestisci lo staff di Vinili & CaffÃ¨ ')
         .addSubcommand(command =>
             command.setName('pex')
                 .setDescription(`Pexa un utente.`)
@@ -62,8 +63,8 @@ module.exports = {
                                 .setDescription('Ore trascorse in vocale in una settimana.')
                                 .setRequired(true))
                         .addStringOption(option =>
-                            option.setName('grado_attività')
-                                .setDescription('Seleziona l\'attività avuta durante la settimana.')
+                            option.setName('grado_attivitÃ ')
+                                .setDescription('Seleziona l\'attivitÃ  avuta durante la settimana.')
                                 .setRequired(true)
                                 .addChoices(
                                     { name: 'Non classificato', value: 'Limiti non rispettati' },
@@ -81,9 +82,9 @@ module.exports = {
                                 .setRequired(true)
                                 .addChoices(
                                     { name: 'Non classificato', value: 'Solo valutazioni negative e 0 positive' },
-                                    { name: 'Insufficiente', value: 'Più valutazioni negative che positive' },
+                                    { name: 'Insufficiente', value: 'PiÃ¹ valutazioni negative che positive' },
                                     { name: 'Sufficiente', value: 'Valutazioni equivalenti/Nessuna valutazione' },
-                                    { name: 'Discreto', value: 'Più valutazioni positive che negative' },
+                                    { name: 'Discreto', value: 'PiÃ¹ valutazioni positive che negative' },
                                     { name: 'Ottimo', value: 'Minimo 3 valutazioni positive e 0 negative' },
                                 )
                         )
@@ -132,7 +133,7 @@ module.exports = {
         const allowedRoles = ['1442568894349840435']
         const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
         if (!hasAllowedRole && !interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)) {
-            return await interaction.editReply({
+            return await safeEditReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -146,14 +147,14 @@ module.exports = {
                 const utentee = interaction.options.getUser('user');
                 const reason = interaction.options.getString('motivo');
                 const member = await interaction.guild.members.fetch(utentee.id).catch(() => null);
-                if (!member) return await interaction.editReply({ embeds: [errorEmbed], flags: 1 << 6 });
+                if (!member) return await safeEditReply(interaction, { embeds: [errorEmbed], flags: 1 << 6 });
                 const ruoloPrecedente = interaction.options.getRole('ruolo_precedente');
                 const ruoloSuccessivo = interaction.options.getRole('ruolo_successivo');
                 const staffchat = interaction.guild.channels.cache.get('1442569260059725844');
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (interaction.user.id === utentee.id) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription('<:vegax:1443934876440068179> Non puoi usare questo comando su te stesso!')
@@ -163,10 +164,10 @@ module.exports = {
                     });
                 }
                 if (member.roles.cache.has(ruoloSuccessivo.id)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} ha già il ruolo che gli vuoi aggiungere.`)
+                                .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} ha giÃ  il ruolo che gli vuoi aggiungere.`)
                                 .setColor("#E74C3C")
                         ],
                         flags: 1 << 6
@@ -177,10 +178,10 @@ module.exports = {
                     await pmchannel.send({
                         content: `
 ${utentee}
-# Benvenutə nei Partner Manager <:partneredserverowner:1443651871125409812>
+# BenvenutÉ™ nei Partner Manager <:partneredserverowner:1443651871125409812>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569199229730836>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
+__Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
                 if (ruoloSuccessivo.id === '1442568904311570555') {
@@ -188,12 +189,12 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     await staffchat.send({
                         content: `
 ${utentee}
-# Benvenutə nello staff <:discordstaff:1443651872258003005>
+# BenvenutÉ™ nello staff <:discordstaff:1443651872258003005>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569237142044773>
 <:dot:1443660294596329582> <#1442569239063167139>
 <:dot:1443660294596329582> <#1442569243626307634>
-__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
+__Per qualsiasi cosa l'High Staff Ã¨ disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
                 if (ruoloSuccessivo.id === '1442568901887000618') {
@@ -218,7 +219,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 if (ruoloSuccessivo.id === '1442568886988963923') {
                     await member.roles.remove('1442568889052430609');
                 }
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -247,11 +248,11 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 const newRole = interaction.options.getRole('ruolo_successivo');
                 const reason = interaction.options.getString('motivo');
                 const member = await interaction.guild.members.fetch(utentee.id).catch(() => null);
-                if (!member) return await interaction.editReply({ embeds: [errorEmbed], flags: 1 << 6 });
+                if (!member) return await safeEditReply(interaction, { embeds: [errorEmbed], flags: 1 << 6 });
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (interaction.user.id === utentee.id) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription('<:vegax:1443934876440068179> Non puoi usare questo comando su te stesso!')
@@ -261,7 +262,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     });
                 }
                 if (!member.roles.cache.has(oldRole.id)) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:attentionfromvega:1443651874032062505> L'utente ${utentee} non ha il ruolo che gli vuoi togliere.`)
@@ -306,7 +307,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     await member.roles.remove('1442568894349840435');
                 }
                 await StaffModel.deleteMany({ userId: utentee.id });
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -345,17 +346,17 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 await Staff.save();
                 const warnstaff = new EmbedBuilder()
                     .setAuthor({ name: `Warn eseguito da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                    .setTitle(`<a:laydowntorest:1444006796661358673>・**__WARN STAFF__** \`#${Staff.warnCount}\``)
+                    .setTitle(`<a:laydowntorest:1444006796661358673>ãƒ»**__WARN STAFF__** \`#${Staff.warnCount}\``)
                     .setThumbnail(`${utentee.displayAvatarURL()}`)
                     .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee}
                         <:pinnednew:1443670849990430750> __${reason}__
                         <a:loading:1443934440614264924> **ID Valutazione** __\`${Staff.idCount}\`__`)
                     .setColor('#6f4e37')
-                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
+                    .setFooter({ text: `Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 if (warnChannel) {
                     await warnChannel.send({ content: `${utentee}`, embeds: [warnstaff] });
                 }
-                await interaction.editReply({
+                await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -375,7 +376,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const azione = interaction.options.getString('azione');
                     const messaggi = interaction.options.getString('messaggi');
                     const oreInVoc = interaction.options.getString('ore');
-                    const grado_attività = interaction.options.getString('grado_attività');
+                    const grado_attivitÃ  = interaction.options.getString('grado_attivitÃ ');
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = '1442568910070349985';
@@ -386,7 +387,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     ];
                     const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                     if (!hasAllowedRole) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -396,7 +397,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         });
                     }
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:attentionfromvega:1443651874032062505> Puoi selezionare solo uno staffer con il ruolo specificato.')
@@ -406,7 +407,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         });
                     }
                     if (interaction.user.id === staffer.id) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:vegax:1443934876440068179> Non puoi usare questo comando su te stesso!')
@@ -421,12 +422,12 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:dot:1443660294596329582> **Ruolo:** __${ruolo}__
 <:dot:1443660294596329582> **Messaggi in una settimana:** __${messaggi}__
 <:dot:1443660294596329582> **Ore in una settimana:** __${oreInVoc}__
-<:dot:1443660294596329582> **Attività:** __${grado_attività}__
+<:dot:1443660294596329582> **AttivitÃ :** __${grado_attivitÃ }__
 <:dot:1443660294596329582> **Condotta:** __${grado_condotta}__
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`
                     });
-                    await interaction.editReply({
+                    await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -452,7 +453,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     ];
                     const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
                     if (!hasAllowedRole) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
@@ -462,7 +463,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         });
                     }
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:attentionfromvega:1443651874032062505> Puoi selezionare solo uno staffer con il ruolo specificato.')
@@ -472,7 +473,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         });
                     }
                     if (interaction.user.id === staffer.id) {
-                        return await interaction.editReply({
+                        return await safeEditReply(interaction, {
                             embeds: [
                                 new EmbedBuilder()
                                     .setDescription('<:vegax:1443934876440068179> Non puoi usare questo comando su te stesso!')
@@ -488,7 +489,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`
                     });
-                    await interaction.editReply({
+                    await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -502,3 +503,4 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         }
     }
 }
+

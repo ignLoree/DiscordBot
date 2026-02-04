@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, ChannelType, EmbedBuilder } = require("discord.js");
 
 module.exports = {
@@ -35,10 +36,11 @@ module.exports = {
                         )
                         .setFooter({ text: `ID: ${guild.id} | Server Creato il` })
                         .setTimestamp(new Date(guild.createdAt))
-                    await interaction.editReply({ embeds: [embed] });
+                    await safeEditReply(interaction, { embeds: [embed] });
                 } catch (error) {
                     global.logger.error(error);
                 };
         }
     }
 }
+

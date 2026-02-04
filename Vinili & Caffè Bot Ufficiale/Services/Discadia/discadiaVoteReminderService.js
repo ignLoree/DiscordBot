@@ -46,7 +46,8 @@ async function sendDueReminders(client) {
     for (const doc of due) {
         if (!doc?.userId || !doc?.guildId) continue;
         if (now - new Date(doc.lastVoteAt).getTime() < cooldownMs) continue;
-        const user = await client.users.fetch(doc.userId).catch(() => null);
+        const user = client.users.cache.get(doc.userId)
+            || await client.users.fetch(doc.userId).catch(() => null);
         if (!user) continue;
         try {
             await user.send(message);

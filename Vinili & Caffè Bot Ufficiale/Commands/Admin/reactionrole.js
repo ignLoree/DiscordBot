@@ -1,3 +1,4 @@
+﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, PermissionFlagsBits } = require('discord.js')
 const reaction = require('../../Schemas/ReactionRole/reactionroleSchema')
 
@@ -51,7 +52,7 @@ module.exports = {
         })
         const data = await reaction.findOne({ Guild: guild.id, Message: message.id, Emoji: emoji });
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await interaction.editReply({
+        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
             embed: [
                 new EmbedBuilder()
                     .setColor('Red')
@@ -59,7 +60,7 @@ module.exports = {
             ], flags: 1 << 6
         })
 
-        if (e) return await interaction.editReply({
+        if (e) return await safeEditReply(interaction, {
             embed: [
                 new EmbedBuilder()
                     .setColor('Red')
@@ -70,11 +71,11 @@ module.exports = {
         switch (sub) {
             case 'add':
                 if (data) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embed: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription(`<:vegax:1443934876440068179> Hai già  una reaction attiva con questa ${emoji} su questo messaggio.`)
+                                .setDescription(`<:vegax:1443934876440068179> Hai giÃ   una reaction attiva con questa ${emoji} su questo messaggio.`)
                         ], flags: 1 << 6
                     })
                 } else {
@@ -91,12 +92,12 @@ module.exports = {
                         .setDescription(`<:vegacheckmark:1443666279058772028> Ho aggiunto la reaction role al messaggio ${message.url} con l'emoji ${emoji} e il ruolo ${role}`)
                     
                     await message.react(emoji).catch(err => { });
-                    await interaction.editReply({ embeds: [embed], flags: 1 << 6 });
+                    await safeEditReply(interaction, { embeds: [embed], flags: 1 << 6 });
                 }
                 break;
             case 'remove':
                 if (!data) {
-                    return await interaction.editReply({
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
@@ -115,8 +116,9 @@ module.exports = {
                         .setColor('#6f4e37')
                         .setDescription(`<:vegacheckmark:1443666279058772028> Ho rimosso la reaction role al messaggio ${message.url} con l'emoji ${emoji}`)
                     
-                    await interaction.editReply({ embeds: [embed], flags: 1 << 6 });
+                    await safeEditReply(interaction, { embeds: [embed], flags: 1 << 6 });
                 }
         }
     }
 }
+
