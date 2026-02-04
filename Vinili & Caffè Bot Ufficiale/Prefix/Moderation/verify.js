@@ -35,7 +35,9 @@ module.exports = {
     const collector = promptMsg.createMessageComponentCollector({ filter, time: 10_000, max: 1 });
     collector.on('collect', async (i) => {
       if (i.customId === noId) {
-        await i.update({ embeds: [buildCancelledEmbed()], components: [] });
+        try {
+          await i.update({ embeds: [buildCancelledEmbed()], components: [] });
+        } catch {}
         return;
       }
       const success = [];
@@ -55,7 +57,11 @@ module.exports = {
           fail.push(displayName);
         }
       }
-      await i.deferUpdate();
+      try {
+        if (!i.deferred && !i.replied) {
+          await i.deferUpdate();
+        }
+      } catch {}
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});
       const resultMsg = await message.channel.send({
@@ -79,12 +85,12 @@ function formatUserList(list) {
   const shown = list.slice(0, maxVisible);
   const lines = shown.map((entry, index) => (
     index === 0
-      ? `\`${entry}\``
-      : `<:space:1461733157840621608> \`${entry}\``
+      ? `<:space:1461733157840621608> ${entry}`
+      : `<:space:1461733157840621608> ${entry}`
   ));
   const remaining = list.length - shown.length;
   if (remaining > 0) {
-    lines.push(`<:space:1461733157840621608> +${remaining} users`);
+    lines.push(`<:space:1461733157840621608> \`+${remaining} users\``);
   }
   return lines.join('\n');
 }
