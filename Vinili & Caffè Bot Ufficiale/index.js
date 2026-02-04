@@ -197,7 +197,6 @@ client.on("clientReady", async (client) => {
                 global.logger.error("Errore durante il post-restart:", err);
             }
         }
-        }
     } catch (error) {
         const detail = error?.stack || error?.message || error;
         client.logs.error(`[STATUS] Error while loading bot status.`, detail);
