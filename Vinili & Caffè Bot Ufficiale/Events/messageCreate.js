@@ -1,6 +1,4 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
@@ -12,7 +10,6 @@ const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderSer
 const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
-const { recordMessage } = require('../Services/Stats/statsService');
 
 const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
@@ -302,11 +299,6 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
-        try {
-            await recordMessage(message);
-        } catch (error) {
-            logEventError(client, 'STATS MESSAGE ERROR', error);
-        }
         try {
             await handleAfk(message);
         } catch (error) {

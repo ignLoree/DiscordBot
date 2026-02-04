@@ -14,6 +14,7 @@ const triggerFiles = fs.existsSync("./Triggers")
 const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
 const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
+const reactions = require('./Schemas/ReactionRole/reactionroleSchema.js')
 const child_process = require('child_process');
 let client;
 
@@ -71,7 +72,7 @@ const pullLatest = () => {
         const branch = process.env.GIT_BRANCH || 'main';
         child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
         child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
-    } catch {}
+    } catch { }
 };
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -153,6 +154,7 @@ setInterval(async () => {
         global.logger.error('[RELOAD] Failed to process reload flag:', err);
     }
 }, 5000);
+
 client.on("clientReady", async (client) => {
     try {
         client.user.setStatus(client.config2.status);
@@ -241,6 +243,7 @@ if (shouldUseCluster) {
         global.logger.error('[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.', error);
     });
 })();
+
 const logCommandUsage = async (client, channelId, serverName, user, userId, content, userAvatarUrl) => {
     if (!channelId) return;
     const channel = await getChannelSafe(client, channelId);
@@ -256,6 +259,7 @@ const logCommandUsage = async (client, channelId, serverName, user, userId, cont
         .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: userAvatarUrl });
     await channel.send({ embeds: [embed] });
 };
+
 client.on("messageDelete", async message => {
     if (!message) return;
     let msg = message;
@@ -280,6 +284,7 @@ client.on("messageDelete", async message => {
             : null
     });
 });
+
 client.on(Events.ThreadCreate, async thread => {
     try {
         if (thread.parent.type !== ChannelType.GuildForum) return;
@@ -292,6 +297,7 @@ client.on(Events.ThreadCreate, async thread => {
     }
 },
 )
+
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction) return;
     if (!interaction.isChatInputCommand()) return;
@@ -315,6 +321,7 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     };
 });
+
 client.on(Events.MessageCreate, async message => {
     if (!message || message.author?.bot) return;
     const content = message.content || '';
@@ -342,7 +349,7 @@ client.on(Events.MessageCreate, async message => {
         }
     };
 });
-const reactions = require('./Schemas/ReactionRole/reactionroleSchema.js')
+
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch();
     if (reaction.partial) await reaction.fetch();
@@ -361,6 +368,7 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
         return;
     }
 });
+
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
     if (reaction.message.partial) await reaction.message.fetch();
     if (reaction.partial) await reaction.fetch();
@@ -379,6 +387,7 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
         return;
     }
 });
+
 const SERVER_ID = '1329080093599076474';
 const CHANNEL_ID = '1442569235426705653';
 let staffListMessageId = null;
@@ -448,6 +457,7 @@ client.on(Events.GuildMemberUpdate, async (membroVecchio, membroNuovo) => {
     }
 }
 )
+
 client.on('error', (error) => {
     global.logger.error("[CLIENT ERROR]", error);
 });
