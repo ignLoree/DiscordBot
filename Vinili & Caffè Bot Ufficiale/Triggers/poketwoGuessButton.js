@@ -4,7 +4,7 @@ const axios = require('axios');
 const SPAWN_RATE_CSV_URL = 'https://gist.githubusercontent.com/WitherredAway/1bc525b05f4cd52555a2a18c331e0cf9/raw/pokemon_chances.csv';
 let spawnRateCache = null;
 let spawnRateFetchedAt = 0;
-const spawnRateTtlMs = 1000 * 60 * 60 * 12; // 12h
+const spawnRateTtlMs = 1000 * 60 * 60 * 12;
 
 function normalizePokeName(name) {
     return String(name || '')

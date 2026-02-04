@@ -2,9 +2,9 @@ const ExpUser = require('../../Schemas/Community/expUserSchema');
 const GlobalSettings = require('../../Schemas/Community/globalSettingsSchema');
 
 const TIME_ZONE = 'Europe/Rome';
-const MESSAGE_EXP = 1;
-const VOICE_EXP_PER_MINUTE = 2;
-const DEFAULT_MULTIPLIER = 2;
+const MESSAGE_EXP = 2;
+const VOICE_EXP_PER_MINUTE = 5;
+const DEFAULT_MULTIPLIER = 1;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const multiplierCache = new Map();
 const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
@@ -16,6 +16,11 @@ const LEVEL_ROLE_MAP = new Map([
   [50, '1442568932136587297'],
   [70, '1442568931326824488'],
   [100, '1442568929930379285']
+]);
+const ROLE_MULTIPLIERS = new Map([
+  ['1442568950805430312', 3],
+  ['1442568916114346096', 3],
+  ['1329497467481493607', 2]
 ]);
 
 function pad2(value) {
@@ -57,19 +62,21 @@ function getCurrentWeekKey() {
   return getIsoWeekKey(new Date());
 }
 
+function roundToNearest50(value) {
+  return Math.round(value / 50) * 50;
+}
+
 function getLevelInfo(totalExp) {
   const exp = Math.max(0, Math.floor(Number(totalExp || 0)));
   let level = 0;
-  let totalNeeded = 0;
-  let need = 100;
-  while (exp >= totalNeeded + need) {
-    totalNeeded += need;
+  let nextThreshold = 100;
+  while (exp >= nextThreshold) {
     level += 1;
-    need += 50;
+    const step = 90 + Math.floor(level * 12) + (level % 4) * 15;
+    nextThreshold = roundToNearest50(nextThreshold + Math.max(110, step));
   }
-  const nextLevelExp = totalNeeded + need;
-  const remainingToNext = Math.max(0, nextLevelExp - exp);
-  return { level, nextLevelExp, remainingToNext };
+  const remainingToNext = Math.max(0, nextThreshold - exp);
+  return { level, nextLevelExp: nextThreshold, remainingToNext };
 }
 
 function ensureWeekly(doc, now) {
@@ -80,7 +87,7 @@ function ensureWeekly(doc, now) {
   }
 }
 
-async function addExp(guildId, userId, amount, applyMultiplier = false) {
+async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAmountOverride = null) {
   if (!guildId || !userId || !Number.isFinite(amount)) return null;
   const now = new Date();
   let doc = await ExpUser.findOne({ guildId, userId });
@@ -90,14 +97,28 @@ async function addExp(guildId, userId, amount, applyMultiplier = false) {
   ensureWeekly(doc, now);
   const multiplier = applyMultiplier ? await getGlobalMultiplier(guildId) : 1;
   const effective = Math.max(0, Math.floor(amount)) * multiplier;
-  if (effective === 0) return doc;
+  const weeklyEffective = weeklyAmountOverride !== null
+    ? Math.max(0, Math.floor(Number(weeklyAmountOverride)))
+    : effective;
+  if (effective === 0 && weeklyEffective === 0) return doc;
   const prevLevel = getLevelInfo(doc.totalExp).level;
   doc.totalExp = Number(doc.totalExp || 0) + effective;
-  doc.weeklyExp = Number(doc.weeklyExp || 0) + effective;
+  doc.weeklyExp = Number(doc.weeklyExp || 0) + weeklyEffective;
   const levelInfo = getLevelInfo(doc.totalExp);
   doc.level = levelInfo.level;
   await doc.save();
   return { doc, prevLevel, levelInfo };
+}
+
+function getRoleMultiplier(member) {
+  if (!member?.roles?.cache) return 1;
+  let multi = 1;
+  for (const [roleId, value] of ROLE_MULTIPLIERS.entries()) {
+    if (member.roles.cache.has(roleId)) {
+      multi *= value;
+    }
+  }
+  return multi;
 }
 
 function buildLevelUpEmbed(member, level) {
@@ -151,7 +172,19 @@ async function sendPerksLevelMessage(guild, member, level) {
 
 async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
   if (!guild || !userId) return null;
-  const result = await addExp(guild.id, userId, amount, applyMultiplier);
+  let effectiveAmount = amount;
+  if (applyMultiplier) {
+    const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
+    const globalMulti = await getGlobalMultiplier(guild.id);
+    const roleMulti = getRoleMultiplier(member);
+    effectiveAmount = Number(amount || 0) * globalMulti * roleMulti;
+  }
+  let weeklyAmount = null;
+  if (applyMultiplier) {
+    const globalMulti = await getGlobalMultiplier(guild.id);
+    weeklyAmount = Number(amount || 0) * globalMulti;
+  }
+  const result = await addExp(guild.id, userId, effectiveAmount, false, weeklyAmount);
   if (!result || !result.levelInfo) return result;
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
@@ -234,4 +267,16 @@ async function getUserRanks(guildId, userId) {
   };
 }
 
-module.exports = { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, addExp, addExpWithLevel, getUserExpStats, getUserRanks, getLevelInfo, getGlobalMultiplier, setGlobalMultiplier, getCurrentWeekKey };
+module.exports = {
+  MESSAGE_EXP,
+  VOICE_EXP_PER_MINUTE,
+  addExp,
+  addExpWithLevel,
+  getUserExpStats,
+  getUserRanks,
+  getLevelInfo,
+  getGlobalMultiplier,
+  setGlobalMultiplier,
+  getRoleMultiplier,
+  getCurrentWeekKey
+};

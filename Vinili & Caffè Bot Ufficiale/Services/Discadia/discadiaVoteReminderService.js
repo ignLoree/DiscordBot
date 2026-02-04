@@ -56,7 +56,6 @@ async function sendDueReminders(client) {
                 { $set: { lastRemindedAt: new Date() } }
             );
         } catch {
-            // ignore DM failures
         }
     }
 }

@@ -8,13 +8,13 @@ const DEFAULT_MODEL = 'skshmjn/Pokemon-classifier-gen9-1025';
 const lastGuessByImage = new Map();
 const inFlightByImage = new Map();
 const cacheKeyVersion = 'v9';
-const cacheTtlMs = 1000 * 60 * 10; // 10 min
-const rateLimitMs = 1000 * 6; // 1 request every 6s per channel
+const cacheTtlMs = 1000 * 60 * 10;
+const rateLimitMs = 1000 * 6;
 const lockTtlMs = 1000 * 60 * 10;
 const spriteCache = new Map();
 const flagImageCache = new Map();
 const altNameCache = new Map();
-const altNameTtlMs = 1000 * 60 * 60 * 12; // 12h
+const altNameTtlMs = 1000 * 60 * 60 * 12;
 let fontRegistered = false;
 
 function isPoketwoSpawn(message, botId) {

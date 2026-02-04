@@ -120,15 +120,13 @@ module.exports = {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:VC_BlackPin:1448687216871084266> Per **salire** di livello e **ottenere** i ruoli bisogna **messaggiare** in <#1442569130573303898> e stare in **vocale** nei canali dei server. <@339254240012664832> vi avviserà quando salirete di **livello**.
-                
-                <:dot:1443660294596329582> <@&1442568937303707789>
-                    <:VC_Reply:1468262952934314131> Cambiarsi il **__nick__**
 
                 <:dot:1443660294596329582> <@&1442568936423034940>
-                    <:VC_Reply:1468262952934314131> Possibilità di **aggiungere** una __reazione__ ai messaggi
+                    <:VC_DoubleReply:1468713981152727120> Cambiarsi il **__nick__**
+                    <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
 
                 <:dot:1443660294596329582> <@&1442568934510297226>
-                    <:VC_DoubleReply:1468713981152727120> Inviare **media** in **__ogni__ chat**
+                    <:VC_DoubleReply:1468713981152727120> Possibilità di **aggiungere** una __reazione__ ai messaggi
                     <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in qualsiasi chat
 
                 <:dot:1443660294596329582> <@&1442568933591748688>

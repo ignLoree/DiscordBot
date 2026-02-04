@@ -10,6 +10,7 @@ const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderSer
 const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
+const { handleChatReminder } = require('../Services/Community/chatReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 
@@ -130,8 +131,15 @@ function getPrefixOverrideMap(client) {
     if (cached && cached.size === size && cached.map) return cached.map;
     const map = new Map();
     for (const cmd of client.pcommands.values()) {
-        if (cmd?.prefixOverride) {
-            map.set(cmd.prefixOverride, cmd);
+        if (!cmd?.prefixOverride) continue;
+        if (!map.has(cmd.prefixOverride)) {
+            map.set(cmd.prefixOverride, new Map());
+        }
+        map.get(cmd.prefixOverride).set(cmd.name, cmd);
+        if (Array.isArray(cmd.aliases)) {
+            for (const alias of cmd.aliases) {
+                map.get(cmd.prefixOverride).set(alias, cmd);
+            }
         }
     }
     client._prefixOverrideCache = { map, size };
@@ -307,6 +315,11 @@ module.exports = {
             logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
         }
         try {
+            await handleChatReminder(message);
+        } catch (error) {
+            logEventError(client, 'CHAT REMINDER ERROR', error);
+        }
+        try {
             await handleMinigameMessage(message, client);
         } catch (error) {
             logEventError(client, 'MINIGAME ERROR', error);
@@ -332,11 +345,11 @@ module.exports = {
         let overridePrefix = null;
 
         const overrideMap = getPrefixOverrideMap(client);
-        for (const [prefix, cmd] of overrideMap.entries()) {
+        for (const prefix of overrideMap.keys()) {
             if (message.content.startsWith(prefix)) {
-                overrideCommand = cmd;
-                overridePrefix = prefix;
-                break;
+                if (!overridePrefix || prefix.length > overridePrefix.length) {
+                    overridePrefix = prefix;
+                }
             }
         }
         try {
@@ -390,6 +403,10 @@ module.exports = {
                 await message.channel.send(buildWelcomePayload());
                 return;
             }
+        }
+        if (overridePrefix) {
+            const prefixCommands = overrideMap.get(overridePrefix);
+            overrideCommand = prefixCommands?.get(cmd) || null;
         }
         let command = overrideCommand
             || client.pcommands.get(cmd)

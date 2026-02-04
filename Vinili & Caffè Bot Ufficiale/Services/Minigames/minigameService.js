@@ -6,6 +6,7 @@ const { addExpWithLevel } = require('../Community/expService');
 const activeGames = new Map();
 const pendingGames = new Map();
 const loopState = new WeakSet();
+const forcedRunState = new Map();
 
 const REWARD_CHANNEL_ID = "1442569138114662490";
 const EXP_REWARDS = [
@@ -93,6 +94,43 @@ function isWithinAllowedWindow(now, start, end) {
   const endMinutes = (end?.hour ?? 23) * 60 + (end?.minute ?? 45);
   const current = now.getHours() * 60 + now.getMinutes();
   return current >= startMinutes && current <= endMinutes;
+}
+
+function getRomeParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Rome',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute)
+  };
+}
+
+function getDateKey(now) {
+  const { year, month, day } = getRomeParts(now);
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function shouldForceRun(now, hour, minute) {
+  const rome = getRomeParts(now);
+  if (rome.hour !== hour || rome.minute !== minute) return false;
+  const key = `${getDateKey(now)}_${hour}:${minute}`;
+  if (forcedRunState.get(key)) return false;
+  forcedRunState.set(key, true);
+  return true;
 }
 
 function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
@@ -430,22 +468,21 @@ async function hasRecentActivity(channel, windowMs, minMessages) {
   return false;
 }
 
-async function maybeStartRandomGame(client) {
+async function maybeStartRandomGame(client, force = false) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return;
   if (!cfg.channelId) return;
   if (activeGames.has(cfg.channelId)) return;
 
   const now = new Date();
-  const windowStart = cfg?.timeWindow?.start;
-  const windowEnd = cfg?.timeWindow?.end;
-  if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
+  if (!force) {
+    const windowStart = cfg?.timeWindow?.start;
+    const windowEnd = cfg?.timeWindow?.end;
+    if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
+  }
 
   const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
   if (!channel) return;
-
-  const hasActivity = await hasRecentActivity(channel, cfg.activityWindowMs, cfg.minMessages);
-  if (!hasActivity) return;
 
   const pending = pendingGames.get(cfg.channelId);
   const gameType = pending?.type || 'guessNumber';
@@ -470,13 +507,23 @@ function startMinigameLoop(client) {
   const tick = async () => {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
+    const now = new Date();
+    const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
+    if (shouldForce) {
+      const available = getAvailableGameTypes(cfg);
+      if (available.length === 0) return;
+      const type = available[randomBetween(0, available.length - 1)];
+      pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+      await maybeStartRandomGame(client, true);
+      return;
+    }
     if (!pendingGames.has(cfg.channelId)) {
       const available = getAvailableGameTypes(cfg);
       if (available.length === 0) return;
       const type = available[randomBetween(0, available.length - 1)];
       pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     }
-    await maybeStartRandomGame(client);
+    await maybeStartRandomGame(client, false);
   };
 
   const cfg = getConfig(client);
