@@ -5,6 +5,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 const RESTART_FLAG = 'restart.json';
+const RESTART_NOTIFY_PREFIX = 'restart_notify_';
 
 function pullLatest() {
     try {
@@ -13,6 +14,13 @@ function pullLatest() {
         const branch = process.env.GIT_BRANCH || 'main';
         child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
         child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
+    } catch {}
+}
+
+function writeRestartNotify(target, payload) {
+    try {
+        const flagPath = path.resolve(process.cwd(), '..', `${RESTART_NOTIFY_PREFIX}${target}.json`);
+        fs.writeFileSync(flagPath, JSON.stringify(payload, null, 2), 'utf8');
     } catch {}
 }
 
@@ -56,6 +64,9 @@ module.exports = {
             }
             const isOfficial = process.cwd().toLowerCase().includes('ufficiale');
             const currentTarget = isOfficial ? 'official' : 'dev';
+            const requestedAt = new Date().toISOString();
+            const requestId = `${Date.now()}_${interaction.id || interaction.user.id}`;
+            const channelId = interaction.channelId || null;
             if (scope === 'full') {
                 const targets = target === 'both' ? ['official', 'dev'] : [target];
                 const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
@@ -63,9 +74,19 @@ module.exports = {
                     targets,
                     respectDelay: target === 'both',
                     by: interaction.user.id,
-                    at: new Date().toISOString()
+                    at: requestedAt
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto.`, flags: 1 << 6 });
+                for (const t of targets) {
+                    writeRestartNotify(t, {
+                        channelId,
+                        by: interaction.user.id,
+                        at: requestedAt,
+                        scope: 'full',
+                        target: t,
+                        requestId
+                    });
+                }
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -75,11 +96,19 @@ module.exports = {
                     scope,
                     gitPull: true,
                     by: interaction.user.id,
-                    at: new Date().toISOString()
+                    at: requestedAt,
+                    channelId,
+                    requestId,
+                    target: otherTarget
                 }, null, 2), 'utf8');
+                const start = Date.now();
                 pullLatest();
                 await interaction.client.reloadScope(scope);
-                return safeReply(interaction, { content: `Reload ${scope} completato per entrambi.`, flags: 1 << 6 });
+                const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
+                return safeReply(interaction, {
+                    content: `Reload ${scope} completato su ${currentTarget} in ${elapsed}s. Conferma per ${otherTarget} in arrivo qui.`,
+                    flags: 1 << 6
+                });
             }
 
             if (target !== currentTarget) {
@@ -88,9 +117,12 @@ module.exports = {
                     scope,
                     gitPull: true,
                     by: interaction.user.id,
-                    at: new Date().toISOString()
+                    at: requestedAt,
+                    channelId,
+                    requestId,
+                    target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();
@@ -123,9 +155,11 @@ module.exports = {
                 interaction.client.handleTriggers(triggerFiles, './Triggers');
             };
 
+            const start = Date.now();
             pullLatest();
             await interaction.client.reloadScope(scope);
-            await safeReply(interaction, { content: `Reload ${scope} completato per ${target}.`, flags: 1 << 6 });
+            const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
+            await safeReply(interaction, { content: `Reload ${scope} completato per ${target} in ${elapsed}s.`, flags: 1 << 6 });
         } catch (error) {
             global.logger.error(error);
             await safeReply(interaction, { content: 'Errore durante il riavvio.', flags: 1 << 6 });

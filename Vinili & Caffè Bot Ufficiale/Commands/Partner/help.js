@@ -82,10 +82,6 @@ module.exports = {
                     slash: loadSlashCommandsFromFolder('Community'),
                     prefix: loadPrefixCommandsFromFolder('Community', prefixes)
                 },
-                Economy: {
-                    slash: loadSlashCommandsFromFolder('Economy'),
-                    prefix: loadPrefixCommandsFromFolder('Economy', prefixes)
-                },
                 Pass: {
                     slash: loadSlashCommandsFromFolder('Pass'),
                     prefix: loadPrefixCommandsFromFolder('Pass', prefixes)

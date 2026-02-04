@@ -1,2 +1,0 @@
-# DiscordBot
-Vinili & Caffè Bot

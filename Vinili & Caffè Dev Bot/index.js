@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
+﻿const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, Partials, ActivityType, ChannelType } = require(`discord.js`);
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
@@ -59,6 +59,8 @@ const isDev = __dirname.toLowerCase().includes('dev bot');
 const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
 if (envToken) client.config.token = envToken;
 if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
+const currentTarget = isDev ? 'dev' : 'official';
+const currentTargetLabel = isDev ? 'Dev' : 'Ufficiale';
 global.botClient = client;
 const pullLatest = () => {
     try {
@@ -127,11 +129,20 @@ setInterval(async () => {
     if (!fs.existsSync(flagPath)) return;
     try {
         const payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
+        if (payload?.target && payload.target !== currentTarget) return;
         fs.unlinkSync(flagPath);
         const scope = payload?.scope || 'all';
         if (payload?.gitPull) pullLatest();
         await client.reloadScope(scope);
         client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
+        if (payload?.channelId) {
+            const channel = await client.channels.fetch(payload.channelId).catch(() => null);
+            if (channel) {
+                const elapsedMs = payload?.at ? Date.now() - Date.parse(payload.at) : null;
+                const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
+                await channel.send(`<:vegacheckmark:1443666279058772028> Reload ${scope} completato su ${currentTargetLabel}${elapsed}.`);
+            }
+        }
     } catch (err) {
         global.logger.error('[RELOAD] Failed to process reload flag:', err);
     }
@@ -143,7 +154,7 @@ client.on("clientReady", async (client) => {
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "☕📀 discord.gg/viniliecaffe"
+            state: "â˜•ðŸ“€ discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
@@ -161,15 +172,31 @@ client.on("clientReady", async (client) => {
         }, {
             timezone: "Europe/Rome"
         });
-        if (fs.existsSync("./restart.json")) {
+        const restartNotifyPath = path.resolve(process.cwd(), '..', `restart_notify_${currentTarget}.json`);
+        if (fs.existsSync(restartNotifyPath)) {
+            try {
+                const data = JSON.parse(fs.readFileSync(restartNotifyPath, "utf8"));
+                const channel = data?.channelId ? await client.channels.fetch(data.channelId).catch(() => null) : null;
+                if (channel) {
+                    const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
+                    const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
+                    const by = data?.by ? ` (richiesto da <@${data.by}>)` : '';
+                    await channel.send(`<:vegacheckmark:1443666279058772028> Bot ${currentTargetLabel} riavviato con successo${elapsed}.${by}`);
+                }
+                fs.unlinkSync(restartNotifyPath);
+            } catch (err) {
+                global.logger.error("Errore durante il post-restart:", err);
+            }
+        } else if (fs.existsSync("./restart.json")) {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
                 const channel = await client.channels.fetch(data.channelID);
-                await channel.send("<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!");
+                await channel.send("<:vegacheckmark:1443666279058772028> Il bot e' stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
                 global.logger.error("Errore durante il post-restart:", err);
             }
+        }
         }
     } catch (error) {
         const detail = error?.stack || error?.message || error;
@@ -383,7 +410,7 @@ async function generateStaffListContent(guild) {
         const member_count = filteredMembers.size;
         const { emoji, number } = ROLE_EMOJIS[roleId];
         const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}・**<@&${roleId}>︲\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
+        staffListContent += `${emoji}ãƒ»**<@&${roleId}>ï¸²\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
     }
     return staffListContent;
 }
@@ -413,3 +440,4 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
+

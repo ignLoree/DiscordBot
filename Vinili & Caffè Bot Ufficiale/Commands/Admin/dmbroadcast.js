@@ -20,7 +20,13 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName("dmbroadcast")
     .setDescription("Invia un DM a tutti gli utenti (escluso staff)")
-    .setDMPermission(false),
+    .setDMPermission(false)
+    .addUserOption(option =>
+      option
+        .setName("utente")
+        .setDescription("Invia il DM solo a un utente specifico")
+        .setRequired(false)
+    ),
 
   async execute(interaction, client) {
     const devIds = getDevIds(client);
@@ -31,13 +37,15 @@ module.exports = {
       });
     }
 
+    const targetUser = interaction.options.getUser("utente");
+    const targetId = targetUser?.id;
     const modal = new ModalBuilder()
-      .setCustomId(`dm_broadcast:${interaction.user.id}`)
+      .setCustomId(`dm_broadcast:${interaction.user.id}:${targetId || "all"}`)
       .setTitle("DM Broadcast");
 
     const titleInput = new TextInputBuilder()
       .setCustomId("title")
-      .setLabel("Titolo (opzionale)")
+      .setLabel("Titolo")
       .setStyle(TextInputStyle.Short)
       .setRequired(false)
       .setMaxLength(100);
