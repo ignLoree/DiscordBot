@@ -160,8 +160,20 @@ async function handleVoteManagerMessage(message) {
     if (voteCount === null) {
         global.logger.warn('[VOTE EMBED] Vote count not found. Text:', fullText);
     }
-    const voteLabel = typeof voteCount === 'number' ? `${voteCount}°` : '';
-    const expValue = getRandomExp();
+    let expValue = getRandomExp();
+    let resolvedVoteCount = voteCount;
+    if (user?.id && message.guild?.id) {
+        try {
+            const count = await recordDiscadiaVote(message.guild.id, user.id);
+            if (typeof count === 'number') {
+                resolvedVoteCount = count;
+            }
+            if (count === 1) {
+                expValue = 250;
+            }
+        } catch {}
+    }
+    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}°` : '';
 
     const embed = new EmbedBuilder()
         .setColor('#6f4e37')
@@ -200,9 +212,6 @@ async function handleVoteManagerMessage(message) {
         global.logger.error('[VOTE EMBED] Failed to send embed:', detail);
     }
     if (sent) {
-        if (user?.id && message.guild?.id) {
-            await recordDiscadiaVote(message.guild.id, user.id).catch(() => {});
-        }
         await message.delete().catch(() => {});
     }
     return true;

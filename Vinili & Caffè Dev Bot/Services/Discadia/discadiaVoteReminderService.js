@@ -17,14 +17,16 @@ function getReminderText(client) {
 
 async function recordDiscadiaVote(guildId, userId) {
     const now = new Date();
-    await DiscadiaVoter.findOneAndUpdate(
+    const doc = await DiscadiaVoter.findOneAndUpdate(
         { guildId, userId },
         {
             $set: { lastVoteAt: now },
-            $setOnInsert: { lastRemindedAt: null }
+            $setOnInsert: { lastRemindedAt: null },
+            $inc: { voteCount: 1 }
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+    return doc?.voteCount || 1;
 }
 
 async function sendDueReminders(client) {

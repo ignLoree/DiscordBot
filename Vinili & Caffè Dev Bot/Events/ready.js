@@ -131,6 +131,25 @@ module.exports = {
         } catch (err) {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
+        try {
+            cron.schedule("30 11 * * *", async () => {
+                const channelId = "1442569130573303898";
+                const channel = client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
+                if (!channel) return;
+                const embed = new (require("discord.js").EmbedBuilder)()
+                    .setColor("#6f4e37")
+                    .setTitle("⭐ Votaci su Discadia!")
+                    .setDescription(
+                        [
+                            "La prima volta otterrai **250 EXP**, le altre volte altri exp!",
+                            "Vota qui: https://discadia.com/vote/ploshin-italia-social-active-c/",
+                        ].join("\n")
+                    );
+                await channel.send({ embeds: [embed] });
+            }, { timezone: "Europe/Rome" });
+        } catch (err) {
+            global.logger.error('[DISCADIA DAILY] Failed to schedule', err);
+        }
         if (logOnce) {
             client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
         }
