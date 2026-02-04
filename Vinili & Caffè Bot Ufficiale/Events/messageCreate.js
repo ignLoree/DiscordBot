@@ -30,6 +30,7 @@ const MEDIA_BLOCK_ROLE_IDS = [
     "1442568950805430312",
     "1442568934510297226"
 ];
+const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = "1442569056795230279";
 
 function hasMediaPermission(member) {
     return MEDIA_BLOCK_ROLE_IDS.some(roleId => member?.roles?.cache?.has(roleId));
@@ -271,14 +272,15 @@ module.exports = {
                 message.member &&
                 !message.author?.bot &&
                 isMediaMessage(message) &&
-                !hasMediaPermission(message.member)
+                !hasMediaPermission(message.member) &&
+                message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID
             ) {
                 await message.delete().catch(() => { });
                 const embed = new EmbedBuilder()
                     .setColor("#6f4e37")
                     .setDescription(
                         [
-                            `<:attentionfromvega:1443651874032062505> ➳ Ciao ${message.author}, __non hai i permessi__ per inviare **FOTO, GIF, LINK, VIDEO O AUDIO** in chat.`,
+                            `<:attentionfromvega:1443651874032062505> ➳ Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                             "",
                             "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
                             `<a:VC_Arrow:1448672967721615452> ottieni uno o più di questi ruoli: <@&1329497467481493607>, <@&1442568948271943721>, <@&1442568916114346096>, <@&1442568950805430312>, <@&1442568934510297226>.`

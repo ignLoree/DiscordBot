@@ -22,10 +22,10 @@ module.exports = {
                 `
 \`\`\`
 _ _  
-_ _      â˜•         ð“‚ƒ         **[Vinili & Caffè](https://discord.gg/viniliecaffe)**      âŸ¢  
-_ _     ð“Ž¢      **social**       âŠ¹       **italia** **chill**       à­§                                             
+_ _`` ☕ ``        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢  
+_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧                                             
                                        **gaming**                      
--# @everyone & @here _ _
+-# @everyone & @here_ _
 \`\`\`
 `,
             allowedMentions: { repliedUser: false }
