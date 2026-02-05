@@ -2,7 +2,6 @@
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
-const LastFmUser = require('../Schemas/LastFm/lastFmSchema');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Disboard/disboardReminderService');
