@@ -199,12 +199,12 @@ module.exports = {
                     : Object.entries(ROLE_MULTIPLIERS || {});
 
             const lines = entries.length
-                ? entries.map(([roleId, multi]) => `<@&${roleId}>  ➜  x${multi}`)
+                ? entries.map(([roleId, multi]) => `<@&${roleId}> <a:VC_Arrow:1448672967721615452> x${multi}`)
                 : ['Nessun moltiplicatore attivo.'];
 
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('🍀 Informazioni sui moltiplicatori')
+                .setTitle('<:VC_EXP:1468714279673925883> Informazioni sui moltiplicatori')
                 .setDescription([
                     'I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.',
                     'I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#1442569159237177385>',
@@ -215,7 +215,7 @@ module.exports = {
                     '**Nota sulla classifica settimanale:**',
                     'Gli exp che determinano la classifica settimanale non vengono influenzati dai moltiplicatori per garantire una partita tra gli utenti.',
                     '',
-                    'Puoi vedere la classifica settimanale con il comando `+classifica`'
+                    'Puoi vedere la classifica settimanale con il comando \`+classifica\`'
                 ].join('\n'))
                 .setFooter({ text: `Richiesto da: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
