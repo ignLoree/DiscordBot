@@ -535,6 +535,7 @@ async function maybeStartRandomGame(client, force = false) {
 function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
+  global.logger?.info?.('[MINIGAMES] Loop start');
 
   const runForcedCheck = async () => {
     const cfg = getConfig(client);
@@ -542,6 +543,7 @@ function startMinigameLoop(client) {
     const now = new Date();
     const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
     if (!shouldForce) return;
+    global.logger?.info?.('[MINIGAMES] Forced run triggered');
     const type = getNextGameType(cfg);
     if (!type) return;
     pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
@@ -551,6 +553,7 @@ function startMinigameLoop(client) {
   const tick = async () => {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
+    global.logger?.info?.('[MINIGAMES] Tick');
     if (!pendingGames.has(cfg.channelId)) {
       const type = getNextGameType(cfg);
       if (!type) return;

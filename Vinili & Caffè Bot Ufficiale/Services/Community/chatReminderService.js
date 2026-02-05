@@ -129,12 +129,26 @@ function scheduleForHour(client, parts) {
   const totalSeconds = parts.minute * 60 + parts.second;
   const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
   const count = Math.random() < 0.5 ? 1 : 2;
+  global.logger?.info?.(`[CHAT REMINDER] Scheduled ${count} reminder(s) for ${key}`);
+  const minGapMs = 30 * 60 * 1000;
   const delays = [];
-  for (let i = 0; i < count; i += 1) {
+  if (count === 1) {
     delays.push(Math.floor(Math.random() * remainingMs));
+  } else {
+    let first = Math.floor(Math.random() * remainingMs);
+    let second = Math.floor(Math.random() * remainingMs);
+    if (second < first) [first, second] = [second, first];
+    if (second - first < minGapMs) {
+      second = Math.min(first + minGapMs, remainingMs - 1000);
+      if (second <= first) {
+        first = Math.max(0, second - minGapMs);
+      }
+    }
+    delays.push(first, second);
   }
   for (const delay of delays) {
     setTimeout(() => {
+      global.logger?.info?.('[CHAT REMINDER] Sending reminder');
       sendReminder(client).catch(() => {});
     }, delay);
   }
@@ -143,6 +157,7 @@ function scheduleForHour(client, parts) {
 function startHourlyReminderLoop(client) {
   const tick = () => {
     const parts = getRomeParts(new Date());
+    global.logger?.info?.('[CHAT REMINDER] Tick');
     if (parts.hour < START_HOUR || parts.hour > END_HOUR) return;
     scheduleForHour(client, parts);
   };
