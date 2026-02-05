@@ -105,15 +105,15 @@ module.exports = {
                 const channelwelcome = member.guild.channels.cache.find(channel => channel.id === '1442569130573303898');
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
-                        .setAuthor({ name: `${member.user.username}` })
-                        .setTitle(`<:pepe_wave:1329488693739782274> **Welcome to __${member.guild.name}__**`)
-                        .setDescription(`<:dot:1443660294596329582> **Passa per questi canali.**\n\n <:customprofile:1443925456972808304> <#1442569103582695536>\n <:rules:1443307208543703131> <#1442569111119990887>\n <a:MimmyGift:1329446511372664886> <#1442569058406109216>`)
+                        .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL })
+                        .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
+                        .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1442569103582695536> e <#1442569099795365898> per **abbellire il tuo profilo** con i ruoli & colori.`)
                         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-                        .setTimestamp()
+                        .setImage(`https://images-ext-1.discordapp.net/external/ZPBrqkOe5ukYYCXnwdI_GbtY-YlPrpF7Ovo28OyFQhA/https/media.tenor.com/qGZ7viTKnZAAAAPo/pastel-divider.mp4`)
                         .setColor('#6f4e37')
-                        .setFooter({ text: `Ora siamo in ${member.guild.memberCount}` });
+                        .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
 
-                    await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user} <@&1442568910070349985>`, embeds: [botEmbed] }).catch(() => {});
+                    await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
                 }
                 const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
                 if (inviteChannel) {
@@ -122,11 +122,11 @@ module.exports = {
                         if (info.isVanity) {
                             await inviteChannel.send({
                                 content: `<:VC_Reply:1468262952934314131> Bot entrato tramite vanity **.gg/viniliecaffe**`
-                            }).catch(() => {});
+                            }).catch(() => { });
                         } else {
                             await inviteChannel.send({
                                 content: `<:VC_Reply:1468262952934314131> Bot entrato con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
-                            }).catch(() => {});
+                            }).catch(() => { });
                         }
                     } catch {
                     }
@@ -211,18 +211,17 @@ module.exports = {
 
             const totalmembers = `${member.guild.memberCount}`;
             totalvoicechannel.setName(`༄☕︲User: ${totalmembers}`);
-            const memberThumbnail = member.user.displayAvatarURL({ size: 256 });
 
             const userEmbed = new EmbedBuilder()
-                .setAuthor({ name: `${member.user.username}` })
-                .setTitle(`<:pepe_wave:1329488693739782274> **Welcome to __${member.guild.name}__**`)
-                .setDescription(`<:dot:1443660294596329582> **Passa per questi canali.**\n\n <:customprofile:1443925456972808304> <#1442569103582695536>\n <:rules:1443307208543703131> <#1442569111119990887>\n <a:MimmyGift:1329446511372664886> <#1442569058406109216>`)
-                .setThumbnail(memberThumbnail)
-                .setTimestamp()
+                .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL })
+                .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
+                .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1442569103582695536> e <#1442569099795365898> per **abbellire il tuo profilo** con i ruoli & colori.`)
+                .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+                .setImage(`https://images-ext-1.discordapp.net/external/ZPBrqkOe5ukYYCXnwdI_GbtY-YlPrpF7Ovo28OyFQhA/https/media.tenor.com/qGZ7viTKnZAAAAPo/pastel-divider.mp4`)
                 .setColor('#6f4e37')
-                .setFooter({ text: `Ora siamo in ${member.guild.memberCount}` });
+                .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
 
-            await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user} <@&1442568910070349985>`, embeds: [userEmbed] });
+            await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
 
             const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
             if (inviteChannel) {
@@ -230,12 +229,12 @@ module.exports = {
                 if (info.isVanity) {
                     await inviteChannel.send({
                         content: `<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**`
-                    }).catch(() => {});
+                    }).catch(() => { });
                     return;
                 }
                 await inviteChannel.send({
                     content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
-                }).catch(() => {});
+                }).catch(() => { });
             }
         } catch (error) {
             global.logger.error(error);
