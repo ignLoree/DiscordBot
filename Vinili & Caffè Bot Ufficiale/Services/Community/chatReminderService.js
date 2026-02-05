@@ -193,16 +193,26 @@ function getRecentReminderCount(channelId, windowMs = 60 * 60 * 1000) {
   return trimmed.length;
 }
 
-async function sendReminder(client, scheduleId) {
+async function sendReminder(client, scheduleId, kind = 'first') {
   const nowMs = Date.now();
   if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
     const nextAt = new Date(lastSentAt + MIN_GAP_MS);
-    await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt } }).catch(() => {});
+    await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt, kind } }).catch(() => {});
     const delay = Math.max(1, nextAt.getTime() - Date.now());
     const timeout = setTimeout(() => {
-      sendReminder(client, scheduleId).catch(() => {});
+      sendReminder(client, scheduleId, kind).catch(() => {});
     }, delay);
     scheduledTimeouts.set(scheduleId.toString(), timeout);
+    return;
+  }
+  const activityCount30m = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
+  const activityCount60m = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  if (kind === 'second' && activityCount60m < 30) {
+    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => {});
+    return;
+  }
+  if (kind !== 'second' && activityCount30m < 15) {
+    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => {});
     return;
   }
   const channel = client.channels.cache.get(REMINDER_CHANNEL_ID)
@@ -256,17 +266,18 @@ async function scheduleForHour(client, parts, guildId) {
   }
   const fireTimes = delays
     .sort((a, b) => a - b)
-    .map((delay) => new Date(Date.now() + delay));
-  for (const fireAt of fireTimes) {
+    .map((delay, idx) => ({ fireAt: new Date(Date.now() + delay), kind: idx === 0 ? 'first' : 'second' }));
+  for (const item of fireTimes) {
+    const fireAt = item.fireAt;
     const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + MIN_GAP_MS) : fireAt.getTime();
     baseLast = adjusted;
-    const doc = await ChatReminderSchedule.create({ guildId, fireAt }).catch(() => null);
+    const doc = await ChatReminderSchedule.create({ guildId, fireAt, kind: item.kind }).catch(() => null);
     if (!doc) continue;
     if (adjusted !== fireAt.getTime()) {
-      await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted) } }).catch(() => {});
+      await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted), kind: item.kind } }).catch(() => {});
     }
     const timeout = setTimeout(() => {
-      sendReminder(client, doc._id).catch(() => { });
+      sendReminder(client, doc._id, item.kind).catch(() => { });
     }, Math.max(1, adjusted - Date.now()));
     scheduledTimeouts.set(doc._id.toString(), timeout);
   }
@@ -281,7 +292,7 @@ async function restoreSchedules(client) {
   await loadRotationState(guildId, key);
   const due = await ChatReminderSchedule.find({ fireAt: { $lte: now } }).lean();
   for (const item of due) {
-    await sendReminder(client, item._id).catch(() => { });
+    await sendReminder(client, item._id, item.kind || 'first').catch(() => { });
   }
   let upcoming = await ChatReminderSchedule.find({ fireAt: { $gt: now } }).lean();
   upcoming = Array.isArray(upcoming) ? upcoming.sort((a, b) => new Date(a.fireAt) - new Date(b.fireAt)) : [];
@@ -294,7 +305,7 @@ async function restoreSchedules(client) {
     }
     const delay = Math.max(1, fireAt - Date.now());
     const timeout = setTimeout(() => {
-      sendReminder(client, item._id).catch(() => { });
+      sendReminder(client, item._id, item.kind || 'first').catch(() => { });
     }, delay);
     scheduledTimeouts.set(item._id.toString(), timeout);
     lastTime = fireAt;

@@ -25,7 +25,7 @@ module.exports = {
     botId: "1222548162741538938",
     reminderChannelId: "1442569154950332536",
     cooldownMinutes: 1440,
-    bumpSuccessPatterns: ["has been successfully bumped"]
+    bumpSuccessPatterns: ["has been successfully bumped", "successfully bumped", "bumped successfully"]
   },
   discadiaVoteReminder: {
     enabled: true,

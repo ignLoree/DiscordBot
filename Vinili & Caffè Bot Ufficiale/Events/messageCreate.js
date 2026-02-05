@@ -750,7 +750,7 @@ async function handleDiscadiaBump(message, client) {
     if (!message.guild) return false;
     if (!message.author || message.author.id !== discadia.botId) return false;
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
-        ? discadia.bumpSuccessPatterns
+        ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
         : [];
     const haystacks = [];
     if (message.content) haystacks.push(message.content);
@@ -758,10 +758,12 @@ async function handleDiscadiaBump(message, client) {
         for (const embed of message.embeds) {
             if (embed?.description) haystacks.push(embed.description);
             if (embed?.title) haystacks.push(embed.title);
+            if (embed?.footer?.text) haystacks.push(embed.footer.text);
         }
     }
+    const normalized = haystacks.map(text => String(text).toLowerCase());
     const isBump = patterns.some((pattern) =>
-        haystacks.some((text) => text.includes(pattern))
+        normalized.some((text) => text.includes(pattern))
     );
     if (!isBump) return false;
     const bumpUserId = message.interaction?.user?.id;
