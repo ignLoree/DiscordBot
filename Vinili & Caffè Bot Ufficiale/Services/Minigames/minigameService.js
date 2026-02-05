@@ -794,7 +794,12 @@ async function handleMinigameButton(interaction, client) {
   } catch {}
 
   const winEmbed = buildWinEmbed(interaction.user.id, rewardExp, nextTotal);
-  await interaction.reply({ embeds: [winEmbed] }).catch(() => {});
+  const mainChannel = getChannelSafe(interaction.client, cfg.channelId)
+    || await interaction.client.channels.fetch(cfg.channelId).catch(() => null);
+  if (mainChannel) {
+    await mainChannel.send({ embeds: [winEmbed] }).catch(() => {});
+  }
+  await interaction.reply({ content: 'Hai vinto!', ephemeral: true }).catch(() => {});
   const member = interaction.member || await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);

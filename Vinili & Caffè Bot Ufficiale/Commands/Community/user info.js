@@ -54,7 +54,7 @@ module.exports = {
           const embed = {
             color: 0x6f4e37,
             author: {
-              name: member.user.tag,
+              name: member?.displayName || member?.user?.username,
               icon_url: member.user.displayAvatarURL(),
             },
             thumbnail: {

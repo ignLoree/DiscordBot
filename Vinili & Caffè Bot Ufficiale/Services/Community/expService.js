@@ -127,11 +127,11 @@ function buildLevelUpEmbed(member, level) {
     embeds: [
       {
         color: 0x6f4e37,
-        title: `${member.user.username} leveled up!`,
+        title: `${member?.displayName || member?.user?.username} leveled up!`,
         description: [
-          `<a:VC_PandaClap:1331620157398712330> Complimenti ${member}!`,
-          `<:VC_LevelUp:1443701876892762243> Hai appena raggiunto il livello ${level}`,
-          `<a:VC_HelloKittyGift:1329447876857958471> Continua ad essere attivo in chat e in vocale per avanzare di livello!`
+          `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
+          `<:VC_LevelUp:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`
         ].join('\n'),
       }
     ]

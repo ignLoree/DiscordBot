@@ -70,7 +70,7 @@ module.exports = {
     const imageUrl = isUser
       ? user.displayAvatarURL({ size: 4096 })
       : member.displayAvatarURL({ size: 4096 });
-    const authorLabel = member?.displayName || user.tag;
+    const authorLabel = member?.displayName || member?.user?.username || user.tag;
 
     const embed = new EmbedBuilder()
       .setTitle(title)

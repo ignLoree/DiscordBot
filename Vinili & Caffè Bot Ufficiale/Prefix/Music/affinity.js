@@ -80,7 +80,7 @@ async function getArtistTags(artist) {
 
 function buildAffinityLine(entry, guild) {
   const member = guild.members.cache.get(entry.discordId);
-  const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+  const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
   const profileUrl = entry.lastFmUsername ? buildUserUrl(entry.lastFmUsername) : null;
   const nameLabel = profileUrl ? `[${displayName}](${profileUrl})` : displayName;
   return `**${entry.score}%** â€” **${nameLabel}** â€” \`${entry.artists}%\` artists, \`${entry.genres}%\` genres, \`${entry.countries}%\` countries`;

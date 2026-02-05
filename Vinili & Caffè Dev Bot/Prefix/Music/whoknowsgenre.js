@@ -79,7 +79,7 @@ async function getGenreLeaderboard({ guild, genre, requesterId, limit = 15, fetc
 function buildLeaderboardLines(results, guild, requesterId) {
   return results.map((item, index) => {
     const member = guild.members.cache.get(item.discordId);
-    const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+    const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
     const isPrivate = item.privacyGlobal === false;
     const safeName = isPrivate ? "Private user" : displayName;
     const profileUrl = !isPrivate && item.lastFmUsername ? buildUserUrl(item.lastFmUsername) : null;

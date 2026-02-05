@@ -189,7 +189,7 @@ async function handleTtsMessage(message, client, prefix) {
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const baseText = sanitizeText(message.cleanContent || message.content || "");
   if (!baseText) return;
-  const name = message.member?.displayName || message.author?.username || "Utente";
+  const name = message.member?.displayName || member?.user?.username || message.author?.username || "Utente";
   const text = includeUsername ? `${name}: ${baseText}` : baseText;
   const clipped = text.slice(0, maxChars);
   const state = getState(voiceChannel);

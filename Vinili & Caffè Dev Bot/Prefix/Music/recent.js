@@ -113,7 +113,7 @@ module.exports = {
         });
       }
       const member = message.guild?.members.cache.get(target.id);
-      const displayName = member?.displayName || target.username;
+      const displayName = member?.displayName || member?.user?.username || target.username;
       const filterText = artistFilter ? `Filtering cached plays to artist ${artistFilter}` : null;
       if (cappedPage > 1) {
         list = list.filter(track => !track?.["@attr"]?.nowplaying);

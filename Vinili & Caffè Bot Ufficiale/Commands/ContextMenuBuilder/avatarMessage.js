@@ -33,7 +33,7 @@ module.exports = {
     }
 
     const avatarUrl = member?.displayAvatarURL({ size: 4096 }) || messageAuthor.displayAvatarURL({ size: 4096 });
-    const authorLabel = member?.displayName || messageAuthor.tag;
+    const authorLabel = member?.displayName || member?.user?.username || messageAuthor.tag;
     const embed = new EmbedBuilder()
       .setTitle("Server Avatar")
       .setImage(avatarUrl)

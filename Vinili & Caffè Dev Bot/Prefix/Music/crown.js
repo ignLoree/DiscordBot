@@ -74,7 +74,7 @@ async function getRandomArtist(username, poolSize = 200) {
 function buildLeaderboardLines(results, guild, highlightId) {
   return results.map((item, index) => {
     const member = guild.members.cache.get(item.discordId);
-    const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+    const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
     const name = item.discordId === highlightId
       ? `**${displayName}**`
       : displayName;
@@ -255,7 +255,7 @@ module.exports = {
         : "";
       const footer = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg${youLine} â€¢ Pagina: ${pagination.page} â€¢ Limite: ${pagination.limit}`;
       const crownMember = message.guild.members.cache.get(crown.holderId);
-      const crownName = crownMember?.displayName || crownMember?.user?.username || "Sconosciuto";
+      const crownName = crownmember?.displayName || member?.user?.username || crownMember?.user?.username || "Sconosciuto";
       const crownText = `Crown claimed by ${crownName}`;
       const lines = buildLeaderboardLines(results, message.guild, message.author.id);
       const row = new ActionRowBuilder().addComponents(
@@ -267,7 +267,7 @@ module.exports = {
       if (options.mode === "image" && renderWhoKnows) {
         const rows = results.map((item) => {
           const member = message.guild.members.cache.get(item.discordId);
-          const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+          const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
           return { user: displayName, plays: item.playcount };
         });
         const imageBuffer = await renderWhoKnows({

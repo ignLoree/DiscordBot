@@ -40,7 +40,7 @@ module.exports = {
     const user = await getLastFmUserForMessageOrUsername(message, target, lastfm);
     if (!user) return;
     const member = message.guild?.members.cache.get(target.id);
-    const displayName = member?.displayName || target.username;
+    const displayName = member?.displayName || member?.user?.username || target.username;
     try {
       const artistName = await resolveArtistName(user.lastFmUsername, artistQuery || null);
       if (!artistName) {

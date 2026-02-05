@@ -39,7 +39,7 @@ async function handleHelpMenu(interaction) {
     const prefixes = { music: config2.musicPrefix || "." };
     const color = config2.embedColor || "#6f4e37";
     const member = interaction.guild?.members.cache.get(interaction.user.id);
-    const displayName = member?.displayName || interaction.user.username;
+    const displayName = member?.displayName || member?.user?.username || interaction.user.username;
     state = {
       userId: interaction.user.id,
       displayName,

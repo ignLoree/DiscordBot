@@ -102,7 +102,7 @@ async function getRandomArtist(username, poolSize = 200) {
 function buildLeaderboardLines(results, guild, highlightId) {
   return results.map((item, index) => {
     const member = guild.members.cache.get(item.discordId);
-    const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+    const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
     const isPrivate = item.privacyGlobal === false;
     const safeName = isPrivate ? "Private user" : displayName;
     const profileUrl = !isPrivate && item.lastFmUsername ? buildUserUrl(item.lastFmUsername) : null;
@@ -289,7 +289,7 @@ module.exports = {
       const totalPlays = fullResults.reduce((sum, item) => sum + item.playcount, 0);
       const avgPlays = totalListeners ? Math.round(totalPlays / totalListeners) : 0;
       const requesterMember = message.guild.members.cache.get(message.author.id);
-      const requesterName = requesterMember?.displayName || message.author.username;
+      const requesterName = requestermember?.displayName || member?.user?.username || message.author.username;
       const statsLine = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg`;
       const title = `${artistName} in Server di ${requesterName}`;
       const displayResults = buildDisplayResults(fullResults, results, message.author.id, pagination.limit, pagination.page);
@@ -299,7 +299,7 @@ module.exports = {
       const crownName = crownEntry
         ? (crownEntry.privacyGlobal === false
           ? "Private user"
-          : crownMember?.displayName || crownMember?.user?.username || "Sconosciuto")
+          : crownmember?.displayName || member?.user?.username || crownMember?.user?.username || "Sconosciuto")
         : null;
       const crownLine = crownName ? `Crown claimed by ${crownName}!` : null;
       if (fullResults[0]) {
@@ -314,7 +314,7 @@ module.exports = {
         const imageResults = buildDisplayResults(fullResults, fullResults.slice(0, 10), message.author.id, 10, 1);
         const rows = imageResults.map((item, index) => {
           const member = message.guild.members.cache.get(item.discordId);
-          const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+          const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
           const fallbackName = member?.user?.username || displayName;
           const safeLabel = pickSafeName(displayName, fallbackName);
           const safeName = item.privacyGlobal === false ? "Private user" : safeLabel;

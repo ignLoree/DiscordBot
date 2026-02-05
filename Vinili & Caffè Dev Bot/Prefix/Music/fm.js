@@ -71,7 +71,7 @@ module.exports = {
           || lastfmImage
           || 'https://via.placeholder.com/150';
         const member = message.guild?.members.cache.get(target.id);
-        const displayName = member?.displayName || target.username;
+        const displayName = member?.displayName || member?.user?.username || target.username;
         const embed = new EmbedBuilder()
           .setAuthor({ name: `Riproducendo in questo momento - ${displayName}`, iconURL: target.displayAvatarURL() })
           .setColor('#6f4e37')

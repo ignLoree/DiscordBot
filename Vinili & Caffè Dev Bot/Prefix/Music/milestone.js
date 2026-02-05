@@ -18,7 +18,7 @@ module.exports = {
     const user = await getLastFmUserForMessageOrUsername(message, target, lastfm);
     if (!user) return;
     const member = message.guild?.members.cache.get(target.id);
-    const displayName = member?.displayName || target.username;
+    const displayName = member?.displayName || member?.user?.username || target.username;
     try {
       const info = await lastFmRequest("user.getinfo", { user: user.lastFmUsername });
       const total = Number(info?.user?.playcount || 0);

@@ -168,9 +168,9 @@ module.exports = {
     }
 
     const baseMember = message.guild?.members.cache.get(message.author.id);
-    const baseName = baseMember?.displayName || message.author.username;
+    const baseName = basemember?.displayName || member?.user?.username || message.author.username;
     const compareMember = message.guild?.members.cache.get(compareUser.id);
-    const compareName = compareUsername || compareMember?.displayName || compareUser.username;
+    const compareName = compareUsername || comparemember?.displayName || member?.user?.username || compareUser.username;
 
     try {
       const period = parsed.period;

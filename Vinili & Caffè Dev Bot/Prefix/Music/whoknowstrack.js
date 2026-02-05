@@ -43,7 +43,7 @@ async function mapWithConcurrency(items, limit, mapper) {
 function buildLeaderboardLines(results, guild, lastfmMap, highlightId) {
   return results.map((item, index) => {
     const member = guild.members.cache.get(item.discordId);
-    const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+    const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
     const lastfmUsername = lastfmMap.get(item.discordId);
     const isPrivate = item.privacyGlobal === false;
     const safeName = isPrivate ? "Private user" : displayName;
@@ -182,14 +182,14 @@ module.exports = {
         || lastfmImage
         || (await getMusicBrainzTrackImage(resolved.artist, resolved.track));
       const requesterMember = message.guild.members.cache.get(message.author.id);
-      const requesterName = requesterMember?.displayName || message.author.username;
+      const requesterName = requestermember?.displayName || member?.user?.username || message.author.username;
       const trackUrl = buildTrackUrl(resolved.artist, resolved.track);
       const title = `${resolved.track} by ${resolved.artist} in Server di ${requesterName}`;
       if (modeData.mode === "image" && renderWhoKnows) {
         const imageResults = buildDisplayResults(fullResults, fullResults.slice(0, 10), message.author.id, 10, 1);
         const rows = imageResults.map((item, index) => {
           const member = message.guild?.members.cache.get(item.discordId);
-          const displayName = member?.displayName || member?.user?.username || "Sconosciuto";
+          const displayName = member?.displayName || member?.user?.username || member?.user?.username || "Sconosciuto";
           const fallbackName = member?.user?.username || displayName;
           const safeLabel = pickSafeName(displayName, fallbackName);
           const safeName = item.privacyGlobal === false ? "Private user" : safeLabel;

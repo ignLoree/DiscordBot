@@ -182,7 +182,7 @@ module.exports = {
       const pageArtists = currentList.slice(start, start + pagination.limit);
 
       const member = message.guild.members.cache.get(message.author.id);
-      const displayName = member?.displayName || message.author.username;
+      const displayName = member?.displayName || member?.user?.username || message.author.username;
       const requester = allUsers.find(user => user.discordId === message.author.id);
       const numberFormat = requester?.localization?.numberFormat;
 

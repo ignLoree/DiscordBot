@@ -6,6 +6,7 @@ const REMINDER_CHANNEL_ID = '1442569130573303898';
 const TIME_ZONE = 'Europe/Rome';
 const START_HOUR = 9;
 const END_HOUR = 21;
+const MIN_GAP_MS = 30 * 60 * 1000;
 const scheduledHours = new Set();
 const scheduledTimeouts = new Map();
 let rotationDate = null;
@@ -166,6 +167,17 @@ function getHourKey(parts) {
 }
 
 async function sendReminder(client, scheduleId) {
+  const nowMs = Date.now();
+  if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
+    const nextAt = new Date(lastSentAt + MIN_GAP_MS);
+    await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt } }).catch(() => {});
+    const delay = Math.max(1, nextAt.getTime() - Date.now());
+    const timeout = setTimeout(() => {
+      sendReminder(client, scheduleId).catch(() => {});
+    }, delay);
+    scheduledTimeouts.set(scheduleId.toString(), timeout);
+    return;
+  }
   const channel = client.channels.cache.get(REMINDER_CHANNEL_ID)
     || await client.channels.fetch(REMINDER_CHANNEL_ID).catch(() => null);
   if (!channel) return;
@@ -186,20 +198,19 @@ async function scheduleForHour(client, parts, guildId) {
 
   const totalSeconds = parts.minute * 60 + parts.second;
   const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
-  const minGapMs = 30 * 60 * 1000;
   const now = Date.now();
-  const minStartDelay = lastSentAt ? Math.max(0, lastSentAt + minGapMs - now) : 0;
+  const minStartDelay = lastSentAt ? Math.max(0, lastSentAt + MIN_GAP_MS - now) : 0;
   if (minStartDelay >= remainingMs) return;
   const availableMs = Math.max(0, remainingMs - minStartDelay);
-  const count = (availableMs <= minGapMs) ? 1 : (Math.random() < 0.5 ? 1 : 2);
+  const count = (availableMs <= MIN_GAP_MS) ? 1 : (Math.random() < 0.5 ? 1 : 2);
   const delays = [];
   if (count === 1) {
     delays.push(minStartDelay + Math.floor(Math.random() * availableMs));
   } else {
-    const maxFirst = Math.max(0, remainingMs - minGapMs);
-    const firstWindowMax = Math.max(minStartDelay, Math.min(maxFirst, remainingMs - minGapMs));
+    const maxFirst = Math.max(0, remainingMs - MIN_GAP_MS);
+    const firstWindowMax = Math.max(minStartDelay, Math.min(maxFirst, remainingMs - MIN_GAP_MS));
     const first = Math.floor(Math.random() * (firstWindowMax - minStartDelay + 1)) + minStartDelay;
-    const second = Math.floor(Math.random() * (remainingMs - (first + minGapMs) + 1)) + first + minGapMs;
+    const second = Math.floor(Math.random() * (remainingMs - (first + MIN_GAP_MS) + 1)) + first + MIN_GAP_MS;
     delays.push(first, second);
   }
   const fireTimes = delays.map((delay) => new Date(Date.now() + delay));
@@ -224,13 +235,21 @@ async function restoreSchedules(client) {
   for (const item of due) {
     await sendReminder(client, item._id).catch(() => { });
   }
-  const upcoming = await ChatReminderSchedule.find({ fireAt: { $gt: now } }).lean();
+  let upcoming = await ChatReminderSchedule.find({ fireAt: { $gt: now } }).lean();
+  upcoming = Array.isArray(upcoming) ? upcoming.sort((a, b) => new Date(a.fireAt) - new Date(b.fireAt)) : [];
+  let lastTime = lastSentAt ? new Date(lastSentAt).getTime() : null;
   for (const item of upcoming) {
-    const delay = Math.max(1, new Date(item.fireAt).getTime() - Date.now());
+    let fireAt = new Date(item.fireAt).getTime();
+    if (lastTime && (fireAt - lastTime) < MIN_GAP_MS) {
+      fireAt = lastTime + MIN_GAP_MS;
+      await ChatReminderSchedule.updateOne({ _id: item._id }, { $set: { fireAt: new Date(fireAt) } }).catch(() => {});
+    }
+    const delay = Math.max(1, fireAt - Date.now());
     const timeout = setTimeout(() => {
       sendReminder(client, item._id).catch(() => { });
     }, delay);
     scheduledTimeouts.set(item._id.toString(), timeout);
+    lastTime = fireAt;
   }
 }
 

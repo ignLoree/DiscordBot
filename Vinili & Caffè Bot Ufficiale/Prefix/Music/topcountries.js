@@ -121,7 +121,7 @@ module.exports = {
     const mode = modeInfo.mode || user.responseMode || "embed";
 
     const member = message.guild?.members.cache.get(target.id);
-    const displayName = lastfm || member?.displayName || target.username;
+    const displayName = lastfm || member?.displayName || member?.user?.username || target.username;
 
     try {
       const data = await lastFmRequest("user.gettopartists", {

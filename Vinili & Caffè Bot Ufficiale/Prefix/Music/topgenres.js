@@ -195,7 +195,7 @@ module.exports = {
       const start = (page - 1) * pagination.limit;
       const slice = genres.slice(start, start + pagination.limit);
       const member = message.guild?.members.cache.get(target.id);
-      const displayName = member?.displayName || target.username;
+      const displayName = member?.displayName || member?.user?.username || target.username;
 
       if (mode === "image" && renderTopList) {
         const topArtistName = artists[0]?.name || null;

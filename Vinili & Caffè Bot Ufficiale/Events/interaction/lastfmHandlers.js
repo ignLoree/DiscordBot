@@ -1524,7 +1524,7 @@ async function handleLastFmSelectMenu(interaction) {
         requesterId: state.userId,
         limit: 15
       });
-      const requesterName = interaction.member?.displayName || interaction.user.username;
+      const requesterName = interaction.member?.displayName || member?.user?.username || interaction.user.username;
       const embed = buildWhoKnowsGenreEmbed({
         genre,
         guild: interaction.guild,

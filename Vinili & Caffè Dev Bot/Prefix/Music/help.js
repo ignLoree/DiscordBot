@@ -14,7 +14,7 @@ module.exports = {
     };
 
     const member = message.guild?.members.cache.get(message.author.id);
-    const displayName = member?.displayName || message.author.username;
+    const displayName = member?.displayName || member?.user?.username || message.author.username;
 
     const lastFmUser = await LastFmUser.findOne({ discordId: message.author.id });
     const lastFmUsername = lastFmUser?.lastFmUsername && lastFmUser.lastFmUsername !== "pending"

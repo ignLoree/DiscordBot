@@ -218,7 +218,7 @@ module.exports = {
     const user = await getLastFmUserForMessageOrUsername(message, target, lastfm);
     if (!user) return;
     const member = message.guild?.members.cache.get(target.id);
-    const displayName = member?.displayName || target.username;
+    const displayName = member?.displayName || member?.user?.username || target.username;
     const year = parseYearArg(filteredArgs[0]);
     const prevYear = year - 1;
     try {

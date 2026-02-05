@@ -132,7 +132,7 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(
                         [
-                            `<:profile:1461732907508039834> **Member:** ${member.user.tag} [${member.user.id}]`,
+                            `<:profile:1461732907508039834> **Member:** ${member?.displayName || member?.user?.username} [${member.user.id}]`,
                             `<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.`,
                             `<:space:1461733157840621608><:rightSort:1461726104422453298> **Accounts Age:** <t:${createdTs}:R>.`,
                             `<:space:1461733157840621608><:rightSort:1461726104422453298> **Minimum Age:** \`${minimumAgeDays}\` days.`
@@ -159,7 +159,7 @@ module.exports = {
                         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                         .setDescription(
                             [
-                                `<:profile:1461732907508039834> **Member:** ${member.user.tag} **[${member.user.id}]**`,
+                                `<:profile:1461732907508039834> **Member:** ${member?.displayName || member?.user?.username} **[${member.user.id}]**`,
                                 `<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.`,
                                 `<:space:1461733157840621608><:rightSort:1461726104422453298> **Accounts Age:** <t:${createdTs}:R>.`,
                                 `<:space:1461733157840621608><:rightSort:1461726104422453298> **Minimum Age:** \`${minimumAgeDays} days\`.`,

@@ -61,7 +61,7 @@ module.exports = {
     const targetMessage = interaction.targetMessage;
     const text = targetMessage?.cleanContent || targetMessage?.content || "";
     const author = targetMessage?.author;
-    const displayName = targetMessage?.member?.displayName || author?.username;
+    const displayName = targetMessage?.member?.displayName || member?.user?.username || author?.username;
     if (!author || !text) {
       return safeEditReply(interaction, {
         embeds: [

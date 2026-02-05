@@ -198,7 +198,7 @@ module.exports = {
       const totalPages = Number(attr.totalPages || 1);
       const totalTracks = Number(attr.total || 0);
       const member = message.guild?.members.cache.get(target.id);
-      const displayName = member?.displayName || target.username;
+      const displayName = member?.displayName || member?.user?.username || target.username;
 
       if (mode === "image" && renderTopList) {
         let topTrack = tracks[0];

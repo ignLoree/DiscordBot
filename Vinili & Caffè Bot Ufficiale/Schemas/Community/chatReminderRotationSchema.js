@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 
 const chatReminderRotationSchema = new Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     dateKey: { type: String, required: true },
     queue: { type: [Number], default: [] },
     lastSentAt: { type: Date, default: null }

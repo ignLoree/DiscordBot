@@ -60,7 +60,7 @@ module.exports = {
       : normalize(args.join(" "));
 
     const author = referenced?.author || message.author;
-    const displayName = referenced?.member?.displayName || author.username;
+    const displayName = referenced?.member?.displayName || member?.user?.username || author.username;
     const footerText = String(message.client?.config2?.botServerInvite || "")
       .replace(/^https?:\/\//i, "")
       .trim();

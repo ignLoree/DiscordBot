@@ -15,7 +15,7 @@ module.exports = {
     const user = await getLastFmUserForMessageOrUsername(message, target, lastfm);
     if (!user) return;
     const member = message.guild?.members.cache.get(target.id);
-    const displayName = member?.displayName || target.username;
+    const displayName = member?.displayName || member?.user?.username || target.username;
     try {
       const [artistsData, tracksData, albumsData] = await Promise.all([
         lastFmRequest("user.gettopartists", { user: user.lastFmUsername, period, limit: pagination.limit }),

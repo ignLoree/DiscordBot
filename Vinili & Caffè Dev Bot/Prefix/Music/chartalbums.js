@@ -141,7 +141,7 @@ module.exports = {
       ? message.guild?.members.cache.get(targetUser.id)
       : message.guild?.members.cache.get(message.author.id);
 
-    let displayName = member?.displayName || avatarUser.username;
+    let displayName = member?.displayName || member?.user?.username || avatarUser.username;
     let userDoc = null;
 
     if (lfmUsername) {
@@ -150,7 +150,7 @@ module.exports = {
       userDoc = await getLastFmUserForMessage(message, targetUser);
       if (!userDoc) return;
       lfmUsername = userDoc.lastFmUsername;
-      displayName = member?.displayName || targetUser.username;
+      displayName = member?.displayName || member?.user?.username || targetUser.username;
     } else if (idToken) {
       userDoc = await LastFmUser.findOne({ discordId: idToken });
       if (!userDoc) {
@@ -168,7 +168,7 @@ module.exports = {
       userDoc = await getLastFmUserForMessage(message, message.author);
       if (!userDoc) return;
       lfmUsername = userDoc.lastFmUsername;
-      displayName = member?.displayName || message.author.username;
+      displayName = member?.displayName || member?.user?.username || message.author.username;
     }
 
     if (!periodSpecified && (releaseYear || releaseDecade)) {
