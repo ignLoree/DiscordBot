@@ -37,6 +37,9 @@ const COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 let cachedPlayers = null;
 let cachedPlayersAt = 0;
 const PLAYER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let cachedSongs = null;
+let cachedSongsAt = 0;
+const SONG_CACHE_TTL_MS = 15 * 60 * 1000;
 
 function getConfig(client) {
   return client?.config2?.minigames || null;
@@ -239,6 +242,10 @@ function normalizePlayerGuess(raw) {
   return normalizeCountryName(raw);
 }
 
+function normalizeSongGuess(raw) {
+  return normalizeCountryName(raw);
+}
+
 function extractPlayerTokens(name) {
   const normalized = normalizePlayerGuess(name);
   if (!normalized) return [];
@@ -302,6 +309,107 @@ async function loadPlayerList(cfg) {
   cachedPlayers = filtered;
   cachedPlayersAt = now;
   return cachedPlayers;
+}
+
+async function fetchRandomSong(cfg) {
+  const apiBase = cfg?.guessSong?.apiUrl;
+  if (!apiBase) return null;
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const letter = letters[randomBetween(0, letters.length - 1)];
+    const url = `${apiBase}${encodeURIComponent(letter)}&entity=song&limit=50`;
+    try {
+      const res = await axios.get(url, { timeout: 15000 });
+      const results = Array.isArray(res?.data?.results) ? res.data.results : [];
+      const songs = results.filter((item) => item?.trackName && item?.artistName);
+      if (!songs.length) continue;
+      const song = songs[randomBetween(0, songs.length - 1)];
+      const artwork = song.artworkUrl100
+        ? song.artworkUrl100.replace('100x100bb', '600x600bb')
+        : null;
+      const genre = song.primaryGenreName || 'Genere sconosciuto';
+      const artistCountry = await fetchArtistCountry(cfg, song.artistName);
+      return {
+        title: song.trackName,
+        artist: song.artistName,
+        album: song.collectionName || 'Album sconosciuto',
+        artwork,
+        genre,
+        artistCountry: artistCountry || 'Nazionalità sconosciuta',
+        previewUrl: song.previewUrl || null
+      };
+    } catch {}
+  }
+  return null;
+}
+
+async function loadPopularSongList(cfg) {
+  const now = Date.now();
+  if (cachedSongs && (now - cachedSongsAt) < SONG_CACHE_TTL_MS) return cachedSongs;
+  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : [];
+  const all = [];
+  for (const feed of feeds) {
+    if (!feed) continue;
+    try {
+      const res = await axios.get(feed, { timeout: 15000 });
+      const entries = Array.isArray(res?.data?.feed?.entry) ? res.data.feed.entry : [];
+      for (const entry of entries) {
+        const id = entry?.id?.attributes?.['im:id'] || entry?.id?.attributes?.im_id;
+        const title = entry?.['im:name']?.label || entry?.title?.label;
+        const artist = entry?.['im:artist']?.label || entry?.['im:artist']?.name;
+        const images = Array.isArray(entry?.['im:image']) ? entry['im:image'] : [];
+        const artwork = images.length ? images[images.length - 1].label : null;
+        if (!id || !title || !artist) continue;
+        all.push({ id: String(id), title, artist, artwork });
+      }
+    } catch {}
+  }
+  cachedSongs = all;
+  cachedSongsAt = now;
+  return cachedSongs;
+}
+
+async function fetchPopularSong(cfg) {
+  const list = await loadPopularSongList(cfg);
+  if (!list.length) return null;
+  const pick = list[randomBetween(0, list.length - 1)];
+  if (!pick?.id) return null;
+  const lookupUrl = `https://itunes.apple.com/lookup?id=${encodeURIComponent(pick.id)}`;
+  try {
+    const res = await axios.get(lookupUrl, { timeout: 15000 });
+    const item = Array.isArray(res?.data?.results) ? res.data.results[0] : null;
+    const genre = item?.primaryGenreName || 'Genere sconosciuto';
+    const artistCountry = await fetchArtistCountry(cfg, pick.artist);
+    return {
+      title: item?.trackName || pick.title,
+      artist: item?.artistName || pick.artist,
+      album: item?.collectionName || 'Album sconosciuto',
+      artwork: item?.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : pick.artwork,
+      genre,
+      artistCountry: artistCountry || 'Nazionalità sconosciuta',
+      previewUrl: item?.previewUrl || null
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchArtistCountry(cfg, artistName) {
+  if (!artistName) return null;
+  const apiBase = cfg?.guessSong?.artistApiUrl || 'https://musicbrainz.org/ws/2/artist/?query=artist:';
+  const url = `${apiBase}${encodeURIComponent(artistName)}&fmt=json&limit=1`;
+  try {
+    const res = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'ViniliCaffeBot/1.0 (discord bot)'
+      }
+    });
+    const artist = Array.isArray(res?.data?.artists) ? res.data.artists[0] : null;
+    return artist?.country || artist?.area?.name || null;
+  } catch {
+    return null;
+  }
 }
 
 function isWithinAllowedWindow(now, start, end) {
@@ -404,6 +512,20 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   if (imageUrl) {
     embed.setImage(imageUrl);
   }
+  return embed;
+}
+
+function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
+  const minutes = Math.max(1, Math.round(durationMs / 60000));
+  const embed = new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('Indovina la canzone .ᐟ ✧')
+    .setDescription([
+      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp** ˚﹒`,
+      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
+    ].join('\n'));
+  if (artworkUrl) embed.setImage(artworkUrl);
   return embed;
 }
 
@@ -537,6 +659,12 @@ function buildTimeoutPlayerEmbed(name) {
     .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il calciatore era **${name}**.`);
 }
 
+function buildTimeoutSongEmbed(title, artist) {
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`);
+}
+
 function buildTimeoutFindBotEmbed() {
   return new EmbedBuilder()
     .setColor('#6f4e37')
@@ -549,6 +677,7 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.guessWord) types.push('guessWord');
   if (cfg?.guessFlag) types.push('guessFlag');
   if (cfg?.guessPlayer) types.push('guessPlayer');
+  if (cfg?.guessSong) types.push('guessSong');
   if (cfg?.findBot) types.push('findBot');
   return types;
 }
@@ -864,6 +993,76 @@ async function startGuessPlayerGame(client, cfg) {
   return true;
 }
 
+async function startGuessSongGame(client, cfg) {
+  const channelId = cfg.channelId;
+  if (!channelId) return false;
+  if (activeGames.has(channelId)) return false;
+
+  const rewardExp = Number(cfg?.guessSong?.rewardExp || 100);
+  const durationMs = Math.max(60000, Number(cfg?.guessSong?.durationMs || 180000));
+
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  if (!channel) return false;
+
+  let info = await fetchPopularSong(cfg);
+  if (!info) {
+    info = await fetchRandomSong(cfg);
+  }
+  if (!info?.title || !info?.artist) return false;
+
+  const roleId = cfg.roleId;
+  if (roleId) {
+    await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
+  }
+
+  let components = [];
+  if (info.previewUrl) {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setURL(info.previewUrl)
+        .setLabel('Ascolta anteprima')
+    );
+    components = [row];
+  }
+  const gameMessage = await channel.send({ embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)], components }).catch(() => null);
+
+  const timeout = setTimeout(async () => {
+    const game = activeGames.get(channelId);
+    if (!game) return;
+    activeGames.delete(channelId);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
+  }, durationMs);
+
+  const hintTimeout = await scheduleFlagHint(client, channelId, durationMs, `${info.artistCountry} • ${info.genre}`);
+
+  activeGames.set(channelId, {
+    type: 'guessSong',
+    title: info.title,
+    artist: info.artist,
+    rewardExp,
+    startedAt: Date.now(),
+    endsAt: Date.now() + durationMs,
+    timeout,
+    hintTimeout,
+    gameMessageId: gameMessage?.id || null
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'guessSong',
+    target: JSON.stringify({ title: info.title, artist: info.artist, album: info.album, artwork: info.artwork, genre: info.genre, artistCountry: info.artistCountry, previewUrl: info.previewUrl }),
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
+    gameMessageId: gameMessage?.id || null
+  });
+
+  markSent(channelId);
+  return true;
+}
+
 async function pickRandomFindBotChannel(guild, requiredRoleId) {
   if (!guild) return null;
   const role = requiredRoleId ? guild.roles.cache.get(requiredRoleId) : null;
@@ -1028,6 +1227,7 @@ async function maybeStartRandomGame(client, force = false) {
     if (gameType === 'guessWord') started = await startGuessWordGame(client, cfg);
     else if (gameType === 'guessFlag') started = await startGuessFlagGame(client, cfg);
     else if (gameType === 'guessPlayer') started = await startGuessPlayerGame(client, cfg);
+    else if (gameType === 'guessSong') started = await startGuessSongGame(client, cfg);
     else if (gameType === 'findBot') started = await startFindBotGame(client, cfg);
     else started = await startGuessNumberGame(client, cfg);
 
@@ -1190,6 +1390,20 @@ async function handleMinigameMessage(message, client) {
     return false;
   }
 
+  if (game.type === 'guessSong') {
+    const guess = normalizeSongGuess(content);
+    if (!guess) return false;
+    const target = normalizeSongGuess(game.title);
+    if (guess === target || (target.includes(guess) && guess.length >= 3)) {
+      clearTimeout(game.timeout);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      activeGames.delete(cfg.channelId);
+      await awardWinAndReply(message, game.rewardExp);
+      return true;
+    }
+    return false;
+  }
+
   return false;
 }
 
@@ -1273,6 +1487,15 @@ async function restoreActiveGames(client) {
         name = parsed?.name || name;
       } catch {}
       await channel.send({ embeds: [buildTimeoutPlayerEmbed(name)] }).catch(() => {});
+    } else if (state.type === 'guessSong') {
+      let title = 'la canzone';
+      let artist = '';
+      try {
+        const parsed = JSON.parse(state.target || '{}');
+        title = parsed?.title || title;
+        artist = parsed?.artist || '';
+      } catch {}
+      await channel.send({ embeds: [buildTimeoutSongEmbed(title, artist)] }).catch(() => {});
     } else if (state.type === 'findBot') {
       const targetChannel = channel.guild.channels.cache.get(state.targetChannelId) || await channel.guild.channels.fetch(state.targetChannelId).catch(() => null);
       if (targetChannel) {
@@ -1387,6 +1610,41 @@ async function restoreActiveGames(client) {
       answers: extractPlayerTokens(name),
       fullAnswer: normalizePlayerGuess(name),
       displayName: name,
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      hintTimeout,
+      gameMessageId: state.gameMessageId || null
+    });
+    return;
+  }
+  if (state.type === 'guessSong') {
+    let parsed = null;
+    try {
+      parsed = JSON.parse(state.target || '{}');
+    } catch {
+      parsed = null;
+    }
+    const title = parsed?.title || 'la canzone';
+    const artist = parsed?.artist || '';
+    const album = parsed?.album || 'Album sconosciuto';
+    const artistCountry = parsed?.artistCountry || 'Nazionalità sconosciuta';
+    const genre = parsed?.genre || 'Genere sconosciuto';
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game) return;
+      activeGames.delete(cfg.channelId);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => {});
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    const hintTimeout = await scheduleFlagHint(client, cfg.channelId, remainingMs, `${artistCountry} • ${genre}`);
+    activeGames.set(cfg.channelId, {
+      type: 'guessSong',
+      title,
+      artist,
+      previewUrl: parsed?.previewUrl || null,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,

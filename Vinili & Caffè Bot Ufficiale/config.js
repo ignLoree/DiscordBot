@@ -7,8 +7,6 @@ module.exports = {
   eventListeners: 50,
   dev: "lXo",
   devBy: "| Developed by lXo",
-  spotifyClientId: process.env.SPOTIFY_CLIENT_ID || "",
-  spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET || "",
   developers: "295500038401163264",
   partnerManager: "1442568905582317740",
   slashCommandLoggingChannel: "1442577274783142039",
@@ -18,19 +16,6 @@ module.exports = {
   ownerOnlyCommand: `Questo comando è disponibile **solo** all'owner del bot!`,
   filterMessage: "Il tuo messaggio contiene una parola **blacklistata**!",
   botServerInvite: "https://discord.gg/viniliecaffe",
-
-  poketwo: {
-    hfToken: process.env.HF_TOKEN || "",
-    botId: "716390085896962058",
-    model: "skshmjn/Pokemon-classifier-gen9-1025",
-    endpoint: "https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025",
-    fallbackEndpoints: ["https://router.huggingface.co/hf-inference/models/skshmjn/Pokemon-classifier-gen9-1025"],
-    dedicatedEndpointUrl: "https://jnwx6if5r8srk4zw.eu-west-1.aws.endpoints.huggingface.cloud",
-    provider: "auto",
-    spaceIds: ["gbryan/pokemon-classifier"]
-  },
-
-  debugSpotifyFeatures: true,
 
   disboard: {
     botId: "302050872383242240",
@@ -70,10 +55,6 @@ module.exports = {
     stayConnected: false
   },
 
-  render: {
-    whoknowsImageCache: 250
-  },
-
   minigames: {
     enabled: true,
     channelId: "1442569130573303898",
@@ -92,13 +73,23 @@ module.exports = {
     },
     guessFlag: {
       durationMs: 3 * 60 * 1000,
-      rewardExp: 150,
+      rewardExp: 100,
       apiUrl: "https://restcountries.com/v3.1/all?fields=name,translations,flags,altSpellings",
     },
     guessPlayer: {
       durationMs: 3 * 60 * 1000,
-      rewardExp: 100,
+      rewardExp: 150,
       apiUrl: "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=",
+    },
+    guessSong: {
+      durationMs: 3 * 60 * 1000,
+      rewardExp: 100,
+      apiUrl: "https://itunes.apple.com/search?term=",
+      artistApiUrl: "https://musicbrainz.org/ws/2/artist/?query=artist=",
+      popularFeeds: [
+        "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/us/rss/topsongs/limit=100/json"
+      ]
     },
     findBot: {
       durationMs: 5 * 60 * 1000,

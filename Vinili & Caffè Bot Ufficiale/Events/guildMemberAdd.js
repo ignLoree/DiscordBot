@@ -102,17 +102,30 @@ module.exports = {
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
                 }
+                const channelwelcome = member.guild.channels.cache.find(channel => channel.id === '1442569130573303898');
+                if (channelwelcome) {
+                    const botEmbed = new EmbedBuilder()
+                        .setAuthor({ name: `${member.user.username}` })
+                        .setTitle(`<:pepe_wave:1329488693739782274> **Welcome to __${member.guild.name}__**`)
+                        .setDescription(`<:dot:1443660294596329582> **Passa per questi canali.**\n\n <:customprofile:1443925456972808304> <#1442569103582695536>\n <:rules:1443307208543703131> <#1442569111119990887>\n <a:MimmyGift:1329446511372664886> <#1442569058406109216>`)
+                        .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
+                        .setTimestamp()
+                        .setColor('#6f4e37')
+                        .setFooter({ text: `Ora siamo in ${member.guild.memberCount}` });
+
+                    await channelwelcome.send({ content: `<:pepe_wave:1329488693739782274> ${member.user} <@&1442568910070349985>`, embeds: [botEmbed] }).catch(() => {});
+                }
                 const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
                 if (inviteChannel) {
                     try {
                         const info = await resolveInviteInfo(member);
                         if (info.isVanity) {
                             await inviteChannel.send({
-                                content: `<:reply:1467582387084067149> L'utente ha usato il link vanity **.gg/viniliecaffe**`
+                                content: `<:VC_Reply:1468262952934314131> Bot entrato tramite vanity **.gg/viniliecaffe**`
                             }).catch(() => {});
                         } else {
                             await inviteChannel.send({
-                                content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                                content: `<:VC_Reply:1468262952934314131> Bot entrato con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                             }).catch(() => {});
                         }
                     } catch {

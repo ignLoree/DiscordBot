@@ -7,6 +7,9 @@ const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const Logs = require('discord-logs');
 const { ClusterClient } = require('discord-hybrid-sharding');
 const functions = fs.readdirSync("./Handlers").filter(file => file.endsWith(".js"));
+const triggerFiles = fs.existsSync("./Triggers")
+    ? fs.readdirSync("./Triggers").filter((file) => file.endsWith(".js"))
+    : [];
 const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
 const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
@@ -98,6 +101,11 @@ client.reloadScope = async (scope) => {
     const reloadEvents = () => {
         clearCacheByDir('Events');
         client.handleEvents('./Events');
+    };
+    const reloadTriggers = () => {
+        clearCacheByDir('Triggers');
+        const triggerFiles = fs.readdirSync(path.join(baseDir, 'Triggers')).filter((f) => f.endsWith('.js'));
+        client.handleTriggers(triggerFiles, './Triggers');
     };
 
     if (scope === 'commands') await reloadCommands();
@@ -206,6 +214,7 @@ if (shouldUseCluster) {
         require(`./Handlers/${file}`)(client);
     }
     client.handleEvents("./Events");
+    client.handleTriggers(triggerFiles, "./Triggers");
     await client.handleCommands(commandFolders, "./Commands");
     await client.prefixCommands(pcommandFolders, './Prefix');
     if (!isDev && typeof client.logBootTables === 'function') {

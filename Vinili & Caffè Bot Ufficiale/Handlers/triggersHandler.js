@@ -35,11 +35,21 @@ module.exports = (client) => {
             }
             client._triggerHandlers.clear();
         }
+        const roots = getBotRoots();
+        const uffFiles = listTriggerFiles(roots.official);
+        const devFiles = listTriggerFiles(roots.dev);
+        const allFiles = new Set([...uffFiles, ...devFiles]);
+        const isOfficial = roots.isOfficial;
+        const loadFiles = isOfficial ? Array.from(allFiles) : Array.from(devFiles);
+
         const statusMap = new Map();
         let loaded = 0;
-        for (const file of triggerFiles) {
+        for (const file of loadFiles) {
             try {
-                const trigger = require(`../Triggers/${file}`);
+                const useDev = isOfficial && !uffFiles.has(file) && devFiles.has(file);
+                const baseRoot = useDev ? roots.dev : roots.official;
+                const triggerPath = path.join(baseRoot, "Triggers", file);
+                const trigger = require(triggerPath);
                 if (!trigger?.name) {
                     statusMap.set(file, "Missing name");
                     continue;
@@ -62,12 +72,7 @@ module.exports = (client) => {
             }
         }
 
-        const roots = getBotRoots();
-        const uffFiles = listTriggerFiles(roots.official);
-        const devFiles = listTriggerFiles(roots.dev);
-        const allFiles = new Set([...uffFiles, ...devFiles]);
         const unified = new ascii().setHeading("Folder", "File", "Ufficiale", "Dev");
-        const isOfficial = roots.isOfficial;
 
         for (const file of Array.from(allFiles).sort()) {
             const folderLabel = "root";

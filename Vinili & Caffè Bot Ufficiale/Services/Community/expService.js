@@ -312,5 +312,6 @@ module.exports = {
   getGlobalMultiplier,
   setGlobalMultiplier,
   getRoleMultiplier,
-  getCurrentWeekKey
+  getCurrentWeekKey,
+  ROLE_MULTIPLIERS
 };

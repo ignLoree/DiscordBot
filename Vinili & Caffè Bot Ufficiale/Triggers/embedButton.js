@@ -1,4 +1,5 @@
 const { EmbedBuilder, Events } = require('discord.js');
+const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -189,6 +190,36 @@ module.exports = {
         <:VC_3:1444099746116534282>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_white:1330194100162396330>`),
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
+        }
+        if (interaction.customId == 'r_multiplier_info') {
+            const entries = ROLE_MULTIPLIERS instanceof Map
+                ? Array.from(ROLE_MULTIPLIERS.entries())
+                : Array.isArray(ROLE_MULTIPLIERS)
+                    ? ROLE_MULTIPLIERS
+                    : Object.entries(ROLE_MULTIPLIERS || {});
+
+            const lines = entries.length
+                ? entries.map(([roleId, multi]) => `<@&${roleId}>  ➜  x${multi}`)
+                : ['Nessun moltiplicatore attivo.'];
+
+            const embed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('🍀 Informazioni sui moltiplicatori')
+                .setDescription([
+                    'I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.',
+                    'I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#1442569159237177385>',
+                    '',
+                    '**Moltiplicatori attivi:**',
+                    ...lines,
+                    '',
+                    '**Nota sulla classifica settimanale:**',
+                    'Gli exp che determinano la classifica settimanale non vengono influenzati dai moltiplicatori per garantire una partita tra gli utenti.',
+                    '',
+                    'Puoi vedere la classifica settimanale con il comando `+classifica`'
+                ].join('\n'))
+                .setFooter({ text: `Richiesto da: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+
+            await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
         if (interaction.customId == 'generali') {
             const embeds = [
