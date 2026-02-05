@@ -105,13 +105,13 @@ async function buildAllTimeEmbed(message) {
 
 module.exports = {
   name: 'classifica',
-  aliases: ['c', 'cs'],
+  aliases: ['c', 'cs', "classificasettimanale"],
   prefixOverride: '+',
 
   async execute(message) {
     await message.channel.sendTyping();
     const invoked = getInvokedCommand(message);
-    const isWeekly = invoked === 'cs';
+    const isWeekly = invoked === 'cs' || invoked === 'classificasettimanale';
     const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }

@@ -3,7 +3,8 @@ const { safeMessageReply } = require('../../Utils/Moderation/message');
 const { getUserRanks, getGlobalMultiplier } = require('../../Services/Community/expService');
 
 module.exports = {
-  name: 'r',
+  name: 'rank',
+  aliases: ["r", "me"],
   prefixOverride: "+",
 
   async execute(message) {

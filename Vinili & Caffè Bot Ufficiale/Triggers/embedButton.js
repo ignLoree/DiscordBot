@@ -89,7 +89,7 @@ module.exports = {
 
                 <:VC_DoubleReply:1468713981152727120> **Ruolo** esclusivo <@&1442568948271943721>
                 <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
-                <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in **__ogni__ chat**`),
+                <:VC_Reply:1468262952934314131> Cambiare il **__nickname__**`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli saranno rimossi\`__**`)
@@ -103,7 +103,7 @@ module.exports = {
                     .setDescription(`<:VC_BlackPin:1448687216871084266> Per **salire** di livello e **ottenere** i ruoli bisogna **messaggiare** in <#1442569130573303898> e stare in **vocale** nei canali dei server. <@1329118940110127204> vi avviserà quando salirete di **livello**.
 
                 <:dot:1443660294596329582> <@&1442568936423034940>
-                    <:VC_DoubleReply:1468713981152727120> Cambiarsi il **__nick__**
+                    <:VC_DoubleReply:1468713981152727120> Cambiare il **__nickname__**
                     <:VC_Reply:1468262952934314131> Inviare **link** e **immagini** in **__ogni__ chat**
                     <:VC_Reply:1468262952934314131> Nuovo comando **sbloccato**: \`+quote\`
                     
