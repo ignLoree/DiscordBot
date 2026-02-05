@@ -1337,6 +1337,7 @@ async function handleMinigameMessage(message, client) {
     if (guess === game.target) {
       clearTimeout(game.timeout);
       activeGames.delete(cfg.channelId);
+      await message.react('<a:VC_Events:1448688007438667796>').catch(() => {});
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }

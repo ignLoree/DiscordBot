@@ -401,7 +401,7 @@ module.exports = {
             ? overrideCommand.name
             : args.shift()?.toLowerCase();
         if (startsWithMention && !cmd) {
-            cmd = "quote";
+            return;
         }
 
         if (!cmd) return;

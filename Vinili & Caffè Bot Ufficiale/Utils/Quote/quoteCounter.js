@@ -10,6 +10,4 @@ async function nextQuoteCount(guildId) {
   return doc?.count || 1;
 }
 
-module.exports = {
-  nextQuoteCount
-};
+module.exports = { nextQuoteCount };
