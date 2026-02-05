@@ -9,7 +9,7 @@ const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
-const { startMinigameLoop } = require('../Services/Minigames/minigameService');
+const { startMinigameLoop, forceStartMinigame } = require('../Services/Minigames/minigameService');
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
@@ -98,6 +98,16 @@ module.exports = {
             startMinigameLoop(client);
         } catch (err) {
             global.logger.error('[MINIGAMES] Failed to start loop', err);
+        }
+        try {
+            cron.schedule('0 9 * * *', async () => {
+                await forceStartMinigame(client);
+            }, { timezone: 'Europe/Rome' });
+            cron.schedule('45 23 * * *', async () => {
+                await forceStartMinigame(client);
+            }, { timezone: 'Europe/Rome' });
+        } catch (err) {
+            global.logger.error('[MINIGAMES] Failed to schedule forced runs', err);
         }
         try {
             startVoteRoleCleanupLoop(client);

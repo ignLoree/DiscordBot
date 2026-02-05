@@ -537,6 +537,18 @@ function startMinigameLoop(client) {
   setInterval(runForcedCheck, 60 * 1000);
 }
 
+async function forceStartMinigame(client) {
+  const cfg = getConfig(client);
+  if (!cfg?.enabled) return;
+  if (!cfg.channelId) return;
+  if (activeGames.has(cfg.channelId)) return;
+  const available = getAvailableGameTypes(cfg);
+  if (available.length === 0) return;
+  const type = available[randomBetween(0, available.length - 1)];
+  pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+  await maybeStartRandomGame(client, true);
+}
+
 async function awardWinAndReply(message, rewardExp) {
   let nextTotal = Number(rewardExp || 0);
   try {
@@ -657,4 +669,4 @@ async function handleMinigameButton(interaction, client) {
   return true;
 }
 
-module.exports = { startMinigameLoop, handleMinigameMessage, handleMinigameButton };
+module.exports = { startMinigameLoop, forceStartMinigame, handleMinigameMessage, handleMinigameButton };

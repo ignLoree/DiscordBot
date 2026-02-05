@@ -78,9 +78,6 @@ module.exports = {
     enabled: true,
     channelId: "1442569130573303898",
     roleId: "1443955529352478830",
-    intervalMs: 10 * 60 * 1000,
-    activityWindowMs: 5 * 60 * 1000,
-    minMessages: 1,
     guessNumber: {
       min: 1,
       max: 100,
