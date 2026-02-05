@@ -183,11 +183,11 @@ function recordReminderActivity(channelId) {
   reminderActivity.set(channelId, trimmed);
 }
 
-function getRecentReminderCount(channelId) {
+function getRecentReminderCount(channelId, windowMs = 60 * 60 * 1000) {
   if (!channelId) return 0;
   const now = Date.now();
   const list = reminderActivity.get(channelId) || [];
-  const cutoff = now - 60 * 60 * 1000;
+  const cutoff = now - windowMs;
   const trimmed = list.filter((ts) => ts >= cutoff);
   reminderActivity.set(channelId, trimmed);
   return trimmed.length;
@@ -237,13 +237,18 @@ async function scheduleForHour(client, parts, guildId) {
   const minStartDelay = baseLast ? Math.max(0, baseLast + MIN_GAP_MS - now) : 0;
   if (minStartDelay >= remainingMs) return;
   const availableMs = Math.max(0, remainingMs - minStartDelay);
-  const activityCount = getRecentReminderCount(REMINDER_CHANNEL_ID);
-  const allowSecond = activityCount >= 30 && availableMs > MIN_GAP_MS;
+  const activityCount30m = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
+  const activityCount60m = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  const allowFirst = activityCount30m >= 15;
+  const allowSecond = activityCount60m >= 30 && availableMs > MIN_GAP_MS;
   const delays = [];
-  const firstDelay = minStartDelay + rand(availableMs);
-  delays.push(firstDelay);
+  if (allowFirst) {
+    const firstDelay = minStartDelay + rand(availableMs);
+    delays.push(firstDelay);
+  }
   if (allowSecond) {
-    const secondMin = firstDelay + MIN_GAP_MS;
+    const baseDelay = delays.length ? delays[0] : minStartDelay;
+    const secondMin = baseDelay + MIN_GAP_MS;
     if (secondMin < remainingMs) {
       const secondDelay = rand(remainingMs - secondMin) + secondMin;
       delays.push(secondDelay);

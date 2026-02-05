@@ -10,7 +10,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setDescription(`<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovrà __seguire__ <#1329080096681758797>, chi non lo farà **riceverà** una __valutazione negativa__.
             
-            > <a:vegarightarrow:1443673039156936837> **__LIMITI SETTIMANALI SULLE SANZIONI__**
+            > <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**
             <:dot:1443660294596329582> Ogni <@&1442568901887000618> dovrà __eseguire__ almeno: **\`3 sanzioni\`**
             <:dot:1443660294596329582> Ogni <@&1442568897902678038> dovrà __eseguire__ almeno: **\`4 sanzioni\`**
             <:dot:1443660294596329582> Ogni <@&1442568896237277295> dovrà __eseguire__ almeno: **\`4 sanzioni\`**
@@ -49,7 +49,7 @@ module.exports = {
             
                 > Per __richiedere__ una pausa basta fare il comando **</pausa request:1215398004182491149>** in <#1442569262689554444>.
             
-                <a:vegarightarrow:1443673039156936837> **__LIMITI__**
+                <a:VC_Arrow:1448672967721615452> **__LIMITI__**
                 <a:loading:1443934440614264924> In un anno si possono chiedere __massimo__ **\`60 giorni\`** di pausa che si possono usufruire in __tutti__ i **12 mesi** dell'anno. Gli <@&1442568895251611924> avranno **__\`5\`__** giorni in più.
             
                 > Nei giorni **festivi** avrete anche dei giorni in più **ulteriori** al __normale mese__:
@@ -58,13 +58,13 @@ module.exports = {
             <:dot:1443660294596329582> **Pasqua** e **Pasquetta**
             
             > Naturalmente per **garantire** al meglio l'attività del server ci sono dei __limiti__ di staffer che possono essere in pausa nello __stesso periodo__
-            <:dot:1443660294596329582> <@&1442568904311570555> <a:vegarightarrow:1443673039156936837> __Nessun limite__
-            <:dot:1443660294596329582> <@&1442568901887000618> <a:vegarightarrow:1443673039156936837> __3__ **staffer**
-            <:dot:1443660294596329582> <@&1442568897902678038> <a:vegarightarrow:1443673039156936837> __1__ **staffer**
-            <:dot:1443660294596329582> <@&1442568896237277295> <a:vegarightarrow:1443673039156936837> __1__ **staffer**
-            <:dot:1443660294596329582> <@&1442568893435478097> <a:vegarightarrow:1443673039156936837> __2__ **staffer**
-            <:dot:1443660294596329582> <@&1442568891875201066> <a:vegarightarrow:1443673039156936837> __1__ **staffer**
-            <:dot:1443660294596329582> <@&1442568889052430609> <a:vegarightarrow:1443673039156936837> __1__ **staffer**
+            <:dot:1443660294596329582> <@&1442568904311570555> <a:VC_Arrow:1448672967721615452> __Nessun limite__
+            <:dot:1443660294596329582> <@&1442568901887000618> <a:VC_Arrow:1448672967721615452> __3__ **staffer**
+            <:dot:1443660294596329582> <@&1442568897902678038> <a:VC_Arrow:1448672967721615452> __1__ **staffer**
+            <:dot:1443660294596329582> <@&1442568896237277295> <a:VC_Arrow:1448672967721615452> __1__ **staffer**
+            <:dot:1443660294596329582> <@&1442568893435478097> <a:VC_Arrow:1448672967721615452> __2__ **staffer**
+            <:dot:1443660294596329582> <@&1442568891875201066> <a:VC_Arrow:1448672967721615452> __1__ **staffer**
+            <:dot:1443660294596329582> <@&1442568889052430609> <a:VC_Arrow:1448672967721615452> __1__ **staffer**
             
             <:attentionfromvega:1443651874032062505> Potrai chiedere __una pausa__ **ogni mese**. Se quest'ultima cade in \`2\` **__mesi diversi__**, verrà contato il mese in cui viene **chiesta** la __pausa__, a patto che non superi i primi __\`5\` giorni__ dell'altro mese. Per chiedere un'altra pausa dovrai aspettare almeno **__\`1 settimana\`__**
             
@@ -80,19 +80,19 @@ module.exports = {
                 
                 > <:attentionfromvega:1443651874032062505> **Superare** i limiti di __poco__ potrebbe comportare a un **depex**, mentre **superarli** di __tanto__ **__non garantisce__** un **pex**
             
-                <a:vegarightarrow:1443673039156936837> <@&1442568904311570555> 
+                <a:VC_Arrow:1448672967721615452> <@&1442568904311570555> 
             <:VC_DoubleReply:1468713981152727120> **__400__** messaggi
             <:VC_Reply:1468262952934314131> **__3.5h__** in vocale
 
-            <a:vegarightarrow:1443673039156936837> <@&1442568901887000618> 
+            <a:VC_Arrow:1448672967721615452> <@&1442568901887000618> 
             <:VC_DoubleReply:1468713981152727120> **__500__** messaggi
             <:VC_Reply:1468262952934314131> **__5h__** in vocale
 
-            <a:vegarightarrow:1443673039156936837> <@&1442568897902678038> 
+            <a:VC_Arrow:1448672967721615452> <@&1442568897902678038> 
             <:VC_DoubleReply:1468713981152727120> **__500__** messaggi
             <:VC_Reply:1468262952934314131> **__4.5h__** in vocale
 
-            <a:vegarightarrow:1443673039156936837> <@&1442568896237277295> 
+            <a:VC_Arrow:1448672967721615452> <@&1442568896237277295> 
             <:VC_DoubleReply:1468713981152727120> **__450__** messaggi
             <:VC_Reply:1468262952934314131> **__4h__** in vocale
 

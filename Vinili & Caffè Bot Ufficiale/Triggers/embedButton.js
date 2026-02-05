@@ -43,9 +43,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#1442569095068254219> \`HIGH STAFF\`.
 
-                    <:dot:1443660294596329582> **€1,50** <a:vegarightarrow:1443673039156936837> sponsor per **2** settimane
-                    <:dot:1443660294596329582> **€3** <a:vegarightarrow:1443673039156936837> sponsor per **1 **mese
-                    <:dot:1443660294596329582> **€5** <a:vegarightarrow:1443673039156936837> sponsor **lifetime**`),
+                    <:dot:1443660294596329582> **€1,50** <a:VC_Arrow:1448672967721615452> sponsor per **2** settimane
+                    <:dot:1443660294596329582> **€3** <a:VC_Arrow:1448672967721615452> sponsor per **1 **mese
+                    <:dot:1443660294596329582> **€5** <a:VC_Arrow:1448672967721615452> sponsor **lifetime**`),
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
@@ -55,9 +55,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:Discord_Mention:1329524304790028328> I **ping** variano in base al __numero__ di **membri** del server.
 
-                    <:dot:1443660294596329582> Meno di **500** <a:vegarightarrow:1443673039156936837> \`no ping\`
-                    <:dot:1443660294596329582> Tra i **500** e i **1000** <a:vegarightarrow:1443673039156936837> \`ping @here\`
-                    <:dot:1443660294596329582> **1000+** <a:vegarightarrow:1443673039156936837> \`ping @here & @everyone\``),
+                    <:dot:1443660294596329582> Meno di **500** <a:VC_Arrow:1448672967721615452> \`no ping\`
+                    <:dot:1443660294596329582> Tra i **500** e i **1000** <a:VC_Arrow:1448672967721615452> \`ping @here\`
+                    <:dot:1443660294596329582> **1000+** <a:VC_Arrow:1448672967721615452> \`ping @here & @everyone\``),
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
@@ -185,9 +185,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<a:Boost_Cycle:1329504283007385642> **__Classifica globale donatori Vinili & Caffè:__** <:Money:1330544713463500970>
 
-        <:VC_1:1444099819680563200>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_yellow:1330194103564238930>
-        <:VC_2:1444099781864722535>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_darkblue:1330194101886255187>
-        <:VC_3:1444099746116534282>° Posizione <a:vegarightarrow:1443673039156936837> ㆍ <a:OP_crown_white:1330194100162396330>`),
+        <:VC_1:1444099819680563200>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_yellow:1330194103564238930>
+        <:VC_2:1444099781864722535>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_darkblue:1330194101886255187>
+        <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_white:1330194100162396330>`),
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
