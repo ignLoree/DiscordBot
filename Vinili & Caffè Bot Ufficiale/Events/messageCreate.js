@@ -12,7 +12,6 @@ const { handleMinigameMessage } = require('../Services/Minigames/minigameService
 const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
-const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 
 const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
@@ -369,9 +368,6 @@ module.exports = {
         } catch (error) {
             logEventError(client, 'TTS ERROR', error);
         }
-        const startsWithMusic = musicPrefix && message.content.startsWith(musicPrefix);
-        const modPrefix = client.config2.moderationPrefix || '?';
-        const startsWithMod = modPrefix && message.content.startsWith(modPrefix);
         const startsWithDefault = message.content.startsWith(defaultPrefix);
         const startsWithVerify = verifyPrefix && message.content.startsWith(verifyPrefix);
         const shouldDeleteCommandMessage = !startsWithMod;
@@ -381,9 +377,7 @@ module.exports = {
         };
         if (
             !overridePrefix &&
-            !startsWithMusic &&
             !startsWithDefault &&
-            !startsWithMod &&
             !startsWithVerify &&
             !startsWithMention
         ) return;
@@ -394,11 +388,7 @@ module.exports = {
                 : null)
             || (startsWithVerify
                 ? verifyPrefix
-                : startsWithMod
-                    ? modPrefix
-                    : startsWithMusic
-                        ? musicPrefix
-                        : defaultPrefix);
+                : startsWithMod);
 
         const args = message.content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean);
         let cmd = overrideCommand
@@ -409,13 +399,6 @@ module.exports = {
         }
 
         if (!cmd) return;
-        if (startsWithMusic && cmd !== "login" && cmd !== "help") {
-            const lastfmUser = await LastFmUser.findOne({ discordId: message.author.id });
-            if (!lastfmUser || !lastfmUser.lastFmUsername || lastfmUser.lastFmUsername === "pending") {
-                await message.channel.send(buildWelcomePayload());
-                return;
-            }
-        }
         if (overridePrefix) {
             const prefixCommands = overrideMap.get(overridePrefix);
             overrideCommand = prefixCommands?.get(cmd) || null;
@@ -434,11 +417,6 @@ module.exports = {
             return;
         }
         if (startsWithVerify && command?.name !== 'verify') return;
-        if (command?.folder === "Music" && !startsWithMusic) return;
-        if (command?.folder !== "Music" && startsWithMusic) return;
-        if (String(command?.folder).toLowerCase() === "moderation" && !startsWithMod && !startsWithVerify) return;
-        if (String(command?.folder).toLowerCase() !== "moderation" && startsWithMod) return;
-        if (String(command?.folder).toLowerCase() !== "moderation" && startsWithVerify) return;
         if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();
         if (!client.prefixCommandQueue) client.prefixCommandQueue = new Map();
         const userId = message.author.id;

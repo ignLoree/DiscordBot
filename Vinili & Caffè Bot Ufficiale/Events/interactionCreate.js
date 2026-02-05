@@ -7,8 +7,6 @@ const { handlePartnerModal } = require('./interaction/partnerModal');
 const { handleSuggestionVote } = require('./interaction/suggestionHandlers');
 const { handleTicketInteraction } = require('./interaction/ticketHandlers');
 const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
-const { handleHelpMenu } = require('./interaction/helpHandlers');
-const { handleLastFmInteraction } = require('./interaction/lastfmHandlers');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
 
 module.exports = {
@@ -16,8 +14,6 @@ module.exports = {
     async execute(interaction, client) {
         if (!interaction) return;
         try {
-            if (await handleHelpMenu(interaction)) return;
-            if (await handleLastFmInteraction(interaction)) return;
             if (await handleVerifyInteraction(interaction)) return;
             if (await handleDmBroadcastModal(interaction, client)) return;
             if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {

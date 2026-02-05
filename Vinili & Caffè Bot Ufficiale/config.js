@@ -1,7 +1,5 @@
 module.exports = {
   prefix: '!',
-  musicPrefix: '.',
-  moderationPrefix: '?',
   status: "idle",
   logLevel: 'debug',
   eventListeners: 50,
