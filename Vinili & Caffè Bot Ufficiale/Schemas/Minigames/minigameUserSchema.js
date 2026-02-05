@@ -11,4 +11,4 @@ const minigameUserSchema = new mongoose.Schema(
 
 minigameUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
-module.exports = mongoose.model('MinigameUser', minigameUserSchema);
+module.exports = mongoose.models.MinigameUser || mongoose.model('MinigameUser', minigameUserSchema);
