@@ -256,9 +256,16 @@ async function restoreSchedules(client) {
 function startHourlyReminderLoop(client) {
   const tick = async () => {
     const parts = getRomeParts(new Date());
-    if (parts.hour < START_HOUR || parts.hour > END_HOUR) return;
+    if (parts.hour < START_HOUR || parts.hour > END_HOUR) {
+      global.logger?.info?.('[CHAT REMINDER] Tick skipped: outside window');
+      return;
+    }
     const guildId = client.guilds.cache.first()?.id || null;
-    if (!guildId) return;
+    if (!guildId) {
+      global.logger?.warn?.('[CHAT REMINDER] Tick skipped: no guild');
+      return;
+    }
+    global.logger?.info?.('[CHAT REMINDER] Tick');
     await scheduleForHour(client, parts, guildId);
   };
   restoreSchedules(client).catch(() => { });
