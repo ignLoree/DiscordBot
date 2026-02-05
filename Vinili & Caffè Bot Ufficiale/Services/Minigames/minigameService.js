@@ -31,6 +31,12 @@ const EXP_REWARDS = [
 let cachedWords = null;
 let cachedWordsAt = 0;
 const WORD_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+let cachedCountries = null;
+let cachedCountriesAt = 0;
+const COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+let cachedPlayers = null;
+let cachedPlayersAt = 0;
+const PLAYER_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function getConfig(client) {
   return client?.config2?.minigames || null;
@@ -130,6 +136,16 @@ function normalizeWord(raw) {
   return String(raw || '').trim().toLowerCase();
 }
 
+function normalizeCountryName(raw) {
+  return String(raw || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function isValidWord(word) {
   if (!word) return false;
   if (word.length < 5 || word.length > 6) return false;
@@ -164,6 +180,128 @@ async function loadWordList(cfg) {
   cachedWords = filtered;
   cachedWordsAt = now;
   return cachedWords;
+}
+
+function collectCountryNames(country) {
+  const names = new Set();
+  const add = (value) => {
+    const normalized = normalizeCountryName(value);
+    if (normalized) names.add(normalized);
+  };
+  add(country?.name?.common);
+  add(country?.name?.official);
+  const nativeNames = country?.name?.nativeName || {};
+  for (const key of Object.keys(nativeNames)) {
+    add(nativeNames[key]?.common);
+    add(nativeNames[key]?.official);
+  }
+  const translations = country?.translations || {};
+  for (const key of Object.keys(translations)) {
+    add(translations[key]?.common);
+    add(translations[key]?.official);
+  }
+  const altSpellings = Array.isArray(country?.altSpellings) ? country.altSpellings : [];
+  for (const alt of altSpellings) add(alt);
+  return Array.from(names.values());
+}
+
+async function loadCountryList(cfg) {
+  const now = Date.now();
+  if (cachedCountries && (now - cachedCountriesAt) < COUNTRY_CACHE_TTL_MS) return cachedCountries;
+
+  const apiUrl = cfg?.guessFlag?.apiUrl;
+  let list = [];
+  if (apiUrl) {
+    try {
+      const res = await axios.get(apiUrl, { timeout: 15000 });
+      if (Array.isArray(res?.data)) {
+        list = res.data;
+      }
+    } catch {}
+  }
+
+  const mapped = list
+    .map((country) => {
+      const names = collectCountryNames(country);
+      const flagUrl = country?.flags?.png || country?.flags?.svg || country?.flags?.[0];
+      const displayName = country?.name?.common || country?.name?.official || null;
+      if (!names.length || !flagUrl || !displayName) return null;
+      return { names, flagUrl, displayName };
+    })
+    .filter(Boolean);
+
+  cachedCountries = mapped;
+  cachedCountriesAt = now;
+  return cachedCountries;
+}
+
+function normalizePlayerGuess(raw) {
+  return normalizeCountryName(raw);
+}
+
+function extractPlayerTokens(name) {
+  const normalized = normalizePlayerGuess(name);
+  if (!normalized) return [];
+  return normalized.split(' ').filter(Boolean);
+}
+
+async function fetchPlayerInfo(cfg, name) {
+  const apiBase = cfg?.guessPlayer?.apiUrl;
+  if (!apiBase || !name) return null;
+  const url = `${apiBase}${encodeURIComponent(name)}`;
+  try {
+    const res = await axios.get(url, { timeout: 15000 });
+    const players = res?.data?.player;
+    if (!Array.isArray(players) || players.length === 0) return null;
+    const player = players.find((p) => (p?.strThumb || p?.strCutout) && p?.strPlayer) || players[0];
+    if (!player?.strPlayer) return null;
+    if (!player.strThumb && !player.strCutout) return null;
+    return {
+      name: player.strPlayer,
+      team: player.strTeam || 'Squadra sconosciuta',
+      nationality: player.strNationality || 'Nazionalità sconosciuta',
+      image: player.strThumb || player.strCutout || null
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchPlayerFromRandomLetter(cfg) {
+  const apiBase = cfg?.guessPlayer?.apiUrl;
+  if (!apiBase) return null;
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const letter = letters[randomBetween(0, letters.length - 1)];
+    const url = `${apiBase}${encodeURIComponent(letter)}`;
+    try {
+      const res = await axios.get(url, { timeout: 15000 });
+      const players = res?.data?.player;
+      if (!Array.isArray(players) || players.length === 0) continue;
+      const withImage = players.filter((p) => p?.strThumb || p?.strCutout);
+      const pool = withImage.length ? withImage : players;
+      const player = pool[randomBetween(0, pool.length - 1)];
+      if (!player?.strPlayer) continue;
+      if (!player.strThumb && !player.strCutout) continue;
+      return {
+        name: player.strPlayer,
+        team: player.strTeam || 'Squadra sconosciuta',
+        nationality: player.strNationality || 'Nazionalità sconosciuta',
+        image: player.strThumb || player.strCutout || null
+      };
+    } catch {}
+  }
+  return null;
+}
+
+async function loadPlayerList(cfg) {
+  const now = Date.now();
+  if (cachedPlayers && (now - cachedPlayersAt) < PLAYER_CACHE_TTL_MS) return cachedPlayers;
+  const list = Array.isArray(cfg?.guessPlayer?.names) ? cfg.guessPlayer.names : [];
+  const filtered = list.map((name) => String(name || '').trim()).filter(Boolean);
+  cachedPlayers = filtered;
+  cachedPlayersAt = now;
+  return cachedPlayers;
 }
 
 function isWithinAllowedWindow(now, start, end) {
@@ -240,6 +378,35 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
     ].join('\n'));
 }
 
+function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
+  const minutes = Math.max(1, Math.round(durationMs / 60000));
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('Indovina la bandiera .ᐟ ✧')
+    .setDescription([
+      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
+      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
+    ].join('\n'))
+    .setImage(flagUrl);
+}
+
+function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
+  const minutes = Math.max(1, Math.round(durationMs / 60000));
+  const embed = new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('Indovina il calciatore .ᐟ ✧')
+    .setDescription([
+      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
+      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
+      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
+    ].join('\n'));
+  if (imageUrl) {
+    embed.setImage(imageUrl);
+  }
+  return embed;
+}
+
 function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
@@ -269,6 +436,13 @@ function buildMinuteHintEmbed(channelId) {
     .setColor('#6f4e37')
     .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
     .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+}
+
+function buildFlagHintEmbed(name) {
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildHintEmbed(isHigher) {
@@ -351,6 +525,18 @@ function buildTimeoutWordEmbed(word) {
     .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La parola era **${word}**.`);
 }
 
+function buildTimeoutFlagEmbed(name) {
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La bandiera era **${name}**.`);
+}
+
+function buildTimeoutPlayerEmbed(name) {
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il calciatore era **${name}**.`);
+}
+
 function buildTimeoutFindBotEmbed() {
   return new EmbedBuilder()
     .setColor('#6f4e37')
@@ -361,6 +547,8 @@ function getAvailableGameTypes(cfg) {
   const types = [];
   if (cfg?.guessNumber) types.push('guessNumber');
   if (cfg?.guessWord) types.push('guessWord');
+  if (cfg?.guessFlag) types.push('guessFlag');
+  if (cfg?.guessPlayer) types.push('guessPlayer');
   if (cfg?.findBot) types.push('findBot');
   return types;
 }
@@ -425,6 +613,16 @@ async function scheduleMinuteHint(client, hintChannelId, durationMs, channelId) 
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
     await mainChannel.send({ embeds: [buildMinuteHintEmbed(hintChannelId)] }).catch(() => {});
+  }, delay);
+}
+
+async function scheduleFlagHint(client, channelId, durationMs, name) {
+  if (!channelId || !durationMs || durationMs <= 60 * 1000) return null;
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  if (!channel) return null;
+  const delay = durationMs - 60 * 1000;
+  return setTimeout(async () => {
+    await channel.send({ embeds: [buildFlagHintEmbed(name)] }).catch(() => {});
   }, delay);
 }
 
@@ -538,6 +736,131 @@ async function startGuessWordGame(client, cfg) {
 
   markSent(channelId);
 
+  return true;
+}
+
+async function startGuessFlagGame(client, cfg) {
+  const channelId = cfg.channelId;
+  if (!channelId) return false;
+  if (activeGames.has(channelId)) return false;
+
+  const countries = await loadCountryList(cfg);
+  if (!countries.length) return false;
+
+  const rewardExp = Number(cfg?.guessFlag?.rewardExp || 150);
+  const durationMs = Math.max(60000, Number(cfg?.guessFlag?.durationMs || 180000));
+
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  if (!channel) return false;
+
+  const target = countries[randomBetween(0, countries.length - 1)];
+  if (!target) return false;
+
+  const roleId = cfg.roleId;
+  if (roleId) {
+    await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
+  }
+
+  const gameMessage = await channel.send({ embeds: [buildGuessFlagEmbed(target.flagUrl, rewardExp, durationMs)] }).catch(() => null);
+
+  const timeout = setTimeout(async () => {
+    const game = activeGames.get(channelId);
+    if (!game) return;
+    activeGames.delete(channelId);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    await channel.send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
+  }, durationMs);
+
+  const hintTimeout = await scheduleFlagHint(client, channelId, durationMs, target.displayName);
+
+  activeGames.set(channelId, {
+    type: 'guessFlag',
+    answers: target.names,
+    displayName: target.displayName,
+    rewardExp,
+    startedAt: Date.now(),
+    endsAt: Date.now() + durationMs,
+    timeout,
+    hintTimeout,
+    gameMessageId: gameMessage?.id || null
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'guessFlag',
+    target: JSON.stringify({ names: target.names, displayName: target.displayName, flagUrl: target.flagUrl }),
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
+    gameMessageId: gameMessage?.id || null
+  });
+
+  markSent(channelId);
+
+  return true;
+}
+
+async function startGuessPlayerGame(client, cfg) {
+  const channelId = cfg.channelId;
+  if (!channelId) return false;
+  if (activeGames.has(channelId)) return false;
+
+  const rewardExp = Number(cfg?.guessPlayer?.rewardExp || 100);
+  const durationMs = Math.max(60000, Number(cfg?.guessPlayer?.durationMs || 180000));
+
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  if (!channel) return false;
+
+  let info = await fetchPlayerFromRandomLetter(cfg);
+  if (!info) {
+    const names = await loadPlayerList(cfg);
+    if (!names.length) return false;
+    const randomName = names[randomBetween(0, names.length - 1)];
+    info = await fetchPlayerInfo(cfg, randomName);
+  }
+  if (!info) return false;
+
+  const roleId = cfg.roleId;
+  if (roleId) {
+    await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
+  }
+
+  const gameMessage = await channel.send({ embeds: [buildGuessPlayerEmbed(rewardExp, durationMs, info.image)] }).catch(() => null);
+
+  const timeout = setTimeout(async () => {
+    const game = activeGames.get(channelId);
+    if (!game) return;
+    activeGames.delete(channelId);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+    await channel.send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
+  }, durationMs);
+
+  const hintTimeout = await scheduleFlagHint(client, channelId, durationMs, `${info.team} • ${info.nationality}`);
+
+  activeGames.set(channelId, {
+    type: 'guessPlayer',
+    answers: extractPlayerTokens(info.name),
+    fullAnswer: normalizePlayerGuess(info.name),
+    displayName: info.name,
+    rewardExp,
+    startedAt: Date.now(),
+    endsAt: Date.now() + durationMs,
+    timeout,
+    hintTimeout,
+    gameMessageId: gameMessage?.id || null
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'guessPlayer',
+    target: JSON.stringify({ name: info.name, team: info.team, nationality: info.nationality, image: info.image }),
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
+    gameMessageId: gameMessage?.id || null
+  });
+
+  markSent(channelId);
   return true;
 }
 
@@ -687,20 +1010,34 @@ async function maybeStartRandomGame(client, force = false) {
   const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
   if (!channel) return;
 
-  const pending = pendingGames.get(cfg.channelId);
-  const gameType = pending?.type || 'guessNumber';
-  if (gameType === 'guessWord') {
-    const started = await startGuessWordGame(client, cfg);
-    if (started) pendingGames.delete(cfg.channelId);
-    return;
+  const available = getAvailableGameTypes(cfg);
+  if (!available.length) return;
+  const tried = new Set();
+  let pending = pendingGames.get(cfg.channelId);
+
+  while (tried.size < available.length) {
+    const gameType = pending?.type || await getNextGameType(client, cfg);
+    if (!gameType) return;
+    if (tried.has(gameType)) {
+      pending = null;
+      continue;
+    }
+    tried.add(gameType);
+
+    let started = false;
+    if (gameType === 'guessWord') started = await startGuessWordGame(client, cfg);
+    else if (gameType === 'guessFlag') started = await startGuessFlagGame(client, cfg);
+    else if (gameType === 'guessPlayer') started = await startGuessPlayerGame(client, cfg);
+    else if (gameType === 'findBot') started = await startFindBotGame(client, cfg);
+    else started = await startGuessNumberGame(client, cfg);
+
+    if (started) {
+      pendingGames.delete(cfg.channelId);
+      return;
+    }
+    pendingGames.delete(cfg.channelId);
+    pending = null;
   }
-  if (gameType === 'findBot') {
-    const started = await startFindBotGame(client, cfg);
-    if (started) pendingGames.delete(cfg.channelId);
-    return;
-  }
-  const started = await startGuessNumberGame(client, cfg);
-  if (started) pendingGames.delete(cfg.channelId);
 }
 
 function startMinigameLoop(client) {
@@ -826,6 +1163,33 @@ async function handleMinigameMessage(message, client) {
     return false;
   }
 
+  if (game.type === 'guessFlag') {
+    const guess = normalizeCountryName(content);
+    if (!guess) return false;
+    if (game.answers?.includes(guess)) {
+      clearTimeout(game.timeout);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      activeGames.delete(cfg.channelId);
+      await awardWinAndReply(message, game.rewardExp);
+      return true;
+    }
+    return false;
+  }
+
+  if (game.type === 'guessPlayer') {
+    const guess = normalizePlayerGuess(content);
+    if (!guess) return false;
+    const tokens = game.answers || [];
+    if (guess === game.fullAnswer || tokens.includes(guess) || (game.fullAnswer && game.fullAnswer.includes(guess) && guess.length >= 3)) {
+      clearTimeout(game.timeout);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      activeGames.delete(cfg.channelId);
+      await awardWinAndReply(message, game.rewardExp);
+      return true;
+    }
+    return false;
+  }
+
   return false;
 }
 
@@ -895,6 +1259,20 @@ async function restoreActiveGames(client) {
       await channel.send({ embeds: [buildTimeoutNumberEmbed(Number(state.target))] }).catch(() => {});
     } else if (state.type === 'guessWord') {
       await channel.send({ embeds: [buildTimeoutWordEmbed(String(state.target))] }).catch(() => {});
+    } else if (state.type === 'guessFlag') {
+      let name = 'la bandiera';
+      try {
+        const parsed = JSON.parse(state.target || '{}');
+        name = parsed?.displayName || name;
+      } catch {}
+      await channel.send({ embeds: [buildTimeoutFlagEmbed(name)] }).catch(() => {});
+    } else if (state.type === 'guessPlayer') {
+      let name = 'il calciatore';
+      try {
+        const parsed = JSON.parse(state.target || '{}');
+        name = parsed?.name || name;
+      } catch {}
+      await channel.send({ embeds: [buildTimeoutPlayerEmbed(name)] }).catch(() => {});
     } else if (state.type === 'findBot') {
       const targetChannel = channel.guild.channels.cache.get(state.targetChannelId) || await channel.guild.channels.fetch(state.targetChannelId).catch(() => null);
       if (targetChannel) {
@@ -950,6 +1328,70 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
+      gameMessageId: state.gameMessageId || null
+    });
+    return;
+  }
+  if (state.type === 'guessFlag') {
+    let parsed = null;
+    try {
+      parsed = JSON.parse(state.target || '{}');
+    } catch {
+      parsed = null;
+    }
+    const answers = Array.isArray(parsed?.names) ? parsed.names : [];
+    const displayName = parsed?.displayName || 'la bandiera';
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game) return;
+      activeGames.delete(cfg.channelId);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      await channel.send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] }).catch(() => {});
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    const hintTimeout = await scheduleFlagHint(client, cfg.channelId, remainingMs, displayName);
+    activeGames.set(cfg.channelId, {
+      type: 'guessFlag',
+      answers,
+      displayName,
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      hintTimeout,
+      gameMessageId: state.gameMessageId || null
+    });
+    return;
+  }
+  if (state.type === 'guessPlayer') {
+    let parsed = null;
+    try {
+      parsed = JSON.parse(state.target || '{}');
+    } catch {
+      parsed = null;
+    }
+    const name = parsed?.name || 'il calciatore';
+    const team = parsed?.team || 'Squadra sconosciuta';
+    const nationality = parsed?.nationality || 'Nazionalità sconosciuta';
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game) return;
+      activeGames.delete(cfg.channelId);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      await channel.send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] }).catch(() => {});
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    const hintTimeout = await scheduleFlagHint(client, cfg.channelId, remainingMs, `${team} • ${nationality}`);
+    activeGames.set(cfg.channelId, {
+      type: 'guessPlayer',
+      answers: extractPlayerTokens(name),
+      fullAnswer: normalizePlayerGuess(name),
+      displayName: name,
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      hintTimeout,
       gameMessageId: state.gameMessageId || null
     });
     return;

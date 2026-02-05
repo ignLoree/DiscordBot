@@ -90,6 +90,16 @@ module.exports = {
       rewardExp: 150,
       apiUrl: "https://cdn.jsdelivr.net/npm/italian-words-dict@3.4.0/dist/words.json",
     },
+    guessFlag: {
+      durationMs: 3 * 60 * 1000,
+      rewardExp: 150,
+      apiUrl: "https://restcountries.com/v3.1/all?fields=name,translations,flags,altSpellings",
+    },
+    guessPlayer: {
+      durationMs: 3 * 60 * 1000,
+      rewardExp: 100,
+      apiUrl: "https://www.thesportsdb.com/api/v1/json/123/searchplayers.php?p=",
+    },
     findBot: {
       durationMs: 5 * 60 * 1000,
       rewardExp: 100,
