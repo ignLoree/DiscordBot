@@ -10,6 +10,7 @@ const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminde
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
+const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 
 const VOTE_MANAGER_BOT_ID = '959699003010871307';
@@ -231,6 +232,9 @@ async function handleVoteManagerMessage(message) {
             if (count === 1) {
                 expValue = 250;
             }
+        } catch {}
+        try {
+            await addExpWithLevel(message.guild, user.id, Number(expValue || 0), false);
         } catch {}
         try {
             const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
