@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const { randomInt } = require('crypto');
 const ChatReminderSchedule = require('../../Schemas/Community/chatReminderScheduleSchema');
 const ChatReminderRotation = require('../../Schemas/Community/chatReminderRotationSchema');
 
@@ -13,6 +14,7 @@ let rotationDate = null;
 let rotationQueue = [];
 let rotationGuildId = null;
 let lastSentAt = null;
+const reminderActivity = new Map();
 
 const reminderPool = [
   () => new EmbedBuilder()
@@ -38,7 +40,7 @@ const reminderPool = [
     .setTitle('📌 Marca un messaggio e rendilo un post')
     .setDescription(
       [
-        'Rispondendo al messaggio con <@1329118940110127204> o con tasto destro -> App -> Quote, che si vuole postare, potrai poi vederlo nel canale <#1468540884537573479>'
+        'Rispondendo al messaggio taggando il bot <@1329118940110127204> o con tasto destro -> App -> Quote, che si vuole postare, potrai poi vederlo nel canale <#1468540884537573479>'
       ].join('\n')
     ),
   () => new EmbedBuilder()
@@ -166,6 +168,31 @@ function getHourKey(parts) {
   return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}`;
 }
 
+function rand(max) {
+  if (max <= 0) return 0;
+  return randomInt(0, max + 1);
+}
+
+function recordReminderActivity(channelId) {
+  if (!channelId) return;
+  const now = Date.now();
+  const list = reminderActivity.get(channelId) || [];
+  list.push(now);
+  const cutoff = now - 60 * 60 * 1000;
+  const trimmed = list.filter((ts) => ts >= cutoff);
+  reminderActivity.set(channelId, trimmed);
+}
+
+function getRecentReminderCount(channelId) {
+  if (!channelId) return 0;
+  const now = Date.now();
+  const list = reminderActivity.get(channelId) || [];
+  const cutoff = now - 60 * 60 * 1000;
+  const trimmed = list.filter((ts) => ts >= cutoff);
+  reminderActivity.set(channelId, trimmed);
+  return trimmed.length;
+}
+
 async function sendReminder(client, scheduleId) {
   const nowMs = Date.now();
   if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
@@ -199,27 +226,43 @@ async function scheduleForHour(client, parts, guildId) {
   const totalSeconds = parts.minute * 60 + parts.second;
   const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
   const now = Date.now();
-  const minStartDelay = lastSentAt ? Math.max(0, lastSentAt + MIN_GAP_MS - now) : 0;
+  let baseLast = lastSentAt || 0;
+  const latestScheduled = await ChatReminderSchedule.findOne({ guildId, fireAt: { $gt: new Date() } })
+    .sort({ fireAt: -1 })
+    .lean()
+    .catch(() => null);
+  if (latestScheduled?.fireAt) {
+    baseLast = Math.max(baseLast, new Date(latestScheduled.fireAt).getTime());
+  }
+  const minStartDelay = baseLast ? Math.max(0, baseLast + MIN_GAP_MS - now) : 0;
   if (minStartDelay >= remainingMs) return;
   const availableMs = Math.max(0, remainingMs - minStartDelay);
-  const count = (availableMs <= MIN_GAP_MS) ? 1 : (Math.random() < 0.5 ? 1 : 2);
+  const activityCount = getRecentReminderCount(REMINDER_CHANNEL_ID);
+  const allowSecond = activityCount >= 30 && availableMs > MIN_GAP_MS;
   const delays = [];
-  if (count === 1) {
-    delays.push(minStartDelay + Math.floor(Math.random() * availableMs));
-  } else {
-    const maxFirst = Math.max(0, remainingMs - MIN_GAP_MS);
-    const firstWindowMax = Math.max(minStartDelay, Math.min(maxFirst, remainingMs - MIN_GAP_MS));
-    const first = Math.floor(Math.random() * (firstWindowMax - minStartDelay + 1)) + minStartDelay;
-    const second = Math.floor(Math.random() * (remainingMs - (first + MIN_GAP_MS) + 1)) + first + MIN_GAP_MS;
-    delays.push(first, second);
+  const firstDelay = minStartDelay + rand(availableMs);
+  delays.push(firstDelay);
+  if (allowSecond) {
+    const secondMin = firstDelay + MIN_GAP_MS;
+    if (secondMin < remainingMs) {
+      const secondDelay = rand(remainingMs - secondMin) + secondMin;
+      delays.push(secondDelay);
+    }
   }
-  const fireTimes = delays.map((delay) => new Date(Date.now() + delay));
+  const fireTimes = delays
+    .sort((a, b) => a - b)
+    .map((delay) => new Date(Date.now() + delay));
   for (const fireAt of fireTimes) {
+    const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + MIN_GAP_MS) : fireAt.getTime();
+    baseLast = adjusted;
     const doc = await ChatReminderSchedule.create({ guildId, fireAt }).catch(() => null);
     if (!doc) continue;
+    if (adjusted !== fireAt.getTime()) {
+      await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted) } }).catch(() => {});
+    }
     const timeout = setTimeout(() => {
       sendReminder(client, doc._id).catch(() => { });
-    }, Math.max(1, fireAt.getTime() - Date.now()));
+    }, Math.max(1, adjusted - Date.now()));
     scheduledTimeouts.set(doc._id.toString(), timeout);
   }
 }
@@ -256,16 +299,9 @@ async function restoreSchedules(client) {
 function startHourlyReminderLoop(client) {
   const tick = async () => {
     const parts = getRomeParts(new Date());
-    if (parts.hour < START_HOUR || parts.hour > END_HOUR) {
-      global.logger?.info?.('[CHAT REMINDER] Tick skipped: outside window');
-      return;
-    }
+    if (parts.hour < START_HOUR || parts.hour > END_HOUR) return;
     const guildId = client.guilds.cache.first()?.id || null;
-    if (!guildId) {
-      global.logger?.warn?.('[CHAT REMINDER] Tick skipped: no guild');
-      return;
-    }
-    global.logger?.info?.('[CHAT REMINDER] Tick');
+    if (!guildId) return;
     await scheduleForHour(client, parts, guildId);
   };
   restoreSchedules(client).catch(() => { });
@@ -273,4 +309,4 @@ function startHourlyReminderLoop(client) {
   setInterval(tick, 60 * 1000);
 }
 
-module.exports = { startHourlyReminderLoop };
+module.exports = { startHourlyReminderLoop, recordReminderActivity };

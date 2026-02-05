@@ -9,6 +9,7 @@ const { recordBump } = require('../Services/Disboard/disboardReminderService');
 const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderService');
 const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
+const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
@@ -318,6 +319,13 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
+        try {
+            if (message.channelId === '1442569130573303898') {
+                recordReminderActivity(message.channelId);
+            }
+        } catch (error) {
+            logEventError(client, 'REMINDER ACTIVITY ERROR', error);
+        }
         try {
             await recordMessageActivity(message);
         } catch (error) {

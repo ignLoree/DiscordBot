@@ -55,7 +55,7 @@ module.exports = {
     enabled: true,
     channelId: "1442569130573303898",
     roleId: "1442569009567629375",
-    hour: 9,
+    hour: 8,
     minute: 0,
     questionsFile: "Data/morningQuestions.json"
   },

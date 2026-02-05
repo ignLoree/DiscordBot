@@ -11,6 +11,9 @@ const loopState = new WeakSet();
 const forcedRunState = new Map();
 let rotationDate = null;
 let rotationQueue = [];
+const recentMessages = new Map();
+const standbyChannels = new Set();
+const lastSentAtByChannel = new Map();
 
 const REWARD_CHANNEL_ID = "1442569138114662490";
 const EXP_REWARDS = [
@@ -36,6 +39,48 @@ function getConfig(client) {
 function getChannelSafe(client, channelId) {
   if (!channelId) return null;
   return client.channels.cache.get(channelId) || null;
+}
+
+function recordActivity(channelId, intervalMs) {
+  if (!channelId) return;
+  const windowMs = Math.max(60 * 1000, Number(intervalMs || 15 * 60 * 1000));
+  const now = Date.now();
+  const list = recentMessages.get(channelId) || [];
+  list.push(now);
+  const cutoff = now - windowMs;
+  const trimmed = list.filter((ts) => ts >= cutoff);
+  recentMessages.set(channelId, trimmed);
+}
+
+function getRecentCount(channelId, intervalMs) {
+  if (!channelId) return 0;
+  const windowMs = Math.max(60 * 1000, Number(intervalMs || 15 * 60 * 1000));
+  const now = Date.now();
+  const list = recentMessages.get(channelId) || [];
+  const cutoff = now - windowMs;
+  const trimmed = list.filter((ts) => ts >= cutoff);
+  recentMessages.set(channelId, trimmed);
+  return trimmed.length;
+}
+
+function isReadyByActivity(cfg) {
+  const intervalMs = Number(cfg?.intervalMs || 15 * 60 * 1000);
+  const channelId = cfg?.channelId;
+  const count = getRecentCount(channelId, intervalMs);
+  return count >= 5;
+}
+
+function canStartByInterval(cfg) {
+  const intervalMs = Number(cfg?.intervalMs || 15 * 60 * 1000);
+  const channelId = cfg?.channelId;
+  const lastSent = lastSentAtByChannel.get(channelId) || 0;
+  return Date.now() - lastSent >= intervalMs;
+}
+
+function markSent(channelId) {
+  if (!channelId) return;
+  lastSentAtByChannel.set(channelId, Date.now());
+  standbyChannels.delete(channelId);
 }
 
 async function saveActiveGame(client, cfg, payload) {
@@ -272,13 +317,13 @@ function buildRewardEmbed(member, reward, totalExp) {
     nextReward
       ? `<a:VC_HeartsBlue:1468686100045369404> / ti mancano **${remaining}** punti per la prossima ricompensa!`
       : '<a:VC_HeartsBlue:1468686100045369404> / hai raggiunto la ricompensa **massima**!',
-  ].join('\n')
-  .setFooter({ text: `Gli exp guadagnati si sommano al tuo livello globale! Controlla le tue statistiche con il comando \`+mstats\``})
+  ].join('\n');
 
   return new EmbedBuilder()
     .setColor('#6f4e37')
     .setAuthor({ name: member.displayName || member.user?.username || 'Utente', iconURL: member.displayAvatarURL() })
-    .setDescription(description);
+    .setDescription(description)
+    .setFooter({ text: 'Gli exp guadagnati si sommano al tuo livello globale! Controlla le tue statistiche con il comando `+mstats`' });
 }
 
 async function handleExpReward(client, member, totalExp) {
@@ -435,6 +480,8 @@ async function startGuessNumberGame(client, cfg) {
     gameMessageId: gameMessage?.id || null
   });
 
+  markSent(channelId);
+
   return true;
 }
 
@@ -488,6 +535,8 @@ async function startGuessWordGame(client, cfg) {
     endsAt: new Date(Date.now() + durationMs),
     gameMessageId: gameMessage?.id || null
   });
+
+  markSent(channelId);
 
   return true;
 }
@@ -551,10 +600,7 @@ async function startFindBotGame(client, cfg) {
       if (ch) {
         const msg = await ch.messages.fetch(game.messageId).catch(() => null);
         if (msg) {
-          const disabledRow = new ActionRowBuilder().addComponents(
-            ButtonBuilder.from(row.components[0]).setDisabled(true)
-          );
-          await msg.edit({ components: [disabledRow] }).catch(() => {});
+          await msg.delete().catch(() => {});
         }
         await ch.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
       }
@@ -587,6 +633,8 @@ async function startFindBotGame(client, cfg) {
     mainMessageId: mainMessage?.id || null,
     customId
   });
+
+  markSent(channelId);
 
   return true;
 }
@@ -629,6 +677,11 @@ async function maybeStartRandomGame(client, force = false) {
     const windowStart = cfg?.timeWindow?.start;
     const windowEnd = cfg?.timeWindow?.end;
     if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
+    if (!canStartByInterval(cfg)) return;
+    if (!isReadyByActivity(cfg)) {
+      standbyChannels.add(cfg.channelId);
+      return;
+    }
   }
 
   const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
@@ -653,17 +706,12 @@ async function maybeStartRandomGame(client, force = false) {
 function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
-  global.logger?.info?.('[MINIGAMES] Loop start');
 
   const runForcedCheck = async () => {
     const cfg = getConfig(client);
-    if (!cfg?.enabled) {
-      global.logger?.info?.('[MINIGAMES] Skip forced check: disabled');
-      return;
-    }
+    if (!cfg?.enabled) return;
     const now = new Date();
     const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
-    global.logger?.info?.(`[MINIGAMES] Forced check ${shouldForce ? 'triggered' : 'skipped'}`);
     if (!shouldForce) return;
     const type = await getNextGameType(client, cfg);
     if (!type) return;
@@ -673,11 +721,7 @@ function startMinigameLoop(client) {
 
   const tick = async () => {
     const cfg = getConfig(client);
-    if (!cfg?.enabled) {
-      global.logger?.info?.('[MINIGAMES] Tick skipped: disabled');
-      return;
-    }
-    global.logger?.info?.('[MINIGAMES] Tick');
+    if (!cfg?.enabled) return;
     if (!pendingGames.has(cfg.channelId)) {
       const type = await getNextGameType(client, cfg);
       if (!type) return;
@@ -732,6 +776,15 @@ async function handleMinigameMessage(message, client) {
   if (!message?.guild) return false;
   if (message.author?.bot) return false;
   if (message.channelId !== cfg.channelId) return false;
+  recordActivity(cfg.channelId, cfg?.intervalMs);
+  if (standbyChannels.has(cfg.channelId)) {
+    if (canStartByInterval(cfg) && isReadyByActivity(cfg)) {
+      const type = await getNextGameType(client, cfg);
+      if (type) pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+      standbyChannels.delete(cfg.channelId);
+      await maybeStartRandomGame(client, false);
+    }
+  }
 
   const game = activeGames.get(cfg.channelId);
   if (!game) return false;
@@ -808,7 +861,7 @@ async function handleMinigameButton(interaction, client) {
   if (mainChannel) {
     await mainChannel.send({ embeds: [winEmbed] }).catch(() => {});
   }
-  await interaction.reply({ content: 'Hai vinto!', ephemeral: true }).catch(() => {});
+  await interaction.reply({ content: 'Hai vinto!', flags: 1 << 6 }).catch(() => {});
   const member = interaction.member || await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);
@@ -819,13 +872,7 @@ async function handleMinigameButton(interaction, client) {
     const channel = interaction.channel;
     const message = await channel.messages.fetch(game.messageId).catch(() => null);
     if (message) {
-      const row = message.components?.[0];
-      if (row?.components?.[0]) {
-        const disabledRow = new ActionRowBuilder().addComponents(
-          ButtonBuilder.from(row.components[0]).setDisabled(true)
-        );
-        await message.edit({ components: [disabledRow] }).catch(() => {});
-      }
+      await message.delete().catch(() => {});
     }
   } catch {}
 

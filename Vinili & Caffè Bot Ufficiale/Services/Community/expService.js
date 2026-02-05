@@ -128,11 +128,18 @@ function buildLevelUpEmbed(member, level) {
       {
         color: 0x6f4e37,
         title: `${member?.displayName || member?.user?.username} leveled up!`,
+        thumbnail: {
+          url: member?.user?.displayAvatarURL({ size: 256 })
+        },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
           `<:VC_LevelUp:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`
         ].join('\n'),
+        footer: {
+          text: 'Vinili & Caffè • Nitro • Tags • Social • Activity',
+          icon_url: member?.guild?.iconURL({ size: 128 })
+        }
       }
     ]
   };
@@ -152,11 +159,18 @@ function buildPerksLevelEmbed(member, level, roleId) {
       {
         color: 0x6f4e37,
         title: `${member.user.username} leveled up!`,
+        thumbnail: {
+          url: member?.user?.displayAvatarURL({ size: 256 })
+        },
         description: [
-          `<a:VC_PandaClap:1331620157398712330> Complimenti ${member}!`,
-          `<:VC_LevelUp:1443701876892762243> Hai appena raggiunto il livello ${level}`,
-          `<a:VC_HelloKittyGift:1329447876857958471> Controlla <#${PERKS_CHANNEL_ID}> per sapere i nuovi vantaggi che hai sbloccato!`
-        ].join('\n')
+          `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
+          `<:VC_LevelUp:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`
+        ].join('\n'),
+        footer: {
+          text: 'Vinili & Caffè • Nitro • Tags • Social • Activity',
+          icon_url: member?.guild?.iconURL({ size: 128 })
+        }
       }
     ]
   };
