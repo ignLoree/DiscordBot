@@ -367,6 +367,8 @@ module.exports = {
         } catch (error) {
             logEventError(client, 'TTS ERROR', error);
         }
+        const modPrefix = client.config2.moderationPrefix || '?';
+        const startsWithMod = modPrefix && message.content.startsWith(modPrefix);
         const startsWithDefault = message.content.startsWith(defaultPrefix);
         const startsWithVerify = verifyPrefix && message.content.startsWith(verifyPrefix);
         const shouldDeleteCommandMessage = !startsWithMod;
@@ -377,6 +379,7 @@ module.exports = {
         if (
             !overridePrefix &&
             !startsWithDefault &&
+            !startsWithMod &&
             !startsWithVerify &&
             !startsWithMention
         ) return;
@@ -387,7 +390,11 @@ module.exports = {
                 : null)
             || (startsWithVerify
                 ? verifyPrefix
-                : startsWithMod);
+                : startsWithMod
+                    ? modPrefix
+                    : defaultPrefix
+                        ? musicPrefix
+                        : defaultPrefix);
 
         const args = message.content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean);
         let cmd = overrideCommand
@@ -416,6 +423,9 @@ module.exports = {
             return;
         }
         if (startsWithVerify && command?.name !== 'verify') return;
+        if (String(command?.folder).toLowerCase() === "moderation" && !startsWithMod && !startsWithVerify) return;
+        if (String(command?.folder).toLowerCase() !== "moderation" && startsWithMod) return;
+        if (String(command?.folder).toLowerCase() !== "moderation" && startsWithVerify) return;
         if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();
         if (!client.prefixCommandQueue) client.prefixCommandQueue = new Map();
         const userId = message.author.id;
