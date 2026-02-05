@@ -10,7 +10,6 @@ const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderSer
 const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
-const { handleChatReminder } = require('../Services/Community/chatReminderService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { buildWelcomePayload } = require('../Utils/Music/lastfmLoginUi');
 
@@ -323,11 +322,6 @@ module.exports = {
             await recordMessageActivity(message);
         } catch (error) {
             logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
-        }
-        try {
-            await handleChatReminder(message);
-        } catch (error) {
-            logEventError(client, 'CHAT REMINDER ERROR', error);
         }
         try {
             await handleMinigameMessage(message, client);

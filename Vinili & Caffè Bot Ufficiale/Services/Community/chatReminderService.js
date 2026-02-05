@@ -1,8 +1,12 @@
 const { EmbedBuilder } = require('discord.js');
 
 const REMINDER_CHANNEL_ID = '1442569130573303898';
-const REMINDER_EVERY_MESSAGES = 20;
-const counters = new Map();
+const TIME_ZONE = 'Europe/Rome';
+const START_HOUR = 9;
+const END_HOUR = 21;
+const scheduledHours = new Set();
+let rotationDate = null;
+let rotationQueue = [];
 
 const reminderPool = [
   () => new EmbedBuilder()
@@ -67,23 +71,83 @@ const reminderPool = [
 ];
 
 function nextReminderEmbed() {
-  const idx = Math.floor(Math.random() * reminderPool.length);
-  return reminderPool[idx]();
-}
-
-async function handleChatReminder(message) {
-  if (!message?.guild || !message.channel || message.author?.bot) return;
-  if (message.channel.id !== REMINDER_CHANNEL_ID) return;
-  const key = message.guild.id;
-  const current = counters.get(key) || 0;
-  const next = current + 1;
-  if (next < REMINDER_EVERY_MESSAGES) {
-    counters.set(key, next);
-    return;
+  const today = new Date().toDateString();
+  if (rotationDate !== today || rotationQueue.length === 0) {
+    rotationDate = today;
+    rotationQueue = reminderPool.slice();
+    for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rotationQueue[i], rotationQueue[j]] = [rotationQueue[j], rotationQueue[i]];
+    }
   }
-  counters.set(key, 0);
-  const embed = nextReminderEmbed();
-  await message.channel.send({ embeds: [embed] }).catch(() => {});
+  const next = rotationQueue.shift() || reminderPool[0];
+  return next();
 }
 
-module.exports = { handleChatReminder };
+function getRomeParts(date) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  }
+  return {
+    year: Number(map.year),
+    month: Number(map.month),
+    day: Number(map.day),
+    hour: Number(map.hour),
+    minute: Number(map.minute),
+    second: Number(map.second)
+  };
+}
+
+function getHourKey(parts) {
+  return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}`;
+}
+
+async function sendReminder(client) {
+  const channel = client.channels.cache.get(REMINDER_CHANNEL_ID)
+    || await client.channels.fetch(REMINDER_CHANNEL_ID).catch(() => null);
+  if (!channel) return;
+  const embed = nextReminderEmbed();
+  await channel.send({ embeds: [embed] }).catch(() => {});
+}
+
+function scheduleForHour(client, parts) {
+  const key = getHourKey(parts);
+  if (scheduledHours.has(key)) return;
+  scheduledHours.add(key);
+
+  const totalSeconds = parts.minute * 60 + parts.second;
+  const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
+  const count = Math.random() < 0.5 ? 1 : 2;
+  const delays = [];
+  for (let i = 0; i < count; i += 1) {
+    delays.push(Math.floor(Math.random() * remainingMs));
+  }
+  for (const delay of delays) {
+    setTimeout(() => {
+      sendReminder(client).catch(() => {});
+    }, delay);
+  }
+}
+
+function startHourlyReminderLoop(client) {
+  const tick = () => {
+    const parts = getRomeParts(new Date());
+    if (parts.hour < START_HOUR || parts.hour > END_HOUR) return;
+    scheduleForHour(client, parts);
+  };
+  tick();
+  setInterval(tick, 60 * 1000);
+}
+
+module.exports = { startHourlyReminderLoop };

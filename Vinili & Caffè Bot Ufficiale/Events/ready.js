@@ -11,6 +11,7 @@ const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
 const { startMinigameLoop, forceStartMinigame } = require('../Services/Minigames/minigameService');
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
+const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
 
@@ -113,6 +114,11 @@ module.exports = {
             startVoteRoleCleanupLoop(client);
         } catch (err) {
             global.logger.error('[VOTE ROLE] Failed to start cleanup loop', err);
+        }
+        try {
+            startHourlyReminderLoop(client);
+        } catch (err) {
+            global.logger.error('[CHAT REMINDER] Failed to start hourly loop', err);
         }
         try {
             cron.schedule("0 0 1 * *", async () => {

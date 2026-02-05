@@ -7,6 +7,8 @@ const activeGames = new Map();
 const pendingGames = new Map();
 const loopState = new WeakSet();
 const forcedRunState = new Map();
+let rotationDate = null;
+let rotationQueue = [];
 
 const REWARD_CHANNEL_ID = "1442569138114662490";
 const EXP_REWARDS = [
@@ -169,6 +171,18 @@ function buildFindBotEmbed(durationMs) {
     ].join('\n'))
 }
 
+function buildFindBotButtonEmbed(durationMs) {
+  const minutes = Math.max(1, Math.round(durationMs / 60000));
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('Sei vicino al bot .ᐟ ✧')
+    .setDescription([
+      '<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!',
+      `> <a:VC_Time:1468641957038526696> Tempo rimasto: **${minutes} minuti**`,
+      `> <:VC_Dot:1443932948599668746> Solo il primo che clicca vince.`
+    ].join('\n'));
+}
+
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
@@ -268,6 +282,21 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.guessWord) types.push('guessWord');
   if (cfg?.findBot) types.push('findBot');
   return types;
+}
+
+function getNextGameType(cfg) {
+  const available = getAvailableGameTypes(cfg);
+  if (available.length === 0) return null;
+  const today = new Date().toDateString();
+  if (rotationDate !== today || rotationQueue.length === 0) {
+    rotationDate = today;
+    rotationQueue = available.slice();
+    for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rotationQueue[i], rotationQueue[j]] = [rotationQueue[j], rotationQueue[i]];
+    }
+  }
+  return rotationQueue.shift() || available[0];
 }
 
 async function scheduleMinuteHint(client, hintChannelId, durationMs, channelId) {
@@ -402,8 +431,10 @@ async function startFindBotGame(client, cfg) {
 
   const roleId = cfg.roleId;
   if (roleId) {
-    await targetChannel.send({ content: `<@&${roleId}>` }).catch(() => {});
+    await mainChannel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
+
+  const mainMessage = await mainChannel.send({ embeds: [buildFindBotEmbed(durationMs)] }).catch(() => null);
 
   const customId = `minigame_findbot:${Date.now()}`;
   const row = new ActionRowBuilder().addComponents(
@@ -412,7 +443,7 @@ async function startFindBotGame(client, cfg) {
       .setLabel('trova il bot')
       .setStyle(ButtonStyle.Primary)
   );
-  const gameMessage = await targetChannel.send({ embeds: [buildFindBotEmbed(durationMs)], components: [row] }).catch(() => null);
+  const gameMessage = await targetChannel.send({ embeds: [buildFindBotButtonEmbed(durationMs)], components: [row] }).catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
@@ -445,6 +476,7 @@ async function startFindBotGame(client, cfg) {
     hintTimeout,
     channelId: targetChannel.id,
     messageId: gameMessage?.id || null,
+    mainMessageId: mainMessage?.id || null,
     customId
   });
 
@@ -510,9 +542,8 @@ function startMinigameLoop(client) {
     const now = new Date();
     const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
     if (!shouldForce) return;
-    const available = getAvailableGameTypes(cfg);
-    if (available.length === 0) return;
-    const type = available[randomBetween(0, available.length - 1)];
+    const type = getNextGameType(cfg);
+    if (!type) return;
     pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     await maybeStartRandomGame(client, true);
   };
@@ -521,9 +552,8 @@ function startMinigameLoop(client) {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
     if (!pendingGames.has(cfg.channelId)) {
-      const available = getAvailableGameTypes(cfg);
-      if (available.length === 0) return;
-      const type = available[randomBetween(0, available.length - 1)];
+      const type = getNextGameType(cfg);
+      if (!type) return;
       pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     }
     await maybeStartRandomGame(client, false);
@@ -542,9 +572,8 @@ async function forceStartMinigame(client) {
   if (!cfg?.enabled) return;
   if (!cfg.channelId) return;
   if (activeGames.has(cfg.channelId)) return;
-  const available = getAvailableGameTypes(cfg);
-  if (available.length === 0) return;
-  const type = available[randomBetween(0, available.length - 1)];
+  const type = getNextGameType(cfg);
+  if (!type) return;
   pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
   await maybeStartRandomGame(client, true);
 }
