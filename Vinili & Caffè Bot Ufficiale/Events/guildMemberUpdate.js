@@ -1,7 +1,19 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const config = require("../config.json");
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
+const PERK_ROLE_ID = '1468938195348754515';
+
+async function addPerkRoleIfPossible(member) {
+    const me = member.guild.members.me;
+    if (!me) return;
+    if (!me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return;
+    const role = member.guild.roles.cache.get(PERK_ROLE_ID);
+    if (!role) return;
+    if (role.position >= me.roles.highest.position) return;
+    if (member.roles.cache.has(PERK_ROLE_ID)) return;
+    await member.roles.add(role).catch(() => {});
+}
 
 module.exports = {
     name: 'guildMemberUpdate',
@@ -28,6 +40,7 @@ module.exports = {
                     boostCountCache.set(guildId, currentCount);
                     return;
                 }
+                await addPerkRoleIfPossible(newMember);
                 const sendTimes = countIncreased ? boostDelta : 1;
                 for (let i = 0; i < sendTimes; i += 1) {
                     const boostAnnounceEmbed = new EmbedBuilder()
@@ -40,11 +53,11 @@ module.exports = {
                         )
                         .setColor("#6f4e37")
                         .setFooter({
-                            text: `🚀 Ora siamo a ${newMember.guild.premiumSubscriptionCount} boost!`,
+                            text: `?? Ora siamo a ${newMember.guild.premiumSubscriptionCount} boost!`,
                         })
                         .setThumbnail(newMember.user.displayAvatarURL());
                     await boostAnnounceChannel.send({
-                        content: `<a:VC_Boost:1448670271115497617> \`┊\`  ${newMember.user} \`┊\` <@&1442568910070349985>`,
+                        content: `<a:VC_Boost:1448670271115497617> \`?\`  ${newMember.user} \`?\` <@&1442568910070349985>`,
                         embeds: [boostAnnounceEmbed],
                     });
                 }
@@ -56,3 +69,4 @@ module.exports = {
         }
     }
 };
+

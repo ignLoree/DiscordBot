@@ -66,28 +66,13 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<a:Boost_Cycle:1329504283007385642> **Boostando** il server di **__Vinili & Caffè__** accederete a delle ricompense esclusive:
 
-            <:1_:1444099163116535930> 
-            <:VC_Reply:1468262952934314131> Ruolo <@&1329497467481493607>
-
-            <:2_:1444099161673826368> 
-            <:VC_Reply:1468262952934314131> \`x2\` di multi in vocale e testuale
-
-            <:3_:1444099160294031471> 
-            <:VC_Reply:1468262952934314131> Possibilità di **cambiare** il __nickname__
-
-            <:4_:1444099158859321435> 
-            <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
-
-            <:5_:1444099157194440884> 
-            <:VC_Reply:1468262952934314131> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-
-            <:6_:1444099156007194887> 
-            <:VC_Reply:1468262952934314131> **Ruolo Custom** & **Stanza Privata**
-
-            <:7_:1444099154610618368> 
-            <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
-
-            <:8_:1444099153125703690> 
+            <:VC_DoubleReply:1468713981152727120> Ruolo <@&1329497467481493607> 
+            <:VC_DoubleReply:1468713981152727120> \`x2\` di multi in vocale e testuale
+            <:VC_DoubleReply:1468713981152727120> Possibilità di **cambiare** il __nickname__
+            <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
+            <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
+            <:VC_DoubleReply:1468713981152727120> **Ruolo Custom** & **Stanza Privata**
+            <:VC_DoubleReply:1468713981152727120> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
             <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
@@ -101,14 +86,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:VC_BlackPin:1448687216871084266> **Inserendo** il link __vanity__ **\`(https://discord.gg/viniliecaffe)\`** nello __status__ o nell'__about me__ riceverai il ruolo <@&1442568948271943721>
 
-                <:1_:1444099163116535930>
-                <:VC_Reply:1468262952934314131> **Ruolo** esclusivo <@&1442568948271943721>
-
-                <:3_:1444099160294031471> 
-                <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
-
-                <:4_:1444099158859321435> 
-                <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in qualsiasi chat`),
+                <<:VC_DoubleReply:1468713981152727120> **Ruolo** esclusivo <@&1442568948271943721>
+                <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
+                <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in **__ogni__ chat**`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli saranno rimossi\`__**`)
@@ -123,7 +103,7 @@ module.exports = {
 
                 <:dot:1443660294596329582> <@&1442568936423034940>
                     <:VC_DoubleReply:1468713981152727120> Cambiarsi il **__nick__**
-                    <:VC_Reply:1468262952934314131> Inviare **media** in **__ogni__ chat**
+                    <:VC_Reply:1468262952934314131> Inviare **link** e **immagini** in **__ogni__ chat**
 
                 <:dot:1443660294596329582> <@&1442568934510297226>
                     <:VC_DoubleReply:1468713981152727120> Possibilità di **aggiungere** una __reazione__ ai messaggi
@@ -153,16 +133,9 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:VC_BlackPin:1448687216871084266> Il ruolo <@&1442568950805430312> è ottinibile solo essendo **amici** dei __Founder__ oppure **vincendo** __eventi__ o __giveaway__.
                 
-                <:1_:1444099163116535930> 
-                <:VC_Reply:1468262952934314131> **Ruolo** esclusivo <@&1442568950805430312>
-
-                <:2_:1444099161673826368> 
-                <:VC_Reply:1468262952934314131> \`x3\` di multi in vocale e testuale
-
-                <:3_:1444099160294031471>
-                <:VC_Reply:1468262952934314131> **Vantaggi** di __tutti__ i ruoli <@&1442568928667631738>
-
-                <:4_:1444099158859321435>
+                <:VC_DoubleReply:1468713981152727120> **Ruolo** esclusivo <@&1442568950805430312> 
+                <:VC_DoubleReply:1468713981152727120> \`x3\` di multi in vocale e testuale
+                <:VC_DoubleReply:1468713981152727120> **Vantaggi** di __tutti__ i ruoli <@&1442568928667631738>
                 <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`),
                 new EmbedBuilder()
                     .setColor('#6f4e37')
@@ -176,8 +149,8 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setTitle('<a:ThankYou:1329504268369002507> **__DONAZIONI SOTTO I 5€__**')
                     .setDescription(`<:VC_DoubleReply:1468713981152727120> Ruolo <@&1442568916114346096>
-                    <:VC_DoubleReply:1468713981152727120> Inviare **media** in **__ogni__ chat**
-                    <:VC_DoubleReply:1468713981152727120> \`x5\` di multi in vocale e testuale
+                    <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
+                    <:VC_DoubleReply:1468713981152727120> \`x3\` di multi in vocale e testuale
                     <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
                     <:VC_DoubleReply:1468713981152727120> Possibilità di suggerire un **poll** tramite <#1442569095068254219> \`PERKS\`
                     <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`)

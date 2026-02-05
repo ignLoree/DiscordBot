@@ -9,7 +9,7 @@ const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
-const { startMinigameLoop, forceStartMinigame } = require('../Services/Minigames/minigameService');
+const { startMinigameLoop, forceStartMinigame, restoreActiveGames } = require('../Services/Minigames/minigameService');
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
 const cron = require('node-cron');
@@ -99,6 +99,11 @@ module.exports = {
             startMinigameLoop(client);
         } catch (err) {
             global.logger.error('[MINIGAMES] Failed to start loop', err);
+        }
+        try {
+            await restoreActiveGames(client);
+        } catch (err) {
+            global.logger.error('[MINIGAMES] Failed to restore active game', err);
         }
         try {
             cron.schedule('0 9 * * *', async () => {

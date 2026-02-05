@@ -1,6 +1,8 @@
 ﻿const axios = require('axios');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } = require('discord.js');
 const MinigameUser = require('../../Schemas/Minigames/minigameUserSchema');
+const MinigameState = require('../../Schemas/Minigames/minigameStateSchema');
+const MinigameRotation = require('../../Schemas/Minigames/minigameRotationSchema');
 const { addExpWithLevel } = require('../Community/expService');
 
 const activeGames = new Map();
@@ -34,6 +36,34 @@ function getConfig(client) {
 function getChannelSafe(client, channelId) {
   if (!channelId) return null;
   return client.channels.cache.get(channelId) || null;
+}
+
+async function saveActiveGame(client, cfg, payload) {
+  const channelId = cfg?.channelId;
+  if (!channelId) return;
+  let guildId = cfg?.guildId || null;
+  if (!guildId) {
+    const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+    guildId = channel?.guild?.id || null;
+  }
+  if (!guildId) return;
+  await MinigameState.findOneAndUpdate(
+    { guildId, channelId },
+    { $set: { guildId, channelId, ...payload } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => {});
+}
+
+async function clearActiveGame(client, cfg) {
+  const channelId = cfg?.channelId;
+  if (!channelId) return;
+  let guildId = cfg?.guildId || null;
+  if (!guildId) {
+    const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+    guildId = channel?.guild?.id || null;
+  }
+  if (!guildId) return;
+  await MinigameState.deleteOne({ guildId, channelId }).catch(() => {});
 }
 
 function randomBetween(min, max) {
@@ -94,7 +124,8 @@ async function loadWordList(cfg) {
 function isWithinAllowedWindow(now, start, end) {
   const startMinutes = (start?.hour ?? 9) * 60 + (start?.minute ?? 0);
   const endMinutes = (end?.hour ?? 23) * 60 + (end?.minute ?? 45);
-  const current = now.getHours() * 60 + now.getMinutes();
+  const parts = getRomeParts(now);
+  const current = parts.hour * 60 + parts.minute;
   return current >= startMinutes && current <= endMinutes;
 }
 
@@ -119,6 +150,11 @@ function getRomeParts(date) {
     hour: Number(map.hour),
     minute: Number(map.minute)
   };
+}
+
+function getRomeDateKey(date) {
+  const parts = getRomeParts(date);
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
 }
 
 function getDateKey(now) {
@@ -284,10 +320,46 @@ function getAvailableGameTypes(cfg) {
   return types;
 }
 
-function getNextGameType(cfg) {
+async function loadRotationState(client, cfg) {
+  const channelId = cfg?.channelId;
+  if (!channelId) return;
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const guildId = channel?.guild?.id || null;
+  if (!guildId) return;
+  const dateKey = getRomeDateKey(new Date());
+  const doc = await MinigameRotation.findOne({ guildId, channelId }).lean().catch(() => null);
+  if (doc && doc.dateKey === dateKey && Array.isArray(doc.queue)) {
+    rotationDate = dateKey;
+    rotationQueue = doc.queue.slice();
+    return;
+  }
+  rotationDate = dateKey;
+  rotationQueue = [];
+  await MinigameRotation.findOneAndUpdate(
+    { guildId, channelId },
+    { $set: { dateKey, queue: [] } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => {});
+}
+
+async function saveRotationState(client, cfg) {
+  const channelId = cfg?.channelId;
+  if (!channelId) return;
+  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const guildId = channel?.guild?.id || null;
+  if (!guildId) return;
+  const dateKey = rotationDate || getRomeDateKey(new Date());
+  await MinigameRotation.findOneAndUpdate(
+    { guildId, channelId },
+    { $set: { dateKey, queue: rotationQueue } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => {});
+}
+
+async function getNextGameType(client, cfg) {
   const available = getAvailableGameTypes(cfg);
   if (available.length === 0) return null;
-  const today = new Date().toDateString();
+  const today = getRomeDateKey(new Date());
   if (rotationDate !== today || rotationQueue.length === 0) {
     rotationDate = today;
     rotationQueue = available.slice();
@@ -296,7 +368,9 @@ function getNextGameType(cfg) {
       [rotationQueue[i], rotationQueue[j]] = [rotationQueue[j], rotationQueue[i]];
     }
   }
-  return rotationQueue.shift() || available[0];
+  const next = rotationQueue.shift() || available[0];
+  await saveRotationState(client, cfg);
+  return next;
 }
 
 async function scheduleMinuteHint(client, hintChannelId, durationMs, channelId) {
@@ -335,6 +409,7 @@ async function startGuessNumberGame(client, cfg) {
     if (!game) return;
     activeGames.delete(channelId);
     await channel.send({ embeds: [buildTimeoutNumberEmbed(game.target)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
   }, durationMs);
 
   activeGames.set(channelId, {
@@ -346,6 +421,17 @@ async function startGuessNumberGame(client, cfg) {
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
+    gameMessageId: gameMessage?.id || null
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'guessNumber',
+    target: String(target),
+    min,
+    max,
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
     gameMessageId: gameMessage?.id || null
   });
 
@@ -381,6 +467,7 @@ async function startGuessWordGame(client, cfg) {
     if (!game) return;
     activeGames.delete(channelId);
     await channel.send({ embeds: [buildTimeoutWordEmbed(game.target)] }).catch(() => {});
+    await clearActiveGame(client, cfg);
   }, durationMs);
 
   activeGames.set(channelId, {
@@ -390,6 +477,15 @@ async function startGuessWordGame(client, cfg) {
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
+    gameMessageId: gameMessage?.id || null
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'guessWord',
+    target,
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
     gameMessageId: gameMessage?.id || null
   });
 
@@ -463,6 +559,7 @@ async function startFindBotGame(client, cfg) {
         await ch.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
       }
     }
+    await clearActiveGame(client, cfg);
   }, durationMs);
 
   const hintTimeout = await scheduleMinuteHint(client, targetChannel.id, durationMs, channelId);
@@ -476,6 +573,17 @@ async function startFindBotGame(client, cfg) {
     hintTimeout,
     channelId: targetChannel.id,
     messageId: gameMessage?.id || null,
+    mainMessageId: mainMessage?.id || null,
+    customId
+  });
+
+  await saveActiveGame(client, cfg, {
+    type: 'findBot',
+    rewardExp,
+    startedAt: new Date(),
+    endsAt: new Date(Date.now() + durationMs),
+    targetChannelId: targetChannel.id,
+    gameMessageId: gameMessage?.id || null,
     mainMessageId: mainMessage?.id || null,
     customId
   });
@@ -504,7 +612,17 @@ async function maybeStartRandomGame(client, force = false) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return;
   if (!cfg.channelId) return;
-  if (activeGames.has(cfg.channelId)) return;
+  if (activeGames.has(cfg.channelId)) {
+    const game = activeGames.get(cfg.channelId);
+    if (game?.endsAt && Date.now() >= game.endsAt) {
+      if (game.timeout) clearTimeout(game.timeout);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      activeGames.delete(cfg.channelId);
+      await clearActiveGame(client, cfg);
+    } else {
+      return;
+    }
+  }
 
   const now = new Date();
   if (!force) {
@@ -535,7 +653,6 @@ async function maybeStartRandomGame(client, force = false) {
 function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
-  global.logger?.info?.('[MINIGAMES] Loop start');
 
   const runForcedCheck = async () => {
     const cfg = getConfig(client);
@@ -543,8 +660,7 @@ function startMinigameLoop(client) {
     const now = new Date();
     const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
     if (!shouldForce) return;
-    global.logger?.info?.('[MINIGAMES] Forced run triggered');
-    const type = getNextGameType(cfg);
+    const type = await getNextGameType(client, cfg);
     if (!type) return;
     pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     await maybeStartRandomGame(client, true);
@@ -553,9 +669,8 @@ function startMinigameLoop(client) {
   const tick = async () => {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
-    global.logger?.info?.('[MINIGAMES] Tick');
     if (!pendingGames.has(cfg.channelId)) {
-      const type = getNextGameType(cfg);
+      const type = await getNextGameType(client, cfg);
       if (!type) return;
       pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
     }
@@ -575,7 +690,7 @@ async function forceStartMinigame(client) {
   if (!cfg?.enabled) return;
   if (!cfg.channelId) return;
   if (activeGames.has(cfg.channelId)) return;
-  const type = getNextGameType(cfg);
+  const type = await getNextGameType(client, cfg);
   if (!type) return;
   pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
   await maybeStartRandomGame(client, true);
@@ -599,6 +714,7 @@ async function awardWinAndReply(message, rewardExp) {
   if (member) {
     await handleExpReward(message.client, member, nextTotal);
   }
+  await clearActiveGame(message.client, getConfig(message.client));
 }
 
 async function handleMinigameMessage(message, client) {
@@ -683,6 +799,7 @@ async function handleMinigameButton(interaction, client) {
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);
   }
+  await clearActiveGame(interaction.client, cfg);
 
   try {
     const channel = interaction.channel;
@@ -701,4 +818,122 @@ async function handleMinigameButton(interaction, client) {
   return true;
 }
 
-module.exports = { startMinigameLoop, forceStartMinigame, handleMinigameMessage, handleMinigameButton };
+async function restoreActiveGames(client) {
+  const cfg = getConfig(client);
+  if (!cfg?.enabled || !cfg.channelId) return;
+  const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
+  const guildId = channel?.guild?.id || null;
+  if (!guildId) return;
+  await loadRotationState(client, cfg);
+  const state = await MinigameState.findOne({ guildId, channelId: cfg.channelId }).lean().catch(() => null);
+  if (!state) return;
+  const now = Date.now();
+  const endsAt = new Date(state.endsAt).getTime();
+  if (endsAt <= now) {
+    if (state.type === 'guessNumber') {
+      await channel.send({ embeds: [buildTimeoutNumberEmbed(Number(state.target))] }).catch(() => {});
+    } else if (state.type === 'guessWord') {
+      await channel.send({ embeds: [buildTimeoutWordEmbed(String(state.target))] }).catch(() => {});
+    } else if (state.type === 'findBot') {
+      const targetChannel = channel.guild.channels.cache.get(state.targetChannelId) || await channel.guild.channels.fetch(state.targetChannelId).catch(() => null);
+      if (targetChannel) {
+        await targetChannel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+        if (state.gameMessageId && state.customId) {
+          const msg = await targetChannel.messages.fetch(state.gameMessageId).catch(() => null);
+          if (msg) {
+            const row = new ActionRowBuilder().addComponents(
+              new ButtonBuilder().setCustomId(state.customId).setLabel('trova il bot').setStyle(ButtonStyle.Primary).setDisabled(true)
+            );
+            await msg.edit({ components: [row] }).catch(() => {});
+          }
+        }
+      }
+    }
+    await MinigameState.deleteOne({ guildId, channelId: cfg.channelId }).catch(() => {});
+    return;
+  }
+  const remainingMs = endsAt - now;
+  if (state.type === 'guessNumber') {
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game) return;
+      activeGames.delete(cfg.channelId);
+      await channel.send({ embeds: [buildTimeoutNumberEmbed(game.target)] }).catch(() => {});
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    activeGames.set(cfg.channelId, {
+      type: 'guessNumber',
+      target: Number(state.target),
+      min: Number(state.min),
+      max: Number(state.max),
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      gameMessageId: state.gameMessageId || null
+    });
+    return;
+  }
+  if (state.type === 'guessWord') {
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game) return;
+      activeGames.delete(cfg.channelId);
+      await channel.send({ embeds: [buildTimeoutWordEmbed(game.target)] }).catch(() => {});
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    activeGames.set(cfg.channelId, {
+      type: 'guessWord',
+      target: String(state.target || '').toLowerCase(),
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      gameMessageId: state.gameMessageId || null
+    });
+    return;
+  }
+  if (state.type === 'findBot') {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(state.customId)
+        .setLabel('trova il bot')
+        .setStyle(ButtonStyle.Primary)
+    );
+    const timeout = setTimeout(async () => {
+      const game = activeGames.get(cfg.channelId);
+      if (!game || game.customId !== state.customId) return;
+      activeGames.delete(cfg.channelId);
+      if (game.hintTimeout) clearTimeout(game.hintTimeout);
+      if (game.channelId && game.messageId) {
+        const ch = channel.guild.channels.cache.get(game.channelId) || await channel.guild.channels.fetch(game.channelId).catch(() => null);
+        if (ch) {
+          const msg = await ch.messages.fetch(game.messageId).catch(() => null);
+          if (msg) {
+            const disabledRow = new ActionRowBuilder().addComponents(
+              ButtonBuilder.from(row.components[0]).setDisabled(true)
+            );
+            await msg.edit({ components: [disabledRow] }).catch(() => {});
+          }
+          await ch.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+        }
+      }
+      await clearActiveGame(client, cfg);
+    }, remainingMs);
+    const hintTimeout = await scheduleMinuteHint(client, state.targetChannelId, remainingMs, cfg.channelId);
+    activeGames.set(cfg.channelId, {
+      type: 'findBot',
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout,
+      hintTimeout,
+      channelId: state.targetChannelId,
+      messageId: state.gameMessageId || null,
+      mainMessageId: state.mainMessageId || null,
+      customId: state.customId
+    });
+  }
+}
+
+module.exports = { startMinigameLoop, forceStartMinigame, restoreActiveGames, handleMinigameMessage, handleMinigameButton };

@@ -2,6 +2,7 @@
 const SupporterStatus = require('../Schemas/Supporter/supporterStatusSchema');
 
 const ROLE_ID = '1442568948271943721';
+const PERK_ROLE_ID = '1468938195348754515';
 const CHANNEL_ID = '1442569123426074736';
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
@@ -47,6 +48,18 @@ async function addRoleIfPossible(member) {
     }
     if (member.roles.cache.has(ROLE_ID)) return false;
     await member.roles.add(role);
+    return true;
+}
+
+async function addPerkRoleIfPossible(member) {
+    const me = member.guild.members.me;
+    if (!me) return false;
+    if (!me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return false;
+    const role = member.guild.roles.cache.get(PERK_ROLE_ID);
+    if (!role) return false;
+    if (role.position >= me.roles.highest.position) return false;
+    if (member.roles.cache.has(PERK_ROLE_ID)) return false;
+    await member.roles.add(role).catch(() => {});
     return true;
 }
 
@@ -284,12 +297,14 @@ module.exports = {
             if (newHas && member.roles.cache.has(ROLE_ID)) {
                 statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
+                await addPerkRoleIfPossible(member);
                 return;
             }
 
             if (newHas && await hasSupporterRole(member)) {
                 statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
+                await addPerkRoleIfPossible(member);
                 return;
             }
 
@@ -307,11 +322,13 @@ module.exports = {
                 if (await hasSupporterRole(member)) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt });
                     await persistStatus(member.guild.id, userId, { hasLink: true });
+                    await addPerkRoleIfPossible(member);
                     return;
                 }
                 if (wasOffline) {
                     statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt });
                     await persistStatus(member.guild.id, userId, { hasLink: true });
+                    await addPerkRoleIfPossible(member);
                     return;
                 }
 
@@ -319,6 +336,7 @@ module.exports = {
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 if (!channel) return;
                 await startPendingFlow(member, channel);
+                await addPerkRoleIfPossible(member);
                 return;
             }
 

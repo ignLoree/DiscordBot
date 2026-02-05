@@ -9,6 +9,7 @@ const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const multiplierCache = new Map();
 const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
 const PERKS_CHANNEL_ID = '1442569159237177385';
+const PERK_ROLE_ID = '1468938195348754515';
 const LEVEL_ROLE_MAP = new Map([
   [10, '1442568936423034940'],
   [20, '1442568934510297226'],
@@ -170,6 +171,17 @@ async function sendPerksLevelMessage(guild, member, level) {
   await channel.send({ content: `${member} <@&${roleId}>`, ...payload }).catch(() => {});
 }
 
+async function addPerkRoleIfPossible(member) {
+  const me = member.guild.members.me;
+  if (!me) return;
+  if (!me.permissions.has('ManageRoles')) return;
+  const role = member.guild.roles.cache.get(PERK_ROLE_ID);
+  if (!role) return;
+  if (role.position >= me.roles.highest.position) return;
+  if (member.roles.cache.has(PERK_ROLE_ID)) return;
+  await member.roles.add(role).catch(() => {});
+}
+
 async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
   if (!guild || !userId) return null;
   let effectiveAmount = amount;
@@ -191,6 +203,14 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
     if (member) {
       await sendLevelUpMessage(guild, member, result.levelInfo.level);
       await sendPerksLevelMessage(guild, member, result.levelInfo.level);
+      if (result.levelInfo.level >= 10) {
+        await addPerkRoleIfPossible(member);
+      }
+    }
+  } else if (result.levelInfo.level >= 10) {
+    const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
+    if (member) {
+      await addPerkRoleIfPossible(member);
     }
   }
   return result;
