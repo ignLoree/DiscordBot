@@ -1107,7 +1107,8 @@ async function startFindBotGame(client, cfg) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(customId)
-      .setLabel('trova il bot')
+      .setEmoji(`<a:VC_Heart:1448672728822448141>`)
+      .setLabel('Clicca qui per vincere!')
       .setStyle(ButtonStyle.Primary)
   );
   const gameMessage = await targetChannel.send({ embeds: [buildFindBotButtonEmbed(durationMs)], components: [row] }).catch(() => null);
