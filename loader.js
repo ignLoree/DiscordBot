@@ -15,7 +15,7 @@ const bots = [
         key: "official",
         label: "Ufficiale",
         start: "./Vinili & Caffè Bot Ufficiale/shard.js",
-        startupDelayMs: 8500
+        startupDelayMs: 6500
     }
 ];
 
