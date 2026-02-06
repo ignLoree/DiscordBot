@@ -39,7 +39,40 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   if (!canvasModule) throw new Error("Canvas module not available");
   registerCanvasFonts(canvasModule);
   const width = 900;
-  const height = 200;
+  const cardX = 16;
+  const cardY = 16;
+  const cardW = width - 32;
+  const nameX = cardX + 68;
+  const nameY = cardY + 8;
+  const textX = nameX;
+  const textStartY = cardY + 32;
+  const maxWidth = width - textX - 32;
+  const lineHeight = 22;
+
+  const tmpCanvas = createCanvas(width, 10);
+  const tmpCtx = tmpCanvas.getContext("2d");
+  registerCanvasFonts(canvasModule);
+  tmpCtx.textAlign = "left";
+  tmpCtx.textBaseline = "top";
+
+  const replyLines = [];
+  if (reply?.content) {
+    tmpCtx.font = fontStack(13, "500");
+    const replyAuthor = reply.author || "Unknown";
+    const replyText = `${replyAuthor}: ${reply.content}`;
+    replyLines.push(...wrapLines(tmpCtx, replyText, maxWidth).slice(0, 1));
+  }
+
+  tmpCtx.font = fontStack(18, "500");
+  const messageLines = wrapLines(tmpCtx, message || "", maxWidth);
+
+  const replyHeight = replyLines.length ? 16 + 2 : 0;
+  const messageHeight = messageLines.length * lineHeight;
+  const contentHeight = (textStartY - cardY) + replyHeight + messageHeight + 12;
+  const minCardH = 72;
+  const cardH = Math.max(minCardH, contentHeight);
+  const height = cardH + 32;
+
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
@@ -47,10 +80,6 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   ctx.fillRect(0, 0, width, height);
 
   // Message card
-  const cardX = 16;
-  const cardY = 16;
-  const cardW = width - 32;
-  const cardH = height - 32;
   ctx.fillStyle = "#313338";
   ctx.fillRect(cardX, cardY, cardW, cardH);
 
@@ -60,8 +89,6 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   const usernameColor = nameColor || "#f2f3f5";
-  const nameX = cardX + 68;
-  const nameY = cardY + 8;
   ctx.font = fontStack(16, "600");
   drawTextWithSpecialFallback(ctx, username || "", nameX, nameY, { size: 16, weight: "600", color: usernameColor });
 
@@ -82,10 +109,7 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
     color: "#aeb3b8"
   });
 
-  const textX = nameX;
-  let textY = cardY + 32;
-  const maxWidth = width - textX - 32;
-  const lineHeight = 22;
+  let textY = textStartY;
 
   if (reply?.content) {
     ctx.font = fontStack(13, "500");
@@ -100,14 +124,13 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
       drawTextWithSpecialFallback(ctx, line, textX, ry, { size: 13, weight: "500", color: "#aeb3b8" });
       ry += 16;
     }
-    textY = ry + 4;
+    textY = ry + 2;
   }
 
   ctx.font = fontStack(18, "500");
   const lines = wrapLines(ctx, message || "", maxWidth);
   let y = textY;
   for (const line of lines) {
-    if (y + lineHeight > height - 32) break;
     drawTextWithSpecialFallback(ctx, line, textX, y, { size: 18, weight: "500", color: "#e6e6e6" });
     y += lineHeight;
   }
