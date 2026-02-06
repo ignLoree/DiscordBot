@@ -23,7 +23,7 @@ module.exports = {
     const attachment = new AttachmentBuilder(IMAGE_PATH, { name: IMAGE_NAME });
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('🔪 Personalità')
+      .setTitle('➷ Personalità')
       .setDescription([
         'Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.',
         '',
@@ -34,7 +34,7 @@ module.exports = {
     const mentionsAttachment = new AttachmentBuilder(MENTIONS_IMAGE_PATH, { name: MENTIONS_IMAGE_NAME });
     const mentionsEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('🔪 Menzioni')
+      .setTitle('➷ Menzioni')
       .setDescription([
         'Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.',
         '',
@@ -45,7 +45,7 @@ module.exports = {
     const colorsAttachment = new AttachmentBuilder(COLORS_IMAGE_PATH, { name: COLORS_IMAGE_NAME });
     const colorsEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('🔪 Colori')
+      .setTitle('➷ Colori')
       .setDescription([
         'Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.',
         '',
@@ -144,9 +144,9 @@ module.exports = {
         )
     );
 
-    const colorsMenu = new ActionRowBuilder().addComponents(
+    const colorsMenu1 = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
-        .setCustomId('personality_colors')
+        .setCustomId('personality_colors_1')
         .setPlaceholder('🎨 Scegli un colore per il tuo profilo')
         .setMinValues(1)
         .setMaxValues(1)
@@ -165,7 +165,17 @@ module.exports = {
           { label: 'Amber', value: '1442568970497687717', emoji: '🔑', description: 'Clicca qui per ottenere il ruolo' },
           { label: 'Lime', value: '1442568971357388912', emoji: '🍋‍🟩', description: 'Clicca qui per ottenere il ruolo' },
           { label: 'Pear', value: '1442568972745838667', emoji: '🍐', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Moss', value: '1442568975966797926', emoji: '🍃', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Moss', value: '1442568975966797926', emoji: '🍃', description: 'Clicca qui per ottenere il ruolo' }
+        )
+    );
+
+    const colorsMenu2 = new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('personality_colors_2')
+        .setPlaceholder('🎨 Scegli un colore per il tuo profilo')
+        .setMinValues(1)
+        .setMaxValues(1)
+        .addOptions(
           { label: 'Green', value: '1442568976944201828', emoji: '🥬', description: 'Clicca qui per ottenere il ruolo' },
           { label: 'Olive', value: '1442568974486208634', emoji: '🫒', description: 'Clicca qui per ottenere il ruolo' },
           { label: 'Aqua', value: '1442568977896439960', emoji: '💧', description: 'Clicca qui per ottenere il ruolo' },
@@ -231,9 +241,9 @@ module.exports = {
     }
 
     if (colorsMessage) {
-      await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu], files: [colorsAttachment] }).catch(() => {});
+      await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => {});
     } else {
-      colorsMessage = await channel.send({ embeds: [colorsEmbed], components: [colorsMenu], files: [colorsAttachment] }).catch(() => null);
+      colorsMessage = await channel.send({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => null);
     }
 
     if (personalityMessage || mentionsMessage || colorsMessage) {
