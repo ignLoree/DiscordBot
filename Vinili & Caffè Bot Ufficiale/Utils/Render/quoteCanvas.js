@@ -2,7 +2,7 @@ const canvasModule = require("canvas");
 const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 
-function wrapLines(ctx, text, maxWidth, maxLines = 2) {
+function wrapLines(ctx, text, maxWidth, maxLines = Infinity) {
   const lines = [];
   const words = String(text || "").split(/\s+/).filter(Boolean);
   let line = "";
@@ -68,16 +68,19 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   let fontSize = 30;
   let lines = [];
   let lineHeight = 36;
-  const maxLines = 2;
-  while (fontSize >= 22) {
+  const topMargin = 100;
+  const bottomMargin = 80;
+  const maxBlockHeight = height - topMargin - bottomMargin;
+  while (fontSize >= 14) {
     ctx.font = fontStack(fontSize, "600");
-    lines = wrapLines(ctx, mainText, maxTextWidth, maxLines);
+    lines = wrapLines(ctx, mainText, maxTextWidth);
     lineHeight = Math.round(fontSize * 1.2);
-    if (lines.length <= maxLines) break;
+    const blockHeight = lines.length * lineHeight;
+    if (blockHeight <= maxBlockHeight) break;
     fontSize -= 2;
   }
   const blockHeight = lines.length * lineHeight;
-  let y = Math.max(140, (height - blockHeight) / 2);
+  let y = Math.max(topMargin, (height - blockHeight) / 2);
 
   ctx.font = fontStack(18, "italic");
   drawTextWithSpecialFallback(ctx, username || "", textX, y - 36, {
