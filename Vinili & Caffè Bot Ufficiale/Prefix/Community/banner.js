@@ -1,6 +1,6 @@
 const { safeChannelSend } = require('../../Utils/Moderation/message');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const AvatarPrivacy = require('../../Schemas/Community/avatarPrivacySchema');
+const BannerPrivacy = require('../../Schemas/Community/bannerPrivacySchema');
 
 function normalize(text) {
   return String(text || "").toLowerCase().trim();
@@ -31,8 +31,8 @@ async function resolveMember(message, query) {
 
 module.exports = {
   skipPrefix: false,
-  name: "avatar",
-  aliases: ["av"],
+  name: "banner",
+  aliases: ["bn"],
   prefixOverride: "?",
 
   async execute(message, args) {
@@ -46,20 +46,18 @@ module.exports = {
       });
     }
 
-    const subRaw = args[0] ? String(args[0]).toLowerCase() : "";
-    const sub = ["get", "server", "user"].includes(subRaw) ? subRaw : "get";
-    const query = ["get", "server", "user"].includes(subRaw) ? args.slice(1).join(" ") : args.join(" ");
+    const query = args.join(" ");
     const member = await resolveMember(message, query) || message.member;
     const user = member?.user || message.author;
 
     let privacyDoc = null;
     try {
-      privacyDoc = await AvatarPrivacy.findOneAndUpdate(
+      privacyDoc = await BannerPrivacy.findOneAndUpdate(
         { guildId: message.guild.id, userId: user.id },
         { $setOnInsert: { guildId: message.guild.id, userId: user.id } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
-      privacyDoc = await AvatarPrivacy.findOneAndUpdate(
+      privacyDoc = await BannerPrivacy.findOneAndUpdate(
         { guildId: message.guild.id, userId: user.id },
         { $inc: { views: 1 } },
         { new: true }
@@ -72,11 +70,11 @@ module.exports = {
     if (isBlocked && !isSelf) {
       const blockedEmbed = new EmbedBuilder()
         .setColor('#e74c3c')
-        .setTitle('<:vegax:1443934876440068179> Avatar Bloccato')
-        .setDescription('Questo utente ha bloccato la visualizzazione del proprio avatar.');
+        .setTitle('<:vegax:1443934876440068179> Banner Bloccato')
+        .setDescription('Questo utente ha bloccato la visualizzazione del proprio banner.');
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId(`avatar_unblock:${user.id}`)
+          .setCustomId(`banner_unblock:${user.id}`)
           .setLabel('Sblocca')
           .setEmoji('??')
           .setStyle(ButtonStyle.Secondary)
@@ -84,39 +82,35 @@ module.exports = {
       return safeChannelSend(message.channel, { embeds: [blockedEmbed], components: [row] });
     }
 
-    if (sub === "server") {
-      const memberAvatar = member.displayAvatarURL();
-      const userAvatar = user.displayAvatarURL();
-      if (memberAvatar === userAvatar) {
-        return safeChannelSend(message.channel, {
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non ha un avatar impostato solo per questo server.")
-          ]
-        });
-      }
+    let fetchedUser = user;
+    try {
+      fetchedUser = await user.fetch();
+    } catch {}
+
+    const bannerUrl = fetchedUser.bannerURL({ size: 4096 });
+    if (!bannerUrl) {
+      return safeChannelSend(message.channel, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> Questo utente non ha un banner.')
+        ]
+      });
     }
 
-    const isUser = sub === "user";
-    const title = isUser ? "User Avatar" : "Server Avatar";
-    const imageUrl = isUser
-      ? user.displayAvatarURL({ size: 4096 })
-      : member.displayAvatarURL({ size: 4096 });
     const authorLabel = member?.displayName || member?.user?.username || user.tag;
-
     const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setImage(imageUrl)
+      .setTitle('User Banner')
+      .setImage(bannerUrl)
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
-      .setColor("#6f4e37")
+      .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav. ${totalViews} Views ??`
+        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbanner. ${totalViews} Views ??`
       });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId('avatar_views')
+        .setCustomId('banner_views')
         .setLabel('Classifica Views')
         .setEmoji('??')
         .setStyle(ButtonStyle.Secondary)

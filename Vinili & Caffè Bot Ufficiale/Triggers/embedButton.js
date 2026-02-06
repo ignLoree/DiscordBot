@@ -1,5 +1,7 @@
 const { EmbedBuilder, Events } = require('discord.js');
 const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
+const AvatarPrivacy = require('../Schemas/Community/avatarPrivacySchema');
+const BannerPrivacy = require('../Schemas/Community/bannerPrivacySchema');
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -10,6 +12,42 @@ module.exports = {
         if (!interaction.message) return;
         if (!interaction.isButton()) return;
 
+        if (interaction.customId && interaction.customId.startsWith('avatar_unblock:')) {
+            const targetId = interaction.customId.split(':')[1];
+            if (interaction.user.id !== targetId) {
+                return interaction.reply({ content: '<:vegax:1443934876440068179> Non puoi sbloccare l\'avatar di un altro utente.', flags: 1 << 6 });
+            }
+            try {
+                await AvatarPrivacy.findOneAndUpdate(
+                    { guildId: interaction.guild.id, userId: targetId },
+                    { $set: { blocked: false }, $setOnInsert: { guildId: interaction.guild.id, userId: targetId } },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                );
+            } catch {}
+            const embed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('Comando sbloccato')
+                .setDescription('Hai sbloccato con successo la visualizzazione del tuo avatar.');
+            return interaction.reply({ embeds: [embed] });
+        }
+        if (interaction.customId && interaction.customId.startsWith('banner_unblock:')) {
+            const targetId = interaction.customId.split(':')[1];
+            if (interaction.user.id !== targetId) {
+                return interaction.reply({ content: '<:vegax:1443934876440068179> Non puoi sbloccare il banner di un altro utente.', flags: 1 << 6 });
+            }
+            try {
+                await BannerPrivacy.findOneAndUpdate(
+                    { guildId: interaction.guild.id, userId: targetId },
+                    { $set: { blocked: false }, $setOnInsert: { guildId: interaction.guild.id, userId: targetId } },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                );
+            } catch {}
+            const embed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('Comando sbloccato')
+                .setDescription('Hai sbloccato con successo la visualizzazione del tuo banner.');
+            return interaction.reply({ embeds: [embed] });
+        }
         if (interaction.customId == 'vocaliprivate') {
             const embeds = [
                 new EmbedBuilder()
@@ -221,6 +259,82 @@ module.exports = {
                 .setFooter({ text: `Richiesto da: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+        }
+        if (interaction.customId == 'avatar_views') {
+            const guildId = interaction.guild.id;
+            const top = await AvatarPrivacy.find({ guildId })
+                .sort({ views: -1 })
+                .limit(10)
+                .lean()
+                .catch(() => []);
+            const lines = [];
+            let idx = 1;
+            for (const entry of top) {
+                const userId = entry.userId;
+                let label = `<@${userId}>`;
+                try {
+                    const member = interaction.guild.members.cache.get(userId)
+                        || await interaction.guild.members.fetch(userId).catch(() => null);
+                    if (member) {
+                        label = member.displayName || member.user.username;
+                    } else {
+                        const user = await interaction.client.users.fetch(userId).catch(() => null);
+                        if (user) label = user.username;
+                    }
+                } catch {}
+                lines.push(`${idx}. ${label} **${entry.views}** visualizzazioni`);
+                idx += 1;
+            }
+            const description = lines.length
+                ? lines.join('\n')
+                : 'Nessuna visualizzazione registrata.';
+            const now = new Date();
+            const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
+            const embed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('👑 Classifica Visualizzazioni Avatar')
+                .setDescription(description)
+                .setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL() });
+            return interaction.reply({ embeds: [embed], flags: 1 << 6 });
+        }
+        if (interaction.customId == 'banner_views') {
+            const guildId = interaction.guild.id;
+            const top = await BannerPrivacy.find({ guildId })
+                .sort({ views: -1 })
+                .limit(10)
+                .lean()
+                .catch(() => []);
+            const lines = [];
+            let idx = 1;
+            for (const entry of top) {
+                const userId = entry.userId;
+                let label = `<@${userId}>`;
+                try {
+                    const member = interaction.guild.members.cache.get(userId)
+                        || await interaction.guild.members.fetch(userId).catch(() => null);
+                    if (member) {
+                        label = member.displayName || member.user.username;
+                    } else {
+                        const user = await interaction.client.users.fetch(userId).catch(() => null);
+                        if (user) label = user.username;
+                    }
+                } catch {}
+                lines.push(`${idx}. ${label} **${entry.views}** visualizzazioni`);
+                idx += 1;
+            }
+            const description = lines.length
+                ? lines.join('\n')
+                : 'Nessuna visualizzazione registrata.';
+            const now = new Date();
+            const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
+            const embed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('👑 Classifica Visualizzazioni Banner')
+                .setDescription(description)
+                .setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL() });
+            return interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
         if (interaction.customId == 'generali') {
             const embeds = [
