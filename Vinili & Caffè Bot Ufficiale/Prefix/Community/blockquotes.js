@@ -4,7 +4,6 @@ const QuotePrivacy = require('../../Schemas/Community/quotePrivacySchema');
 
 module.exports = {
   name: 'blockquotes',
-  aliases: ['blocquotes', 'blockquote'],
   prefixOverride: '?',
 
   async execute(message) {
@@ -24,17 +23,17 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('? Quote bloccate')
+      .setTitle('âœ… Quote bloccate')
       .setDescription([
         'Le quote dei tuoi messaggi sono state bloccate con successo!',
         '',
         '**Cosa significa?**',
-        'Gli altri utenti non potranno più creare quote dei tuoi messaggi.',
+        'Gli altri utenti non potranno piÃ¹ creare quote dei tuoi messaggi.',
         '',
         '**Per sbloccare**',
         'Usa il comando `?unblockquotes` quando vuoi riattivare le quote.'
       ].join('\n'))
-      .setFooter({ text: `Bloccate il ${date} • Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
+      .setFooter({ text: `Bloccate il ${date} â€¢ Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
 
     return safeChannelSend(message.channel, { embeds: [embed] });
   }

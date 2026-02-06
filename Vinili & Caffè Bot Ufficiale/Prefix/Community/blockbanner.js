@@ -25,7 +25,7 @@ module.exports = {
       .setDescription([
         'Gli altri membri non potranno più visualizzare il tuo banner.',
         '',
-        'ⓘ Utilizza il pulsante qui sotto o il comando `?unblockbanner` se vuoi riattivare la visualizzazione.'
+        'ⓘ Utilizza il pulsante qui sotto o il comando `?unblockbn` se vuoi riattivare la visualizzazione.'
       ].join('\n'));
 
     const row = new ActionRowBuilder().addComponents(

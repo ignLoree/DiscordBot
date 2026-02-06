@@ -4,7 +4,7 @@ const AvatarPrivacy = require('../../Schemas/Community/avatarPrivacySchema');
 
 module.exports = {
   name: 'unblockavatar',
-  aliases: ['unblockav', 'sblockav'],
+  aliases: ['unblockav'],
   prefixOverride: '?',
 
   async execute(message) {
