@@ -25,11 +25,43 @@ module.exports = {
 
       const author = message.author;
       const avatarUrl = author.displayAvatarURL({ extension: 'png', size: 256 });
+      const member = message.member || await message.guild.members.fetch(author.id).catch(() => null);
+      const nameColor = member?.displayHexColor && member.displayHexColor !== '#000000'
+        ? member.displayHexColor
+        : '#f2f3f5';
+      let roleIconUrl = null;
+      if (member?.roles?.cache?.size) {
+        const sortedRoles = [...member.roles.cache.values()]
+          .filter(r => r.id !== message.guild.id)
+          .sort((a, b) => b.position - a.position);
+        for (const role of sortedRoles) {
+          const icon = role?.iconURL?.({ size: 32 }) || null;
+          if (icon) {
+            roleIconUrl = icon;
+            break;
+          }
+        }
+      }
       const text = message.content || (message.embeds?.[0]?.description || '');
+      let reply = null;
+      if (message.reference?.messageId) {
+        const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
+        if (replied) {
+          reply = {
+            author: replied.member?.displayName || replied.author?.username || 'Unknown',
+            content: replied.content || (replied.embeds?.[0]?.description || '')
+          };
+        }
+      }
+
       const screenshot = await renderSkullboardCanvas({
         avatarUrl,
-        username: author.username,
-        message: text || '[Messaggio vuoto]'
+        username: member?.displayName || author.username,
+        message: text || '[Messaggio vuoto]',
+        nameColor,
+        createdAt: message.createdAt,
+        reply,
+        roleIconUrl
       });
       const attachment = new AttachmentBuilder(screenshot, { name: 'skullboard.png' });
 
@@ -51,6 +83,7 @@ module.exports = {
 
       const postMessage = await skullboardChannel.send({ embeds: [postEmbed], files: [attachment] }).catch(() => null);
       if (!postMessage) return;
+      await postMessage.react('💀').catch(() => {});
 
       await SkullboardPost.findOneAndUpdate(
         { guildId: message.guild.id, messageId: message.id },
