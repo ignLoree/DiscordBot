@@ -1,7 +1,8 @@
-const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
+const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const renderQuoteCanvas = require('../../Utils/Render/quoteCanvas');
 const { nextQuoteCount } = require('../../Utils/Quote/quoteCounter');
+const QuotePrivacy = require('../../Schemas/Community/quotePrivacySchema');
 
 const QUOTE_CHANNEL_ID = "1468540884537573479";
 const ALLOWED_ROLE_IDS = [
@@ -136,9 +137,29 @@ module.exports = {
         creatorId: message.author.id,
         totalPosts
       });
-      await quoteChannel.send({ files: [postAttachment], embeds: [postEmbed] }).catch(() => {});
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`quote_remove:${message.author.id}`)
+          .setLabel('Rimuovi questa quote')
+          .setEmoji('🗑️')
+          .setStyle(ButtonStyle.Danger)
+      );
+      await quoteChannel.send({ files: [postAttachment], embeds: [postEmbed], components: [row] }).catch(() => {});
     }
 
     return safeMessageReply(message, { files: [attachment], embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+    try {
+      const privacy = await QuotePrivacy.findOne({ guildId: message.guild.id, userId: author.id }).lean();
+      if (privacy?.blocked) {
+        return safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Red")
+              .setDescription("<:vegax:1443934876440068179> Questo utente ha bloccato le quote dei propri messaggi.")
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+      }
+    } catch {}

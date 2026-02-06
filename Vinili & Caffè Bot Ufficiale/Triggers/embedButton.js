@@ -48,6 +48,31 @@ module.exports = {
                 .setDescription('Hai sbloccato con successo la visualizzazione del tuo banner.');
             return interaction.reply({ embeds: [embed] });
         }
+        if (interaction.customId && interaction.customId.startsWith('quote_remove:')) {
+            const targetId = interaction.customId.split(':')[1];
+            if (interaction.user.id !== targetId) {
+                const denied = new EmbedBuilder()
+                    .setColor('#e74c3c')
+                    .setTitle('❌ Accesso negato')
+                    .setDescription("Solo l'autore della citazione può rimuoverla.");
+                return interaction.reply({ embeds: [denied], flags: 1 << 6 });
+            }
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('it-IT');
+            const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            const removedEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('🗑️ Citazione rimossa')
+                .setDescription('Questa citazione è stata rimossa dall\'autore.')
+                .addFields(
+                    { name: 'Rimossa da', value: `<@${interaction.user.id}>`, inline: true },
+                    { name: 'Data rimozione', value: `${dateStr} ${timeStr}`, inline: true }
+                )
+                .setFooter({ text: `Puoi bloccare le future quote tramite il comando ?blocquotes • Oggi alle ${timeStr}` });
+            return interaction.update({ embeds: [removedEmbed], components: [], files: [] }).catch(async () => {
+                await interaction.reply({ embeds: [removedEmbed], flags: 1 << 6 }).catch(() => {});
+            });
+        }
         if (interaction.customId == 'vocaliprivate') {
             const embeds = [
                 new EmbedBuilder()
