@@ -56,7 +56,7 @@ module.exports = {
     const pronouns = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('personality_pronouns')
-        .setPlaceholder('Seleziona i tuoi pronomi')
+        .setPlaceholder('⭐ Seleziona i tuoi pronomi')
         .setMinValues(1)
         .setMaxValues(1)
         .addOptions(
@@ -72,7 +72,7 @@ module.exports = {
     const age = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('personality_age')
-        .setPlaceholder('Seleziona la tua età')
+        .setPlaceholder('🔞 Seleziona la tua età')
         .setMinValues(1)
         .setMaxValues(1)
         .addOptions(
@@ -87,7 +87,7 @@ module.exports = {
     const region = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('personality_region')
-        .setPlaceholder('Seleziona la tua provenienza')
+        .setPlaceholder('🗺️ Seleziona la tua località')
         .setMinValues(1)
         .setMaxValues(1)
         .addOptions(
@@ -102,7 +102,7 @@ module.exports = {
     const dmStatus = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('personality_dm')
-        .setPlaceholder('Seleziona il tuo stato DM')
+        .setPlaceholder('📩 Seleziona il tuo stato DM')
         .setMinValues(1)
         .setMaxValues(1)
         .addOptions(
@@ -116,7 +116,7 @@ module.exports = {
     const relationship = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('personality_relationship')
-        .setPlaceholder('Seleziona il tuo stato sentimentale')
+        .setPlaceholder('💞 Seleziona il tuo stato sentimentale')
         .setMinValues(1)
         .setMaxValues(1)
         .addOptions(
