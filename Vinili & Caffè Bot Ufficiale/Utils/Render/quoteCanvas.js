@@ -50,6 +50,21 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   ctx.fillStyle = "rgba(0,0,0,0.25)";
   ctx.fillRect(0, 0, leftWidth, height);
 
+  const vignette = ctx.createRadialGradient(leftWidth * 0.35, height * 0.5, 120, leftWidth * 0.35, height * 0.5, 520);
+  vignette.addColorStop(0, "rgba(0,0,0,0.0)");
+  vignette.addColorStop(0.65, "rgba(0,0,0,0.25)");
+  vignette.addColorStop(1, "rgba(0,0,0,0.65)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, leftWidth, height);
+
+  const topBottomShade = ctx.createLinearGradient(0, 0, 0, height);
+  topBottomShade.addColorStop(0, "rgba(0,0,0,0.55)");
+  topBottomShade.addColorStop(0.2, "rgba(0,0,0,0.0)");
+  topBottomShade.addColorStop(0.8, "rgba(0,0,0,0.0)");
+  topBottomShade.addColorStop(1, "rgba(0,0,0,0.6)");
+  ctx.fillStyle = topBottomShade;
+  ctx.fillRect(0, 0, leftWidth, height);
+
   const gradient = ctx.createLinearGradient(leftWidth - 140, 0, width, 0);
   gradient.addColorStop(0, "rgba(0,0,0,0.0)");
   gradient.addColorStop(0.18, "rgba(0,0,0,0.18)");
