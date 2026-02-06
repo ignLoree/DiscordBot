@@ -338,7 +338,7 @@ module.exports = {
             <:dot:1443660294596329582> <@&1442568936423034940>
                 <:VC_DoubleReply:1468713981152727120> Cambiare il **__nickname__**
                 <:VC_Reply:1468262952934314131> Inviare **link** e **immagini** in **__ogni__ chat**
-                <:VC_Reply:1468262952934314131> Nuovo comando **sbloccato**: \`+quote\`
+                <:VC_Reply:1468262952934314131> Nuovo comando **sbloccato**: \`?quote\`
                 
             <:dot:1443660294596329582> <@&1442568934510297226>
                 <:VC_DoubleReply:1468713981152727120> Possibilità di **aggiungere** una __reazione__ ai messaggi
