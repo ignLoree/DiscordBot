@@ -6,7 +6,8 @@ const PersonalityPanelSchema = new Schema({
   channelId: { type: String, required: true },
   personalityMessageId: { type: String, default: null },
   mentionsMessageId: { type: String, default: null },
-  colorsMessageId: { type: String, default: null }
+  colorsMessageId: { type: String, default: null },
+  infoMessageId: { type: String, default: null }
 });
 
 PersonalityPanelSchema.index({ guildId: 1, channelId: 1 }, { unique: true });

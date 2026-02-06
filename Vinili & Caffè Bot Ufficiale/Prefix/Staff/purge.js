@@ -9,7 +9,6 @@ module.exports = {
     await message.channel.sendTyping();
     const { user } = await resolveTarget(message, args, 1);
     const fetched = await message.channel.messages.fetch({ limit: 100 });
-    const deleted = await message.channel.bulkDelete(toDelete, true).catch(() => null);
     const config = await getModConfig(message.guild.id);
 
     const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => { }), 5000);
@@ -46,6 +45,7 @@ module.exports = {
 
     if (!Array.isArray(toDelete)) toDelete = [toDelete];
 
+    const deleted = await message.channel.bulkDelete(toDelete, true).catch(() => null);
     if (!deleted) {
       await replyTemp({ content: '<:vegax:1443934876440068179> Impossibile eliminare i messaggi (forse troppo vecchi).' });
       return;

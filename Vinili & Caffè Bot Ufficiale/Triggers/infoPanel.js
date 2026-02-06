@@ -1,0 +1,103 @@
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const path = require('path');
+const PersonalityPanel = require('../Schemas/Community/personalityPanelSchema');
+
+const INFO_CHANNEL_ID = '1468229791374249995';
+const INFO_MEDIA_NAME = 'info.gif';
+const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
+
+module.exports = {
+  name: 'clientReady',
+  once: true,
+
+  async execute(client) {
+    const channel = client.channels.cache.get(INFO_CHANNEL_ID)
+      || await client.channels.fetch(INFO_CHANNEL_ID).catch(() => null);
+    if (!channel) return;
+
+    const attachment = new AttachmentBuilder(INFO_MEDIA_PATH, { name: INFO_MEDIA_NAME });
+
+    const embed1 = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setTitle('Ti diamo il benvenuto nella nostra community!')
+      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:'})
+      .setDescription([
+        '<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l\'unico server in Italia non tossico e __incentrato sulla socializzazione__.',
+        '',
+        '<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**',
+        '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!',
+      ].join('\n'));
+
+    const row1 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('info_rules')
+        .setLabel('Regolamento')
+        .setEmoji('<a:VC_Rule:1469462649950703709>')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('info_donations')
+        .setLabel('Donazioni')
+        .setEmoji('<a:VC_Sparkles:1468546911936974889>')
+        .setStyle(ButtonStyle.Success)
+    );
+
+    const embed2 = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:'})
+      .setTitle('<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:')
+      .setDescription([
+        'Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.',
+      ].join('\n'));
+
+    const row2 = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('info_boost_levels')
+        .setLabel('Vantaggi Boost & Livelli')
+        .setEmoji('<a:VC_Rocket:1468544312475123753>')
+        .setStyle(ButtonStyle.Danger),
+      new ButtonBuilder()
+        .setCustomId('info_badges_roles')
+        .setLabel('Badge & Altri ruoli')
+        .setEmoji('<a:VC_Diamon:1469463765610135635>')
+        .setStyle(ButtonStyle.Primary)
+    );
+
+    const guildId = channel.guild?.id;
+    if (!guildId) return;
+
+    let panel = null;
+    try {
+      panel = await PersonalityPanel.findOneAndUpdate(
+        { guildId, channelId: INFO_CHANNEL_ID },
+        { $setOnInsert: { guildId, channelId: INFO_CHANNEL_ID } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch {}
+
+    let infoMessage = null;
+    if (panel?.infoMessageId) {
+      infoMessage = await channel.messages.fetch(panel.infoMessageId).catch(() => null);
+    }
+
+    if (infoMessage) {
+      await infoMessage.edit({
+        files: [attachment],
+        embeds: [embed1, embed2],
+        components: [row1, row2]
+      }).catch(() => {});
+    } else {
+      infoMessage = await channel.send({
+        files: [attachment],
+        embeds: [embed1, embed2],
+        components: [row1, row2]
+      }).catch(() => null);
+    }
+
+    if (infoMessage) {
+      await PersonalityPanel.updateOne(
+        { guildId, channelId: INFO_CHANNEL_ID },
+        { $set: { infoMessageId: infoMessage.id } }
+      ).catch(() => {});
+    }
+  }
+};
