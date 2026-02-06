@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, PermissionsBitField } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { default: axios } = require('axios');
 
 module.exports = {
@@ -22,21 +22,11 @@ module.exports = {
         )
         .addSubcommand(sub =>
             sub.setName('sticker')
-                .setDescription('Ruba uno sticker.'))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+                .setDescription('Ruba uno sticker.')),
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
-
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
-            embeds: [
-                new EmbedBuilder()
-                    .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
-                    .setColor("Red")
-            ],
-            flags: 1 << 6
-        });
 
         switch (sub) {
             case 'emoji': {
@@ -153,4 +143,3 @@ module.exports = {
         }
     }
 }
-

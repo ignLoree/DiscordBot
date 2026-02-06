@@ -1,0 +1,138 @@
+{
+  "slash": {
+    "copy": {
+      "roles": null,
+      "subcommands": {
+        "emoji": ["1442568894349840435"],
+        "sticker": ["1442568894349840435"]
+      }
+    },
+    "dmbroadcast": {
+      "roles": ["1442568886988963923"]
+    },
+    "no-dm-list": {
+      "roles": ["1442568894349840435"]
+    },
+    "reaction-roles": {
+      "roles": null,
+      "subcommands": {
+        "add": ["1442568894349840435"],
+        "remove": ["1442568894349840435"]
+      }
+    },
+    "restart": {
+      "roles": ["1442568886988963923"]
+    },
+    "say": {
+      "roles": ["1442568886988963923"]
+    },
+    "no-dm": {
+      "roles": null
+    },
+    "set": {
+      "roles": null,
+      "subcommands": {
+        "autojoin": ["1442568886988963923"],
+        "voice": null
+      }
+    },
+    "suggestion": {
+      "roles": null,
+      "subcommands": {
+        "suggest": null,
+        "accept": ["1442568894349840435"],
+        "reject": ["1442568894349840435"]
+      }
+    },
+    "Show Avatar": {
+      "roles": null
+    },
+    "Partnership": {
+      "roles": ["1442568905582317740"]
+    },
+    "help": {
+      "roles": ["1442568905582317740"]
+    },
+    "leaderboard": {
+      "roles": ["1442568905582317740"]
+    },
+    "partnership": {
+      "roles": ["1442568905582317740"]
+    },
+    "modname": {
+      "roles": ["1442568894349840435"]
+    },
+    "partner": {
+      "roles": null,
+      "subcommands": {
+        "modifypoint.add": ["1442568894349840435"],
+        "modifypoint.remove": ["1442568894349840435"]
+      }
+    },
+    "pausa": {
+      "roles": null,
+      "subcommands": {
+        "request": ["1442568910070349985", "1442568905582317740"],
+        "accept": ["1442568894349840435"]
+      }
+    },
+    "poll": {
+      "roles": null,
+      "subcommands": {
+        "create": ["1442568894349840435"],
+        "remove": ["1442568894349840435"],
+        "edit": ["1442568894349840435"]
+      }
+    },
+    "staff": {
+      "roles": null,
+      "subcommands": {
+        "pex": ["1442568894349840435"],
+        "depex": ["1442568894349840435"],
+        "warn": ["1442568894349840435"],
+        "resoconto.staffer": ["1442568894349840435"],
+        "resoconto.pm": ["1442568894349840435"]
+      }
+    },
+    "ticket": {
+      "roles": null,
+      "subcommands": {
+        "setup": ["1442568886988963923"],
+        "add": ["1442568910070349985"],
+        "remove": ["1442568910070349985"],
+        "closerequest": ["1442568910070349985"],
+        "close": ["1442568910070349985"],
+        "claim": ["1442568910070349985"],
+        "unclaim": ["1442568910070349985"]
+      }
+    },
+    "valutazione": {
+      "roles": null,
+      "subcommands": {
+        "positiva.add": ["1442568886988963923"],
+        "positiva.remove": ["1442568886988963923"],
+        "negativa.add": ["1442568886988963923"],
+        "negativa.remove": ["1442568886988963923"],
+        "media": ["1442568910070349985"]
+      }
+    }
+  },
+  "prefix": {
+    "afk": null,
+    "avatar": null,
+    "membercount": null,
+    "ping": null,
+    "snipe": null,
+    "join": null,
+    "leave": null,
+    "classifica": null,
+    "mstats": null,
+    "myactivity": null,
+    "rank": null,
+    "description": ["1442568905582317740"],
+    "gmulti": ["1442568886988963923"],
+    "purge": ["1442568894349840435"],
+    "verify": ["1442568894349840435"],
+    "quote": null
+  }
+}

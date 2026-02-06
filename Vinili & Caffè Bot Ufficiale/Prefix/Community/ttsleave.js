@@ -3,6 +3,8 @@ const { leaveTtsGuild } = require('../../Services/TTS/ttsService');
 
 module.exports = {
     name: 'leave',
+    prefixOverride: "-",
+    
     async execute(message) {
         await message.channel.sendTyping();
         const result = await leaveTtsGuild(message.guild.id);

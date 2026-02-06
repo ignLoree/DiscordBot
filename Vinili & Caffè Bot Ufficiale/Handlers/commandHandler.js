@@ -61,16 +61,6 @@ module.exports = (client) => {
                         continue;
                     }
 
-                    if (typeof command.staffOnly === "undefined") {
-                        const folderName = folder.toLowerCase();
-                        command.staffOnly = folderName === "staff" || folderName === "moderation";
-                    }
-                    if (typeof command.adminOnly === "undefined") {
-                        command.adminOnly = folder.toLowerCase() === "admin";
-                    }
-                    if (typeof command.partnerManagerOnly === "undefined") {
-                        command.partnerManagerOnly = folder.toLowerCase() === "partnermanager";
-                    }
                     if (typeof command.category === "undefined") {
                         command.category = folder;
                     }

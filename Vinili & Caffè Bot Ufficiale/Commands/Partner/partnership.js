@@ -1,5 +1,5 @@
 ﻿const { safeReply } = require('../../Utils/Moderation/interaction');
-const { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
@@ -15,18 +15,6 @@ module.exports = {
 
     async execute(interaction) {
         const manager = interaction.options.getUser('manager');
-        const allowedRoles = ['1442568905582317740']
-        const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-        if (!hasAllowedRole) {
-            return safeReply(interaction, {
-                embeds: [
-                    new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                        .setColor("Red")
-                ],
-                flags: 1 << 6
-            });
-        }
         const userRoles = ['1442568949605597264'];
         let managerMember = interaction.guild?.members?.cache?.get(manager.id) || null;
         if (!managerMember) {
@@ -61,5 +49,4 @@ module.exports = {
         await interaction.showModal(modal);
     }
 }
-
 

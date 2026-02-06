@@ -1,5 +1,5 @@
 ﻿const { safeReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, PermissionsBitField, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,16 +49,6 @@ module.exports = {
     client.config2.tts = client.config2.tts || {};
 
     if (sub === 'autojoin') {
-      if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return safeReply(interaction, {
-          embeds: [
-            new EmbedBuilder()
-              .setDescription('<:vegax:1443934876440068179> Non hai il permesso per usare questo subcommand.')
-              .setColor('Red')
-          ],
-          flags: 1 << 6
-        });
-      }
       const stato = interaction.options.getBoolean('stato', true);
       client.config2.tts.autojoin = stato;
       const label = stato ? 'attivo' : 'disattivato';

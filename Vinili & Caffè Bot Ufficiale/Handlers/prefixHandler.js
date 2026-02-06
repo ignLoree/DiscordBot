@@ -58,15 +58,6 @@ module.exports = (client) => {
                 }
                 const folderName = String(folder).toLowerCase();
                 command.folder = command.folder || folder;
-                if (typeof command.staffOnly === 'undefined') {
-                    command.staffOnly = folderName === 'staff' || folderName === 'moderation';
-                }
-                if (typeof command.adminOnly === 'undefined') {
-                    command.adminOnly = folderName === 'admin';
-                }
-                if (folderName === 'moderation') {
-                    command.prefixOverride = '?';
-                }
                 client.pcommands.set(command.name, command);
                 if (disabledPrefixCommands.has(command.name)) {
                     statusMap.set(key, "Disabilitato");

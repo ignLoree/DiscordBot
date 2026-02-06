@@ -106,7 +106,6 @@ async function buildAllTimeEmbed(message) {
 module.exports = {
   name: 'classifica',
   aliases: ['c', 'cs', "classificasettimanale"],
-  prefixOverride: '+',
 
   async execute(message) {
     await message.channel.sendTyping();

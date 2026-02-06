@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const SuggestionCount = require('../../Schemas/Suggestion/suggestionSchema');
 
 module.exports = {
@@ -127,16 +127,6 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                 }
                 break;
             case 'accept':
-                if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-                    return safeEditReply(interaction, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setDescription("<:vegax:1443934876440068179> Non hai i permessi per accettare i suggerimenti.")
-                                .setColor("Red")
-                        ],
-                        flags: 1 << 6
-                    });
-                }
                 const suggestionId = options.getString('suggestion_id');
                 const reason = options.getString('reason');
                 const suggestionData = await SuggestionCount.findOne({
@@ -183,16 +173,6 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                 });
                 break;
             case 'reject':
-                if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-                    return safeEditReply(interaction, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setDescription("<:vegax:1443934876440068179> Non hai i permessi per rifiutare i suggerimenti.")
-                                .setColor("Red")
-                        ],
-                        flags: 1 << 6
-                    });
-                }
                 const rejectSuggestionId = options.getString('suggestion_id');
                 const rejectReason = options.getString('reason');
                 const rejectSuggestionData = await SuggestionCount.findOne({
@@ -240,4 +220,3 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
         }
     }
 }
-

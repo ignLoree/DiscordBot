@@ -2,17 +2,16 @@
     "boostChannelId": "1442569123426074736", 
     "clientid": "1329118940110127204",
     "guildid": "1462458562507964584",
-    "devid": "295500038401163264",
-    "color": "000000",
     "staffRoleIds": ["1442568910070349985"],
     "prefixStaffRoleIds": ["1442568905582317740"],
     "adminRoleIds": ["1442568894349840435"],
-    "disabledPrefixCommands": [],
-    "disabledCommands": [],
+    "disabledPrefixCommands": ["gmulti", "purge", "verify"],
+    "disabledCommands": ["copy", "dmbroadcast", "no-dm-list", "say", "reactionrole", "restart", "modname" ],
     "disabledSubcommands": {
         "ticket": ["setup"],
         "set": ["autojoin"],
-        "pause": ["accept"]
+        "pause": ["accept"],
+        "suggestion": ["accept", "reject"]
     }
 }
 

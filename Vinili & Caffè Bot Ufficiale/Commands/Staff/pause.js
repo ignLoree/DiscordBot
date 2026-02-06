@@ -1,7 +1,6 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { EmbedBuilder, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
     staffRoleIdsBySubcommand: {
@@ -29,24 +28,14 @@ module.exports = {
                 .addIntegerOption(option => option.setName('giorni_usati').setDescription('Giorni già usati').setRequired(true))
                 .addIntegerOption(option => option.setName('giorni_aggiuntivi').setDescription('Giorni aggiuntivi').setRequired(true))
         ),
+
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
         const guildId = interaction.guild.id
+
         switch (sub) {
             case 'request': {
-                const allowedRoles = ['1442568905582317740', '1442568910070349985'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                                .setColor("Red")
-                        ],
-                        flags: 1 << 6
-                    });
-                }
                 const userId = interaction.user.id;
                 const dataRichiesta = interaction.options.getString('data_richiesta');
                 const dataRitorno = interaction.options.getString('data_ritorno');
@@ -75,18 +64,6 @@ module.exports = {
             }
                 break;
             case 'accept': {
-                const allowedRoles = ['1442568894349840435'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                                .setColor("Red")
-                        ],
-                        flags: 1 << 6
-                    });
-                }
                 const staffer = interaction.options.getUser('staffer');
                 const dataRichiesta = interaction.options.getString('data_richiesta');
                 const dataRitorno = interaction.options.getString('data_ritorno');
@@ -124,4 +101,3 @@ module.exports = {
         }
     }
 }
-

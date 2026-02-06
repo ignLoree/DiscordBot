@@ -5,8 +5,6 @@ const getDevIds = (client) => {
   const raw =
     client.config2?.developers ??
     client.config?.developers ??
-    client.config?.devid ??
-    client.config2?.devid ??
     "";
   if (Array.isArray(raw)) {
     return raw.map((id) => String(id).trim()).filter(Boolean);

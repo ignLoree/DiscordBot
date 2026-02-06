@@ -1,11 +1,9 @@
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { resolveTarget } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
 
 module.exports = {
-  skipPrefix: false,
   name: 'purge',
-  prefixOverride: "w!",
   
   async execute(message, args, client) {
     await message.channel.sendTyping();
@@ -21,11 +19,6 @@ module.exports = {
       return msg;
     };
     setTimeout(() => message.delete().catch(() => { }), 5000);
-
-    if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
-      return;
-    }
 
     const amount = Number(args?.[0]);
     if (!amount || amount < 1 || amount > 100) {

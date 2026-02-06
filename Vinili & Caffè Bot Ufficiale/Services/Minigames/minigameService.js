@@ -343,6 +343,18 @@ async function fetchRandomSong(cfg) {
   return null;
 }
 
+async function fetchAudioAttachment(url) {
+  if (!url) return null;
+  try {
+    const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
+    const data = Buffer.from(res.data);
+    if (!data || !data.length) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 async function loadPopularSongList(cfg) {
   const now = Date.now();
   if (cachedSongs && (now - cachedSongsAt) < SONG_CACHE_TTL_MS) return cachedSongs;
@@ -1015,17 +1027,17 @@ async function startGuessSongGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
 
-  let components = [];
-  if (info.previewUrl) {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setURL(info.previewUrl)
-        .setLabel('Ascolta anteprima')
-    );
-    components = [row];
-  }
-  const gameMessage = await channel.send({ embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)], components }).catch(() => null);
+  const previewCustomId = `minigame_song_preview:${Date.now()}`;
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(previewCustomId)
+      .setLabel('Ascolta anteprima')
+      .setStyle(ButtonStyle.Secondary)
+  );
+  const gameMessage = await channel.send({
+    embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)],
+    components: [row]
+  }).catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
@@ -1042,6 +1054,8 @@ async function startGuessSongGame(client, cfg) {
     type: 'guessSong',
     title: info.title,
     artist: info.artist,
+    previewUrl: info.previewUrl || null,
+    previewCustomId,
     rewardExp,
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
@@ -1056,7 +1070,8 @@ async function startGuessSongGame(client, cfg) {
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
+    customId: previewCustomId
   });
 
   markSent(channelId);
@@ -1414,6 +1429,20 @@ async function handleMinigameButton(interaction, client) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return false;
   const game = activeGames.get(cfg.channelId);
+  if (interaction.customId.startsWith('minigame_song_preview:')) {
+    if (!game || game.type !== 'guessSong' || interaction.customId !== game.previewCustomId) {
+      await interaction.reply({ content: 'Anteprima non disponibile.', flags: 1 << 6 }).catch(() => {});
+      return true;
+    }
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+    const audio = await fetchAudioAttachment(game.previewUrl);
+    if (!audio) {
+      await interaction.editReply({ content: 'Anteprima non disponibile.' }).catch(() => {});
+      return true;
+    }
+    await interaction.editReply({ files: [new AttachmentBuilder(audio, { name: 'anteprima.m4a' })] }).catch(() => {});
+    return true;
+  }
   if (!game || game.type !== 'findBot') return false;
   if (interaction.customId !== game.customId) return false;
 
@@ -1647,6 +1676,7 @@ async function restoreActiveGames(client) {
       title,
       artist,
       previewUrl: parsed?.previewUrl || null,
+      previewCustomId: state.customId || null,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,

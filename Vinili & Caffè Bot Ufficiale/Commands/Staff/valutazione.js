@@ -1,6 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 
 module.exports = {
@@ -8,7 +7,7 @@ module.exports = {
         .setName("valutazione")
         .setDescription("Gestisci le valutazioni degli staffer")
         .addSubcommandGroup(group =>
-            group.setName("positive")
+            group.setName("positiva")
                 .setDescription("Gestisci valutazioni positive")
                 .addSubcommand(sub =>
                     sub.setName("add")
@@ -25,7 +24,7 @@ module.exports = {
                 )
         )
         .addSubcommandGroup(group =>
-            group.setName("negative")
+            group.setName("negativa")
                 .setDescription("Gestisci valutazioni negative")
                 .addSubcommand(sub =>
                     sub.setName("add")
@@ -71,15 +70,12 @@ module.exports = {
             }
             const checkPermissions = () => {
                 const allowedRoleID = '1442568910070349985';
-                const allowedRoles = ['1442568894349840435'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) return false;
                 const stafferMember = interaction.guild.members.cache.get(utentee.id);
                 if (!stafferMember || !stafferMember.roles.cache.has(allowedRoleID)) return false;
                 if (interaction.user.id === utentee.id) return false;
                 return true;
             };
-            if (group === "positive") {
+            if (group === "positiva") {
                 if (!checkPermissions()) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!").setColor("Red")], flags: 1 << 6 });
                 if (sub === "add") {
                     StaffDoc.valutazioniCount++;
@@ -118,7 +114,7 @@ module.exports = {
                     return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegacheckmark:1443666279058772028> Valutazione positiva rimossa con successo!").setColor('#6f4e37')] });
                 }
             }
-            if (group === "negative") {
+            if (group === "negativa") {
                 if (!checkPermissions()) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!").setColor("Red")], flags: 1 << 6 });
                 if (sub === "add") {
                     StaffDoc.valutazioniCount++;
@@ -176,4 +172,3 @@ module.exports = {
         }
     }
 }
-

@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, PermissionsBitField, PermissionFlagsBits, EmbedBuilder } = require('discord.js')
+const { SlashCommandBuilder } = require('discord.js')
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -7,8 +7,7 @@ module.exports = {
         .setDescription('Quello che vorresti che il bot dicesse al posto tuo')
         .addStringOption(option => option.setName('messaggio').setDescription('Il messaggio che vuoi che scriva il bot').setRequired(true))
         .addStringOption(option => option.setName('message_id').setDescription('ID del messaggio a cui rispondere (stesso canale)').setRequired(false))
-        .addStringOption(option => option.setName('message_link').setDescription('Link del messaggio a cui rispondere').setRequired(false))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        .addStringOption(option => option.setName('message_link').setDescription('Link del messaggio a cui rispondere').setRequired(false)),
 
     async execute(interaction) {
         await interaction.deferReply({ flags: 1 << 6 })
@@ -45,14 +44,6 @@ module.exports = {
             replyTo = targetMessage;
         }
 
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
-            embeds: [
-                new EmbedBuilder()
-                    .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
-                    .setColor("Red")
-            ]
-        });
-
         await safeEditReply(interaction, { content: `Messaggio inviato`, flags: 1 << 6});
         const payload = { content: `${mensaje}` };
         if (replyTo) {
@@ -62,5 +53,4 @@ module.exports = {
         await channel.send(payload);
     },
 };
-
 

@@ -36,7 +36,6 @@ function buildNoPermsEmbed() {
 
 module.exports = {
   name: 'quote',
-  prefixOverride: "+",
 
   async execute(message) {
     if (!message?.guild) {

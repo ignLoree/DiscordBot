@@ -6,8 +6,6 @@ const getDevIds = (client) => {
   const raw =
     client.config2?.developers ??
     client.config?.developers ??
-    client.config?.devid ??
-    client.config2?.devid ??
     "";
   if (Array.isArray(raw)) {
     return raw.map((id) => String(id).trim()).filter(Boolean);
@@ -35,6 +33,7 @@ function chunkLines(lines, maxLen = 1900) {
 }
 
 module.exports = {
+  adminOnly: true,
   data: new SlashCommandBuilder()
     .setName("no-dm-list")
     .setDescription("Mostra la lista utenti esclusi dai DM broadcast")

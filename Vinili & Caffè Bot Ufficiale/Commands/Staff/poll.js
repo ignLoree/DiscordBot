@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
 
 module.exports = {
@@ -47,21 +47,11 @@ module.exports = {
                 .addStringOption(o => o.setName("r7").setDescription("Nuova risposta 7").setRequired(false))
                 .addStringOption(o => o.setName("r8").setDescription("Nuova risposta 8").setRequired(false))
                 .addStringOption(o => o.setName("r9").setDescription("Nuova risposta 9").setRequired(false))
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        ),
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand()
         await interaction.deferReply()
-
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
-            embeds: [
-                new EmbedBuilder()
-                    .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.')
-                    .setColor("Red")
-            ],
-            flags: 1 << 6
-        });
 
         if (subcommand === "create") {
             try {
@@ -278,7 +268,7 @@ ${answersText}
 
 <:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
                 });
-                
+
                 await pollMessage.reactions.removeAll().catch(() => { });
                 for (const reaction of validReactions) {
                     const emojiId = reaction.match(/:(\d+)>$/)?.[1];
@@ -306,4 +296,3 @@ ${answersText}
         }
     }
 };
-

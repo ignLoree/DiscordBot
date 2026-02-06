@@ -1,8 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
-
-const ROLE_PARTNER_MANAGER = ['1442568905582317740'];
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -11,18 +8,6 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.deferReply();
-        const hasPartnerManagerRole = hasAnyRole(interaction.member, ROLE_PARTNER_MANAGER);
-        if (!hasPartnerManagerRole) {
-            return await safeEditReply(interaction, {
-                embeds: [
-                    new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non hai il permesso per usare questo comando!')
-                        .setColor('Red')
-                ],
-                flags: 1 << 6
-            });
-        }
-
         return await safeEditReply(interaction, {
             embeds: [buildPartnerManagerEmbed()]
         });

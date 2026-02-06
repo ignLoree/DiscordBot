@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const VERIFY_ROLE_IDS = [
   '1442568949605597264',
@@ -11,15 +11,10 @@ const VERIFY_ROLE_IDS = [
 ];
 
 module.exports = {
-  skipPrefix: false,
   name: 'verify',
-  prefixOverride: "w!",
   
   async execute(message, args) {
     await message.channel.sendTyping();
-    if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-      return message.reply({ content: '<:vegax:1443934876440068179> Non hai i permessi per usare questo comando.' });
-    }
     await message.delete().catch(() => {});
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {

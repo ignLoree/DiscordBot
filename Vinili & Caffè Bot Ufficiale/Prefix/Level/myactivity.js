@@ -9,7 +9,6 @@ function formatHours(seconds) {
 
 module.exports = {
   name: 'myactivity',
-  prefixOverride: "+",
   
   async execute(message) {
     await message.channel.sendTyping();

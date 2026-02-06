@@ -1,7 +1,8 @@
 ﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
 module.exports = {
-    name: 'desc',
-    aliases: ['description'],
+    name: 'description',
+    aliases: ['desc'],
+    
     async execute(message) {
         await message.channel.sendTyping();
         const allowedCategoryId = "1442569056795230279";

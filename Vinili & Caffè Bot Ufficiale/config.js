@@ -1,11 +1,12 @@
 module.exports = {
-  prefix: '!',
+  prefix: '+',
   status: "idle",
   logLevel: 'debug',
   eventListeners: 50,
   dev: "lXo",
   devBy: "| Developed by lXo",
   developers: "295500038401163264",
+  staff: "1442568910070349985",
   partnerManager: "1442568905582317740",
   slashCommandLoggingChannel: "1442577274783142039",
   prefixCommandLoggingChannel: "1442577274783142039",
@@ -40,7 +41,11 @@ module.exports = {
     roleId: "1442569009567629375",
     hour: 8,
     minute: 0,
-    questionsFile: "Data/morningQuestions.json"
+    apiUrl: "https://opentdb.com/api.php",
+    tokenUrl: "https://opentdb.com/api_token.php?command=request",
+    tokenUrlBase: "https://opentdb.com/api_token.php",
+    translateApiUrl: "https://api.mymemory.translated.net/get",
+    maxAttempts: 5
   },
 
   tts: {

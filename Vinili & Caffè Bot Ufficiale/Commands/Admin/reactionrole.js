@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, PermissionsBitField, PermissionFlagsBits } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const reaction = require('../../Schemas/ReactionRole/reactionroleSchema')
 
 module.exports = {
@@ -38,8 +38,7 @@ module.exports = {
                         .setDescription('L\'emoji con cui deve reagire.')
                         .setRequired(true)
                 )
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+        ),
 
     async execute(interaction) {
         const { options, guild, channel } = interaction
@@ -51,14 +50,6 @@ module.exports = {
             e = err;
         })
         const data = await reaction.findOne({ Guild: guild.id, Message: message.id, Emoji: emoji });
-
-        if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) return await safeEditReply(interaction, {
-            embed: [
-                new EmbedBuilder()
-                    .setColor('Red')
-                    .setDescription('<:vegax:1443934876440068179> Non hai i permessi per fare questo comando.')
-            ], flags: 1 << 6
-        })
 
         if (e) return await safeEditReply(interaction, {
             embed: [
@@ -121,4 +112,3 @@ module.exports = {
         }
     }
 }
-

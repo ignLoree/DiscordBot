@@ -1,6 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const PartnershipCount = require('../../Schemas/Staff/staffSchema');
 
 module.exports = {
@@ -10,18 +9,6 @@ module.exports = {
 
     async execute(interaction) {
         await interaction.deferReply()
-        const allowedRoles = ['1442568894349840435', '1442568896237277295', '1442568905582317740'];
-        const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-        if (!hasAllowedRole) {
-            return await safeEditReply(interaction, {
-                embeds: [
-                    new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                        .setColor("Red")
-                ],
-                flags: 1 << 6
-            });
-        }
         const partnersPerPage = 10;
         const allPartners = await PartnershipCount.find().sort({ partnerCount: -1 }).lean();
         if (allPartners.length === 0) {
@@ -93,4 +80,3 @@ module.exports = {
         });
     }
 };
-

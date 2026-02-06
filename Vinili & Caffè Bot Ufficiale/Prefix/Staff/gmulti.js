@@ -4,7 +4,6 @@ const { setGlobalMultiplier } = require('../../Services/Community/expService');
 
 module.exports = {
   name: 'gmulti',
-  prefixOverride: "+",
   adminOnly: true,
 
   async execute(message, args) {

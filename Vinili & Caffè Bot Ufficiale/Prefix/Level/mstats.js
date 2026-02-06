@@ -21,8 +21,6 @@ function getUnlockedRewards(totalExp) {
 
 module.exports = {
   name: 'mstats',
-  prefixOverride: "+",
-  prefixOverride: "+",
 
   async execute(message) {
     await message.channel.sendTyping();

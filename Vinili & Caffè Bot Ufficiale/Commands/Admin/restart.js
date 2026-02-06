@@ -1,4 +1,4 @@
-ï»¿const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/interaction');
 const fs = require('fs');
 const path = require('path');
@@ -33,6 +33,7 @@ function writeRestartWatch(target, payload) {
 }
 
 module.exports = {
+    adminOnly: true,
     data: new SlashCommandBuilder()
         .setName('restart')
         .setDescription('Riavvia uno dei bot tramite loader.')
@@ -61,7 +62,6 @@ module.exports = {
                 { name: 'Schemas', value: 'schemas' },
                 { name: 'All', value: 'all' }
             ))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
     async execute(interaction) {
         try {
@@ -102,7 +102,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -138,7 +138,7 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();

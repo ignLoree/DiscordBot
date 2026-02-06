@@ -1,7 +1,6 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -121,27 +120,14 @@ module.exports = {
                                     { name: 'Nulla', value: 'Nulla' },
                                 ))
                 )
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
-        
+        ),
+
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
         const channel = interaction.guild.channels.cache.get('1442569234004709391')
         const pmchannel = interaction.guild.channels.cache.get('1442569209849843823')
-        const allowedRoles = ['1442568894349840435']
-        const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-        if (!hasAllowedRole && !interaction.memberPermissions?.has(PermissionFlagsBits.ManageRoles)) {
-            return await safeEditReply(interaction, {
-                embeds: [
-                    new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                        .setColor("#E74C3C")
-                ],
-                flags: 1 << 6
-            });
-        }
         if (sub === 'pex') {
             try {
                 const utentee = interaction.options.getUser('user');
@@ -385,17 +371,6 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         '1442568896237277295',
                         '1442568894349840435'
                     ];
-                    const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                    if (!hasAllowedRole) {
-                        return await safeEditReply(interaction, {
-                            embeds: [
-                                new EmbedBuilder()
-                                    .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                                    .setColor("#E74C3C")
-                            ],
-                            flags: 1 << 6
-                        });
-                    }
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
                             embeds: [
@@ -451,17 +426,6 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         '1442568896237277295',
                         '1442568894349840435'
                     ];
-                    const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                    if (!hasAllowedRole) {
-                        return await safeEditReply(interaction, {
-                            embeds: [
-                                new EmbedBuilder()
-                                    .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                                    .setColor("#E74C3C")
-                            ],
-                            flags: 1 << 6
-                        });
-                    }
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
                             embeds: [
@@ -503,4 +467,3 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         }
     }
 }
-

@@ -1,8 +1,7 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -72,18 +71,6 @@ module.exports = {
         }
         switch (subcommand) {
             case 'setup': {
-                const allowedRoles = ['1442568888096391260'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                                .setColor("#6f4e37")
-                        ],
-                        flags: 1 << 6
-                    });
-                }
                 const ticketChannel = interaction.options.getChannel('canale');
                 const ticketEmbed = new EmbedBuilder()
                     .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & Caffè**!
@@ -110,14 +97,6 @@ module.exports = {
                 return await safeEditReply(interaction, { content: `Pannello inviato nel canale ${ticketChannel}`, flags: 1 << 6 });
             }
             case 'add': {
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('? Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
-                        flags: 1 << 6
-                    });
-                }
                 const user = interaction.options.getUser('utente');
                 await interaction.channel.permissionOverwrites.edit(user.id, { ViewChannel: true, SendMessages: true });
                 return await safeEditReply(interaction, {
@@ -130,14 +109,6 @@ module.exports = {
                 });
             }
             case 'remove': {
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
-                        flags: 1 << 6
-                    });
-                }
                 const user = interaction.options.getUser('utente');
                 await interaction.channel.permissionOverwrites.edit(user.id, { ViewChannel: false, SendMessages: false });
                 return await safeEditReply(interaction, {
@@ -150,14 +121,6 @@ module.exports = {
                 });
             }
             case 'closerequest': {
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
-                        flags: 1 << 6
-                    });
-                }
                 const reason = interaction.options.getString('reason');
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
@@ -182,14 +145,6 @@ module.exports = {
             }
             case 'close': {
                 const LOG_CHANNEL = '1442569290682208296';
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("#6f4e37")],
-                        flags: 1 << 6
-                    });
-                }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 const transcriptTXT = await createTranscript(interaction.channel).catch(() => '');
                 ticketDoc.open = false;
@@ -241,14 +196,6 @@ module.exports = {
                 return;
             }
             case 'claim': {
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("Red")],
-                        flags: 1 << 6
-                    });
-                }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {
@@ -306,14 +253,6 @@ module.exports = {
                 });
             }
             case 'unclaim': {
-                const allowedRoles = ['1442568910070349985', '1442568905582317740'];
-                const hasAllowedRole = hasAnyRole(interaction.member, allowedRoles);
-                if (!hasAllowedRole && !interaction.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-                    return await safeEditReply(interaction, {
-                        embeds: [new EmbedBuilder().setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!').setColor("Red")],
-                        flags: 1 << 6
-                    });
-                }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc)
                     return await safeEditReply(interaction, {

@@ -1,6 +1,7 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/interaction');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
+const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -29,52 +30,11 @@ async function handleSlashCommand(interaction, client) {
         });
     }
 
-    if (command.staffOnly) {
-        const sub = interaction.options?.getSubcommand?.(false);
-        let staffRoleIds = Array.isArray(client.config?.staffRoleIds)
-            ? client.config.staffRoleIds
-            : [];
-        if (sub && command.staffRoleIdsBySubcommand && Array.isArray(command.staffRoleIdsBySubcommand[sub])) {
-            staffRoleIds = command.staffRoleIdsBySubcommand[sub];
-        } else if (Array.isArray(command.staffRoleIds)) {
-            staffRoleIds = command.staffRoleIds;
-        }
-        const hasStaffRole = staffRoleIds.some(roleId => interaction.member?.roles?.cache?.has(roleId));
-        const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
-        if (!interaction.inGuild() || (!hasStaffRole && !isAdmin)) {
-            return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando è solo per lo Staff.",
-                flags: 1 << 6
-            });
-        }
-    }
-
-    if (command.partnerManagerOnly) {
-        const partnerRoleIds = Array.isArray(client.config?.prefixStaffRoleIds)
-            ? client.config.prefixStaffRoleIds
-            : [];
-        const hasPartnerRole = partnerRoleIds.some(roleId => interaction.member?.roles?.cache?.has(roleId));
-        const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
-        if (!interaction.inGuild() || (!hasPartnerRole && !isAdmin)) {
-            return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando è solo per i Partner Manager.",
-                flags: 1 << 6
-            });
-        }
-    }
-
-    if (command.adminOnly) {
-        const adminRoleIds = Array.isArray(client.config?.adminRoleIds)
-            ? client.config.adminRoleIds
-            : [];
-        const hasAdminRole = adminRoleIds.some(roleId => interaction.member?.roles?.cache?.has(roleId));
-        const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
-        if (!interaction.inGuild() || (!hasAdminRole && !isAdmin)) {
-            return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo comando è solo per l'High Staff.",
-                flags: 1 << 6
-            });
-        }
+    if (!checkSlashPermission(interaction)) {
+        return interaction.reply({
+            content: "<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.",
+            flags: 1 << 6
+        });
     }
 
     if (subcommand && Array.isArray(disabledSubcommands[interaction.commandName])) {

@@ -3,6 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
     name: "snipe",
+    
     async execute(message, args, client) {
         await message.channel.sendTyping();
         if (!client.snipes || !(client.snipes instanceof Map)) {

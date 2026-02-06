@@ -4,8 +4,7 @@ const { getUserRanks, getGlobalMultiplier } = require('../../Services/Community/
 
 module.exports = {
   name: 'rank',
-  aliases: ["r", "me"],
-  prefixOverride: "+",
+  aliases: ["r"],
 
   async execute(message) {
     await message.channel.sendTyping();

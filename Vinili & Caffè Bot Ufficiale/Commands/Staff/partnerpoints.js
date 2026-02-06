@@ -1,7 +1,6 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -62,18 +61,6 @@ module.exports = {
         const linkmessaggio = interaction.options.getString('linkmessaggio')
         const channel = interaction.guild.channels.cache.get('1442569257375367320')
 
-        const allowedRoles = ['1442568894349840435']
-        if (!hasAnyRole(interaction.member, allowedRoles)) {
-            return await safeEditReply(interaction, {
-                embeds: [
-                    new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!')
-                        .setColor('Red')
-                ],
-                flags: 1 << 6
-            });
-        }
-
         if (value < 0)
             return await safeEditReply(interaction, { content: '<:vegax:1443934876440068179> Il valore deve essere positivo.', flags: 1 << 6 });
         let staffData = await Staff.findOne({
@@ -131,5 +118,4 @@ module.exports = {
         }
     }
 }
-
 

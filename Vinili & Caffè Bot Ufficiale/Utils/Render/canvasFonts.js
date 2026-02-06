@@ -115,18 +115,4 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   ctx.restore();
 }
 
-module.exports = {
-  registerCanvasFonts,
-  fontStack,
-  fontStackWithPrimary,
-  drawTextWithSpecialFallback,
-  PRIMARY_FONT,
-  TIBETAN_FONT,
-  SYMBOLS_FONT,
-  COLOR_EMOJI_FONT,
-  EMOJI_FONT,
-  FRAKTUR_FONT,
-  MATH_FONT,
-  FALLBACK_FONT,
-  FONT_STACK
-};
+module.exports = { registerCanvasFonts, fontStack, fontStackWithPrimary, drawTextWithSpecialFallback, PRIMARY_FONT, TIBETAN_FONT, SYMBOLS_FONT, COLOR_EMOJI_FONT, EMOJI_FONT, FRAKTUR_FONT, MATH_FONT, FALLBACK_FONT, FONT_STACK };
