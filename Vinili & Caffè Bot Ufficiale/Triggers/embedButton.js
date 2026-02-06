@@ -10,6 +10,105 @@ module.exports = {
 
         if (!interaction.guild) return;
         if (!interaction.message) return;
+        if (interaction.isStringSelectMenu()) {
+            const menuId = interaction.customId;
+            const values = Array.isArray(interaction.values) ? interaction.values : [];
+            const categories = {
+                personality_pronouns: [
+                    '1442568997848743997',
+                    '1442568999043989565',
+                    '1442569000063074498',
+                    '1442569001367769210',
+                    '1442569002932109434'
+                ],
+                personality_age: [
+                    '1442568993197265021',
+                    '1442568994581381170',
+                    '1442568995348807691',
+                    '1442568996774871194'
+                ],
+                personality_region: [
+                    '1442569021861007443',
+                    '1442569023303974922',
+                    '1442569024486506498',
+                    '1442569025790939167'
+                ],
+                personality_dm: [
+                    '1442569004215697438',
+                    '1442569005071077417',
+                    '1442569006543274126'
+                ],
+                personality_relationship: [
+                    '1442569028173299732',
+                    '1442569029263818906'
+                ],
+                personality_mentions: [
+                    '1442569009567629375',
+                    '1442569012063109151',
+                    '1442569010943365342',
+                    '1442569014474965033',
+                    '1442569013074071644',
+                    '1443955529352478830',
+                    '1447597930944008376'
+                ],
+                personality_colors: [
+                    '1442568958656905318',
+                    '1442568956832645212',
+                    '1442568961077153994',
+                    '1442568960016121998',
+                    '1442568963836874886',
+                    '1442568965040636019',
+                    '1442568967045648412',
+                    '1442568962167541760',
+                    '1442568968371048449',
+                    '1442568969528541225',
+                    '1442568970497687717',
+                    '1442568971357388912',
+                    '1442568972745838667',
+                    '1442568975966797926',
+                    '1442568976944201828',
+                    '1442568974486208634',
+                    '1442568977896439960',
+                    '1442568979473371258',
+                    '1442568980626673685',
+                    '1442568981792948304',
+                    '1442568982769959002',
+                    '1442568983898357954',
+                    '1442568985278156971',
+                    '1442568986720993350',
+                    '1442568987887276133',
+                    '1442568988961013821',
+                    '1442568989866725468',
+                    '1442568991150309578'
+                ]
+            };
+
+            const roleIds = categories[menuId];
+            if (!roleIds) return;
+            const member = interaction.member;
+            if (!member) return;
+
+            try {
+                if (!values.length || values.includes('remove')) {
+                    await member.roles.remove(roleIds).catch(() => {});
+                    return interaction.reply({
+                        content: 'Ruoli rimossi correttamente.',
+                        flags: 1 << 6
+                    });
+                }
+                await member.roles.remove(roleIds).catch(() => {});
+                await member.roles.add(values).catch(() => {});
+                return interaction.reply({
+                    content: 'Ruolo aggiornato correttamente.',
+                    flags: 1 << 6
+                });
+            } catch {
+                return interaction.reply({
+                    content: '<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.',
+                    flags: 1 << 6
+                });
+            }
+        }
         if (!interaction.isButton()) return;
 
         if (interaction.customId && interaction.customId.startsWith('avatar_unblock:')) {

@@ -33,7 +33,7 @@ module.exports = {
 
     const unlocked = getUnlockedRewards(totalExp);
     const unlockedText = unlocked.length
-      ? unlocked.map((reward) => `<@&${reward.roleId}>`).join('\n')
+      ? unlocked.map((reward) => `<a:VC_Arrow:1448672967721615452> <@&${reward.roleId}>`).join('\n')
       : 'Nessun ruolo ancora sbloccato';
 
     const embed = new EmbedBuilder()
@@ -44,7 +44,7 @@ module.exports = {
         `<a:VC_Arrow:1448672967721615452> Hai un totale di \`${totalExp}\` punti (e exp guadagnati) <a:VC_FlowerPink:1468688049725636903>`,
         '',
         '🎲 .ᐟRuoli sbloccati:',
-        `<a:VC_Arrow:1448672967721615452> ${unlockedText}`,
+        unlockedText,
       ].join('\n'))
       .setFooter({ text: `Comando eseguito da: ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
 
