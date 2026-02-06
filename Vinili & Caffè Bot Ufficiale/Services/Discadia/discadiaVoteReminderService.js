@@ -15,6 +15,15 @@ function getReminderText(client) {
         || 'Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!';
 }
 
+async function sendFallbackChannelReminder(client, guildId, userId, message) {
+    const fallbackId = client?.config2?.discadiaVoteReminder?.fallbackChannelId;
+    if (!fallbackId) return;
+    const channel = client.channels.cache.get(fallbackId)
+        || await client.channels.fetch(fallbackId).catch(() => null);
+    if (!channel) return;
+    await channel.send({ content: `<@${userId}> ${message}` }).catch(() => {});
+}
+
 async function recordDiscadiaVote(guildId, userId) {
     const now = new Date();
     const doc = await DiscadiaVoter.findOneAndUpdate(
@@ -56,6 +65,7 @@ async function sendDueReminders(client) {
                 { $set: { lastRemindedAt: new Date() } }
             );
         } catch {
+            await sendFallbackChannelReminder(client, doc.guildId, doc.userId, message);
         }
     }
 }

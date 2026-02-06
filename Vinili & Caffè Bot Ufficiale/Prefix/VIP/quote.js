@@ -94,6 +94,36 @@ module.exports = {
       });
     }
 
+    try {
+      const privacy = await QuotePrivacy.findOne({ guildId: message.guild.id, userId: author.id }).lean();
+      if (privacy?.blocked) {
+        const dateText = new Date().toLocaleString('it-IT', {
+          timeZone: 'Europe/Rome',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        return safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor("#ed4245")
+              .setTitle("🚫 Quote bloccate")
+              .setDescription([
+                `**${displayName || author.username}** ha bloccato le quote dei propri messaggi.`,
+                "",
+                "**Rispetta la privacy**",
+                "L'utente ha scelto di non essere quotato. Rispetta questa decisione!",
+                
+              ].join("\n"))
+              .setFooter({ text: `Se hai bisogno di condividere il messaggio, usa un screenshot o chiedi il permesso diretto. • ${dateText}` })
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+      }
+    } catch {}
+
     let buffer;
     try {
       const footerText = String(message.client?.config2?.botServerInvite || "")
@@ -150,16 +180,3 @@ module.exports = {
     return safeMessageReply(message, { files: [attachment], embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
-    try {
-      const privacy = await QuotePrivacy.findOne({ guildId: message.guild.id, userId: author.id }).lean();
-      if (privacy?.blocked) {
-        return safeMessageReply(message, {
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Questo utente ha bloccato le quote dei propri messaggi.")
-          ],
-          allowedMentions: { repliedUser: false }
-        });
-      }
-    } catch {}

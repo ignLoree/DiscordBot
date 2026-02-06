@@ -202,7 +202,11 @@ async function handleVoteManagerMessage(message) {
     if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
     const isVoteManagerAuthor = message.author?.id === VOTE_MANAGER_BOT_ID;
     const { content, embedText, embedTitle, fieldsText } = getMessageTextParts(message);
-    const looksLikeVote = /has voted/i.test(content + ' ' + embedText + ' ' + embedTitle + ' ' + fieldsText);
+    const voteText = `${content} ${embedText} ${embedTitle} ${fieldsText}`.toLowerCase();
+    const looksLikeVote =
+        /has voted|voted/i.test(voteText) ||
+        /ha votato|votato/i.test(voteText) ||
+        (voteText.includes('discadia') && /(vote|voto|votato)/i.test(voteText));
     if (!isVoteManagerAuthor && !looksLikeVote) return false;
 
     const user = await resolveUserFromMessage(message);
@@ -691,7 +695,9 @@ async function handleDiscadiaBump(message, client) {
     const discadia = client?.config2?.discadia;
     if (!discadia) return false;
     if (!message.guild) return false;
-    if (!message.author || message.author.id !== discadia.botId) return false;
+    const isDiscadiaAuthor = message.author?.id === discadia.botId;
+    const isDiscadiaApp = message.applicationId === discadia.botId;
+    const interactionBump = message.interaction?.commandName === 'bump';
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
         ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
         : [];
@@ -702,13 +708,23 @@ async function handleDiscadiaBump(message, client) {
             if (embed?.description) haystacks.push(embed.description);
             if (embed?.title) haystacks.push(embed.title);
             if (embed?.footer?.text) haystacks.push(embed.footer.text);
+            if (embed?.author?.name) haystacks.push(embed.author.name);
+            if (Array.isArray(embed?.fields)) {
+                for (const field of embed.fields) {
+                    if (field?.name) haystacks.push(field.name);
+                    if (field?.value) haystacks.push(field.value);
+                }
+            }
         }
     }
     const normalized = haystacks.map(text => String(text).toLowerCase());
-    const isBump = patterns.some((pattern) =>
+    const hasPattern = patterns.some((pattern) =>
         normalized.some((text) => text.includes(pattern))
     );
+    const hasBumpText = normalized.some((text) => text.includes('bump'));
+    const isBump = interactionBump || hasPattern || hasBumpText;
     if (!isBump) return false;
+    if (!isDiscadiaAuthor && !isDiscadiaApp && !interactionBump) return false;
     const bumpUserId = message.interaction?.user?.id;
     const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
     const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
