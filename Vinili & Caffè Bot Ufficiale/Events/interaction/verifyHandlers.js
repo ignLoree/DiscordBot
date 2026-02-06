@@ -6,11 +6,7 @@ const path = require('path');
 const VERIFY_ROLE_IDS = [
     '1442568949605597264',
     '1442568938457399299',
-    '1442568955347865675',
     '1442568992459067423',
-    '1442569008078393466',
-    '1442569020636266531',
-    '1442569027082911855',
     '1468674171213971568',
     '1442568938457399299'
 ];
@@ -18,6 +14,7 @@ const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const VERIFY_LOG_CHANNEL_ID = '1442569294796820541';
 const VERIFY_PING_CHANNEL_ID = '1442569115972669541';
+const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/verificationTenureService');
 const verifyState = new Map();
 const fontPath = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');
 let captchaFontFamily = 'captcha';
@@ -324,6 +321,10 @@ async function handleVerifyInteraction(interaction) {
             if (rolesToAdd.length > 0) {
                 await member.roles.add(rolesToAdd);
             }
+            try {
+                const record = await upsertVerifiedMember(interaction.guild.id, member.id, new Date());
+                await applyTenureForMember(member, record);
+            } catch {}
             const logChannel = interaction.guild?.channels?.cache?.get(VERIFY_LOG_CHANNEL_ID);
             if (logChannel) {
                 const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
