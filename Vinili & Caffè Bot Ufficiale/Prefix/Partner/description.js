@@ -6,9 +6,11 @@ module.exports = {
     async execute(message) {
         await message.channel.sendTyping();
         const allowedCategoryId = "1442569056795230279";
-        const partnerRole = message.guild.roles.cache.find(r => r.id.toLowerCase() === "1442568905582317740");
+        const partnerRoleId = message.client?.config2?.partnerManager || "1442568905582317740";
+        const partnerRole = message.guild?.roles?.cache?.get(partnerRoleId);
 
-        if (!message.channel.parent || message.channel.parent.id !== allowedCategoryId) {
+        const parentId = message.channel?.parentId || message.channel?.parent?.id || null;
+        if (!parentId || parentId !== allowedCategoryId) {
             return safeMessageReply(message, "<:vegax:1443934876440068179> Questo comando può essere usato **solo nella categoria autorizzata**.");
         }
 
@@ -33,4 +35,3 @@ _ _     𓎢      **social**       ⊹       **italia** **chill**       ୧
         });
     }
 }
-

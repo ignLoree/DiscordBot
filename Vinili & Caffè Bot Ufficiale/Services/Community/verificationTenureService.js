@@ -4,16 +4,9 @@ const ROLE_STAGE_1 = '1469041461294268489';
 const ROLE_STAGE_2 = '1469073503025103113';
 const ROLE_STAGE_3 = '1469041493401534644';
 
-function addMonths(date, months) {
-  const d = new Date(date.getTime());
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + months);
-  // handle month overflow
-  if (d.getDate() < day) {
-    d.setDate(0);
-  }
-  return d;
-}
+const DAY_MS = 24 * 60 * 60 * 1000;
+const STAGE_1_DAYS = 30;
+const STAGE_2_DAYS = 365;
 
 async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
   return VerificationTenure.findOneAndUpdate(
@@ -26,8 +19,8 @@ async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
 async function applyTenureForMember(member, record) {
   if (!member || !record) return;
   const now = new Date();
-  const stage1At = addMonths(record.verifiedAt, 1);
-  const stage2At = addMonths(record.verifiedAt, 12);
+  const stage1At = new Date(record.verifiedAt.getTime() + STAGE_1_DAYS * DAY_MS);
+  const stage2At = new Date(record.verifiedAt.getTime() + STAGE_2_DAYS * DAY_MS);
 
   const has1 = member.roles.cache.has(ROLE_STAGE_1);
   const has2 = member.roles.cache.has(ROLE_STAGE_2);
@@ -88,8 +81,4 @@ function startVerificationTenureLoop(client) {
   }, 60 * 60 * 1000);
 }
 
-module.exports = {
-  upsertVerifiedMember,
-  applyTenureForMember,
-  startVerificationTenureLoop
-};
+module.exports = { upsertVerifiedMember, applyTenureForMember, startVerificationTenureLoop };

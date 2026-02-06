@@ -105,7 +105,7 @@ module.exports = {
                 const channelwelcome = member.guild.channels.cache.find(channel => channel.id === '1442569130573303898');
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
-                        .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL })
+                        .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
                         .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
                         .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1469429150669602961> per **abbellire il tuo profilo** con i ruoli & colori.`)
                         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
@@ -213,7 +213,7 @@ module.exports = {
             totalvoicechannel.setName(`༄☕︲User: ${totalmembers}`);
 
             const userEmbed = new EmbedBuilder()
-                .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL })
+                .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
                 .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
                 .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1442569103582695536> e <#1442569099795365898> per **abbellire il tuo profilo** con i ruoli & colori.`)
                 .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
@@ -221,7 +221,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
 
-            await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
+            await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
 
             const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
             if (inviteChannel) {
