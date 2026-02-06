@@ -33,7 +33,6 @@ function writeRestartWatch(target, payload) {
 }
 
 module.exports = {
-    adminOnly: true,
     data: new SlashCommandBuilder()
         .setName('restart')
         .setDescription('Riavvia uno dei bot tramite loader.')
@@ -52,7 +51,7 @@ module.exports = {
             .setRequired(false)
             .addChoices(
                 { name: 'Full', value: 'full' },
-                { name: 'Handlers (events+triggers+commands+prefix)', value: 'handlers' },
+                { name: 'Handlers', value: 'handlers' },
                 { name: 'Commands', value: 'commands' },
                 { name: 'Prefix', value: 'prefix' },
                 { name: 'Events', value: 'events' },
@@ -61,7 +60,7 @@ module.exports = {
                 { name: 'Utils', value: 'utils' },
                 { name: 'Schemas', value: 'schemas' },
                 { name: 'All', value: 'all' }
-            ))
+            )),
 
     async execute(interaction) {
         try {
@@ -102,7 +101,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando ï¿½ completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -138,7 +137,7 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando ï¿½ completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();
@@ -182,4 +181,3 @@ module.exports = {
         }
     }
 };
-
