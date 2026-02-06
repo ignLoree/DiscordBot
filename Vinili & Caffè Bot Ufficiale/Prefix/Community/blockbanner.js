@@ -21,17 +21,18 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('Banner bloccato')
+      .setThumbnail(`https://images-ext-1.discordapp.net/external/GrhQsfA7zwxEiX5aOQo9kfQ-EF9Z9VLS-JD0w5iJEZU/https/i.imgur.com/Qqn7J3d.png?format=webp&quality=lossless&width=640&height=640`)
       .setDescription([
-        'Gli altri membri non potranno pi� visualizzare il tuo banner.',
+        'Gli altri membri non potranno più visualizzare il tuo banner.',
         '',
-        '?? Utilizza il pulsante qui sotto o il comando `?unblockbanner` se vuoi riattivare la visualizzazione.'
+        'ⓘ Utilizza il pulsante qui sotto o il comando `?unblockbanner` se vuoi riattivare la visualizzazione.'
       ].join('\n'));
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`banner_unblock:${userId}`)
         .setLabel('Sblocca')
-        .setEmoji('??')
+        .setEmoji('🔓')
         .setStyle(ButtonStyle.Secondary)
     );
 

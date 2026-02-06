@@ -41,7 +41,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando pu� essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
         ]
       });
     }
@@ -70,13 +70,14 @@ module.exports = {
     if (isBlocked && !isSelf) {
       const blockedEmbed = new EmbedBuilder()
         .setColor('#e74c3c')
+        .setThumbnail(`https://images-ext-1.discordapp.net/external/fRgXgmNV39-c_gorTdDdWPSyx2fFy_i4t01cYEF-DKY/https/i.imgur.com/7OnTq5S.png?format=webp&quality=lossless&width=640&height=640`)
         .setTitle('<:vegax:1443934876440068179> Banner Bloccato')
         .setDescription('Questo utente ha bloccato la visualizzazione del proprio banner.');
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`banner_unblock:${user.id}`)
           .setLabel('Sblocca')
-          .setEmoji('??')
+          .setEmoji('🔓')
           .setStyle(ButtonStyle.Secondary)
       );
       return safeChannelSend(message.channel, { embeds: [blockedEmbed], components: [row] });
@@ -112,7 +113,7 @@ module.exports = {
       new ButtonBuilder()
         .setCustomId('banner_views')
         .setLabel('Classifica Views')
-        .setEmoji('??')
+        .setEmoji('📊')
         .setStyle(ButtonStyle.Secondary)
     );
 
