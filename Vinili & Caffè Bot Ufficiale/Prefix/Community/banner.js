@@ -106,7 +106,7 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbanner. ${totalViews} Views ??`
+        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbanner.\n${totalViews} Views 👁`
       });
 
     const row = new ActionRowBuilder().addComponents(

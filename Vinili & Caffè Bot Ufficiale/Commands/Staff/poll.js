@@ -20,6 +20,7 @@ module.exports = {
                 .addStringOption(o => o.setName("risposta7").setDescription("Risposta 7").setRequired(false))
                 .addStringOption(o => o.setName("risposta8").setDescription("Risposta 8").setRequired(false))
                 .addStringOption(o => o.setName("risposta9").setDescription("Risposta 9").setRequired(false))
+                .addStringOption(o => o.setName("risposta10").setDescription("Risposta 10").setRequired(false))
         )
         .addSubcommand(sub =>
             sub
@@ -47,6 +48,7 @@ module.exports = {
                 .addStringOption(o => o.setName("r7").setDescription("Nuova risposta 7").setRequired(false))
                 .addStringOption(o => o.setName("r8").setDescription("Nuova risposta 8").setRequired(false))
                 .addStringOption(o => o.setName("r9").setDescription("Nuova risposta 9").setRequired(false))
+                .addStringOption(o => o.setName("r10").setDescription("Nuova risposta 10").setRequired(false))
         ),
 
     async execute(interaction) {
@@ -59,7 +61,7 @@ module.exports = {
                 const domanda = interaction.options.getString("domanda");
                 const answers = [];
 
-                for (let i = 1; i <= 9; i++) {
+                for (let i = 1; i <= 10; i++) {
                     answers.push(interaction.options.getString(`risposta${i}`) || null);
                 }
 
@@ -72,7 +74,8 @@ module.exports = {
                     '<:6_:1444099156007194887>',
                     '<:7_:1444099154610618368>',
                     '<:8_:1444099153125703690>',
-                    '<:9_:1444099151443919004>'
+                    '<:9_:1444099151443919004>',
+                    '<:VC_10:1469357839066730627>'
                 ];
 
                 let foundEmpty = false;
@@ -214,7 +217,7 @@ ${answersText}
                     });
                 }
                 const answers = [];
-                for (let i = 1; i <= 9; i++) {
+                for (let i = 1; i <= 10; i++) {
                     const existing = pollMessage.content.match(/__([^_]+)__/g)?.[i - 1];
                     const extracted = existing?.replace(/__/g, "") || null;
                     const newValue = interaction.options.getString(`r${i}`);
@@ -244,7 +247,8 @@ ${answersText}
                     '<:6_:1444099156007194887>',
                     '<:7_:1444099154610618368>',
                     '<:8_:1444099153125703690>',
-                    '<:9_:1444099151443919004>'
+                    '<:9_:1444099151443919004>',
+                    '<:VC_10:1469357839066730627>'
                 ];
 
                 let answersText = "";

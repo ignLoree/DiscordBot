@@ -268,6 +268,18 @@ module.exports = {
                 .lean()
                 .catch(() => []);
             const lines = [];
+            const rankEmojis = [
+                '<:VC_1:1444099819680563200>',
+                '<:VC_2:1444099781864722535>',
+                '<:VC_3:1444099746116534282>',
+                '<:VC_4:1444099708292169740>',
+                '<:VC_5:1444099670870593776>',
+                '<:VC_6:1444099623714033838>',
+                '<:VC_7:1444099572916945120>',
+                '<:VC_8:1444099520500600998>',
+                '<:VC_9:1444099441790554182>',
+                '<:VC_10:1469357839066730627>'
+            ];
             let idx = 1;
             for (const entry of top) {
                 const userId = entry.userId;
@@ -276,13 +288,14 @@ module.exports = {
                     const member = interaction.guild.members.cache.get(userId)
                         || await interaction.guild.members.fetch(userId).catch(() => null);
                     if (member) {
-                        label = member.displayName || member.user.username;
+                        label = `<@${member.user.id}>`;
                     } else {
                         const user = await interaction.client.users.fetch(userId).catch(() => null);
-                        if (user) label = user.username;
+                        if (user) label = `<@${user.id}>`;
                     }
                 } catch {}
-                lines.push(`${idx}. ${label} **${entry.views}** visualizzazioni`);
+                const rank = rankEmojis[idx - 1] || `${idx}.`;
+                lines.push(`${rank} ${label} <a:VC_Arrow:1448672967721615452> **${entry.views}** visualizzazioni`);
                 idx += 1;
             }
             const description = lines.length
@@ -293,7 +306,7 @@ module.exports = {
             const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('👑 Classifica Visualizzazioni Avatar')
+                .setTitle('<a:VC_CrownYellow:1330194103564238930> Classifica Visualizzazioni Avatar')
                 .setDescription(description)
                 .setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL() });
             return interaction.reply({ embeds: [embed], flags: 1 << 6 });
@@ -306,6 +319,18 @@ module.exports = {
                 .lean()
                 .catch(() => []);
             const lines = [];
+            const rankEmojis = [
+                '<:VC_1:1444099819680563200>',
+                '<:VC_2:1444099781864722535>',
+                '<:VC_3:1444099746116534282>',
+                '<:VC_4:1444099708292169740>',
+                '<:VC_5:1444099670870593776>',
+                '<:VC_6:1444099623714033838>',
+                '<:VC_7:1444099572916945120>',
+                '<:VC_8:1444099520500600998>',
+                '<:VC_9:1444099441790554182>',
+                '<:VC_10:1469357839066730627>'
+            ];
             let idx = 1;
             for (const entry of top) {
                 const userId = entry.userId;
@@ -314,13 +339,14 @@ module.exports = {
                     const member = interaction.guild.members.cache.get(userId)
                         || await interaction.guild.members.fetch(userId).catch(() => null);
                     if (member) {
-                        label = member.displayName || member.user.username;
+                        label = `<@${member.user.id}>`;
                     } else {
                         const user = await interaction.client.users.fetch(userId).catch(() => null);
-                        if (user) label = user.username;
+                        if (user) label = `<@${user.id}>`;
                     }
                 } catch {}
-                lines.push(`${idx}. ${label} **${entry.views}** visualizzazioni`);
+                const rank = rankEmojis[idx - 1] || `${idx}.`;
+                lines.push(`${rank} ${label} <a:VC_Arrow:1448672967721615452> **${entry.views}** visualizzazioni`);
                 idx += 1;
             }
             const description = lines.length
@@ -331,7 +357,7 @@ module.exports = {
             const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('👑 Classifica Visualizzazioni Banner')
+                .setTitle('<a:VC_CrownYellow:1330194103564238930> Classifica Visualizzazioni Banner')
                 .setDescription(description)
                 .setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL() });
             return interaction.reply({ embeds: [embed], flags: 1 << 6 });

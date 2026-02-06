@@ -112,7 +112,7 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor("#6f4e37")
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav. ${totalViews} Views ??`
+        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views 👁`
       });
 
     const row = new ActionRowBuilder().addComponents(
