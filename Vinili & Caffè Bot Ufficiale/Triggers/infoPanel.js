@@ -2,7 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const path = require('path');
 const PersonalityPanel = require('../Schemas/Community/personalityPanelSchema');
 
-const INFO_CHANNEL_ID = '1468229791374249995';
+const INFO_CHANNEL_ID = '1442569111119990887';
 const INFO_MEDIA_NAME = 'info.gif';
 const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
 
@@ -74,29 +74,45 @@ module.exports = {
       );
     } catch {}
 
-    let infoMessage = null;
-    if (panel?.infoMessageId) {
-      infoMessage = await channel.messages.fetch(panel.infoMessageId).catch(() => null);
+    let infoMessage1 = null;
+    let infoMessage2 = null;
+    if (panel?.infoMessageId1) {
+      infoMessage1 = await channel.messages.fetch(panel.infoMessageId1).catch(() => null);
+    }
+    if (panel?.infoMessageId2) {
+      infoMessage2 = await channel.messages.fetch(panel.infoMessageId2).catch(() => null);
     }
 
-    if (infoMessage) {
-      await infoMessage.edit({
+    if (infoMessage1) {
+      await infoMessage1.edit({
         files: [attachment],
-        embeds: [embed1, embed2],
-        components: [row1, row2]
+        embeds: [embed1],
+        components: [row1]
       }).catch(() => {});
     } else {
-      infoMessage = await channel.send({
+      infoMessage1 = await channel.send({
         files: [attachment],
-        embeds: [embed1, embed2],
-        components: [row1, row2]
+        embeds: [embed1],
+        components: [row1]
       }).catch(() => null);
     }
 
-    if (infoMessage) {
+    if (infoMessage2) {
+      await infoMessage2.edit({
+        embeds: [embed2],
+        components: [row2]
+      }).catch(() => {});
+    } else {
+      infoMessage2 = await channel.send({
+        embeds: [embed2],
+        components: [row2]
+      }).catch(() => null);
+    }
+
+    if (infoMessage1 || infoMessage2) {
       await PersonalityPanel.updateOne(
         { guildId, channelId: INFO_CHANNEL_ID },
-        { $set: { infoMessageId: infoMessage.id } }
+        { $set: { infoMessageId1: infoMessage1?.id || panel?.infoMessageId1 || null, infoMessageId2: infoMessage2?.id || panel?.infoMessageId2 || null } }
       ).catch(() => {});
     }
   }

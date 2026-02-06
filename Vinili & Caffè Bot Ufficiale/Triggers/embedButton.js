@@ -228,7 +228,7 @@ module.exports = {
         if (interaction.customId == 'info_rules') {
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__ʬʬʬ`);
+                .setDescription(`<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__`);
             const generalEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`
@@ -306,15 +306,13 @@ module.exports = {
                     <:VC_DoubleReply:1468713981152727120> **Stanza Privata**
                     <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**`)
                 .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 6€` });
-            const topEmbed = [
-                new EmbedBuilder()
-                    .setColor('#6f4e37')
-                    .setDescription(`<a:Boost_Cycle:1329504283007385642> **__Classifica globale donatori Vinili & Caffè:__** <:Money:1330544713463500970>
+            const topEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setDescription(`<a:Boost_Cycle:1329504283007385642> **__Classifica globale donatori Vinili & Caffè:__** <:Money:1330544713463500970>
 
         <:VC_1:1444099819680563200>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_yellow:1330194103564238930>
         <:VC_2:1444099781864722535>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_darkblue:1330194101886255187>
-        <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_white:1330194100162396330>`),
-            ]
+        <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> ㆍ <a:OP_crown_white:1330194100162396330>`)
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
