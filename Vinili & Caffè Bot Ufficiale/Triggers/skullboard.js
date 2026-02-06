@@ -35,7 +35,7 @@ module.exports = {
           .filter(r => r.id !== message.guild.id)
           .sort((a, b) => b.position - a.position);
         for (const role of sortedRoles) {
-          const icon = role?.iconURL?.({ size: 32 }) || null;
+          const icon = role?.iconURL?.({ size: 32, extension: 'png' }) || null;
           if (icon) {
             roleIconUrl = icon;
             break;
