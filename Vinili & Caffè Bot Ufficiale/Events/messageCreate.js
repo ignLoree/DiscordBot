@@ -33,9 +33,25 @@ const MEDIA_BLOCK_ROLE_IDS = [
     "1442568934510297226"
 ];
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = "1442569056795230279";
+const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([
+    "1442569136067575809"
+]);
 
 function hasMediaPermission(member) {
     return MEDIA_BLOCK_ROLE_IDS.some(roleId => member?.roles?.cache?.has(roleId));
+}
+
+function channelAllowsMedia(message) {
+    const channel = message?.channel;
+    const member = message?.member;
+    if (!channel || !member) return false;
+    const perms = channel.permissionsFor(member);
+    if (!perms) return false;
+    const hasAttachment = Boolean(message.attachments?.size);
+    const hasLink = /https?:\/\/\S+/i.test(String(message.content || "")) || /discord\.gg\/\S+|\.gg\/\S+/i.test(String(message.content || ""));
+    if (hasAttachment) return perms.has('AttachFiles');
+    if (hasLink) return perms.has('EmbedLinks');
+    return perms.has('AttachFiles') || perms.has('EmbedLinks');
 }
 
 function isMediaMessage(message) {
@@ -297,7 +313,9 @@ module.exports = {
                 !message.author?.bot &&
                 isMediaMessage(message) &&
                 !hasMediaPermission(message.member) &&
-                message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID
+                !channelAllowsMedia(message) &&
+                message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID &&
+                !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
             ) {
                 await message.delete().catch(() => { });
                 const embed = new EmbedBuilder()
