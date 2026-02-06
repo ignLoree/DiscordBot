@@ -5,13 +5,9 @@
     "staffRoleIds": ["1442568910070349985"],
     "prefixStaffRoleIds": ["1442568905582317740"],
     "adminRoleIds": ["1442568894349840435"],
-    "disabledPrefixCommands": ["gmulti", "purge", "verify"],
-    "disabledCommands": ["copy", "dmbroadcast", "no-dm-list", "say", "reactionrole", "restart", "modname" ],
+    "disabledPrefixCommands": [],
+    "disabledCommands": [],
     "disabledSubcommands": {
-        "ticket": ["setup"],
-        "set": ["autojoin"],
-        "pause": ["accept"],
-        "suggestion": ["accept", "reject"]
     }
 }
 
