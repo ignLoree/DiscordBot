@@ -159,6 +159,12 @@ module.exports = {
       .setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
       .addFields({ name: "📸 Totale immagini generate:", value: String(totalPosts) });
 
+    const replyMsg = await safeMessageReply(message, {
+      files: [attachment],
+      embeds: [embed],
+      allowedMentions: { repliedUser: false }
+    });
+
     const quoteChannel = message.guild.channels.cache.get(QUOTE_CHANNEL_ID);
     if (quoteChannel) {
       const postAttachment = new AttachmentBuilder(buffer, { name: "quote.png" });
@@ -167,9 +173,11 @@ module.exports = {
         creatorId: message.author.id,
         totalPosts
       });
+      const originChannelId = message.channel.id;
+      const originMessageId = replyMsg?.id || '0';
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId(`quote_remove:${message.author.id}`)
+          .setCustomId(`quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`)
           .setLabel('Rimuovi questa quote')
           .setEmoji('🗑️')
           .setStyle(ButtonStyle.Danger)
@@ -177,6 +185,6 @@ module.exports = {
       await quoteChannel.send({ files: [postAttachment], embeds: [postEmbed], components: [row] }).catch(() => {});
     }
 
-    return safeMessageReply(message, { files: [attachment], embeds: [embed], allowedMentions: { repliedUser: false } });
+    return replyMsg;
   }
 };

@@ -1,4 +1,5 @@
 const { EmbedBuilder, Events } = require('discord.js');
+const { decrementQuoteCount } = require('../Utils/Quote/quoteCounter');
 const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
 const AvatarPrivacy = require('../Schemas/Community/avatarPrivacySchema');
 const BannerPrivacy = require('../Schemas/Community/bannerPrivacySchema');
@@ -150,7 +151,10 @@ module.exports = {
             return interaction.reply({ embeds: [embed] });
         }
         if (interaction.customId && interaction.customId.startsWith('quote_remove:')) {
-            const targetId = interaction.customId.split(':')[1];
+            const parts = interaction.customId.split(':');
+            const targetId = parts[1];
+            const originChannelId = parts[2] || null;
+            const originMessageId = parts[3] || null;
             if (interaction.user.id !== targetId) {
                 const denied = new EmbedBuilder()
                     .setColor('#e74c3c')
@@ -170,6 +174,17 @@ module.exports = {
                     { name: 'Data rimozione', value: `${dateStr} ${timeStr}`, inline: true }
                 )
                 .setFooter({ text: `Puoi bloccare le future quote tramite il comando ?blockquotes • Oggi alle ${timeStr}` });
+            if (originChannelId && originMessageId && originMessageId !== '0') {
+                const originChannel = interaction.guild?.channels?.cache?.get(originChannelId)
+                    || await interaction.guild?.channels?.fetch(originChannelId).catch(() => null);
+                if (originChannel?.isTextBased?.()) {
+                    const originMessage = await originChannel.messages.fetch(originMessageId).catch(() => null);
+                    if (originMessage) await originMessage.delete().catch(() => {});
+                }
+            }
+            try {
+                await decrementQuoteCount(interaction.guild?.id);
+            } catch {}
             return interaction.update({ embeds: [removedEmbed], components: [], files: [] }).catch(async () => {
                 await interaction.reply({ embeds: [removedEmbed], flags: 1 << 6 }).catch(() => { });
             });

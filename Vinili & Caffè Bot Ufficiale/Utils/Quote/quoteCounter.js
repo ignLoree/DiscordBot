@@ -10,4 +10,19 @@ async function nextQuoteCount(guildId) {
   return doc?.count || 1;
 }
 
-module.exports = { nextQuoteCount };
+async function decrementQuoteCount(guildId) {
+  if (!guildId) return 0;
+  const doc = await QuoteCount.findOneAndUpdate(
+    { guildId },
+    { $inc: { count: -1 } },
+    { new: true }
+  );
+  if (!doc) return 0;
+  if (doc.count < 0) {
+    await QuoteCount.updateOne({ guildId }, { $set: { count: 0 } });
+    return 0;
+  }
+  return doc.count;
+}
+
+module.exports = { nextQuoteCount, decrementQuoteCount };
