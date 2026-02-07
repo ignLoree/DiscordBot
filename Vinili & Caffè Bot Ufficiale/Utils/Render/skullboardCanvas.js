@@ -65,8 +65,8 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   tmpCtx.font = fontStack(16, "500");
   const messageLines = wrapLines(tmpCtx, message || "", maxWidth);
 
-  const replyY = nameY + 18;
-  const messageY = replyLine ? replyY + 16 : nameY + 20;
+  const replyY = nameY + 6;
+  const messageY = replyLine ? replyY + 18 : nameY + 20;
   const messageHeight = messageLines.length ? messageLines.length * lineHeight : 0;
   const bottomContentY = messageLines.length
     ? messageY + messageHeight
