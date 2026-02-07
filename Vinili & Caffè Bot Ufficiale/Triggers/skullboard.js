@@ -42,7 +42,7 @@ module.exports = {
           }
         }
       }
-      const text = message.content || (message.embeds?.[0]?.description || '');
+      const text = message.content?.trim() || '';
       let reply = null;
       if (message.reference?.messageId) {
         const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
