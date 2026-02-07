@@ -235,12 +235,11 @@ module.exports = {
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
                 .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
-                .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1442569103582695536> e <#1442569099795365898> per **abbellire il tuo profilo** con i ruoli & colori.`)
+                .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1469429150669602961> per **abbellire il tuo profilo** con i ruoli & colori.`)
                 .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-                .setImage(`https://images-ext-1.discordapp.net/external/ZPBrqkOe5ukYYCXnwdI_GbtY-YlPrpF7Ovo28OyFQhA/https/media.tenor.com/qGZ7viTKnZAAAAPo/pastel-divider.mp4`)
+                .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                 .setColor('#6f4e37')
                 .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
-
             await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
 
             const info = await resolveInviteInfo(member).catch(() => null);

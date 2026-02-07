@@ -102,8 +102,13 @@ module.exports = {
     const finalRows = Array.from(merged.values())
       .map((r) => {
         const totalInvites = Math.max(Number(r.trackedTotal || 0), Number(r.currentUses || 0));
-        const activeInvites = Number(r.activeInvites || 0);
-        const leftInvites = Math.max(Number(r.leftInvites || 0), totalInvites - activeInvites);
+        const trackedActiveInvites = Number(r.activeInvites || 0);
+        const currentUses = Number(r.currentUses || 0);
+        const activeInvites = Math.min(
+          totalInvites,
+          Math.max(trackedActiveInvites, currentUses)
+        );
+        const leftInvites = Math.max(0, totalInvites - activeInvites);
         return { inviterId: r.inviterId, totalInvites, activeInvites, leftInvites };
       })
       .sort((a, b) => b.totalInvites - a.totalInvites || b.activeInvites - a.activeInvites)
