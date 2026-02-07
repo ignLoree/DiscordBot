@@ -123,6 +123,16 @@ function drawHeart(ctx, cx, cy, size) {
   ctx.restore();
 }
 
+function getFittedTitleSize(ctx, text, maxWidth, startSize = 42, minSize = 24) {
+  let size = startSize;
+  while (size > minSize) {
+    ctx.font = `700 ${size}px "Noto Sans", Arial, sans-serif`;
+    if (ctx.measureText(String(text || '')).width <= maxWidth) break;
+    size -= 2;
+  }
+  return Math.max(minSize, size);
+}
+
 module.exports = async function renderShipCanvas({
   leftAvatarUrl,
   rightAvatarUrl,
@@ -157,8 +167,9 @@ module.exports = async function renderShipCanvas({
   drawFramedImage(ctx, leftAvatar, 110, 145, 220, -2.8);
   drawFramedImage(ctx, rightAvatar, 670, 145, 220, 3.2);
 
+  const topTitleSize = getFittedTitleSize(ctx, topText, width - 64, 42, 24);
   drawTextWithSpecialFallback(ctx, topText, width / 2, 66, {
-    size: 42,
+    size: topTitleSize,
     weight: '700',
     color: '#ffffff',
     align: 'center',

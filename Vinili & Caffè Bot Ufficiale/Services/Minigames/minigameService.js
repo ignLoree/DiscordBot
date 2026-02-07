@@ -50,33 +50,44 @@ function getChannelSafe(client, channelId) {
   return client.channels.cache.get(channelId) || null;
 }
 
-function recordActivity(channelId, intervalMs) {
+function getActivityWindowMs(cfg) {
+  return Math.max(60 * 1000, Number(cfg?.activityWindowMs || 30 * 60 * 1000));
+}
+
+function getMinMessages(cfg) {
+  return Math.max(1, Number(cfg?.minMessages || 3));
+}
+
+function getFailsafeMs(cfg) {
+  return Math.max(60 * 1000, Number(cfg?.failsafeMs || 90 * 60 * 1000));
+}
+
+function recordActivity(channelId, windowMs) {
   if (!channelId) return;
-  const windowMs = Math.max(60 * 1000, Number(intervalMs || 15 * 60 * 1000));
+  const safeWindowMs = Math.max(60 * 1000, Number(windowMs || 30 * 60 * 1000));
   const now = Date.now();
   const list = recentMessages.get(channelId) || [];
   list.push(now);
-  const cutoff = now - windowMs;
+  const cutoff = now - safeWindowMs;
   const trimmed = list.filter((ts) => ts >= cutoff);
   recentMessages.set(channelId, trimmed);
 }
 
-function getRecentCount(channelId, intervalMs) {
+function getRecentCount(channelId, windowMs) {
   if (!channelId) return 0;
-  const windowMs = Math.max(60 * 1000, Number(intervalMs || 15 * 60 * 1000));
+  const safeWindowMs = Math.max(60 * 1000, Number(windowMs || 30 * 60 * 1000));
   const now = Date.now();
   const list = recentMessages.get(channelId) || [];
-  const cutoff = now - windowMs;
+  const cutoff = now - safeWindowMs;
   const trimmed = list.filter((ts) => ts >= cutoff);
   recentMessages.set(channelId, trimmed);
   return trimmed.length;
 }
 
 function isReadyByActivity(cfg) {
-  const intervalMs = Number(cfg?.intervalMs || 15 * 60 * 1000);
   const channelId = cfg?.channelId;
-  const count = getRecentCount(channelId, intervalMs);
-  return count >= 5;
+  const count = getRecentCount(channelId, getActivityWindowMs(cfg));
+  return count >= getMinMessages(cfg);
 }
 
 function canStartByInterval(cfg) {
@@ -90,6 +101,14 @@ function markSent(channelId) {
   if (!channelId) return;
   lastSentAtByChannel.set(channelId, Date.now());
   standbyChannels.delete(channelId);
+}
+
+function isFailsafeDue(cfg) {
+  const channelId = cfg?.channelId;
+  if (!channelId) return false;
+  const lastSent = lastSentAtByChannel.get(channelId) || 0;
+  if (!lastSent) return false;
+  return Date.now() - lastSent >= getFailsafeMs(cfg);
 }
 
 async function saveActiveGame(client, cfg, payload) {
@@ -1318,7 +1337,9 @@ async function maybeStartRandomGame(client, force = false) {
     const windowEnd = cfg?.timeWindow?.end;
     if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
     if (!canStartByInterval(cfg)) return;
-    if (!isReadyByActivity(cfg)) {
+    const readyByActivity = isReadyByActivity(cfg);
+    const failsafeDue = isFailsafeDue(cfg);
+    if (!readyByActivity && !failsafeDue) {
       standbyChannels.add(cfg.channelId);
       return;
     }
@@ -1431,7 +1452,7 @@ async function handleMinigameMessage(message, client) {
   if (!message?.guild) return false;
   if (message.author?.bot) return false;
   if (message.channelId !== cfg.channelId) return false;
-  recordActivity(cfg.channelId, cfg?.intervalMs);
+  recordActivity(cfg.channelId, getActivityWindowMs(cfg));
   if (standbyChannels.has(cfg.channelId)) {
     if (canStartByInterval(cfg) && isReadyByActivity(cfg)) {
       const type = await getNextGameType(client, cfg);

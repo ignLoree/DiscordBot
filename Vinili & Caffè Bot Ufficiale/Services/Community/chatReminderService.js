@@ -3,11 +3,11 @@ const { randomInt } = require('crypto');
 const ChatReminderSchedule = require('../../Schemas/Community/chatReminderScheduleSchema');
 const ChatReminderRotation = require('../../Schemas/Community/chatReminderRotationSchema');
 
-const REMINDER_CHANNEL_ID = '1442569130573303898';
-const TIME_ZONE = 'Europe/Rome';
-const START_HOUR = 9;
-const END_HOUR = 21;
-const MIN_GAP_MS = 30 * 60 * 1000;
+const DEFAULT_REMINDER_CHANNEL_ID = '1442569130573303898';
+const DEFAULT_TIME_ZONE = 'Europe/Rome';
+const DEFAULT_START_HOUR = 9;
+const DEFAULT_END_HOUR = 21;
+const DEFAULT_MIN_GAP_MS = 30 * 60 * 1000;
 const scheduledHours = new Set();
 const scheduledTimeouts = new Map();
 let rotationDate = null;
@@ -106,6 +106,42 @@ function getDateKey(parts) {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
+function getCfg(client) {
+  return client?.config2?.chatReminder || {};
+}
+
+function getReminderChannelId(client) {
+  return getCfg(client)?.channelId || DEFAULT_REMINDER_CHANNEL_ID;
+}
+
+function getTimeZone(client) {
+  return getCfg(client)?.timeZone || DEFAULT_TIME_ZONE;
+}
+
+function getStartHour(client) {
+  return Number.isFinite(Number(getCfg(client)?.startHour))
+    ? Number(getCfg(client)?.startHour)
+    : DEFAULT_START_HOUR;
+}
+
+function getEndHour(client) {
+  return Number.isFinite(Number(getCfg(client)?.endHour))
+    ? Number(getCfg(client)?.endHour)
+    : DEFAULT_END_HOUR;
+}
+
+function getMinGapMs(client) {
+  return Math.max(60 * 1000, Number(getCfg(client)?.minGapMs || DEFAULT_MIN_GAP_MS));
+}
+
+function getFirstThreshold(client) {
+  return Math.max(1, Number(getCfg(client)?.firstReminderMinMessages30m || 5));
+}
+
+function getSecondThreshold(client) {
+  return Math.max(1, Number(getCfg(client)?.secondReminderMinMessages30m || 20));
+}
+
 async function saveRotationState() {
   if (!rotationGuildId || !rotationDate) return;
   await ChatReminderRotation.findOneAndUpdate(
@@ -147,9 +183,9 @@ async function nextReminderEmbed(parts) {
   return next();
 }
 
-function getRomeParts(date) {
+function getRomeParts(date, client) {
   const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: TIME_ZONE,
+    timeZone: getTimeZone(client),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -219,10 +255,11 @@ async function getRecentChannelMessageCount(client, channelId, windowMs = 60 * 6
 }
 
 async function getActivityCounts(client) {
-  const mem30 = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
-  const mem60 = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
-  const hist30 = await getRecentChannelMessageCount(client, REMINDER_CHANNEL_ID, 30 * 60 * 1000);
-  const hist60 = await getRecentChannelMessageCount(client, REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  const channelId = getReminderChannelId(client);
+  const mem30 = getRecentReminderCount(channelId, 30 * 60 * 1000);
+  const mem60 = getRecentReminderCount(channelId, 60 * 60 * 1000);
+  const hist30 = await getRecentChannelMessageCount(client, channelId, 30 * 60 * 1000);
+  const hist60 = await getRecentChannelMessageCount(client, channelId, 60 * 60 * 1000);
   return {
     count30m: Math.max(mem30, hist30),
     count60m: Math.max(mem60, hist60)
@@ -231,8 +268,9 @@ async function getActivityCounts(client) {
 
 async function sendReminder(client, scheduleId, kind = 'first') {
   const nowMs = Date.now();
-  if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
-    const nextAt = new Date(lastSentAt + MIN_GAP_MS);
+  const minGapMs = getMinGapMs(client);
+  if (lastSentAt && (nowMs - lastSentAt) < minGapMs && scheduleId) {
+    const nextAt = new Date(lastSentAt + minGapMs);
     await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt, kind } }).catch(() => { });
     const delay = Math.max(1, nextAt.getTime() - Date.now());
     const timeout = setTimeout(() => {
@@ -241,19 +279,20 @@ async function sendReminder(client, scheduleId, kind = 'first') {
     scheduledTimeouts.set(scheduleId.toString(), timeout);
     return;
   }
-  const { count30m: activityCount30m, count60m: activityCount60m } = await getActivityCounts(client);
-  if (kind === 'second' && activityCount60m < 30) {
+  const { count30m: activityCount30m } = await getActivityCounts(client);
+  if (kind === 'second' && activityCount30m < getSecondThreshold(client)) {
     if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
     return;
   }
-  if (kind !== 'second' && activityCount30m < 15) {
+  if (kind !== 'second' && activityCount30m < getFirstThreshold(client)) {
     if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
     return;
   }
-  const channel = client.channels.cache.get(REMINDER_CHANNEL_ID)
-    || await client.channels.fetch(REMINDER_CHANNEL_ID).catch(() => null);
+  const channelId = getReminderChannelId(client);
+  const channel = client.channels.cache.get(channelId)
+    || await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return;
-  const parts = getRomeParts(new Date());
+  const parts = getRomeParts(new Date(), client);
   const embed = await nextReminderEmbed(parts);
   await channel.send({ embeds: [embed] }).catch(() => { });
   lastSentAt = Date.now();
@@ -271,6 +310,7 @@ async function scheduleForHour(client, parts, guildId) {
   const totalSeconds = parts.minute * 60 + parts.second;
   const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
   const now = Date.now();
+  const minGapMs = getMinGapMs(client);
   let baseLast = lastSentAt || 0;
   const latestScheduled = await ChatReminderSchedule.findOne({ guildId, fireAt: { $gt: new Date() } })
     .sort({ fireAt: -1 })
@@ -279,12 +319,12 @@ async function scheduleForHour(client, parts, guildId) {
   if (latestScheduled?.fireAt) {
     baseLast = Math.max(baseLast, new Date(latestScheduled.fireAt).getTime());
   }
-  const minStartDelay = baseLast ? Math.max(0, baseLast + MIN_GAP_MS - now) : 0;
+  const minStartDelay = baseLast ? Math.max(0, baseLast + minGapMs - now) : 0;
   if (minStartDelay >= remainingMs) return;
   const availableMs = Math.max(0, remainingMs - minStartDelay);
-  const { count30m: activityCount30m, count60m: activityCount60m } = await getActivityCounts(client);
-  const allowFirst = activityCount30m >= 15;
-  const allowSecond = activityCount60m >= 30 && availableMs > MIN_GAP_MS;
+  const { count30m: activityCount30m } = await getActivityCounts(client);
+  const allowFirst = activityCount30m >= getFirstThreshold(client);
+  const allowSecond = activityCount30m >= getSecondThreshold(client) && availableMs > minGapMs;
   const delays = [];
   if (allowFirst) {
     const firstDelay = minStartDelay + rand(availableMs);
@@ -292,7 +332,7 @@ async function scheduleForHour(client, parts, guildId) {
   }
   if (allowSecond) {
     const baseDelay = delays.length ? delays[0] : minStartDelay;
-    const secondMin = baseDelay + MIN_GAP_MS;
+    const secondMin = baseDelay + minGapMs;
     if (secondMin < remainingMs) {
       const secondDelay = rand(remainingMs - secondMin) + secondMin;
       delays.push(secondDelay);
@@ -303,7 +343,7 @@ async function scheduleForHour(client, parts, guildId) {
     .map((delay, idx) => ({ fireAt: new Date(Date.now() + delay), kind: idx === 0 ? 'first' : 'second' }));
   for (const item of fireTimes) {
     const fireAt = item.fireAt;
-    const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + MIN_GAP_MS) : fireAt.getTime();
+    const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + minGapMs) : fireAt.getTime();
     baseLast = adjusted;
     const doc = await ChatReminderSchedule.create({ guildId, fireAt, kind: item.kind }).catch(() => null);
     if (!doc) continue;
@@ -319,7 +359,7 @@ async function scheduleForHour(client, parts, guildId) {
 
 async function restoreSchedules(client) {
   const now = new Date();
-  const parts = getRomeParts(now);
+  const parts = getRomeParts(now, client);
   const key = getDateKey(parts);
   const guildId = client.guilds.cache.first()?.id || null;
   if (!guildId) return;
@@ -330,11 +370,12 @@ async function restoreSchedules(client) {
   }
   let upcoming = await ChatReminderSchedule.find({ fireAt: { $gt: now } }).lean();
   upcoming = Array.isArray(upcoming) ? upcoming.sort((a, b) => new Date(a.fireAt) - new Date(b.fireAt)) : [];
+  const minGapMs = getMinGapMs(client);
   let lastTime = lastSentAt ? new Date(lastSentAt).getTime() : null;
   for (const item of upcoming) {
     let fireAt = new Date(item.fireAt).getTime();
-    if (lastTime && (fireAt - lastTime) < MIN_GAP_MS) {
-      fireAt = lastTime + MIN_GAP_MS;
+    if (lastTime && (fireAt - lastTime) < minGapMs) {
+      fireAt = lastTime + minGapMs;
       await ChatReminderSchedule.updateOne({ _id: item._id }, { $set: { fireAt: new Date(fireAt) } }).catch(() => { });
     }
     const delay = Math.max(1, fireAt - Date.now());
@@ -348,8 +389,8 @@ async function restoreSchedules(client) {
 
 function startHourlyReminderLoop(client) {
   const tick = async () => {
-    const parts = getRomeParts(new Date());
-    if (parts.hour < START_HOUR || parts.hour > END_HOUR) return;
+    const parts = getRomeParts(new Date(), client);
+    if (parts.hour < getStartHour(client) || parts.hour > getEndHour(client)) return;
     const guildId = client.guilds.cache.first()?.id || null;
     if (!guildId) return;
     await scheduleForHour(client, parts, guildId);

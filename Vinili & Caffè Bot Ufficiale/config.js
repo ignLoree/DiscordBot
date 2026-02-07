@@ -62,7 +62,14 @@ module.exports = {
     enabled: true,
     channelId: "1442569130573303898",
     roleId: "1443955529352478830",
-    intervalMs: 15 * 60 * 1000,
+    intervalMs: 30 * 60 * 1000,
+    activityWindowMs: 30 * 60 * 1000,
+    minMessages: 3,
+    failsafeMs: 90 * 60 * 1000,
+    timeWindow: {
+      start: { hour: 9, minute: 0 },
+      end: { hour: 23, minute: 45 }
+    },
     guessNumber: {
       min: 1,
       max: 100,
@@ -141,6 +148,16 @@ module.exports = {
       rewardExp: 100,
       requiredRoleId: "1442568949605597264"
     }
+  },
+
+  chatReminder: {
+    channelId: "1442569130573303898",
+    timeZone: "Europe/Rome",
+    startHour: 9,
+    endHour: 21,
+    minGapMs: 30 * 60 * 1000,
+    firstReminderMinMessages30m: 5,
+    secondReminderMinMessages30m: 20
   },
 
   categoryNumbering: {
