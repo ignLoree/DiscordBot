@@ -47,9 +47,29 @@ module.exports = {
       if (message.reference?.messageId) {
         const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
         if (replied) {
+          const repliedMember = replied.member || await message.guild.members.fetch(replied.author.id).catch(() => null);
+          let replyRoleIconUrl = null;
+          if (repliedMember?.roles?.cache?.size) {
+            const sortedReplyRoles = [...repliedMember.roles.cache.values()]
+              .filter(r => r.id !== message.guild.id)
+              .sort((a, b) => b.position - a.position);
+            for (const role of sortedReplyRoles) {
+              const icon = role?.iconURL?.({ size: 32, extension: 'png' }) || null;
+              if (icon) {
+                replyRoleIconUrl = icon;
+                break;
+              }
+            }
+          }
+          const replyNameColor = repliedMember?.displayHexColor && repliedMember.displayHexColor !== '#000000'
+            ? repliedMember.displayHexColor
+            : '#f2f3f5';
           reply = {
-            author: replied.member?.displayName || replied.author?.username || 'Unknown',
-            content: replied.content || (replied.embeds?.[0]?.description || '')
+            author: repliedMember?.displayName || replied.author?.username || 'Unknown',
+            content: replied.content || '',
+            avatarUrl: replied.author?.displayAvatarURL({ extension: 'png', size: 128 }),
+            nameColor: replyNameColor,
+            roleIconUrl: replyRoleIconUrl
           };
         }
       }

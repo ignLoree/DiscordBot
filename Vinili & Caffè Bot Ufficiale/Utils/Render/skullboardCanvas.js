@@ -66,13 +66,13 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   const messageLines = wrapLines(tmpCtx, message || "", maxWidth);
 
   const replyY = nameYBase + 2;
-  const nameY = replyLine ? replyY + 14 : nameYBase;
-  const messageY = replyLine ? nameY + 18 : nameY + 20;
+  const nameY = replyLine ? replyY + 12 : nameYBase;
+  const messageY = replyLine ? nameY + 18 : nameY + 18;
   const messageHeight = messageLines.length ? messageLines.length * lineHeight : 0;
   const bottomContentY = messageLines.length
     ? messageY + messageHeight
     : (replyLine ? replyY + replyLineHeight : nameY + 18);
-  const contentBottom = Math.max(avatarY + avatarSize, bottomContentY) + 8;
+  const contentBottom = Math.max(avatarY + avatarSize, bottomContentY) + 6;
   const cardH = Math.max(72, contentBottom - cardY);
   const height = cardH + 32;
 
@@ -112,10 +112,43 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
   });
 
   if (replyLine) {
+    const replyStartX = nameX + 18;
+    const replyAvatarSize = 14;
+    const replyAvatarX = replyStartX;
+    const replyAvatarY = replyY - 1;
+
+    ctx.strokeStyle = "#3f4147";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(replyStartX - 12, replyY + 4);
+    ctx.lineTo(replyStartX - 12, replyY + 10);
+    ctx.quadraticCurveTo(replyStartX - 12, replyY + 14, replyStartX - 8, replyY + 14);
+    ctx.lineTo(replyStartX - 2, replyY + 14);
+    ctx.stroke();
+
+    if (reply?.avatarUrl) {
+      try {
+        const replyAvatar = await loadImage(reply.avatarUrl);
+        drawCircleImage(ctx, replyAvatar, replyAvatarX, replyAvatarY, replyAvatarSize);
+      } catch {}
+    }
+
+    const replyTextX = replyAvatarX + replyAvatarSize + 6;
     ctx.font = fontStack(12, "500");
-    ctx.fillStyle = "#3f4147";
-    ctx.fillRect(nameX - 10, replyY + 1, 2, 12);
-    drawTextWithSpecialFallback(ctx, replyLine, nameX, replyY, { size: 12, weight: "500", color: "#b5bac1" });
+    const replyName = reply.author || "Unknown";
+    const replyNameColor = reply.nameColor || "#f2f3f5";
+    drawTextWithSpecialFallback(ctx, replyName, replyTextX, replyY, { size: 12, weight: "600", color: replyNameColor });
+    const replyNameWidth = ctx.measureText(replyName).width;
+    const replyContent = reply.content || "";
+    drawTextWithSpecialFallback(ctx, replyContent, replyTextX + replyNameWidth + 6, replyY, { size: 12, weight: "500", color: "#b5bac1" });
+
+    if (reply?.roleIconUrl) {
+      try {
+        const replyRoleIcon = await loadImage(reply.roleIconUrl);
+        const size = 12;
+        drawCircleImage(ctx, replyRoleIcon, replyTextX + replyNameWidth + 2, replyY + 1, size);
+      } catch {}
+    }
   }
 
   if (messageLines.length) {
