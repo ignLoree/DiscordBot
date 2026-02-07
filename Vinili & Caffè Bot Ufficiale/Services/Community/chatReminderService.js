@@ -193,6 +193,34 @@ function getRecentReminderCount(channelId, windowMs = 60 * 60 * 1000) {
   return trimmed.length;
 }
 
+async function getRecentChannelMessageCount(client, channelId, windowMs = 60 * 60 * 1000) {
+  if (!client || !channelId) return 0;
+  const channel = client.channels.cache.get(channelId)
+    || await client.channels.fetch(channelId).catch(() => null);
+  if (!channel?.isTextBased?.()) return 0;
+  const messages = await channel.messages.fetch({ limit: 100 }).catch(() => null);
+  if (!messages?.size) return 0;
+  const cutoff = Date.now() - windowMs;
+  let count = 0;
+  for (const msg of messages.values()) {
+    if (msg?.author?.bot) continue;
+    const ts = msg?.createdTimestamp || 0;
+    if (ts >= cutoff) count += 1;
+  }
+  return count;
+}
+
+async function getActivityCounts(client) {
+  const mem30 = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
+  const mem60 = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  const hist30 = await getRecentChannelMessageCount(client, REMINDER_CHANNEL_ID, 30 * 60 * 1000);
+  const hist60 = await getRecentChannelMessageCount(client, REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  return {
+    count30m: Math.max(mem30, hist30),
+    count60m: Math.max(mem60, hist60)
+  };
+}
+
 async function sendReminder(client, scheduleId, kind = 'first') {
   const nowMs = Date.now();
   if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
@@ -205,8 +233,7 @@ async function sendReminder(client, scheduleId, kind = 'first') {
     scheduledTimeouts.set(scheduleId.toString(), timeout);
     return;
   }
-  const activityCount30m = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
-  const activityCount60m = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  const { count30m: activityCount30m, count60m: activityCount60m } = await getActivityCounts(client);
   if (kind === 'second' && activityCount60m < 30) {
     if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => {});
     return;
@@ -247,8 +274,7 @@ async function scheduleForHour(client, parts, guildId) {
   const minStartDelay = baseLast ? Math.max(0, baseLast + MIN_GAP_MS - now) : 0;
   if (minStartDelay >= remainingMs) return;
   const availableMs = Math.max(0, remainingMs - minStartDelay);
-  const activityCount30m = getRecentReminderCount(REMINDER_CHANNEL_ID, 30 * 60 * 1000);
-  const activityCount60m = getRecentReminderCount(REMINDER_CHANNEL_ID, 60 * 60 * 1000);
+  const { count30m: activityCount30m, count60m: activityCount60m } = await getActivityCounts(client);
   const allowFirst = activityCount30m >= 15;
   const allowSecond = activityCount60m >= 30 && availableMs > MIN_GAP_MS;
   const delays = [];
