@@ -92,6 +92,14 @@ const reminderPool = [
         'Vuoi un Nitro Boost o fari un po\' di soldi gratis? Trovi tutto nel canale <#1442579412280410194>'
       ].join('\n')
     ),
+  () => new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle("🎨 Ottieni i colori gradienti")
+    .setDescription(
+      [
+        'Potrai sbloccare i colori PLUS con il ruolo Server Booster o Livello 50+; invece con il VIP potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>'
+      ].join('\n')
+    ),
 ];
 
 function getDateKey(parts) {
@@ -104,7 +112,7 @@ async function saveRotationState() {
     { guildId: rotationGuildId },
     { $set: { dateKey: rotationDate, queue: rotationQueue, lastSentAt: lastSentAt ? new Date(lastSentAt) : null } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
-  ).catch(() => {});
+  ).catch(() => { });
 }
 
 async function loadRotationState(guildId, dateKey) {
@@ -225,21 +233,21 @@ async function sendReminder(client, scheduleId, kind = 'first') {
   const nowMs = Date.now();
   if (lastSentAt && (nowMs - lastSentAt) < MIN_GAP_MS && scheduleId) {
     const nextAt = new Date(lastSentAt + MIN_GAP_MS);
-    await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt, kind } }).catch(() => {});
+    await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt, kind } }).catch(() => { });
     const delay = Math.max(1, nextAt.getTime() - Date.now());
     const timeout = setTimeout(() => {
-      sendReminder(client, scheduleId, kind).catch(() => {});
+      sendReminder(client, scheduleId, kind).catch(() => { });
     }, delay);
     scheduledTimeouts.set(scheduleId.toString(), timeout);
     return;
   }
   const { count30m: activityCount30m, count60m: activityCount60m } = await getActivityCounts(client);
   if (kind === 'second' && activityCount60m < 30) {
-    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => {});
+    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
     return;
   }
   if (kind !== 'second' && activityCount30m < 15) {
-    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => {});
+    if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
     return;
   }
   const channel = client.channels.cache.get(REMINDER_CHANNEL_ID)
@@ -300,7 +308,7 @@ async function scheduleForHour(client, parts, guildId) {
     const doc = await ChatReminderSchedule.create({ guildId, fireAt, kind: item.kind }).catch(() => null);
     if (!doc) continue;
     if (adjusted !== fireAt.getTime()) {
-      await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted), kind: item.kind } }).catch(() => {});
+      await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted), kind: item.kind } }).catch(() => { });
     }
     const timeout = setTimeout(() => {
       sendReminder(client, doc._id, item.kind).catch(() => { });
@@ -327,7 +335,7 @@ async function restoreSchedules(client) {
     let fireAt = new Date(item.fireAt).getTime();
     if (lastTime && (fireAt - lastTime) < MIN_GAP_MS) {
       fireAt = lastTime + MIN_GAP_MS;
-      await ChatReminderSchedule.updateOne({ _id: item._id }, { $set: { fireAt: new Date(fireAt) } }).catch(() => {});
+      await ChatReminderSchedule.updateOne({ _id: item._id }, { $set: { fireAt: new Date(fireAt) } }).catch(() => { });
     }
     const delay = Math.max(1, fireAt - Date.now());
     const timeout = setTimeout(() => {

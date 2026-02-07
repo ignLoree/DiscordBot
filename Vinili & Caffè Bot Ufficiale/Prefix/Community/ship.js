@@ -15,6 +15,27 @@ async function resolveUser(guild, token) {
   return member?.user || null;
 }
 
+async function resolveReplyUser(message) {
+  const ref = message.reference?.messageId;
+  if (!ref) return null;
+  const replied = message.channel?.messages?.cache?.get(ref)
+    || await message.channel.messages.fetch(ref).catch(() => null);
+  return replied?.author || null;
+}
+
+async function resolveRandomGuildUser(guild, excludedIds = []) {
+  if (!guild) return null;
+  if (guild.members.cache.size < 2) {
+    await guild.members.fetch().catch(() => null);
+  }
+  const excluded = new Set(excludedIds.filter(Boolean));
+  const pool = guild.members.cache.filter((m) => !m.user?.bot && !excluded.has(m.user.id));
+  if (!pool.size) return null;
+  const values = Array.from(pool.values());
+  const member = values[Math.floor(Math.random() * values.length)];
+  return member?.user || null;
+}
+
 function trimName(name) {
   const v = String(name || '').trim();
   return v.length > 16 ? `${v.slice(0, 16)}...` : v;
@@ -40,14 +61,20 @@ module.exports = {
       right = users[1];
     } else if (mentioned.size === 1) {
       right = mentioned.first();
-    } else if (Array.isArray(args) && args.length > 0) {
-      right = await resolveUser(message.guild, args[0]);
+    } else {
+      right = await resolveReplyUser(message);
+      if (!right && Array.isArray(args) && args.length > 0) {
+        right = await resolveUser(message.guild, args[0]);
+      }
+      if (!right) {
+        right = await resolveRandomGuildUser(message.guild, [left.id]);
+      }
     }
 
     if (!right) {
       const warn = new EmbedBuilder()
         .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Devi indicare almeno un utente. Esempio: `+ship @utente`');
+        .setDescription('<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.');
       await safeMessageReply(message, { embeds: [warn], allowedMentions: { repliedUser: false } });
       return;
     }
