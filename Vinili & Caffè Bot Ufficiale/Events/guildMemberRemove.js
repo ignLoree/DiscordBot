@@ -2,11 +2,17 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("
 const Staff = require('../Schemas/Staff/staffSchema');
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const createTranscript = require("../Utils/Ticket/createTranscript");
+const InviteTrack = require('../Schemas/Community/inviteTrackSchema');
 
 module.exports = {
     name: 'guildMemberRemove',
     async execute(member) {
         try {
+            await InviteTrack.findOneAndUpdate(
+                { guildId: member.guild.id, userId: member.id, active: true },
+                { $set: { active: false, leftAt: new Date() } }
+            ).catch(() => {});
+
             const guild = member.guild;
             const totalVoice = guild.channels.cache.get('1442569096700104754');
             if (totalVoice) {

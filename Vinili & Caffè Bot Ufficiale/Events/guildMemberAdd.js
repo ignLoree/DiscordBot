@@ -1,4 +1,5 @@
 ﻿const { EmbedBuilder, PermissionsBitField } = require('discord.js');
+const InviteTrack = require('../Schemas/Community/inviteTrackSchema');
 
 function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
@@ -38,7 +39,8 @@ async function resolveInviteInfo(member) {
             link: `https://discord.gg/${guild.vanityURLCode}`,
             inviterTag: 'Vanity URL',
             totalInvites: 0,
-            isVanity: true
+            isVanity: true,
+            inviterId: null
         };
     }
 
@@ -51,7 +53,25 @@ async function resolveInviteInfo(member) {
             .filter(inv => inv.inviter?.id === inviterId)
             .reduce((sum, inv) => sum + (inv.uses || 0), 0);
     }
-    return { link, inviterTag, totalInvites, isVanity: false };
+    return { link, inviterTag, totalInvites, isVanity: false, inviterId };
+}
+
+async function trackInviteJoin(member, inviterId) {
+    if (!inviterId || inviterId === member.id) return;
+    await InviteTrack.findOneAndUpdate(
+        { guildId: member.guild.id, userId: member.id },
+        {
+            $set: {
+                inviterId,
+                active: true,
+                leftAt: null
+            },
+            $setOnInsert: {
+                joinedAt: new Date()
+            }
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 }
 
 async function addBotRoles(member) {
@@ -223,9 +243,12 @@ module.exports = {
 
             await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
 
+            const info = await resolveInviteInfo(member).catch(() => null);
+            if (info && !info.isVanity && info.inviterId) {
+                await trackInviteJoin(member, info.inviterId).catch(() => { });
+            }
             const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
-            if (inviteChannel) {
-                const info = await resolveInviteInfo(member);
+            if (inviteChannel && info) {
                 if (info.isVanity) {
                     await inviteChannel.send({
                         content: `<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**`
@@ -241,3 +264,4 @@ module.exports = {
         }
     }
 };
+

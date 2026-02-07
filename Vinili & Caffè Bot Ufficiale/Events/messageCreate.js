@@ -26,11 +26,7 @@ const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
 const guildSettingsCache = new Map();
 
 const MEDIA_BLOCK_ROLE_IDS = [
-    "1442568948271943721",
-    "1329497467481493607",
-    "1442568916114346096",
-    "1442568950805430312",
-    "1442568934510297226"
+    "1468938195348754515"
 ];
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = "1442569056795230279";
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([
@@ -325,7 +321,7 @@ module.exports = {
                             `<:attentionfromvega:1443651874032062505> ➳ Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                             "",
                             "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
-                            `<a:VC_Arrow:1448672967721615452> ottieni uno o più di questi ruoli: <@&1329497467481493607>, <@&1442568948271943721>, <@&1442568916114346096>, <@&1442568950805430312>, <@&1442568934510297226>.`
+                            `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&1468938195348754515>.`
                         ].join("\n")
                     );
                 await message.channel.send({ content: `${message.author}`, embeds: [embed] });

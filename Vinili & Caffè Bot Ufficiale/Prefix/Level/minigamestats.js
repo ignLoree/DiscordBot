@@ -20,7 +20,8 @@ function getUnlockedRewards(totalExp) {
 }
 
 module.exports = {
-  name: 'mstats',
+  name: 'minigamestats',
+  aliases: ["mstats"],
 
   async execute(message) {
     await message.channel.sendTyping();

@@ -12,6 +12,13 @@ function getInvokedCommand(message) {
   return content.slice(1).split(/\s+/)[0].toLowerCase();
 }
 
+function rankLabel(index) {
+  if (index === 0) return '<:VC_Podio1:1469659449974329598>';
+  if (index === 1) return '<:VC_Podio2:1469659512863592500>';
+  if (index === 2) return '<:VC_Podio3:1469659557696504024>';
+  return `${index + 1}°`;
+}
+
 function formatUserLabel(member, userId) {
   if (member) {
     const username = member.user?.username || member.user?.tag || member.displayName || 'utente';
@@ -49,7 +56,7 @@ async function buildWeeklyEmbed(message) {
     const member = members.get(row.userId);
     const label = formatUserLabel(member, row.userId);
     const exp = Number(row.weeklyExp || 0);
-    lines.push(`${index + 1}. ${label}`);
+    lines.push(`${rankLabel(index)} ${label}`);
     lines.push(`<:VC_Reply:1468262952934314131> Weekly <:VC_EXP:1468714279673925883> __${exp}__ EXP`);
   });
 
@@ -83,7 +90,7 @@ async function buildAllTimeEmbed(message) {
     const label = formatUserLabel(member, row.userId);
     const exp = Number(row.totalExp || 0);
     const level = Number(row.level || 0);
-    lines.push(`${index + 1}. ${label}`);
+    lines.push(`${rankLabel(index)} ${label}`);
     lines.push(`<:VC_Reply:1468262952934314131> Exp: <:VC_EXP:1468714279673925883> __${exp}__ <a:VC_Arrow:1448672967721615452> Livello: ${level}`);
   });
 

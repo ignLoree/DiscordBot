@@ -1,0 +1,103 @@
+const { EmbedBuilder } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/message');
+const InviteTrack = require('../../Schemas/Community/inviteTrackSchema');
+
+const TOP_LIMIT = 10;
+const THUMBNAIL_URL = 'https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114';
+
+function rankLabel(index) {
+  if (index === 0) return '<:VC_Podio1:1469659449974329598>';
+  if (index === 1) return '<:VC_Podio2:1469659512863592500>';
+  if (index === 2) return '<:VC_Podio3:1469659557696504024>';
+  return `${index + 1}°`;
+}
+
+async function resolveDisplayName(guild, userId) {
+  const cachedMember = guild.members.cache.get(userId);
+  if (cachedMember) return cachedMember.displayName;
+
+  const fetchedMember = await guild.members.fetch(userId).catch(() => null);
+  if (fetchedMember) return fetchedMember.displayName;
+
+  const cachedUser = guild.client.users.cache.get(userId);
+  if (cachedUser) return cachedUser.username;
+
+  const fetchedUser = await guild.client.users.fetch(userId).catch(() => null);
+  if (fetchedUser) return fetchedUser.username;
+
+  return `utente_${String(userId).slice(-6)}`;
+}
+
+module.exports = {
+  name: 'topinvites',
+
+  async execute(message) {
+    await message.channel.sendTyping();
+
+    const rows = await InviteTrack.aggregate([
+      { $match: { guildId: message.guild.id } },
+      {
+        $group: {
+          _id: '$inviterId',
+          totalInvites: { $sum: 1 },
+          activeInvites: {
+            $sum: {
+              $cond: [{ $eq: ['$active', true] }, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          inviterId: '$_id',
+          totalInvites: 1,
+          activeInvites: 1,
+          leftInvites: { $subtract: ['$totalInvites', '$activeInvites'] }
+        }
+      },
+      { $sort: { totalInvites: -1, activeInvites: -1 } },
+      { $limit: TOP_LIMIT }
+    ]);
+
+    const lines = [];
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i];
+      const name = await resolveDisplayName(message.guild, row.inviterId);
+      const total = Number(row.totalInvites || 0);
+      const active = Number(row.activeInvites || 0);
+      const left = Number(row.leftInvites || 0);
+      const retention = total > 0 ? Math.round((active / total) * 100) : 0;
+
+      lines.push(`${rankLabel(i)} **${name}**`);
+      lines.push(`└─ 👥 **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
+      lines.push('');
+    }
+
+    if (lines.length === 0) {
+      lines.push('Nessun dato inviti disponibile.');
+    }
+
+    const now = new Date().toLocaleTimeString('it-IT', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Rome'
+    });
+
+    const embed = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setTitle('<:VC_Leaderboard:1469659357678669958> Classifica Inviti')
+      .setDescription(lines.join('\n').trim())
+      .setThumbnail(THUMBNAIL_URL)
+      .setFooter({
+        text: `Richiesto da ${message.author.username} • Oggi alle ${now}`,
+        iconURL: message.author.displayAvatarURL({ size: 64 })
+      });
+
+    await safeMessageReply(message, {
+      embeds: [embed],
+      allowedMentions: { repliedUser: false }
+    });
+  }
+};
+
