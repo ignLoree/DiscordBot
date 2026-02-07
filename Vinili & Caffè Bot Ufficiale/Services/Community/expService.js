@@ -133,7 +133,7 @@ function buildLevelUpEmbed(member, level) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`
         ].join('\n'),
         footer: {
@@ -164,7 +164,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`
         ].join('\n'),
         footer: {
@@ -182,7 +182,7 @@ async function sendPerksLevelMessage(guild, member, level) {
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
   if (!channel) return;
   const payload = buildPerksLevelEmbed(member, level, roleId);
-  await channel.send({ content: `${member} sei salito/a di livello! <:VC_LevelUp:1443701876892762243>`, ...payload }).catch(() => {});
+  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`, ...payload }).catch(() => {});
 }
 
 async function addPerkRoleIfPossible(member) {
