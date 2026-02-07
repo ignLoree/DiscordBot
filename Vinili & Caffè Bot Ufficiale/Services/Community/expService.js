@@ -179,7 +179,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
 async function sendPerksLevelMessage(guild, member, level) {
   const roleId = LEVEL_ROLE_MAP.get(level);
   if (!guild || !member || !roleId) return;
-  const channel = guild.channels.cache.get(PERKS_CHANNEL_ID) || await guild.channels.fetch(PERKS_CHANNEL_ID).catch(() => null);
+  const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
   if (!channel) return;
   const payload = buildPerksLevelEmbed(member, level, roleId);
   await channel.send({ content: `${member} sei salito/a di livello! <:VC_LevelUp:1443701876892762243>`, ...payload }).catch(() => {});
@@ -215,8 +215,12 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
     if (member) {
-      await sendLevelUpMessage(guild, member, result.levelInfo.level);
-      await sendPerksLevelMessage(guild, member, result.levelInfo.level);
+      const level = result.levelInfo.level;
+      if (LEVEL_ROLE_MAP.has(level)) {
+        await sendPerksLevelMessage(guild, member, level);
+      } else {
+        await sendLevelUpMessage(guild, member, level);
+      }
       if (result.levelInfo.level >= 10) {
         await addPerkRoleIfPossible(member);
       }

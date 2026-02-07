@@ -311,6 +311,57 @@ async function loadPlayerList(cfg) {
   return cachedPlayers;
 }
 
+async function fetchFamousPlayer(cfg) {
+  const customNames = Array.isArray(cfg?.guessPlayer?.famousNames)
+    ? cfg.guessPlayer.famousNames
+    : [];
+  const defaultNames = [
+    'Kylian Mbappe',
+    'Erling Haaland',
+    'Jude Bellingham',
+    'Vinicius Junior',
+    'Robert Lewandowski',
+    'Mohamed Salah',
+    'Kevin De Bruyne',
+    'Harry Kane',
+    'Bukayo Saka',
+    'Phil Foden',
+    'Rodri',
+    'Lautaro Martinez',
+    'Victor Osimhen',
+    'Nicolas Barella',
+    'Pedri',
+    'Antoine Griezmann',
+    'Bruno Fernandes',
+    'Son Heung-min',
+    'Florian Wirtz',
+    'Jamal Musiala'
+  ];
+
+  const names = (customNames.length ? customNames : defaultNames)
+    .map((name) => String(name || '').trim())
+    .filter(Boolean);
+  if (!names.length) return null;
+
+  const maxAttempts = Math.min(10, names.length);
+  const used = new Set();
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    let pick = null;
+    for (let guard = 0; guard < 20; guard += 1) {
+      const candidate = names[randomBetween(0, names.length - 1)];
+      if (!used.has(candidate)) {
+        pick = candidate;
+        used.add(candidate);
+        break;
+      }
+    }
+    if (!pick) break;
+    const info = await fetchPlayerInfo(cfg, pick);
+    if (info?.name && info?.image) return info;
+  }
+  return null;
+}
+
 async function fetchRandomSong(cfg) {
   const apiBase = cfg?.guessSong?.apiUrl;
   if (!apiBase) return null;
@@ -412,7 +463,9 @@ async function loadPopularSongList(cfg) {
 async function fetchPopularSong(cfg) {
   const list = await loadPopularSongList(cfg);
   if (!list.length) return null;
-  const pick = list[randomBetween(0, list.length - 1)];
+  const onlyWithPreview = list.filter((item) => item?.previewUrl);
+  const pool = onlyWithPreview.length ? onlyWithPreview : list;
+  const pick = pool[randomBetween(0, pool.length - 1)];
   if (!pick?.id) return null;
 
   if (pick.source === 'deezer') {
@@ -995,12 +1048,17 @@ async function startGuessPlayerGame(client, cfg) {
   const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return false;
 
-  let info = await fetchPlayerFromRandomLetter(cfg);
+  const onlyFamous = cfg?.guessPlayer?.onlyFamous !== false;
+  let info = await fetchFamousPlayer(cfg);
   if (!info) {
     const names = await loadPlayerList(cfg);
-    if (!names.length) return false;
-    const randomName = names[randomBetween(0, names.length - 1)];
-    info = await fetchPlayerInfo(cfg, randomName);
+    if (names.length) {
+      const randomName = names[randomBetween(0, names.length - 1)];
+      info = await fetchPlayerInfo(cfg, randomName);
+    }
+  }
+  if (!info && !onlyFamous) {
+    info = await fetchPlayerFromRandomLetter(cfg);
   }
   if (!info) return false;
 
@@ -1059,8 +1117,9 @@ async function startGuessSongGame(client, cfg) {
   const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return false;
 
+  const onlyFamous = cfg?.guessSong?.onlyFamous !== false;
   let info = await fetchPopularSong(cfg);
-  if (!info) {
+  if (!info && !onlyFamous) {
     info = await fetchRandomSong(cfg);
   }
   if (!info?.title || !info?.artist) return false;
