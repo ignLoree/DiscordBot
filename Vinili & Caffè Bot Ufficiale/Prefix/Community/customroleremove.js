@@ -1,7 +1,7 @@
 const {
   EmbedBuilder,
   ActionRowBuilder,
-  UserSelectMenuBuilder,
+  StringSelectMenuBuilder,
   PermissionsBitField
 } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
@@ -84,12 +84,37 @@ module.exports = {
       .setTitle('🗑️ Seleziona un utente')
       .setDescription('Usa il menu a tendina qui sotto per rimuovere un utente dal tuo ruolo personalizzato.');
 
+    await message.guild.members.fetch().catch(() => {});
+    const membersWithRole = Array.from(role.members.values())
+      .filter((m) => !m.user?.bot)
+      .slice(0, 25);
+
+    if (!membersWithRole.length) {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('#6f4e37')
+            .setTitle('🗑️ Seleziona un utente')
+            .setDescription('Nessun utente ha attualmente il tuo ruolo personalizzato.')
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
     const row = new ActionRowBuilder().addComponents(
-      new UserSelectMenuBuilder()
+      new StringSelectMenuBuilder()
         .setCustomId(`customrole_remove_select:${message.author.id}:${role.id}`)
         .setPlaceholder('Seleziona un utente')
         .setMinValues(1)
         .setMaxValues(1)
+        .addOptions(
+          membersWithRole.map((member) => ({
+            label: member.user.username.slice(0, 100),
+            value: member.id,
+            description: (member.displayName || member.user.username).slice(0, 100)
+          }))
+        )
     );
 
     await safeMessageReply(message, {
