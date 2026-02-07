@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const DiscadiaVoterSchema = new Schema({
-  guildId: { type: String, required: true, index: true },
+  guildId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
   lastVoteAt: { type: Date, required: true },
   lastRemindedAt: { type: Date, default: null },

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const PersonalityPanelSchema = new Schema({
-  guildId: { type: String, required: true, index: true },
+  guildId: { type: String, required: true },
   channelId: { type: String, required: true },
   personalityMessageId: { type: String, default: null },
   mentionsMessageId: { type: String, default: null },

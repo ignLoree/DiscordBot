@@ -2,7 +2,7 @@
 
 const minigameUserSchema = new mongoose.Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     totalExp: { type: Number, default: 0 }
   },

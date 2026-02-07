@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const minigameStateSchema = new mongoose.Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     channelId: { type: String, required: true, index: true },
     type: { type: String, required: true },
     target: { type: String, default: null },

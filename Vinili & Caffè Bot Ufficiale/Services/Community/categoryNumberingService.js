@@ -1,19 +1,19 @@
-const { ChannelType, PermissionsBitField } = require('discord.js');
+﻿const { ChannelType, PermissionsBitField } = require('discord.js');
 
 const SUPERSCRIPT_MAP = {
-  '0': '⁰',
-  '1': '¹',
-  '2': '²',
-  '3': '³',
-  '4': '⁴',
-  '5': '⁵',
-  '6': '⁶',
-  '7': '⁷',
-  '8': '⁸',
-  '9': '⁹'
+  '0': '\u2070',
+  '1': '\u00B9',
+  '2': '\u00B2',
+  '3': '\u00B3',
+  '4': '\u2074',
+  '5': '\u2075',
+  '6': '\u2076',
+  '7': '\u2077',
+  '8': '\u2078',
+  '9': '\u2079'
 };
 
-const INDEX_PREFIX_RE = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/;
+const INDEX_PREFIX_RE = /^[\u2070\u00B9\u00B2\u00B3\u2074\u2075\u2076\u2077\u2078\u2079]+/;
 const guildTimers = new Map();
 let loopHandle = null;
 
@@ -108,4 +108,3 @@ module.exports = {
   runAllGuilds,
   startCategoryNumberingLoop
 };
-

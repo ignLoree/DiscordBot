@@ -59,7 +59,12 @@ async function handleDmBroadcastModal(interaction, client) {
   const partsId = interaction.customId.split(":");
   const userId = partsId[1];
   const rawTargetId = partsId[2];
+  const allConfirmed = partsId[3] === "1";
   const targetId = rawTargetId && rawTargetId !== "all" ? rawTargetId : null;
+  if (!targetId && !allConfirmed) {
+    await interaction.reply({ content: "<:vegax:1443934876440068179> Invio globale non confermato.", flags: 1 << 6 });
+    return true;
+  }
   if (interaction.user.id !== userId) {
     await interaction.reply({ content: "<:vegax:1443934876440068179> Non puoi usare questo modal.", flags: 1 << 6 });
     return true;

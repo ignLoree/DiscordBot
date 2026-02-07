@@ -43,7 +43,7 @@ module.exports = {
                         })
                     emoji = `https://cdn.discordapp.com/emojis/${id}.${type}`
                 }
-                if (!emoji.startsWith("http") || !emoji.startsWith("https")) {
+                if (!emoji.startsWith("http://") && !emoji.startsWith("https://")) {
                     return safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()

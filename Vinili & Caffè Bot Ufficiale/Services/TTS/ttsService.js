@@ -1,5 +1,5 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
-const discordTTS = require('discord-tts');
+const { Readable } = require('stream');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const ttsStates = new Map();
 const guildLocks = new Map();
@@ -70,6 +70,27 @@ function getUnicodeEmojiName(emoji) {
   }
   return null;
 }
+
+function buildGoogleTtsUrl(text, lang) {
+  const q = encodeURIComponent(String(text || '').slice(0, 200));
+  const tl = encodeURIComponent(String(lang || 'it'));
+  return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${tl}&q=${q}`;
+}
+
+async function createTtsStream(text, lang) {
+  const url = buildGoogleTtsUrl(text, lang);
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 ViniliCaffeBot/1.0',
+      Accept: 'audio/mpeg,audio/*;q=0.9,*/*;q=0.8'
+    }
+  });
+  if (!res.ok || !res.body) {
+    throw new Error(`TTS fetch failed (${res.status})`);
+  }
+  return Readable.fromWeb(res.body);
+}
+
 function getState(voiceChannel) {
   const key = voiceChannel.id;
   let state = ttsStates.get(key);
@@ -150,7 +171,7 @@ async function playNext(state) {
       playNext(state);
       return;
     }
-    const stream = discordTTS.getVoiceStream(item.text, { lang: item.lang });
+    const stream = await createTtsStream(item.text, item.lang);
     const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
     state.player.play(resource);
   } catch (err) {
@@ -189,7 +210,7 @@ async function handleTtsMessage(message, client, prefix) {
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const baseText = sanitizeText(message.cleanContent || message.content || "");
   if (!baseText) return;
-  const name = message.member?.displayName || member?.user?.username || message.author?.username || "Utente";
+  const name = message.member?.displayName || message.member?.user?.username || message.author?.username || "Utente";
   const text = includeUsername ? `${name}: ${baseText}` : baseText;
   const clipped = text.slice(0, maxChars);
   const state = getState(voiceChannel);

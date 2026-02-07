@@ -16,7 +16,7 @@ module.exports = {
             const guild = member.guild;
             const totalVoice = guild.channels.cache.get('1442569096700104754');
             if (totalVoice) {
-                totalVoice.setName(`à¼„â˜•ï¸²User: ${guild.memberCount}`).catch(() => {});
+                totalVoice.setName(`༄☕︲User: ${guild.memberCount}`).catch(() => {});
             }
             const ticket = await Ticket.findOne({ userId: member.id, open: true });
             if (ticket) {
@@ -60,7 +60,7 @@ module.exports = {
             });
             if (staffDoc) {
             const newRole = guild.roles.cache.get('1442568949605597264');
-            const newRoleName = newRole ? newRole.name : "à¼„ User";
+            const newRoleName = newRole ? newRole.name : "༄ User";
             let lastRole = "Nessun ruolo salvato";
             if (staffDoc.rolesHistory.length > 0) {
                 const lastRoleIdOrName =

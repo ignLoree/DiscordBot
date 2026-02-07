@@ -2,7 +2,7 @@ const { Schema, model, models } = require('mongoose');
 
 const inviteTrackSchema = new Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     inviterId: { type: String, required: true, index: true },
     active: { type: Boolean, default: true, index: true },

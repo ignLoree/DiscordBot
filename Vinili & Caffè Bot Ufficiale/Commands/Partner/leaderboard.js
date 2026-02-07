@@ -34,7 +34,7 @@ module.exports = {
                     userTag = user.username;
                 } catch {
                 }
-                description += `**${startIndex + i + 1}.** ${userTag} â€” â­ ${partner.partnerCount} partnership\n`;
+                description += `**${startIndex + i + 1}.** ${userTag} — ⭐ ${partner.partnerCount} partnership\n`;
             }
             return new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -49,7 +49,7 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('prev')
-                    .setLabel('<a:vegaleftarrow:1462914743416131816>ï¸ Precedente')
+                    .setLabel('<a:vegaleftarrow:1462914743416131816> Precedente')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === 1),
                 new ButtonBuilder()

@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const InviteTrack = require('../../Schemas/Community/inviteTrackSchema');
 
@@ -46,11 +46,9 @@ module.exports = {
       .lean();
 
     const trackedTotal = rows.length;
-    const trackedActive = rows.filter(r => r.active).length;
+    const trackedActive = rows.filter((r) => r.active).length;
     const currentInviteUses = await getCurrentInviteUsesForUser(message.guild, target.id);
     const totalInvited = Math.max(trackedTotal, currentInviteUses);
-    // Fallback storico: se il tracking DB e recente, usiamo anche gli uses correnti
-    // per evitare "0 attivi" falsi su dati vecchi.
     const activeMembers = Math.min(
       totalInvited,
       Math.max(trackedActive, currentInviteUses)

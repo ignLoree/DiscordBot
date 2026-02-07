@@ -89,7 +89,7 @@ module.exports = {
                         )
                         .setColor("#6f4e37")
                         .setFooter({
-                            text: `?? Ora siamo a ${newMember.guild.premiumSubscriptionCount} boost!`,
+                            text: `Ora siamo a ${newMember.guild.premiumSubscriptionCount} boost!`,
                         })
                         .setThumbnail(newMember.user.displayAvatarURL());
                     await boostAnnounceChannel.send({

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 const ModCaseSchema = new Schema({
-  guildId: { type: String, required: true, index: true },
+  guildId: { type: String, required: true },
   caseId: { type: Number, required: true, index: true },
   action: { type: String, required: true },
   userId: { type: String, required: true, index: true },

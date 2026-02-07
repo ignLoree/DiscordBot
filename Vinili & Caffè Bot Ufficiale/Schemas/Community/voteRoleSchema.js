@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 
 const voteRoleSchema = new Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     expiresAt: { type: Date, required: true }
   },

@@ -22,6 +22,16 @@ const getChannelSafe = async (client, channelId) => {
     return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
 };
 
+function isPrimaryScheduler(client) {
+    if (client?.cluster && Number.isInteger(client.cluster.id)) {
+        return client.cluster.id === 0;
+    }
+    if (client?.shard?.ids && Array.isArray(client.shard.ids)) {
+        return client.shard.ids.includes(0);
+    }
+    return true;
+}
+
 module.exports = {
     name: 'clientReady',
     once: true,
@@ -45,20 +55,23 @@ module.exports = {
             client.logs.success('[DATABASE] Connected to MongoDB successfully.');
         }
         require('events').EventEmitter.defaultMaxListeners = config2.eventListeners;
-        try {
-            await restorePendingReminders(client);
-        } catch (err) {
-            global.logger.error('[DISBOARD REMINDER ERROR]', err);
-        }
-        try {
-            await restorePendingDiscadiaReminders(client);
-        } catch (err) {
-            global.logger.error('[DISCADIA REMINDER ERROR]', err);
-        }
-        try {
-            startDiscadiaVoteReminderLoop(client);
-        } catch (err) {
-            global.logger.error('[DISCADIA VOTE REMINDER ERROR]', err);
+        const primaryScheduler = isPrimaryScheduler(client);
+        if (primaryScheduler) {
+            try {
+                await restorePendingReminders(client);
+            } catch (err) {
+                global.logger.error('[DISBOARD REMINDER ERROR]', err);
+            }
+            try {
+                await restorePendingDiscadiaReminders(client);
+            } catch (err) {
+                global.logger.error('[DISCADIA REMINDER ERROR]', err);
+            }
+            try {
+                startDiscadiaVoteReminderLoop(client);
+            } catch (err) {
+                global.logger.error('[DISCADIA VOTE REMINDER ERROR]', err);
+            }
         }
         try {
             await bootstrapSupporter(client);
@@ -87,66 +100,68 @@ module.exports = {
         } catch (err) {
             global.logger.error('[TTS RESTORE ERROR]', err);
         }
-        let engagementTickRunning = false;
-        const engagementTick = async () => {
-            if (engagementTickRunning) return;
-            engagementTickRunning = true;
+        if (primaryScheduler) {
+            let engagementTickRunning = false;
+            const engagementTick = async () => {
+                if (engagementTickRunning) return;
+                engagementTickRunning = true;
+                try {
+                    await maybeRunMorningReminder(client);
+                    await runDueOneTimeReminders(client);
+                } catch (err) {
+                    global.logger.error(err);
+                } finally {
+                    engagementTickRunning = false;
+                }
+            };
+            await engagementTick();
+            setInterval(engagementTick, 60 * 1000);
             try {
-                await maybeRunMorningReminder(client);
-                await runDueOneTimeReminders(client);
+                startMinigameLoop(client);
             } catch (err) {
-                global.logger.error(err);
-            } finally {
-                engagementTickRunning = false;
+                global.logger.error('[MINIGAMES] Failed to start loop', err);
             }
-        };
-        await engagementTick();
-        setInterval(engagementTick, 60 * 1000);
-        try {
-            startMinigameLoop(client);
-        } catch (err) {
-            global.logger.error('[MINIGAMES] Failed to start loop', err);
-        }
-        try {
-            await restoreActiveGames(client);
-        } catch (err) {
-            global.logger.error('[MINIGAMES] Failed to restore active game', err);
-        }
-        try {
-            cron.schedule('0 9 * * *', async () => {
-                await forceStartMinigame(client);
-            }, { timezone: 'Europe/Rome' });
-            cron.schedule('45 23 * * *', async () => {
-                await forceStartMinigame(client);
-            }, { timezone: 'Europe/Rome' });
-        } catch (err) {
-            global.logger.error('[MINIGAMES] Failed to schedule forced runs', err);
-        }
-        try {
-            startVoteRoleCleanupLoop(client);
-        } catch (err) {
-            global.logger.error('[VOTE ROLE] Failed to start cleanup loop', err);
-        }
-        try {
-            startHourlyReminderLoop(client);
-        } catch (err) {
-            global.logger.error('[CHAT REMINDER] Failed to start hourly loop', err);
-        }
-        try {
-            await backfillVerificationTenure(client);
-        } catch (err) {
-            global.logger.error('[VERIFY TENURE] Failed to backfill existing verified users', err);
-        }
-        try {
-            startVerificationTenureLoop(client);
-        } catch (err) {
-            global.logger.error('[VERIFY TENURE] Failed to start loop', err);
-        }
-        try {
-            await renumberAllCategories(client);
-            startCategoryNumberingLoop(client);
-        } catch (err) {
-            global.logger.error('[CATEGORY NUMBERING] Failed to start', err);
+            try {
+                await restoreActiveGames(client);
+            } catch (err) {
+                global.logger.error('[MINIGAMES] Failed to restore active game', err);
+            }
+            try {
+                cron.schedule('0 9 * * *', async () => {
+                    await forceStartMinigame(client);
+                }, { timezone: 'Europe/Rome' });
+                cron.schedule('45 23 * * *', async () => {
+                    await forceStartMinigame(client);
+                }, { timezone: 'Europe/Rome' });
+            } catch (err) {
+                global.logger.error('[MINIGAMES] Failed to schedule forced runs', err);
+            }
+            try {
+                startVoteRoleCleanupLoop(client);
+            } catch (err) {
+                global.logger.error('[VOTE ROLE] Failed to start cleanup loop', err);
+            }
+            try {
+                startHourlyReminderLoop(client);
+            } catch (err) {
+                global.logger.error('[CHAT REMINDER] Failed to start hourly loop', err);
+            }
+            try {
+                await backfillVerificationTenure(client);
+            } catch (err) {
+                global.logger.error('[VERIFY TENURE] Failed to backfill existing verified users', err);
+            }
+            try {
+                startVerificationTenureLoop(client);
+            } catch (err) {
+                global.logger.error('[VERIFY TENURE] Failed to start loop', err);
+            }
+            try {
+                await renumberAllCategories(client);
+                startCategoryNumberingLoop(client);
+            } catch (err) {
+                global.logger.error('[CATEGORY NUMBERING] Failed to start', err);
+            }
         }
         try {
             cron.schedule("0 0 1 * *", async () => {

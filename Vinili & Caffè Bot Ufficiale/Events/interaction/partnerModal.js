@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder} = require('discord.js');
-const fetch = require('node-fetch');
+const fetch = globalThis.fetch;
 const Staff = require('../../Schemas/Staff/staffSchema');
 
 function extractInviteCode(text) {

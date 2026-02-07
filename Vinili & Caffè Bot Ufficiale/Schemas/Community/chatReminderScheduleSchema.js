@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 
 const chatReminderScheduleSchema = new Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     fireAt: { type: Date, required: true },
     kind: { type: String, default: 'first' }
   },

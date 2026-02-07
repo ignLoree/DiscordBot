@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const InviteTrack = require('../../Schemas/Community/inviteTrackSchema');
 
@@ -180,7 +180,7 @@ module.exports = {
     const redirectEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setDescription(
-        `Per evitare di intasare la chat, la classifica inviti e stata generata nel canale ` +
+        `Per evitare di intasare la chat, la classifica inviti è stata generata nel canale ` +
         `<#${LEADERBOARD_CHANNEL_ID}>. [Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
       );
 

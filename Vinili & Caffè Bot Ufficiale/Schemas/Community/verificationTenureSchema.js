@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const VerificationTenureSchema = new Schema({
-  guildId: { type: String, required: true, index: true },
+  guildId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
   verifiedAt: { type: Date, required: true },
   stage: { type: Number, default: 1 }

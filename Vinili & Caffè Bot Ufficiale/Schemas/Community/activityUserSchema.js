@@ -3,7 +3,7 @@ const { Schema, model } = mongoose;
 
 const activityUserSchema = new Schema(
   {
-    guildId: { type: String, required: true, index: true },
+    guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     messages: {
       total: { type: Number, default: 0 },

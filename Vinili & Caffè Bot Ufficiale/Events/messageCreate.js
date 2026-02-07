@@ -711,10 +711,9 @@ async function handleDiscadiaBump(message, client) {
     if (!message.guild) return false;
     const isDiscadiaAuthor = message.author?.id === discadia.botId;
     const isDiscadiaApp = message.applicationId === discadia.botId;
-    const interactionBump = message.interaction?.commandName === 'bump';
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
         ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
-        : [];
+        : ['has been successfully bumped', 'successfully bumped', 'bumped successfully'];
     const haystacks = [];
     if (message.content) haystacks.push(message.content);
     if (Array.isArray(message.embeds)) {
@@ -735,10 +734,9 @@ async function handleDiscadiaBump(message, client) {
     const hasPattern = patterns.some((pattern) =>
         normalized.some((text) => text.includes(pattern))
     );
-    const hasBumpText = normalized.some((text) => text.includes('bump'));
-    const isBump = interactionBump || hasPattern || hasBumpText;
+    const isBump = hasPattern;
     if (!isBump) return false;
-    if (!isDiscadiaAuthor && !isDiscadiaApp && !interactionBump) return false;
+    if (!isDiscadiaAuthor && !isDiscadiaApp) return false;
     const bumpUserId = message.interaction?.user?.id;
     const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
     const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +

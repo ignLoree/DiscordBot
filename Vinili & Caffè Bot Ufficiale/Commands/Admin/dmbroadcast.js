@@ -25,6 +25,12 @@ module.exports = {
         .setName("utente")
         .setDescription("Invia il DM solo a un utente specifico")
         .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option
+        .setName("all")
+        .setDescription("Conferma invio a tutti (usa solo se non imposti utente)")
+        .setRequired(false)
     ),
 
   async execute(interaction, client) {
@@ -37,9 +43,16 @@ module.exports = {
     }
 
     const targetUser = interaction.options.getUser("utente");
+    const confirmAll = interaction.options.getBoolean("all") === true;
+    if (!targetUser && !confirmAll) {
+      return safeReply(interaction, {
+        content: "<:vegax:1443934876440068179> Per sicurezza, senza `utente` devi impostare `all: true`.",
+        flags: 1 << 6
+      });
+    }
     const targetId = targetUser?.id;
     const modal = new ModalBuilder()
-      .setCustomId(`dm_broadcast:${interaction.user.id}:${targetId || "all"}`)
+      .setCustomId(`dm_broadcast:${interaction.user.id}:${targetId || "all"}:${confirmAll ? "1" : "0"}`)
       .setTitle("DM Broadcast");
 
     const titleInput = new TextInputBuilder()
@@ -64,4 +77,3 @@ module.exports = {
     await interaction.showModal(modal);
   }
 };
-

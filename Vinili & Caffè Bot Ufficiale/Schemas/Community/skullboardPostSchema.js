@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { Schema, model } = mongoose;
 
 const SkullboardPostSchema = new Schema({
-  guildId: { type: String, required: true, index: true },
+  guildId: { type: String, required: true },
   messageId: { type: String, required: true, index: true },
   postMessageId: { type: String, default: null }
 });
