@@ -8,6 +8,7 @@ const { handleSuggestionVote } = require('./interaction/suggestionHandlers');
 const { handleTicketInteraction } = require('./interaction/ticketHandlers');
 const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
+const { handleCustomRoleInteraction } = require('./interaction/customRoleHandlers');
 
 module.exports = {
     name: 'interactionCreate',
@@ -31,6 +32,7 @@ module.exports = {
             if (await handleTicketInteraction(interaction)) return;
             if (await handlePartnerModal(interaction)) return;
             if (await handleSuggestionVote(interaction)) return;
+            if (await handleCustomRoleInteraction(interaction)) return;
             if (await handleButtonInteraction(interaction, client)) return;
         } catch (err) {
             global.logger.error(err);

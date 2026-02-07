@@ -6,18 +6,26 @@ module.exports = {
   name: 'rank',
   aliases: ["r"],
 
-  async execute(message) {
+  async execute(message, args = []) {
     await message.channel.sendTyping();
 
-    const { stats, weeklyRank, allTimeRank } = await getUserRanks(message.guild.id, message.author.id);
+    const targetFromMention = message.mentions?.users?.first() || null;
+    const raw = Array.isArray(args) && args[0] ? String(args[0]) : '';
+    const id = raw.replace(/[<@!>]/g, '');
+    const targetFromId = /^\d{16,20}$/.test(id)
+      ? (await message.client.users.fetch(id).catch(() => null))
+      : null;
+    const targetUser = targetFromMention || targetFromId || message.author;
+
+    const { stats, weeklyRank, allTimeRank } = await getUserRanks(message.guild.id, targetUser.id);
     const multiplier = await getGlobalMultiplier(message.guild.id);
     const weeklyText = stats.level === 0 ? 'Fuori dalla classifica' : `#${weeklyRank}`;
     const allTimeText = stats.level === 0 ? 'Fuori dalla classifica' : `#${allTimeRank}`;
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle(`Le statistiche di ${message.author.tag} .ᐟ ✧`)
-      .setThumbnail(message.author.displayAvatarURL())
+      .setTitle(`Le statistiche di ${targetUser.tag} .ᐟ ✧`)
+      .setThumbnail(targetUser.displayAvatarURL())
       .setDescription([
         `<:VC_EXP:1468714279673925883> Hai accumulato un totale di **${stats.totalExp} EXP**.`,
         `<a:VC_Rocket:1468544312475123753> **Moltiplicatore:** ${multiplier}x`,
@@ -40,5 +48,4 @@ module.exports = {
     await safeMessageReply(message, { embeds: [embed], components: [row], allowedMentions: { repliedUser: false } });
   }
 };
-
 

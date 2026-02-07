@@ -19,16 +19,29 @@ function getUnlockedRewards(totalExp) {
   return EXP_REWARDS.filter((reward) => expValue >= reward.exp);
 }
 
+async function resolveTargetUser(message, args = []) {
+  const mention = message.mentions?.users?.first();
+  if (mention) return mention;
+  const raw = Array.isArray(args) && args[0] ? String(args[0]) : '';
+  const id = raw.replace(/[<@!>]/g, '');
+  if (/^\d{16,20}$/.test(id)) {
+    const user = await message.client.users.fetch(id).catch(() => null);
+    if (user) return user;
+  }
+  return message.author;
+}
+
 module.exports = {
   name: 'minigamestats',
-  aliases: ["mstats"],
+  aliases: ['mstats'],
 
-  async execute(message) {
+  async execute(message, args = []) {
     await message.channel.sendTyping();
+    const targetUser = await resolveTargetUser(message, args);
 
     let totalExp = 0;
     try {
-      const doc = await MinigameUser.findOne({ guildId: message.guild.id, userId: message.author.id });
+      const doc = await MinigameUser.findOne({ guildId: message.guild.id, userId: targetUser.id });
       totalExp = Number(doc?.totalExp || 0);
     } catch {}
 
@@ -39,8 +52,8 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setAuthor({ name: message.author.username, iconURL: message.author.displayAvatarURL() })
-      .setTitle('Le tue statistiche nei Minigames <a:VC_Flowers:1468687836055212174>')
+      .setAuthor({ name: targetUser.username, iconURL: targetUser.displayAvatarURL() })
+      .setTitle(`Le statistiche nei Minigames di ${targetUser.username} <a:VC_Flowers:1468687836055212174>`)
       .setDescription([
         `<a:VC_Arrow:1448672967721615452> Hai un totale di \`${totalExp}\` punti (e exp guadagnati) <a:VC_FlowerPink:1468688049725636903>`,
         '',
@@ -52,3 +65,4 @@ module.exports = {
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
+
