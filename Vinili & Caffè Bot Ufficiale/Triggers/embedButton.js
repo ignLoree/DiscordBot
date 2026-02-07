@@ -195,7 +195,7 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:discordvoiceprivatewhite:1443925460185780257> **__VOCALI PRIVATE__**
 
-        > I **canali vocali privati** sono ottenibili tramite <#1442569159237177385> o tramite <#1442569148839493775> e hanno bisogno di un **__ruolo custom__**.
+        > I **canali vocali privati** sono ottenibili tramite perks e hanno bisogno di un **__ruolo custom__**.
         
         <:pinnednew:1443670849990430750> __**REGOLE:**__
         <:VC_DoubleReply:1468713981152727120>  Devono essere **attive** almeno **__3 ore a settimana__**;
@@ -209,7 +209,7 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setDescription(`<:defaultrolepermissions:1443925459170623509> **__RUOLO CUSTOM__**
 
-        > I **canali vocali privati** sono ottenibili tramite <#1442569159237177385> o tramite <#1442569148839493775>. A differenza delle **vocali private** essi possono essere ottenuti anche __senza__ l'ausilio di un **canale vocale privato**
+        > I **canali vocali privati** sono ottenibili tramite perks. A differenza delle **vocali private** essi possono essere ottenuti anche __senza__ l'ausilio di un **canale vocale privato**
         
         <:pinnednew:1443670849990430750> __**REGOLE:**__
         <:VC_DoubleReply:1468713981152727120>  Chi **possiede** il __ruolo__ dovrà fare almeno **__100 messaggi__** _a settimana_;
@@ -413,7 +413,7 @@ module.exports = {
                 .setTitle('<:VC_EXP:1468714279673925883> Informazioni sui moltiplicatori')
                 .setDescription([
                     'I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.',
-                    'I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#1442569159237177385>',
+                    'I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#1442569111119990887>',
                     '',
                     '**Moltiplicatori attivi:**',
                     ...lines,

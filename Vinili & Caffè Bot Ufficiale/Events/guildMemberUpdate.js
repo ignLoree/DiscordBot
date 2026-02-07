@@ -49,7 +49,7 @@ module.exports = {
                         .setDescription(
                             `<a:ThankYou:1329504268369002507> **Grazie** ${newMember.user} per aver **boostato** **${newMember.guild.name}**!
 <a:flyingnitroboost:1443652205705170986> Tutto lo **staff** ti _ringrazia_ per averci __supportato__.
-> <a:Boost_Cycle:1329504283007385642> Ora hai dei **nuovi** <#1442569159237177385>, vai a __controllarli__!`
+> <a:Boost_Cycle:1329504283007385642> Ora hai dei **nuovi** perks, vai a __controllarli__ in <#1442569111119990887>!`
                         )
                         .setColor("#6f4e37")
                         .setFooter({

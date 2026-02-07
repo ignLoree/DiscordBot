@@ -11,24 +11,19 @@ module.exports = {
         const canaleregole = client.channels.cache.get('1442569111119990887');
         const verifica = client.channels.cache.get('1442569059983163403');
         const ticket = client.channels.cache.get('1442569095068254219');
-        const donazioni = client.channels.cache.get('1442569148839493775');
         const private = client.channels.cache.get('1442569190971015239');
         const sponsor = client.channels.cache.get('1442569211611185323');
         const social = client.channels.cache.get('1442569225930805320');
         const colori = client.channels.cache.get('1442569099795365898');
         const profile = client.channels.cache.get('1442569103582695536');
         const pings = client.channels.cache.get('1442569105222664354');
-        const perks = client.channels.cache.get('1442569159237177385');
         const candidature = client.channels.cache.get('1442569232507473951');
 
         const embeds = [
             new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:rules:1443307208543703131> **Entrando su Vinili & Caffè accetti il regolamento qui presente. Ti consigliamo di non violare le regole per vivere una esperienza migliore nel server!**`),
-            new EmbedBuilder()
-                .setColor('#6f4e37')
                 .setTitle(`<:pepe_wave:1329488693739782274> **__BENVENUTO SU Vinili & Caffè'__**`)
-                .setDescription(`? Per **verificarti** premi il pulsante **__\`Verify\`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.
+                .setDescription(`<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__\`Verify\`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.
     <:vsl_ticket:1329520261053022208> Per **qualsiasi** problema,  non **esitate** ad aprire un **__<#1442569095068254219> \`SUPPORTO\`__**`),
             new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -52,7 +47,7 @@ module.exports = {
 
             new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:customprofile:1443925456972808304> **Vinili & Caffè** dispone di **Ruoli Custom** e **Vocali Private** totalmente __customizzabili__. Questi sono ottenibili tramite <#1442569159237177385> o tramite <#1442569148839493775>.
+                .setDescription(`<:customprofile:1443925456972808304> **Vinili & Caffè** dispone di **Ruoli Custom** e **Vocali Private** totalmente __customizzabili__. Questi sono ottenibili tramite <#1442569111119990887>.
 
                     > Per leggere **come funzionano** e le **regole** puoi cliccare sui bottoni sottostanti.`),
 
@@ -66,138 +61,12 @@ module.exports = {
         > <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)`),
 
             new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Rosso__**・───`)
-                .setDescription(`> 🍒 <a:vegarightarrow:1443673039156936837> <@&1442568958656905318>
-        > 🩸 <a:vegarightarrow:1443673039156936837> <@&1442568956832645212>
-        > 🏮 <a:vegarightarrow:1443673039156936837> <@&1442568961077153994>
-        > 🪸 <a:vegarightarrow:1443673039156936837> <@&1442568960016121998>`)
-                .setColor('#7f171f'),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Arancione__**・───`)
-                .setDescription(`> 🥕 <a:vegarightarrow:1443673039156936837> <@&1442568963836874886>
-        > 🎃 <a:vegarightarrow:1443673039156936837> <@&1442568965040636019>
-        > 🍊 <a:vegarightarrow:1443673039156936837> <@&1442568967045648412>
-        > 🍑 <a:vegarightarrow:1443673039156936837> <@&1442568962167541760>`)
-                .setColor(`#d5654d`),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Giallo__**・───`)
-                .setDescription(`> 🌽 <a:vegarightarrow:1443673039156936837> <@&1442568968371048449>        
-        > 🎖️ <a:vegarightarrow:1443673039156936837> <@&1442568969528541225>
-        > 🔑 <a:vegarightarrow:1443673039156936837> <@&1442568970497687717>
-        > 🍋‍🟩 <a:vegarightarrow:1443673039156936837> <@&1442568971357388912>`)
-                .setColor(`#ffd700`),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Verde__**・───`)
-                .setDescription(`> 🍐 <a:vegarightarrow:1443673039156936837> <@&1442568972745838667>
-        > 🍃 <a:vegarightarrow:1443673039156936837> <@&1442568975966797926>
-        > 🥬 <a:vegarightarrow:1443673039156936837> <@&1442568976944201828>
-        > 🫒 <a:vegarightarrow:1443673039156936837> <@&1442568974486208634>`)
-                .setColor(`#bfe88b`),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Blu__**・───`)
-                .setDescription(`> 💧 <a:vegarightarrow:1443673039156936837> <@&1442568977896439960>
-        > 💎 <a:vegarightarrow:1443673039156936837> <@&1442568979473371258>
-        > 🧶 <a:vegarightarrow:1443673039156936837> <@&1442568980626673685>
-        > 🌃 <a:vegarightarrow:1443673039156936837> <@&1442568981792948304>`)
-                .setColor('#4169e1'),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Viola__**・───`)
-                .setDescription(`> 🍆 <a:vegarightarrow:1443673039156936837> <@&1442568982769959002>
-        > 🏓 <a:vegarightarrow:1443673039156936837> <@&1442568983898357954>
-        > 🌷 <a:vegarightarrow:1443673039156936837> <@&1442568985278156971>
-        > 🍷 <a:vegarightarrow:1443673039156936837> <@&1442568986720993350>`)
-                .setColor(`#b300ff`),
-
-            new EmbedBuilder()
-                .setTitle(`───・**__Sfumature di Nero__**・───`)
-                .setDescription(`> 🐈‍⬛ <a:vegarightarrow:1443673039156936837> <@&1442568987887276133>
-        > 🚬 <a:vegarightarrow:1443673039156936837> <@&1442568988961013821>
-        > 🐭 <a:vegarightarrow:1443673039156936837> <@&1442568989866725468>
-        > 🐼 <a:vegarightarrow:1443673039156936837> <@&1442568991150309578>`)
-                .setColor('#808080'),
-
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`───・**__QUALI SONO I TUOI PRONOMI?__**・─── 
-
-        \`›                             ›\`
-
-        🧔‍♂️ <a:vegarightarrow:1443673039156936837> <@&1442568997848743997>
-        👩 <a:vegarightarrow:1443673039156936837> <@&1442568999043989565>
-        🧑 <a:vegarightarrow:1443673039156936837> <@&1442569000063074498>
-        ❔ <a:vegarightarrow:1443673039156936837> <@&1442569001367769210>
-        ❓ <a:vegarightarrow:1443673039156936837> <@&1442569002932109434>`),
-
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`───・**__DA DOVE PROVIENI?__**・───
-
-        \`›                             ›\`
-
-        🥀 <a:vegarightarrow:1443673039156936837> <@&1442569021861007443>
-        🌿 <a:vegarightarrow:1443673039156936837> <@&1442569023303974922>
-        🌵 <a:vegarightarrow:1443673039156936837> <@&1442569024486506498>
-        🪺 <a:vegarightarrow:1443673039156936837> <@&1442569025790939167>`),
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`───・**__DM STATUS__**・───
-
-        \`›                             ›\`
-
-        📫 <a:vegarightarrow:1443673039156936837> <@&1442569004215697438>
-        📪 <a:vegarightarrow:1443673039156936837> <@&1442569005071077417>
-        📭 <a:vegarightarrow:1443673039156936837> <@&1442569006543274126>`),
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`───・**__QUANTI ANNI HAI?__**・───
-
-        \`›                             ›\`
-
-        🍂 <a:vegarightarrow:1443673039156936837> <@&1442568996774871194>
-        🧹 <a:vegarightarrow:1443673039156936837> <@&1442568995348807691>
-        🪒 <a:vegarightarrow:1443673039156936837> <@&1442568994581381170>
-        🧸 <a:vegarightarrow:1443673039156936837> <@&1442568993197265021>`),
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`───・**__STATO SENTIMENTALE__**・───
-
-        \`›                             ›\`
-
-        💋 <a:vegarightarrow:1443673039156936837> <@&1442569028173299732>
-        💦 <a:vegarightarrow:1443673039156936837> <@&1442569029263818906>`),
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`🗣️ <a:vegarightarrow:1443673039156936837> <@&1442569009567629375>
-        🎊 <a:vegarightarrow:1443673039156936837> <@&1442569012063109151> 
-        📰 <a:vegarightarrow:1443673039156936837> <@&1442569010943365342> 
-        📊 <a:vegarightarrow:1443673039156936837> <@&1442569014474965033> 
-        🔔 <a:vegarightarrow:1443673039156936837> <@&1442569013074071644>
-        🕹️ <a:vegarightarrow:1443673039156936837> <@&1443955529352478830>
-        💼 <a:vegarightarrow:1443673039156936837> <@&1447597930944008376>`),
-
-            new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`<a:MimmyGift:1329446511372664886> Cliccando i **bottoni** qua sotto, potrete vedere i **__vantaggi__** e come **__ottenerli__**.
-
-            > **LISTA RUOLI:**
-
-            <:dot:1443660294596329582> <@&1329497467481493607>
-            <:dot:1443660294596329582> <@&1442568948271943721>
-            <:dot:1443660294596329582> **Dal livello <@&1442568937303707789> al livello <@&1442568929930379285>**
-            <:dot:1443660294596329582> <@&1442568950805430312>`),
-
-            new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:7871discordstaff:1443651872258003005> Su **__Vinili & Caffè__** ci si può candidare a **__\`2\`__** _ruoli_: **__\`Helper\`__** e **__\`Partner Manager\`__**. 
         > <:5751attentionfromvega:1443651874032062505> Per **candidarti** dovrai __cliccare__ il bottone in base al **ruolo** che vuoi __ricoprire__ 
 
         Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
-        <:1_:1444099163116535930> Avere almeno **__14 anni (compiùti)__**
+        <:1_:1444099163116535930> Avere almeno **__14 anni (compiuti)__**
         <:2_:1444099161673826368> Rispettare i **[ToS](https://discord.com/terms)** e le **[Linee Guida](https://discord.com/guidelines)** di **Discord**
         <:3_:1444099160294031471> Essere **maturi** e **attivi**
         <:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`),

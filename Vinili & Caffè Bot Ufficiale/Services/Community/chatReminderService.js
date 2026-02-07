@@ -65,7 +65,7 @@ const reminderPool = [
     .setDescription(
       [
         'Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
-        '> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost & livelli su: <#1442569159237177385>'
+        '> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost & livelli su: <#1442569111119990887>'
       ].join('\n')
     ),
   () => new EmbedBuilder()

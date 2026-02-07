@@ -102,7 +102,7 @@ module.exports = {
         if (interaction.customId == 'regolamento') {
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:dot:1443660294596329582> **Rispettare** le <#1442569111119990887> del server;
+                .setDescription(`<:dot:1443660294596329582> **Rispettare** le regole (<#1442569111119990887>) del server;
 
             <:dot:1443660294596329582> __Non__ **chiedere** pex _continuamente_;
 

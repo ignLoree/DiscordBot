@@ -325,12 +325,6 @@ module.exports = {
                     await addPerkRoleIfPossible(member);
                     return;
                 }
-                if (wasOffline) {
-                    statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastSeenOnlineAt });
-                    await persistStatus(member.guild.id, userId, { hasLink: true });
-                    await addPerkRoleIfPossible(member);
-                    return;
-                }
 
                 statusCache.set(userId, { hasLink: true, lastAnnounced: Date.now(), lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
