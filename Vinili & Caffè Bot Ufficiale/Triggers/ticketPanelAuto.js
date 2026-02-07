@@ -38,7 +38,7 @@ module.exports = {
 <a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli più __importanti__ sono quelli da usare **raramente**.
 
 <:dot:1443660294596329582> **__\`PERKS\`__**
-<:VC_Reply:1468262952934314131> Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poich� sono dati **__automaticamente__**.
+<:VC_Reply:1468262952934314131> Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichè sono dati **__automaticamente__**.
 
 <:dot:1443660294596329582> **__\`SUPPORTO\`__**
 <:VC_Reply:1468262952934314131> Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
