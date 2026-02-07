@@ -1,4 +1,4 @@
-const canvasModule = require('canvas');
+﻿const canvasModule = require('canvas');
 const { createCanvas, loadImage } = canvasModule;
 const { registerCanvasFonts, drawTextWithSpecialFallback } = require('./canvasFonts');
 
@@ -73,6 +73,56 @@ function drawFramedImage(ctx, image, x, y, size, rotationDeg) {
   ctx.restore();
 }
 
+function drawHeartShape(ctx, cx, cy, size) {
+  const topCurveHeight = size * 0.32;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + size * 0.28);
+  ctx.bezierCurveTo(
+    cx - size * 0.52,
+    cy - topCurveHeight,
+    cx - size,
+    cy + size * 0.38,
+    cx,
+    cy + size
+  );
+  ctx.bezierCurveTo(
+    cx + size,
+    cy + size * 0.38,
+    cx + size * 0.52,
+    cy - topCurveHeight,
+    cx,
+    cy + size * 0.28
+  );
+  ctx.closePath();
+}
+
+function drawHeart(ctx, cx, cy, size) {
+  ctx.save();
+
+  const glow = ctx.createRadialGradient(cx, cy + size * 0.35, size * 0.2, cx, cy + size * 0.35, size * 1.25);
+  glow.addColorStop(0, 'rgba(255,120,190,0.55)');
+  glow.addColorStop(1, 'rgba(255,120,190,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy + size * 0.35, size * 1.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  drawHeartShape(ctx, cx, cy, size);
+  const fill = ctx.createLinearGradient(cx - size, cy - size * 0.3, cx + size, cy + size);
+  fill.addColorStop(0, '#ff93d1');
+  fill.addColorStop(0.5, '#ff4fa7');
+  fill.addColorStop(1, '#db2a85');
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  drawHeartShape(ctx, cx, cy, size);
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 module.exports = async function renderShipCanvas({
   leftAvatarUrl,
   rightAvatarUrl,
@@ -131,15 +181,21 @@ module.exports = async function renderShipCanvas({
     baseline: 'middle'
   });
 
-  drawTextWithSpecialFallback(ctx, '💗', width / 2, 292, {
-    size: 110,
-    align: 'center',
-    baseline: 'middle'
-  });
-  drawTextWithSpecialFallback(ctx, `${finalPercent}%`, width / 2, 299, {
+  drawHeart(ctx, width / 2, 228, 54);
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '700 44px "Noto Sans", Arial, sans-serif';
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.strokeText(`${finalPercent}%`, width / 2, 300);
+  ctx.restore();
+
+  drawTextWithSpecialFallback(ctx, `${finalPercent}%`, width / 2, 300, {
     size: 44,
     weight: '700',
-    color: '#ffffff',
+    color: '#5b0d3f',
     align: 'center',
     baseline: 'middle'
   });

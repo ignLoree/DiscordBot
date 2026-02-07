@@ -1,8 +1,9 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const ActivityUser = require('../../Schemas/Community/activityUserSchema');
 
 const TOP_LIMIT = 10;
+const LEADERBOARD_CHANNEL_ID = '1442569138114662490';
 
 function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
@@ -69,7 +70,50 @@ module.exports = {
       .setDescription(lines.join('\n'))
       .setFooter({ text: `⇢ Comando eseguito da: ${message.author.username}` });
 
-    await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+    const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
+    if (!shouldRedirect) {
+      await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+      return;
+    }
+
+    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID)
+      || await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null);
+
+    if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
+      await safeMessageReply(message, {
+        content: `Non riesco a trovare il canale <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const sent = await leaderboardChannel.send({ embeds: [embed] }).catch(() => null);
+    if (!sent) {
+      await safeMessageReply(message, {
+        content: `Non sono riuscito a inviare la classifica in <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const redirectEmbed = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setDescription(
+        `Per evitare di intasare la chat, la classifica messaggi e stata generata nel canale ` +
+        `<#${LEADERBOARD_CHANNEL_ID}>. [Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
+      );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel('Vai alla classifica messaggi')
+        .setURL(sent.url)
+    );
+
+    await safeMessageReply(message, {
+      embeds: [redirectEmbed],
+      components: [row],
+      allowedMentions: { repliedUser: false }
+    });
   }
 };
-

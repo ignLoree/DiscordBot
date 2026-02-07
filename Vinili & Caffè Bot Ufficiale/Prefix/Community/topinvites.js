@@ -1,9 +1,10 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const InviteTrack = require('../../Schemas/Community/inviteTrackSchema');
 
 const TOP_LIMIT = 10;
 const THUMBNAIL_URL = 'https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114';
+const LEADERBOARD_CHANNEL_ID = '1442569138114662490';
 
 function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
@@ -94,10 +95,53 @@ module.exports = {
         iconURL: message.author.displayAvatarURL({ size: 64 })
       });
 
+    const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
+    if (!shouldRedirect) {
+      await safeMessageReply(message, {
+        embeds: [embed],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID)
+      || await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null);
+
+    if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
+      await safeMessageReply(message, {
+        content: `Non riesco a trovare il canale <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const sent = await leaderboardChannel.send({ embeds: [embed] }).catch(() => null);
+    if (!sent) {
+      await safeMessageReply(message, {
+        content: `Non sono riuscito a inviare la classifica in <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const redirectEmbed = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setDescription(
+        `Per evitare di intasare la chat, la classifica inviti e stata generata nel canale ` +
+        `<#${LEADERBOARD_CHANNEL_ID}>. [Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
+      );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel('Vai alla classifica inviti')
+        .setURL(sent.url)
+    );
+
     await safeMessageReply(message, {
-      embeds: [embed],
+      embeds: [redirectEmbed],
+      components: [row],
       allowedMentions: { repliedUser: false }
     });
   }
 };
-
