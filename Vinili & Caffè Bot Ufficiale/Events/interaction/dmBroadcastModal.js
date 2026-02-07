@@ -56,7 +56,10 @@ function chunkLines(lines, maxLen = 1800) {
 
 async function handleDmBroadcastModal(interaction, client) {
   if (!interaction.isModalSubmit() || !interaction.customId.startsWith("dm_broadcast:")) return false;
-  const userId = interaction.customId.split(":")[1];
+  const partsId = interaction.customId.split(":");
+  const userId = partsId[1];
+  const rawTargetId = partsId[2];
+  const targetId = rawTargetId && rawTargetId !== "all" ? rawTargetId : null;
   if (interaction.user.id !== userId) {
     await interaction.reply({ content: "<:vegax:1443934876440068179> Non puoi usare questo modal.", flags: 1 << 6 });
     return true;
@@ -86,6 +89,7 @@ async function handleDmBroadcastModal(interaction, client) {
   const skippedNoDm = [];
   const targets = interaction.guild.members.cache.filter((member) => {
     if (!member || member.user?.bot) return false;
+    if (targetId && member.id !== targetId) return false;
     if (noDmSet.has(member.id)) {
       skippedNoDm.push(member.id);
       return false;
