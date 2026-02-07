@@ -7,7 +7,6 @@ const {
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 
-const THUMBNAIL_URL = 'https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114';
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
   '1442568950805430312',
   '1442568916114346096',
@@ -23,28 +22,31 @@ function buildNoPermEmbed(message) {
   const rolesText = CUSTOM_ROLE_ALLOWED_ROLE_IDS.map((id) => `<@&${id}>`).join(', ');
   return new EmbedBuilder()
     .setColor('#e67e22')
-    .setTitle('<:vegax:1443934876440068179> ➤ Non hai i permessi')
+    .setTitle('<:vegax:1443934876440068179> ? Non hai i permessi')
     .setDescription([
-      'Questo comando è riservato agli utenti che possiedono i seguenti ruoli:',
+      'Questo comando � riservato agli utenti che possiedono i seguenti ruoli:',
       rolesText
     ].join('\n'))
     .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
 }
 
-function buildPanelEmbed(member, role) {
-  return new EmbedBuilder()
+function buildPanelEmbed(member, role, guild) {
+  const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('🎨 Modifica Ruolo')
+    .setTitle('?? Modifica Ruolo')
     .setDescription([
-      '❄️ Modifica il tuo ruolo personalizzato.',
-      'Altri comandi li trovi nel menù con il comando `+help`',
+      '<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.',
+      '__Altri__ comandi li trovi nel men� con il comando `+help`',
       'Puoi configurarlo con i pulsanti qui sotto.',
       '',
       '**Ruolo:**',
       `${role}`
     ].join('\n'))
-    .setThumbnail(THUMBNAIL_URL)
     .setFooter({ text: `Comando eseguito da ${member.user.username}.` });
+
+  const guildIcon = guild?.iconURL?.({ extension: 'png', size: 256, forceStatic: false }) || null;
+  if (guildIcon) embed.setThumbnail(guildIcon);
+  return embed;
 }
 
 function buildPanelRows(ownerId, roleId) {
@@ -106,7 +108,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste pi�. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -114,7 +116,7 @@ module.exports = {
     }
 
     await safeMessageReply(message, {
-      embeds: [buildPanelEmbed(message.member, role)],
+      embeds: [buildPanelEmbed(message.member, role, message.guild)],
       components: buildPanelRows(message.author.id, role.id),
       allowedMentions: { repliedUser: false }
     });

@@ -176,9 +176,22 @@ async function handleRoleActionButton(interaction) {
       await interaction.reply({ content: '<:vegax:1443934876440068179> Non posso eliminare questo ruolo (gerarchia/permesi).', flags: 1 << 6 }).catch(() => {});
       return true;
     }
+    const roleName = role.name;
     await role.delete(`Custom role deleted by ${interaction.user.tag}`).catch(() => {});
     await CustomRole.deleteOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => {});
-    await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Ruolo eliminato.', flags: 1 << 6 }).catch(() => {});
+
+    const deletedEmbed = new EmbedBuilder()
+      .setColor('#e74c3c')
+      .setTitle('Ruolo eliminato')
+      .setDescription(`Il ruolo **${roleName}** è stato cancellato con successo.`);
+
+    const updated = await interaction.update({ embeds: [deletedEmbed], components: [] }).then(() => true).catch(() => false);
+    if (!updated) {
+      await interaction.message?.edit({ embeds: [deletedEmbed], components: [] }).catch(() => {});
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Ruolo eliminato.', flags: 1 << 6 }).catch(() => {});
+      }
+    }
     return true;
   }
 
@@ -370,6 +383,13 @@ async function handleAddRemoveSelectMenus(interaction) {
     }
 
     const targetId = interaction.values?.[0];
+    if (targetId === ownerId) {
+      await interaction.reply({
+        content: '<:vegax:1443934876440068179> Non puoi rimuovere il tuo stesso ruolo con questo comando.',
+        flags: 1 << 6
+      }).catch(() => {});
+      return true;
+    }
     const targetMember = interaction.guild.members.cache.get(targetId) || await interaction.guild.members.fetch(targetId).catch(() => null);
     if (!targetMember) {
       await interaction.reply({ content: '<:vegax:1443934876440068179> Utente non trovato.', flags: 1 << 6 }).catch(() => {});

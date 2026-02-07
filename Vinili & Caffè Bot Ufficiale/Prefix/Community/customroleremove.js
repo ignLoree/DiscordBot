@@ -86,7 +86,7 @@ module.exports = {
 
     await message.guild.members.fetch().catch(() => {});
     const membersWithRole = Array.from(role.members.values())
-      .filter((m) => !m.user?.bot)
+      .filter((m) => !m.user?.bot && m.id !== message.author.id)
       .slice(0, 25);
 
     if (!membersWithRole.length) {
@@ -95,7 +95,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor('#6f4e37')
             .setTitle('🗑️ Seleziona un utente')
-            .setDescription('Nessun utente ha attualmente il tuo ruolo personalizzato.')
+            .setDescription('Nessun utente valido (diverso da te) ha attualmente il tuo ruolo personalizzato.')
         ],
         allowedMentions: { repliedUser: false }
       });
