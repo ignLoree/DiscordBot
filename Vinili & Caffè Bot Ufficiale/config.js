@@ -142,4 +142,12 @@ module.exports = {
       requiredRoleId: "1442568949605597264"
     }
   },
+
+  categoryNumbering: {
+    enabled: true,
+    debounceMs: 1200,
+    intervalMs: 10 * 60 * 1000,
+    minDigits: 2,
+    separator: " "
+  }
 }

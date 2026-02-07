@@ -1,95 +1,111 @@
 const { ChannelType, PermissionsBitField } = require('discord.js');
 
 const SUPERSCRIPT_MAP = {
-    '0': '⁰',
-    '1': '¹',
-    '2': '²',
-    '3': '³',
-    '4': '⁴',
-    '5': '⁵',
-    '6': '⁶',
-    '7': '⁷',
-    '8': '⁸',
-    '9': '⁹'
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹'
 };
 
 const INDEX_PREFIX_RE = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/;
 const guildTimers = new Map();
 let loopHandle = null;
 
-function toSuperscriptNumber(value) {
-    const normalized = Math.max(1, Number(value) || 1).toString().padStart(2, '0');
-    return normalized
-        .split('')
-        .map((digit) => SUPERSCRIPT_MAP[digit] || digit)
-        .join('');
+function getSettings(client) {
+  const cfg = client?.config2?.categoryNumbering || {};
+  return {
+    enabled: cfg.enabled !== false,
+    debounceMs: Math.max(300, Number(cfg.debounceMs || 1200)),
+    intervalMs: Math.max(60 * 1000, Number(cfg.intervalMs || 10 * 60 * 1000)),
+    minDigits: Math.max(1, Number(cfg.minDigits || 2)),
+    separator: typeof cfg.separator === 'string' ? cfg.separator : ' '
+  };
 }
 
-function replaceNumberPrefixOnly(name, nextNumber) {
-    const value = String(name || '');
-    if (INDEX_PREFIX_RE.test(value)) {
-        return value.replace(INDEX_PREFIX_RE, nextNumber);
-    }
-    return `${nextNumber} ${value}`;
+function toSuperscriptNumber(value, minDigits) {
+  const normalized = Math.max(1, Number(value) || 1).toString().padStart(minDigits, '0');
+  return normalized
+    .split('')
+    .map((digit) => SUPERSCRIPT_MAP[digit] || digit)
+    .join('');
 }
 
-async function renumberGuildCategories(guild) {
+function replaceNumberPrefixOnly(name, nextNumber, separator) {
+  const value = String(name || '');
+  if (INDEX_PREFIX_RE.test(value)) {
+    return value.replace(INDEX_PREFIX_RE, nextNumber);
+  }
+  return `${nextNumber}${separator}${value}`;
+}
+
+async function renumberGuildCategories(guild, options) {
+  if (!guild) return;
+  const me = guild.members.me;
+  if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
+
+  const categories = guild.channels.cache
+    .filter((channel) => channel.type === ChannelType.GuildCategory)
+    .sort((a, b) => (a.rawPosition - b.rawPosition) || a.id.localeCompare(b.id))
+    .map((channel) => channel);
+
+  for (let index = 0; index < categories.length; index += 1) {
+    const category = categories[index];
+    if (!category?.manageable) continue;
+
+    const nextNumber = toSuperscriptNumber(index + 1, options.minDigits);
+    const expectedName = replaceNumberPrefixOnly(category.name, nextNumber, options.separator);
+    if (category.name === expectedName) continue;
+    await category.setName(expectedName).catch(() => {});
+  }
+}
+
+function queueCategoryRenumber(client, guildId, delayMs = null) {
+  if (!client || !guildId) return;
+  const options = getSettings(client);
+  if (!options.enabled) return;
+
+  const pending = guildTimers.get(guildId);
+  if (pending) clearTimeout(pending);
+
+  const timeout = setTimeout(async () => {
+    guildTimers.delete(guildId);
+    const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
     if (!guild) return;
-    const me = guild.members.me;
-    if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageChannels)) return;
+    await guild.channels.fetch().catch(() => {});
+    await renumberGuildCategories(guild, options);
+  }, delayMs == null ? options.debounceMs : delayMs);
 
-    const categories = guild.channels.cache
-        .filter((channel) => channel.type === ChannelType.GuildCategory)
-        .sort((a, b) => (a.rawPosition - b.rawPosition) || a.id.localeCompare(b.id))
-        .map((channel) => channel);
-
-    for (let index = 0; index < categories.length; index += 1) {
-        const category = categories[index];
-        if (!category?.manageable) continue;
-
-        const expectedName = replaceNumberPrefixOnly(
-            category.name,
-            toSuperscriptNumber(index + 1)
-        );
-
-        if (category.name === expectedName) continue;
-        await category.setName(expectedName).catch(() => {});
-    }
-}
-
-function queueCategoryRenumber(client, guildId, delayMs = 1200) {
-    if (!client || !guildId) return;
-    const pending = guildTimers.get(guildId);
-    if (pending) clearTimeout(pending);
-
-    const timeout = setTimeout(async () => {
-        guildTimers.delete(guildId);
-        const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
-        if (!guild) return;
-        await guild.channels.fetch().catch(() => {});
-        await renumberGuildCategories(guild);
-    }, delayMs);
-
-    guildTimers.set(guildId, timeout);
+  guildTimers.set(guildId, timeout);
 }
 
 async function runAllGuilds(client) {
-    if (!client) return;
-    for (const guild of client.guilds.cache.values()) {
-        await guild.channels.fetch().catch(() => {});
-        await renumberGuildCategories(guild);
-    }
+  if (!client) return;
+  const options = getSettings(client);
+  if (!options.enabled) return;
+  for (const guild of client.guilds.cache.values()) {
+    await guild.channels.fetch().catch(() => {});
+    await renumberGuildCategories(guild, options);
+  }
 }
 
-function startCategoryNumberingLoop(client, intervalMs = 10 * 60 * 1000) {
-    if (loopHandle) return;
-    loopHandle = setInterval(() => {
-        runAllGuilds(client).catch(() => {});
-    }, intervalMs);
+function startCategoryNumberingLoop(client) {
+  if (loopHandle) return;
+  const options = getSettings(client);
+  if (!options.enabled) return;
+  loopHandle = setInterval(() => {
+    runAllGuilds(client).catch(() => {});
+  }, options.intervalMs);
 }
 
 module.exports = {
-    queueCategoryRenumber,
-    runAllGuilds,
-    startCategoryNumberingLoop
+  queueCategoryRenumber,
+  runAllGuilds,
+  startCategoryNumberingLoop
 };
+
