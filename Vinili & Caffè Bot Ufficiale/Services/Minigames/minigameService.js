@@ -1,5 +1,5 @@
 ﻿const axios = require('axios');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder } = require('discord.js');
 const MinigameUser = require('../../Schemas/Minigames/minigameUserSchema');
 const MinigameState = require('../../Schemas/Minigames/minigameStateSchema');
 const MinigameRotation = require('../../Schemas/Minigames/minigameRotationSchema');
@@ -314,14 +314,20 @@ async function loadPlayerList(cfg) {
 async function fetchRandomSong(cfg) {
   const apiBase = cfg?.guessSong?.apiUrl;
   if (!apiBase) return null;
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    const letter = letters[randomBetween(0, letters.length - 1)];
-    const url = `${apiBase}${encodeURIComponent(letter)}&entity=song&limit=50`;
+  const popularTerms = Array.isArray(cfg?.guessSong?.popularTerms) && cfg.guessSong.popularTerms.length
+    ? cfg.guessSong.popularTerms
+    : [
+      'the weeknd', 'dua lipa', 'ed sheeran', 'drake', 'ariana grande',
+      'post malone', 'taylor swift', 'billie eilish', 'maneskin', 'elodie',
+      'sfera ebbasta', 'thasup', 'bad bunny', 'eminem', 'coldplay'
+    ];
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const term = popularTerms[randomBetween(0, popularTerms.length - 1)];
+    const url = `${apiBase}${encodeURIComponent(term)}&entity=song&limit=50`;
     try {
       const res = await axios.get(url, { timeout: 15000 });
       const results = Array.isArray(res?.data?.results) ? res.data.results : [];
-      const songs = results.filter((item) => item?.trackName && item?.artistName);
+      const songs = results.filter((item) => item?.trackName && item?.artistName && item?.previewUrl);
       if (!songs.length) continue;
       const song = songs[randomBetween(0, songs.length - 1)];
       const artwork = song.artworkUrl100
@@ -358,8 +364,30 @@ async function fetchAudioAttachment(url) {
 async function loadPopularSongList(cfg) {
   const now = Date.now();
   if (cachedSongs && (now - cachedSongsAt) < SONG_CACHE_TTL_MS) return cachedSongs;
-  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : [];
   const all = [];
+
+  // Primary source: Deezer chart (global top tracks, no API key required).
+  const deezerChartUrl = cfg?.guessSong?.deezerChartUrl || 'https://api.deezer.com/chart/0/tracks?limit=100';
+  try {
+    const chartRes = await axios.get(deezerChartUrl, { timeout: 15000 });
+    const tracks = Array.isArray(chartRes?.data?.data) ? chartRes.data.data : [];
+    for (const track of tracks) {
+      if (!track?.title || !track?.artist?.name) continue;
+      all.push({
+        source: 'deezer',
+        id: String(track.id || ''),
+        title: track.title,
+        artist: track.artist.name,
+        album: track?.album?.title || 'Album sconosciuto',
+        artwork: track?.album?.cover_xl || track?.album?.cover_big || track?.album?.cover_medium || null,
+        genre: 'Popolare',
+        previewUrl: track.preview || null
+      });
+    }
+  } catch {}
+
+  // Secondary source: iTunes feeds.
+  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : [];
   for (const feed of feeds) {
     if (!feed) continue;
     try {
@@ -372,7 +400,7 @@ async function loadPopularSongList(cfg) {
         const images = Array.isArray(entry?.['im:image']) ? entry['im:image'] : [];
         const artwork = images.length ? images[images.length - 1].label : null;
         if (!id || !title || !artist) continue;
-        all.push({ id: String(id), title, artist, artwork });
+        all.push({ source: 'itunes_feed', id: String(id), title, artist, artwork });
       }
     } catch {}
   }
@@ -386,10 +414,25 @@ async function fetchPopularSong(cfg) {
   if (!list.length) return null;
   const pick = list[randomBetween(0, list.length - 1)];
   if (!pick?.id) return null;
+
+  if (pick.source === 'deezer') {
+    const artistCountry = await fetchArtistCountry(cfg, pick.artist);
+    return {
+      title: pick.title,
+      artist: pick.artist,
+      album: pick.album || 'Album sconosciuto',
+      artwork: pick.artwork || null,
+      genre: pick.genre || 'Genere sconosciuto',
+      artistCountry: artistCountry || 'Nazionalità sconosciuta',
+      previewUrl: pick.previewUrl || null
+    };
+  }
+
   const lookupUrl = `https://itunes.apple.com/lookup?id=${encodeURIComponent(pick.id)}`;
   try {
     const res = await axios.get(lookupUrl, { timeout: 15000 });
     const item = Array.isArray(res?.data?.results) ? res.data.results[0] : null;
+    if (!item?.trackName || !item?.artistName) return null;
     const genre = item?.primaryGenreName || 'Genere sconosciuto';
     const artistCountry = await fetchArtistCountry(cfg, pick.artist);
     return {

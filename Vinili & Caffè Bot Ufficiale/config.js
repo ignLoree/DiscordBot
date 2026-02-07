@@ -89,6 +89,24 @@ module.exports = {
       rewardExp: 100,
       apiUrl: "https://itunes.apple.com/search?term=",
       artistApiUrl: "https://musicbrainz.org/ws/2/artist/?query=artist=",
+      deezerChartUrl: "https://api.deezer.com/chart/0/tracks?limit=100",
+      popularTerms: [
+        "the weeknd",
+        "dua lipa",
+        "ed sheeran",
+        "drake",
+        "ariana grande",
+        "post malone",
+        "taylor swift",
+        "billie eilish",
+        "maneskin",
+        "elodie",
+        "sfera ebbasta",
+        "thasup",
+        "bad bunny",
+        "eminem",
+        "coldplay"
+      ],
       popularFeeds: [
         "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
         "https://itunes.apple.com/us/rss/topsongs/limit=100/json"
