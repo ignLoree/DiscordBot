@@ -146,7 +146,7 @@ module.exports = {
       .setDescription(
         `Per evitare di intasare la chat, la classifica ${isWeekly ? 'settimanale' : 'generale'} ` +
         `e stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>. ` +
-        `Clicca qui per vederla o utilizza il bottone sottostante.`
+        `[Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
       );
 
     const row = new ActionRowBuilder().addComponents(
