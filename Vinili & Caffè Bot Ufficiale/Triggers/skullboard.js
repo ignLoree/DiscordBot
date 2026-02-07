@@ -43,6 +43,17 @@ module.exports = {
         }
       }
       const text = message.content?.trim() || '';
+      const firstAttachment = message.attachments?.first?.() || null;
+      const firstSticker = message.stickers?.first?.() || null;
+      const firstEmbed = Array.isArray(message.embeds) && message.embeds.length ? message.embeds[0] : null;
+
+      const mediaUrlFromAttachment = firstAttachment?.url || null;
+      const mediaUrlFromSticker = firstSticker?.url || firstSticker?.imageURL?.() || null;
+      const mediaUrlFromEmbed = firstEmbed?.image?.url || null;
+      const mediaUrl = mediaUrlFromAttachment || mediaUrlFromSticker || mediaUrlFromEmbed || null;
+
+      const hasMedia = Boolean(mediaUrl);
+      const hasEmbedOnly = !text && !hasMedia && Array.isArray(message.embeds) && message.embeds.length > 0;
       let reply = null;
       if (message.reference?.messageId) {
         const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
@@ -81,7 +92,10 @@ module.exports = {
         nameColor,
         createdAt: message.createdAt,
         reply,
-        roleIconUrl
+        roleIconUrl,
+        mediaUrl,
+        hasMedia,
+        hasEmbedOnly
       });
       const attachment = new AttachmentBuilder(screenshot, { name: 'skullboard.png' });
 
