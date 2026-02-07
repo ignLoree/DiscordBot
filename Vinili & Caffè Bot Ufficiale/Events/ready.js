@@ -13,6 +13,7 @@ const { startMinigameLoop, forceStartMinigame, restoreActiveGames } = require('.
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
+const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/categoryNumberingService');
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
 
@@ -140,6 +141,12 @@ module.exports = {
             startVerificationTenureLoop(client);
         } catch (err) {
             global.logger.error('[VERIFY TENURE] Failed to start loop', err);
+        }
+        try {
+            await renumberAllCategories(client);
+            startCategoryNumberingLoop(client);
+        } catch (err) {
+            global.logger.error('[CATEGORY NUMBERING] Failed to start', err);
         }
         try {
             cron.schedule("0 0 1 * *", async () => {
