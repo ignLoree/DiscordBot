@@ -1,6 +1,6 @@
 ﻿const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const path = require('path');
-const PersonalityPanel = require('../Schemas/Community/personalityPanelSchema');
+const PersonalityPanel = require('../Schemas/Community/panelSchema');
 
 const CHANNEL_ID = '1469429150669602961';
 const IMAGE_NAME = 'personalità.gif';
