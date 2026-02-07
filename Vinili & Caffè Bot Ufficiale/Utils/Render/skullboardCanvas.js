@@ -119,11 +119,15 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
 
     ctx.strokeStyle = "#3f4147";
     ctx.lineWidth = 2;
+    const connectorStartX = avatarX + avatarSize / 2;
+    const connectorStartY = avatarY + avatarSize;
+    const connectorEndX = replyStartX - 6;
+    const connectorEndY = replyY + 8;
     ctx.beginPath();
-    ctx.moveTo(replyStartX - 12, replyY + 4);
-    ctx.lineTo(replyStartX - 12, replyY + 10);
-    ctx.quadraticCurveTo(replyStartX - 12, replyY + 14, replyStartX - 8, replyY + 14);
-    ctx.lineTo(replyStartX - 2, replyY + 14);
+    ctx.moveTo(connectorStartX, connectorStartY);
+    ctx.lineTo(connectorStartX, connectorEndY);
+    ctx.quadraticCurveTo(connectorStartX, connectorEndY + 6, connectorStartX + 6, connectorEndY + 6);
+    ctx.lineTo(connectorEndX, connectorEndY + 6);
     ctx.stroke();
 
     if (reply?.avatarUrl) {
@@ -139,16 +143,19 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
     const replyNameColor = reply.nameColor || "#f2f3f5";
     drawTextWithSpecialFallback(ctx, replyName, replyTextX, replyY, { size: 12, weight: "600", color: replyNameColor });
     const replyNameWidth = ctx.measureText(replyName).width;
-    const replyContent = reply.content || "";
-    drawTextWithSpecialFallback(ctx, replyContent, replyTextX + replyNameWidth + 6, replyY, { size: 12, weight: "500", color: "#b5bac1" });
 
+    let afterNameX = replyTextX + replyNameWidth + 4;
     if (reply?.roleIconUrl) {
       try {
         const replyRoleIcon = await loadImage(reply.roleIconUrl);
         const size = 12;
-        drawCircleImage(ctx, replyRoleIcon, replyTextX + replyNameWidth + 2, replyY + 1, size);
+        drawCircleImage(ctx, replyRoleIcon, afterNameX, replyY + 1, size);
+        afterNameX += size + 4;
       } catch {}
     }
+
+    const replyContent = reply.content || "";
+    drawTextWithSpecialFallback(ctx, replyContent, afterNameX, replyY, { size: 12, weight: "500", color: "#b5bac1" });
   }
 
   if (messageLines.length) {
