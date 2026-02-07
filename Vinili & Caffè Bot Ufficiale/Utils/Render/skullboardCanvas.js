@@ -120,13 +120,13 @@ module.exports = async function renderSkullboardCanvas({ avatarUrl, username, me
     ctx.strokeStyle = "#3f4147";
     ctx.lineWidth = 2;
     const connectorStartX = avatarX + avatarSize / 2;
-    const connectorStartY = avatarY + avatarSize;
+    const connectorStartY = avatarY + avatarSize - 2;
     const connectorEndX = replyStartX - 6;
-    const connectorEndY = replyY + 8;
+    const connectorEndY = replyY + 9;
     ctx.beginPath();
     ctx.moveTo(connectorStartX, connectorStartY);
-    ctx.lineTo(connectorStartX, connectorEndY);
-    ctx.quadraticCurveTo(connectorStartX, connectorEndY + 6, connectorStartX + 6, connectorEndY + 6);
+    ctx.lineTo(connectorStartX, connectorEndY - 4);
+    ctx.quadraticCurveTo(connectorStartX, connectorEndY + 6, connectorStartX + 10, connectorEndY + 6);
     ctx.lineTo(connectorEndX, connectorEndY + 6);
     ctx.stroke();
 
