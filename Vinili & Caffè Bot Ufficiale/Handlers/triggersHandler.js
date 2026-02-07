@@ -56,7 +56,13 @@ module.exports = (client) => {
                 }
                 const handler = (...args) => trigger.execute(...args, client);
                 if (trigger.once) {
-                    client.once(trigger.name, handler);
+                    if (trigger.name === "clientReady" && client.isReady()) {
+                        Promise.resolve(handler(client)).catch((err) => {
+                            global.logger.error(`[TRIGGERS] Failed to run ${file} on hot-reload:`, err);
+                        });
+                    } else {
+                        client.once(trigger.name, handler);
+                    }
                 } else {
                     client.on(trigger.name, handler);
                 }
