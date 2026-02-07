@@ -1,19 +1,9 @@
-const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-  UserSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  PermissionsBitField
-} = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 
 const pendingRoleGrants = new Map();
 
-function parseCustomRoleId(customId) {
+function parseRoleActionId(customId) {
   const [head, ownerId, roleId] = String(customId || '').split(':');
   if (!head || !ownerId || !roleId) return null;
   return { head, ownerId, roleId };
@@ -26,7 +16,7 @@ async function checkOwnership(interaction, ownerId) {
       new EmbedBuilder()
         .setColor('Red')
         .setTitle('Accesso negato')
-        .setDescription('Solo il proprietario di questo ruolo personalizzato puo usare questi controlli.')
+        .setDescription('Solo il proprietario del ruolo personalizzato può usare questo controllo.')
     ],
     flags: 1 << 6
   }).catch(() => {});
@@ -44,6 +34,29 @@ function canManageRole(interaction, role) {
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) return false;
   if (!role) return false;
   return role.position < me.roles.highest.position;
+}
+
+function refreshEmbedRoleLine(sourceEmbed, role, executorName) {
+  const embed = sourceEmbed ? EmbedBuilder.from(sourceEmbed) : new EmbedBuilder().setColor('#6f4e37');
+  const oldDesc = String(embed.data?.description || '');
+  let nextDesc = oldDesc;
+  if (/\*\*Ruolo:\*\*/.test(oldDesc)) {
+    nextDesc = oldDesc.replace(/(\*\*Ruolo:\*\*\n)([\s\S]*)$/m, `$1${role}`);
+  } else {
+    nextDesc = [oldDesc, '', '**Ruolo:**', `${role}`].join('\n').trim();
+  }
+  embed.setDescription(nextDesc);
+  if (executorName) embed.setFooter({ text: `Comando eseguito da: ${executorName}` });
+  return embed;
+}
+
+async function updatePanelMessage(interaction, panelMessageId, role) {
+  if (!panelMessageId || !interaction.channel) return;
+  const msg = interaction.channel.messages.cache.get(panelMessageId)
+    || await interaction.channel.messages.fetch(panelMessageId).catch(() => null);
+  if (!msg) return;
+  const updated = refreshEmbedRoleLine(msg.embeds?.[0], role, interaction.user?.username);
+  await msg.edit({ embeds: [updated] }).catch(() => {});
 }
 
 async function createCustomRoleGrantRequest({
@@ -70,17 +83,10 @@ async function createCustomRoleGrantRequest({
   if (!promptMsg) return { ok: false };
 
   const token = `${Date.now()}_${Math.floor(Math.random() * 999999)}`;
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`customrole_grant:${token}:yes`)
-      .setLabel('Si')
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(`customrole_grant:${token}:no`)
-      .setLabel('No')
-      .setStyle(ButtonStyle.Danger)
+  const dmRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`customrole_grant:${token}:yes`).setLabel('Si').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`customrole_grant:${token}:no`).setLabel('No').setStyle(ButtonStyle.Danger)
   );
-
   const dmEmbed = new EmbedBuilder()
     .setColor('#6f4e37')
     .setTitle('Richiesta ruolo personalizzato')
@@ -89,7 +95,7 @@ async function createCustomRoleGrantRequest({
       'Accetti?'
     ].join('\n'));
 
-  const dmSent = await targetMember.send({ embeds: [dmEmbed], components: [row] }).catch(() => null);
+  const dmSent = await targetMember.send({ embeds: [dmEmbed], components: [dmRow] }).catch(() => null);
   if (!dmSent) {
     await promptMsg.edit({
       embeds: [
@@ -102,7 +108,6 @@ async function createCustomRoleGrantRequest({
     return { ok: false };
   }
 
-  const expiresAt = Date.now() + Math.max(15_000, Number(timeoutMs || 60_000));
   pendingRoleGrants.set(token, {
     guildId,
     channelId,
@@ -110,8 +115,9 @@ async function createCustomRoleGrantRequest({
     targetId,
     roleId,
     promptMessageId: promptMsg.id,
+    dmChannelId: dmSent.channelId,
     dmMessageId: dmSent.id,
-    expiresAt
+    expiresAt: Date.now() + Math.max(15_000, Number(timeoutMs || 60_000))
   });
 
   setTimeout(async () => {
@@ -124,11 +130,24 @@ async function createCustomRoleGrantRequest({
     if (msg) {
       await msg.edit({
         embeds: [
+          new EmbedBuilder().setColor('#e67e22').setTitle('Scaduto').setDescription(`<@${req.targetId}> non ha risposto in tempo.`)
+        ]
+      }).catch(() => {});
+    }
+
+    const user = client.users.cache.get(req.targetId) || await client.users.fetch(req.targetId).catch(() => null);
+    const dmChannel = user?.dmChannel || await user?.createDM().catch(() => null);
+    const dmMsg = dmChannel?.messages?.cache?.get(req.dmMessageId)
+      || await dmChannel?.messages?.fetch(req.dmMessageId).catch(() => null);
+    if (dmMsg) {
+      await dmMsg.edit({
+        embeds: [
           new EmbedBuilder()
             .setColor('#e67e22')
             .setTitle('Scaduto')
-            .setDescription(`<@${req.targetId}> non ha risposto in tempo.`)
-        ]
+            .setDescription('Tempo scaduto: la richiesta non è piu valida.')
+        ],
+        components: []
       }).catch(() => {});
     }
   }, Math.max(15_000, Number(timeoutMs || 60_000)));
@@ -136,10 +155,10 @@ async function createCustomRoleGrantRequest({
   return { ok: true, promptMessageId: promptMsg.id };
 }
 
-async function handleButton(interaction) {
+async function handleRoleActionButton(interaction) {
   if (!interaction.isButton()) return false;
-  if (String(interaction.customId || '').startsWith('customrole_grant')) return false;
-  const parsed = parseCustomRoleId(interaction.customId);
+  if (String(interaction.customId || '').startsWith('customrole_grant:')) return false;
+  const parsed = parseRoleActionId(interaction.customId);
   if (!parsed || !parsed.head.startsWith('customrole_')) return false;
 
   const { head, ownerId, roleId } = parsed;
@@ -148,7 +167,7 @@ async function handleButton(interaction) {
   const role = await fetchRole(interaction, roleId);
   if (!role) {
     await CustomRole.deleteOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => {});
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, crea di nuovo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, ricrealo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
@@ -189,20 +208,22 @@ async function handleButton(interaction) {
   let title = null;
   let label = null;
   let placeholder = null;
+  const panelMessageId = interaction.message?.id || '';
+
   if (head === 'customrole_name') {
-    modalId = `customrole_modal_name:${ownerId}:${roleId}`;
+    modalId = `customrole_modal_name:${ownerId}:${roleId}:${panelMessageId}`;
     title = 'Modifica nome ruolo';
     label = 'Nuovo nome';
-    placeholder = 'Es: Astrofam';
+    placeholder = 'Es: AstroFam';
   } else if (head === 'customrole_color') {
-    modalId = `customrole_modal_color:${ownerId}:${roleId}`;
+    modalId = `customrole_modal_color:${ownerId}:${roleId}:${panelMessageId}`;
     title = 'Modifica colore ruolo';
     label = 'Colore HEX';
     placeholder = 'Es: #ff66cc';
   } else if (head === 'customrole_emoji') {
-    modalId = `customrole_modal_emoji:${ownerId}:${roleId}`;
-    title = 'Imposta emoji/icona ruolo';
-    label = 'Emoji Unicode o URL immagine';
+    modalId = `customrole_modal_emoji:${ownerId}:${roleId}:${panelMessageId}`;
+    title = 'Imposta emoji o icona ruolo';
+    label = 'Emoji unicode o URL immagine';
     placeholder = 'Es: 🌟 oppure https://.../icon.png';
   }
   if (!modalId) return true;
@@ -215,27 +236,24 @@ async function handleButton(interaction) {
     .setPlaceholder(placeholder)
     .setMaxLength(200);
 
-  const modal = new ModalBuilder()
-    .setCustomId(modalId)
-    .setTitle(title)
-    .addComponents(new ActionRowBuilder().addComponents(input));
-
+  const modal = new ModalBuilder().setCustomId(modalId).setTitle(title).addComponents(new ActionRowBuilder().addComponents(input));
   await interaction.showModal(modal).catch(() => {});
   return true;
 }
 
-async function handleModal(interaction) {
-  if (!interaction.isModalSubmit() || !interaction.customId.startsWith('customrole_modal_')) return false;
-  const parsed = parseCustomRoleId(interaction.customId.replace('customrole_modal_', 'customrole_'));
-  if (!parsed) return false;
+async function handleRoleActionModal(interaction) {
+  if (!interaction.isModalSubmit()) return false;
+  if (!String(interaction.customId || '').startsWith('customrole_modal_')) return false;
 
-  const { ownerId, roleId } = parsed;
+  const modalBody = String(interaction.customId).replace('customrole_modal_', '');
+  const [action, ownerId, roleId, panelMessageId] = modalBody.split(':');
+  if (!action || !ownerId || !roleId) return false;
   if (!(await checkOwnership(interaction, ownerId))) return true;
 
   const role = await fetchRole(interaction, roleId);
   if (!role) {
     await CustomRole.deleteOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => {});
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, crea di nuovo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, ricrealo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
   if (!canManageRole(interaction, role)) {
@@ -245,39 +263,40 @@ async function handleModal(interaction) {
 
   const value = interaction.fields.getTextInputValue('value')?.trim() || '';
 
-  if (interaction.customId.startsWith('customrole_modal_name:')) {
+  if (action === 'name') {
     const name = String(value).slice(0, 32).trim();
     if (!name) {
       await interaction.reply({ content: '<:vegax:1443934876440068179> Nome non valido.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
     await role.edit({ name }, `Custom role rename by ${interaction.user.tag}`).catch(() => {});
+    await updatePanelMessage(interaction, panelMessageId, role);
     await interaction.reply({ content: `<:vegacheckmark:1443666279058772028> Nome aggiornato: **${name}**`, flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
-  if (interaction.customId.startsWith('customrole_modal_color:')) {
+  if (action === 'color') {
     const hex = value.startsWith('#') ? value : `#${value}`;
     if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) {
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Inserisci un colore HEX valido, es: `#ff66cc`.', flags: 1 << 6 }).catch(() => {});
+      await interaction.reply({ content: '<:vegax:1443934876440068179> Colore HEX non valido. Esempio: `#ff66cc`.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
     await role.edit({ color: hex }, `Custom role color by ${interaction.user.tag}`).catch(() => {});
+    await updatePanelMessage(interaction, panelMessageId, role);
     await interaction.reply({ content: `<:vegacheckmark:1443666279058772028> Colore aggiornato: \`${hex}\``, flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
-  if (interaction.customId.startsWith('customrole_modal_emoji:')) {
-    const input = value || null;
-    if (!input) {
+  if (action === 'emoji') {
+    if (!value) {
       await role.edit({ unicodeEmoji: null, icon: null }, `Custom role icon cleared by ${interaction.user.tag}`).catch(() => {});
-      await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Emoji/icona ruolo rimossa.', flags: 1 << 6 }).catch(() => {});
+      await updatePanelMessage(interaction, panelMessageId, role);
+      await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Emoji/icona rimossa.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
-
-    const isUrl = /^https?:\/\/\S+$/i.test(input);
+    const isUrl = /^https?:\/\/\S+$/i.test(value);
     if (isUrl) {
-      const iconBuffer = await fetch(input)
+      const iconBuffer = await fetch(value)
         .then((r) => (r.ok ? r.arrayBuffer() : null))
         .then((b) => (b ? Buffer.from(b) : null))
         .catch(() => null);
@@ -286,58 +305,21 @@ async function handleModal(interaction) {
         return true;
       }
       await role.edit({ icon: iconBuffer, unicodeEmoji: null }, `Custom role icon by ${interaction.user.tag}`).catch(() => {});
-      await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Icona ruolo aggiornata da immagine.', flags: 1 << 6 }).catch(() => {});
+      await updatePanelMessage(interaction, panelMessageId, role);
+      await interaction.reply({ content: '<:vegacheckmark:1443666279058772028> Icona ruolo aggiornata.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
-
-    await role.edit({ unicodeEmoji: input, icon: null }, `Custom role emoji by ${interaction.user.tag}`).catch(() => {});
-    await interaction.reply({ content: `<:vegacheckmark:1443666279058772028> Emoji ruolo aggiornata: ${input}`, flags: 1 << 6 }).catch(() => {});
+    await role.edit({ unicodeEmoji: value, icon: null }, `Custom role emoji by ${interaction.user.tag}`).catch(() => {});
+    await updatePanelMessage(interaction, panelMessageId, role);
+    await interaction.reply({ content: `<:vegacheckmark:1443666279058772028> Emoji ruolo aggiornata: ${value}`, flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
   return true;
 }
 
-async function handleUserSelectMenus(interaction) {
-  if (interaction.isStringSelectMenu && interaction.isStringSelectMenu() && interaction.customId.startsWith('customrole_remove_select:')) {
-    const [, ownerId, roleId] = String(interaction.customId).split(':');
-    if (!ownerId || !roleId) return true;
-    if (!(await checkOwnership(interaction, ownerId))) return true;
-
-    const role = await fetchRole(interaction, roleId);
-    if (!role) {
-      await CustomRole.deleteOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => {});
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, crea di nuovo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
-      return true;
-    }
-    if (!canManageRole(interaction, role)) {
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Non posso modificare questo ruolo (gerarchia/permesi).', flags: 1 << 6 }).catch(() => {});
-      return true;
-    }
-
-    const targetId = interaction.values?.[0];
-    const targetMember = interaction.guild.members.cache.get(targetId) || await interaction.guild.members.fetch(targetId).catch(() => null);
-    if (!targetMember) {
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Utente non trovato.', flags: 1 << 6 }).catch(() => {});
-      return true;
-    }
-
-    await targetMember.roles.remove(role.id, `Custom role member removal by ${interaction.user.tag}`).catch(() => {});
-    await interaction.update({
-      embeds: [
-        new EmbedBuilder()
-          .setColor('#2ecc71')
-          .setTitle('Utente Rimosso')
-          .setDescription(`L'utente ${targetMember} e stato rimosso dal tuo ruolo.`)
-      ],
-      components: []
-    }).catch(() => {});
-    return true;
-  }
-
-  if (!interaction.isUserSelectMenu || !interaction.isUserSelectMenu()) return false;
-
-  if (interaction.customId.startsWith('customrole_add_select:')) {
+async function handleAddRemoveSelectMenus(interaction) {
+  if (interaction.isUserSelectMenu && interaction.isUserSelectMenu() && String(interaction.customId || '').startsWith('customrole_add_select:')) {
     const [, ownerId, roleId] = String(interaction.customId).split(':');
     if (!ownerId || !roleId) return true;
     if (!(await checkOwnership(interaction, ownerId))) return true;
@@ -365,18 +347,13 @@ async function handleUserSelectMenus(interaction) {
     }
 
     await interaction.update({
-      embeds: [
-        new EmbedBuilder()
-          .setColor('#2ecc71')
-          .setTitle('Richiesta inviata')
-          .setDescription(`Ho inviato la richiesta in DM a <@${targetId}>.`)
-      ],
+      embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Richiesta inviata').setDescription(`Ho inviato la richiesta in DM a <@${targetId}>.`)],
       components: []
     }).catch(() => {});
     return true;
   }
 
-  if (interaction.customId.startsWith('customrole_remove_select:')) {
+  if (interaction.isStringSelectMenu && interaction.isStringSelectMenu() && String(interaction.customId || '').startsWith('customrole_remove_select:')) {
     const [, ownerId, roleId] = String(interaction.customId).split(':');
     if (!ownerId || !roleId) return true;
     if (!(await checkOwnership(interaction, ownerId))) return true;
@@ -384,7 +361,7 @@ async function handleUserSelectMenus(interaction) {
     const role = await fetchRole(interaction, roleId);
     if (!role) {
       await CustomRole.deleteOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => {});
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, crea di nuovo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
+      await interaction.reply({ content: '<:vegax:1443934876440068179> Ruolo non trovato, ricrealo con `+customrolecreate`.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
     if (!canManageRole(interaction, role)) {
@@ -401,12 +378,7 @@ async function handleUserSelectMenus(interaction) {
 
     await targetMember.roles.remove(role.id, `Custom role member removal by ${interaction.user.tag}`).catch(() => {});
     await interaction.update({
-      embeds: [
-        new EmbedBuilder()
-          .setColor('#2ecc71')
-          .setTitle('Utente Rimosso')
-          .setDescription(`L'utente ${targetMember} e stato rimosso dal tuo ruolo.`)
-      ],
+      embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Utente Rimosso').setDescription(`L'utente ${targetMember} è stato rimosso dal tuo ruolo.`)],
       components: []
     }).catch(() => {});
     return true;
@@ -416,25 +388,17 @@ async function handleUserSelectMenus(interaction) {
 }
 
 async function handleGrantButtons(interaction) {
-  if (!interaction.isButton() || !String(interaction.customId || '').startsWith('customrole_grant')) return false;
+  if (!interaction.isButton() || !String(interaction.customId || '').startsWith('customrole_grant:')) return false;
 
-  const parts = String(interaction.customId).split(':');
-  const token = parts[1];
-  const action = parts[2];
+  const [, token, action] = String(interaction.customId).split(':');
   const request = pendingRoleGrants.get(token);
-
   if (!request) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non e piu valida.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non è piu valida.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
   if (interaction.user.id !== request.targetId) {
     await interaction.reply({
-      embeds: [
-        new EmbedBuilder()
-          .setColor('Red')
-          .setTitle('Accesso negato')
-          .setDescription('Solo l utente invitato puo rispondere a questa richiesta.')
-      ],
+      embeds: [new EmbedBuilder().setColor('Red').setTitle('Accesso negato').setDescription('Solo l utente invitato può rispondere a questa richiesta.')],
       flags: 1 << 6
     }).catch(() => {});
     return true;
@@ -490,7 +454,7 @@ async function handleGrantButtons(interaction) {
       }).catch(() => {});
     }
     await interaction.update({
-      embeds: [new EmbedBuilder().setColor('Red').setTitle('Errore').setDescription('Il bot non puo assegnare questo ruolo.')],
+      embeds: [new EmbedBuilder().setColor('Red').setTitle('Errore').setDescription('Il bot non può assegnare questo ruolo.')],
       components: [disabledRow]
     }).catch(() => {});
     return true;
@@ -498,14 +462,13 @@ async function handleGrantButtons(interaction) {
 
   await targetMember.roles.add(role.id, `Custom role accepted from ${requester.user.tag}`).catch(() => {});
   pendingRoleGrants.delete(token);
-
   if (promptMsg) {
     await promptMsg.edit({
       embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Ruolo Concesso').setDescription(`${targetMember} ha accettato il ruolo **${role.name}**.`)]
     }).catch(() => {});
   }
   await channel.send({
-    embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Ruolo Concesso').setDescription(`Il ruolo **${role.name}** e stato assegnato a ${targetMember}.`)]
+    embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Ruolo Concesso').setDescription(`Il ruolo **${role.name}** è stato assegnato a ${targetMember}.`)]
   }).catch(() => {});
   await interaction.update({
     embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Richiesta accettata').setDescription(`Hai accettato il ruolo **${role.name}**.`)],
@@ -515,10 +478,10 @@ async function handleGrantButtons(interaction) {
 }
 
 async function handleCustomRoleInteraction(interaction) {
-  if (await handleUserSelectMenus(interaction)) return true;
+  if (await handleAddRemoveSelectMenus(interaction)) return true;
   if (await handleGrantButtons(interaction)) return true;
-  if (await handleButton(interaction)) return true;
-  if (await handleModal(interaction)) return true;
+  if (await handleRoleActionButton(interaction)) return true;
+  if (await handleRoleActionModal(interaction)) return true;
   return false;
 }
 

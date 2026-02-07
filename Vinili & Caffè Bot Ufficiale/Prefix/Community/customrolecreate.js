@@ -116,7 +116,6 @@ async function resolveOrCreateRole(message) {
     return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo più in alto.' };
   }
 
-  // Keep custom roles below the configured anchor role.
   const anchor = guild.roles.cache.get(ANCHOR_ROLE_ID) || await guild.roles.fetch(ANCHOR_ROLE_ID).catch(() => null);
   if (anchor) {
     const targetPosition = Math.max(1, anchor.position - 1);
