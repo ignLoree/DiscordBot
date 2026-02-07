@@ -22,6 +22,16 @@ function getCustomStatus(presence) {
     return (custom?.state || '').toString();
 }
 
+function hasNonCustomActivities(presence) {
+    if (!presence?.activities?.length) return false;
+    return presence.activities.some((activity) => activity.type !== ActivityType.Custom);
+}
+
+function hasCustomActivity(presence) {
+    if (!presence?.activities?.length) return false;
+    return presence.activities.some((activity) => activity.type === ActivityType.Custom);
+}
+
 function hasInvite(presence) {
     const status = getCustomStatus(presence).toLowerCase();
     return INVITE_REGEX.test(status);
@@ -157,6 +167,10 @@ async function clearPersistedStatus(guildId, userId) {
 
 async function startPendingFlow(member, channel) {
     if (pendingChecks.has(member.id)) return;
+    const existing = statusCache.get(member.id);
+    if (existing?.lastMessageId && channel) {
+        await channel.messages.delete(existing.lastMessageId).catch(() => {});
+    }
     pendingChecks.set(member.id, { timeout: null, messageId: null, inFlight: true });
     const embed = new EmbedBuilder()
         .setColor('#6f4e37')
@@ -341,6 +355,21 @@ module.exports = {
             }
 
             if (prevHas && !newHas) {
+                // Discord puo' nascondere momentaneamente il custom status
+                // (giochi/start activity o update vuoto): non trattarlo come rimozione link.
+                if (!hasCustomActivity(newPresence)) {
+                    statusCache.set(userId, {
+                        hasLink: true,
+                        lastAnnounced: prev?.lastAnnounced || 0,
+                        lastMessageId: prev?.lastMessageId || null,
+                        lastSeenOnlineAt
+                    });
+                    await persistStatus(member.guild.id, userId, {
+                        hasLink: true,
+                        lastMessageId: prev?.lastMessageId || null
+                    });
+                    return;
+                }
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
                 scheduleRemovalConfirm(member, channel);

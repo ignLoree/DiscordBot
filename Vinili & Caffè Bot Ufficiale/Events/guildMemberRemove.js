@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Staff = require('../Schemas/Staff/staffSchema');
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const createTranscript = require("../Utils/Ticket/createTranscript");
@@ -16,7 +16,7 @@ module.exports = {
             const guild = member.guild;
             const totalVoice = guild.channels.cache.get('1442569096700104754');
             if (totalVoice) {
-                totalVoice.setName(`༄☕︲User: ${guild.memberCount}`).catch(() => {});
+                totalVoice.setName(`à¼„â˜•ï¸²User: ${guild.memberCount}`).catch(() => {});
             }
             const ticket = await Ticket.findOne({ userId: member.id, open: true });
             if (ticket) {
@@ -58,9 +58,9 @@ module.exports = {
                 guildId: guild.id,
                 userId: member.id
             });
-            if (!staffDoc) return;
+            if (staffDoc) {
             const newRole = guild.roles.cache.get('1442568949605597264');
-            const newRoleName = newRole ? newRole.name : "༄ User";
+            const newRoleName = newRole ? newRole.name : "à¼„ User";
             let lastRole = "Nessun ruolo salvato";
             if (staffDoc.rolesHistory.length > 0) {
                 const lastRoleIdOrName =
@@ -81,6 +81,7 @@ module.exports = {
 <:member_role_icon:1330530086792728618> \`${lastRole}\` <a:vegarightarrow:1443673039156936837> \`${newRoleName}\`
 <:discordstaff:1443651872258003005> __Dimissioni (Esce dal server)__`;
                 await resignChannel.send({ content: msg });
+            }
             }
             const partnerships = await Staff.find({ managerId: member.id });
             if (partnerships.length > 0) {
