@@ -20,7 +20,8 @@ module.exports = {
     if (!guildId) return;
 
     const attachment = new AttachmentBuilder(VERIFY_MEDIA_PATH, { name: VERIFY_MEDIA_NAME });
-
+    const serverName = channel.guild?.name || 'this server';
+    
     const verifyInfoEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('<:pepe_wave:1329488693739782274> **__BENVENUTO SU `' + serverName + '`__**')
@@ -30,7 +31,6 @@ module.exports = {
       )
       .setImage(DIVIDER_URL);
 
-    const serverName = channel.guild?.name || 'this server';
     const color = client?.config2?.embedVerify || '#6f4e37';
 
     const verifyPanelEmbed = new EmbedBuilder()
@@ -55,7 +55,7 @@ module.exports = {
         { $setOnInsert: { guildId, channelId: VERIFY_CHANNEL_ID } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
-    } catch {}
+    } catch { }
 
     let infoMessage = null;
     let panelMessage = null;
@@ -68,13 +68,13 @@ module.exports = {
     }
 
     if (infoMessage) {
-      await infoMessage.edit({ files: [attachment], embeds: [verifyInfoEmbed], components: [] }).catch(() => {});
+      await infoMessage.edit({ files: [attachment], embeds: [verifyInfoEmbed], components: [] }).catch(() => { });
     } else {
       infoMessage = await channel.send({ files: [attachment], embeds: [verifyInfoEmbed] }).catch(() => null);
     }
 
     if (panelMessage) {
-      await panelMessage.edit({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => {});
+      await panelMessage.edit({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => { });
     } else {
       panelMessage = await channel.send({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => null);
     }
@@ -88,7 +88,7 @@ module.exports = {
             verifyPanelMessageId: panelMessage?.id || panelDoc?.verifyPanelMessageId || null
           }
         }
-      ).catch(() => {});
+      ).catch(() => { });
     }
   }
 };
