@@ -7,6 +7,7 @@ const PersonalityPanelSchema = new Schema({
   personalityMessageId: { type: String, default: null },
   mentionsMessageId: { type: String, default: null },
   colorsMessageId: { type: String, default: null },
+  plusColorsMessageId: { type: String, default: null },
   infoMessageId1: { type: String, default: null },
   infoMessageId2: { type: String, default: null }
 });

@@ -83,6 +83,19 @@ module.exports = {
                     '1442568988961013821',
                     '1442568989866725468',
                     '1442568991150309578'
+                ],
+                personality_colors_plus: [
+                    '1469759694930182284',
+                    '1469759700944814231',
+                    '1469759704380084384',
+                    '1469759708742160537',
+                    '1469759714094088327',
+                    '1469759719194230906',
+                    '1469759723418026233',
+                    '1469759731945177182',
+                    '1469760931113336864',
+                    '1469761030417809675',
+                    '1469761114140315831'
                 ]
             };
 
@@ -98,6 +111,16 @@ module.exports = {
                         content: 'Ruoli rimossi correttamente.',
                         flags: 1 << 6
                     });
+                }
+                if (menuId === 'personality_colors_plus') {
+                    const allowed = member.roles.cache.has('1329497467481493607')
+                        || member.roles.cache.has('1442568932136587297');
+                    if (!allowed) {
+                        return interaction.reply({
+                            content: '<:vegax:1443934876440068179> Non puoi selezionare i Colori PLUS. Servono i ruoli richiesti.',
+                            flags: 1 << 6
+                        });
+                    }
                 }
                 await member.roles.remove(roleIds).catch(() => { });
                 await member.roles.add(values).catch(() => { });
