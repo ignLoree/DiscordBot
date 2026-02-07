@@ -29,6 +29,18 @@ async function resolveDisplayName(guild, userId) {
   return `utente_${String(userId).slice(-6)}`;
 }
 
+async function getCurrentInviteUsesMap(guild) {
+  const map = new Map();
+  const invites = await guild.invites.fetch().catch(() => null);
+  if (!invites) return map;
+  for (const invite of invites.values()) {
+    const inviterId = invite?.inviter?.id;
+    if (!inviterId) continue;
+    map.set(inviterId, (map.get(inviterId) || 0) + Number(invite.uses || 0));
+  }
+  return map;
+}
+
 module.exports = {
   name: 'topinvites',
 
@@ -58,12 +70,48 @@ module.exports = {
         }
       },
       { $sort: { totalInvites: -1, activeInvites: -1 } },
-      { $limit: TOP_LIMIT }
+      { $limit: TOP_LIMIT * 3 }
     ]);
 
+    const currentUsesMap = await getCurrentInviteUsesMap(message.guild);
+    const merged = new Map();
+
+    for (const row of rows) {
+      merged.set(row.inviterId, {
+        inviterId: row.inviterId,
+        trackedTotal: Number(row.totalInvites || 0),
+        activeInvites: Number(row.activeInvites || 0),
+        leftInvites: Number(row.leftInvites || 0)
+      });
+    }
+
+    for (const [inviterId, uses] of currentUsesMap.entries()) {
+      if (!merged.has(inviterId)) {
+        merged.set(inviterId, {
+          inviterId,
+          trackedTotal: 0,
+          activeInvites: 0,
+          leftInvites: 0
+        });
+      }
+      const item = merged.get(inviterId);
+      item.currentUses = Number(uses || 0);
+      merged.set(inviterId, item);
+    }
+
+    const finalRows = Array.from(merged.values())
+      .map((r) => {
+        const totalInvites = Math.max(Number(r.trackedTotal || 0), Number(r.currentUses || 0));
+        const activeInvites = Number(r.activeInvites || 0);
+        const leftInvites = Math.max(Number(r.leftInvites || 0), totalInvites - activeInvites);
+        return { inviterId: r.inviterId, totalInvites, activeInvites, leftInvites };
+      })
+      .sort((a, b) => b.totalInvites - a.totalInvites || b.activeInvites - a.activeInvites)
+      .slice(0, TOP_LIMIT);
+
     const lines = [];
-    for (let i = 0; i < rows.length; i += 1) {
-      const row = rows[i];
+    for (let i = 0; i < finalRows.length; i += 1) {
+      const row = finalRows[i];
       const name = await resolveDisplayName(message.guild, row.inviterId);
       const total = Number(row.totalInvites || 0);
       const active = Number(row.activeInvites || 0);

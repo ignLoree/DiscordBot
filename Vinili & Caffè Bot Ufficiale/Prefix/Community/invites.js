@@ -19,6 +19,18 @@ function formatRetention(rate) {
   return `${rate}% dei membri invitati sono ancora presenti`;
 }
 
+async function getCurrentInviteUsesForUser(guild, userId) {
+  const invites = await guild.invites.fetch().catch(() => null);
+  if (!invites) return 0;
+  let total = 0;
+  for (const invite of invites.values()) {
+    if (invite?.inviter?.id === userId) {
+      total += Number(invite.uses || 0);
+    }
+  }
+  return total;
+}
+
 module.exports = {
   name: 'invites',
 
@@ -33,8 +45,10 @@ module.exports = {
       .select('active')
       .lean();
 
-    const totalInvited = rows.length;
+    const trackedTotal = rows.length;
     const activeMembers = rows.filter(r => r.active).length;
+    const currentInviteUses = await getCurrentInviteUsesForUser(message.guild, target.id);
+    const totalInvited = Math.max(trackedTotal, currentInviteUses);
     const leftMembers = Math.max(0, totalInvited - activeMembers);
     const retention = totalInvited > 0
       ? Math.round((activeMembers / totalInvited) * 100)

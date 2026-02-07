@@ -12,7 +12,7 @@ const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminde
 const { startMinigameLoop, forceStartMinigame, restoreActiveGames } = require('../Services/Minigames/minigameService');
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
-const { startVerificationTenureLoop } = require('../Services/Community/verificationTenureService');
+const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
 const cron = require('node-cron');
 const { EmbedBuilder } = require('discord.js');
 
@@ -130,6 +130,11 @@ module.exports = {
             startHourlyReminderLoop(client);
         } catch (err) {
             global.logger.error('[CHAT REMINDER] Failed to start hourly loop', err);
+        }
+        try {
+            await backfillVerificationTenure(client);
+        } catch (err) {
+            global.logger.error('[VERIFY TENURE] Failed to backfill existing verified users', err);
         }
         try {
             startVerificationTenureLoop(client);

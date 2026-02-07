@@ -7,6 +7,7 @@ const ROLE_STAGE_3 = '1469041493401534644';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;
+const VERIFIED_ROLE_ID = '1442568949605597264';
 
 async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
   return VerificationTenure.findOneAndUpdate(
@@ -81,4 +82,29 @@ function startVerificationTenureLoop(client) {
   }, 60 * 60 * 1000);
 }
 
-module.exports = { upsertVerifiedMember, applyTenureForMember, startVerificationTenureLoop };
+async function backfillVerificationTenure(client) {
+  const guilds = Array.from(client.guilds.cache.values());
+  for (const guild of guilds) {
+    const verifiedRole = guild.roles.cache.get(VERIFIED_ROLE_ID)
+      || await guild.roles.fetch(VERIFIED_ROLE_ID).catch(() => null);
+    if (!verifiedRole) continue;
+
+    await guild.members.fetch().catch(() => null);
+    const verifiedMembers = guild.members.cache.filter(
+      (m) => !m.user?.bot && m.roles.cache.has(VERIFIED_ROLE_ID)
+    );
+
+    for (const member of verifiedMembers.values()) {
+      const verifiedAt = member.joinedAt || new Date();
+      const record = await VerificationTenure.findOneAndUpdate(
+        { guildId: guild.id, userId: member.id },
+        { $setOnInsert: { verifiedAt, stage: 1 } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      ).catch(() => null);
+      if (!record) continue;
+      await applyTenureForMember(member, record);
+    }
+  }
+}
+
+module.exports = { upsertVerifiedMember, applyTenureForMember, startVerificationTenureLoop, backfillVerificationTenure };
