@@ -86,12 +86,17 @@ module.exports = {
         } catch (err) {
             global.logger.error('[TTS RESTORE ERROR]', err);
         }
+        let engagementTickRunning = false;
         const engagementTick = async () => {
+            if (engagementTickRunning) return;
+            engagementTickRunning = true;
             try {
                 await maybeRunMorningReminder(client);
                 await runDueOneTimeReminders(client);
             } catch (err) {
                 global.logger.error(err);
+            } finally {
+                engagementTickRunning = false;
             }
         };
         await engagementTick();

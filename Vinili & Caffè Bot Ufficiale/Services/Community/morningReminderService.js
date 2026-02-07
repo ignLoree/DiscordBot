@@ -23,33 +23,24 @@ function decodeUrl3986(value) {
   }
 }
 
-async function getTriviaToken(cfg) {
-  const tokenUrl = cfg?.tokenUrl || 'https://opentdb.com/api_token.php?command=request';
-  const res = await axios.get(tokenUrl, { timeout: 15000 });
-  const token = res?.data?.token;
-  return token || null;
-}
-
-async function resetTriviaToken(cfg, token) {
-  if (!token) return null;
-  const base = cfg?.tokenUrlBase || 'https://opentdb.com/api_token.php';
-  const url = `${base}?command=reset&token=${encodeURIComponent(token)}`;
-  const res = await axios.get(url, { timeout: 15000 }).catch(() => null);
-  const nextToken = res?.data?.token || token;
-  return nextToken;
-}
-
-async function fetchTriviaQuestion(cfg, token) {
-  const baseUrl = cfg?.apiUrl || 'https://opentdb.com/api.php';
-  const params = new URLSearchParams({
-    amount: '1',
-    type: 'multiple',
-    encode: 'url3986'
+async function fetchMorningPrompt(cfg) {
+  const apiUrl = cfg?.apiUrl || 'https://api.adviceslip.com/advice';
+  const res = await axios.get(apiUrl, {
+    timeout: 15000,
+    headers: {
+      Accept: 'application/json',
+      'Cache-Control': 'no-cache'
+    }
   });
-  if (token) params.set('token', token);
-  const url = `${baseUrl}?${params.toString()}`;
-  const res = await axios.get(url, { timeout: 15000 });
-  return res?.data || null;
+  const rawAdvice = String(res?.data?.slip?.advice || '').trim();
+  if (!rawAdvice) return null;
+
+  const italianAdvice = await translateToItalian(cfg, decodeUrl3986(rawAdvice)).catch(() => null);
+  if (!italianAdvice) return null;
+
+  const cleaned = italianAdvice.replace(/[.!?]+$/g, '').trim();
+  if (!cleaned) return null;
+  return `Appena sveglio/a, su quale aspetto vuoi concentrarti oggi partendo da questo spunto: "${cleaned}"?`;
 }
 
 async function translateToItalian(cfg, text) {
@@ -68,44 +59,23 @@ async function pickQuestion(guildId) {
   const cfg = CONFIG.morningReminder || {};
   const state = await getState(guildId);
   const used = new Set(state.usedQuestions || []);
-  let token = state.sessionToken;
-
-  if (!token) {
-    token = await getTriviaToken(cfg);
-    if (!token) return null;
-    state.sessionToken = token;
-    await state.save();
-  }
-
   const maxAttempts = Number.isInteger(cfg.maxAttempts) ? cfg.maxAttempts : 5;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const data = await fetchTriviaQuestion(cfg, token).catch(() => null);
-    const responseCode = Number(data?.response_code);
-    if (responseCode === 3) {
-      token = await getTriviaToken(cfg);
-      if (!token) return null;
-      state.sessionToken = token;
-      await state.save();
-      continue;
-    }
-    if (responseCode === 4) {
-      token = await resetTriviaToken(cfg, token);
-      state.sessionToken = token;
-      await state.save();
-      continue;
-    }
-    const result = Array.isArray(data?.results) ? data.results[0] : null;
-    if (!result?.question) continue;
-    const englishQuestion = decodeUrl3986(result.question);
-    const italianQuestion = await translateToItalian(cfg, englishQuestion).catch(() => null);
-    if (!italianQuestion) continue;
-    const key = italianQuestion.trim().toLowerCase();
+    const prompt = await fetchMorningPrompt(cfg).catch(() => null);
+    if (!prompt) continue;
+    const key = prompt.trim().toLowerCase();
     if (used.has(key)) continue;
     used.add(key);
     state.usedQuestions = Array.from(used).slice(-200);
-    state.sessionToken = token;
-    await state.save();
-    return italianQuestion;
+    await MorningReminderState.updateOne(
+      { guildId },
+      {
+        $set: {
+          usedQuestions: state.usedQuestions
+        }
+      }
+    );
+    return prompt;
   }
   return null;
 }
@@ -137,9 +107,15 @@ async function maybeRunMorningReminder(client) {
   await channel.send({
     content: `<:VC_PepeWave:1331589315175907412> ${tag} Buongiorno a tutti!\n${question}`
   });
-  state.lastSentAt = new Date();
-  state.lastSentDate = today;
-  await state.save();
+  await MorningReminderState.updateOne(
+    { guildId: channel.guild.id },
+    {
+      $set: {
+        lastSentAt: new Date(),
+        lastSentDate: today
+      }
+    }
+  );
 }
 
 module.exports = { maybeRunMorningReminder };

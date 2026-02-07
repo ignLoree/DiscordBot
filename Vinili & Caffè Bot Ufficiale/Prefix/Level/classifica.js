@@ -1,9 +1,10 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/message');
 const ExpUser = require('../../Schemas/Community/expUserSchema');
 const { getCurrentWeekKey } = require('../../Services/Community/expService');
 
 const TOP_LIMIT = 10;
+const LEADERBOARD_CHANNEL_ID = '1442569138114662490';
 
 function getInvokedCommand(message) {
   const content = String(message?.content || '').trim();
@@ -112,6 +113,53 @@ module.exports = {
     const invoked = getInvokedCommand(message);
     const isWeekly = invoked === 'cs' || invoked === 'classificasettimanale';
     const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
-    await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+
+    const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
+    if (!shouldRedirect) {
+      await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+      return;
+    }
+
+    const leaderboardChannel = message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID)
+      || await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null);
+
+    if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
+      await safeMessageReply(message, {
+        content: `Non riesco a trovare il canale <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const sent = await leaderboardChannel.send({ embeds: [embed] }).catch(() => null);
+    if (!sent) {
+      await safeMessageReply(message, {
+        content: `Non sono riuscito a inviare la classifica in <#${LEADERBOARD_CHANNEL_ID}>.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const label = isWeekly ? 'Vai alla classifica settimanale' : 'Vai alla classifica generale';
+    const redirectEmbed = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setDescription(
+        `Per evitare di intasare la chat, la classifica ${isWeekly ? 'settimanale' : 'generale'} ` +
+        `e stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>. ` +
+        `Clicca qui per vederla o utilizza il bottone sottostante.`
+      );
+
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel(label)
+        .setURL(sent.url)
+    );
+
+    await safeMessageReply(message, {
+      embeds: [redirectEmbed],
+      components: [row],
+      allowedMentions: { repliedUser: false }
+    });
   }
 };
