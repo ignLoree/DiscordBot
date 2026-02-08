@@ -33,7 +33,7 @@ function buildNoPermEmbed(message) {
 function buildPanelEmbed(member, role, guild) {
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('?? Modifica Ruolo')
+    .setTitle('✅ Modifica Ruolo')
     .setDescription([
       '<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.',
       '__Altri__ comandi li trovi nel menù con il comando `+help`',

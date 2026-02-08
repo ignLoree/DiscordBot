@@ -693,17 +693,17 @@ function buildFlagHintEmbed(name) {
 function buildHintEmbed(isHigher) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setDescription(isHigher ? '?? <a:VC_Arrow:1448672967721615452> Più alto!' : '?? <a:VC_Arrow:1448672967721615452> Più basso!');
+    .setDescription(isHigher ? '📈 <a:VC_Arrow:1448672967721615452> Più alto!' : '📉 <a:VC_Arrow:1448672967721615452> Più basso!');
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('??? Un utente ha vinto !')
+    .setTitle('<a:VC_Events:1448688007438667796> Un utente ha vinto !')
     .setDescription([
       `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
       '',
-      '?? **Le tue statistiche:**',
+      '📊 **Le tue statistiche:**',
       `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
     ].join('\n'))
     .setFooter({ text: '? digita il comando "+mstats" per vedere i tuoi progressi' });

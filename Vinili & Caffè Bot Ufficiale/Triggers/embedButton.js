@@ -195,7 +195,7 @@ module.exports = {
                     { name: 'Rimossa da', value: `<@${interaction.user.id}>`, inline: true },
                     { name: 'Data rimozione', value: `${dateStr} ${timeStr}`, inline: true }
                 )
-                .setFooter({ text: `Puoi bloccare le future quote tramite il comando ?blockquotes " Oggi alle ${timeStr}` });
+                .setFooter({ text: `Puoi bloccare le future quote tramite il comando ?blockquotes • Oggi alle ${timeStr}` });
             if (originChannelId && originMessageId && originMessageId !== '0') {
                 const originChannel = interaction.guild?.channels?.cache?.get(originChannelId)
                     || await interaction.guild?.channels?.fetch(originChannelId).catch(() => null);
@@ -492,7 +492,7 @@ module.exports = {
                 : 'Nessuna visualizzazione registrata.';
             const now = new Date();
             const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-            const footerText = `Classifica richiesta da ${interaction.user.username} " Oggi alle ${time}`;
+            const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setTitle('<a:VC_CrownYellow:1330194103564238930> Classifica Visualizzazioni Avatar')
@@ -543,7 +543,7 @@ module.exports = {
                 : 'Nessuna visualizzazione registrata.';
             const now = new Date();
             const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-            const footerText = `Classifica richiesta da ${interaction.user.username} " Oggi alle ${time}`;
+            const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
             const embed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setTitle('<a:VC_CrownYellow:1330194103564238930> Classifica Visualizzazioni Banner')

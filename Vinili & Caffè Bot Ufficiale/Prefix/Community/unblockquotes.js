@@ -33,7 +33,7 @@ module.exports = {
         '**Per bloccare nuovamente**',
         'Usa il comando `?blockquotes` quando vuoi bloccare di nuovo le quote.'
       ].join('\n'))
-      .setFooter({ text: `Sbloccate il ${date} " Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
+      .setFooter({ text: `Sbloccate il ${date} • Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
 
     return safeChannelSend(message.channel, { embeds: [embed] });
   }

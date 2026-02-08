@@ -40,8 +40,8 @@ module.exports = {
     const descriptionText = [
       '```',
       '_ _',
-      '_ _`?`        ??        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ?',
-      '_ _     ??      **social**       ?       **italia** **chill**       ?',
+      '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
+      '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
       '                                       **gaming**',
       '-# @everyone & @here_ _',
       '```'

@@ -13,7 +13,6 @@ const { startHourlyReminderLoop } = require('../Services/Community/chatReminderS
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
 const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/categoryNumberingService');
 const cron = require('node-cron');
-const { EmbedBuilder } = require('discord.js');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;

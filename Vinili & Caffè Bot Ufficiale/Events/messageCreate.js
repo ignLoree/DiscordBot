@@ -275,7 +275,7 @@ async function handleVoteManagerMessage(message) {
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ??' });
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente 🍀' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()

@@ -41,7 +41,7 @@ function trimRoleName(name) {
 function buildPanelEmbed(member, role, guild) {
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('?? Ruolo Creato')
+    .setTitle('✅ Ruolo Creato')
     .setDescription([
       '<a:VC_Flowers:1468687836055212174> Il tuo ruolo è stato creato. **Ora personalizzalo!**',
       '__Altri comandi__ li trovi nel menù con il comando `+help`',

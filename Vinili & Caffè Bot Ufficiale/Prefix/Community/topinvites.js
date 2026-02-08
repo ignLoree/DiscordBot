@@ -124,7 +124,7 @@ module.exports = {
       const retention = total > 0 ? Math.round((active / total) * 100) : 0;
 
       lines.push(`${rankLabel(i)} **${name}**`);
-      lines.push(`+- ?? **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
+      lines.push(`+- 🌐 **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
       lines.push('');
     }
 

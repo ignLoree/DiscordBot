@@ -93,7 +93,7 @@ module.exports = {
                         })
                         .setThumbnail(newMember.user.displayAvatarURL());
                     await boostAnnounceChannel.send({
-                        content: `<a:VC_Boost:1448670271115497617> \`?\`  ${newMember.user} \`?\` <@&1442568910070349985>`,
+                        content: `<a:VC_Boost:1448670271115497617> \`┊\`  ${newMember.user} \`┊\` <@&1442568910070349985>`,
                         embeds: [boostAnnounceEmbed],
                     });
                 }

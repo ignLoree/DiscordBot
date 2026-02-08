@@ -70,7 +70,7 @@ module.exports = {
       .setTitle('Informazioni inviti')
       .setDescription(`Statistiche sugli inviti effettuati da **${target.username}**`)
       .addFields(
-        { name: '?? Totale Invitati', value: String(totalInvited), inline: true },
+        { name: '🌐 Totale Invitati', value: String(totalInvited), inline: true },
         { name: '<:vegacheckmark:1443666279058772028> Membri Attuali', value: String(activeMembers), inline: true },
         { name: '<:vegax:1443934876440068179> Membri Usciti', value: String(leftMembers), inline: true },
         { name: '<:podium:1469660769984708629> Tasso di Ritenzione', value: formatRetention(retention), inline: false }

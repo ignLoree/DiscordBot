@@ -33,7 +33,7 @@ module.exports = {
         '**Per sbloccare**',
         'Usa il comando `?unblockquotes` quando vuoi riattivare le quote.'
       ].join('\n'))
-      .setFooter({ text: `Bloccate il ${date} " Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
+      .setFooter({ text: `Bloccate il ${date} • Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
 
     return safeChannelSend(message.channel, { embeds: [embed] });
   }

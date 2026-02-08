@@ -35,7 +35,7 @@ module.exports = {
         { name: '<a:VC_StarBlue:1330194918043418674> **Weekly Top:**', value: `${weeklyText}`, inline: true },
         { name: '<a:VC_StarPurple:1330195026688344156> **General Top:**', value: `${allTimeText}`, inline: true }
       )
-      .setFooter({ text: `? ???  Ti mancano ${stats.remainingToNext} exp per il prossimo livello` });
+      .setFooter({ text: `⭐ 𓂃★ Ti mancano ${stats.remainingToNext} exp per il prossimo livello` });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
