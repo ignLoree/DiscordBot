@@ -56,8 +56,8 @@ try {
     global.logger.error('[ERROR] Error while creating the client.', error);
 };
 client.logs = require('./Utils/Moderation/logs');
-client.config2 = require('./config.js');
-client.config = require('./config.json')
+client.config = require('./config.json');
+client.config2 = client.config;
 const isDev = __dirname.toLowerCase().includes('dev bot');
 const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
 if (envToken) client.config.token = envToken;

@@ -32,7 +32,7 @@ async function handleSlashCommand(interaction, client) {
     if (command.staffOnly) {
         const sub = interaction.options?.getSubcommand?.(false);
         let staffRoleIds = Array.isArray(client.config?.staffRoleIds)
-            ? client.config.staffRoleIds
+            ? client.config.staff
             : [];
         if (sub && command.staffRoleIdsBySubcommand && Array.isArray(command.staffRoleIdsBySubcommand[sub])) {
             staffRoleIds = command.staffRoleIdsBySubcommand[sub];
@@ -51,7 +51,7 @@ async function handleSlashCommand(interaction, client) {
 
     if (command.partnerManagerOnly) {
         const partnerRoleIds = Array.isArray(client.config?.prefixStaffRoleIds)
-            ? client.config.prefixStaffRoleIds
+            ? client.config.partnerManager
             : [];
         const hasPartnerRole = partnerRoleIds.some(roleId => interaction.member?.roles?.cache?.has(roleId));
         const isAdmin = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);

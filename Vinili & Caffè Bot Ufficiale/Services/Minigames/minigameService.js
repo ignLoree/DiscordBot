@@ -436,7 +436,6 @@ async function loadPopularSongList(cfg) {
   if (cachedSongs && (now - cachedSongsAt) < SONG_CACHE_TTL_MS) return cachedSongs;
   const all = [];
 
-  // Primary source: Deezer chart (global top tracks, no API key required).
   const deezerChartUrl = cfg?.guessSong?.deezerChartUrl || 'https://api.deezer.com/chart/0/tracks?limit=100';
   try {
     const chartRes = await axios.get(deezerChartUrl, { timeout: 15000 });
@@ -456,7 +455,6 @@ async function loadPopularSongList(cfg) {
     }
   } catch {}
 
-  // Secondary source: iTunes feeds.
   const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : [];
   for (const feed of feeds) {
     if (!feed) continue;

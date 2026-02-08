@@ -18,32 +18,12 @@ async function handleAutocomplete(interaction, client) {
 async function handleSlashCommand(interaction, client) {
     const command = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
     if (!command) return;
-    const disabledCommands = Array.isArray(client.config?.disabledCommands)
-        ? client.config.disabledCommands
-        : [];
-    const disabledSubcommands = client.config?.disabledSubcommands || {};
-    const subcommand = interaction.options?.getSubcommand?.(false);
-    if (disabledCommands.includes(interaction.commandName)) {
-        return interaction.reply({
-            content: "<:vegax:1443934876440068179> Questo comando è disabilitato al momento.",
-            flags: 1 << 6
-        });
-    }
 
     if (!checkSlashPermission(interaction)) {
         return interaction.reply({
             content: "<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.",
             flags: 1 << 6
         });
-    }
-
-    if (subcommand && Array.isArray(disabledSubcommands[interaction.commandName])) {
-        if (disabledSubcommands[interaction.commandName].includes(subcommand)) {
-            return interaction.reply({
-                content: "<:vegax:1443934876440068179> Questo subcommand è disabilitato al momento.",
-                flags: 1 << 6
-            });
-        }
     }
 
     const originalReply = interaction.reply.bind(interaction);

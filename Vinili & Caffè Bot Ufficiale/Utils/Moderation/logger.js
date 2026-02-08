@@ -1,5 +1,5 @@
 ﻿const baseLogs = require('./logs');
-const config = require('../../config.js');
+const config = require('../../config.json');
 
 const levels = {
     debug: 0,
@@ -50,4 +50,3 @@ const logger = {
 };
 
 module.exports = logger;
-

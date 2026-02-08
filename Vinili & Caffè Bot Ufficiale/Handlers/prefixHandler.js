@@ -2,7 +2,6 @@
 const fs = require("fs");
 const path = require("path");
 const isDev = process.cwd().toLowerCase().includes("dev bot");
-const config = require("../config.json");
 
 function getBotRoots() {
     const cwd = process.cwd();
@@ -36,9 +35,6 @@ function shouldLogOnce(tag) {
 
 module.exports = (client) => {
     client.prefixCommands = async (folders) => {
-        const disabledPrefixCommands = Array.isArray(config.disabledPrefixCommands)
-            ? new Set(config.disabledPrefixCommands)
-            : new Set();
         const statusMap = new Map();
         for (const folder of folders) {
             const folderPath = `./Prefix/${folder}`;
@@ -56,14 +52,9 @@ module.exports = (client) => {
                     statusMap.set(key, "Skipped");
                     continue;
                 }
-                const folderName = String(folder).toLowerCase();
                 command.folder = command.folder || folder;
                 client.pcommands.set(command.name, command);
-                if (disabledPrefixCommands.has(command.name)) {
-                    statusMap.set(key, "Disabilitato");
-                } else {
-                    statusMap.set(key, "Loaded");
-                }
+                statusMap.set(key, "Loaded");
                 if (Array.isArray(command.aliases)) {
                     for (const alias of command.aliases) {
                         client.aliases.set(alias, command.name);

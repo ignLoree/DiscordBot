@@ -41,9 +41,6 @@ module.exports = (client) => {
     client.handleCommands = async (commandFolders, basePath) => {
         const statusMap = new Map();
         client.commandArray = [];
-        const disabledCommands = Array.isArray(config.disabledCommands)
-            ? new Set(config.disabledCommands)
-            : new Set();
 
         for (const folder of commandFolders) {
             const commandFiles = fs
@@ -68,22 +65,13 @@ module.exports = (client) => {
                     const commandType = command.data?.type ?? 1;
                     client.commands.set(`${command.data.name}:${commandType}`, command);
 
-                    const isDisabled = disabledCommands.has(command.data.name);
-                    if (isDisabled) {
-                        statusMap.set(key, "Disabilitato");
-                    }
-
                     if (command.skipDeploy) {
-                        if (!isDisabled) {
-                            statusMap.set(key, "Skipped");
-                        }
+                        statusMap.set(key, "Skipped");
                         continue;
                     }
 
                     client.commandArray.push(command.data.toJSON());
-                    if (!isDisabled) {
-                        statusMap.set(key, "Loaded");
-                    }
+                    statusMap.set(key, "Loaded");
                 } catch (err) {
                     global.logger.error(`[COMMANDS] Failed to load ${file}:`, err);
                     statusMap.set(key, "Error loading");

@@ -41,7 +41,7 @@ async function fetchMorningPrompt(cfg, guildId) {
   const token = await getOpenTdbToken(cfg, guildId).catch(() => null);
   const params = new URLSearchParams({
     amount: '1',
-    category: String(cfg?.category || 9), // General Knowledge
+    category: String(cfg?.category || 9),
     type: 'multiple',
     encode: 'url3986'
   });

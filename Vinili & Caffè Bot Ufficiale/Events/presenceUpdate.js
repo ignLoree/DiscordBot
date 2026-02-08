@@ -355,8 +355,6 @@ module.exports = {
             }
 
             if (prevHas && !newHas) {
-                // Discord puo' nascondere momentaneamente il custom status
-                // (giochi/start activity o update vuoto): non trattarlo come rimozione link.
                 if (!hasCustomActivity(newPresence)) {
                     statusCache.set(userId, {
                         hasLink: true,

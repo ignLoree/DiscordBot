@@ -419,6 +419,24 @@ module.exports = {
             setTimeout(() => msg.delete().catch(() => { }), 2000);
             return;
         }
+        if (!checkPrefixPermission(message, command.name)) {
+            const embed = new EmbedBuilder()
+                .setColor("Red")
+                .setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.");
+            await deleteCommandMessage();
+            const msg = await message.channel.send({ embeds: [embed] });
+            setTimeout(() => msg.delete().catch(() => { }), 2000);
+            return;
+        }
+        if (command?.args && !args.length) {
+            const embed = new EmbedBuilder()
+                .setColor("Red")
+                .setDescription(`<:vegax:1443934876440068179> Non hai **aggiunto** nessun argomento.`);
+            await deleteCommandMessage();
+            const msg = await message.channel.send({ embeds: [embed] });
+            setTimeout(() => msg.delete().catch(() => { }), 2000);
+            return;
+        }
         if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();
         if (!client.prefixCommandQueue) client.prefixCommandQueue = new Map();
         const userId = message.author.id;
@@ -438,35 +456,6 @@ module.exports = {
             await enqueueCommand();
             return;
         }
-        const disabledPrefixCommands = Array.isArray(client.config?.disabledPrefixCommands)
-            ? client.config.disabledPrefixCommands
-            : [];
-        if (disabledPrefixCommands.includes(command.name)) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription("<:vegax:1443934876440068179> Questo comando è disabilitato al momento.");
-            await deleteCommandMessage();
-            const msg = await message.channel.send({ embeds: [embed] });
-            setTimeout(() => msg.delete().catch(() => { }), 2000);
-            return;
-        }
-        if (!checkPrefixPermission(message, command.name)) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.");
-            await deleteCommandMessage();
-            const msg = await message.channel.send({ embeds: [embed] });
-            setTimeout(() => msg.delete().catch(() => { }), 2000);
-            return;
-        }
-        if (command?.args && !args.length) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription(`<:vegax:1443934876440068179> Non hai **aggiunto** nessun argomento.`);
-            await deleteCommandMessage();
-            const msg = await message.channel.send({ embeds: [embed] });
-            setTimeout(() => msg.delete().catch(() => { }), 2000);
-        }
         const executePrefixCommand = async (payload) => {
             const { message: execMessage, args: execArgs, command: execCommand } = payload;
             const originalReply = execMessage.reply.bind(execMessage);
@@ -476,17 +465,25 @@ module.exports = {
                 execMessage.channel.send = (payload) => originalChannelSend(applyDefaultFooterToEmbeds(payload, execMessage.guild));
             }
             const originalSendTyping = execMessage.channel?.sendTyping?.bind(execMessage.channel);
-            let typingTimer = null;
+            let typingStartTimer = null;
+            let typingPulseTimer = null;
             let commandFinished = false;
             if (originalSendTyping) {
+                const sendTypingSafe = async () => {
+                    if (commandFinished) return;
+                    try {
+                        await originalSendTyping();
+                    } catch { }
+                };
+                typingStartTimer = setTimeout(async () => {
+                    if (commandFinished) return;
+                    await sendTypingSafe();
+                    typingPulseTimer = setInterval(() => {
+                        void sendTypingSafe();
+                    }, 8000);
+                }, 2500);
                 execMessage.channel.sendTyping = async () => {
-                    if (typingTimer || commandFinished) return;
-                    typingTimer = setTimeout(async () => {
-                        if (commandFinished) return;
-                        try {
-                            await originalSendTyping();
-                        } catch { }
-                    }, 3000);
+                    await sendTypingSafe();
                 };
             }
             try {
@@ -542,7 +539,8 @@ module.exports = {
                 return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
             } finally {
                 commandFinished = true;
-                if (typingTimer) clearTimeout(typingTimer);
+                if (typingStartTimer) clearTimeout(typingStartTimer);
+                if (typingPulseTimer) clearInterval(typingPulseTimer);
                 if (originalSendTyping) {
                     execMessage.channel.sendTyping = originalSendTyping;
                 }

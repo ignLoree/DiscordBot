@@ -1,7 +1,5 @@
 ﻿const config = require('../config.json');
 const mongoose = require('mongoose');
-const mongodbURL = config.mongoURL;
-const config2 = require('../config.js');
 const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
 const { restorePendingDiscadiaReminders } = require('../Services/Discadia/discadiaReminderService');
 const { startDiscadiaVoteReminderLoop } = require('../Services/Discadia/discadiaVoteReminderService');
@@ -37,7 +35,8 @@ module.exports = {
     once: true,
     async execute(client) {
         let logOnce = true;
-        client.setMaxListeners(client.config2.eventListeners || 20);
+        client.setMaxListeners(client.config.eventListeners || 20);
+        const mongodbURL = client.config.mongoURL;
         if (!mongodbURL) {
             client.logs.error('[DATABASE] No MongoDB URL has been provided. Double check your config.json file and make sure it is correct.');
             return;
@@ -54,7 +53,7 @@ module.exports = {
         if (mongoose.connect && logOnce) {
             client.logs.success('[DATABASE] Connected to MongoDB successfully.');
         }
-        require('events').EventEmitter.defaultMaxListeners = config2.eventListeners;
+        require('events').EventEmitter.defaultMaxListeners = config.eventListeners;
         const primaryScheduler = isPrimaryScheduler(client);
         if (primaryScheduler) {
             try {
@@ -182,7 +181,6 @@ module.exports = {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
 
-        // reminders now handled per-message in messageCreate
         if (logOnce) {
             client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
         }
