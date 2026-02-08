@@ -1,4 +1,4 @@
-const ActivityUser = require('../../Schemas/Community/activityUserSchema');
+﻿const ActivityUser = require('../../Schemas/Community/activityUserSchema');
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE } = require('./expService');
 
 const TIME_ZONE = 'Europe/Rome';

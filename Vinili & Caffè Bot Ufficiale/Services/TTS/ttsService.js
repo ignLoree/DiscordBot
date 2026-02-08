@@ -1,4 +1,4 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
+﻿const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
 const { Readable } = require('stream');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const ttsStates = new Map();
@@ -187,7 +187,7 @@ function enqueue(state, item) {
   }
 }
 async function handleTtsMessage(message, client, prefix) {
-  const config = client?.config2;
+  const config = client?.config;
   if (!shouldHandleMessage(message, config, prefix)) return;
   const isVoiceChat = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
   const voiceChannel = isVoiceChat ? message.channel : message.member?.voice?.channel;

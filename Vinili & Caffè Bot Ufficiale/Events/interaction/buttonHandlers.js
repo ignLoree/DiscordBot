@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
+﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const { handleMinigameButton } = require('../../Services/Minigames/minigameService');
 
 async function handleButtonInteraction(interaction, client) {
@@ -33,7 +33,7 @@ async function handleButtonInteraction(interaction, client) {
         await button.execute(interaction, client);
     } catch (error) {
         global.logger.error(`${color.red}[${getTimestamp()}] [BUTTON_CREATE]:`, error);
-        const channelID = `${client.config2.commandErrorChannel}`;
+        const channelID = `${client.config.commandErrorChannel}`;
         const channel = client.channels.cache.get(channelID);
         if (!channel) return global.logger.error("Errore: Canale errori non trovato!");
 
@@ -81,7 +81,7 @@ async function handleButtonInteraction(interaction, client) {
 
         const errorEmbed = new EmbedBuilder()
             .setColor('Red')
-            .setDescription(`<:vegax:1443934876440068179> Si è verificato un errore durante l'esecuzione del bottone!
+            .setDescription(`<:vegax:1443934876440068179> Si Ã¨ verificato un errore durante l'esecuzione del bottone!
             \`\`\`${error}\`\`\``);
             
         await interaction.reply({ embeds: [errorEmbed], flags: 1 << 6 });

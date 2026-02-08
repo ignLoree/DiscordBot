@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const Panel = require('../Schemas/Community/panelSchema');
 
@@ -31,7 +31,7 @@ module.exports = {
       )
       .setImage(DIVIDER_URL);
 
-    const color = client?.config2?.embedVerify || '#6f4e37';
+    const color = client?.config?.embedVerify || '#6f4e37';
 
     const verifyPanelEmbed = new EmbedBuilder()
       .setColor(color)

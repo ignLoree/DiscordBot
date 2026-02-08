@@ -1,6 +1,6 @@
-const { safeChannelSend } = require('../../Utils/Moderation/message');
+﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const BannerPrivacy = require('../../Schemas/Community/bannerPrivacySchema');
+const { BannerPrivacy } = require('../../Schemas/Community/privacySchemas');
 
 function normalize(text) {
   return String(text || "").toLowerCase().trim();
@@ -41,7 +41,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ]
       });
     }
@@ -70,7 +70,7 @@ module.exports = {
         new ButtonBuilder()
           .setCustomId(`banner_unblock:${user.id}`)
           .setLabel('Sblocca')
-          .setEmoji('🔓')
+          .setEmoji('ðŸ”“')
           .setStyle(ButtonStyle.Secondary)
       );
       return safeChannelSend(message.channel, { embeds: [blockedEmbed], components: [row] });
@@ -110,14 +110,14 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbn.\n${totalViews} Views 👁`
+        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbn.\n${totalViews} Views ðŸ‘`
       });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('banner_views')
         .setLabel('Classifica Views')
-        .setEmoji('📊')
+        .setEmoji('ðŸ“Š')
         .setStyle(ButtonStyle.Secondary)
     );
 

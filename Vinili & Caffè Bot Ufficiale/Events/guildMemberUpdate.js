@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const config = require("../config.json");
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();

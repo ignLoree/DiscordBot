@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
 
@@ -116,7 +116,7 @@ module.exports = {
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>?<@&1442569014474965033>`
                 });
 
                 for (const emoji of validReactions) {
@@ -270,7 +270,7 @@ ${answersText}
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>?<@&1442569014474965033>`
                 });
 
                 await pollMessage.reactions.removeAll().catch(() => { });

@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 const ascii = require('ascii-table');
 
@@ -6,8 +6,8 @@ function getBotRoots() {
     const cwd = process.cwd();
     const base = path.dirname(cwd);
     const isOfficial = cwd.toLowerCase().includes('ufficiale');
-    const official = isOfficial ? cwd : path.join(base, 'Vinili & Caffè Bot Ufficiale');
-    const dev = isOfficial ? path.join(base, 'Vinili & Caffè Dev Bot') : cwd;
+    const official = isOfficial ? cwd : path.join(base, 'Vinili & CaffÃ¨ Bot Ufficiale');
+    const dev = isOfficial ? path.join(base, 'Vinili & CaffÃ¨ Dev Bot') : cwd;
     return { official, dev, isOfficial };
 }
 

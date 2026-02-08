@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 
@@ -85,7 +85,7 @@ module.exports = {
                     await StaffDoc.save();
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione eseguita da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                        .setTitle(`<a:laydowntorest:1444006796661358673>・**__VALUTAZIONE POSITIVA__** \#${StaffDoc.positiveCount}\``)
+                        .setTitle(`<a:laydowntorest:1444006796661358673>·**__VALUTAZIONE POSITIVA__** \#${StaffDoc.positiveCount}\``)
                         .setThumbnail(`${utentee.displayAvatarURL()}`)
                         .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee} <:pinnednew:1443670849990430750> __${reason}__ <a:loading:1443934440614264924> **ID Valutazione** __\`${StaffDoc.valutazioniCount}\`__`)
                         .setColor('#6f4e37')
@@ -124,7 +124,7 @@ module.exports = {
                     await StaffDoc.save();
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione eseguita da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                        .setTitle(`<a:laydowntorest:1444006796661358673>・**__VALUTAZIONE NEGATIVA__** \#${StaffDoc.negativeCount}\``)
+                        .setTitle(`<a:laydowntorest:1444006796661358673>·**__VALUTAZIONE NEGATIVA__** \#${StaffDoc.negativeCount}\``)
                         .setThumbnail(`${utentee.displayAvatarURL()}`)
                         .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee} <:pinnednew:1443670849990430750> __${reason}__ <a:loading:1443934440614264924> **ID Valutazione** __\`${StaffDoc.valutazioniCount}\`__`)
                         .setColor('#6f4e37')

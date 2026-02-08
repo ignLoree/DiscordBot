@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const SuggestionCount = require('../../Schemas/Suggestion/suggestionSchema');
 

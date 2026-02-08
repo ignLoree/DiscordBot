@@ -1,4 +1,4 @@
-const VerificationTenure = require('../../Schemas/Community/verificationTenureSchema');
+﻿const VerificationTenure = require('../../Schemas/Community/verificationTenureSchema');
 
 const ROLE_STAGE_1 = '1469041461294268489';
 const ROLE_STAGE_2 = '1469073503025103113';

@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
     name: 'inviteDelete',
     async execute(invite) {
         try {

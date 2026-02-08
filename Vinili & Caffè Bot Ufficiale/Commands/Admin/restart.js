@@ -1,5 +1,5 @@
-const { SlashCommandBuilder } = require('discord.js');
-const { safeReply } = require('../../Utils/Moderation/interaction');
+﻿const { SlashCommandBuilder } = require('discord.js');
+const { safeReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
@@ -101,7 +101,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -137,7 +137,7 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();

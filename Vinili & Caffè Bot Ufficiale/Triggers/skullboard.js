@@ -1,8 +1,8 @@
-const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+﻿const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
 const SkullboardPost = require('../Schemas/Community/skullboardPostSchema');
 
-const SKULL_EMOJI = '💀';
+const SKULL_EMOJI = 'ðŸ’€';
 const SKULLBOARD_CHANNEL_ID = '1468540884537573479';
 
 module.exports = {
@@ -102,7 +102,7 @@ module.exports = {
       const postEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({ name: author.username, iconURL: author.displayAvatarURL({ size: 64 }) })
-        .setDescription('Aggiungi la reazione 💀 ad un messaggio per pubblicarlo nella SkullBoard')
+        .setDescription('Aggiungi la reazione ðŸ’€ ad un messaggio per pubblicarlo nella SkullBoard')
         .addFields(
           { name: 'Autore', value: `${author}`, inline: true },
           { name: 'Canale', value: `${message.channel}`, inline: true },
@@ -117,7 +117,7 @@ module.exports = {
 
       const postMessage = await skullboardChannel.send({ embeds: [postEmbed], files: [attachment] }).catch(() => null);
       if (!postMessage) return;
-      await postMessage.react('💀').catch(() => {});
+      await postMessage.react('ðŸ’€').catch(() => {});
 
       await SkullboardPost.findOneAndUpdate(
         { guildId: message.guild.id, messageId: message.id },
@@ -127,12 +127,12 @@ module.exports = {
 
       const confirmEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+        .setDescription(`Il messaggio Ã¨ stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Vai al Post')
-          .setEmoji('💀')
+          .setEmoji('ðŸ’€')
           .setURL(postMessage.url)
       );
       await message.channel.send({ embeds: [confirmEmbed], components: [row] }).catch(() => {});

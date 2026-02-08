@@ -1,8 +1,8 @@
-const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const renderQuoteCanvas = require('../../Utils/Render/quoteCanvas');
 const { nextQuoteCount } = require('../../Utils/Quote/quoteCounter');
-const QuotePrivacy = require('../../Schemas/Community/quotePrivacySchema');
+const { QuotePrivacy } = require('../../Schemas/Community/privacySchemas');
 
 const QUOTE_CHANNEL_ID = "1468540884537573479";
 const ALLOWED_ROLE_IDS = [
@@ -15,8 +15,8 @@ const ALLOWED_ROLE_IDS = [
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione .ᐟ ✧")
-    .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando **?quote** rispondendo al messaggio di un utente .ᐟ ✧")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione .áŸ âœ§")
+    .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando **?quote** rispondendo al messaggio di un utente .áŸ âœ§")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
       { name: "Creato da:", value: `<@${creatorId}>` }
@@ -28,7 +28,7 @@ function buildNoPermsEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${ALLOWED_ROLE_IDS[0]}>, <@&${ALLOWED_ROLE_IDS[1]}>, <@&${ALLOWED_ROLE_IDS[2]}>, <@&${ALLOWED_ROLE_IDS[3]}>`
@@ -44,7 +44,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.")
+            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -109,7 +109,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor("#ed4245")
-              .setTitle("🚫 Quote bloccate")
+              .setTitle("ðŸš« Quote bloccate")
               .setDescription([
                 `**${displayName || author.username}** ha bloccato le quote dei propri messaggi.`,
                 "",
@@ -117,7 +117,7 @@ module.exports = {
                 "L'utente ha scelto di non essere quotato. Rispetta questa decisione!",
                 
               ].join("\n"))
-              .setFooter({ text: `Se hai bisogno di condividere il messaggio, usa un screenshot o chiedi il permesso diretto. • ${dateText}` })
+              .setFooter({ text: `Se hai bisogno di condividere il messaggio, usa un screenshot o chiedi il permesso diretto. â€¢ ${dateText}` })
           ],
           allowedMentions: { repliedUser: false }
         });
@@ -126,7 +126,7 @@ module.exports = {
 
     let buffer;
     try {
-      const footerText = String(message.client?.config2?.botServerInvite || "")
+      const footerText = String(message.client?.config?.botServerInvite || "")
         .replace(/^https?:\/\//i, "")
         .trim();
       buffer = await renderQuoteCanvas({
@@ -157,7 +157,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`)
-      .addFields({ name: "📸 Totale immagini generate:", value: String(totalPosts) });
+      .addFields({ name: "ðŸ“¸ Totale immagini generate:", value: String(totalPosts) });
 
     const replyMsg = await safeMessageReply(message, {
       files: [attachment],
@@ -179,7 +179,7 @@ module.exports = {
         new ButtonBuilder()
           .setCustomId(`quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`)
           .setLabel('Rimuovi questa quote')
-          .setEmoji('🗑️')
+          .setEmoji('ðŸ—‘ï¸')
           .setStyle(ButtonStyle.Danger)
       );
       await quoteChannel.send({ files: [postAttachment], embeds: [postEmbed], components: [row] }).catch(() => {});

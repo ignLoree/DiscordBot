@@ -1,11 +1,11 @@
-const {
+﻿const {
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
   PermissionsBitField
 } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
   '1442568950805430312',
   '1442568916114346096',
@@ -21,9 +21,9 @@ function buildNoPermEmbed(message) {
   const rolesText = CUSTOM_ROLE_ALLOWED_ROLE_IDS.map((id) => `<@&${id}>`).join(', ');
   return new EmbedBuilder()
     .setColor('#e67e22')
-    .setTitle('<:vegax:1443934876440068179> ➤ Non hai i permessi')
+    .setTitle('<:vegax:1443934876440068179> âž¤ Non hai i permessi')
     .setDescription([
-      'Questo comando è riservato agli utenti che possiedono i seguenti ruoli:',
+      'Questo comando Ã¨ riservato agli utenti che possiedono i seguenti ruoli:',
       rolesText
     ].join('\n'))
     .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
@@ -59,7 +59,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piÃ¹. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -81,7 +81,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('🗑️ Seleziona un utente')
+      .setTitle('ðŸ—‘ï¸ Seleziona un utente')
       .setDescription('Usa il menu a tendina qui sotto per rimuovere un utente dal tuo ruolo personalizzato.');
 
     await message.guild.members.fetch().catch(() => {});
@@ -94,7 +94,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('#6f4e37')
-            .setTitle('🗑️ Seleziona un utente')
+            .setTitle('ðŸ—‘ï¸ Seleziona un utente')
             .setDescription('Nessun utente valido (diverso da te) ha attualmente il tuo ruolo personalizzato.')
         ],
         allowedMentions: { repliedUser: false }

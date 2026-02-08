@@ -1,4 +1,4 @@
-﻿const { safeReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -46,11 +46,11 @@ module.exports = {
 
   async execute(interaction, client) {
     const sub = interaction.options.getSubcommand();
-    client.config2.tts = client.config2.tts || {};
+    client.config.tts = client.config.tts || {};
 
     if (sub === 'autojoin') {
       const stato = interaction.options.getBoolean('stato', true);
-      client.config2.tts.autojoin = stato;
+      client.config.tts.autojoin = stato;
       const label = stato ? 'attivo' : 'disattivato';
       return safeReply(interaction, {
         content: `<:vegacheckmark:1443666279058772028> Autojoin TTS settato su \`${label}\`.`,

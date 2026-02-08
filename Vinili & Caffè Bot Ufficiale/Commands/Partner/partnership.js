@@ -1,4 +1,4 @@
-﻿const { safeReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { hasAnyRole } = require('../../Utils/Moderation/permissions');
 

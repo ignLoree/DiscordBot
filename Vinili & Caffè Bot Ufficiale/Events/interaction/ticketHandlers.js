@@ -1,7 +1,7 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, AttachmentBuilder } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
-const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/interaction');
+const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const CONFIG = require('../../config');
 
@@ -94,49 +94,49 @@ async function handleTicketInteraction(interaction) {
             const ticketConfig = {
                 ticket_perks: {
                     type: "perks",
-                    emoji: "💎",
+                    emoji: "??",
                     name: "perks",
                     role: ROLE_HIGHSTAFF,
                     requiredRoles: [ROLE_USER, ROLE_BOOSTER, ROLE_DONATOR, ROLE_SUPPORTER, ROLE_LEVEL5],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>・**__TICKET PERKS__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507>・__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Indica quali **perks** vuoi riscattare.`)
+                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET PERKS__**")
+                        .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ?? Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ? Indica quali **perks** vuoi riscattare.`)
                         .setColor("#6f4e37")
                         .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: interaction.guild?.iconURL?.() })
                 },
                 ticket_supporto: {
                     type: "supporto",
-                    emoji: "🆘",
+                    emoji: "??",
                     name: "supporto",
                     role: ROLE_STAFF,
                     requiredRoles: [],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>・**__TICKET SUPPORTO__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507>・__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Spiega subito il tuo problema.`)
+                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET SUPPORTO__**")
+                        .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ?? Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ? Spiega subito il tuo problema.`)
                         .setColor("#6f4e37")
                         .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: interaction.guild?.iconURL?.() })
                 },
                 ticket_partnership: {
                     type: "partnership",
-                    emoji: "🤝",
+                    emoji: "??",
                     name: "partnership",
                     role: ROLE_PARTNERMANAGER,
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>・**__TICKET PARTNERSHIP__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507>・__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.`)
+                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET PARTNERSHIP__**")
+                        .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ?? Attendi un **__\`PARTNER MANAGER\`__**.`)
                         .setColor("#6f4e37")
                         .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: interaction.guild?.iconURL?.() })
                 },
                 ticket_highstaff: {
                     type: "high",
-                    emoji: "⭐",
+                    emoji: "?",
                     name: "highstaff",
                     role: ROLE_HIGHSTAFF,
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>・**__TICKET HIGH__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507>・__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi cosa vuoi segnalare.`)
+                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET HIGH__**")
+                        .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ?? Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ? Descrivi cosa vuoi segnalare.`)
                         .setColor("#6f4e37")
                         .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: interaction.guild?.iconURL?.() })
                 }
@@ -170,7 +170,7 @@ async function handleTicketInteraction(interaction) {
                     return true;
                 }
                 const channel = await interaction.guild.channels.create({
-                    name: `༄${config.emoji}︲${config.name}᲼${interaction.user.username}`,
+                    name: `?${config.emoji}?${config.name}?${interaction.user.username}`,
                     type: 0,
                     parent: TICKET_CATEGORY,
                     permissionOverwrites: [
@@ -218,9 +218,9 @@ async function handleTicketInteraction(interaction) {
                     return true;
                 }
                 const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId("claim_ticket").setLabel("🔓 Claim").setStyle(ButtonStyle.Success)
+                    new ButtonBuilder().setCustomId("close_ticket").setLabel("?? Chiudi").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("?? Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("claim_ticket").setLabel("?? Claim").setStyle(ButtonStyle.Success)
                 );
                 const mainMsg = await channel.send({ embeds: [config.embed], components: [row] }).catch(err => {
                     global.logger.error(err);
@@ -240,7 +240,7 @@ async function handleTicketInteraction(interaction) {
                         mentionMsg.delete().catch(() => { });
                     }, 100);
                 }
-                await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('🎫 Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('?? Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
                 return true;
             }
             if (interaction.customId === 'claim_ticket') {
@@ -304,9 +304,9 @@ async function handleTicketInteraction(interaction) {
                     }
                 }
                 const claimedButtons = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId("unclaim").setLabel("🔓 Unclaim").setStyle(ButtonStyle.Secondary)
+                    new ButtonBuilder().setCustomId("close_ticket").setLabel("?? Chiudi").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("?? Chiudi con motivo").setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId("unclaim").setLabel("?? Unclaim").setStyle(ButtonStyle.Secondary)
                 );
                 try {
                     if (interaction.channel && ticket.messageId) {
@@ -337,9 +337,9 @@ async function handleTicketInteraction(interaction) {
                     return true;
                 }
                 const ticketButtonsOriginal = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId('claim_ticket').setLabel('🔓 Claim').setStyle(ButtonStyle.Success)
+                    new ButtonBuilder().setCustomId('close_ticket').setLabel('?? Chiudi').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('?? Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId('claim_ticket').setLabel('?? Claim').setStyle(ButtonStyle.Success)
                 );
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc) {
@@ -539,7 +539,7 @@ async function handleTicketInteraction(interaction) {
                 }
             }
             await Ticket.updateOne({ channelId: targetInteraction.channel.id }, { $set: { open: false, transcript: transcriptTXT, claimedBy: ticket.claimedBy || null, closeReason: motivo || null, closedAt: new Date() } }).catch(() => { });
-            await safeEditReply(targetInteraction, { embeds: [new EmbedBuilder().setDescription("🔒 Il ticket verrà chiuso...").setColor('#6f4e37')]});
+            await safeEditReply(targetInteraction, { embeds: [new EmbedBuilder().setDescription("?? Il ticket verrà chiuso...").setColor('#6f4e37')]});
             setTimeout(() => {
                 if (targetInteraction.channel) targetInteraction.channel.delete().catch(() => { });
             }, 2000);

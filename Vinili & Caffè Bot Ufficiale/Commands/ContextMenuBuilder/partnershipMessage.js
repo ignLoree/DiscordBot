@@ -1,4 +1,4 @@
-﻿const { safeReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
 
 module.exports = {

@@ -1,27 +1,27 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const DiscadiaBump = require('../../Schemas/Discadia/discadiaBumpSchema');
 const bumpTimers = new Map();
 
 function getCooldownMs(client) {
-    const minutes = client?.config2?.discadia?.cooldownMinutes || 1440;
+    const minutes = client?.config?.discadia?.cooldownMinutes || 1440;
     return minutes * 60 * 1000;
 }
 
 async function sendReminder(client, guildId) {
-    const discadia = client?.config2?.discadia;
+    const discadia = client?.config?.discadia;
     if (!discadia?.reminderChannelId) return;
     const channel = client.channels.cache.get(discadia.reminderChannelId)
         || await client.channels.fetch(discadia.reminderChannelId).catch(() => null);
     if (!channel) return;
-    const embedColor = client?.config2?.embedInfo || "#6f4e37";
+    const embedColor = client?.config?.embedInfo || "#6f4e37";
     await channel.send({
         content: "<@&1442569013074071644>",
         embeds: [
             new EmbedBuilder()
                 .setColor(embedColor)
                 .setTimestamp()
-                .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
-                .setTitle("<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**")
+                .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
+                .setTitle("<:VC_Eye:1331619214410383381> **Ãˆ L'ORA DEL `BUMP` SU DISCADIA!**")
                 .setURL("https://discadia.com/server/viniliecaffe/")
                 .setDescription("<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!")
         ]

@@ -1,4 +1,4 @@
-module.exports = (db) => {
+﻿module.exports = (db) => {
     process.on('SIGINT', () => {
         global.logger.info();
         error('SIGINT: Exiting...');

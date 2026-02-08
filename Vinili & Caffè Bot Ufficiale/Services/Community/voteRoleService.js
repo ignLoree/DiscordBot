@@ -1,4 +1,4 @@
-const VoteRole = require('../../Schemas/Community/voteRoleSchema');
+﻿const VoteRole = require('../../Schemas/Community/voteRoleSchema');
 
 const VOTE_ROLE_ID = '1468266342682722679';
 const CHECK_INTERVAL_MS = 60 * 1000;

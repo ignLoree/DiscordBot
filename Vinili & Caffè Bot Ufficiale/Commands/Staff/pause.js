@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 

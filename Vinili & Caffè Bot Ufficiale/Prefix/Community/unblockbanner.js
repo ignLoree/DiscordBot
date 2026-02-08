@@ -1,6 +1,6 @@
-const { safeChannelSend } = require('../../Utils/Moderation/message');
+﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder } = require('discord.js');
-const BannerPrivacy = require('../../Schemas/Community/bannerPrivacySchema');
+const { BannerPrivacy } = require('../../Schemas/Community/privacySchemas');
 
 module.exports = {
   name: 'unblockbanner',

@@ -1,9 +1,9 @@
-﻿const { safeReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 
 const getDevIds = (client) => {
   const raw =
-    client.config2?.developers ??
+    client.config?.developers ??
     client.config?.developers ??
     "";
   if (Array.isArray(raw)) {

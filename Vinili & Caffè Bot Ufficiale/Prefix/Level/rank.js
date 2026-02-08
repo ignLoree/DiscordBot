@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { getUserRanks, getGlobalMultiplier } = require('../../Services/Community/expService');
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle(`Le statistiche di ${targetUser.tag} .ᐟ ✧`)
+      .setTitle(`Le statistiche di ${targetUser.tag} .? ?`)
       .setThumbnail(targetUser.displayAvatarURL())
       .setDescription([
         `<:VC_EXP:1468714279673925883> Hai accumulato un totale di **${stats.totalExp} EXP**.`,
@@ -35,7 +35,7 @@ module.exports = {
         { name: '<a:VC_StarBlue:1330194918043418674> **Weekly Top:**', value: `${weeklyText}`, inline: true },
         { name: '<a:VC_StarPurple:1330195026688344156> **General Top:**', value: `${allTimeText}`, inline: true }
       )
-      .setFooter({ text: `⭐ 𓂃★  Ti mancano ${stats.remainingToNext} exp per il prossimo livello` });
+      .setFooter({ text: `? ???  Ti mancano ${stats.remainingToNext} exp per il prossimo livello` });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()

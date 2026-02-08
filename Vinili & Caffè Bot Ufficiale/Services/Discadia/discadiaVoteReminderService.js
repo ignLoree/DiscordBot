@@ -1,22 +1,22 @@
-const DiscadiaVoter = require('../../Schemas/Discadia/discadiaVoterSchema');
+﻿const DiscadiaVoter = require('../../Schemas/Discadia/discadiaVoterSchema');
 
 function getCooldownMs(client) {
-    const hours = client?.config2?.discadiaVoteReminder?.cooldownHours || 24;
+    const hours = client?.config?.discadiaVoteReminder?.cooldownHours || 24;
     return hours * 60 * 60 * 1000;
 }
 
 function getCheckIntervalMs(client) {
-    const minutes = client?.config2?.discadiaVoteReminder?.checkIntervalMinutes || 30;
+    const minutes = client?.config?.discadiaVoteReminder?.checkIntervalMinutes || 30;
     return minutes * 60 * 1000;
 }
 
 function getReminderText(client) {
-    return client?.config2?.discadiaVoteReminder?.message
+    return client?.config?.discadiaVoteReminder?.message
         || 'Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!';
 }
 
 async function sendFallbackChannelReminder(client, guildId, userId, message) {
-    const fallbackId = client?.config2?.discadiaVoteReminder?.fallbackChannelId;
+    const fallbackId = client?.config?.discadiaVoteReminder?.fallbackChannelId;
     if (!fallbackId) return;
     const channel = client.channels.cache.get(fallbackId)
         || await client.channels.fetch(fallbackId).catch(() => null);
@@ -39,7 +39,7 @@ async function recordDiscadiaVote(guildId, userId) {
 }
 
 async function sendDueReminders(client) {
-    const enabled = client?.config2?.discadiaVoteReminder?.enabled;
+    const enabled = client?.config?.discadiaVoteReminder?.enabled;
     if (!enabled) return;
     const cooldownMs = getCooldownMs(client);
     const now = Date.now();
@@ -71,7 +71,7 @@ async function sendDueReminders(client) {
 }
 
 function startDiscadiaVoteReminderLoop(client) {
-    const enabled = client?.config2?.discadiaVoteReminder?.enabled;
+    const enabled = client?.config?.discadiaVoteReminder?.enabled;
     if (!enabled) return;
     const intervalMs = getCheckIntervalMs(client);
     setInterval(() => {

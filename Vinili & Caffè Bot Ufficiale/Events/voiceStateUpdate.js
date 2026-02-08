@@ -1,4 +1,4 @@
-const { leaveTtsGuild } = require('../Services/TTS/ttsService');
+﻿const { leaveTtsGuild } = require('../Services/TTS/ttsService');
 const { handleVoiceActivity } = require('../Services/Community/activityService');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
                 global.logger.error('[ACTIVITY VOICE ERROR]', error);
             }
         }
-        if (client?.config2?.tts?.stayConnected) return;
+        if (client?.config?.tts?.stayConnected) return;
         const guild = newState.guild || oldState.guild;
         if (!guild) return;
         if (oldState.id === client.user.id && oldState.channelId && !newState.channelId) {

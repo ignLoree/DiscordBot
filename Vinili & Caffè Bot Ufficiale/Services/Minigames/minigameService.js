@@ -1,8 +1,6 @@
 ﻿const axios = require('axios');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder } = require('discord.js');
-const MinigameUser = require('../../Schemas/Minigames/minigameUserSchema');
-const MinigameState = require('../../Schemas/Minigames/minigameStateSchema');
-const MinigameRotation = require('../../Schemas/Minigames/minigameRotationSchema');
+const { MinigameUser, MinigameState, MinigameRotation } = require('../../Schemas/Minigames/minigameSchema');
 const { addExpWithLevel } = require('../Community/expService');
 
 const activeGames = new Map();
@@ -42,7 +40,7 @@ let cachedSongsAt = 0;
 const SONG_CACHE_TTL_MS = 15 * 60 * 1000;
 
 function getConfig(client) {
-  return client?.config2?.minigames || null;
+  return client?.config?.minigames || null;
 }
 
 function getChannelSafe(client, channelId) {
@@ -591,9 +589,9 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina il numero .ᐟ ✧')
+    .setTitle('Indovina il numero .? ?')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚﹒`,
+      `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -603,9 +601,9 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la parola .ᐟ ✧')
+    .setTitle('Indovina la parola .? ?')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚﹒`,
+      `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -615,9 +613,9 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la bandiera .ᐟ ✧')
+    .setTitle('Indovina la bandiera .? ?')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
+      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'))
@@ -628,9 +626,9 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina il calciatore .ᐟ ✧')
+    .setTitle('Indovina il calciatore .? ?')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
+      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -644,9 +642,9 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la canzone .ᐟ ✧')
+    .setTitle('Indovina la canzone .? ?')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp** ˚﹒`,
+      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -658,7 +656,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Trova il bot .ᐟ ✧')
+    .setTitle('Trova il bot .? ?')
     .setDescription([
       '<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!',
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per trovarlo!`,
@@ -670,7 +668,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Sei vicino al bot .ᐟ ✧')
+    .setTitle('Sei vicino al bot .? ?')
     .setDescription([
       '<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!',
       `> <a:VC_Time:1468641957038526696> Tempo rimasto: **${minutes} minuti**`,
@@ -681,34 +679,34 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
-    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle('<a:VC_Heart:1448672728822448141>?Indizio')
+    .setDescription(`? <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
-    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle('<a:VC_Heart:1448672728822448141>?Indizio')
+    .setDescription(`? <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildHintEmbed(isHigher) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setDescription(isHigher ? '📈 <a:VC_Arrow:1448672967721615452> Più alto!' : '📉 <a:VC_Arrow:1448672967721615452> Più basso!');
+    .setDescription(isHigher ? '?? <a:VC_Arrow:1448672967721615452> Più alto!' : '?? <a:VC_Arrow:1448672967721615452> Più basso!');
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('𓂃★ Un utente ha vinto !')
+    .setTitle('??? Un utente ha vinto !')
     .setDescription([
-      `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
+      `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.? ?`,
       '',
-      '📊 **Le tue statistiche:**',
+      '?? **Le tue statistiche:**',
       `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
     ].join('\n'))
-    .setFooter({ text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi' });
+    .setFooter({ text: '? digita il comando "+mstats" per vedere i tuoi progressi' });
 }
 
 function getHighestEligibleReward(totalExp) {

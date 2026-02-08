@@ -1,5 +1,5 @@
-const { EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { EmbedBuilder } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { setGlobalMultiplier } = require('../../Services/Community/expService');
 
 module.exports = {

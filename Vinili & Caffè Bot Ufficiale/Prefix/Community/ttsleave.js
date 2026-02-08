@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { leaveTtsGuild } = require('../../Services/TTS/ttsService');
 
 module.exports = {

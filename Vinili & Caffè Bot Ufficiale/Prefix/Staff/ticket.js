@@ -1,5 +1,5 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
 
@@ -12,7 +12,7 @@ module.exports = {
   async execute(message, args = []) {
     if (!message.inGuild?.() || !message.guild || !message.member) {
       await safeMessageReply(message, {
-        content: '<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.',
+        content: '<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.',
         allowedMentions: { repliedUser: false }
       });
       return;
@@ -48,7 +48,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Aggiungi')
-            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato aggiunto a ${message.channel}`)
+            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato aggiunto a ${message.channel}`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -71,7 +71,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Rimuovi')
-            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato rimosso da ${message.channel}`)
+            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato rimosso da ${message.channel}`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -84,7 +84,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -112,7 +112,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -163,7 +163,7 @@ module.exports = {
       ).catch(() => {});
 
       await safeMessageReply(message, {
-        embeds: [new EmbedBuilder().setDescription('🔒 Il ticket verrà chiuso...').setColor('#6f4e37')],
+        embeds: [new EmbedBuilder().setDescription('ðŸ”’ Il ticket verrÃ  chiuso...').setColor('#6f4e37')],
         allowedMentions: { repliedUser: false }
       });
 
@@ -177,7 +177,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -188,7 +188,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setTitle('Errore')
-              .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket è già stato claimato da <@${ticketDoc.claimedBy}>`)
+              .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  stato claimato da <@${ticketDoc.claimedBy}>`)
               .setColor('Red')
           ],
           allowedMentions: { repliedUser: false }
@@ -211,9 +211,9 @@ module.exports = {
 
       const updatedEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor('#6f4e37');
       const updatedButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi con motivo').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('unclaim').setLabel('🔓 Unclaim').setStyle(ButtonStyle.Secondary)
+        new ButtonBuilder().setCustomId('close_ticket').setLabel('ðŸ”’ Chiudi').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('ðŸ“ Chiudi con motivo').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('unclaim').setLabel('ðŸ”“ Unclaim').setStyle(ButtonStyle.Secondary)
       );
 
       await msg.edit({ embeds: [updatedEmbed], components: [updatedButtons] });
@@ -221,7 +221,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Ticket Claimato')
-            .setDescription(`Il ticket è stato preso in carico da <@${ticketDoc.claimedBy}>`)
+            .setDescription(`Il ticket Ã¨ stato preso in carico da <@${ticketDoc.claimedBy}>`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -233,7 +233,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -241,7 +241,7 @@ module.exports = {
 
       if (!ticketDoc.claimedBy) {
         await safeMessageReply(message, {
-          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Questo ticket non è claimato.').setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.').setColor('Red')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -272,9 +272,9 @@ module.exports = {
 
       const originalEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor('#6f4e37');
       const originalButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('claim_ticket').setLabel('✅ Claim').setStyle(ButtonStyle.Success)
+        new ButtonBuilder().setCustomId('close_ticket').setLabel('ðŸ”’ Chiudi').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('ðŸ“ Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('claim_ticket').setLabel('âœ… Claim').setStyle(ButtonStyle.Success)
       );
 
       await msg.edit({ embeds: [originalEmbed], components: [originalButtons] });
@@ -282,7 +282,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Ticket Unclaimato')
-            .setDescription(`<@${oldClaimer}> non gestisce più il ticket`)
+            .setDescription(`<@${oldClaimer}> non gestisce piÃ¹ il ticket`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }

@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
-const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/interaction');
+const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 
@@ -75,7 +75,7 @@ async function handleSlashCommand(interaction, client) {
             `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
             error
         );
-        const errorChannelId = client.config2?.commandErrorChannel;
+        const errorChannelId = client.config?.commandErrorChannel;
         const errorChannel = errorChannelId
             ? client.channels.cache.get(errorChannelId)
             : null;

@@ -1,4 +1,4 @@
-const { queueCategoryRenumber } = require('../Services/Community/categoryNumberingService');
+﻿const { queueCategoryRenumber } = require('../Services/Community/categoryNumberingService');
 
 module.exports = {
     name: 'channelDelete',

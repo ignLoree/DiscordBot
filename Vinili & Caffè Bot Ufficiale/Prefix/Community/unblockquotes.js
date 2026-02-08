@@ -1,6 +1,6 @@
-const { safeChannelSend } = require('../../Utils/Moderation/message');
+﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder } = require('discord.js');
-const QuotePrivacy = require('../../Schemas/Community/quotePrivacySchema');
+const { QuotePrivacy } = require('../../Schemas/Community/privacySchemas');
 
 module.exports = {
   name: 'unblockquotes',
@@ -23,7 +23,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('✅ Quote sbloccate')
+      .setTitle('âœ… Quote sbloccate')
       .setDescription([
         'Le quote dei tuoi messaggi sono state sbloccate con successo!',
         '',
@@ -33,7 +33,7 @@ module.exports = {
         '**Per bloccare nuovamente**',
         'Usa il comando `?blockquotes` quando vuoi bloccare di nuovo le quote.'
       ].join('\n'))
-      .setFooter({ text: `Sbloccate il ${date} • Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
+      .setFooter({ text: `Sbloccate il ${date} â€¢ Oggi alle ${time}`, iconURL: message.author.displayAvatarURL() });
 
     return safeChannelSend(message.channel, { embeds: [embed] });
   }

@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/interaction');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const PartnershipCount = require('../../Schemas/Staff/staffSchema');
 
@@ -34,7 +34,7 @@ module.exports = {
                     userTag = user.username;
                 } catch {
                 }
-                description += `**${startIndex + i + 1}.** ${userTag} — ⭐ ${partner.partnerCount} partnership\n`;
+                description += `**${startIndex + i + 1}.** ${userTag} — ? ${partner.partnerCount} partnership\n`;
             }
             return new EmbedBuilder()
                 .setColor('#6f4e37')

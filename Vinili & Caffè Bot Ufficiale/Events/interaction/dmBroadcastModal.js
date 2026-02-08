@@ -1,9 +1,9 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const { getNoDmSet } = require("../../Utils/noDmList");
 
 const getDevIds = (client) => {
   const raw =
-    client.config2?.developers ??
+    client.config?.developers ??
     client.config?.developers ??
     "";
   if (Array.isArray(raw)) {
@@ -105,7 +105,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   const content = message.replace(/@everyone|@here/g, "@\u200beveryone");
   const parts = splitMessage(content);
-  const footerText = "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +no-dm nel server";
+  const footerText = "Se non vuoi ricevere piÃ¹ questi avvisi tramite DM fai il comando +no-dm nel server";
 
   let sent = 0;
   let failed = 0;

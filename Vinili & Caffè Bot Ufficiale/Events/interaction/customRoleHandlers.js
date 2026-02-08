@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField } = require('discord.js');
+﻿const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 
 const pendingRoleGrants = new Map();
@@ -16,7 +16,7 @@ async function checkOwnership(interaction, ownerId) {
       new EmbedBuilder()
         .setColor('Red')
         .setTitle('Accesso negato')
-        .setDescription('Solo il proprietario del ruolo personalizzato può usare questo controllo.')
+        .setDescription('Solo il proprietario del ruolo personalizzato puÃ² usare questo controllo.')
     ],
     flags: 1 << 6
   }).catch(() => {});
@@ -145,7 +145,7 @@ async function createCustomRoleGrantRequest({
           new EmbedBuilder()
             .setColor('#e67e22')
             .setTitle('Scaduto')
-            .setDescription('Tempo scaduto: la richiesta non è piu valida.')
+            .setDescription('Tempo scaduto: la richiesta non Ã¨ piu valida.')
         ],
         components: []
       }).catch(() => {});
@@ -183,7 +183,7 @@ async function handleRoleActionButton(interaction) {
     const deletedEmbed = new EmbedBuilder()
       .setColor('#e74c3c')
       .setTitle('Ruolo eliminato')
-      .setDescription(`Il ruolo **${roleName}** è stato cancellato con successo.`);
+      .setDescription(`Il ruolo **${roleName}** Ã¨ stato cancellato con successo.`);
 
     const updated = await interaction.update({ embeds: [deletedEmbed], components: [] }).then(() => true).catch(() => false);
     if (!updated) {
@@ -237,7 +237,7 @@ async function handleRoleActionButton(interaction) {
     modalId = `customrole_modal_emoji:${ownerId}:${roleId}:${panelMessageId}`;
     title = 'Imposta emoji o icona ruolo';
     label = 'Emoji unicode o URL immagine';
-    placeholder = 'Es: 🌟 oppure https://.../icon.png';
+    placeholder = 'Es: ðŸŒŸ oppure https://.../icon.png';
   }
   if (!modalId) return true;
 
@@ -398,7 +398,7 @@ async function handleAddRemoveSelectMenus(interaction) {
 
     await targetMember.roles.remove(role.id, `Custom role member removal by ${interaction.user.tag}`).catch(() => {});
     await interaction.update({
-      embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Utente Rimosso').setDescription(`L'utente ${targetMember} è stato rimosso dal tuo ruolo.`)],
+      embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Utente Rimosso').setDescription(`L'utente ${targetMember} Ã¨ stato rimosso dal tuo ruolo.`)],
       components: []
     }).catch(() => {});
     return true;
@@ -413,12 +413,12 @@ async function handleGrantButtons(interaction) {
   const [, token, action] = String(interaction.customId).split(':');
   const request = pendingRoleGrants.get(token);
   if (!request) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non è piu valida.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non Ã¨ piu valida.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
   if (interaction.user.id !== request.targetId) {
     await interaction.reply({
-      embeds: [new EmbedBuilder().setColor('Red').setTitle('Accesso negato').setDescription('Solo l utente invitato può rispondere a questa richiesta.')],
+      embeds: [new EmbedBuilder().setColor('Red').setTitle('Accesso negato').setDescription('Solo l utente invitato puÃ² rispondere a questa richiesta.')],
       flags: 1 << 6
     }).catch(() => {});
     return true;
@@ -474,7 +474,7 @@ async function handleGrantButtons(interaction) {
       }).catch(() => {});
     }
     await interaction.update({
-      embeds: [new EmbedBuilder().setColor('Red').setTitle('Errore').setDescription('Il bot non può assegnare questo ruolo.')],
+      embeds: [new EmbedBuilder().setColor('Red').setTitle('Errore').setDescription('Il bot non puÃ² assegnare questo ruolo.')],
       components: [disabledRow]
     }).catch(() => {});
     return true;
@@ -488,7 +488,7 @@ async function handleGrantButtons(interaction) {
     }).catch(() => {});
   }
   await channel.send({
-    embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Ruolo Concesso').setDescription(`Il ruolo **${role.name}** è stato assegnato a ${targetMember}.`)]
+    embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Ruolo Concesso').setDescription(`Il ruolo **${role.name}** Ã¨ stato assegnato a ${targetMember}.`)]
   }).catch(() => {});
   await interaction.update({
     embeds: [new EmbedBuilder().setColor('#2ecc71').setTitle('Richiesta accettata').setDescription(`Hai accettato il ruolo **${role.name}**.`)],

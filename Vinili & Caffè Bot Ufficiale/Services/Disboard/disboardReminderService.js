@@ -1,27 +1,27 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const DisboardBump = require('../../Schemas/Disboard/disboardBumpSchema');
 const bumpTimers = new Map();
 
 function getCooldownMs(client) {
-    const minutes = client?.config2?.disboard?.cooldownMinutes || 120;
+    const minutes = client?.config?.disboard?.cooldownMinutes || 120;
     return minutes * 60 * 1000;
 }
 
 async function sendReminder(client, guildId) {
-    const disboard = client?.config2?.disboard;
+    const disboard = client?.config?.disboard;
     if (!disboard?.reminderChannelId) return;
     const channel = client.channels.cache.get(disboard.reminderChannelId)
         || await client.channels.fetch(disboard.reminderChannelId).catch(() => null);
     if (!channel) return;
-    const embedColor = client?.config2?.embedInfo || "#6f4e37";
+    const embedColor = client?.config?.embedInfo || "#6f4e37";
     await channel.send({
         content: "<@&1442569013074071644>",
         embeds: [
             new EmbedBuilder()
                 .setColor(embedColor)
                 .setTimestamp()
-                .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
-                .setTitle(`<:VC_Eye:1331619214410383381> **É L'ORA DEL \`BUMP\`!**`)
+                .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
+                .setTitle(`<:VC_Eye:1331619214410383381> **Ã‰ L'ORA DEL \`BUMP\`!**`)
                 .setURL("https://disboard.org/it/server/1329080093599076474")
                 .setDescription("<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!")
         ]

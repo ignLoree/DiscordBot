@@ -18,7 +18,7 @@ const guildTimers = new Map();
 let loopHandle = null;
 
 function getSettings(client) {
-  const cfg = client?.config2?.categoryNumbering || {};
+  const cfg = client?.config?.categoryNumbering || {};
   return {
     enabled: cfg.enabled !== false,
     debounceMs: Math.max(300, Number(cfg.debounceMs || 1200)),

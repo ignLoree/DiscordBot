@@ -1,6 +1,6 @@
-const { safeChannelSend } = require('../../Utils/Moderation/message');
+﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder } = require('discord.js');
-const AvatarPrivacy = require('../../Schemas/Community/avatarPrivacySchema');
+const { AvatarPrivacy } = require('../../Schemas/Community/privacySchemas');
 
 module.exports = {
   name: 'unblockavatar',

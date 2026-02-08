@@ -275,7 +275,7 @@ async function handleVoteManagerMessage(message) {
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ☘️' });
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ??' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -318,7 +318,7 @@ module.exports = {
                     .setColor("#6f4e37")
                     .setDescription(
                         [
-                            `<:attentionfromvega:1443651874032062505> ➳ Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
+                            `<:attentionfromvega:1443651874032062505> ? Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                             "",
                             "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
                             `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&1468938195348754515>.`
@@ -490,7 +490,7 @@ module.exports = {
                 await execCommand.execute(execMessage, execArgs, client);
             } catch (error) {
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
-                const channelID = client.config2.commandErrorChannel;
+                const channelID = client.config.commandErrorChannel;
                 const errorChannel = client.channels.cache.get(channelID);
                 const errorEmbed = new EmbedBuilder()
                     .setColor("#6f4e37")
@@ -674,7 +674,7 @@ function logEventError(client, label, error) {
 }
 
 async function handleDisboardBump(message, client) {
-    const disboard = client?.config2?.disboard;
+    const disboard = client?.config?.disboard;
     if (!disboard) return false;
     if (!message.guild) return false;
     if (!message.author || message.author.id !== disboard.botId) return false;
@@ -704,7 +704,7 @@ async function handleDisboardBump(message, client) {
 }
 
 async function handleDiscadiaBump(message, client) {
-    const discadia = client?.config2?.discadia;
+    const discadia = client?.config?.discadia;
     if (!discadia) return false;
     if (!message.guild) return false;
     const isDiscadiaAuthor = message.author?.id === discadia.botId;

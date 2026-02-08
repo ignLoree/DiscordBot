@@ -1,5 +1,5 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const ExpUser = require('../../Schemas/Community/expUserSchema');
 const { getCurrentWeekKey } = require('../../Services/Community/expService');
 
@@ -16,7 +16,7 @@ function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
   if (index === 1) return '<:VC_Podio2:1469659512863592500>';
   if (index === 2) return '<:VC_Podio3:1469659557696504024>';
-  return `${index + 1}°`;
+  return `${index + 1}Â°`;
 }
 
 function formatUserLabel(member, userId) {
@@ -70,11 +70,11 @@ async function buildWeeklyEmbed(message) {
     .setTitle('Classifica settimanale [Weekly]')
     .setThumbnail(message.guild.iconURL({ size: 128 }))
     .setDescription([
-      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana (aggiornata ogni Lunedì)',
+      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con piÃ¹ exp guadagnati in settimana (aggiornata ogni LunedÃ¬)',
       '',
       lines.join('\n')
     ].join('\n'))
-    .setFooter({ text: `⇢  Comando eseguito da: ${message.author.username}` });
+    .setFooter({ text: `â‡¢  Comando eseguito da: ${message.author.username}` });
 }
 
 async function buildAllTimeEmbed(message) {
@@ -104,11 +104,11 @@ async function buildAllTimeEmbed(message) {
     .setTitle('Classifica generale [AllTime]')
     .setThumbnail(message.guild.iconURL({ size: 128 }))
     .setDescription([
-      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con il livello più alto nel server.',
+      '<a:VC_Sparkles:1468546911936974889> I 10 utenti con il livello piÃ¹ alto nel server.',
       '',
       lines.join('\n')
     ].join('\n'))
-    .setFooter({ text: `⇢ Comando eseguito da: ${message.author.username}` });
+    .setFooter({ text: `â‡¢ Comando eseguito da: ${message.author.username}` });
 }
 
 module.exports = {

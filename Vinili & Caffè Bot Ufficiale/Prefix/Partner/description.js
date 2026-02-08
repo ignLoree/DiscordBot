@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 module.exports = {
   name: 'description',
@@ -9,7 +9,7 @@ module.exports = {
 
     const allowedCategoryId = '1442569056795230279';
     const partnerRoleId =
-      message.client?.config2?.partnerManager ||
+      message.client?.config?.partnerManager ||
       message.client?.config?.partnerManager ||
       '1442568905582317740';
 
@@ -40,8 +40,8 @@ module.exports = {
     const descriptionText = [
       '```',
       '_ _',
-      '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
-      '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
+      '_ _`?`        ??        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ?',
+      '_ _     ??      **social**       ?       **italia** **chill**       ?',
       '                                       **gaming**',
       '-# @everyone & @here_ _',
       '```'

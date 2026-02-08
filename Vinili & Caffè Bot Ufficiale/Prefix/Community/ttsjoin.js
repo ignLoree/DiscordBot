@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/message');
+﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { joinTtsChannel } = require('../../Services/TTS/ttsService');
 
 module.exports = {

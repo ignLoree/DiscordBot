@@ -1,11 +1,11 @@
-const {
+ï»¿const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle
 } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
   '1442568950805430312',
@@ -24,7 +24,7 @@ function buildNoPermEmbed(message) {
     .setColor('#e67e22')
     .setTitle('<:vegax:1443934876440068179> ? Non hai i permessi')
     .setDescription([
-      'Questo comando è riservato agli utenti che possiedono i seguenti ruoli:',
+      'Questo comando Ã¨ riservato agli utenti che possiedono i seguenti ruoli:',
       rolesText
     ].join('\n'))
     .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
@@ -36,7 +36,7 @@ function buildPanelEmbed(member, role, guild) {
     .setTitle('?? Modifica Ruolo')
     .setDescription([
       '<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.',
-      '__Altri__ comandi li trovi nel menù con il comando `+help`',
+      '__Altri__ comandi li trovi nel menÃ¹ con il comando `+help`',
       'Puoi configurarlo con i pulsanti qui sotto.',
       '',
       '**Ruolo:**',
@@ -108,7 +108,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piÃ¹. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });

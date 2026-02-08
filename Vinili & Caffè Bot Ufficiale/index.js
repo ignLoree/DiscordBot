@@ -57,7 +57,6 @@ try {
 };
 client.logs = require('./Utils/Moderation/logs');
 client.config = require('./config.json');
-client.config2 = client.config;
 const isDev = __dirname.toLowerCase().includes('dev bot');
 const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
 if (envToken) client.config.token = envToken;
@@ -179,12 +178,12 @@ setInterval(async () => {
 
 client.on("clientReady", async (client) => {
     try {
-        client.user.setStatus(client.config2.status);
-        client.logs.success(`[STATUS] Bot status loaded as ${client.config2.status}.`);
+        client.user.setStatus(client.config.status);
+        client.logs.success(`[STATUS] Bot status loaded as ${client.config.status}.`);
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "☕📀 discord.gg/viniliecaffe"
+            state: "??? discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);
@@ -278,7 +277,7 @@ const logCommandUsage = async (client, channelId, serverName, user, userId, cont
         .addFields({ name: 'Comando', value: `\`\`\`${content}\`\`\`` })
         .addFields({ name: 'Utente', value: `${user} | ${userId}` })
         .setTimestamp()
-        .setFooter({ text: `Log Comandi ${client.config2.devBy}`, iconURL: userAvatarUrl });
+        .setFooter({ text: `Log Comandi ${client.config.devBy}`, iconURL: userAvatarUrl });
     await channel.send({ embeds: [embed] });
 };
 
@@ -325,7 +324,7 @@ client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
     else {
         try {
-            const logChannelId = client.config2.slashCommandLoggingChannel;
+            const logChannelId = client.config.slashCommandLoggingChannel;
             const server = interaction.guild?.name || "DM";
             const user = interaction.user.username;
             const userID = interaction.user.id;
@@ -348,12 +347,12 @@ client.on(Events.MessageCreate, async message => {
     if (!message || message.author?.bot) return;
     const content = message.content || '';
     if (!content) return;
-    const prefix = client.config2.prefix;
-    const musicPrefix = client.config2.musicPrefix || prefix;
-    const modPrefix = client.config2.moderationPrefix || '?';
+    const prefix = client.config.prefix;
+    const musicPrefix = client.config.musicPrefix || prefix;
+    const modPrefix = client.config.moderationPrefix || '?';
     if (content.startsWith(prefix) || content.startsWith(musicPrefix) || content.startsWith(modPrefix)) {
         try {
-            const logChannelId = client.config2.prefixCommandLoggingChannel;
+            const logChannelId = client.config.prefixCommandLoggingChannel;
             const server = message.guild?.name || "DM";
             const user = message.author.username;
             const userID = message.author.id;
@@ -464,7 +463,7 @@ async function generateStaffListContent(guild) {
         const member_count = filteredMembers.size;
         const { emoji, number } = ROLE_EMOJIS[roleId];
         const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}・**<@&${roleId}>︲\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
+        staffListContent += `${emoji}·**<@&${roleId}>?\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
     }
     return staffListContent;
 }

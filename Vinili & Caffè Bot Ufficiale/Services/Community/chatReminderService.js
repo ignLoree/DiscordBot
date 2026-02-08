@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const { randomInt } = require('crypto');
 const ChatReminderSchedule = require('../../Schemas/Community/chatReminderScheduleSchema');
 const ChatReminderRotation = require('../../Schemas/Community/chatReminderRotationSchema');
@@ -19,7 +19,7 @@ const reminderActivity = new Map();
 const reminderPool = [
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('⭐ Votaci su Discadia!')
+    .setTitle('â­ Votaci su Discadia!')
     .setDescription(
       [
         'La prima volta otterrai **250 EXP**, le altre volte altri exp!',
@@ -28,7 +28,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('⭐ Lascia una recensione su DISBOARD!')
+    .setTitle('â­ Lascia una recensione su DISBOARD!')
     .setDescription(
       [
         'Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#1442569095068254219> `HIGH STAFF` e riceverei **5 livelli**!',
@@ -37,7 +37,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('📌 Marca un messaggio e rendilo un post')
+    .setTitle('ðŸ“Œ Marca un messaggio e rendilo un post')
     .setDescription(
       [
         'Rispondendo al messaggio taggando il bot <@1329118940110127204> o con tasto destro -> App -> Quote, che si vuole postare, potrai poi vederlo nel canale <#1468540884537573479>'
@@ -45,7 +45,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("🔢 Conta fino all'infinito!")
+    .setTitle("ðŸ”¢ Conta fino all'infinito!")
     .setDescription(
       [
         'Sei un appasionato di calcoli e matematica? Vieni a contare nel canale <#1442569179743125554>'
@@ -53,15 +53,15 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('💌 Devi segnalare un utente, fare una partnership o ti serve supporto?')
+    .setTitle('ðŸ’Œ Devi segnalare un utente, fare una partnership o ti serve supporto?')
     .setDescription(
       [
-        'Attraverso i ticket nel canale <#1442569095068254219> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.'
+        'Attraverso i ticket nel canale <#1442569095068254219> puoi contattare un membro dello Staff che ti darÃ  una mano per ogni tua richiesta.'
       ].join('\n')
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('📸 Sblocca i Picperms')
+    .setTitle('ðŸ“¸ Sblocca i Picperms')
     .setDescription(
       [
         'Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
@@ -73,12 +73,12 @@ const reminderPool = [
     .setTitle("<:pokeball:1467091572632850474> Gotta Catch 'Em All!")
     .setDescription(
       [
-        'Sei un appasionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>'
+        'Sei un appasionato di PokÃ©mon? Vieni a catturarli tutti nel canale <#1442569184281362552>'
       ].join('\n')
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("📬 Vuoi candidarti come staffer?")
+    .setTitle("ðŸ“¬ Vuoi candidarti come staffer?")
     .setDescription(
       [
         'Cosa aspetti? Vieni a candidarti attraverso il modulo che trovi nel canale <#1442569232507473951>'
@@ -86,7 +86,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("💸 Soldi o Nitro Boost **__GRATIS__**?")
+    .setTitle("ðŸ’¸ Soldi o Nitro Boost **__GRATIS__**?")
     .setDescription(
       [
         'Vuoi un Nitro Boost o fari un po\' di soldi gratis? Trovi tutto nel canale <#1442579412280410194>'
@@ -94,7 +94,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("🎨 Ottieni i colori gradienti")
+    .setTitle("ðŸŽ¨ Ottieni i colori gradienti")
     .setDescription(
       [
         'Potrai sbloccare i colori PLUS con il ruolo Server Booster o Livello 50+; invece con il VIP potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>'
@@ -107,7 +107,7 @@ function getDateKey(parts) {
 }
 
 function getCfg(client) {
-  return client?.config2?.chatReminder || {};
+  return client?.config?.chatReminder || {};
 }
 
 function getReminderChannelId(client) {

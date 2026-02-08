@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const ModConfig = require('../../Schemas/Moderation/modConfigSchema');
 const ModCase = require('../../Schemas/Moderation/modCaseSchema');
 
@@ -84,7 +84,7 @@ async function logModCase({ client, guild, modCase, config }) {
   const isUserId = /^\d{17,20}$/.test(String(modCase.userId));
   const userLabel = isUserId ? `<@${modCase.userId}> (\`${modCase.userId}\`)` : String(modCase.userId);
   const embed = new EmbedBuilder()
-    .setColor(client?.config2?.embedModLight || '#6f4e37')
+    .setColor(client?.config?.embedModLight || '#6f4e37')
     .setTitle(`Case #${modCase.caseId} - ${modCase.action}`)
     .addFields(
       { name: 'Utente', value: userLabel, inline: true },

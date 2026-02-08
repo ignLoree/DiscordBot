@@ -1,5 +1,5 @@
 ﻿const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const renderShipCanvas = require('../../Utils/Render/shipCanvas');
 
 function extractId(raw) {

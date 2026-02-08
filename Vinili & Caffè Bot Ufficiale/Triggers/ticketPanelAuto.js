@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const Panel = require('../Schemas/Community/panelSchema');
 
@@ -33,12 +33,12 @@ module.exports = {
 
     const ticketPanelEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & Caffè**!
+      .setDescription(`<:vsl_ticket:1329520261053022208> **Tickets** di **Vinili & CaffÃ¨**!
 
-<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli più __importanti__ sono quelli da usare **raramente**.
+<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli piÃ¹ __importanti__ sono quelli da usare **raramente**.
 
 <:dot:1443660294596329582> **__\`PERKS\`__**
-<:VC_Reply:1468262952934314131> Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichè sono dati **__automaticamente__**.
+<:VC_Reply:1468262952934314131> Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichÃ¨ sono dati **__automaticamente__**.
 
 <:dot:1443660294596329582> **__\`SUPPORTO\`__**
 <:VC_Reply:1468262952934314131> Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
@@ -49,13 +49,13 @@ module.exports = {
 <:dot:1443660294596329582> **__\`HIGH STAFF\`__**
 <:VC_Reply:1468262952934314131> Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
 
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`)
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterÃ  un **warn**.`)
 
     const ticketButtons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji('<a:Boost_Cycle:1329504283007385642>').setStyle(ButtonStyle.Primary),
-      new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji('<:discordstaff:1443651872258003005>').setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId('ticket_partnership').setLabel('︲PARTNERSHIP').setEmoji('<:partneredserverowner:1443651871125409812>').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji('<:reportmessage:1443670575376765130>').setStyle(ButtonStyle.Secondary)
+      new ButtonBuilder().setCustomId('ticket_perks').setLabel('ï¸²PERKS').setEmoji('<a:Boost_Cycle:1329504283007385642>').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('ticket_supporto').setLabel('ï¸²SUPPORTO').setEmoji('<:discordstaff:1443651872258003005>').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId('ticket_partnership').setLabel('ï¸²PARTNERSHIP').setEmoji('<:partneredserverowner:1443651871125409812>').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('ï¸²HIGH STAFF').setEmoji('<:reportmessage:1443670575376765130>').setStyle(ButtonStyle.Secondary)
     );
 
     let panelDoc = null;

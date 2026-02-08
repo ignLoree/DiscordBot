@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/message');
-const MinigameUser = require('../../Schemas/Minigames/minigameUserSchema');
+﻿const { EmbedBuilder } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const { MinigameUser } = require('../../Schemas/Minigames/minigameSchema');
 
 const EXP_REWARDS = [
   { exp: 100, roleId: '1468675561948971058' },
@@ -57,7 +57,7 @@ module.exports = {
       .setDescription([
         `<a:VC_Arrow:1448672967721615452> Hai un totale di \`${totalExp}\` punti (e exp guadagnati) <a:VC_FlowerPink:1468688049725636903>`,
         '',
-        '🎲 .ᐟRuoli sbloccati:',
+        'ðŸŽ² .áŸRuoli sbloccati:',
         unlockedText,
       ].join('\n'))
       .setFooter({ text: `Comando eseguito da: ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
@@ -65,4 +65,3 @@ module.exports = {
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
 };
-
