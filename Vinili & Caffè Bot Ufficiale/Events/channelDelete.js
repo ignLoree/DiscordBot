@@ -1,6 +1,6 @@
 const { queueCategoryRenumber } = require('../Services/Community/categoryNumberingService');
 
-const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
+const TICKETS_CATEGORY_NAME = '⁰¹・ 　　　　    　    TICKETS 　　　    　    ・';
 
 module.exports = {
     name: 'channelDelete',

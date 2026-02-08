@@ -22,7 +22,7 @@ async function handleTicketInteraction(interaction) {
     const isTicketButton = interaction.isButton && interaction.isButton() && handledButtons.has(interaction.customId);
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId === 'modal_close_ticket';
     if (!isTicketButton && !isTicketModal) return false;
-    const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
+    const TICKETS_CATEGORY_NAME = '⁰¹・ 　　　　    　    TICKETS 　　　    　    ・';
     const LOG_CHANNEL = '1442569290682208296';
     const ROLE_STAFF = '1442568910070349985';
     const ROLE_HIGHSTAFF = '1442568894349840435';
