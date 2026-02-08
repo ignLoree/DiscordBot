@@ -375,10 +375,10 @@ module.exports = {
         const buildBoostLevelsPayload = () => {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('・**__Potenzia il server e sblocca vantaggi unici__**')
+                .setTitle('<a:VC_HeartWhite:1448673535253024860>・**__Potenzia il server e sblocca vantaggi unici__**')
                 .setDescription([
                     'Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.',
-                    '**Non sai cos\'è Discord Nitro?** [Scoprilo qui](<https://discord.com/nitro>).',
+                    '**Non sai cos\'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).',
                     '',
                     '<:sparkledred:1470064814502973591>・Ruolo <@&1329497467481493607> con badge speciale',
                     '<:moon:1470064812615667827>・Permesso di allegare immagini e link in chat',
