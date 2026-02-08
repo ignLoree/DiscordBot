@@ -71,7 +71,7 @@ module.exports = {
                     userTag = user.username;
                 } catch {}
 
-                description += `**${startIndex + i + 1}.** ${userTag} - ? ${partner.score} partnership\n`;
+                description += `**${startIndex + i + 1}.** ${userTag} - <:VC_Partner:1443933014835986473> ${partner.score} partnership\n`;
             }
 
             return new EmbedBuilder()
@@ -88,12 +88,14 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('prev')
-                    .setLabel('<a:vegaleftarrow:1462914743416131816> Precedente')
+                    .setLabel('Precedente')
+                    .setEmoji(`<a:vegaleftarrow:1462914743416131816>`)
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === 1),
                 new ButtonBuilder()
                     .setCustomId('next')
-                    .setLabel('Prossima <a:vegarightarrow:1443673039156936837>')
+                    .setLabel('Prossima')
+                    .setEmoji('<a:vegarightarrow:1443673039156936837>')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === totalPages)
             );
