@@ -112,43 +112,46 @@ module.exports = {
     const levelUpChannel = message.guild.channels.cache.get(LEVEL_UP_CHANNEL_ID)
       || await message.guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
     if (levelUpChannel) {
-      const levelUpEmbed = new EmbedBuilder()
-        .setColor('#6f4e37')
-        .setTitle(`${target.username} leveled up!`)
-        .setThumbnail(target.displayAvatarURL({ size: 256 }))
-        .setDescription([
-          `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
-          `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il **livello** \`${doc.level}\``,
-          `<:dot:1443660294596329582> Livelli assegnati per recensione: **+${LEVELS_TO_ADD}**`
-        ].join('\n'))
-        .setFooter({ text: `Azione staff: ${message.author.tag}` });
-
-      await levelUpChannel.send({
-        content: `${target} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
-        embeds: [levelUpEmbed]
-      }).catch(() => {});
-
       const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
         .filter((level) => level > currentLevel && level <= doc.level)
         .sort((a, b) => a - b);
 
-      for (const level of reachedPerkLevels) {
-        const roleId = LEVEL_ROLE_MAP.get(level);
-        if (!roleId) continue;
-        const perkEmbed = new EmbedBuilder()
+      const highestPerkLevel = reachedPerkLevels.length
+        ? reachedPerkLevels[reachedPerkLevels.length - 1]
+        : null;
+
+      if (highestPerkLevel) {
+        const roleId = LEVEL_ROLE_MAP.get(highestPerkLevel);
+        if (roleId) {
+          const perkEmbed = new EmbedBuilder()
+            .setColor('#6f4e37')
+            .setTitle(`${target.username} leveled up!`)
+            .setThumbnail(target.displayAvatarURL({ size: 256 }))
+            .setDescription([
+              `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
+              `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il <@&${roleId}>`,
+              '<a:VC_HelloKittyGift:1329447876857958471> Controlla <#1442569111119990887> per i nuovi vantaggi!'
+            ].join('\n'));
+
+          await levelUpChannel.send({
+            content: `${target} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
+            embeds: [perkEmbed]
+          }).catch(() => {});
+        }
+      } else {
+        const levelUpEmbed = new EmbedBuilder()
           .setColor('#6f4e37')
           .setTitle(`${target.username} leveled up!`)
           .setThumbnail(target.displayAvatarURL({ size: 256 }))
           .setDescription([
             `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
-            `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il <@&${roleId}>`,
-            '<a:VC_HelloKittyGift:1329447876857958471> Controlla <#1442569111119990887> per i nuovi vantaggi!'
-          ].join('\n'))
-          .setFooter({ text: `Azione staff: ${message.author.tag}` });
+            `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il **livello** \`${doc.level}\``,
+            `<:dot:1443660294596329582> Livelli assegnati per recensione: **+${LEVELS_TO_ADD}**`
+          ].join('\n'));
 
         await levelUpChannel.send({
           content: `${target} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
-          embeds: [perkEmbed]
+          embeds: [levelUpEmbed]
         }).catch(() => {});
       }
     }
