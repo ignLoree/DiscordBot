@@ -195,6 +195,19 @@ async function sendPerksLevelMessage(guild, member, level) {
   await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`, ...payload }).catch(() => {});
 }
 
+async function addLevelRoleIfPossible(member, roleId) {
+  if (!member || !roleId) return false;
+  const me = member.guild.members.me;
+  if (!me) return false;
+  if (!me.permissions.has('ManageRoles')) return false;
+  const role = member.guild.roles.cache.get(roleId) || await member.guild.roles.fetch(roleId).catch(() => null);
+  if (!role) return false;
+  if (role.position >= me.roles.highest.position) return false;
+  if (member.roles.cache.has(roleId)) return true;
+  await member.roles.add(role).catch(() => {});
+  return member.roles.cache.has(roleId);
+}
+
 async function addPerkRoleIfPossible(member) {
   const me = member.guild.members.me;
   if (!me) return;
@@ -226,6 +239,14 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
     if (member) {
       const level = result.levelInfo.level;
+      const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
+        .filter((perkLevel) => perkLevel > (result.prevLevel ?? 0) && perkLevel <= level)
+        .sort((a, b) => a - b);
+      for (const perkLevel of reachedPerkLevels) {
+        const roleId = LEVEL_ROLE_MAP.get(perkLevel);
+        if (!roleId) continue;
+        await addLevelRoleIfPossible(member, roleId);
+      }
       if (LEVEL_ROLE_MAP.has(level)) {
         await sendPerksLevelMessage(guild, member, level);
       } else {

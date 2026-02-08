@@ -53,6 +53,19 @@ async function resolveTargetUser(message, raw) {
   return message.client.users.fetch(id).catch(() => null);
 }
 
+async function addLevelRoleIfPossible(guild, member, roleId) {
+  if (!guild || !member || !roleId) return false;
+  const me = guild.members.me;
+  if (!me) return false;
+  if (!me.permissions.has('ManageRoles')) return false;
+  const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
+  if (!role) return false;
+  if (role.position >= me.roles.highest.position) return false;
+  if (member.roles.cache.has(roleId)) return true;
+  await member.roles.add(role).catch(() => {});
+  return member.roles.cache.has(roleId);
+}
+
 module.exports = {
   name: 'addlevel',
   aliases: ['addlvl', 'leveladd'],
@@ -113,9 +126,14 @@ module.exports = {
         .filter((level) => level > currentLevel && level <= doc.level)
         .sort((a, b) => a - b);
 
+      const targetMember = message.guild.members.cache.get(target.id)
+        || await message.guild.members.fetch(target.id).catch(() => null);
       for (const level of reachedPerkLevels) {
         const roleId = LEVEL_ROLE_MAP.get(level);
         if (!roleId) continue;
+        if (targetMember) {
+          await addLevelRoleIfPossible(message.guild, targetMember, roleId);
+        }
         const perkEmbed = new EmbedBuilder()
           .setColor('#6f4e37')
           .setTitle(`${target.username} leveled up!`)
