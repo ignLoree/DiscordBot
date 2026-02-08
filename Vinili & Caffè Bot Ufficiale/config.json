@@ -22,7 +22,7 @@
 
   "disboard": {
     "botId": "302050872383242240",
-    "reminderChannelId": "1442569154950332536",
+    "reminderChannelId": "1442569138114662490",
     "cooldownMinutes": 120,
     "bumpSuccessPatterns": [
       "Bump done",
@@ -31,7 +31,7 @@
   },
   "discadia": {
     "botId": "1222548162741538938",
-    "reminderChannelId": "1442569154950332536",
+    "reminderChannelId": "1442569138114662490",
     "cooldownMinutes": 1440,
     "bumpSuccessPatterns": [
       "has been successfully bumped",
