@@ -356,9 +356,20 @@ module.exports = {
             await interaction.reply({ embeds: [under5Embed, over5Embed, topEmbed, commonEmbed], flags: 1 << 6 });
         }
         const sendUpdatedView = async (payload) => {
-            return interaction.update(payload).catch(async () => {
-                return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
-            });
+            const msgFlags = interaction.message?.flags;
+            const isEphemeralSource = Boolean(
+                (typeof msgFlags?.has === 'function' && msgFlags.has(1 << 6))
+                || (typeof msgFlags?.bitfield === 'number' && (msgFlags.bitfield & (1 << 6)) !== 0)
+                || (typeof msgFlags === 'number' && (msgFlags & (1 << 6)) !== 0)
+            );
+
+            if (isEphemeralSource) {
+                return interaction.update(payload).catch(async () => {
+                    return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
+                });
+            }
+
+            return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
         };
 
         const buildBoostLevelsPayload = () => {
@@ -468,10 +479,14 @@ module.exports = {
                 )
                 .setFooter({ text: 'Se esci dal server o cambi account, i livelli ti verranno tolti e NON rimessi.' });
 
-            const helpEmbed = new EmbedBuilder()
+            const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('Link utili')
-                .setDescription('Usa i pulsanti qui sotto per aprire i canali utili oppure tornare indietro.');
+                .setTitle('Come creare ruolo personalizzato e vocale privata')
+                .setDescription([
+                    'Usa +customrolecreate in <#1442569138114662490> per creare e configurare il ruolo.',
+                    'Poi usa +vocprivatecreate nello stesso canale per creare e configurare la vocale privata.',
+                    'Digita +help per la lista completa dei comandi.'
+                ].join('\n'));
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
@@ -491,7 +506,7 @@ module.exports = {
                     .setStyle(ButtonStyle.Secondary)
             );
 
-            return { embeds: [levelEmbed, helpEmbed], components: [row] };
+            return { embeds: [levelEmbed, howtoEmbed], components: [row] };
         };
 
         if (interaction.customId == 'info_boost_levels') {
