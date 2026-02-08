@@ -2,6 +2,7 @@
 const config = require("../config.json");
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
+const boostFollowupLocks = new Map();
 const PERK_ROLE_ID = '1468938195348754515';
 const PLUS_COLOR_REQUIRED_ROLE_IDS = ['1329497467481493607', '1442568932136587297'];
 const PLUS_COLOR_ROLE_IDS = [
@@ -49,6 +50,30 @@ async function removePlusColorsIfNotEligible(member) {
     await member.roles.remove(removableRoleIds).catch(() => {});
 }
 
+async function sendBoostEmbeds(channel, member, times, boostCount) {
+    const safeTimes = Math.max(0, Number(times || 0));
+    for (let i = 0; i < safeTimes; i += 1) {
+        const boostAnnounceEmbed = new EmbedBuilder()
+            .setAuthor({ name: member.user.username })
+            .setTitle(`<a:vegarightarrow:1443673039156936837> **__GRAZIE PER IL BOOST!__**`)
+            .setDescription(
+                `<a:ThankYou:1329504268369002507> **Grazie** ${member.user} per aver **boostato** **${member.guild.name}**!
+<a:flyingnitroboost:1443652205705170986> Tutto lo **staff** ti _ringrazia_ per averci __supportato__.
+> <a:Boost_Cycle:1329504283007385642> Ora hai dei **nuovi** perks, vai a __controllarli__ in <#1442569111119990887>!`
+            )
+            .setColor("#6f4e37")
+            .setFooter({
+                text: `Ora siamo a ${boostCount} boost!`,
+            })
+            .setThumbnail(member.user.displayAvatarURL());
+
+        await channel.send({
+            content: `<a:VC_Boost:1448670271115497617> \`┊\`  ${member.user} \`┊\` <@&1442568910070349985>`,
+            embeds: [boostAnnounceEmbed],
+        });
+    }
+}
+
 module.exports = {
     name: 'guildMemberUpdate',
     async execute(oldMember, newMember) {
@@ -78,26 +103,26 @@ module.exports = {
                 }
                 await addPerkRoleIfPossible(newMember);
                 const sendTimes = countIncreased ? boostDelta : 1;
-                for (let i = 0; i < sendTimes; i += 1) {
-                    const boostAnnounceEmbed = new EmbedBuilder()
-                        .setAuthor({ name: newMember.user.username })
-                        .setTitle(`<a:vegarightarrow:1443673039156936837> **__GRAZIE PER IL BOOST!__**`)
-                        .setDescription(
-                            `<a:ThankYou:1329504268369002507> **Grazie** ${newMember.user} per aver **boostato** **${newMember.guild.name}**!
-<a:flyingnitroboost:1443652205705170986> Tutto lo **staff** ti _ringrazia_ per averci __supportato__.
-> <a:Boost_Cycle:1329504283007385642> Ora hai dei **nuovi** perks, vai a __controllarli__ in <#1442569111119990887>!`
-                        )
-                        .setColor("#6f4e37")
-                        .setFooter({
-                            text: `Ora siamo a ${newMember.guild.premiumSubscriptionCount} boost!`,
-                        })
-                        .setThumbnail(newMember.user.displayAvatarURL());
-                    await boostAnnounceChannel.send({
-                        content: `<a:VC_Boost:1448670271115497617> \`┊\`  ${newMember.user} \`┊\` <@&1442568910070349985>`,
-                        embeds: [boostAnnounceEmbed],
-                    });
-                }
+                await sendBoostEmbeds(boostAnnounceChannel, newMember, sendTimes, currentCount);
                 boostAnnounceCache.set(boostKey, currentCount);
+
+                if (!boostFollowupLocks.get(boostKey)) {
+                    boostFollowupLocks.set(boostKey, true);
+                    setTimeout(async () => {
+                        try {
+                            const freshGuild = await newMember.guild.fetch().catch(() => null);
+                            const latestCount = Number(freshGuild?.premiumSubscriptionCount || newMember.guild.premiumSubscriptionCount || 0);
+                            const knownCount = Number(boostCountCache.get(guildId) || currentCount);
+                            const missing = Math.max(0, latestCount - knownCount);
+                            if (missing > 0) {
+                                await sendBoostEmbeds(boostAnnounceChannel, newMember, missing, latestCount);
+                                boostAnnounceCache.set(boostKey, latestCount);
+                                boostCountCache.set(guildId, latestCount);
+                            }
+                        } catch {}
+                        boostFollowupLocks.delete(boostKey);
+                    }, 5000);
+                }
             }
             boostCountCache.set(guildId, currentCount);
         } catch (error) {

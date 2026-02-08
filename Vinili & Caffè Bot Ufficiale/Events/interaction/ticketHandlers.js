@@ -22,7 +22,7 @@ async function handleTicketInteraction(interaction) {
     const isTicketButton = interaction.isButton && interaction.isButton() && handledButtons.has(interaction.customId);
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId === 'modal_close_ticket';
     if (!isTicketButton && !isTicketModal) return false;
-    const TICKET_CATEGORY = '1442569056795230279';
+    const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
     const LOG_CHANNEL = '1442569290682208296';
     const ROLE_STAFF = '1442568910070349985';
     const ROLE_HIGHSTAFF = '1442568894349840435';
@@ -54,6 +54,18 @@ async function handleTicketInteraction(interaction) {
 
     function makeErrorEmbed(title, description) {
         return new EmbedBuilder().setTitle(title).setDescription(description).setColor('#6f4e37');
+    }
+
+    async function createTicketsCategory(guild) {
+        if (!guild) return null;
+        const category = await guild.channels.create({
+            name: TICKETS_CATEGORY_NAME,
+            type: 4
+        }).catch(() => null);
+        if (!category) return null;
+
+        await category.setPosition(0).catch(() => {});
+        return category;
     }
 
     try {
@@ -165,10 +177,15 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
                     return true;
                 }
+                const ticketsCategory = await createTicketsCategory(interaction.guild);
+                if (!ticketsCategory) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket')], flags: 1 << 6 });
+                    return true;
+                }
                 const channel = await interaction.guild.channels.create({
                     name: `༄${config.emoji}︲${config.name}᲼${interaction.user.username}`,
                     type: 0,
-                    parent: TICKET_CATEGORY,
+                    parent: ticketsCategory.id,
                     permissionOverwrites: [
                         {
                             id: interaction.guild.roles.everyone,

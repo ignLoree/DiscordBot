@@ -13,6 +13,8 @@ module.exports = {
         if (interaction.isStringSelectMenu()) {
             const menuId = interaction.customId;
             const values = Array.isArray(interaction.values) ? interaction.values : [];
+
+            /// EMBED RUOLI
             const categories = {
                 personality_pronouns: [
                     '1442568997848743997',
@@ -136,6 +138,7 @@ module.exports = {
         }
         if (!interaction.isButton()) return;
 
+        /// AVATAR 
         if (interaction.customId && interaction.customId.startsWith('avatar_unblock:')) {
             const targetId = interaction.customId.split(':')[1];
             if (interaction.user.id !== targetId) {
@@ -154,6 +157,8 @@ module.exports = {
                 .setDescription('Hai sbloccato con successo la visualizzazione del tuo avatar.');
             return interaction.reply({ embeds: [embed] });
         }
+
+        /// BANNER
         if (interaction.customId && interaction.customId.startsWith('banner_unblock:')) {
             const targetId = interaction.customId.split(':')[1];
             if (interaction.user.id !== targetId) {
@@ -172,6 +177,8 @@ module.exports = {
                 .setDescription('Hai sbloccato con successo la visualizzazione del tuo banner.');
             return interaction.reply({ embeds: [embed] });
         }
+
+        /// QUOTE
         if (interaction.customId && interaction.customId.startsWith('quote_remove:')) {
             const parts = interaction.customId.split(':');
             const targetId = parts[1];
@@ -211,33 +218,8 @@ module.exports = {
                 await interaction.reply({ embeds: [removedEmbed], flags: 1 << 6 }).catch(() => { });
             });
         }
-        if (interaction.customId == 'vocaliprivate') {
-            const embeds = [
-                new EmbedBuilder()
-                    .setColor('#6f4e37')
-                    .setDescription(`<:discordvoiceprivatewhite:1443925460185780257> **__VOCALI PRIVATE__**
 
-        > I **canali vocali privati** sono ottenibili tramite perks e hanno bisogno di un **__ruolo custom__**.
-        
-        <:pinnednew:1443670849990430750> __**REGOLE:**__
-        <:VC_DoubleReply:1468713981152727120>  Devono essere **attive** almeno **__3 ore a settimana__**;
-        <:VC_DoubleReply:1468713981152727120>  __Non__ è fatto obbligo di rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887), __tranne__ per i **contenuti** \`NSFW & GORE\`;
-        <:VC_Reply:1468262952934314131> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi** esso **__NON__** potrà essere più **richiesto**.`),]
-            await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
-        }
-        if (interaction.customId == 'ruolocustom') {
-            const embeds = [
-                new EmbedBuilder()
-                    .setColor('#6f4e37')
-                    .setDescription(`<:defaultrolepermissions:1443925459170623509> **__RUOLO CUSTOM__**
-
-        > I **canali vocali privati** sono ottenibili tramite perks. A differenza delle **vocali private** essi possono essere ottenuti anche __senza__ l'ausilio di un **canale vocale privato**
-        
-        <:pinnednew:1443670849990430750> __**REGOLE:**__
-        <:VC_DoubleReply:1468713981152727120>  Chi **possiede** il __ruolo__ dovrà fare almeno **__100 messaggi__** _a settimana_;
-        <:VC_Reply:1468262952934314131> In caso di **inattività**, il canale verrà **eliminato** e sarà __possibile__ richiederlo soltanto **dopo 2 settimane** tramite <#1442569095068254219> \`HIGH STAFF\`. Alla **terza cancellazione** nel giro di **2 mesi**  esso **__NON__** potrà essere più **richiesto**.`),]
-            await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
-        }
+        /// SPONSOR
         if (interaction.customId == 'metodi') {
             const embeds = [
                 new EmbedBuilder()
@@ -262,6 +244,8 @@ module.exports = {
             ]
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
+
+        /// INFO RULES
         if (interaction.customId == 'info_rules') {
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -323,6 +307,8 @@ module.exports = {
         <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`);
             await interaction.reply({ embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed], flags: 1 << 6 });
         }
+
+        /// INFO DONATIONS
         if (interaction.customId == 'info_donations') {
             const under5Embed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -372,6 +358,7 @@ module.exports = {
             return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
         };
 
+        /// INFO BOOST E LIVELLI
         const buildBoostLevelsPayload = () => {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -508,7 +495,7 @@ module.exports = {
                     .setCustomId('torna_indietro')
                     .setLabel('Torna indietro')
                     .setEmoji('<a:vegaleftarrow:1462914743416131816>')
-                    .setStyle(ButtonStyle.Secondary)
+                    .setStyle(ButtonStyle.Primary)
             );
 
             return { embeds: [levelEmbed, howtoEmbed], components: [row] };
@@ -523,6 +510,8 @@ module.exports = {
         if (interaction.customId == 'torna_indietro') {
             return sendUpdatedView(buildBoostLevelsPayload());
         }
+
+        /// INFO BADGES
         if (interaction.customId == 'info_badges_roles') {
             const supporterEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -544,6 +533,8 @@ module.exports = {
                 .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli saranno rimossi\`__**`);
             await interaction.reply({ embeds: [supporterEmbed, vipEmbed, commonEmbed], flags: 1 << 6 });
         }
+
+        /// INFO MULTIPLIER
         if (interaction.customId == 'r_multiplier_info') {
             const entries = ROLE_MULTIPLIERS instanceof Map
                 ? Array.from(ROLE_MULTIPLIERS.entries())
@@ -574,6 +565,8 @@ module.exports = {
 
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
+
+        /// CLASSIFICA AVATAR
         if (interaction.customId == 'avatar_views') {
             const guildId = interaction.guild.id;
             const top = await AvatarPrivacy.find({ guildId })
@@ -625,6 +618,8 @@ module.exports = {
                 .setFooter({ text: footerText, iconURL: interaction.user.displayAvatarURL() });
             return interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
+
+        /// CLASSIFICA BANNER
         if (interaction.customId == 'banner_views') {
             const guildId = interaction.guild.id;
             const top = await BannerPrivacy.find({ guildId })
