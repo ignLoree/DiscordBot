@@ -23,7 +23,7 @@ function decodeHtmlEntities(input) {
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&eacute;/g, 'è)
+    .replace(/&eacute;/g, 'è')
     .replace(/&uuml;/g, 'u')
     .replace(/&rsquo;/g, "'")
     .replace(/&ldquo;|&rdquo;/g, '"');
