@@ -59,8 +59,22 @@ module.exports = {
       const users = Array.from(mentioned.values());
       left = users[0];
       right = users[1];
+    } else if (Array.isArray(args) && args.length >= 2) {
+      const first = await resolveUser(message.guild, args[0]);
+      const second = await resolveUser(message.guild, args[1]);
+      if (first && second) {
+        left = first;
+        right = second;
+      }
     } else if (mentioned.size === 1) {
       right = mentioned.first();
+      if (Array.isArray(args) && args.length >= 2) {
+        const second = await resolveUser(message.guild, args[1]);
+        if (second) {
+          left = mentioned.first();
+          right = second;
+        }
+      }
     } else {
       right = await resolveReplyUser(message);
       if (!right && Array.isArray(args) && args.length > 0) {

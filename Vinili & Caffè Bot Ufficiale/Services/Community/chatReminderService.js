@@ -19,7 +19,7 @@ const reminderActivity = new Map();
 const reminderPool = [
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('P Votaci su Discadia!')
+    .setTitle('🌐 Votaci su Discadia!')
     .setDescription(
       [
         'La prima volta otterrai **250 EXP**, le altre volte altri exp!',
