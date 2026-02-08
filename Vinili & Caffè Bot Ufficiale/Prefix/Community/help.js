@@ -38,6 +38,16 @@ const CATEGORY_LABELS = {
   contextmenubuilder: 'Context Menu',
   misc: 'Misc'
 };
+const CATEGORY_ORDER = [
+  'community',
+  'level',
+  'partner',
+  'staff',
+  'vip',
+  'admin',
+  'contextmenubuilder',
+  'misc'
+];
 
 function loadPermissions() {
   try {
@@ -199,7 +209,16 @@ function buildEntries(client, permissions) {
     const key = `${entry.type}:${entry.invoke}:${roleKey}`;
     if (!dedupe.has(key)) dedupe.set(key, entry);
   }
-  return Array.from(dedupe.values()).sort((a, b) => a.invoke.localeCompare(b.invoke, 'it'));
+  const getCategoryIndex = (entry) => {
+    const key = String(entry?.category || 'misc').toLowerCase();
+    const idx = CATEGORY_ORDER.indexOf(key);
+    return idx === -1 ? CATEGORY_ORDER.length : idx;
+  };
+  return Array.from(dedupe.values()).sort((a, b) => {
+    const catCmp = getCategoryIndex(a) - getCategoryIndex(b);
+    if (catCmp !== 0) return catCmp;
+    return a.invoke.localeCompare(b.invoke, 'it');
+  });
 }
 
 function filterByPage(entries, pageRoleId) {
@@ -226,7 +245,15 @@ function renderPageEmbed(message, page, totalPages) {
   }
 
   const sections = [];
-  for (const [categoryKey, entries] of grouped) {
+  const orderedKeys = Array.from(grouped.keys()).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    const safeA = ai === -1 ? CATEGORY_ORDER.length : ai;
+    const safeB = bi === -1 ? CATEGORY_ORDER.length : bi;
+    return safeA - safeB;
+  });
+  for (const categoryKey of orderedKeys) {
+    const entries = grouped.get(categoryKey) || [];
     const categoryLabel = CATEGORY_LABELS[categoryKey] || (categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1));
     const rows = entries.map((entry) => {
       const aliasText = entry.type === 'prefix' && Array.isArray(entry.aliases) && entry.aliases.length
@@ -289,13 +316,40 @@ module.exports = {
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {
       const filtered = filterByPage(allEntries, roleId);
-      const chunks = chunkEntries(filtered, 9);
-      chunks.forEach((chunk, idx) => {
+      const byCategory = new Map();
+      for (const entry of filtered) {
+        const key = String(entry.category || 'misc').toLowerCase();
+        if (!byCategory.has(key)) byCategory.set(key, []);
+        byCategory.get(key).push(entry);
+      }
+
+      const rolePages = [];
+      const orderedCategories = Array.from(byCategory.keys()).sort((a, b) => {
+        const ai = CATEGORY_ORDER.indexOf(a);
+        const bi = CATEGORY_ORDER.indexOf(b);
+        const safeA = ai === -1 ? CATEGORY_ORDER.length : ai;
+        const safeB = bi === -1 ? CATEGORY_ORDER.length : bi;
+        return safeA - safeB;
+      });
+
+      for (const categoryKey of orderedCategories) {
+        const categoryEntries = byCategory.get(categoryKey) || [];
+        const chunks = chunkEntries(categoryEntries, 9);
+        for (const chunk of chunks) {
+          rolePages.push({
+            roleId,
+            items: chunk,
+            groupLabel: `${PAGE_TITLES[roleId] || roleId} • ${CATEGORY_LABELS[categoryKey] || categoryKey}`
+          });
+        }
+      }
+
+      rolePages.forEach((page, idx) => {
         groupedPages.push({
           roleId,
-          items: chunk,
-          indexLabel: `${idx + 1}/${chunks.length}`,
-          groupLabel: PAGE_TITLES[roleId] || roleId
+          items: page.items,
+          indexLabel: `${idx + 1}/${rolePages.length}`,
+          groupLabel: page.groupLabel
         });
       });
     }
