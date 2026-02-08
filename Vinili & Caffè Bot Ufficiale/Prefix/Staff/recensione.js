@@ -1,20 +1,10 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const ExpUser = require('../../Schemas/Community/expUserSchema');
-const { getLevelInfo } = require('../../Services/Community/expService');
+const { getLevelInfo, addExpWithLevel } = require('../../Services/Community/expService');
 
 const REVIEW_CHANNEL_ID = '1442569123426074736';
-const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
 const LEVELS_TO_ADD = 5;
-
-const LEVEL_ROLE_MAP = new Map([
-  [10, '1442568936423034940'],
-  [20, '1442568934510297226'],
-  [30, '1442568933591748688'],
-  [50, '1442568932136587297'],
-  [70, '1442568931326824488'],
-  [100, '1442568929930379285']
-]);
 
 function roundToNearest50(value) {
   return Math.round(value / 50) * 50;
@@ -88,9 +78,8 @@ module.exports = {
     const finalExp = Math.max(currentExp, targetExp);
     const addedExp = Math.max(0, finalExp - currentExp);
 
-    doc.totalExp = finalExp;
-    doc.level = getLevelInfo(finalExp).level;
-    await doc.save();
+    const levelResult = await addExpWithLevel(message.guild, target.id, addedExp, false);
+    const finalLevel = Number(levelResult?.levelInfo?.level ?? getLevelInfo(finalExp).level);
 
     const reviewChannel = message.guild.channels.cache.get(REVIEW_CHANNEL_ID)
       || await message.guild.channels.fetch(REVIEW_CHANNEL_ID).catch(() => null);
@@ -109,59 +98,12 @@ module.exports = {
       await reviewChannel.send({ content: `${target}`, embeds: [reviewEmbed] }).catch(() => {});
     }
 
-    const levelUpChannel = message.guild.channels.cache.get(LEVEL_UP_CHANNEL_ID)
-      || await message.guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
-    if (levelUpChannel) {
-      const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
-        .filter((level) => level > currentLevel && level <= doc.level)
-        .sort((a, b) => a - b);
-
-      const highestPerkLevel = reachedPerkLevels.length
-        ? reachedPerkLevels[reachedPerkLevels.length - 1]
-        : null;
-
-      if (highestPerkLevel) {
-        const roleId = LEVEL_ROLE_MAP.get(highestPerkLevel);
-        if (roleId) {
-          const perkEmbed = new EmbedBuilder()
-            .setColor('#6f4e37')
-            .setTitle(`${target.username} leveled up!`)
-            .setThumbnail(target.displayAvatarURL({ size: 256 }))
-            .setDescription([
-              `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
-              `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il <@&${roleId}>`,
-              '<a:VC_HelloKittyGift:1329447876857958471> Controlla <#1442569111119990887> per i nuovi vantaggi!'
-            ].join('\n'));
-
-          await levelUpChannel.send({
-            content: `${target} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
-            embeds: [perkEmbed]
-          }).catch(() => {});
-        }
-      } else {
-        const levelUpEmbed = new EmbedBuilder()
-          .setColor('#6f4e37')
-          .setTitle(`${target.username} leveled up!`)
-          .setThumbnail(target.displayAvatarURL({ size: 256 }))
-          .setDescription([
-            `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
-            `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il **livello** \`${doc.level}\``,
-            `<:dot:1443660294596329582> Livelli assegnati per recensione: **+${LEVELS_TO_ADD}**`
-          ].join('\n'));
-
-        await levelUpChannel.send({
-          content: `${target} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`,
-          embeds: [levelUpEmbed]
-        }).catch(() => {});
-      }
-    }
-
     const done = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('<:vegacheckmark:1443666279058772028> Recensione Registrata')
       .setDescription(`Ho assegnato la ricompensa recensione a ${target}.`)
       .addFields(
-        { name: 'Livello', value: `\`${currentLevel}\` -> \`${doc.level}\``, inline: true },
+        { name: 'Livello', value: `\`${currentLevel}\` -> \`${finalLevel}\``, inline: true },
         { name: 'EXP Aggiunta', value: `\`+${addedExp}\``, inline: true },
         { name: 'Ricompensa', value: `\`+${LEVELS_TO_ADD} livelli\``, inline: true }
       )
