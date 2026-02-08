@@ -51,9 +51,9 @@ module.exports = {
 
     const ticketButtons = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji('<a:Boost_Cycle:1329504283007385642>').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji('<:discordstaff:1443651872258003005>').setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji('<:discordstaff:1443651872258003005>').setStyle(ButtonStyle.Danger),
       new ButtonBuilder().setCustomId('ticket_partnership').setLabel('︲PARTNERSHIP').setEmoji('<:partneredserverowner:1443651871125409812>').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji('<:reportmessage:1443670575376765130>').setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji('<:reportmessage:1443670575376765130>').setStyle(ButtonStyle.Primary)
     );
 
     let panelDoc = null;
