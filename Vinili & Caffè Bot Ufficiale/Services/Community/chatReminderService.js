@@ -32,7 +32,7 @@ const reminderPool = [
     .setDescription(
       [
         'Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#1442569095068254219> `HIGH STAFF` e riceverai **5 livelli**!',
-        'Recensisci il nostro server qui: https://disboard.org/it/review/update/1019527'
+        'Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474'
       ].join('\n')
     ),
   () => new EmbedBuilder()

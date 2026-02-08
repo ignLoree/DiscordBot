@@ -2,7 +2,11 @@ const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const ExpUser = require('../../Schemas/Community/expUserSchema');
 const { getLevelInfo } = require('../../Services/Community/expService');
+
+const REVIEW_CHANNEL_ID = '1442569123426074736';
 const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
+const LEVELS_TO_ADD = 5;
+
 const LEVEL_ROLE_MAP = new Map([
   [10, '1442568936423034940'],
   [20, '1442568934510297226'],
@@ -54,19 +58,17 @@ async function resolveTargetUser(message, raw) {
 }
 
 module.exports = {
-  name: 'addlevel',
-  aliases: ['addlvl', 'leveladd'],
+  name: 'recensione',
+  aliases: ['review', 'disboardreview'],
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
 
     const target = await resolveTargetUser(message, args[0]);
-    const amount = Number(args[1]);
-
-    if (!target || !Number.isInteger(amount) || amount <= 0) {
+    if (!target) {
       const help = new EmbedBuilder()
         .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Uso corretto: `+addlevel <@utente|id> <livelli>`');
+        .setDescription('<:vegax:1443934876440068179> Uso corretto: `+recensione <@utente|id>`');
       await safeMessageReply(message, { embeds: [help], allowedMentions: { repliedUser: false } });
       return;
     }
@@ -81,7 +83,7 @@ module.exports = {
 
     const currentExp = Number(doc.totalExp || 0);
     const currentLevel = getLevelInfo(currentExp).level;
-    const targetLevel = currentLevel + amount;
+    const targetLevel = currentLevel + LEVELS_TO_ADD;
     const targetExp = getTotalExpForLevel(targetLevel);
     const finalExp = Math.max(currentExp, targetExp);
     const addedExp = Math.max(0, finalExp - currentExp);
@@ -89,6 +91,23 @@ module.exports = {
     doc.totalExp = finalExp;
     doc.level = getLevelInfo(finalExp).level;
     await doc.save();
+
+    const reviewChannel = message.guild.channels.cache.get(REVIEW_CHANNEL_ID)
+      || await message.guild.channels.fetch(REVIEW_CHANNEL_ID).catch(() => null);
+    if (reviewChannel) {
+      const reviewEmbed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setAuthor({ name: target.guild.name, iconURL: target.guild.iconURL({ size: 128 }) })
+        .setTitle('Grazie per la recensione su Disboard! <a:VC_StarPink:1330194976440848500>')
+        .setDescription([
+          `<a:VC_ThankYou:1330186319673950401> Grazie ${target} per aver lasciato una recensione su **Disboard**.`,
+          '',
+          '<:VC_LevelUp2:1443701876892762243> Ricompensa assegnata: **+5 livelli**'
+        ].join('\n'))
+        .setThumbnail(target.displayAvatarURL({ size: 256 }))
+
+      await reviewChannel.send({ content: `${target}`, embeds: [reviewEmbed] }).catch(() => {});
+    }
 
     const levelUpChannel = message.guild.channels.cache.get(LEVEL_UP_CHANNEL_ID)
       || await message.guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
@@ -100,7 +119,7 @@ module.exports = {
         .setDescription([
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
           `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il **livello** \`${doc.level}\``,
-          `<:dot:1443660294596329582> Livelli assegnati dallo staff: **+${amount}**`
+          `<:dot:1443660294596329582> Livelli assegnati per recensione: **+${LEVELS_TO_ADD}**`
         ].join('\n'))
         .setFooter({ text: `Azione staff: ${message.author.tag}` });
 
@@ -136,12 +155,12 @@ module.exports = {
 
     const done = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('<:vegacheckmark:1443666279058772028> Livelli Aggiornati')
-      .setDescription(`Ho aggiunto **${amount} livelli** a ${target}.`)
+      .setTitle('<:vegacheckmark:1443666279058772028> Recensione Registrata')
+      .setDescription(`Ho assegnato la ricompensa recensione a ${target}.`)
       .addFields(
         { name: 'Livello', value: `\`${currentLevel}\` -> \`${doc.level}\``, inline: true },
         { name: 'EXP Aggiunta', value: `\`+${addedExp}\``, inline: true },
-        { name: 'EXP Totale', value: `\`${finalExp}\``, inline: true }
+        { name: 'Ricompensa', value: `\`+${LEVELS_TO_ADD} livelli\``, inline: true }
       )
       .setThumbnail(target.displayAvatarURL({ size: 256 }));
 
@@ -151,3 +170,4 @@ module.exports = {
     });
   }
 };
+

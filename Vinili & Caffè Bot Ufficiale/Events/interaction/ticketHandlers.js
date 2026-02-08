@@ -60,7 +60,13 @@ async function handleTicketInteraction(interaction) {
         if (!guild) return null;
         const category = await guild.channels.create({
             name: TICKETS_CATEGORY_NAME,
-            type: 4
+            type: 4,
+            permissionOverwrites: [
+                {
+                    id: guild.roles.everyone.id,
+                    deny: [PermissionFlagsBits.ViewChannel]
+                }
+            ]
         }).catch(() => null);
         if (!category) return null;
 
