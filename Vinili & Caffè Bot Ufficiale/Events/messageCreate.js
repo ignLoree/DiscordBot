@@ -13,6 +13,7 @@ const { recordMessageActivity } = require('../Services/Community/activityService
 const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { checkPrefixPermission } = require('../Utils/Moderation/commandPermissions');
+const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
 
 const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
@@ -435,6 +436,27 @@ module.exports = {
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
+            return;
+        }
+        const cooldownSeconds = await getUserCommandCooldownSeconds({
+            guildId: message.guild.id,
+            userId: message.author.id,
+            member: message.member
+        });
+        const cooldownResult = consumeUserCooldown({
+            client,
+            guildId: message.guild.id,
+            userId: message.author.id,
+            cooldownSeconds
+        });
+        if (!cooldownResult.ok) {
+            const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
+            const embed = new EmbedBuilder()
+                .setColor("Red")
+                .setDescription(`<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`);
+            await deleteCommandMessage();
+            const msg = await message.channel.send({ embeds: [embed] });
+            setTimeout(() => msg.delete().catch(() => { }), 2500);
             return;
         }
         if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();

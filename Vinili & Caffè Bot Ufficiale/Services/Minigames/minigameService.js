@@ -706,7 +706,7 @@ function buildWinEmbed(winnerId, rewardExp, totalExp) {
       '📊 **Le tue statistiche:**',
       `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
     ].join('\n'))
-    .setFooter({ text: '? digita il comando "+mstats" per vedere i tuoi progressi' });
+    .setFooter({ text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi' });
 }
 
 function getHighestEligibleReward(totalExp) {

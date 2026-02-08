@@ -201,12 +201,12 @@ module.exports = {
                     || await interaction.guild?.channels?.fetch(originChannelId).catch(() => null);
                 if (originChannel?.isTextBased?.()) {
                     const originMessage = await originChannel.messages.fetch(originMessageId).catch(() => null);
-                    if (originMessage) await originMessage.delete().catch(() => {});
+                    if (originMessage) await originMessage.delete().catch(() => { });
                 }
             }
             try {
                 await decrementQuoteCount(interaction.guild?.id);
-            } catch {}
+            } catch { }
             return interaction.update({ embeds: [removedEmbed], components: [], files: [] }).catch(async () => {
                 await interaction.reply({ embeds: [removedEmbed], flags: 1 << 6 }).catch(() => { });
             });
@@ -358,45 +358,133 @@ module.exports = {
         if (interaction.customId == 'info_boost_levels') {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<a:Boost_Cycle:1329504283007385642> **Boostando** il server di **__Vinili & Caffè__** accederete a delle ricompense esclusive:
+                .setTitle(`**__・Potenzia il server e sblocca dei vantaggi unici!__**`)
+                .setDescription(`Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, sbloccherai un sacco di vantaggi. **Non sai cos'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).
 
-            <:VC_DoubleReply:1468713981152727120> Ruolo <@&1329497467481493607> 
-            <:VC_DoubleReply:1468713981152727120> \`x2\` di multi in vocale e testuale
-            <:VC_DoubleReply:1468713981152727120> Possibilità di **cambiare** il __nickname__
-            <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
-            <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-            <:VC_DoubleReply:1468713981152727120> **Ruolo Custom** & **Stanza Privata**
-            <:VC_DoubleReply:1468713981152727120> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
-            <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`);
+                **Con __UN__ potenziamento otterrai:**
+
+                <:sparkledred:1470064814502973591>・Il ruolo <@&1329497467481493607> con un badge speciale
+                <:moon:1470064812615667827>・Permesso di allegare **link** e **immagini** in **chat**
+                <:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server
+                <:sparkle:1470064801811140866>・Permesso di usare le SoundBoard del server
+                <:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata**
+                <a:reddiamond:1443652837346377841>・Sblocco del comando \`+quote\`
+                <:exp:1470067108543987846>・X2 EXP Boost
+                <:staffdelmese:1443651918617640991>・**Votare** per lo <@&1442568895251611924>`
+                )
+                .setFooter({ text: `Se dovessi spostare i potenziamenti o dovessero scadere, ti verranno tolte tutte le ricompense scritte sopra.` })
+            const howtoEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle(`<:nitroboost:1470064881674883326>**__・Come creare un ruolo personalizzato  e una vocale privata__**`)
+                .setDescription(`Una volta sbloccato il permesso, usa il comando \`+customrolecreate\` nel canale <#1442569138114662490> per creare il tuo ruolo e per personalizzarlo. 
+                    Una volta creato il tuo ruolo, usa il comando \`+vocprivatecreate\` nel canale <#1442569138114662490> per creare la tua vocale private e personalizzarla.
+                    **NB: Tutti quelli che avranno il tuo ruolo avranno accesso al canale vocale**
+                    Digita il comando \`+help\` per la lista dei comandi completa.`
+                )
+
+            const levelRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('info_levels')
+                        .setLabel('Info & Vantaggi Ruoli')
+                        .setEmoji(`<:exp:1470067108543987846>`)
+                        .setStyle(ButtonStyle.Secondary),
+                )
+            await interaction.reply({ embeds: [boostEmbed, howtoEmbed], components: [levelRow], flags: 1 << 6 });
+        }
+        if (interaction.customId == 'info_levels') {
             const levelEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:VC_BlackPin:1448687216871084266> Per **salire** di livello e **ottenere** i ruoli bisogna **messaggiare** in <#1442569130573303898> e stare in **vocale** nei canali dei server. <@1329118940110127204> vi avviserà quando salirete di **livello**.
+                .setTitle('・Sali di livello e sblocca vantaggi sempre migliori')
+                .setDescription([
+                    'I livelli nel server rappresentano la tua attivita: scrivendo in chat e stando in vocale, guadagni exp.',
+                    'Quando raggiungi abbastanza esperienza, fai level up.',
+                    '',
+                    '<:dot:1443660294596329582> Per vedere exp e statistiche usa `+rank` in <#1442569138114662490>.',
+                    '<a:VC_Arrow:1448672967721615452> **LISTA dei LIVELLI:**',
+                ].join('\n'))
+                .addFields(
+                    {
+                        name: '\`LIVELLO 10-19\`',
+                        value: [
+                            '<@&1442568936423034940>',
+                            '<:VC_DoubleReply:1468713981152727120> Cambiare il nickname',
+                            '<:VC_DoubleReply:1468713981152727120> Inviare link e immagini in ogni chat',
+                            '<:VC_Reply:1468262952934314131> Comando sbloccato: `?quote`'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`LIVELLO 20-29\`',
+                        value: [
+                            '<@&1442568934510297226>',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di aggiungere reazioni ai messaggi in chat',
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`LIVELLO 30-49\`',
+                        value: [
+                            '<@&1442568933591748688>',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Reazione personalizzata quando menzionato',
+                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`LIVELLO 50-69\`',
+                        value: [
+                            '<@&1442568932136587297>',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#1469429150669602961>',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di creare un ruolo  __personalizzato PERMANENTE.__ e una vocale privata __personalizzata PERMANENTE.__',
+                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 15 secondi a 5 secondi).'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`LIVELLO 70-99\`',
+                        value: [
+                            '<@&1442568931326824488>',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di usare stickers ed emoji di altri server',
+                            '<:VC_Reply:1468262952934314131> Aggiungi le reazioni al messaggio quando ti @menzionano in chat (max. 3)'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`LIVELLO 100\`',
+                        value: [
+                            '<@&1442568929930379285>',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_Reply:1468262952934314131> Votare per lo <@&1442568895251611924>'
+                        ].join('\n'),
+                        inline: true
+                    }
+                )
+                .setFooter({ text: 'Se esci dal server o cambi account, i livelli ti verranno tolti e NON rimessi.' });
 
-            <:dot:1443660294596329582> <@&1442568936423034940>
-                <:VC_DoubleReply:1468713981152727120> Cambiare il **__nickname__**
-                <:VC_Reply:1468262952934314131> Inviare **link** e **immagini** in **__ogni__ chat**
-                <:VC_Reply:1468262952934314131> Nuovo comando **sbloccato**: \`?quote\`
-                
-            <:dot:1443660294596329582> <@&1442568934510297226>
-                <:VC_DoubleReply:1468713981152727120> Possibilità di **aggiungere** una __reazione__ ai messaggi
-                <:VC_Reply:1468262952934314131> Mandare **adesivi** esterni in qualsiasi chat
-
-            <:dot:1443660294596329582> <@&1442568933591748688>
-                <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-                <:VC_Reply:1468262952934314131> Possibilità di **chiedere** un __poll__ tramite __\`TICKET PERKS\`__
-
-            <:dot:1443660294596329582> <@&1442568932136587297>
-                <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**
-
-            <:dot:1443660294596329582> <@&1442568931326824488>
-                <:VC_Reply:1468262952934314131> **Ruolo Custom** & **Canale Privato**
-
-            <:dot:1443660294596329582> <@&1442568929930379285>
-                <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`);
-            const commonEmbed = new EmbedBuilder()
+            const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`(Il ruolo e la stanza verranno rimossi in caso di rimozione dei boosts o in caso di mancato rinnovo)\`__**`);
-            await interaction.reply({ embeds: [boostEmbed, levelEmbed, commonEmbed], flags: 1 << 6 });
+                .setTitle(`<:nitroboost:1470064881674883326>**__・Come creare un ruolo personalizzato  e una vocale privata__**`)
+                .setDescription(`Una volta sbloccato il permesso, usa il comando \`+customrolecreate\` nel canale <#1442569138114662490> per creare il tuo ruolo e per personalizzarlo. 
+                    Una volta creato il tuo ruolo, usa il comando \`+vocprivatecreate\` nel canale <#1442569138114662490> per creare la tua vocale private e personalizzarla.
+                    **NB: Tutti quelli che avranno il tuo ruolo avranno accesso al canale vocale**
+                    Digita il comando \`+help\` per la lista dei comandi completa.`
+                )
+
+            const levelRow = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('colori_vip')
+                        .setLabel('Colori VIP Sbloccati')
+                        .setEmoji(`<:exp:1470067108543987846>`)
+                        .setStyle(ButtonStyle.Secondary),
+                )
+
+            await interaction.reply({ embeds: [levelEmbed, howtoEmbed], flags: 1 << 6 });
         }
         if (interaction.customId == 'info_badges_roles') {
             const supporterEmbed = new EmbedBuilder()

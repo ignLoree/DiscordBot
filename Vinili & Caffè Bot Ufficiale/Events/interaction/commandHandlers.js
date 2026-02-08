@@ -2,6 +2,7 @@
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
+const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -22,6 +23,24 @@ async function handleSlashCommand(interaction, client) {
     if (!checkSlashPermission(interaction)) {
         return interaction.reply({
             content: "<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.",
+            flags: 1 << 6
+        });
+    }
+    const cooldownSeconds = await getUserCommandCooldownSeconds({
+        guildId: interaction.guildId,
+        userId: interaction.user.id,
+        member: interaction.member
+    });
+    const cooldownResult = consumeUserCooldown({
+        client,
+        guildId: interaction.guildId,
+        userId: interaction.user.id,
+        cooldownSeconds
+    });
+    if (!cooldownResult.ok) {
+        const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
+        return interaction.reply({
+            content: `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
             flags: 1 << 6
         });
     }
