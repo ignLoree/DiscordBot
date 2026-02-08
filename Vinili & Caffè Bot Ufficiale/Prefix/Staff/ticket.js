@@ -196,6 +196,19 @@ module.exports = {
         return;
       }
 
+      if (ticketDoc.userId === message.author.id) {
+        await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setTitle('Errore')
+              .setDescription('<:vegax:1443934876440068179> Non puoi claimare il ticket che hai aperto tu.')
+              .setColor('Red')
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
       ticketDoc.claimedBy = message.author.id;
       await ticketDoc.save();
       await message.channel.permissionOverwrites.edit(message.author.id, { ViewChannel: true, SendMessages: true });

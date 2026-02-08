@@ -284,6 +284,10 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
+                if (ticket.userId === interaction.user.id) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi claimare il ticket che hai aperto tu.')], flags: 1 << 6 });
+                    return true;
+                }
                 if (ticket.claimedBy) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
                     return true;
