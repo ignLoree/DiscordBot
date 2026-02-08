@@ -411,15 +411,7 @@ module.exports = {
             || client.pcommands.get(cmd)
             || client.pcommands.get(client.aliases.get(cmd));
             
-        if (!command) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription(`<:vegax:1443934876440068179> Il comando che hai provato ad eseguire **non esiste**.`);
-            await deleteCommandMessage();
-            const msg = await message.channel.send({ embeds: [embed] });
-            setTimeout(() => msg.delete().catch(() => { }), 2000);
-            return;
-        }
+        if (!command) return;
         if (!checkPrefixPermission(message, command.name)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
