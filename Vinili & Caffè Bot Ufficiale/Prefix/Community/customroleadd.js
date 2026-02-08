@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { createCustomRoleGrantRequest } = require('../../Events/interaction/customRoleHandlers');
@@ -19,9 +19,9 @@ function buildNoPermEmbed(message) {
   const rolesText = CUSTOM_ROLE_ALLOWED_ROLE_IDS.map((id) => `<@&${id}>`).join(', ');
   return new EmbedBuilder()
     .setColor('#e67e22')
-    .setTitle('<:vegax:1443934876440068179> âž¤ Non hai i permessi')
+    .setTitle('<:vegax:1443934876440068179> Non hai i permessi')
     .setDescription([
-      'Questo comando Ã¨ riservato agli utenti che possiedono i seguenti ruoli:',
+      'Questo comando è riservato agli utenti che possiedono i seguenti ruoli:',
       rolesText
     ].join('\n'))
     .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
@@ -74,7 +74,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piÃ¹. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });

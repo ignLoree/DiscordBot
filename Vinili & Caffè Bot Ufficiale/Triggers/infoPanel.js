@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const PersonalityPanel = require('../Schemas/Community/panelSchema');
 
@@ -22,10 +22,10 @@ module.exports = {
       .setTitle('Ti diamo il benvenuto nella nostra community!')
       .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:'})
       .setDescription([
-        '<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & CaffÃ¨**, l\'unico server in Italia non tossico e __incentrato sulla socializzazione__.',
+        '<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l\'unico server in Italia non tossico e __incentrato sulla socializzazione__.',
         '',
         '<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**',
-        '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come etÃ , menzioni, passioni e molto altro!',
+        '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!',
       ].join('\n'));
 
     const row1 = new ActionRowBuilder().addComponents(

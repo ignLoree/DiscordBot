@@ -589,7 +589,7 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina il numero .? ?')
+    .setTitle('Indovina il numero .ᐟ ✧')
     .setDescription([
       `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
@@ -601,7 +601,7 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la parola .? ?')
+    .setTitle('Indovina la parola .ᐟ ✧')
     .setDescription([
       `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
@@ -613,7 +613,7 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la bandiera .? ?')
+    .setTitle('Indovina la bandiera .ᐟ ✧')
     .setDescription([
       `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
@@ -626,7 +626,7 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina il calciatore .? ?')
+    .setTitle('Indovina il calciatore .ᐟ ✧')
     .setDescription([
       `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
@@ -642,7 +642,7 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Indovina la canzone .? ?')
+    .setTitle('Indovina la canzone .ᐟ ✧')
     .setDescription([
       `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp** °?`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
@@ -656,7 +656,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Trova il bot .? ?')
+    .setTitle('Trova il bot .ᐟ ✧')
     .setDescription([
       '<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!',
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per trovarlo!`,
@@ -668,7 +668,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('Sei vicino al bot .? ?')
+    .setTitle('Sei vicino al bot .ᐟ ✧')
     .setDescription([
       '<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!',
       `> <a:VC_Time:1468641957038526696> Tempo rimasto: **${minutes} minuti**`,
@@ -701,7 +701,7 @@ function buildWinEmbed(winnerId, rewardExp, totalExp) {
     .setColor('#6f4e37')
     .setTitle('??? Un utente ha vinto !')
     .setDescription([
-      `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.? ?`,
+      `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
       '',
       '?? **Le tue statistiche:**',
       `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,

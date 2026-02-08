@@ -1,4 +1,4 @@
-﻿const { InteractionType } = require('discord.js');
+const { InteractionType } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { handleAutocomplete, handleSlashCommand } = require('./interaction/commandHandlers');
@@ -62,7 +62,7 @@ module.exports = {
                 }
                 if (interaction?.isRepliable?.()) {
                     const payload = {
-                        content: '<:vegax:1443934876440068179> C\'Ã¨ stato un errore nell\'esecuzione del comando.',
+                        content: '<:vegax:1443934876440068179>  C\'è stato un errore nell\'esecuzione del comando.',
                         flags: 1 << 6
                     };
                     if (!interaction.replied && !interaction.deferred) {

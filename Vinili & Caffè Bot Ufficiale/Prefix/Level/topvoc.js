@@ -9,7 +9,7 @@ function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
   if (index === 1) return '<:VC_Podio2:1469659512863592500>';
   if (index === 2) return '<:VC_Podio3:1469659557696504024>';
-  return `${index + 1}Â°`;
+  return `${index + 1}°`;
 }
 
 function formatUserLabel(member, userId) {
@@ -73,7 +73,7 @@ module.exports = {
       .setTitle('Classifica Vocale [TopVoc]')
       .setThumbnail(message.guild.iconURL({ size: 128 }))
       .setDescription(lines.join('\n'))
-      .setFooter({ text: `â‡¢ Comando eseguito da: ${message.author.username}` });
+      .setFooter({ text: `⇢ Comando eseguito da: ${message.author.username}` });
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
     if (!shouldRedirect) {

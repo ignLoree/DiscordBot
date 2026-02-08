@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const suggestion = require('../../Schemas/Suggestion/suggestionSchema.js');
 
 async function handleSuggestionVote(interaction) {
@@ -13,7 +13,7 @@ async function handleSuggestionVote(interaction) {
             await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai giÃ  votato per questo suggerimento')
+                        .setDescription('<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai già votato per questo suggerimento')
                         .setColor('Red')
                 ],
                 flags: 1 << 6
@@ -55,7 +55,7 @@ async function handleSuggestionVote(interaction) {
             await interaction.reply({
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai giÃ  votato per questo suggerimento')
+                        .setDescription('<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai già votato per questo suggerimento')
                         .setColor('Red')
                 ],
                 flags: 1 << 6

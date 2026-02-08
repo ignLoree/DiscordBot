@@ -21,7 +21,7 @@ module.exports = {
       .setColor('#6f4e37')
       .setAuthor({ name: guildName, iconURL: guildIcon })
       .setDescription([
-        `<a:VC_Flowers:1468687836055212174> **__${message.author.tag}__** le tue statistiche ð“‚ƒâ˜…`,
+        `<a:VC_Flowers:1468687836055212174> **__${message.author.tag}__** le tue statistiche 𓂃★`,
         '',
         '<:channeltext:1443247596922470551> __Messaggi__:',
         `<:dot:1443660294596329582> Giornalieri: **${stats.messages.daily}** _messaggi_`,

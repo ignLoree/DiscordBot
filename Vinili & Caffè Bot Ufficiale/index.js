@@ -166,8 +166,7 @@ setInterval(async () => {
         if (channel) {
             const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
             const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
-            const by = data?.by ? ` (richiesto da <@${data.by}>)` : '';
-            await channel.send(`<:vegacheckmark:1443666279058772028> Bot Dev riavviato con successo${elapsed}.${by}`);
+            await channel.send(`<:vegacheckmark:1443666279058772028> Bot Dev riavviato con successo${elapsed}.`);
         }
     } catch (err) {
         global.logger.error('[RESTART WATCH] Failed to send dev restart confirmation:', err);
@@ -183,7 +182,7 @@ client.on("clientReady", async (client) => {
         client.user.setActivity({
             type: ActivityType.Custom,
             name: "irrelevant",
-            state: "??? discord.gg/viniliecaffe"
+            state: "☕📀 discord.gg/viniliecaffe"
         })
         if (typeof checkAndInstallPackages === 'function') {
             await checkAndInstallPackages(client);

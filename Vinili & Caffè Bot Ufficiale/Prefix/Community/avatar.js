@@ -3,13 +3,13 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { AvatarPrivacy } = require('../../Schemas/Community/privacySchemas');
 
 function normalize(text) {
-  return String(text || "").toLowerCase().trim();
+  return String(text || '').toLowerCase().trim();
 }
 
 async function resolveMember(message, query) {
   const mention = message.mentions?.members?.first();
   if (mention) return mention;
-  const id = String(query || "").replace(/[<@!>]/g, "");
+  const id = String(query || '').replace(/[<@!>]/g, '');
   if (/^\d{17,20}$/.test(id)) {
     const cached = message.guild.members.cache.get(id);
     if (cached) return cached;
@@ -31,24 +31,24 @@ async function resolveMember(message, query) {
 
 module.exports = {
   skipPrefix: false,
-  name: "avatar",
-  aliases: ["av"],
-  prefixOverride: "?",
+  name: 'avatar',
+  aliases: ['av'],
+  prefixOverride: '?',
 
   async execute(message, args) {
     if (!message.guild) {
       return safeChannelSend(message.channel, {
         embeds: [
           new EmbedBuilder()
-            .setColor("Red")
-            .setDescription("<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.")
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.')
         ]
       });
     }
 
-    const subRaw = args[0] ? String(args[0]).toLowerCase() : "";
-    const sub = ["get", "server", "user"].includes(subRaw) ? subRaw : "get";
-    const query = ["get", "server", "user"].includes(subRaw) ? args.slice(1).join(" ") : args.join(" ");
+    const subRaw = args[0] ? String(args[0]).toLowerCase() : '';
+    const sub = ['get', 'server', 'user'].includes(subRaw) ? subRaw : 'get';
+    const query = ['get', 'server', 'user'].includes(subRaw) ? args.slice(1).join(' ') : args.join(' ');
     const member = await resolveMember(message, query) || message.member;
     const user = member?.user || message.author;
 
@@ -61,32 +61,33 @@ module.exports = {
       );
     } catch {}
 
-    const isBlocked = Boolean(privacyDoc?.blocked);
-    if (isBlocked) {
+    if (Boolean(privacyDoc?.blocked)) {
       const blockedEmbed = new EmbedBuilder()
         .setColor('#e74c3c')
         .setTitle('<:vegax:1443934876440068179> Avatar Bloccato')
-        .setThumbnail(`https://images-ext-1.discordapp.net/external/qZp8C7dthauZs3SMmWIVqoxSjwXkKvmCXhZpro2lLzI/%3Fformat%3Dwebp%26quality%3Dlossless%26width%3D640%26height%3D640/https/images-ext-1.discordapp.net/external/fRgXgmNV39-c_gorTdDdWPSyx2fFy_i4t01cYEF-DKY/https/i.imgur.com/7OnTq5S.png?format=webp&quality=lossless&width=640&height=640`)
+        .setThumbnail('https://images-ext-1.discordapp.net/external/qZp8C7dthauZs3SMmWIVqoxSjwXkKvmCXhZpro2lLzI/%3Fformat%3Dwebp%26quality%3Dlossless%26width%3D640%26height%3D640/https/images-ext-1.discordapp.net/external/fRgXgmNV39-c_gorTdDdWPSyx2fFy_i4t01cYEF-DKY/https/i.imgur.com/7OnTq5S.png?format=webp&quality=lossless&width=640&height=640')
         .setDescription('Questo utente ha bloccato la visualizzazione del proprio avatar.');
+
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`avatar_unblock:${user.id}`)
           .setLabel('Sblocca')
-          .setEmoji('ðŸ”“')
+          .setEmoji('<a:VC_Unlock:1470011538432852108>')
           .setStyle(ButtonStyle.Secondary)
       );
+
       return safeChannelSend(message.channel, { embeds: [blockedEmbed], components: [row] });
     }
 
-    if (sub === "server") {
+    if (sub === 'server') {
       const memberAvatar = member.displayAvatarURL();
       const userAvatar = user.displayAvatarURL();
       if (memberAvatar === userAvatar) {
         return safeChannelSend(message.channel, {
           embeds: [
             new EmbedBuilder()
-              .setColor("Red")
-              .setDescription("<:vegax:1443934876440068179> Non ha un avatar impostato solo per questo server.")
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Non ha un avatar impostato solo per questo server.')
           ]
         });
       }
@@ -102,9 +103,8 @@ module.exports = {
     } catch {}
 
     const totalViews = Number(privacyCount?.views || 0);
-
-    const isUser = sub === "user";
-    const title = isUser ? "User Avatar" : "Server Avatar";
+    const isUser = sub === 'user';
+    const title = isUser ? 'User Avatar' : 'Server Avatar';
     const imageUrl = isUser
       ? user.displayAvatarURL({ size: 4096 })
       : member.displayAvatarURL({ size: 4096 });
@@ -114,16 +114,16 @@ module.exports = {
       .setTitle(title)
       .setImage(imageUrl)
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
-      .setColor("#6f4e37")
+      .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views ðŸ‘`
+        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views 👁️`
       });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('avatar_views')
         .setLabel('Classifica Views')
-        .setEmoji('ðŸ“Š')
+        .setEmoji('📊')
         .setStyle(ButtonStyle.Secondary)
     );
 

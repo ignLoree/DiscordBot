@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 
@@ -85,11 +85,10 @@ module.exports = {
                     await StaffDoc.save();
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione eseguita da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                        .setTitle(`<a:laydowntorest:1444006796661358673>·**__VALUTAZIONE POSITIVA__** \#${StaffDoc.positiveCount}\``)
+                        .setTitle(`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__** \#${StaffDoc.positiveCount}\``)
                         .setThumbnail(`${utentee.displayAvatarURL()}`)
                         .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee} <:pinnednew:1443670849990430750> __${reason}__ <a:loading:1443934440614264924> **ID Valutazione** __\`${StaffDoc.valutazioniCount}\`__`)
                         .setColor('#6f4e37')
-                        .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                     await channel.send({ content: `${utentee}`, embeds: [embed] });
                     return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegacheckmark:1443666279058772028> Valutazione positiva registrata con successo!").setColor('#6f4e37')] });
                 }
@@ -109,7 +108,6 @@ module.exports = {
                             { name: "__Numero Valutazioni Positive Aggiornato__", value: `Ora sei a \`${StaffDoc.positiveCount}\` valutazioni!`, inline: false },
                         )
                         .setColor("#6f4e37")
-                        .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                     await channel.send({ embeds: [embed] });
                     return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegacheckmark:1443666279058772028> Valutazione positiva rimossa con successo!").setColor('#6f4e37')] });
                 }
@@ -124,11 +122,10 @@ module.exports = {
                     await StaffDoc.save();
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione eseguita da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                        .setTitle(`<a:laydowntorest:1444006796661358673>·**__VALUTAZIONE NEGATIVA__** \#${StaffDoc.negativeCount}\``)
+                        .setTitle(`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__** \#${StaffDoc.negativeCount}\``)
                         .setThumbnail(`${utentee.displayAvatarURL()}`)
                         .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee} <:pinnednew:1443670849990430750> __${reason}__ <a:loading:1443934440614264924> **ID Valutazione** __\`${StaffDoc.valutazioniCount}\`__`)
                         .setColor('#6f4e37')
-                        .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                     await channel.send({ content: `${utentee}`, embeds: [embed] });
                     return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegacheckmark:1443666279058772028> Valutazione negativa registrata con successo!").setColor('#6f4e37')] });
                 }
@@ -148,7 +145,6 @@ module.exports = {
                             { name: "__Numero Valutazioni Negativa Aggiornato__", value: `Ora sei a \`${StaffDoc.negativeCount}\` valutazioni!`, inline: false },
                         )
                         .setColor("#6f4e37")
-                        .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                     await channel.send({ embeds: [embed] });
                     return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegacheckmark:1443666279058772028> Valutazione negativa rimossa con successo!").setColor('#6f4e37')] });
                 }
@@ -160,11 +156,10 @@ module.exports = {
                     .setTitle(`Valutazioni di ${utentee.username}`)
                     .setColor("#6f4e37")
                     .addFields(
-                        { name: "Positive", value: (doc.positiveReasons || []).map((r, i) => `\`${i + 1}\` â€¢ ${r}`).join("\n") || "Nessuna", inline: false },
-                        { name: "Negative", value: (doc.negativeReasons || []).map((r, i) => `\`${i + 1}\` â€¢ ${r}`).join("\n") || "Nessuna", inline: false },
+                        { name: "Positive", value: (doc.positiveReasons || []).map((r, i) => `\`${i + 1}\` " ${r}`).join("\n") || "Nessuna", inline: false },
+                        { name: "Negative", value: (doc.negativeReasons || []).map((r, i) => `\`${i + 1}\` " ${r}`).join("\n") || "Nessuna", inline: false },
                         { name: "Totale", value: `Totali: ${doc.valutazioniCount}`, inline: false }
                     )
-                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
                 return await safeEditReply(interaction, { embeds: [embed] });
             }
         } catch (err) {

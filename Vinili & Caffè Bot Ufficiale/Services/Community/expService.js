@@ -1,4 +1,4 @@
-﻿const ExpUser = require('../../Schemas/Community/expUserSchema');
+const ExpUser = require('../../Schemas/Community/expUserSchema');
 const GlobalSettings = require('../../Schemas/Community/globalSettingsSchema');
 
 const TIME_ZONE = 'Europe/Rome';
@@ -137,7 +137,7 @@ function buildLevelUpEmbed(member, level) {
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`
         ].join('\n'),
         footer: {
-          text: 'Vinili & CaffÃ¨ â€¢ Nitro â€¢ Tags â€¢ Social â€¢ Activity',
+          text: 'Vinili & Caffè " Nitro " Tags " Social " Activity',
           icon_url: member?.guild?.iconURL({ size: 128 })
         }
       }
@@ -168,7 +168,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`
         ].join('\n'),
         footer: {
-          text: 'Vinili & CaffÃ¨ â€¢ Nitro â€¢ Tags â€¢ Social â€¢ Activity',
+          text: 'Vinili & Caffè " Nitro " Tags " Social " Activity',
           icon_url: member?.guild?.iconURL({ size: 128 })
         }
       }

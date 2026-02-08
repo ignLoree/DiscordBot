@@ -24,7 +24,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle(`Le statistiche di ${targetUser.tag} .? ?`)
+      .setTitle(`Le statistiche di ${targetUser.tag} .ᐟ ✧`)
       .setThumbnail(targetUser.displayAvatarURL())
       .setDescription([
         `<:VC_EXP:1468714279673925883> Hai accumulato un totale di **${stats.totalExp} EXP**.`,

@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
@@ -101,7 +101,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             if (target === 'both') {
@@ -121,7 +121,7 @@ module.exports = {
                 await interaction.client.reloadScope(scope);
                 const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
                 return safeReply(interaction, {
-                    content: `Reload ${scope} completato su ${currentTarget} in ${elapsed}s. Conferma per ${otherTarget} in arrivo qui.`,
+                    content: `<:vegacheckmark:1443666279058772028> Reload ${scope} completato su ${currentTarget} in ${elapsed}s. Conferma per ${otherTarget} in arrivo qui.`,
                     flags: 1 << 6
                 });
             }
@@ -137,7 +137,7 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `Reload ${scope} richiesto su ${target}. Ti avviso qui quando Ã¨ completato.`, flags: 1 << 6 });
+                return safeReply(interaction, { content: `<:vegacheckmark:1443666279058772028> Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
             const baseDir = process.cwd();

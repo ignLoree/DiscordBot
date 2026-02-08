@@ -57,7 +57,7 @@ module.exports = {
       .setDescription([
         `<a:VC_Arrow:1448672967721615452> Hai un totale di \`${totalExp}\` punti (e exp guadagnati) <a:VC_FlowerPink:1468688049725636903>`,
         '',
-        'ðŸŽ² .áŸRuoli sbloccati:',
+        '🎲 .ᐟRuoli sbloccati:',
         unlockedText,
       ].join('\n'))
       .setFooter({ text: `Comando eseguito da: ${message.author.username}`, iconURL: message.author.displayAvatarURL() });

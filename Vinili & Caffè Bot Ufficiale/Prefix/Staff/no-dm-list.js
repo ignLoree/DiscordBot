@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { getNoDmSet } = require('../../Utils/noDmList');
 
 const getDevIds = (client) => {
@@ -38,7 +38,7 @@ module.exports = {
     const devIds = getDevIds(client);
     if (!devIds.includes(message.author.id)) {
       await safeMessageReply(message, {
-        content: '<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo al developer del bot.',
+        content: '<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.',
         allowedMentions: { repliedUser: false }
       });
       return;

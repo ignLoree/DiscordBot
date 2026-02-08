@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const DisboardBump = require('../../Schemas/Disboard/disboardBumpSchema');
 const bumpTimers = new Map();
 
@@ -19,9 +19,7 @@ async function sendReminder(client, guildId) {
         embeds: [
             new EmbedBuilder()
                 .setColor(embedColor)
-                .setTimestamp()
-                .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
-                .setTitle(`<:VC_Eye:1331619214410383381> **Ã‰ L'ORA DEL \`BUMP\`!**`)
+                .setTitle(`<:VC_Eye:1331619214410383381> **É L'ORA DEL \`BUMP\`!**`)
                 .setURL("https://disboard.org/it/server/1329080093599076474")
                 .setDescription("<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!")
         ]

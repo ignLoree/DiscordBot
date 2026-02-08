@@ -4,7 +4,6 @@ const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, Act
 const getDevIds = (client) => {
   const raw =
     client.config?.developers ??
-    client.config?.developers ??
     "";
   if (Array.isArray(raw)) {
     return raw.map((id) => String(id).trim()).filter(Boolean);
@@ -18,7 +17,7 @@ const getDevIds = (client) => {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("dmbroadcast")
-    .setDescription("Invia un DM a tutti gli utenti (escluso staff)")
+    .setDescription("Invia un DM a tutti gli utenti")
     .setDMPermission(false)
     .addUserOption(option =>
       option
@@ -29,7 +28,7 @@ module.exports = {
     .addBooleanOption(option =>
       option
         .setName("all")
-        .setDescription("Conferma invio a tutti (usa solo se non imposti utente)")
+        .setDescription("Conferma invio a tutti")
         .setRequired(false)
     ),
 

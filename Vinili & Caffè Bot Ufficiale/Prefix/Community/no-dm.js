@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { getNoDmSet, addNoDm, removeNoDm } = require('../../Utils/noDmList');
 
 module.exports = {
@@ -26,7 +26,7 @@ module.exports = {
 
     await addNoDm(message.guild.id, message.author.id);
     await safeMessageReply(message, {
-      content: 'Ok! **Non riceverai piÃ¹** i DM broadcast. Puoi riattivarli rifacendo `+no-dm`.',
+      content: 'Ok! **Non riceverai più** i DM broadcast. Puoi riattivarli rifacendo `+no-dm`.',
       allowedMentions: { repliedUser: false }
     });
   }

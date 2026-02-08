@@ -19,7 +19,7 @@ module.exports = {
     if (!parentId || parentId !== allowedCategoryId) {
       return safeMessageReply(
         message,
-        '<:vegax:1443934876440068179> Questo comando puo essere usato **solo nella categoria autorizzata**.'
+        '<:vegax:1443934876440068179> Questo comando può essere usato **solo nella categoria autorizzata**.'
       );
     }
 
