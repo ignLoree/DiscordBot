@@ -228,7 +228,7 @@ module.exports = {
         const buffer = await renderTopList({
           title: "Top Albums",
           displayName,
-          periodLabel: `${formatPeriodLabel(period)} · Playcounts`,
+          periodLabel: `${formatPeriodLabel(period)} •  Playcounts`,
           rows,
           footerLeft: `${formatNumber(totalAlbums, user.localization?.numberFormat)} different albums`,
           footerRight: `${formatNumber(totalPlays, user.localization?.numberFormat)} total plays`,

@@ -67,7 +67,7 @@ function buildBillboardLines(albums, offset, prevRanks, numberFormat) {
     const prevRank = prevRanks?.get(key) || null;
     const emoji = getMovementEmoji(currentRank, prevRank);
     const label = playsValue === 1 ? "play" : "plays";
-    return `${emoji} \`${currentRank}\` · **${artist} - ${name}**- _${plays} ${label}_`;
+    return `${emoji} \`${currentRank}\` • **${artist} - ${name}**- _${plays} ${label}_`;
   });
 }
 

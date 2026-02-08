@@ -111,8 +111,8 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_HIGHSTAFF,
                     requiredRoles: [ROLE_USER, ROLE_BOOSTER, ROLE_DONATOR, ROLE_SUPPORTER, ROLE_LEVEL5],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET PERKS__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Indica quali **perks** vuoi riscattare.`)
+                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PERKS__**")
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Indica quali **perks** vuoi riscattare.`)
                         .setColor("#6f4e37")
                 },
                 ticket_supporto: {
@@ -122,7 +122,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_STAFF,
                     requiredRoles: [],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET SUPPORTO__**")
+                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
                         .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Spiega subito il tuo problema.`)
                         .setColor("#6f4e37")
                 },
@@ -133,7 +133,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_PARTNERMANAGER,
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET PARTNERSHIP__**")
+                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
                         .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.`)
                         .setColor("#6f4e37")
                 },
@@ -144,7 +144,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_HIGHSTAFF,
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208>·**__TICKET HIGH__**")
+                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH__**")
                         .setDescription(`<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi cosa vuoi segnalare.`)
                         .setColor("#6f4e37")
                 }

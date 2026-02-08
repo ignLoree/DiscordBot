@@ -40,7 +40,7 @@ function buildServerArtistsLines({ artists, prevRanks, numberFormat, fallbackOff
     const emoji = getMovementEmoji(currentRank, prevRank);
     const prefixValue = showListeners ? listeners : String(currentRank);
     const label = playsValue === 1 ? "play" : "plays";
-    lines.push(`${emoji} \`${prefixValue}\` · **${name}** - _${plays} ${label}_`);
+    lines.push(`${emoji} \`${prefixValue}\` • **${name}** - _${plays} ${label}_`);
   });
   return lines;
 }

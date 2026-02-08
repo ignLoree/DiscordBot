@@ -192,7 +192,7 @@ module.exports = {
         const buffer = await renderTopList({
           title: "Top Countries",
           displayName,
-          periodLabel: `${formatPeriodLabel(periodInfo.period)} · Playcounts`,
+          periodLabel: `${formatPeriodLabel(periodInfo.period)}  •  Playcounts`,
           rows,
           footerLeft: `${formatNumber(resultsAll.length, user.localization?.numberFormat)} total countries`,
           footerRight: `${formatNumber(totalPlays, user.localization?.numberFormat)} total plays`,
@@ -206,7 +206,7 @@ module.exports = {
 
       const lines = results.map(item => {
         const label = item.plays === 1 ? "play" : "plays";
-        return `${item.count} · ${item.country} - ${formatNumber(item.plays, user.localization?.numberFormat)} ${label}`;
+        return `${item.count} • ${item.country} - ${formatNumber(item.plays, user.localization?.numberFormat)} ${label}`;
       });
 
       const embed = new EmbedBuilder()

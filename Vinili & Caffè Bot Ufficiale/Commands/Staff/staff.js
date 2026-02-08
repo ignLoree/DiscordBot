@@ -332,7 +332,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 await Staff.save();
                 const warnstaff = new EmbedBuilder()
                     .setAuthor({ name: `Warn eseguito da ${interaction.user.username}`, iconURL: `${interaction.user.displayAvatarURL()}` })
-                    .setTitle(`<a:laydowntorest:1444006796661358673>·**__WARN STAFF__** \`#${Staff.warnCount}\``)
+                    .setTitle(`<a:laydowntorest:1444006796661358673> • **__WARN STAFF__** \`#${Staff.warnCount}\``)
                     .setThumbnail(`${utentee.displayAvatarURL()}`)
                     .setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${utentee}
                         <:pinnednew:1443670849990430750> __${reason}__

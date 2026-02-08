@@ -51,7 +51,7 @@ function buildServerAlbumsLines({
     const prefixValue = showListeners ? listeners : String(currentRank);
     const label = playsValue === 1 ? "play" : "plays";
     const title = showArtist ? `${artist} - ${name}` : name;
-    const separator = showArtist ? " · " : " · ";
+    const separator = showArtist ? " • " : " • ";
     lines.push(`${emoji} \`${prefixValue}\`${separator}**${title}**- _${plays} ${label}_`);
   });
   return lines;
