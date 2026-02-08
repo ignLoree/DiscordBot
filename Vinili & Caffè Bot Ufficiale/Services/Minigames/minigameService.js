@@ -592,7 +592,7 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
     .setColor('#6f4e37')
     .setTitle('Indovina il numero .ᐟ ✧')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** °?`,
+      `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚﹒`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -604,7 +604,7 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
     .setColor('#6f4e37')
     .setTitle('Indovina la parola .ᐟ ✧')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** °?`,
+      `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚﹒`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -616,7 +616,7 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
     .setColor('#6f4e37')
     .setTitle('Indovina la bandiera .ᐟ ✧')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** °?`,
+      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'))
@@ -629,7 +629,7 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
     .setColor('#6f4e37')
     .setTitle('Indovina il calciatore .ᐟ ✧')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** °?`,
+      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -1150,7 +1150,9 @@ async function startGuessSongGame(client, cfg) {
     new ButtonBuilder()
       .setCustomId(previewCustomId)
       .setLabel('Ascolta anteprima')
+      .setEmoji(`<:VC_Preview:1462941162393309431>`)
       .setStyle(ButtonStyle.Secondary)
+      .setDisabled(!info.previewUrl)
   );
   const gameMessage = await channel.send({
     embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)],
@@ -1561,9 +1563,13 @@ async function handleMinigameButton(interaction, client) {
       return true;
     }
     await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+    if (!game.previewUrl) {
+      await interaction.editReply({ content: 'Anteprima non disponibile.' }).catch(() => {});
+      return true;
+    }
     const audio = await fetchAudioAttachment(game.previewUrl);
     if (!audio) {
-      await interaction.editReply({ content: 'Anteprima non disponibile.' }).catch(() => {});
+      await interaction.editReply({ content: `Non riesco ad allegare il file, ascoltala qui:\n${game.previewUrl}` }).catch(() => {});
       return true;
     }
     await interaction.editReply({ files: [new AttachmentBuilder(audio, { name: 'anteprima.m4a' })] }).catch(() => {});

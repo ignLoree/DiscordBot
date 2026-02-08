@@ -379,22 +379,22 @@ module.exports = {
                 .setDescription([
                     'Con un Nitro Boost ottieni vantaggi esclusivi nel server.',
                     '',
-                    '<:sparkledred:1470064814502973591> Ruolo booster con badge speciale',
-                    '<:moon:1470064812615667827> Link e immagini in chat',
-                    '<:pinkstar:1470064804835229768> Emoji e adesivi esterni',
-                    '<:sparkle:1470064801811140866> Uso soundboard del server',
-                    '<:blueflash:1470064803157643468> Ruolo personalizzato e vocale privata',
-                    '<a:reddiamond:1443652837346377841> Comando +quote',
-                    '<:exp:1470067108543987846> X2 EXP Boost'
+                    '<:sparkledred:1470064814502973591>・Ruolo <@&1329497467481493607> con badge speciale',
+                    '<:moon:1470064812615667827>・Permesso di allegare immagini e link in chat',
+                    '<:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server',
+                    '<:sparkle:1470064801811140866>・Permesso di usare le Soundboard del server',
+                    '<:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**',
+                    '<a:reddiamond:1443652837346377841>・Comando \`?quote\`',
+                    '<:exp:1470067108543987846>・X2 EXP Boost'
                 ].join('\n'));
 
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('Come creare ruolo personalizzato e vocale privata')
+                .setTitle('<:nitroboost:1470064881674883326> **__・Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    'Usa +customrolecreate in <#1442569138114662490> per creare e configurare il ruolo.',
-                    'Poi usa +vocprivatecreate nello stesso canale per creare e configurare la vocale privata.',
-                    'Digita +help per la lista completa dei comandi.'
+                    'Usa \`+customrolecreate\` in <#1442569138114662490> per creare e configurare il ruolo.',
+                    'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
+                    'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
 
             const row = new ActionRowBuilder().addComponents(
@@ -411,67 +411,71 @@ module.exports = {
         const buildLevelsPayload = () => {
             const levelEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('Sali di livello e sblocca vantaggi sempre migliori')
+                .setTitle('<:exp:1470067108543987846> **__・Sali di livello e sblocca vantaggi sempre migliori__**')
                 .setDescription([
-                    'I livelli rappresentano la tua attivita: scrivendo in chat e stando in vocale guadagni exp.',
-                    'Per vedere exp e statistiche usa +rank in <#1442569138114662490>.',
+                    'I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale. ',
+                    'Una volta raggiunta una certa somma di esperienza, farai un **level up**!',
+                    '',
+                    '<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#1442569138114662490>.',
+                    '',
+                    '<a:VC_Arrow:1448672967721615452> **LISTA dei LIVELLI:**'
                 ].join('\n'))
                 .addFields(
                     {
-                        name: 'LIVELLO 10-19',
+                        name: '\`LIVELLO 10-19\`',
                         value: [
                             '<@&1442568936423034940>',
-                            '<:VC_DoubleReply:1468713981152727120> Cambiare nickname',
-                            '<:VC_DoubleReply:1468713981152727120> Link e immagini in chat',
-                            '<:VC_Reply:1468262952934314131> Comando ?quote'
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di cambiare nickname',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
+                            '<:VC_Reply:1468262952934314131> Sblocchi il comando \`?quote\`'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: 'LIVELLO 20-29',
+                        name: '\`LIVELLO 20-29\`',
                         value: [
                             '<@&1442568934510297226>',
-                            'Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Reazioni ai messaggi in chat'
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di aggiungere reazioni ai messaggi in chat'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: 'LIVELLO 30-49',
+                        name: '\`LIVELLO 30-49\`',
                         value: [
                             '<@&1442568933591748688>',
-                            'Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Reazione personalizzata menzione',
-                            '<:VC_Reply:1468262952934314131> Cooldown comandi: 15 secondi'
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di usare soundboard di altri server',
+                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: 'LIVELLO 50-69',
+                        name: '\`LIVELLO 50-69\`',
                         value: [
                             '<@&1442568932136587297>',
-                            'Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Colori PLUS',
-                            '<:VC_DoubleReply:1468713981152727120> Ruolo/vocale personalizzati permanenti',
-                            '<:VC_Reply:1468262952934314131> Cooldown comandi: 5 secondi'
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#1469429150669602961>',
+                            '<:VC_DoubleReply:1468713981152727120> Possibilità di creare un ruolo __personalizzato PERMANENTE__ e un canale vocale privato __personalizzato PERMANENTE__.',
+                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 5 secondi).'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: 'LIVELLO 70-99',
+                        name: '\`LIVELLO 70-99\`',
                         value: [
                             '<@&1442568931326824488>',
-                            'Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Sticker ed emoji esterni',
-                            '<:VC_Reply:1468262952934314131> Reazione auto quando ti menzionano (max 3)'
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di usare stickers ed emoji di altri serve',
+                            '<:VC_Reply:1468262952934314131> Aggiungi le reazioni al messaggio quando ti @menzionano in chat (max. 3)'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: 'LIVELLO 100',
+                        name: '\`LIVELLO 100\`',
                         value: [
                             '<@&1442568929930379285>',
-                            'Tutte le ricompense precedenti',
+                            '९ Tutte le ricompense precedenti',
                             '<:VC_Reply:1468262952934314131> Votare per lo <@&1442568895251611924>'
                         ].join('\n'),
                         inline: true
@@ -481,11 +485,11 @@ module.exports = {
 
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('Come creare ruolo personalizzato e vocale privata')
+                .setTitle('<:nitroboost:1470064881674883326> **__・Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    'Usa +customrolecreate in <#1442569138114662490> per creare e configurare il ruolo.',
-                    'Poi usa +vocprivatecreate nello stesso canale per creare e configurare la vocale privata.',
-                    'Digita +help per la lista completa dei comandi.'
+                    'Usa \`+customrolecreate\` in <#1442569138114662490> per creare e configurare il ruolo.',
+                    'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
+                    'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
 
             const row = new ActionRowBuilder().addComponents(

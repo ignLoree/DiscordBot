@@ -67,13 +67,31 @@ function roundToNearest50(value) {
   return Math.round(value / 50) * 50;
 }
 
+function getLevelStep(level) {
+  const safeLevel = Math.max(1, Math.floor(Number(level || 1)));
+  let step = 90 + Math.floor(safeLevel * 12) + (safeLevel % 4) * 15;
+
+  if (safeLevel >= 10) {
+    const over10 = safeLevel - 9;
+    step += 120 + (over10 * 28) + Math.floor((over10 * over10) * 1.3);
+  }
+  if (safeLevel >= 30) {
+    step += 120 + ((safeLevel - 30) * 18);
+  }
+  if (safeLevel >= 50) {
+    step += 220 + ((safeLevel - 50) * 25);
+  }
+
+  return Math.max(110, step);
+}
+
 function getLevelInfo(totalExp) {
   const exp = Math.max(0, Math.floor(Number(totalExp || 0)));
   let level = 0;
   let nextThreshold = 100;
   while (exp >= nextThreshold) {
     level += 1;
-    const step = 90 + Math.floor(level * 12) + (level % 4) * 15;
+    const step = getLevelStep(level);
     nextThreshold = roundToNearest50(nextThreshold + Math.max(110, step));
   }
   const remainingToNext = Math.max(0, nextThreshold - exp);
