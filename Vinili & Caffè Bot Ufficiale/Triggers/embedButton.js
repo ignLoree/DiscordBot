@@ -375,9 +375,10 @@ module.exports = {
         const buildBoostLevelsPayload = () => {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('Potenzia il server e sblocca vantaggi unici')
+                .setTitle('・**__Potenzia il server e sblocca vantaggi unici__**')
                 .setDescription([
-                    'Con un Nitro Boost ottieni vantaggi esclusivi nel server.',
+                    'Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.',
+                    '**Non sai cos\'è Discord Nitro?** [Scoprilo qui](<https://discord.com/nitro>).',
                     '',
                     '<:sparkledred:1470064814502973591>・Ruolo <@&1329497467481493607> con badge speciale',
                     '<:moon:1470064812615667827>・Permesso di allegare immagini e link in chat',
@@ -390,7 +391,7 @@ module.exports = {
 
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('<:nitroboost:1470064881674883326> **__・Come creare ruolo personalizzato e vocale privata__**')
+                .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
                     'Usa \`+customrolecreate\` in <#1442569138114662490> per creare e configurare il ruolo.',
                     'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
@@ -411,7 +412,7 @@ module.exports = {
         const buildLevelsPayload = () => {
             const levelEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('<:exp:1470067108543987846> **__・Sali di livello e sblocca vantaggi sempre migliori__**')
+                .setTitle('<:exp:1470067108543987846>・**__Sali di livello e sblocca vantaggi sempre migliori__**')
                 .setDescription([
                     'I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale. ',
                     'Una volta raggiunta una certa somma di esperienza, farai un **level up**!',
@@ -485,7 +486,7 @@ module.exports = {
 
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('<:nitroboost:1470064881674883326> **__・Come creare ruolo personalizzato e vocale privata__**')
+                .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
                     'Usa \`+customrolecreate\` in <#1442569138114662490> per creare e configurare il ruolo.',
                     'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
