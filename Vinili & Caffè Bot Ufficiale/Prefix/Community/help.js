@@ -327,7 +327,7 @@ module.exports = {
     });
     if (!sent) return;
 
-    const collector = sent.createMessageComponentCollector({ time: 3 * 60 * 1000 });
+    const collector = sent.createMessageComponentCollector();
 
     collector.on('collect', async (interaction) => {
       if (interaction.user.id !== message.author.id) {
@@ -350,20 +350,6 @@ module.exports = {
       await interaction.update({ embeds: [embed], components: [row] }).catch(() => {});
     });
 
-    collector.on('end', async () => {
-      const disabled = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(navState.prevId)
-          .setLabel('Precedente')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(true),
-        new ButtonBuilder()
-          .setCustomId(navState.nextId)
-          .setLabel('Prossima')
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(true)
-      );
-      await sent.edit({ components: [disabled] }).catch(() => {});
-    });
+    // Nessuna scadenza: i pulsanti restano attivi finché il messaggio esiste.
   }
 };
