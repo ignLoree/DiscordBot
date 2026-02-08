@@ -24,7 +24,7 @@ module.exports = {
     
     const verifyInfoEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('<:pepe_wave:1329488693739782274> **__BENVENUTO SU `' + serverName + '`__**')
+      .setTitle('<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**')
       .setDescription(
         '<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n' +
         '<:vsl_ticket:1329520261053022208> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `SUPPORTO`__**'
