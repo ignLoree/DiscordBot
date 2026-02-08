@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const ExpUser = require('../../Schemas/Community/expUserSchema');
+const ReviewReward = require('../../Schemas/Community/reviewRewardSchema');
 const { getLevelInfo, addExpWithLevel } = require('../../Services/Community/expService');
 
 const REVIEW_CHANNEL_ID = '1442569123426074736';
@@ -66,6 +67,16 @@ module.exports = {
     const guildId = message.guild?.id;
     if (!guildId) return;
 
+    const alreadyRewarded = await ReviewReward.findOne({ guildId, userId: target.id }).lean().catch(() => null);
+    if (alreadyRewarded) {
+      const blocked = new EmbedBuilder()
+        .setColor('Red')
+        .setTitle('Recensione già riscattata')
+        .setDescription('<:vegax:1443934876440068179> Su questo utente la ricompensa recensione è già stata assegnata.');
+      await safeMessageReply(message, { embeds: [blocked], allowedMentions: { repliedUser: false } });
+      return;
+    }
+
     let doc = await ExpUser.findOne({ guildId, userId: target.id });
     if (!doc) {
       doc = new ExpUser({ guildId, userId: target.id });
@@ -78,8 +89,22 @@ module.exports = {
     const finalExp = Math.max(currentExp, targetExp);
     const addedExp = Math.max(0, finalExp - currentExp);
 
+    if (addedExp <= 0) {
+      const nothing = new EmbedBuilder()
+        .setColor('Red')
+        .setDescription('<:vegax:1443934876440068179> Non posso assegnare livelli: il target ha già una soglia EXP superiore.');
+      await safeMessageReply(message, { embeds: [nothing], allowedMentions: { repliedUser: false } });
+      return;
+    }
+
     const levelResult = await addExpWithLevel(message.guild, target.id, addedExp, false);
     const finalLevel = Number(levelResult?.levelInfo?.level ?? getLevelInfo(finalExp).level);
+    await ReviewReward.create({
+      guildId,
+      userId: target.id,
+      rewardedBy: message.author.id,
+      rewardedAt: new Date()
+    }).catch(() => {});
 
     const reviewChannel = message.guild.channels.cache.get(REVIEW_CHANNEL_ID)
       || await message.guild.channels.fetch(REVIEW_CHANNEL_ID).catch(() => null);
