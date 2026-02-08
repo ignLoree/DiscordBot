@@ -1261,7 +1261,7 @@ async function startFindBotGame(client, cfg) {
         if (msg) {
           await msg.delete().catch(() => {});
         }
-        await ch.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+        await mainChannel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
       }
     }
     await clearActiveGame(client, cfg);
@@ -1651,17 +1651,15 @@ async function restoreActiveGames(client) {
       } catch {}
       await channel.send({ embeds: [buildTimeoutSongEmbed(title, artist)] }).catch(() => {});
     } else if (state.type === 'findBot') {
+      await channel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
       const targetChannel = channel.guild.channels.cache.get(state.targetChannelId) || await channel.guild.channels.fetch(state.targetChannelId).catch(() => null);
-      if (targetChannel) {
-        await targetChannel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
-        if (state.gameMessageId && state.customId) {
-          const msg = await targetChannel.messages.fetch(state.gameMessageId).catch(() => null);
-          if (msg) {
-            const row = new ActionRowBuilder().addComponents(
-              new ButtonBuilder().setCustomId(state.customId).setLabel('trova il bot').setStyle(ButtonStyle.Primary).setDisabled(true)
-            );
-            await msg.edit({ components: [row] }).catch(() => {});
-          }
+      if (targetChannel && state.gameMessageId && state.customId) {
+        const msg = await targetChannel.messages.fetch(state.gameMessageId).catch(() => null);
+        if (msg) {
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(state.customId).setLabel('trova il bot').setStyle(ButtonStyle.Primary).setDisabled(true)
+          );
+          await msg.edit({ components: [row] }).catch(() => {});
         }
       }
     }
@@ -1831,7 +1829,7 @@ async function restoreActiveGames(client) {
             );
             await msg.edit({ components: [disabledRow] }).catch(() => {});
           }
-          await ch.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+          await channel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
         }
       }
       await clearActiveGame(client, cfg);
