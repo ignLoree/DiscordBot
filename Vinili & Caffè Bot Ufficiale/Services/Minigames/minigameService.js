@@ -644,7 +644,7 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
     .setColor('#6f4e37')
     .setTitle('Indovina la canzone .ᐟ ✧')
     .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp** °?`,
+      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**˚﹒`,
       `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
       `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
     ].join('\n'));
@@ -679,15 +679,15 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>?Indizio')
-    .setDescription(`? <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>?Indizio')
-    .setDescription(`? <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildHintEmbed(isHigher) {
