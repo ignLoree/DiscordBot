@@ -16,11 +16,6 @@
         "1442568886988963923"
       ]
     },
-    "no-dm-list": {
-      "roles": [
-        "1442568894349840435"
-      ]
-    },
     "reaction-roles": {
       "roles": null,
       "subcommands": {
@@ -205,6 +200,7 @@
     "membercount": null,
     "ping": null,
     "no-dm": null,
+    "no-dm-list": ["1442568894349840435"],
     "snipe": null,
     "join": null,
     "leave": null,
