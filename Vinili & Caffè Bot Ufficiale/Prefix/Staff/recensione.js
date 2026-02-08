@@ -97,7 +97,7 @@ module.exports = {
     if (reviewChannel) {
       const reviewEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setAuthor({ name: target.guild.name, iconURL: target.guild.iconURL({ size: 128 }) })
+        .setAuthor({ name: message.guild.name, iconURL: message.guild.iconURL({ size: 128 }) || undefined })
         .setTitle('Grazie per la recensione su Disboard! <a:VC_StarPink:1330194976440848500>')
         .setDescription([
           `<a:VC_ThankYou:1330186319673950401> Grazie ${target} per aver lasciato una recensione su **Disboard**.`,
@@ -170,4 +170,3 @@ module.exports = {
     });
   }
 };
-

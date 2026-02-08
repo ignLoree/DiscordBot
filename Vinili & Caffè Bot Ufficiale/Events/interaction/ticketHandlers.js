@@ -224,7 +224,15 @@ async function handleTicketInteraction(interaction) {
                                 {
                                     id: ROLE_PARTNERMANAGER,
                                     deny: [PermissionFlagsBits.ViewChannel]
-                                }
+                                },
+                                ...(config.type === 'high'
+                                    ? [
+                                        {
+                                            id: ROLE_STAFF,
+                                            deny: [PermissionFlagsBits.ViewChannel]
+                                        }
+                                    ]
+                                    : [])
                             ]
                         )
                     ]
@@ -300,12 +308,23 @@ async function handleTicketInteraction(interaction) {
                             ReadMessageHistory: true,
                             AddReactions: true
                         });
-                        for (const r of STAFF_ROLES) {
-                            await interaction.channel.permissionOverwrites.edit(r, {
+                        if (ticket.ticketType === 'high') {
+                            await interaction.channel.permissionOverwrites.edit(ROLE_HIGHSTAFF, {
                                 ViewChannel: true,
                                 SendMessages: false,
                                 ReadMessageHistory: true
                             });
+                            await interaction.channel.permissionOverwrites.edit(ROLE_STAFF, {
+                                ViewChannel: false
+                            });
+                        } else {
+                            for (const r of STAFF_ROLES) {
+                                await interaction.channel.permissionOverwrites.edit(r, {
+                                    ViewChannel: true,
+                                    SendMessages: false,
+                                    ReadMessageHistory: true
+                                });
+                            }
                         }
                         if (ticket.ticketType === 'partnership') {
                             await interaction.channel.permissionOverwrites.edit(ROLE_PARTNERMANAGER, {
