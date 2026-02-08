@@ -42,9 +42,6 @@
         "1442568886988963923"
       ]
     },
-    "no-dm": {
-      "roles": null
-    },
     "set": {
       "roles": null,
       "subcommands": {
@@ -207,6 +204,7 @@
     "blockquotes": null,
     "membercount": null,
     "ping": null,
+    "no-dm": null,
     "snipe": null,
     "join": null,
     "leave": null,

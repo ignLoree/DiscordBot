@@ -4,7 +4,7 @@ const { fetchMemberSafe } = require('../../Utils/Moderation/discordFetch');
 
 module.exports = {
   data: new ContextMenuCommandBuilder()
-    .setName('modname')
+    .setName('Modera il nome dell\'utente')
     .setType(ApplicationCommandType.User),
 
   async execute(interaction) {
