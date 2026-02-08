@@ -178,7 +178,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il <@&${roleId}>`,
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`
         ].join('\n'),
       }
