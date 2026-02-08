@@ -7,11 +7,12 @@ const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
-const { startMinigameLoop, forceStartMinigame, restoreActiveGames } = require('../Services/Minigames/minigameService');
+const { startMinigameLoop, restoreActiveGames } = require('../Services/Minigames/minigameService');
 const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
 const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/categoryNumberingService');
+const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
 const cron = require('node-cron');
 
 const getChannelSafe = async (client, channelId) => {
@@ -125,16 +126,6 @@ module.exports = {
                 global.logger.error('[MINIGAMES] Failed to restore active game', err);
             }
             try {
-                cron.schedule('0 9 * * *', async () => {
-                    await forceStartMinigame(client);
-                }, { timezone: 'Europe/Rome' });
-                cron.schedule('45 23 * * *', async () => {
-                    await forceStartMinigame(client);
-                }, { timezone: 'Europe/Rome' });
-            } catch (err) {
-                global.logger.error('[MINIGAMES] Failed to schedule forced runs', err);
-            }
-            try {
                 startVoteRoleCleanupLoop(client);
             } catch (err) {
                 global.logger.error('[VOTE ROLE] Failed to start cleanup loop', err);
@@ -159,6 +150,11 @@ module.exports = {
                 startCategoryNumberingLoop(client);
             } catch (err) {
                 global.logger.error('[CATEGORY NUMBERING] Failed to start', err);
+            }
+            try {
+                startWeeklyActivityWinnersLoop(client);
+            } catch (err) {
+                global.logger.error('[WEEKLY ACTIVITY] Failed to start loop', err);
             }
         }
         try {
