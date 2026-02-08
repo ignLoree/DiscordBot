@@ -12,6 +12,7 @@ let rotationQueue = [];
 const recentMessages = new Map();
 const standbyChannels = new Set();
 const lastSentAtByChannel = new Map();
+const startingChannels = new Set();
 
 const REWARD_CHANNEL_ID = "1442569138114662490";
 const EXP_REWARDS = [
@@ -1315,6 +1316,9 @@ async function maybeStartRandomGame(client, force = false) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return;
   if (!cfg.channelId) return;
+  if (startingChannels.has(cfg.channelId)) return;
+  startingChannels.add(cfg.channelId);
+  try {
   if (activeGames.has(cfg.channelId)) {
     const game = activeGames.get(cfg.channelId);
     if (game?.endsAt && Date.now() >= game.endsAt) {
@@ -1372,6 +1376,9 @@ async function maybeStartRandomGame(client, force = false) {
     }
     pendingGames.delete(cfg.channelId);
     pending = null;
+  }
+  } finally {
+    startingChannels.delete(cfg.channelId);
   }
 }
 

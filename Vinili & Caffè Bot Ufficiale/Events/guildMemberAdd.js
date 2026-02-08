@@ -9,8 +9,11 @@ const INVITE_LOG_CHANNEL_ID = '1442569130573303898';
 
 async function resolveInviteInfo(member) {
     const guild = member.guild;
+    if (!member.client.inviteCache) {
+        member.client.inviteCache = new Map();
+    }
     const invites = await guild.invites.fetch().catch(() => null);
-    const cache = member.client.inviteCache?.get(guild.id);
+    const cache = member.client.inviteCache.get(guild.id);
     let usedInvite = null;
 
     if (invites && cache) {
@@ -31,7 +34,7 @@ async function resolveInviteInfo(member) {
                 inviterId: invite.inviter?.id || null
             });
         }
-        member.client.inviteCache?.set(guild.id, map);
+        member.client.inviteCache.set(guild.id, map);
     }
 
     if (!usedInvite && guild.vanityURLCode) {
@@ -122,7 +125,7 @@ module.exports = {
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
                 }
-                const channelwelcome = member.guild.channels.cache.find(channel => channel.id === '1442569130573303898');
+                const channelwelcome = member.guild.channels.cache.get('1442569130573303898');
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
                         .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
@@ -218,19 +221,18 @@ module.exports = {
                 }
                 return;
             }
-            const channelwelcome = member.guild.channels.cache.find(channel => channel.id === '1442569130573303898');
+            const channelwelcome = member.guild.channels.cache.get('1442569130573303898');
 
             if (!channelwelcome) {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
                 return;
             }
 
-            if (member.guild === null) return;
-            const totalvoicechannel = member.guild.channels.cache.find(channel => channel.id === '1442569096700104754');
-            if (!totalvoicechannel || totalvoicechannel === null) return;
+            const totalvoicechannel = member.guild.channels.cache.get('1442569096700104754');
+            if (!totalvoicechannel) return;
 
             const totalmembers = `${member.guild.memberCount}`;
-            totalvoicechannel.setName(`༄☕︲User: ${totalmembers}`);
+            await totalvoicechannel.setName(`༄☕︲User: ${totalmembers}`).catch(() => { });
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
@@ -263,4 +265,3 @@ module.exports = {
         }
     }
 };
-

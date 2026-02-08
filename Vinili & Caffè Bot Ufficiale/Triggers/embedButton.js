@@ -1,4 +1,4 @@
-const { EmbedBuilder, Events } = require('discord.js');
+const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { decrementQuoteCount } = require('../Utils/Quote/quoteCounter');
 const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
 const { AvatarPrivacy, BannerPrivacy } = require('../Schemas/Community/privacySchemas');
@@ -355,110 +355,112 @@ module.exports = {
                 .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
             await interaction.reply({ embeds: [under5Embed, over5Embed, topEmbed, commonEmbed], flags: 1 << 6 });
         }
-        if (interaction.customId == 'info_boost_levels') {
+        const sendUpdatedView = async (payload) => {
+            return interaction.update(payload).catch(async () => {
+                return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
+            });
+        };
+
+        const buildBoostLevelsPayload = () => {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle(`**__・Potenzia il server e sblocca dei vantaggi unici!__**`)
-                .setDescription(`Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, sbloccherai un sacco di vantaggi. **Non sai cos'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).
+                .setTitle('Potenzia il server e sblocca vantaggi unici')
+                .setDescription([
+                    'Con un Nitro Boost ottieni vantaggi esclusivi nel server.',
+                    '',
+                    '<:sparkledred:1470064814502973591> Ruolo booster con badge speciale',
+                    '<:moon:1470064812615667827> Link e immagini in chat',
+                    '<:pinkstar:1470064804835229768> Emoji e adesivi esterni',
+                    '<:sparkle:1470064801811140866> Uso soundboard del server',
+                    '<:blueflash:1470064803157643468> Ruolo personalizzato e vocale privata',
+                    '<a:reddiamond:1443652837346377841> Comando +quote',
+                    '<:exp:1470067108543987846> X2 EXP Boost'
+                ].join('\n'));
 
-                **Con __UN__ potenziamento otterrai:**
-
-                <:sparkledred:1470064814502973591>・Il ruolo <@&1329497467481493607> con un badge speciale
-                <:moon:1470064812615667827>・Permesso di allegare **link** e **immagini** in **chat**
-                <:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server
-                <:sparkle:1470064801811140866>・Permesso di usare le SoundBoard del server
-                <:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata**
-                <a:reddiamond:1443652837346377841>・Sblocco del comando \`+quote\`
-                <:exp:1470067108543987846>・X2 EXP Boost
-                <:staffdelmese:1443651918617640991>・**Votare** per lo <@&1442568895251611924>`
-                )
-                .setFooter({ text: `Se dovessi spostare i potenziamenti o dovessero scadere, ti verranno tolte tutte le ricompense scritte sopra.` })
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle(`<:nitroboost:1470064881674883326>**__・Come creare un ruolo personalizzato  e una vocale privata__**`)
-                .setDescription(`Una volta sbloccato il permesso, usa il comando \`+customrolecreate\` nel canale <#1442569138114662490> per creare il tuo ruolo e per personalizzarlo. 
-                    Una volta creato il tuo ruolo, usa il comando \`+vocprivatecreate\` nel canale <#1442569138114662490> per creare la tua vocale private e personalizzarla.
-                    **NB: Tutti quelli che avranno il tuo ruolo avranno accesso al canale vocale**
-                    Digita il comando \`+help\` per la lista dei comandi completa.`
-                )
+                .setTitle('Come creare ruolo personalizzato e vocale privata')
+                .setDescription([
+                    'Usa +customrolecreate in <#1442569138114662490> per creare e configurare il ruolo.',
+                    'Poi usa +vocprivatecreate nello stesso canale per creare e configurare la vocale privata.',
+                    'Digita +help per la lista completa dei comandi.'
+                ].join('\n'));
 
-            const levelRow = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('info_levels')
-                        .setLabel('Info & Vantaggi Ruoli')
-                        .setEmoji(`<:exp:1470067108543987846>`)
-                        .setStyle(ButtonStyle.Secondary),
-                )
-            await interaction.reply({ embeds: [boostEmbed, howtoEmbed], components: [levelRow], flags: 1 << 6 });
-        }
-        if (interaction.customId == 'info_levels') {
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('info_levels')
+                    .setLabel('Info & Vantaggi Ruoli')
+                    .setEmoji('<:exp:1470067108543987846>')
+                    .setStyle(ButtonStyle.Secondary)
+            );
+
+            return { embeds: [boostEmbed, howtoEmbed], components: [row] };
+        };
+
+        const buildLevelsPayload = () => {
             const levelEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('・Sali di livello e sblocca vantaggi sempre migliori')
+                .setTitle('Sali di livello e sblocca vantaggi sempre migliori')
                 .setDescription([
-                    'I livelli nel server rappresentano la tua attivita: scrivendo in chat e stando in vocale, guadagni exp.',
-                    'Quando raggiungi abbastanza esperienza, fai level up.',
-                    '',
-                    '<:dot:1443660294596329582> Per vedere exp e statistiche usa `+rank` in <#1442569138114662490>.',
-                    '<a:VC_Arrow:1448672967721615452> **LISTA dei LIVELLI:**',
+                    'I livelli rappresentano la tua attivita: scrivendo in chat e stando in vocale guadagni exp.',
+                    'Per vedere exp e statistiche usa +rank in <#1442569138114662490>.',
                 ].join('\n'))
                 .addFields(
                     {
-                        name: '\`LIVELLO 10-19\`',
+                        name: 'LIVELLO 10-19',
                         value: [
                             '<@&1442568936423034940>',
-                            '<:VC_DoubleReply:1468713981152727120> Cambiare il nickname',
-                            '<:VC_DoubleReply:1468713981152727120> Inviare link e immagini in ogni chat',
-                            '<:VC_Reply:1468262952934314131> Comando sbloccato: `?quote`'
+                            '<:VC_DoubleReply:1468713981152727120> Cambiare nickname',
+                            '<:VC_DoubleReply:1468713981152727120> Link e immagini in chat',
+                            '<:VC_Reply:1468262952934314131> Comando ?quote'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: '\`LIVELLO 20-29\`',
+                        name: 'LIVELLO 20-29',
                         value: [
                             '<@&1442568934510297226>',
-                            '९ Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Possibilità di aggiungere reazioni ai messaggi in chat',
+                            'Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Reazioni ai messaggi in chat'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: '\`LIVELLO 30-49\`',
+                        name: 'LIVELLO 30-49',
                         value: [
                             '<@&1442568933591748688>',
-                            '९ Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Reazione personalizzata quando menzionato',
-                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).'
+                            'Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Reazione personalizzata menzione',
+                            '<:VC_Reply:1468262952934314131> Cooldown comandi: 15 secondi'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: '\`LIVELLO 50-69\`',
+                        name: 'LIVELLO 50-69',
                         value: [
                             '<@&1442568932136587297>',
-                            '९ Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#1469429150669602961>',
-                            '<:VC_DoubleReply:1468713981152727120> Possibilità di creare un ruolo  __personalizzato PERMANENTE.__ e una vocale privata __personalizzata PERMANENTE.__',
-                            '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 15 secondi a 5 secondi).'
+                            'Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Colori PLUS',
+                            '<:VC_DoubleReply:1468713981152727120> Ruolo/vocale personalizzati permanenti',
+                            '<:VC_Reply:1468262952934314131> Cooldown comandi: 5 secondi'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: '\`LIVELLO 70-99\`',
+                        name: 'LIVELLO 70-99',
                         value: [
                             '<@&1442568931326824488>',
-                            '९ Tutte le ricompense precedenti',
-                            '<:VC_DoubleReply:1468713981152727120> Permesso di usare stickers ed emoji di altri server',
-                            '<:VC_Reply:1468262952934314131> Aggiungi le reazioni al messaggio quando ti @menzionano in chat (max. 3)'
+                            'Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Sticker ed emoji esterni',
+                            '<:VC_Reply:1468262952934314131> Reazione auto quando ti menzionano (max 3)'
                         ].join('\n'),
                         inline: true
                     },
                     {
-                        name: '\`LIVELLO 100\`',
+                        name: 'LIVELLO 100',
                         value: [
                             '<@&1442568929930379285>',
-                            '९ Tutte le ricompense precedenti',
+                            'Tutte le ricompense precedenti',
                             '<:VC_Reply:1468262952934314131> Votare per lo <@&1442568895251611924>'
                         ].join('\n'),
                         inline: true
@@ -466,25 +468,40 @@ module.exports = {
                 )
                 .setFooter({ text: 'Se esci dal server o cambi account, i livelli ti verranno tolti e NON rimessi.' });
 
-            const howtoEmbed = new EmbedBuilder()
+            const helpEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle(`<:nitroboost:1470064881674883326>**__・Come creare un ruolo personalizzato  e una vocale privata__**`)
-                .setDescription(`Una volta sbloccato il permesso, usa il comando \`+customrolecreate\` nel canale <#1442569138114662490> per creare il tuo ruolo e per personalizzarlo. 
-                    Una volta creato il tuo ruolo, usa il comando \`+vocprivatecreate\` nel canale <#1442569138114662490> per creare la tua vocale private e personalizzarla.
-                    **NB: Tutti quelli che avranno il tuo ruolo avranno accesso al canale vocale**
-                    Digita il comando \`+help\` per la lista dei comandi completa.`
-                )
+                .setTitle('Link utili')
+                .setDescription('Usa i pulsanti qui sotto per aprire i canali utili oppure tornare indietro.');
 
-            const levelRow = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('colori_vip')
-                        .setLabel('Colori VIP Sbloccati')
-                        .setEmoji(`<:exp:1470067108543987846>`)
-                        .setStyle(ButtonStyle.Secondary),
-                )
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setLabel('Colori VIP Sbloccati')
+                    .setEmoji(`🎨`)
+                    .setStyle(ButtonStyle.Link)
+                    .setURL('https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647'),
+                new ButtonBuilder()
+                    .setLabel('Canale per i comandi')
+                    .setEmoji(`🤖`)
+                    .setStyle(ButtonStyle.Link)
+                    .setURL('https://discord.com/channels/1329080093599076474/1442569138114662490'),
+                new ButtonBuilder()
+                    .setCustomId('torna_indietro')
+                    .setLabel('Torna indietro')
+                    .setEmoji('<a:vegaleftarrow:1462914743416131816>')
+                    .setStyle(ButtonStyle.Secondary)
+            );
 
-            await interaction.reply({ embeds: [levelEmbed, howtoEmbed], flags: 1 << 6 });
+            return { embeds: [levelEmbed, helpEmbed], components: [row] };
+        };
+
+        if (interaction.customId == 'info_boost_levels') {
+            return sendUpdatedView(buildBoostLevelsPayload());
+        }
+        if (interaction.customId == 'info_levels' || interaction.customId == 'info_level') {
+            return sendUpdatedView(buildLevelsPayload());
+        }
+        if (interaction.customId == 'torna_indietro') {
+            return sendUpdatedView(buildBoostLevelsPayload());
         }
         if (interaction.customId == 'info_badges_roles') {
             const supporterEmbed = new EmbedBuilder()

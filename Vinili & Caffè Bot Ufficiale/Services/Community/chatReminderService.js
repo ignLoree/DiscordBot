@@ -305,7 +305,6 @@ async function sendReminder(client, scheduleId, kind = 'first') {
 async function scheduleForHour(client, parts, guildId) {
   const key = getHourKey(parts);
   if (scheduledHours.has(key)) return;
-  scheduledHours.add(key);
 
   const totalSeconds = parts.minute * 60 + parts.second;
   const remainingMs = Math.max(1, (60 * 60 - totalSeconds) * 1000);
@@ -341,6 +340,8 @@ async function scheduleForHour(client, parts, guildId) {
   const fireTimes = delays
     .sort((a, b) => a - b)
     .map((delay, idx) => ({ fireAt: new Date(Date.now() + delay), kind: idx === 0 ? 'first' : 'second' }));
+  if (!fireTimes.length) return;
+  scheduledHours.add(key);
   for (const item of fireTimes) {
     const fireAt = item.fireAt;
     const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + minGapMs) : fireAt.getTime();

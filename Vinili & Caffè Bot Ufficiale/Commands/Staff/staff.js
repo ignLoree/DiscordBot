@@ -338,7 +338,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                         <:pinnednew:1443670849990430750> __${reason}__
                         <a:loading:1443934440614264924> **ID Valutazione** __\`${Staff.idCount}\`__`)
                     .setColor('#6f4e37')
-                    .setFooter({ text: `© 2025 Vinili & Caffè. Tutti i diritti riservati.`, iconURL: `${interaction.guild.iconURL()}` });
+                    
                 if (warnChannel) {
                     await warnChannel.send({ content: `${utentee}`, embeds: [warnstaff] });
                 }

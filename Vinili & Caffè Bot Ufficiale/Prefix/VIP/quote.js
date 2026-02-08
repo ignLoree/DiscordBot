@@ -15,7 +15,7 @@ const ALLOWED_ROLE_IDS = [
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione  . '")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione .ᐟ ✧")
     .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando **?quote** rispondendo al messaggio di un utente  . '")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
@@ -37,7 +37,8 @@ function buildNoPermsEmbed() {
 
 module.exports = {
   name: 'quote',
-
+  prefixOverride: '?',
+  
   async execute(message) {
     if (!message?.guild) {
       return safeMessageReply(message, {

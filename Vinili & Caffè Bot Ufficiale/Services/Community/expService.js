@@ -8,7 +8,7 @@ const DEFAULT_MULTIPLIER = 1;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const multiplierCache = new Map();
 const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
-const PERKS_CHANNEL_ID = '1442569138114662490';
+const PERKS_CHANNEL_ID = '1442569111119990887';
 const PERK_ROLE_ID = '1468938195348754515';
 const LEVEL_ROLE_MAP = new Map([
   [10, '1442568936423034940'],
@@ -136,10 +136,6 @@ function buildLevelUpEmbed(member, level) {
           `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`
         ].join('\n'),
-        footer: {
-          text: 'Vinili & Caffè " Nitro " Tags " Social " Activity',
-          icon_url: member?.guild?.iconURL({ size: 128 })
-        }
       }
     ]
   };
@@ -167,10 +163,6 @@ function buildPerksLevelEmbed(member, level, roleId) {
           `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`
         ].join('\n'),
-        footer: {
-          text: 'Vinili & Caffè " Nitro " Tags " Social " Activity',
-          icon_url: member?.guild?.iconURL({ size: 128 })
-        }
       }
     ]
   };
@@ -182,7 +174,7 @@ async function sendPerksLevelMessage(guild, member, level) {
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
   if (!channel) return;
   const payload = buildPerksLevelEmbed(member, level, roleId);
-  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`, ...payload }).catch(() => {});
+  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1443701876892762243>`, ...payload }).catch(() => {});
 }
 
 async function addPerkRoleIfPossible(member) {
