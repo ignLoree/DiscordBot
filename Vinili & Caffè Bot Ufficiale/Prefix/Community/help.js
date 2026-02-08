@@ -28,6 +28,16 @@ const TYPE_LABEL = {
   slash: 'Slash',
   context: 'Context'
 };
+const CATEGORY_LABELS = {
+  community: 'Community',
+  level: 'Level',
+  partner: 'Partner',
+  staff: 'Staff',
+  vip: 'VIP',
+  admin: 'Admin',
+  contextmenubuilder: 'Context Menu',
+  misc: 'Misc'
+};
 
 function loadPermissions() {
   try {
@@ -59,7 +69,7 @@ function getSlashTopLevelDescription(dataJson) {
   return normalizeDescription(dataJson?.description, 'Comando slash.');
 }
 
-function getSubcommandEntries(commandName, dataJson, permissionConfig, commandType) {
+function getSubcommandEntries(commandName, dataJson, permissionConfig, commandType, category) {
   const entries = [];
   const options = Array.isArray(dataJson?.options) ? dataJson.options : [];
   const isChatInput = commandType === ApplicationCommandType.ChatInput;
@@ -83,6 +93,7 @@ function getSubcommandEntries(commandName, dataJson, permissionConfig, commandTy
       invoke: `/${groupName ? `${commandName} ${groupName} ${subName}` : `${commandName} ${subName}`}`,
       type: 'slash',
       description: normalizeDescription(subOption.description, topDesc),
+      category: String(category || 'misc').toLowerCase(),
       roles: pageKey
     });
   };
@@ -108,11 +119,16 @@ function buildEntries(client, permissions) {
     if (!command?.name) continue;
     const perm = permissions.prefix?.[command.name];
     const roles = Array.isArray(perm) ? perm : null;
+    const aliases = Array.isArray(command.aliases)
+      ? command.aliases.filter((alias) => typeof alias === 'string' && alias.trim().length)
+      : [];
     entries.push({
       name: command.name,
       invoke: `+${command.name}`,
       type: 'prefix',
       description: getPrefixDescription(command),
+      aliases,
+      category: String(command.folder || 'misc').toLowerCase(),
       roles
     });
   }
@@ -128,11 +144,12 @@ function buildEntries(client, permissions) {
     seenSlash.add(uniqueKey);
 
     const perm = permissions.slash?.[dataJson.name];
+    const category = String(command?.category || 'misc').toLowerCase();
     const hasSubcommands = Array.isArray(dataJson.options) &&
       dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
     if (commandType === ApplicationCommandType.ChatInput && hasSubcommands) {
-      const subEntries = getSubcommandEntries(dataJson.name, dataJson, perm, commandType);
+      const subEntries = getSubcommandEntries(dataJson.name, dataJson, perm, commandType, category);
       entries.push(...subEntries);
       continue;
     }
@@ -147,6 +164,7 @@ function buildEntries(client, permissions) {
       invoke: `/${dataJson.name}`,
       type: 'slash',
       description: getSlashTopLevelDescription(dataJson),
+      category,
       roles
     });
   }
@@ -170,6 +188,7 @@ function buildEntries(client, permissions) {
       invoke: `Apps > ${dataJson.name}`,
       type: 'context',
       description: `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
+      category: String(command?.category || 'contextmenubuilder').toLowerCase(),
       roles
     });
   }
@@ -199,21 +218,41 @@ function chunkEntries(entries, size = 12) {
 }
 
 function renderPageEmbed(message, page, totalPages) {
-  const lines = page.items.length
-    ? page.items.map((entry) => `\`${entry.invoke}\` | **${TYPE_LABEL[entry.type] || 'Comando'}**\n${entry.description}`)
-    : ['Nessun comando disponibile in questa pagina.'];
+  const grouped = new Map();
+  for (const entry of page.items) {
+    const key = String(entry.category || 'misc').toLowerCase();
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(entry);
+  }
+
+  const sections = [];
+  for (const [categoryKey, entries] of grouped) {
+    const categoryLabel = CATEGORY_LABELS[categoryKey] || (categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1));
+    const rows = entries.map((entry) => {
+      const aliasText = entry.type === 'prefix' && Array.isArray(entry.aliases) && entry.aliases.length
+        ? ` (alias: ${entry.aliases.map((alias) => `+${alias}`).join(', ')})`
+        : '';
+      return `┃ \`${entry.invoke}\` - ${entry.description}${aliasText}`;
+    });
+    sections.push(`✨ **${categoryLabel}**\n${rows.join('\n')}`);
+  }
+
+  const description = page.items.length
+    ? [
+      'Ecco la lista dei comandi disponibili.',
+      'Usa prefisso, slash o context menu in base al comando.',
+      '',
+      sections.join('\n\n')
+    ].join('\n')
+    : 'Nessun comando disponibile in questa pagina.';
 
   return new EmbedBuilder()
     .setColor('#6f4e37')
     .setAuthor({ name: message.guild?.name || 'Help', iconURL: message.guild?.iconURL?.({ size: 128 }) || undefined })
-    .setTitle(`Help Dinamico - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
-    .setDescription(lines.join('\n\n'))
+    .setTitle(`📜 Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
+    .setDescription(description)
     .setFooter({ text: `Pagina ${page.indexLabel} | ${page.items.length} comandi | ${page.groupLabel}` })
     .setTimestamp()
-    .addFields({
-      name: 'Formato',
-      value: '`Comando` | Tipo\nDescrizione'
-    })
     .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 }
 
