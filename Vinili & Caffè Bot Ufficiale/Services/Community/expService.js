@@ -164,7 +164,7 @@ async function sendLevelUpMessage(guild, member, level) {
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
   if (!channel) return;
   const payload = buildLevelUpEmbed(member, level);
-  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1443701876892762243>`, ...payload }).catch(() => {});
+  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`, ...payload }).catch(() => {});
 }
 
 function buildPerksLevelEmbed(member, level, roleId) {
@@ -192,7 +192,7 @@ async function sendPerksLevelMessage(guild, member, level) {
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL_ID) || await guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);
   if (!channel) return;
   const payload = buildPerksLevelEmbed(member, level, roleId);
-  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1443701876892762243>`, ...payload }).catch(() => {});
+  await channel.send({ content: `${member} sei salito/a di livello! <a:VC_LevelUp:1469046204582068376>`, ...payload }).catch(() => {});
 }
 
 async function addPerkRoleIfPossible(member) {

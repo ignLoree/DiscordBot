@@ -11,10 +11,26 @@ function getBucket(client) {
   return client.commandCooldowns;
 }
 
+function hasRole(member, roleId) {
+  if (!member || !roleId) return false;
+  const roles = member.roles;
+  if (!roles) return false;
+  if (roles.cache && typeof roles.cache.has === 'function') {
+    return roles.cache.has(roleId);
+  }
+  if (Array.isArray(roles)) {
+    return roles.includes(roleId);
+  }
+  if (Array.isArray(roles._roles)) {
+    return roles._roles.includes(roleId);
+  }
+  return false;
+}
+
 function computeCooldownSeconds(member, level) {
-  const hasBypassRole = Boolean(member?.roles?.cache?.has(ROLE_COOLDOWN_BYPASS));
-  const hasRole50 = Boolean(member?.roles?.cache?.has(ROLE_LEVEL_50));
-  const hasRole30 = Boolean(member?.roles?.cache?.has(ROLE_LEVEL_30));
+  const hasBypassRole = hasRole(member, ROLE_COOLDOWN_BYPASS);
+  const hasRole50 = hasRole(member, ROLE_LEVEL_50);
+  const hasRole30 = hasRole(member, ROLE_LEVEL_30);
 
   if (hasBypassRole) return 0;
   if (hasRole50 || level >= 50) return 5;

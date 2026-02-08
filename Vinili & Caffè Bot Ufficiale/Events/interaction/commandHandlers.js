@@ -3,6 +3,7 @@ const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
+const SLASH_COOLDOWN_BYPASS_ROLE_ID = '1442568910070349985';
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -26,23 +27,32 @@ async function handleSlashCommand(interaction, client) {
             flags: 1 << 6
         });
     }
-    const cooldownSeconds = await getUserCommandCooldownSeconds({
-        guildId: interaction.guildId,
-        userId: interaction.user.id,
-        member: interaction.member
-    });
-    const cooldownResult = consumeUserCooldown({
-        client,
-        guildId: interaction.guildId,
-        userId: interaction.user.id,
-        cooldownSeconds
-    });
-    if (!cooldownResult.ok) {
-        const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
-        return interaction.reply({
-            content: `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
-            flags: 1 << 6
+    const memberRoleCache = interaction.member?.roles?.cache;
+    const memberRoleArray = interaction.member?.roles;
+    const hasSlashCooldownBypass = Boolean(
+        (memberRoleCache && typeof memberRoleCache.has === 'function' && memberRoleCache.has(SLASH_COOLDOWN_BYPASS_ROLE_ID))
+        || (Array.isArray(memberRoleArray) && memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID))
+    );
+
+    if (!hasSlashCooldownBypass) {
+        const cooldownSeconds = await getUserCommandCooldownSeconds({
+            guildId: interaction.guildId,
+            userId: interaction.user.id,
+            member: interaction.member
         });
+        const cooldownResult = consumeUserCooldown({
+            client,
+            guildId: interaction.guildId,
+            userId: interaction.user.id,
+            cooldownSeconds
+        });
+        if (!cooldownResult.ok) {
+            const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
+            return interaction.reply({
+                content: `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
+                flags: 1 << 6
+            });
+        }
     }
 
     const originalReply = interaction.reply.bind(interaction);
