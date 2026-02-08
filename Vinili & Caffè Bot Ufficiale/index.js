@@ -208,8 +208,7 @@ client.on("clientReady", async (client) => {
                 if (channel) {
                     const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
                     const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
-                    const by = data?.by ? ` (richiesto da <@${data.by}>)` : '';
-                    await channel.send(`<:vegacheckmark:1443666279058772028> Bot ${currentTargetLabel} riavviato con successo${elapsed}.${by}`);
+                    await channel.send(`<:vegacheckmark:1443666279058772028> Bot ${currentTargetLabel} riavviato con successo${elapsed}.`);
                 }
                 fs.unlinkSync(restartNotifyPath);
             } catch (err) {
@@ -219,7 +218,7 @@ client.on("clientReady", async (client) => {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
                 const channel = await getChannelSafe(client, data?.channelID);
-                await channel.send("<:vegacheckmark:1443666279058772028> Il bot e' stato riavviato con successo!");
+                await channel.send("<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
                 global.logger.error("Errore durante il post-restart:", err);
@@ -462,7 +461,7 @@ async function generateStaffListContent(guild) {
         const member_count = filteredMembers.size;
         const { emoji, number } = ROLE_EMOJIS[roleId];
         const staffMembersList = filteredMembers.map(member => `<:dot:1443660294596329582> <@${member.id}>`).join('\n') || '<:dot:1443660294596329582>';
-        staffListContent += `${emoji}·**<@&${roleId}>?\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
+        staffListContent += `${emoji} · **<@&${roleId}>︲\`${member_count}/${number}\`**\n\n${staffMembersList}\n\n`;
     }
     return staffListContent;
 }

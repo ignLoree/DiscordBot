@@ -181,7 +181,7 @@ client.on("clientReady", async (client) => {
             try {
                 const data = JSON.parse(fs.readFileSync("./restart.json", "utf8"));
                 const channel = await getChannelSafe(client, data?.channelID);
-                await channel.send("<:vegacheckmark:1443666279058772028> Il bot e' stato riavviato con successo!");
+                await channel.send("<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!");
                 fs.unlinkSync("./restart.json");
             } catch (err) {
                 global.logger.error("Errore durante il post-restart:", err);

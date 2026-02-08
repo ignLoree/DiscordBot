@@ -80,7 +80,7 @@ async function handleHelpMenu(interaction) {
   if (state.expiresAt && Date.now() > state.expiresAt) {
     stateMap.delete(interaction.message.id);
     await interaction.reply({
-      content: "<:vegax:1443934876440068179> Questo menù e' scaduto.",
+      content: "<:vegax:1443934876440068179> Questo menù è scaduto.",
       flags: 1 << 6
     });
     return true;

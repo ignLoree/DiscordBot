@@ -164,7 +164,7 @@ module.exports = {
                     await pmchannel.send({
                         content: `
 ${utentee}
-# BenvenutÉ™ nei Partner Manager <:partneredserverowner:1443651871125409812>
+# Benvenutx nei Partner Manager <:partneredserverowner:1443651871125409812>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569199229730836>
 __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
@@ -175,7 +175,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     await staffchat.send({
                         content: `
 ${utentee}
-# BenvenutÉ™ nello staff <:discordstaff:1443651872258003005>
+# Benvenutx nello staff <:discordstaff:1443651872258003005>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569237142044773>
 <:dot:1443660294596329582> <#1442569239063167139>

@@ -629,7 +629,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -638,7 +638,7 @@ async function handleLastFmInteraction(interaction) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -706,7 +706,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -715,7 +715,7 @@ async function handleLastFmInteraction(interaction) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -749,7 +749,7 @@ async function handleLastFmInteraction(interaction) {
       const stateMap = interaction.client.albumStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -758,7 +758,7 @@ async function handleLastFmInteraction(interaction) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -994,7 +994,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1003,7 +1003,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1035,7 +1035,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1044,7 +1044,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1135,7 +1135,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1144,7 +1144,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1200,7 +1200,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1209,7 +1209,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1267,7 +1267,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistAlbumsStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1276,7 +1276,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1309,7 +1309,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       const stateMap = interaction.client.artistTracksStates;
       if (!messageId || !stateMap || !stateMap.has(messageId)) {
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non e' più valida.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina non è più valida.")],
           flags: 1 << 6
         });
         return true;
@@ -1318,7 +1318,7 @@ if (interaction.customId.startsWith("lfm_serveralbums:")) {
       if (state.expiresAt && Date.now() > state.expiresAt) {
         stateMap.delete(messageId);
         await safeReply(interaction, {
-          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+          embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
           flags: 1 << 6
         });
         return true;
@@ -1495,7 +1495,7 @@ async function handleLastFmSelectMenu(interaction) {
     if (state.expiresAt && Date.now() > state.expiresAt) {
       stateMap.delete(messageId);
       await interaction.reply({
-        embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina e' scaduta.")],
+        embeds: [errorEmbed("<:vegax:1443934876440068179> Questa pagina è scaduta.")],
         flags: 1 << 6
       });
       return true;
