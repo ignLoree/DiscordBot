@@ -372,7 +372,7 @@ module.exports = {
                     '<:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server',
                     '<:sparkle:1470064801811140866>・Permesso di usare le Soundboard del server',
                     '<:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**',
-                    '<a:reddiamond:1443652837346377841>・Comando \`?quote\`',
+                    '<a:reddiamond:1443652837346377841>・Sblocchi il comando \`?quote\`',
                     '<:exp:1470067108543987846>・X2 EXP Boost'
                 ].join('\n'));
 

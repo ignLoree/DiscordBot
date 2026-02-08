@@ -52,6 +52,7 @@ function findExistingVoiceChannel(guild, roleId) {
 module.exports = {
   name: 'customvoc',
   aliases: ['customvoice', 'crvoice', 'vocprivata'],
+  description: 'Crea la tua vocale privata nella categoria dedicata usando il tuo ruolo personalizzato.',
 
   async execute(message) {
     if (!message.guild || !message.member) return;
