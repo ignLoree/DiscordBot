@@ -48,6 +48,7 @@ const CATEGORY_ORDER = [
   'contextmenubuilder',
   'misc'
 ];
+const HELP_PAGE_SIZE = 18;
 
 function loadPermissions() {
   try {
@@ -316,33 +317,11 @@ module.exports = {
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {
       const filtered = filterByPage(allEntries, roleId);
-      const byCategory = new Map();
-      for (const entry of filtered) {
-        const key = String(entry.category || 'misc').toLowerCase();
-        if (!byCategory.has(key)) byCategory.set(key, []);
-        byCategory.get(key).push(entry);
-      }
-
-      const rolePages = [];
-      const orderedCategories = Array.from(byCategory.keys()).sort((a, b) => {
-        const ai = CATEGORY_ORDER.indexOf(a);
-        const bi = CATEGORY_ORDER.indexOf(b);
-        const safeA = ai === -1 ? CATEGORY_ORDER.length : ai;
-        const safeB = bi === -1 ? CATEGORY_ORDER.length : bi;
-        return safeA - safeB;
-      });
-
-      for (const categoryKey of orderedCategories) {
-        const categoryEntries = byCategory.get(categoryKey) || [];
-        const chunks = chunkEntries(categoryEntries, 9);
-        for (const chunk of chunks) {
-          rolePages.push({
-            roleId,
-            items: chunk,
-            groupLabel: `${PAGE_TITLES[roleId] || roleId} • ${CATEGORY_LABELS[categoryKey] || categoryKey}`
-          });
-        }
-      }
+      const rolePages = chunkEntries(filtered, HELP_PAGE_SIZE).map((items) => ({
+        roleId,
+        items,
+        groupLabel: PAGE_TITLES[roleId] || roleId
+      }));
 
       rolePages.forEach((page, idx) => {
         groupedPages.push({
