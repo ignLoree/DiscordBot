@@ -33,7 +33,7 @@ module.exports = {
 
     const ticketPanelEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setAuthor({ text: `Contatta lo Staff & chiedi supporto:`, iconURL: message.guild.iconURL() })
+      .setAuthor({ name: 'Contatta lo Staff & chiedi supporto:', iconURL: channel.guild?.iconURL() || undefined })
       .setDescription(`I ticket equivalgono ad un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
 <:VC_1:1444099819680563200> Prima categoria
 <a:VC_Arrow:1448672967721615452> usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
