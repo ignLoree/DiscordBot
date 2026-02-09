@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
 const TOP_LIMIT = 10;
 const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;

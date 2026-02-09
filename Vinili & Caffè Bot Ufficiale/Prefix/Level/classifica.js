@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 const { getCurrentWeekKey } = require('../../Services/Community/expService');
 
 const TOP_LIMIT = 10;
