@@ -4,7 +4,6 @@ const fs = require("fs");
 const path = require("path");
 const ascii = require("ascii-table");
 const config = require("../config.json");
-const { syncPermissionsFile } = require("../Utils/Moderation/permissionsSync");
 const isDev = __dirname.toLowerCase().includes("dev bot");
 const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
 
@@ -110,15 +109,6 @@ module.exports = (client) => {
             global.logger.info(unified.toString());
             global.logger.info(`[COMMANDS] Loaded ${client.commands.size} SlashCommands.`);
         }
-        try {
-            const updated = syncPermissionsFile({ commands: client.commands });
-            if (updated) {
-                global.logger.info('[PERMISSIONS] permissions.json aggiornato con nuovi app command.');
-            }
-        } catch (err) {
-            global.logger.error('[PERMISSIONS] Sync slash/app command fallita:', err);
-        }
-
         const rest = new REST({ version: "9" }).setToken(envToken || config.token);
 
         try {
