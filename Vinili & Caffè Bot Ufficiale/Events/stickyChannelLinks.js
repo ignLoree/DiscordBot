@@ -5,6 +5,7 @@ const STICKY_CONFIG = {
 };
 
 const lastStickyMessageByChannel = new Map();
+const stickyProcessingChannels = new Set();
 
 async function deletePreviousSticky(channel, stickyText, clientUserId) {
   const trackedId = lastStickyMessageByChannel.get(channel.id);
@@ -26,6 +27,24 @@ async function deletePreviousSticky(channel, stickyText, clientUserId) {
   }
 }
 
+async function collapseStickyMessages(channel, stickyText, clientUserId, keepMessageId = null) {
+  const recent = await channel.messages.fetch({ limit: 50 }).catch(() => null);
+  if (!recent?.size) return;
+  const matching = recent
+    .filter((msg) => msg.author?.id === clientUserId && String(msg.content || '').trim() === stickyText)
+    .sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+  if (!matching.size) return;
+
+  let keepId = keepMessageId;
+  if (!keepId) {
+    keepId = matching.first()?.id || null;
+  }
+  for (const msg of matching.values()) {
+    if (msg.id === keepId) continue;
+    await msg.delete().catch(() => {});
+  }
+}
+
 module.exports = {
   name: 'messageCreate',
   async execute(message, client) {
@@ -34,13 +53,32 @@ module.exports = {
 
     const stickyText = STICKY_CONFIG[message.channelId];
     if (!stickyText) return;
+    if (stickyProcessingChannels.has(message.channelId)) return;
 
     const channel = message.channel;
-    await deletePreviousSticky(channel, stickyText, client.user.id);
+    stickyProcessingChannels.add(message.channelId);
+    try {
+      await deletePreviousSticky(channel, stickyText, client.user.id);
 
-    const sent = await channel.send({ content: stickyText }).catch(() => null);
-    if (sent) {
-      lastStickyMessageByChannel.set(channel.id, sent.id);
+      const latest = await channel.messages.fetch({ limit: 1 }).catch(() => null);
+      const latestMessage = latest?.first();
+      if (
+        latestMessage &&
+        latestMessage.author?.id === client.user.id &&
+        String(latestMessage.content || '').trim() === stickyText
+      ) {
+        lastStickyMessageByChannel.set(channel.id, latestMessage.id);
+        await collapseStickyMessages(channel, stickyText, client.user.id, latestMessage.id);
+        return;
+      }
+
+      const sent = await channel.send({ content: stickyText }).catch(() => null);
+      if (sent) {
+        lastStickyMessageByChannel.set(channel.id, sent.id);
+        await collapseStickyMessages(channel, stickyText, client.user.id, sent.id);
+      }
+    } finally {
+      stickyProcessingChannels.delete(message.channelId);
     }
   }
 };
