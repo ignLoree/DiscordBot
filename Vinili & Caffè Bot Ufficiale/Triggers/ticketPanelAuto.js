@@ -45,7 +45,7 @@ module.exports = {
 
     const ticketMenu = new StringSelectMenuBuilder()
       .setCustomId('ticket_open_menu')
-      .setPlaceholder('Seleziona una categoria...')
+      .setPlaceholder('🎫 Seleziona una categoria...')
       .addOptions(
         {
           label: 'Prima categoria',

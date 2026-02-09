@@ -523,7 +523,7 @@ function getTicketPanelConfig(raw) {
       name: 'supporto',
       embed: new EmbedBuilder()
         .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**')
-        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\\`STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.')
+        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\\`STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.')
         .setColor('#6f4e37')
     },
     partnership: {
@@ -533,7 +533,7 @@ function getTicketPanelConfig(raw) {
       name: 'partnership',
       embed: new EmbedBuilder()
         .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**')
-        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`PARTNER MANAGER\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.')
+        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`PARTNER MANAGER\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.')
         .setColor('#6f4e37')
     },
     highstaff: {
@@ -543,7 +543,7 @@ function getTicketPanelConfig(raw) {
       name: 'highstaff',
       embed: new EmbedBuilder()
         .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**')
-        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`HIGH STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.')
+        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`HIGH STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.')
         .setColor('#6f4e37')
     }
   };
