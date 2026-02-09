@@ -44,6 +44,10 @@ function replaceNumberPrefixOnly(name, nextNumber, separator) {
   return `${nextNumber}${separator}${value}`;
 }
 
+function isTicketsCategoryName(name) {
+  return String(name || '').toLowerCase().includes('tickets');
+}
+
 async function renumberGuildCategories(guild, options) {
   if (!guild) return;
   const me = guild.members.me;
@@ -54,11 +58,14 @@ async function renumberGuildCategories(guild, options) {
     .sort((a, b) => (a.rawPosition - b.rawPosition) || a.id.localeCompare(b.id))
     .map((channel) => channel);
 
+  let nonTicketIndex = 1;
   for (let index = 0; index < categories.length; index += 1) {
     const category = categories[index];
     if (!category?.manageable) continue;
 
-    const nextNumber = toSuperscriptNumber(index + 1, options.minDigits);
+    const nextNumber = isTicketsCategoryName(category.name)
+      ? toSuperscriptNumber(0, options.minDigits)
+      : toSuperscriptNumber(nonTicketIndex++, options.minDigits);
     const expectedName = replaceNumberPrefixOnly(category.name, nextNumber, options.separator);
     if (category.name === expectedName) continue;
     await category.setName(expectedName).catch(() => {});

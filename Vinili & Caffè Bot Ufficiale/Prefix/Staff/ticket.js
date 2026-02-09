@@ -51,6 +51,12 @@ module.exports = {
 
     const subcommand = String(directAliasSub || args[0] || '').toLowerCase();
     const rest = directAliasSub ? args : args.slice(1);
+    const parentChannel = message.channel?.parent || null;
+    const inTicketCategory = Boolean(
+      parentChannel &&
+      String(parentChannel.name || '').toLowerCase().includes('tickets')
+    );
+    const activeTicketInChannel = await Ticket.findOne({ channelId: message.channel.id, open: true }).catch(() => null);
 
     if (!subcommand) {
       await safeMessageReply(message, {
@@ -58,6 +64,30 @@ module.exports = {
           new EmbedBuilder()
             .setColor('Red')
             .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel>`')
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+    if (!inTicketCategory || !activeTicketInChannel) {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> I comandi ticket possono essere usati solo dentro un canale ticket.')
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const requiresClaimOwnership = subcommand !== 'claim';
+    if (requiresClaimOwnership && activeTicketInChannel.claimedBy !== message.author.id) {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> Devi prima claimare questo ticket per usare questo comando.')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -335,8 +365,8 @@ module.exports = {
     }
 
     if (subcommand === 'switchpanel') {
-      const targetChannel = resolveChannelFromArg(message, rest[0]) || message.channel;
-      const categoryToken = String(rest[1] || '').toLowerCase();
+      const targetChannel = message.channel;
+      const categoryToken = String(rest[0] || '').toLowerCase();
       const panelConfig = getTicketPanelConfig(categoryToken);
 
       if (!targetChannel || !targetChannel.isTextBased?.()) {
@@ -360,7 +390,7 @@ module.exports = {
         return;
       }
 
-      const ticketDoc = await Ticket.findOne({ channelId: targetChannel.id, open: true });
+      const ticketDoc = activeTicketInChannel;
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Nel canale indicato non c\'è un ticket aperto.')],
