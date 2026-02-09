@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 const {
   EmbedBuilder,
@@ -22,11 +22,6 @@ const PAGE_TITLES = {
   '1442568910070349985': 'Comandi Staff',
   '1442568894349840435': 'Comandi High Staff',
   '1442568886988963923': 'Comandi Founder'
-};
-const TYPE_LABEL = {
-  prefix: 'Prefix',
-  slash: 'Slash',
-  context: 'Context'
 };
 const CATEGORY_LABELS = {
   community: 'Community',
@@ -76,6 +71,34 @@ function getPrefixDescription(command) {
   );
 }
 
+function getPrefixBase(command) {
+  const override = String(command?.prefixOverride || '').trim();
+  return override || '+';
+}
+
+function extractPrefixSubcommands(command) {
+  const meta = Array.isArray(command?.subcommands)
+    ? command.subcommands.map((s) => String(s || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (meta.length) return Array.from(new Set(meta));
+
+  const src = String(command?.execute || '');
+  const found = new Set();
+  let match = null;
+
+  const eqRegex = /subcommand\s*===\s*['"`]([a-z0-9._-]+)['"`]/gi;
+  while ((match = eqRegex.exec(src)) !== null) {
+    found.add(String(match[1]).toLowerCase());
+  }
+
+  const caseRegex = /case\s+['"`]([a-z0-9._-]+)['"`]\s*:/gi;
+  while ((match = caseRegex.exec(src)) !== null) {
+    found.add(String(match[1]).toLowerCase());
+  }
+
+  return Array.from(found.values());
+}
+
 function getSlashTopLevelDescription(dataJson) {
   return normalizeDescription(dataJson?.description, 'Comando slash.');
 }
@@ -83,8 +106,7 @@ function getSlashTopLevelDescription(dataJson) {
 function getSubcommandEntries(commandName, dataJson, permissionConfig, commandType, category) {
   const entries = [];
   const options = Array.isArray(dataJson?.options) ? dataJson.options : [];
-  const isChatInput = commandType === ApplicationCommandType.ChatInput;
-  if (!isChatInput) return entries;
+  if (commandType !== ApplicationCommandType.ChatInput) return entries;
 
   const subPermissions = permissionConfig?.subcommands || {};
   const commandRoles = Array.isArray(permissionConfig?.roles) ? permissionConfig.roles : null;
@@ -98,14 +120,13 @@ function getSubcommandEntries(commandName, dataJson, permissionConfig, commandTy
       ? subPermissions[key]
       : commandRoles;
     const roleList = Array.isArray(allowedRoles) ? allowedRoles : null;
-    const pageKey = roleList ? roleList : null;
+
     entries.push({
-      name: groupName ? `${commandName} ${groupName} ${subName}` : `${commandName} ${subName}`,
       invoke: `/${groupName ? `${commandName} ${groupName} ${subName}` : `${commandName} ${subName}`}`,
       type: 'slash',
       description: normalizeDescription(subOption.description, topDesc),
       category: String(category || 'misc').toLowerCase(),
-      roles: pageKey
+      roles: roleList
     });
   };
 
@@ -128,20 +149,37 @@ function buildEntries(client, permissions) {
 
   for (const command of client.pcommands.values()) {
     if (!command?.name) continue;
+
     const perm = permissions.prefix?.[command.name];
     const roles = Array.isArray(perm) ? perm : null;
     const aliases = Array.isArray(command.aliases)
       ? command.aliases.filter((alias) => typeof alias === 'string' && alias.trim().length)
       : [];
-    entries.push({
-      name: command.name,
-      invoke: `+${command.name}`,
+    const prefixBase = getPrefixBase(command);
+    const base = {
       type: 'prefix',
       description: getPrefixDescription(command),
       aliases,
+      prefixBase,
       category: String(command.folder || 'misc').toLowerCase(),
       roles
-    });
+    };
+
+    const subcommands = extractPrefixSubcommands(command);
+    if (subcommands.length) {
+      for (const sub of subcommands) {
+        entries.push({
+          ...base,
+          invoke: `${prefixBase}${command.name} ${sub}`,
+          aliases: []
+        });
+      }
+    } else {
+      entries.push({
+        ...base,
+        invoke: `${prefixBase}${command.name}`
+      });
+    }
   }
 
   const seenSlash = new Set();
@@ -150,28 +188,23 @@ function buildEntries(client, permissions) {
     if (!dataJson?.name) continue;
     const commandType = dataJson.type || ApplicationCommandType.ChatInput;
     if (commandType !== ApplicationCommandType.ChatInput) continue;
+
     const uniqueKey = `${dataJson.name}:${commandType}`;
     if (seenSlash.has(uniqueKey)) continue;
     seenSlash.add(uniqueKey);
 
     const perm = permissions.slash?.[dataJson.name];
     const category = String(command?.category || 'misc').toLowerCase();
-    const hasSubcommands = Array.isArray(dataJson.options) &&
-      dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
+    const hasSubcommands = Array.isArray(dataJson.options)
+      && dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
-    if (commandType === ApplicationCommandType.ChatInput && hasSubcommands) {
-      const subEntries = getSubcommandEntries(dataJson.name, dataJson, perm, commandType, category);
-      entries.push(...subEntries);
+    if (hasSubcommands) {
+      entries.push(...getSubcommandEntries(dataJson.name, dataJson, perm, commandType, category));
       continue;
     }
 
-    const roles = Array.isArray(perm)
-      ? perm
-      : Array.isArray(perm?.roles)
-        ? perm.roles
-        : null;
+    const roles = Array.isArray(perm) ? perm : (Array.isArray(perm?.roles) ? perm.roles : null);
     entries.push({
-      name: dataJson.name,
       invoke: `/${dataJson.name}`,
       type: 'slash',
       description: getSlashTopLevelDescription(dataJson),
@@ -184,18 +217,12 @@ function buildEntries(client, permissions) {
     const dataJson = command?.data?.toJSON?.();
     if (!dataJson?.name) continue;
     const commandType = dataJson.type || ApplicationCommandType.ChatInput;
-    if (commandType !== ApplicationCommandType.User && commandType !== ApplicationCommandType.Message) {
-      continue;
-    }
+    if (commandType !== ApplicationCommandType.User && commandType !== ApplicationCommandType.Message) continue;
+
     const perm = permissions.slash?.[dataJson.name];
-    const roles = Array.isArray(perm)
-      ? perm
-      : Array.isArray(perm?.roles)
-        ? perm.roles
-        : null;
+    const roles = Array.isArray(perm) ? perm : (Array.isArray(perm?.roles) ? perm.roles : null);
 
     entries.push({
-      name: dataJson.name,
       invoke: `Apps > ${dataJson.name}`,
       type: 'context',
       description: `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
@@ -210,11 +237,13 @@ function buildEntries(client, permissions) {
     const key = `${entry.type}:${entry.invoke}:${roleKey}`;
     if (!dedupe.has(key)) dedupe.set(key, entry);
   }
+
   const getCategoryIndex = (entry) => {
     const key = String(entry?.category || 'misc').toLowerCase();
     const idx = CATEGORY_ORDER.indexOf(key);
     return idx === -1 ? CATEGORY_ORDER.length : idx;
   };
+
   return Array.from(dedupe.values()).sort((a, b) => {
     const catCmp = getCategoryIndex(a) - getCategoryIndex(b);
     if (catCmp !== 0) return catCmp;
@@ -229,7 +258,7 @@ function filterByPage(entries, pageRoleId) {
   return entries.filter((entry) => Array.isArray(entry.roles) && entry.roles.includes(pageRoleId));
 }
 
-function chunkEntries(entries, size = 12) {
+function chunkEntries(entries, size) {
   const chunks = [];
   for (let i = 0; i < entries.length; i += size) {
     chunks.push(entries.slice(i, i + size));
@@ -237,7 +266,7 @@ function chunkEntries(entries, size = 12) {
   return chunks.length ? chunks : [[]];
 }
 
-function renderPageEmbed(message, page, totalPages) {
+function renderPageEmbed(message, page) {
   const grouped = new Map();
   for (const entry of page.items) {
     const key = String(entry.category || 'misc').toLowerCase();
@@ -245,7 +274,6 @@ function renderPageEmbed(message, page, totalPages) {
     grouped.get(key).push(entry);
   }
 
-  const sections = [];
   const orderedKeys = Array.from(grouped.keys()).sort((a, b) => {
     const ai = CATEGORY_ORDER.indexOf(a);
     const bi = CATEGORY_ORDER.indexOf(b);
@@ -253,22 +281,24 @@ function renderPageEmbed(message, page, totalPages) {
     const safeB = bi === -1 ? CATEGORY_ORDER.length : bi;
     return safeA - safeB;
   });
+
+  const sections = [];
   for (const categoryKey of orderedKeys) {
-    const entries = grouped.get(categoryKey) || [];
+    const categoryEntries = grouped.get(categoryKey) || [];
     const categoryLabel = CATEGORY_LABELS[categoryKey] || (categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1));
-    const rows = entries.map((entry) => {
+    const rows = categoryEntries.map((entry) => {
       const aliasText = entry.type === 'prefix' && Array.isArray(entry.aliases) && entry.aliases.length
-        ? ` (alias: ${entry.aliases.map((alias) => `+${alias}`).join(', ')})`
+        ? ` (alias: ${entry.aliases.map((alias) => `${entry.prefixBase || '+'}${alias}`).join(', ')})`
         : '';
-      return `┃ \`${entry.invoke}\` - ${entry.description}${aliasText}`;
+      return `| \`${entry.invoke}\` - ${entry.description}${aliasText}`;
     });
-    sections.push(`✨ **${categoryLabel}**\n${rows.join('\n')}`);
+    sections.push(`* ${categoryLabel}\n${rows.join('\n')}`);
   }
 
   const description = page.items.length
     ? [
       'Ecco la lista dei comandi disponibili.',
-      'Usa prefisso, slash o context menu in base al comando.',
+      'Uso: prefix/slash/context in base al comando.',
       '',
       sections.join('\n\n')
     ].join('\n')
@@ -277,7 +307,7 @@ function renderPageEmbed(message, page, totalPages) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
     .setAuthor({ name: message.guild?.name || 'Help', iconURL: message.guild?.iconURL?.({ size: 128 }) || undefined })
-    .setTitle(`📜 Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
+    .setTitle(`Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
     .setDescription(description)
     .setFooter({ text: `Pagina ${page.indexLabel} | ${page.items.length} comandi | ${page.groupLabel}` })
     .setTimestamp()
@@ -289,14 +319,12 @@ function buildNavigationRow(state) {
     new ButtonBuilder()
       .setCustomId(state.prevId)
       .setLabel('Precedente')
-      .setEmoji(`<a:vegaleftarrow:1462914743416131816>`)
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
       .setLabel('Prossima')
       .setStyle(ButtonStyle.Primary)
-      .setEmoji(`<a:vegarightarrow:1443673039156936837>`)
       .setDisabled(state.currentIndex >= state.total - 1)
   );
 }
@@ -317,18 +345,13 @@ module.exports = {
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {
       const filtered = filterByPage(allEntries, roleId);
-      const rolePages = chunkEntries(filtered, HELP_PAGE_SIZE).map((items) => ({
-        roleId,
-        items,
-        groupLabel: PAGE_TITLES[roleId] || roleId
-      }));
-
-      rolePages.forEach((page, idx) => {
+      const roleChunks = chunkEntries(filtered, HELP_PAGE_SIZE);
+      roleChunks.forEach((items, idx) => {
         groupedPages.push({
           roleId,
-          items: page.items,
-          indexLabel: `${idx + 1}/${rolePages.length}`,
-          groupLabel: page.groupLabel
+          items,
+          indexLabel: `${idx + 1}/${roleChunks.length}`,
+          groupLabel: PAGE_TITLES[roleId] || roleId
         });
       });
     }
@@ -352,12 +375,9 @@ module.exports = {
       nextId: `help_next_${uniqueToken}`
     };
 
-    const firstEmbed = renderPageEmbed(message, groupedPages[0], groupedPages.length);
-    const firstRow = buildNavigationRow(navState);
-
     const sent = await safeMessageReply(message, {
-      embeds: [firstEmbed],
-      components: [firstRow],
+      embeds: [renderPageEmbed(message, groupedPages[0])],
+      components: [buildNavigationRow(navState)],
       allowedMentions: { repliedUser: false }
     });
     if (!sent) return;
@@ -380,11 +400,10 @@ module.exports = {
       }
 
       const page = groupedPages[navState.currentIndex];
-      const embed = renderPageEmbed(message, page, navState.total);
-      const row = buildNavigationRow(navState);
-      await interaction.update({ embeds: [embed], components: [row] }).catch(() => {});
+      await interaction.update({
+        embeds: [renderPageEmbed(message, page)],
+        components: [buildNavigationRow(navState)]
+      }).catch(() => {});
     });
-
-    // Nessuna scadenza: i pulsanti restano attivi finché il messaggio esiste.
   }
 };

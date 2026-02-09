@@ -2,6 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const isDev = process.cwd().toLowerCase().includes("dev bot");
+const { syncPermissionsFile } = require("../Utils/Moderation/permissionsSync");
 
 function getBotRoots() {
     const cwd = process.cwd();
@@ -89,6 +90,14 @@ module.exports = (client) => {
         if (shouldLogOnce('prefix')) {
             global.logger.info(unified.toString());
             global.logger.info(`[PREFIX_COMMANDS] Loaded ${client.pcommands.size} PrefixCommands.`);
+        }
+        try {
+            const updated = syncPermissionsFile({ pcommands: client.pcommands });
+            if (updated) {
+                global.logger.info('[PERMISSIONS] permissions.json aggiornato con nuovi prefix command.');
+            }
+        } catch (err) {
+            global.logger.error('[PERMISSIONS] Sync prefix command fallita:', err);
         }
         client._prefixOverrideCache = null;
         try {
