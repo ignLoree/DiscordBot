@@ -3,11 +3,6 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 
 const CUSTOM_VOICE_CATEGORY_ID = '1442569078379118755';
-const STAFF_ROLE_ID = '1442568894349840435';
-
-function hasStaffAccess(member) {
-  return Boolean(member?.roles?.cache?.has(STAFF_ROLE_ID));
-}
 
 function parseUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -43,13 +38,6 @@ module.exports = {
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;
-    if (!hasStaffAccess(message.member)) {
-      await safeMessageReply(message, {
-        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Non hai i permessi per questo comando.')],
-        allowedMentions: { repliedUser: false }
-      });
-      return;
-    }
 
     const mode = String(args[0] || '').toLowerCase();
     if (!mode || !['role', 'voc', 'voice'].includes(mode)) {
@@ -64,7 +52,7 @@ module.exports = {
               '',
               'Note:',
               `- il canale vocale privato dovrebbe stare in <#${CUSTOM_VOICE_CATEGORY_ID}>`,
-              '- se il ruolo non e nel DB, viene registrato automaticamente'
+              '- se il ruolo non è nel DB, viene registrato automaticamente'
             ].join('\n'))
         ],
         allowedMentions: { repliedUser: false }
