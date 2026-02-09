@@ -1,6 +1,6 @@
 ﻿const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
@@ -352,7 +352,7 @@ function chunkEntries(entries, size) {
   return chunks.length ? chunks : [[]];
 }
 
-function renderPageEmbed(message, page) {
+function renderPageText(page) {
   const grouped = new Map();
   for (const entry of page.items) {
     const key = String(entry.category || 'misc').toLowerCase();
@@ -382,22 +382,20 @@ function renderPageEmbed(message, page) {
     sections.push(`✨ **${categoryLabel}**\n${rows.join('\n')}`);
   }
 
-  const description = page.items.length
+  return page.items.length
     ? [
+      '## 📜 Comandi Disponibili',
+      '',
+      `### ${PAGE_TITLES[page.roleId] || 'Comandi'}`,
+      '',
       'Ecco la lista dei comandi disponibili.',
       'Usa il prefix, slash o context menu in base al comando.',
       '',
-      sections.join('\n\n')
+      sections.join('\n\n'),
+      '',
+      `*Pagina ${page.indexLabel}*`
     ].join('\n')
     : '<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.';
-
-  return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setAuthor({ name: message.guild?.name || 'Help', iconURL: message.guild?.iconURL?.({ size: 128 }) || undefined })
-    .setTitle(`📜 Comandi Disponibili`)
-    .setDescription(description)
-    .setFooter({ text: `Pagina ${page.indexLabel}` })
-    .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 }
 
 function buildNavigationRow(state) {
@@ -462,8 +460,14 @@ module.exports = {
     };
 
     const sent = await safeMessageReply(message, {
-      embeds: [renderPageEmbed(message, groupedPages[0])],
-      components: [buildNavigationRow(navState)],
+      components: [
+        {
+          type: ComponentType.TextDisplay,
+          content: renderPageText(groupedPages[0])
+        },
+        buildNavigationRow(navState)
+      ],
+      flags: MessageFlags.IsComponentsV2,
       allowedMentions: { repliedUser: false }
     });
     if (!sent) return;
@@ -487,8 +491,13 @@ module.exports = {
 
       const page = groupedPages[navState.currentIndex];
       await interaction.update({
-        embeds: [renderPageEmbed(message, page)],
-        components: [buildNavigationRow(navState)]
+        components: [
+          {
+            type: ComponentType.TextDisplay,
+            content: renderPageText(page)
+          },
+          buildNavigationRow(navState)
+        ]
       }).catch(() => {});
     });
   }
