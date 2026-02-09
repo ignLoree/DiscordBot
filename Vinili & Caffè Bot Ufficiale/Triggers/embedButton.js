@@ -515,7 +515,7 @@ module.exports = {
         if (interaction.customId == 'info_badges_roles') {
             const badgesEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('<:exp:1470067108543987846>・**__Ottieni un ruolo speciale per il tuo profilo !__**')
+                .setTitle('<:pinkstar:1470064804835229768>・**__Ottieni un ruolo speciale per il tuo profilo !__**')
                 .setDescription([
                     'I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all\'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.',
                     '',
@@ -541,7 +541,7 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '\`VERIFICATO E VERIFICATA\`',
+                        name: '\`VERIFICATO/A\`',
                         value: [
                             '<@&1469040190730408018>/<@&1469040179799920801>',
                             'Ottenibile facendo la verifica tramite selfie.',
