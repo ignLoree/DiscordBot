@@ -406,7 +406,7 @@ module.exports = {
                     '',
                     '<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#1442569138114662490>.',
                     '',
-                    '<a:VC_Arrow:1448672967721615452> **LISTA dei LIVELLI:**'
+                    '<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**'
                 ].join('\n'))
                 .addFields(
                     {
@@ -513,25 +513,88 @@ module.exports = {
 
         /// INFO BADGES
         if (interaction.customId == 'info_badges_roles') {
-            const supporterEmbed = new EmbedBuilder()
+            const badgesEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:VC_BlackPin:1448687216871084266> **Inserendo** il link __vanity__ **\`(https://discord.gg/viniliecaffe)\`** nello __status__ o nell'__about me__ riceverai il ruolo <@&1442568948271943721>
+                .setTitle('<:exp:1470067108543987846>・**__Ottieni un ruolo speciale per il tuo profilo !__**')
+                .setDescription([
+                    'I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all\'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.',
+                    '',
+                    '<a:VC_Arrow:1448672967721615452> **LISTA DEI BADGES:**'
+                ].join('\n'))
+                .addFields(
+                    {
+                        name: '\`VETERANO\`',
+                        value: [
+                            '<@&1469073503025103113>',
+                            'Ottenibile stando nel server per almeno 1 mese',
+                            '९ Esclusività del ruolo.'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`OG\`',
+                        value: [
+                            '<@&1469041493401534644>',
+                            'Ottenibile stando nel server per almeno 1 anno',
+                            '९ Esclusività del ruolo.'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`VERIFICATO E VERIFICATA\`',
+                        value: [
+                            '<@&1469040190730408018>/<@&1469040179799920801>',
+                            'Ottenibile facendo la verifica tramite selfie.',
+                            '९ Esclusività del ruolo.',
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`WEEKLY WINNERS\`',
+                        value: [
+                            '<@&1468674837957574757>/<@&1468674787399172208>',
+                            'Ottenibile arrivando primo per exp in messaggi o exp in vocale nella [classifica settimanale](<https://discord.com/channels/1329080093599076474/1470183921236049940>).',
+                            '९ Tutte le ricompense precedenti',
+                            '<:VC_DoubleReply:1468713981152727120> Ruolo esclusivo per 7 giorni.',
+                            '<:VC_Reply:1468262952934314131> Permesso di usare soundboard esterne',
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`SUPPORTER\`',
+                        value: [
+                            '<@&1442568948271943721>',
+                            'Ottenibile mettendo il testo ".gg/viniliecaffe" o "discord.gg/viniliecaffe" nello status del tuo profilo Discord!',
+                            'Nello stato, non nella bio ; se viene tolto o se sei offline, non ti verranno assegnati i vantaggi.',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
+                            '<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`VOTER\`',
+                        value: [
+                            '<@&1468266342682722679>',
+                            'Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)',
+                            '<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.',
+                            '<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`PROMOTER\`',
+                        value: [
+                            '<@&1469758545263198442>',
+                            'Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
+                            '<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname'
+                        ].join('\n'),
+                        inline: true
+                    }
+                )
+                .setFooter({ text: '⚠️ ▸ Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.' });
 
-                <:VC_DoubleReply:1468713981152727120> **Ruolo** esclusivo <@&1442568948271943721>
-                <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
-                <:VC_Reply:1468262952934314131> Cambiare il **__nickname__**`);
-            const vipEmbed = new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`<:VC_BlackPin:1448687216871084266> Il ruolo <@&1442568950805430312> è ottinibile solo essendo **amici** dei __Founder__ oppure **vincendo** __eventi__ o __giveaway__.
-                
-                <:VC_DoubleReply:1468713981152727120> **Ruolo** esclusivo <@&1442568950805430312> 
-                <:VC_DoubleReply:1468713981152727120> \`x3\` di multi in vocale e testuale
-                <:VC_DoubleReply:1468713981152727120> **Vantaggi** di __tutti__ i ruoli <@&1442568928667631738>
-                <:VC_Reply:1468262952934314131> **Votare** per lo <@&1442568895251611924>`);
-            const commonEmbed = new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**. **__\`Nel caso l'utente uscisse dal server i ruoli saranno rimossi\`__**`);
-            await interaction.reply({ embeds: [supporterEmbed, vipEmbed, commonEmbed], flags: 1 << 6 });
+            await interaction.reply({ embeds: [ badgesEmbed ], flags: 1 << 6 });
         }
 
         /// INFO MULTIPLIER
