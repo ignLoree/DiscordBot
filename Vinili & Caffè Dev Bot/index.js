@@ -137,7 +137,7 @@ setInterval(async () => {
         const scope = payload?.scope || 'all';
         if (payload?.gitPull) pullLatest();
         await client.reloadScope(scope);
-        client.logs?.success?.(`[RELOAD] ${scope} reloaded (remote).`);
+        client.logs?.success?.(`[RELOAD] ${scope} reloaded.`);
         if (payload?.channelId) {
             const channel = await getChannelSafe(client, payload.channelId);
             if (channel) {
@@ -170,8 +170,7 @@ client.on("clientReady", async (client) => {
                 if (channel) {
                     const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
                     const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
-                    const by = data?.by ? ` (richiesto da <@${data.by}>)` : '';
-                    await channel.send(`<:vegacheckmark:1443666279058772028> Bot ${currentTargetLabel} riavviato con successo${elapsed}.${by}`);
+                    await channel.send(`<:vegacheckmark:1443666279058772028> Bot ${currentTargetLabel} riavviato con successo${elapsed}.`);
                 }
                 fs.unlinkSync(restartNotifyPath);
             } catch (err) {

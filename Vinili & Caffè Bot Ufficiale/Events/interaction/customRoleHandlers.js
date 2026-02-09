@@ -53,7 +53,6 @@ function refreshEmbedRoleLine(sourceEmbed, role, executorName) {
     nextDesc = [oldDesc, '', '**Ruolo:**', `${role}`].join('\n').trim();
   }
   embed.setDescription(nextDesc);
-  if (executorName) embed.setFooter({ text: `Comando eseguito da: ${executorName}` });
   return embed;
 }
 

@@ -26,7 +26,7 @@ function buildNoPermEmbed(message) {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[0]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[1]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[2]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[3]}>`
@@ -44,14 +44,13 @@ function buildPanelEmbed(member, role, guild) {
     .setColor('#6f4e37')
     .setTitle('<:vegacheckmark:1443666279058772028> Ruolo Creato')
     .setDescription([
-      '<a:VC_Flowers:1468687836055212174> Il tuo ruolo è stato creato. **Ora personalizzalo!**',
-      '__Altri comandi__ li trovi nel menù con il comando `+help`',
+      '<a:VC_Flowers:1468687836055212174> Il tuo ruolo Ã¨ stato creato. **Ora personalizzalo!**',
+      '__Altri comandi__ li trovi nel menÃ¹ con il comando `+help`',
       'Puoi modificare il ruolo con i bottoni sottostanti.',
       '',
       '**Ruolo:**',
       `${role}`
     ].join('\n'))
-    .setFooter({ text: `Comando eseguito da ${member.user.username}.` });
 
   const guildIcon = guild?.iconURL?.({ extension: 'png', size: 256, forceStatic: false }) || null;
   if (guildIcon) embed.setThumbnail(guildIcon);
@@ -116,7 +115,7 @@ async function resolveOrCreateRole(message) {
   const editable = role.position < me.roles.highest.position;
   if (!editable) {
     await role.delete().catch(() => {});
-    return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo più in alto.' };
+    return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo piÃ¹ in alto.' };
   }
 
   const anchor = guild.roles.cache.get(ANCHOR_ROLE_ID) || await guild.roles.fetch(ANCHOR_ROLE_ID).catch(() => null);

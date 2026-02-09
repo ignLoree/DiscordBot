@@ -412,8 +412,8 @@ const SERVER_ID = IDs.guilds.main;
 const CHANNEL_ID = IDs.channels.staffListChannel;
 let staffListMessageId = null;
 const ROLE_EMOJIS = {
-    [IDs.roles.partnerManager]: { emoji: '<:partnermanager:1443651916838998099>', number: '8' },
-    [IDs.roles.helper]: { emoji: '<:helper:1443651909448630312>', number: '8' },
+    [IDs.roles.partnerManager]: { emoji: '<:partnermanager:1443651916838998099>', number: '∞' },
+    [IDs.roles.helper]: { emoji: '<:helper:1443651909448630312>', number: '∞' },
     [IDs.roles.moderator]: { emoji: '<:mod:1443651914209165454>', number: '6' },
     [IDs.roles.coordinator]: { emoji: '<:coordinator:1443651923168202824>', number: '4' },
     [IDs.roles.supervisor]: { emoji: '<:supervisor:1443651907900932157>', number: '4' },

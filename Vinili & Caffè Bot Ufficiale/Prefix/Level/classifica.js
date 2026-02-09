@@ -75,7 +75,6 @@ async function buildWeeklyEmbed(message) {
       '',
       lines.join('\n')
     ].join('\n'))
-    .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
 }
 
 async function buildAllTimeEmbed(message) {
@@ -109,7 +108,6 @@ async function buildAllTimeEmbed(message) {
       '',
       lines.join('\n')
     ].join('\n'))
-    .setFooter({ text: `Comando eseguito da: ${message.author.username}` });
 }
 
 module.exports = {

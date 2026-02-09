@@ -24,7 +24,7 @@ module.exports = {
       .setTitle('Banner bloccato')
       .setThumbnail('https://images-ext-1.discordapp.net/external/GrhQsfA7zwxEiX5aOQo9kfQ-EF9Z9VLS-JD0w5iJEZU/https/i.imgur.com/Qqn7J3d.png?format=webp&quality=lossless&width=640&height=640')
       .setDescription([
-        'Gli altri membri non potranno più visualizzare il tuo banner.',
+        'Gli altri membri non potranno piÃ¹ visualizzare il tuo banner.',
         '',
         'Utilizza il pulsante qui sotto o il comando `?unblockbn` se vuoi riattivare la visualizzazione.'
       ].join('\n'));

@@ -80,7 +80,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('👤 Seleziona un utente')
-      .setDescription('Usa il menu a tendina qui sotto per rimuovere un utente dal tuo ruolo personalizzato.');
+      .setDescription('Usa il menù a tendina qui sotto per rimuovere un utente dal tuo ruolo personalizzato.');
 
     await message.guild.members.fetch().catch(() => {});
     const membersWithRole = Array.from(role.members.values())

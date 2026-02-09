@@ -103,7 +103,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE POSITIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ Ã¨ stata **rimossa** una _Valutazione Positiva!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è¨ stata **rimossa** una _Valutazione Positiva!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Positive Aggiornato__", value: `Ora sei a \`${StaffDoc.positiveCount}\` valutazioni!`, inline: false },
@@ -140,7 +140,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE NEGATIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ Ã¨ stata **rimossa** una _Valutazione Negativa!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è stata **rimossa** una _Valutazione Negativa!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Negativa Aggiornato__", value: `Ora sei a \`${StaffDoc.negativeCount}\` valutazioni!`, inline: false },

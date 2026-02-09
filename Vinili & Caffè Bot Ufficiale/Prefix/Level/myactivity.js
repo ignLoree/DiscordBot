@@ -33,7 +33,6 @@ module.exports = {
         `<:dot:1443660294596329582> Settimanali: **${formatHours(stats.voice.weeklySeconds)}** _ore_`,
         `<:dot:1443660294596329582> Totali: **${formatHours(stats.voice.totalSeconds)}** _ore_`,
       ].join('\n'))
-      .setFooter({ text: `Comando eseguito da ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
 
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }

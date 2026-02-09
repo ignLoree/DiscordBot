@@ -208,7 +208,7 @@ module.exports = {
           rows,
           footer: `Global track - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg`,
           badgeText: "WhoKnows Track",
-          serverLabel: "in Vinili & Caffè Bot ðŸŒ",
+          serverLabel: "in Vinili & Caffè Bot",
           showCrown: false,
           poweredByText: "Powered by Vinili & Caffè Bot"
         });

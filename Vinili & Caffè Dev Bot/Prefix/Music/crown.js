@@ -253,7 +253,7 @@ module.exports = {
       const youLine = requesterEntry
         ? ` - You: ${requesterPlays} plays${requesterRank ? ` (#${requesterRank})` : ""}`
         : "";
-      const footer = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg${youLine} â€¢ Pagina: ${pagination.page} â€¢ Limite: ${pagination.limit}`;
+      const footer = `Artist - ${totalListeners} listeners - ${totalPlays} plays - ${avgPlays} avg${youLine} ︲ Pagina: ${pagination.page} ︲ Limite: ${pagination.limit}`;
       const crownMember = message.guild.members.cache.get(crown.holderId);
       const crownName = crownmember?.displayName || member?.user?.username || crownMember?.user?.username || "Sconosciuto";
       const crownText = `Crown claimed by ${crownName}`;

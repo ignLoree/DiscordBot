@@ -137,7 +137,7 @@ function slicePage(items, page, perPage) {
 function buildInstructionEmbed() {
   return new EmbedBuilder()
     .setColor(0xF39C12)
-    .setDescription("Please enter a Last.fm username or mention someone to compare yourself to.\nExamples:\nâ€¢ `.taste Vinili&CaffèBot`\nâ€¢ `.taste @Vinili&CaffèBot`\n\nPlease note that the other user must also have an Vinili & Caffè Bot account.");
+    .setDescription("Please enter a Last.fm username or mention someone to compare yourself to.\nExamples:\n︲ `.taste Vinili&CaffèBot`\n︲ `.taste @Vinili&CaffèBot`\n\nPlease note that the other user must also have an Vinili & Caffè Bot account.");
 }
 
 module.exports = {

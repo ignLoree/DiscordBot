@@ -16,8 +16,8 @@ module.exports = {
         .setColor("#6f4e37")
         .setDescription(
           "Pick which mode you want to modify:\n\n" +
-          "â€¢ \`fm\` mode - Changes how your .fm command looks\n" +
-          "â€¢ Response mode - changes default response to \`WhoKnows\` and top list commands"
+          "︲ \`fm\` mode - Changes how your .fm command looks\n" +
+          "︲ Response mode - changes default response to \`WhoKnows\` and top list commands"
         );
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()

@@ -26,7 +26,7 @@ function buildNoPermEmbed(message) {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[0]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[1]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[2]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[3]}>`
@@ -39,13 +39,12 @@ function buildPanelEmbed(member, role, guild) {
     .setTitle('? Modifica Ruolo')
     .setDescription([
       '<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.',
-      '__Altri__ comandi li trovi nel menù con il comando `+help`',
+      '__Altri__ comandi li trovi nel menÃ¹ con il comando `+help`',
       'Puoi configurarlo con i pulsanti qui sotto.',
       '',
       '**Ruolo:**',
       `${role}`
     ].join('\n'))
-    .setFooter({ text: `Comando eseguito da ${member.user.username}.` });
 
   const guildIcon = guild?.iconURL?.({ extension: 'png', size: 256, forceStatic: false }) || null;
   if (guildIcon) embed.setThumbnail(guildIcon);
@@ -111,7 +110,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piÃ¹. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });

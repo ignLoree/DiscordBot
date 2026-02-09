@@ -62,7 +62,7 @@ async function processTickets(client) {
       const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setTitle('Richiesta di chiusura')
-        .setDescription('Il ticket Ë aperto da pi˘ di 24 ore e non ci sono messaggi recenti.\n» stato risolto?');
+        .setDescription('Il ticket √® aperto da pi√π di 24 ore e non ci sono messaggi recenti.\n√® stato risolto?');
 
       await channel.send({
         content: mentionText || null,

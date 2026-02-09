@@ -634,7 +634,6 @@ module.exports = {
                     '',
                     'Puoi vedere la classifica settimanale con il comando \`+classifica\`'
                 ].join('\n'))
-                .setFooter({ text: `Richiesto da: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
 
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }

@@ -593,9 +593,7 @@ module.exports = {
         .split(/\s+/)
         .map((word) => word.replace(/[\/\\#@:`*?"<>|]/g, '').trim())
         .filter(Boolean);
-      const normalizedTail = words.length <= 1
-        ? (words[0] || '')
-        : `${words[0]}᲼${words.slice(1).join('')}`;
+      const normalizedTail = words.join('᲼');
 
       if (!normalizedTail) {
         await safeMessageReply(message, {

@@ -61,7 +61,6 @@ module.exports = {
         '🎲 .ᐟRuoli sbloccati:',
         unlockedText,
       ].join('\n'))
-      .setFooter({ text: `Comando eseguito da: ${message.author.username}`, iconURL: message.author.displayAvatarURL() });
 
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }
