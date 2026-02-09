@@ -393,7 +393,7 @@ function renderPageText(page) {
       '',
       sections.join('\n\n'),
       '',
-      `*Pagina ${page.indexLabel}*`
+      `**Pagina ${page.indexLabel}**`
     ].join('\n')
     : '<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.';
 }
@@ -413,11 +413,29 @@ function buildNavigationRow(state) {
   );
 }
 
-function buildHelpV2Container(page, navState) {
+function buildHelpV2Container(message, page, navState) {
+  const guildIcon = message.guild?.iconURL?.({ size: 256 }) || null;
+  const headerSection = guildIcon
+    ? {
+        type: ComponentType.Section,
+        components: [
+          {
+            type: ComponentType.TextDisplay,
+            content: `## ${message.guild?.name || 'Help'}`
+          }
+        ],
+        accessory: {
+          type: ComponentType.Thumbnail,
+          media: { url: guildIcon }
+        }
+      }
+    : null;
+
   return {
     type: ComponentType.Container,
     accentColor: 0x6f4e37,
     components: [
+      ...(headerSection ? [headerSection] : []),
       {
         type: ComponentType.TextDisplay,
         content: renderPageText(page)
@@ -475,7 +493,7 @@ module.exports = {
 
     const sent = await safeMessageReply(message, {
       components: [
-        buildHelpV2Container(groupedPages[0], navState)
+        buildHelpV2Container(message, groupedPages[0], navState)
       ],
       flags: MessageFlags.IsComponentsV2,
       allowedMentions: { repliedUser: false }
@@ -502,7 +520,7 @@ module.exports = {
       const page = groupedPages[navState.currentIndex];
       await interaction.update({
         components: [
-          buildHelpV2Container(page, navState)
+          buildHelpV2Container(message, page, navState)
         ]
       }).catch(() => {});
     });
