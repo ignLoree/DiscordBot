@@ -58,6 +58,12 @@ async function handleTicketInteraction(interaction) {
 
     async function createTicketsCategory(guild) {
         if (!guild) return null;
+        const existing = guild.channels.cache
+            .filter(ch => ch.type === 4 && ch.name === TICKETS_CATEGORY_NAME)
+            .sort((a, b) => a.position - b.position)
+            .first();
+        if (existing) return existing;
+
         const category = await guild.channels.create({
             name: TICKETS_CATEGORY_NAME,
             type: 4,
@@ -129,7 +135,7 @@ async function handleTicketInteraction(interaction) {
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
                         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.`)
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Non mandare la descrizione del tuo server/catena qui o verrai mutato.`)
                         .setColor("#6f4e37")
                 },
                 ticket_highstaff: {
