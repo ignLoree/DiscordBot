@@ -36,6 +36,55 @@ const CATEGORY_ORDER = [
   'contextmenubuilder',
 ];
 const HELP_PAGE_SIZE = 18;
+const PREFIX_HELP_DESCRIPTIONS = {
+  help: 'Mostra il pannello con tutti i comandi disponibili in base ai tuoi ruoli.',
+  afk: 'Imposta il tuo stato AFK con un messaggio personalizzato.',
+  avatar: 'Mostra l\'avatar server di un utente.',
+  banner: 'Mostra il banner profilo di un utente.',
+  blockav: 'Blocca la visualizzazione del tuo avatar agli altri utenti.',
+  blockbanner: 'Blocca la visualizzazione del tuo banner agli altri utenti.',
+  blockquotes: 'Blocca la creazione di quote dei tuoi messaggi.',
+  invites: 'Mostra le statistiche inviti del server o di un utente.',
+  membercount: 'Mostra il numero totale di membri del server.',
+  'no-dm': 'Attiva/disattiva il blocco DM per gli annunci dello staff.',
+  ping: 'Mostra latenza bot, database e informazioni di uptime.',
+  ship: 'Calcola la compatibilità tra due utenti.',
+  snipe: 'Recupera l\'ultimo messaggio eliminato nel canale.',
+  topinvites: 'Mostra la classifica inviti del server.',
+  join: 'Fa entrare il bot nel tuo canale vocale.',
+  leave: 'Fa uscire il bot dal canale vocale.',
+  unblockavatar: 'Sblocca la visualizzazione del tuo avatar.',
+  unblockbanner: 'Sblocca la visualizzazione del tuo banner.',
+  unblockquotes: 'Sblocca la creazione di quote dei tuoi messaggi.',
+  classifica: 'Mostra la classifica livelli (totale/settimanale).',
+  minigamestats: 'Mostra statistiche minigiochi di un utente.',
+  myactivity: 'Mostra la tua attività settimanale.',
+  rank: 'Mostra livello, exp e posizione in classifica di un utente.',
+  toptext: 'Mostra top utenti per messaggi testuali.',
+  topvoc: 'Mostra top utenti per exp/attività vocale.',
+  description: 'Manda la descrizione del server direttamente nel ticket.',
+  addlevel: 'Aggiunge livelli/exp a un utente.',
+  customregister: 'Registra retroattivamente custom role/vocale già esistenti.',
+  gmulti: 'Gestisce il moltiplicatore globale exp.',
+  'no-dm-list': 'Mostra la lista utenti con blocco DM attivo.',
+  purge: 'Elimina messaggi da un canale.',
+  recensione: 'Premia una recensione assegnando livelli.',
+  removelevel: 'Rimuove livelli/exp da un utente.',
+  reviewlock: 'Blocca o sblocca premio recensione per un utente.',
+  ticket: 'Gestisce i ticket.',
+  verify: 'Gestisce il flusso di verifica utenti.',
+  customroleadd: 'Aggiunge utenti al tuo ruolo personalizzato.',
+  customrolecreate: 'Crea il tuo ruolo personalizzato.',
+  customrolemodify: 'Apre il pannello di modifica del ruolo personalizzato.',
+  customroleremove: 'Rimuove utenti dal tuo ruolo personalizzato.',
+  customvoc: 'Crea e gestisce la tua vocale privata personalizzata.',
+  quote: 'Genera una quote grafica da un messaggio.'
+};
+const CONTEXT_HELP_DESCRIPTIONS = {
+  'Show Avatar': 'Mostra rapidamente l\'avatar dell\'autore del messaggio selezionato.',
+  Partnership: 'Apre il modal partnership partendo dal messaggio selezionato.',
+  'Moderate Name': 'Modera/cambia nickname dell utente selezionato.'
+};
 
 function loadPermissions() {
   try {
@@ -57,6 +106,10 @@ function normalizeDescription(text, fallback = 'Nessuna descrizione disponibile.
 }
 
 function getPrefixDescription(command) {
+  const commandName = String(command?.name || '').toLowerCase();
+  if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
+    return PREFIX_HELP_DESCRIPTIONS[commandName];
+  }
   return normalizeDescription(
     command?.description || command?.desc || command?.help || command?.usage,
     'Comando prefix.'
@@ -246,7 +299,8 @@ function buildEntries(client, permissions) {
     entries.push({
       invoke: `${dataJson.name}`,
       type: 'context',
-      description: `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
+      description: CONTEXT_HELP_DESCRIPTIONS[dataJson.name]
+        || `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
       category: String(command?.category || 'contextmenubuilder').toLowerCase(),
       roles
     });
