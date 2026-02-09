@@ -9,8 +9,7 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
-    const descriptionText = [
-      '```',
+    const descriptionText = ['```',
       '_ _',
       '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
       '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
