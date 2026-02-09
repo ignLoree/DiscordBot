@@ -15,8 +15,12 @@ module.exports = {
 
     const partnerRole = message.guild?.roles?.cache?.get(partnerRoleId);
     const parentId = message.channel?.parentId || message.channel?.parent?.id || null;
+    const parentChannel = parentId ? message.guild?.channels?.cache?.get(parentId) : null;
+    const parentName = String(parentChannel?.name || '').toLowerCase();
+    const isBotTicketCategory = parentChannel?.type === 4 && parentName.includes('tickets');
+    const isAllowedCategory = Boolean(parentId && (parentId === allowedCategoryId || isBotTicketCategory));
 
-    if (!parentId || parentId !== allowedCategoryId) {
+    if (!isAllowedCategory) {
       return safeMessageReply(
         message,
         '<:vegax:1443934876440068179> Questo comando può essere usato **solo nella categoria autorizzata**.'

@@ -235,9 +235,10 @@ async function handleTicketInteraction(interaction) {
                                     id: ROLE_HIGHSTAFF,
                                     allow: [
                                         PermissionFlagsBits.ViewChannel,
+                                        PermissionFlagsBits.SendMessages,
                                         PermissionFlagsBits.ReadMessageHistory
                                     ],
-                                    deny: [PermissionFlagsBits.SendMessages]
+                                    deny: []
                                 },
                                 {
                                     id: ROLE_STAFF,
