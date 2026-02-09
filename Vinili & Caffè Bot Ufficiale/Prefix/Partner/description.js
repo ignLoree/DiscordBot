@@ -6,6 +6,23 @@ module.exports = {
 
   async execute(message) {
     await message.channel.sendTyping();
+    const descriptionText = [
+      '```',
+      '_ _',
+      '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
+      '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
+      '                                       **gaming**',
+      '-# @everyone & @here_ _',
+      '```'
+    ].join('\n');
+
+    if (!message.inGuild?.() || !message.guild || !message.member) {
+      await safeMessageReply(message, {
+        content: descriptionText,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
 
     const allowedCategoryId = '1442569056795230279';
     const partnerRoleId =
@@ -40,16 +57,6 @@ module.exports = {
         '<:vegax:1443934876440068179> Non hai il permesso per usare questo comando. Solo i **Partner Manager** possono farlo.'
       );
     }
-
-    const descriptionText = [
-      '```',
-      '_ _',
-      '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
-      '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
-      '                                       **gaming**',
-      '-# @everyone & @here_ _',
-      '```'
-    ].join('\n');
 
     await safeMessageReply(message, {
       content: descriptionText,
