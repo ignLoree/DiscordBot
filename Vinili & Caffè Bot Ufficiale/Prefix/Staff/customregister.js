@@ -18,11 +18,13 @@ function parseUser(message, raw) {
   return message.client.users.fetch(id).catch(() => null);
 }
 
-function parseRole(guild, raw) {
+async function parseRole(message, raw) {
+  const mentionedRole = message.mentions?.roles?.first();
+  if (mentionedRole) return mentionedRole;
   if (!raw) return null;
   const roleId = String(raw).match(/^<@&(\d+)>$/)?.[1] || (String(raw).match(/^\d{17,20}$/) ? String(raw) : null);
   if (!roleId) return null;
-  return guild.roles.cache.get(roleId) || null;
+  return message.guild.roles.cache.get(roleId) || await message.guild.roles.fetch(roleId).catch(() => null);
 }
 
 function parseVoiceChannel(guild, raw) {
@@ -72,7 +74,7 @@ module.exports = {
 
     if (mode === 'role') {
       const user = await parseUser(message, args[1]);
-      const role = parseRole(message.guild, args[2]);
+      const role = await parseRole(message, args[2]);
       if (!user || !role) {
         await safeMessageReply(message, {
           embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Uso: `+customregister role @utente @ruolo`.')],
@@ -106,7 +108,7 @@ module.exports = {
 
     const voiceChannel = parseVoiceChannel(message.guild, args[1]);
     const user = await parseUser(message, args[2]);
-    const role = parseRole(message.guild, args[3]);
+    const role = await parseRole(message, args[3]);
     if (!voiceChannel || !user) {
       await safeMessageReply(message, {
         embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Uso: `+customregister voc #canale @utente @ruolo`.')],
