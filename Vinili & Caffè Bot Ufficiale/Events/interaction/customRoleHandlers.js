@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 
 const pendingRoleGrants = new Map();
@@ -7,6 +7,13 @@ function parseRoleActionId(customId) {
   const [head, ownerId, roleId] = String(customId || '').split(':');
   if (!head || !ownerId || !roleId) return null;
   return { head, ownerId, roleId };
+}
+
+function parseVoiceActionId(customId) {
+  const [head, ownerId, channelId] = String(customId || '').split(':');
+  if (!head || !ownerId || !channelId) return null;
+  if (head !== 'customvoc_name' && head !== 'customvoc_emoji') return null;
+  return { head, ownerId, channelId };
 }
 
 async function checkOwnership(interaction, ownerId) {
@@ -407,6 +414,127 @@ async function handleAddRemoveSelectMenus(interaction) {
   return false;
 }
 
+function sanitizeVoiceBaseName(name) {
+  const clean = String(name || '')
+    .replace(/[^a-zA-Z0-9 _-]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+  if (!clean) return 'privata';
+  return clean;
+}
+
+function buildCustomVocName(emoji, baseName) {
+  const safeEmoji = String(emoji || '🎧').trim() || '🎧';
+  const safeBase = sanitizeVoiceBaseName(baseName);
+  const prefix = `༄${safeEmoji}︲`;
+  const maxBaseLength = Math.max(1, 100 - prefix.length);
+  return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
+}
+
+async function handleCustomVocButton(interaction) {
+  if (!interaction.isButton()) return false;
+  const parsed = parseVoiceActionId(interaction.customId);
+  if (!parsed) return false;
+
+  const { head, ownerId, channelId } = parsed;
+  if (interaction.user.id !== ownerId) {
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor('Red')
+          .setTitle('Accesso negato')
+          .setDescription('Solo il proprietario della vocale privata puo usare questo controllo.')
+      ],
+      flags: 1 << 6
+    }).catch(() => {});
+    return true;
+  }
+
+  const channel = interaction.guild?.channels?.cache?.get(channelId)
+    || await interaction.guild?.channels?.fetch(channelId).catch(() => null);
+  if (!channel || channel.type !== ChannelType.GuildVoice) {
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Canale vocale non trovato.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+
+  const modal = new ModalBuilder()
+    .setCustomId(`${head === 'customvoc_emoji' ? 'customvoc_modal_emoji' : 'customvoc_modal_name'}:${ownerId}:${channelId}`)
+    .setTitle(head === 'customvoc_emoji' ? 'Imposta emoji vocale' : 'Modifica nome vocale');
+  const input = new TextInputBuilder()
+    .setCustomId('value')
+    .setLabel(head === 'customvoc_emoji' ? 'Emoji' : 'Nuovo nome')
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true)
+    .setPlaceholder(head === 'customvoc_emoji' ? 'Es: 🎧' : 'Es: privata-lore')
+    .setMaxLength(head === 'customvoc_emoji' ? 32 : 90);
+  modal.addComponents(new ActionRowBuilder().addComponents(input));
+  await interaction.showModal(modal).catch(() => {});
+  return true;
+}
+
+async function handleCustomVocModal(interaction) {
+  if (!interaction.isModalSubmit()) return false;
+  const customId = String(interaction.customId || '');
+  const isNameModal = customId.startsWith('customvoc_modal_name:');
+  const isEmojiModal = customId.startsWith('customvoc_modal_emoji:');
+  if (!isNameModal && !isEmojiModal) return false;
+  const [, ownerId, channelId] = customId.split(':');
+  if (!ownerId || !channelId) return true;
+  if (interaction.user.id !== ownerId) {
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Non puoi modificare questo canale.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+
+  const channel = interaction.guild?.channels?.cache?.get(channelId)
+    || await interaction.guild?.channels?.fetch(channelId).catch(() => null);
+  if (!channel || channel.type !== ChannelType.GuildVoice) {
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Canale vocale non trovato.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+
+  const me = interaction.guild?.members?.me || interaction.guild?.members?.cache?.get(interaction.client.user.id);
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Mi serve il permesso `Gestisci Canali`.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+
+  const raw = interaction.fields.getTextInputValue('value') || '';
+  const ownerCustomRoleDoc = await CustomRole.findOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => null);
+  const ownerRole = ownerCustomRoleDoc?.roleId
+    ? (interaction.guild.roles.cache.get(ownerCustomRoleDoc.roleId) || await interaction.guild.roles.fetch(ownerCustomRoleDoc.roleId).catch(() => null))
+    : null;
+
+  if (isEmojiModal) {
+    const emoji = raw.trim();
+    if (!emoji) {
+      await interaction.reply({ content: '<:vegax:1443934876440068179> Emoji non valida.', flags: 1 << 6 }).catch(() => {});
+      return true;
+    }
+    if (ownerCustomRoleDoc) {
+      ownerCustomRoleDoc.customVocEmoji = emoji;
+      await ownerCustomRoleDoc.save().catch(() => {});
+    }
+    const currentBase = String(channel.name || '').includes('︲')
+      ? String(channel.name).split('︲').slice(1).join('︲')
+      : String(channel.name || 'privata');
+    const nextNameFromEmoji = buildCustomVocName(emoji, currentBase);
+    await channel.edit({ name: nextNameFromEmoji }, `Custom voc emoji by ${interaction.user.tag}`).catch(() => {});
+    await interaction.reply({
+      content: `<:vegacheckmark:1443666279058772028> Emoji aggiornata: ${emoji}`,
+      flags: 1 << 6
+    }).catch(() => {});
+    return true;
+  }
+
+  const nextName = buildCustomVocName(ownerCustomRoleDoc?.customVocEmoji || ownerRole?.unicodeEmoji || '🎧', raw);
+  await channel.edit({ name: nextName }, `Custom voc rename by ${interaction.user.tag}`).catch(() => {});
+  await interaction.reply({
+    content: `<:vegacheckmark:1443666279058772028> Nome aggiornato: \`${nextName}\``,
+    flags: 1 << 6
+  }).catch(() => {});
+  return true;
+}
+
 async function handleGrantButtons(interaction) {
   if (!interaction.isButton() || !String(interaction.customId || '').startsWith('customrole_grant:')) return false;
 
@@ -498,6 +626,8 @@ async function handleGrantButtons(interaction) {
 }
 
 async function handleCustomRoleInteraction(interaction) {
+  if (await handleCustomVocButton(interaction)) return true;
+  if (await handleCustomVocModal(interaction)) return true;
   if (await handleAddRemoveSelectMenus(interaction)) return true;
   if (await handleGrantButtons(interaction)) return true;
   if (await handleRoleActionButton(interaction)) return true;

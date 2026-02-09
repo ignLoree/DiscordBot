@@ -4,7 +4,8 @@ const customRoleSchema = new Schema(
   {
     guildId: { type: String, required: true },
     userId: { type: String, required: true },
-    roleId: { type: String, required: true }
+    roleId: { type: String, required: true },
+    customVocEmoji: { type: String, default: null }
   },
   {
     timestamps: true

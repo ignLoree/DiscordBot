@@ -1,4 +1,4 @@
-const { ChannelType, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const CustomRole = require('../../Schemas/Community/customRoleSchema');
 
@@ -21,20 +21,28 @@ function buildNoPermEmbed() {
     .setDescription('Questo comando e riservato agli utenti VIP con accesso ai ruoli personalizzati.');
 }
 
-function sanitizeVoiceName(name) {
+function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
     .replace(/[^a-zA-Z0-9 _-]/g, '')
     .replace(/\s+/g, '-')
     .trim();
-  if (!clean) return 'private-voice';
-  return `private-${clean}`.slice(0, 90);
+  if (!clean) return 'privata';
+  return clean;
+}
+
+function buildCustomVocName(emoji, baseName) {
+  const safeEmoji = String(emoji || '🎧').trim() || '🎧';
+  const safeBase = sanitizeVoiceBaseName(baseName);
+  const prefix = `༄${safeEmoji}︲`;
+  const maxBaseLength = Math.max(1, 100 - prefix.length);
+  return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
 }
 
 async function resolveCustomRole(guild, userId) {
   const doc = await CustomRole.findOne({ guildId: guild.id, userId }).lean().catch(() => null);
-  if (!doc?.roleId) return null;
+  if (!doc?.roleId) return { role: null, doc };
   const role = guild.roles.cache.get(doc.roleId) || await guild.roles.fetch(doc.roleId).catch(() => null);
-  return role || null;
+  return { role: role || null, doc };
 }
 
 function findExistingVoiceChannel(guild, roleId) {
@@ -47,6 +55,32 @@ function findExistingVoiceChannel(guild, roleId) {
       overwrite.allow.has(PermissionsBitField.Flags.Connect) &&
       overwrite.allow.has(PermissionsBitField.Flags.Speak);
   }) || null;
+}
+
+function buildVoicePanelEmbed(channel, customRole) {
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle('Pannello Vocale Privata')
+    .setDescription([
+      `<:vegacheckmark:1443666279058772028> Canale: ${channel}`,
+      `<:dot:1443660294596329582> Categoria: <#${CUSTOM_VOICE_CATEGORY_ID}>`,
+      `<:dot:1443660294596329582> Accesso consentito a chi possiede ${customRole}`,
+      '',
+      'Usa il bottone per modificare il nome del canale.'
+    ].join('\n'));
+}
+
+function buildVoicePanelRow(ownerId, channelId) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`customvoc_name:${ownerId}:${channelId}`)
+      .setLabel('Modifica Nome')
+      .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`customvoc_emoji:${ownerId}:${channelId}`)
+      .setLabel('Aggiungi Emoji')
+      .setStyle(ButtonStyle.Secondary)
+  );
 }
 
 module.exports = {
@@ -62,7 +96,7 @@ module.exports = {
       return;
     }
 
-    const customRole = await resolveCustomRole(message.guild, message.author.id);
+    const { role: customRole, doc: customRoleDoc } = await resolveCustomRole(message.guild, message.author.id);
     if (!customRole) {
       await safeMessageReply(message, {
         embeds: [
@@ -106,16 +140,15 @@ module.exports = {
     if (existing) {
       await safeMessageReply(message, {
         embeds: [
-          new EmbedBuilder()
-            .setColor('#6f4e37')
-            .setDescription(`<:vegacheckmark:1443666279058772028> Hai gia una vocale privata: ${existing}`)
+          buildVoicePanelEmbed(existing, customRole)
         ],
+        components: [buildVoicePanelRow(message.author.id, existing.id)],
         allowedMentions: { repliedUser: false }
       });
       return;
     }
 
-    const channelName = sanitizeVoiceName(message.member.displayName || message.author.username);
+    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || '🎧', message.member.displayName || message.author.username);
     const channel = await message.guild.channels.create({
       name: channelName,
       type: ChannelType.GuildVoice,
@@ -165,15 +198,9 @@ module.exports = {
 
     await safeMessageReply(message, {
       embeds: [
-        new EmbedBuilder()
-          .setColor('#6f4e37')
-          .setTitle('Vocale Privata Creata')
-          .setDescription([
-            `<:vegacheckmark:1443666279058772028> Canale creato: ${channel}`,
-            `<:dot:1443660294596329582> Categoria: <#${CUSTOM_VOICE_CATEGORY_ID}>`,
-            `<:dot:1443660294596329582> Accesso consentito a chi possiede ${customRole}`
-          ].join('\n'))
+        buildVoicePanelEmbed(channel, customRole)
       ],
+      components: [buildVoicePanelRow(message.author.id, channel.id)],
       allowedMentions: { repliedUser: false }
     });
   }
