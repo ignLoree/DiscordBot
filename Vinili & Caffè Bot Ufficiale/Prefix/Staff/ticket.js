@@ -81,8 +81,9 @@ module.exports = {
       return;
     }
 
+    const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
     const requiresClaimOwnership = subcommand !== 'claim';
-    if (requiresClaimOwnership && activeTicketInChannel.claimedBy !== message.author.id) {
+    if (requiresClaimOwnership && !isHighStaffBypass && activeTicketInChannel.claimedBy !== message.author.id) {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
@@ -365,6 +366,17 @@ module.exports = {
     }
 
     if (subcommand === 'switchpanel') {
+      if (!message.member.roles.cache.has(HIGHSTAFF_ROLE_ID)) {
+        await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Solo l\'**High Staff** può usare `switchpanel`.')
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
       const targetChannel = message.channel;
       const categoryToken = String(rest[0] || '').toLowerCase();
       const panelConfig = getTicketPanelConfig(categoryToken);
