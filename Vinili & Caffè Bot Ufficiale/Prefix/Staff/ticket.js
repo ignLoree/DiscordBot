@@ -8,6 +8,8 @@ const STAFF_ROLE_ID = '1442568910070349985';
 
 module.exports = {
   name: 'ticket',
+  description: 'Gestione ticket.',
+  subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim'],
 
   async execute(message, args = []) {
     if (!message.inGuild?.() || !message.guild || !message.member) {

@@ -290,15 +290,15 @@ function renderPageEmbed(message, page) {
       const aliasText = entry.type === 'prefix' && Array.isArray(entry.aliases) && entry.aliases.length
         ? ` (alias: ${entry.aliases.map((alias) => `${entry.prefixBase || '+'}${alias}`).join(', ')})`
         : '';
-      return `| \`${entry.invoke}\` - ${entry.description}${aliasText}`;
+      return `┃ \`${entry.invoke}\` - ${entry.description}${aliasText}`;
     });
-    sections.push(`* ${categoryLabel}\n${rows.join('\n')}`);
+    sections.push(`✨ **${categoryLabel}**\n${rows.join('\n')}`);
   }
 
   const description = page.items.length
     ? [
       'Ecco la lista dei comandi disponibili.',
-      'Uso: prefix/slash/context in base al comando.',
+      'Usa prefisso, slash o context menu in base al comando.',
       '',
       sections.join('\n\n')
     ].join('\n')
@@ -307,7 +307,7 @@ function renderPageEmbed(message, page) {
   return new EmbedBuilder()
     .setColor('#6f4e37')
     .setAuthor({ name: message.guild?.name || 'Help', iconURL: message.guild?.iconURL?.({ size: 128 }) || undefined })
-    .setTitle(`Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
+    .setTitle(`📜 Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
     .setDescription(description)
     .setFooter({ text: `Pagina ${page.indexLabel} | ${page.items.length} comandi | ${page.groupLabel}` })
     .setTimestamp()
@@ -319,11 +319,13 @@ function buildNavigationRow(state) {
     new ButtonBuilder()
       .setCustomId(state.prevId)
       .setLabel('Precedente')
+      .setEmoji('<a:vegaleftarrow:1462914743416131816>')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
       .setLabel('Prossima')
+      .setEmoji('<a:vegarightarrow:1443673039156936837>')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex >= state.total - 1)
   );
