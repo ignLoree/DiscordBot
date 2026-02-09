@@ -421,7 +421,7 @@ function buildHelpV2Container(message, page, navState) {
         components: [
           {
             type: ComponentType.TextDisplay,
-            content: '‎'
+            content: `## ${message.guild?.name || 'Help'}`
           }
         ],
         accessory: {
