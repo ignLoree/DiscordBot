@@ -523,24 +523,6 @@ module.exports = {
                 ].join('\n'))
                 .addFields(
                     {
-                        name: '\`VETERANO\`',
-                        value: [
-                            '<@&1469073503025103113>',
-                            'Ottenibile stando nel server per almeno 1 mese',
-                            '९ Esclusività del ruolo.'
-                        ].join('\n'),
-                        inline: true
-                    },
-                    {
-                        name: '\`OG\`',
-                        value: [
-                            '<@&1469041493401534644>',
-                            'Ottenibile stando nel server per almeno 1 anno',
-                            '९ Esclusività del ruolo.'
-                        ].join('\n'),
-                        inline: true
-                    },
-                    {
                         name: '\`WEEKLY WINNERS\`',
                         value: [
                             '<@&1468674837957574757>/<@&1468674787399172208>',
@@ -581,7 +563,25 @@ module.exports = {
                             '<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname'
                         ].join('\n'),
                         inline: true
-                    }
+                    },
+                                        {
+                        name: '\`VETERANO\`',
+                        value: [
+                            '<@&1469073503025103113>',
+                            'Ottenibile stando nel server per almeno 1 mese',
+                            '९ Esclusività del ruolo.'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`OG\`',
+                        value: [
+                            '<@&1469041493401534644>',
+                            'Ottenibile stando nel server per almeno 1 anno',
+                            '९ Esclusività del ruolo.'
+                        ].join('\n'),
+                        inline: true
+                    },
                 )
                 .setFooter({ text: '⚠️ ▸ Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.' });
 
