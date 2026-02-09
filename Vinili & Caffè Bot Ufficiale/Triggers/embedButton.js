@@ -545,6 +545,16 @@ module.exports = {
                         inline: true
                     },
                     {
+                        name: '\`PROMOTER\`',
+                        value: [
+                            '<@&1469758545263198442>',
+                            'Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)',
+                            '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
+                            '<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
                         name: '\`VOTER\`',
                         value: [
                             '<@&1468266342682722679>',
@@ -555,16 +565,6 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '\`PROMOTER\`',
-                        value: [
-                            '<@&1469758545263198442>',
-                            'Ottenibile invitando 5 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)',
-                            '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
-                            '<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname'
-                        ].join('\n'),
-                        inline: true
-                    },
-                                        {
                         name: '\`VETERANO\`',
                         value: [
                             '<@&1469073503025103113>',
@@ -585,7 +585,7 @@ module.exports = {
                 )
                 .setFooter({ text: '⚠️ ▸ Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.' });
 
-            await interaction.reply({ embeds: [ badgesEmbed ], flags: 1 << 6 });
+            await interaction.reply({ embeds: [badgesEmbed], flags: 1 << 6 });
         }
 
         /// INFO MULTIPLIER
