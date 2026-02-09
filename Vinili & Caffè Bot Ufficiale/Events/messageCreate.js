@@ -505,7 +505,28 @@ module.exports = {
             execMessage.reply = (payload) => originalReply(applyDefaultFooterToEmbeds(payload, execMessage.guild));
             const originalChannelSend = execMessage.channel?.send?.bind(execMessage.channel);
             if (originalChannelSend) {
-                execMessage.channel.send = (payload) => originalChannelSend(applyDefaultFooterToEmbeds(payload, execMessage.guild));
+                execMessage.channel.send = (payload) => {
+                    const withFooter = applyDefaultFooterToEmbeds(payload, execMessage.guild);
+                    if (typeof withFooter === 'string') {
+                        return originalChannelSend({
+                            content: withFooter,
+                            reply: { messageReference: execMessage.id, failIfNotExists: false },
+                            allowedMentions: { repliedUser: false }
+                        });
+                    }
+                    if (!withFooter || typeof withFooter !== 'object') {
+                        return originalChannelSend(withFooter);
+                    }
+                    const normalized = {
+                        ...withFooter,
+                        reply: withFooter.reply || (withFooter.messageReference ? undefined : { messageReference: execMessage.id, failIfNotExists: false }),
+                        allowedMentions: {
+                            ...(withFooter.allowedMentions || {}),
+                            repliedUser: withFooter.allowedMentions?.repliedUser ?? false
+                        }
+                    };
+                    return originalChannelSend(normalized);
+                };
             }
             const originalSendTyping = execMessage.channel?.sendTyping?.bind(execMessage.channel);
             let typingStartTimer = null;

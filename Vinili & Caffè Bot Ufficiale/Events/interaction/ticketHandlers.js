@@ -159,7 +159,8 @@ async function handleTicketInteraction(interaction) {
                 'close_ticket_motivo',
                 'accetta',
                 'rifiuta',
-                'unclaim'
+                'unclaim',
+                'ticket_open_desc_modal'
             ].includes(interaction.customId)) {
                 return true;
             }

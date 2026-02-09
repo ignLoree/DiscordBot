@@ -11,9 +11,9 @@ const PARTNERMANAGER_ROLE_ID = '1442568905582317740';
 
 module.exports = {
   name: 'ticket',
-  aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'switchpanel', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketswitchpanel', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
+  aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'switchpanel', 'rename', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketswitchpanel', 'ticketrename', 'trename', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
   description: 'Gestione ticket.',
-  subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim', 'switchpanel'],
+  subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim', 'switchpanel', 'rename'],
   subcommandAliases: {
     add: 'add',
     remove: 'remove',
@@ -22,7 +22,10 @@ module.exports = {
     claim: 'claim',
     unclaim: 'unclaim',
     switchpanel: 'switchpanel',
+    rename: 'rename',
     ticketswitchpanel: 'switchpanel',
+    ticketrename: 'rename',
+    trename: 'rename',
     ticketclose: 'close',
     ticketclaim: 'claim',
     ticketunclaim: 'unclaim',
@@ -64,7 +67,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel>`')
+            .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename>`')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -548,11 +551,83 @@ module.exports = {
       }
     }
 
+    if (subcommand === 'rename') {
+      if (!message.member.roles.cache.has(HIGHSTAFF_ROLE_ID)) {
+        await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Solo l\'**High Staff** può usare `rename`.')
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const rawNewName = rest.join(' ').trim();
+      if (!rawNewName) {
+        await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket rename <nuovo nome>`')
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const currentName = String(message.channel.name || '');
+      const firstSeparatorIndex = currentName.indexOf('︲');
+      if (firstSeparatorIndex === -1) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Nome canale ticket non valido: manca il separatore `︲`.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const ticketPrefix = currentName.slice(0, firstSeparatorIndex + 1);
+      const normalizedTail = rawNewName
+        .replace(/[\s-]+/g, '᲼')
+        .replace(/[\/\\#@:`*?"<>|]/g, '')
+        .trim();
+
+      if (!normalizedTail) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Il nuovo nome non è valido.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const newName = `${ticketPrefix}${normalizedTail}`.slice(0, 100);
+      if (newName === currentName) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Info', '<:attentionfromvega:1443651874032062505> Il canale ha già questo nome.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      await message.channel.setName(newName).catch(() => null);
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('#6f4e37')
+            .setTitle('Rinomina Ticket')
+            .setDescription(`<:vegacheckmark:1443666279058772028> Canale rinominato in \`${newName}\``)
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
     await safeMessageReply(message, {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`.')
+          .setDescription('<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`.')
       ],
       allowedMentions: { repliedUser: false }
     });
