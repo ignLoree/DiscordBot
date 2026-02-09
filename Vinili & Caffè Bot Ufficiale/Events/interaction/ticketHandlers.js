@@ -58,6 +58,25 @@ async function handleTicketInteraction(interaction) {
         return new EmbedBuilder().setTitle(title).setDescription(description).setColor('#6f4e37');
     }
 
+    async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
+        if (!target?.send) return null;
+        const sent = await target.send(payload).catch(() => null);
+        if (!sent || !hasHtml) return sent;
+        const attachment = sent.attachments?.find((att) => {
+            const name = String(att?.name || '').toLowerCase();
+            const url = String(att?.url || '').toLowerCase();
+            return name.endsWith('.html') || url.includes('.html');
+        });
+        if (attachment?.url) {
+            const baseContent = typeof payload?.content === 'string' ? payload.content.trim() : '';
+            const nextContent = baseContent
+                ? `${baseContent}\nApri transcript HTML: ${attachment.url}`
+                : `Apri transcript HTML: ${attachment.url}`;
+            await sent.edit({ content: nextContent }).catch(() => { });
+        }
+        return sent;
+    }
+
     function normalizeCategoryName(name) {
         return String(name || '')
             .toLowerCase()
@@ -694,7 +713,7 @@ async function handleTicketInteraction(interaction) {
                 const motivo = ticketDoc.closeReason || 'Nessun motivo inserito';
                 const logChannel = interaction.guild.channels.cache.get(IDs.channels.ticketCloseLogAlt);
                 if (logChannel) {
-                    await logChannel.send({
+                    await sendTranscriptWithBrowserLink(logChannel, {
                         embeds: [
                             new EmbedBuilder()
                                 .setTitle('Ticket Chiuso')
@@ -704,17 +723,17 @@ async function handleTicketInteraction(interaction) {
                         files: transcriptHtmlPath
                             ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
                             : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
-                    }).catch(() => { });
+                    }, Boolean(transcriptHtmlPath));
                 }
                 try {
                     const member = await interaction.guild.members.fetch(ticketDoc.userId).catch(() => null);
                     if (member) {
-                        await member.send({
+                        await sendTranscriptWithBrowserLink(member, {
                             embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`).setColor('#6f4e37')],
                             files: transcriptHtmlPath
                                 ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
                                 : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
-                        }).catch(() => { });
+                        }, Boolean(transcriptHtmlPath));
                     }
                 } catch (err) { global.logger.error(err); }
                 await Ticket.updateOne({ channelId: channel.id }, { $set: { open: false, transcript: transcriptTXT, closeReason: motivo, closedAt: new Date() } }).catch(() => { });
@@ -839,7 +858,7 @@ async function handleTicketInteraction(interaction) {
                 : 'Data non disponibile';
             const logChannel = targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL);
             if (logChannel) {
-                await logChannel.send({
+                await sendTranscriptWithBrowserLink(logChannel, {
                     files: transcriptHtmlPath
                         ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
                         : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
@@ -849,17 +868,17 @@ async function handleTicketInteraction(interaction) {
                             .setDescription(`**Aperto da:** <@${ticket.userId}>\n**Chiuso da:** ${targetInteraction.user}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`)
                             .setColor('#6f4e37')
                     ],
-                }).catch(err => global.logger.error(err));
+                }, Boolean(transcriptHtmlPath));
             }
             const member = await targetInteraction.guild.members.fetch(ticket.userId).catch(() => null);
             if (member) {
                 try {
-                    await member.send({
+                    await sendTranscriptWithBrowserLink(member, {
                         files: transcriptHtmlPath
                             ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
                             : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
                         embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticket.userId}>\n**Chiuso da:** ${targetInteraction.user}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`).setColor('#6f4e37')]
-                    })
+                    }, Boolean(transcriptHtmlPath));
                 } catch (err) {
                     if (err.code !== 50007) {
                         global.logger.error(err);

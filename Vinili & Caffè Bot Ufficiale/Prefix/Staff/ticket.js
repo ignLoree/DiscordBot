@@ -9,6 +9,25 @@ const STAFF_ROLE_ID = IDs.roles.staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.highStaff;
 const PARTNERMANAGER_ROLE_ID = IDs.roles.partnerManager;
 
+async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
+  if (!target?.send) return null;
+  const sent = await target.send(payload).catch(() => null);
+  if (!sent || !hasHtml) return sent;
+  const attachment = sent.attachments?.find((att) => {
+    const name = String(att?.name || '').toLowerCase();
+    const url = String(att?.url || '').toLowerCase();
+    return name.endsWith('.html') || url.includes('.html');
+  });
+  if (attachment?.url) {
+    const baseContent = typeof payload?.content === 'string' ? payload.content.trim() : '';
+    const nextContent = baseContent
+      ? `${baseContent}\nApri transcript HTML: ${attachment.url}`
+      : `Apri transcript HTML: ${attachment.url}`;
+    await sent.edit({ content: nextContent }).catch(() => {});
+  }
+  return sent;
+}
+
 module.exports = {
   name: 'ticket',
   aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'switchpanel', 'rename', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketswitchpanel', 'ticketrename', 'trename', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
@@ -199,7 +218,7 @@ module.exports = {
 
       const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID) || await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
       if (logChannel) {
-        await logChannel.send({
+        await sendTranscriptWithBrowserLink(logChannel, {
           files: transcriptHtmlPath
             ? [{ attachment: transcriptHtmlPath, name: `transcript_${message.channel.id}.html` }]
             : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
@@ -209,13 +228,13 @@ module.exports = {
               .setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${message.author}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
               .setColor('#6f4e37')
           ]
-        }).catch((err) => global.logger.error(err));
+        }, Boolean(transcriptHtmlPath));
       }
 
       const member = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
       if (member) {
         try {
-          await member.send({
+          await sendTranscriptWithBrowserLink(member, {
             files: transcriptHtmlPath
               ? [{ attachment: transcriptHtmlPath, name: `transcript_${message.channel.id}.html` }]
               : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
@@ -225,7 +244,7 @@ module.exports = {
                 .setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${message.author}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
                 .setColor('#6f4e37')
             ]
-          });
+          }, Boolean(transcriptHtmlPath));
         } catch (err) {
           if (err?.code !== 50007) global.logger.error('[DM ERROR]', err);
         }
