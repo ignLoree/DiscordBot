@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder } = require('discord.js');
-const { resolveTarget } = require('../../Utils/Moderation/prefixModeration');
+const { resolveTarget, extractUserId } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
 
 const DISCORD_BULK_DELETE_MAX = 100;
@@ -23,7 +23,10 @@ module.exports = {
   async execute(message, args, client) {
     await message.channel.sendTyping();
 
-    const { user } = await resolveTarget(message, args, 1);
+    const userArgIndex = Array.isArray(args)
+      ? args.findIndex((arg) => Boolean(extractUserId(String(arg || ''), message)))
+      : -1;
+    const { user } = await resolveTarget(message, args, userArgIndex >= 0 ? userArgIndex : 0);
     const config = await getModConfig(message.guild.id);
 
     const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => {}), 5000);
@@ -35,12 +38,23 @@ module.exports = {
 
     await message.delete().catch(() => {});
 
-    const requestedRaw = String(args?.[0] || '').trim().toLowerCase();
+    const amountToken = Array.isArray(args)
+      ? args.find((arg) => {
+          const token = String(arg || '').trim().toLowerCase();
+          if (!token) return false;
+          if (token === 'all') return true;
+          if (!/^\d+$/.test(token)) return false;
+          if (/^\d{17,20}$/.test(token)) return false;
+          return true;
+        })
+      : null;
+
+    const requestedRaw = String(amountToken || '').trim().toLowerCase();
     const requestedAmount = Number(requestedRaw);
     const hasNumericAmount = Number.isFinite(requestedAmount) && requestedAmount > 0;
 
     if (requestedRaw && requestedRaw !== 'all' && !hasNumericAmount) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Quantita non valida. Usa un numero positivo oppure `all`.' });
+      await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida. Usa un numero positivo oppure `all`.' });
       return;
     }
 
