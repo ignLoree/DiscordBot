@@ -363,8 +363,7 @@ function buildNavigationRow(state) {
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
-      .setLabel('Prossima')
-      .setEmoji('<a:vegarightarrow:1443673039156936837>')
+      .setLabel('Prossima <a:vegarightarrow:1443673039156936837>')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex >= state.total - 1)
   );

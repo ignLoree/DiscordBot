@@ -304,70 +304,75 @@ async function handleVoteManagerMessage(message) {
 module.exports = {
     name: "messageCreate",
     async execute(message, client) {
+        const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
         try {
-            if (
-                message.guild &&
-                message.member &&
-                !message.author?.bot &&
-                isMediaMessage(message) &&
-                !hasMediaPermission(message.member) &&
-                !channelAllowsMedia(message) &&
-                message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID &&
-                !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
-            ) {
-                await message.delete().catch(() => { });
-                const embed = new EmbedBuilder()
-                    .setColor("#6f4e37")
-                    .setDescription(
-                        [
-                            `<:attentionfromvega:1443651874032062505> ? Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
-                            "",
-                            "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
-                            `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&1468938195348754515>.`
-                        ].join("\n")
-                    );
-                await message.channel.send({ content: `${message.author}`, embeds: [embed] });
-                return;
+            if (!isEditedPrefixExecution) {
+                if (
+                    message.guild &&
+                    message.member &&
+                    !message.author?.bot &&
+                    isMediaMessage(message) &&
+                    !hasMediaPermission(message.member) &&
+                    !channelAllowsMedia(message) &&
+                    message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID &&
+                    !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
+                ) {
+                    await message.delete().catch(() => { });
+                    const embed = new EmbedBuilder()
+                        .setColor("#6f4e37")
+                        .setDescription(
+                            [
+                                `<:attentionfromvega:1443651874032062505> ? Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
+                                "",
+                                "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
+                                `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&1468938195348754515>.`
+                            ].join("\n")
+                        );
+                    await message.channel.send({ content: `${message.author}`, embeds: [embed] });
+                    return;
+                }
+                if (message.author?.id !== client?.user?.id) {
+                    const handledVote = await handleVoteManagerMessage(message);
+                    if (handledVote) return;
+                }
+                const handledDisboard = await handleDisboardBump(message, client);
+                if (handledDisboard) return;
+                const handledDiscadia = await handleDiscadiaBump(message, client);
+                if (handledDiscadia) return;
             }
-            if (message.author?.id !== client?.user?.id) {
-                const handledVote = await handleVoteManagerMessage(message);
-                if (handledVote) return;
-            }
-            const handledDisboard = await handleDisboardBump(message, client);
-            if (handledDisboard) return;
-            const handledDiscadia = await handleDiscadiaBump(message, client);
-            if (handledDiscadia) return;
         } catch (error) {
             logEventError(client, 'DISBOARD REMINDER ERROR', error);
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
-        try {
-            if (message.channelId === '1442569130573303898') {
-                recordReminderActivity(message.channelId);
+        if (!isEditedPrefixExecution) {
+            try {
+                if (message.channelId === '1442569130573303898') {
+                    recordReminderActivity(message.channelId);
+                }
+            } catch (error) {
+                logEventError(client, 'REMINDER ACTIVITY ERROR', error);
             }
-        } catch (error) {
-            logEventError(client, 'REMINDER ACTIVITY ERROR', error);
-        }
-        try {
-            await recordMessageActivity(message);
-        } catch (error) {
-            logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
-        }
-        try {
-            await handleMinigameMessage(message, client);
-        } catch (error) {
-            logEventError(client, 'MINIGAME ERROR', error);
-        }
-        try {
-            await handleAfk(message);
-        } catch (error) {
-            logEventError(client, 'AFK ERROR', error);
-        }
-        try {
-            await handleCounting(message, client);
-        } catch (error) {
-            logEventError(client, 'COUNTING ERROR', error);
+            try {
+                await recordMessageActivity(message);
+            } catch (error) {
+                logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
+            }
+            try {
+                await handleMinigameMessage(message, client);
+            } catch (error) {
+                logEventError(client, 'MINIGAME ERROR', error);
+            }
+            try {
+                await handleAfk(message);
+            } catch (error) {
+                logEventError(client, 'AFK ERROR', error);
+            }
+            try {
+                await handleCounting(message, client);
+            } catch (error) {
+                logEventError(client, 'COUNTING ERROR', error);
+            }
         }
         const defaultPrefix = '+';
         let overrideCommand = null;
@@ -381,10 +386,12 @@ module.exports = {
                 }
             }
         }
-        try {
-            await handleTtsMessage(message, client, defaultPrefix);
-        } catch (error) {
-            logEventError(client, 'TTS ERROR', error);
+        if (!isEditedPrefixExecution) {
+            try {
+                await handleTtsMessage(message, client, defaultPrefix);
+            } catch (error) {
+                logEventError(client, 'TTS ERROR', error);
+            }
         }
         const startsWithDefault = message.content.startsWith(defaultPrefix);
         const shouldDeleteCommandMessage = true;
