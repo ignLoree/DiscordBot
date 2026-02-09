@@ -4,7 +4,7 @@ module.exports = {
   name: 'description',
   aliases: ['desc'],
 
-  async execute(message) {
+  async execute(message, args = []) {
     await message.channel.sendTyping();
     const descriptionText = [
       '```',
@@ -15,14 +15,7 @@ module.exports = {
       '-# @everyone & @here_ _',
       '```'
     ].join('\n');
-
-    if (!message.inGuild?.() || !message.guild || !message.member) {
-      await safeMessageReply(message, {
-        content: descriptionText,
-        allowedMentions: { repliedUser: false }
-      });
-      return;
-    }
+    if (!message.inGuild?.() || !message.guild || !message.member) return;
 
     const allowedCategoryId = '1442569056795230279';
     const partnerRoleId =
@@ -58,9 +51,37 @@ module.exports = {
       );
     }
 
+    const target = await resolveTargetUser(message, args[0]);
+    if (!target) {
+      await safeMessageReply(message, {
+        content: descriptionText,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const delivered = await target.send(descriptionText).then(() => true).catch(() => false);
+    if (!delivered) {
+      await safeMessageReply(message, {
+        content: `<:vegax:1443934876440068179> Non riesco a inviare DM a ${target}.`,
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
     await safeMessageReply(message, {
-      content: descriptionText,
+      content: `<:vegacheckmark:1443666279058772028> Description inviata in DM a ${target}.`,
       allowedMentions: { repliedUser: false }
     });
   }
 };
+
+async function resolveTargetUser(message, rawArg) {
+  const mentioned = message.mentions?.users?.first();
+  if (mentioned) return mentioned;
+  if (!rawArg) return null;
+
+  const value = String(rawArg).trim();
+  const id = value.match(/^<@!?(\d+)>$/)?.[1] || (/^\d{17,20}$/.test(value) ? value : null);
+  if (!id) return null;
+  return message.client.users.fetch(id).catch(() => null);
+}

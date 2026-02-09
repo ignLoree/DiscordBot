@@ -8,5 +8,10 @@ const ticketSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     transcript: String,
     messageId: String,
+    descriptionPromptMessageId: String,
+    descriptionSubmitted: { type: Boolean, default: false },
+    descriptionText: String,
+    descriptionSubmittedAt: Date,
+    autoClosePromptSentAt: Date
 });
 module.exports = mongoose.models.Ticket || mongoose.model('Ticket', ticketSchema);

@@ -2,6 +2,7 @@
 const Staff = require('../Schemas/Staff/staffSchema');
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const createTranscript = require("../Utils/Ticket/createTranscript");
+const { createTranscriptHtml, saveTranscriptHtml } = require("../Utils/Ticket/createTranscriptHtml");
 const InviteTrack = require('../Schemas/Community/inviteTrackSchema');
 
 module.exports = {
@@ -18,25 +19,41 @@ module.exports = {
             if (totalVoice) {
                 totalVoice.setName(`༄☕︲User: ${guild.memberCount}`).catch(() => {});
             }
-            const ticket = await Ticket.findOne({ userId: member.id, open: true });
-            if (ticket) {
-                const channel = guild.channels.cache.get(ticket.channelId);
-                if (channel) {
-                    const transcriptTXT = await createTranscript(channel);
+            const openTickets = await Ticket.find({ userId: member.id, open: true }).catch(() => []);
+            if (openTickets.length > 0) {
+                const logChannel = guild.channels.cache.get("1442569290682208296");
+                for (const ticket of openTickets) {
+                    const channel = guild.channels.cache.get(ticket.channelId) || await guild.channels.fetch(ticket.channelId).catch(() => null);
+                    if (!channel) {
+                        await Ticket.updateOne(
+                            { _id: ticket._id },
+                            { $set: { open: false, closeReason: "Utente uscito dal server", closedAt: new Date() } }
+                        ).catch(() => {});
+                        continue;
+                    }
+
+                    const transcriptTXT = await createTranscript(channel).catch(() => "");
+                    const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
+                    const transcriptHtmlPath = transcriptHTML
+                        ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
+                        : null;
                     ticket.open = false;
                     ticket.transcript = transcriptTXT;
                     ticket.closeReason = "Utente uscito dal server";
-                    await ticket.save();
-                    const logChannel = guild.channels.cache.get("1442569290682208296");
+                    ticket.closedAt = new Date();
+                    await ticket.save().catch(() => {});
+
                     const createdAtFormatted = ticket.createdAt
                         ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                         : "Data non disponibile";
                     if (logChannel) {
                         await logChannel.send({
-                            files: [{
-                                attachment: Buffer.from(transcriptTXT, "utf-8"),
-                                name: `transcript_${channel.id}.txt`
-                            }],
+                            files: transcriptHtmlPath
+                                ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
+                                : [{
+                                    attachment: Buffer.from(transcriptTXT, "utf-8"),
+                                    name: `transcript_${channel.id}.txt`
+                                }],
                             embeds: [
                                 new EmbedBuilder()
                                     .setTitle("Ticket Chiuso")
@@ -49,7 +66,7 @@ module.exports = {
 `)
                                     .setColor("#6f4e37")
                             ]
-                        });
+                        }).catch(() => {});
                     }
                     setTimeout(() => channel.delete().catch(() => {}), 1000);
                 }

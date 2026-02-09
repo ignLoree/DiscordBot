@@ -2,6 +2,7 @@
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
+const { createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/createTranscriptHtml');
 
 const LOG_CHANNEL_ID = '1442569290682208296';
 const STAFF_ROLE_ID = '1442568910070349985';
@@ -181,6 +182,10 @@ module.exports = {
       }
 
       const transcriptTXT = await createTranscript(message.channel).catch(() => '');
+      const transcriptHTML = await createTranscriptHtml(message.channel).catch(() => '');
+      const transcriptHtmlPath = transcriptHTML
+        ? await saveTranscriptHtml(message.channel, transcriptHTML).catch(() => null)
+        : null;
       ticketDoc.open = false;
       ticketDoc.transcript = transcriptTXT;
       await ticketDoc.save().catch(() => { });
@@ -192,7 +197,9 @@ module.exports = {
       const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID) || await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
       if (logChannel) {
         await logChannel.send({
-          files: [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
+          files: transcriptHtmlPath
+            ? [{ attachment: transcriptHtmlPath, name: `transcript_${message.channel.id}.html` }]
+            : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
           embeds: [
             new EmbedBuilder()
               .setTitle('Ticket Chiuso')
@@ -206,7 +213,9 @@ module.exports = {
       if (member) {
         try {
           await member.send({
-            files: [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
+            files: transcriptHtmlPath
+              ? [{ attachment: transcriptHtmlPath, name: `transcript_${message.channel.id}.html` }]
+              : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${message.channel.id}.txt` }],
             embeds: [
               new EmbedBuilder()
                 .setTitle('Ticket Chiuso')

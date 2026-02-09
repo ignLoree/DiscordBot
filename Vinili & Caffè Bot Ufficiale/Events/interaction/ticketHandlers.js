@@ -1,14 +1,15 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, AttachmentBuilder } = require('discord.js');
+﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
+const { createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/createTranscriptHtml');
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
-const fs = require('fs');
 
 async function handleTicketInteraction(interaction) {
     const handledButtons = new Set([
         'ticket_partnership',
         'ticket_highstaff',
         'ticket_supporto',
+        'ticket_open_desc_modal',
         'claim_ticket',
         'close_ticket',
         'close_ticket_motivo',
@@ -17,6 +18,7 @@ async function handleTicketInteraction(interaction) {
         'unclaim'
     ]);
     const handledSelectMenus = new Set(['ticket_open_menu']);
+    const handledModals = new Set(['modal_close_ticket', 'ticket_open_desc_modal_submit']);
     const selectedTicketAction = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId)
         ? interaction.values?.[0]
         : null;
@@ -24,7 +26,7 @@ async function handleTicketInteraction(interaction) {
 
     const isTicketButton = interaction.isButton && interaction.isButton() && handledButtons.has(interaction.customId);
     const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId);
-    const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && interaction.customId === 'modal_close_ticket';
+    const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && handledModals.has(interaction.customId);
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
     const LOG_CHANNEL = '1442569290682208296';
@@ -280,12 +282,24 @@ async function handleTicketInteraction(interaction) {
                     global.logger.error(err);
                     return null;
                 });
+                const descriptionRow = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder()
+                        .setCustomId('ticket_open_desc_modal')
+                        .setLabel('📝 Invia Descrizione')
+                        .setStyle(ButtonStyle.Primary)
+                );
+                const descriptionPrompt = await channel.send({
+                    content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
+                    components: [descriptionRow]
+                }).catch(() => null);
                 await Ticket.create({
                     userId: interaction.user.id,
                     channelId: channel.id,
                     ticketType: config.type,
                     open: true,
-                    messageId: mainMsg?.id || null
+                    messageId: mainMsg?.id || null,
+                    descriptionPromptMessageId: descriptionPrompt?.id || null,
+                    descriptionSubmitted: false
                 }).catch(err => global.logger.error(err));
                 let tagRole = config.type === 'partnership' ? ROLE_PARTNERMANAGER : config.role;
                 const mentionMsg = await channel.send(`<@${interaction.user.id}> ${tagRole ? `<@&${tagRole}>` : ''}`).catch(() => null);
@@ -419,6 +433,38 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Claimato').setDescription(`Ticket preso in carico da <@${claimedTicket.claimedBy}>`).setColor('#6f4e37')] });
                 return true;
             }
+            if (interaction.customId === 'ticket_open_desc_modal') {
+                if (!interaction.channel) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    return true;
+                }
+                const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
+                if (!ticketDoc) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                    return true;
+                }
+                if (interaction.user.id !== ticketDoc.userId) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
+                    return true;
+                }
+                if (ticketDoc.descriptionSubmitted) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Hai già inviato la descrizione iniziale.')], flags: 1 << 6 });
+                    return true;
+                }
+                const modal = new ModalBuilder().setCustomId('ticket_open_desc_modal_submit').setTitle('Descrizione Ticket');
+                const input = new TextInputBuilder()
+                    .setCustomId('ticket_description')
+                    .setLabel('Inserisci la descrizione')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+                    .setMinLength(8)
+                    .setMaxLength(1000);
+                modal.addComponents(new ActionRowBuilder().addComponents(input));
+                await interaction.showModal(modal).catch(err => {
+                    global.logger.error(err);
+                });
+                return true;
+            }
             if (interaction.customId === 'unclaim') {
                 if (!interaction.channel) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
@@ -540,21 +586,17 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
                     return true;
                 }
-                if (interaction.user.id !== ticketDoc.userId) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo il proprietario del ticket può accettare la chiusura.')], flags: 1 << 6 });
+                const canHandleCloseRequest = interaction.user.id === ticketDoc.userId || interaction.user.id === ticketDoc.claimedBy;
+                if (!canHandleCloseRequest) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
                 const channel = interaction.channel;
-                const messages = await channel.messages.fetch({ limit: 100 }).catch(() => ({ values: () => [] }));
-                const msgs = Array.isArray(messages) ? messages : Array.from(messages.values());
-                const content = msgs.reverse().map(m => `[${m.createdAt.toLocaleString()}] ${m.author.tag}: ${m.content || '**No message content**'}`).join('\n');
-                const fileName = `transcript-${channel.id}.txt`;
-                try {
-                    fs.writeFileSync(fileName, content);
-                } catch (e) {
-                    global.logger.error(e);
-                }
-                const attachment = new AttachmentBuilder(fileName);
+                const transcriptTXT = await createTranscript(channel).catch(() => '');
+                const transcriptHTML = await createTranscriptHtml(channel).catch(() => '');
+                const transcriptHtmlPath = transcriptHTML
+                    ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
+                    : null;
                 const createdAtFormatted = ticketDoc.createdAt
                     ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
                     : 'Data non disponibile';
@@ -568,17 +610,23 @@ async function handleTicketInteraction(interaction) {
                                 .setDescription(`\n**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`)
                                 .setColor('#6f4e37')
                         ],
-                        files: [attachment]
+                        files: transcriptHtmlPath
+                            ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
+                            : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
                     }).catch(() => { });
                 }
                 try {
                     const member = await interaction.guild.members.fetch(ticketDoc.userId).catch(() => null);
                     if (member) {
-                        await member.send({ embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`).setColor('#6f4e37')], files: [attachment] }).catch(() => { });
+                        await member.send({
+                            embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`).setColor('#6f4e37')],
+                            files: transcriptHtmlPath
+                                ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
+                                : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
+                        }).catch(() => { });
                     }
                 } catch (err) { global.logger.error(err); }
-                try { fs.unlinkSync(fileName); } catch (e) { }
-                await Ticket.updateOne({ channelId: channel.id }, { $set: { open: false, transcript: content, closeReason: motivo, closedAt: new Date() } }).catch(() => { });
+                await Ticket.updateOne({ channelId: channel.id }, { $set: { open: false, transcript: transcriptTXT, closeReason: motivo, closedAt: new Date() } }).catch(() => { });
                 await channel.delete().catch(() => { });
                 return true;
             }
@@ -592,13 +640,61 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
                     return true;
                 }
-                if (interaction.user.id !== ticketDoc.userId) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo il proprietario del ticket può rifiutare la chiusura.')], flags: 1 << 6 });
+                const canHandleCloseRequest = interaction.user.id === ticketDoc.userId || interaction.user.id === ticketDoc.claimedBy;
+                if (!canHandleCloseRequest) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
                 await interaction.update({ embeds: [new EmbedBuilder().setTitle('Richiesta di chiusura').setDescription(`<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta di chiusura`).setColor('Red')], components: [] }).catch(() => { });
                 return true;
             }
+        }
+        if (isTicketModal && interaction.customId === 'ticket_open_desc_modal_submit') {
+            if (!interaction.channel) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                return true;
+            }
+            const description = interaction.fields.getTextInputValue('ticket_description')?.trim();
+            const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
+            if (!ticketDoc) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                return true;
+            }
+            if (interaction.user.id !== ticketDoc.userId) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
+                return true;
+            }
+            const updatedTicket = await Ticket.findOneAndUpdate(
+                { channelId: interaction.channel.id, descriptionSubmitted: { $ne: true } },
+                {
+                    $set: {
+                        descriptionSubmitted: true,
+                        descriptionText: description,
+                        descriptionSubmittedAt: new Date()
+                    }
+                },
+                { new: true }
+            ).catch(() => null);
+            if (!updatedTicket) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> La descrizione è già stata inviata.')], flags: 1 << 6 });
+                return true;
+            }
+            const descriptionEmbed = new EmbedBuilder()
+                .setTitle('<:reportmessage:1443670575376765130> • Descrizione Ticket')
+                .setDescription(description)
+                .setColor('#6f4e37')
+                .setFooter({ text: `Inviata da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) });
+            await interaction.channel.send({ embeds: [descriptionEmbed] }).catch(() => { });
+            if (updatedTicket.descriptionPromptMessageId) {
+                const promptMessage = await interaction.channel.messages.fetch(updatedTicket.descriptionPromptMessageId).catch(() => null);
+                if (promptMessage) {
+                    await promptMessage.delete().catch(() => { });
+                }
+            }
+            await safeReply(interaction, {
+                embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1443666279058772028> Descrizione inviata correttamente.')]
+            });
+            return true;
         }
         if (isTicketModal && interaction.customId === 'modal_close_ticket') {
             try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch (e) { }
@@ -628,6 +724,10 @@ async function handleTicketInteraction(interaction) {
                 return;
             }
             const transcriptTXT = await createTranscript(targetInteraction.channel).catch(() => '');
+            const transcriptHTML = await createTranscriptHtml(targetInteraction.channel).catch(() => '');
+            const transcriptHtmlPath = transcriptHTML
+                ? await saveTranscriptHtml(targetInteraction.channel, transcriptHTML).catch(() => null)
+                : null;
             ticket.open = false;
             ticket.transcript = transcriptTXT;
             await ticket.save().catch(() => { });
@@ -637,7 +737,9 @@ async function handleTicketInteraction(interaction) {
             const logChannel = targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL);
             if (logChannel) {
                 await logChannel.send({
-                    files: [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
+                    files: transcriptHtmlPath
+                        ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
+                        : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
                     embeds: [
                         new EmbedBuilder()
                             .setTitle('Ticket Chiuso')
@@ -650,7 +752,9 @@ async function handleTicketInteraction(interaction) {
             if (member) {
                 try {
                     await member.send({
-                        files: [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
+                        files: transcriptHtmlPath
+                            ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
+                            : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
                         embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticket.userId}>\n**Chiuso da:** ${targetInteraction.user}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`).setColor('#6f4e37')]
                     })
                 } catch (err) {
@@ -672,3 +776,4 @@ async function handleTicketInteraction(interaction) {
 }
 
 module.exports = { handleTicketInteraction };
+

@@ -13,6 +13,7 @@ const { startHourlyReminderLoop } = require('../Services/Community/chatReminderS
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
 const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/categoryNumberingService');
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
+const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketAutoClosePromptService');
 const cron = require('node-cron');
 
 const getChannelSafe = async (client, channelId) => {
@@ -155,6 +156,11 @@ module.exports = {
                 startWeeklyActivityWinnersLoop(client);
             } catch (err) {
                 global.logger.error('[WEEKLY ACTIVITY] Failed to start loop', err);
+            }
+            try {
+                startTicketAutoClosePromptLoop(client);
+            } catch (err) {
+                global.logger.error('[TICKET AUTO CLOSE PROMPT] Failed to start loop', err);
             }
         }
         try {
