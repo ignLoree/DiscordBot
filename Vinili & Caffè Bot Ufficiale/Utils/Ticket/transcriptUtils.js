@@ -18,22 +18,95 @@ function formatDate(timestamp) {
   }
 }
 
+const RICH_TOKEN_REGEX = /<a?:([a-zA-Z0-9_]+):(\d{17,20})>|<@!?(\d{17,20})>|<@&(\d{17,20})>|<#(\d{17,20})>/g;
+
+function getUserMentionLabel(message, userId) {
+  const member = message.guild?.members?.cache?.get(userId) || message.mentions?.members?.get?.(userId);
+  if (member?.displayName) return `@${member.displayName}`;
+
+  const user = message.client?.users?.cache?.get(userId) || message.mentions?.users?.get?.(userId);
+  if (user?.username) return `@${user.username}`;
+
+  return `@user-${userId}`;
+}
+
+function getRoleMentionLabel(message, roleId) {
+  const role = message.guild?.roles?.cache?.get(roleId) || message.mentions?.roles?.get?.(roleId);
+  if (role?.name) return `@${role.name}`;
+  return `@role-${roleId}`;
+}
+
+function getChannelMentionLabel(message, channelId) {
+  const channel = message.guild?.channels?.cache?.get(channelId) || message.mentions?.channels?.get?.(channelId);
+  if (channel?.name) return `#${channel.name}`;
+  return `#channel-${channelId}`;
+}
+
+function renderRichTextHtml(message, text) {
+  const input = String(text || '');
+  let out = '';
+  let last = 0;
+  const regex = new RegExp(RICH_TOKEN_REGEX.source, 'g');
+  let match;
+
+  while ((match = regex.exec(input)) !== null) {
+    out += escapeHtml(input.slice(last, match.index));
+
+    const full = match[0];
+    const emojiName = match[1];
+    const emojiId = match[2];
+    const userId = match[3];
+    const roleId = match[4];
+    const channelId = match[5];
+
+    if (emojiId) {
+      const animated = full.startsWith('<a:');
+      const ext = animated ? 'gif' : 'png';
+      const url = `https://cdn.discordapp.com/emojis/${emojiId}.${ext}?size=64&quality=lossless`;
+      out += `<img class="custom-emoji" src="${escapeHtml(url)}" alt="${escapeHtml(`:${emojiName}:`)}" title="${escapeHtml(`:${emojiName}:`)}" loading="lazy">`;
+    } else if (userId) {
+      out += `<span class="mention mention-user">${escapeHtml(getUserMentionLabel(message, userId))}</span>`;
+    } else if (roleId) {
+      out += `<span class="mention mention-role">${escapeHtml(getRoleMentionLabel(message, roleId))}</span>`;
+    } else if (channelId) {
+      out += `<span class="mention mention-channel">${escapeHtml(getChannelMentionLabel(message, channelId))}</span>`;
+    } else {
+      out += escapeHtml(full);
+    }
+
+    last = regex.lastIndex;
+  }
+
+  out += escapeHtml(input.slice(last));
+  return out.replace(/\n/g, '<br>');
+}
+
+function renderRichTextPlain(message, text) {
+  return String(text || '').replace(RICH_TOKEN_REGEX, (full, emojiName, emojiId, userId, roleId, channelId) => {
+    if (emojiId) return `:${emojiName}:`;
+    if (userId) return getUserMentionLabel(message, userId);
+    if (roleId) return getRoleMentionLabel(message, roleId);
+    if (channelId) return getChannelMentionLabel(message, channelId);
+    return full;
+  });
+}
+
 function messageContentToHtml(message) {
   let body = '';
   if (message.content) {
-    body += `<div class="content">${escapeHtml(message.content).replace(/\n/g, '<br>')}</div>`;
+    body += `<div class="content">${renderRichTextHtml(message, message.content)}</div>`;
   }
 
   if (Array.isArray(message.embeds) && message.embeds.length > 0) {
     for (const embed of message.embeds) {
       const fieldsHtml = Array.isArray(embed.fields) && embed.fields.length > 0
-        ? `<div class="embed-fields">${embed.fields.map((field) => `<div class="embed-field"><div class="embed-field-name">${escapeHtml(field.name)}</div><div class="embed-field-value">${escapeHtml(field.value)}</div></div>`).join('')}</div>`
+        ? `<div class="embed-fields">${embed.fields.map((field) => `<div class="embed-field"><div class="embed-field-name">${renderRichTextHtml(message, field.name)}</div><div class="embed-field-value">${renderRichTextHtml(message, field.value)}</div></div>`).join('')}</div>`
         : '';
 
       body += `
         <div class="embed">
-          ${embed.title ? `<div class="embed-title">${escapeHtml(embed.title)}</div>` : ''}
-          ${embed.description ? `<div class="embed-description">${escapeHtml(embed.description).replace(/\n/g, '<br>')}</div>` : ''}
+          ${embed.title ? `<div class="embed-title">${renderRichTextHtml(message, embed.title)}</div>` : ''}
+          ${embed.description ? `<div class="embed-description">${renderRichTextHtml(message, embed.description)}</div>` : ''}
           ${fieldsHtml}
         </div>
       `;
@@ -78,15 +151,15 @@ async function createTranscript(channel) {
   const sorted = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
   let txt = `Transcript of: ${channel.name}\n\n`;
   sorted.forEach((msg) => {
-    let content = msg.content || '';
+    let content = renderRichTextPlain(msg, msg.content || '');
     if (msg.embeds.length > 0) {
       msg.embeds.forEach((embed, i) => {
         content += `\n[Embed ${i + 1}]\n`;
-        if (embed.title) content += `Title: ${embed.title}\n`;
-        if (embed.description) content += `Description: ${embed.description}\n`;
+        if (embed.title) content += `Title: ${renderRichTextPlain(msg, embed.title)}\n`;
+        if (embed.description) content += `Description: ${renderRichTextPlain(msg, embed.description)}\n`;
         if (embed.fields) {
           embed.fields.forEach((f) => {
-            content += `${f.name}: ${f.value}\n`;
+            content += `${renderRichTextPlain(msg, f.name)}: ${renderRichTextPlain(msg, f.value)}\n`;
           });
         }
       });
@@ -203,6 +276,25 @@ async function createTranscriptHtml(channel) {
     .attachments { margin: 8px 0 0; padding-left: 16px; }
     .attachments a { color: #9ecbff; text-decoration: none; }
     .attachments a:hover { text-decoration: underline; }
+    .custom-emoji {
+      width: 22px;
+      height: 22px;
+      object-fit: contain;
+      vertical-align: text-bottom;
+    }
+    .mention {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95em;
+    }
+    .mention-user,
+    .mention-role,
+    .mention-channel {
+      background: rgba(88, 101, 242, 0.25);
+      color: #c9cdfb;
+    }
   </style>
 </head>
 <body>

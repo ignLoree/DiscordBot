@@ -113,7 +113,7 @@ const disboardService = createBumpReminderService({
   configKey: 'disboard',
   defaultCooldownMinutes: 120,
   mentionContent: '<@&1442569013074071644>',
-  title: "<:VC_Eye:1331619214410383381> **É L'ORA DEL `BUMP`!**",
+  title: "<:VC_Eye:1331619214410383381> **Ã‰ L'ORA DEL `BUMP`!**",
   url: 'https://disboard.org/it/server/1329080093599076474',
   description: '<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!',
   errorTag: '[DISBOARD REMINDER ERROR]'
@@ -124,7 +124,7 @@ const discadiaBumpService = createBumpReminderService({
   configKey: 'discadia',
   defaultCooldownMinutes: 1440,
   mentionContent: '<@&1442569013074071644>',
-  title: '<:VC_Eye:1331619214410383381> **É L\'ORA DEL `BUMP` SU DISCADIA!**',
+  title: '<:VC_Eye:1331619214410383381> **Ã‰ L\'ORA DEL `BUMP` SU DISCADIA!**',
   url: 'https://discadia.com/server/viniliecaffe/',
   description: '<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!',
   errorTag: '[DISCADIA REMINDER ERROR]'

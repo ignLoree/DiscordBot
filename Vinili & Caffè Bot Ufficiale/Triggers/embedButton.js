@@ -264,48 +264,48 @@ module.exports = {
         <:VC_Reply:1468262952934314131> **Rispettare** gli __utenti__ e lo __staff__ del server.
         
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.4\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ **auto-promuoversi**.
+        <:VC_Reply:1468262952934314131> √â __vietato__ **auto-promuoversi**.
         
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.5\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ **uscire** e **rientrare** continuamente dal server.`);
+        <:VC_Reply:1468262952934314131> √â __vietato__ **uscire** e **rientrare** continuamente dal server.`);
             const textEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:rules:1443307208543703131> **\`REGOLA TESTUALE 2.1\`** 
-                <:VC_Reply:1468262952934314131> … __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> √â __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.2\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> √â __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.3\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
+        <:VC_Reply:1468262952934314131> √â __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.4\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
+        <:VC_Reply:1468262952934314131> √â __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.5\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinit√†**.`);
+        <:VC_Reply:1468262952934314131> √â __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinit√†**.`);
             const voiceEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:rules:1443307208543703131> **\`REGOLA VOCALE 3.1\`** 
-                <:VC_Reply:1468262952934314131> … __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> √â __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.2\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> √â __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.3\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
+        <:VC_Reply:1468262952934314131> √â __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.4\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
+        <:VC_Reply:1468262952934314131> √â __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.5\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ **urlare** o fare **errape** col microfono.
+        <:VC_Reply:1468262952934314131> √â __vietato__ **urlare** o fare **errape** col microfono.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.6\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinit√†**.
+        <:VC_Reply:1468262952934314131> √â __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinit√†**.
         
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.7\`** 
-        <:VC_Reply:1468262952934314131> … __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`);
+        <:VC_Reply:1468262952934314131> √â __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`);
             await interaction.reply({ embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed], flags: 1 << 6 });
         }
 

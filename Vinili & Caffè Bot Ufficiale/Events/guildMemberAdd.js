@@ -163,12 +163,12 @@ module.exports = {
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
                         .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
-                        .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caff� <a:VC_HeartsPink:1468685897389052008>`)
+                        .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
                         .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1469429150669602961> per **abbellire il tuo profilo** con i ruoli & colori.`)
                         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                         .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                         .setColor('#6f4e37')
-                        .setFooter({ text: `?? Ora siamo in ${member.guild.memberCount} ?` });
+                        .setFooter({ text: `🚀 Ora siamo in ${member.guild.memberCount} ?` });
 
                     await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
                 }
@@ -264,16 +264,16 @@ module.exports = {
             if (!totalvoicechannel) return;
 
             const totalmembers = `${member.guild.memberCount}`;
-            await totalvoicechannel.setName(`???User: ${totalmembers}`).catch(() => { });
+            await totalvoicechannel.setName(`☕ User: ${totalmembers}`).catch(() => { });
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
-                .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caff� <a:VC_HeartsPink:1468685897389052008>`)
+                .setTitle(`<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>`)
                 .setDescription(`__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\nPassa su <#1469429150669602961> per **abbellire il tuo profilo** con i ruoli & colori.`)
                 .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                 .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                 .setColor('#6f4e37')
-                .setFooter({ text: `?? Ora siamo in ${member.guild.memberCount} ?` });
+                .setFooter({ text: `🚀 Ora siamo in ${member.guild.memberCount} ?` });
             if (channelwelcome) {
                 await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
             }
@@ -302,7 +302,7 @@ module.exports = {
                     return;
                 }
                 await channelwelcome.send({
-                    content: `<:VC_Reply:1468262952934314131> � entratx con il link <${info.link}>,\n-# ? <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                    content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ? <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                 }).catch(() => { });
             }
         } catch (error) {

@@ -70,16 +70,12 @@ module.exports = {
       .setTitle('Informazioni inviti')
       .setDescription(`Statistiche sugli inviti effettuati da **${target.username}**`)
       .addFields(
-        { name: '?? Totale Invitati', value: String(totalInvited), inline: true },
+        { name: 'ðŸ“Š Totale Invitati', value: String(totalInvited), inline: true },
         { name: '<:vegacheckmark:1443666279058772028> Membri Attuali', value: String(activeMembers), inline: true },
         { name: '<:vegax:1443934876440068179> Membri Usciti', value: String(leftMembers), inline: true },
         { name: '<:podium:1469660769984708629> Tasso di Ritenzione', value: formatRetention(retention), inline: false }
       )
       .setThumbnail('https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114')
-      .setFooter({
-        text: `Richiesto da ${message.author.username} • Oggi alle ${timeText}`,
-        iconURL: message.author.displayAvatarURL({ size: 64 })
-      });
 
     await safeMessageReply(message, {
       embeds: [embed],

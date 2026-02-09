@@ -1,5 +1,6 @@
-﻿const { safeReply } = require('../../Utils/Moderation/reply');
-const { EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ContextMenuCommandBuilder, ApplicationCommandType } = require('discord.js');
+const { safeReply } = require('../../Utils/Moderation/reply');
+
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new ContextMenuCommandBuilder()
@@ -44,5 +45,6 @@ module.exports = {
         await interaction.showModal(modal);
     }
 };
+
 
 

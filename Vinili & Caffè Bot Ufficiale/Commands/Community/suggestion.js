@@ -1,6 +1,7 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const SuggestionCount = require('../../Schemas/Suggestion/suggestionSchema');
+
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -85,7 +86,7 @@ ${suggestmsg}
                             new EmbedBuilder()
                                 .setDescription(`Hey, ${interaction.user.tag}. Il tuo suggerimento è stato inviato nel canale ${suggestionchannel} per essere votato!
 Per favore attendi mentre uno staff lo approva o lo rifiuta.
-Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
+Il tuo ID Suggerimento (sID) • **${SuggestionID}**`)
                                 .setColor('#6f4e37')
                                 .setTimestamp()
                                 .setFooter({ text: `Guild ID: ${interaction.guild.id} | sID: ${SuggestionID}` })
@@ -196,7 +197,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                     .setColor("Red")
                     .setTitle("<:pinnednew:1443670849990430750> Suggerimento Rifiutato!")
                     .setDescription(rejectOldEmbed.description)
-                    .setFields(oldEmbed.fields)
+                    .setFields(rejectOldEmbed.fields)
                     .setTimestamp()
                     .addFields({ name: "<:attentionfromvega:1443651874032062505> Motivo del rifiuto:", value: rejectReason });
                 await rejectSuggestionMessage.edit({ embeds: [rejectNewEmbed], components: [] });
@@ -220,4 +221,6 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
         }
     }
 }
+
+
 

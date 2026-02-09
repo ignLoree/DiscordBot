@@ -1,8 +1,9 @@
 const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
-const { SkullboardPost } = require('../Schemas/Community/communitySchemas');
 
-const SKULL_EMOJI = '💀';
+const IDs = require('../Utils/Config/ids');
+
+const SKULL_EMOJI = '\uD83D\uDC80';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.skullboard;
 
 module.exports = {
@@ -117,7 +118,7 @@ module.exports = {
 
       const postMessage = await skullboardChannel.send({ embeds: [postEmbed], files: [attachment] }).catch(() => null);
       if (!postMessage) return;
-      await postMessage.react('💀').catch(() => {});
+      await postMessage.react(SKULL_EMOJI).catch(() => {});
 
       await SkullboardPost.findOneAndUpdate(
         { guildId: message.guild.id, messageId: message.id },
@@ -132,7 +133,7 @@ module.exports = {
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
           .setLabel('Vai al Post')
-          .setEmoji('💀')
+          .setEmoji(SKULL_EMOJI)
           .setURL(postMessage.url)
       );
       await message.channel.send({ embeds: [confirmEmbed], components: [row] }).catch(() => {});
@@ -141,6 +142,7 @@ module.exports = {
     }
   }
 };
+
 
 
 

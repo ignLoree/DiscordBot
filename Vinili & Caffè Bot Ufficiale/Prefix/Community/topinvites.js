@@ -11,7 +11,7 @@ function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
   if (index === 1) return '<:VC_Podio2:1469659512863592500>';
   if (index === 2) return '<:VC_Podio3:1469659557696504024>';
-  return `${index + 1}°`;
+  return `${index + 1}Â°`;
 }
 
 async function resolveDisplayName(guild, userId) {
@@ -125,7 +125,7 @@ module.exports = {
       const retention = total > 0 ? Math.round((active / total) * 100) : 0;
 
       lines.push(`${rankLabel(i)} **${name}**`);
-      lines.push(`+-?? **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
+      lines.push(`<:VC_Reply:1468262952934314131> **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
       lines.push('');
     }
 
@@ -144,10 +144,6 @@ module.exports = {
       .setTitle('<:VC_Leaderboard:1469659357678669958> Classifica Inviti')
       .setDescription(lines.join('\n').trim())
       .setThumbnail(THUMBNAIL_URL)
-      .setFooter({
-        text: `Richiesto da ${message.author.username} • Oggi alle ${now}`,
-        iconURL: message.author.displayAvatarURL({ size: 64 })
-      });
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
     if (!shouldRedirect) {
@@ -181,7 +177,7 @@ module.exports = {
     const redirectEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setDescription(
-        `Per evitare di intasare la chat, la classifica inviti è stata generata nel canale ` +
+        `Per evitare di intasare la chat, la classifica inviti Ã¨ stata generata nel canale ` +
         `<#${LEADERBOARD_CHANNEL_ID}>. [Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
       );
 

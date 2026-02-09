@@ -280,7 +280,7 @@ async function handleVoteManagerMessage(message) {
             }
         } catch {}
     }
-    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}°` : '';
+    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}Â°` : '';
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
             .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
@@ -288,12 +288,12 @@ async function handleVoteManagerMessage(message) {
                 `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
                 '',
                 '\`Hai guadagnato:\`',
-                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
-                `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+                `<a:VC_Events:1448688007438667796> â€¢ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
+                `<a:VC_Money:1448671284748746905> â€¢ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente ??' });
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierÃ : a volte sarÃ  piÃ¹ alto, altre volte piÃ¹ basso, mentre altre ancora uguale al precedente' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -338,10 +338,10 @@ module.exports = {
                         .setColor("#6f4e37")
                         .setDescription(
                             [
-                                `<:attentionfromvega:1443651874032062505> ? Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
+                                `<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                                 "",
-                                "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
-                                `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&${IDs.roles.mediaBypass}>.`
+                                "<a:VC_StarPink:1330194976440848500> â€¢ **__Sblocca il permesso:__**",
+                                `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.mediaBypass}>.`
                             ].join("\n")
                         );
                     await message.channel.send({ content: `${message.author}`, embeds: [embed] });
@@ -488,8 +488,8 @@ module.exports = {
                         `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
                         '',
                         'Il cooldown si riduce con i ruoli:',
-                        `• <@&${IDs.roles.level30}> -> **15s**`,
-                        `• <@&${IDs.roles.level50}> -> **5s**`
+                        `â€¢ <@&${IDs.roles.level30}> -> **15s**`,
+                        `â€¢ <@&${IDs.roles.level50}> -> **5s**`
                     ].join('\n'));
                 await message.channel.send({ embeds: [embed] });
                 return;
@@ -601,7 +601,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando è scaduto dopo 60 secondi. Prova di nuovo.')
+                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando Ã¨ scaduto dopo 60 secondi. Prova di nuovo.')
                         ]
                     }).catch(() => { });
                 }
@@ -654,7 +654,7 @@ module.exports = {
                 }
                 const feedback = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
+                    .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback] });
             } finally {
@@ -725,7 +725,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 async function handleCounting(message, client) {
@@ -824,11 +824,13 @@ async function handleDiscadiaBump(message, client) {
     const discadia = client?.config?.discadia;
     if (!discadia) return false;
     if (!message.guild) return false;
+
     const isDiscadiaAuthor = message.author?.id === discadia.botId;
     const isDiscadiaApp = message.applicationId === discadia.botId;
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
         ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
         : ['has been successfully bumped', 'successfully bumped', 'bumped successfully'];
+
     const haystacks = [];
     if (message.content) haystacks.push(message.content);
     if (Array.isArray(message.embeds)) {
@@ -845,21 +847,34 @@ async function handleDiscadiaBump(message, client) {
             }
         }
     }
+
     const normalized = haystacks.map(text => String(text).toLowerCase());
-    const hasPattern = patterns.some((pattern) =>
-        normalized.some((text) => text.includes(pattern))
-    );
-    const isBump = hasPattern;
+    const joined = normalized.join('\n');
+
+    const hasPattern = patterns.some((pattern) => joined.includes(pattern));
+    const hasDiscadiaWord = joined.includes('discadia');
+    const hasBumpWord = /\bbump(?:ed|ing)?\b/i.test(joined);
+    const hasSuccessWord =
+        /\bsuccess(?:ful|fully)?\b/i.test(joined) ||
+        /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump/i.test(joined);
+    const hasFailureWord =
+        /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before/i.test(joined);
+
+    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || hasDiscadiaWord;
+    const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord));
     if (!isBump) return false;
-    if (!isDiscadiaAuthor && !isDiscadiaApp) return false;
-    const bumpUserId = message.interaction?.user?.id;
+
+    const bumpUserId =
+        message.interaction?.user?.id
+        || message.interactionMetadata?.user?.id
+        || extractUserIdFromText(message.content)
+        || extractUserIdFromText(joined);
     const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
     const thanksMessage = "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
         "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" +
         bumpMention;
+
     await message.channel.send({ content: thanksMessage.trim() });
     await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
-
-

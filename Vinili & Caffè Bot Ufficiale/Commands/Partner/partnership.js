@@ -1,6 +1,7 @@
-﻿const { safeReply } = require('../../Utils/Moderation/reply');
+const { safeReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const { hasAnyRole } = require('../../Utils/Moderation/commandPermissions');
+
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -49,5 +50,6 @@ module.exports = {
         await interaction.showModal(modal);
     }
 }
+
 
 

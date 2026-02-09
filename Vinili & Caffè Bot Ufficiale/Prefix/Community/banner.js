@@ -41,7 +41,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Questo comando pu� essere usato solo in un server.')
+            .setDescription('<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.')
         ]
       });
     }
@@ -111,14 +111,14 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbn.\n${totalViews} Views ???`
+        text: `Puoi disabilitare la visualizzazione del tuo banner tramite il comando ?blockbn.\n${totalViews} Views 👁️`
       });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('banner_views')
         .setLabel('Classifica Views')
-        .setEmoji('??')
+        .setEmoji('📊')
         .setStyle(ButtonStyle.Secondary)
     );
 
