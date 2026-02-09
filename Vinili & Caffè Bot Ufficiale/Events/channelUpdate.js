@@ -1,4 +1,4 @@
-﻿const { queueCategoryRenumber } = require('../Services/Community/categoryNumberingService');
+const { queueCategoryRenumber } = require('../Services/Community/communityOpsService');
 
 module.exports = {
     name: 'channelUpdate',
@@ -14,4 +14,5 @@ module.exports = {
         queueCategoryRenumber(client, guildId);
     }
 };
+
 

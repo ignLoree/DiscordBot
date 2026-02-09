@@ -1,6 +1,6 @@
 ﻿const { safeReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-const { hasAnyRole } = require('../../Utils/Moderation/permissions');
+const { hasAnyRole } = require('../../Utils/Moderation/commandPermissions');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,7 +15,7 @@ module.exports = {
 
     async execute(interaction) {
         const manager = interaction.options.getUser('manager');
-        const userRoles = ['1442568949605597264'];
+        const userRoles = [IDs.roles.verifiedUser];
         let managerMember = interaction.guild?.members?.cache?.get(manager.id) || null;
         if (!managerMember) {
             try {
@@ -49,4 +49,5 @@ module.exports = {
         await interaction.showModal(modal);
     }
 }
+
 

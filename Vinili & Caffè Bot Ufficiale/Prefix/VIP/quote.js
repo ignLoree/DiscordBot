@@ -2,14 +2,15 @@ const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, Button
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const renderQuoteCanvas = require('../../Utils/Render/quoteCanvas');
 const { nextQuoteCount } = require('../../Utils/Quote/quoteCounter');
-const { QuotePrivacy } = require('../../Schemas/Community/privacySchemas');
+const { QuotePrivacy } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
-const QUOTE_CHANNEL_ID = "1468540884537573479";
+const QUOTE_CHANNEL_ID = IDs.channels.skullboard;
 const ALLOWED_ROLE_IDS = [
-  "1329497467481493607",
-  "1442568916114346096",
-  "1442568950805430312",
-  "1442568936423034940"
+  IDs.roles.customRoleAccessC,
+  IDs.roles.customRoleAccessB,
+  IDs.roles.customRoleAccessA,
+  IDs.roles.level10
 ];
 
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
@@ -189,3 +190,5 @@ module.exports = {
     return replyMsg;
   }
 };
+
+

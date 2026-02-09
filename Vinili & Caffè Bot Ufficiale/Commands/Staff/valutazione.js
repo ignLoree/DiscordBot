@@ -1,6 +1,7 @@
-const { safeEditReply } = require('../../Utils/Moderation/reply');
+﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -51,7 +52,7 @@ module.exports = {
         await interaction.deferReply()
         const utentee = interaction.options.getUser('staffer')
         const reason = interaction.options.getString("motivo")
-        const channel = interaction.guild.channels.cache.get('1442569249649459340')
+        const channel = interaction.guild.channels.cache.get(IDs.channels.staffValutazioniLog)
         try {
             let StaffDoc = await Staff.findOne({ guildId: interaction.guild.id, userId: utentee.id });
             if (!StaffDoc) {
@@ -69,7 +70,7 @@ module.exports = {
                 });
             }
             const checkPermissions = () => {
-                const allowedRoleID = '1442568910070349985';
+                const allowedRoleID = IDs.roles.staff;
                 const stafferMember = interaction.guild.members.cache.get(utentee.id);
                 if (!stafferMember || !stafferMember.roles.cache.has(allowedRoleID)) return false;
                 if (interaction.user.id === utentee.id) return false;
@@ -102,7 +103,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE POSITIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è stata **rimossa** una _Valutazione Positiva!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ Ã¨ stata **rimossa** una _Valutazione Positiva!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Positive Aggiornato__", value: `Ora sei a \`${StaffDoc.positiveCount}\` valutazioni!`, inline: false },
@@ -139,7 +140,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE NEGATIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è stata **rimossa** una _Valutazione Negativa!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ Ã¨ stata **rimossa** una _Valutazione Negativa!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Negativa Aggiornato__", value: `Ora sei a \`${StaffDoc.negativeCount}\` valutazioni!`, inline: false },
@@ -167,3 +168,4 @@ module.exports = {
         }
     }
 }
+

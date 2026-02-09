@@ -2,6 +2,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder } = require('discord.js');
 const { MinigameUser, MinigameState, MinigameRotation } = require('../../Schemas/Minigames/minigameSchema');
 const { addExpWithLevel } = require('../Community/expService');
+const IDs = require('../../Utils/Config/ids');
 
 const activeGames = new Map();
 const pendingGames = new Map();
@@ -14,17 +15,17 @@ const standbyChannels = new Set();
 const lastSentAtByChannel = new Map();
 const startingChannels = new Set();
 
-const REWARD_CHANNEL_ID = "1442569138114662490";
+const REWARD_CHANNEL_ID = IDs.channels.levelUp;
 const EXP_REWARDS = [
-  { exp: 100, roleId: "1468675561948971058" },
-  { exp: 500, roleId: "1468675567015428239" },
-  { exp: 1000, roleId: "1468675570865803407" },
-  { exp: 1500, roleId: "1468675576326918302" },
-  { exp: 2500, roleId: "1468675580609429536" },
-  { exp: 5000, roleId: "1468675584094769427" },
-  { exp: 10000, roleId: "1468675587747877028" },
-  { exp: 50000, roleId: "1468675590747062355" },
-  { exp: 100000, roleId: "1468675595058811075" }
+  { exp: 100, roleId: IDs.roles.minigameReward100 },
+  { exp: 500, roleId: IDs.roles.minigameReward500 },
+  { exp: 1000, roleId: IDs.roles.minigameReward1000 },
+  { exp: 1500, roleId: IDs.roles.minigameReward1500 },
+  { exp: 2500, roleId: IDs.roles.minigameReward2500 },
+  { exp: 5000, roleId: IDs.roles.minigameReward5000 },
+  { exp: 10000, roleId: IDs.roles.minigameReward10000 },
+  { exp: 50000, roleId: IDs.roles.minigameReward50000 },
+  { exp: 100000, roleId: IDs.roles.minigameReward100000 }
 ];
 
 let cachedWords = null;
@@ -1860,3 +1861,4 @@ async function restoreActiveGames(client) {
 }
 
 module.exports = { startMinigameLoop, forceStartMinigame, restoreActiveGames, handleMinigameMessage, handleMinigameButton };
+

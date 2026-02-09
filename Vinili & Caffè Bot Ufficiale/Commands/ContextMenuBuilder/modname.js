@@ -1,6 +1,6 @@
 const { safeReply, safeEditReply } = require('../../Utils/Moderation/reply');
 const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = require('discord.js');
-const { fetchMemberSafe } = require('../../Utils/Moderation/discordFetch');
+const { fetchMemberSafe } = require('../../Utils/Moderation/prefixModeration');
 
 module.exports = {
   data: new ContextMenuCommandBuilder()

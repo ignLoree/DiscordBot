@@ -1,22 +1,23 @@
 ﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const config = require("../config.json");
+const IDs = require('../Utils/Config/ids');
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
-const PERK_ROLE_ID = '1468938195348754515';
-const PLUS_COLOR_REQUIRED_ROLE_IDS = ['1329497467481493607', '1442568932136587297'];
+const PERK_ROLE_ID = IDs.roles.mediaBypass;
+const PLUS_COLOR_REQUIRED_ROLE_IDS = [IDs.roles.plusColorBooster, IDs.roles.level50];
 const PLUS_COLOR_ROLE_IDS = [
-    '1469759694930182284',
-    '1469759700944814231',
-    '1469759704380084384',
-    '1469759708742160537',
-    '1469759714094088327',
-    '1469759719194230906',
-    '1469759723418026233',
-    '1469759731945177182',
-    '1469760931113336864',
-    '1469761030417809675',
-    '1469761114140315831'
+    IDs.roles.plusColorAllowedA,
+    IDs.roles.plusColorAllowedB,
+    IDs.roles.plusColorAllowedC,
+    IDs.roles.plusColorAllowedD,
+    IDs.roles.plusColorAllowedE,
+    IDs.roles.plusColorAllowedF,
+    IDs.roles.plusColorAllowedG,
+    IDs.roles.plusColorAllowedH,
+    IDs.roles.plusColorAllowedI,
+    IDs.roles.plusColorAllowedJ,
+    IDs.roles.plusColorAllowedK
 ];
 
 async function addPerkRoleIfPossible(member) {

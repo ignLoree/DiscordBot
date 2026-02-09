@@ -1,6 +1,7 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -59,7 +60,7 @@ module.exports = {
         const value = interaction.options.getInteger('amount')
         const motivo = interaction.options.getString('motivo')
         const linkmessaggio = interaction.options.getString('linkmessaggio')
-        const channel = interaction.guild.channels.cache.get('1442569257375367320')
+        const channel = interaction.guild.channels.cache.get(IDs.channels.partnerPointsLog)
 
         if (value < 0)
             return await safeEditReply(interaction, { content: '<:vegax:1443934876440068179> Il valore deve essere positivo.', flags: 1 << 6 });
@@ -118,4 +119,3 @@ module.exports = {
         }
     }
 }
-

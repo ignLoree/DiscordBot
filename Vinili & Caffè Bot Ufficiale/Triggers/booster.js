@@ -1,4 +1,5 @@
 ﻿const { Events } = require('discord.js');
+const IDs = require('../Utils/Config/ids');
 
 module.exports = {
     name: Events.MessageCreate,
@@ -6,15 +7,15 @@ module.exports = {
     async execute(message) {
 
         const allowedChannels = [
-            '1442569130573303898',
-            '1442569136067575809',
-            '1442569138114662490',
-            '1442569187376763010',
-            '1444295396619976817',
-            '1442569260059725844',
-            '1442569268666568897',
-            '1442569285909217301',
-            '1442569209849843823'
+            IDs.channels.inviteLog,
+            IDs.channels.mediaExemptChannel,
+            IDs.channels.levelUp,
+            IDs.channels.chatGeneralA,
+            IDs.channels.chatGeneralB,
+            IDs.channels.staffOnboarding,
+            IDs.channels.staffOnboardingExtra,
+            IDs.channels.pauseRequestLog,
+            IDs.channels.partnerOnboarding
         ];
 
         if (!allowedChannels.includes(message.channel.id)) return;
@@ -22,7 +23,7 @@ module.exports = {
         
         try {
             if (message.reference) return;
-            const mentionId = '295500038401163264';
+            const mentionId = IDs.users.owner;
             const hasMention = message.content.includes(`<@${mentionId}>`);
             const triggerWords = [
                 'lore',
@@ -47,3 +48,4 @@ function containsExactWord(content, words) {
     return regex.test(text);
   });
 }
+

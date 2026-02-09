@@ -1,15 +1,16 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { getLevelInfo } = require('../../Services/Community/expService');
-const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
+const IDs = require('../../Utils/Config/ids');
+const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
 const LEVEL_ROLE_MAP = new Map([
-  [10, '1442568936423034940'],
-  [20, '1442568934510297226'],
-  [30, '1442568933591748688'],
-  [50, '1442568932136587297'],
-  [70, '1442568931326824488'],
-  [100, '1442568929930379285']
+  [10, IDs.roles.level10],
+  [20, IDs.roles.level20],
+  [30, IDs.roles.level30],
+  [50, IDs.roles.level50],
+  [70, IDs.roles.level70],
+  [100, IDs.roles.level100]
 ]);
 
 function roundToNearest50(value) {
@@ -141,7 +142,7 @@ module.exports = {
           .setDescription([
             `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
             `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il <@&${roleId}>`,
-            '<a:VC_HelloKittyGift:1329447876857958471> Controlla <#1442569111119990887> per i nuovi vantaggi!'
+            `<a:VC_HelloKittyGift:1329447876857958471> Controlla <#${IDs.channels.infoPerks}> per i nuovi vantaggi!`
           ].join('\n'))
           .setFooter({ text: `Azione staff: ${message.author.tag}` });
 
@@ -169,3 +170,5 @@ module.exports = {
     });
   }
 };
+
+

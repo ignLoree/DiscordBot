@@ -1,4 +1,4 @@
-ï»¿const {
+const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -6,14 +6,15 @@
   PermissionsBitField
 } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const CustomRole = require('../../Schemas/Community/customRoleSchema');
+const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
-const ANCHOR_ROLE_ID = '1469452890761596981';
+const ANCHOR_ROLE_ID = IDs.roles.customRoleAnchor;
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  '1442568950805430312',
-  '1442568916114346096',
-  '1329497467481493607',
-  '1442568931326824488'
+  IDs.roles.customRoleAccessA,
+  IDs.roles.customRoleAccessB,
+  IDs.roles.customRoleAccessC,
+  IDs.roles.customRoleAccessD
 ];
 
 function hasCustomRoleAccess(member) {
@@ -25,7 +26,7 @@ function buildNoPermEmbed(message) {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[0]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[1]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[2]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[3]}>`
@@ -41,10 +42,10 @@ function trimRoleName(name) {
 function buildPanelEmbed(member, role, guild) {
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('âœ… Ruolo Creato')
+    .setTitle('<:vegacheckmark:1443666279058772028> Ruolo Creato')
     .setDescription([
-      '<a:VC_Flowers:1468687836055212174> Il tuo ruolo Ã¨ stato creato. **Ora personalizzalo!**',
-      '__Altri comandi__ li trovi nel menÃ¹ con il comando `+help`',
+      '<a:VC_Flowers:1468687836055212174> Il tuo ruolo è stato creato. **Ora personalizzalo!**',
+      '__Altri comandi__ li trovi nel menù con il comando `+help`',
       'Puoi modificare il ruolo con i bottoni sottostanti.',
       '',
       '**Ruolo:**',
@@ -115,7 +116,7 @@ async function resolveOrCreateRole(message) {
   const editable = role.position < me.roles.highest.position;
   if (!editable) {
     await role.delete().catch(() => {});
-    return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo piÃ¹ in alto.' };
+    return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo più in alto.' };
   }
 
   const anchor = guild.roles.cache.get(ANCHOR_ROLE_ID) || await guild.roles.fetch(ANCHOR_ROLE_ID).catch(() => null);
@@ -165,3 +166,7 @@ module.exports = {
     });
   }
 };
+
+
+
+

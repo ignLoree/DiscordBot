@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { getLevelInfo } = require('../../Services/Community/expService');
 
 function roundToNearest50(value) {
@@ -97,4 +97,6 @@ module.exports = {
     });
   }
 };
+
+
 

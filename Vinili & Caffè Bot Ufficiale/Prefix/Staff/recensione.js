@@ -1,10 +1,11 @@
 const { EmbedBuilder } = require('discord.js');
+const IDs = require('../../Utils/Config/ids');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const ExpUser = require('../../Schemas/Community/expUserSchema');
-const ReviewReward = require('../../Schemas/Community/reviewRewardSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
+const { ReviewReward } = require('../../Schemas/Community/communitySchemas');
 const { getLevelInfo, addExpWithLevel } = require('../../Services/Community/expService');
 
-const REVIEW_CHANNEL_ID = '1442569123426074736';
+const REVIEW_CHANNEL_ID = IDs.channels.thanks;
 const LEVELS_TO_ADD = 5;
 
 function roundToNearest50(value) {
@@ -140,3 +141,6 @@ module.exports = {
     });
   }
 };
+
+
+

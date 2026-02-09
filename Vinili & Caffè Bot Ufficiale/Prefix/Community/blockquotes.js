@@ -1,6 +1,6 @@
 const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder } = require('discord.js');
-const { QuotePrivacy } = require('../../Schemas/Community/privacySchemas');
+const { QuotePrivacy } = require('../../Schemas/Community/communitySchemas');
 
 module.exports = {
   name: 'blockquotes',
@@ -38,3 +38,4 @@ module.exports = {
     return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+

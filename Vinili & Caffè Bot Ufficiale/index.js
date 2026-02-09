@@ -16,6 +16,7 @@ const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands"
 const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js')
 const reactions = require('./Schemas/ReactionRole/reactionroleSchema.js')
 const child_process = require('child_process');
+const IDs = require('./Utils/Config/ids');
 let client;
 
 try {
@@ -188,11 +189,11 @@ client.on("clientReady", async (client) => {
             await checkAndInstallPackages(client);
         }
         cron.schedule("0 19 * * *", async () => {
-            const guild = client.guilds.cache.get("1329080093599076474");
+            const guild = client.guilds.cache.get(IDs.guilds.main);
             if (!guild) return;
-            const role = guild.roles.cache.find(r => r.id === "1442568889052430609");
+            const role = guild.roles.cache.find(r => r.id === IDs.roles.coOwner);
             if (!role) return;
-            const channel = guild.channels.cache.get("1442569285909217301");
+            const channel = guild.channels.cache.get(IDs.channels.pauseRequestLog);
             if (!channel) return;
             await channel.send({
                 content: `<:attentionfromvega:1443651874032062505> ${role} ricordatevi di mettere il poll usando il comando dedicato! </poll create:1467597234387419478>`
@@ -307,7 +308,7 @@ client.on("messageDelete", async message => {
 client.on(Events.ThreadCreate, async thread => {
     try {
         if (thread.parent.type !== ChannelType.GuildForum) return;
-        const forumRoleId = "1447597930944008376";
+        const forumRoleId = IDs.roles.forumNotify;
         await thread.send({
             content: `<@&${forumRoleId}>`
         });
@@ -407,22 +408,22 @@ client.on(Events.MessageReactionRemove, async (reaction, user) => {
     }
 });
 
-const SERVER_ID = '1329080093599076474';
-const CHANNEL_ID = '1442569235426705653';
+const SERVER_ID = IDs.guilds.main;
+const CHANNEL_ID = IDs.channels.staffListChannel;
 let staffListMessageId = null;
 const ROLE_EMOJIS = {
-    '1442568905582317740': { emoji: '<:partnermanager:1443651916838998099>', number: '8' },
-    '1442568904311570555': { emoji: '<:helper:1443651909448630312>', number: '8' },
-    '1442568901887000618': { emoji: '<:mod:1443651914209165454>', number: '6' },
-    '1442568897902678038': { emoji: '<:coordinator:1443651923168202824>', number: '4' },
-    '1442568896237277295': { emoji: '<:supervisor:1443651907900932157>', number: '4' },
-    '1442568893435478097': { emoji: '<:admin:1443651911059247225>', number: '4' },
-    '1442568891875201066': { emoji: '<:manager:1443651919829536940>', number: '1' },
-    '1442568889052430609': { emoji: '<:cofounder:1443651915752804392>', number: '2' },
-    '1442568886988963923': { emoji: '<:founder:1443651924674216128>', number: '1' },
+    [IDs.roles.partnerManager]: { emoji: '<:partnermanager:1443651916838998099>', number: '8' },
+    [IDs.roles.helper]: { emoji: '<:helper:1443651909448630312>', number: '8' },
+    [IDs.roles.moderator]: { emoji: '<:mod:1443651914209165454>', number: '6' },
+    [IDs.roles.coordinator]: { emoji: '<:coordinator:1443651923168202824>', number: '4' },
+    [IDs.roles.supervisor]: { emoji: '<:supervisor:1443651907900932157>', number: '4' },
+    [IDs.roles.admin]: { emoji: '<:admin:1443651911059247225>', number: '4' },
+    [IDs.roles.manager]: { emoji: '<:manager:1443651919829536940>', number: '1' },
+    [IDs.roles.coOwner]: { emoji: '<:cofounder:1443651915752804392>', number: '2' },
+    [IDs.roles.owner]: { emoji: '<:founder:1443651924674216128>', number: '1' },
 }
 const ID_LORE = {
-    '1329080093653471300': ['1442568907801100419'],
+    [IDs.roles.partnerManager]: ['1442568907801100419'],
 };
 const STAFF_ROLES_ID = Object.keys(ROLE_EMOJIS);
 async function aggiornaListaStaff() {
@@ -492,3 +493,4 @@ process.on("uncaughtException", (err) => {
 Logs(client, {
     debug: false
 });
+

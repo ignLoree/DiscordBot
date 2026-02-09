@@ -1,11 +1,18 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 
 const OPEN_FOR_MS = 24 * 60 * 60 * 1000;
 const INACTIVE_FOR_MS = 2 * 60 * 60 * 1000;
 
-let loopHandle = null;
-let loopRunning = false;
+const TRANSCRIPTS_ROOT = path.join(process.cwd(), 'local_transcripts');
+const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+let promptLoopHandle = null;
+let promptLoopRunning = false;
+let cleanupHandle = null;
 
 function buildCloseRequestRow() {
   return new ActionRowBuilder().addComponents(
@@ -55,7 +62,7 @@ async function processTickets(client) {
       const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setTitle('Richiesta di chiusura')
-        .setDescription('Il ticket Ã¨ aperto da piÃ¹ di 24 ore e non ci sono messaggi recenti.\nÃˆ stato risolto?');
+        .setDescription('Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nÈ stato risolto?');
 
       await channel.send({
         content: mentionText || null,
@@ -74,24 +81,58 @@ async function processTickets(client) {
 }
 
 function startTicketAutoClosePromptLoop(client) {
-  if (loopHandle) return loopHandle;
+  if (promptLoopHandle) return promptLoopHandle;
   const tick = async () => {
-    if (loopRunning) return;
-    loopRunning = true;
+    if (promptLoopRunning) return;
+    promptLoopRunning = true;
     try {
       await processTickets(client);
     } catch (err) {
       global.logger.error('[TICKET AUTO CLOSE PROMPT] Loop error', err);
     } finally {
-      loopRunning = false;
+      promptLoopRunning = false;
     }
   };
   tick();
-  loopHandle = setInterval(tick, 10 * 60 * 1000);
-  return loopHandle;
+  promptLoopHandle = setInterval(tick, 10 * 60 * 1000);
+  return promptLoopHandle;
+}
+
+function walkTranscriptFiles(dir, out = []) {
+  const items = fs.readdirSync(dir, { withFileTypes: true });
+  for (const item of items) {
+    const full = path.join(dir, item.name);
+    if (item.isDirectory()) {
+      walkTranscriptFiles(full, out);
+    } else if (item.isFile()) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+function cleanupOldTranscripts() {
+  if (!fs.existsSync(TRANSCRIPTS_ROOT)) return;
+  const now = Date.now();
+  const files = walkTranscriptFiles(TRANSCRIPTS_ROOT, []);
+  for (const file of files) {
+    try {
+      const stat = fs.statSync(file);
+      if ((now - stat.mtimeMs) > MAX_AGE_MS) {
+        fs.unlinkSync(file);
+      }
+    } catch {}
+  }
+}
+
+function startTranscriptCleanupLoop() {
+  if (cleanupHandle) return cleanupHandle;
+  cleanupOldTranscripts();
+  cleanupHandle = setInterval(cleanupOldTranscripts, CLEANUP_INTERVAL_MS);
+  return cleanupHandle;
 }
 
 module.exports = {
-  startTicketAutoClosePromptLoop
+  startTicketAutoClosePromptLoop,
+  startTranscriptCleanupLoop
 };
-

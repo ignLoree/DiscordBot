@@ -1,12 +1,12 @@
 ﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 const VERIFY_ROLE_IDS = [
-    '1442568949605597264',
-    '1442568938457399299',
-    '1442568992459067423',
-    '1468674171213971568',
-    '1442568928667631738',
-    '1442568938457399299'
+    IDs.roles.verifiedUser,
+    IDs.roles.verifyExtraA,
+    IDs.roles.verifyExtraB,
+    IDs.roles.verifyExtraC,
+    IDs.roles.verifyExtraD,
+    IDs.roles.verifyExtraA
 ];
 
 module.exports = {
@@ -196,3 +196,4 @@ async function resolveTargetsFlexible(message, args) {
   }
   return member ? [member] : [];
 }
+

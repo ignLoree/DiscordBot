@@ -1,9 +1,9 @@
 const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
-const SkullboardPost = require('../Schemas/Community/skullboardPostSchema');
+const { SkullboardPost } = require('../Schemas/Community/communitySchemas');
 
 const SKULL_EMOJI = '💀';
-const SKULLBOARD_CHANNEL_ID = '1468540884537573479';
+const SKULLBOARD_CHANNEL_ID = IDs.channels.skullboard;
 
 module.exports = {
   name: Events.MessageReactionAdd,
@@ -141,3 +141,6 @@ module.exports = {
     }
   }
 };
+
+
+

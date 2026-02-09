@@ -1,6 +1,7 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -57,7 +58,7 @@ module.exports = {
 
         if (subcommand === "create") {
             try {
-                const channel = interaction.guild.channels.cache.get('1442569128706838528');
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
                 const domanda = interaction.options.getString("domanda");
                 const answers = [];
 
@@ -130,7 +131,7 @@ ${answersText}
                 return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription(`<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#1442569128706838528>!`)
+                            .setDescription(`<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#${IDs.channels.polls}>!`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -149,7 +150,7 @@ ${answersText}
 
         if (subcommand === "remove") {
             try {
-                const channel = interaction.guild.channels.cache.get("1442569128706838528");
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
                 let lastPoll = await poll.findOne().sort({ pollcount: -1 });
 
                 if (!lastPoll || !lastPoll.messageId) {
@@ -190,7 +191,7 @@ ${answersText}
                 const id = interaction.options.getInteger("id");
                 const newQuestion = interaction.options.getString("domanda");
                 const pollData = await poll.findOne({ pollcount: id });
-                const channel = interaction.guild.channels.cache.get("1442569128706838528");
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
                 let pollMessage;
 
                 if (!pollData) {
@@ -300,3 +301,4 @@ ${answersText}
         }
     }
 };
+

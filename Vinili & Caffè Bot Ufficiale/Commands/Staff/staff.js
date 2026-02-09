@@ -1,6 +1,18 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
+const IDs = require('../../Utils/Config/ids');
+const ROLE_PARTNER_MANAGER = IDs.roles.partnerManager;
+const ROLE_STAFF = IDs.roles.staff;
+const ROLE_HIGH_STAFF = IDs.roles.highStaff;
+const ROLE_HELPER = IDs.roles.helper;
+const ROLE_MODERATOR = IDs.roles.moderator;
+const ROLE_COORDINATOR = IDs.roles.coordinator;
+const ROLE_SUPERVISOR = IDs.roles.supervisor;
+const ROLE_ADMIN = IDs.roles.admin;
+const ROLE_MANAGER = IDs.roles.manager;
+const ROLE_CO_OWNER = IDs.roles.coOwner;
+const ROLE_OWNER = IDs.roles.owner;
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -126,8 +138,8 @@ module.exports = {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
-        const channel = interaction.guild.channels.cache.get('1442569234004709391')
-        const pmchannel = interaction.guild.channels.cache.get('1442569209849843823')
+        const channel = interaction.guild.channels.cache.get(IDs.channels.resignLog)
+        const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnerOnboarding)
         if (sub === 'pex') {
             try {
                 const utentee = interaction.options.getUser('user');
@@ -136,7 +148,7 @@ module.exports = {
                 if (!member) return await safeEditReply(interaction, { embeds: [errorEmbed], flags: 1 << 6 });
                 const ruoloPrecedente = interaction.options.getRole('ruolo_precedente');
                 const ruoloSuccessivo = interaction.options.getRole('ruolo_successivo');
-                const staffchat = interaction.guild.channels.cache.get('1442569260059725844');
+                const staffchat = interaction.guild.channels.cache.get(IDs.channels.staffOnboarding);
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (interaction.user.id === utentee.id) {
@@ -160,7 +172,7 @@ module.exports = {
                     });
                 }
                 await member.roles.add(ruoloSuccessivo.id);
-                if (ruoloSuccessivo.id === '1442568905582317740') {
+                if (ruoloSuccessivo.id === ROLE_PARTNER_MANAGER) {
                     await pmchannel.send({
                         content: `
 ${utentee}
@@ -170,8 +182,8 @@ ${utentee}
 __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
-                if (ruoloSuccessivo.id === '1442568904311570555') {
-                    await member.roles.add('1442568910070349985');
+                if (ruoloSuccessivo.id === ROLE_HELPER) {
+                    await member.roles.add(ROLE_STAFF);
                     await staffchat.send({
                         content: `
 ${utentee}
@@ -183,27 +195,27 @@ ${utentee}
 __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`
                     });
                 }
-                if (ruoloSuccessivo.id === '1442568901887000618') {
-                    await member.roles.remove('1442568904311570555');
+                if (ruoloSuccessivo.id === ROLE_MODERATOR) {
+                    await member.roles.remove(ROLE_HELPER);
                 }
-                if (ruoloSuccessivo.id === '1442568897902678038') {
-                    await member.roles.remove('1442568901887000618');
+                if (ruoloSuccessivo.id === ROLE_COORDINATOR) {
+                    await member.roles.remove(ROLE_MODERATOR);
                 }
-                if (ruoloSuccessivo.id === '1442568896237277295') {
-                    await member.roles.remove('1442568897902678038');
+                if (ruoloSuccessivo.id === ROLE_SUPERVISOR) {
+                    await member.roles.remove(ROLE_COORDINATOR);
                 }
-                if (ruoloSuccessivo.id === '1442568893435478097') {
-                    await member.roles.remove('1442568896237277295');
-                    await member.roles.add('1442568894349840435');
+                if (ruoloSuccessivo.id === ROLE_ADMIN) {
+                    await member.roles.remove(ROLE_SUPERVISOR);
+                    await member.roles.add(ROLE_HIGH_STAFF);
                 }
-                if (ruoloSuccessivo.id === '1442568891875201066') {
-                    await member.roles.remove('1442568893435478097');
+                if (ruoloSuccessivo.id === ROLE_MANAGER) {
+                    await member.roles.remove(ROLE_ADMIN);
                 }
-                if (ruoloSuccessivo.id === '1442568889052430609') {
-                    await member.roles.remove('1442568891875201066');
+                if (ruoloSuccessivo.id === ROLE_CO_OWNER) {
+                    await member.roles.remove(ROLE_MANAGER);
                 }
-                if (ruoloSuccessivo.id === '1442568886988963923') {
-                    await member.roles.remove('1442568889052430609');
+                if (ruoloSuccessivo.id === ROLE_OWNER) {
+                    await member.roles.remove(ROLE_CO_OWNER);
                 }
                 await safeEditReply(interaction, {
                     embeds: [
@@ -258,39 +270,39 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     });
                 }
                 await member.roles.remove(oldRole.id);
-                if (oldRole.id === '1442568905582317740') {
+                if (oldRole.id === ROLE_PARTNER_MANAGER) {
                     await member.roles.remove(oldRole.id);
                 }
-                if (oldRole.id === '1442568904311570555') {
+                if (oldRole.id === ROLE_HELPER) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
+                    await member.roles.remove(ROLE_STAFF);
                 }
-                if (oldRole.id === '1442568901887000618') {
+                if (oldRole.id === ROLE_MODERATOR) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
+                    await member.roles.remove(ROLE_STAFF);
                 }
-                if (oldRole.id === '1442568897902678038') {
+                if (oldRole.id === ROLE_COORDINATOR) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
+                    await member.roles.remove(ROLE_STAFF);
                 }
-                if (oldRole.id === '1442568896237277295') {
+                if (oldRole.id === ROLE_SUPERVISOR) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
+                    await member.roles.remove(ROLE_STAFF);
                 }
-                if (oldRole.id === '1442568893435478097') {
+                if (oldRole.id === ROLE_ADMIN) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
-                    await member.roles.remove('1442568894349840435');
+                    await member.roles.remove(ROLE_STAFF);
+                    await member.roles.remove(ROLE_HIGH_STAFF);
                 }
-                if (oldRole.id === '1442568891875201066') {
+                if (oldRole.id === ROLE_MANAGER) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
-                    await member.roles.remove('1442568894349840435');
+                    await member.roles.remove(ROLE_STAFF);
+                    await member.roles.remove(ROLE_HIGH_STAFF);
                 }
-                if (oldRole.id === '1442568889052430609') {
+                if (oldRole.id === ROLE_CO_OWNER) {
                     await member.roles.remove(oldRole.id);
-                    await member.roles.remove('1442568910070349985');
-                    await member.roles.remove('1442568894349840435');
+                    await member.roles.remove(ROLE_STAFF);
+                    await member.roles.remove(ROLE_HIGH_STAFF);
                 }
                 await StaffModel.deleteMany({ userId: utentee.id });
                 await safeEditReply(interaction, {
@@ -320,7 +332,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
             try {
                 const utentee = interaction.options.getUser('staffer');
                 const reason = interaction.options.getString('motivo');
-                const warnChannel = interaction.guild.channels.cache.get('1443250635108646943');
+                const warnChannel = interaction.guild.channels.cache.get(IDs.channels.staffWarnLog);
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff.idCount) Staff.idCount = 0;
@@ -356,7 +368,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         if (group === 'resoconto') {
             if (sub === 'staffer') {
                 try {
-                    const rescoontoChannel = interaction.guild.channels.cache.get('1442569270784692306');
+                    const rescoontoChannel = interaction.guild.channels.cache.get(IDs.channels.staffReportLog);
                     const staffer = interaction.options.getUser('staffer');
                     const ruolo = interaction.options.getRole('ruolo');
                     const azione = interaction.options.getString('azione');
@@ -365,11 +377,11 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const grado_attività = interaction.options.getString('grado_attività');
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
-                    const allowedRoleID = '1442568910070349985';
+                    const allowedRoleID = ROLE_STAFF;
                     const allowedRoles = [
-                        '1442568897902678038',
-                        '1442568896237277295',
-                        '1442568894349840435'
+                        ROLE_COORDINATOR,
+                        ROLE_SUPERVISOR,
+                        ROLE_HIGH_STAFF
                     ];
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
@@ -415,16 +427,16 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
             }
             if (sub === 'pm') {
                 try {
-                    const channel = interaction.guild.channels.cache.get('1442569270784692306');
+                    const channel = interaction.guild.channels.cache.get(IDs.channels.staffReportLog);
                     const staffer = interaction.options.getUser('staffer');
                     const azione = interaction.options.getString('azione');
                     const partner = interaction.options.getString('partner');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
-                    const allowedRoleID = '1442568910070349985';
+                    const allowedRoleID = ROLE_STAFF;
                     const allowedRoles = [
-                        '1442568897902678038',
-                        '1442568896237277295',
-                        '1442568894349840435'
+                        ROLE_COORDINATOR,
+                        ROLE_SUPERVISOR,
+                        ROLE_HIGH_STAFF
                     ];
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
@@ -467,3 +479,4 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         }
     }
 }
+

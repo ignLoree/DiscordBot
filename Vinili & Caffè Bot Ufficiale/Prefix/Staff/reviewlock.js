@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const ReviewReward = require('../../Schemas/Community/reviewRewardSchema');
+const { ReviewReward } = require('../../Schemas/Community/communitySchemas');
 
 function parseUserIds(message, args = []) {
   const ids = new Set();
@@ -64,4 +64,6 @@ module.exports = {
     await safeMessageReply(message, { embeds: [done], allowedMentions: { repliedUser: false } });
   }
 };
+
+
 

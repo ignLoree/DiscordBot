@@ -1,6 +1,6 @@
-﻿const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
-const ModConfig = require('../../Schemas/Moderation/modConfigSchema');
-const ModCase = require('../../Schemas/Moderation/modCaseSchema');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
+const { ModConfig } = require('../../Schemas/Moderation/moderationSchemas');
+const { ModCase } = require('../../Schemas/Moderation/moderationSchemas');
 
 async function getModConfig(guildId) {
   return ModConfig.findOneAndUpdate(
@@ -115,3 +115,4 @@ async function tryDmUser(user, content) {
   }
 }
 module.exports = { getModConfig, isExempt, createModCase, logModCase, formatDuration, parseDuration, tryDmUser };
+

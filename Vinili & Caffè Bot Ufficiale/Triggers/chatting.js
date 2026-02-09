@@ -1,16 +1,17 @@
 ﻿const { Events } = require('discord.js');
+const IDs = require('../Utils/Config/ids');
 module.exports = {
   name: Events.MessageCreate,
   async execute(message) {
     const allowedChannels = [
-      '1442569130573303898',
-      '1442569187376763010',
-      '1442569136067575809',
-      '1442569138114662490',
-      '1442569260059725844',
-      '1442569268666568897',
-      '1442569285909217301',
-      '1442569209849843823'
+      IDs.channels.inviteLog,
+      IDs.channels.chatGeneralA,
+      IDs.channels.mediaExemptChannel,
+      IDs.channels.levelUp,
+      IDs.channels.staffOnboarding,
+      IDs.channels.staffOnboardingExtra,
+      IDs.channels.pauseRequestLog,
+      IDs.channels.partnerOnboarding
     ];
     if (!allowedChannels.includes(message.channel.id)) return;
     if (message.author.bot) return;
@@ -66,3 +67,5 @@ function isExactMessage(content, words) {
   const text = content.trim().toLowerCase();
   return words.includes(text);
 }
+
+

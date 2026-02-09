@@ -1,21 +1,22 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const PImage = require('pureimage');
 const { PassThrough } = require('stream');
 const path = require('path');
+const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_ROLE_IDS = [
-    '1442568949605597264',
-    '1442568938457399299',
-    '1442568992459067423',
-    '1468674171213971568',
-    '1442568928667631738',
-    '1442568938457399299'
+    IDs.roles.verifiedUser,
+    IDs.roles.verifyExtraA,
+    IDs.roles.verifyExtraB,
+    IDs.roles.verifyExtraC,
+    IDs.roles.verifyExtraD,
+    IDs.roles.verifyExtraA
 ];
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
-const VERIFY_LOG_CHANNEL_ID = '1442569294796820541';
-const VERIFY_PING_CHANNEL_ID = '1442569115972669541';
-const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/verificationTenureService');
+const VERIFY_LOG_CHANNEL_ID = IDs.channels.antiRaidLog;
+const VERIFY_PING_CHANNEL_ID = IDs.channels.verifyPing;
+const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/communityOpsService');
 const verifyState = new Map();
 const fontPath = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');
 let captchaFontFamily = 'captcha';
@@ -385,3 +386,4 @@ async function handleVerifyInteraction(interaction) {
 }
 
 module.exports = { handleVerifyInteraction };
+

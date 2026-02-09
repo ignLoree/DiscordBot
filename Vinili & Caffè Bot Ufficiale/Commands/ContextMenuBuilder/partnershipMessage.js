@@ -9,7 +9,7 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.inGuild()) return;
         const categoryId = interaction.channel?.parentId || interaction.channel?.parent?.id;
-        if (categoryId !== '1442569056795230279') {
+        if (categoryId !== IDs.channels.mediaExemptCategory) {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
@@ -44,4 +44,5 @@ module.exports = {
         await interaction.showModal(modal);
     }
 };
+
 

@@ -1,6 +1,7 @@
 ﻿const { EmbedBuilder} = require('discord.js');
 const fetch = globalThis.fetch;
 const Staff = require('../../Schemas/Staff/staffSchema');
+const IDs = require('../../Utils/Config/ids');
 
 function extractInviteCode(text) {
     if (!text) return null;
@@ -43,7 +44,7 @@ function isValidServerName(name) {
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
     await interaction.deferReply().catch(() => { });
-    if (!interaction.member.roles.cache.has('1442568905582317740')) {
+    if (!interaction.member.roles.cache.has(IDs.roles.partnerManager)) {
         await interaction.editReply({
             embeds: [
                 new EmbedBuilder()
@@ -55,7 +56,7 @@ async function handlePartnerModal(interaction) {
     }
     const description = interaction.fields.getTextInputValue('serverDescription');
     const managerId = interaction.customId.split('_')[1];
-    const PARTNER_BLACKLIST_ROLE = '1443252279477272647';
+    const PARTNER_BLACKLIST_ROLE = IDs.roles.ticketPartnerBlacklist;
     if (!managerId) {
         await interaction.editReply({
             embeds: [
@@ -157,7 +158,7 @@ async function handlePartnerModal(interaction) {
 
         await staffDoc.save();
         const totalPartners = staffDoc.partnerCount;
-        const partnershipChannel = interaction.guild.channels.cache.get('1442569193470824448');
+        const partnershipChannel = interaction.guild.channels.cache.get(IDs.channels.partnershipPosts);
 
         const embed = new EmbedBuilder()
             .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })
@@ -224,3 +225,4 @@ function splitMessage(message, maxLength = 2000) {
 }
 
 module.exports = { handlePartnerModal };
+

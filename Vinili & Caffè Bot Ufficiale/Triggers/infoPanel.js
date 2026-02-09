@@ -1,8 +1,9 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const path = require('path');
-const PersonalityPanel = require('../Schemas/Community/panelSchema');
+const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
+const IDs = require('../Utils/Config/ids');
 
-const INFO_CHANNEL_ID = '1442569111119990887';
+const INFO_CHANNEL_ID = IDs.channels.infoPerks;
 const INFO_MEDIA_NAME = 'info.gif';
 const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
 
@@ -27,7 +28,7 @@ module.exports = {
         '<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**',
         '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!',
         '',
-        'Dubbi o problemi? <#1442569095068254219> sarà la vostra bussola, lo staff vi risponderà il prima possibile!'
+        `Dubbi o problemi? <#${IDs.channels.ticketOpenPanelChannel}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`
       ].join('\n'))
       .addFields(
         {
@@ -142,3 +143,6 @@ module.exports = {
     }
   }
 };
+
+
+

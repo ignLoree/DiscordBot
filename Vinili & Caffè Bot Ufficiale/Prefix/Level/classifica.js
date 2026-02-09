@@ -1,10 +1,10 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { getCurrentWeekKey } = require('../../Services/Community/expService');
 
 const TOP_LIMIT = 10;
-const LEADERBOARD_CHANNEL_ID = '1442569138114662490';
+const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;
 
 function getInvokedCommand(message) {
   const content = String(message?.content || '').trim();
@@ -170,3 +170,6 @@ module.exports = {
     });
   }
 };
+
+
+

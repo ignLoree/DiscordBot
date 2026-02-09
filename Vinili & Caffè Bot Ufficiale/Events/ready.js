@@ -1,20 +1,22 @@
-﻿const config = require('../config.json');
+const config = require('../config.json');
 const mongoose = require('mongoose');
-const { restorePendingReminders } = require('../Services/Disboard/disboardReminderService');
-const { restorePendingDiscadiaReminders } = require('../Services/Discadia/discadiaReminderService');
-const { startDiscadiaVoteReminderLoop } = require('../Services/Discadia/discadiaVoteReminderService');
+const { restorePendingReminders } = require('../Services/Bump/bumpService');
+const { restorePendingDiscadiaReminders } = require('../Services/Bump/bumpService');
+const { startDiscadiaVoteReminderLoop } = require('../Services/Bump/bumpService');
 const { bootstrapSupporter } = require('./presenceUpdate');
 const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
 const { startMinigameLoop, restoreActiveGames } = require('../Services/Minigames/minigameService');
-const { startVoteRoleCleanupLoop } = require('../Services/Community/voteRoleService');
+const { startVoteRoleCleanupLoop } = require('../Services/Community/communityOpsService');
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
-const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/verificationTenureService');
-const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/categoryNumberingService');
+const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/communityOpsService');
+const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/communityOpsService');
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
-const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketAutoClosePromptService');
+const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
+const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const cron = require('node-cron');
+const IDs = require('../Utils/Config/ids');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -162,10 +164,15 @@ module.exports = {
             } catch (err) {
                 global.logger.error('[TICKET AUTO CLOSE PROMPT] Failed to start loop', err);
             }
+            try {
+                startTranscriptCleanupLoop();
+            } catch (err) {
+                global.logger.error('[TRANSCRIPT CLEANUP] Failed to start loop', err);
+            }
         }
         try {
             cron.schedule("0 0 1 * *", async () => {
-                const channelId = "1442569130573303898";
+                const channelId = IDs.channels.inviteLog;
                 const channel = await getChannelSafe(client, channelId);
                 if (!channel) return;
                 await channel.send({
@@ -187,3 +194,4 @@ module.exports = {
         }
     },
 };
+

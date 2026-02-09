@@ -1,5 +1,5 @@
 const CONFIG = require('../../config');
-const { MorningReminderState } = require('../../Schemas/Community/morningReminderSchema');
+const { MorningReminderState } = require('../../Schemas/Community/communitySchemas');
 const axios = require('axios');
 
 const MORNING_PROMPTS = buildMorningPrompts();
@@ -257,3 +257,4 @@ async function maybeRunMorningReminder(client) {
 }
 
 module.exports = { maybeRunMorningReminder };
+

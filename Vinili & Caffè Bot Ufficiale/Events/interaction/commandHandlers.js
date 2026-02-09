@@ -3,7 +3,8 @@ const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
-const SLASH_COOLDOWN_BYPASS_ROLE_ID = '1442568910070349985';
+const IDs = require('../../Utils/Config/ids');
+const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
@@ -83,7 +84,8 @@ async function handleSlashCommand(interaction, client) {
     const originalFollowUp = interaction.followUp?.bind(interaction);
     const originalEditReply = interaction.editReply.bind(interaction);
     const originalChannelSend = interaction.channel?.send?.bind(interaction.channel);
-    interaction.reply = async (payload) => {
+    const wrappedInteraction = Object.create(interaction);
+    wrappedInteraction.reply = async (payload) => {
         payload = applyDefaultFooterToEmbeds(payload, interaction.guild);
         if (interaction.deferred) {
             return interaction.editReply(payload);
@@ -92,7 +94,7 @@ async function handleSlashCommand(interaction, client) {
     };
 
     if (originalFollowUp) {
-        interaction.followUp = async (payload) => {
+        wrappedInteraction.followUp = async (payload) => {
             payload = applyDefaultFooterToEmbeds(payload, interaction.guild);
             if (interaction.deferred && !interaction.replied) {
                 try {
@@ -103,9 +105,11 @@ async function handleSlashCommand(interaction, client) {
         };
     }
 
-    interaction.editReply = async (payload) => originalEditReply(applyDefaultFooterToEmbeds(payload, interaction.guild));
+    wrappedInteraction.editReply = async (payload) => originalEditReply(applyDefaultFooterToEmbeds(payload, interaction.guild));
     if (originalChannelSend) {
-        interaction.channel.send = async (payload) => originalChannelSend(applyDefaultFooterToEmbeds(payload, interaction.guild));
+        const wrappedChannel = Object.create(interaction.channel);
+        wrappedChannel.send = async (payload) => originalChannelSend(applyDefaultFooterToEmbeds(payload, interaction.guild));
+        wrappedInteraction.channel = wrappedChannel;
     }
 
     const getTimestamp = () => {
@@ -123,11 +127,14 @@ async function handleSlashCommand(interaction, client) {
             }
         }, 3000);
         await runWithTimeout(
-            Promise.resolve(command.execute(interaction, client)),
+            Promise.resolve(command.execute(wrappedInteraction, client)),
             COMMAND_EXECUTION_TIMEOUT_MS,
             `app:${interaction.commandName || 'unknown'}`
         );
     } catch (error) {
+        if (error?.code === 'COMMAND_TIMEOUT') {
+            global.logger.warn(`[INTERACTION TIMEOUT] ${interaction.commandName || 'unknown'} by ${interaction.user?.tag || interaction.user?.id}`);
+        }
         global.logger.error(
             `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
             error

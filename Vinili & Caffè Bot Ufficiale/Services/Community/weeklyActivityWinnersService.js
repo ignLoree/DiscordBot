@@ -1,22 +1,23 @@
-Ôªøconst { EmbedBuilder, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const cron = require('node-cron');
-const ActivityUser = require('../../Schemas/Community/activityUserSchema');
-const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { VOICE_EXP_PER_MINUTE } = require('./expService');
+const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
-const TARGET_CHANNEL_ID = '1470183921236049940';
-const INFO_CHANNEL_ID = '1442569111119990887';
+const TARGET_CHANNEL_ID = IDs.channels.weeklyWinners;
+const INFO_CHANNEL_ID = IDs.channels.infoPerks;
 const TROPHY_LABELS = [
   '<:VC_Podio1:1469659449974329598>',
   '<:VC_Podio2:1469659512863592500>',
   '<:VC_Podio3:1469659557696504024>'
 ];
-const MESSAGE_WINNER_ROLE_ID = '1468674837957574757';
-const VOICE_WINNER_ROLE_ID = '1468674787399172208';
+const MESSAGE_WINNER_ROLE_ID = IDs.roles.weeklyMessageWinner;
+const VOICE_WINNER_ROLE_ID = IDs.roles.weeklyVoiceWinner;
 const EXCLUDED_ROLE_IDS = new Set([
-  '1442568910070349985',
-  '1442568905582317740'
+  IDs.roles.staff,
+  IDs.roles.partnerManager
 ]);
 
 function pad2(value) {
@@ -58,7 +59,7 @@ function getNextWeekKey(date) {
 }
 
 function buildEmptyLine(kind) {
-  return `‚Ä¢ Nessun dato disponibile per ${kind}.`;
+  return `ï Nessun dato disponibile per ${kind}.`;
 }
 
 function formatRankLine(index, userMention, value, unit) {
@@ -202,10 +203,10 @@ async function publishWeeklyActivityWinners(client) {
     .setDescription([
       `<:VC_Leaderboard:1469659357678669958> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
       '',
-      `<a:VC_HeartsBlue:1468686100045369404> ‚Ä¢ **Classifica testuale:**`,
+      `<a:VC_HeartsBlue:1468686100045369404> ï **Classifica testuale:**`,
       ...messageRows,
       '',
-      `<a:VC_HeartsBlue:1468686100045369404> ‚Ä¢ **Classifica vocale:**`,
+      `<a:VC_HeartsBlue:1468686100045369404> ï **Classifica vocale:**`,
       ...voiceRows,
     ].join('\n'))
     .setThumbnail(guild.iconURL({ size: 256 }) || null);
@@ -231,7 +232,7 @@ async function publishWeeklyActivityWinners(client) {
 
   await channel.send({
     content: `<@&1442568949605597264>
-<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attivit√† <a:VC_StarPink:1330194976440848500>
+<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attivit‡ <a:VC_StarPink:1330194976440848500>
 
 <a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **__chat testuale__**!
 <a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp**, ${voiceWinnerMention} ottieni il primo posto per **__chat vocale__**!
@@ -289,3 +290,7 @@ module.exports = {
   publishWeeklyActivityWinners,
   resetWeeklyActivityCounters
 };
+
+
+
+

@@ -51,7 +51,7 @@ module.exports = {
         switch (sub) {
             case 'suggest':
                 try {
-                    const suggestionchannel = interaction.guild.channels.cache.get("1442569147559973094");
+                    const suggestionchannel = interaction.guild.channels.cache.get(IDs.channels.suggestions);
                     let counter = await SuggestionCount.findOne();
                     if (!counter) {
                         counter = await SuggestionCount.create({ count: 0 });
@@ -143,7 +143,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                         flags: 1 << 6
                     });
                 }
-                const suggestionChannel = interaction.guild.channels.cache.get("1442569147559973094");
+                const suggestionChannel = interaction.guild.channels.cache.get(IDs.channels.suggestions);
                 const suggestionMessage = await suggestionChannel.messages.fetch(suggestionData.Msg);
                 const oldEmbed = suggestionMessage.embeds[0];
                 const newEmbed = new EmbedBuilder()
@@ -189,7 +189,7 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
                         flags: 1 << 6
                     });
                 }
-                const rejectSuggestionChannel = interaction.guild.channels.cache.get("1442569147559973094");
+                const rejectSuggestionChannel = interaction.guild.channels.cache.get(IDs.channels.suggestions);
                 const rejectSuggestionMessage = await rejectSuggestionChannel.messages.fetch(rejectSuggestionData.Msg);
                 const rejectOldEmbed = rejectSuggestionMessage.embeds[0];
                 const rejectNewEmbed = new EmbedBuilder()
@@ -220,3 +220,4 @@ Il tuo ID Suggerimento (sID) è **${SuggestionID}**`)
         }
     }
 }
+

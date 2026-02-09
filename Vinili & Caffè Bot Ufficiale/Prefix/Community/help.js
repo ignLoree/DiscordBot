@@ -1,21 +1,24 @@
 ﻿const fs = require('fs');
 const path = require('path');
+const IDs = require('../../Utils/Config/ids');
+
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags } = require('discord.js');
+
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
 const PAGE_ROLE_IDS = [
-  '1442568905582317740',
-  '1442568910070349985',
-  '1442568894349840435',
-  '1442568886988963923'
+  IDs.roles.partnerManager,
+  IDs.roles.staff,
+  IDs.roles.highStaff,
+  IDs.roles.owner
 ];
 const PAGE_TITLES = {
   utente: 'Comandi Utente',
-  '1442568905582317740': 'Comandi Partner Manager',
-  '1442568910070349985': 'Comandi Staff',
-  '1442568894349840435': 'Comandi High Staff',
-  '1442568886988963923': 'Comandi Dev'
+  [IDs.roles.partnerManager]: 'Comandi Partner Manager',
+  [IDs.roles.staff]: 'Comandi Staff',
+  [IDs.roles.highStaff]: 'Comandi High Staff',
+  [IDs.roles.owner]: 'Comandi Dev'
 };
 const CATEGORY_LABELS = {
   community: 'Community',
@@ -508,3 +511,4 @@ module.exports = {
     });
   }
 };
+

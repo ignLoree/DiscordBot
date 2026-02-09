@@ -1,6 +1,6 @@
-﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
+const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder } = require('discord.js');
-const { AvatarPrivacy } = require('../../Schemas/Community/privacySchemas');
+const { AvatarPrivacy } = require('../../Schemas/Community/communitySchemas');
 
 module.exports = {
   name: 'unblockavatar',
@@ -26,3 +26,4 @@ module.exports = {
     return safeChannelSend(message.channel, { embeds: [embed] });
   }
 };
+

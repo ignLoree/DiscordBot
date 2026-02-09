@@ -1,11 +1,12 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
+const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
     staffRoleIdsBySubcommand: {
-        request: ['1442568905582317740', '1442568910070349985'],
-        accept: ['1442568894349840435']
+        request: [IDs.roles.partnerManager, IDs.roles.staff],
+        accept: [IDs.roles.highStaff]
     },
     data: new SlashCommandBuilder()
         .setName('pausa')
@@ -40,7 +41,7 @@ module.exports = {
                 const dataRichiesta = interaction.options.getString('data_richiesta');
                 const dataRitorno = interaction.options.getString('data_ritorno');
                 const motivazione = interaction.options.getString('motivazione');
-                const channel = interaction.guild.channels.cache.get('1442569285909217301');
+                const channel = interaction.guild.channels.cache.get(IDs.channels.pauseRequestLog);
                 let stafferDoc = await Staff.findOne({ guildId, userId });
                 if (!stafferDoc) stafferDoc = new Staff({ guildId, userId });
                 stafferDoc.pauses.push({
@@ -59,7 +60,7 @@ module.exports = {
                     flags: 1 << 6
                 });
                 await channel.send({
-                    content: `<@&1442568894349840435> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${dataRichiesta}\nData ritorno: ${dataRitorno}\nMotivo: ${motivazione}`
+                    content: `<@&${IDs.roles.highStaff}> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${dataRichiesta}\nData ritorno: ${dataRitorno}\nMotivo: ${motivazione}`
                 });
             }
                 break;
@@ -71,7 +72,7 @@ module.exports = {
                 const stafferInPausa = interaction.options.getInteger('staffer_in_pausa');
                 const giorniUsati = interaction.options.getInteger('giorni_usati');
                 const giorniAggiuntivi = interaction.options.getInteger('giorni_aggiuntivi');
-                const channel = interaction.guild.channels.cache.get('1442569255315832945');
+                const channel = interaction.guild.channels.cache.get(IDs.channels.pauseAcceptedLog);
                 let stafferRecord = await Staff.findOne({ guildId, userId: staffer.id });
                 if (!stafferRecord) stafferRecord = new Staff({ guildId, userId: staffer.id });
                 stafferRecord.pauses.push({
@@ -101,3 +102,4 @@ module.exports = {
         }
     }
 }
+

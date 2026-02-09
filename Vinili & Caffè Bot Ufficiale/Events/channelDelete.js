@@ -1,4 +1,4 @@
-const { queueCategoryRenumber } = require('../Services/Community/categoryNumberingService');
+const { queueCategoryRenumber } = require('../Services/Community/communityOpsService');
 
 function isTicketsCategory(name) {
     return String(name || '').toLowerCase().includes('tickets');
@@ -30,3 +30,4 @@ module.exports = {
         queueCategoryRenumber(client, channel.guildId);
     }
 };
+

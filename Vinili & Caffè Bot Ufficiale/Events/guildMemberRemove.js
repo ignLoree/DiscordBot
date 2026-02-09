@@ -1,9 +1,9 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const Staff = require('../Schemas/Staff/staffSchema');
 const Ticket = require("../Schemas/Ticket/ticketSchema");
-const createTranscript = require("../Utils/Ticket/createTranscript");
-const { createTranscriptHtml, saveTranscriptHtml } = require("../Utils/Ticket/createTranscriptHtml");
-const InviteTrack = require('../Schemas/Community/inviteTrackSchema');
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require("../Utils/Ticket/transcriptUtils");
+const { InviteTrack } = require('../Schemas/Community/communitySchemas');
+const IDs = require('../Utils/Config/ids');
 
 module.exports = {
     name: 'guildMemberRemove',
@@ -15,13 +15,13 @@ module.exports = {
             ).catch(() => {});
 
             const guild = member.guild;
-            const totalVoice = guild.channels.cache.get('1442569096700104754');
+            const totalVoice = guild.channels.cache.get(IDs.channels.totalVoiceCounter);
             if (totalVoice) {
-                totalVoice.setName(`༄☕︲User: ${guild.memberCount}`).catch(() => {});
+                totalVoice.setName(`???User: ${guild.memberCount}`).catch(() => {});
             }
             const openTickets = await Ticket.find({ userId: member.id, open: true }).catch(() => []);
             if (openTickets.length > 0) {
-                const logChannel = guild.channels.cache.get("1442569290682208296");
+                const logChannel = guild.channels.cache.get(IDs.channels.commandError);
                 for (const ticket of openTickets) {
                     const channel = guild.channels.cache.get(ticket.channelId) || await guild.channels.fetch(ticket.channelId).catch(() => null);
                     if (!channel) {
@@ -76,8 +76,8 @@ module.exports = {
                 userId: member.id
             });
             if (staffDoc) {
-            const newRole = guild.roles.cache.get('1442568949605597264');
-            const newRoleName = newRole ? newRole.name : "༄ User";
+            const newRole = guild.roles.cache.get(IDs.roles.user);
+            const newRoleName = newRole ? newRole.name : "? User";
             let lastRole = "Nessun ruolo salvato";
             if (staffDoc.rolesHistory.length > 0) {
                 const lastRoleIdOrName =
@@ -91,7 +91,7 @@ module.exports = {
                 reason: "Dimissioni"
             });
             await staffDoc.save();
-            const resignChannel = guild.channels.cache.get('1442569234004709391');
+            const resignChannel = guild.channels.cache.get(IDs.channels.resignLog);
             if (resignChannel) {
                 const msg =
                     `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
@@ -103,7 +103,7 @@ module.exports = {
             const partnerships = await Staff.find({ managerId: member.id });
             if (partnerships.length > 0) {
                 try {
-                    const partnerLogChannel = guild.channels.cache.get('1467533670129729680');
+                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerManagerLeaveLog);
                     if (partnerLogChannel) {
                         for (const doc of partnerships) {
                             const lastPartner = doc.partnerActions && doc.partnerActions.length
@@ -131,7 +131,7 @@ module.exports = {
                             new ButtonBuilder()
                                 .setLabel("Rientra nel server")
                                 .setStyle(ButtonStyle.Link)
-                                .setURL("https://discord.gg/viniliecaffe")
+                                .setURL(IDs.links.invite)
                         );
                         await dmChannel.send({
                             content: `<:vegax:1443934876440068179> Sei uscito dal server! Rientra entro 5 minuti per non perdere la tua partnership.`,
@@ -156,3 +156,5 @@ module.exports = {
         }
     }
 }
+
+

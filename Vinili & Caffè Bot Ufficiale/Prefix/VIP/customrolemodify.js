@@ -1,17 +1,20 @@
-ï»¿const {
+const IDs = require('../../Utils/Config/ids');
+
+const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle
 } = require('discord.js');
-const CustomRole = require('../../Schemas/Community/customRoleSchema');
+const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  '1442568950805430312',
-  '1442568916114346096',
-  '1329497467481493607',
-  '1442568931326824488'
+  IDs.roles.customRoleAccessA,
+  IDs.roles.customRoleAccessB,
+  IDs.roles.customRoleAccessC,
+  IDs.roles.customRoleAccessD
 ];
 
 function hasCustomRoleAccess(member) {
@@ -23,7 +26,7 @@ function buildNoPermEmbed(message) {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando Ã¨ **VIP**, riservato ad una categoria di utenti specifici.")
+    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
     .addFields({
       name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
       value: `ottieni uno dei seguenti ruoli: <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[0]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[1]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[2]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[3]}>`
@@ -33,10 +36,10 @@ function buildNoPermEmbed(message) {
 function buildPanelEmbed(member, role, guild) {
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle('âœ… Modifica Ruolo')
+    .setTitle('? Modifica Ruolo')
     .setDescription([
       '<a:VC_Flowers:1468687836055212174> Modifica il tuo ruolo personalizzato.',
-      '__Altri__ comandi li trovi nel menÃ¹ con il comando `+help`',
+      '__Altri__ comandi li trovi nel menù con il comando `+help`',
       'Puoi configurarlo con i pulsanti qui sotto.',
       '',
       '**Ruolo:**',
@@ -108,7 +111,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piÃ¹. Ricrealo con `+customrolecreate`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrolecreate`.')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -122,3 +125,7 @@ module.exports = {
     });
   }
 };
+
+
+
+

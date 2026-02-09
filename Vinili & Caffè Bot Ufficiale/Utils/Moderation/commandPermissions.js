@@ -73,4 +73,4 @@ function checkPrefixPermission(message, commandName, subcommandName = null) {
   return hasAnyRole(message.member, roles);
 }
 
-module.exports = { checkSlashPermission, checkPrefixPermission };
+module.exports = { checkSlashPermission, checkPrefixPermission, hasAnyRole };

@@ -1,6 +1,6 @@
-﻿const { safeChannelSend } = require('../../Utils/Moderation/reply');
+const { safeChannelSend } = require('../../Utils/Moderation/reply');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { AvatarPrivacy } = require('../../Schemas/Community/privacySchemas');
+const { AvatarPrivacy } = require('../../Schemas/Community/communitySchemas');
 
 function normalize(text) {
   return String(text || '').toLowerCase().trim();
@@ -41,7 +41,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.')
+            .setDescription('<:vegax:1443934876440068179> Questo comando pu� essere usato solo in un server.')
         ]
       });
     }
@@ -116,17 +116,18 @@ module.exports = {
       .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
       .setColor('#6f4e37')
       .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views 👁️`
+        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views ???`
       });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('avatar_views')
         .setLabel('Classifica Views')
-        .setEmoji('📊')
+        .setEmoji('??')
         .setStyle(ButtonStyle.Secondary)
     );
 
     return safeChannelSend(message.channel, { embeds: [embed], components: [row] });
   }
 };
+

@@ -1,16 +1,16 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const InviteTrack = require('../../Schemas/Community/inviteTrackSchema');
+const { InviteTrack } = require('../../Schemas/Community/communitySchemas');
 
 const TOP_LIMIT = 10;
 const THUMBNAIL_URL = 'https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114';
-const LEADERBOARD_CHANNEL_ID = '1442569138114662490';
+const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;
 
 function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';
   if (index === 1) return '<:VC_Podio2:1469659512863592500>';
   if (index === 2) return '<:VC_Podio3:1469659557696504024>';
-  return `${index + 1}°`;
+  return `${index + 1}�`;
 }
 
 async function resolveDisplayName(guild, userId) {
@@ -124,7 +124,7 @@ module.exports = {
       const retention = total > 0 ? Math.round((active / total) * 100) : 0;
 
       lines.push(`${rankLabel(i)} **${name}**`);
-      lines.push(`└─👥 **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
+      lines.push(`+-?? **${total}** inviti totali (<:vegacheckmark:1443666279058772028> **${active}** attivi, <:vegax:1443934876440068179> **${left}** usciti, <:podium:1469660769984708629> **${retention}%** ritenzione)`);
       lines.push('');
     }
 
@@ -144,7 +144,7 @@ module.exports = {
       .setDescription(lines.join('\n').trim())
       .setThumbnail(THUMBNAIL_URL)
       .setFooter({
-        text: `Richiesto da ${message.author.username} • Oggi alle ${now}`,
+        text: `Richiesto da ${message.author.username} � Oggi alle ${now}`,
         iconURL: message.author.displayAvatarURL({ size: 64 })
       });
 
@@ -180,7 +180,7 @@ module.exports = {
     const redirectEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setDescription(
-        `Per evitare di intasare la chat, la classifica inviti è stata generata nel canale ` +
+        `Per evitare di intasare la chat, la classifica inviti � stata generata nel canale ` +
         `<#${LEADERBOARD_CHANNEL_ID}>. [Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`
       );
 
@@ -198,3 +198,6 @@ module.exports = {
     });
   }
 };
+
+
+

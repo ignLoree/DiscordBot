@@ -1,8 +1,8 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
-const createTranscript = require('../../Utils/Ticket/createTranscript');
-const { createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/createTranscriptHtml');
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
+const IDs = require('../../Utils/Config/ids');
 
 async function handleTicketInteraction(interaction) {
     const handledButtons = new Set([
@@ -29,13 +29,13 @@ async function handleTicketInteraction(interaction) {
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && handledModals.has(interaction.customId);
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
-    const LOG_CHANNEL = '1442569290682208296';
-    const ROLE_STAFF = '1442568910070349985';
-    const ROLE_HIGHSTAFF = '1442568894349840435';
-    const ROLE_PARTNERMANAGER = '1442568905582317740';
-    const ROLE_USER = '1442568949605597264';
-    const ROLE_TICKETPARTNER_BLACKLIST = '1443252279477272647';
-    const ROLE_TICKET_BLACKLIST = '1463248847768785038';
+    const LOG_CHANNEL = IDs.channels.commandError;
+    const ROLE_STAFF = IDs.roles.staff;
+    const ROLE_HIGHSTAFF = IDs.roles.highStaff;
+    const ROLE_PARTNERMANAGER = IDs.roles.partnerManager;
+    const ROLE_USER = IDs.roles.user;
+    const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.ticketPartnerBlacklist;
+    const ROLE_TICKET_BLACKLIST = IDs.roles.ticketBlacklist;
     const STAFF_ROLES = [ROLE_STAFF, ROLE_HIGHSTAFF];
     const TICKET_PERMISSIONS = [
         PermissionFlagsBits.ViewChannel,
@@ -58,13 +58,41 @@ async function handleTicketInteraction(interaction) {
         return new EmbedBuilder().setTitle(title).setDescription(description).setColor('#6f4e37');
     }
 
+    function normalizeCategoryName(name) {
+        return String(name || '')
+            .toLowerCase()
+            .replace(/\s+/g, '')
+            .replace(/[・`'".,;:!?\-_=+()[\]{}|/\\]/g, '');
+    }
+
     async function createTicketsCategory(guild) {
         if (!guild) return null;
+        if (!interaction.client.ticketCategoryCache) {
+            interaction.client.ticketCategoryCache = new Map();
+        }
+
+        const cachedCategoryId = interaction.client.ticketCategoryCache.get(guild.id);
+        if (cachedCategoryId) {
+            const cachedCategory = guild.channels.cache.get(cachedCategoryId)
+                || await guild.channels.fetch(cachedCategoryId).catch(() => null);
+            if (cachedCategory && cachedCategory.type === 4) return cachedCategory;
+        }
+
+        await guild.channels.fetch().catch(() => null);
+        const normalizedTarget = normalizeCategoryName(TICKETS_CATEGORY_NAME);
         const existing = guild.channels.cache
-            .filter(ch => ch.type === 4 && ch.name === TICKETS_CATEGORY_NAME)
+            .filter(ch => ch.type === 4)
             .sort((a, b) => a.position - b.position)
-            .first();
-        if (existing) return existing;
+            .find((ch) => {
+                if (ch.name === TICKETS_CATEGORY_NAME) return true;
+                const normalized = normalizeCategoryName(ch.name);
+                return normalized === normalizedTarget
+                    || (normalized.includes('tickets') && normalized.includes('⁰⁰'));
+            });
+        if (existing) {
+            interaction.client.ticketCategoryCache.set(guild.id, existing.id);
+            return existing;
+        }
 
         const category = await guild.channels.create({
             name: TICKETS_CATEGORY_NAME,
@@ -79,6 +107,7 @@ async function handleTicketInteraction(interaction) {
         if (!category) return null;
 
         await category.setPosition(0).catch(() => {});
+        interaction.client.ticketCategoryCache.set(guild.id, category.id);
         return category;
     }
 
@@ -602,7 +631,7 @@ async function handleTicketInteraction(interaction) {
                     ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
                     : 'Data non disponibile';
                 const motivo = ticketDoc.closeReason || 'Nessun motivo inserito';
-                const logChannel = interaction.guild.channels.cache.get('1442570210784591912');
+                const logChannel = interaction.guild.channels.cache.get(IDs.channels.ticketCloseLogAlt);
                 if (logChannel) {
                     await logChannel.send({
                         embeds: [
@@ -789,4 +818,3 @@ async function handleTicketInteraction(interaction) {
 }
 
 module.exports = { handleTicketInteraction };
-

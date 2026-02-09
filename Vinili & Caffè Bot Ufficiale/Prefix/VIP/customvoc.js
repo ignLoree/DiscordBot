@@ -1,13 +1,14 @@
 const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const CustomRole = require('../../Schemas/Community/customRoleSchema');
+const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
-const CUSTOM_VOICE_CATEGORY_ID = '1442569078379118755';
+const CUSTOM_VOICE_CATEGORY_ID = IDs.channels.customVoiceCategory;
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  '1442568950805430312',
-  '1442568916114346096',
-  '1329497467481493607',
-  '1442568931326824488'
+  IDs.roles.customRoleAccessA,
+  IDs.roles.customRoleAccessB,
+  IDs.roles.customRoleAccessC,
+  IDs.roles.customRoleAccessD
 ];
 
 function hasCustomRoleAccess(member) {
@@ -205,3 +206,5 @@ module.exports = {
     });
   }
 };
+
+

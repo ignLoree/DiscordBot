@@ -1,8 +1,10 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
-const path = require('path');
-const Panel = require('../Schemas/Community/panelSchema');
+const IDs = require('../Utils/Config/ids');
 
-const VERIFY_CHANNEL_ID = '1442569059983163403';
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const path = require('path');
+const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
+
+const VERIFY_CHANNEL_ID = IDs.channels.verifyPanel;
 const VERIFY_MEDIA_NAME = 'verifica.gif';
 const VERIFY_MEDIA_PATH = path.join(__dirname, '..', 'Photos', VERIFY_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
@@ -24,7 +26,7 @@ module.exports = {
     
     const verifyInfoEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setTitle('<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caffè__**')
+      .setTitle('<a:VC_HeartsPink:1468685897389052008> **__Benvenutx su Vinili & Caff�__**')
       .setDescription(
         '<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n' +
         '<:vsl_ticket:1329520261053022208> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `SUPPORTO`__**'
@@ -92,3 +94,6 @@ module.exports = {
     }
   }
 };
+
+
+

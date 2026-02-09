@@ -1,8 +1,9 @@
 const { ChannelType, EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const CustomRole = require('../../Schemas/Community/customRoleSchema');
+const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
-const CUSTOM_VOICE_CATEGORY_ID = '1442569078379118755';
+const CUSTOM_VOICE_CATEGORY_ID = IDs.channels.customVoiceCategory;
 
 function parseUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -165,3 +166,5 @@ module.exports = {
     });
   }
 };
+
+

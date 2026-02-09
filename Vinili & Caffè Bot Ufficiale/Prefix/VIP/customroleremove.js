@@ -1,11 +1,14 @@
+const IDs = require('../../Utils/Config/ids');
+
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, PermissionsBitField } = require('discord.js');
-const CustomRole = require('../../Schemas/Community/customRoleSchema');
+const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  '1442568950805430312',
-  '1442568916114346096',
-  '1329497467481493607',
-  '1442568931326824488'
+  IDs.roles.customRoleAccessA,
+  IDs.roles.customRoleAccessB,
+  IDs.roles.customRoleAccessC,
+  IDs.roles.customRoleAccessD
 ];
 
 function hasCustomRoleAccess(member) {
@@ -119,3 +122,7 @@ module.exports = {
     });
   }
 };
+
+
+
+

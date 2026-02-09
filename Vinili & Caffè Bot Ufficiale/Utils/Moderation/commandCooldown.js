@@ -1,8 +1,9 @@
-const ExpUser = require('../../Schemas/Community/expUserSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../Config/ids');
 
-const ROLE_COOLDOWN_BYPASS = '1442568910070349985';
-const ROLE_LEVEL_30 = '1442568933591748688';
-const ROLE_LEVEL_50 = '1442568932136587297';
+const ROLE_COOLDOWN_BYPASS = IDs.roles.staff;
+const ROLE_LEVEL_30 = IDs.roles.level30;
+const ROLE_LEVEL_50 = IDs.roles.level50;
 
 function getBucket(client) {
   if (!client.commandCooldowns) {
@@ -77,3 +78,6 @@ module.exports = {
   getUserCommandCooldownSeconds,
   consumeUserCooldown
 };
+
+
+

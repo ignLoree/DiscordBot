@@ -1,5 +1,6 @@
-const ExpUser = require('../../Schemas/Community/expUserSchema');
-const GlobalSettings = require('../../Schemas/Community/globalSettingsSchema');
+const { ExpUser } = require('../../Schemas/Community/communitySchemas');
+const { GlobalSettings } = require('../../Schemas/Community/communitySchemas');
+const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
 const MESSAGE_EXP = 2;
@@ -7,21 +8,21 @@ const VOICE_EXP_PER_MINUTE = 5;
 const DEFAULT_MULTIPLIER = 1;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const multiplierCache = new Map();
-const LEVEL_UP_CHANNEL_ID = '1442569138114662490';
-const PERKS_CHANNEL_ID = '1442569111119990887';
-const PERK_ROLE_ID = '1468938195348754515';
+const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
+const PERKS_CHANNEL_ID = IDs.channels.infoPerks;
+const PERK_ROLE_ID = IDs.roles.mediaBypass;
 const LEVEL_ROLE_MAP = new Map([
-  [10, '1442568936423034940'],
-  [20, '1442568934510297226'],
-  [30, '1442568933591748688'],
-  [50, '1442568932136587297'],
-  [70, '1442568931326824488'],
-  [100, '1442568929930379285']
+  [10, IDs.roles.level10],
+  [20, IDs.roles.level20],
+  [30, IDs.roles.level30],
+  [50, IDs.roles.level50],
+  [70, IDs.roles.level70],
+  [100, IDs.roles.level100]
 ]);
 const ROLE_MULTIPLIERS = new Map([
-  ['1442568950805430312', 3],
-  ['1442568916114346096', 3],
-  ['1329497467481493607', 2]
+  [IDs.roles.customRoleAccessA, 3],
+  [IDs.roles.customRoleAccessB, 3],
+  [IDs.roles.plusColorBooster, 2]
 ]);
 
 function pad2(value) {
@@ -350,3 +351,6 @@ module.exports = {
   getCurrentWeekKey,
   ROLE_MULTIPLIERS
 };
+
+
+

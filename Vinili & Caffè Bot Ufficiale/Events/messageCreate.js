@@ -1,12 +1,12 @@
-Ôªøconst { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
-const { recordBump } = require('../Services/Disboard/disboardReminderService');
-const { recordDiscadiaBump } = require('../Services/Discadia/discadiaReminderService');
-const { recordDiscadiaVote } = require('../Services/Discadia/discadiaVoteReminderService');
+const { recordBump } = require('../Services/Bump/bumpService');
+const { recordDiscadiaBump } = require('../Services/Bump/bumpService');
+const { recordDiscadiaVote } = require('../Services/Bump/bumpService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
@@ -14,26 +14,27 @@ const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { checkPrefixPermission } = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
-const PREFIX_COOLDOWN_BYPASS_ROLE_ID = '1442568910070349985';
+const IDs = require('../Utils/Config/ids');
+const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
-const VOTE_MANAGER_BOT_ID = '959699003010871307';
-const VOTE_CHANNEL_ID = '1442569123426074736';
-const VOTE_ROLE_ID = '1468266342682722679';
-const VOTE_URL = 'https://discadia.com/server/viniliecaffe/';
+const VOTE_MANAGER_BOT_ID = IDs.bots.voteManager;
+const VOTE_CHANNEL_ID = IDs.channels.thanks;
+const VOTE_ROLE_ID = IDs.roles.voteReward;
+const VOTE_URL = IDs.links.vote;
 const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
-const { upsertVoteRole } = require('../Services/Community/voteRoleService');
-const COUNTING_CHANNEL_ID = '1442569179743125554';
+const { upsertVoteRole } = require('../Services/Community/communityOpsService');
+const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
 const guildSettingsCache = new Map();
 
 const MEDIA_BLOCK_ROLE_IDS = [
-    "1468938195348754515"
+    IDs.roles.mediaBypass
 ];
-const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = "1442569056795230279";
+const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.channels.mediaExemptCategory;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([
-    "1442569136067575809"
+    IDs.channels.mediaExemptChannel
 ]);
 
 function hasMediaPermission(member) {
@@ -279,7 +280,7 @@ async function handleVoteManagerMessage(message) {
             }
         } catch {}
     }
-    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}¬∞` : '';
+    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}∞` : '';
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
             .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
@@ -287,12 +288,12 @@ async function handleVoteManagerMessage(message) {
                 `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
                 '',
                 '\`Hai guadagnato:\`',
-                `<a:VC_Events:1448688007438667796> ‚Ä¢ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
-                `<a:VC_Money:1448671284748746905> ‚Ä¢ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+                `<a:VC_Events:1448688007438667796> ï **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
+                `<a:VC_Money:1448671284748746905> ï Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varier√†: a volte sar√† pi√π alto, altre volte pi√π basso, mentre altre ancora uguale al precedente üçÄ' });
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varier‡: a volte sar‡ pi˘ alto, altre volte pi˘ basso, mentre altre ancora uguale al precedente ??' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -339,8 +340,8 @@ module.exports = {
                             [
                                 `<:attentionfromvega:1443651874032062505> ? Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                                 "",
-                                "<a:VC_StarPink:1330194976440848500> ‚Ä¢ **__Sblocca il permesso:__**",
-                                `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&1468938195348754515>.`
+                                "<a:VC_StarPink:1330194976440848500> ï **__Sblocca il permesso:__**",
+                                `<a:VC_Arrow:1448672967721615452> ottieni il ruolo: <@&${IDs.roles.mediaBypass}>.`
                             ].join("\n")
                         );
                     await message.channel.send({ content: `${message.author}`, embeds: [embed] });
@@ -362,7 +363,7 @@ module.exports = {
             return;
         if (!isEditedPrefixExecution) {
             try {
-                if (message.channelId === '1442569130573303898') {
+                if (message.channelId === IDs.channels.inviteLog) {
                     recordReminderActivity(message.channelId);
                 }
             } catch (error) {
@@ -487,8 +488,8 @@ module.exports = {
                         `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
                         '',
                         'Il cooldown si riduce con i ruoli:',
-                        `‚Ä¢ <@&1442568933591748688> -> **15s**`,
-                        `‚Ä¢ <@&1442568932136587297> -> **5s**`
+                        `ï <@&${IDs.roles.level30}> -> **15s**`,
+                        `ï <@&${IDs.roles.level50}> -> **5s**`
                     ].join('\n'));
                 await message.channel.send({ embeds: [embed] });
                 return;
@@ -499,11 +500,11 @@ module.exports = {
         const userId = message.author.id;
         const queueLockId = `${message.guild.id}:${userId}`;
         const enqueueCommand = async () => {
-            const emoji = message.client?.emojis?.cache?.get('1443934440614264924');
+            const emoji = message.client?.emojis?.cache?.get(IDs.emojis.loadingAnimatedId);
             if (emoji) {
                 await message.react(emoji).catch(() => { });
             } else {
-                await message.react('<a:VC_Loading:1462504528774430962>').catch(() => { });
+                await message.react(IDs.emojis.loadingFallbackId).catch(() => { });
             }
             if (!client.prefixCommandQueue.has(queueLockId)) {
                 client.prefixCommandQueue.set(queueLockId, []);
@@ -517,11 +518,30 @@ module.exports = {
         const executePrefixCommand = async (payload) => {
             const { message: execMessage, args: execArgs, command: execCommand } = payload;
             const originalReply = execMessage.reply.bind(execMessage);
-            execMessage.reply = (payload) => originalReply(applyDefaultFooterToEmbeds(payload, execMessage.guild));
+            const hasSendablePayload = (data) => {
+                if (typeof data === 'string') return data.trim().length > 0;
+                if (!data || typeof data !== 'object') return false;
+                const hasContent = typeof data.content === 'string' ? data.content.trim().length > 0 : data.content != null;
+                const hasEmbeds = Array.isArray(data.embeds) && data.embeds.length > 0;
+                const hasComponents = Array.isArray(data.components) && data.components.length > 0;
+                const hasFiles = Array.isArray(data.files) && data.files.length > 0;
+                const hasStickers = Array.isArray(data.stickers) && data.stickers.length > 0;
+                const hasAttachments = Array.isArray(data.attachments) && data.attachments.length > 0;
+                const hasPoll = Boolean(data.poll);
+                return hasContent || hasEmbeds || hasComponents || hasFiles || hasStickers || hasAttachments || hasPoll;
+            };
+            const commandMessage = Object.create(execMessage);
+            commandMessage.reply = (replyPayload) => {
+                const withFooter = applyDefaultFooterToEmbeds(replyPayload, execMessage.guild);
+                if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
+                return originalReply(withFooter);
+            };
             const originalChannelSend = execMessage.channel?.send?.bind(execMessage.channel);
+            const commandChannel = execMessage.channel ? Object.create(execMessage.channel) : execMessage.channel;
             if (originalChannelSend) {
-                execMessage.channel.send = (payload) => {
-                    const withFooter = applyDefaultFooterToEmbeds(payload, execMessage.guild);
+                commandChannel.send = (sendPayload) => {
+                    const withFooter = applyDefaultFooterToEmbeds(sendPayload, execMessage.guild);
+                    if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
                     if (typeof withFooter === 'string') {
                         return originalChannelSend({
                             content: withFooter,
@@ -561,23 +581,27 @@ module.exports = {
                         void sendTypingSafe();
                     }, 8000);
                 }, 2500);
-                execMessage.channel.sendTyping = async () => {
+                commandChannel.sendTyping = async () => {
                     await sendTypingSafe();
                 };
             }
+            if (commandChannel) {
+                commandMessage.channel = commandChannel;
+            }
             try {
                 await runWithTimeout(
-                    Promise.resolve(execCommand.execute(execMessage, execArgs, client)),
+                    Promise.resolve(execCommand.execute(commandMessage, execArgs, client)),
                     COMMAND_EXECUTION_TIMEOUT_MS,
                     `prefix:${execCommand?.name || 'unknown'}`
                 );
             } catch (error) {
                 if (error?.code === 'COMMAND_TIMEOUT') {
+                    logEventError(client, 'PREFIX COMMAND TIMEOUT', error);
                     await execMessage.reply({
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando √® scaduto dopo 60 secondi. Prova di nuovo.')
+                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando Ë scaduto dopo 60 secondi. Prova di nuovo.')
                         ]
                     }).catch(() => { });
                 }
@@ -587,8 +611,8 @@ module.exports = {
                 const errorEmbed = new EmbedBuilder()
                     .setColor("#6f4e37")
                     .addFields(
-                        { name: '<:dot:1443660294596329582> Comando', value: `\`${cmd}\`` },
-                        { name: '<:dot:1443660294596329582> Utente', value: `${message.author.tag}` },
+                        { name: '<:dot:1443660294596329582> Comando', value: `\`${execCommand?.name || 'unknown'}\`` },
+                        { name: '<:dot:1443660294596329582> Utente', value: `${execMessage.author?.tag || 'unknown'}` },
                         { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${error}\`\`\`` }
                     );
                 if (errorChannel) {
@@ -609,6 +633,10 @@ module.exports = {
                     const collector = sentError.createMessageComponentCollector({ time: 1000 * 60 * 60 * 24 });
                     collector.on("collect", async (btn) => {
                         if (!["error_pending", "error_solved", "error_unsolved"].includes(btn.customId)) return;
+                        if (!btn.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
+                            await btn.reply({ content: "<:vegax:1443934876440068179> Non hai i permessi per fare questo comando.", flags: 1 << 6 });
+                            return;
+                        }
                         if (btn.customId === "error_pending") {
                             errorEmbed.setColor("Yellow");
                             await btn.reply({ content: "In risoluzione.", flags: 1 << 6 });
@@ -621,21 +649,18 @@ module.exports = {
                             errorEmbed.setColor("Red");
                             await btn.reply({ content: "Irrisolto.", flags: 1 << 6 });
                         }
-                        await msg.edit({ embeds: [errorEmbed], components: [row] });
+                        await sentError.edit({ embeds: [errorEmbed], components: [row] });
                     });
                 }
                 const feedback = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'√® stato un errore nell'esecuzione del comando.
+                    .setDescription(`<:vegax:1443934876440068179> C'Ë stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
-                return execMessage.reply({ embeds: [feedback], flags: 1 << 6 });
+                return execMessage.reply({ embeds: [feedback] });
             } finally {
                 commandFinished = true;
                 if (typingStartTimer) clearTimeout(typingStartTimer);
                 if (typingPulseTimer) clearInterval(typingPulseTimer);
-                if (originalSendTyping) {
-                    execMessage.channel.sendTyping = originalSendTyping;
-                }
             }
         };
         const lockId = queueLockId;
@@ -646,12 +671,12 @@ module.exports = {
             client.prefixCommandLocks.delete(lockId);
             const removeLoadingReaction = async (msg) => {
                 try {
-                    const emoji = msg.client?.emojis?.cache?.get('1443934440614264924');
+                    const emoji = msg.client?.emojis?.cache?.get(IDs.emojis.loadingAnimatedId);
                     if (emoji) {
                         const react = msg.reactions.resolve(emoji.id);
                         if (react) await react.users.remove(client.user.id);
                     }
-                    const fallback = msg.reactions.resolve('VC_Loading') || msg.reactions.resolve('1462504528774430962');
+                    const fallback = msg.reactions.resolve('VC_Loading') || msg.reactions.resolve(IDs.emojis.loadingFallbackId);
                     if (fallback) await fallback.users.remove(client.user.id);
                 } catch { }
             };
@@ -700,7 +725,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` √® AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` Ë AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 async function handleCounting(message, client) {
@@ -836,3 +861,5 @@ async function handleDiscadiaBump(message, client) {
     await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
+
+

@@ -1,13 +1,13 @@
 ﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
-const createTranscript = require('../../Utils/Ticket/createTranscript');
-const { createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/createTranscriptHtml');
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
+const IDs = require('../../Utils/Config/ids');
 
-const LOG_CHANNEL_ID = '1442569290682208296';
-const STAFF_ROLE_ID = '1442568910070349985';
-const HIGHSTAFF_ROLE_ID = '1442568894349840435';
-const PARTNERMANAGER_ROLE_ID = '1442568905582317740';
+const LOG_CHANNEL_ID = IDs.channels.commandError;
+const STAFF_ROLE_ID = IDs.roles.staff;
+const HIGHSTAFF_ROLE_ID = IDs.roles.highStaff;
+const PARTNERMANAGER_ROLE_ID = IDs.roles.partnerManager;
 
 module.exports = {
   name: 'ticket',

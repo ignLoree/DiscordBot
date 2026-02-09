@@ -1,9 +1,10 @@
 ﻿const { EmbedBuilder, PermissionsBitField, ActivityType } = require('discord.js');
 const SupporterStatus = require('../Schemas/Supporter/supporterStatusSchema');
+const IDs = require('../Utils/Config/ids');
 
-const ROLE_ID = '1442568948271943721';
-const PERK_ROLE_ID = '1468938195348754515';
-const CHANNEL_ID = '1442569123426074736';
+const ROLE_ID = IDs.roles.supporterLink;
+const PERK_ROLE_ID = IDs.roles.mediaBypass;
+const CHANNEL_ID = IDs.channels.thanks;
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
 const pendingChecks = new Map();
