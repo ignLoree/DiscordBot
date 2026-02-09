@@ -14,6 +14,18 @@ const getDevIds = (client) => {
     .filter(Boolean);
 };
 
+const getStaffRoleIds = (client) => {
+  const fromArray = client?.config?.staffRoleIds;
+  if (Array.isArray(fromArray)) {
+    return fromArray.map((id) => String(id).trim()).filter(Boolean);
+  }
+  const fromString = client?.config?.staff || "";
+  return String(fromString)
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+};
+
 function splitMessage(text, max = 1900) {
   const chunks = [];
   let current = "";
@@ -84,9 +96,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   await interaction.deferReply({ flags: 1 << 6 });
 
-  const staffRoleIds = Array.isArray(client.config?.staffRoleIds)
-    ? client.config.staffRoleIds
-    : [];
+  const staffRoleIds = getStaffRoleIds(client);
   const noDmSet = await getNoDmSet(interaction.guild.id);
   await interaction.guild.members.fetch().catch(() => {});
 

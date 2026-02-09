@@ -9,14 +9,14 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
-    const descriptionText = ['```',
-      '_ _',
-      '_ _`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
-      '_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧',
+    const descriptionText = [
+      '```',
+      '`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢',
+      '     𓎢      **social**       ⊹       **italia** **chill**       ୧',
       '                                       **gaming**',
-      '-# @everyone & @here_ _',
+      '-# @everyone & @here',
       '```'
-    ].join('\\n');
+    ].join('\n');
     const descriptionEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setAuthor({ name: `Ecco la nostra descrizione pronta da copiare e incollare:`})

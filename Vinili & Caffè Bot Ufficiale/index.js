@@ -249,7 +249,7 @@ if (shouldUseCluster) {
     client.cluster = null;
 }
 (async () => {
-    for (file of functions) {
+    for (const file of functions) {
         require(`./Handlers/${file}`)(client);
     }
     client.handleEvents("./Events");

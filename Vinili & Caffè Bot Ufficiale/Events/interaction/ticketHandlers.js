@@ -70,11 +70,16 @@ async function handleTicketInteraction(interaction) {
         return normalized.includes('tickets');
     }
 
+    function buildOverflowTicketCategoryName(index) {
+        return `${TICKETS_CATEGORY_NAME} #${index}`;
+    }
+
     async function createTicketsCategory(guild) {
         if (!guild) return null;
         if (!interaction.client.ticketCategoryCache) {
             interaction.client.ticketCategoryCache = new Map();
         }
+        const getChildrenCount = (categoryId) => guild.channels.cache.filter((ch) => ch.parentId === categoryId).size;
 
         const cachedCategoryId = interaction.client.ticketCategoryCache.get(guild.id);
         if (cachedCategoryId) {
@@ -82,36 +87,67 @@ async function handleTicketInteraction(interaction) {
                 || await guild.channels.fetch(cachedCategoryId).catch(() => null);
             if (cachedCategory && cachedCategory.type === 4) {
                 if (isTicketCategoryName(cachedCategory.name)) {
-                    if (cachedCategory.name !== TICKETS_CATEGORY_NAME) {
-                        await cachedCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
-                    }
-                    return cachedCategory;
+                    const isFull = getChildrenCount(cachedCategory.id) >= 50;
+                    if (!isFull) return cachedCategory;
                 }
             }
         }
 
         await guild.channels.fetch().catch(() => null);
-        const exactCategory = guild.channels.cache
-            .filter((ch) => ch.type === 4)
-            .find((ch) => ch.name === TICKETS_CATEGORY_NAME);
+        const ticketCategories = guild.channels.cache
+            .filter((ch) => ch.type === 4 && isTicketCategoryName(ch.name))
+            .sort((a, b) => (a.rawPosition - b.rawPosition) || a.id.localeCompare(b.id));
+
+        const exactCategory = ticketCategories.find((ch) => ch.name === TICKETS_CATEGORY_NAME);
         if (exactCategory) {
-            interaction.client.ticketCategoryCache.set(guild.id, exactCategory.id);
-            return exactCategory;
-        }
-        const fallbackTicketCategory = guild.channels.cache
-            .filter((ch) => ch.type === 4)
-            .sort((a, b) => a.position - b.position)
-            .find((ch) => isTicketCategoryName(ch.name));
-        if (fallbackTicketCategory) {
-            if (fallbackTicketCategory.name !== TICKETS_CATEGORY_NAME) {
-                await fallbackTicketCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+            if (getChildrenCount(exactCategory.id) < 50) {
+                interaction.client.ticketCategoryCache.set(guild.id, exactCategory.id);
+                return exactCategory;
             }
-            interaction.client.ticketCategoryCache.set(guild.id, fallbackTicketCategory.id);
-            return fallbackTicketCategory;
+        } else if (ticketCategories.length > 0) {
+            const firstTicketCategory = ticketCategories[0];
+            await firstTicketCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+            if (getChildrenCount(firstTicketCategory.id) < 50) {
+                interaction.client.ticketCategoryCache.set(guild.id, firstTicketCategory.id);
+                return firstTicketCategory;
+            }
+        }
+
+        for (const category of ticketCategories) {
+            if (category.name === TICKETS_CATEGORY_NAME) continue;
+            if (getChildrenCount(category.id) < 50) {
+                interaction.client.ticketCategoryCache.set(guild.id, category.id);
+                return category;
+            }
+        }
+
+        if (ticketCategories.length === 0) {
+            const category = await guild.channels.create({
+                name: TICKETS_CATEGORY_NAME,
+                type: 4,
+                permissionOverwrites: [
+                    {
+                        id: guild.roles.everyone.id,
+                        deny: [PermissionFlagsBits.ViewChannel]
+                    }
+                ]
+            }).catch(() => null);
+            if (!category) return null;
+            await category.setPosition(0).catch(() => {});
+            interaction.client.ticketCategoryCache.set(guild.id, category.id);
+            return category;
+        }
+
+        const namesInUse = new Set(ticketCategories.map((ch) => String(ch.name || '')));
+        let overflowIndex = 2;
+        let overflowName = buildOverflowTicketCategoryName(overflowIndex);
+        while (namesInUse.has(overflowName) && overflowIndex < 1000) {
+            overflowIndex += 1;
+            overflowName = buildOverflowTicketCategoryName(overflowIndex);
         }
 
         const category = await guild.channels.create({
-            name: TICKETS_CATEGORY_NAME,
+            name: overflowName,
             type: 4,
             permissionOverwrites: [
                 {
