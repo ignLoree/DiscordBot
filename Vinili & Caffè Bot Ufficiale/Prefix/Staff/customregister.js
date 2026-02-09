@@ -34,7 +34,7 @@ function parseVoiceChannel(guild, raw) {
 module.exports = {
   name: 'customregister',
   aliases: ['customsync', 'registercustom'],
-  description: 'Registra custom role/vocale gia esistenti nel sistema.',
+  description: 'Registra custom role/vocale già esistenti nel sistema.',
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;
@@ -146,7 +146,7 @@ module.exports = {
 
     const inExpectedCategory = voiceChannel.parentId === CUSTOM_VOICE_CATEGORY_ID;
     const categoryNote = inExpectedCategory
-      ? 'Canale gia nella categoria corretta.'
+      ? 'Canale già nella categoria corretta.'
       : `Attenzione: canale non in <#${CUSTOM_VOICE_CATEGORY_ID}>.`;
 
     await safeMessageReply(message, {

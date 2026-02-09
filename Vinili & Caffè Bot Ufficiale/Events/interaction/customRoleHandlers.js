@@ -152,7 +152,7 @@ async function createCustomRoleGrantRequest({
           new EmbedBuilder()
             .setColor('#e67e22')
             .setTitle('Scaduto')
-            .setDescription('Tempo scaduto: la richiesta non è piu valida.')
+            .setDescription('Tempo scaduto: la richiesta non è più valida.')
         ],
         components: []
       }).catch(() => {});
@@ -443,7 +443,7 @@ async function handleCustomVocButton(interaction) {
         new EmbedBuilder()
           .setColor('Red')
           .setTitle('Accesso negato')
-          .setDescription('Solo il proprietario della vocale privata puo usare questo controllo.')
+          .setDescription('Solo il proprietario della vocale privata può usare questo controllo.')
       ],
       flags: 1 << 6
     }).catch(() => {});
@@ -541,7 +541,7 @@ async function handleGrantButtons(interaction) {
   const [, token, action] = String(interaction.customId).split(':');
   const request = pendingRoleGrants.get(token);
   if (!request) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non è piu valida.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Questa richiesta non è più valida.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
   if (interaction.user.id !== request.targetId) {
