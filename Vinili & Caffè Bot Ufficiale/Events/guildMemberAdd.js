@@ -40,9 +40,14 @@ async function resolveInviteInfo(member) {
         member.client.inviteCache.set(guild.id, map);
     }
 
-    if (!usedInvite && guild.vanityURLCode) {
+    let vanityCode = guild.vanityURLCode || null;
+    if (!usedInvite && !vanityCode && guild.features?.includes('VANITY_URL')) {
+        const vanityData = await guild.fetchVanityData().catch(() => null);
+        vanityCode = vanityData?.code || null;
+    }
+    if (!usedInvite && vanityCode) {
         return {
-            link: `https://discord.gg/${guild.vanityURLCode}`,
+            link: `https://discord.gg/${vanityCode}`,
             inviterTag: 'Vanity URL',
             totalInvites: 0,
             isVanity: true,
@@ -64,6 +69,9 @@ async function resolveInviteInfo(member) {
 
 async function trackInviteJoin(member, inviterId) {
     if (!inviterId || inviterId === member.id) return;
+    const inviterMember = member.guild.members.cache.get(inviterId)
+        || await member.guild.members.fetch(inviterId).catch(() => null);
+    if (!inviterMember || inviterMember.user?.bot) return;
     await InviteTrack.findOneAndUpdate(
         { guildId: member.guild.id, userId: member.id },
         {
@@ -88,6 +96,7 @@ async function tryAwardInviteRole(member, inviteInfo) {
     const inviterMember = guild.members.cache.get(inviteInfo.inviterId)
         || await guild.members.fetch(inviteInfo.inviterId).catch(() => null);
     if (!inviterMember) return false;
+    if (inviterMember.user?.bot) return false;
     if (inviterMember.roles.cache.has(INVITE_REWARD_ROLE_ID)) return false;
 
     const rewardRole = guild.roles.cache.get(INVITE_REWARD_ROLE_ID);
@@ -246,10 +255,8 @@ module.exports = {
                 return;
             }
             const channelwelcome = member.guild.channels.cache.get('1442569130573303898');
-
             if (!channelwelcome) {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
-                return;
             }
 
             const totalvoicechannel = member.guild.channels.cache.get('1442569096700104754');
@@ -266,7 +273,9 @@ module.exports = {
                 .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                 .setColor('#6f4e37')
                 .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
-            await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
+            if (channelwelcome) {
+                await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&1442568910070349985> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
+            }
 
             const info = await resolveInviteInfo(member).catch(() => null);
             if (info && !info.isVanity && info.inviterId) {
@@ -286,12 +295,12 @@ module.exports = {
             }
             if (inviteChannel && info) {
                 if (info.isVanity) {
-                    await inviteChannel.send({
+                    await channelwelcome.send({
                         content: `<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**`
                     }).catch(() => { });
                     return;
                 }
-                await inviteChannel.send({
+                await channelwelcome.send({
                     content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                 }).catch(() => { });
             }
