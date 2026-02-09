@@ -53,12 +53,12 @@ module.exports = {
         const row2 = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder()
-                    .setLabel('2HELPER')
+                    .setLabel('︲HELPER')
                     .setEmoji(`<:helper:1443651909448630312>`)
                     .setStyle(ButtonStyle.Link)
                     .setURL('https://dyno.gg/form/b40bd751'),
                 new ButtonBuilder()
-                    .setLabel('PARTNER MANAGER')
+                    .setLabel('︲PARTNER MANAGER')
                     .setEmoji(`<:partnermanager:1443651916838998099>`)
                     .setStyle(ButtonStyle.Link)
                     .setURL('https://dyno.gg/form/f9013078'),
@@ -67,12 +67,12 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('metodi')
-                    .setLabel('2METODI')
+                    .setLabel('︲METODI')
                     .setEmoji(`<:Money:1330544713463500970>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('ping')
-                    .setLabel('2PING')
+                    .setLabel('︲PING')
                     .setEmoji(`<:Discord_Mention:1329524304790028328>`)
                     .setStyle(ButtonStyle.Secondary),
             );
@@ -80,12 +80,12 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('vocaliprivate')
-                    .setLabel('2VOCALI PRIVATE')
+                    .setLabel('︲VOCALI PRIVATE')
                     .setEmoji(`<:discordvoiceprivatewhite:1443925460185780257>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('ruolocustom')
-                    .setLabel('2RUOLO CUSTOM')
+                    .setLabel('︲RUOLO CUSTOM')
                     .setEmoji(`<:Discord_Mention:1329524304790028328>`)
                     .setStyle(ButtonStyle.Secondary),
             );

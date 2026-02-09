@@ -60,27 +60,27 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('regolamento')
-                    .setLabel('2REGOLE')
+                    .setLabel('︲REGOLE')
                     .setEmoji(`<:rules:1443307208543703131>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('limiti')
-                    .setLabel('2LIMITI SETTIMANALI')
+                    .setLabel('︲LIMITI SETTIMANALI')
                     .setEmoji(`<:reportmessage:1443670575376765130>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('pause')
-                    .setLabel('2PAUSE')
+                    .setLabel('︲PAUSE')
                     .setEmoji(`<:Clock:1330530065133338685>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('valutazioni')
-                    .setLabel('2VALUTAZIONI')
+                    .setLabel('︲VALUTAZIONI')
                     .setEmoji(`<a:loading:1443934440614264924>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('sanzioni')
-                    .setLabel('2SANZIONI')
+                    .setLabel('︲SANZIONI')
                     .setEmoji(`<:discordstaff:1443651872258003005>`)
                     .setStyle(ButtonStyle.Secondary),
             );
@@ -88,7 +88,7 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('warnstaff')
-                    .setLabel('2WARN STAFF')
+                    .setLabel('︲WARN STAFF')
                     .setEmoji(`<:banhammer:1443651875441217639>`)
                     .setStyle(ButtonStyle.Secondary),
             );
@@ -96,17 +96,17 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('generalimoderazione')
-                    .setLabel('GENERALI')
+                    .setLabel('︲GENERALI')
                     .setEmoji(`<:appdirectoryallwhite:1443308556995788840>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('testualimoderazione')
-                    .setLabel('TESTUALI')
+                    .setLabel('︲TESTUALI')
                     .setEmoji(`<:discordchannelwhite:1443308552536985810>`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId('vocalimoderazione')
-                    .setLabel('2VOCALI')
+                    .setLabel('︲VOCALI')
                     .setEmoji(`<:microphone:1443307206824169573>`)
                     .setStyle(ButtonStyle.Secondary),
             );
