@@ -35,10 +35,11 @@ module.exports = {
       .setColor('#6f4e37')
       .setAuthor({ name: 'Contatta lo Staff & chiedi supporto:', iconURL: channel.guild?.iconURL() || undefined })
       .setDescription(`I ticket equivalgono ad un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
+
 <:VC_1:1444099819680563200> Prima categoria
 <a:VC_Arrow:1448672967721615452> usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
 <:VC_2:1444099781864722535> Seconda categoria
-<a:VC_Arrow:1448672967721615452> usalo per riscattare vantaggi e ricompense, modificare una ricompensa ottenuta o chiedere aiuto sui vantaggi generali del server
+<a:VC_Arrow:1448672967721615452> usalo per fare partnership con noi.
 <:VC_3:1444099746116534282> Terza categoria
 <a:VC_Arrow:1448672967721615452> usalo per fare una donazione, per fare la "selfie verify", per richiedere una sponsor a pagamento o per parlare con un amministratore del server.
 

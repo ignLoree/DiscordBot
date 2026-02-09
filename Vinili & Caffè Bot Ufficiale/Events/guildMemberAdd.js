@@ -6,6 +6,9 @@ function toUnix(date) {
 }
 
 const INVITE_LOG_CHANNEL_ID = '1442569130573303898';
+const THANKS_CHANNEL_ID = '1442569123426074736';
+const INVITE_REWARD_ROLE_ID = '1469758545263198442';
+const INFO_PERKS_CHANNEL_ID = '1442569111119990887';
 
 async function resolveInviteInfo(member) {
     const guild = member.guild;
@@ -75,6 +78,27 @@ async function trackInviteJoin(member, inviterId) {
         },
         { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+}
+
+async function tryAwardInviteRole(member, inviteInfo) {
+    if (!inviteInfo || inviteInfo.isVanity || !inviteInfo.inviterId) return false;
+    if ((inviteInfo.totalInvites || 0) < 5) return false;
+
+    const guild = member.guild;
+    const inviterMember = guild.members.cache.get(inviteInfo.inviterId)
+        || await guild.members.fetch(inviteInfo.inviterId).catch(() => null);
+    if (!inviterMember) return false;
+    if (inviterMember.roles.cache.has(INVITE_REWARD_ROLE_ID)) return false;
+
+    const rewardRole = guild.roles.cache.get(INVITE_REWARD_ROLE_ID);
+    if (!rewardRole) return false;
+
+    const me = guild.members.me;
+    if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageRoles)) return false;
+    if (rewardRole.position >= me.roles.highest.position) return false;
+
+    await inviterMember.roles.add(rewardRole).catch(() => {});
+    return true;
 }
 
 async function addBotRoles(member) {
@@ -248,7 +272,18 @@ module.exports = {
             if (info && !info.isVanity && info.inviterId) {
                 await trackInviteJoin(member, info.inviterId).catch(() => { });
             }
-            const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
+            const inviteChannel = member.guild.channels.cache.get(THANKS_CHANNEL_ID);
+            const awarded = await tryAwardInviteRole(member, info).catch(() => false);
+            if (inviteChannel && awarded && info?.inviterId) {
+                const rewardEmbed = new EmbedBuilder()
+                    .setColor('#6f4e37')
+                    .setTitle('<a:ThankYou:1329504268369002507> Grazie per gli inviti!')
+                    .setDescription(
+                        `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto il ruolo <@&${INVITE_REWARD_ROLE_ID}>.\n` +
+                        `<a:Boost_Cycle:1329504283007385642> Controlla <#${INFO_PERKS_CHANNEL_ID}> per i nuovi vantaggi.`
+                    );
+                await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
+            }
             if (inviteChannel && info) {
                 if (info.isVanity) {
                     await inviteChannel.send({
