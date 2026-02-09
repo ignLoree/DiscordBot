@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const Panel = require('../Schemas/Community/panelSchema');
 
@@ -33,28 +33,42 @@ module.exports = {
 
     const ticketPanelEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setDescription(`<a:vegarightarrow:1443673039156936837> Abbiamo **__4__** tipi di __ticket__. I ticket sono **ordinati** per __importanza__, ovviamente quelli più __importanti__ sono quelli da usare **raramente**.
+      .setAuthor({ text: `Contatta lo Staff & chiedi supporto:`, iconURL: message.guild.iconURL() })
+      .setDescription(`I ticket equivalgono ad un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
+<:VC_1:1444099819680563200> Prima categoria
+<a:VC_Arrow:1448672967721615452> usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
+<:VC_2:1444099781864722535> Seconda categoria
+<a:VC_Arrow:1448672967721615452> usalo per riscattare vantaggi e ricompense, modificare una ricompensa ottenuta o chiedere aiuto sui vantaggi generali del server
+<:VC_3:1444099746116534282> Terza categoria
+<a:VC_Arrow:1448672967721615452> usalo per fare una donazione, per fare la "selfie verify", per richiedere una sponsor a pagamento o per parlare con un amministratore del server.
 
-<:dot:1443660294596329582> **__\`PERKS\`__**
-<:VC_Reply:1468262952934314131> Apri questo ticket per __richiedere__ i **perks** che ti spettano. Non aprire per richiedere __perks__ che necessitano di **permessi**, come mandare **__media__** in chat poichè sono dati **__automaticamente__**.
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comportera un **warn**.`)
+        .setFooter({ text: `Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00`});
 
-<:dot:1443660294596329582> **__\`SUPPORTO\`__**
-<:VC_Reply:1468262952934314131> Apri questo ticket per richiedere **__supporto__** allo **__staff__** del server.
-
-<:dot:1443660294596329582> **__\`PARTNERSHIP\`__**
-<:VC_Reply:1468262952934314131> Apri questo ticket per richiedere una **partnership**. Se volessi effettuare una **collaborazione/sponsor**, apri un ticket **__\`HIGH STAFF\`__**
-
-<:dot:1443660294596329582> **__\`HIGH STAFF\`__**
-<:VC_Reply:1468262952934314131> Usa questa __sezione__ per **contattare** l'**__amministrazione__** del server.
-
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`)
-
-    const ticketButtons = new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId('ticket_perks').setLabel('︲PERKS').setEmoji('<a:Boost_Cycle:1329504283007385642>').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId('ticket_supporto').setLabel('︲SUPPORTO').setEmoji('<:discordstaff:1443651872258003005>').setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId('ticket_partnership').setLabel('︲PARTNERSHIP').setEmoji('<:partneredserverowner:1443651871125409812>').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId('ticket_highstaff').setLabel('︲HIGH STAFF').setEmoji('<:reportmessage:1443670575376765130>').setStyle(ButtonStyle.Primary)
-    );
+    const ticketMenu = new StringSelectMenuBuilder()
+      .setCustomId('ticket_open_menu')
+      .setPlaceholder('Seleziona una categoria...')
+      .addOptions(
+        {
+          label: 'Prima categoria',
+          description: 'Supporto generale - Segnalazioni - Problemi',
+          value: 'ticket_supporto',
+          emoji: { id: '1443651872258003005', name: 'discordstaff' }
+        },
+        {
+          label: 'Seconda categoria',
+          description: 'Partnership',
+          value: 'ticket_partnership',
+          emoji: { id: '1443651871125409812', name: 'partneredserverowner' }
+        },
+        {
+          label: 'Terza categoria',
+          description: 'Verifica Selfie - Donazioni - Sponsor - HighStaff',
+          value: 'ticket_highstaff',
+          emoji: { id: '1443670575376765130', name: 'reportmessage' }
+        }
+      );
+    const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
 
     let panelDoc = null;
     try {
@@ -82,9 +96,9 @@ module.exports = {
     }
 
     if (panelMessage) {
-      await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketButtons] }).catch(() => {});
+      await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => {});
     } else {
-      panelMessage = await channel.send({ embeds: [ticketPanelEmbed], components: [ticketButtons] }).catch(() => null);
+      panelMessage = await channel.send({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => null);
     }
 
     if (infoMessage?.id || panelMessage?.id) {

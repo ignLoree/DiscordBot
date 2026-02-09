@@ -5,12 +5,14 @@ const createTranscript = require('../../Utils/Ticket/createTranscript');
 
 const LOG_CHANNEL_ID = '1442569290682208296';
 const STAFF_ROLE_ID = '1442568910070349985';
+const HIGHSTAFF_ROLE_ID = '1442568894349840435';
+const PARTNERMANAGER_ROLE_ID = '1442568905582317740';
 
 module.exports = {
   name: 'ticket',
-  aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
+  aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'switchpanel', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketswitchpanel', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
   description: 'Gestione ticket.',
-  subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim'],
+  subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim', 'switchpanel'],
   subcommandAliases: {
     add: 'add',
     remove: 'remove',
@@ -18,6 +20,8 @@ module.exports = {
     closerequest: 'closerequest',
     claim: 'claim',
     unclaim: 'unclaim',
+    switchpanel: 'switchpanel',
+    ticketswitchpanel: 'switchpanel',
     ticketclose: 'close',
     ticketclaim: 'claim',
     ticketunclaim: 'unclaim',
@@ -53,7 +57,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim>`')
+            .setDescription('<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel>`')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -330,11 +334,145 @@ module.exports = {
       return;
     }
 
+    if (subcommand === 'switchpanel') {
+      const targetChannel = resolveChannelFromArg(message, rest[0]) || message.channel;
+      const categoryToken = String(rest[1] || '').toLowerCase();
+      const panelConfig = getTicketPanelConfig(categoryToken);
+
+      if (!targetChannel || !targetChannel.isTextBased?.()) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Specifica un canale valido.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      if (!panelConfig) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              'Errore',
+              '<:vegax:1443934876440068179> Categoria non valida. Usa: `supporto`, `partnership`, `highstaff`.'
+            )
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const ticketDoc = await Ticket.findOne({ channelId: targetChannel.id, open: true });
+      if (!ticketDoc) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Nel canale indicato non c\'è un ticket aperto.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const openerMember = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
+      const openerName = openerMember?.user?.username || 'utente';
+      const safeOpenerName = String(openerName).replace(/[^\w.-]/g, '').slice(0, 20) || 'utente';
+      const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;
+      await targetChannel.setName(newChannelName).catch(() => {});
+
+      await targetChannel.permissionOverwrites.edit(message.guild.roles.everyone.id, {
+        ViewChannel: false
+      }).catch(() => {});
+      await targetChannel.permissionOverwrites.edit(ticketDoc.userId, {
+        ViewChannel: true,
+        SendMessages: true,
+        EmbedLinks: true,
+        AttachFiles: true,
+        ReadMessageHistory: true,
+        AddReactions: true
+      }).catch(() => {});
+
+      const applyReadOnly = { ViewChannel: true, SendMessages: false, ReadMessageHistory: true };
+      const applyFull = {
+        ViewChannel: true,
+        SendMessages: true,
+        EmbedLinks: true,
+        AttachFiles: true,
+        ReadMessageHistory: true,
+        AddReactions: true
+      };
+      const denyView = { ViewChannel: false };
+
+      if (panelConfig.type === 'supporto') {
+        if (ticketDoc.claimedBy) {
+          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyReadOnly).catch(() => {});
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+        } else {
+          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyFull).catch(() => {});
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
+        }
+        await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
+      }
+
+      if (panelConfig.type === 'partnership') {
+        if (ticketDoc.claimedBy) {
+          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyReadOnly).catch(() => {});
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+        } else {
+          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyFull).catch(() => {});
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+        }
+        await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
+      }
+
+      if (panelConfig.type === 'high') {
+        if (ticketDoc.claimedBy) {
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+        } else {
+          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
+        }
+        await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
+        await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
+      }
+
+      if (ticketDoc.claimedBy) {
+        await targetChannel.permissionOverwrites.edit(ticketDoc.claimedBy, {
+          ViewChannel: true,
+          SendMessages: true,
+          EmbedLinks: true,
+          AttachFiles: true,
+          ReadMessageHistory: true,
+          AddReactions: true
+        }).catch(() => {});
+      }
+
+      ticketDoc.ticketType = panelConfig.type;
+      await ticketDoc.save().catch(() => {});
+
+      const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId);
+      if (msg) {
+        const row = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
+          ticketDoc.claimedBy
+            ? new ButtonBuilder().setCustomId('unclaim').setLabel('🔓 Unclaim').setStyle(ButtonStyle.Secondary)
+            : new ButtonBuilder().setCustomId('claim_ticket').setLabel('✅ Claim').setStyle(ButtonStyle.Success)
+        );
+        await msg.edit({ embeds: [panelConfig.embed], components: [row] }).catch(() => {});
+      }
+
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('#6f4e37')
+            .setTitle('Switch Panel')
+            .setDescription(`<:vegacheckmark:1443666279058772028> Ticket aggiornato in **${panelConfig.label}** nel canale ${targetChannel}.`)
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
     await safeMessageReply(message, {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`.')
+          .setDescription('<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`.')
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -365,4 +503,66 @@ async function fetchTicketMessage(channel, messageId) {
   }
   const fallback = await channel.messages.fetch({ limit: 5 }).catch(() => null);
   return fallback?.first() || null;
+}
+
+function resolveChannelFromArg(message, rawArg) {
+  if (!rawArg) return null;
+  const mentionMatch = String(rawArg).match(/^<#(\d+)>$/);
+  const id = mentionMatch?.[1] || (/^\d{17,20}$/.test(String(rawArg)) ? String(rawArg) : null);
+  if (!id) return null;
+  return message.guild.channels.cache.get(id) || null;
+}
+
+function getTicketPanelConfig(raw) {
+  const key = String(raw || '').toLowerCase();
+  const configs = {
+    supporto: {
+      type: 'supporto',
+      label: 'Supporto',
+      emoji: '⭐',
+      name: 'supporto',
+      embed: new EmbedBuilder()
+        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**')
+        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\\`STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.')
+        .setColor('#6f4e37')
+    },
+    partnership: {
+      type: 'partnership',
+      label: 'Partnership',
+      emoji: '🤝',
+      name: 'partnership',
+      embed: new EmbedBuilder()
+        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**')
+        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`PARTNER MANAGER\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.')
+        .setColor('#6f4e37')
+    },
+    highstaff: {
+      type: 'high',
+      label: 'High Staff',
+      emoji: '✨',
+      name: 'highstaff',
+      embed: new EmbedBuilder()
+        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**')
+        .setDescription('<a:ThankYou:1329504268369002507>·__Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`HIGH STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.')
+        .setColor('#6f4e37')
+    }
+  };
+  const aliases = {
+    supporto: 'supporto',
+    prima: 'supporto',
+    '1': 'supporto',
+    first: 'supporto',
+    partnership: 'partnership',
+    partner: 'partnership',
+    seconda: 'partnership',
+    '2': 'partnership',
+    second: 'partnership',
+    highstaff: 'highstaff',
+    high: 'highstaff',
+    terza: 'highstaff',
+    '3': 'highstaff',
+    third: 'highstaff'
+  };
+  const resolved = aliases[key] || key;
+  return configs[resolved] || null;
 }

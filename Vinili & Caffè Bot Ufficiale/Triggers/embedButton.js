@@ -338,7 +338,7 @@ module.exports = {
         <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> <a:OP_crown_white:1330194100162396330>`)
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`PERKS\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
+                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`SUPPORTO\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
             await interaction.reply({ embeds: [under5Embed, over5Embed, topEmbed, commonEmbed], flags: 1 << 6 });
         }
         const sendUpdatedView = async (payload) => {
@@ -357,6 +357,24 @@ module.exports = {
 
             return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
         };
+
+        /// INFO VERIFICA
+        if (interaction.customId == 'info_verifica') {
+            const verifyEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle('<a:VC_Verified:1448687631109197978>・**__Verificati per ottenere vantaggi unici__**')
+                .setDescription([
+                    'Per verificare il tuo profilo dovrai andare in <#1442569095068254219> e selezionare la terza categoria',
+                    '<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:',
+                    'con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo discord',
+                    '',
+                    '<:sparkledred:1470064814502973591>・Ruolo <@&1469040179799920801> o <@&1469040190730408018> con badge speciale',
+                    '<:moon:1470064812615667827>・Permesso di allegare immagini e link in chat',
+                    '<:pinkstar:1470064804835229768>・Permesso di scrivere in <#1470029899740873029>',
+                ].join('\n'));
+
+            await interaction.reply({ embeds: [verifyEmbed], flags: 1 << 6 });
+        }
 
         /// INFO BOOST E LIVELLI
         const buildBoostLevelsPayload = () => {

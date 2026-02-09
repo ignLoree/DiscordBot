@@ -17,6 +17,44 @@ function chunkArray(array, size) {
   return chunks;
 }
 
+function normalizeArgToken(raw) {
+  return String(raw || '').trim().toLowerCase();
+}
+
+function isMentionToken(raw) {
+  return /^<@!?(\d+)>$/.test(String(raw || '').trim());
+}
+
+function pickAmountToken(args) {
+  if (!Array.isArray(args) || !args.length) {
+    return { token: null, invalidToken: null };
+  }
+
+  let token = null;
+  let invalidToken = null;
+
+  for (const rawArg of args) {
+    const raw = String(rawArg || '').trim();
+    const normalized = normalizeArgToken(raw);
+    if (!normalized) continue;
+    if (isMentionToken(raw)) continue;
+    if (/^\d{17,20}$/.test(normalized)) continue;
+    if (normalized === 'all') {
+      token = 'all';
+      continue;
+    }
+    if (/^\d+$/.test(normalized)) {
+      token = normalized;
+      continue;
+    }
+    if (invalidToken === null) {
+      invalidToken = normalized;
+    }
+  }
+
+  return { token, invalidToken };
+}
+
 module.exports = {
   name: 'purge',
 
@@ -38,22 +76,12 @@ module.exports = {
 
     await message.delete().catch(() => {});
 
-    const amountToken = Array.isArray(args)
-      ? args.find((arg) => {
-          const token = String(arg || '').trim().toLowerCase();
-          if (!token) return false;
-          if (token === 'all') return true;
-          if (!/^\d+$/.test(token)) return false;
-          if (/^\d{17,20}$/.test(token)) return false;
-          return true;
-        })
-      : null;
-
-    const requestedRaw = String(amountToken || '').trim().toLowerCase();
+    const { token: amountToken, invalidToken } = pickAmountToken(args);
+    const requestedRaw = normalizeArgToken(amountToken);
     const requestedAmount = Number(requestedRaw);
     const hasNumericAmount = Number.isFinite(requestedAmount) && requestedAmount > 0;
 
-    if (requestedRaw && requestedRaw !== 'all' && !hasNumericAmount) {
+    if ((requestedRaw && requestedRaw !== 'all' && !hasNumericAmount) || (!requestedRaw && invalidToken)) {
       await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida. Usa un numero positivo oppure `all`.' });
       return;
     }

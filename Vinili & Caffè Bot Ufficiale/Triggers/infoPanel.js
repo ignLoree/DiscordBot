@@ -20,14 +20,34 @@ module.exports = {
     const embed1 = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('Ti diamo il benvenuto nella nostra community!')
-      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:'})
+      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:' })
       .setDescription([
         '<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l\'unico server in Italia non tossico e __incentrato sulla socializzazione__.',
         '',
         '<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**',
         '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!',
-      ].join('\n'));
-
+        '',
+        'Dubbi o problemi? <#1442569095068254219> sarà la vostra bussola, lo staff vi risponderà il prima possibile!'
+      ].join('\n'))
+      .addFields(
+        {
+          name: '<:dot:1443660294596329582> Links',
+          value: [
+            '<:VC_bump:1330185435401424896> [Lascia una recensione su DISBOARD](<https://disboard.org/it/server/1329080093599076474>)',
+            '<:link:1470064815899803668> [Votaci su Discadia](<https://discadia.com/vote/viniliecaffe/>)',
+          ].join('\n'),
+          inline: true
+        },
+        {
+          name: '<:dot:1443660294596329582> Informazioni',
+          value: [
+            '<:exp:1470067108543987846> Owner: <@295500038401163264>',
+            '<:moon:1470064812615667827> Fondazione: ||<t:1765382400:F>||',
+            '<:nitroboost:1470064881674883326> Invite: <https://discord.gg/viniliecaffe>',
+          ].join('\n'),
+          inline: true
+        }
+      );
     const row1 = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('info_rules')
@@ -38,12 +58,17 @@ module.exports = {
         .setCustomId('info_donations')
         .setLabel('Donazioni')
         .setEmoji('<a:VC_Sparkles:1468546911936974889>')
-        .setStyle(ButtonStyle.Success)
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('info_verifica')
+        .setLabel('Verifica Selfie')
+        .setEmoji(`<a:VC_Verified:1448687631109197978>`)
+        .setStyle(ButtonStyle.Secondary)
     );
 
     const embed2 = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:'})
+      .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:' })
       .setTitle('<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:')
       .setDescription([
         'Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.',
@@ -59,7 +84,7 @@ module.exports = {
         .setCustomId('info_badges_roles')
         .setLabel('Badge & Altri ruoli')
         .setEmoji('<a:VC_Diamon:1469463765610135635>')
-        .setStyle(ButtonStyle.Primary)
+        .setStyle(ButtonStyle.Success)
     );
 
     const guildId = channel.guild?.id;
@@ -72,7 +97,7 @@ module.exports = {
         { $setOnInsert: { guildId, channelId: INFO_CHANNEL_ID } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
-    } catch {}
+    } catch { }
 
     let infoMessage1 = null;
     let infoMessage2 = null;
@@ -88,7 +113,7 @@ module.exports = {
         files: [attachment],
         embeds: [embed1],
         components: [row1]
-      }).catch(() => {});
+      }).catch(() => { });
     } else {
       infoMessage1 = await channel.send({
         files: [attachment],
@@ -101,7 +126,7 @@ module.exports = {
       await infoMessage2.edit({
         embeds: [embed2],
         components: [row2]
-      }).catch(() => {});
+      }).catch(() => { });
     } else {
       infoMessage2 = await channel.send({
         embeds: [embed2],
@@ -113,7 +138,7 @@ module.exports = {
       await PersonalityPanel.updateOne(
         { guildId, channelId: INFO_CHANNEL_ID },
         { $set: { infoMessageId1: infoMessage1?.id || panel?.infoMessageId1 || null, infoMessageId2: infoMessage2?.id || panel?.infoMessageId2 || null } }
-      ).catch(() => {});
+      ).catch(() => { });
     }
   }
 };
