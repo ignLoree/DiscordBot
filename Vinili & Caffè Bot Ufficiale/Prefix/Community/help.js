@@ -357,13 +357,12 @@ function buildNavigationRow(state) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(state.prevId)
-      .setLabel('Precedente')
-      .setEmoji('<a:vegaleftarrow:1462914743416131816>')
+      .setLabel('◀ Precedente')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
-      .setLabel('Prossima <a:vegarightarrow:1443673039156936837>')
+      .setLabel('Prossima ▶')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex >= state.total - 1)
   );
