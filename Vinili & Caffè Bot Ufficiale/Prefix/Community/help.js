@@ -413,29 +413,11 @@ function buildNavigationRow(state) {
   );
 }
 
-function buildHelpV2Container(message, page, navState) {
-  const guildIcon = message.guild?.iconURL?.({ size: 256 }) || null;
-  const headerSection = guildIcon
-    ? {
-        type: ComponentType.Section,
-        components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: `## ${message.guild?.name || 'Help'}`
-          }
-        ],
-        accessory: {
-          type: ComponentType.Thumbnail,
-          media: { url: guildIcon }
-        }
-      }
-    : null;
-
+function buildHelpV2Container(page, navState) {
   return {
     type: ComponentType.Container,
     accentColor: 0x6f4e37,
     components: [
-      ...(headerSection ? [headerSection] : []),
       {
         type: ComponentType.TextDisplay,
         content: renderPageText(page)
@@ -493,7 +475,7 @@ module.exports = {
 
     const sent = await safeMessageReply(message, {
       components: [
-        buildHelpV2Container(message, groupedPages[0], navState)
+        buildHelpV2Container(groupedPages[0], navState)
       ],
       flags: MessageFlags.IsComponentsV2,
       allowedMentions: { repliedUser: false }
@@ -520,7 +502,7 @@ module.exports = {
       const page = groupedPages[navState.currentIndex];
       await interaction.update({
         components: [
-          buildHelpV2Container(message, page, navState)
+          buildHelpV2Container(page, navState)
         ]
       }).catch(() => {});
     });
