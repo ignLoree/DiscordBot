@@ -413,6 +413,20 @@ function buildNavigationRow(state) {
   );
 }
 
+function buildHelpV2Container(page, navState) {
+  return {
+    type: ComponentType.Container,
+    accentColor: 0x6f4e37,
+    components: [
+      {
+        type: ComponentType.TextDisplay,
+        content: renderPageText(page)
+      },
+      buildNavigationRow(navState).toJSON()
+    ]
+  };
+}
+
 module.exports = {
   name: 'help',
 
@@ -461,11 +475,7 @@ module.exports = {
 
     const sent = await safeMessageReply(message, {
       components: [
-        {
-          type: ComponentType.TextDisplay,
-          content: renderPageText(groupedPages[0])
-        },
-        buildNavigationRow(navState)
+        buildHelpV2Container(groupedPages[0], navState)
       ],
       flags: MessageFlags.IsComponentsV2,
       allowedMentions: { repliedUser: false }
@@ -492,11 +502,7 @@ module.exports = {
       const page = groupedPages[navState.currentIndex];
       await interaction.update({
         components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: renderPageText(page)
-          },
-          buildNavigationRow(navState)
+          buildHelpV2Container(page, navState)
         ]
       }).catch(() => {});
     });
