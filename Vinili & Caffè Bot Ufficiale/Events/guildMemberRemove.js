@@ -17,7 +17,7 @@ module.exports = {
             const guild = member.guild;
             const totalVoice = guild.channels.cache.get(IDs.channels.totalVoiceCounter);
             if (totalVoice) {
-                totalVoice.setName(`☕ User: ${guild.memberCount}`).catch(() => {});
+                totalVoice.setName(`༄☕︲ User: ${guild.memberCount}`).catch(() => {});
             }
             const openTickets = await Ticket.find({ userId: member.id, open: true }).catch(() => []);
             if (openTickets.length > 0) {

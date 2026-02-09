@@ -264,7 +264,7 @@ module.exports = {
             if (!totalvoicechannel) return;
 
             const totalmembers = `${member.guild.memberCount}`;
-            await totalvoicechannel.setName(`☕ User: ${totalmembers}`).catch(() => { });
+            await totalvoicechannel.setName(`༄☕︲ User: ${totalmembers}`).catch(() => { });
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
