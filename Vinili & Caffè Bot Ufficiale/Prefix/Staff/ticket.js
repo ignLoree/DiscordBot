@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const createTranscript = require('../../Utils/Ticket/createTranscript');
@@ -34,7 +34,7 @@ module.exports = {
   async execute(message, args = []) {
     if (!message.inGuild?.() || !message.guild || !message.member) {
       await safeMessageReply(message, {
-        content: '<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.',
+        content: '<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.',
         allowedMentions: { repliedUser: false }
       });
       return;
@@ -110,7 +110,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Aggiungi')
-            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato aggiunto a ${message.channel}`)
+            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato aggiunto a ${message.channel}`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -133,7 +133,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Rimuovi')
-            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} è stato rimosso da ${message.channel}`)
+            .setDescription(`<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato rimosso da ${message.channel}`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -146,7 +146,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -174,7 +174,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -225,7 +225,7 @@ module.exports = {
       ).catch(() => {});
 
       await safeMessageReply(message, {
-        embeds: [new EmbedBuilder().setDescription('🔒 Il ticket verrà chiuso...').setColor('#6f4e37')],
+        embeds: [new EmbedBuilder().setDescription('ðŸ”’ Il ticket verrÃ  chiuso...').setColor('#6f4e37')],
         allowedMentions: { repliedUser: false }
       });
 
@@ -239,7 +239,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -250,7 +250,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setTitle('Errore')
-              .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket è già stato claimato da <@${ticketDoc.claimedBy}>`)
+              .setDescription(`<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  stato claimato da <@${ticketDoc.claimedBy}>`)
               .setColor('Red')
           ],
           allowedMentions: { repliedUser: false }
@@ -286,8 +286,8 @@ module.exports = {
 
       const updatedEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor('#6f4e37');
       const updatedButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi con motivo').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('close_ticket').setLabel('ðŸ”’ Chiudi').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('ðŸ“ Chiudi con motivo').setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId('unclaim').setLabel('<a:VC_Unlock:1470011538432852108> Unclaim').setStyle(ButtonStyle.Secondary)
       );
 
@@ -296,7 +296,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Ticket Claimato')
-            .setDescription(`Il ticket è stato preso in carico da <@${ticketDoc.claimedBy}>`)
+            .setDescription(`Il ticket Ã¨ stato preso in carico da <@${ticketDoc.claimedBy}>`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
@@ -308,7 +308,7 @@ module.exports = {
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -316,7 +316,7 @@ module.exports = {
 
       if (!ticketDoc.claimedBy) {
         await safeMessageReply(message, {
-          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Questo ticket non è claimato.').setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.').setColor('Red')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -347,9 +347,9 @@ module.exports = {
 
       const originalEmbed = msg.embeds?.[0] ? EmbedBuilder.from(msg.embeds[0]) : new EmbedBuilder().setColor('#6f4e37');
       const originalButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
-        new ButtonBuilder().setCustomId('claim_ticket').setLabel('✅ Claim').setStyle(ButtonStyle.Success)
+        new ButtonBuilder().setCustomId('close_ticket').setLabel('ðŸ”’ Chiudi').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('ðŸ“ Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId('claim_ticket').setLabel('âœ… Claim').setStyle(ButtonStyle.Success)
       );
 
       await msg.edit({ embeds: [originalEmbed], components: [originalButtons] });
@@ -357,14 +357,13 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle('Ticket Unclaimato')
-            .setDescription(`<@${oldClaimer}> non gestisce più il ticket`)
+            .setDescription(`<@${oldClaimer}> non gestisce piÃ¹ il ticket`)
             .setColor('#6f4e37')
         ],
         allowedMentions: { repliedUser: false }
       });
       return;
     }
-
     if (subcommand === 'switchpanel') {
       if (!message.member.roles.cache.has(HIGHSTAFF_ROLE_ID)) {
         await safeMessageReply(message, {
@@ -377,6 +376,7 @@ module.exports = {
         });
         return;
       }
+
       const targetChannel = message.channel;
       const categoryToken = String(rest[0] || '').toLowerCase();
       const panelConfig = getTicketPanelConfig(categoryToken);
@@ -391,89 +391,61 @@ module.exports = {
 
       if (!panelConfig) {
         await safeMessageReply(message, {
-          embeds: [
-            makeErrorEmbed(
-              'Errore',
-              '<:vegax:1443934876440068179> Categoria non valida. Usa: `supporto`, `partnership`, `highstaff`.'
-            )
-          ],
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Categoria non valida. Usa: `supporto`, `partnership`, `highstaff`.')],
           allowedMentions: { repliedUser: false }
         });
         return;
       }
 
-      const ticketDoc = activeTicketInChannel;
-      if (!ticketDoc) {
+      if (!message.client.ticketSwitchLocks) message.client.ticketSwitchLocks = new Set();
+      if (!message.client.ticketSwitchCooldowns) message.client.ticketSwitchCooldowns = new Map();
+      const switchKey = `${message.guild.id}:${targetChannel.id}`;
+      const lastSwitchAt = Number(message.client.ticketSwitchCooldowns.get(switchKey) || 0);
+
+      if (message.client.ticketSwitchLocks.has(switchKey)) {
         await safeMessageReply(message, {
-          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Nel canale indicato non c\'è un ticket aperto.')],
+          embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1443651874032062505> C\'è già uno switchpanel in esecuzione su questo ticket.')],
           allowedMentions: { repliedUser: false }
         });
         return;
       }
 
-      const openerMember = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
-      const openerName = openerMember?.user?.username || 'utente';
-      const safeOpenerName = String(openerName).replace(/[^\w.-]/g, '').slice(0, 20) || 'utente';
-      const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;
-      await targetChannel.setName(newChannelName).catch(() => {});
-
-      await targetChannel.permissionOverwrites.edit(message.guild.roles.everyone.id, {
-        ViewChannel: false
-      }).catch(() => {});
-      await targetChannel.permissionOverwrites.edit(ticketDoc.userId, {
-        ViewChannel: true,
-        SendMessages: true,
-        EmbedLinks: true,
-        AttachFiles: true,
-        ReadMessageHistory: true,
-        AddReactions: true
-      }).catch(() => {});
-
-      const applyReadOnly = { ViewChannel: true, SendMessages: false, ReadMessageHistory: true };
-      const applyFull = {
-        ViewChannel: true,
-        SendMessages: true,
-        EmbedLinks: true,
-        AttachFiles: true,
-        ReadMessageHistory: true,
-        AddReactions: true
-      };
-      const denyView = { ViewChannel: false };
-
-      if (panelConfig.type === 'supporto') {
-        if (ticketDoc.claimedBy) {
-          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyReadOnly).catch(() => {});
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
-        } else {
-          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyFull).catch(() => {});
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
-        }
-        await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
+      if (Date.now() - lastSwitchAt < 2000) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1443651874032062505> Aspetta un attimo prima di rifare switchpanel.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
       }
 
-      if (panelConfig.type === 'partnership') {
-        if (ticketDoc.claimedBy) {
-          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyReadOnly).catch(() => {});
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
-        } else {
-          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyFull).catch(() => {});
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+      message.client.ticketSwitchLocks.add(switchKey);
+      try {
+        const ticketDoc = activeTicketInChannel;
+        if (!ticketDoc) {
+          await safeMessageReply(message, {
+            embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Nel canale indicato non c\'è un ticket aperto.')],
+            allowedMentions: { repliedUser: false }
+          });
+          return;
         }
-        await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
-      }
-
-      if (panelConfig.type === 'high') {
-        if (ticketDoc.claimedBy) {
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
-        } else {
-          await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
+        if (ticketDoc.ticketType === panelConfig.type) {
+          await safeMessageReply(message, {
+            embeds: [makeErrorEmbed('Info', `<:attentionfromvega:1443651874032062505> Questo ticket è già impostato su **${panelConfig.label}**.`)],
+            allowedMentions: { repliedUser: false }
+          });
+          return;
         }
-        await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
-        await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
-      }
 
-      if (ticketDoc.claimedBy) {
-        await targetChannel.permissionOverwrites.edit(ticketDoc.claimedBy, {
+        const openerMember = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
+        const openerName = openerMember?.user?.username || 'utente';
+        const safeOpenerName = String(openerName).replace(/[^\w.-]/g, '').slice(0, 20) || 'utente';
+        const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;
+        if (targetChannel.name !== newChannelName) {
+          await targetChannel.setName(newChannelName).catch(() => {});
+        }
+
+        await targetChannel.permissionOverwrites.edit(message.guild.roles.everyone.id, { ViewChannel: false }).catch(() => {});
+        await targetChannel.permissionOverwrites.edit(ticketDoc.userId, {
           ViewChannel: true,
           SendMessages: true,
           EmbedLinks: true,
@@ -481,33 +453,90 @@ module.exports = {
           ReadMessageHistory: true,
           AddReactions: true
         }).catch(() => {});
+
+        const applyReadOnly = { ViewChannel: true, SendMessages: false, ReadMessageHistory: true };
+        const applyFull = {
+          ViewChannel: true,
+          SendMessages: true,
+          EmbedLinks: true,
+          AttachFiles: true,
+          ReadMessageHistory: true,
+          AddReactions: true
+        };
+        const denyView = { ViewChannel: false };
+
+        if (panelConfig.type === 'supporto') {
+          if (ticketDoc.claimedBy) {
+            await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyReadOnly).catch(() => {});
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+          } else {
+            await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, applyFull).catch(() => {});
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
+          }
+          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
+        }
+
+        if (panelConfig.type === 'partnership') {
+          if (ticketDoc.claimedBy) {
+            await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyReadOnly).catch(() => {});
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+          } else {
+            await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, applyFull).catch(() => {});
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+          }
+          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
+        }
+
+        if (panelConfig.type === 'high') {
+          if (ticketDoc.claimedBy) {
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyReadOnly).catch(() => {});
+          } else {
+            await targetChannel.permissionOverwrites.edit(HIGHSTAFF_ROLE_ID, applyFull).catch(() => {});
+          }
+          await targetChannel.permissionOverwrites.edit(STAFF_ROLE_ID, denyView).catch(() => {});
+          await targetChannel.permissionOverwrites.edit(PARTNERMANAGER_ROLE_ID, denyView).catch(() => {});
+        }
+
+        if (ticketDoc.claimedBy) {
+          await targetChannel.permissionOverwrites.edit(ticketDoc.claimedBy, {
+            ViewChannel: true,
+            SendMessages: true,
+            EmbedLinks: true,
+            AttachFiles: true,
+            ReadMessageHistory: true,
+            AddReactions: true
+          }).catch(() => {});
+        }
+
+        ticketDoc.ticketType = panelConfig.type;
+        await ticketDoc.save().catch(() => {});
+
+        const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId);
+        if (msg) {
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
+            new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
+            ticketDoc.claimedBy
+              ? new ButtonBuilder().setCustomId('unclaim').setLabel('🔓 Unclaim').setStyle(ButtonStyle.Secondary)
+              : new ButtonBuilder().setCustomId('claim_ticket').setLabel('✅ Claim').setStyle(ButtonStyle.Success)
+          );
+          await msg.edit({ embeds: [panelConfig.embed], components: [row] }).catch(() => {});
+        }
+
+        await safeMessageReply(message, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('#6f4e37')
+              .setTitle('Switch Panel')
+              .setDescription(`<:vegacheckmark:1443666279058772028> Ticket aggiornato in **${panelConfig.label}** nel canale ${targetChannel}.`)
+          ],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      } finally {
+        message.client.ticketSwitchLocks.delete(switchKey);
+        message.client.ticketSwitchCooldowns.set(switchKey, Date.now());
       }
-
-      ticketDoc.ticketType = panelConfig.type;
-      await ticketDoc.save().catch(() => {});
-
-      const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId);
-      if (msg) {
-        const row = new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('close_ticket').setLabel('🔒 Chiudi').setStyle(ButtonStyle.Danger),
-          new ButtonBuilder().setCustomId('close_ticket_motivo').setLabel('📝 Chiudi Con Motivo').setStyle(ButtonStyle.Danger),
-          ticketDoc.claimedBy
-            ? new ButtonBuilder().setCustomId('unclaim').setLabel('🔓 Unclaim').setStyle(ButtonStyle.Secondary)
-            : new ButtonBuilder().setCustomId('claim_ticket').setLabel('✅ Claim').setStyle(ButtonStyle.Success)
-        );
-        await msg.edit({ embeds: [panelConfig.embed], components: [row] }).catch(() => {});
-      }
-
-      await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor('#6f4e37')
-            .setTitle('Switch Panel')
-            .setDescription(`<:vegacheckmark:1443666279058772028> Ticket aggiornato in **${panelConfig.label}** nel canale ${targetChannel}.`)
-        ],
-        allowedMentions: { repliedUser: false }
-      });
-      return;
     }
 
     await safeMessageReply(message, {
@@ -561,31 +590,31 @@ function getTicketPanelConfig(raw) {
     supporto: {
       type: 'supporto',
       label: 'Supporto',
-      emoji: '⭐',
+      emoji: 'â­',
       name: 'supporto',
       embed: new EmbedBuilder()
-        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**')
-        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\\`STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.')
+        .setTitle('<:vsl_ticket:1329520261053022208> â€¢ **__TICKET SUPPORTO__**')
+        .setDescription('<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un membro dello **__\\`STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Descrivi supporto, segnalazione o problema in modo chiaro.')
         .setColor('#6f4e37')
     },
     partnership: {
       type: 'partnership',
       label: 'Partnership',
-      emoji: '🤝',
+      emoji: 'ðŸ¤',
       name: 'partnership',
       embed: new EmbedBuilder()
-        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**')
-        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`PARTNER MANAGER\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena qui.')
+        .setTitle('<:vsl_ticket:1329520261053022208> â€¢ **__TICKET PARTNERSHIP__**')
+        .setDescription('<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\\`PARTNER MANAGER\\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Manda la descrizione del tuo server/catena qui.')
         .setColor('#6f4e37')
     },
     highstaff: {
       type: 'high',
       label: 'High Staff',
-      emoji: '✨',
+      emoji: 'âœ¨',
       name: 'highstaff',
       embed: new EmbedBuilder()
-        .setTitle('<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**')
-        .setDescription('<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\\`HIGH STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.')
+        .setTitle('<:vsl_ticket:1329520261053022208> â€¢ **__TICKET HIGH STAFF__**')
+        .setDescription('<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\\`HIGH STAFF\\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.')
         .setColor('#6f4e37')
     }
   };

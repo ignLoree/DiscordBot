@@ -20,6 +20,8 @@ async function handleAutocomplete(interaction, client) {
 async function handleSlashCommand(interaction, client) {
     const command = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
     if (!command) return;
+    if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
+    const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
     if (!checkSlashPermission(interaction)) {
         return interaction.reply({
@@ -54,6 +56,13 @@ async function handleSlashCommand(interaction, client) {
             });
         }
     }
+    if (client.interactionCommandLocks.has(interactionLockId)) {
+        return interaction.reply({
+            content: "<:attentionfromvega:1443651874032062505> Hai già un comando in esecuzione, attendi un attimo.",
+            flags: 1 << 6
+        });
+    }
+    client.interactionCommandLocks.add(interactionLockId);
 
     const originalReply = interaction.reply.bind(interaction);
     const originalFollowUp = interaction.followUp?.bind(interaction);
@@ -190,6 +199,7 @@ async function handleSlashCommand(interaction, client) {
         });
     } finally {
         if (deferTimer) clearTimeout(deferTimer);
+        client.interactionCommandLocks.delete(interactionLockId);
     }
 }
 

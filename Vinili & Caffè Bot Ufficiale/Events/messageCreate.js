@@ -482,6 +482,7 @@ module.exports = {
         if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();
         if (!client.prefixCommandQueue) client.prefixCommandQueue = new Map();
         const userId = message.author.id;
+        const queueLockId = `${message.guild.id}:${userId}`;
         const enqueueCommand = async () => {
             const emoji = message.client?.emojis?.cache?.get('1443934440614264924');
             if (emoji) {
@@ -489,12 +490,12 @@ module.exports = {
             } else {
                 await message.react('<a:VC_Loading:1462504528774430962>').catch(() => { });
             }
-            if (!client.prefixCommandQueue.has(userId)) {
-                client.prefixCommandQueue.set(userId, []);
+            if (!client.prefixCommandQueue.has(queueLockId)) {
+                client.prefixCommandQueue.set(queueLockId, []);
             }
-            client.prefixCommandQueue.get(userId).push({ message, args, command });
+            client.prefixCommandQueue.get(queueLockId).push({ message, args, command });
         };
-        if (client.prefixCommandLocks.has(userId)) {
+        if (client.prefixCommandLocks.has(queueLockId)) {
             await enqueueCommand();
             return;
         }
@@ -588,7 +589,7 @@ module.exports = {
                 }
             }
         };
-        const lockId = userId;
+        const lockId = queueLockId;
         client.prefixCommandLocks.add(lockId);
         try {
             await executePrefixCommand({ message, args, command });
