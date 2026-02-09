@@ -305,6 +305,28 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
+        if (!message.guild) {
+            if (message.author?.bot || message.system || message.webhookId) return;
+            const dmPrefix = '+';
+            if (!String(message.content || '').startsWith(dmPrefix)) return;
+            const dmArgs = String(message.content || '')
+                .slice(dmPrefix.length)
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean);
+            const dmCmd = dmArgs.shift()?.toLowerCase();
+            if (!dmCmd) return;
+            const dmCommand = client.pcommands?.get(dmCmd)
+                || client.pcommands?.get(client.aliases?.get(dmCmd));
+            if (!dmCommand) return;
+            if (dmCommand.name !== 'description') return;
+            try {
+                await dmCommand.execute(message, dmArgs, client);
+            } catch (error) {
+                logEventError(client, 'DM PREFIX DESCRIPTION ERROR', error);
+            }
+            return;
+        }
         try {
             if (!isEditedPrefixExecution) {
                 if (
