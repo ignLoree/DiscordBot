@@ -194,6 +194,11 @@ async function handleTicketInteraction(interaction) {
                 return true;
             }
             if (config) {
+                if (!interaction.deferred && !interaction.replied) {
+                    try {
+                        await interaction.deferReply({ flags: 1 << 6 });
+                    } catch (_) { }
+                }
                 if (!interaction.client.ticketOpenLocks) {
                     interaction.client.ticketOpenLocks = new Set();
                 }
@@ -338,7 +343,7 @@ async function handleTicketInteraction(interaction) {
                         mentionMsg.delete().catch(() => { });
                     }, 100);
                 }
-                await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('<:vegacheckmark:1443666279058772028> Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
+                await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('<:vegacheckmark:1443666279058772028> Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
                 return true;
                 } finally {
                     interaction.client.ticketOpenLocks.delete(ticketLockKey);

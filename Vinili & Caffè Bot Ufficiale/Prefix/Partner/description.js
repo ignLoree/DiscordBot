@@ -1,4 +1,5 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
+﻿const { EmbedBuilder } = require('discord.js');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const IDs = require('../../Utils/Config/ids');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 
@@ -16,7 +17,11 @@ module.exports = {
       '                                       **gaming**',
       '-# @everyone & @here_ _',
       '```'
-    ].join('\n');
+    ].join('\\n');
+    const descriptionEmbed = new EmbedBuilder()
+      .setColor('#6f4e37')
+      .setAuthor({ text: `Ecco la nostra descrizione pronta da copiare e incollare:`})
+      .setDescription(descriptionText);
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 
     const ticketDoc = await Ticket.findOne({ channelId: message.channel.id, open: true }).lean().catch(() => null);
@@ -61,13 +66,13 @@ module.exports = {
 
     if (!target) {
       await safeMessageReply(message, {
-        content: descriptionText,
+        embeds: [descriptionEmbed],
         allowedMentions: { repliedUser: false }
       });
       return;
     }
 
-    const delivered = await target.send(descriptionText).then(() => true).catch(() => false);
+    const delivered = await target.send({ embeds: [descriptionEmbed] }).then(() => true).catch(() => false);
     if (!delivered) {
       await safeMessageReply(message, {
         content: `<:vegax:1443934876440068179> Non riesco a inviare DM a ${target}.`,
