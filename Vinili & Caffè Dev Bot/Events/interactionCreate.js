@@ -1,4 +1,4 @@
-const { InteractionType } = require('discord.js');
+const { InteractionType, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { handleAutocomplete, handleSlashCommand } = require('./interaction/commandHandlers');

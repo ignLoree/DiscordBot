@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const suggestion = require('../../Schemas/Suggestion/suggestionSchema.js');
 
 async function handleSuggestionVote(interaction) {

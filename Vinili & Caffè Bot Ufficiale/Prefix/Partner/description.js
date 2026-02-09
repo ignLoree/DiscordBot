@@ -20,7 +20,7 @@ module.exports = {
     ].join('\\n');
     const descriptionEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setAuthor({ text: `Ecco la nostra descrizione pronta da copiare e incollare:`})
+      .setAuthor({ name: `Ecco la nostra descrizione pronta da copiare e incollare:`})
       .setDescription(descriptionText);
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 

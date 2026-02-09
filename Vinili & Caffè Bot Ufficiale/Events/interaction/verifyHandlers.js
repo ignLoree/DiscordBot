@@ -9,8 +9,7 @@ const VERIFY_ROLE_IDS = [
     IDs.roles.verifyExtraA,
     IDs.roles.verifyExtraB,
     IDs.roles.verifyExtraC,
-    IDs.roles.verifyExtraD,
-    IDs.roles.verifyExtraA
+    IDs.roles.verifyExtraD
 ];
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;

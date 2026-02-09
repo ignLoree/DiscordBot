@@ -85,7 +85,7 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.deferReply({ flags: 1 << 6 });
 
   const staffRoleIds = Array.isArray(client.config?.staffRoleIds)
-    ? client.config.staff
+    ? client.config.staffRoleIds
     : [];
   const noDmSet = await getNoDmSet(interaction.guild.id);
   await interaction.guild.members.fetch().catch(() => {});

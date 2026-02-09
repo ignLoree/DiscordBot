@@ -207,10 +207,9 @@ async function renumberGuildCategories(guild, options) {
   for (let index = 0; index < categories.length; index += 1) {
     const category = categories[index];
     if (!category?.manageable) continue;
+    if (isTicketsCategoryName(category.name)) continue;
 
-    const nextNumber = isTicketsCategoryName(category.name)
-      ? toSuperscriptNumber(0, options.minDigits)
-      : toSuperscriptNumber(nonTicketIndex++, options.minDigits);
+    const nextNumber = toSuperscriptNumber(nonTicketIndex++, options.minDigits);
     const expectedName = replaceNumberPrefixOnly(category.name, nextNumber, options.separator);
     if (category.name === expectedName) continue;
     await category.setName(expectedName).catch(() => {});

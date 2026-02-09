@@ -125,7 +125,7 @@ async function handleSlashCommand(interaction, client) {
             if (!interaction.replied && !interaction.deferred) {
                 interaction.deferReply().catch(() => { });
             }
-        }, 3000);
+        }, 1500);
         await runWithTimeout(
             Promise.resolve(command.execute(wrappedInteraction, client)),
             COMMAND_EXECUTION_TIMEOUT_MS,

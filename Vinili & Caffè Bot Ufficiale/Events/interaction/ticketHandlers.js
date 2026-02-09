@@ -65,6 +65,11 @@ async function handleTicketInteraction(interaction) {
             .replace(/[・`'".,;:!?\-_=+()[\]{}|/\\]/g, '');
     }
 
+    function isTicketCategoryName(name) {
+        const normalized = normalizeCategoryName(name);
+        return normalized.includes('tickets');
+    }
+
     async function createTicketsCategory(guild) {
         if (!guild) return null;
         if (!interaction.client.ticketCategoryCache) {
@@ -75,23 +80,34 @@ async function handleTicketInteraction(interaction) {
         if (cachedCategoryId) {
             const cachedCategory = guild.channels.cache.get(cachedCategoryId)
                 || await guild.channels.fetch(cachedCategoryId).catch(() => null);
-            if (cachedCategory && cachedCategory.type === 4) return cachedCategory;
+            if (cachedCategory && cachedCategory.type === 4) {
+                if (isTicketCategoryName(cachedCategory.name)) {
+                    if (cachedCategory.name !== TICKETS_CATEGORY_NAME) {
+                        await cachedCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+                    }
+                    return cachedCategory;
+                }
+            }
         }
 
         await guild.channels.fetch().catch(() => null);
-        const normalizedTarget = normalizeCategoryName(TICKETS_CATEGORY_NAME);
-        const existing = guild.channels.cache
-            .filter(ch => ch.type === 4)
+        const exactCategory = guild.channels.cache
+            .filter((ch) => ch.type === 4)
+            .find((ch) => ch.name === TICKETS_CATEGORY_NAME);
+        if (exactCategory) {
+            interaction.client.ticketCategoryCache.set(guild.id, exactCategory.id);
+            return exactCategory;
+        }
+        const fallbackTicketCategory = guild.channels.cache
+            .filter((ch) => ch.type === 4)
             .sort((a, b) => a.position - b.position)
-            .find((ch) => {
-                if (ch.name === TICKETS_CATEGORY_NAME) return true;
-                const normalized = normalizeCategoryName(ch.name);
-                return normalized === normalizedTarget
-                    || (normalized.includes('tickets') && normalized.includes('⁰⁰'));
-            });
-        if (existing) {
-            interaction.client.ticketCategoryCache.set(guild.id, existing.id);
-            return existing;
+            .find((ch) => isTicketCategoryName(ch.name));
+        if (fallbackTicketCategory) {
+            if (fallbackTicketCategory.name !== TICKETS_CATEGORY_NAME) {
+                await fallbackTicketCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+            }
+            interaction.client.ticketCategoryCache.set(guild.id, fallbackTicketCategory.id);
+            return fallbackTicketCategory;
         }
 
         const category = await guild.channels.create({
@@ -191,6 +207,10 @@ async function handleTicketInteraction(interaction) {
                 'unclaim',
                 'ticket_open_desc_modal'
             ].includes(interaction.customId)) {
+                await safeReply(interaction, {
+                    embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Categoria ticket non valida. Riprova dal pannello.')],
+                    flags: 1 << 6
+                });
                 return true;
             }
             if (config) {
