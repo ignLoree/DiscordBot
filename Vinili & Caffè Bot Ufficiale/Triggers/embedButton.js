@@ -541,15 +541,6 @@ module.exports = {
                         inline: true
                     },
                     {
-                        name: '\`VERIFICATO/A\`',
-                        value: [
-                            '<@&1469040190730408018>/<@&1469040179799920801>',
-                            'Ottenibile facendo la verifica tramite selfie.',
-                            '९ Esclusività del ruolo.',
-                        ].join('\n'),
-                        inline: true
-                    },
-                    {
                         name: '\`WEEKLY WINNERS\`',
                         value: [
                             '<@&1468674837957574757>/<@&1468674787399172208>',
