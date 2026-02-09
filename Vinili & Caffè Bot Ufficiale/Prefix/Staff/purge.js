@@ -1,54 +1,116 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const { resolveTarget } = require('../../Utils/Moderation/prefixModeration');
 const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
 
+const DISCORD_BULK_DELETE_MAX = 100;
+const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function chunkArray(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 module.exports = {
   name: 'purge',
-  
+
   async execute(message, args, client) {
     await message.channel.sendTyping();
+
     const { user } = await resolveTarget(message, args, 1);
-    const fetched = await message.channel.messages.fetch({ limit: 100 });
     const config = await getModConfig(message.guild.id);
 
-    const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => { }), 5000);
+    const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => {}), 5000);
     const replyTemp = async (payload) => {
       const msg = await message.channel.send({ ...payload, allowedMentions: { repliedUser: false } });
       deleteLater(msg);
       return msg;
     };
-    setTimeout(() => message.delete().catch(() => { }), 5000);
 
-    const amount = Number(args?.[0]);
-    if (!amount || amount < 1 || amount > 100) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida (1-100).' });
+    await message.delete().catch(() => {});
+
+    const requestedRaw = String(args?.[0] || '').trim().toLowerCase();
+    const requestedAmount = Number(requestedRaw);
+    const hasNumericAmount = Number.isFinite(requestedAmount) && requestedAmount > 0;
+
+    if (requestedRaw && requestedRaw !== 'all' && !hasNumericAmount) {
+      await replyTemp({ content: '<:vegax:1443934876440068179> Quantita non valida. Usa un numero positivo oppure `all`.' });
       return;
     }
 
-    if (amount == 1) {
-      const embed = new EmbedBuilder()
-        .setColor('#e67e22')
-        .setTitle('<:vegax:1443934876440068179> Wrong Use!')
-        .setDescription('If you want to purge one message, please do it manually.');
-      await replyTemp({ embeds: [embed] });
-      return;
+    const targetCount = hasNumericAmount ? requestedAmount : Number.POSITIVE_INFINITY;
+
+    let scanned = 0;
+    let cursor = null;
+    let rounds = 0;
+    const candidates = [];
+
+    while (candidates.length < targetCount) {
+      const batch = await message.channel.messages.fetch({
+        limit: DISCORD_BULK_DELETE_MAX,
+        ...(cursor ? { before: cursor } : {})
+      }).catch(() => null);
+
+      if (!batch?.size) break;
+
+      rounds += 1;
+      scanned += batch.size;
+      cursor = batch.last()?.id || null;
+
+      const filtered = batch.filter((m) => {
+        if (m.id === message.id) return false;
+        if (m.pinned) return false;
+        if (user && m.author?.id !== user.id) return false;
+        return true;
+      });
+
+      for (const msg of filtered.values()) {
+        candidates.push(msg);
+        if (candidates.length >= targetCount) break;
+      }
+
+      if (!cursor) break;
+      if (rounds % 8 === 0) {
+        await message.channel.sendTyping().catch(() => {});
+      }
     }
 
-    let toDelete = user
-      ? fetched.filter(m => m.author.id === user.id).first(amount)
-      : fetched.first(amount);
-
-    if (!toDelete || (Array.isArray(toDelete) && toDelete.length === 0)) {
+    if (!candidates.length) {
       await replyTemp({ content: '<:vegax:1443934876440068179> Nessun messaggio da eliminare.' });
       return;
     }
 
-    if (!Array.isArray(toDelete)) toDelete = [toDelete];
+    const now = Date.now();
+    const recent = [];
+    const old = [];
 
-    const deleted = await message.channel.bulkDelete(toDelete, true).catch(() => null);
-    if (!deleted) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Impossibile eliminare i messaggi (forse troppo vecchi).' });
-      return;
+    for (const msg of candidates) {
+      if (now - msg.createdTimestamp < BULK_DELETE_MAX_AGE_MS) {
+        recent.push(msg);
+      } else {
+        old.push(msg);
+      }
+    }
+
+    let deletedCount = 0;
+
+    const recentChunks = chunkArray(recent, DISCORD_BULK_DELETE_MAX);
+    for (const chunk of recentChunks) {
+      const deleted = await message.channel.bulkDelete(chunk, true).catch(() => null);
+      if (deleted?.size) deletedCount += deleted.size;
+      await sleep(250);
+    }
+
+    for (const msg of old) {
+      const ok = await msg.delete().then(() => true).catch(() => false);
+      if (ok) deletedCount += 1;
+      await sleep(400);
     }
 
     const { doc } = await createModCase({
@@ -57,22 +119,26 @@ module.exports = {
       userId: user ? user.id : `CHANNEL:${message.channel.id}`,
       modId: message.author.id,
       reason: user
-        ? `Purge ${deleted.size} messaggi di ${user.tag}`
-        : `Purge ${deleted.size} messaggi in #${message.channel.name}`,
+        ? `Purge ${deletedCount} messaggi di ${user.tag}`
+        : `Purge ${deletedCount} messaggi in #${message.channel.name}`,
       context: { channelId: message.channel.id }
     });
+
     await logModCase({ client, guild: message.guild, modCase: doc, config });
-    const embed = new EmbedBuilder()
+
+    const summary = new EmbedBuilder()
       .setColor(client.config?.embedModLight || '#6f4e37')
       .setDescription(
         `<a:VC_Channel:1448670215444631706> Canale: <#${message.channel.id}>\n` +
         `<a:VC_Staff:1448670376736456787> Staffer: <@${message.author.id}>\n` +
-        `<:VC_Chat:1448694742237053061> Messaggi Recuperati: ${fetched.size}\n` +
-        `<:VC_Stats:1448695844923510884> Richiesta di eliminazione: ${amount}\n` +
-        `<:VC_Search:1460657088899584265> Messaggi Identificati: ${toDelete.length}\n` +
-        `<:VC_Trash:1460645075242451025> Messaggi Cancellati: ${deleted.size}`
+        `<:VC_Chat:1448694742237053061> Messaggi scansionati: ${scanned}\n` +
+        `<:VC_Stats:1448695844923510884> Richiesta: ${Number.isFinite(targetCount) ? targetCount : 'ALL'}\n` +
+        `<:VC_Search:1460657088899584265> Messaggi identificati: ${candidates.length}\n` +
+        `<:VC_Trash:1460645075242451025> Messaggi cancellati: ${deletedCount}\n` +
+        `<:dot:1443660294596329582> Bulk (<14 giorni): ${recent.length}\n` +
+        `<:dot:1443660294596329582> Singoli (>=14 giorni): ${old.length}`
       );
-    await replyTemp({ embeds: [embed] });
-    return;
+
+    await replyTemp({ embeds: [summary] });
   }
 };
