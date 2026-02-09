@@ -8,8 +8,24 @@ const STAFF_ROLE_ID = '1442568910070349985';
 
 module.exports = {
   name: 'ticket',
+  aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
   description: 'Gestione ticket.',
   subcommands: ['add', 'remove', 'closerequest', 'close', 'claim', 'unclaim'],
+  subcommandAliases: {
+    add: 'add',
+    remove: 'remove',
+    close: 'close',
+    closerequest: 'closerequest',
+    claim: 'claim',
+    unclaim: 'unclaim',
+    ticketclose: 'close',
+    ticketclaim: 'claim',
+    ticketunclaim: 'unclaim',
+    tadd: 'add',
+    tremove: 'remove',
+    ticketadd: 'add',
+    ticketremove: 'remove'
+  },
 
   async execute(message, args = []) {
     if (!message.inGuild?.() || !message.guild || !message.member) {
@@ -20,8 +36,17 @@ module.exports = {
       return;
     }
 
-    const subcommand = String(args[0] || '').toLowerCase();
-    const rest = args.slice(1);
+    const defaultPrefix = '+';
+    const rawContent = String(message.content || '').trim();
+    const invokedToken = rawContent.startsWith(defaultPrefix)
+      ? rawContent.slice(defaultPrefix.length).trim().split(/\s+/)[0]?.toLowerCase()
+      : '';
+    const directAliasSub = invokedToken && this.subcommandAliases
+      ? this.subcommandAliases[invokedToken]
+      : null;
+
+    const subcommand = String(directAliasSub || args[0] || '').toLowerCase();
+    const rest = directAliasSub ? args : args.slice(1);
 
     if (!subcommand) {
       await safeMessageReply(message, {

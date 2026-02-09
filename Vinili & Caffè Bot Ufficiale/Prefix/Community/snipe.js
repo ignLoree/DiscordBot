@@ -19,10 +19,15 @@ module.exports = {
                 allowedMentions: { repliedUser: false }
             });
         }
-        const content =
-            snipe.content && snipe.content.length > 1900
-                ? snipe.content.slice(0, 1900) + "..."
-                : snipe.content || "*<:vegax:1443934876440068179> Nessun contenuto*";
+        const rawContent = String(snipe.content || '').trim();
+        const safeContent = rawContent
+            ? rawContent.replace(/```/g, '\\`\\`\\`')
+            : "*<:vegax:1443934876440068179> Nessun contenuto*";
+        const maxFieldPayload = 980; // keep room for markdown wrapper
+        const clippedContent =
+            safeContent.length > maxFieldPayload
+                ? `${safeContent.slice(0, maxFieldPayload)}...`
+                : safeContent;
         const embed = new EmbedBuilder()
             .setColor("#6f4e37")
             .addFields(
@@ -35,12 +40,12 @@ module.exports = {
                 },
                 {
                     name: "<:VC_BlackPin:1448687216871084266> Canale:",
-                    value: snipe.channel,
+                    value: snipe.channel || `${message.channel}`,
                     inline: true
                 },
                 {
                     name: "<:VC_Chat:1448694742237053061> Contenuto:",
-                    value: `\`\`\`${content}\`\`\``
+                    value: `\`\`\`${clippedContent}\`\`\``
                 }
             )
             .setTimestamp();
@@ -53,5 +58,3 @@ module.exports = {
         });
     }
 };
-
-

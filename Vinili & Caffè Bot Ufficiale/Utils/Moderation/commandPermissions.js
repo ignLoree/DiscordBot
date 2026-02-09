@@ -42,11 +42,15 @@ function resolveSlashRoles(data, commandName, groupName, subcommandName) {
   return null;
 }
 
-function resolvePrefixRoles(data, commandName) {
+function resolvePrefixRoles(data, commandName, subcommandName = null) {
   const cmd = data?.prefix?.[commandName];
   if (!cmd) return null;
   if (Array.isArray(cmd)) return cmd;
   if (typeof cmd !== 'object') return null;
+  const subcommands = cmd.subcommands || {};
+  if (subcommandName && Array.isArray(subcommands[subcommandName])) {
+    return subcommands[subcommandName];
+  }
   if (Array.isArray(cmd.roles)) return cmd.roles;
   return null;
 }
@@ -61,9 +65,9 @@ function checkSlashPermission(interaction) {
   return hasAnyRole(interaction.member, roles);
 }
 
-function checkPrefixPermission(message, commandName) {
+function checkPrefixPermission(message, commandName, subcommandName = null) {
   const data = loadPermissions();
-  const roles = resolvePrefixRoles(data, commandName);
+  const roles = resolvePrefixRoles(data, commandName, subcommandName);
   if (!Array.isArray(roles)) return true;
   if (!message.guild) return false;
   return hasAnyRole(message.member, roles);

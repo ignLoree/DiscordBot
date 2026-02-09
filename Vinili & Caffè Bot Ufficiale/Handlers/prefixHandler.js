@@ -36,6 +36,8 @@ function shouldLogOnce(tag) {
 
 module.exports = (client) => {
     client.prefixCommands = async (folders) => {
+        client.pcommands.clear();
+        client.aliases.clear();
         const statusMap = new Map();
         for (const folder of folders) {
             const folderPath = `./Prefix/${folder}`;

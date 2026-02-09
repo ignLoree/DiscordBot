@@ -413,7 +413,15 @@ module.exports = {
             || client.pcommands.get(client.aliases.get(cmd));
             
         if (!command) return;
-        if (!checkPrefixPermission(message, command.name)) {
+        const prefixSubcommandFromArgs = args[0] ? String(args[0]).toLowerCase() : null;
+        const prefixSubcommandFromAlias = !prefixSubcommandFromArgs && command?.subcommandAliases
+            ? command.subcommandAliases[cmd] || null
+            : null;
+        const prefixSubcommand = prefixSubcommandFromArgs || prefixSubcommandFromAlias || null;
+        if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
+            args.unshift(prefixSubcommandFromAlias);
+        }
+        if (!checkPrefixPermission(message, command.name, prefixSubcommand)) {
             const embed = new EmbedBuilder()
                 .setColor("Red")
                 .setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.");

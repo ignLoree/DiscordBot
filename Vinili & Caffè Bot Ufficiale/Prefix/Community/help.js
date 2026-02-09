@@ -99,6 +99,27 @@ function extractPrefixSubcommands(command) {
   return Array.from(found.values());
 }
 
+function extractDirectAliasesForSubcommand(command, subcommandName) {
+  const mapped = command?.subcommandAliases && typeof command.subcommandAliases === 'object'
+    ? command.subcommandAliases
+    : {};
+  const declaredAliases = Array.isArray(command?.aliases)
+    ? new Set(command.aliases.map((alias) => String(alias || '').trim().toLowerCase()).filter(Boolean))
+    : null;
+  const out = [];
+
+  for (const [alias, target] of Object.entries(mapped)) {
+    const normalizedAlias = String(alias || '').trim().toLowerCase();
+    const normalizedTarget = String(target || '').trim().toLowerCase();
+    if (!normalizedAlias || !normalizedTarget) continue;
+    if (normalizedTarget !== subcommandName) continue;
+    if (declaredAliases && !declaredAliases.has(normalizedAlias)) continue;
+    out.push(normalizedAlias);
+  }
+
+  return Array.from(new Set(out));
+}
+
 function getSlashTopLevelDescription(dataJson) {
   return normalizeDescription(dataJson?.description, 'Comando slash.');
 }
@@ -151,7 +172,14 @@ function buildEntries(client, permissions) {
     if (!command?.name) continue;
 
     const perm = permissions.prefix?.[command.name];
-    const roles = Array.isArray(perm) ? perm : null;
+    const commandRoles = Array.isArray(perm)
+      ? perm
+      : Array.isArray(perm?.roles)
+        ? perm.roles
+        : null;
+    const subcommandRoles = perm && typeof perm === 'object' && !Array.isArray(perm)
+      ? (perm.subcommands || {})
+      : {};
     const aliases = Array.isArray(command.aliases)
       ? command.aliases.filter((alias) => typeof alias === 'string' && alias.trim().length)
       : [];
@@ -162,7 +190,7 @@ function buildEntries(client, permissions) {
       aliases,
       prefixBase,
       category: String(command.folder || 'misc').toLowerCase(),
-      roles
+      roles: commandRoles
     };
 
     const subcommands = extractPrefixSubcommands(command);
@@ -171,7 +199,8 @@ function buildEntries(client, permissions) {
         entries.push({
           ...base,
           invoke: `${prefixBase}${command.name} ${sub}`,
-          aliases: []
+          roles: Array.isArray(subcommandRoles[sub]) ? subcommandRoles[sub] : commandRoles,
+          aliases: extractDirectAliasesForSubcommand(command, sub)
         });
       }
     } else {
@@ -251,9 +280,19 @@ function buildEntries(client, permissions) {
   });
 }
 
-function filterByPage(entries, pageRoleId) {
+function hasAnyRole(memberRoles, roleIds) {
+  if (!memberRoles || !Array.isArray(roleIds) || !roleIds.length) return false;
+  return roleIds.some((roleId) => memberRoles.has(roleId));
+}
+
+function filterByPage(entries, pageRoleId, memberRoles) {
   if (pageRoleId === 'base') {
-    return entries.filter((entry) => !Array.isArray(entry.roles));
+    return entries.filter((entry) => {
+      if (!Array.isArray(entry.roles)) return true;
+      const isVipCategory = String(entry.category || '').toLowerCase() === 'vip';
+      if (!isVipCategory) return false;
+      return hasAnyRole(memberRoles, entry.roles);
+    });
   }
   return entries.filter((entry) => Array.isArray(entry.roles) && entry.roles.includes(pageRoleId));
 }
@@ -346,7 +385,7 @@ module.exports = {
 
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {
-      const filtered = filterByPage(allEntries, roleId);
+      const filtered = filterByPage(allEntries, roleId, memberRoles);
       const roleChunks = chunkEntries(filtered, HELP_PAGE_SIZE);
       roleChunks.forEach((items, idx) => {
         groupedPages.push({
