@@ -4,8 +4,23 @@ const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = '1442568910070349985';
+const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
+
+function runWithTimeout(taskPromise, timeoutMs, label = 'command') {
+    let timeoutHandle = null;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+            const err = new Error(`${label} execution timed out after ${timeoutMs}ms`);
+            err.code = 'COMMAND_TIMEOUT';
+            reject(err);
+        }, timeoutMs);
+    });
+    return Promise.race([taskPromise, timeoutPromise]).finally(() => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+    });
+}
 
 async function handleAutocomplete(interaction, client) {
     const cmd = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
@@ -107,7 +122,11 @@ async function handleSlashCommand(interaction, client) {
                 interaction.deferReply().catch(() => { });
             }
         }, 3000);
-        await command.execute(interaction, client);
+        await runWithTimeout(
+            Promise.resolve(command.execute(interaction, client)),
+            COMMAND_EXECUTION_TIMEOUT_MS,
+            `app:${interaction.commandName || 'unknown'}`
+        );
     } catch (error) {
         global.logger.error(
             `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
@@ -191,8 +210,11 @@ async function handleSlashCommand(interaction, client) {
         }
         const userEmbed = new EmbedBuilder()
             .setColor('#e74c3c')
-            .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
-                \`\`\`${errorText}\`\`\``);
+            .setDescription(
+                error?.code === 'COMMAND_TIMEOUT'
+                    ? '<:attentionfromvega:1443651874032062505> Il comando è scaduto dopo 60 secondi. Riprova.'
+                    : `<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.\n\`\`\`${errorText}\`\`\``
+            );
         await safeReply({
             embeds: [userEmbed],
             flags: 1 << 6

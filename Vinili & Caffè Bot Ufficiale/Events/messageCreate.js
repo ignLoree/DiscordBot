@@ -15,6 +15,7 @@ const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { checkPrefixPermission } = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = '1442568910070349985';
+const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
 const VOTE_MANAGER_BOT_ID = '959699003010871307';
 const VOTE_CHANNEL_ID = '1442569123426074736';
@@ -66,6 +67,20 @@ function getRandomExp() {
     const step = 5;
     const count = Math.floor((max - min) / step) + 1;
     return min + Math.floor(Math.random() * count) * step;
+}
+
+function runWithTimeout(taskPromise, timeoutMs, label = 'command') {
+    let timeoutHandle = null;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+            const err = new Error(`${label} execution timed out after ${timeoutMs}ms`);
+            err.code = 'COMMAND_TIMEOUT';
+            reject(err);
+        }, timeoutMs);
+    });
+    return Promise.race([taskPromise, timeoutPromise]).finally(() => {
+        if (timeoutHandle) clearTimeout(timeoutHandle);
+    });
 }
 
 function extractVoteCountFromText(text) {
@@ -551,8 +566,21 @@ module.exports = {
                 };
             }
             try {
-                await execCommand.execute(execMessage, execArgs, client);
+                await runWithTimeout(
+                    Promise.resolve(execCommand.execute(execMessage, execArgs, client)),
+                    COMMAND_EXECUTION_TIMEOUT_MS,
+                    `prefix:${execCommand?.name || 'unknown'}`
+                );
             } catch (error) {
+                if (error?.code === 'COMMAND_TIMEOUT') {
+                    await execMessage.reply({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor('Red')
+                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando è scaduto dopo 60 secondi. Prova di nuovo.')
+                        ]
+                    }).catch(() => { });
+                }
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
                 const channelID = client.config.commandErrorChannel;
                 const errorChannel = client.channels.cache.get(channelID);
