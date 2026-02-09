@@ -418,12 +418,6 @@ function buildHelpV2Container(message, page, navState) {
   const headerSection = guildIcon
     ? {
         type: ComponentType.Section,
-        components: [
-          {
-            type: ComponentType.TextDisplay,
-            content: `## ${message.guild?.name || 'Help'}`
-          }
-        ],
         accessory: {
           type: ComponentType.Thumbnail,
           media: { url: guildIcon }
