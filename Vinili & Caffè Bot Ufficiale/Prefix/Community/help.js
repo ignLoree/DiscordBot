@@ -1,12 +1,6 @@
 ﻿const fs = require('fs');
 const path = require('path');
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ApplicationCommandType
-} = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
@@ -17,11 +11,11 @@ const PAGE_ROLE_IDS = [
   '1442568886988963923'
 ];
 const PAGE_TITLES = {
-  base: 'Comandi Base',
+  utente: 'Comandi Utente',
   '1442568905582317740': 'Comandi Partner Manager',
   '1442568910070349985': 'Comandi Staff',
   '1442568894349840435': 'Comandi High Staff',
-  '1442568886988963923': 'Comandi Founder'
+  '1442568886988963923': 'Comandi Dev'
 };
 const CATEGORY_LABELS = {
   community: 'Community',
@@ -29,9 +23,8 @@ const CATEGORY_LABELS = {
   partner: 'Partner',
   staff: 'Staff',
   vip: 'VIP',
-  admin: 'Admin',
+  admin: 'Dev',
   contextmenubuilder: 'Context Menu',
-  misc: 'Misc'
 };
 const CATEGORY_ORDER = [
   'community',
@@ -39,9 +32,8 @@ const CATEGORY_ORDER = [
   'partner',
   'staff',
   'vip',
-  'admin',
+  'dev',
   'contextmenubuilder',
-  'misc'
 ];
 const HELP_PAGE_SIZE = 18;
 
@@ -252,7 +244,7 @@ function buildEntries(client, permissions) {
     const roles = Array.isArray(perm) ? perm : (Array.isArray(perm?.roles) ? perm.roles : null);
 
     entries.push({
-      invoke: `Apps > ${dataJson.name}`,
+      invoke: `${dataJson.name}`,
       type: 'context',
       description: `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
       category: String(command?.category || 'contextmenubuilder').toLowerCase(),
@@ -262,7 +254,8 @@ function buildEntries(client, permissions) {
 
   const dedupe = new Map();
   for (const entry of entries) {
-    const roleKey = Array.isArray(entry.roles) ? entry.roles.slice().sort().join(',') : 'base';
+    if (String(entry?.category || '').toLowerCase() === 'misc') continue;
+    const roleKey = Array.isArray(entry.roles) ? entry.roles.slice().sort().join(',') : 'utente';
     const key = `${entry.type}:${entry.invoke}:${roleKey}`;
     if (!dedupe.has(key)) dedupe.set(key, entry);
   }
@@ -286,7 +279,7 @@ function hasAnyRole(memberRoles, roleIds) {
 }
 
 function filterByPage(entries, pageRoleId, memberRoles) {
-  if (pageRoleId === 'base') {
+  if (pageRoleId === 'utente') {
     return entries.filter((entry) => {
       if (!Array.isArray(entry.roles)) return true;
       const isVipCategory = String(entry.category || '').toLowerCase() === 'vip';
@@ -309,6 +302,7 @@ function renderPageEmbed(message, page) {
   const grouped = new Map();
   for (const entry of page.items) {
     const key = String(entry.category || 'misc').toLowerCase();
+    if (key === 'misc') continue;
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key).push(entry);
   }
@@ -337,19 +331,18 @@ function renderPageEmbed(message, page) {
   const description = page.items.length
     ? [
       'Ecco la lista dei comandi disponibili.',
-      'Usa prefisso, slash o context menu in base al comando.',
+      'Usa il prefix, slash o context menu in base al comando.',
       '',
       sections.join('\n\n')
     ].join('\n')
-    : 'Nessun comando disponibile in questa pagina.';
+    : '<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.';
 
   return new EmbedBuilder()
     .setColor('#6f4e37')
     .setAuthor({ name: message.guild?.name || 'Help', iconURL: message.guild?.iconURL?.({ size: 128 }) || undefined })
-    .setTitle(`📜 Comandi Disponibili - ${PAGE_TITLES[page.roleId] || 'Comandi'}`)
+    .setTitle(`📜 Comandi Disponibili`)
     .setDescription(description)
-    .setFooter({ text: `Pagina ${page.indexLabel} | ${page.items.length} comandi | ${page.groupLabel}` })
-    .setTimestamp()
+    .setFooter({ text: `Pagina ${page.indexLabel}` })
     .setThumbnail(message.client.user.displayAvatarURL({ size: 256 }));
 }
 
@@ -357,12 +350,12 @@ function buildNavigationRow(state) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(state.prevId)
-      .setLabel('◀ Precedente')
+      .setLabel('⬅️ Precedente')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
-      .setLabel('Prossima ▶')
+      .setLabel('Prossima ➡️')
       .setStyle(ButtonStyle.Primary)
       .setDisabled(state.currentIndex >= state.total - 1)
   );
@@ -379,7 +372,7 @@ module.exports = {
 
     const memberRoles = message.member?.roles?.cache;
     const rolePages = PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId));
-    const visibleRoleIds = ['base', ...rolePages];
+    const visibleRoleIds = ['utente', ...rolePages];
 
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {
@@ -400,7 +393,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('Nessun comando disponibile.')
+            .setDescription('<:vegax:1443934876440068179> Nessun comando disponibile.')
         ],
         allowedMentions: { repliedUser: false }
       });
@@ -426,7 +419,7 @@ module.exports = {
     collector.on('collect', async (interaction) => {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
-          content: 'Puoi usare i bottoni solo sul tuo help.',
+          content: '<:vegax:1443934876440068179> Puoi usare i bottoni solo sul tuo help.',
           flags: 1 << 6
         }).catch(() => {});
         return;
