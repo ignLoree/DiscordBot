@@ -351,12 +351,12 @@ function buildNavigationRow(state) {
     new ButtonBuilder()
       .setCustomId(state.prevId)
       .setEmoji(`<a:vegaleftarrow:1462914743416131816>`)
-      .setStyle(ButtonStyle.Primary)
+      .setStyle(ButtonStyle.Secondary)
       .setDisabled(state.currentIndex <= 0),
     new ButtonBuilder()
       .setCustomId(state.nextId)
       .setEmoji(`<a:vegarightarrow:1443673039156936837>`)
-      .setStyle(ButtonStyle.Primary)
+      .setStyle(ButtonStyle.Secondary)
       .setDisabled(state.currentIndex >= state.total - 1)
   );
 }
