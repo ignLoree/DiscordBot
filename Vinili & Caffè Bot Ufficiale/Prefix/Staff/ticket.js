@@ -588,10 +588,14 @@ module.exports = {
       }
 
       const ticketPrefix = currentName.slice(0, firstSeparatorIndex + 1);
-      const normalizedTail = rawNewName
-        .replace(/[\s-]+/g, '᲼')
-        .replace(/[\/\\#@:`*?"<>|]/g, '')
-        .trim();
+      const words = rawNewName
+        .replace(/-/g, ' ')
+        .split(/\s+/)
+        .map((word) => word.replace(/[\/\\#@:`*?"<>|]/g, '').trim())
+        .filter(Boolean);
+      const normalizedTail = words.length <= 1
+        ? (words[0] || '')
+        : `${words[0]}᲼${words.slice(1).join('')}`;
 
       if (!normalizedTail) {
         await safeMessageReply(message, {
@@ -610,7 +614,14 @@ module.exports = {
         return;
       }
 
-      await message.channel.setName(newName).catch(() => null);
+      const renamed = await message.channel.setName(newName).catch(() => null);
+      if (!renamed) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non riesco a rinominare il canale con questo nome.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()

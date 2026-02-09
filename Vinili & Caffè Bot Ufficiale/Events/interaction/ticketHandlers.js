@@ -137,7 +137,7 @@ async function handleTicketInteraction(interaction) {
                     requiredRoles: [ROLE_USER],
                     embed: new EmbedBuilder()
                         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Non mandare la descrizione del tuo server/catena qui o verrai mutato.`)
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`)
                         .setColor("#6f4e37")
                 },
                 ticket_highstaff: {
@@ -655,6 +655,9 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
                 return true;
             }
+            try {
+                await interaction.deferReply({ flags: 1 << 6 });
+            } catch (_) { }
             const description = interaction.fields.getTextInputValue('ticket_description')?.trim();
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
             if (!ticketDoc) {
@@ -680,21 +683,30 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> La descrizione è già stata inviata.')], flags: 1 << 6 });
                 return true;
             }
-            const descriptionEmbed = new EmbedBuilder()
-                .setTitle('<:reportmessage:1443670575376765130> • Descrizione Ticket')
-                .setDescription(description)
-                .setColor('#6f4e37')
-                .setFooter({ text: `Inviata da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) });
-            await interaction.channel.send({ embeds: [descriptionEmbed] }).catch(() => { });
-            if (updatedTicket.descriptionPromptMessageId) {
-                const promptMessage = await interaction.channel.messages.fetch(updatedTicket.descriptionPromptMessageId).catch(() => null);
+
+            const chunks = [];
+            const maxChunkLen = 3900;
+            for (let i = 0; i < description.length; i += maxChunkLen) {
+                chunks.push(description.slice(i, i + maxChunkLen));
+            }
+            const descriptionEmbeds = chunks.map((chunk, index) => {
+                const embed = new EmbedBuilder()
+                    .setColor('#6f4e37')
+                    .setDescription(`\`\`\`\n${chunk}\n\`\`\``);
+                return embed;
+            });
+            if (descriptionEmbeds.length > 0) {
+                await interaction.channel.send({ embeds: descriptionEmbeds }).catch(() => { });
+            }
+
+            const promptId = updatedTicket.descriptionPromptMessageId || ticketDoc.descriptionPromptMessageId || null;
+            if (promptId) {
+                const promptMessage = await interaction.channel.messages.fetch(promptId).catch(() => null);
                 if (promptMessage) {
                     await promptMessage.delete().catch(() => { });
                 }
             }
-            await safeReply(interaction, {
-                embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1443666279058772028> Descrizione inviata correttamente.')]
-            });
+            await interaction.deleteReply().catch(() => { });
             return true;
         }
         if (isTicketModal && interaction.customId === 'modal_close_ticket') {
