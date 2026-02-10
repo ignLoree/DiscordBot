@@ -28,10 +28,16 @@ async function safeReply(interaction, payload) {
       logReplyError('editReply(primary)', err);
       try {
         return await interaction.followUp(payload);
-      } catch (fallbackErr) {
-        if (isUnknownInteractionError(fallbackErr)) return null;
-        logReplyError('followUp(fallback)', fallbackErr);
-        return null;
+      } catch (followUpErr) {
+        if (isUnknownInteractionError(followUpErr)) return null;
+        logReplyError('followUp(fallback)', followUpErr);
+        try {
+          return await interaction.reply(payload);
+        } catch (replyErr) {
+          if (isUnknownInteractionError(replyErr)) return null;
+          logReplyError('reply(final-fallback)', replyErr);
+          return null;
+        }
       }
     }
   }
@@ -66,10 +72,16 @@ async function safeEditReply(interaction, payload) {
       logReplyError('editReply(primary)', err);
       try {
         return await interaction.followUp(payload);
-      } catch (fallbackErr) {
-        if (isUnknownInteractionError(fallbackErr)) return null;
-        logReplyError('followUp(fallback)', fallbackErr);
-        return null;
+      } catch (followUpErr) {
+        if (isUnknownInteractionError(followUpErr)) return null;
+        logReplyError('followUp(fallback)', followUpErr);
+        try {
+          return await interaction.reply(payload);
+        } catch (replyErr) {
+          if (isUnknownInteractionError(replyErr)) return null;
+          logReplyError('reply(final-fallback)', replyErr);
+          return null;
+        }
       }
     }
   }

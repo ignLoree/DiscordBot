@@ -64,10 +64,6 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
-            }
-
             const target = interaction.options.getString('target');
             const scope = interaction.options.getString('scope') || 'full';
             if (!['official', 'dev', 'both'].includes(target)) {

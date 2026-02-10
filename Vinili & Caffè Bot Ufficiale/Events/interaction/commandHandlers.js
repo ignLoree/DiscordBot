@@ -110,7 +110,14 @@ async function handleSlashCommand(interaction, client) {
                     return await interaction.editReply(sanitizeEditPayload(payload));
                 } catch { }
             }
-            return originalFollowUp(payload);
+            try {
+                return await originalFollowUp(payload);
+            } catch (err) {
+                if (err?.code === 'InteractionNotReplied') {
+                    return originalReply(payload);
+                }
+                throw err;
+            }
         };
     }
 
