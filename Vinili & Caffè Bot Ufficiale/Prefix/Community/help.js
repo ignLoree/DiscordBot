@@ -242,7 +242,10 @@ function buildEntries(client, permissions) {
       roles: commandRoles
     };
 
-    const subcommands = extractPrefixSubcommands(command);
+    const subcommands = Array.from(new Set([
+      ...extractPrefixSubcommands(command),
+      ...Object.keys(subcommandRoles || {}).map((key) => String(key || '').trim().toLowerCase()).filter(Boolean)
+    ]));
     if (subcommands.length) {
       for (const sub of subcommands) {
         entries.push({
