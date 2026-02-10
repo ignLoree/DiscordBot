@@ -24,7 +24,7 @@ function buildNoPermEmbed() {
 
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
-    .replace(/[^\p{L}\p{N} _\-',’]/gu, '')
+    .replace(/[^\p{L}\p{N} _\-',’!?]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!clean) return 'privata';

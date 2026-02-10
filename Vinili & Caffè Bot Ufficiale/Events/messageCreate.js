@@ -32,6 +32,9 @@ const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
 const guildSettingsCache = new Map();
 const AUTORESPONDER_CACHE_TTL_MS = 30 * 1000;
 const autoResponderCache = new Map();
+const FORCE_DELETE_CHANNEL_IDS = new Set(
+    [IDs.channels.forceDeleteAllMessages].filter(Boolean).map((id) => String(id))
+);
 
 const MEDIA_BLOCK_ROLE_IDS = [
     IDs.roles.mediaBypass
@@ -325,6 +328,10 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
+        if (FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || '')) && !message?.system) {
+            await message.delete().catch(() => {});
+            return;
+        }
         try {
             if (!isEditedPrefixExecution) {
                 if (
