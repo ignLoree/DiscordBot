@@ -23,7 +23,7 @@ const LEVEL_ROLE_MAP = new Map([
 const ROLE_MULTIPLIERS = new Map([
   [IDs.roles.customRoleAccessA, 3],
   [IDs.roles.customRoleAccessB, 3],
-  [IDs.roles.plusColorBooster, 2]
+  [IDs.roles.plusColorBooster, 4]
 ]);
 
 function pad2(value) {

@@ -3,6 +3,7 @@ const { decrementQuoteCount } = require('../Utils/Quote/quoteCounter');
 const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
 const { AvatarPrivacy, BannerPrivacy } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
+const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -310,36 +311,54 @@ module.exports = {
 
         /// INFO DONATIONS
         if (interaction.customId == 'info_donations') {
-            const under5Embed = new EmbedBuilder()
+            const donations = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setTitle('<a:ThankYou:1329504268369002507> **__DONAZIONI SOTTO I 5€__**')
-                .setDescription(`<:VC_DoubleReply:1468713981152727120> Ruolo <@&${IDs.roles.customRoleAccessB}>
-                    <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
-                    <:VC_DoubleReply:1468713981152727120> \`x3\` di multi in vocale e testuale
-                    <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-                    <:VC_DoubleReply:1468713981152727120> Possibilità di suggerire un **poll** tramite <#${IDs.channels.ticketPanel}> \`Terza Categoria\`
-                    <:VC_Reply:1468262952934314131> **Votare** per lo <@&${IDs.roles.supervisor}>`)
-                .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 1€` });
-            const over5Embed = new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setTitle('<a:ThankYou:1329504268369002507> **__DONAZIONI SOPRA I 5€__**')
-                .setDescription(`<:VC_DoubleReply:1468713981152727120> Ruolo <@&${IDs.roles.customRoleAccessB}>
-                    <:VC_DoubleReply:1468713981152727120> **Vantaggi** del <@&${IDs.roles.customRoleAccessB}> sotto i 5€
-                    <:VC_DoubleReply:1468713981152727120> **Ruolo Custom**
-                    <:VC_DoubleReply:1468713981152727120> **Stanza Privata**
-                    <:VC_Reply:1468262952934314131> Possibilità di __usare__ le **soundboard** **__(con moderazione)__**`)
-                .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 6€` });
-            const topEmbed = new EmbedBuilder()
-                .setColor('#6f4e37')
-                .setDescription(`<a:Boost_Cycle:1329504283007385642> **__Classifica globale donatori Vinili & Caffè:__** <:Money:1330544713463500970>
+                .setAuthor({ name: `Supporta il server con l'acquisto di un VIP o una donazione!`, iconURL: `https://emoji.gg/emoji/480166-coffee` })
+                .setDescription([
+                    `Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.`,
+                    'Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.',
+                    '**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**',
+                    '\`10,99€\`',
+                    '<:dot:1443660294596329582> Il ruolo <@1442568916114346096> **permanente**',
+                    '<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat',
+                    '<:dot:1443660294596329582> Possibilità di usare le soundboard di altri server',
+                    '<:dot:1443660294596329582> Possibilità di mandare stickers ed emoji di altri server',
+                    '<:dot:1443660294596329582> Bypass dei requisiti nei giveaway',
+                    '<:dot:1443660294596329582> Possibilità di cambiare il tuo nickname',
+                    '<:dot:1443660294596329582> Sblocchi i COLORI PLUS (gradienti) su <#1469429150669602961>',
+                    '<:dot:1443660294596329582> Sblocchi il comando \`?quote\`',
+                    '<:dot:1443660294596329582> X3 EXP boost',
+                ].join('\n'))
+                .setImage(DIVIDER_URL);
 
-        <:VC_1:1444099819680563200>° Posizione <a:VC_Arrow:1448672967721615452> <a:OP_crown_yellow:1330194103564238930>
-        <:VC_2:1444099781864722535>° Posizione <a:VC_Arrow:1448672967721615452> <a:OP_crown_darkblue:1330194101886255187>
-        <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> <a:OP_crown_white:1330194100162396330>`)
-            const commonEmbed = new EmbedBuilder()
+            const vip = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`Prima Categoria\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
-            await interaction.reply({ embeds: [under5Embed, over5Embed, topEmbed, commonEmbed], flags: 1 << 6 });
+                .setDescription([
+                    `**Vuoi sostenere il server?** Acqusita il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>`,
+                    '',
+                    'ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>',
+                    '\`7,99€\`☆',
+                    '',
+                    '<:sparkledred:1470064814502973591> Sbloccherai:',
+                    '<:dot:1443660294596329582> Permesso di allegare link e immagini in chat',
+                    '<:dot:1443660294596329582> Permesso di usare soundboard di altri server',
+                    '<:dot:1443660294596329582> Possibilità di mandare stickers ed emoji di altri server',
+                    '<:dot:1443660294596329582> Bypass dei requisiti nei giveaway',
+                    '<:dot:1443660294596329582> Possibilità di creare una vocale privata per te e i tuoi amici',
+                    '<:dot:1443660294596329582> Reazioni al messaggio quando viene @menzionato in chat (max. 3 reazioni).',
+                    '<:dot:1443660294596329582> Potrai crearti un ruolo personalizzato con colore GRADIENTE scelto da te.',
+                    '<:dot:1443660294596329582> X4 EXP boost',
+                    '',
+                    '<:attentionfromvega:1443651874032062505> DISCLAIMER / I soldi non sono rimborsabili essendo volontari.',
+                    'I vantaggi segnati in "☆" vengono rimossi qualora l\'utente violi il regolamento, porti un immagine negativa al server o sia inattivo per mesi.'
+                ].join('\n'))
+                .setImage(DIVIDER_URL);
+
+            const ticket = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setTitle(`Acquista ora!`)
+                .setDescription([`<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.ᐟ`])
+            await interaction.reply({ embeds: [donations, vip, ticket], flags: 1 << 6 });
         }
         const sendUpdatedView = async (payload) => {
             const msgFlags = interaction.message?.flags;
@@ -392,7 +411,8 @@ module.exports = {
                     '<:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**',
                     '<a:reddiamond:1443652837346377841>・Sblocchi il comando \`?quote\`',
                     '<:exp:1470067108543987846>・X2 EXP Boost'
-                ].join('\n'));
+                ].join('\n'))
+                .setImage(DIVIDER_URL);
 
             const howtoEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -422,7 +442,7 @@ module.exports = {
                     'I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale. ',
                     'Una volta raggiunta una certa somma di esperienza, farai un **level up**!',
                     '',
-                    ` <:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#${IDs.channels.levelUp}>.`,
+                    `<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#${IDs.channels.levelUp}>.`,
                     '',
                     '<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**'
                 ].join('\n'))
@@ -487,6 +507,7 @@ module.exports = {
                         inline: true
                     }
                 )
+                .setImage(DIVIDER_URL)
                 .setFooter({ text: 'Se esci dal server o cambi account, i livelli ti verranno tolti e NON rimessi.' });
 
             const howtoEmbed = new EmbedBuilder()
