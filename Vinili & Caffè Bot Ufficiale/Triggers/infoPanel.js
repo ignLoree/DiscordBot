@@ -79,12 +79,12 @@ module.exports = {
         .setCustomId('info_donations')
         .setLabel('Donazioni')
         .setEmoji('<a:VC_Sparkles:1468546911936974889>')
-        .setStyle(ButtonStyle.Primary),
+        .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId('info_verifica')
         .setLabel('Verifica Selfie')
         .setEmoji(`<a:VC_Verified:1448687631109197978>`)
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Primary)
     );
 
     const embed2 = new EmbedBuilder()
