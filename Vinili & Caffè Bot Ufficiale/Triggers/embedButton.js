@@ -224,7 +224,7 @@ module.exports = {
             const embeds = [
                 new EmbedBuilder()
                     .setColor('#6f4e37')
-                    .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#${IDs.channels.ticketPanel}> \`HIGH STAFF\`.
+                    .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#${IDs.channels.ticketPanel}> \`Terza Categoria\`.
 
                     <:dot:1443660294596329582> **€1,50** <a:VC_Arrow:1448672967721615452> sponsor per **2** settimane
                     <:dot:1443660294596329582> **€3** <a:VC_Arrow:1448672967721615452> sponsor per **1 **mese
@@ -317,7 +317,7 @@ module.exports = {
                     <:VC_DoubleReply:1468713981152727120> Inviare **link** e **immagini** in **__ogni__ chat**
                     <:VC_DoubleReply:1468713981152727120> \`x3\` di multi in vocale e testuale
                     <:VC_DoubleReply:1468713981152727120> Una **reazione** a tua scelta dopo che qualcuno __scrive__ il tuo **nome**
-                    <:VC_DoubleReply:1468713981152727120> Possibilità di suggerire un **poll** tramite <#${IDs.channels.ticketPanel}> \`PERKS\`
+                    <:VC_DoubleReply:1468713981152727120> Possibilità di suggerire un **poll** tramite <#${IDs.channels.ticketPanel}> \`Terza Categoria\`
                     <:VC_Reply:1468262952934314131> **Votare** per lo <@&${IDs.roles.supervisor}>`)
                 .setFooter({ text: `⚠️ Attenzione: Per ricevere i perks dovrai donare almeno 1€` });
             const over5Embed = new EmbedBuilder()
@@ -338,7 +338,7 @@ module.exports = {
         <:VC_3:1444099746116534282>° Posizione <a:VC_Arrow:1448672967721615452> <a:OP_crown_white:1330194100162396330>`)
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`SUPPORTO\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
+                .setDescription(`<:5751attentionfromvega:1443651874032062505> Lo **staff** di **__Vinili & Caffè__** non vi __consegnerà__ automaticamente i **perks**. Dovrete aprire un __ticket__ __**\`Prima Categoria\`**__ per **riscattarli**. Ovviamente questo non vale per **perks** riguardanti i **permessi**, come i **nick** o i **media**.`);
             await interaction.reply({ embeds: [under5Embed, over5Embed, topEmbed, commonEmbed], flags: 1 << 6 });
         }
         const sendUpdatedView = async (payload) => {
@@ -482,7 +482,7 @@ module.exports = {
                         value: [
                             `<@&${IDs.roles.level100}>`,
                             '९ Tutte le ricompense precedenti',
-                            `<:VC_Reply:1468262952934314131> Votare per lo <@&${IDs.roles.supervisor}>`
+                            `<:VC_Reply:1468262952934314131> Votare per lo <@&${IDs.roles.bestStaff}>`
                         ].join('\n'),
                         inline: true
                     }
@@ -501,12 +501,12 @@ module.exports = {
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
                     .setLabel('Colori VIP Sbloccati')
-                    .setEmoji(`🎨`)
+                    .setEmoji(`<:VC_Color:1470781368630775982>`)
                     .setStyle(ButtonStyle.Link)
                     .setURL('https://discord.com/channels/1329080093599076474/1469429150669602961/1469803395937472647'),
                 new ButtonBuilder()
                     .setLabel('Canale per i comandi')
-                    .setEmoji(`🤖`)
+                    .setEmoji(`<:VC_Bot:1470780684233871428>`)
                     .setStyle(ButtonStyle.Link)
                     .setURL('https://discord.com/channels/1329080093599076474/1442569138114662490'),
                 new ButtonBuilder()

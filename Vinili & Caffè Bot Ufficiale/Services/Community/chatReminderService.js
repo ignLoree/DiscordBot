@@ -32,7 +32,7 @@ const reminderPool = [
     .setTitle('🌐 Lascia una recensione su DISBOARD!')
     .setDescription(
       [
-        `Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticketPanel}> \`HIGH STAFF\` e riceverai **5 livelli**!`,
+        `Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticketPanel}> \`Terza Categoria\` e riceverai **5 livelli**!`,
         'Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474'
       ].join('\n')
     ),
@@ -41,7 +41,7 @@ const reminderPool = [
     .setTitle('📌 Marca un messaggio e rendilo un post')
     .setDescription(
       [
-        'Rispondendo al messaggio taggando il bot <@1329118940110127204> o con tasto destro -> App -> Quote, che si vuole postare, potrai poi vederlo nel canale <#1468540884537573479>'
+        'Rispondendo al messaggio che si vuole postare con \`?quote\`, potrai poi vederlo nel canale <#1468540884537573479>'
       ].join('\n')
     ),
   () => new EmbedBuilder()
@@ -90,7 +90,7 @@ const reminderPool = [
     .setTitle("💸 Soldi o Nitro Boost **__GRATIS__**?")
     .setDescription(
       [
-        'Vuoi un Nitro Boost o fari un po\' di soldi gratis? Trovi tutto nel canale <#1442579412280410194>'
+        'Vuoi un Nitro Boost o farti un po\' di soldi gratis? Trovi tutto nel canale <#1442579412280410194>'
       ].join('\n')
     ),
   () => new EmbedBuilder()
@@ -98,7 +98,7 @@ const reminderPool = [
     .setTitle("🎨 Ottieni i colori gradienti")
     .setDescription(
       [
-        'Potrai sbloccare i colori PLUS con il ruolo Server Booster o Livello 50+; invece con il VIP potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>'
+        'Potrai sbloccare i colori PLUS con il ruolo <@&1329497467481493607> o <@&1442568932136587297>; invece con il <@&1442568950805430312> potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>'
       ].join('\n')
     ),
 ];

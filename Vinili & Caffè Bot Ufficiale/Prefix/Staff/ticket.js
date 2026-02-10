@@ -714,7 +714,7 @@ function getTicketPanelConfig(raw) {
       name: "partnership",
       embed: new EmbedBuilder()
         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
-        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Non mandare la descrizione del tuo server/catena qui o verrai mutato.`)
+        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`)
         .setColor("#6f4e37")
     },
     highstaff: {

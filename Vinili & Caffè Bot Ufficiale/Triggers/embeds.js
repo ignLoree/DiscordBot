@@ -22,8 +22,8 @@ module.exports = {
             > <a:serversubscriptionsanimated:1443669659986559169> **__METODI DI DONAZIONE__**
 
             <:dot:1443660294596329582> [**Cliccando qua**](https://www.paypal.com/paypalme/lorenzocorvagliaa) potrete **donare** tramite **PayPal**<:paypal:1329524292446191676>
-            <:dot:1443660294596329582> Potete **donare** tramite **Nitro Boost** aprendo un <#1442569095068254219> \`HIGH STAFF\` <a:Boost_Cycle:1329504283007385642>
-            <:dot:1443660294596329582> Potete **donare** tramite **Bot Premium** aprendo un <#1442569095068254219> \`HIGH STAFF\` <:premiumbot:1443670260216627341>`)
+            <:dot:1443660294596329582> Potete **donare** tramite **Nitro Boost** aprendo un <#1442569095068254219> \`Terza Categoria\` <a:Boost_Cycle:1329504283007385642>
+            <:dot:1443660294596329582> Potete **donare** tramite **Bot Premium** aprendo un <#1442569095068254219> \`Terza Categoria\` <:premiumbot:1443670260216627341>`)
                 .setFooter({ text: `<:attentionfromvega:1443651874032062505> Attenzione: Le donazioni non sono rimborsabili` }),
 
             new EmbedBuilder()
@@ -34,7 +34,7 @@ module.exports = {
 
             new EmbedBuilder()
                 .setColor('#6f4e37')
-                .setDescription(`<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> \`HIGH STAFF\`.
+                .setDescription(`<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> \`Terza Categoria\`.
 
         > Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:
         > <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)

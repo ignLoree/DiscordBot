@@ -50,7 +50,7 @@ module.exports = {
             new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setDescription(`<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.
-                > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`HIGH STAFF\`__**
+                > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
                 
                 <:dot:1443660294596329582> **__\`150\`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>
                 <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>

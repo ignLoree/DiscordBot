@@ -26,14 +26,35 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply().catch(() => {})
 
+        try {
         switch (sub) {
             case 'emoji': {
                 let emoji = interaction.options.getString('id')?.trim();
                 const name = interaction.options.getString('nome');
+                if (!emoji || !name) {
+                    return safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor('Red')
+                                .setDescription("<:vegax:1443934876440068179> Parametri non validi.")
+                        ],
+                        flags: 1 << 6
+                    });
+                }
                 if (emoji.startsWith("<") && emoji.endsWith(">")) {
-                    const id = emoji.match(/\d{15,}/g)[0];
+                    const id = emoji.match(/\d{15,}/g)?.[0];
+                    if (!id) {
+                        return safeEditReply(interaction, {
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setColor('Red')
+                                    .setDescription("<:vegax:1443934876440068179> Emoji non valida.")
+                            ],
+                            flags: 1 << 6
+                        });
+                    }
                     const type = await axios.get(`https://cdn.discordapp.com/emojis/${id}.gif`)
                         .then(image => {
                             if (image) return "gif"
@@ -140,6 +161,17 @@ module.exports = {
                         ], flags: 1 << 6
                     })
                 })
+        }
+        } catch (err) {
+            global.logger.error(err);
+            return safeEditReply(interaction, {
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor('Red')
+                        .setDescription('<:vegax:1443934876440068179> Errore durante l\'esecuzione del comando `copy`.')
+                ],
+                flags: 1 << 6
+            });
         }
     }
 }

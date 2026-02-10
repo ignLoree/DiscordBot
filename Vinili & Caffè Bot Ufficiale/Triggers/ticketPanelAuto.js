@@ -71,7 +71,7 @@ module.exports = {
       .addOptions(
         {
           label: 'Prima categoria',
-          description: 'Supporto generale - Segnalazioni - Problemi',
+          description: 'Supporto generale ▸ Segnalazioni ▸ Problemi',
           value: 'ticket_supporto',
           emoji: { id: '1443651872258003005', name: 'discordstaff' }
         },
@@ -83,7 +83,7 @@ module.exports = {
         },
         {
           label: 'Terza categoria',
-          description: 'Verifica Selfie - Donazioni - Sponsor - HighStaff',
+          description: 'Verifica Selfie ▸ Donazioni ▸ Sponsor ▸ HighStaff',
           value: 'ticket_highstaff',
           emoji: { id: '1443670575376765130', name: 'reportmessage' }
         }

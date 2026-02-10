@@ -194,7 +194,7 @@ async function handleTicketInteraction(interaction) {
                     embeds: [
                         new EmbedBuilder()
                             .setColor('#6f4e37')
-                            .setDescription(`<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`HIGH STAFF\``)
+                            .setDescription(`<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``)
                     ],
                     flags: 1 << 6
                 });
