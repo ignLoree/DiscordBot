@@ -357,7 +357,7 @@ module.exports = {
             const ticket = new EmbedBuilder()
                 .setColor('#6f4e37')
                 .setTitle(`Acquista ora!`)
-                .setDescription([`<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.ᐟ`])
+                .setDescription(`<:blueflash:1470064803157643468> Apri un ticket nella **terza categoria** su: <#1442569095068254219>.ᐟ`)
             await interaction.reply({ embeds: [donations, vip, ticket], flags: 1 << 6 });
         }
         const sendUpdatedView = async (payload) => {
