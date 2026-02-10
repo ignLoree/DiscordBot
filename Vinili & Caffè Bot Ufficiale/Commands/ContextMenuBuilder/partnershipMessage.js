@@ -44,7 +44,18 @@ module.exports = {
         }
         const row = new ActionRowBuilder().addComponents(descriptionInput);
         modal.addComponents(row);
-        await interaction.showModal(modal);
+        try {
+            await interaction.showModal(modal);
+        } catch (error) {
+            if (error?.code === 10062) return;
+            return safeReply(interaction, {
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription('<:vegax:1443934876440068179> Non riesco ad aprire il modulo, riprova.')
+                        .setColor('Red')
+                ],
+                flags: 1 << 6
+            });
+        }
     }
 };
-

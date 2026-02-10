@@ -94,6 +94,13 @@ async function handleSlashCommand(interaction, client) {
     const originalEditReply = interaction.editReply.bind(interaction);
     const originalChannelSend = interaction.channel?.send?.bind(interaction.channel);
     const wrappedInteraction = Object.create(interaction);
+    // Keep acknowledge state on the original interaction object.
+    wrappedInteraction.deferReply = (...args) => interaction.deferReply(...args);
+    wrappedInteraction.showModal = (...args) => interaction.showModal(...args);
+    wrappedInteraction.deferUpdate = (...args) => interaction.deferUpdate(...args);
+    wrappedInteraction.update = (...args) => interaction.update(...args);
+    wrappedInteraction.fetchReply = (...args) => interaction.fetchReply(...args);
+    wrappedInteraction.deleteReply = (...args) => interaction.deleteReply(...args);
     wrappedInteraction.reply = async (payload) => {
         payload = applyDefaultFooterToEmbeds(payload, interaction.guild);
         if (interaction.deferred) {
