@@ -160,12 +160,12 @@ module.exports = {
         .setMaxValues(7)
         .addOptions(
           { label: 'Rimuovi', value: 'remove', emoji: '<:vegax:1443934876440068179>', description: 'Rimuovi ruoli dal tuo profilo' },
-          { label: 'Revive Chat', value: IDs.roles.supporterLink, emoji: '<a:pepedeadchat:1470541176284381226>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Events', value: '1442569012063109151', emoji: '<a:announce:1470541173507751957>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'News', value: '1442569010943365342', emoji: '<:newspaper:1470541170353377290>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Polls', value: '1442569014474965033', emoji: '<:polls:1470541168860201072>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Bump', value: '1442569013074071644', emoji: '<:bumpstab:1470541167429947607>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Minigames', value: IDs.roles.verifyExtraB, emoji: '<:health:1470541164363911313>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Revive Chat', value: IDs.roles.mentionReviveChat, emoji: '<a:pepedeadchat:1470541176284381226>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Events', value: IDs.roles.mentionEvents, emoji: '<a:announce:1470541173507751957>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'News', value: IDs.roles.mentionNews, emoji: '<:newspaper:1470541170353377290>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Polls', value: IDs.roles.mentionPolls, emoji: '<:polls:1470541168860201072>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Bump', value: IDs.roles.mentionBump, emoji: '<:bumpstab:1470541167429947607>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Minigames', value: IDs.roles.minigamesNotify, emoji: '<:health:1470541164363911313>', description: 'Clicca qui per ottenere il ruolo' },
           { label: 'Forum', value: IDs.roles.forumNotify, emoji: '<:forum:1470541157724328059>', description: 'Clicca qui per ottenere il ruolo' }
         )
     );

@@ -247,6 +247,7 @@ const roles = {
   verifyExtraB: '1442568992459067423',
   verifyExtraC: '1468674171213971568',
   verifyExtraD: '1442568928667631738',
+  minigamesNotify: pick(config.minigames?.roleId, '1443955529352478830'),
   customRoleAccessA: '1442568950805430312',
   customRoleAccessB: '1442568916114346096',
   customRoleAnchor: '1469452890761596981',
@@ -271,6 +272,7 @@ const roles = {
   dmAskFirst: '1442569006543274126',
   relationshipTaken: '1442569028173299732',
   relationshipSingle: '1442569029263818906',
+  mentionReviveChat: '1442569009567629375',
   mentionEvents: '1442569012063109151',
   mentionNews: '1442569010943365342',
   mentionPolls: '1442569014474965033',
@@ -398,4 +400,3 @@ ids.roles.customRoleAccessD = ids.roles.level70;
 ids.channels.ticketOpenPanelChannel = ids.channels.ticketPanel;
 
 module.exports = ids;
-

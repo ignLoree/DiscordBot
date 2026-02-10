@@ -46,12 +46,11 @@ module.exports = {
                     '1442569029263818906'
                 ],
                 personality_mentions: [
-                    IDs.roles.supporterLink,
-                    '1442569012063109151',
-                    '1442569010943365342',
-                    '1442569014474965033',
-                    '1442569013074071644',
-                    IDs.roles.verifyExtraB,
+                    IDs.roles.mentionEvents,
+                    IDs.roles.mentionNews,
+                    IDs.roles.mentionPolls,
+                    IDs.roles.mentionBump,
+                    IDs.roles.minigamesNotify,
                     IDs.roles.forumNotify
                 ],
                 personality_colors_1: [
