@@ -319,7 +319,7 @@ module.exports = {
                     'Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.',
                     '**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**',
                     '\`10,99€\`',
-                    '<:dot:1443660294596329582> Il ruolo <@1442568916114346096> **permanente**',
+                    '<:dot:1443660294596329582> Il ruolo <@&1442568916114346096> **permanente**',
                     '<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat',
                     '<:dot:1443660294596329582> Possibilità di usare le soundboard di altri server',
                     '<:dot:1443660294596329582> Possibilità di mandare stickers ed emoji di altri server',
