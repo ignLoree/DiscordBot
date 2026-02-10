@@ -9,6 +9,26 @@ const TICKET_MEDIA_NAME = 'ticket.gif';
 const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
 
+const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
+
+const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
+  const currentEmbeds = toComparableJson(message?.embeds || []);
+  const nextEmbeds = toComparableJson(embeds);
+  if (currentEmbeds !== nextEmbeds) return true;
+
+  const currentComponents = toComparableJson(message?.components || []);
+  const nextComponents = toComparableJson(components);
+  if (currentComponents !== nextComponents) return true;
+
+  if (attachmentName) {
+    if ((message?.attachments?.size || 0) !== 1) return true;
+    const currentName = message.attachments.first()?.name || null;
+    if (currentName !== attachmentName) return true;
+  }
+
+  return false;
+};
+
 module.exports = {
   name: 'clientReady',
   once: true,
@@ -90,13 +110,17 @@ module.exports = {
     }
 
     if (infoMessage) {
-      await infoMessage.edit({ files: [attachment], embeds: [ticketInfoEmbed], components: [] }).catch(() => {});
+      if (shouldEditMessage(infoMessage, { embeds: [ticketInfoEmbed], components: [], attachmentName: TICKET_MEDIA_NAME })) {
+        await infoMessage.edit({ files: [attachment], embeds: [ticketInfoEmbed], components: [] }).catch(() => {});
+      }
     } else {
       infoMessage = await channel.send({ files: [attachment], embeds: [ticketInfoEmbed] }).catch(() => null);
     }
 
     if (panelMessage) {
-      await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => {});
+      if (shouldEditMessage(panelMessage, { embeds: [ticketPanelEmbed], components: [ticketSelectRow] })) {
+        await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => {});
+      }
     } else {
       panelMessage = await channel.send({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => null);
     }

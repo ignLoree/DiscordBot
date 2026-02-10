@@ -7,6 +7,26 @@ const INFO_CHANNEL_ID = IDs.channels.infoPerks;
 const INFO_MEDIA_NAME = 'info.gif';
 const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
 
+const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
+
+const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
+  const currentEmbeds = toComparableJson(message?.embeds || []);
+  const nextEmbeds = toComparableJson(embeds);
+  if (currentEmbeds !== nextEmbeds) return true;
+
+  const currentComponents = toComparableJson(message?.components || []);
+  const nextComponents = toComparableJson(components);
+  if (currentComponents !== nextComponents) return true;
+
+  if (attachmentName) {
+    if ((message?.attachments?.size || 0) !== 1) return true;
+    const currentName = message.attachments.first()?.name || null;
+    if (currentName !== attachmentName) return true;
+  }
+
+  return false;
+};
+
 module.exports = {
   name: 'clientReady',
   once: true,
@@ -110,11 +130,13 @@ module.exports = {
     }
 
     if (infoMessage1) {
-      await infoMessage1.edit({
-        files: [attachment],
-        embeds: [embed1],
-        components: [row1]
-      }).catch(() => { });
+      if (shouldEditMessage(infoMessage1, { embeds: [embed1], components: [row1], attachmentName: INFO_MEDIA_NAME })) {
+        await infoMessage1.edit({
+          files: [attachment],
+          embeds: [embed1],
+          components: [row1]
+        }).catch(() => { });
+      }
     } else {
       infoMessage1 = await channel.send({
         files: [attachment],
@@ -124,10 +146,12 @@ module.exports = {
     }
 
     if (infoMessage2) {
-      await infoMessage2.edit({
-        embeds: [embed2],
-        components: [row2]
-      }).catch(() => { });
+      if (shouldEditMessage(infoMessage2, { embeds: [embed2], components: [row2] })) {
+        await infoMessage2.edit({
+          embeds: [embed2],
+          components: [row2]
+        }).catch(() => { });
+      }
     } else {
       infoMessage2 = await channel.send({
         embeds: [embed2],

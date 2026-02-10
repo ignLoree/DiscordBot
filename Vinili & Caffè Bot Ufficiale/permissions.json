@@ -1,4 +1,4 @@
-﻿{
+{
   "slash": {
     "copy": {
       "roles": null,
@@ -159,6 +159,7 @@
     "membercount": null,
     "ping": null,
     "reaction": ["1442568894349840435"],
+    "autoresponder": ["1442568894349840435"],
     "no-dm": null,
     "no-dm-list": [
       "1442568894349840435"

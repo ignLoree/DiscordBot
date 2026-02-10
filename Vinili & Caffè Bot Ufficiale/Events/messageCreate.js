@@ -3,6 +3,7 @@ const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
 const MentionReaction = require('../Schemas/Community/mentionReactionSchema');
+const AutoResponder = require('../Schemas/Community/autoResponderSchema');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Bump/bumpService');
@@ -29,6 +30,8 @@ const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
 const guildSettingsCache = new Map();
+const AUTORESPONDER_CACHE_TTL_MS = 30 * 1000;
+const autoResponderCache = new Map();
 
 const MEDIA_BLOCK_ROLE_IDS = [
     IDs.roles.mediaBypass
@@ -391,6 +394,11 @@ module.exports = {
                 logEventError(client, 'MENTION REACTION ERROR', error);
             }
             try {
+                await handleAutoResponders(message);
+            } catch (error) {
+                logEventError(client, 'AUTORESPONDER ERROR', error);
+            }
+            try {
                 await handleCounting(message, client);
             } catch (error) {
                 logEventError(client, 'COUNTING ERROR', error);
@@ -740,6 +748,59 @@ function resolveReactionToken(token) {
     if (value.startsWith('custom:')) return value.slice('custom:'.length);
     if (value.startsWith('unicode:')) return value.slice('unicode:'.length);
     return value;
+}
+
+async function getGuildAutoResponders(guildId) {
+    if (!guildId) return [];
+    const now = Date.now();
+    const cached = autoResponderCache.get(guildId);
+    if (cached && (now - cached.at) < AUTORESPONDER_CACHE_TTL_MS) {
+        return cached.rules;
+    }
+    const docs = await AutoResponder.find({ guildId, enabled: true }).lean().catch(() => []);
+    const rules = Array.isArray(docs)
+        ? docs
+            .map((doc) => ({
+                triggerLower: String(doc?.triggerLower || '').trim().toLowerCase(),
+                response: String(doc?.response || ''),
+                reactions: Array.isArray(doc?.reactions) ? doc.reactions : []
+            }))
+            .filter((doc) => Boolean(doc.triggerLower))
+            .sort((a, b) => b.triggerLower.length - a.triggerLower.length)
+        : [];
+    autoResponderCache.set(guildId, { at: now, rules });
+    return rules;
+}
+
+async function handleAutoResponders(message) {
+    const guildId = message.guild?.id;
+    if (!guildId) return;
+    const normalized = String(message.content || '').toLowerCase().trim();
+    if (!normalized) return;
+    if (normalized.startsWith('+')) return;
+
+    const rules = await getGuildAutoResponders(guildId);
+    if (!Array.isArray(rules) || !rules.length) return;
+
+    const matched = rules.find((rule) => normalized.includes(rule.triggerLower));
+    if (!matched) return;
+
+    const response = String(matched.response || '').trim();
+    if (response) {
+        await message.channel.send({
+            content: response,
+            allowedMentions: { repliedUser: false }
+        }).catch(() => { });
+    }
+
+    const seen = new Set();
+    const list = Array.isArray(matched.reactions) ? matched.reactions : [];
+    for (const token of list) {
+        const emoji = resolveReactionToken(token);
+        if (!emoji || seen.has(emoji)) continue;
+        seen.add(emoji);
+        await message.react(emoji).catch(() => { });
+    }
 }
 
 async function handleMentionAutoReactions(message) {

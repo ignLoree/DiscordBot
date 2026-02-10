@@ -6,7 +6,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationC
 
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
-const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
+const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
 const PAGE_ROLE_IDS = [
   IDs.roles.partnerManager,
   IDs.roles.staff,
@@ -67,6 +67,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   topvoc: 'Mostra top utenti per exp/attività vocale.',
   description: 'Manda la descrizione del server direttamente nel ticket.',
   addlevel: 'Aggiunge livelli/exp a un utente.',
+  autoresponder: 'Configura risposte automatiche e reaction su parole o frasi trigger.',
   customregister: 'Registra retroattivamente custom role/vocale già esistenti.',
   gmulti: 'Gestisce il moltiplicatore globale exp.',
   'no-dm-list': 'Mostra la lista utenti con blocco DM attivo.',
@@ -338,7 +339,7 @@ function hasAnyRole(memberRoles, roleIds) {
 function filterByPage(entries, pageRoleId, memberRoles) {
   if (pageRoleId === 'utente') {
     return entries.filter((entry) => {
-      if (!Array.isArray(entry.roles)) return true;
+      if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
       const isVipCategory = String(entry.category || '').toLowerCase() === 'vip';
       if (!isVipCategory) return false;
       return hasAnyRole(memberRoles, entry.roles);

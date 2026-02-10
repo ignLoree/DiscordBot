@@ -14,6 +14,26 @@ const PLUS_COLORS_IMAGE_NAME = 'coloriPlus.gif';
 const PLUS_COLORS_IMAGE_PATH = path.join(__dirname, '..', 'Photos', PLUS_COLORS_IMAGE_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
 
+const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
+
+const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
+  const currentEmbeds = toComparableJson(message?.embeds || []);
+  const nextEmbeds = toComparableJson(embeds);
+  if (currentEmbeds !== nextEmbeds) return true;
+
+  const currentComponents = toComparableJson(message?.components || []);
+  const nextComponents = toComparableJson(components);
+  if (currentComponents !== nextComponents) return true;
+
+  if (attachmentName) {
+    if ((message?.attachments?.size || 0) !== 1) return true;
+    const currentName = message.attachments.first()?.name || null;
+    if (currentName !== attachmentName) return true;
+  }
+
+  return false;
+};
+
 module.exports = {
   name: 'clientReady',
   once: true,
@@ -281,25 +301,33 @@ module.exports = {
     }
 
     if (personalityMessage) {
-      await personalityMessage.edit({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => {});
+      if (shouldEditMessage(personalityMessage, { embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], attachmentName: IMAGE_NAME })) {
+        await personalityMessage.edit({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => {});
+      }
     } else {
       personalityMessage = await channel.send({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => null);
     }
 
     if (mentionsMessage) {
-      await mentionsMessage.edit({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => {});
+      if (shouldEditMessage(mentionsMessage, { embeds: [mentionsEmbed], components: [mentionsMenu], attachmentName: MENTIONS_IMAGE_NAME })) {
+        await mentionsMessage.edit({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => {});
+      }
     } else {
       mentionsMessage = await channel.send({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => null);
     }
 
     if (colorsMessage) {
-      await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => {});
+      if (shouldEditMessage(colorsMessage, { embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], attachmentName: COLORS_IMAGE_NAME })) {
+        await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => {});
+      }
     } else {
       colorsMessage = await channel.send({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => null);
     }
 
     if (plusColorsMessage) {
-      await plusColorsMessage.edit({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => {});
+      if (shouldEditMessage(plusColorsMessage, { embeds: [plusColorsEmbed], components: [plusColorsMenu], attachmentName: PLUS_COLORS_IMAGE_NAME })) {
+        await plusColorsMessage.edit({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => {});
+      }
     } else {
       plusColorsMessage = await channel.send({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => null);
     }
