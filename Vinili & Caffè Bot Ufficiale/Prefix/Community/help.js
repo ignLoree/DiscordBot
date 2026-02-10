@@ -84,6 +84,27 @@ const PREFIX_HELP_DESCRIPTIONS = {
   customvoc: 'Crea e gestisce la tua vocale privata personalizzata.',
   quote: 'Genera una quote grafica da un messaggio.'
 };
+const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
+  'level.set': 'Imposta EXP o livello a un valore preciso per un utente.',
+  'level.add': 'Aggiunge EXP a un utente.',
+  'level.remove': 'Rimuove EXP da un utente.',
+  'level.reset': 'Azzera EXP e livello di un utente.',
+  'level.lock': 'Blocca il guadagno EXP in un canale.',
+  'level.unlock': 'Sblocca il guadagno EXP in un canale.',
+  'level.multiplier': 'Imposta un moltiplicatore EXP temporaneo.',
+  'level.ignore': 'Esclude un ruolo dal guadagno EXP.',
+  'level.unignore': 'Riabilita un ruolo al guadagno EXP.',
+  'level.config': 'Mostra la configurazione attuale del sistema level.',
+  'level.audit': 'Mostra audit/stats level di un utente.',
+  'ticket.add': 'Aggiunge uno o più utenti al ticket corrente.',
+  'ticket.remove': 'Rimuove uno o più utenti dal ticket corrente.',
+  'ticket.closerequest': 'Invia richiesta di chiusura ticket.',
+  'ticket.close': 'Chiude il ticket corrente.',
+  'ticket.claim': 'Assegna il ticket a te.',
+  'ticket.unclaim': 'Rimuove la presa in carico del ticket.',
+  'ticket.switchpanel': 'Sposta il ticket a un pannello differente.',
+  'ticket.rename': 'Rinomina il canale ticket.'
+};
 const CONTEXT_HELP_DESCRIPTIONS = {
   'Show Avatar': 'Mostra rapidamente l\'avatar dell\'autore del messaggio selezionato.',
   Partnership: 'Apre il modal partnership partendo dal messaggio selezionato.',
@@ -118,6 +139,24 @@ function getPrefixDescription(command) {
     command?.description || command?.desc || command?.help || command?.usage,
     'Comando prefix.'
   );
+}
+
+function prettifySubcommandName(name) {
+  const raw = String(name || '').trim();
+  if (!raw) return 'subcommand';
+  return raw
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getPrefixSubcommandDescription(commandName, subcommandName, fallback) {
+  const key = `${String(commandName || '').toLowerCase()}.${String(subcommandName || '').toLowerCase()}`;
+  if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
+    return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
+  }
+  const pretty = prettifySubcommandName(subcommandName);
+  return `Subcommand \`${pretty}\` di \`+${String(commandName || '').toLowerCase()}\`.`;
 }
 
 function getPrefixBase(command) {
@@ -251,6 +290,7 @@ function buildEntries(client, permissions) {
         entries.push({
           ...base,
           invoke: `${prefixBase}${command.name} ${sub}`,
+          description: getPrefixSubcommandDescription(command.name, sub, base.description),
           roles: Array.isArray(subcommandRoles[sub]) ? subcommandRoles[sub] : commandRoles,
           aliases: extractDirectAliasesForSubcommand(command, sub)
         });

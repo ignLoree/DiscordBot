@@ -399,7 +399,7 @@ module.exports = {
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
                     `Usa \`+customrolecreate\` in <#${IDs.channels.levelUp}> per creare e configurare il ruolo.`,
-                    'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
+                    'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
 
@@ -494,7 +494,7 @@ module.exports = {
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
                     `Usa \`+customrolecreate\` in <#${IDs.channels.levelUp}> per creare e configurare il ruolo.`,
-                    'Poi usa \`+vocprivatecreate\` nello stesso canale per creare e configurare la vocale privata.',
+                    'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
 
