@@ -17,6 +17,9 @@ const { checkAndInstallPackages } = require('./Utils/Moderation/checkPackages.js
 const reactions = require('./Schemas/ReactionRole/reactionroleSchema.js')
 const child_process = require('child_process');
 const IDs = require('./Utils/Config/ids');
+const POLL_REMINDER_ROLE_ID = '1442568894349840435';
+const POLL_REMINDER_CHANNEL_ID = '1442569285909217301';
+const STAFF_LIST_MARKER = 'staff list';
 let client;
 
 try {
@@ -188,18 +191,19 @@ client.on("clientReady", async (client) => {
             name: "irrelevant",
             state: "☕📀 discord.gg/viniliecaffe"
         })
-        if (typeof checkAndInstallPackages === 'function') {
-            await checkAndInstallPackages(client);
+        if (typeof checkAndInstallPackages === 'function' && process.env.CHECK_PACKAGES_ON_READY === '1') {
+            Promise.resolve(checkAndInstallPackages(client)).catch((err) => {
+                global.logger.error('[PACKAGES] Check failed:', err);
+            });
         }
         cron.schedule("0 19 * * *", async () => {
-            const guild = client.guilds.cache.get(IDs.guilds.main);
+            const guild = client.guilds.cache.get(IDs.guilds.main) || await client.guilds.fetch(IDs.guilds.main).catch(() => null);
             if (!guild) return;
-            const role = guild.roles.cache.find(r => r.id === IDs.roles.coOwner);
-            if (!role) return;
-            const channel = guild.channels.cache.get(IDs.channels.pauseRequestLog);
+            const channel = guild.channels.cache.get(POLL_REMINDER_CHANNEL_ID)
+                || await guild.channels.fetch(POLL_REMINDER_CHANNEL_ID).catch(() => null);
             if (!channel) return;
             await channel.send({
-                content: `<:attentionfromvega:1443651874032062505> ${role} ricordatevi di mettere il poll usando il comando dedicato! </poll create:1467597234387419478>`
+                content: `<:attentionfromvega:1443651874032062505> <@&${POLL_REMINDER_ROLE_ID}> ricordatevi di mettere il poll usando il comando dedicato! </poll create:1467597234387419478>`
             });
         }, {
             timezone: "Europe/Rome"
@@ -234,7 +238,6 @@ client.on("clientReady", async (client) => {
         global.logger.error(`[STATUS] Error while loading bot status.`, detail);
     };
 });
-require('./Handlers/processHandler')();
 client.commands = new Collection();
 client.pcommands = new Collection();
 client.aliases = new Collection();
@@ -310,7 +313,7 @@ client.on("messageDelete", async message => {
 
 client.on(Events.ThreadCreate, async thread => {
     try {
-        if (thread.parent.type !== ChannelType.GuildForum) return;
+        if (!thread?.parent || thread.parent.type !== ChannelType.GuildForum) return;
         const forumRoleId = IDs.roles.forumNotify;
         await thread.send({
             content: `<@&${forumRoleId}>`
@@ -339,7 +342,7 @@ client.on(Events.InteractionCreate, async interaction => {
                 `${interaction}`,
                 interaction.user.avatarURL({ dynamic: true })
             );
-        } catch (error) {
+        } catch {
             client.logs.error(`[SLASH_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
     };
@@ -367,23 +370,32 @@ client.on(Events.MessageCreate, async message => {
                 content,
                 message.author.avatarURL({ dynamic: true })
             );
-        } catch (error) {
+        } catch {
             client.logs.error(`[PREFIX_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.`);
         }
     };
 });
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
+    if (reaction.message.partial) {
+        const fetchedMessage = await reaction.message.fetch().catch(() => null);
+        if (!fetchedMessage) return;
+    }
+    if (reaction.partial) {
+        const fetchedReaction = await reaction.fetch().catch(() => null);
+        if (!fetchedReaction) return;
+    }
     if (!reaction.message.guildId) return;
     if (user.bot) return;
-    let cID = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
+    const animatedPrefix = reaction.emoji.animated ? 'a' : '';
+    let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
     if (!reaction.emoji.id) cID = reaction.emoji.name;
     const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
     if (!data) return
-    const guild = await client.guilds.cache.get(reaction.message.guildId);
-    const member = await guild.members.cache.get(user.id);
+    const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
+    if (!guild) return;
+    const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
+    if (!member) return;
     try {
         await member.roles.add(data.Role);
     } catch (e) {
@@ -393,16 +405,25 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 });
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.partial) await reaction.fetch();
+    if (reaction.message.partial) {
+        const fetchedMessage = await reaction.message.fetch().catch(() => null);
+        if (!fetchedMessage) return;
+    }
+    if (reaction.partial) {
+        const fetchedReaction = await reaction.fetch().catch(() => null);
+        if (!fetchedReaction) return;
+    }
     if (!reaction.message.guildId) return;
     if (user.bot) return;
-    let cID = `<:${reaction.emoji.name}:${reaction.emoji.id}>`;
+    const animatedPrefix = reaction.emoji.animated ? 'a' : '';
+    let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
     if (!reaction.emoji.id) cID = reaction.emoji.name;
     const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
     if (!data) return
-    const guild = await client.guilds.cache.get(reaction.message.guildId);
-    const member = await guild.members.cache.get(user.id);
+    const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
+    if (!guild) return;
+    const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
+    if (!member) return;
     try {
         await member.roles.remove(data.Role);
     } catch (e) {
@@ -430,9 +451,9 @@ const ID_LORE = {
 };
 const STAFF_ROLES_ID = Object.keys(ROLE_EMOJIS);
 async function aggiornaListaStaff() {
-    const guild = client.guilds.cache.get(SERVER_ID);
+    const guild = client.guilds.cache.get(SERVER_ID) || await client.guilds.fetch(SERVER_ID).catch(() => null);
     if (!guild) return global.logger.error('Server non trovato');
-    const channel = guild.channels.cache.get(CHANNEL_ID);
+    const channel = guild.channels.cache.get(CHANNEL_ID) || await guild.channels.fetch(CHANNEL_ID).catch(() => null);
     if (!channel) return global.logger.error('Canale non trovato');
     const staffListContent = await generateStaffListContent(guild);
     if (staffListMessageId) {
@@ -444,7 +465,10 @@ async function aggiornaListaStaff() {
         staffListMessageId = null;
     }
     const messages = await channel.messages.fetch({ limit: 100 });
-    const lastMessage = messages.find((message) => message.author.id === client.user.id && message.content.includes("3/3"));
+    const lastMessage = messages.find((message) =>
+        message.author.id === client.user.id
+        && String(message.content || '').toLowerCase().includes(STAFF_LIST_MARKER)
+    );
     if (lastMessage) {
         staffListMessageId = lastMessage.id;
         await lastMessage.edit(staffListContent);
@@ -454,6 +478,7 @@ async function aggiornaListaStaff() {
     }
 }
 async function generateStaffListContent(guild) {
+    await guild.members.fetch().catch(() => { });
     const staffRoleIds = Object.keys(ROLE_EMOJIS).reverse();
     let staffListContent = `<:pinnednew:1443670849990430750> La __**staff list**__ serve per sapere i __**limiti di ogni ruolo**__, per capire __**quanti staffer ci sono**__ e per poter capire a chi __**chiedere assistenza**__.\n\n`;
     for (const roleId of staffRoleIds) {

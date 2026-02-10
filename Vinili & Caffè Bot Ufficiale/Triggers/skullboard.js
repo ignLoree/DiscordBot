@@ -7,10 +7,22 @@ const IDs = require('../Utils/Config/ids');
 const SKULL_EMOJI = '\uD83D\uDC80';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.skullboard;
 
+function normalizeEmojiName(value) {
+  return String(value || '').replace(/\uFE0F/g, '').trim();
+}
+
+function isSkullReaction(reaction) {
+  const name = normalizeEmojiName(reaction?.emoji?.name);
+  if (name === normalizeEmojiName(SKULL_EMOJI)) return true;
+  // Accept common skull variants to avoid false negatives from different keyboards.
+  if (name === '\u2620') return true;
+  return false;
+}
+
 module.exports = {
   name: Events.MessageReactionAdd,
 
-  async execute(reaction, user, client) {
+  async execute(reaction, user) {
     try {
       if (user?.bot) return;
       if (reaction.partial) await reaction.fetch().catch(() => null);
@@ -18,9 +30,7 @@ module.exports = {
       if (!message || !message.guild) return;
       if (message.channel?.id === SKULLBOARD_CHANNEL_ID) return;
 
-      const emojiName = reaction.emoji?.name;
-      if (emojiName !== SKULL_EMOJI) return;
-      if ((reaction.count || 0) < 1) return;
+      if (!isSkullReaction(reaction)) return;
 
       const existing = await SkullboardPost.findOne({ guildId: message.guild.id, messageId: message.id }).lean().catch(() => null);
       if (existing?.postMessageId) return;

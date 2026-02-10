@@ -21,8 +21,7 @@ function hasCustomRoleAccess(member) {
   return CUSTOM_ROLE_ALLOWED_ROLE_IDS.some((id) => member?.roles?.cache?.has(id));
 }
 
-function buildNoPermEmbed(message) {
-  const rolesText = CUSTOM_ROLE_ALLOWED_ROLE_IDS.map((id) => `<@&${id}>`).join(', ');
+function buildNoPermEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
@@ -124,7 +123,6 @@ module.exports = {
     });
   }
 };
-
 
 
 

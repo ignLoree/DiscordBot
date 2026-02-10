@@ -271,6 +271,32 @@ function extractPlayerTokens(name) {
   return normalized.split(' ').filter(Boolean);
 }
 
+function isPlayerGuessCorrect(guessRaw, fullAnswerRaw, answerTokensRaw) {
+  const guess = normalizePlayerGuess(guessRaw);
+  const fullAnswer = normalizePlayerGuess(fullAnswerRaw);
+  const answerTokens = Array.isArray(answerTokensRaw)
+    ? answerTokensRaw.map((token) => normalizePlayerGuess(token)).filter(Boolean)
+    : [];
+  if (!guess || !fullAnswer) return false;
+
+  if (guess === fullAnswer) return true;
+  if (answerTokens.includes(guess)) return true;
+  if (guess.length >= 3 && fullAnswer.includes(guess)) return true;
+
+  const guessTokens = guess.split(' ').filter(Boolean);
+  if (!guessTokens.length) return false;
+
+  // Consider correct when every guessed token matches a full token (exact or prefix),
+  // useful for names with particles/accent differences while avoiding random single letters.
+  const allTokensMatch = guessTokens.every((token) => {
+    if (token.length < 2) return false;
+    return answerTokens.some((answerToken) => answerToken === token || answerToken.startsWith(token));
+  });
+  if (allTokensMatch) return true;
+
+  return false;
+}
+
 async function fetchPlayerInfo(cfg, name) {
   const apiBase = cfg?.guessPlayer?.apiUrl;
   if (!apiBase || !name) return null;
@@ -1353,23 +1379,6 @@ async function startFindBotGame(client, cfg) {
   return true;
 }
 
-async function hasRecentActivity(channel, windowMs, minMessages) {
-  const window = Math.max(60 * 1000, Number(windowMs || 15 * 60 * 1000));
-  const threshold = Math.max(1, Number(minMessages || 5));
-  const messages = await channel.messages.fetch({ limit: 50 }).catch(() => null);
-  if (!messages) return false;
-  const now = Date.now();
-  let count = 0;
-  for (const msg of messages.values()) {
-    if (msg.author?.bot) continue;
-    if ((now - msg.createdTimestamp) <= window) {
-      count += 1;
-      if (count >= threshold) return true;
-    }
-  }
-  return false;
-}
-
 async function maybeStartRandomGame(client, force = false) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return;
@@ -1578,10 +1587,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessPlayer') {
-    const guess = normalizePlayerGuess(content);
-    if (!guess) return false;
-    const tokens = game.answers || [];
-    if (guess === game.fullAnswer || tokens.includes(guess) || (game.fullAnswer && game.fullAnswer.includes(guess) && guess.length >= 3)) {
+    if (isPlayerGuessCorrect(content, game.fullAnswer, game.answers)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -1845,7 +1851,6 @@ async function restoreActiveGames(client) {
     }
     const title = parsed?.title || 'la canzone';
     const artist = parsed?.artist || '';
-    const album = parsed?.album || 'Album sconosciuto';
     const artistCountry = parsed?.artistCountry || 'Nazionalità sconosciuta';
     const genre = parsed?.genre || 'Genere sconosciuto';
     const timeout = setTimeout(async () => {

@@ -19,12 +19,12 @@ function buildNoPermEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
     .setTitle('<:VC_Lock:1468544444113617063> Non hai i permessi')
-    .setDescription('Questo comando e riservato agli utenti VIP con accesso ai ruoli personalizzati.');
+    .setDescription('Questo comando è riservato agli utenti VIP con accesso ai ruoli personalizzati.');
 }
 
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
-    .replace(/[^\p{L}\p{N} _\-',’!?]/gu, '')
+    .replace(/[^\p{L}\p{N} _',.!?\-]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!clean) return 'privata';
@@ -206,5 +206,7 @@ module.exports = {
     });
   }
 };
+
+
 
 

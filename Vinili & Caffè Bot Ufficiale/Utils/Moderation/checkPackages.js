@@ -1,4 +1,5 @@
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
@@ -44,25 +45,48 @@ async function checkForOutdatedPackages(client) {
         }
     }
 }
-async function updateOutdatedPackages(client) {
-    try {
-        client.logs.debug('Updating outdated packages...');
-        execSync('npm update', { stdio: 'inherit' });
-        client.logs.success('Outdated packages updated successfully.');
-    } catch (err) {
-        client.logs.error(`Failed to update packages: ${err.message}`);
-    }
-}
 async function checkNodeVersion(client) {
     try {
         const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'));
-        const requiredNodeVersion = packageJson.engines?.node;
-        const currentVersion = process.version;
-        if (requiredNodeVersion && !execSync(`node -v`).toString().startsWith(requiredNodeVersion)) {
-            client.logs.warn(`Warning: Node.js version mismatch. Required: ${requiredNodeVersion}, Current: ${currentVersion}`);
-        } else {
+        const requiredNodeVersion = String(packageJson.engines?.node || '').trim();
+        const currentVersion = String(process.version || '').trim();
+        if (!requiredNodeVersion) {
             client.logs.success('Node.js version is compatible.');
+            return;
         }
+
+        const normalize = (value) => String(value || '').trim().replace(/^v/i, '');
+        const parse = (value) => normalize(value).split('.').map((part) => Number(part || 0));
+        const compare = (a, b) => {
+            for (let i = 0; i < 3; i += 1) {
+                const diff = (a[i] || 0) - (b[i] || 0);
+                if (diff !== 0) return diff;
+            }
+            return 0;
+        };
+
+        const currentParts = parse(currentVersion);
+        let isCompatible = true;
+
+        const rangeMatch = requiredNodeVersion.match(/^(>=|<=|>|<|=)?\s*v?(\d+(?:\.\d+){0,2})$/);
+        if (rangeMatch) {
+            const op = rangeMatch[1] || '=';
+            const requiredParts = parse(rangeMatch[2]);
+            const cmp = compare(currentParts, requiredParts);
+            if (op === '>=') isCompatible = cmp >= 0;
+            else if (op === '<=') isCompatible = cmp <= 0;
+            else if (op === '>') isCompatible = cmp > 0;
+            else if (op === '<') isCompatible = cmp < 0;
+            else isCompatible = cmp === 0;
+        } else {
+            isCompatible = normalize(currentVersion) === normalize(requiredNodeVersion);
+        }
+
+        if (!isCompatible) {
+            client.logs.warn(`Warning: Node.js version mismatch. Required: ${requiredNodeVersion}, Current: ${currentVersion}`);
+            return;
+        }
+        client.logs.success('Node.js version is compatible.');
     } catch (err) {
         client.logs.error(`Error checking Node.js version: ${err.message}`);
     }
@@ -76,12 +100,16 @@ async function checkAndInstallPackages(client, ignorePackages = ['@discordjs/bui
             packages.forEach(pkg => requiredPackages.add(pkg));
         }
         const packageJson = JSON.parse(await fs.readFile('package.json', 'utf8'));
-        const installedPackages = new Set(Object.keys(packageJson.dependencies || {}));
-        const missingPackages = [...requiredPackages].filter(pkg => 
-            !installedPackages.has(pkg) && 
-            !fs.access(path.join('node_modules', pkg)).then(() => true).catch(() => false) &&
-            !ignorePackages.includes(pkg)
-        );
+        const installedPackages = new Set([
+            ...Object.keys(packageJson.dependencies || {}),
+            ...Object.keys(packageJson.devDependencies || {})
+        ]);
+        const missingPackages = [...requiredPackages].filter((pkg) => {
+            if (ignorePackages.includes(pkg)) return false;
+            if (installedPackages.has(pkg)) return false;
+            const modulePath = path.join('node_modules', ...pkg.split('/'));
+            return !fsSync.existsSync(modulePath);
+        });
         if (missingPackages.length > 0) {
             client.logs.error(`Missing packages detected: ${missingPackages.join(', ')}`);
             for (const pkg of missingPackages) {
@@ -96,7 +124,7 @@ async function checkAndInstallPackages(client, ignorePackages = ['@discordjs/bui
         } else {
             client.logs.success('All required packages are installed.');
         }
-        await checkForOutdatedPackages(client);;
+        await checkForOutdatedPackages(client);
         await checkNodeVersion(client);
     } catch (err) {
         client.logs.error(`Error during package check: ${err.message}`);

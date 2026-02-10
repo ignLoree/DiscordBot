@@ -40,7 +40,7 @@ function listEventFiles(root) {
     return out;
 }
 
-function shouldLogOnce(tag) {
+function shouldLogOnce() {
     return !isDev;
 }
 
@@ -77,8 +77,8 @@ module.exports = (client) => {
         for (const file of eventFiles) {
             const rel = path.relative(absBase, file).replace(/\\/g, '/');
             try {
-                const relFromHandlers = path.relative(__dirname, file).replace(/\\/g, '/');
-                const event = require(`./${relFromHandlers}`);
+                delete require.cache[require.resolve(file)];
+                const event = require(file);
                 if (!event?.name) {
                     statusMap.set(rel, "Missing name");
                     continue;

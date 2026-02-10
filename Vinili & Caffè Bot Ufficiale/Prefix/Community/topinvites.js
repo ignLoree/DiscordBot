@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { InviteTrack } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
@@ -46,7 +46,7 @@ module.exports = {
   name: 'topinvites',
 
   async execute(message) {
-    await message.channel.sendTyping();
+    await message.channel.sendTyping().catch(() => {});
 
     const rows = await InviteTrack.aggregate([
       { $match: { guildId: message.guild.id } },
@@ -133,12 +133,6 @@ module.exports = {
       lines.push('Nessun dato inviti disponibile.');
     }
 
-    const now = new Date().toLocaleTimeString('it-IT', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Rome'
-    });
-
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('<:VC_Leaderboard:1469659357678669958> Classifica Inviti')
@@ -195,6 +189,7 @@ module.exports = {
     });
   }
 };
+
 
 
 

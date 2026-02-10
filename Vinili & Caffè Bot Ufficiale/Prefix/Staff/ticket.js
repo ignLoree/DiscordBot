@@ -354,7 +354,10 @@ module.exports = {
       }
 
       const oldClaimer = ticketDoc.claimedBy;
-      const hasAllowedRole = message.member.roles.cache.has(STAFF_ROLE_ID);
+      const hasAllowedRole =
+        message.member.roles.cache.has(STAFF_ROLE_ID)
+        || message.member.roles.cache.has(HIGHSTAFF_ROLE_ID)
+        || message.member.roles.cache.has(PARTNERMANAGER_ROLE_ID);
       if (message.author.id !== oldClaimer && !hasAllowedRole) {
         await safeMessageReply(message, {
           embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Non puoi unclaimare questo ticket.').setColor('Red')],
@@ -559,7 +562,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor('#6f4e37')
               .setTitle('Switch Panel')
-              .setDescription(`<:vegacheckmark:1443666279058772028> Ticket aggiornato in **${panelConfig.label}** nel canale ${targetChannel}.`)
+              .setDescription(`<:vegacheckmark:1443666279058772028> Ticket aggiornato in **${panelConfig.label || panelConfig.name || panelConfig.type}** nel canale ${targetChannel}.`)
           ],
           allowedMentions: { repliedUser: false }
         });
@@ -688,14 +691,6 @@ async function fetchTicketMessage(channel, messageId) {
   return fallback?.first() || null;
 }
 
-function resolveChannelFromArg(message, rawArg) {
-  if (!rawArg) return null;
-  const mentionMatch = String(rawArg).match(/^<#(\d+)>$/);
-  const id = mentionMatch?.[1] || (/^\d{17,20}$/.test(String(rawArg)) ? String(rawArg) : null);
-  if (!id) return null;
-  return message.guild.channels.cache.get(id) || null;
-}
-
 function getTicketPanelConfig(raw) {
   const key = String(raw || '').toLowerCase();
   const configs = {
@@ -703,6 +698,7 @@ function getTicketPanelConfig(raw) {
       type: "supporto",
       emoji: "⭐",
       name: "supporto",
+      label: "Supporto",
       embed: new EmbedBuilder()
         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
@@ -712,6 +708,7 @@ function getTicketPanelConfig(raw) {
       type: "partnership",
       emoji: "🤝",
       name: "partnership",
+      label: "Partnership",
       embed: new EmbedBuilder()
         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`)
@@ -721,6 +718,7 @@ function getTicketPanelConfig(raw) {
       type: "high",
       emoji: "✨",
       name: "highstaff",
+      label: "High Staff",
       embed: new EmbedBuilder()
         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**")
         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)

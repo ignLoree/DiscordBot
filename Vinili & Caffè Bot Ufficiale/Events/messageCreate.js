@@ -1,5 +1,4 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
-const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
 const MentionReaction = require('../Schemas/Community/mentionReactionSchema');
@@ -16,11 +15,14 @@ const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { checkPrefixPermission } = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
+const {
+    getGuildAutoResponderCache,
+    setGuildAutoResponderCache
+} = require('../Utils/Community/autoResponderCache');
 const IDs = require('../Utils/Config/ids');
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
-const VOTE_MANAGER_BOT_ID = IDs.bots.voteManager;
 const VOTE_CHANNEL_ID = IDs.channels.thanks;
 const VOTE_ROLE_ID = IDs.roles.voteReward;
 const VOTE_URL = IDs.links.vote;
@@ -28,10 +30,6 @@ const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
 const { upsertVoteRole } = require('../Services/Community/communityOpsService');
 const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
-const GUILD_SETTINGS_CACHE_TTL_MS = 60 * 1000;
-const guildSettingsCache = new Map();
-const AUTORESPONDER_CACHE_TTL_MS = 30 * 1000;
-const autoResponderCache = new Map();
 const FORCE_DELETE_CHANNEL_IDS = new Set(
     [IDs.channels.forceDeleteAllMessages].filter(Boolean).map((id) => String(id))
 );
@@ -184,21 +182,6 @@ function getPrefixOverrideMap(client) {
     client._prefixOverrideCache = { map, size };
     return map;
 }
-async function getGuildSettingsCached(guildId, defaultPrefix) {
-    const cached = guildSettingsCache.get(guildId);
-    const now = Date.now();
-    if (cached && (now - cached.at) < GUILD_SETTINGS_CACHE_TTL_MS) {
-        return cached.value;
-    }
-    const value = await GuildSettings.findOneAndUpdate(
-        { Guild: guildId },
-        { $setOnInsert: { Prefix: defaultPrefix } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    guildSettingsCache.set(guildId, { value, at: now });
-    return value;
-}
-
 async function resolveUserFromMessage(message) {
     const mentioned = message.mentions?.users?.first();
     if (mentioned) return mentioned;
@@ -234,17 +217,20 @@ async function resolveUserFromMessage(message) {
     return null;
 }
 
-async function handleVoteManagerMessage(message) {
+async function handleVoteManagerMessage(message, client) {
     if (!message.guild) return false;
     if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
-    const isVoteManagerAuthor = message.author?.id === VOTE_MANAGER_BOT_ID;
+    const allowedBotIds = getVoteManagerBotIds(client);
+    const isVoteManagerAuthor = allowedBotIds.has(String(message.author?.id || ''));
+    const isVoteManagerApp = allowedBotIds.has(String(message.applicationId || ''));
+    if (!isVoteManagerAuthor && !isVoteManagerApp) return false;
     const { content, embedText, embedTitle, fieldsText } = getMessageTextParts(message);
     const voteText = `${content} ${embedText} ${embedTitle} ${fieldsText}`.toLowerCase();
     const looksLikeVote =
         /has voted|voted/i.test(voteText) ||
         /ha votato|votato/i.test(voteText) ||
         (voteText.includes('discadia') && /(vote|voto|votato)/i.test(voteText));
-    if (!isVoteManagerAuthor && !looksLikeVote) return false;
+    if (!looksLikeVote) return false;
 
     const user = await resolveUserFromMessage(message);
     const nameRaw = extractNameFromText(content)
@@ -359,7 +345,7 @@ module.exports = {
                     return;
                 }
                 if (message.author?.id !== client?.user?.id) {
-                    const handledVote = await handleVoteManagerMessage(message);
+                    const handledVote = await handleVoteManagerMessage(message, client);
                     if (handledVote) return;
                 }
                 const handledDisboard = await handleDisboardBump(message, client);
@@ -721,14 +707,16 @@ module.exports = {
 };
 
 async function handleAfk(message) {
+    const guildId = message.guild?.id;
+    if (!guildId) return;
     const userId = message.author.id;
-    const afkData = await AFK.findOne({ userId: userId });
+    const afkData = await AFK.findOne({ guildId, userId: userId });
     if (afkData) {
         const member = message.guild.members.cache.get(userId);
         if (member && afkData.originalName) {
             await member.setNickname(afkData.originalName).catch(() => { });
         }
-        await AFK.deleteOne({ userId: userId });
+        await AFK.deleteOne({ guildId, userId: userId });
         const msg = await message.reply(`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`);
         setTimeout(() => {
             msg.delete().catch(() => { });
@@ -737,7 +725,7 @@ async function handleAfk(message) {
     const mentionedUsers = message.mentions.users;
     for (const user of mentionedUsers.values()) {
         if (user.bot) continue;
-        const data = await AFK.findOne({ userId: user.id });
+        const data = await AFK.findOne({ guildId, userId: user.id });
         if (!data) continue;
         const now = Date.now();
         const diff = Math.floor((now - data.timestamp) / 1000);
@@ -750,6 +738,19 @@ async function handleAfk(message) {
     }
 }
 
+function getVoteManagerBotIds(client) {
+    return new Set(
+        [
+            IDs.bots.voteManager,
+            client?.config?.voteManager?.botId,
+            client?.config?.discadia?.botId,
+            client?.config?.disboard?.botId
+        ]
+            .filter(Boolean)
+            .map((id) => String(id))
+    );
+}
+
 function resolveReactionToken(token) {
     const value = String(token || '');
     if (value.startsWith('custom:')) return value.slice('custom:'.length);
@@ -759,11 +760,8 @@ function resolveReactionToken(token) {
 
 async function getGuildAutoResponders(guildId) {
     if (!guildId) return [];
-    const now = Date.now();
-    const cached = autoResponderCache.get(guildId);
-    if (cached && (now - cached.at) < AUTORESPONDER_CACHE_TTL_MS) {
-        return cached.rules;
-    }
+    const cached = getGuildAutoResponderCache(guildId);
+    if (cached) return cached;
     const docs = await AutoResponder.find({ guildId, enabled: true }).lean().catch(() => []);
     const rules = Array.isArray(docs)
         ? docs
@@ -779,7 +777,7 @@ async function getGuildAutoResponders(guildId) {
             .filter((doc) => Boolean(doc.triggerLower))
             .sort((a, b) => b.triggerLower.length - a.triggerLower.length)
         : [];
-    autoResponderCache.set(guildId, { at: now, rules });
+    setGuildAutoResponderCache(guildId, rules);
     return rules;
 }
 
@@ -793,13 +791,17 @@ function normalizeForTriggerMatch(value) {
         .trim();
 }
 
+function containsWholeLoosePhrase(normalizedLooseText, normalizedLooseNeedle) {
+    const haystack = String(normalizedLooseText || '').trim();
+    const needle = String(normalizedLooseNeedle || '').trim();
+    if (!haystack || !needle) return false;
+    return ` ${haystack} `.includes(` ${needle} `);
+}
+
 function ruleMatchesMessage(normalizedText, normalizedLoose, rule) {
+    void normalizedText;
     if (!rule) return false;
-    if (rule.triggerLower && normalizedText.includes(rule.triggerLower)) return true;
-    if (rule.triggerLoose && normalizedLoose.includes(rule.triggerLoose)) return true;
-    if (Array.isArray(rule.triggerTokens) && rule.triggerTokens.length > 0) {
-        return rule.triggerTokens.some((token) => normalizedLoose.includes(token));
-    }
+    if (rule.triggerLoose && containsWholeLoosePhrase(normalizedLoose, rule.triggerLoose)) return true;
     return false;
 }
 
@@ -893,7 +895,7 @@ async function handleCounting(message, client) {
             .replace(/x/g, '*')
             .replace(/:/g, '/');
         messageValue = math.evaluate(expression);
-    } catch (err) {
+    } catch {
         return message.delete().catch(() => { });
     }
     let reaction = '<:vegacheckmark:1443666279058772028>';
@@ -1003,8 +1005,10 @@ async function handleDiscadiaBump(message, client) {
         /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump/i.test(joined);
     const hasFailureWord =
         /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before/i.test(joined);
-
-    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || hasDiscadiaWord;
+    const expectedChannelId = String(discadia?.bumpChannelId || discadia?.reminderChannelId || '');
+    const inExpectedChannel = expectedChannelId ? String(message.channelId) === expectedChannelId : true;
+    const fallbackTrustedSource = Boolean(message.author?.bot && inExpectedChannel);
+    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || (fallbackTrustedSource && hasDiscadiaWord);
     const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord));
     if (!isBump) return false;
 

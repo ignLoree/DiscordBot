@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder} = require('discord.js');
-const fetch = globalThis.fetch;
+const axios = require('axios');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
@@ -18,22 +18,6 @@ function extractInviteCode(text) {
     return fallback ? fallback[1] : null;
 }
 
-function extractServerNameFromDescription(description) {
-    if (!description) return null;
-    const cleaned = String(description)
-        .replace(/\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/g, '$1')
-        .replace(/https?:\/\/[^\s]+/g, '')
-        .replace(/@everyone|@here/g, '')
-        .trim();
-    const lines = cleaned.split('\n').map(line => line.trim()).filter(Boolean);
-    const labeled = lines.find(line => /server|nome/i.test(line) && /[:\-]/.test(line));
-    const pickLine = labeled || lines[0];
-    if (!pickLine) return null;
-    const match = pickLine.match(/(?:server|nome)[^:]*[:\-]\s*(.+)$/i);
-    const name = (match ? match[1] : pickLine).replace(/[`*_~>]/g, '').trim();
-    return name || null;
-}
-
 function isValidServerName(name) {
     if (!name) return false;
     const trimmed = String(name).replace(/\s+/g, ' ').trim();
@@ -43,7 +27,7 @@ function isValidServerName(name) {
 
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
-    await interaction.deferReply().catch(() => { });
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
     if (!interaction.member.roles.cache.has(IDs.roles.partnerManager)) {
         await interaction.editReply({
             embeds: [
@@ -116,20 +100,19 @@ async function handlePartnerModal(interaction) {
     }
     let serverName = 'Server Sconosciuto';
     let serverIcon = null;
-    let serverId = null;
     const inviteUrl = `https://discord.gg/${inviteCode}`;
-    let inviteVerified = true;
     try {
-        const res = await fetch(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`);
-        const data = await res.json();
+        const res = await axios.get(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`, {
+            timeout: 15000,
+            headers: { Accept: 'application/json' }
+        });
+        const data = res?.data || {};
         if (!data.guild) throw new Error('Invite invalid');
         serverName = data.guild.name;
-        serverId = data.guild.id;
         serverIcon = data.guild.icon
             ? `https://cdn.discordapp.com/icons/${data.guild.id}/${data.guild.icon}.png`
             : null;
     } catch {
-        inviteVerified = false;
         serverName = 'Server Sconosciuto';
     }
     if (!isValidServerName(serverName)) {
@@ -144,7 +127,7 @@ async function handlePartnerModal(interaction) {
             .setColor('Red')
             .setTimestamp()
             .setThumbnail(interaction.guild.iconURL());
-        await interaction.editReply({ embeds: [embed], flags: 1 << 6 });
+        await interaction.editReply({ embeds: [embed] });
         return true;
     }
 
@@ -245,4 +228,5 @@ function splitMessage(message, maxLength = 2000) {
 }
 
 module.exports = { handlePartnerModal };
+
 

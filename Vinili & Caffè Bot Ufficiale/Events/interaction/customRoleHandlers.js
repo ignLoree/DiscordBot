@@ -1,5 +1,6 @@
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
+const axios = require('axios');
 
 const pendingRoleGrants = new Map();
 
@@ -50,7 +51,7 @@ function canManageRole(interaction, role) {
   return role.position < me.roles.highest.position;
 }
 
-function refreshEmbedRoleLine(sourceEmbed, role, executorName) {
+function refreshEmbedRoleLine(sourceEmbed, role) {
   const embed = sourceEmbed ? EmbedBuilder.from(sourceEmbed) : new EmbedBuilder().setColor('#6f4e37');
   const oldDesc = String(embed.data?.description || '');
   let nextDesc = oldDesc;
@@ -68,7 +69,7 @@ async function updatePanelMessage(interaction, panelMessageId, role) {
   const msg = interaction.channel.messages.cache.get(panelMessageId)
     || await interaction.channel.messages.fetch(panelMessageId).catch(() => null);
   if (!msg) return;
-  const updated = refreshEmbedRoleLine(msg.embeds?.[0], role, interaction.user?.username);
+  const updated = refreshEmbedRoleLine(msg.embeds?.[0], role);
   await msg.edit({ embeds: [updated] }).catch(() => {});
 }
 
@@ -328,9 +329,11 @@ async function handleRoleActionModal(interaction) {
     }
     const isUrl = /^https?:\/\/\S+$/i.test(value);
     if (isUrl) {
-      const iconBuffer = await fetch(value)
-        .then((r) => (r.ok ? r.arrayBuffer() : null))
-        .then((b) => (b ? Buffer.from(b) : null))
+      const iconBuffer = await axios.get(value, {
+        responseType: 'arraybuffer',
+        timeout: 15000
+      })
+        .then((r) => (r?.status >= 200 && r?.status < 300 ? Buffer.from(r.data) : null))
         .catch(() => null);
       if (!iconBuffer) {
         await interaction.reply({ content: '<:vegax:1443934876440068179> URL immagine non valida o non raggiungibile.', flags: 1 << 6 }).catch(() => {});
@@ -428,7 +431,7 @@ async function handleAddRemoveSelectMenus(interaction) {
 
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
-    .replace(/[^\p{L}\p{N} _\-',’!?]/gu, '')
+    .replace(/[^\p{L}\p{N} _',.!?\-’]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!clean) return 'privata';
@@ -439,7 +442,14 @@ function parseCustomVocName(rawName) {
   const name = String(rawName || '').trim();
   if (!name) return { emoji: '', baseName: 'privata' };
 
-  const separators = ['\uFE32', 'ï¸²', '︲', 'Ã¯Â¸Â²', 'ÃƒÂ¯Ã‚Â¸Ã‚Â²'];
+  const separators = [
+    '\uFE32',
+    '︲',
+    'ï¸²',
+    'Ã¯Â¸Â²',
+    'ÃƒÂ¯Ã‚Â¸Ã‚Â²',
+    'ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â²'
+  ];
   for (const separator of separators) {
     if (!name.includes(separator)) continue;
     const parts = name.split(separator);
@@ -448,6 +458,7 @@ function parseCustomVocName(rawName) {
       .replace(/^à¼„/u, '')
       .replace(/^Ã Â¼â€ž/u, '')
       .replace(/^ÃƒÂ Ã‚Â¼Ã¢â‚¬Å¾/u, '')
+      .replace(/^ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¼ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾/u, '')
       .trim();
     const right = parts.join(separator).trim();
     return { emoji: left, baseName: right || 'privata' };
@@ -685,4 +696,6 @@ async function handleCustomRoleInteraction(interaction) {
 }
 
 module.exports = { handleCustomRoleInteraction, createCustomRoleGrantRequest };
+
+
 

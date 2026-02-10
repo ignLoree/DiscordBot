@@ -17,7 +17,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply();
+        await interaction.deferReply({ flags: 1 << 6 });
         const tipo = interaction.options.getString('tipo') || 'totale';
         const isWeekly = tipo === 'settimanale';
         const weekAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000));
@@ -107,7 +107,7 @@ module.exports = {
 
         collector.on('collect', async (i) => {
             if (i.user.id !== interaction.user.id) {
-                return i.editReply({ content: '<:vegax:1443934876440068179> Non puoi usare questi pulsanti.', flags: 1 << 6 });
+                return i.reply({ content: '<:vegax:1443934876440068179> Non puoi usare questi pulsanti.', flags: 1 << 6 });
             }
 
             if (i.customId === 'prev' && currentPage > 1) {

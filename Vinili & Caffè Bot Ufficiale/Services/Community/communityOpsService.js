@@ -28,6 +28,8 @@ const SUPERSCRIPT_MAP = {
 const INDEX_PREFIX_RE = /^[\u2070\u00B9\u00B2\u00B3\u2074\u2075\u2076\u2077\u2078\u2079]+/;
 const guildTimers = new Map();
 let numberingLoopHandle = null;
+let voteCleanupLoopHandle = null;
+let verificationTenureLoopHandle = null;
 
 async function upsertVoteRole(guildId, userId, expiresAt) {
   if (!guildId || !userId || !expiresAt) return null;
@@ -59,9 +61,11 @@ async function removeExpiredVoteRoles(client) {
 
 function startVoteRoleCleanupLoop(client) {
   if (!client) return;
-  setInterval(() => {
+  if (voteCleanupLoopHandle) return voteCleanupLoopHandle;
+  voteCleanupLoopHandle = setInterval(() => {
     removeExpiredVoteRoles(client).catch(() => {});
   }, CHECK_INTERVAL_MS);
+  return voteCleanupLoopHandle;
 }
 
 async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
@@ -130,11 +134,13 @@ async function runTenureSweep(client) {
 }
 
 function startVerificationTenureLoop(client) {
-  setInterval(() => {
+  if (verificationTenureLoopHandle) return verificationTenureLoopHandle;
+  verificationTenureLoopHandle = setInterval(() => {
     runTenureSweep(client).catch((error) => {
       global.logger.error('[VERIFY TENURE] Sweep failed:', error);
     });
   }, 60 * 60 * 1000);
+  return verificationTenureLoopHandle;
 }
 
 async function backfillVerificationTenure(client) {

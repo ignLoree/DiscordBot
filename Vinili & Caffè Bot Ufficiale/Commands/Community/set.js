@@ -1,5 +1,5 @@
 ﻿const { safeReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()

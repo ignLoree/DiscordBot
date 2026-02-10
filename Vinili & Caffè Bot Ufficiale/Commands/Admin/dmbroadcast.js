@@ -15,6 +15,7 @@ const getDevIds = (client) => {
 };
 
 module.exports = {
+  expectsModal: true,
   data: new SlashCommandBuilder()
     .setName("dmbroadcast")
     .setDescription("Invia un DM a tutti gli utenti")

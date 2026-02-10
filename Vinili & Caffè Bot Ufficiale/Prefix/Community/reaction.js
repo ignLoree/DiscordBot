@@ -2,6 +2,7 @@ const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const MentionReaction = require('../../Schemas/Community/mentionReactionSchema');
 const AutoResponder = require('../../Schemas/Community/autoResponderSchema');
+const { invalidateGuildAutoResponderCache } = require('../../Utils/Community/autoResponderCache');
 
 const MAX_REACTIONS = 6;
 const MAX_RULES = 50;
@@ -197,6 +198,7 @@ async function handleAutoResponders(message, args) {
 
   if (sub === 'clear' || sub === 'reset') {
     await AutoResponder.deleteMany({ guildId }).catch(() => {});
+    invalidateGuildAutoResponderCache(guildId);
     await safeMessageReply(message, {
       embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1443666279058772028> Tutti gli autoresponder sono stati rimossi.')],
       allowedMentions: { repliedUser: false }
@@ -222,6 +224,7 @@ async function handleAutoResponders(message, args) {
       guildId,
       triggerLower: { $in: triggerLowerList }
     }).catch(() => {});
+    invalidateGuildAutoResponderCache(guildId);
 
     if (!Array.isArray(removedDocs) || !removedDocs.length) {
       await safeMessageReply(message, {
@@ -319,6 +322,7 @@ async function handleAutoResponders(message, args) {
       });
       return;
     }
+    invalidateGuildAutoResponderCache(guildId);
     const triggerLabel = savedTriggers.map((item) => `\`${item}\``).join(', ');
 
     const resultEmbed = new EmbedBuilder()

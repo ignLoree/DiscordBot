@@ -58,13 +58,6 @@ module.exports = {
       ? Math.round((activeMembers / totalInvited) * 100)
       : 0;
 
-    const now = new Date();
-    const timeText = now.toLocaleTimeString('it-IT', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Rome'
-    });
-
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle('Informazioni inviti')
@@ -83,5 +76,4 @@ module.exports = {
     });
   }
 };
-
 

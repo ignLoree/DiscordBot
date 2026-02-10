@@ -9,13 +9,40 @@ const DEFAULT_TIME_ZONE = 'Europe/Rome';
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
 const DEFAULT_MIN_GAP_MS = 30 * 60 * 1000;
-const scheduledHours = new Set();
+const scheduledHours = new Map();
 const scheduledTimeouts = new Map();
 let rotationDate = null;
 let rotationQueue = [];
 let rotationGuildId = null;
 let lastSentAt = null;
 const reminderActivity = new Map();
+let hourlyLoopHandle = null;
+
+function cleanupScheduledHourKeys() {
+  const now = Date.now();
+  const maxAgeMs = 6 * 60 * 60 * 1000;
+  for (const [key, createdAt] of scheduledHours.entries()) {
+    if (!Number.isFinite(createdAt) || (now - createdAt) > maxAgeMs) {
+      scheduledHours.delete(key);
+    }
+  }
+}
+
+function attachScheduleTimeout(scheduleId, timeout) {
+  if (!scheduleId) return;
+  const id = String(scheduleId);
+  const existing = scheduledTimeouts.get(id);
+  if (existing) clearTimeout(existing);
+  scheduledTimeouts.set(id, timeout);
+}
+
+function clearScheduleTimeout(scheduleId) {
+  if (!scheduleId) return;
+  const id = String(scheduleId);
+  const existing = scheduledTimeouts.get(id);
+  if (existing) clearTimeout(existing);
+  scheduledTimeouts.delete(id);
+}
 
 const reminderPool = [
   () => new EmbedBuilder()
@@ -32,7 +59,7 @@ const reminderPool = [
     .setTitle('🌐 Lascia una recensione su DISBOARD!')
     .setDescription(
       [
-        `Lasciare un recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticketPanel}> \`Terza Categoria\` e riceverai **5 livelli**!`,
+        `Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticketPanel}> \`Terza Categoria\` e riceverai **5 livelli**!`,
         'Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474'
       ].join('\n')
     ),
@@ -49,7 +76,7 @@ const reminderPool = [
     .setTitle("🔢 Conta fino all'infinito!")
     .setDescription(
       [
-        `Sei un appasionato di calcoli e matematica? Vieni a contare nel canale <#${IDs.channels.counting}>`
+        `Sei un appassionato di calcoli e matematica? Vieni a contare nel canale <#${IDs.channels.counting}>`
       ].join('\n')
     ),
   () => new EmbedBuilder()
@@ -74,12 +101,12 @@ const reminderPool = [
     .setTitle("<:pokeball:1467091572632850474> Gotta Catch 'Em All!")
     .setDescription(
       [
-        'Sei un appasionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>'
+        'Sei un appassionato di Pokémon? Vieni a catturarli tutti nel canale <#1442569184281362552>'
       ].join('\n')
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("📝 Vuoi candidarti come staffer?")
+    .setTitle('📝 Vuoi candidarti come staffer?')
     .setDescription(
       [
         'Cosa aspetti? Vieni a candidarti attraverso il modulo che trovi nel canale <#1442569232507473951>'
@@ -87,7 +114,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("💸 Soldi o Nitro Boost **__GRATIS__**?")
+    .setTitle('💸 Soldi o Nitro Boost **__GRATIS__**?')
     .setDescription(
       [
         'Vuoi un Nitro Boost o farti un po\' di soldi gratis? Trovi tutto nel canale <#1442579412280410194>'
@@ -95,7 +122,7 @@ const reminderPool = [
     ),
   () => new EmbedBuilder()
     .setColor('#6f4e37')
-    .setTitle("🎨 Ottieni i colori gradienti")
+    .setTitle('🎨 Ottieni i colori gradienti')
     .setDescription(
       [
         'Potrai sbloccare i colori PLUS con il ruolo <@&1329497467481493607> o <@&1442568932136587297>; invece con il <@&1442568950805430312> potrai creartene uno personalizzato! Li trovi su: <#1469429150669602961>'
@@ -268,6 +295,7 @@ async function getActivityCounts(client) {
 }
 
 async function sendReminder(client, scheduleId, kind = 'first') {
+  clearScheduleTimeout(scheduleId);
   const nowMs = Date.now();
   const minGapMs = getMinGapMs(client);
   if (lastSentAt && (nowMs - lastSentAt) < minGapMs && scheduleId) {
@@ -275,18 +303,21 @@ async function sendReminder(client, scheduleId, kind = 'first') {
     await ChatReminderSchedule.updateOne({ _id: scheduleId }, { $set: { fireAt: nextAt, kind } }).catch(() => { });
     const delay = Math.max(1, nextAt.getTime() - Date.now());
     const timeout = setTimeout(() => {
+      scheduledTimeouts.delete(String(scheduleId));
       sendReminder(client, scheduleId, kind).catch(() => { });
     }, delay);
-    scheduledTimeouts.set(scheduleId.toString(), timeout);
+    attachScheduleTimeout(scheduleId, timeout);
     return;
   }
   const { count30m: activityCount30m } = await getActivityCounts(client);
   if (kind === 'second' && activityCount30m < getSecondThreshold(client)) {
     if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
+    clearScheduleTimeout(scheduleId);
     return;
   }
   if (kind !== 'second' && activityCount30m < getFirstThreshold(client)) {
     if (scheduleId) await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
+    clearScheduleTimeout(scheduleId);
     return;
   }
   const channelId = getReminderChannelId(client);
@@ -300,10 +331,12 @@ async function sendReminder(client, scheduleId, kind = 'first') {
   await saveRotationState();
   if (scheduleId) {
     await ChatReminderSchedule.deleteOne({ _id: scheduleId }).catch(() => { });
+    clearScheduleTimeout(scheduleId);
   }
 }
 
 async function scheduleForHour(client, parts, guildId) {
+  cleanupScheduledHourKeys();
   const key = getHourKey(parts);
   if (scheduledHours.has(key)) return;
 
@@ -342,7 +375,7 @@ async function scheduleForHour(client, parts, guildId) {
     .sort((a, b) => a - b)
     .map((delay, idx) => ({ fireAt: new Date(Date.now() + delay), kind: idx === 0 ? 'first' : 'second' }));
   if (!fireTimes.length) return;
-  scheduledHours.add(key);
+  scheduledHours.set(key, Date.now());
   for (const item of fireTimes) {
     const fireAt = item.fireAt;
     const adjusted = baseLast ? Math.max(fireAt.getTime(), baseLast + minGapMs) : fireAt.getTime();
@@ -353,9 +386,10 @@ async function scheduleForHour(client, parts, guildId) {
       await ChatReminderSchedule.updateOne({ _id: doc._id }, { $set: { fireAt: new Date(adjusted), kind: item.kind } }).catch(() => { });
     }
     const timeout = setTimeout(() => {
+      scheduledTimeouts.delete(String(doc._id));
       sendReminder(client, doc._id, item.kind).catch(() => { });
     }, Math.max(1, adjusted - Date.now()));
-    scheduledTimeouts.set(doc._id.toString(), timeout);
+    attachScheduleTimeout(doc._id, timeout);
   }
 }
 
@@ -382,15 +416,18 @@ async function restoreSchedules(client) {
     }
     const delay = Math.max(1, fireAt - Date.now());
     const timeout = setTimeout(() => {
+      scheduledTimeouts.delete(String(item._id));
       sendReminder(client, item._id, item.kind || 'first').catch(() => { });
     }, delay);
-    scheduledTimeouts.set(item._id.toString(), timeout);
+    attachScheduleTimeout(item._id, timeout);
     lastTime = fireAt;
   }
 }
 
 function startHourlyReminderLoop(client) {
+  if (hourlyLoopHandle) return hourlyLoopHandle;
   const tick = async () => {
+    cleanupScheduledHourKeys();
     const parts = getRomeParts(new Date(), client);
     if (parts.hour < getStartHour(client) || parts.hour > getEndHour(client)) return;
     const guildId = client.guilds.cache.first()?.id || null;
@@ -399,7 +436,8 @@ function startHourlyReminderLoop(client) {
   };
   restoreSchedules(client).catch(() => { });
   tick();
-  setInterval(tick, 60 * 1000);
+  hourlyLoopHandle = setInterval(tick, 60 * 1000);
+  return hourlyLoopHandle;
 }
 
 module.exports = { startHourlyReminderLoop, recordReminderActivity };

@@ -54,11 +54,23 @@ module.exports = {
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 })
 
         if (subcommand === "create") {
             try {
-                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
+                const guildId = interaction.guild.id;
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls)
+                    || await interaction.guild.channels.fetch(IDs.channels.polls).catch(() => null);
+                if (!channel || !channel.isTextBased?.()) {
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription('<:vegax:1443934876440068179> Canale poll non trovato o non valido.')
+                                .setColor("Red")
+                        ],
+                        flags: 1 << 6
+                    });
+                }
                 const domanda = interaction.options.getString("domanda");
                 const answers = [];
 
@@ -104,14 +116,17 @@ module.exports = {
                     }
                 });
 
-                let pollCount = await poll.findOne();
-                if (!pollCount) pollCount = new poll();
-                pollCount.pollcount++;
-                await pollCount.save();
+                const counterFilter = { guildId, domanda: '__counter__' };
+                const pollCount = await poll.findOneAndUpdate(
+                    counterFilter,
+                    { $inc: { pollcount: 1 }, $setOnInsert: { guildId, domanda: '__counter__' } },
+                    { new: true, upsert: true, setDefaultsOnInsert: true }
+                );
+                const pollNumber = Number(pollCount?.pollcount || 1);
 
                 const pollMessage = await channel.send({
                     content: `
-<:channeltext:1443247596922470551> __Poll #${pollCount.pollcount}__
+<:channeltext:1443247596922470551> __Poll #${pollNumber}__
 
 <a:questionexclaimanimated:1443660299994533960> **${domanda}**
 
@@ -125,8 +140,22 @@ ${answersText}
                     if (id) await pollMessage.react(id);
                 }
 
-                pollCount.messageId = pollMessage.id;
-                await pollCount.save();
+                await poll.create({
+                    guildId,
+                    pollcount: pollNumber,
+                    domanda,
+                    risposta1: answers[0] || null,
+                    risposta2: answers[1] || null,
+                    risposta3: answers[2] || null,
+                    risposta4: answers[3] || null,
+                    risposta5: answers[4] || null,
+                    risposta6: answers[5] || null,
+                    risposta7: answers[6] || null,
+                    risposta8: answers[7] || null,
+                    risposta9: answers[8] || null,
+                    risposta10: answers[9] || null,
+                    messageId: pollMessage.id
+                });
 
                 return await safeEditReply(interaction, {
                     embeds: [
@@ -150,8 +179,23 @@ ${answersText}
 
         if (subcommand === "remove") {
             try {
-                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
-                let lastPoll = await poll.findOne().sort({ pollcount: -1 });
+                const guildId = interaction.guild.id;
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls)
+                    || await interaction.guild.channels.fetch(IDs.channels.polls).catch(() => null);
+                if (!channel || !channel.isTextBased?.()) {
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription('<:vegax:1443934876440068179> Canale poll non trovato o non valido.')
+                                .setColor("Red")
+                        ],
+                        flags: 1 << 6
+                    });
+                }
+                let lastPoll = await poll.findOne({ guildId, domanda: { $ne: '__counter__' } }).sort({ pollcount: -1 });
+                if (!lastPoll) {
+                    lastPoll = await poll.findOne({ domanda: { $ne: '__counter__' } }).sort({ pollcount: -1 });
+                }
 
                 if (!lastPoll || !lastPoll.messageId) {
                     return await safeEditReply(interaction, {
@@ -188,10 +232,25 @@ ${answersText}
         }
         if (subcommand === "edit") {
             try {
+                const guildId = interaction.guild.id;
                 const id = interaction.options.getInteger("id");
                 const newQuestion = interaction.options.getString("domanda");
-                const pollData = await poll.findOne({ pollcount: id });
-                const channel = interaction.guild.channels.cache.get(IDs.channels.polls);
+                let pollData = await poll.findOne({ guildId, pollcount: id, domanda: { $ne: '__counter__' } });
+                if (!pollData) {
+                    pollData = await poll.findOne({ pollcount: id, domanda: { $ne: '__counter__' } });
+                }
+                const channel = interaction.guild.channels.cache.get(IDs.channels.polls)
+                    || await interaction.guild.channels.fetch(IDs.channels.polls).catch(() => null);
+                if (!channel || !channel.isTextBased?.()) {
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription('<:vegax:1443934876440068179> Canale poll non trovato o non valido.')
+                                .setColor("Red")
+                        ],
+                        flags: 1 << 6
+                    });
+                }
                 let pollMessage;
 
                 if (!pollData) {

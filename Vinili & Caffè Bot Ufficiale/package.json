@@ -6,7 +6,8 @@
   "author": "lXo",
   "nodeVersion": "24.7.0",
   "scripts": {
-    "check:mojibake": "node scripts/check-mojibake.js"
+    "check:mojibake": "node scripts/check-mojibake.js",
+    "migrate:schemas": "node scripts/migrate-schema-data.js"
   },
   "dependencies": {
     "@discordjs/rest": "^2.4.0",

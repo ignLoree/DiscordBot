@@ -7,7 +7,7 @@ const GuildSettingsSchema = new mongoose.Schema({
     },
     Prefix: {
         type: String,
-        default: "!"
+        default: "+"
     }
 }, { timestamps: true });
 module.exports = mongoose.models.GuildSettings || mongoose.model('GuildSettings', GuildSettingsSchema);

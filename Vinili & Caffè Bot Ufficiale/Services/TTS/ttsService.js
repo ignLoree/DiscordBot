@@ -1,5 +1,6 @@
 ﻿const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
 const { Readable } = require('stream');
+const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const ttsStates = new Map();
 const guildLocks = new Map();
@@ -7,8 +8,12 @@ const lastSavedChannels = new Map();
 let emojiNameMap = null;
 let nodeEmoji = null;
 const userLangs = new Map();
-try { emojiNameMap = require('emoji-name-map'); } catch {}
-try { nodeEmoji = require('node-emoji'); } catch {}
+try { emojiNameMap = require('emoji-name-map'); } catch (error) {
+  global.logger?.warn?.('[TTS] emoji-name-map non disponibile:', error?.message || error);
+}
+try { nodeEmoji = require('node-emoji'); } catch (error) {
+  global.logger?.warn?.('[TTS] node-emoji non disponibile:', error?.message || error);
+}
 
 function shouldHandleMessage(message, config, prefix) {
   if (!config?.tts?.enabled) return false;
@@ -79,16 +84,19 @@ function buildGoogleTtsUrl(text, lang) {
 
 async function createTtsStream(text, lang) {
   const url = buildGoogleTtsUrl(text, lang);
-  const res = await fetch(url, {
+  const res = await axios.get(url, {
+    responseType: 'arraybuffer',
+    timeout: 15000,
     headers: {
       'User-Agent': 'Mozilla/5.0 ViniliCaffeBot/1.0',
       Accept: 'audio/mpeg,audio/*;q=0.9,*/*;q=0.8'
     }
   });
-  if (!res.ok || !res.body) {
-    throw new Error(`TTS fetch failed (${res.status})`);
+  const data = res?.data;
+  if (!data) {
+    throw new Error(`TTS fetch failed (${res?.status || 'no-data'})`);
   }
-  return Readable.fromWeb(res.body);
+  return Readable.from(Buffer.from(data));
 }
 
 function getState(voiceChannel) {
@@ -285,3 +293,4 @@ async function restoreTtsConnections(client) {
 }
 
 module.exports = { handleTtsMessage, joinTtsChannel, leaveTtsGuild, setUserTtsLang, getUserTtsLang, restoreTtsConnections };
+

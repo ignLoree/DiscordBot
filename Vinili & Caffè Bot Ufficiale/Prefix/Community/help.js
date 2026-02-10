@@ -7,6 +7,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationC
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
+const MAX_HELP_COLLECTOR_MS = 2147483647;
 const PAGE_ROLE_IDS = [
   IDs.roles.partnerManager,
   IDs.roles.staff,
@@ -26,7 +27,7 @@ const CATEGORY_LABELS = {
   partner: 'Partner',
   staff: 'Staff',
   vip: 'VIP',
-  admin: 'Dev',
+  dev: 'Dev',
   contextmenubuilder: 'Context Menu',
 };
 const CATEGORY_ORDER = [
@@ -150,7 +151,7 @@ function prettifySubcommandName(name) {
     .trim();
 }
 
-function getPrefixSubcommandDescription(commandName, subcommandName, fallback) {
+function getPrefixSubcommandDescription(commandName, subcommandName) {
   const key = `${String(commandName || '').toLowerCase()}.${String(subcommandName || '').toLowerCase()}`;
   if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
     return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
@@ -162,6 +163,12 @@ function getPrefixSubcommandDescription(commandName, subcommandName, fallback) {
 function getPrefixBase(command) {
   const override = String(command?.prefixOverride || '').trim();
   return override || '+';
+}
+
+function normalizeCategoryKey(value) {
+  const key = String(value || 'misc').toLowerCase();
+  if (key === 'admin') return 'dev';
+  return key;
 }
 
 function extractPrefixSubcommands(command) {
@@ -234,7 +241,7 @@ function getSubcommandEntries(commandName, dataJson, permissionConfig, commandTy
       invoke: `/${groupName ? `${commandName} ${groupName} ${subName}` : `${commandName} ${subName}`}`,
       type: 'slash',
       description: normalizeDescription(subOption.description, topDesc),
-      category: String(category || 'misc').toLowerCase(),
+      category: normalizeCategoryKey(category),
       roles: roleList
     });
   };
@@ -277,7 +284,7 @@ function buildEntries(client, permissions) {
       description: getPrefixDescription(command),
       aliases,
       prefixBase,
-      category: String(command.folder || 'misc').toLowerCase(),
+      category: normalizeCategoryKey(command.folder || 'misc'),
       roles: commandRoles
     };
 
@@ -315,7 +322,7 @@ function buildEntries(client, permissions) {
     seenSlash.add(uniqueKey);
 
     const perm = permissions.slash?.[dataJson.name];
-    const category = String(command?.category || 'misc').toLowerCase();
+    const category = normalizeCategoryKey(command?.category || 'misc');
     const hasSubcommands = Array.isArray(dataJson.options)
       && dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
@@ -348,7 +355,7 @@ function buildEntries(client, permissions) {
       type: 'context',
       description: CONTEXT_HELP_DESCRIPTIONS[dataJson.name]
         || `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
-      category: String(command?.category || 'contextmenubuilder').toLowerCase(),
+      category: normalizeCategoryKey(command?.category || 'contextmenubuilder'),
       roles
     });
   }
@@ -529,7 +536,10 @@ module.exports = {
     });
     if (!sent) return;
 
-    const collector = sent.createMessageComponentCollector();
+    const collector = sent.createMessageComponentCollector({
+      time: MAX_HELP_COLLECTOR_MS,
+      idle: MAX_HELP_COLLECTOR_MS
+    });
 
     collector.on('collect', async (interaction) => {
       if (interaction.user.id !== message.author.id) {
@@ -555,4 +565,3 @@ module.exports = {
     });
   }
 };
-

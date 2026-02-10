@@ -12,7 +12,9 @@ function escapeHtml(value) {
 
 function formatDate(timestamp) {
   try {
-    return new Date(timestamp).toLocaleString('it-IT');
+    const value = new Date(timestamp);
+    if (Number.isNaN(value.getTime())) return String(timestamp || '');
+    return value.toLocaleString('it-IT');
   } catch {
     return String(timestamp || '');
   }
@@ -147,8 +149,7 @@ async function fetchAllMessages(channel, maxMessages = 2000) {
 }
 
 async function createTranscript(channel) {
-  const messages = await channel.messages.fetch({ limit: 100 });
-  const sorted = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+  const sorted = await fetchAllMessages(channel);
   let txt = `Transcript of: ${channel.name}\n\n`;
   sorted.forEach((msg) => {
     let content = renderRichTextPlain(msg, msg.content || '');

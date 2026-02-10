@@ -6,7 +6,10 @@ async function handleSuggestionVote(interaction) {
     if (!interaction.isButton || !interaction.isButton()) return false;
     const data = await suggestion.findOne({ GuildID: interaction.guild.id, Msg: interaction.message.id });
     if (!data) return false;
-    const message = await interaction.channel.messages.fetch(data.Msg);
+    const message = await interaction.channel.messages.fetch(data.Msg).catch(() => null);
+    if (!message || !Array.isArray(message.embeds) || message.embeds.length === 0) {
+        return false;
+    }
 
     if (interaction.customId === 'upv') {
         if (data.Upmembers.includes(interaction.user.id)) {

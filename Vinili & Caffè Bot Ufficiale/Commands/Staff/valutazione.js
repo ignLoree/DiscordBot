@@ -49,7 +49,7 @@ module.exports = {
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 })
         const utentee = interaction.options.getUser('staffer')
         const reason = interaction.options.getString("motivo")
         const channel = interaction.guild.channels.cache.get(IDs.channels.staffValutazioniLog)
@@ -96,7 +96,7 @@ module.exports = {
                 if (sub === "remove") {
                     const removeId = interaction.options.getInteger("id");
                     if (!StaffDoc.positiveReasons[removeId - 1]) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> ID non valido").setColor("Red")], flags: 1 << 6 });
-                    const removed = StaffDoc.positiveReasons.splice(removeId - 1, 1)[0];
+                    StaffDoc.positiveReasons.splice(removeId - 1, 1);
                     StaffDoc.positiveCount = Math.max(0, StaffDoc.positiveCount - 1);
                     StaffDoc.valutazioniCount = Math.max(0, StaffDoc.valutazioniCount - 1);
                     await StaffDoc.save();
@@ -133,7 +133,7 @@ module.exports = {
                 if (sub === "remove") {
                     const removeId = interaction.options.getInteger("id");
                     if (!StaffDoc.negativeReasons[removeId - 1]) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> ID non valido").setColor("Red")], flags: 1 << 6 });
-                    const removed = StaffDoc.negativeReasons.splice(removeId - 1, 1)[0];
+                    StaffDoc.negativeReasons.splice(removeId - 1, 1);
                     StaffDoc.negativeCount = Math.max(0, StaffDoc.negativeCount - 1);
                     StaffDoc.valutazioniCount = Math.max(0, StaffDoc.valutazioniCount - 1);
                     await StaffDoc.save();
@@ -165,7 +165,14 @@ module.exports = {
             }
         } catch (err) {
             global.logger.error(err);
+            return await safeEditReply(interaction, {
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                        .setColor("Red")
+                ],
+                flags: 1 << 6
+            });
         }
     }
 }
-

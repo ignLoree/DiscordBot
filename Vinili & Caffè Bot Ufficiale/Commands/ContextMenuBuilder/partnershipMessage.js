@@ -4,6 +4,7 @@ const { safeReply } = require('../../Utils/Moderation/reply');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
+    expectsModal: true,
     data: new ContextMenuCommandBuilder()
         .setName('Partnership')
         .setType(ApplicationCommandType.Message),
@@ -46,5 +47,4 @@ module.exports = {
         await interaction.showModal(modal);
     }
 };
-
 

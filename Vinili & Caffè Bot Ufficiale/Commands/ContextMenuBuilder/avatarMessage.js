@@ -18,7 +18,7 @@ module.exports = {
       });
     }
 
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: 1 << 6 });
     const messageAuthor = interaction.targetMessage?.author;
     const member = interaction.targetMessage?.member;
     if (!messageAuthor) {
@@ -43,5 +43,4 @@ module.exports = {
     return safeEditReply(interaction, { embeds: [embed] });
   }
 };
-
 

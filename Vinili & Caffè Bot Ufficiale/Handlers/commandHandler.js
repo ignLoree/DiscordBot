@@ -6,6 +6,7 @@ const ascii = require("ascii-table");
 const config = require("../config.json");
 const isDev = __dirname.toLowerCase().includes("dev bot");
 const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
+const envClientId = isDev ? process.env.DISCORD_CLIENT_ID_DEV : process.env.DISCORD_CLIENT_ID_OFFICIAL;
 
 function getBotRoots() {
     const cwd = process.cwd();
@@ -33,7 +34,7 @@ function listCommandFiles(root) {
     return out;
 }
 
-function shouldLogOnce(tag) {
+function shouldLogOnce() {
     return !isDev;
 }
 
@@ -109,12 +110,13 @@ module.exports = (client) => {
             global.logger.info(unified.toString());
             global.logger.info(`[COMMANDS] Loaded ${client.commands.size} SlashCommands.`);
         }
-        const rest = new REST({ version: "9" }).setToken(envToken || config.token);
+        const rest = new REST({ version: "9" }).setToken(envToken || process.env.DISCORD_TOKEN || config.token);
+        const targetClientId = envClientId || process.env.DISCORD_CLIENT_ID || config.clientid;
 
         try {
             client.logs.info(`[FUNCTION] Refreshing application (/) commands...`);
             await rest.put(
-                Routes.applicationCommands(config.clientid),
+                Routes.applicationCommands(targetClientId),
                 { body: client.commandArray }
             );
             client.logs.success(`[FUNCTION] Successfully reloaded application (/) commands.`);

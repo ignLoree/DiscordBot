@@ -92,12 +92,6 @@ function fontStackWithPrimary(primary, size, weight) {
   return `${prefix}${size}px ${stack}`;
 }
 
-function isTibetanChar(char) {
-  if (!char) return false;
-  const code = char.codePointAt(0);
-  return code >= 0x0f00 && code <= 0x0fff;
-}
-
 function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const value = text == null ? "" : String(text);
   const size = options.size || 16;

@@ -36,6 +36,7 @@ async function handleAutocomplete(interaction, client) {
 async function handleSlashCommand(interaction, client) {
     const command = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
     if (!command) return;
+    const expectsModal = command?.expectsModal === true;
     if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
@@ -52,7 +53,7 @@ async function handleSlashCommand(interaction, client) {
         || (Array.isArray(memberRoleArray) && memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID))
     );
 
-    if (!hasSlashCooldownBypass) {
+    if (!hasSlashCooldownBypass && !expectsModal) {
         const cooldownSeconds = await getUserCommandCooldownSeconds({
             guildId: interaction.guildId,
             userId: interaction.user.id,
@@ -121,11 +122,13 @@ async function handleSlashCommand(interaction, client) {
 
     let deferTimer;
     try {
-        deferTimer = setTimeout(() => {
-            if (!interaction.replied && !interaction.deferred) {
-                interaction.deferReply().catch(() => { });
-            }
-        }, 1500);
+        if (!expectsModal) {
+            deferTimer = setTimeout(() => {
+                if (!interaction.replied && !interaction.deferred) {
+                    interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
+                }
+            }, 1500);
+        }
         await runWithTimeout(
             Promise.resolve(command.execute(wrappedInteraction, client)),
             COMMAND_EXECUTION_TIMEOUT_MS,

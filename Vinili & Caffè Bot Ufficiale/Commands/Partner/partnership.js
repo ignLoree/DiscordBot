@@ -1,6 +1,7 @@
 ﻿const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
 module.exports = {
+    expectsModal: true,
     data: new SlashCommandBuilder()
         .setName('partnership')
         .setDescription('Invia una partnership per il tuo server.')

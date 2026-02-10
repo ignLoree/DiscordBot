@@ -143,36 +143,6 @@ module.exports = {
                 return safeReply(interaction, { content: `<:vegacheckmark:1443666279058772028> Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
             }
 
-            const baseDir = process.cwd();
-            const clearCacheByDir = (dirName) => {
-                const abs = path.join(baseDir, dirName);
-                if (!fs.existsSync(abs)) return;
-                for (const key of Object.keys(require.cache)) {
-                    if (key.startsWith(abs)) {
-                        delete require.cache[key];
-                    }
-                }
-            };
-            const reloadCommands = async () => {
-                clearCacheByDir('Commands');
-                const commandFolders = fs.readdirSync(path.join(baseDir, 'Commands'));
-                await interaction.client.handleCommands(commandFolders, './Commands');
-            };
-            const reloadPrefix = async () => {
-                clearCacheByDir('Prefix');
-                const folders = fs.readdirSync(path.join(baseDir, 'Prefix'));
-                await interaction.client.prefixCommands(folders, './Prefix');
-            };
-            const reloadEvents = () => {
-                clearCacheByDir('Events');
-                interaction.client.handleEvents('./Events');
-            };
-            const reloadTriggers = () => {
-                clearCacheByDir('Triggers');
-                const triggerFiles = fs.readdirSync(path.join(baseDir, 'Triggers')).filter((f) => f.endsWith('.js'));
-                interaction.client.handleTriggers(triggerFiles, './Triggers');
-            };
-
             const start = Date.now();
             pullLatest();
             await interaction.client.reloadScope(scope);

@@ -272,7 +272,7 @@ async function handleTicketInteraction(interaction) {
                 if (!interaction.deferred && !interaction.replied) {
                     try {
                         await interaction.deferReply({ flags: 1 << 6 });
-                    } catch (_) { }
+                    } catch { }
                 }
                 if (!interaction.client.ticketOpenLocks) {
                     interaction.client.ticketOpenLocks = new Set();
@@ -298,7 +298,11 @@ async function handleTicketInteraction(interaction) {
                         return true;
                     }
                 }
-                const existing = await Ticket.findOne({ userId: interaction.user.id, open: true });
+                const existing = await Ticket.findOne({
+                    guildId: interaction.guild.id,
+                    userId: interaction.user.id,
+                    open: true
+                });
                 if (existing) {
                     await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
                     return true;
@@ -392,17 +396,21 @@ async function handleTicketInteraction(interaction) {
                     global.logger.error(err);
                     return null;
                 });
-                const descriptionRow = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('ticket_open_desc_modal')
-                        .setLabel('📝 Invia Descrizione')
-                        .setStyle(ButtonStyle.Primary)
-                );
-                const descriptionPrompt = await channel.send({
-                    content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
-                    components: [descriptionRow]
-                }).catch(() => null);
+                let descriptionPrompt = null;
+                if (config.type === 'partnership') {
+                    const descriptionRow = new ActionRowBuilder().addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('ticket_open_desc_modal')
+                            .setLabel('📝 Invia Descrizione')
+                            .setStyle(ButtonStyle.Primary)
+                    );
+                    descriptionPrompt = await channel.send({
+                        content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
+                        components: [descriptionRow]
+                    }).catch(() => null);
+                }
                 await Ticket.create({
+                    guildId: interaction.guild.id,
                     userId: interaction.user.id,
                     channelId: channel.id,
                     ticketType: config.type,
@@ -696,7 +704,7 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
                     return true;
                 }
-                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch (e) { }
+                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
                 await closeTicket(interaction, null, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
                 return true;
             }
@@ -781,7 +789,7 @@ async function handleTicketInteraction(interaction) {
             }
             try {
                 await interaction.deferReply({ flags: 1 << 6 });
-            } catch (_) { }
+            } catch { }
             const description = interaction.fields.getTextInputValue('ticket_description')?.trim();
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
             if (!ticketDoc) {
@@ -813,7 +821,7 @@ async function handleTicketInteraction(interaction) {
             for (let i = 0; i < description.length; i += maxChunkLen) {
                 chunks.push(description.slice(i, i + maxChunkLen));
             }
-            const descriptionEmbeds = chunks.map((chunk, index) => {
+            const descriptionEmbeds = chunks.map((chunk) => {
                 const embed = new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription(`\`\`\`\n${chunk}\n\`\`\``);
@@ -834,7 +842,7 @@ async function handleTicketInteraction(interaction) {
             return true;
         }
         if (isTicketModal && interaction.customId === 'modal_close_ticket') {
-            try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch (e) { }
+            try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
             const motivo = interaction.fields.getTextInputValue('motivo');
             await closeTicket(interaction, motivo, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
             return true;

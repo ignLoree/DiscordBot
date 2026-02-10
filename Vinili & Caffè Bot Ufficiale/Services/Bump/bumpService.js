@@ -23,10 +23,16 @@ function createBumpReminderService(options) {
 
   async function sendReminder(client, guildId) {
     const serviceConfig = client?.config?.[configKey];
-    if (!serviceConfig?.reminderChannelId) return;
+    if (!serviceConfig?.reminderChannelId) {
+      global.logger.warn(`${errorTag} reminderChannelId missing for guild ${guildId}`);
+      return;
+    }
     const channel = client.channels.cache.get(serviceConfig.reminderChannelId)
       || await client.channels.fetch(serviceConfig.reminderChannelId).catch(() => null);
-    if (!channel) return;
+    if (!channel) {
+      global.logger.warn(`${errorTag} reminder channel not found (${serviceConfig.reminderChannelId}) for guild ${guildId}`);
+      return;
+    }
 
     const embedColor = client?.config?.embedInfo || '#6f4e37';
     await channel.send({
@@ -56,6 +62,7 @@ function createBumpReminderService(options) {
     const remaining = targetTime - now;
 
     if (remaining <= 0) {
+      bumpTimers.delete(guildId);
       void sendReminder(client, guildId);
       return;
     }
@@ -65,6 +72,8 @@ function createBumpReminderService(options) {
         await sendReminder(client, guildId);
       } catch (error) {
         global.logger.error(errorTag, error);
+      } finally {
+        bumpTimers.delete(guildId);
       }
     }, remaining);
 
@@ -113,7 +122,7 @@ const disboardService = createBumpReminderService({
   configKey: 'disboard',
   defaultCooldownMinutes: 120,
   mentionContent: '<@&1442569013074071644>',
-  title: "<:VC_Eye:1331619214410383381> **É L'ORA DEL `BUMP`!**",
+  title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**",
   url: 'https://disboard.org/it/server/1329080093599076474',
   description: '<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!',
   errorTag: '[DISBOARD REMINDER ERROR]'
@@ -124,11 +133,12 @@ const discadiaBumpService = createBumpReminderService({
   configKey: 'discadia',
   defaultCooldownMinutes: 1440,
   mentionContent: '<@&1442569013074071644>',
-  title: '<:VC_Eye:1331619214410383381> **É L\'ORA DEL `BUMP` SU DISCADIA!**',
+  title: '<:VC_Eye:1331619214410383381> **È L\'ORA DEL `BUMP` SU DISCADIA!**',
   url: 'https://discadia.com/server/viniliecaffe/',
   description: '<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!',
   errorTag: '[DISCADIA REMINDER ERROR]'
 });
+let discadiaVoteReminderLoopHandle = null;
 
 function getVoteCooldownMs(client) {
   const hours = client?.config?.discadiaVoteReminder?.cooldownHours || 24;
@@ -203,12 +213,14 @@ async function sendDueDiscadiaVoteReminders(client) {
 function startDiscadiaVoteReminderLoop(client) {
   const enabled = client?.config?.discadiaVoteReminder?.enabled;
   if (!enabled) return;
+  if (discadiaVoteReminderLoopHandle) return discadiaVoteReminderLoopHandle;
   const intervalMs = getVoteCheckIntervalMs(client);
-  setInterval(() => {
+  discadiaVoteReminderLoopHandle = setInterval(() => {
     sendDueDiscadiaVoteReminders(client).catch((error) => {
       global.logger.error('[DISCADIA VOTE REMINDER ERROR]', error);
     });
   }, intervalMs);
+  return discadiaVoteReminderLoopHandle;
 }
 
 module.exports = {
@@ -221,3 +233,4 @@ module.exports = {
   sendDueReminders: sendDueDiscadiaVoteReminders,
   startDiscadiaVoteReminderLoop
 };
+

@@ -1,4 +1,4 @@
-const { ChannelType, EmbedBuilder, PermissionsBitField } = require('discord.js');
+const { ChannelType, EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');

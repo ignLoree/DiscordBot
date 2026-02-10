@@ -26,7 +26,7 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply().catch(() => {})
+        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {})
 
         try {
         switch (sub) {
@@ -59,7 +59,7 @@ module.exports = {
                         .then(image => {
                             if (image) return "gif"
                             else return "png"
-                        }).catch(err => {
+                        }).catch(() => {
                             return "png"
                         })
                     emoji = `https://cdn.discordapp.com/emojis/${id}.${type}`
@@ -152,7 +152,7 @@ module.exports = {
                         })
                     }
                 })
-                collector.on('end', async reason => {
+                collector.on('end', async (_collected, reason) => {
                     if (reason === 'time') return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()

@@ -23,11 +23,6 @@ function getCustomStatus(presence) {
     return (custom?.state || '').toString();
 }
 
-function hasNonCustomActivities(presence) {
-    if (!presence?.activities?.length) return false;
-    return presence.activities.some((activity) => activity.type !== ActivityType.Custom);
-}
-
 function hasCustomActivity(presence) {
     if (!presence?.activities?.length) return false;
     return presence.activities.some((activity) => activity.type === ActivityType.Custom);
@@ -223,7 +218,7 @@ async function bootstrapSupporter(client) {
         let persisted = [];
         try {
             persisted = await SupporterStatus.find({ guildId: guild.id }).lean();
-        } catch (error) {
+        } catch {
             persisted = [];
         }
         for (const doc of persisted) {
@@ -267,7 +262,6 @@ function startCleanupClock(client, guildId) {
             if (!member.presence || ['offline', 'invisible'].includes(member.presence.status)) {
                 continue;
             }
-            const hasRole = member.roles.cache.has(ROLE_ID);
             const hasLink = hasInviteNow(member, userId);
             if (pendingChecks.has(userId)) {
                 continue;

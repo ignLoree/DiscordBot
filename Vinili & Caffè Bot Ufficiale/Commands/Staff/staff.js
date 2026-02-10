@@ -137,7 +137,7 @@ module.exports = {
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 })
         const channel = interaction.guild.channels.cache.get(IDs.channels.resignLog)
         const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnerOnboarding)
         if (sub === 'pex') {
@@ -246,6 +246,14 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 await Staff.save();
             } catch (err) {
                 global.logger.error(err);
+                return await safeEditReply(interaction, {
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                            .setColor("Red")
+                    ],
+                    flags: 1 << 6
+                });
             }
         }
         if (sub === 'depex') {
@@ -344,6 +352,14 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 await Staff.save();
             } catch (err) {
                 global.logger.error(err);
+                return await safeEditReply(interaction, {
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                            .setColor("Red")
+                    ],
+                    flags: 1 << 6
+                });
             }
         }
         if (sub === 'warn') {
@@ -381,6 +397,14 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 });
             } catch (err) {
                 global.logger.error(err);
+                return await safeEditReply(interaction, {
+                    embeds: [
+                        new EmbedBuilder()
+                            .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                            .setColor("Red")
+                    ],
+                    flags: 1 << 6
+                });
             }
         }
         if (group === 'resoconto') {
@@ -396,11 +420,6 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = ROLE_STAFF;
-                    const allowedRoles = [
-                        ROLE_COORDINATOR,
-                        ROLE_SUPERVISOR,
-                        ROLE_HIGH_STAFF
-                    ];
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
                             embeds: [
@@ -441,6 +460,14 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     });
                 } catch (err) {
                     global.logger.error(err);
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                                .setColor("Red")
+                        ],
+                        flags: 1 << 6
+                    });
                 }
             }
             if (sub === 'pm') {
@@ -488,6 +515,14 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     });
                 } catch (err) {
                     global.logger.error(err);
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription("<:vegax:1443934876440068179> Errore durante l'esecuzione del comando.")
+                                .setColor("Red")
+                        ],
+                        flags: 1 << 6
+                    });
                 }
             }
         }

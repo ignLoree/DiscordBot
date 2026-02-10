@@ -55,7 +55,7 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 })
         const utentee = interaction.options.getUser('user')
         const value = interaction.options.getInteger('amount')
         const motivo = interaction.options.getString('motivo')

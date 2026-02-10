@@ -47,20 +47,34 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 })
         const { options } = interaction
         const suggestmsg = options.getString('suggerimento')
         switch (sub) {
             case 'suggest':
                 try {
                     const suggestionchannel = interaction.guild.channels.cache.get(IDs.channels.suggestions);
-                    let counter = await SuggestionCount.findOne();
-                    if (!counter) {
-                        counter = await SuggestionCount.create({ count: 0 });
-                    }
-                    counter.count++;
-                    await counter.save();
-                    const SuggestionID = counter.count;
+                    const counterFilter = {
+                        GuildID: interaction.guild.id,
+                        ChannelID: '__counter__',
+                        Msg: '__counter__',
+                        AuthorID: '__system__'
+                    };
+                    const counter = await SuggestionCount.findOneAndUpdate(
+                        counterFilter,
+                        {
+                            $inc: { count: 1 },
+                            $setOnInsert: {
+                                Upmembers: [],
+                                Downmembers: [],
+                                upvotes: 0,
+                                downvotes: 0,
+                                sID: '__counter__'
+                            }
+                        },
+                        { new: true, upsert: true, setDefaultsOnInsert: true }
+                    );
+                    const SuggestionID = String(counter.count || 1);
                     const suggestionembed = new EmbedBuilder()
                         .setColor('#6f4e37')
                         .setDescription(`**<a:VC_CrownYellow:1330194103564238930> Mandato da:** 
@@ -99,7 +113,6 @@ Il tuo ID Suggerimento (sID) • **${SuggestionID}**`)
                         embeds: [suggestionembed],
                         components: [button]
                     });
-                    msg.createMessageComponentCollector();
                     await SuggestionCount.create({
                         GuildID: interaction.guild.id,
                         ChannelID: suggestionchannel.id,
@@ -222,5 +235,3 @@ Il tuo ID Suggerimento (sID) • **${SuggestionID}**`)
         }
     }
 }
-
-

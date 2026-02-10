@@ -29,7 +29,7 @@ function listPrefixFiles(root) {
     return out;
 }
 
-function shouldLogOnce(tag) {
+function shouldLogOnce() {
     return !isDev;
 }
 

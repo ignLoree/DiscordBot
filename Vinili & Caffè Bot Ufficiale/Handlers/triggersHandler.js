@@ -20,13 +20,13 @@ function listTriggerFiles(root) {
     return new Set(files);
 }
 
-function shouldLogOnce(tag) {
+function shouldLogOnce() {
     return !isDev;
 }
 
 module.exports = (client) => {
     if (!client._triggerHandlers) client._triggerHandlers = new Map();
-    client.handleTriggers = async (triggerFiles, pathArg) => {
+    client.handleTriggers = async () => {
         if (client._triggerHandlers && client._triggerHandlers.size) {
             for (const [eventName, handlers] of client._triggerHandlers.entries()) {
                 for (const handler of handlers) {
@@ -40,7 +40,7 @@ module.exports = (client) => {
         const devFiles = listTriggerFiles(roots.dev);
         const allFiles = new Set([...uffFiles, ...devFiles]);
         const isOfficial = roots.isOfficial;
-        const loadFiles = isOfficial ? Array.from(allFiles) : Array.from(devFiles);
+        const loadFiles = isOfficial ? Array.from(uffFiles) : Array.from(devFiles);
 
         const statusMap = new Map();
         let loaded = 0;
@@ -49,6 +49,7 @@ module.exports = (client) => {
                 const useDev = isOfficial && !uffFiles.has(file) && devFiles.has(file);
                 const baseRoot = useDev ? roots.dev : roots.official;
                 const triggerPath = path.join(baseRoot, "Triggers", file);
+                delete require.cache[require.resolve(triggerPath)];
                 const trigger = require(triggerPath);
                 if (!trigger?.name) {
                     statusMap.set(file, "Missing name");
