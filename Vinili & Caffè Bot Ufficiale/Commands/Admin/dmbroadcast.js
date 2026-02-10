@@ -74,6 +74,14 @@ module.exports = {
       new ActionRowBuilder().addComponents(messageInput)
     );
 
-    await interaction.showModal(modal);
+    try {
+      await interaction.showModal(modal);
+    } catch (error) {
+      if (error?.code === 10062) return;
+      return safeReply(interaction, {
+        content: "<:vegax:1443934876440068179> Non riesco ad aprire il modulo, riprova.",
+        flags: 1 << 6
+      });
+    }
   }
 };

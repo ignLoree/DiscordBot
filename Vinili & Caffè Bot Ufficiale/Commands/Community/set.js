@@ -65,6 +65,11 @@ module.exports = {
         content: `<:vegacheckmark:1443666279058772028> Lingua TTS personale impostata su \`${lingua}\`.`,
       });
     }
+
+    return safeReply(interaction, {
+      content: '<:vegax:1443934876440068179> Subcomando non valido.',
+      flags: 1 << 6
+    });
   }
 };
 

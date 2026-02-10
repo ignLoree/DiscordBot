@@ -117,5 +117,10 @@ module.exports = {
 
             return await safeEditReply(interaction, { embeds: [embedRemove] });
         }
+
+        return await safeEditReply(interaction, {
+            content: '<:vegax:1443934876440068179> Subcomando non valido.',
+            flags: 1 << 6
+        });
     }
 }

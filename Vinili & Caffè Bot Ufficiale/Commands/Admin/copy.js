@@ -161,6 +161,16 @@ module.exports = {
                         ], flags: 1 << 6
                     })
                 })
+                break;
+            default:
+                return safeEditReply(interaction, {
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor('Red')
+                            .setDescription("<:vegax:1443934876440068179> Subcomando non valido.")
+                    ],
+                    flags: 1 << 6
+                });
         }
         } catch (err) {
             global.logger.error(err);

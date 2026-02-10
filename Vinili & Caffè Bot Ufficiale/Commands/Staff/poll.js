@@ -358,6 +358,15 @@ ${answersText}
                 });
             }
         }
+
+        return await safeEditReply(interaction, {
+            embeds: [
+                new EmbedBuilder()
+                    .setDescription("<:vegax:1443934876440068179> Subcomando non valido.")
+                    .setColor("Red")
+            ],
+            flags: 1 << 6
+        });
     }
 };
 

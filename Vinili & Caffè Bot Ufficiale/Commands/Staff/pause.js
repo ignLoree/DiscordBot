@@ -99,6 +99,11 @@ module.exports = {
                 })
                 break;
             }
+            default:
+                return await safeEditReply(interaction, {
+                    content: '<:vegax:1443934876440068179> Subcomando non valido.',
+                    flags: 1 << 6
+                });
         }
     }
 }
