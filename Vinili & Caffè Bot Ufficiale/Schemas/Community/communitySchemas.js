@@ -41,7 +41,11 @@ expUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 const globalSettingsSchema = new Schema(
   {
     guildId: { type: String, required: true, unique: true, index: true },
-    expMultiplier: { type: Number, default: 2 }
+    expMultiplier: { type: Number, default: 2 },
+    expEventMultiplier: { type: Number, default: 1 },
+    expEventMultiplierExpiresAt: { type: Date, default: null },
+    expLockedChannelIds: { type: [String], default: [] },
+    expIgnoredRoleIds: { type: [String], default: [] }
   },
   { timestamps: true }
 );

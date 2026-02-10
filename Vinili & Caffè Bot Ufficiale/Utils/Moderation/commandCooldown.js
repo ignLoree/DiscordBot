@@ -75,6 +75,7 @@ function consumeUserCooldown({ client, guildId, userId, cooldownSeconds }) {
 }
 
 module.exports = {
+  computeCooldownSeconds,
   getUserCommandCooldownSeconds,
   consumeUserCooldown
 };

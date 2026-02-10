@@ -433,11 +433,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const partner = interaction.options.getString('partner');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = ROLE_STAFF;
-                    const allowedRoles = [
-                        ROLE_COORDINATOR,
-                        ROLE_SUPERVISOR,
-                        ROLE_HIGH_STAFF
-                    ];
+
                     if (!stafferMember.roles.cache.has(allowedRoleID)) {
                         return await safeEditReply(interaction, {
                             embeds: [
@@ -479,4 +475,3 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         }
     }
 }
-

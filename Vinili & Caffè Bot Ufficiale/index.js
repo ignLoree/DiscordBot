@@ -59,9 +59,12 @@ try {
 client.logs = require('./Utils/Moderation/logs');
 client.config = require('./config.json');
 const isDev = __dirname.toLowerCase().includes('dev bot');
-const envToken = isDev ? process.env.DISCORD_TOKEN_DEV : process.env.DISCORD_TOKEN_OFFICIAL;
-if (envToken) client.config.token = envToken;
-if (process.env.MONGO_URL) client.config.mongoURL = process.env.MONGO_URL;
+const envToken = isDev
+    ? (process.env.DISCORD_TOKEN_DEV || process.env.DISCORD_TOKEN)
+    : (process.env.DISCORD_TOKEN_OFFICIAL || process.env.DISCORD_TOKEN);
+const envMongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI;
+client.config.token = envToken || client.config.token;
+client.config.mongoURL = envMongoUrl || client.config.mongoURL;
 const currentTarget = isDev ? 'dev' : 'official';
 const currentTargetLabel = isDev ? 'Dev' : 'Ufficiale';
 global.botClient = client;

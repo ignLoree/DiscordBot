@@ -4,7 +4,7 @@ const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
 const IDs = require('../../Utils/Config/ids');
 
-const LOG_CHANNEL_ID = IDs.channels.commandError;
+const LOG_CHANNEL_ID = IDs.channels.ticketCloseLogAlt || IDs.channels.commandError;
 const STAFF_ROLE_ID = IDs.roles.staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.highStaff;
 const PARTNERMANAGER_ROLE_ID = IDs.roles.partnerManager;

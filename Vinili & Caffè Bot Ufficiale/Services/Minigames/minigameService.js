@@ -519,22 +519,77 @@ async function fetchPopularSong(cfg) {
   }
 }
 
+function normalizeArtistLabel(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\((feat|ft)\.?[^)]*\)/g, ' ')
+    .replace(/\b(feat|ft)\.?[\s\S]*$/g, ' ')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildArtistSearchTerms(artistName) {
+  const raw = String(artistName || '').trim();
+  const normalized = normalizeArtistLabel(raw);
+  const terms = new Set();
+  if (raw) terms.add(raw);
+  if (normalized && normalized !== raw.toLowerCase()) terms.add(normalized);
+  return Array.from(terms).filter(Boolean);
+}
+
+function pickBestArtistCandidate(candidates, artistName) {
+  if (!Array.isArray(candidates) || !candidates.length) return null;
+  const target = normalizeArtistLabel(artistName);
+  const scored = candidates
+    .map((artist) => {
+      const artistLabel = normalizeArtistLabel(artist?.name);
+      const hasCountry = Boolean(artist?.country || artist?.area?.name);
+      const mbScore = Number(artist?.score || 0);
+      let nameScore = 0;
+      if (artistLabel && target) {
+        if (artistLabel === target) nameScore = 120;
+        else if (artistLabel.includes(target) || target.includes(artistLabel)) nameScore = 60;
+      }
+      const countryBonus = hasCountry ? 30 : 0;
+      return { artist, score: mbScore + nameScore + countryBonus };
+    })
+    .sort((a, b) => b.score - a.score);
+  return scored[0]?.artist || null;
+}
+
 async function fetchArtistCountry(cfg, artistName) {
   if (!artistName) return null;
   const apiBase = cfg?.guessSong?.artistApiUrl || 'https://musicbrainz.org/ws/2/artist/?query=artist:';
-  const url = `${apiBase}${encodeURIComponent(artistName)}&fmt=json&limit=1`;
-  try {
-    const res = await axios.get(url, {
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'ViniliCaffeBot/1.0 (discord bot)'
-      }
-    });
-    const artist = Array.isArray(res?.data?.artists) ? res.data.artists[0] : null;
-    return artist?.country || artist?.area?.name || null;
-  } catch {
-    return null;
+  const terms = buildArtistSearchTerms(artistName);
+  const urls = [];
+
+  for (const term of terms) {
+    urls.push(`${apiBase}${encodeURIComponent(term)}&fmt=json&limit=8`);
   }
+  urls.push(`https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artistName)}&fmt=json&limit=8`);
+  urls.push(`https://musicbrainz.org/ws/2/artist/?query=artist:%22${encodeURIComponent(artistName)}%22&fmt=json&limit=8`);
+
+  const seen = new Set();
+  for (const url of urls) {
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    try {
+      const res = await axios.get(url, {
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'ViniliCaffeBot/1.0 (discord bot)'
+        }
+      });
+      const candidates = Array.isArray(res?.data?.artists) ? res.data.artists : [];
+      const artist = pickBestArtistCandidate(candidates, artistName);
+      const country = artist?.country || artist?.area?.name || null;
+      if (country) return country;
+    } catch {}
+  }
+  return null;
 }
 
 function isWithinAllowedWindow(now, start, end) {

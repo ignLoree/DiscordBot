@@ -1,5 +1,6 @@
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { GlobalSettings } = require('../../Schemas/Community/communitySchemas');
+const LevelHistory = require('../../Schemas/Community/levelHistorySchema');
 const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
@@ -7,7 +8,7 @@ const MESSAGE_EXP = 2;
 const VOICE_EXP_PER_MINUTE = 5;
 const DEFAULT_MULTIPLIER = 1;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
-const multiplierCache = new Map();
+const settingsCache = new Map();
 const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
 const PERKS_CHANNEL_ID = IDs.channels.infoPerks;
 const PERK_ROLE_ID = IDs.roles.mediaBypass;
@@ -89,14 +90,43 @@ function getLevelStep(level) {
 function getLevelInfo(totalExp) {
   const exp = Math.max(0, Math.floor(Number(totalExp || 0)));
   let level = 0;
+  let currentLevelExp = 0;
   let nextThreshold = 100;
   while (exp >= nextThreshold) {
     level += 1;
+    currentLevelExp = nextThreshold;
     const step = getLevelStep(level);
     nextThreshold = roundToNearest50(nextThreshold + Math.max(110, step));
   }
   const remainingToNext = Math.max(0, nextThreshold - exp);
-  return { level, nextLevelExp: nextThreshold, remainingToNext };
+  const span = Math.max(1, nextThreshold - currentLevelExp);
+  const progressPercent = Math.max(0, Math.min(100, Math.round(((exp - currentLevelExp) / span) * 100)));
+  return { level, currentLevelExp, nextLevelExp: nextThreshold, remainingToNext, progressPercent };
+}
+
+function getTotalExpForLevel(level) {
+  const targetLevel = Math.max(0, Math.floor(Number(level || 0)));
+  if (targetLevel <= 0) return 0;
+  let threshold = 100;
+  for (let l = 1; l < targetLevel; l += 1) {
+    threshold = roundToNearest50(threshold + Math.max(110, getLevelStep(l)));
+  }
+  return threshold;
+}
+
+function normalizeSettingsDoc(doc) {
+  const now = Date.now();
+  const expiresAtValue = doc?.expEventMultiplierExpiresAt ? new Date(doc.expEventMultiplierExpiresAt).getTime() : null;
+  const eventActive = Number.isFinite(expiresAtValue) && expiresAtValue > now;
+  const baseMultiplier = Number(doc?.expMultiplier || DEFAULT_MULTIPLIER);
+  const eventMultiplier = eventActive ? Number(doc?.expEventMultiplier || 1) : 1;
+  return {
+    baseMultiplier: Number.isFinite(baseMultiplier) && baseMultiplier > 0 ? baseMultiplier : DEFAULT_MULTIPLIER,
+    eventMultiplier: Number.isFinite(eventMultiplier) && eventMultiplier > 0 ? eventMultiplier : 1,
+    eventExpiresAt: eventActive ? new Date(expiresAtValue) : null,
+    lockedChannelIds: Array.isArray(doc?.expLockedChannelIds) ? doc.expLockedChannelIds.filter(Boolean) : [],
+    ignoredRoleIds: Array.isArray(doc?.expIgnoredRoleIds) ? doc.expIgnoredRoleIds.filter(Boolean) : []
+  };
 }
 
 function ensureWeekly(doc, now) {
@@ -105,6 +135,72 @@ function ensureWeekly(doc, now) {
     doc.weeklyKey = weekKey;
     doc.weeklyExp = 0;
   }
+}
+
+function invalidateSettingsCache(guildId) {
+  if (guildId) settingsCache.delete(guildId);
+}
+
+async function getGuildExpSettings(guildId) {
+  if (!guildId) {
+    return {
+      baseMultiplier: DEFAULT_MULTIPLIER,
+      eventMultiplier: 1,
+      effectiveMultiplier: DEFAULT_MULTIPLIER,
+      eventExpiresAt: null,
+      lockedChannelIds: [],
+      ignoredRoleIds: []
+    };
+  }
+  const cached = settingsCache.get(guildId);
+  const now = Date.now();
+  if (cached && (now - cached.at) < MULTIPLIER_CACHE_TTL_MS) {
+    return cached.value;
+  }
+  let doc = null;
+  try {
+    doc = await GlobalSettings.findOneAndUpdate(
+      { guildId },
+      { $setOnInsert: { expMultiplier: DEFAULT_MULTIPLIER, expEventMultiplier: 1, expEventMultiplierExpiresAt: null, expLockedChannelIds: [], expIgnoredRoleIds: [] } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  } catch {}
+
+  if (doc?.expEventMultiplierExpiresAt && new Date(doc.expEventMultiplierExpiresAt).getTime() <= now) {
+    try {
+      doc = await GlobalSettings.findOneAndUpdate(
+        { guildId },
+        { $set: { expEventMultiplier: 1, expEventMultiplierExpiresAt: null } },
+        { new: true }
+      );
+    } catch {}
+  }
+
+  const normalized = normalizeSettingsDoc(doc);
+  const value = {
+    ...normalized,
+    effectiveMultiplier: normalized.baseMultiplier * normalized.eventMultiplier
+  };
+  settingsCache.set(guildId, { value, at: now });
+  return value;
+}
+
+async function recordLevelHistory({ guildId, userId, actorId = null, action = 'update', beforeExp = 0, afterExp = 0, note = null }) {
+  if (!guildId || !userId) return null;
+  const beforeLevel = getLevelInfo(beforeExp).level;
+  const afterLevel = getLevelInfo(afterExp).level;
+  return LevelHistory.create({
+    guildId,
+    userId,
+    actorId,
+    action,
+    beforeExp: Number(beforeExp || 0),
+    afterExp: Number(afterExp || 0),
+    beforeLevel,
+    afterLevel,
+    deltaExp: Number(afterExp || 0) - Number(beforeExp || 0),
+    note: note ? String(note).slice(0, 500) : null
+  }).catch(() => null);
 }
 
 async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAmountOverride = null) {
@@ -121,13 +217,14 @@ async function addExp(guildId, userId, amount, applyMultiplier = false, weeklyAm
     ? Math.max(0, Math.floor(Number(weeklyAmountOverride)))
     : effective;
   if (effective === 0 && weeklyEffective === 0) return doc;
-  const prevLevel = getLevelInfo(doc.totalExp).level;
+  const beforeExp = Number(doc.totalExp || 0);
+  const prevLevel = getLevelInfo(beforeExp).level;
   doc.totalExp = Number(doc.totalExp || 0) + effective;
   doc.weeklyExp = Number(doc.weeklyExp || 0) + weeklyEffective;
   const levelInfo = getLevelInfo(doc.totalExp);
   doc.level = levelInfo.level;
   await doc.save();
-  return { doc, prevLevel, levelInfo };
+  return { doc, prevLevel, levelInfo, beforeExp, afterExp: Number(doc.totalExp || 0) };
 }
 
 function getRoleMultiplier(member) {
@@ -237,6 +334,16 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
   const result = await addExp(guild.id, userId, effectiveAmount, false, weeklyAmount);
   if (!result || !result.levelInfo) return result;
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
+    await recordLevelHistory({
+      guildId: guild.id,
+      userId,
+      action: 'level_up_auto',
+      beforeExp: result.beforeExp,
+      afterExp: result.afterExp,
+      note: `Level up ${(result.prevLevel ?? 0)} -> ${result.levelInfo.level}`
+    });
+  }
+  if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
     if (member) {
       const level = result.levelInfo.level;
@@ -267,24 +374,8 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
 }
 
 async function getGlobalMultiplier(guildId) {
-  if (!guildId) return DEFAULT_MULTIPLIER;
-  const cached = multiplierCache.get(guildId);
-  const now = Date.now();
-  if (cached && (now - cached.at) < MULTIPLIER_CACHE_TTL_MS) {
-    return cached.value;
-  }
-  let value = DEFAULT_MULTIPLIER;
-  try {
-    const doc = await GlobalSettings.findOneAndUpdate(
-      { guildId },
-      { $setOnInsert: { expMultiplier: DEFAULT_MULTIPLIER } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    value = Number(doc?.expMultiplier || DEFAULT_MULTIPLIER);
-  } catch {}
-  if (!Number.isFinite(value) || value <= 0) value = DEFAULT_MULTIPLIER;
-  multiplierCache.set(guildId, { value, at: now });
-  return value;
+  const settings = await getGuildExpSettings(guildId);
+  return settings.effectiveMultiplier;
 }
 
 async function setGlobalMultiplier(guildId, multiplier) {
@@ -296,9 +387,73 @@ async function setGlobalMultiplier(guildId, multiplier) {
     { $set: { expMultiplier: value } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
-  const stored = Number(doc?.expMultiplier || value);
-  multiplierCache.set(guildId, { value: stored, at: Date.now() });
-  return stored;
+  invalidateSettingsCache(guildId);
+  const settings = normalizeSettingsDoc(doc);
+  return settings.baseMultiplier;
+}
+
+async function setTemporaryEventMultiplier(guildId, multiplier, durationMs) {
+  if (!guildId) return null;
+  let value = Number(multiplier);
+  if (!Number.isFinite(value) || value <= 0) value = 1;
+  const safeDurationMs = Math.max(60 * 1000, Number(durationMs || 60 * 1000));
+  const expiresAt = new Date(Date.now() + safeDurationMs);
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    { $set: { expEventMultiplier: value, expEventMultiplierExpiresAt: expiresAt } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+  return { multiplier: value, expiresAt };
+}
+
+async function setLevelChannelLocked(guildId, channelId, locked = true) {
+  if (!guildId || !channelId) return [];
+  const current = await getGuildExpSettings(guildId);
+  const set = new Set(current.lockedChannelIds);
+  if (locked) set.add(channelId);
+  else set.delete(channelId);
+  const next = Array.from(set);
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    { $set: { expLockedChannelIds: next } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+  return next;
+}
+
+async function setRoleIgnored(guildId, roleId, ignored = true) {
+  if (!guildId || !roleId) return [];
+  const current = await getGuildExpSettings(guildId);
+  const set = new Set(current.ignoredRoleIds);
+  if (ignored) set.add(roleId);
+  else set.delete(roleId);
+  const next = Array.from(set);
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    { $set: { expIgnoredRoleIds: next } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+  return next;
+}
+
+async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
+  const settings = await getGuildExpSettings(guildId);
+  if (channelId && settings.lockedChannelIds.includes(channelId)) return true;
+  if (member?.roles?.cache && settings.ignoredRoleIds.length > 0) {
+    for (const roleId of settings.ignoredRoleIds) {
+      if (member.roles.cache.has(roleId)) return true;
+    }
+  }
+  return false;
+}
+
+async function getRecentLevelHistory(guildId, userId, limit = 10) {
+  if (!guildId || !userId) return [];
+  const safeLimit = Math.max(1, Math.min(30, Number(limit || 10)));
+  return LevelHistory.find({ guildId, userId }).sort({ createdAt: -1 }).limit(safeLimit).lean().catch(() => []);
 }
 
 async function getUserExpStats(guildId, userId) {
@@ -315,8 +470,10 @@ async function getUserExpStats(guildId, userId) {
     totalExp: Number(doc.totalExp || 0),
     weeklyExp: Number(doc.weeklyExp || 0),
     level: levelInfo.level,
+    currentLevelExp: levelInfo.currentLevelExp,
     nextLevelExp: levelInfo.nextLevelExp,
-    remainingToNext: levelInfo.remainingToNext
+    remainingToNext: levelInfo.remainingToNext,
+    progressPercent: levelInfo.progressPercent
   };
 }
 
@@ -345,8 +502,16 @@ module.exports = {
   getUserExpStats,
   getUserRanks,
   getLevelInfo,
+  getTotalExpForLevel,
   getGlobalMultiplier,
   setGlobalMultiplier,
+  setTemporaryEventMultiplier,
+  getGuildExpSettings,
+  setLevelChannelLocked,
+  setRoleIgnored,
+  shouldIgnoreExpForMember,
+  recordLevelHistory,
+  getRecentLevelHistory,
   getRoleMultiplier,
   getCurrentWeekKey,
   ROLE_MULTIPLIERS

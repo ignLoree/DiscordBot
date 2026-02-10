@@ -3,6 +3,13 @@ const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 
 const pendingRoleGrants = new Map();
 
+async function replyEphemeral(interaction, payload) {
+  if (interaction?.replied || interaction?.deferred) {
+    return interaction.followUp(payload).catch(() => {});
+  }
+  return interaction.reply(payload).catch(() => {});
+}
+
 function parseRoleActionId(customId) {
   const [head, ownerId, roleId] = String(customId || '').split(':');
   if (!head || !ownerId || !roleId) return null;
@@ -256,7 +263,13 @@ async function handleRoleActionButton(interaction) {
     .setMaxLength(200);
 
   const modal = new ModalBuilder().setCustomId(modalId).setTitle(title).addComponents(new ActionRowBuilder().addComponents(input));
-  await interaction.showModal(modal).catch(() => {});
+  const shown = await interaction.showModal(modal).then(() => true).catch(() => false);
+  if (!shown) {
+    await replyEphemeral(interaction, {
+      content: '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.',
+      flags: 1 << 6
+    });
+  }
   return true;
 }
 
@@ -467,7 +480,13 @@ async function handleCustomVocButton(interaction) {
     .setPlaceholder(head === 'customvoc_emoji' ? 'Es: 🎧' : 'Es: privata-lore')
     .setMaxLength(head === 'customvoc_emoji' ? 32 : 90);
   modal.addComponents(new ActionRowBuilder().addComponents(input));
-  await interaction.showModal(modal).catch(() => {});
+  const shown = await interaction.showModal(modal).then(() => true).catch(() => false);
+  if (!shown) {
+    await replyEphemeral(interaction, {
+      content: '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.',
+      flags: 1 << 6
+    });
+  }
   return true;
 }
 
@@ -635,5 +654,4 @@ async function handleCustomRoleInteraction(interaction) {
 }
 
 module.exports = { handleCustomRoleInteraction, createCustomRoleGrantRequest };
-
 

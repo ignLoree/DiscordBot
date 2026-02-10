@@ -1,5 +1,5 @@
 const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
-const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE } = require('./expService');
+const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember } = require('./expService');
 const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
@@ -88,10 +88,18 @@ async function recordMessageActivity(message) {
   doc.messages.daily = Number(doc.messages.daily || 0) + 1;
   doc.messages.weekly = Number(doc.messages.weekly || 0) + 1;
   await doc.save();
-  await addExpWithLevel(message.guild, message.author.id, MESSAGE_EXP, true);
+  const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+  const ignored = await shouldIgnoreExpForMember({
+    guildId: message.guild.id,
+    member,
+    channelId: message.channel?.id || message.channelId || null
+  });
+  if (!ignored) {
+    await addExpWithLevel(message.guild, message.author.id, MESSAGE_EXP, true);
+  }
 }
 
-async function recordVoiceSessionEnd(doc, now, guild) {
+async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
   const startedAt = doc.voice.sessionStartedAt;
   if (!startedAt) return;
   const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(startedAt).getTime()) / 1000));
@@ -101,7 +109,7 @@ async function recordVoiceSessionEnd(doc, now, guild) {
   doc.voice.weeklySeconds = Number(doc.voice.weeklySeconds || 0) + elapsedSeconds;
   doc.voice.sessionStartedAt = null;
   const minutes = Math.floor(elapsedSeconds / 60);
-  if (minutes > 0) {
+  if (!skipExp && minutes > 0) {
     await addExpWithLevel(guild, doc.userId, minutes * VOICE_EXP_PER_MINUTE, true);
   }
 }
@@ -139,7 +147,12 @@ async function handleVoiceActivity(oldState, newState) {
       await doc.save();
       return;
     }
-    await recordVoiceSessionEnd(doc, now, member.guild);
+    const ignored = await shouldIgnoreExpForMember({
+      guildId,
+      member,
+      channelId: oldChannel?.id || null
+    });
+    await recordVoiceSessionEnd(doc, now, member.guild, ignored);
     await doc.save();
     return;
   }
@@ -147,7 +160,12 @@ async function handleVoiceActivity(oldState, newState) {
   if (wasInVoice && isInVoice && oldState.channelId !== newState.channelId) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
     if (canRoleUseVoiceChannel(oldChannel, role)) {
-      await recordVoiceSessionEnd(doc, now, member.guild);
+      const ignored = await shouldIgnoreExpForMember({
+        guildId,
+        member,
+        channelId: oldChannel?.id || null
+      });
+      await recordVoiceSessionEnd(doc, now, member.guild, ignored);
     } else {
       doc.voice.sessionStartedAt = null;
     }

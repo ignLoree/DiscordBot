@@ -2,6 +2,7 @@ const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFl
 const GuildSettings = require('../Schemas/GuildSettings/guildSettingsSchema');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
+const MentionReaction = require('../Schemas/Community/mentionReactionSchema');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { recordBump } = require('../Services/Bump/bumpService');
@@ -385,6 +386,11 @@ module.exports = {
                 logEventError(client, 'AFK ERROR', error);
             }
             try {
+                await handleMentionAutoReactions(message);
+            } catch (error) {
+                logEventError(client, 'MENTION REACTION ERROR', error);
+            }
+            try {
                 await handleCounting(message, client);
             } catch (error) {
                 logEventError(client, 'COUNTING ERROR', error);
@@ -726,6 +732,43 @@ async function handleAfk(message) {
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
         await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
+    }
+}
+
+function resolveReactionToken(token) {
+    const value = String(token || '');
+    if (value.startsWith('custom:')) return value.slice('custom:'.length);
+    if (value.startsWith('unicode:')) return value.slice('unicode:'.length);
+    return value;
+}
+
+async function handleMentionAutoReactions(message) {
+    const mentionedUsers = message.mentions?.users;
+    if (!mentionedUsers || mentionedUsers.size === 0) return;
+    const targetIds = Array.from(new Set(
+        mentionedUsers
+            .filter((user) => !user.bot)
+            .map((user) => user.id)
+    ));
+    if (!targetIds.length) return;
+    const docs = await MentionReaction.find({
+        guildId: message.guild.id,
+        userId: { $in: targetIds }
+    }).lean().catch(() => []);
+    if (!Array.isArray(docs) || !docs.length) return;
+    const uniqueTokens = new Set();
+    for (const doc of docs) {
+        const list = Array.isArray(doc?.reactions) ? doc.reactions : [];
+        for (const token of list) {
+            if (token) uniqueTokens.add(String(token));
+            if (uniqueTokens.size >= 10) break;
+        }
+        if (uniqueTokens.size >= 10) break;
+    }
+    for (const token of uniqueTokens) {
+        const emoji = resolveReactionToken(token);
+        if (!emoji) continue;
+        await message.react(emoji).catch(() => { });
     }
 }
 async function handleCounting(message, client) {

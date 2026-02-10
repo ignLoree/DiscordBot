@@ -29,7 +29,7 @@ async function handleTicketInteraction(interaction) {
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && handledModals.has(interaction.customId);
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
-    const LOG_CHANNEL = IDs.channels.commandError;
+    const LOG_CHANNEL = IDs.channels.ticketCloseLogAlt || IDs.channels.commandError;
     const ROLE_STAFF = IDs.roles.staff;
     const ROLE_HIGHSTAFF = IDs.roles.highStaff;
     const ROLE_PARTNERMANAGER = IDs.roles.partnerManager;
@@ -570,9 +570,16 @@ async function handleTicketInteraction(interaction) {
                     .setMinLength(8)
                     .setMaxLength(1000);
                 modal.addComponents(new ActionRowBuilder().addComponents(input));
-                await interaction.showModal(modal).catch(err => {
+                const shown = await interaction.showModal(modal).then(() => true).catch(err => {
                     global.logger.error(err);
+                    return false;
                 });
+                if (!shown) {
+                    await safeReply(interaction, {
+                        embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.')],
+                        flags: 1 << 6
+                    });
+                }
                 return true;
             }
             if (interaction.customId === 'unclaim') {
@@ -655,9 +662,16 @@ async function handleTicketInteraction(interaction) {
                 const modal = new ModalBuilder().setCustomId('modal_close_ticket').setTitle('Chiudi Ticket con Motivo');
                 const input = new TextInputBuilder().setCustomId('motivo').setLabel('Motivo della chiusura').setStyle(TextInputStyle.Paragraph).setRequired(true);
                 modal.addComponents(new ActionRowBuilder().addComponents(input));
-                await interaction.showModal(modal).catch(err => {
+                const shown = await interaction.showModal(modal).then(() => true).catch(err => {
                     global.logger.error(err);
+                    return false;
                 });
+                if (!shown) {
+                    await safeReply(interaction, {
+                        embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.')],
+                        flags: 1 << 6
+                    });
+                }
                 return true;
             }
             if (interaction.customId === 'close_ticket') {
@@ -711,7 +725,8 @@ async function handleTicketInteraction(interaction) {
                     ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
                     : 'Data non disponibile';
                 const motivo = ticketDoc.closeReason || 'Nessun motivo inserito';
-                const logChannel = interaction.guild.channels.cache.get(IDs.channels.ticketCloseLogAlt);
+                const logChannel = interaction.guild.channels.cache.get(IDs.channels.ticketCloseLogAlt)
+                    || await interaction.guild.channels.fetch(IDs.channels.ticketCloseLogAlt).catch(() => null);
                 if (logChannel) {
                     await sendTranscriptWithBrowserLink(logChannel, {
                         embeds: [
@@ -856,7 +871,8 @@ async function handleTicketInteraction(interaction) {
             const createdAtFormatted = ticket.createdAt
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';
-            const logChannel = targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL);
+            const logChannel = targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL)
+                || await targetInteraction.guild?.channels?.fetch(LOG_CHANNEL).catch(() => null);
             if (logChannel) {
                 await sendTranscriptWithBrowserLink(logChannel, {
                     files: transcriptHtmlPath

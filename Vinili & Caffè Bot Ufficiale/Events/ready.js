@@ -39,9 +39,9 @@ module.exports = {
     async execute(client) {
         let logOnce = true;
         client.setMaxListeners(client.config.eventListeners || 20);
-        const mongodbURL = client.config.mongoURL;
+        const mongodbURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
         if (!mongodbURL) {
-            client.logs.error('[DATABASE] No MongoDB URL has been provided. Double check your config.json file and make sure it is correct.');
+            client.logs.error('[DATABASE] No MongoDB URL has been provided. Set MONGO_URL (or MONGODB_URI) or fallback config.mongoURL.');
             return;
         }
         try {
