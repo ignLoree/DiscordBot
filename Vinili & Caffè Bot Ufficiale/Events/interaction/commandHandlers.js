@@ -132,6 +132,7 @@ async function handleSlashCommand(interaction, client) {
     const safeReply = async (payload) => safeReplyHelper(interaction, payload);
 
     let deferTimer;
+    let commandFailed = false;
     try {
         if (!expectsModal) {
             deferTimer = setTimeout(() => {
@@ -145,12 +146,8 @@ async function handleSlashCommand(interaction, client) {
             COMMAND_EXECUTION_TIMEOUT_MS,
             `app:${interaction.commandName || 'unknown'}`
         );
-        if (!expectsModal && interaction.deferred && !interaction.replied) {
-            await interaction.editReply({
-                content: '<:vegacheckmark:1443666279058772028> Comando eseguito.'
-            }).catch(() => { });
-        }
     } catch (error) {
+        commandFailed = true;
         if (error?.code === 'COMMAND_TIMEOUT') {
             global.logger.warn(`[INTERACTION TIMEOUT] ${interaction.commandName || 'unknown'} by ${interaction.user?.tag || interaction.user?.id}`);
         }
@@ -246,6 +243,13 @@ async function handleSlashCommand(interaction, client) {
             flags: 1 << 6
         });
     } finally {
+        // Hard safety net: never leave deferred interactions stuck on "thinking..."
+        if (!expectsModal && interaction.deferred && !interaction.replied) {
+            const fallbackPayload = commandFailed
+                ? { content: '<:vegax:1443934876440068179> Comando terminato con errore.' }
+                : { content: '<:vegacheckmark:1443666279058772028> Comando eseguito.' };
+            await interaction.editReply(fallbackPayload).catch(() => { });
+        }
         if (deferTimer) clearTimeout(deferTimer);
         client.interactionCommandLocks.delete(interactionLockId);
     }
