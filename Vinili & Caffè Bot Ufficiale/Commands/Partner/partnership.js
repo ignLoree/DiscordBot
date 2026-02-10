@@ -1,4 +1,5 @@
 const { safeReply } = require('../../Utils/Moderation/reply');
+const { hasAnyRole } = require('../../Utils/Moderation/commandPermissions');
 const { EmbedBuilder, SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
 const IDs = require('../../Utils/Config/ids');
@@ -50,6 +51,5 @@ module.exports = {
         await interaction.showModal(modal);
     }
 }
-
 
 
