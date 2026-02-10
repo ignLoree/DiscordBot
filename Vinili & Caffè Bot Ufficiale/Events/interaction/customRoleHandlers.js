@@ -428,7 +428,7 @@ async function handleAddRemoveSelectMenus(interaction) {
 
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
-    .replace(/[^a-zA-Z0-9 _-]/g, '')
+    .replace(/[^\p{L}\p{N} _\-',’]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
   if (!clean) return 'privata';
