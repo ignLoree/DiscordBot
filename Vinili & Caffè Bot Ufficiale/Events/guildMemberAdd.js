@@ -295,7 +295,7 @@ module.exports = {
                     .setColor('#6f4e37')
                     .setTitle('<a:ThankYou:1329504268369002507> Grazie per gli inviti!')
                     .setDescription(
-                        `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto i ruoli <@&${INVITE_REWARD_ROLE_ID}> + <@&${INVITE_EXTRA_ROLE_ID}>.\n` +
+                        `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto il ruolo <@&${INVITE_REWARD_ROLE_ID}>` +
                         `<a:Boost_Cycle:1329504283007385642> Controlla <#${INFO_PERKS_CHANNEL_ID}> per i nuovi vantaggi.`
                     );
                 await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
