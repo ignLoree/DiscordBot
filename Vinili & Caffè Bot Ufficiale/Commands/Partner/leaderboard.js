@@ -88,13 +88,11 @@ module.exports = {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId('prev')
-                    .setLabel('Precedente')
                     .setEmoji(`<a:vegaleftarrow:1462914743416131816>`)
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === 1),
                 new ButtonBuilder()
                     .setCustomId('next')
-                    .setLabel('Prossima')
                     .setEmoji('<a:vegarightarrow:1443673039156936837>')
                     .setStyle(ButtonStyle.Primary)
                     .setDisabled(currentPage === totalPages)
