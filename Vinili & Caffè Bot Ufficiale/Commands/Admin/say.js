@@ -10,7 +10,7 @@ module.exports = {
         .addStringOption(option => option.setName('message_link').setDescription('Link del messaggio a cui rispondere').setRequired(false)),
 
     async execute(interaction) {
-        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {})
+        await interaction.deferReply().catch(() => {})
         try {
             const mensaje = interaction.options.getString('messaggio');
             const messageId = interaction.options.getString('message_id')?.trim();

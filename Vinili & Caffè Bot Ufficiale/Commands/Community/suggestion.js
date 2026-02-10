@@ -47,7 +47,7 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply({ flags: 1 << 6 })
+        await interaction.deferReply()
         const { options } = interaction
         const suggestmsg = options.getString('suggerimento')
         switch (sub) {

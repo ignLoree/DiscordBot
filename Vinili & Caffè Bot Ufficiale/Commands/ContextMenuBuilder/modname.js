@@ -19,7 +19,7 @@ module.exports = {
       });
     }
 
-    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+    await interaction.deferReply().catch(() => {});
 
     try {
       const targetUser = interaction.targetUser;

@@ -544,7 +544,7 @@ async function handleCustomVocModal(interaction) {
       return true;
     }
 
-    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+    await interaction.deferReply().catch(() => {});
 
     const channel = interaction.guild?.channels?.cache?.get(channelId)
       || await interaction.guild?.channels?.fetch(channelId).catch(() => null);

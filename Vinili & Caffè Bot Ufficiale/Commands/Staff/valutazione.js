@@ -49,7 +49,7 @@ module.exports = {
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply({ flags: 1 << 6 })
+        await interaction.deferReply()
         const utentee = interaction.options.getUser('staffer')
         const reason = interaction.options.getString("motivo")
         const channel = interaction.guild.channels.cache.get(IDs.channels.staffValutazioniLog)

@@ -78,8 +78,7 @@ module.exports = {
 
             if (scope === 'full') {
                 const targets = target === 'both' ? ['official', 'dev'] : [target];
-
-                // Ack first, then write flags (prevents ephemeral stuck when process restarts quickly)
+                
                 await safeReply(interaction, {
                     content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`,
                     flags: 1 << 6

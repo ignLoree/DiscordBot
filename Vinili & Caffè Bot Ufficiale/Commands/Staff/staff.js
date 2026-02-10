@@ -137,7 +137,7 @@ module.exports = {
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply({ flags: 1 << 6 })
+        await interaction.deferReply()
         const channel = interaction.guild.channels.cache.get(IDs.channels.resignLog)
         const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnerOnboarding)
         if (sub === 'pex') {

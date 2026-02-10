@@ -26,7 +26,7 @@ module.exports = {
 
     async execute(interaction) {
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {})
+        await interaction.deferReply().catch(() => {})
 
         try {
         switch (sub) {

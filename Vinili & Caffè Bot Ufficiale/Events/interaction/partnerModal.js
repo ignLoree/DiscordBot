@@ -27,7 +27,7 @@ function isValidServerName(name) {
 
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
-    await interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
+    await interaction.deferReply().catch(() => { });
     if (!interaction.member.roles.cache.has(IDs.roles.partnerManager)) {
         await interaction.editReply({
             embeds: [

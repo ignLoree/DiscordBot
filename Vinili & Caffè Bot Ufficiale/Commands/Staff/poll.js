@@ -54,7 +54,7 @@ module.exports = {
 
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand()
-        await interaction.deferReply({ flags: 1 << 6 })
+        await interaction.deferReply()
 
         if (subcommand === "create") {
             try {

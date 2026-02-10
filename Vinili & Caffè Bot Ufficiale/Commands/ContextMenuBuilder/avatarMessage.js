@@ -18,7 +18,7 @@ module.exports = {
       });
     }
 
-    await interaction.deferReply({ flags: 1 << 6 });
+    await interaction.deferReply();
     const messageAuthor = interaction.targetMessage?.author;
     const member = interaction.targetMessage?.member;
     if (!messageAuthor) {

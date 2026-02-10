@@ -94,7 +94,7 @@ async function handleDmBroadcastModal(interaction, client) {
     return true;
   }
 
-  await interaction.deferReply({ flags: 1 << 6 });
+  await interaction.deferReply();
 
   const staffRoleIds = getStaffRoleIds(client);
   const noDmSet = await getNoDmSet(interaction.guild.id);
