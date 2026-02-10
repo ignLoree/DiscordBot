@@ -151,7 +151,7 @@ async function handleSlashCommand(interaction, client) {
         if (!expectsModal) {
             deferTimer = setTimeout(() => {
                 if (!interaction.replied && !interaction.deferred) {
-                    interaction.deferReply({ flags: 1 << 6 }).catch(() => { });
+                    interaction.deferReply().catch(() => { });
                 }
             }, 1500);
         }
