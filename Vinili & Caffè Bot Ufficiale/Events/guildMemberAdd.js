@@ -174,7 +174,7 @@ module.exports = {
                         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                         .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                         .setColor('#6f4e37')
-                        .setFooter({ text: `🚀 Ora siamo in ${member.guild.memberCount} ?` });
+                        .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
 
                     await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
                 }
@@ -188,7 +188,7 @@ module.exports = {
                             }).catch(() => { });
                         } else {
                             await inviteChannel.send({
-                                content: `<:VC_Reply:1468262952934314131> Bot entrato con il link <${info.link}>,\n-# ? <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                                content: `<:VC_Reply:1468262952934314131> Bot entrato con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                             }).catch(() => { });
                         }
                     } catch {
@@ -279,7 +279,7 @@ module.exports = {
                 .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
                 .setImage(`https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db`)
                 .setColor('#6f4e37')
-                .setFooter({ text: `🚀 Ora siamo in ${member.guild.memberCount} ?` });
+                .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
             if (channelwelcome) {
                 await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
             }
@@ -308,7 +308,7 @@ module.exports = {
                     return;
                 }
                 await channelwelcome.send({
-                    content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ? <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
+                    content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# ⟢ <a:VC_Arrow:1448672967721615452> __invitato da__ ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`
                 }).catch(() => { });
             }
         } catch (error) {
