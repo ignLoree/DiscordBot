@@ -831,9 +831,17 @@ async function handleAutoResponders(message) {
 async function handleMentionAutoReactions(message) {
     const mentionedUsers = message.mentions?.users;
     if (!mentionedUsers || mentionedUsers.size === 0) return;
+    const explicitMentionIds = new Set();
+    const mentionRegex = /<@!?(\d{16,20})>/g;
+    let match = null;
+    const content = String(message.content || '');
+    while ((match = mentionRegex.exec(content)) !== null) {
+        explicitMentionIds.add(String(match[1]));
+    }
+    if (!explicitMentionIds.size) return;
     const targetIds = Array.from(new Set(
         mentionedUsers
-            .filter((user) => !user.bot)
+            .filter((user) => !user.bot && explicitMentionIds.has(user.id))
             .map((user) => user.id)
     ));
     if (!targetIds.length) return;
