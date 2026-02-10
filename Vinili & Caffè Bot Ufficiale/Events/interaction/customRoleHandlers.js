@@ -435,6 +435,27 @@ function sanitizeVoiceBaseName(name) {
   return clean;
 }
 
+function parseCustomVocName(rawName) {
+  const name = String(rawName || '').trim();
+  if (!name) return { emoji: '', baseName: 'privata' };
+
+  const separators = ['\uFE32', 'ï¸²', '︲', 'Ã¯Â¸Â²', 'ÃƒÂ¯Ã‚Â¸Ã‚Â²'];
+  for (const separator of separators) {
+    if (!name.includes(separator)) continue;
+    const parts = name.split(separator);
+    const left = String(parts.shift() || '')
+      .replace(/^\u0F04/u, '')
+      .replace(/^à¼„/u, '')
+      .replace(/^Ã Â¼â€ž/u, '')
+      .replace(/^ÃƒÂ Ã‚Â¼Ã¢â‚¬Å¾/u, '')
+      .trim();
+    const right = parts.join(separator).trim();
+    return { emoji: left, baseName: right || 'privata' };
+  }
+
+  return { emoji: '', baseName: name };
+}
+
 function buildCustomVocName(emoji, baseName) {
   const safeEmoji = String(emoji || '🎧').trim() || '🎧';
   const safeBase = sanitizeVoiceBaseName(baseName);
@@ -532,9 +553,8 @@ async function handleCustomVocModal(interaction) {
       ownerCustomRoleDoc.customVocEmoji = emoji;
       await ownerCustomRoleDoc.save().catch(() => {});
     }
-    const currentBase = String(channel.name || '').includes('︲')
-      ? String(channel.name).split('︲').slice(1).join('︲')
-      : String(channel.name || 'privata');
+    const parsedCurrent = parseCustomVocName(channel.name || '');
+    const currentBase = parsedCurrent.baseName || 'privata';
     const nextNameFromEmoji = buildCustomVocName(emoji, currentBase);
     await channel.edit({ name: nextNameFromEmoji }, `Custom voc emoji by ${interaction.user.tag}`).catch(() => {});
     await interaction.reply({
@@ -544,7 +564,9 @@ async function handleCustomVocModal(interaction) {
     return true;
   }
 
-  const nextName = buildCustomVocName(ownerCustomRoleDoc?.customVocEmoji || ownerRole?.unicodeEmoji || '🎧', raw);
+  const parsedCurrent = parseCustomVocName(channel.name || '');
+  const preservedEmoji = parsedCurrent.emoji || ownerCustomRoleDoc?.customVocEmoji || ownerRole?.unicodeEmoji || '🎧';
+  const nextName = buildCustomVocName(preservedEmoji, raw);
   await channel.edit({ name: nextName }, `Custom voc rename by ${interaction.user.tag}`).catch(() => {});
   await interaction.reply({
     content: `<:vegacheckmark:1443666279058772028> Nome aggiornato: \`${nextName}\``,
