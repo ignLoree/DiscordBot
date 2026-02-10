@@ -13,6 +13,18 @@ const ROLE_ADMIN = IDs.roles.admin;
 const ROLE_MANAGER = IDs.roles.manager;
 const ROLE_CO_OWNER = IDs.roles.coOwner;
 const ROLE_OWNER = IDs.roles.owner;
+const STAFF_TRACKED_ROLE_IDS = new Set([
+    ROLE_PARTNER_MANAGER,
+    ROLE_STAFF,
+    ROLE_HELPER,
+    ROLE_MODERATOR,
+    ROLE_COORDINATOR,
+    ROLE_SUPERVISOR,
+    ROLE_ADMIN,
+    ROLE_MANAGER,
+    ROLE_CO_OWNER,
+    ROLE_OWNER
+]);
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -330,7 +342,12 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     await member.roles.remove(ROLE_STAFF);
                     await member.roles.remove(ROLE_HIGH_STAFF);
                 }
-                await StaffModel.deleteMany({ userId: utentee.id });
+                if (STAFF_TRACKED_ROLE_IDS.has(oldRole.id)) {
+                    await StaffModel.deleteOne({
+                        guildId: interaction.guild.id,
+                        userId: utentee.id
+                    });
+                }
                 await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
@@ -344,12 +361,6 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:member_role_icon:1330530086792728618> \`${oldRole.name}\` <a:vegarightarrow:1443673039156936837> \`${newRole.name}\`
 <:discordstaff:1443651872258003005> __${reason}__`
                 });
-                Staff.rolesHistory.push({
-                    oldRole: oldRole.id,
-                    newRole: newRole.id,
-                    reason
-                });
-                await Staff.save();
             } catch (err) {
                 global.logger.error(err);
                 return await safeEditReply(interaction, {

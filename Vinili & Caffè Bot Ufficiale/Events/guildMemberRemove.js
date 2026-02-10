@@ -2,8 +2,23 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("
 const Staff = require('../Schemas/Staff/staffSchema');
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require("../Utils/Ticket/transcriptUtils");
-const { InviteTrack } = require('../Schemas/Community/communitySchemas');
+const { InviteTrack, ExpUser, ActivityUser } = require('../Schemas/Community/communitySchemas');
+const LevelHistory = require('../Schemas/Community/levelHistorySchema');
+const { MinigameUser } = require('../Schemas/Minigames/minigameSchema');
 const IDs = require('../Utils/Config/ids');
+
+const STAFF_TRACKED_ROLE_IDS = new Set([
+    IDs.roles.partnerManager,
+    IDs.roles.staff,
+    IDs.roles.helper,
+    IDs.roles.moderator,
+    IDs.roles.coordinator,
+    IDs.roles.supervisor,
+    IDs.roles.admin,
+    IDs.roles.manager,
+    IDs.roles.coOwner,
+    IDs.roles.owner
+]);
 
 module.exports = {
     name: 'guildMemberRemove',
@@ -74,34 +89,31 @@ module.exports = {
                     setTimeout(() => channel.delete().catch(() => {}), 1000);
                 }
             }
-            const staffDoc = await Staff.findOne({
-                guildId: guild.id,
-                userId: member.id
-            });
-            if (staffDoc) {
-            const newRole = guild.roles.cache.get(IDs.roles.user);
-            const newRoleName = newRole ? newRole.name : "? User";
-            let lastRole = "Nessun ruolo salvato";
-            if (staffDoc.rolesHistory.length > 0) {
-                const lastRoleIdOrName =
-                    staffDoc.rolesHistory[staffDoc.rolesHistory.length - 1].newRole;
-                const roleFromGuild = guild.roles.cache.get(lastRoleIdOrName);
-                lastRole = roleFromGuild ? roleFromGuild.name : lastRoleIdOrName;
-            }
-            staffDoc.rolesHistory.push({
-                oldRole: lastRole,
-                newRole: newRoleName,
-                reason: "Dimissioni"
-            });
-            await staffDoc.save();
-            const resignChannel = guild.channels.cache.get(IDs.channels.resignLog);
-            if (resignChannel) {
-                const msg =
-                    `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
-<:member_role_icon:1330530086792728618> \`${lastRole}\` <a:vegarightarrow:1443673039156936837> \`${newRoleName}\`
+            const hadTrackedStaffRole = member.roles?.cache
+                ? [...STAFF_TRACKED_ROLE_IDS].some((roleId) => member.roles.cache.has(roleId))
+                : false;
+
+            if (hadTrackedStaffRole) {
+                const resignChannel = guild.channels.cache.get(IDs.channels.resignLog);
+                if (resignChannel) {
+                    const highestTrackedRole = member.roles.cache
+                        .filter((role) => STAFF_TRACKED_ROLE_IDS.has(role.id))
+                        .sort((a, b) => b.position - a.position)
+                        .first();
+                    const roleLabel = highestTrackedRole?.name || "Staff/PM";
+                    const userRole = guild.roles.cache.get(IDs.roles.user);
+                    const userRoleLabel = userRole?.name || "? User";
+                    const msg =
+                        `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
+<:member_role_icon:1330530086792728618> \`${roleLabel}\` <a:vegarightarrow:1443673039156936837> \`${userRoleLabel}\`
 <:discordstaff:1443651872258003005> __Dimissioni (Esce dal server)__`;
-                await resignChannel.send({ content: msg });
-            }
+                    await resignChannel.send({ content: msg }).catch(() => {});
+                }
+
+                await Staff.deleteOne({
+                    guildId: guild.id,
+                    userId: member.id
+                }).catch(() => {});
             }
             const partnerships = await Staff.find({ managerId: member.id });
             if (partnerships.length > 0) {
@@ -154,6 +166,14 @@ module.exports = {
                     global.logger.error(err);
                 }
             }
+
+            // Remove all user progression data when the member leaves.
+            await Promise.allSettled([
+                ExpUser.deleteOne({ guildId: guild.id, userId: member.id }),
+                ActivityUser.deleteOne({ guildId: guild.id, userId: member.id }),
+                LevelHistory.deleteMany({ guildId: guild.id, userId: member.id }),
+                MinigameUser.deleteOne({ guildId: guild.id, userId: member.id })
+            ]);
         } catch (err) {
             global.logger.error(err);
         }
