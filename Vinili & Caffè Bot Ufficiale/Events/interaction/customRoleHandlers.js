@@ -519,62 +519,71 @@ async function handleCustomVocModal(interaction) {
   if (!isNameModal && !isEmojiModal) return false;
   const [, ownerId, channelId] = customId.split(':');
   if (!ownerId || !channelId) return true;
-  if (interaction.user.id !== ownerId) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Non puoi modificare questo canale.', flags: 1 << 6 }).catch(() => {});
-    return true;
-  }
 
-  const channel = interaction.guild?.channels?.cache?.get(channelId)
-    || await interaction.guild?.channels?.fetch(channelId).catch(() => null);
-  if (!channel || channel.type !== ChannelType.GuildVoice) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Canale vocale non trovato.', flags: 1 << 6 }).catch(() => {});
-    return true;
-  }
+  const send = async (payload) => {
+    if (interaction.deferred || interaction.replied) {
+      return interaction.editReply(payload).catch(() => {});
+    }
+    return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => {});
+  };
 
-  const me = interaction.guild?.members?.me || interaction.guild?.members?.cache?.get(interaction.client.user.id);
-  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Mi serve il permesso `Gestisci Canali`.', flags: 1 << 6 }).catch(() => {});
-    return true;
-  }
-
-  const raw = interaction.fields.getTextInputValue('value') || '';
-  const ownerCustomRoleDoc = await CustomRole.findOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => null);
-  const ownerRole = ownerCustomRoleDoc?.roleId
-    ? (interaction.guild.roles.cache.get(ownerCustomRoleDoc.roleId) || await interaction.guild.roles.fetch(ownerCustomRoleDoc.roleId).catch(() => null))
-    : null;
-
-  if (isEmojiModal) {
-    const emoji = raw.trim();
-    if (!emoji) {
-      await interaction.reply({ content: '<:vegax:1443934876440068179> Emoji non valida.', flags: 1 << 6 }).catch(() => {});
+  try {
+    if (interaction.user.id !== ownerId) {
+      await send({ content: '<:vegax:1443934876440068179> Non puoi modificare questo canale.' });
       return true;
     }
-    if (ownerCustomRoleDoc) {
-      ownerCustomRoleDoc.customVocEmoji = emoji;
-      await ownerCustomRoleDoc.save().catch(() => {});
+
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+
+    const channel = interaction.guild?.channels?.cache?.get(channelId)
+      || await interaction.guild?.channels?.fetch(channelId).catch(() => null);
+    if (!channel || channel.type !== ChannelType.GuildVoice) {
+      await send({ content: '<:vegax:1443934876440068179> Canale vocale non trovato.' });
+      return true;
     }
+
+    const me = interaction.guild?.members?.me || interaction.guild?.members?.cache?.get(interaction.client.user.id);
+    if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
+      await send({ content: '<:vegax:1443934876440068179> Mi serve il permesso Gestisci Canali.' });
+      return true;
+    }
+
+    const raw = interaction.fields.getTextInputValue('value') || '';
+    const ownerCustomRoleDoc = await CustomRole.findOne({ guildId: interaction.guild.id, userId: ownerId }).catch(() => null);
+    const ownerRole = ownerCustomRoleDoc?.roleId
+      ? (interaction.guild.roles.cache.get(ownerCustomRoleDoc.roleId) || await interaction.guild.roles.fetch(ownerCustomRoleDoc.roleId).catch(() => null))
+      : null;
+
+    if (isEmojiModal) {
+      const emoji = raw.trim();
+      if (!emoji) {
+        await send({ content: '<:vegax:1443934876440068179> Emoji non valida.' });
+        return true;
+      }
+      if (ownerCustomRoleDoc) {
+        ownerCustomRoleDoc.customVocEmoji = emoji;
+        await ownerCustomRoleDoc.save().catch(() => {});
+      }
+      const parsedCurrent = parseCustomVocName(channel.name || '');
+      const currentBase = parsedCurrent.baseName || 'privata';
+      const nextNameFromEmoji = buildCustomVocName(emoji, currentBase);
+      await channel.edit({ name: nextNameFromEmoji }, `Custom voc emoji by ${interaction.user.tag}`).catch(() => {});
+      await send({ content: `<:vegacheckmark:1443666279058772028> Emoji aggiornata: ${emoji}` });
+      return true;
+    }
+
     const parsedCurrent = parseCustomVocName(channel.name || '');
-    const currentBase = parsedCurrent.baseName || 'privata';
-    const nextNameFromEmoji = buildCustomVocName(emoji, currentBase);
-    await channel.edit({ name: nextNameFromEmoji }, `Custom voc emoji by ${interaction.user.tag}`).catch(() => {});
-    await interaction.reply({
-      content: `<:vegacheckmark:1443666279058772028> Emoji aggiornata: ${emoji}`,
-      flags: 1 << 6
-    }).catch(() => {});
+    const preservedEmoji = parsedCurrent.emoji || ownerCustomRoleDoc?.customVocEmoji || ownerRole?.unicodeEmoji || '🎧';
+    const nextName = buildCustomVocName(preservedEmoji, raw);
+    await channel.edit({ name: nextName }, `Custom voc rename by ${interaction.user.tag}`).catch(() => {});
+    await send({ content: `<:vegacheckmark:1443666279058772028> Nome aggiornato: \`${nextName}\`` });
+    return true;
+  } catch (error) {
+    global.logger.error(error);
+    await send({ content: '<:vegax:1443934876440068179> Errore durante la modifica della vocale.' });
     return true;
   }
-
-  const parsedCurrent = parseCustomVocName(channel.name || '');
-  const preservedEmoji = parsedCurrent.emoji || ownerCustomRoleDoc?.customVocEmoji || ownerRole?.unicodeEmoji || '🎧';
-  const nextName = buildCustomVocName(preservedEmoji, raw);
-  await channel.edit({ name: nextName }, `Custom voc rename by ${interaction.user.tag}`).catch(() => {});
-  await interaction.reply({
-    content: `<:vegacheckmark:1443666279058772028> Nome aggiornato: \`${nextName}\``,
-    flags: 1 << 6
-  }).catch(() => {});
-  return true;
 }
-
 async function handleGrantButtons(interaction) {
   if (!interaction.isButton() || !String(interaction.customId || '').startsWith('customrole_grant:')) return false;
 
