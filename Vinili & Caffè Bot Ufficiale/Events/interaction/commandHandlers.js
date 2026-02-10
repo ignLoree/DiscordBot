@@ -145,6 +145,11 @@ async function handleSlashCommand(interaction, client) {
             COMMAND_EXECUTION_TIMEOUT_MS,
             `app:${interaction.commandName || 'unknown'}`
         );
+        if (!expectsModal && interaction.deferred && !interaction.replied) {
+            await interaction.editReply({
+                content: '<:vegacheckmark:1443666279058772028> Comando eseguito.'
+            }).catch(() => { });
+        }
     } catch (error) {
         if (error?.code === 'COMMAND_TIMEOUT') {
             global.logger.warn(`[INTERACTION TIMEOUT] ${interaction.commandName || 'unknown'} by ${interaction.user?.tag || interaction.user?.id}`);
