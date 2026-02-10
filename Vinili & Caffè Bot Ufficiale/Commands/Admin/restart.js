@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+﻿const { SlashCommandBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
@@ -67,18 +67,28 @@ module.exports = {
             if (!interaction.deferred && !interaction.replied) {
                 await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
             }
+
             const target = interaction.options.getString('target');
             const scope = interaction.options.getString('scope') || 'full';
-            if (target !== 'official' && target !== 'dev' && target !== 'both') {
+            if (!['official', 'dev', 'both'].includes(target)) {
                 return safeReply(interaction, { content: 'Target non valido.', flags: 1 << 6 });
             }
+
             const isOfficial = process.cwd().toLowerCase().includes('ufficiale');
             const currentTarget = isOfficial ? 'official' : 'dev';
             const requestedAt = new Date().toISOString();
             const requestId = `${Date.now()}_${interaction.id || interaction.user.id}`;
             const channelId = interaction.channelId || null;
+
             if (scope === 'full') {
                 const targets = target === 'both' ? ['official', 'dev'] : [target];
+
+                // Ack first, then write flags (prevents ephemeral stuck when process restarts quickly)
+                await safeReply(interaction, {
+                    content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`,
+                    flags: 1 << 6
+                });
+
                 const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
                 fs.writeFileSync(flagPath, JSON.stringify({
                     targets,
@@ -86,6 +96,7 @@ module.exports = {
                     by: interaction.user.id,
                     at: requestedAt
                 }, null, 2), 'utf8');
+
                 for (const t of targets) {
                     writeRestartNotify(t, {
                         channelId,
@@ -104,7 +115,7 @@ module.exports = {
                         requestId
                     });
                 }
-                return safeReply(interaction, { content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return;
             }
 
             if (target === 'both') {
@@ -119,6 +130,7 @@ module.exports = {
                     requestId,
                     target: otherTarget
                 }, null, 2), 'utf8');
+
                 const start = Date.now();
                 pullLatest();
                 await interaction.client.reloadScope(scope);
@@ -140,17 +152,23 @@ module.exports = {
                     requestId,
                     target
                 }, null, 2), 'utf8');
-                return safeReply(interaction, { content: `<:vegacheckmark:1443666279058772028> Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`, flags: 1 << 6 });
+                return safeReply(interaction, {
+                    content: `<:vegacheckmark:1443666279058772028> Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`,
+                    flags: 1 << 6
+                });
             }
 
             const start = Date.now();
             pullLatest();
             await interaction.client.reloadScope(scope);
             const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
-            await safeReply(interaction, { content: `Reload ${scope} completato per ${target} in ${elapsed}s.`, flags: 1 << 6 });
+            return safeReply(interaction, {
+                content: `Reload ${scope} completato per ${target} in ${elapsed}s.`,
+                flags: 1 << 6
+            });
         } catch (error) {
             global.logger.error(error);
-            await safeReply(interaction, { content: 'Errore durante il riavvio.', flags: 1 << 6 });
+            return safeReply(interaction, { content: 'Errore durante il riavvio.', flags: 1 << 6 });
         }
     }
 };
