@@ -73,6 +73,26 @@ async function handlePartnerModal(interaction) {
     } catch {
         managerMember = null;
     }
+    if (!managerMember) {
+        await interaction.editReply({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor('Red')
+                    .setDescription('<:vegax:1443934876440068179> Manager non trovato nel server.')
+            ], flags: 1 << 6
+        });
+        return true;
+    }
+    if (!managerMember.roles?.cache?.has(IDs.roles.verifiedUser)) {
+        await interaction.editReply({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor('Red')
+                    .setDescription('<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!')
+            ], flags: 1 << 6
+        });
+        return true;
+    }
     if (managerMember && managerMember.roles?.cache?.has(PARTNER_BLACKLIST_ROLE)) {
         await interaction.editReply({
             embeds: [

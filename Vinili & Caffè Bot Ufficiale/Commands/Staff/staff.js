@@ -145,7 +145,16 @@ module.exports = {
                 const utentee = interaction.options.getUser('user');
                 const reason = interaction.options.getString('motivo');
                 const member = await interaction.guild.members.fetch(utentee.id).catch(() => null);
-                if (!member) return await safeEditReply(interaction, { embeds: [errorEmbed], flags: 1 << 6 });
+                if (!member) {
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription('<:vegax:1443934876440068179> Utente non trovato nel server.')
+                                .setColor('#E74C3C')
+                        ],
+                        flags: 1 << 6
+                    });
+                }
                 const ruoloPrecedente = interaction.options.getRole('ruolo_precedente');
                 const ruoloSuccessivo = interaction.options.getRole('ruolo_successivo');
                 const staffchat = interaction.guild.channels.cache.get(IDs.channels.staffOnboarding);
@@ -246,7 +255,16 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 const newRole = interaction.options.getRole('ruolo_successivo');
                 const reason = interaction.options.getString('motivo');
                 const member = await interaction.guild.members.fetch(utentee.id).catch(() => null);
-                if (!member) return await safeEditReply(interaction, { embeds: [errorEmbed], flags: 1 << 6 });
+                if (!member) {
+                    return await safeEditReply(interaction, {
+                        embeds: [
+                            new EmbedBuilder()
+                                .setDescription('<:vegax:1443934876440068179> Utente non trovato nel server.')
+                                .setColor('#E74C3C')
+                        ],
+                        flags: 1 << 6
+                    });
+                }
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (interaction.user.id === utentee.id) {

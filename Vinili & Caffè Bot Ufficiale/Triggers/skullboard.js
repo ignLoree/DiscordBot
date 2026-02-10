@@ -1,5 +1,6 @@
 const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
+const { SkullboardPost } = require('../Schemas/Community/communitySchemas');
 
 const IDs = require('../Utils/Config/ids');
 
