@@ -973,6 +973,9 @@ async function handleDiscadiaBump(message, client) {
 
     const isDiscadiaAuthor = message.author?.id === discadia.botId;
     const isDiscadiaApp = message.applicationId === discadia.botId;
+    const isSlashBumpContext =
+        String(message?.interaction?.commandName || '').toLowerCase() === 'bump'
+        || String(message?.interactionMetadata?.name || '').toLowerCase() === 'bump';
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
         ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
         : ['has been successfully bumped', 'successfully bumped', 'bumped successfully'];
@@ -1005,10 +1008,11 @@ async function handleDiscadiaBump(message, client) {
         /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump/i.test(joined);
     const hasFailureWord =
         /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before/i.test(joined);
-    const expectedChannelId = String(discadia?.bumpChannelId || discadia?.reminderChannelId || '');
-    const inExpectedChannel = expectedChannelId ? String(message.channelId) === expectedChannelId : true;
-    const fallbackTrustedSource = Boolean(message.author?.bot && inExpectedChannel);
-    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || (fallbackTrustedSource && hasDiscadiaWord);
+    const fallbackTrustedSource = Boolean(
+        message.author?.bot
+        && (hasPattern || (hasBumpWord && hasSuccessWord))
+    );
+    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || isSlashBumpContext || fallbackTrustedSource || hasDiscadiaWord;
     const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord));
     if (!isBump) return false;
 
