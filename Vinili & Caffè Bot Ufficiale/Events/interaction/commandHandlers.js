@@ -23,6 +23,14 @@ function runWithTimeout(taskPromise, timeoutMs, label = 'command') {
     });
 }
 
+function sanitizeEditPayload(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+    if (!Object.prototype.hasOwnProperty.call(payload, 'flags')) return payload;
+    const next = { ...payload };
+    delete next.flags;
+    return next;
+}
+
 async function handleAutocomplete(interaction, client) {
     const cmd = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
     if (!cmd?.autocomplete) return;
@@ -89,7 +97,7 @@ async function handleSlashCommand(interaction, client) {
     wrappedInteraction.reply = async (payload) => {
         payload = applyDefaultFooterToEmbeds(payload, interaction.guild);
         if (interaction.deferred) {
-            return interaction.editReply(payload);
+            return interaction.editReply(sanitizeEditPayload(payload));
         }
         return originalReply(payload);
     };
@@ -99,14 +107,17 @@ async function handleSlashCommand(interaction, client) {
             payload = applyDefaultFooterToEmbeds(payload, interaction.guild);
             if (interaction.deferred && !interaction.replied) {
                 try {
-                    return await interaction.editReply(payload);
+                    return await interaction.editReply(sanitizeEditPayload(payload));
                 } catch { }
             }
             return originalFollowUp(payload);
         };
     }
 
-    wrappedInteraction.editReply = async (payload) => originalEditReply(applyDefaultFooterToEmbeds(payload, interaction.guild));
+    wrappedInteraction.editReply = async (payload) => {
+        const withFooter = applyDefaultFooterToEmbeds(payload, interaction.guild);
+        return originalEditReply(sanitizeEditPayload(withFooter));
+    };
     if (originalChannelSend) {
         const wrappedChannel = Object.create(interaction.channel);
         wrappedChannel.send = async (payload) => originalChannelSend(applyDefaultFooterToEmbeds(payload, interaction.guild));

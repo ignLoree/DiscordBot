@@ -1,7 +1,15 @@
-﻿async function safeReply(interaction, payload) {
+function sanitizeEditPayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  if (!Object.prototype.hasOwnProperty.call(payload, 'flags')) return payload;
+  const next = { ...payload };
+  delete next.flags;
+  return next;
+}
+
+async function safeReply(interaction, payload) {
   try {
     if (interaction.deferred && !interaction.replied) {
-      return await interaction.editReply(payload);
+      return await interaction.editReply(sanitizeEditPayload(payload));
     }
     if (interaction.replied) {
       return await interaction.followUp(payload);
@@ -16,7 +24,7 @@
 async function safeEditReply(interaction, payload) {
   try {
     if (interaction.deferred || interaction.replied) {
-      return await interaction.editReply(payload);
+      return await interaction.editReply(sanitizeEditPayload(payload));
     }
     return await interaction.reply(payload);
   } catch (err) {
