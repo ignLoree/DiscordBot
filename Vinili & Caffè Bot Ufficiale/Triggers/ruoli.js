@@ -103,10 +103,10 @@ module.exports = {
         .setMaxValues(1)
         .addOptions(
           { label: 'Rimuovi i ruoli di età', value: 'remove', description: 'Rimuovi ruoli dal tuo profilo', emoji: '<:vegax:1443934876440068179>' },
-          { label: '13-14', value: '1442568993197265021', emoji: '<:ageids:1470541159351976066>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: '15-16', value: '1442568994581381170', emoji: '<:ageids:1470541159351976066>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: '17-18', value: '1442568995348807691', emoji: '<:ageadultids:1470541163219128444>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: '19+', value: '1442568996774871194', emoji: '<:ageadultids:1470541163219128444>', description: 'Clicca qui per ottenere il ruolo' }
+          { label: '13-14', value: '1442568993197265021', emoji: '<:ageadultids:1470541163219128444>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: '15-16', value: '1442568994581381170', emoji: '<:ageadultids:1470541163219128444>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: '17-18', value: '1442568995348807691', emoji: '<:ageids:1470541159351976066>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: '19+', value: '1442568996774871194', emoji: '<:ageids:1470541159351976066>', description: 'Clicca qui per ottenere il ruolo' }
         )
     );
 
