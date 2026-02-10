@@ -8,7 +8,8 @@ const {
   setLevelChannelLocked,
   setRoleIgnored,
   getGuildExpSettings,
-  setTemporaryEventMultiplier
+  setTemporaryEventMultiplier,
+  syncLevelRolesForMember
 } = require('../../Services/Community/expService');
 
 async function resolveTargetUser(message, raw) {
@@ -224,6 +225,7 @@ module.exports = {
     doc.totalExp = Math.max(0, Math.floor(afterExp));
     doc.level = getLevelInfo(doc.totalExp).level;
     await doc.save();
+    await syncLevelRolesForMember(message.guild, target.id, doc.level);
     await recordLevelHistory({
       guildId,
       userId: target.id,

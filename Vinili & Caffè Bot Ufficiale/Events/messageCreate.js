@@ -762,6 +762,10 @@ async function getGuildAutoResponders(guildId) {
         ? docs
             .map((doc) => ({
                 triggerLower: String(doc?.triggerLower || '').trim().toLowerCase(),
+                triggerLoose: normalizeForTriggerMatch(doc?.triggerLower || doc?.trigger || ''),
+                triggerTokens: normalizeForTriggerMatch(doc?.triggerLower || doc?.trigger || '')
+                    .split(/\s+/)
+                    .filter((token) => token.length >= 3),
                 response: String(doc?.response || ''),
                 reactions: Array.isArray(doc?.reactions) ? doc.reactions : []
             }))
@@ -772,17 +776,38 @@ async function getGuildAutoResponders(guildId) {
     return rules;
 }
 
+function normalizeForTriggerMatch(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function ruleMatchesMessage(normalizedText, normalizedLoose, rule) {
+    if (!rule) return false;
+    if (rule.triggerLower && normalizedText.includes(rule.triggerLower)) return true;
+    if (rule.triggerLoose && normalizedLoose.includes(rule.triggerLoose)) return true;
+    if (Array.isArray(rule.triggerTokens) && rule.triggerTokens.length > 0) {
+        return rule.triggerTokens.some((token) => normalizedLoose.includes(token));
+    }
+    return false;
+}
+
 async function handleAutoResponders(message) {
     const guildId = message.guild?.id;
     if (!guildId) return;
     const normalized = String(message.content || '').toLowerCase().trim();
     if (!normalized) return;
     if (normalized.startsWith('+')) return;
+    const normalizedLoose = normalizeForTriggerMatch(message.content || '');
 
     const rules = await getGuildAutoResponders(guildId);
     if (!Array.isArray(rules) || !rules.length) return;
 
-    const matched = rules.find((rule) => normalized.includes(rule.triggerLower));
+    const matched = rules.find((rule) => ruleMatchesMessage(normalized, normalizedLoose, rule));
     if (!matched) return;
 
     const response = String(matched.response || '').trim();

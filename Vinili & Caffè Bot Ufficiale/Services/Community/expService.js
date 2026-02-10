@@ -317,6 +317,27 @@ async function addPerkRoleIfPossible(member) {
   await member.roles.add(role).catch(() => {});
 }
 
+async function syncLevelRolesForMember(guild, userId, level) {
+  if (!guild || !userId) return [];
+  const safeLevel = Math.max(0, Math.floor(Number(level || 0)));
+  const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
+  if (!member) return [];
+  const awarded = [];
+  const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
+    .filter((perkLevel) => perkLevel <= safeLevel)
+    .sort((a, b) => a - b);
+  for (const perkLevel of reachedPerkLevels) {
+    const roleId = LEVEL_ROLE_MAP.get(perkLevel);
+    if (!roleId) continue;
+    const ok = await addLevelRoleIfPossible(member, roleId);
+    if (ok) awarded.push(roleId);
+  }
+  if (safeLevel >= 10) {
+    await addPerkRoleIfPossible(member);
+  }
+  return awarded;
+}
+
 async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
   if (!guild || !userId) return null;
   let effectiveAmount = amount;
@@ -456,6 +477,24 @@ async function getRecentLevelHistory(guildId, userId, limit = 10) {
   return LevelHistory.find({ guildId, userId }).sort({ createdAt: -1 }).limit(safeLimit).lean().catch(() => []);
 }
 
+async function getLevelHistoryPage(guildId, userId, page = 1, pageSize = 10) {
+  if (!guildId || !userId) return { rows: [], page: 1, totalPages: 1, totalCount: 0, pageSize: 10 };
+  const safePageSize = Math.max(1, Math.min(20, Number(pageSize || 10)));
+  const safePage = Math.max(1, Number(page || 1));
+  const filter = { guildId, userId };
+  const totalCount = await LevelHistory.countDocuments(filter).catch(() => 0);
+  const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
+  const effectivePage = Math.min(safePage, totalPages);
+  const skip = (effectivePage - 1) * safePageSize;
+  const rows = await LevelHistory.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(safePageSize)
+    .lean()
+    .catch(() => []);
+  return { rows, page: effectivePage, totalPages, totalCount, pageSize: safePageSize };
+}
+
 async function getUserExpStats(guildId, userId) {
   const now = new Date();
   let doc = await ExpUser.findOne({ guildId, userId });
@@ -512,6 +551,8 @@ module.exports = {
   shouldIgnoreExpForMember,
   recordLevelHistory,
   getRecentLevelHistory,
+  getLevelHistoryPage,
+  syncLevelRolesForMember,
   getRoleMultiplier,
   getCurrentWeekKey,
   ROLE_MULTIPLIERS

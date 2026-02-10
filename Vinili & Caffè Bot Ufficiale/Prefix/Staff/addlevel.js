@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
-const { getLevelInfo } = require('../../Services/Community/expService');
+const { getLevelInfo, syncLevelRolesForMember } = require('../../Services/Community/expService');
 const IDs = require('../../Utils/Config/ids');
 const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
 const LEVEL_ROLE_MAP = new Map([
@@ -103,6 +103,7 @@ module.exports = {
     doc.totalExp = finalExp;
     doc.level = getLevelInfo(finalExp).level;
     await doc.save();
+    await syncLevelRolesForMember(message.guild, target.id, doc.level);
 
     const levelUpChannel = message.guild.channels.cache.get(LEVEL_UP_CHANNEL_ID)
       || await message.guild.channels.fetch(LEVEL_UP_CHANNEL_ID).catch(() => null);

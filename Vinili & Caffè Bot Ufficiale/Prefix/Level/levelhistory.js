@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const { getRecentLevelHistory } = require('../../Services/Community/expService');
+const { getLevelHistoryPage } = require('../../Services/Community/expService');
 
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -22,8 +22,15 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
-    const target = await resolveTargetUser(message, args[0]);
-    const rows = await getRecentLevelHistory(message.guild.id, target.id, 10);
+    const first = String(args[0] || '').trim();
+    const second = String(args[1] || '').trim();
+    const firstLooksPage = /^\d+$/.test(first);
+
+    const target = await resolveTargetUser(message, firstLooksPage ? null : first);
+    const pageRaw = firstLooksPage ? first : second;
+    const page = /^\d+$/.test(pageRaw) ? Math.max(1, Number(pageRaw)) : 1;
+
+    const { rows, page: effectivePage, totalPages } = await getLevelHistoryPage(message.guild.id, target.id, page, 10);
 
     if (!rows.length) {
       const embed = new EmbedBuilder()
@@ -43,7 +50,8 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
       .setTitle(`Storico livelli di ${target.username}`)
-      .setDescription(lines.join('\n'));
+      .setDescription(lines.join('\n'))
+      .setFooter({ text: `Pagina ${effectivePage}/${totalPages} • Usa: +levelhistory [@utente] [pagina]` });
 
     await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
   }

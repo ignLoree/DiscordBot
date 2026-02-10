@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
-const { getLevelInfo } = require('../../Services/Community/expService');
+const { getLevelInfo, syncLevelRolesForMember } = require('../../Services/Community/expService');
 
 function roundToNearest50(value) {
   return Math.round(value / 50) * 50;
@@ -79,6 +79,7 @@ module.exports = {
     doc.totalExp = finalExp;
     doc.level = getLevelInfo(finalExp).level;
     await doc.save();
+    await syncLevelRolesForMember(message.guild, target.id, doc.level);
 
     const done = new EmbedBuilder()
       .setColor('#6f4e37')
