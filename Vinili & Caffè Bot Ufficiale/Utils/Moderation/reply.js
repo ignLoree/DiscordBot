@@ -1,6 +1,9 @@
 ﻿async function safeReply(interaction, payload) {
   try {
-    if (interaction.replied || interaction.deferred) {
+    if (interaction.deferred && !interaction.replied) {
+      return await interaction.editReply(payload);
+    }
+    if (interaction.replied) {
       return await interaction.followUp(payload);
     }
     return await interaction.reply(payload);

@@ -317,8 +317,8 @@ module.exports = {
                 .setDescription([
                     `Usiamo i soldi donati per portare eventi con premi migliori, come Discord Nitro o gift card, e per cercare collaborazioni interessanti per voi utenti.`,
                     'Le donazioni sono completamente volontarie e contribuiscono alla nostra crescita. In anticipo, grazie.',
-                    '**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**',
                     '',
+                    '**Vuoi acquistare direttamente tutti i vantaggi permanenti e differenti dal VIP?**',
                     '\`5,00€\`',
                     '<:dot:1443660294596329582> Il ruolo <@&1442568916114346096> **permanente**',
                     '<:dot:1443660294596329582> Possibilità di allegare link e immagini in chat',
