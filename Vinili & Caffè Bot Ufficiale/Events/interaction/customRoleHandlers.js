@@ -261,7 +261,7 @@ async function handleRoleActionButton(interaction) {
     .setStyle(TextInputStyle.Short)
     .setRequired(head !== 'customrole_emoji')
     .setPlaceholder(placeholder)
-    .setMaxLength(200);
+    .setMaxLength(4000);
 
   const modal = new ModalBuilder().setCustomId(modalId).setTitle(title).addComponents(new ActionRowBuilder().addComponents(input));
   const shown = await interaction.showModal(modal).then(() => true).catch(() => false);

@@ -377,56 +377,70 @@ client.on(Events.MessageCreate, async message => {
 });
 
 client.on(Events.MessageReactionAdd, async (reaction, user) => {
-    if (reaction.message.partial) {
-        const fetchedMessage = await reaction.message.fetch().catch(() => null);
-        if (!fetchedMessage) return;
-    }
-    if (reaction.partial) {
-        const fetchedReaction = await reaction.fetch().catch(() => null);
-        if (!fetchedReaction) return;
-    }
-    if (!reaction.message.guildId) return;
-    if (user.bot) return;
-    const animatedPrefix = reaction.emoji.animated ? 'a' : '';
-    let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    if (!reaction.emoji.id) cID = reaction.emoji.name;
-    const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
-    if (!data) return
-    const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
-    if (!guild) return;
-    const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
-    if (!member) return;
     try {
+        if (reaction.partial) {
+            const fetchedReaction = await reaction.fetch().catch((err) => {
+                if (err?.code === 10008 || err?.code === 10062) return null;
+                throw err;
+            });
+            if (!fetchedReaction) return;
+        }
+        if (reaction.message.partial) {
+            const fetchedMessage = await reaction.message.fetch().catch((err) => {
+                if (err?.code === 10008 || err?.code === 10062) return null;
+                throw err;
+            });
+            if (!fetchedMessage) return;
+        }
+        if (!reaction.message.guildId) return;
+        if (user.bot) return;
+        const animatedPrefix = reaction.emoji.animated ? 'a' : '';
+        let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
+        if (!reaction.emoji.id) cID = reaction.emoji.name;
+        const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
+        if (!data) return
+        const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
+        if (!guild) return;
+        const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
+        if (!member) return;
         await member.roles.add(data.Role);
     } catch (e) {
+        if (e?.code === 10008 || e?.code === 10062) return;
         global.logger.error(e)
         return;
     }
 });
 
 client.on(Events.MessageReactionRemove, async (reaction, user) => {
-    if (reaction.message.partial) {
-        const fetchedMessage = await reaction.message.fetch().catch(() => null);
-        if (!fetchedMessage) return;
-    }
-    if (reaction.partial) {
-        const fetchedReaction = await reaction.fetch().catch(() => null);
-        if (!fetchedReaction) return;
-    }
-    if (!reaction.message.guildId) return;
-    if (user.bot) return;
-    const animatedPrefix = reaction.emoji.animated ? 'a' : '';
-    let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
-    if (!reaction.emoji.id) cID = reaction.emoji.name;
-    const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
-    if (!data) return
-    const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
-    if (!guild) return;
-    const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
-    if (!member) return;
     try {
+        if (reaction.partial) {
+            const fetchedReaction = await reaction.fetch().catch((err) => {
+                if (err?.code === 10008 || err?.code === 10062) return null;
+                throw err;
+            });
+            if (!fetchedReaction) return;
+        }
+        if (reaction.message.partial) {
+            const fetchedMessage = await reaction.message.fetch().catch((err) => {
+                if (err?.code === 10008 || err?.code === 10062) return null;
+                throw err;
+            });
+            if (!fetchedMessage) return;
+        }
+        if (!reaction.message.guildId) return;
+        if (user.bot) return;
+        const animatedPrefix = reaction.emoji.animated ? 'a' : '';
+        let cID = `<${animatedPrefix}:${reaction.emoji.name}:${reaction.emoji.id}>`;
+        if (!reaction.emoji.id) cID = reaction.emoji.name;
+        const data = await reactions.findOne({ Guild: reaction.message.guildId, Message: reaction.message.id, Emoji: cID });
+        if (!data) return
+        const guild = client.guilds.cache.get(reaction.message.guildId) || await client.guilds.fetch(reaction.message.guildId).catch(() => null);
+        if (!guild) return;
+        const member = guild.members.cache.get(user.id) || await guild.members.fetch(user.id).catch(() => null);
+        if (!member) return;
         await member.roles.remove(data.Role);
     } catch (e) {
+        if (e?.code === 10008 || e?.code === 10062) return;
         global.logger.error(e)
         return;
     }
@@ -457,7 +471,7 @@ async function aggiornaListaStaff() {
     if (!channel) return global.logger.error('Canale non trovato');
     const staffListContent = await generateStaffListContent(guild);
     if (staffListMessageId) {
-        const existing = await channel.messages.fetch(staffListMessageId).catch(() => null);
+        const existing = channel.messages.cache.get(staffListMessageId) || null;
         if (existing) {
             await existing.edit(staffListContent);
             return;

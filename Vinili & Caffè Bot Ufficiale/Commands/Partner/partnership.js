@@ -1,4 +1,5 @@
-﻿const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { safeReply } = require('../../Utils/Moderation/reply');
 
 module.exports = {
     expectsModal: true,
@@ -29,6 +30,15 @@ module.exports = {
         const row = new ActionRowBuilder().addComponents(descriptionInput);
         modal.addComponents(row);
 
-        await interaction.showModal(modal);
+        try {
+            await interaction.showModal(modal);
+        } catch (error) {
+            if (error?.code === 10062) return;
+            await safeReply(interaction, {
+                content: '<:vegax:1443934876440068179> Non riesco ad aprire il modulo, riprova.',
+                flags: 1 << 6
+            });
+        }
     }
 };
+

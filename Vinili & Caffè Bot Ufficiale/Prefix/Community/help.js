@@ -7,7 +7,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationC
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
-const MAX_HELP_COLLECTOR_MS = 2147483647;
+const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const PAGE_ROLE_IDS = [
   IDs.roles.partnerManager,
   IDs.roles.staff,

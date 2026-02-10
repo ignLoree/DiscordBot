@@ -60,14 +60,14 @@ module.exports = {
       .setLabel("Titolo")
       .setStyle(TextInputStyle.Short)
       .setRequired(false)
-      .setMaxLength(100);
+      .setMaxLength(4000);
 
     const messageInput = new TextInputBuilder()
       .setCustomId("message")
       .setLabel("Messaggio")
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true)
-      .setMaxLength(1900);
+      .setMaxLength(4000);
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(titleInput),

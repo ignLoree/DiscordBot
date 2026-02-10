@@ -37,6 +37,9 @@ async function handleTicketInteraction(interaction) {
     const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.ticketPartnerBlacklist;
     const ROLE_TICKET_BLACKLIST = IDs.roles.ticketBlacklist;
     const STAFF_ROLES = [ROLE_STAFF, ROLE_HIGHSTAFF];
+    if (!interaction.client.ticketCloseLocks) {
+        interaction.client.ticketCloseLocks = new Set();
+    }
     const TICKET_PERMISSIONS = [
         PermissionFlagsBits.ViewChannel,
         PermissionFlagsBits.SendMessages,
@@ -576,7 +579,7 @@ async function handleTicketInteraction(interaction) {
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true)
                     .setMinLength(8)
-                    .setMaxLength(1000);
+                    .setMaxLength(4000);
                 modal.addComponents(new ActionRowBuilder().addComponents(input));
                 const shown = await interaction.showModal(modal).then(() => true).catch(err => {
                     global.logger.error(err);
@@ -723,44 +726,9 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
-                const channel = interaction.channel;
-                const transcriptTXT = await createTranscript(channel).catch(() => '');
-                const transcriptHTML = await createTranscriptHtml(channel).catch(() => '');
-                const transcriptHtmlPath = transcriptHTML
-                    ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
-                    : null;
-                const createdAtFormatted = ticketDoc.createdAt
-                    ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
-                    : 'Data non disponibile';
+                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
                 const motivo = ticketDoc.closeReason || 'Nessun motivo inserito';
-                const logChannel = interaction.guild.channels.cache.get(IDs.channels.ticketCloseLogAlt)
-                    || await interaction.guild.channels.fetch(IDs.channels.ticketCloseLogAlt).catch(() => null);
-                if (logChannel) {
-                    await sendTranscriptWithBrowserLink(logChannel, {
-                        embeds: [
-                            new EmbedBuilder()
-                                .setTitle('Ticket Chiuso')
-                                .setDescription(`\n**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`)
-                                .setColor('#6f4e37')
-                        ],
-                        files: transcriptHtmlPath
-                            ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
-                            : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
-                    }, Boolean(transcriptHtmlPath));
-                }
-                try {
-                    const member = await interaction.guild.members.fetch(ticketDoc.userId).catch(() => null);
-                    if (member) {
-                        await sendTranscriptWithBrowserLink(member, {
-                            embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${interaction.user}\n**Creato il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${motivo}\n`).setColor('#6f4e37')],
-                            files: transcriptHtmlPath
-                                ? [{ attachment: transcriptHtmlPath, name: `transcript_${channel.id}.html` }]
-                                : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${channel.id}.txt` }]
-                        }, Boolean(transcriptHtmlPath));
-                    }
-                } catch (err) { global.logger.error(err); }
-                await Ticket.updateOne({ channelId: channel.id }, { $set: { open: false, transcript: transcriptTXT, closeReason: motivo, closedAt: new Date() } }).catch(() => { });
-                await channel.delete().catch(() => { });
+                await closeTicket(interaction, motivo, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
                 return true;
             }
             if (interaction.customId === 'rifiuta') {
@@ -858,6 +826,15 @@ async function handleTicketInteraction(interaction) {
     return true;
     async function closeTicket(targetInteraction, motivo, helpers) {
         const { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL } = helpers;
+        const closeLockKey = `${targetInteraction?.guildId || 'noguild'}:${targetInteraction?.channelId || targetInteraction?.channel?.id || 'nochannel'}`;
+        if (interaction.client.ticketCloseLocks.has(closeLockKey)) {
+            await safeReply(targetInteraction, {
+                embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1443651874032062505> Chiusura ticket già in corso, attendi un attimo.')],
+                flags: 1 << 6
+            });
+            return;
+        }
+        interaction.client.ticketCloseLocks.add(closeLockKey);
         try {
             if (!targetInteraction || !targetInteraction.channel) {
                 await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida')], flags: 1 << 6 });
@@ -917,6 +894,8 @@ async function handleTicketInteraction(interaction) {
         } catch (err) {
             global.logger.error(err);
             await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', "<:vegax:1443934876440068179> Errore durante la chiusura del ticket")], flags: 1 << 6 }).catch(() => { });
+        } finally {
+            interaction.client.ticketCloseLocks.delete(closeLockKey);
         }
     }
 }

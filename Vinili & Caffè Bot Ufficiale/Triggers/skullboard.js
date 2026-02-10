@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
-const { SkullboardPost } = require('../Schemas/Community/communitySchemas');
+const communitySchemas = require('../Schemas/Community/communitySchemas');
+const SkullboardPost = communitySchemas?.SkullboardPost;
 
 const IDs = require('../Utils/Config/ids');
 
@@ -24,6 +25,7 @@ module.exports = {
 
   async execute(reaction, user) {
     try {
+      if (!SkullboardPost) return;
       if (user?.bot) return;
       if (reaction.partial) await reaction.fetch().catch(() => null);
       const message = reaction.message?.partial ? await reaction.message.fetch().catch(() => null) : reaction.message;
