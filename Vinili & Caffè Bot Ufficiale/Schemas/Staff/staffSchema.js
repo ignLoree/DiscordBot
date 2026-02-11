@@ -20,11 +20,15 @@ const StaffSchema = new Schema({
     negativeReasons: { type: [String], default: [] },
     valutazioniCount: { type: Number, default: 0 },
     partnerCount: { type: Number, default: 0 },
+    managerId: { type: String, default: null },
     partnerActions: [
         {
             action: String,
             partner: String,
+            invite: String,
             managerId: String,
+            partnershipChannelId: String,
+            partnerMessageIds: { type: [String], default: [] },
             date: { type: Date, default: Date.now }
         }
     ],

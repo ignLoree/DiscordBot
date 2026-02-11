@@ -6,6 +6,7 @@ const { InviteTrack, ExpUser, ActivityUser } = require('../Schemas/Community/com
 const LevelHistory = require('../Schemas/Community/levelHistorySchema');
 const { MinigameUser } = require('../Schemas/Minigames/minigameSchema');
 const IDs = require('../Utils/Config/ids');
+const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
     IDs.roles.partnerManager,
@@ -22,8 +23,12 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 
 module.exports = {
     name: 'guildMemberRemove',
-    async execute(member) {
+    async execute(member, client) {
         try {
+            if (member?.guild?.id === IDs.guilds.main) {
+                scheduleStaffListRefresh(client, member.guild.id);
+            }
+
             await InviteTrack.findOneAndUpdate(
                 { guildId: member.guild.id, userId: member.id, active: true },
                 { $set: { active: false, leftAt: new Date() } }
@@ -115,14 +120,21 @@ module.exports = {
                     userId: member.id
                 }).catch(() => {});
             }
-            const partnerships = await Staff.find({ managerId: member.id });
+            const partnerships = await Staff.find({
+                guildId: guild.id,
+                $or: [
+                    { managerId: member.id },
+                    { 'partnerActions.managerId': member.id }
+                ]
+            }).catch(() => []);
             if (partnerships.length > 0) {
                 try {
-                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerManagerLeaveLog);
+                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerManagerLeaveLog)
+                        || await guild.channels.fetch(IDs.channels.partnerManagerLeaveLog).catch(() => null);
                     if (partnerLogChannel) {
                         for (const doc of partnerships) {
-                            const lastPartner = doc.partnerActions && doc.partnerActions.length
-                                ? doc.partnerActions[doc.partnerActions.length - 1]
+                            const lastPartner = Array.isArray(doc.partnerActions)
+                                ? [...doc.partnerActions].reverse().find((action) => action?.managerId === member.id) || doc.partnerActions[doc.partnerActions.length - 1]
                                 : null;
                             const partnerName = lastPartner?.partner || 'Partner sconosciuta';
                             const inviteLink = lastPartner?.invite || 'Link non disponibile';
@@ -155,11 +167,33 @@ module.exports = {
                     }
                     setTimeout(async () => {
                         const stillOut = await guild.members.fetch(member.id).catch(() => null);
-                        if (!stillOut) {
-                            for (const doc of partnerships) {
-                                doc.managerId = null;
-                                await doc.save();
+                        if (stillOut) return;
+
+                        for (const doc of partnerships) {
+                            const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
+                            const toRollback = actions.filter((action) => action?.managerId === member.id);
+
+                            for (const action of toRollback) {
+                                const channelId = action?.partnershipChannelId || IDs.channels.partnershipPosts;
+                                const channel = guild.channels.cache.get(channelId)
+                                    || await guild.channels.fetch(channelId).catch(() => null);
+                                if (!channel?.isTextBased?.()) continue;
+
+                                const messageIds = Array.isArray(action?.partnerMessageIds) ? action.partnerMessageIds : [];
+                                for (const messageId of messageIds) {
+                                    if (!messageId) continue;
+                                    const msg = await channel.messages.fetch(messageId).catch(() => null);
+                                    if (msg) await msg.delete().catch(() => {});
+                                }
                             }
+
+                            const removedCount = toRollback.length;
+                            if (removedCount > 0) {
+                                doc.partnerActions = actions.filter((action) => action?.managerId !== member.id);
+                                doc.partnerCount = Math.max(0, Number(doc.partnerCount || 0) - removedCount);
+                            }
+                            doc.managerId = null;
+                            await doc.save().catch(() => {});
                         }
                     }, 5 * 60 * 1000);
                 } catch (err) {

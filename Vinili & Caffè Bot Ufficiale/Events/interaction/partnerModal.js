@@ -152,12 +152,16 @@ async function handlePartnerModal(interaction) {
 
         staffDoc.partnerCount++;
         staffDoc.managerId = managerId;
-        staffDoc.partnerActions.push({
+        const actionEntry = {
             action: 'create',
             partner: serverName,
             invite: inviteUrl,
-            managerId
-        });
+            managerId,
+            partnershipChannelId: IDs.channels.partnershipPosts,
+            partnerMessageIds: []
+        };
+        staffDoc.partnerActions.push(actionEntry);
+        const actionIndex = Math.max(0, staffDoc.partnerActions.length - 1);
 
         await staffDoc.save();
         const totalPartners = staffDoc.partnerCount;
@@ -177,11 +181,20 @@ async function handlePartnerModal(interaction) {
             .setThumbnail(interaction.guild.iconURL());
 
         if (partnershipChannel) {
+            const sentMessageIds = [];
             const parts = splitMessage(`${filteredDescription}\n\nPartner effettuata con **<@${managerId}>**`);
             for (const part of parts) {
-                await partnershipChannel.send({ content: part });
+                const sent = await partnershipChannel.send({ content: part }).catch(() => null);
+                if (sent?.id) sentMessageIds.push(sent.id);
             }
-            await partnershipChannel.send({ embeds: [embed] });
+            const thankYouMessage = await partnershipChannel.send({ embeds: [embed] }).catch(() => null);
+            if (thankYouMessage?.id) sentMessageIds.push(thankYouMessage.id);
+
+            if (staffDoc.partnerActions?.[actionIndex]) {
+                staffDoc.partnerActions[actionIndex].partnershipChannelId = partnershipChannel.id;
+                staffDoc.partnerActions[actionIndex].partnerMessageIds = sentMessageIds;
+                await staffDoc.save().catch(() => {});
+            }
         }
 
         const doneEmbed = new EmbedBuilder()
@@ -228,5 +241,4 @@ function splitMessage(message, maxLength = 2000) {
 }
 
 module.exports = { handlePartnerModal };
-
 

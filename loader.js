@@ -1,105 +1,92 @@
-const child_process = require("child_process");
-const fs = require("fs");
-const path = require("path");
+﻿const child_process = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const baseDir = __dirname;
 
-const bots = [
-    {
-        key: "dev",
-        label: "Dev",
-        start: "./Vinili & Caffè Dev Bot/shard.js",
-        startupDelayMs: 0
-    },
-    {
-        key: "official",
-        label: "Ufficiale",
-        start: "./Vinili & Caffè Bot Ufficiale/shard.js",
-        startupDelayMs: 6500
-    }
-];
+const bot = {
+    key: 'official',
+    label: 'Ufficiale',
+    start: './Vinili & Caffè Bot Ufficiale/shard.js',
+    startupDelayMs: 0
+};
 
-const processes = new Map();
-const restarting = new Map();
+let processRef = null;
+let restarting = false;
 
-console.log(`[Loader] Loading ${bots.length} files`);
+console.log('[Loader] Loading 1 file');
 
 function killPidTree(pid) {
     if (!pid || Number.isNaN(pid)) return;
     try {
-        if (process.platform === "win32") {
-            child_process.spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { stdio: "ignore" });
+        if (process.platform === 'win32') {
+            child_process.spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
         } else {
-            process.kill(pid, "SIGTERM");
+            process.kill(pid, 'SIGTERM');
         }
     } catch {}
 }
 
-function cleanupStalePid(bot) {
+function cleanupStalePid() {
     const lockPath = path.resolve(baseDir, `.shard_${bot.key}.pid`);
     if (!fs.existsSync(lockPath)) return;
+
     let pid = null;
     try {
-        pid = Number(fs.readFileSync(lockPath, "utf8").trim());
+        pid = Number(fs.readFileSync(lockPath, 'utf8').trim());
     } catch {
         pid = null;
     }
-    const proc = processes.get(bot.key);
-    if (proc && pid && proc.pid === pid) return;
-    if (pid && !Number.isNaN(pid)) {
-        killPidTree(pid);
-    }
+
+    if (processRef && pid && processRef.pid === pid) return;
+    if (pid && !Number.isNaN(pid)) killPidTree(pid);
     try { fs.unlinkSync(lockPath); } catch {}
 }
 
-function runfile(bot, options = {}) {
+function runfile(options = {}) {
     return new Promise((resolve) => {
-        const working_dir = path.resolve(baseDir, bot.start.split("/").slice(0, -1).join("/"));
-        const file = bot.start.split("/")[bot.start.split("/").length - 1];
+        const workingDir = path.resolve(baseDir, bot.start.split('/').slice(0, -1).join('/'));
+        const file = bot.start.split('/').at(-1);
 
         const start = () => {
-        cleanupStalePid(bot);
-        // Best-effort git pull to fetch updated files before restarting.
-        const repoRoot = fs.existsSync(path.join(baseDir, ".git")) ? baseDir : working_dir;
-        if (fs.existsSync(path.join(repoRoot, ".git"))) {
-            try {
-                console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
-                const branch = process.env.GIT_BRANCH || "main";
-                child_process.spawnSync("git", ["pull", "origin", branch, "--ff-only"], { cwd: repoRoot, stdio: "inherit" });
-                child_process.spawnSync("git", ["submodule", "update", "--init", "--recursive"], { cwd: repoRoot, stdio: "inherit" });
-            } catch (err) {
-                console.log(`[Loader] Git pull failed: ${err?.message || err}`);
+            cleanupStalePid();
+
+            const repoRoot = fs.existsSync(path.join(baseDir, '.git')) ? baseDir : workingDir;
+            if (fs.existsSync(path.join(repoRoot, '.git'))) {
+                try {
+                    console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
+                    const branch = process.env.GIT_BRANCH || 'main';
+                    child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
+                    child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
+                } catch (err) {
+                    console.log(`[Loader] Git pull failed: ${err?.message || err}`);
+                }
             }
-        }
 
-        console.log(`[Loader] Installing dependencies in directory ${working_dir}`);
-
-        child_process
-            .spawn("npm", [
-                "install",
-                "--build-from-resource",
-                "--no-bin-links",
-                "--cache",
-                "/tmp/.npm-global",
-                "--update-notifier",
-                "false",
-                "--prefix",
-                working_dir
-            ], {
-                cwd: working_dir
-            })
-            .on("exit", () => {
-                console.log(`[Loader] Opening file ${bot.start}`);
-                const proc = child_process.spawn(process.execPath, [file], {
-                    cwd: working_dir,
-                    stdio: "inherit"
+            console.log(`[Loader] Installing dependencies in directory ${workingDir}`);
+            child_process
+                .spawn('npm', [
+                    'install',
+                    '--build-from-resource',
+                    '--no-bin-links',
+                    '--cache',
+                    '/tmp/.npm-global',
+                    '--update-notifier',
+                    'false',
+                    '--prefix',
+                    workingDir
+                ], { cwd: workingDir })
+                .on('exit', () => {
+                    console.log(`[Loader] Opening file ${bot.start}`);
+                    processRef = child_process.spawn(process.execPath, [file], {
+                        cwd: workingDir,
+                        stdio: 'inherit'
+                    });
+                    processRef.on('exit', (code) => {
+                        console.log(`[Loader] File ${bot.start} stopped (code ${code})`);
+                        resolve();
+                    });
                 });
-                processes.set(bot.key, proc);
-                proc.on("exit", (code) => {
-                    console.log(`[Loader] File ${bot.start} stopped (code ${code})`);
-                    resolve();
-                });
-            });
         };
 
         const delay = options.bypassDelay ? 0 : Number(bot.startupDelayMs || 0);
@@ -112,59 +99,49 @@ function runfile(bot, options = {}) {
     });
 }
 
-function restartBot(bot, options = {}) {
+function restartBot(options = {}) {
     const respectDelay = Boolean(options.respectDelay);
-    if (restarting.get(bot.key)) return;
-    restarting.set(bot.key, true);
-    const proc = processes.get(bot.key);
-    if (proc && !proc.killed) {
+    if (restarting) return;
+    restarting = true;
+
+    if (processRef && !processRef.killed) {
         console.log(`[Loader] Restarting ${bot.label}...`);
         const forceTimer = setTimeout(() => {
-            try { killPidTree(proc.pid); } catch {}
+            try { killPidTree(processRef.pid); } catch {}
         }, 8000);
-        proc.once("exit", () => {
+
+        processRef.once('exit', () => {
             clearTimeout(forceTimer);
-            restarting.set(bot.key, false);
-            runfile(bot, { bypassDelay: !respectDelay });
+            restarting = false;
+            runfile({ bypassDelay: !respectDelay });
         });
+
         try {
-            proc.kill();
+            processRef.kill();
         } catch {
-            restarting.set(bot.key, false);
-            runfile(bot, { bypassDelay: !respectDelay });
+            restarting = false;
+            runfile({ bypassDelay: !respectDelay });
         }
         return;
     }
-    restarting.set(bot.key, false);
-    runfile(bot, { bypassDelay: !respectDelay });
+
+    restarting = false;
+    runfile({ bypassDelay: !respectDelay });
 }
 
-for (const bot of bots) {
-    runfile(bot);
-}
+runfile();
 
 setInterval(() => {
-    const flagPath = path.resolve(baseDir, "restart.json");
+    const flagPath = path.resolve(baseDir, 'restart.json');
     if (!fs.existsSync(flagPath)) return;
+
     let payload = null;
     try {
-        const raw = fs.readFileSync(flagPath, "utf8");
-        payload = JSON.parse(raw);
+        payload = JSON.parse(fs.readFileSync(flagPath, 'utf8'));
     } catch {
         payload = null;
     }
-    try {
-        fs.unlinkSync(flagPath);
-    } catch {}
-    const targets = Array.isArray(payload?.targets)
-        ? payload.targets
-        : payload?.target
-            ? [payload.target]
-            : [];
-    const respectDelay = Boolean(payload?.respectDelay);
-    for (const bot of bots) {
-        if (targets.length === 0 || targets.includes(bot.key)) {
-            restartBot(bot, { respectDelay });
-        }
-    }
+
+    try { fs.unlinkSync(flagPath); } catch {}
+    restartBot({ respectDelay: Boolean(payload?.respectDelay) });
 }, 5000);

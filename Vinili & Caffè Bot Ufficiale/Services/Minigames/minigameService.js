@@ -159,7 +159,28 @@ function normalizeWord(raw) {
 }
 
 function normalizeCountryName(raw) {
-  return String(raw || '')
+  const specials = {
+    'ß': 'ss',
+    'ẞ': 'ss',
+    'æ': 'ae',
+    'Æ': 'ae',
+    'œ': 'oe',
+    'Œ': 'oe',
+    'ø': 'o',
+    'Ø': 'o',
+    'å': 'a',
+    'Å': 'a',
+    'ł': 'l',
+    'Ł': 'l',
+    'đ': 'd',
+    'Đ': 'd',
+    'ð': 'd',
+    'Ð': 'd',
+    'þ': 'th',
+    'Þ': 'th'
+  };
+  const replaced = String(raw || '').replace(/[ßẞæÆœŒøØåÅłŁđĐðÐþÞ]/g, (ch) => specials[ch] || ch);
+  return replaced
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -265,6 +286,95 @@ function normalizeSongGuess(raw) {
   return normalizeCountryName(raw);
 }
 
+const NATURAL_GUESS_STOP_TOKENS = new Set([
+  'e', 'ed', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'uno',
+  'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle',
+  'a', 'ad', 'al', 'alla', 'allo', 'ai', 'agli', 'alle',
+  'in', 'nel', 'nella', 'nello', 'nei', 'negli', 'nelle',
+  'su', 'sul', 'sulla', 'sullo', 'sui', 'sugli', 'sulle',
+  'per', 'con', 'tra', 'fra', 'the', 'is', 'it', 'its', 'my',
+  'secondo', 'me', 'penso', 'direi', 'forse', 'sarà', 'sara', 'era',
+  'che', 'sia', 'sono', 'sei', 'ho', 'hai', 'ha', 'abbia', 'questa',
+  'questo', 'quello', 'quella', 'quindi'
+]);
+
+function buildNaturalGuessCandidates(raw, normalizer = normalizeCountryName) {
+  const normalized = normalizer(raw);
+  if (!normalized) return [];
+  const tokens = normalized.split(' ').filter(Boolean);
+  const filteredTokens = tokens.filter((t) => !NATURAL_GUESS_STOP_TOKENS.has(t));
+
+  const candidates = new Set();
+  candidates.add(normalized);
+  if (filteredTokens.length) {
+    candidates.add(filteredTokens.join(' '));
+  }
+  for (const token of filteredTokens) {
+    if (token.length >= 2) candidates.add(token);
+  }
+
+  const source = filteredTokens.length ? filteredTokens : tokens;
+  const maxNgram = Math.min(4, source.length);
+  for (let size = 2; size <= maxNgram; size += 1) {
+    for (let i = 0; i <= source.length - size; i += 1) {
+      const phrase = source.slice(i, i + size).join(' ').trim();
+      if (phrase) candidates.add(phrase);
+    }
+  }
+
+  return Array.from(candidates.values()).sort((a, b) => b.length - a.length);
+}
+
+function isNaturalGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCountryName) {
+  const answers = Array.isArray(rawAnswers)
+    ? rawAnswers.map((a) => normalizer(a)).filter(Boolean)
+    : [normalizer(rawAnswers)].filter(Boolean);
+  if (!answers.length) return false;
+
+  const candidates = buildNaturalGuessCandidates(rawGuess, normalizer);
+  if (!candidates.length) return false;
+
+  const answerCompacts = answers.map((a) => a.replace(/\s+/g, ''));
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    if (answers.includes(candidate)) return true;
+
+    const candidateCompact = candidate.replace(/\s+/g, '');
+    if (candidateCompact && answerCompacts.includes(candidateCompact)) return true;
+
+    const candidateTokens = candidate
+      .split(' ')
+      .filter(Boolean)
+      .filter((t) => t.length >= 2 && !NATURAL_GUESS_STOP_TOKENS.has(t));
+    if (!candidateTokens.length) continue;
+
+    for (const answer of answers) {
+      const answerTokens = answer.split(' ').filter(Boolean);
+      const allMatch = candidateTokens.every((token) => {
+        if (token.length < 3) return false;
+        return answerTokens.some((at) =>
+          at === token
+          || at.startsWith(token)
+          || (at.length >= 3 && token.startsWith(at))
+        );
+      });
+      if (allMatch) return true;
+    }
+  }
+
+  return false;
+}
+
+function extractWordGuessCandidates(raw) {
+  const lower = String(raw || '').toLowerCase();
+  const tokens = lower
+    .split(/[^a-zà-öø-ÿ]+/i)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => t.length >= 5 && t.length <= 6);
+  return Array.from(new Set(tokens));
+}
+
 function extractPlayerTokens(name) {
   const normalized = normalizePlayerGuess(name);
   if (!normalized) return [];
@@ -280,21 +390,52 @@ function isPlayerGuessCorrect(guessRaw, fullAnswerRaw, answerTokensRaw) {
   if (!guess || !fullAnswer) return false;
 
   if (guess === fullAnswer) return true;
+  const guessCompact = guess.replace(/\s+/g, '');
+  const fullCompact = fullAnswer.replace(/\s+/g, '');
+  if (guessCompact && (guessCompact === fullCompact || fullCompact.includes(guessCompact))) return true;
   if (answerTokens.includes(guess)) return true;
   if (guess.length >= 3 && fullAnswer.includes(guess)) return true;
 
-  const guessTokens = guess.split(' ').filter(Boolean);
+  const stopTokens = new Set([
+    'e', 'ed', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'uno',
+    'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle',
+    'a', 'ad', 'al', 'alla', 'allo', 'ai', 'agli', 'alle',
+    'in', 'nel', 'nella', 'nello', 'nei', 'negli', 'nelle',
+    'su', 'sul', 'sulla', 'sullo', 'sui', 'sugli', 'sulle',
+    'per', 'con', 'tra', 'fra', 'the', 'is', 'it', 'its', 'my',
+    'secondo', 'me', 'penso', 'direi', 'forse', 'sarà', 'sara', 'era'
+  ]);
+  const guessTokens = guess
+    .split(' ')
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2 && !stopTokens.has(t));
   if (!guessTokens.length) return false;
 
-  // Consider correct when every guessed token matches a full token (exact or prefix),
-  // useful for names with particles/accent differences while avoiding random single letters.
+  if (guessTokens.some((t) => t.length >= 3 && answerTokens.includes(t))) return true;
+
   const allTokensMatch = guessTokens.every((token) => {
-    if (token.length < 2) return false;
-    return answerTokens.some((answerToken) => answerToken === token || answerToken.startsWith(token));
+    if (token.length < 3) return false;
+    return answerTokens.some((answerToken) =>
+      answerToken === token
+      || answerToken.startsWith(token)
+      || (answerToken.length >= 3 && token.startsWith(answerToken))
+    );
   });
   if (allTokensMatch) return true;
 
   return false;
+}
+
+function buildPlayerAliases(player) {
+  const aliases = new Set();
+  const add = (value) => {
+    const normalized = normalizePlayerGuess(value);
+    if (normalized) aliases.add(normalized);
+  };
+  add(player?.strPlayer);
+  add(player?.strKnownAs);
+  add(player?.strNickname);
+  return Array.from(aliases.values());
 }
 
 async function fetchPlayerInfo(cfg, name) {
@@ -312,7 +453,8 @@ async function fetchPlayerInfo(cfg, name) {
       name: player.strPlayer,
       team: player.strTeam || 'Squadra sconosciuta',
       nationality: player.strNationality || 'Nazionalità sconosciuta',
-      image: player.strThumb || player.strCutout || null
+      image: player.strThumb || player.strCutout || null,
+      aliases: buildPlayerAliases(player)
     };
   } catch {
     return null;
@@ -339,7 +481,8 @@ async function fetchPlayerFromRandomLetter(cfg) {
         name: player.strPlayer,
         team: player.strTeam || 'Squadra sconosciuta',
         nationality: player.strNationality || 'Nazionalità sconosciuta',
-        image: player.strThumb || player.strCutout || null
+        image: player.strThumb || player.strCutout || null,
+        aliases: buildPlayerAliases(player)
       };
     } catch {}
   }
@@ -1180,7 +1323,10 @@ async function startGuessPlayerGame(client, cfg) {
 
   activeGames.set(channelId, {
     type: 'guessPlayer',
-    answers: extractPlayerTokens(info.name),
+    answers: Array.from(new Set([
+      ...extractPlayerTokens(info.name),
+      ...(Array.isArray(info.aliases) ? info.aliases : [])
+    ])),
     fullAnswer: normalizePlayerGuess(info.name),
     displayName: info.name,
     rewardExp,
@@ -1556,27 +1702,23 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessWord') {
-    if (/^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(content) && !/^\d+$/.test(content)) {
-      await message.react('<:vegax:1443934876440068179>').catch(() => {});
-    } else {
+    const guessCandidates = extractWordGuessCandidates(content);
+    if (!guessCandidates.length) {
       return false;
     }
-    const guess = content.toLowerCase();
-    if (guess.length < 5 || guess.length > 6) return false;
 
-    if (guess === game.target) {
+    if (guessCandidates.includes(game.target)) {
       clearTimeout(game.timeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
+    await message.react('<:vegax:1443934876440068179>').catch(() => {});
     return false;
   }
 
   if (game.type === 'guessFlag') {
-    const guess = normalizeCountryName(content);
-    if (!guess) return false;
-    if (game.answers?.includes(guess)) {
+    if (isNaturalGuessCorrect(content, game.answers, normalizeCountryName)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -1587,7 +1729,13 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessPlayer') {
-    if (isPlayerGuessCorrect(content, game.fullAnswer, game.answers)) {
+    const byStoredAnswers = isPlayerGuessCorrect(content, game.fullAnswer, game.answers);
+    const byDisplayNameFallback = isPlayerGuessCorrect(
+      content,
+      game.displayName,
+      extractPlayerTokens(game.displayName)
+    );
+    if (byStoredAnswers || byDisplayNameFallback) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -1598,10 +1746,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessSong') {
-    const guess = normalizeSongGuess(content);
-    if (!guess) return false;
-    const target = normalizeSongGuess(game.title);
-    if (guess === target || (target.includes(guess) && guess.length >= 3)) {
+    if (isNaturalGuessCorrect(content, game.title, normalizeSongGuess)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -1921,4 +2066,3 @@ async function restoreActiveGames(client) {
 }
 
 module.exports = { startMinigameLoop, forceStartMinigame, restoreActiveGames, handleMinigameMessage, handleMinigameButton };
-

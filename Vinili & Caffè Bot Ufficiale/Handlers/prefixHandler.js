@@ -1,37 +1,5 @@
-﻿const ascii = require("ascii-table");
-const fs = require("fs");
-const path = require("path");
-const isDev = process.cwd().toLowerCase().includes("dev bot");
-
-function getBotRoots() {
-    const cwd = process.cwd();
-    const base = path.dirname(cwd);
-    const isOfficial = cwd.toLowerCase().includes("ufficiale");
-    const isDev = cwd.toLowerCase().includes("dev bot");
-    const official = isOfficial ? cwd : path.join(base, "Vinili & Caffè Bot Ufficiale");
-    const dev = isDev ? cwd : path.join(base, "Vinili & Caffè Dev Bot");
-    return { official, dev, isOfficial };
-}
-
-function listPrefixFiles(root) {
-    const out = new Map();
-    const prefixRoot = path.join(root, "Prefix");
-    if (!fs.existsSync(prefixRoot)) return out;
-    const folders = fs.readdirSync(prefixRoot).filter((f) => {
-        const full = path.join(prefixRoot, f);
-        return fs.statSync(full).isDirectory();
-    });
-    for (const folder of folders) {
-        const folderPath = path.join(prefixRoot, folder);
-        const files = fs.readdirSync(folderPath).filter((f) => f.endsWith(".js"));
-        out.set(folder, new Set(files));
-    }
-    return out;
-}
-
-function shouldLogOnce() {
-    return !isDev;
-}
+﻿const ascii = require('ascii-table');
+const fs = require('fs');
 
 function humanizeCommandName(name) {
     return String(name || '')
@@ -65,9 +33,7 @@ function buildAutoPrefixDescription(command, folder) {
     if (exact[name]) return exact[name];
 
     const subcommands = Array.isArray(command?.subcommands) ? command.subcommands : [];
-    if (subcommands.length) {
-        return `Gestisce ${readable} con subcomandi dedicati.`;
-    }
+    if (subcommands.length) return `Gestisce ${readable} con subcomandi dedicati.`;
 
     const folderName = String(folder || '').toLowerCase();
     if (folderName === 'community') return `Comando community: ${readable}.`;
@@ -83,20 +49,21 @@ module.exports = (client) => {
         client.pcommands.clear();
         client.aliases.clear();
         const statusMap = new Map();
+
         for (const folder of folders) {
             const folderPath = `./Prefix/${folder}`;
-            const files = fs.readdirSync(folderPath).filter(f => f.endsWith(".js"));
+            const files = fs.readdirSync(folderPath).filter((f) => f.endsWith('.js'));
             for (const file of files) {
                 const filePath = `../Prefix/${folder}/${file}`;
                 const key = `${folder}/${file}`;
                 delete require.cache[require.resolve(filePath)];
                 const command = require(filePath);
                 if (!command || !command.name) {
-                    statusMap.set(key, "Missing name");
+                    statusMap.set(key, 'Missing name');
                     continue;
                 }
                 if (command.skipLoad || command.skipPrefix) {
-                    statusMap.set(key, "Skipped");
+                    statusMap.set(key, 'Skipped');
                     continue;
                 }
                 command.folder = command.folder || folder;
@@ -104,47 +71,23 @@ module.exports = (client) => {
                     command.description = buildAutoPrefixDescription(command, folder);
                 }
                 client.pcommands.set(command.name, command);
-                statusMap.set(key, "Loaded");
+                statusMap.set(key, 'Loaded');
                 if (Array.isArray(command.aliases)) {
-                    for (const alias of command.aliases) {
-                        client.aliases.set(alias, command.name);
-                    }
+                    for (const alias of command.aliases) client.aliases.set(alias, command.name);
                 }
             }
         }
 
-        const roots = getBotRoots();
-        const officialMap = listPrefixFiles(roots.official);
-        const devMap = listPrefixFiles(roots.dev);
-        const allFolders = new Set([...officialMap.keys(), ...devMap.keys()]);
-        const unified = new ascii().setHeading("Folder", "File", "Ufficiale", "Dev");
-        const isOfficial = roots.isOfficial;
-
-        for (const folder of Array.from(allFolders).sort()) {
-            const uffFiles = officialMap.get(folder) || new Set();
-            const devFiles = devMap.get(folder) || new Set();
-            const allFiles = new Set([...uffFiles, ...devFiles]);
-            for (const file of Array.from(allFiles).sort()) {
-                const key = `${folder}/${file}`;
-                const currentStatus = statusMap.get(key) || (isOfficial ? (uffFiles.has(file) ? "Loaded" : "-") : (devFiles.has(file) ? "Loaded" : "-"));
-                const otherStatus = isOfficial ? (devFiles.has(file) ? "Loaded" : "-") : (uffFiles.has(file) ? "Loaded" : "-");
-                if (isOfficial) {
-                    unified.addRow(folder, file, currentStatus, otherStatus);
-                } else {
-                    unified.addRow(folder, file, otherStatus, currentStatus);
-                }
-            }
+        const table = new ascii().setHeading('Folder', 'File', 'Status');
+        for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
+            const [folder, file] = key.split('/');
+            table.addRow(folder, file, status);
         }
 
-        if (shouldLogOnce('prefix')) {
-            global.logger.info(unified.toString());
-            global.logger.info(`[PREFIX_COMMANDS] Loaded ${client.pcommands.size} PrefixCommands.`);
-        }
+        global.logger.info(table.toString());
+        global.logger.info(`[PREFIX_COMMANDS] Loaded ${client.pcommands.size} PrefixCommands.`);
+
         client._prefixOverrideCache = null;
-        try {
-            client.logs.success(`[FUNCTION] Successfully reloaded prefix commands.`);
-        } catch (error) {
-            global.logger.error(error);
-        }
+        client.logs.success('[FUNCTION] Successfully reloaded prefix commands.');
     };
 };

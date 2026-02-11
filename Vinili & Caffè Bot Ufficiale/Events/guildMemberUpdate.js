@@ -1,6 +1,7 @@
 ﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const config = require("../config.json");
 const IDs = require('../Utils/Config/ids');
+const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
@@ -77,8 +78,19 @@ async function sendBoostEmbeds(channel, member, times, boostCount) {
 
 module.exports = {
     name: 'guildMemberUpdate',
-    async execute(oldMember, newMember) {
+    async execute(oldMember, newMember, client) {
         try {
+            if (newMember?.guild?.id === IDs.guilds.main) {
+                const oldRoles = oldMember?.roles?.cache;
+                const newRoles = newMember?.roles?.cache;
+                const roleChanged = !!oldRoles && !!newRoles && (
+                    oldRoles.size !== newRoles.size
+                    || oldRoles.some((role) => !newRoles.has(role.id))
+                    || newRoles.some((role) => !oldRoles.has(role.id))
+                );
+                if (roleChanged) scheduleStaffListRefresh(client, newMember.guild.id);
+            }
+
             await removePlusColorsIfNotEligible(newMember);
 
             const boostAnnounceChannel =

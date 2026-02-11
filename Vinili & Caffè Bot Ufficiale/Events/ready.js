@@ -1,4 +1,4 @@
-const config = require('../config.json');
+﻿const config = require('../config.json');
 const mongoose = require('mongoose');
 const { restorePendingReminders } = require('../Services/Bump/bumpService');
 const { restorePendingDiscadiaReminders } = require('../Services/Bump/bumpService');
@@ -22,16 +22,6 @@ const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
     return client.channels.cache.get(channelId) || await client.channels.fetch(channelId).catch(() => null);
 };
-
-function isPrimaryScheduler(client) {
-    if (client?.cluster && Number.isInteger(client.cluster.id)) {
-        return client.cluster.id === 0;
-    }
-    if (client?.shard?.ids && Array.isArray(client.shard.ids)) {
-        return client.shard.ids.includes(0);
-    }
-    return true;
-}
 
 module.exports = {
     name: 'clientReady',
@@ -57,7 +47,7 @@ module.exports = {
             client.logs.success('[DATABASE] Connected to MongoDB successfully.');
         }
         require('events').EventEmitter.defaultMaxListeners = config.eventListeners;
-        const primaryScheduler = isPrimaryScheduler(client);
+        const primaryScheduler = true;
         if (primaryScheduler) {
             try {
                 await restorePendingReminders(client);
@@ -194,4 +184,5 @@ module.exports = {
         }
     },
 };
+
 

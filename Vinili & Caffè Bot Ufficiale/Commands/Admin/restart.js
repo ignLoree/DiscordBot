@@ -5,8 +5,6 @@ const path = require('path');
 const child_process = require('child_process');
 
 const RESTART_FLAG = 'restart.json';
-const RESTART_NOTIFY_PREFIX = 'restart_notify_';
-const RESTART_WATCH_PREFIX = 'restart_watch_';
 
 function pullLatest() {
     try {
@@ -18,139 +16,51 @@ function pullLatest() {
     } catch {}
 }
 
-function writeRestartNotify(target, payload) {
-    try {
-        const flagPath = path.resolve(process.cwd(), '..', `${RESTART_NOTIFY_PREFIX}${target}.json`);
-        fs.writeFileSync(flagPath, JSON.stringify(payload, null, 2), 'utf8');
-    } catch {}
-}
-
-function writeRestartWatch(target, payload) {
-    try {
-        const flagPath = path.resolve(process.cwd(), '..', `${RESTART_WATCH_PREFIX}${target}.json`);
-        fs.writeFileSync(flagPath, JSON.stringify(payload, null, 2), 'utf8');
-    } catch {}
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('restart')
-        .setDescription('Riavvia uno dei bot tramite loader.')
-        .addStringOption(opt => opt
-            .setName('target')
-            .setDescription('Quale bot riavviare')
-            .setRequired(true)
-            .addChoices(
-                { name: 'Ufficiale', value: 'official' },
-                { name: 'Dev', value: 'dev' },
-                { name: 'Entrambi', value: 'both' }
-            ))
-        .addStringOption(opt => opt
-            .setName('scope')
-            .setDescription('Cosa vuoi riavviare')
-            .setRequired(false)
-            .addChoices(
-                { name: 'Full', value: 'full' },
-                { name: 'Handlers', value: 'handlers' },
-                { name: 'Commands', value: 'commands' },
-                { name: 'Prefix', value: 'prefix' },
-                { name: 'Events', value: 'events' },
-                { name: 'Triggers', value: 'triggers' },
-                { name: 'Services', value: 'services' },
-                { name: 'Utils', value: 'utils' },
-                { name: 'Schemas', value: 'schemas' },
-                { name: 'All', value: 'all' }
-            )),
+        .setDescription('Riavvia il bot o ricarica moduli.')
+        .addStringOption((opt) =>
+            opt
+                .setName('scope')
+                .setDescription('Cosa vuoi ricaricare')
+                .setRequired(false)
+                .addChoices(
+                    { name: 'Full (riavvio processo)', value: 'full' },
+                    { name: 'Handlers', value: 'handlers' },
+                    { name: 'Commands', value: 'commands' },
+                    { name: 'Prefix', value: 'prefix' },
+                    { name: 'Events', value: 'events' },
+                    { name: 'Triggers', value: 'triggers' },
+                    { name: 'Services', value: 'services' },
+                    { name: 'Utils', value: 'utils' },
+                    { name: 'Schemas', value: 'schemas' },
+                    { name: 'All', value: 'all' }
+                )
+        ),
 
     async execute(interaction) {
         try {
-            const target = interaction.options.getString('target');
             const scope = interaction.options.getString('scope') || 'full';
-            if (!['official', 'dev', 'both'].includes(target)) {
-                return safeReply(interaction, { content: 'Target non valido.', flags: 1 << 6 });
-            }
-
-            const isOfficial = process.cwd().toLowerCase().includes('ufficiale');
-            const currentTarget = isOfficial ? 'official' : 'dev';
             const requestedAt = new Date().toISOString();
-            const requestId = `${Date.now()}_${interaction.id || interaction.user.id}`;
             const channelId = interaction.channelId || null;
 
             if (scope === 'full') {
-                const targets = target === 'both' ? ['official', 'dev'] : [target];
-                
                 await safeReply(interaction, {
-                    content: `Riavvio ${target} richiesto. Ti avviso qui quando è completato.`,
+                    content: 'Riavvio richiesto. Ti avviso qui quando è completato.',
                     flags: 1 << 6
                 });
+
+                const notifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
+                fs.writeFileSync(
+                    notifyPath,
+                    JSON.stringify({ channelId, by: interaction.user.id, at: requestedAt, scope: 'full' }, null, 2),
+                    'utf8'
+                );
 
                 const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
-                fs.writeFileSync(flagPath, JSON.stringify({
-                    targets,
-                    respectDelay: target === 'both',
-                    by: interaction.user.id,
-                    at: requestedAt
-                }, null, 2), 'utf8');
-
-                for (const t of targets) {
-                    writeRestartNotify(t, {
-                        channelId,
-                        by: interaction.user.id,
-                        at: requestedAt,
-                        scope: 'full',
-                        target: t,
-                        requestId
-                    });
-                    writeRestartWatch(t, {
-                        channelId,
-                        by: interaction.user.id,
-                        at: requestedAt,
-                        scope: 'full',
-                        target: t,
-                        requestId
-                    });
-                }
+                fs.writeFileSync(flagPath, JSON.stringify({ at: requestedAt, by: interaction.user.id }, null, 2), 'utf8');
                 return;
-            }
-
-            if (target === 'both') {
-                const otherTarget = currentTarget === 'official' ? 'dev' : 'official';
-                const remoteFlag = path.resolve(process.cwd(), '..', `reload_${otherTarget}.json`);
-                fs.writeFileSync(remoteFlag, JSON.stringify({
-                    scope,
-                    gitPull: true,
-                    by: interaction.user.id,
-                    at: requestedAt,
-                    channelId,
-                    requestId,
-                    target: otherTarget
-                }, null, 2), 'utf8');
-
-                const start = Date.now();
-                pullLatest();
-                await interaction.client.reloadScope(scope);
-                const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
-                return safeReply(interaction, {
-                    content: `<:vegacheckmark:1443666279058772028> Reload ${scope} completato su ${currentTarget} in ${elapsed}s. Conferma per ${otherTarget} in arrivo qui.`,
-                    flags: 1 << 6
-                });
-            }
-
-            if (target !== currentTarget) {
-                const remoteFlag = path.resolve(process.cwd(), '..', `reload_${target}.json`);
-                fs.writeFileSync(remoteFlag, JSON.stringify({
-                    scope,
-                    gitPull: true,
-                    by: interaction.user.id,
-                    at: requestedAt,
-                    channelId,
-                    requestId,
-                    target
-                }, null, 2), 'utf8');
-                return safeReply(interaction, {
-                    content: `<:vegacheckmark:1443666279058772028> Reload ${scope} richiesto su ${target}. Ti avviso qui quando è completato.`,
-                    flags: 1 << 6
-                });
             }
 
             const start = Date.now();
@@ -158,12 +68,12 @@ module.exports = {
             await interaction.client.reloadScope(scope);
             const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
             return safeReply(interaction, {
-                content: `Reload ${scope} completato per ${target} in ${elapsed}s.`,
+                content: `Reload ${scope} completato in ${elapsed}s.`,
                 flags: 1 << 6
             });
         } catch (error) {
             global.logger.error(error);
-            return safeReply(interaction, { content: 'Errore durante il riavvio.', flags: 1 << 6 });
+            return safeReply(interaction, { content: 'Errore durante il restart/reload.', flags: 1 << 6 });
         }
     }
 };

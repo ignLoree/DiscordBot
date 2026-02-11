@@ -15,7 +15,6 @@
     "ascii-table": "0.0.9",
     "axios": "^1.12.2",
     "canvas": "npm:@napi-rs/canvas@^0.1.82",
-    "discord-hybrid-sharding": "3.0.1",
     "discord-logs": "2.2.1",
     "discord.js": "^14.21.0",
     "dotenv": "17.2.3",
