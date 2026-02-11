@@ -34,6 +34,39 @@ const toComparableJson = (items = []) => JSON.stringify(
   items.map((item) => normalizeComparable(typeof item?.toJSON === 'function' ? item.toJSON() : item))
 );
 
+function extractCustomIdsFromComponents(components = []) {
+  const ids = new Set();
+  for (const row of components || []) {
+    const rowJson = typeof row?.toJSON === 'function' ? row.toJSON() : row;
+    const children = Array.isArray(rowJson?.components) ? rowJson.components : [];
+    for (const component of children) {
+      const id = component?.custom_id || component?.customId || null;
+      if (id) ids.add(String(id));
+    }
+  }
+  return ids;
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function buildEmbedSignatureFromPayload(payloadEmbeds = []) {
+  const first = Array.isArray(payloadEmbeds) ? payloadEmbeds[0] : null;
+  const json = typeof first?.toJSON === 'function' ? first.toJSON() : first;
+  if (!json) return '';
+  return normalizeText(`${json.title || ''}|${json.description || ''}`).slice(0, 400);
+}
+
+function buildEmbedSignatureFromMessage(msgEmbeds = []) {
+  const first = Array.isArray(msgEmbeds) ? msgEmbeds[0] : null;
+  if (!first) return '';
+  return normalizeText(`${first.title || ''}|${first.description || ''}`).slice(0, 400);
+}
+
 function shouldEditMessage(message, { embeds = [], components = [], attachmentName = null }) {
   const currentEmbeds = toComparableJson(message?.embeds || []);
   const nextEmbeds = toComparableJson(embeds);
@@ -53,8 +86,35 @@ function shouldEditMessage(message, { embeds = [], components = [], attachmentNa
 }
 
 async function upsertPanelMessage(channel, client, payload) {
-  const messages = await channel.messages.fetch({ limit: 30 }).catch(() => null);
-  const existing = messages?.find((msg) => msg.author?.id === client.user?.id && msg.embeds?.length);
+  const messages = await channel.messages.fetch({ limit: 80 }).catch(() => null);
+  const botMessages = messages
+    ? [...messages.values()].filter((msg) => msg.author?.id === client.user?.id && msg.embeds?.length)
+    : [];
+
+  const payloadCustomIds = extractCustomIdsFromComponents(payload?.components || []);
+  const payloadSignature = buildEmbedSignatureFromPayload(payload?.embeds || []);
+
+  let existing = null;
+
+  if (payloadCustomIds.size > 0) {
+    existing = botMessages.find((msg) => {
+      const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
+      if (!msgCustomIds.size) return false;
+      for (const id of payloadCustomIds) {
+        if (!msgCustomIds.has(id)) return false;
+      }
+      return true;
+    }) || null;
+  }
+
+  if (!existing && payloadSignature) {
+    existing = botMessages.find((msg) => buildEmbedSignatureFromMessage(msg.embeds || []) === payloadSignature) || null;
+  }
+
+  if (!existing) {
+    existing = botMessages.find((msg) => msg.author?.id === client.user?.id && msg.embeds?.length) || null;
+  }
+
   if (!existing) {
     await channel.send(payload).catch(() => {});
     return;

@@ -47,7 +47,12 @@ module.exports = {
           if (channel) {
             const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
             const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
-            await channel.send(`<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`);
+            const restartMsg = await channel.send(`<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`).catch(() => null);
+            if (restartMsg) {
+              setTimeout(() => {
+                restartMsg.delete().catch(() => { });
+              }, 5000);
+            }
             if (data?.notifyMessageId) {
               const notifyMsg = await channel.messages.fetch(data.notifyMessageId).catch(() => null);
               if (notifyMsg) await notifyMsg.delete().catch(() => { });
@@ -65,7 +70,14 @@ module.exports = {
         try {
           const data = JSON.parse(fs.readFileSync('./restart.json', 'utf8'));
           const channel = await getChannelSafe(client, data?.channelID);
-          if (channel) await channel.send('<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!');
+          if (channel) {
+            const restartMsg = await channel.send('<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!').catch(() => null);
+            if (restartMsg) {
+              setTimeout(() => {
+                restartMsg.delete().catch(() => { });
+              }, 5000);
+            }
+          }
           fs.unlinkSync('./restart.json');
         } catch (err) {
           global.logger.error('Errore durante il post-restart:', err);

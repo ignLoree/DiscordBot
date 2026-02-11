@@ -188,12 +188,16 @@ module.exports = {
             }
         }
         const runStartupPanels = async (label = 'immediate') => {
+            if (client._startupPanelsRefreshRunning) return;
+            client._startupPanelsRefreshRunning = true;
             try {
                 if (typeof startupPanelsTrigger?.execute === 'function') {
                     await startupPanelsTrigger.execute(client);
                 }
             } catch (err) {
                 global.logger.error(`[CLIENT READY] Startup panels refresh failed (${label}):`, err);
+            } finally {
+                client._startupPanelsRefreshRunning = false;
             }
         };
         await runStartupPanels('immediate');
