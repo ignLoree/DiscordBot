@@ -342,12 +342,10 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     await member.roles.remove(ROLE_STAFF);
                     await member.roles.remove(ROLE_HIGH_STAFF);
                 }
-                if (STAFF_TRACKED_ROLE_IDS.has(oldRole.id)) {
-                    await StaffModel.deleteOne({
-                        guildId: interaction.guild.id,
-                        userId: utentee.id
-                    });
-                }
+                await StaffModel.deleteOne({
+                    guildId: interaction.guild.id,
+                    userId: utentee.id
+                });
                 await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()

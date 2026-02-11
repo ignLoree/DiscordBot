@@ -37,7 +37,8 @@ const StaffSchema = new Schema({
             giorniAggiuntivi: { type: Number, default: 0 },
             ruolo: String,
             stafferInPausa: { type: Number, default: 0 },
-            status: { type: String, default: 'pending' }
+            status: { type: String, default: 'pending' },
+            cancelledAt: { type: Date, default: null }
         }
     ]
 });
