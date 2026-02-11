@@ -29,6 +29,7 @@ const {
     getGuildAutoResponderCache,
     setGuildAutoResponderCache
 } = require('../Utils/Community/autoResponderCache');
+const { safeMessageReply } = require('../Utils/Moderation/reply');
 const IDs = require('../Utils/Config/ids');
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
@@ -767,10 +768,12 @@ async function handleAfk(message) {
             await member.setNickname(afkData.originalName).catch(() => { });
         }
         await AFK.deleteOne({ guildId, userId: userId });
-        const msg = await message.reply(`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`);
-        setTimeout(() => {
-            msg.delete().catch(() => { });
-        }, 5000);
+        const msg = await safeMessageReply(message, `<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`);
+        if (msg) {
+            setTimeout(() => {
+                msg.delete().catch(() => { });
+            }, 5000);
+        }
     }
     const mentionedUsers = message.mentions.users;
     for (const user of mentionedUsers.values()) {
@@ -784,7 +787,7 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
+        await safeMessageReply(message, `\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 
@@ -950,7 +953,7 @@ async function handleCounting(message, client) {
     }
     let reaction = '<:vegacheckmark:1443666279058772028>';
     if (message.author.id === countdata.LastUser) {
-        message.reply({
+        safeMessageReply(message, {
             embeds: [
                 new EmbedBuilder()
                     .setDescription(`<:vegax:1443934876440068179> Non puoi contare da solo! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`)
@@ -961,7 +964,7 @@ async function handleCounting(message, client) {
         countdata.LastUser = ' ';
         message.react('<:vegax:1443934876440068179>').catch((err) => logEventError(client, 'COUNTING', err));
     } else if (messageValue - 1 !== countdata.Count || messageValue === countdata.Count || messageValue > countdata.Count + 1) {
-        message.reply({
+        safeMessageReply(message, {
             embeds: [
                 new EmbedBuilder()
                     .setDescription(`<:vegax:1443934876440068179> Hai sbagliato numero! Counting perso a: **${countdata.Count}**! Riparti scrivendo **1**.`)
