@@ -13,6 +13,7 @@ const { startHourlyReminderLoop } = require('../Services/Community/chatReminderS
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/communityOpsService');
 const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/communityOpsService');
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
+const { startDailyPartnerAuditLoop } = require('../Services/Partner/partnerAuditService');
 const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { retroSyncGuildLevels } = require('../Services/Community/expService');
@@ -169,6 +170,11 @@ module.exports = {
                 startWeeklyActivityWinnersLoop(client);
             } catch (err) {
                 global.logger.error('[WEEKLY ACTIVITY] Failed to start loop', err);
+            }
+            try {
+                startDailyPartnerAuditLoop(client);
+            } catch (err) {
+                global.logger.error('[PARTNER AUDIT] Failed to start loop', err);
             }
             try {
                 startTicketAutoClosePromptLoop(client);

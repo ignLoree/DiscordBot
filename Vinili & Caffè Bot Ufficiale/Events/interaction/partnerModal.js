@@ -201,7 +201,8 @@ async function handlePartnerModal(interaction) {
 
         if (partnershipChannel) {
             const sentMessageIds = [];
-            const parts = splitMessage(filteredDescription);
+            const contentWithManager = `${filteredDescription}\n\nManager: <@${managerId}>`;
+            const parts = splitMessage(contentWithManager);
             for (const part of parts) {
                 const sent = await partnershipChannel.send({ content: part }).catch(() => null);
                 if (sent?.id) sentMessageIds.push(sent.id);
