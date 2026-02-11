@@ -546,6 +546,70 @@ async function getUserRanks(guildId, userId) {
   };
 }
 
+async function retroSyncGuildLevels(guild, { syncRoles = true } = {}) {
+  if (!guild?.id) {
+    return {
+      scanned: 0,
+      changed: 0,
+      raised: 0,
+      lowered: 0,
+      roleSynced: 0
+    };
+  }
+
+  const guildId = guild.id;
+  const changedUsers = [];
+  const batchOps = [];
+  let scanned = 0;
+  let changed = 0;
+  let raised = 0;
+  let lowered = 0;
+
+  const cursor = ExpUser.find({ guildId })
+    .select('userId totalExp level')
+    .lean()
+    .cursor();
+
+  for await (const doc of cursor) {
+    scanned += 1;
+    const totalExp = Math.max(0, Math.floor(Number(doc?.totalExp || 0)));
+    const oldLevel = Math.max(0, Math.floor(Number(doc?.level || 0)));
+    const newLevel = getLevelInfo(totalExp).level;
+    if (newLevel === oldLevel) continue;
+
+    changed += 1;
+    if (newLevel > oldLevel) raised += 1;
+    if (newLevel < oldLevel) lowered += 1;
+    changedUsers.push({ userId: String(doc.userId), newLevel });
+
+    batchOps.push({
+      updateOne: {
+        filter: { guildId, userId: String(doc.userId) },
+        update: { $set: { level: newLevel } }
+      }
+    });
+
+    if (batchOps.length >= 500) {
+      await ExpUser.bulkWrite(batchOps, { ordered: false }).catch(() => null);
+      batchOps.length = 0;
+    }
+  }
+
+  if (batchOps.length > 0) {
+    await ExpUser.bulkWrite(batchOps, { ordered: false }).catch(() => null);
+  }
+
+  let roleSynced = 0;
+  if (syncRoles && changedUsers.length > 0) {
+    for (const row of changedUsers) {
+      await syncLevelRolesForMember(guild, row.userId, row.newLevel).catch(() => {});
+      roleSynced += 1;
+    }
+  }
+
+  return { scanned, changed, raised, lowered, roleSynced };
+}
+
 module.exports = {
   MESSAGE_EXP,
   VOICE_EXP_PER_MINUTE,
@@ -566,6 +630,7 @@ module.exports = {
   getRecentLevelHistory,
   getLevelHistoryPage,
   syncLevelRolesForMember,
+  retroSyncGuildLevels,
   getRoleMultiplier,
   getCurrentWeekKey,
   ROLE_MULTIPLIERS

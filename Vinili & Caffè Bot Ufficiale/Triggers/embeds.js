@@ -956,14 +956,9 @@ async function runAllClientReadyPanels(client) {
 }
 
 module.exports = {
-  name: 'clientReady',
-  once: true,
+  name: 'startupPanelsInternal',
+  once: false,
   async execute(client) {
     await runAllClientReadyPanels(client);
-    setTimeout(() => {
-      runAllClientReadyPanels(client).catch((err) => {
-        global.logger.error('[CLIENT READY] delayed panel refresh failed:', err);
-      });
-    }, 15000);
   }
 };

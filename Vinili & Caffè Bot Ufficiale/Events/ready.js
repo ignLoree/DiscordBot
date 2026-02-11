@@ -15,6 +15,7 @@ const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = requ
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
 const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
+const { retroSyncGuildLevels } = require('../Services/Community/expService');
 const cron = require('node-cron');
 const IDs = require('../Utils/Config/ids');
 const startupPanelsTrigger = require('../Triggers/embeds');
@@ -28,23 +29,32 @@ module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        let logOnce = true;
         client.setMaxListeners(client.config.eventListeners || 20);
         const mongodbURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
+        let dbConnected = false;
         if (!mongodbURL) {
             client.logs.error('[DATABASE] No MongoDB URL has been provided. Set MONGO_URL (or MONGODB_URI) or fallback config.mongoURL.');
-            return;
+        } else {
+            try {
+                mongoose.set('strictQuery', false);
+                mongoose.set('bufferCommands', false);
+                if (mongoose.connection.readyState === 1) {
+                    dbConnected = true;
+                } else {
+                    await mongoose.connect(mongodbURL, {
+                        serverSelectionTimeoutMS: 5000,
+                        connectTimeoutMS: 5000,
+                        socketTimeoutMS: 20000,
+                        maxPoolSize: 20,
+                        minPoolSize: 1
+                    });
+                    dbConnected = true;
+                }
+            } catch (err) {
+                client.logs.error(`[DATABASE] Error connecting to the database (continuo comunque il bootstrap): ${err}`);
+            }
         }
-        try {
-            mongoose.set('strictQuery', false);
-            await mongoose.connect(mongodbURL || '', {
-                serverSelectionTimeoutMS: 10000,
-            });
-        } catch (err) {
-            client.logs.error(`[DATABASE] Error connecting to the database: ${err}`);
-            return;
-        }
-        if (mongoose.connect && logOnce) {
+        if (dbConnected) {
             client.logs.success('[DATABASE] Connected to MongoDB successfully.');
         }
         require('events').EventEmitter.defaultMaxListeners = config.eventListeners;
@@ -94,6 +104,18 @@ module.exports = {
             global.logger.error('[TTS RESTORE ERROR]', err);
         }
         if (primaryScheduler) {
+            try {
+                const guild = client.guilds.cache.get(IDs.guilds.main)
+                    || await client.guilds.fetch(IDs.guilds.main).catch(() => null);
+                if (guild) {
+                    const retro = await retroSyncGuildLevels(guild, { syncRoles: true });
+                    global.logger.info(
+                        `[LEVEL RETRO] scanned=${retro.scanned} changed=${retro.changed} raised=${retro.raised} lowered=${retro.lowered} roleSynced=${retro.roleSynced}`
+                    );
+                }
+            } catch (err) {
+                global.logger.error('[LEVEL RETRO] Failed to run startup retro sync', err);
+            }
             let engagementTickRunning = false;
             const engagementTick = async () => {
                 if (engagementTickRunning) return;
@@ -175,9 +197,6 @@ module.exports = {
         setTimeout(() => {
             runStartupPanels('retry+15s').catch(() => {});
         }, 15000);
-        setTimeout(() => {
-            runStartupPanels('retry+60s').catch(() => {});
-        }, 60000);
         try {
             cron.schedule("0 0 1 * *", async () => {
                 const channelId = IDs.channels.inviteLog;
@@ -197,9 +216,7 @@ module.exports = {
             global.logger.error('[MONTHLY GIF] Failed to schedule', err);
         }
 
-        if (logOnce) {
-            client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
-        }
+        client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
     },
 };
 

@@ -45,7 +45,8 @@ module.exports = {
     'levelignore',
     'levelunignore',
     'levelconfig',
-    'levelaudit'
+    'levelaudit',
+    'levelretro'
   ],
   subcommandAliases: {
     levelset: 'set',
@@ -58,7 +59,8 @@ module.exports = {
     levelignore: 'ignore',
     levelunignore: 'unignore',
     levelconfig: 'config',
-    levelaudit: 'audit'
+    levelaudit: 'audit',
+    levelretro: 'retro'
   },
 
   async execute(message, args = []) {
@@ -82,7 +84,8 @@ module.exports = {
           '`+level ignore <@ruolo|id>`',
           '`+level unignore <@ruolo|id>`',
           '`+level config`',
-          '`+level audit <@utente|id>`'
+          '`+level audit <@utente|id>`',
+          '`+level retro [noroles]`'
         ].join('\n'));
       await safeMessageReply(message, { embeds: [usage], allowedMentions: { repliedUser: false } });
       return;
@@ -177,6 +180,63 @@ module.exports = {
           `- Vocale totale (sec): **${Number(actDoc?.voice?.totalSeconds || 0)}**`,
           `- Vocale settimanale (sec): **${Number(actDoc?.voice?.weeklySeconds || 0)}**`
         ].join('\n'));
+      await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
+      return;
+    }
+
+    if (sub === 'retro') {
+      const skipRoleSync = String(args[1] || '').toLowerCase() === 'noroles';
+      const docs = await ExpUser.find({ guildId }).select('userId totalExp level').lean();
+      if (!docs.length) {
+        await safeMessageReply(message, {
+          content: '<:vegax:1443934876440068179> Nessun dato level trovato da ricalcolare.',
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
+      const changed = [];
+      const ops = [];
+      for (const doc of docs) {
+        const totalExp = Math.max(0, Math.floor(Number(doc?.totalExp || 0)));
+        const oldLevel = Math.max(0, Math.floor(Number(doc?.level || 0)));
+        const newLevel = getLevelInfo(totalExp).level;
+        if (newLevel === oldLevel) continue;
+        changed.push({ userId: String(doc.userId), oldLevel, newLevel, totalExp });
+        ops.push({
+          updateOne: {
+            filter: { guildId, userId: String(doc.userId) },
+            update: { $set: { level: newLevel } }
+          }
+        });
+      }
+
+      if (ops.length > 0) {
+        await ExpUser.bulkWrite(ops, { ordered: false });
+      }
+
+      let roleSynced = 0;
+      if (!skipRoleSync && changed.length > 0) {
+        for (const row of changed) {
+          await syncLevelRolesForMember(message.guild, row.userId, row.newLevel).catch(() => {});
+          roleSynced += 1;
+        }
+      }
+
+      const raised = changed.filter((x) => x.newLevel > x.oldLevel).length;
+      const lowered = changed.filter((x) => x.newLevel < x.oldLevel).length;
+      const embed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setTitle('Migrazione retroattiva livelli')
+        .setDescription([
+          `- Utenti controllati: **${docs.length}**`,
+          `- Utenti aggiornati: **${changed.length}**`,
+          `- Livelli aumentati: **${raised}**`,
+          `- Livelli diminuiti: **${lowered}**`,
+          `- Ruoli sincronizzati: **${skipRoleSync ? 0 : roleSynced}**`
+        ].join('\n'))
+        .setFooter({ text: skipRoleSync ? 'Modalità noroles attiva' : 'Sincronizzazione ruoli completata' });
+
       await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
       return;
     }

@@ -22,8 +22,9 @@ function normalizeComparable(value) {
   }
 
   const normalized = {};
-  for (const [key, raw] of Object.entries(value)) {
-    if (key === 'proxy_url' || key === 'proxyURL') continue;
+  const entries = Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
+  for (const [key, raw] of entries) {
+    if (key === 'proxy_url' || key === 'proxyURL' || key === 'id') continue;
     normalized[key] = normalizeComparable(raw);
   }
   return normalized;
