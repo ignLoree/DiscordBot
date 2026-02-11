@@ -108,10 +108,7 @@ module.exports = {
                 const guild = client.guilds.cache.get(IDs.guilds.main)
                     || await client.guilds.fetch(IDs.guilds.main).catch(() => null);
                 if (guild) {
-                    const retro = await retroSyncGuildLevels(guild, { syncRoles: true });
-                    global.logger.info(
-                        `[LEVEL RETRO] scanned=${retro.scanned} changed=${retro.changed} raised=${retro.raised} lowered=${retro.lowered} roleSynced=${retro.roleSynced}`
-                    );
+                    await retroSyncGuildLevels(guild, { syncRoles: true });
                 }
             } catch (err) {
                 global.logger.error('[LEVEL RETRO] Failed to run startup retro sync', err);

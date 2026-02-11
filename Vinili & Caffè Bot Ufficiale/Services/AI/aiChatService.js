@@ -4,7 +4,6 @@ const IDs = require('../../Utils/Config/ids');
 
 const AI_CHAT_CHANNEL_ID = String(process.env.AI_CHAT_CHANNEL_ID || '1471108621629784104');
 const AI_MENTION_CHAT_CHANNEL_ID = String(process.env.AI_MENTION_CHAT_CHANNEL_ID || '1442569130573303898');
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || '';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
 const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || 'gpt-4o-mini';
 const OPENAI_URL = process.env.OPENAI_API_URL || 'https://api.openai.com/v1/chat/completions';
@@ -22,6 +21,20 @@ const AI_OWNER_USER_ID = String(
   || ''
 );
 const aiBudgetState = new Map();
+let missingKeyWarned = false;
+
+function getOpenAiKey() {
+  const key = String(process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || '').trim();
+  if (!key && !missingKeyWarned) {
+    missingKeyWarned = true;
+    global.logger.error('[AI] OPENAI_API_KEY mancante o vuota: uso fallback locale.');
+  }
+  if (key && missingKeyWarned) {
+    missingKeyWarned = false;
+    global.logger.info('[AI] OPENAI_API_KEY rilevata: chiamate OpenAI abilitate.');
+  }
+  return key;
+}
 
 function logOpenAiError(scope, error) {
   const status = error?.response?.status;
@@ -343,7 +356,8 @@ async function buildContext(guildId, channelId) {
 }
 
 async function generateAiReply(guildName, userTag, userMessage, context) {
-  if (!OPENAI_API_KEY) return null;
+  const apiKey = getOpenAiKey();
+  if (!apiKey) return null;
 
   const systemPrompt = [
     'Sei un assistente Discord italiano, utile e concreto.',
@@ -386,7 +400,7 @@ async function generateAiReply(guildName, userTag, userMessage, context) {
       {
         timeout: 22000,
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         }
       }
@@ -402,7 +416,8 @@ async function generateAiReply(guildName, userTag, userMessage, context) {
 }
 
 async function generateMentionReply(guildName, userTag, userMessage, context, mood) {
-  if (!OPENAI_API_KEY) return null;
+  const apiKey = getOpenAiKey();
+  if (!apiKey) return null;
 
   const style =
     mood === 'angry-funny'
@@ -446,7 +461,7 @@ async function generateMentionReply(guildName, userTag, userMessage, context, mo
       {
         timeout: 18000,
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         }
       }
@@ -462,7 +477,8 @@ async function generateMentionReply(guildName, userTag, userMessage, context, mo
 }
 
 async function generateAiImage(prompt) {
-  if (!OPENAI_API_KEY) return null;
+  const apiKey = getOpenAiKey();
+  if (!apiKey) return null;
   const normalizedPrompt = toLimitedText(prompt, 1200);
   if (!normalizedPrompt) return null;
 
@@ -476,7 +492,7 @@ async function generateAiImage(prompt) {
     {
       timeout: 60000,
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       }
     }
