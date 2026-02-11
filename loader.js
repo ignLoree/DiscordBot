@@ -7,7 +7,7 @@ const baseDir = __dirname;
 const bot = {
     key: 'official',
     label: 'Ufficiale',
-    start: './Vinili & Caffè Bot Ufficiale/shard.js',
+    start: './Vinili & Caffè Bot Ufficiale/index.js',
     startupDelayMs: 0
 };
 
