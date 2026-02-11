@@ -14,6 +14,7 @@ const PENDING_MS = 3 * 60 * 1000;
 const CLEANUP_MS = 60 * 1000;
 const LINK_WARMUP_MS = 2 * 60 * 1000;
 const REMOVE_CONFIRM_MS = 2 * 60 * 1000;
+const ANNOUNCE_COOLDOWN_MS = 30 * 60 * 1000;
 let cleanupInterval = null;
 let bootstrapRan = false;
 const bootstrappedUsers = new Set();
@@ -38,10 +39,16 @@ function hasInvite(presence) {
     return INVITE_REGEX.test(status);
 }
 
-function resolveInviteState(presence, fallback = false) {
-    if (!presence) return Boolean(fallback);
-    if (!hasCustomActivity(presence)) return Boolean(fallback);
+function getInviteState(presence) {
+    if (!presence) return null;
+    if (!hasCustomActivity(presence)) return null;
     return hasInvite(presence);
+}
+
+function resolveInviteState(presence, fallback = false) {
+    const state = getInviteState(presence);
+    if (state === null) return Boolean(fallback);
+    return state;
 }
 
 async function addRoleIfPossible(member) {
@@ -106,7 +113,7 @@ async function removeRoleIfPossible(member) {
 
 function hasInviteNow(member, userId) {
     void userId;
-    return hasInvite(member.presence);
+    return getInviteState(member.presence);
 }
 
 function recentlyOnline(info) {
@@ -136,7 +143,8 @@ function scheduleRemovalConfirm(member, channel) {
     const timeout = setTimeout(async () => {
         removalChecks.delete(userId);
         const stillHas = hasInviteNow(member, userId);
-        if (stillHas) return;
+        // Remove only if Discord explicitly reports custom status without invite.
+        if (stillHas !== false) return;
         await removeRoleIfPossible(member);
         try {
             await member.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.");
@@ -203,7 +211,7 @@ async function startPendingFlow(member, channel) {
     if (sent) {
         const timeout = setTimeout(async () => {
             const stillHas = hasInviteNow(member, member.id);
-            if (!stillHas) {
+            if (stillHas === false) {
                 await channel.messages.delete(sent.id).catch(() => {});
                 pendingChecks.delete(member.id);
                 statusCache.set(member.id, { hasLink: false, lastAnnounced: statusCache.get(member.id)?.lastAnnounced || 0, lastMessageId: null });
@@ -280,7 +288,8 @@ function startCleanupClock(client, guildId) {
             if (pendingChecks.has(userId)) {
                 continue;
             }
-            if (!hasLink) {
+            // Schedule removal only when link is explicitly missing from custom status.
+            if (hasLink === false) {
                 if (recentlyOnline(info)) {
                     continue;
                 }
@@ -336,7 +345,7 @@ module.exports = {
             if (!prevHas && newHas) {
                 if (pendingChecks.has(userId)) return;
                 if (prev?.lastMessageId) return;
-                if (prev?.lastAnnounced && Date.now() - prev.lastAnnounced < 5000) {
+                if (prev?.lastAnnounced && Date.now() - prev.lastAnnounced < ANNOUNCE_COOLDOWN_MS) {
                     return;
                 }
                 if (prev?.lastMessageId) {

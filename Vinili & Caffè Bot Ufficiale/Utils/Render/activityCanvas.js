@@ -24,15 +24,6 @@ function compactNumber(value) {
   return `${n}`;
 }
 
-function stripEmoji(value) {
-  return String(value || '')
-    .replace(/[\u{1F000}-\u{1FAFF}]/gu, '')
-    .replace(/[\u2600-\u27BF]/gu, '')
-    .replace(/[\uFE0E\uFE0F]/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
-
 function fitText(ctx, text, maxWidth) {
   const value = String(text || '');
   if (!value) return '-';
@@ -45,22 +36,14 @@ function fitText(ctx, text, maxWidth) {
   return `${out}${ellipsis}`;
 }
 
-function drawLegendDot(ctx, x, y, color) {
-  ctx.save();
-  ctx.beginPath();
-  ctx.fillStyle = color;
-  ctx.arc(x, y, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawLabel(ctx, text, x, y, size = 18, color = '#c4c9d1', weight = '600', align = 'left') {
+function drawLabel(ctx, text, x, y, size = 18, color = '#c4c9d1', weight = '600', align = 'left', normalizeCompatibility = true) {
   drawTextWithSpecialFallback(ctx, text, x, y, {
     size,
     weight,
     color,
     align,
-    baseline: 'middle'
+    baseline: 'middle',
+    normalizeCompatibility
   });
 }
 
@@ -68,17 +51,16 @@ function drawTopChip(ctx, label, value, unit, x, y, w, h) {
   roundRect(ctx, x, y, w, h, 12);
   ctx.fillStyle = '#171c23';
   ctx.fill();
-  const safeLabel = stripEmoji(label || '-') || '-';
+  const safeLabel = String(label || '-').trim() || '-';
   drawLabel(ctx, fitText(ctx, safeLabel, w - 220), x + 16, y + (h / 2), 18, '#d8dbe1', '700');
   drawLabel(ctx, `${value} ${unit || ''}`.trim(), x + w - 16, y + (h / 2), 16, '#cfd3db', '600', 'right');
 }
 
-function drawMetricPanel(ctx, title, icon, rows, x, y, w, h) {
+function drawMetricPanel(ctx, title, rows, x, y, w, h) {
   roundRect(ctx, x, y, w, h, 18);
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, title, x + 16, y + 24, 22, '#d9dde3', '700');
-  drawLabel(ctx, icon, x + w - 24, y + 22, 22, '#d9dde3', '700', 'right');
 
   const rowHeight = 56;
   const startY = y + 44;
@@ -102,9 +84,7 @@ function drawChart(ctx, chart, x, y, w, h) {
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, 'Charts', x + 16, y + 24, 22, '#d9dde3', '700');
-  drawLegendDot(ctx, x + w - 214, y + 24, '#3ec455');
-  drawLegendDot(ctx, x + w - 86, y + 24, '#d95095');
-  drawLabel(ctx, 'Message', x + w - 202, y + 24, 16, '#3ec455', '700');
+  drawLabel(ctx, 'Message', x + w - 200, y + 24, 16, '#3ec455', '700');
   drawLabel(ctx, 'Voice', x + w - 74, y + 24, 16, '#d95095', '700');
 
   const px = x + 16;
@@ -209,24 +189,24 @@ async function renderUserActivityCanvas({
   ctx.clip();
 
   await drawAvatarCircle(ctx, avatarUrl, 22, 20, 90);
-  drawLabel(ctx, `${displayName || userTag}`, 124, 52, 48, '#dfe4eb', '700');
-  drawLabel(ctx, `${guildName} • My Activity`, 124, 90, 22, '#b9c0ca', '600');
+  drawLabel(ctx, fitText(ctx, `${displayName || userTag}`, 540), 124, 52, 48, '#dfe4eb', '700');
+  drawLabel(ctx, fitText(ctx, `${guildName || 'Server'} - My Activity`, 540), 124, 90, 22, '#b9c0ca', '600');
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 700, 22, 250, 78);
   drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 22, 290, 78);
 
-  drawMetricPanel(ctx, 'Server Ranks', 'R', [
+  drawMetricPanel(ctx, 'Server Ranks', [
     { label: 'Text', value: `#${ranks?.text || '-'}` },
     { label: 'Voice', value: `#${ranks?.voice || '-'}` }
   ], 20, 132, 400, 236);
 
-  drawMetricPanel(ctx, 'Messages', '#', [
+  drawMetricPanel(ctx, 'Messages', [
     { label: '1d', value: `${compactNumber(windows?.d1?.text)} messages` },
     { label: '7d', value: `${compactNumber(windows?.d7?.text)} messages` },
     { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
   ], 440, 132, 400, 236);
 
-  drawMetricPanel(ctx, 'Voice Activity', 'V', [
+  drawMetricPanel(ctx, 'Voice Activity', [
     { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
     { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
     { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
@@ -270,25 +250,25 @@ async function renderServerActivityCanvas({
   ctx.clip();
 
   await drawAvatarCircle(ctx, guildIconUrl, 26, 20, 90);
-  drawLabel(ctx, guildName, 124, 52, 48, '#dfe4eb', '700');
+  drawLabel(ctx, fitText(ctx, guildName || 'Server', 500), 124, 52, 48, '#dfe4eb', '700');
   drawLabel(ctx, 'Server Overview', 124, 90, 22, '#b9c0ca', '600');
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 650, 22, 270, 80);
   drawDateBadge(ctx, 'Invited Bot On', dateText(invitedBotOn), 940, 22, 300, 80);
 
-  drawMetricPanel(ctx, 'Messages', '#', [
+  drawMetricPanel(ctx, 'Messages', [
     { label: '1d', value: `${compactNumber(windows?.d1?.text)} messages` },
     { label: '7d', value: `${compactNumber(windows?.d7?.text)} messages` },
     { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
   ], 20, 132, 400, 220);
 
-  drawMetricPanel(ctx, 'Voice Activity', 'V', [
+  drawMetricPanel(ctx, 'Voice Activity', [
     { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
     { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
     { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
   ], 440, 132, 400, 220);
 
-  drawMetricPanel(ctx, 'Contributors', 'U', [
+  drawMetricPanel(ctx, 'Contributors', [
     { label: '1d', value: `${Number(windows?.d1?.contributors || 0)} members` },
     { label: '7d', value: `${Number(windows?.d7?.contributors || 0)} members` },
     { label: '14d', value: `${Number(windows?.d14?.contributors || 0)} members` }
