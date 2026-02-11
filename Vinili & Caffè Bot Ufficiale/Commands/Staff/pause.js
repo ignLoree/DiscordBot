@@ -4,6 +4,32 @@ const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const IT_MONTHS = {
+    gennaio: 1,
+    feb: 2,
+    febbraio: 2,
+    mar: 3,
+    marzo: 3,
+    apr: 4,
+    aprile: 4,
+    mag: 5,
+    maggio: 5,
+    giu: 6,
+    giugno: 6,
+    lug: 7,
+    luglio: 7,
+    ago: 8,
+    agosto: 8,
+    set: 9,
+    sett: 9,
+    settembre: 9,
+    ott: 10,
+    ottobre: 10,
+    nov: 11,
+    novembre: 11,
+    dic: 12,
+    dicembre: 12
+};
 
 function parseItalianDate(value) {
     if (!value || typeof value !== 'string') return null;
@@ -22,6 +48,99 @@ function parseItalianDate(value) {
         return null;
     }
     return date;
+}
+
+function parseUserDateInput(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    const value = raw.trim().toLowerCase();
+
+    const slash = value.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+    if (slash) {
+        const day = Number(slash[1]);
+        const month = Number(slash[2]);
+        let year = slash[3] ? Number(slash[3]) : null;
+        if (year !== null && year < 100) year += 2000;
+        return { day, month, year, hasYear: year !== null };
+    }
+
+    const words = value.match(/^(\d{1,2})\s+([a-zàèéìòù]+)(?:\s+(\d{2,4}))?$/i);
+    if (words) {
+        const day = Number(words[1]);
+        const monthName = words[2]
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '');
+        const month = IT_MONTHS[monthName];
+        if (!month) return null;
+        let year = words[3] ? Number(words[3]) : null;
+        if (year !== null && year < 100) year += 2000;
+        return { day, month, year, hasYear: year !== null };
+    }
+
+    return null;
+}
+
+function buildUtcDate(day, month, year) {
+    if (!day || !month || !year) return null;
+    const d = new Date(Date.UTC(year, month - 1, day));
+    if (
+        d.getUTCFullYear() !== year
+        || d.getUTCMonth() !== month - 1
+        || d.getUTCDate() !== day
+    ) {
+        return null;
+    }
+    return d;
+}
+
+function formatDateDDMMYYYY(date) {
+    const dd = String(date.getUTCDate()).padStart(2, '0');
+    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const yyyy = String(date.getUTCFullYear());
+    return `${dd}/${mm}/${yyyy}`;
+}
+
+function normalizePauseDates(startRaw, endRaw) {
+    const startParsed = parseUserDateInput(startRaw);
+    const endParsed = parseUserDateInput(endRaw);
+    if (!startParsed || !endParsed) return null;
+
+    const today = getTodayUtc();
+    const currentYear = today.getUTCFullYear();
+
+    let startYear = startParsed.hasYear ? startParsed.year : currentYear;
+    let endYear;
+    if (endParsed.hasYear) {
+        endYear = endParsed.year;
+    } else if (startParsed.hasYear) {
+        endYear = startYear;
+    } else {
+        endYear = currentYear;
+    }
+
+    let startDate = buildUtcDate(startParsed.day, startParsed.month, startYear);
+    let endDate = buildUtcDate(endParsed.day, endParsed.month, endYear);
+    if (!startDate || !endDate) return null;
+
+    if (!endParsed.hasYear && endDate < startDate) {
+        endYear += 1;
+        endDate = buildUtcDate(endParsed.day, endParsed.month, endYear);
+        if (!endDate) return null;
+    }
+
+    if (!startParsed.hasYear && endParsed.hasYear && startDate > endDate) {
+        startYear = endYear - 1;
+        startDate = buildUtcDate(startParsed.day, startParsed.month, startYear);
+        if (!startDate) return null;
+    }
+
+    if (endDate < startDate) return null;
+
+    return {
+        start: startDate,
+        end: endDate,
+        dataRichiesta: formatDateDDMMYYYY(startDate),
+        dataRitorno: formatDateDDMMYYYY(endDate)
+    };
 }
 
 function getPauseDaysBetween(startRaw, endRaw) {
@@ -166,10 +285,19 @@ module.exports = {
         switch (sub) {
             case 'request': {
                 const userId = interaction.user.id;
-                const dataRichiesta = interaction.options.getString('data_richiesta');
-                const dataRitorno = interaction.options.getString('data_ritorno');
+                const rawDataRichiesta = interaction.options.getString('data_richiesta');
+                const rawDataRitorno = interaction.options.getString('data_ritorno');
                 const motivazione = interaction.options.getString('motivazione');
                 const channel = interaction.guild.channels.cache.get(IDs.channels.pauseRequestLog);
+                const normalizedDates = normalizePauseDates(rawDataRichiesta, rawDataRitorno);
+                if (!normalizedDates) {
+                    return await safeEditReply(interaction, {
+                        content: '<:vegax:1443934876440068179> Date non valide. Formati supportati: `GG/MM`, `GG/MM/AAAA`, `1 agosto`, `1 agosto 2027`.',
+                        flags: 1 << 6
+                    });
+                }
+                const dataRichiesta = normalizedDates.dataRichiesta;
+                const dataRitorno = normalizedDates.dataRitorno;
                 let stafferDoc = await Staff.findOne({ guildId, userId });
                 if (!stafferDoc) stafferDoc = new Staff({ guildId, userId });
                 stafferDoc.pauses.push({
