@@ -1,6 +1,7 @@
 const canvasModule = require('canvas');
 const { createCanvas, loadImage } = canvasModule;
 const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack } = require('./canvasFonts');
+const emojiImageCache = new Map();
 
 function roundRectPath(ctx, x, y, w, h, r = 16) {
   const radius = Math.max(0, Math.min(r, w / 2, h / 2));
@@ -70,8 +71,122 @@ function drawLabel(ctx, text, x, y, {
     color,
     align,
     baseline,
-    normalizeCompatibility: true
+    normalizeCompatibility: false
   });
+}
+
+function isEmojiCodePoint(cp) {
+  if (!Number.isFinite(cp)) return false;
+  if (cp >= 0x1f000 && cp <= 0x1faff) return true;
+  if (cp >= 0x2600 && cp <= 0x27bf) return true;
+  if (cp >= 0x2300 && cp <= 0x23ff) return true;
+  if (cp >= 0x2b00 && cp <= 0x2bff) return true;
+  if (cp === 0x00a9 || cp === 0x00ae || cp === 0x2122 || cp === 0x3030 || cp === 0x303d) return true;
+  return false;
+}
+
+function tokenizeEmojiText(text) {
+  const chars = Array.from(String(text || ''));
+  const tokens = [];
+  let buffer = '';
+  let emoji = '';
+
+  const flushText = () => {
+    if (!buffer) return;
+    tokens.push({ type: 'text', value: buffer });
+    buffer = '';
+  };
+  const flushEmoji = () => {
+    if (!emoji) return;
+    tokens.push({ type: 'emoji', value: emoji });
+    emoji = '';
+  };
+
+  for (let i = 0; i < chars.length; i += 1) {
+    const ch = chars[i];
+    const cp = ch.codePointAt(0);
+    const next = chars[i + 1];
+    const nextCp = next ? next.codePointAt(0) : null;
+    const isJoiner = cp === 0x200d || cp === 0xfe0f;
+    const isEmoji = isEmojiCodePoint(cp);
+
+    if (isEmoji || (emoji && isJoiner)) {
+      flushText();
+      emoji += ch;
+      const nextIsEmoji = isEmojiCodePoint(nextCp);
+      const nextIsJoiner = nextCp === 0x200d || nextCp === 0xfe0f;
+      if (!nextIsEmoji && !nextIsJoiner) flushEmoji();
+      continue;
+    }
+
+    flushEmoji();
+    buffer += ch;
+  }
+
+  flushEmoji();
+  flushText();
+  return tokens.length ? tokens : [{ type: 'text', value: '' }];
+}
+
+function emojiToTwemojiUrl(emoji) {
+  const codepoints = Array.from(emoji)
+    .map((ch) => ch.codePointAt(0).toString(16))
+    .filter((cp) => cp !== 'fe0f')
+    .join('-');
+  return `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${codepoints}.png`;
+}
+
+async function getEmojiImage(emoji) {
+  if (emojiImageCache.has(emoji)) return emojiImageCache.get(emoji);
+  const promise = loadImage(emojiToTwemojiUrl(emoji)).catch(() => null);
+  emojiImageCache.set(emoji, promise);
+  return promise;
+}
+
+function tokenWidth(ctx, token, size, weight) {
+  if (token.type === 'emoji') return size + 2;
+  return textWidth(ctx, token.value, size, weight);
+}
+
+async function drawLabelWithEmoji(ctx, text, x, y, {
+  size = 16,
+  weight = '600',
+  color = '#d7dbe3',
+  align = 'left',
+  baseline = 'middle'
+} = {}) {
+  const tokens = tokenizeEmojiText(text);
+  const hasEmoji = tokens.some((t) => t.type === 'emoji');
+  if (!hasEmoji) {
+    drawLabel(ctx, text, x, y, { size, weight, color, align, baseline });
+    return;
+  }
+
+  const total = tokens.reduce((sum, token) => sum + tokenWidth(ctx, token, size, weight), 0);
+  let cursorX = x;
+  if (align === 'center') cursorX = x - total / 2;
+  else if (align === 'right') cursorX = x - total;
+
+  for (const token of tokens) {
+    if (token.type === 'text') {
+      if (token.value) {
+        drawLabel(ctx, token.value, cursorX, y, { size, weight, color, align: 'left', baseline });
+        cursorX += textWidth(ctx, token.value, size, weight);
+      }
+      continue;
+    }
+
+    const img = await getEmojiImage(token.value);
+    if (img) {
+      const drawSize = size + 1;
+      const topY = y - drawSize / 2;
+      ctx.drawImage(img, cursorX, topY, drawSize, drawSize);
+      cursorX += drawSize + 1;
+    } else {
+      drawLabel(ctx, token.value, cursorX, y, { size, weight, color, align: 'left', baseline });
+      cursorX += textWidth(ctx, token.value, size, weight);
+    }
+  }
 }
 
 function drawBackground(ctx, width, height) {
@@ -139,18 +254,18 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
   }
 }
 
-function drawTopCard(ctx, title, first, second, x, y, w, h) {
+async function drawTopCard(ctx, title, first, second, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 18, 'rgba(46, 55, 70, 0.94)');
   strokeRoundRect(ctx, x, y, w, h, 18, 'rgba(255,255,255,0.05)', 1);
   drawLabel(ctx, title, x + 14, y + 24, { size: 22, weight: '700', color: '#e2e7ef' });
 
-  drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', x + 14, y + 44, w - 28, 72);
-  drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', x + 14, y + 126, w - 28, 72);
+  await drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', x + 14, y + 44, w - 28, 72);
+  await drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', x + 14, y + 126, w - 28, 72);
 }
 
-function drawTopChip(ctx, label, value, unit, x, y, w, h) {
+async function drawTopChip(ctx, label, value, unit, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 12, 'rgba(12, 18, 28, 0.95)');
-  drawLabel(ctx, fitText(ctx, label, w - 210, 18, '700'), x + 14, y + h / 2, { size: 18, weight: '700', color: '#e0e5ed' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, label, w - 210, 18, '700'), x + 14, y + h / 2, { size: 18, weight: '700', color: '#e0e5ed', align: 'left' });
   drawLabel(ctx, `${value}${unit ? ` ${unit}` : ''}`, x + w - 14, y + h / 2, { size: 16, weight: '700', align: 'right', color: '#d5dbe5' });
 }
 
@@ -244,8 +359,8 @@ async function renderUserActivityCanvas({
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, 'rgba(255,255,255,0.06)', 1);
 
   await drawAvatarCircle(ctx, avatarUrl, 28, 24, 80);
-  drawLabel(ctx, fitText(ctx, `${displayName || userTag}`, 560, 46, '700'), 124, 52, { size: 46, weight: '700', color: '#eef3fb' });
-  drawLabel(ctx, fitText(ctx, `${guildName || 'Server'} / My Activity`, 560, 22, '600'), 124, 88, { size: 22, weight: '600', color: '#bfc8d6' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, `${displayName || userTag}`, 560, 46, '700'), 124, 52, { size: 46, weight: '700', color: '#eef3fb' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, `${guildName || 'Server'} / My Activity`, 560, 22, '600'), 124, 88, { size: 22, weight: '600', color: '#bfc8d6' });
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 700, 24, 250, 80);
   drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 24, 290, 80);
@@ -267,7 +382,7 @@ async function renderUserActivityCanvas({
     { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
   ], 860, 132, 400, 236);
 
-  drawTopCard(ctx, 'Top Channels', {
+  await drawTopCard(ctx, 'Top Channels', {
     label: topChannelsText?.[0]?.label || '#-',
     value: compactNumber(topChannelsText?.[0]?.value || 0),
     unit: 'messages'
@@ -309,7 +424,7 @@ async function renderServerActivityCanvas({
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, 'rgba(255,255,255,0.06)', 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  drawLabel(ctx, fitText(ctx, guildName || 'Server', 500, 56, '700'), 124, 52, { size: 56, weight: '700', color: '#eef3fb' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, guildName || 'Server', 500, 56, '700'), 124, 52, { size: 56, weight: '700', color: '#eef3fb' });
   drawLabel(ctx, 'Server Overview', 124, 88, { size: 22, weight: '600', color: '#bfc8d6' });
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 650, 24, 270, 80);
@@ -333,7 +448,7 @@ async function renderServerActivityCanvas({
     { label: '14d', value: `${Number(windows?.d14?.contributors || 0)} members` }
   ], 860, 132, 400, 220);
 
-  drawTopCard(ctx, 'Top Members', {
+  await drawTopCard(ctx, 'Top Members', {
     label: topUsersText?.[0]?.label || '-',
     value: compactNumber(topUsersText?.[0]?.value || 0),
     unit: 'messages'
@@ -343,7 +458,7 @@ async function renderServerActivityCanvas({
     unit: 'hours'
   }, 20, 370, 600, 220);
 
-  drawTopCard(ctx, 'Top Channels', {
+  await drawTopCard(ctx, 'Top Channels', {
     label: topChannelsText?.[0]?.label || '#-',
     value: compactNumber(topChannelsText?.[0]?.value || 0),
     unit: 'messages'
