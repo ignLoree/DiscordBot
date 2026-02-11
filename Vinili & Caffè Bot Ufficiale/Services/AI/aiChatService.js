@@ -6,6 +6,7 @@ const AI_CHAT_CHANNEL_ID = String(process.env.AI_CHAT_CHANNEL_ID || '14711086216
 const AI_MENTION_CHAT_CHANNEL_ID = String(process.env.AI_MENTION_CHAT_CHANNEL_ID || '1442569130573303898');
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || '';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const OPENAI_FALLBACK_MODEL = process.env.OPENAI_FALLBACK_MODEL || 'gpt-4o-mini';
 const OPENAI_URL = process.env.OPENAI_API_URL || 'https://api.openai.com/v1/chat/completions';
 const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
 const OPENAI_IMAGES_URL = process.env.OPENAI_IMAGES_URL || 'https://api.openai.com/v1/images/generations';
@@ -21,6 +22,14 @@ const AI_OWNER_USER_ID = String(
   || ''
 );
 const aiBudgetState = new Map();
+
+function logOpenAiError(scope, error) {
+  const status = error?.response?.status;
+  const data = error?.response?.data;
+  const message = error?.message || 'Unknown OpenAI error';
+  const detail = data?.error?.message || data?.message || '';
+  global.logger.error(`[AI:${scope}] ${status || 'no-status'} ${message}${detail ? ` | ${detail}` : ''}`);
+}
 
 function normalizeTokens(text) {
   return String(text || '')
@@ -361,27 +370,35 @@ async function generateAiReply(guildName, userTag, userMessage, context) {
     userMessage
   ].join('\n');
 
-  const response = await axios.post(
-    OPENAI_URL,
-    {
-      model: OPENAI_MODEL,
-      temperature: 0.5,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    },
-    {
-      timeout: 22000,
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
+  const candidateModels = Array.from(new Set([OPENAI_MODEL, OPENAI_FALLBACK_MODEL].filter(Boolean)));
+  let lastError = null;
+  for (const model of candidateModels) {
+    const response = await axios.post(
+      OPENAI_URL,
+      {
+        model,
+        temperature: 0.5,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      },
+      {
+        timeout: 22000,
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
       }
-    }
-  ).catch(() => null);
-
-  const text = response?.data?.choices?.[0]?.message?.content;
-  return toLimitedText(text || '', 1800) || null;
+    ).catch((error) => {
+      lastError = error;
+      return null;
+    });
+    const text = response?.data?.choices?.[0]?.message?.content;
+    if (text) return toLimitedText(text, 1800) || null;
+  }
+  if (lastError) logOpenAiError('chat', lastError);
+  return null;
 }
 
 async function generateMentionReply(guildName, userTag, userMessage, context, mood) {
@@ -413,27 +430,35 @@ async function generateMentionReply(guildName, userTag, userMessage, context, mo
     userMessage
   ].join('\n');
 
-  const response = await axios.post(
-    OPENAI_URL,
-    {
-      model: OPENAI_MODEL,
-      temperature: mood === 'angry-funny' ? 0.9 : 0.75,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    },
-    {
-      timeout: 18000,
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
+  const candidateModels = Array.from(new Set([OPENAI_MODEL, OPENAI_FALLBACK_MODEL].filter(Boolean)));
+  let lastError = null;
+  for (const model of candidateModels) {
+    const response = await axios.post(
+      OPENAI_URL,
+      {
+        model,
+        temperature: mood === 'angry-funny' ? 0.9 : 0.75,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      },
+      {
+        timeout: 18000,
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
       }
-    }
-  ).catch(() => null);
-
-  const text = response?.data?.choices?.[0]?.message?.content;
-  return toLimitedText(text || '', 700) || null;
+    ).catch((error) => {
+      lastError = error;
+      return null;
+    });
+    const text = response?.data?.choices?.[0]?.message?.content;
+    if (text) return toLimitedText(text, 700) || null;
+  }
+  if (lastError) logOpenAiError('mention-chat', lastError);
+  return null;
 }
 
 async function generateAiImage(prompt) {
@@ -455,7 +480,10 @@ async function generateAiImage(prompt) {
         'Content-Type': 'application/json'
       }
     }
-  ).catch(() => null);
+  ).catch((error) => {
+    logOpenAiError('image', error);
+    return null;
+  });
 
   const url = response?.data?.data?.[0]?.url;
   if (typeof url === 'string' && url.trim()) return url.trim();
