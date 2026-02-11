@@ -5,7 +5,7 @@ const path = require('path');
 const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_ROLE_IDS = [
-    IDs.roles.verifiedUser,
+    IDs.roles.user,
     IDs.roles.verifyExtraA,
     IDs.roles.verifyExtraB,
     IDs.roles.verifyExtraC,
@@ -385,4 +385,3 @@ async function handleVerifyInteraction(interaction) {
 }
 
 module.exports = { handleVerifyInteraction };
-

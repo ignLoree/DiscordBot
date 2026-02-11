@@ -6,7 +6,7 @@ function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
 }
 
-const INVITE_LOG_CHANNEL_ID = IDs.channels.inviteLog;
+const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.thanks;
 const INVITE_REWARD_ROLE_ID = IDs.roles.inviteReward;
 const INVITE_EXTRA_ROLE_ID = IDs.roles.mediaBypass || '1468938195348754515';
@@ -171,7 +171,7 @@ module.exports = {
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
                 }
-                const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.inviteLog);
+                const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.chat);
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
                         .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
@@ -267,7 +267,7 @@ module.exports = {
                 }
                 return;
             }
-            const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.inviteLog);
+            const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.chat);
             if (!channelwelcome) {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
             }

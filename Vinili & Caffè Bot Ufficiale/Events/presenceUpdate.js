@@ -99,9 +99,8 @@ async function removeRoleIfPossible(member) {
 }
 
 function hasInviteNow(member, userId) {
-    if (hasInvite(member.presence)) return true;
-    const cached = statusCache.get(userId);
-    return cached?.hasLink === true;
+    void userId;
+    return hasInvite(member.presence);
 }
 
 function recentlyOnline(info) {
@@ -352,28 +351,20 @@ module.exports = {
                 return;
             }
 
-            if (prevHas && !newHas && wasOffline) {
-                statusCache.set(userId, { hasLink: true, lastAnnounced: prev?.lastAnnounced || 0, lastMessageId: prev?.lastMessageId || null, lastSeenOnlineAt });
-                await persistStatus(member.guild.id, userId, { hasLink: true, lastMessageId: prev?.lastMessageId || null });
-                return;
-            }
-
             if (prevHas && !newHas) {
-                if (!hasCustomActivity(newPresence)) {
-                    statusCache.set(userId, {
-                        hasLink: true,
-                        lastAnnounced: prev?.lastAnnounced || 0,
-                        lastMessageId: prev?.lastMessageId || null,
-                        lastSeenOnlineAt
-                    });
-                    await persistStatus(member.guild.id, userId, {
-                        hasLink: true,
-                        lastMessageId: prev?.lastMessageId || null
-                    });
-                    return;
-                }
+                void wasOffline;
                 await clearPending(userId, member.guild.channels.cache.get(CHANNEL_ID));
                 const channel = member.guild.channels.cache.get(CHANNEL_ID);
+                statusCache.set(userId, {
+                    hasLink: false,
+                    lastAnnounced: prev?.lastAnnounced || 0,
+                    lastMessageId: prev?.lastMessageId || null,
+                    lastSeenOnlineAt
+                });
+                await persistStatus(member.guild.id, userId, {
+                    hasLink: false,
+                    lastMessageId: prev?.lastMessageId || null
+                });
                 scheduleRemovalConfirm(member, channel);
                 return;
             }
