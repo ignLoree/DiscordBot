@@ -11,6 +11,9 @@ const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK = [
   `"${COLOR_EMOJI_FONT}"`,
+  "\"Segoe UI\"",
+  "\"Calibri\"",
+  "\"Tahoma\"",
   "\"Segoe UI Emoji\"",
   "\"Apple Color Emoji\"",
   "\"Noto Emoji\"",

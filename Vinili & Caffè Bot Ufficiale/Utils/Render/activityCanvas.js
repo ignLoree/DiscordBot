@@ -2,6 +2,7 @@ const canvasModule = require('canvas');
 const { createCanvas, loadImage } = canvasModule;
 const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack } = require('./canvasFonts');
 const emojiImageCache = new Map();
+const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;
 
 function roundRectPath(ctx, x, y, w, h, r = 16) {
   const radius = Math.max(0, Math.min(r, w / 2, h / 2));
@@ -58,6 +59,16 @@ function fitText(ctx, text, maxWidth, size = 16, weight = '600') {
   return `${out}${ellipsis}`;
 }
 
+function prepareVisibleText(value) {
+  const out = String(value || '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .replace(/\uFFFD/g, '')
+    .normalize('NFC')
+    .trim();
+
+  return out || '-';
+}
+
 function drawLabel(ctx, text, x, y, {
   size = 16,
   weight = '600',
@@ -65,7 +76,7 @@ function drawLabel(ctx, text, x, y, {
   align = 'left',
   baseline = 'middle'
 } = {}) {
-  drawTextWithSpecialFallback(ctx, String(text || ''), x, y, {
+  drawTextWithSpecialFallback(ctx, prepareVisibleText(text), x, y, {
     size,
     weight,
     color,
@@ -86,7 +97,7 @@ function isEmojiCodePoint(cp) {
 }
 
 function tokenizeEmojiText(text) {
-  const chars = Array.from(String(text || ''));
+  const chars = Array.from(prepareVisibleText(text));
   const tokens = [];
   let buffer = '';
   let emoji = '';
@@ -103,6 +114,21 @@ function tokenizeEmojiText(text) {
   };
 
   for (let i = 0; i < chars.length; i += 1) {
+    const rest = chars.slice(i).join('');
+    const customMatch = rest.match(CUSTOM_EMOJI_START_RE);
+    if (customMatch) {
+      flushEmoji();
+      flushText();
+      tokens.push({
+        type: 'custom_emoji',
+        id: customMatch[3],
+        animated: customMatch[1] === 'a',
+        raw: customMatch[0]
+      });
+      i += customMatch[0].length - 1;
+      continue;
+    }
+
     const ch = chars[i];
     const cp = ch.codePointAt(0);
     const next = chars[i + 1];
@@ -136,15 +162,24 @@ function emojiToTwemojiUrl(emoji) {
   return `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${codepoints}.png`;
 }
 
-async function getEmojiImage(emoji) {
-  if (emojiImageCache.has(emoji)) return emojiImageCache.get(emoji);
-  const promise = loadImage(emojiToTwemojiUrl(emoji)).catch(() => null);
-  emojiImageCache.set(emoji, promise);
+function customEmojiUrl(id, animated = false) {
+  const ext = animated ? 'gif' : 'png';
+  return `https://cdn.discordapp.com/emojis/${id}.${ext}?size=96&quality=lossless`;
+}
+
+async function getEmojiImage(token) {
+  const key = typeof token === 'string' ? token : `custom:${token.id}:${token.animated ? 1 : 0}`;
+  if (emojiImageCache.has(key)) return emojiImageCache.get(key);
+  const sourceUrl = typeof token === 'string'
+    ? emojiToTwemojiUrl(token)
+    : customEmojiUrl(token.id, false);
+  const promise = loadImage(sourceUrl).catch(() => null);
+  emojiImageCache.set(key, promise);
   return promise;
 }
 
 function tokenWidth(ctx, token, size, weight) {
-  if (token.type === 'emoji') return size + 2;
+  if (token.type === 'emoji' || token.type === 'custom_emoji') return size + 2;
   return textWidth(ctx, token.value, size, weight);
 }
 
@@ -156,7 +191,7 @@ async function drawLabelWithEmoji(ctx, text, x, y, {
   baseline = 'middle'
 } = {}) {
   const tokens = tokenizeEmojiText(text);
-  const hasEmoji = tokens.some((t) => t.type === 'emoji');
+  const hasEmoji = tokens.some((t) => t.type === 'emoji' || t.type === 'custom_emoji');
   if (!hasEmoji) {
     drawLabel(ctx, text, x, y, { size, weight, color, align, baseline });
     return;
@@ -176,7 +211,9 @@ async function drawLabelWithEmoji(ctx, text, x, y, {
       continue;
     }
 
-    const img = await getEmojiImage(token.value);
+    const img = token.type === 'custom_emoji'
+      ? await getEmojiImage(token)
+      : await getEmojiImage(token.value);
     if (img) {
       const drawSize = size + 1;
       const topY = y - drawSize / 2;
@@ -233,14 +270,14 @@ async function drawAvatarCircle(ctx, avatarUrl, x, y, size) {
 function drawDateBadge(ctx, title, value, x, y, w = 280, h = 80) {
   fillRoundRect(ctx, x, y, w, h, 14, 'rgba(43, 52, 67, 0.92)');
   fillRoundRect(ctx, x + 10, y + 10, w - 20, 24, 9, 'rgba(88, 99, 120, 0.62)');
-  drawLabel(ctx, title, x + 18, y + 22, { size: 14, weight: '700', color: '#e0e5ee' });
-  drawLabel(ctx, fitText(ctx, value, w - 32, 18, '700'), x + 18, y + 55, { size: 18, weight: '700', color: '#f2f5fa' });
+  drawLabel(ctx, title, x + 18, y + 22, { size: 15, weight: '700', color: '#e0e5ee' });
+  drawLabel(ctx, fitText(ctx, value, w - 32, 21, '700'), x + 18, y + 55, { size: 21, weight: '700', color: '#f2f5fa' });
 }
 
 function drawMetricPanel(ctx, title, rows, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 18, 'rgba(46, 55, 70, 0.94)');
   strokeRoundRect(ctx, x, y, w, h, 18, 'rgba(255,255,255,0.05)', 1);
-  drawLabel(ctx, title, x + 16, y + 24, { size: 22, weight: '700', color: '#e2e7ef' });
+  drawLabel(ctx, title, x + 16, y + 24, { size: 27, weight: '700', color: '#e2e7ef' });
 
   const rowHeight = 56;
   const startY = y + 44;
@@ -249,33 +286,35 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
     fillRoundRect(ctx, x + 14, rowY, w - 28, 50, 11, 'rgba(19, 26, 37, 0.92)');
     fillRoundRect(ctx, x + 14, rowY, 98, 50, 11, 'rgba(10, 16, 27, 0.95)');
 
-    drawLabel(ctx, rows[i].label, x + 63, rowY + 25, { size: 17, weight: '700', align: 'center', color: '#dbe1eb' });
-    drawLabel(ctx, fitText(ctx, rows[i].value, w - 170, 16, '600'), x + 126, rowY + 25, { size: 16, weight: '600', color: '#d2d9e5' });
+    drawLabel(ctx, rows[i].label, x + 63, rowY + 25, { size: 20, weight: '700', align: 'center', color: '#dbe1eb' });
+    drawLabel(ctx, fitText(ctx, rows[i].value, w - 170, 19, '600'), x + 126, rowY + 25, { size: 19, weight: '600', color: '#d2d9e5' });
   }
 }
 
 async function drawTopCard(ctx, title, first, second, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 18, 'rgba(46, 55, 70, 0.94)');
   strokeRoundRect(ctx, x, y, w, h, 18, 'rgba(255,255,255,0.05)', 1);
-  drawLabel(ctx, title, x + 14, y + 24, { size: 22, weight: '700', color: '#e2e7ef' });
+  drawLabel(ctx, title, x + 14, y + 24, { size: 27, weight: '700', color: '#e2e7ef' });
 
-  await drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', x + 14, y + 44, w - 28, 72);
-  await drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', x + 14, y + 126, w - 28, 72);
+  await drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', 1, x + 14, y + 44, w - 28, 72);
+  await drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', 2, x + 14, y + 126, w - 28, 72);
 }
 
-async function drawTopChip(ctx, label, value, unit, x, y, w, h) {
+async function drawTopChip(ctx, label, value, unit, position, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 12, 'rgba(12, 18, 28, 0.95)');
-  await drawLabelWithEmoji(ctx, fitText(ctx, label, w - 210, 18, '700'), x + 14, y + h / 2, { size: 18, weight: '700', color: '#e0e5ed', align: 'left' });
-  drawLabel(ctx, `${value}${unit ? ` ${unit}` : ''}`, x + w - 14, y + h / 2, { size: 16, weight: '700', align: 'right', color: '#d5dbe5' });
+  const safeLabel = prepareVisibleText(label);
+  await drawLabelWithEmoji(ctx, fitText(ctx, safeLabel, w - 310, 22, '700'), x + 14, y + h / 2, { size: 22, weight: '700', color: '#e0e5ed', align: 'left' });
+  drawLabel(ctx, `${value}${unit ? ` ${unit}` : ''}`, x + w - 94, y + h / 2, { size: 20, weight: '700', align: 'right', color: '#d5dbe5' });
+  drawLabel(ctx, `#${Number(position || 0) || '-'}`, x + w - 14, y + h / 2, { size: 40, weight: '800', align: 'right', color: '#e8edf7' });
 }
 
 function drawChart(ctx, chart, x, y, w, h) {
   fillRoundRect(ctx, x, y, w, h, 18, 'rgba(46, 55, 70, 0.94)');
   strokeRoundRect(ctx, x, y, w, h, 18, 'rgba(255,255,255,0.05)', 1);
 
-  drawLabel(ctx, 'Charts', x + 16, y + 24, { size: 22, weight: '700', color: '#e2e7ef' });
-  drawLabel(ctx, 'Message', x + w - 200, y + 24, { size: 16, weight: '700', color: '#3ec455' });
-  drawLabel(ctx, 'Voice', x + w - 74, y + 24, { size: 16, weight: '700', color: '#d95095' });
+  drawLabel(ctx, 'Charts', x + 16, y + 24, { size: 27, weight: '700', color: '#e2e7ef' });
+  drawLabel(ctx, 'Message', x + w - 220, y + 24, { size: 20, weight: '700', color: '#3ec455' });
+  drawLabel(ctx, 'Voice', x + w - 90, y + 24, { size: 20, weight: '700', color: '#d95095' });
 
   const px = x + 16;
   const py = y + 44;
@@ -359,8 +398,8 @@ async function renderUserActivityCanvas({
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, 'rgba(255,255,255,0.06)', 1);
 
   await drawAvatarCircle(ctx, avatarUrl, 28, 24, 80);
-  await drawLabelWithEmoji(ctx, fitText(ctx, `${displayName || userTag}`, 560, 46, '700'), 124, 52, { size: 46, weight: '700', color: '#eef3fb' });
-  await drawLabelWithEmoji(ctx, fitText(ctx, `${guildName || 'Server'} / My Activity`, 560, 22, '600'), 124, 88, { size: 22, weight: '600', color: '#bfc8d6' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, `${displayName || userTag}`, 560, 52, '700'), 124, 52, { size: 52, weight: '700', color: '#eef3fb' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, `${guildName || 'Server'} / My Activity`, 560, 28, '600'), 124, 88, { size: 28, weight: '600', color: '#bfc8d6' });
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 700, 24, 250, 80);
   drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 24, 290, 80);
@@ -393,7 +432,7 @@ async function renderUserActivityCanvas({
   }, 20, 392, 610, 242);
 
   drawChart(ctx, chart, 650, 392, 610, 242);
-  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 24, 670, { size: 16, weight: '700', color: '#cfd6e2' });
+  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 24, 670, { size: 20, weight: '700', color: '#cfd6e2' });
 
   return canvas.toBuffer('image/png');
 }
@@ -424,8 +463,8 @@ async function renderServerActivityCanvas({
   strokeRoundRect(ctx, 20, 16, 1240, 96, 22, 'rgba(255,255,255,0.06)', 1);
 
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
-  await drawLabelWithEmoji(ctx, fitText(ctx, guildName || 'Server', 500, 56, '700'), 124, 52, { size: 56, weight: '700', color: '#eef3fb' });
-  drawLabel(ctx, 'Server Overview', 124, 88, { size: 22, weight: '600', color: '#bfc8d6' });
+  await drawLabelWithEmoji(ctx, fitText(ctx, guildName || 'Server', 500, 60, '700'), 124, 52, { size: 60, weight: '700', color: '#eef3fb' });
+  drawLabel(ctx, 'Server Overview', 124, 88, { size: 28, weight: '600', color: '#bfc8d6' });
 
   drawDateBadge(ctx, 'Created On', dateText(createdOn), 650, 24, 270, 80);
   drawDateBadge(ctx, 'Invited Bot On', dateText(invitedBotOn), 940, 24, 300, 80);
@@ -469,7 +508,7 @@ async function renderServerActivityCanvas({
   }, 640, 370, 620, 220);
 
   drawChart(ctx, chart, 20, 610, 1240, 240);
-  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 28, 878, { size: 16, weight: '700', color: '#cfd6e2' });
+  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 28, 878, { size: 20, weight: '700', color: '#cfd6e2' });
 
   return canvas.toBuffer('image/png');
 }
