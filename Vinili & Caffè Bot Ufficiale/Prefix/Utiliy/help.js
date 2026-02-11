@@ -8,9 +8,7 @@ const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const PAGE_ROLE_IDS = [
   IDs.roles.PartnerManager,
-  IDs.roles.Staff,
-  IDs.roles.HighStaff,
-  IDs.roles.Founder
+  IDs.roles.Staff
 ];
 const PAGE_TITLES = {
   utente: 'Comandi Utente',
@@ -48,6 +46,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   membercount: 'Mostra il numero totale di membri del server.',
   'no-dm': 'Attiva/disattiva il blocco DM per gli annunci dello staff.',
   ping: 'Mostra latenza bot, database e informazioni di uptime.',
+  set: 'Impostazioni bot TTS: voice.',
   ship: 'Calcola la compatibilità tra due utenti.',
   snipe: 'Recupera l\'ultimo messaggio eliminato nel canale.',
   join: 'Fa entrare il bot nel tuo canale vocale.',
@@ -101,14 +100,19 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   'unblock.avatar': 'Sblocca la visualizzazione del tuo avatar.',
   'unblock.banner': 'Sblocca la visualizzazione del tuo banner.',
   'unblock.quotes': 'Sblocca la creazione di quote dei tuoi messaggi.',
+  'classifica.alltime': 'Mostra la classifica generale livelli/exp.',
+  'classifica.weekly': 'Mostra la classifica settimanale exp.',
+  'set.autojoin': 'Attiva o disattiva autojoin TTS.',
+  'set.voice': 'Imposta la lingua TTS personale.',
   'top.text': 'Mostra la classifica utenti per messaggi testuali.',
   'top.voc': 'Mostra la classifica utenti per attività vocale.',
   'top.invites': 'Mostra la classifica utenti per inviti.'
 };
 const CONTEXT_HELP_DESCRIPTIONS = {
-  'Show Avatar': 'Mostra rapidamente l\'avatar dell\'autore del messaggio selezionato.',
   Partnership: 'Apre il modal partnership partendo dal messaggio selezionato.',
-  'Moderate Name': 'Modera/cambia nickname dell utente selezionato.'
+};
+const CONTEXT_CATEGORY_OVERRIDES = {
+  partnership: 'partner'
 };
 
 
@@ -201,6 +205,14 @@ function normalizeCategoryKey(value) {
   const key = String(value || 'misc').toLowerCase();
   if (key === 'admin') return 'dev';
   return key;
+}
+
+function resolveContextCategory(command, dataJson) {
+  const contextName = String(dataJson?.name || '').trim().toLowerCase();
+  if (contextName && CONTEXT_CATEGORY_OVERRIDES[contextName]) {
+    return normalizeCategoryKey(CONTEXT_CATEGORY_OVERRIDES[contextName]);
+  }
+  return normalizeCategoryKey(command?.category || 'contextmenubuilder');
 }
 
 function extractPrefixSubcommands(command) {
@@ -387,7 +399,7 @@ function buildEntries(client, permissions) {
       type: 'context',
       description: CONTEXT_HELP_DESCRIPTIONS[dataJson.name]
         || `Comando context (${commandType === ApplicationCommandType.User ? 'utente' : 'messaggio'}).`,
-      category: normalizeCategoryKey(command?.category || 'contextmenubuilder'),
+      category: resolveContextCategory(command, dataJson),
       roles
     });
   }
@@ -428,6 +440,18 @@ function filterByPage(entries, pageRoleId, memberRoles) {
 
       if (hasMemberRoleRequirement) return hasAnyRole(memberRoles, entry.roles);
       if (isVipCategory) return hasAnyRole(memberRoles, entry.roles);
+      return false;
+    });
+  }
+  if (pageRoleId === IDs.roles.Staff) {
+    const hasStaff = Boolean(memberRoles?.has?.(IDs.roles.Staff));
+    const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
+    const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
+    return entries.filter((entry) => {
+      if (!Array.isArray(entry.roles) || !entry.roles.length) return false;
+      if (hasStaff && entry.roles.includes(IDs.roles.Staff)) return true;
+      if (hasHighStaff && entry.roles.includes(IDs.roles.HighStaff)) return true;
+      if (hasFounder && entry.roles.includes(IDs.roles.Founder)) return true;
       return false;
     });
   }
@@ -528,6 +552,11 @@ module.exports = {
 
     const memberRoles = message.member?.roles?.cache;
     const rolePages = PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId));
+    const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
+    const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
+    if (!rolePages.includes(IDs.roles.Staff) && (hasHighStaff || hasFounder)) {
+      rolePages.push(IDs.roles.Staff);
+    }
     const visibleRoleIds = ['utente', ...rolePages];
 
     const groupedPages = [];

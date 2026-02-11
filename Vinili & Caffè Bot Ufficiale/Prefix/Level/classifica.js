@@ -112,12 +112,33 @@ async function buildAllTimeEmbed(message) {
 
 module.exports = {
   name: 'classifica',
-  aliases: ['c', 'cs', "classificasettimanale"],
+  aliases: ['c', 'cs', 'classificasettimanale'],
+  subcommands: ['alltime', 'weekly'],
+  subcommandAliases: {
+    cs: 'weekly',
+    classificasettimanale: 'weekly'
+  },
 
-  async execute(message) {
+  async execute(message, args = []) {
     await message.channel.sendTyping();
     const invoked = getInvokedCommand(message);
-    const isWeekly = invoked === 'cs' || invoked === 'classificasettimanale';
+    const rawMode = String(args[0] || '').toLowerCase();
+    const normalizedMode = ['weekly', 'settimanale', 'week', 'w'].includes(rawMode)
+      ? 'weekly'
+      : ['alltime', 'all', 'totale', 'general', 'generale', 'a'].includes(rawMode)
+        ? 'alltime'
+        : null;
+    const mode = normalizedMode || (invoked === 'cs' || invoked === 'classificasettimanale' ? 'weekly' : 'alltime');
+    const isWeekly = mode === 'weekly';
+
+    if (rawMode && !normalizedMode) {
+      await safeMessageReply(message, {
+        content: '<:vegax:1443934876440068179> Usa: `+classifica alltime` oppure `+classifica weekly`.',
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
     const embed = isWeekly ? await buildWeeklyEmbed(message) : await buildAllTimeEmbed(message);
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
@@ -169,6 +190,5 @@ module.exports = {
     });
   }
 };
-
 
 

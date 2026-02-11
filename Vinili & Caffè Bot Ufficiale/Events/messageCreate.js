@@ -30,6 +30,7 @@ const {
 } = require('../Utils/Community/autoResponderCache');
 const { safeMessageReply } = require('../Utils/Moderation/reply');
 const IDs = require('../Utils/Config/ids');
+const SuggestionCount = require('../Schemas/Suggestion/suggestionSchema');
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
@@ -363,6 +364,8 @@ module.exports = {
                 if (handledDisboard) return;
                 const handledDiscadia = await handleDiscadiaBump(message, client);
                 if (handledDiscadia) return;
+                const handledSuggestion = await handleSuggestionChannelMessage(message);
+                if (handledSuggestion) return;
             }
         } catch (error) {
             logEventError(client, 'DISBOARD REMINDER ERROR', error);
@@ -1045,15 +1048,16 @@ async function handleDiscadiaBump(message, client) {
     const hasBumpWord = /\bbump(?:ed|ing)?\b/i.test(joined);
     const hasSuccessWord =
         /\bsuccess(?:ful|fully)?\b/i.test(joined) ||
-        /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump/i.test(joined);
+        /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump|bumpato con successo|bump eseguito/i.test(joined);
     const hasFailureWord =
-        /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before/i.test(joined);
+        /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(joined);
     const fallbackTrustedSource = Boolean(
         message.author?.bot
         && (hasPattern || (hasBumpWord && hasSuccessWord))
     );
     const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || isSlashBumpContext || fallbackTrustedSource || hasDiscadiaWord;
-    const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord));
+    const trustedSlashReply = (isDiscadiaAuthor || isDiscadiaApp) && isSlashBumpContext;
+    const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord) || trustedSlashReply);
     if (!isBump) return false;
 
     const bumpUserId =
@@ -1071,3 +1075,98 @@ async function handleDiscadiaBump(message, client) {
     return true;
 }
 
+async function handleSuggestionChannelMessage(message) {
+    if (!message?.guild) return false;
+    if (message.author?.bot || message.webhookId || message.system) return false;
+
+    const suggestionsChannelId = String(IDs.channels.suggestions || '1442569147559973094');
+    if (String(message.channelId) !== suggestionsChannelId) return false;
+
+    const suggestionText = String(message.content || '').trim();
+    if (!suggestionText) return false;
+
+    const counterFilter = {
+        GuildID: message.guild.id,
+        ChannelID: '__counter__',
+        Msg: '__counter__',
+        AuthorID: '__system__'
+    };
+    const counter = await SuggestionCount.findOneAndUpdate(
+        counterFilter,
+        {
+            $inc: { count: 1 },
+            $setOnInsert: {
+                Upmembers: [],
+                Downmembers: [],
+                upvotes: 0,
+                downvotes: 0,
+                sID: '__counter__'
+            }
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    const suggestionId = String(counter?.count || 1);
+
+    const suggestionEmbed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setDescription(`**<a:VC_CrownYellow:1330194103564238930> Mandato da:**\n${message.author.username}\n**<:pinnednew:1443670849990430750> Suggerimento:**\n${suggestionText}\n**<:infoglowingdot:1443660296823767110> Numero voti:**`)
+        .setFields(
+            { name: '<:thumbsup:1471292172145004768>', value: '0', inline: false },
+            { name: '<:thumbsdown:1471292163957457013>', value: '0', inline: false }
+        )
+        .setTimestamp()
+        .setFooter({ text: `User ID: ${message.author.id} | sID: ${suggestionId}` });
+
+    const voteRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('upv')
+            .setEmoji('<:thumbsup:1471292172145004768>')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('downv')
+            .setEmoji('<:thumbsdown:1471292163957457013>')
+            .setStyle(ButtonStyle.Secondary)
+    );
+    const staffRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId('suggestion_staff_accept')
+            .setLabel('Accetta')
+            .setEmoji('<:vegacheckmark:1443666279058772028>')
+            .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+            .setCustomId('suggestion_staff_reject')
+            .setLabel('Rifiuta')
+            .setEmoji('<:vegax:1443934876440068179>')
+            .setStyle(ButtonStyle.Danger)
+    );
+
+    const posted = await message.channel.send({
+        content: '<@&1442568894349840435>',
+        embeds: [suggestionEmbed],
+        components: [voteRow, staffRow]
+    }).catch(() => null);
+    if (!posted) return false;
+
+    await SuggestionCount.create({
+        GuildID: message.guild.id,
+        ChannelID: message.channel.id,
+        Msg: posted.id,
+        AuthorID: message.author.id,
+        upvotes: 0,
+        downvotes: 0,
+        Upmembers: [],
+        Downmembers: [],
+        sID: suggestionId
+    }).catch(() => {});
+
+    const thread = await posted.startThread({
+        name: `Thread per il suggerimento ${suggestionId}`,
+        autoArchiveDuration: 10080
+    }).catch(() => null);
+    if (thread) {
+        await thread.send(`Ho creato questo thread per discutere del suggerimento di <@${message.author.id}>`).catch(() => {});
+    }
+
+    await message.delete().catch(() => {});
+    return true;
+}

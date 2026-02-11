@@ -28,46 +28,9 @@
         "roles.Founder"
       ]
     },
-    "set": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "autojoin": [
-          "roles.HighStaff"
-        ],
-        "voice": [
-          "roles.Member"
-        ]
-      }
-    },
-    "suggestion": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "suggest": [
-          "roles.Member"
-        ],
-        "accept": [
-          "roles.HighStaff"
-        ],
-        "reject": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "Show Avatar": {
-      "roles": null
-    },
     "Partnership": {
       "roles": [
         "roles.PartnerManager"
-      ]
-    },
-    "Moderate Name": {
-      "roles": [
-        "roles.HighStaff"
       ]
     },
     "leaderboard": {
@@ -207,6 +170,19 @@
     "ping": [
       "roles.Member"
     ],
+    "set": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "autojoin": [
+          "roles.HighStaff"
+        ],
+        "voice": [
+          "roles.Member"
+        ]
+      }
+    },
     "restart": [
       "roles.Founder"
     ],
@@ -244,9 +220,19 @@
         ]
       }
     },
-    "classifica": [
-      "roles.Member"
-    ],
+    "classifica": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "alltime": [
+          "roles.Member"
+        ],
+        "weekly": [
+          "roles.Member"
+        ]
+      }
+    },
     "mstats": [
       "roles.Member"
     ],
