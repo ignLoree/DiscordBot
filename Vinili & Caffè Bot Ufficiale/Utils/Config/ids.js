@@ -363,7 +363,8 @@ const channels = {
   stickyHelpB: '1442569184281362552',
   stickyHelpC: '1469685688814407726',
   staffListChannel: '1442569235426705653',
-  forceDeleteAllMessages: '1470775925426618468'
+  forceDeleteAllMessages: '1470775925426618468',
+  expExcludedCategory: '1442569074310643845'
 };
 
 const ids = {

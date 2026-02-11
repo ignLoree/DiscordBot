@@ -155,6 +155,12 @@ async function addBotRoles(member) {
     await member.roles.add(roles);
 }
 
+async function resolveGuildChannel(guild, channelId) {
+    if (!guild || !channelId) return null;
+    return guild.channels.cache.get(channelId)
+        || await guild.channels.fetch(channelId).catch(() => null);
+}
+
 module.exports = {
     name: "guildMemberAdd",
     async execute(member) {
@@ -165,7 +171,7 @@ module.exports = {
                 } catch (error) {
                     global.logger.error('[guildMemberAdd] Failed to add bot roles:', error);
                 }
-                const channelwelcome = member.guild.channels.cache.get(IDs.channels.inviteLog);
+                const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.inviteLog);
                 if (channelwelcome) {
                     const botEmbed = new EmbedBuilder()
                         .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
@@ -178,7 +184,7 @@ module.exports = {
 
                     await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
                 }
-                const inviteChannel = member.guild.channels.cache.get(INVITE_LOG_CHANNEL_ID);
+                const inviteChannel = await resolveGuildChannel(member.guild, INVITE_LOG_CHANNEL_ID);
                 if (inviteChannel) {
                     try {
                         const info = await resolveInviteInfo(member);
@@ -261,16 +267,19 @@ module.exports = {
                 }
                 return;
             }
-            const channelwelcome = member.guild.channels.cache.get(IDs.channels.inviteLog);
+            const channelwelcome = await resolveGuildChannel(member.guild, IDs.channels.inviteLog);
             if (!channelwelcome) {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
             }
 
-            const totalvoicechannel = member.guild.channels.cache.get(IDs.channels.totalVoiceCounter);
-            if (!totalvoicechannel) return;
+            const totalvoicechannel = await resolveGuildChannel(member.guild, IDs.channels.totalVoiceCounter);
+            
 
             const totalmembers = `${member.guild.memberCount}`;
+            if (totalvoicechannel) {
+                
             await totalvoicechannel.setName(`༄☕︲ User: ${totalmembers}`).catch(() => { });
+            }
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })
@@ -288,7 +297,7 @@ module.exports = {
             if (info && !info.isVanity && info.inviterId) {
                 await trackInviteJoin(member, info.inviterId).catch(() => { });
             }
-            const inviteChannel = member.guild.channels.cache.get(THANKS_CHANNEL_ID);
+            const inviteChannel = await resolveGuildChannel(member.guild, THANKS_CHANNEL_ID);
             const awarded = await tryAwardInviteRole(member, info).catch(() => false);
             if (inviteChannel && awarded && info?.inviterId) {
                 const rewardEmbed = new EmbedBuilder()
@@ -300,7 +309,7 @@ module.exports = {
                     );
                 await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
             }
-            if (inviteChannel && info) {
+            if (channelwelcome && info) {
                 if (info.isVanity) {
                     await channelwelcome.send({
                         content: `<:VC_Reply:1468262952934314131> L'utente ha usato il link vanity **.gg/viniliecaffe**`

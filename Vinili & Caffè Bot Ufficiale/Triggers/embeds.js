@@ -5,7 +5,10 @@ const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
 const sponsorChannel = client.channels.cache.get(IDs.channels.infoPanelSponsor)
       || await client.channels.fetch(IDs.channels.infoPanelSponsor).catch(() => null);
-    if (!sponsorChannel?.isTextBased?.()) return;
+    if (!sponsorChannel?.isTextBased?.()) {
+      global.logger.warn('[CLIENT READY] Sponsor panel channel missing/unusable:', IDs.channels.infoPanelSponsor);
+      return;
+    }
 
     const sponsorEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
@@ -42,7 +45,10 @@ const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
 const candidatureChannel = client.channels.cache.get(IDs.channels.infoPanelCandidature)
       || await client.channels.fetch(IDs.channels.infoPanelCandidature).catch(() => null);
-    if (!candidatureChannel?.isTextBased?.()) return;
+    if (!candidatureChannel?.isTextBased?.()) {
+      global.logger.warn('[CLIENT READY] Candidature panel channel missing/unusable:', IDs.channels.infoPanelCandidature);
+      return;
+    }
 
     const candidatureEmbed = new EmbedBuilder()
       .setColor('#6f4e37')
@@ -1042,12 +1048,21 @@ async function runEmbedOnlySections(client) {
   }
 }
 
+async function runAllClientReadyPanels(client) {
+  await runMenuAndSelectSections(client);
+  await runEmbedWithButtonsSections(client);
+  await runEmbedOnlySections(client);
+}
+
 module.exports = {
   name: 'clientReady',
   once: true,
   async execute(client) {
-    await runMenuAndSelectSections(client);
-    await runEmbedWithButtonsSections(client);
-    await runEmbedOnlySections(client);
+    await runAllClientReadyPanels(client);
+    setTimeout(() => {
+      runAllClientReadyPanels(client).catch((err) => {
+        global.logger.error('[CLIENT READY] delayed panel refresh failed:', err);
+      });
+    }, 15000);
   }
 };

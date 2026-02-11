@@ -2,11 +2,15 @@ const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { GlobalSettings } = require('../../Schemas/Community/communitySchemas');
 const LevelHistory = require('../../Schemas/Community/levelHistorySchema');
 const IDs = require('../../Utils/Config/ids');
+const EXP_EXCLUDED_CATEGORY_IDS = new Set(
+  [IDs.channels.expExcludedCategory].filter(Boolean).map((id) => String(id))
+);
 
 const TIME_ZONE = 'Europe/Rome';
 const MESSAGE_EXP = 2;
 const VOICE_EXP_PER_MINUTE = 5;
 const DEFAULT_MULTIPLIER = 1;
+const MAX_COMBINED_MULTIPLIER = 8;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const settingsCache = new Map();
 const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
@@ -21,9 +25,9 @@ const LEVEL_ROLE_MAP = new Map([
   [100, IDs.roles.level100]
 ]);
 const ROLE_MULTIPLIERS = new Map([
-  [IDs.roles.customRoleAccessA, 3],
-  [IDs.roles.customRoleAccessB, 3],
-  [IDs.roles.plusColorBooster, 4]
+  [IDs.roles.customRoleAccessB, 3], // Donator
+  [IDs.roles.customRoleAccessA, 4], // VIP
+  [IDs.roles.plusColorBooster, 2]   // Booster
 ]);
 
 function pad2(value) {
@@ -71,20 +75,17 @@ function roundToNearest50(value) {
 
 function getLevelStep(level) {
   const safeLevel = Math.max(1, Math.floor(Number(level || 1)));
-  let step = 90 + Math.floor(safeLevel * 12) + (safeLevel % 4) * 15;
-
-  if (safeLevel >= 10) {
-    const over10 = safeLevel - 9;
-    step += 120 + (over10 * 28) + Math.floor((over10 * over10) * 1.3);
+  // Curva progressiva: livelli 1-10 facili, poi crescita sempre più dura.
+  if (safeLevel <= 10) {
+    return 120 + (safeLevel - 1) * 25;
   }
-  if (safeLevel >= 30) {
-    step += 120 + ((safeLevel - 30) * 18);
+  if (safeLevel <= 30) {
+    return 380 + (safeLevel - 10) * 55;
   }
-  if (safeLevel >= 50) {
-    step += 220 + ((safeLevel - 50) * 25);
+  if (safeLevel <= 60) {
+    return 1600 + (safeLevel - 30) * 120;
   }
-
-  return Math.max(110, step);
+  return 5200 + (safeLevel - 60) * 210;
 }
 
 function getLevelInfo(totalExp) {
@@ -232,7 +233,7 @@ function getRoleMultiplier(member) {
   let multi = 1;
   for (const [roleId, value] of ROLE_MULTIPLIERS.entries()) {
     if (member.roles.cache.has(roleId)) {
-      multi *= value;
+      multi = Math.max(multi, Number(value) || 1);
     }
   }
   return multi;
@@ -345,12 +346,17 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
     const member = guild.members.cache.get(userId) || await guild.members.fetch(userId).catch(() => null);
     const globalMulti = await getGlobalMultiplier(guild.id);
     const roleMulti = getRoleMultiplier(member);
-    effectiveAmount = Number(amount || 0) * globalMulti * roleMulti;
+    const combined = Math.min(
+      MAX_COMBINED_MULTIPLIER,
+      Math.max(1, Number(globalMulti || 1) * Number(roleMulti || 1))
+    );
+    effectiveAmount = Number(amount || 0) * combined;
   }
   let weeklyAmount = null;
   if (applyMultiplier) {
     const globalMulti = await getGlobalMultiplier(guild.id);
-    weeklyAmount = Number(amount || 0) * globalMulti;
+    const clampedGlobal = Math.min(MAX_COMBINED_MULTIPLIER, Math.max(1, Number(globalMulti || 1)));
+    weeklyAmount = Number(amount || 0) * clampedGlobal;
   }
   const result = await addExp(guild.id, userId, effectiveAmount, false, weeklyAmount);
   if (!result || !result.levelInfo) return result;
@@ -463,6 +469,13 @@ async function setRoleIgnored(guildId, roleId, ignored = true) {
 async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
   const settings = await getGuildExpSettings(guildId);
   if (channelId && settings.lockedChannelIds.includes(channelId)) return true;
+  if (channelId && EXP_EXCLUDED_CATEGORY_IDS.size > 0) {
+    const guild = member?.guild || null;
+    const channel = guild?.channels?.cache?.get(channelId)
+      || await guild?.channels?.fetch?.(channelId).catch(() => null);
+    const parentId = String(channel?.parentId || '');
+    if (parentId && EXP_EXCLUDED_CATEGORY_IDS.has(parentId)) return true;
+  }
   if (member?.roles?.cache && settings.ignoredRoleIds.length > 0) {
     for (const roleId of settings.ignoredRoleIds) {
       if (member.roles.cache.has(roleId)) return true;
