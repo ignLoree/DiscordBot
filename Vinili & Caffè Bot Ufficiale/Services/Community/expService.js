@@ -339,7 +339,7 @@ async function syncLevelRolesForMember(guild, userId, level) {
   return awarded;
 }
 
-async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
+async function addExpWithLevel(guild, userId, amount, applyMultiplier = false, includeWeekly = true) {
   if (!guild || !userId) return null;
   let effectiveAmount = amount;
   if (applyMultiplier) {
@@ -353,7 +353,9 @@ async function addExpWithLevel(guild, userId, amount, applyMultiplier = false) {
     effectiveAmount = Number(amount || 0) * combined;
   }
   let weeklyAmount = null;
-  if (applyMultiplier) {
+  if (!includeWeekly) {
+    weeklyAmount = 0;
+  } else if (applyMultiplier) {
     const globalMulti = await getGlobalMultiplier(guild.id);
     const clampedGlobal = Math.min(MAX_COMBINED_MULTIPLIER, Math.max(1, Number(globalMulti || 1)));
     weeklyAmount = Number(amount || 0) * clampedGlobal;

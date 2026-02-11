@@ -98,7 +98,7 @@ module.exports = {
       return;
     }
 
-    const levelResult = await addExpWithLevel(message.guild, target.id, addedExp, false);
+    const levelResult = await addExpWithLevel(message.guild, target.id, addedExp, false, false);
     const finalLevel = Number(levelResult?.levelInfo?.level ?? getLevelInfo(finalExp).level);
     await ReviewReward.create({
       guildId,

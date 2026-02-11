@@ -1,4 +1,5 @@
 const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
+const ActivityDaily = require('../../Schemas/Community/activityDailySchema');
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember } = require('./expService');
 const IDs = require('../../Utils/Config/ids');
 
@@ -32,6 +33,49 @@ function getTimeParts(date) {
 function getDayKey(date) {
   const { year, month, day } = getTimeParts(date);
   return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+function getLastNDaysKeys(days) {
+  const safeDays = Math.max(1, Math.min(31, Number(days || 7)));
+  const keys = [];
+  const now = new Date();
+  for (let i = 0; i < safeDays; i += 1) {
+    const d = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+    keys.push(getDayKey(d));
+  }
+  return keys;
+}
+
+async function bumpDailyText(guildId, userId, channelId, amount = 1) {
+  const inc = Math.max(0, Number(amount || 0));
+  if (!guildId || !userId || !channelId || !inc) return;
+  const dateKey = getDayKey(new Date());
+  await ActivityDaily.updateOne(
+    { guildId, dateKey, userId },
+    {
+      $inc: {
+        textCount: inc,
+        [`textChannels.${channelId}`]: inc
+      }
+    },
+    { upsert: true }
+  ).catch(() => {});
+}
+
+async function bumpDailyVoice(guildId, userId, channelId, seconds = 0) {
+  const inc = Math.max(0, Math.floor(Number(seconds || 0)));
+  if (!guildId || !userId || !channelId || !inc) return;
+  const dateKey = getDayKey(new Date());
+  await ActivityDaily.updateOne(
+    { guildId, dateKey, userId },
+    {
+      $inc: {
+        voiceSeconds: inc,
+        [`voiceChannels.${channelId}`]: inc
+      }
+    },
+    { upsert: true }
+  ).catch(() => {});
 }
 
 function getWeekKey(date) {
@@ -88,6 +132,7 @@ async function recordMessageActivity(message) {
   doc.messages.daily = Number(doc.messages.daily || 0) + 1;
   doc.messages.weekly = Number(doc.messages.weekly || 0) + 1;
   await doc.save();
+  await bumpDailyText(message.guild.id, message.author.id, message.channelId, 1);
   const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
   const ignored = await shouldIgnoreExpForMember({
     guildId: message.guild.id,
@@ -147,12 +192,19 @@ async function handleVoiceActivity(oldState, newState) {
       await doc.save();
       return;
     }
+    const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
+    const elapsedSeconds = startedAt
+      ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
+      : 0;
     const ignored = await shouldIgnoreExpForMember({
       guildId,
       member,
       channelId: oldChannel?.id || null
     });
     await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    if (oldChannel?.id) {
+      await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
+    }
     await doc.save();
     return;
   }
@@ -160,12 +212,19 @@ async function handleVoiceActivity(oldState, newState) {
   if (wasInVoice && isInVoice && oldState.channelId !== newState.channelId) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
     if (canRoleUseVoiceChannel(oldChannel, role)) {
+      const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
+      const elapsedSeconds = startedAt
+        ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
+        : 0;
       const ignored = await shouldIgnoreExpForMember({
         guildId,
         member,
         channelId: oldChannel?.id || null
       });
       await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+      if (oldChannel?.id) {
+        await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
+      }
     } else {
       doc.voice.sessionStartedAt = null;
     }
@@ -215,10 +274,65 @@ async function getUserActivityStats(guildId, userId) {
   };
 }
 
+function pushMapValue(target, key, amount) {
+  if (!key || !Number.isFinite(amount) || amount <= 0) return;
+  target.set(key, (target.get(key) || 0) + amount);
+}
+
+function topNFromMap(map, n = 3) {
+  return Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([id, value]) => ({ id, value }));
+}
+
+async function getServerActivityStats(guildId, days = 7) {
+  const dateKeys = getLastNDaysKeys(days);
+  const rows = await ActivityDaily.find({
+    guildId,
+    dateKey: { $in: dateKeys }
+  }).lean().catch(() => []);
+
+  const userText = new Map();
+  const userVoice = new Map();
+  const channelText = new Map();
+  const channelVoice = new Map();
+
+  for (const row of rows) {
+    const textCount = Number(row?.textCount || 0);
+    const voiceSeconds = Number(row?.voiceSeconds || 0);
+    pushMapValue(userText, String(row.userId || ''), textCount);
+    pushMapValue(userVoice, String(row.userId || ''), voiceSeconds);
+
+    const textChannels = row?.textChannels || {};
+    for (const [channelId, value] of Object.entries(textChannels)) {
+      pushMapValue(channelText, String(channelId || ''), Number(value || 0));
+    }
+
+    const voiceChannels = row?.voiceChannels || {};
+    for (const [channelId, value] of Object.entries(voiceChannels)) {
+      pushMapValue(channelVoice, String(channelId || ''), Number(value || 0));
+    }
+  }
+
+  return {
+    days: Math.max(1, Math.min(31, Number(days || 7))),
+    totals: {
+      text: Array.from(userText.values()).reduce((sum, value) => sum + value, 0),
+      voiceSeconds: Array.from(userVoice.values()).reduce((sum, value) => sum + value, 0)
+    },
+    topUsersText: topNFromMap(userText, 3),
+    topUsersVoice: topNFromMap(userVoice, 3),
+    topChannelsText: topNFromMap(channelText, 3),
+    topChannelsVoice: topNFromMap(channelVoice, 3)
+  };
+}
+
 module.exports = {
   recordMessageActivity,
   handleVoiceActivity,
-  getUserActivityStats
+  getUserActivityStats,
+  getServerActivityStats
 };
 
 

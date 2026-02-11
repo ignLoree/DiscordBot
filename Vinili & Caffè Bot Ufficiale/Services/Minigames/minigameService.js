@@ -1652,7 +1652,7 @@ async function awardWinAndReply(message, rewardExp) {
     nextTotal = Number(doc?.totalExp || nextTotal);
   } catch {}
   try {
-    await addExpWithLevel(message.guild, message.author.id, Number(rewardExp || 0), false);
+    await addExpWithLevel(message.guild, message.author.id, Number(rewardExp || 0), false, false);
   } catch {}
   await message.reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] }).catch(() => {});
   const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
@@ -1800,7 +1800,7 @@ async function handleMinigameButton(interaction, client) {
     nextTotal = Number(doc?.totalExp || nextTotal);
   } catch {}
   try {
-    await addExpWithLevel(interaction.guild, interaction.user.id, Number(rewardExp || 0), false);
+    await addExpWithLevel(interaction.guild, interaction.user.id, Number(rewardExp || 0), false, false);
   } catch {}
 
   const winEmbed = buildWinEmbed(interaction.user.id, rewardExp, nextTotal);

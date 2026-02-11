@@ -262,7 +262,7 @@ async function handleVoteManagerMessage(message, client) {
             }
         } catch {}
         try {
-            await addExpWithLevel(message.guild, user.id, Number(expValue || 0), false);
+            await addExpWithLevel(message.guild, user.id, Number(expValue || 0), false, false);
         } catch {}
         try {
             const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
@@ -314,6 +314,7 @@ module.exports = {
     name: "messageCreate",
     async execute(message, client) {
         const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
+        const defaultPrefix = '+';
         if (FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || '')) && !message?.system) {
             await message.delete().catch(() => {});
             return;
@@ -358,6 +359,28 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
+        let earlyOverridePrefix = null;
+        const earlyOverrideMap = getPrefixOverrideMap(client);
+        for (const prefix of earlyOverrideMap.keys()) {
+            if (message.content.startsWith(prefix)) {
+                if (!earlyOverridePrefix || prefix.length > earlyOverridePrefix.length) {
+                    earlyOverridePrefix = prefix;
+                }
+            }
+        }
+        const isPrefixMessage = (() => {
+            if (earlyOverridePrefix) {
+                const raw = message.content.slice(earlyOverridePrefix.length).trim();
+                const first = raw.split(/\s+/)[0]?.toLowerCase();
+                if (!first) return false;
+                return Boolean(earlyOverrideMap.get(earlyOverridePrefix)?.has(first));
+            }
+            if (!message.content.startsWith(defaultPrefix)) return false;
+            const raw = message.content.slice(defaultPrefix.length).trim();
+            const first = raw.split(/\s+/)[0]?.toLowerCase();
+            if (!first) return false;
+            return Boolean(client.pcommands.get(first) || client.pcommands.get(client.aliases.get(first)));
+        })();
         if (!isEditedPrefixExecution) {
             try {
                 if (message.channelId === IDs.channels.inviteLog) {
@@ -366,10 +389,12 @@ module.exports = {
             } catch (error) {
                 logEventError(client, 'REMINDER ACTIVITY ERROR', error);
             }
-            try {
-                await recordMessageActivity(message);
-            } catch (error) {
-                logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
+            if (!isPrefixMessage) {
+                try {
+                    await recordMessageActivity(message);
+                } catch (error) {
+                    logEventError(client, 'ACTIVITY MESSAGE ERROR', error);
+                }
             }
             try {
                 await handleMinigameMessage(message, client);
@@ -397,7 +422,6 @@ module.exports = {
                 logEventError(client, 'COUNTING ERROR', error);
             }
         }
-        const defaultPrefix = '+';
         let overrideCommand = null;
         let overridePrefix = null;
 
