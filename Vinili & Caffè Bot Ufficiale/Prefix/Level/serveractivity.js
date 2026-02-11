@@ -23,11 +23,13 @@ function formatHours(seconds) {
   return (Number(seconds || 0) / 3600).toFixed(2);
 }
 
-function formatCompactMessages(value) {
-  const n = Number(value || 0);
-  if (n >= 1000000) return `${(n / 1000000).toFixed(2)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
-  return `${n}`;
+function safeWindow(windows, key) {
+  const row = windows?.[key] || {};
+  return {
+    text: Number(row.text || 0),
+    voiceSeconds: Number(row.voiceSeconds || 0),
+    contributors: Number(row.contributors || 0)
+  };
 }
 
 async function resolveChannelLabel(guild, channelId) {
@@ -69,6 +71,9 @@ module.exports = {
     await message.channel.sendTyping();
     const { lookbackDays, wantsEmbed } = parseServerActivityArgs(args);
     const stats = await getServerOverviewStats(message.guild.id, lookbackDays);
+    const d1 = safeWindow(stats?.windows, 'd1');
+    const d7 = safeWindow(stats?.windows, 'd7');
+    const d14 = safeWindow(stats?.windows, 'd14');
     const enriched = await enrichTops(message.guild, stats);
 
     const imageName = `serveractivity-overview-${message.guild.id}-${lookbackDays}d.png`;
@@ -80,13 +85,13 @@ module.exports = {
         createdOn: message.guild?.createdAt || null,
         invitedBotOn: message.guild?.members?.me?.joinedAt || null,
         lookbackDays,
-        windows: stats.windows,
+        windows: { d1, d7, d14 },
         topUsersText: enriched.topUsersText,
         topUsersVoice: enriched.topUsersVoice,
         topChannelsText: enriched.topChannelsText,
         topChannelsVoice: enriched.topChannelsVoice,
-        chart: stats.chart,
-        approximate: stats.approximate
+        chart: Array.isArray(stats?.chart) ? stats.chart : [],
+        approximate: Boolean(stats?.approximate)
       });
       file = new AttachmentBuilder(buffer, { name: imageName });
     } catch (error) {
@@ -107,10 +112,10 @@ module.exports = {
       .setAuthor({ name: `${message.guild?.name || 'Server'} - Overview ${lookbackDays}d`, iconURL: message.guild?.iconURL({ size: 128 }) || null })
       .setImage(file ? `attachment://${imageName}` : null)
       .setDescription([
-        `Messaggi (1d/7d/14d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${stats.windows.d14.text}**`,
-        `Ore vocali (1d/7d/14d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(stats.windows.d14.voiceSeconds)}**`,
-        `Contributors (1d/7d/14d): **${stats.windows.d1.contributors} / ${stats.windows.d7.contributors} / ${stats.windows.d14.contributors}**`,
-        stats.approximate ? '_Nota: dati retroattivi parziali._' : null
+        `Messaggi (1d/7d/14d): **${d1.text} / ${d7.text} / ${d14.text}**`,
+        `Ore vocali (1d/7d/14d): **${formatHours(d1.voiceSeconds)} / ${formatHours(d7.voiceSeconds)} / ${formatHours(d14.voiceSeconds)}**`,
+        `Contributori (1d/7d/14d): **${d1.contributors} / ${d7.contributors} / ${d14.contributors}**`,
+        stats?.approximate ? '_Nota: dati retroattivi parziali._' : null
       ].filter(Boolean).join('\n'));
 
     await safeMessageReply(message, {

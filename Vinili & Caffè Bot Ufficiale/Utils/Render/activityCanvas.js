@@ -24,6 +24,36 @@ function compactNumber(value) {
   return `${n}`;
 }
 
+function stripEmoji(value) {
+  return String(value || '')
+    .replace(/[\u{1F000}-\u{1FAFF}]/gu, '')
+    .replace(/[\u2600-\u27BF]/gu, '')
+    .replace(/[\uFE0E\uFE0F]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function fitText(ctx, text, maxWidth) {
+  const value = String(text || '');
+  if (!value) return '-';
+  if (ctx.measureText(value).width <= maxWidth) return value;
+  const ellipsis = '...';
+  let out = value;
+  while (out.length > 1 && ctx.measureText(`${out}${ellipsis}`).width > maxWidth) {
+    out = out.slice(0, -1);
+  }
+  return `${out}${ellipsis}`;
+}
+
+function drawLegendDot(ctx, x, y, color) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.arc(x, y, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawLabel(ctx, text, x, y, size = 18, color = '#c4c9d1', weight = '600', align = 'left') {
   drawTextWithSpecialFallback(ctx, text, x, y, {
     size,
@@ -38,7 +68,8 @@ function drawTopChip(ctx, label, value, unit, x, y, w, h) {
   roundRect(ctx, x, y, w, h, 12);
   ctx.fillStyle = '#171c23';
   ctx.fill();
-  drawLabel(ctx, label || '-', x + 16, y + (h / 2), 18, '#d8dbe1', '700');
+  const safeLabel = stripEmoji(label || '-') || '-';
+  drawLabel(ctx, fitText(ctx, safeLabel, w - 220), x + 16, y + (h / 2), 18, '#d8dbe1', '700');
   drawLabel(ctx, `${value} ${unit || ''}`.trim(), x + w - 16, y + (h / 2), 16, '#cfd3db', '600', 'right');
 }
 
@@ -71,8 +102,10 @@ function drawChart(ctx, chart, x, y, w, h) {
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, 'Charts', x + 16, y + 24, 22, '#d9dde3', '700');
-  drawLabel(ctx, '● Message', x + w - 220, y + 24, 16, '#3ec455', '700');
-  drawLabel(ctx, '● Voice', x + w - 92, y + 24, 16, '#d95095', '700');
+  drawLegendDot(ctx, x + w - 214, y + 24, '#3ec455');
+  drawLegendDot(ctx, x + w - 86, y + 24, '#d95095');
+  drawLabel(ctx, 'Message', x + w - 202, y + 24, 16, '#3ec455', '700');
+  drawLabel(ctx, 'Voice', x + w - 74, y + 24, 16, '#d95095', '700');
 
   const px = x + 16;
   const py = y + 44;
@@ -179,10 +212,10 @@ async function renderUserActivityCanvas({
   drawLabel(ctx, `${displayName || userTag}`, 124, 52, 48, '#dfe4eb', '700');
   drawLabel(ctx, `${guildName} • My Activity`, 124, 90, 22, '#b9c0ca', '600');
 
-  drawDateBadge(ctx, 'Created On', dateText(createdOn), 710, 22, 210, 78);
-  drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 22, 190, 78);
+  drawDateBadge(ctx, 'Created On', dateText(createdOn), 700, 22, 250, 78);
+  drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 22, 290, 78);
 
-  drawMetricPanel(ctx, 'Server Ranks', '🏆', [
+  drawMetricPanel(ctx, 'Server Ranks', 'R', [
     { label: 'Text', value: `#${ranks?.text || '-'}` },
     { label: 'Voice', value: `#${ranks?.voice || '-'}` }
   ], 20, 132, 400, 236);
@@ -193,7 +226,7 @@ async function renderUserActivityCanvas({
     { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
   ], 440, 132, 400, 236);
 
-  drawMetricPanel(ctx, 'Voice Activity', '🔊', [
+  drawMetricPanel(ctx, 'Voice Activity', 'V', [
     { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
     { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
     { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
@@ -203,9 +236,8 @@ async function renderUserActivityCanvas({
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, 'Top Channels & Applications', 34, 422, 22, '#d9dde3', '700');
-  drawTopChip(ctx, (topChannelsText?.[0]?.label || '#-').replace(/^#/, ''), `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 34, 442, 582, 60);
-  drawTopChip(ctx, (topChannelsVoice?.[0]?.label || '#-').replace(/^#/, ''), `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 34, 510, 582, 60);
-  drawTopChip(ctx, '-', '-', '', 34, 578, 582, 42);
+  drawTopChip(ctx, topChannelsText?.[0]?.label || '#-', `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 34, 442, 582, 60);
+  drawTopChip(ctx, topChannelsVoice?.[0]?.label || '#-', `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 34, 510, 582, 60);
 
   drawChart(ctx, chart, 650, 392, 610, 242);
   drawLabel(ctx, `Server Lookback: Last ${lookbackDays || 14} days`, 24, 670, 16, '#cdd2da', '700');
@@ -250,13 +282,13 @@ async function renderServerActivityCanvas({
     { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
   ], 20, 132, 400, 220);
 
-  drawMetricPanel(ctx, 'Voice Activity', '🔊', [
+  drawMetricPanel(ctx, 'Voice Activity', 'V', [
     { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
     { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
     { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
   ], 440, 132, 400, 220);
 
-  drawMetricPanel(ctx, 'Contributors', '👤', [
+  drawMetricPanel(ctx, 'Contributors', 'U', [
     { label: '1d', value: `${Number(windows?.d1?.contributors || 0)} members` },
     { label: '7d', value: `${Number(windows?.d7?.contributors || 0)} members` },
     { label: '14d', value: `${Number(windows?.d14?.contributors || 0)} members` }
@@ -266,15 +298,15 @@ async function renderServerActivityCanvas({
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, 'Top Members', 34, 402, 24, '#d9dde3', '700');
-  drawTopChip(ctx, (topUsersText?.[0]?.label || '-').replace(/^@/, ''), `${compactNumber(topUsersText?.[0]?.value || 0)}`, 'messages', 34, 424, 572, 72);
-  drawTopChip(ctx, (topUsersVoice?.[0]?.label || '-').replace(/^@/, ''), `${formatHours(topUsersVoice?.[0]?.value || 0)}`, 'hours', 34, 506, 572, 72);
+  drawTopChip(ctx, topUsersText?.[0]?.label || '-', `${compactNumber(topUsersText?.[0]?.value || 0)}`, 'messages', 34, 424, 572, 72);
+  drawTopChip(ctx, topUsersVoice?.[0]?.label || '-', `${formatHours(topUsersVoice?.[0]?.value || 0)}`, 'hours', 34, 506, 572, 72);
 
   roundRect(ctx, 640, 370, 620, 220, 18);
   ctx.fillStyle = '#2f343d';
   ctx.fill();
   drawLabel(ctx, 'Top Channels', 654, 402, 24, '#d9dde3', '700');
-  drawTopChip(ctx, (topChannelsText?.[0]?.label || '#-').replace(/^#/, ''), `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 654, 424, 592, 72);
-  drawTopChip(ctx, (topChannelsVoice?.[0]?.label || '#-').replace(/^#/, ''), `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 654, 506, 592, 72);
+  drawTopChip(ctx, topChannelsText?.[0]?.label || '#-', `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 654, 424, 592, 72);
+  drawTopChip(ctx, topChannelsVoice?.[0]?.label || '#-', `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 654, 506, 592, 72);
 
   drawChart(ctx, chart, 20, 610, 1240, 240);
   drawLabel(ctx, `Server Lookback: Last ${lookbackDays} days`, 28, 878, 16, '#cdd2da', '700');

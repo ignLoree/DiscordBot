@@ -38,6 +38,12 @@ function hasInvite(presence) {
     return INVITE_REGEX.test(status);
 }
 
+function resolveInviteState(presence, fallback = false) {
+    if (!presence) return Boolean(fallback);
+    if (!hasCustomActivity(presence)) return Boolean(fallback);
+    return hasInvite(presence);
+}
+
 async function addRoleIfPossible(member) {
     const me = member.guild.members.me;
     if (!me) {
@@ -297,8 +303,10 @@ module.exports = {
 
             const userId = member.id;
             const prev = statusCache.get(userId);
-            const prevHas = typeof prev?.hasLink === 'boolean' ? prev.hasLink : hasInvite(oldPresence);
-            const newHas = hasInvite(newPresence);
+            const prevHas = typeof prev?.hasLink === 'boolean'
+                ? prev.hasLink
+                : resolveInviteState(oldPresence, false);
+            const newHas = resolveInviteState(newPresence, prevHas);
             const isOffline = !newPresence || ['offline', 'invisible'].includes(newPresence.status);
             const wasOffline = !oldPresence || ['offline', 'invisible'].includes(oldPresence.status);
 
