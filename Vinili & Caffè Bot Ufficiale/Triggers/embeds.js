@@ -85,30 +85,11 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const path = require('path');
 const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
+const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
 const INFO_CHANNEL_ID = IDs.channels.infoPerks;
 const INFO_MEDIA_NAME = 'info.gif';
 const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
-
-const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
-
-const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
-
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
-  if (currentComponents !== nextComponents) return true;
-
-  if (attachmentName) {
-    if ((message?.attachments?.size || 0) !== 1) return true;
-    const currentName = message.attachments.first()?.name || null;
-    if (currentName !== attachmentName) return true;
-  }
-
-  return false;
-};
 
 const channel = client.channels.cache.get(INFO_CHANNEL_ID)
       || await client.channels.fetch(INFO_CHANNEL_ID).catch(() => null);
@@ -248,30 +229,7 @@ const channel = client.channels.cache.get(INFO_CHANNEL_ID)
 async function runStaffEmbedAuto(client) {
 const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-
-const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
-
-function shouldEditMessage(message, { embeds = [], components = [] }) {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
-
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
-  return currentComponents !== nextComponents;
-}
-
-async function upsertPanelMessage(channel, client, payload) {
-  const messages = await channel.messages.fetch({ limit: 30 }).catch(() => null);
-  const existing = messages?.find((msg) => msg.author?.id === client.user?.id && msg.embeds?.length);
-  if (!existing) {
-    await channel.send(payload).catch(() => {});
-    return;
-  }
-  if (shouldEditMessage(existing, payload)) {
-    await existing.edit(payload).catch(() => {});
-  }
-}
+const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
 const moderationChannel = client.channels.cache.get(IDs.channels.staffModeration)
       || await client.channels.fetch(IDs.channels.staffModeration).catch(() => null);
@@ -404,31 +362,12 @@ const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
+const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
 const VERIFY_CHANNEL_ID = IDs.channels.verifyPanel;
 const VERIFY_MEDIA_NAME = 'verifica.gif';
 const VERIFY_MEDIA_PATH = path.join(__dirname, '..', 'Photos', VERIFY_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
-
-const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
-
-const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
-
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
-  if (currentComponents !== nextComponents) return true;
-
-  if (attachmentName) {
-    if ((message?.attachments?.size || 0) !== 1) return true;
-    const currentName = message.attachments.first()?.name || null;
-    if (currentName !== attachmentName) return true;
-  }
-
-  return false;
-};
 
 const channel = client.channels.cache.get(VERIFY_CHANNEL_ID)
       || await client.channels.fetch(VERIFY_CHANNEL_ID).catch(() => null);
@@ -519,6 +458,7 @@ const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuild
 const path = require('path');
 const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
+const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
 const CHANNEL_ID = IDs.channels.rolePanel;
 const IMAGE_NAME = 'personalità.gif';
@@ -530,26 +470,6 @@ const COLORS_IMAGE_PATH = path.join(__dirname, '..', 'Photos', COLORS_IMAGE_NAME
 const PLUS_COLORS_IMAGE_NAME = 'coloriPlus.gif';
 const PLUS_COLORS_IMAGE_PATH = path.join(__dirname, '..', 'Photos', PLUS_COLORS_IMAGE_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
-
-const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
-
-const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
-
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
-  if (currentComponents !== nextComponents) return true;
-
-  if (attachmentName) {
-    if ((message?.attachments?.size || 0) !== 1) return true;
-    const currentName = message.attachments.first()?.name || null;
-    if (currentName !== attachmentName) return true;
-  }
-
-  return false;
-};
 
 const channel = client.channels.cache.get(CHANNEL_ID)
       || await client.channels.fetch(CHANNEL_ID).catch(() => null);
@@ -860,31 +780,12 @@ const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder } = require('discord.js');
 const path = require('path');
 const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
+const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
 const TICKET_CHANNEL_ID = IDs.channels.ticketPanel;
 const TICKET_MEDIA_NAME = 'ticket.gif';
 const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
-
-const toComparableJson = (items = []) => JSON.stringify(items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item)));
-
-const shouldEditMessage = (message, { embeds = [], components = [], attachmentName = null }) => {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
-
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
-  if (currentComponents !== nextComponents) return true;
-
-  if (attachmentName) {
-    if ((message?.attachments?.size || 0) !== 1) return true;
-    const currentName = message.attachments.first()?.name || null;
-    if (currentName !== attachmentName) return true;
-  }
-
-  return false;
-};
 
 const channel = client.channels.cache.get(TICKET_CHANNEL_ID)
       || await client.channels.fetch(TICKET_CHANNEL_ID).catch(() => null);

@@ -1,15 +1,54 @@
+const CDN_ATTACHMENT_PATTERN = /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
+
+function normalizeDiscordAttachmentUrl(value) {
+  if (typeof value !== 'string') return value;
+  if (value.startsWith('attachment://')) {
+    return value.toLowerCase();
+  }
+  if (!CDN_ATTACHMENT_PATTERN.test(value)) {
+    return value;
+  }
+  const filenameMatch = value.match(/\/([^/?#]+)(?:\?|#|$)/);
+  if (!filenameMatch?.[1]) return value;
+  return `attachment://${filenameMatch[1].toLowerCase()}`;
+}
+
+function normalizeComparable(value) {
+  if (Array.isArray(value)) {
+    return value.map(normalizeComparable);
+  }
+  if (!value || typeof value !== 'object') {
+    return normalizeDiscordAttachmentUrl(value);
+  }
+
+  const normalized = {};
+  for (const [key, raw] of Object.entries(value)) {
+    if (key === 'proxy_url' || key === 'proxyURL') continue;
+    normalized[key] = normalizeComparable(raw);
+  }
+  return normalized;
+}
+
 const toComparableJson = (items = []) => JSON.stringify(
-  items.map((item) => (typeof item?.toJSON === 'function' ? item.toJSON() : item))
+  items.map((item) => normalizeComparable(typeof item?.toJSON === 'function' ? item.toJSON() : item))
 );
 
-function shouldEditMessage(message, { embeds = [], components = [] }) {
+function shouldEditMessage(message, { embeds = [], components = [], attachmentName = null }) {
   const currentEmbeds = toComparableJson(message?.embeds || []);
   const nextEmbeds = toComparableJson(embeds);
   if (currentEmbeds !== nextEmbeds) return true;
 
   const currentComponents = toComparableJson(message?.components || []);
   const nextComponents = toComparableJson(components);
-  return currentComponents !== nextComponents;
+  if (currentComponents !== nextComponents) return true;
+
+  if (attachmentName) {
+    if ((message?.attachments?.size || 0) !== 1) return true;
+    const currentName = message.attachments.first()?.name || null;
+    if (currentName !== attachmentName) return true;
+  }
+
+  return false;
 }
 
 async function upsertPanelMessage(channel, client, payload) {

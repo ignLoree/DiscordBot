@@ -17,6 +17,7 @@ const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMai
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const cron = require('node-cron');
 const IDs = require('../Utils/Config/ids');
+const startupPanelsTrigger = require('../Triggers/embeds');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -160,6 +161,23 @@ module.exports = {
                 global.logger.error('[TRANSCRIPT CLEANUP] Failed to start loop', err);
             }
         }
+        const runStartupPanels = async (label = 'immediate') => {
+            try {
+                if (typeof startupPanelsTrigger?.execute === 'function') {
+                    await startupPanelsTrigger.execute(client);
+                    global.logger.info(`[CLIENT READY] Startup panels refresh executed (${label}).`);
+                }
+            } catch (err) {
+                global.logger.error(`[CLIENT READY] Startup panels refresh failed (${label}):`, err);
+            }
+        };
+        await runStartupPanels('immediate');
+        setTimeout(() => {
+            runStartupPanels('retry+15s').catch(() => {});
+        }, 15000);
+        setTimeout(() => {
+            runStartupPanels('retry+60s').catch(() => {});
+        }, 60000);
         try {
             cron.schedule("0 0 1 * *", async () => {
                 const channelId = IDs.channels.inviteLog;
