@@ -2,13 +2,13 @@ const { ChannelType, PermissionsBitField } = require('discord.js');
 const { VoteRole, VerificationTenure } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const VOTE_ROLE_ID = IDs.roles.voteReward;
+const VOTE_ROLE_ID = IDs.roles.Voter;
 const CHECK_INTERVAL_MS = 60 * 1000;
 
-const ROLE_STAGE_1 = IDs.roles.verifyStage1;
-const ROLE_STAGE_2 = IDs.roles.verifyStage2;
-const ROLE_STAGE_3 = IDs.roles.verifyStage3;
-const VERIFIED_ROLE_ID = IDs.roles.user || IDs.roles.verifiedUser;
+const ROLE_STAGE_1 = IDs.roles.NuovoUtente;
+const ROLE_STAGE_2 = IDs.roles.Veterano;
+const ROLE_STAGE_3 = IDs.roles.OG;
+const VERIFIED_ROLE_ID = IDs.roles.Member || IDs.roles.Verificato;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;

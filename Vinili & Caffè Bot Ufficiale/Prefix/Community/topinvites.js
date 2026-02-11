@@ -5,7 +5,7 @@ const IDs = require('../../Utils/Config/ids');
 
 const TOP_LIMIT = 10;
 const THUMBNAIL_URL = 'https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114';
-const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;
+const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
 
 function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';

@@ -11,10 +11,10 @@ const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  IDs.roles.customRoleAccessA,
-  IDs.roles.customRoleAccessB,
-  IDs.roles.customRoleAccessC,
-  IDs.roles.customRoleAccessD
+  IDs.roles.VIP,
+  IDs.roles.Donator,
+  IDs.roles.ServerBooster,
+  IDs.roles.Level70
 ];
 
 function hasCustomRoleAccess(member) {

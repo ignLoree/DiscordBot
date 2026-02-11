@@ -6,18 +6,18 @@ const { VOICE_EXP_PER_MINUTE } = require('./expService');
 const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
-const TARGET_CHANNEL_ID = IDs.channels.weeklyWinners;
-const INFO_CHANNEL_ID = IDs.channels.infoPerks;
+const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
+const INFO_CHANNEL_ID = IDs.channels.info;
 const TROPHY_LABELS = [
   '<:VC_Podio1:1469659449974329598>',
   '<:VC_Podio2:1469659512863592500>',
   '<:VC_Podio3:1469659557696504024>'
 ];
-const MESSAGE_WINNER_ROLE_ID = IDs.roles.weeklyMessageWinner;
-const VOICE_WINNER_ROLE_ID = IDs.roles.weeklyVoiceWinner;
+const MESSAGE_WINNER_ROLE_ID = IDs.roles.TopWeeklyText;
+const VOICE_WINNER_ROLE_ID = IDs.roles.TopWeeklyVoc;
 const EXCLUDED_ROLE_IDS = new Set([
-  IDs.roles.staff,
-  IDs.roles.partnerManager
+  IDs.roles.Staff,
+  IDs.roles.PartnerManager
 ]);
 
 function pad2(value) {

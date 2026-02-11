@@ -29,13 +29,13 @@ async function handleTicketInteraction(interaction) {
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && handledModals.has(interaction.customId);
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
-    const LOG_CHANNEL = IDs.channels.ticketCloseLogAlt || IDs.channels.commandError;
-    const ROLE_STAFF = IDs.roles.staff;
-    const ROLE_HIGHSTAFF = IDs.roles.highStaff;
-    const ROLE_PARTNERMANAGER = IDs.roles.partnerManager;
-    const ROLE_USER = IDs.roles.user;
-    const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.ticketPartnerBlacklist;
-    const ROLE_TICKET_BLACKLIST = IDs.roles.ticketBlacklist;
+    const LOG_CHANNEL = IDs.channels.ticketLogs || IDs.channels.serveBbotLogs;
+    const ROLE_STAFF = IDs.roles.Staff;
+    const ROLE_HIGHSTAFF = IDs.roles.HighStaff;
+    const ROLE_PARTNERMANAGER = IDs.roles.PartnerManager;
+    const ROLE_USER = IDs.roles.Member;
+    const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.blackilistPartner;
+    const ROLE_TICKET_BLACKLIST = IDs.roles.blacklistTicket;
     const STAFF_ROLES = [ROLE_STAFF, ROLE_HIGHSTAFF];
     if (!interaction.client.ticketCloseLocks) {
         interaction.client.ticketCloseLocks = new Set();

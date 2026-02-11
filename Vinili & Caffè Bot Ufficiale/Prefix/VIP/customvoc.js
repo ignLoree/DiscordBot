@@ -1,14 +1,14 @@
-const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+﻿const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const CUSTOM_VOICE_CATEGORY_ID = IDs.channels.customVoiceCategory;
+const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  IDs.roles.customRoleAccessA,
-  IDs.roles.customRoleAccessB,
-  IDs.roles.customRoleAccessC,
-  IDs.roles.customRoleAccessD
+  IDs.roles.VIP,
+  IDs.roles.Donator,
+  IDs.roles.ServerBooster,
+  IDs.roles.Level70
 ];
 
 function hasCustomRoleAccess(member) {
@@ -19,7 +19,7 @@ function buildNoPermEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
     .setTitle('<:VC_Lock:1468544444113617063> Non hai i permessi')
-    .setDescription('Questo comando è riservato agli utenti VIP con accesso ai ruoli personalizzati.');
+    .setDescription('Questo comando Ã¨ riservato agli utenti VIP con accesso ai ruoli personalizzati.');
 }
 
 function sanitizeVoiceBaseName(name) {
@@ -32,9 +32,9 @@ function sanitizeVoiceBaseName(name) {
 }
 
 function buildCustomVocName(emoji, baseName) {
-  const safeEmoji = String(emoji || '🎧').trim() || '🎧';
+  const safeEmoji = String(emoji || 'ðŸŽ§').trim() || 'ðŸŽ§';
   const safeBase = sanitizeVoiceBaseName(baseName);
-  const prefix = `༄${safeEmoji}︲`;
+  const prefix = `à¼„${safeEmoji}ï¸²`;
   const maxBaseLength = Math.max(1, 100 - prefix.length);
   return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
 }
@@ -149,7 +149,7 @@ module.exports = {
       return;
     }
 
-    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || '🎧', message.member.displayName || message.author.username);
+    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || 'ðŸŽ§', message.member.displayName || message.author.username);
     const channel = await message.guild.channels.create({
       name: channelName,
       type: ChannelType.GuildVoice,
@@ -206,6 +206,7 @@ module.exports = {
     });
   }
 };
+
 
 
 

@@ -115,7 +115,7 @@ function ensureVoiceKeys(doc, now) {
 
 async function recordMessageActivity(message) {
   if (!message?.guild || !message.author || message.author.bot) return;
-  const roleId = IDs.roles.user || IDs.roles.verifiedUser;
+  const roleId = IDs.roles.Member || IDs.roles.Verificato;
   const role = message.guild.roles.cache.get(roleId);
   if (!role) return;
   const permissions = message.channel?.permissionsFor?.(role);
@@ -175,7 +175,7 @@ async function handleVoiceActivity(oldState, newState) {
   const now = new Date();
   const wasInVoice = Boolean(oldState?.channelId);
   const isInVoice = Boolean(newState?.channelId);
-  const roleId = IDs.roles.user || IDs.roles.verifiedUser;
+  const roleId = IDs.roles.Member || IDs.roles.Verificato;
   const role = member.guild.roles.cache.get(roleId);
   if (!role) return;
 

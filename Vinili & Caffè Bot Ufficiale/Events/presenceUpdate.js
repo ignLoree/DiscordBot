@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const SupporterStatus = require('../Schemas/Supporter/supporterStatusSchema');
 const IDs = require('../Utils/Config/ids');
 
-const ROLE_ID = IDs.roles.supporterLink;
-const PERK_ROLE_ID = IDs.roles.mediaBypass;
-const CHANNEL_ID = IDs.channels.thanks;
+const ROLE_ID = IDs.roles.Supporter;
+const PERK_ROLE_ID = IDs.roles.PicPerms;
+const CHANNEL_ID = IDs.channels.suppporters;
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
 const pendingChecks = new Map();

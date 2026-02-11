@@ -31,7 +31,7 @@ module.exports = {
       );
     }
 
-    const partnerRoleId = message.client?.config?.partnerManager || IDs.roles.partnerManager;
+    const partnerRoleId = message.client?.config?.partnerManager || IDs.roles.PartnerManager;
     const partnerRole = message.guild?.roles?.cache?.get(partnerRoleId);
 
     if (!partnerRole) {

@@ -1,4 +1,5 @@
 const { queueCategoryRenumber } = require('../Services/Community/communityOpsService');
+const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 
 module.exports = {
     name: 'channelUpdate',
@@ -12,6 +13,7 @@ module.exports = {
         if (!parentChanged && !positionChanged && !nameChanged) return;
 
         queueCategoryRenumber(client, guildId);
+        queueIdsCatalogSync(client, guildId, 'channelUpdate');
     }
 };
 

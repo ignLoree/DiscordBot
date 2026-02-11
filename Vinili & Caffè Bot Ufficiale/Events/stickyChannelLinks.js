@@ -1,9 +1,9 @@
 const IDs = require('../Utils/Config/ids');
 
 const STICKY_CONFIG = {
-  [IDs.channels.stickyHelpA]: '**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)_**',
-  [IDs.channels.stickyHelpB]: '**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**',
-  [IDs.channels.stickyHelpC]: '**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1469686181884072022)__**'
+  [IDs.channels.mudae]: '**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)_**',
+  [IDs.channels.poketwo]: '**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**',
+  [IDs.channels.ship]: '**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1469686181884072022)__**'
 };
 
 const lastStickyMessageByChannel = new Map();

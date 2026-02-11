@@ -3,10 +3,10 @@ const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-const sponsorChannel = client.channels.cache.get(IDs.channels.infoPanelSponsor)
-      || await client.channels.fetch(IDs.channels.infoPanelSponsor).catch(() => null);
+const sponsorChannel = client.channels.cache.get(IDs.channels.infoSponsor)
+      || await client.channels.fetch(IDs.channels.infoSponsor).catch(() => null);
     if (!sponsorChannel?.isTextBased?.()) {
-      global.logger.warn('[CLIENT READY] Sponsor panel channel missing/unusable:', IDs.channels.infoPanelSponsor);
+      global.logger.warn('[CLIENT READY] Sponsor panel channel missing/unusable:', IDs.channels.infoSponsor);
       return;
     }
 
@@ -43,10 +43,10 @@ const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-const candidatureChannel = client.channels.cache.get(IDs.channels.infoPanelCandidature)
-      || await client.channels.fetch(IDs.channels.infoPanelCandidature).catch(() => null);
+const candidatureChannel = client.channels.cache.get(IDs.channels.candidatureStaff)
+      || await client.channels.fetch(IDs.channels.candidatureStaff).catch(() => null);
     if (!candidatureChannel?.isTextBased?.()) {
-      global.logger.warn('[CLIENT READY] Candidature panel channel missing/unusable:', IDs.channels.infoPanelCandidature);
+      global.logger.warn('[CLIENT READY] Candidature panel channel missing/unusable:', IDs.channels.candidatureStaff);
       return;
     }
 
@@ -87,7 +87,7 @@ const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
 const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
-const INFO_CHANNEL_ID = IDs.channels.infoPerks;
+const INFO_CHANNEL_ID = IDs.channels.info;
 const INFO_MEDIA_NAME = 'info.gif';
 const INFO_MEDIA_PATH = path.join(__dirname, '..', 'Photos', INFO_MEDIA_NAME);
 
@@ -107,7 +107,7 @@ const channel = client.channels.cache.get(INFO_CHANNEL_ID)
         '<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**',
         '<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!',
         '',
-        `Dubbi o problemi? <#${IDs.channels.ticketOpenPanelChannel}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`
+        `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`
       ].join('\n'))
       .addFields(
         {
@@ -231,14 +231,14 @@ const IDs = require('../Utils/Config/ids');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-const moderationChannel = client.channels.cache.get(IDs.channels.staffModeration)
-      || await client.channels.fetch(IDs.channels.staffModeration).catch(() => null);
-    const bestStaffChannel = client.channels.cache.get(IDs.channels.staffBest)
-      || await client.channels.fetch(IDs.channels.staffBest).catch(() => null);
-    const guideChannel = client.channels.cache.get(IDs.channels.staffGuide)
-      || await client.channels.fetch(IDs.channels.staffGuide).catch(() => null);
-    const paidChannel = client.channels.cache.get(IDs.channels.staffPaid)
-      || await client.channels.fetch(IDs.channels.staffPaid).catch(() => null);
+const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaff)
+      || await client.channels.fetch(IDs.channels.moderazioneStaff).catch(() => null);
+    const bestStaffChannel = client.channels.cache.get(IDs.channels.bestStaff)
+      || await client.channels.fetch(IDs.channels.bestStaff).catch(() => null);
+    const guideChannel = client.channels.cache.get(IDs.channels.guidaStaff)
+      || await client.channels.fetch(IDs.channels.guidaStaff).catch(() => null);
+    const paidChannel = client.channels.cache.get(IDs.channels.staffPagato)
+      || await client.channels.fetch(IDs.channels.staffPagato).catch(() => null);
 
     const embeds = [
       new EmbedBuilder()
@@ -364,7 +364,7 @@ const path = require('path');
 const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
 const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
-const VERIFY_CHANNEL_ID = IDs.channels.verifyPanel;
+const VERIFY_CHANNEL_ID = IDs.channels.verify;
 const VERIFY_MEDIA_NAME = 'verifica.gif';
 const VERIFY_MEDIA_PATH = path.join(__dirname, '..', 'Photos', VERIFY_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
@@ -460,7 +460,7 @@ const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
 const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
-const CHANNEL_ID = IDs.channels.rolePanel;
+const CHANNEL_ID = IDs.channels.ruoliColori;
 const IMAGE_NAME = 'personalità.gif';
 const IMAGE_PATH = path.join(__dirname, '..', 'Photos', IMAGE_NAME);
 const MENTIONS_IMAGE_NAME = 'menzioni.gif';
@@ -515,20 +515,20 @@ const channel = client.channels.cache.get(CHANNEL_ID)
       .setDescription([
         'Scegli il colore che più ti piace per il tuo profilo! Utilizza il menù a tendina sottostante. __Rimuovi i colori__ con la "<:vegax:1443934876440068179>" in alto.',
         '',
-        `➳ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.plusColorBooster}> e/o <@&${IDs.roles.level50}>`,
+        `➳ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`,
         '',
         '<:sparkle:1470064801811140866> **LISTA COLORI:**',
-        `<:VC_1:1444099819680563200> <@&${IDs.roles.plusColorAllowedA}>`,
-        `<:VC_2:1444099781864722535> <@&${IDs.roles.plusColorAllowedB}>`,
-        `<:VC_3:1444099746116534282> <@&${IDs.roles.plusColorAllowedC}>`,
-        `<:VC_4:1444099708292169740> <@&${IDs.roles.plusColorAllowedD}>`,
-        `<:VC_5:1444099671894134947> <@&${IDs.roles.plusColorAllowedE}>`,
-        `<:VC_6:1444099623714033838> <@&${IDs.roles.plusColorAllowedF}>`,
-        `<:VC_7:1444099572916945120> <@&${IDs.roles.plusColorAllowedG}>`,
-        `<:VC_8:1444099520500600998> <@&${IDs.roles.plusColorAllowedH}>`,
-        `<:VC_9:1444099441790554182> <@&${IDs.roles.plusColorAllowedI}>`,
-        `<:VC_10:1469357839066730627> <@&${IDs.roles.plusColorAllowedJ}>`,
-        `<:VC_11:1469772033410859173> <@&${IDs.roles.plusColorAllowedK}>`
+        `<:VC_1:1444099819680563200> <@&${IDs.roles.redPlus}>`,
+        `<:VC_2:1444099781864722535> <@&${IDs.roles.orangePlus}>`,
+        `<:VC_3:1444099746116534282> <@&${IDs.roles.yellowPlus}>`,
+        `<:VC_4:1444099708292169740> <@&${IDs.roles.greenPlus}>`,
+        `<:VC_5:1444099671894134947> <@&${IDs.roles.bluePlus}>`,
+        `<:VC_6:1444099623714033838> <@&${IDs.roles.purplePlus}>`,
+        `<:VC_7:1444099572916945120> <@&${IDs.roles.pinkPlus}>`,
+        `<:VC_8:1444099520500600998> <@&${IDs.roles.blackPlus}>`,
+        `<:VC_9:1444099441790554182> <@&${IDs.roles.grayPlus}>`,
+        `<:VC_10:1469357839066730627> <@&${IDs.roles.whitePlus}>`,
+        `<:VC_11:1469772033410859173> <@&${IDs.roles.YinYangPlus}>`
       ].join('\n'))
       .setImage(DIVIDER_URL);
 
@@ -612,13 +612,13 @@ const channel = client.channels.cache.get(CHANNEL_ID)
         .setMaxValues(7)
         .addOptions(
           { label: 'Rimuovi', value: 'remove', emoji: '<:vegax:1443934876440068179>', description: 'Rimuovi ruoli dal tuo profilo' },
-          { label: 'Revive Chat', value: IDs.roles.mentionReviveChat, emoji: '<a:pepedeadchat:1470541176284381226>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Events', value: IDs.roles.mentionEvents, emoji: '<a:announce:1470541173507751957>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'News', value: IDs.roles.mentionNews, emoji: '<:newspaper:1470541170353377290>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Polls', value: IDs.roles.mentionPolls, emoji: '<:polls:1470541168860201072>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Bump', value: IDs.roles.mentionBump, emoji: '<:bumpstab:1470541167429947607>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Minigames', value: IDs.roles.minigamesNotify, emoji: '<:health:1470541164363911313>', description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Forum', value: IDs.roles.forumNotify, emoji: '<:forum:1470541157724328059>', description: 'Clicca qui per ottenere il ruolo' }
+          { label: 'Revive Chat', value: IDs.roles.ReviveChat, emoji: '<a:pepedeadchat:1470541176284381226>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Events', value: IDs.roles.Events, emoji: '<a:announce:1470541173507751957>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'News', value: IDs.roles.News, emoji: '<:newspaper:1470541170353377290>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Polls', value: IDs.roles.Polls, emoji: '<:polls:1470541168860201072>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Bump', value: IDs.roles.Bump, emoji: '<:bumpstab:1470541167429947607>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Minigames', value: IDs.roles.Minigames, emoji: '<:health:1470541164363911313>', description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Forum', value: IDs.roles.Forum, emoji: '<:forum:1470541157724328059>', description: 'Clicca qui per ottenere il ruolo' }
         )
     );
 
@@ -679,17 +679,17 @@ const channel = client.channels.cache.get(CHANNEL_ID)
         .setMaxValues(1)
         .addOptions(
           { label: 'Rimuovi', value: 'remove', emoji: '<:vegax:1443934876440068179>', description: 'Rimuovi ruoli dal tuo profilo' },
-          { label: 'Red Gradient', value: IDs.roles.plusColorAllowedA, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Orange Gradient', value: IDs.roles.plusColorAllowedB, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Yellow Gradient', value: IDs.roles.plusColorAllowedC, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Green Gradient', value: IDs.roles.plusColorAllowedD, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Blue Gradient', value: IDs.roles.plusColorAllowedE, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Purple Gradient', value: IDs.roles.plusColorAllowedF, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Pink Gradient', value: IDs.roles.plusColorAllowedG, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Black Gradient', value: IDs.roles.plusColorAllowedH, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Gray Gradient', value: IDs.roles.plusColorAllowedI, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'White Gradient', value: IDs.roles.plusColorAllowedJ, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
-          { label: 'Yin & Yang Special', value: IDs.roles.plusColorAllowedK, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' }
+          { label: 'Red Gradient', value: IDs.roles.redPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Orange Gradient', value: IDs.roles.orangePlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Yellow Gradient', value: IDs.roles.yellowPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Green Gradient', value: IDs.roles.greenPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Blue Gradient', value: IDs.roles.bluePlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Purple Gradient', value: IDs.roles.purplePlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Pink Gradient', value: IDs.roles.pinkPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Black Gradient', value: IDs.roles.blackPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Gray Gradient', value: IDs.roles.grayPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'White Gradient', value: IDs.roles.whitePlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' },
+          { label: 'Yin & Yang Special', value: IDs.roles.YinYangPlus, emoji: { id: '1448691936797134880', name: 'VC_Vip' }, description: 'Clicca qui per ottenere il ruolo' }
         )
     );
 
@@ -782,7 +782,7 @@ const path = require('path');
 const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
 const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
 
-const TICKET_CHANNEL_ID = IDs.channels.ticketPanel;
+const TICKET_CHANNEL_ID = IDs.channels.ticket;
 const TICKET_MEDIA_NAME = 'ticket.gif';
 const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';

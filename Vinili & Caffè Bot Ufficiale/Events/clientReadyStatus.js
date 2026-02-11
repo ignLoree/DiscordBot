@@ -6,7 +6,7 @@ const IDs = require('../Utils/Config/ids');
 const { checkAndInstallPackages } = require('../Utils/Moderation/checkPackages');
 const { getChannelSafe } = require('../Utils/Logging/commandUsageLogger');
 
-const POLL_REMINDER_ROLE_ID = IDs.roles.highStaff;
+const POLL_REMINDER_ROLE_ID = IDs.roles.HighStaff;
 const POLL_REMINDER_CHANNEL_ID = '1442569285909217301';
 
 module.exports = {

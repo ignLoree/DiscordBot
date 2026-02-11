@@ -1,16 +1,17 @@
 const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { InviteTrack } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
+const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 
 function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
 }
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
-const THANKS_CHANNEL_ID = IDs.channels.thanks;
-const INVITE_REWARD_ROLE_ID = IDs.roles.inviteReward;
-const INVITE_EXTRA_ROLE_ID = IDs.roles.mediaBypass || '1468938195348754515';
-const INFO_PERKS_CHANNEL_ID = IDs.channels.infoPerks;
+const THANKS_CHANNEL_ID = IDs.channels.suppporters;
+const INVITE_REWARD_ROLE_ID = IDs.roles.Promoter;
+const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || '1468938195348754515';
+const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
 
 async function resolveInviteInfo(member) {
     const guild = member.guild;
@@ -118,7 +119,7 @@ async function tryAwardInviteRole(member, inviteInfo) {
 }
 
 async function addBotRoles(member) {
-    const roleIds = [IDs.roles.autoAssignBotRole];
+    const roleIds = [IDs.roles.Bots];
     const me = member.guild.members.me;
 
     if (!me) {
@@ -166,6 +167,7 @@ module.exports = {
     async execute(member) {
         try {
             if (member.user?.bot) {
+                queueIdsCatalogSync(member.client, member.guild.id, 'botJoin');
                 try {
                     await addBotRoles(member);
                 } catch (error) {
@@ -182,7 +184,7 @@ module.exports = {
                         .setColor('#6f4e37')
                         .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
 
-                    await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
+                    await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.Staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [botEmbed] }).catch(() => { });
                 }
                 const inviteChannel = await resolveGuildChannel(member.guild, INVITE_LOG_CHANNEL_ID);
                 if (inviteChannel) {
@@ -206,7 +208,7 @@ module.exports = {
             const minAgeMs = minimumAgeDays * 24 * 60 * 60 * 1000;
             const accountAgeMs = Date.now() - member.user.createdAt.getTime();
             if (accountAgeMs < minAgeMs) {
-                const logChannel = member.guild.channels.cache.get(IDs.channels.antiRaidLog);
+                const logChannel = member.guild.channels.cache.get(IDs.channels.modLogs);
                 const createdTs = toUnix(member.user.createdAt);
                 const nowTs = Math.floor(Date.now() / 1000);
                 const dmEmbed = new EmbedBuilder()
@@ -272,7 +274,7 @@ module.exports = {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
             }
 
-            const totalvoicechannel = await resolveGuildChannel(member.guild, IDs.channels.totalVoiceCounter);
+            const totalvoicechannel = await resolveGuildChannel(member.guild, IDs.channels.countUtenti);
             
 
             const totalmembers = `${member.guild.memberCount}`;
@@ -290,7 +292,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setFooter({ text: `𓂃 Ora siamo in ${member.guild.memberCount} ★` });
             if (channelwelcome) {
-                await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
+                await channelwelcome.send({ content: `Ciao ${member.user}, benvenuto/a! <@&${IDs.roles.Staff}> <a:VC_HeartOrange:1448673443762405386>`, embeds: [userEmbed] }).catch(() => { });
             }
 
             const info = await resolveInviteInfo(member).catch(() => null);

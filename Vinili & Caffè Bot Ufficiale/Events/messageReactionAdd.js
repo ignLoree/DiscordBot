@@ -5,7 +5,7 @@ const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require('../Utils/Config/ids');
 
 const SKULL_EMOJI = '\uD83D\uDC80';
-const SKULLBOARD_CHANNEL_ID = IDs.channels.skullboard;
+const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
 
 function normalizeEmojiName(value) {
   return String(value || '').replace(/\uFE0F/g, '').trim();

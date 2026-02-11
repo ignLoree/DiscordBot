@@ -52,7 +52,7 @@ module.exports = {
         await interaction.deferReply()
         const utentee = interaction.options.getUser('staffer')
         const reason = interaction.options.getString("motivo")
-        const channel = interaction.guild.channels.cache.get(IDs.channels.staffValutazioniLog)
+        const channel = interaction.guild.channels.cache.get(IDs.channels.valutazioniStaff)
         try {
             let StaffDoc = await Staff.findOne({ guildId: interaction.guild.id, userId: utentee.id });
             if (!StaffDoc) {
@@ -70,7 +70,7 @@ module.exports = {
                 });
             }
             const checkPermissions = () => {
-                const allowedRoleID = IDs.roles.staff;
+                const allowedRoleID = IDs.roles.Staff;
                 const stafferMember = interaction.guild.members.cache.get(utentee.id);
                 if (!stafferMember || !stafferMember.roles.cache.has(allowedRoleID)) return false;
                 if (interaction.user.id === utentee.id) return false;

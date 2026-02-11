@@ -4,7 +4,7 @@ const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
 const TOP_LIMIT = 10;
-const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;
+const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
 
 function rankLabel(index) {
   if (index === 0) return '<:VC_Podio1:1469659449974329598>';

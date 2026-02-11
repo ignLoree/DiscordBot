@@ -3,14 +3,14 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { getLevelInfo, syncLevelRolesForMember } = require('../../Services/Community/expService');
 const IDs = require('../../Utils/Config/ids');
-const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
+const LEVEL_UP_CHANNEL_ID = IDs.channels.commands;
 const LEVEL_ROLE_MAP = new Map([
-  [10, IDs.roles.level10],
-  [20, IDs.roles.level20],
-  [30, IDs.roles.level30],
-  [50, IDs.roles.level50],
-  [70, IDs.roles.level70],
-  [100, IDs.roles.level100]
+  [10, IDs.roles.Level10],
+  [20, IDs.roles.Level20],
+  [30, IDs.roles.Level30],
+  [50, IDs.roles.Level50],
+  [70, IDs.roles.Level70],
+  [100, IDs.roles.Level100]
 ]);
 
 function roundToNearest50(value) {
@@ -143,7 +143,7 @@ module.exports = {
           .setDescription([
             `<a:VC_PandaClap:1331620157398712330> **Complimenti ${target}!**`,
             `<:VC_LevelUp2:1443701876892762243> Hai appena raggiunto il <@&${roleId}>`,
-            `<a:VC_HelloKittyGift:1329447876857958471> Controlla <#${IDs.channels.infoPerks}> per i nuovi vantaggi!`
+            `<a:VC_HelloKittyGift:1329447876857958471> Controlla <#${IDs.channels.info}> per i nuovi vantaggi!`
           ].join('\n'))
           .setFooter({ text: `Azione staff: ${message.author.tag}` });
 

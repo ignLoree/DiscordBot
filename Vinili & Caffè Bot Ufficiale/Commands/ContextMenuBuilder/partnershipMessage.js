@@ -1,4 +1,4 @@
-const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+﻿const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 
 const IDs = require('../../Utils/Config/ids');
@@ -12,11 +12,11 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.inGuild()) return;
         const categoryId = interaction.channel?.parentId || interaction.channel?.parent?.id;
-        if (categoryId !== IDs.channels.mediaExemptCategory) {
+        if (categoryId !== IDs.categories.categorChat) {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nella categoria ticket.')
+                        .setDescription('<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo nella categoria ticket.')
                         .setColor("Red")
                 ],
                 flags: 1 << 6
@@ -117,3 +117,4 @@ function stripOuterCodeBlock(text) {
         .replace(/```$/, '')
         .trim();
 }
+

@@ -258,8 +258,8 @@ function getPauseStatusLabel(pause, todayUtc) {
 
 module.exports = {
     staffRoleIdsBySubcommand: {
-        request: [IDs.roles.partnerManager, IDs.roles.staff],
-        list: [IDs.roles.partnerManager, IDs.roles.staff, IDs.roles.highStaff]
+        request: [IDs.roles.PartnerManager, IDs.roles.Staff],
+        list: [IDs.roles.PartnerManager, IDs.roles.Staff, IDs.roles.HighStaff]
     },
     data: new SlashCommandBuilder()
         .setName('pausa')
@@ -288,7 +288,7 @@ module.exports = {
                 const rawDataRichiesta = interaction.options.getString('data_richiesta');
                 const rawDataRitorno = interaction.options.getString('data_ritorno');
                 const motivazione = interaction.options.getString('motivazione');
-                const channel = interaction.guild.channels.cache.get(IDs.channels.pauseRequestLog);
+                const channel = interaction.guild.channels.cache.get(IDs.channels.pause);
                 const normalizedDates = normalizePauseDates(rawDataRichiesta, rawDataRitorno);
                 if (!normalizedDates) {
                     return await safeEditReply(interaction, {
@@ -330,14 +330,14 @@ module.exports = {
                     flags: 1 << 6
                 });
                 await channel.send({
-                    content: `<@&${IDs.roles.highStaff}> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${dataRichiesta}\nData ritorno: ${dataRitorno}\nMotivo: ${motivazione}`,
+                    content: `<@&${IDs.roles.HighStaff}> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${dataRichiesta}\nData ritorno: ${dataRitorno}\nMotivo: ${motivazione}`,
                     components: pauseId ? [row] : []
                 });
             }
                 break;
             case 'list': {
                 const targetUser = interaction.options.getUser('staffer') || interaction.user;
-                const isHighStaff = interaction.member?.roles?.cache?.has(IDs.roles.highStaff);
+                const isHighStaff = interaction.member?.roles?.cache?.has(IDs.roles.HighStaff);
                 if (!isHighStaff && targetUser.id !== interaction.user.id) {
                     return await safeEditReply(interaction, {
                         content: '<:vegax:1443934876440068179> Puoi vedere solo le tue pause.',

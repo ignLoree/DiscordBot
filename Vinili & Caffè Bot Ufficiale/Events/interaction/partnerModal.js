@@ -28,7 +28,7 @@ function isValidServerName(name) {
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
     await interaction.deferReply().catch(() => { });
-    if (!interaction.member.roles.cache.has(IDs.roles.partnerManager)) {
+    if (!interaction.member.roles.cache.has(IDs.roles.PartnerManager)) {
         await interaction.editReply({
             embeds: [
                 new EmbedBuilder()
@@ -41,7 +41,7 @@ async function handlePartnerModal(interaction) {
     const rawDescription = interaction.fields.getTextInputValue('serverDescription');
     const description = stripOuterCodeBlock(String(rawDescription || '').trim());
     const managerId = interaction.customId.split('_')[1];
-    const PARTNER_BLACKLIST_ROLE = IDs.roles.ticketPartnerBlacklist;
+    const PARTNER_BLACKLIST_ROLE = IDs.roles.blackilistPartner;
     if (!managerId) {
         await interaction.editReply({
             embeds: [
@@ -69,8 +69,8 @@ async function handlePartnerModal(interaction) {
         return true;
     }
     const isVerifiedMember = Boolean(
-        managerMember.roles?.cache?.has(IDs.roles.user)
-        || managerMember.roles?.cache?.has(IDs.roles.verifiedUser)
+        managerMember.roles?.cache?.has(IDs.roles.Member)
+        || managerMember.roles?.cache?.has(IDs.roles.Verificato)
     );
     if (!isVerifiedMember) {
         await interaction.editReply({
@@ -162,7 +162,7 @@ async function handlePartnerModal(interaction) {
             partner: serverName,
             invite: inviteUrl,
             managerId,
-            partnershipChannelId: IDs.channels.partnershipPosts,
+            partnershipChannelId: IDs.channels.partnerships,
             partnerMessageIds: []
         };
         staffDoc.partnerActions.push(actionEntry);
@@ -170,7 +170,7 @@ async function handlePartnerModal(interaction) {
 
         await staffDoc.save();
         const totalPartners = staffDoc.partnerCount;
-        const partnershipChannel = interaction.guild.channels.cache.get(IDs.channels.partnershipPosts);
+        const partnershipChannel = interaction.guild.channels.cache.get(IDs.channels.partnerships);
 
         const embed = new EmbedBuilder()
             .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL() })

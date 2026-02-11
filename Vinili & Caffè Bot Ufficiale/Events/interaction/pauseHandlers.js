@@ -4,16 +4,16 @@ const IDs = require('../../Utils/Config/ids');
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const STAFF_ROLE_PRIORITY = [
-  IDs.roles.owner,
-  IDs.roles.coOwner,
-  IDs.roles.manager,
-  IDs.roles.admin,
-  IDs.roles.supervisor,
-  IDs.roles.coordinator,
-  IDs.roles.moderator,
-  IDs.roles.helper,
-  IDs.roles.staff,
-  IDs.roles.partnerManager
+  IDs.roles.Founder,
+  IDs.roles.CoFounder,
+  IDs.roles.Manager,
+  IDs.roles.Admin,
+  IDs.roles.Supervisor,
+  IDs.roles.Coordinator,
+  IDs.roles.Mod,
+  IDs.roles.Helper,
+  IDs.roles.Staff,
+  IDs.roles.PartnerManager
 ];
 
 function parseItalianDate(value) {
@@ -130,8 +130,8 @@ function getMemberRoleLabel(member) {
 }
 
 function getBasePauseLimit(member) {
-  const hasStaffRole = member.roles.cache.has(IDs.roles.staff);
-  const hasPartnerManagerRole = member.roles.cache.has(IDs.roles.partnerManager);
+  const hasStaffRole = member.roles.cache.has(IDs.roles.Staff);
+  const hasPartnerManagerRole = member.roles.cache.has(IDs.roles.PartnerManager);
   if (hasStaffRole) return 60;
   if (hasPartnerManagerRole) return 45;
   return 60;
@@ -245,7 +245,7 @@ async function handlePauseButton(interaction) {
     return true;
   }
 
-  const isHighStaff = Boolean(interaction.member?.roles?.cache?.has(IDs.roles.highStaff));
+  const isHighStaff = Boolean(interaction.member?.roles?.cache?.has(IDs.roles.HighStaff));
   if ((action === 'pause_accept' || action === 'pause_reject' || action === 'pause_cancel') && !isHighStaff) {
     await interaction.reply({ content: '<:vegax:1443934876440068179> Solo High Staff può usare questi pulsanti.', flags: 1 << 6 }).catch(() => {});
     return true;
@@ -380,7 +380,7 @@ async function handlePauseButton(interaction) {
     await stafferRecord.save();
 
     const baseLimit = getBasePauseLimit(member);
-    const bonusBestStaff = member.roles.cache.has(IDs.roles.bestStaff) ? 5 : 0;
+    const bonusBestStaff = member.roles.cache.has(IDs.roles.StafferDelMese) ? 5 : 0;
     const maxGiorni = baseLimit + bonusBestStaff;
     const giorniTotaliUsati = computeConsumedPauseDays(stafferRecord.pauses);
     const giorniRimanenti = Math.max(0, maxGiorni - giorniTotaliUsati);
@@ -420,7 +420,7 @@ async function handlePauseButton(interaction) {
   }
 
   const baseLimit = getBasePauseLimit(member);
-  const bonusBestStaff = member.roles.cache.has(IDs.roles.bestStaff) ? 5 : 0;
+  const bonusBestStaff = member.roles.cache.has(IDs.roles.StafferDelMese) ? 5 : 0;
   const maxGiorni = baseLimit + bonusBestStaff;
   const usedBefore = computeConsumedPauseDays(stafferRecord.pauses);
   const giorniUsati = usedBefore + giorniRichiesti;
@@ -452,7 +452,7 @@ async function handlePauseButton(interaction) {
   const pauseEnd = parseItalianDate(targetPause.dataRitorno);
   const hideCancelOnCreate = Boolean(pauseEnd && getTodayUtc() > pauseEnd);
   const pauseTimingText = getPauseTimingText(targetPause.dataRichiesta, targetPause.dataRitorno);
-  const channel = interaction.guild.channels.cache.get(IDs.channels.pauseAcceptedLog);
+  const channel = interaction.guild.channels.cache.get(IDs.channels.pause);
   if (channel) {
     await channel.send({
       content: `<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>** ${pauseTimingText}.\n<:Clock:1330530065133338685> Dal **\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo`,

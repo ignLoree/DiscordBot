@@ -5,7 +5,7 @@ const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const { ReviewReward } = require('../../Schemas/Community/communitySchemas');
 const { getLevelInfo, addExpWithLevel } = require('../../Services/Community/expService');
 
-const REVIEW_CHANNEL_ID = IDs.channels.thanks;
+const REVIEW_CHANNEL_ID = IDs.channels.suppporters;
 const LEVELS_TO_ADD = 5;
 
 function roundToNearest50(value) {

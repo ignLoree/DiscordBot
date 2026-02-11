@@ -5,7 +5,7 @@ const IDs = require('../../Utils/Config/ids');
 const { getCurrentWeekKey } = require('../../Services/Community/expService');
 
 const TOP_LIMIT = 10;
-const LEADERBOARD_CHANNEL_ID = IDs.channels.levelUp;
+const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
 
 function getInvokedCommand(message) {
   const content = String(message?.content || '').trim();

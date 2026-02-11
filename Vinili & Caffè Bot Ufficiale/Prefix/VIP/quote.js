@@ -5,12 +5,12 @@ const { nextQuoteCount } = require('../../Utils/Quote/quoteCounter');
 const { QuotePrivacy } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const QUOTE_CHANNEL_ID = IDs.channels.skullboard;
+const QUOTE_CHANNEL_ID = IDs.channels.quotes;
 const ALLOWED_ROLE_IDS = [
-  IDs.roles.customRoleAccessC,
-  IDs.roles.customRoleAccessB,
-  IDs.roles.customRoleAccessA,
-  IDs.roles.level10
+  IDs.roles.ServerBooster,
+  IDs.roles.Donator,
+  IDs.roles.VIP,
+  IDs.roles.Level10
 ];
 
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {

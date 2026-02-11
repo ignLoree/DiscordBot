@@ -1,7 +1,7 @@
-const { ExpUser, GlobalSettings, LevelHistory } = require('../../Schemas/Community/communitySchemas');
+﻿const { ExpUser, GlobalSettings, LevelHistory } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 const EXP_EXCLUDED_CATEGORY_IDS = new Set(
-  [IDs.channels.expExcludedCategory].filter(Boolean).map((id) => String(id))
+  [IDs.categories.categoryGames].filter(Boolean).map((id) => String(id))
 );
 
 const TIME_ZONE = 'Europe/Rome';
@@ -11,21 +11,21 @@ const DEFAULT_MULTIPLIER = 1;
 const MAX_COMBINED_MULTIPLIER = 8;
 const MULTIPLIER_CACHE_TTL_MS = 60 * 1000;
 const settingsCache = new Map();
-const LEVEL_UP_CHANNEL_ID = IDs.channels.levelUp;
-const PERKS_CHANNEL_ID = IDs.channels.infoPerks;
-const PERK_ROLE_ID = IDs.roles.mediaBypass;
+const LEVEL_UP_CHANNEL_ID = IDs.channels.commands;
+const PERKS_CHANNEL_ID = IDs.channels.info;
+const PERK_ROLE_ID = IDs.roles.PicPerms;
 const LEVEL_ROLE_MAP = new Map([
-  [10, IDs.roles.level10],
-  [20, IDs.roles.level20],
-  [30, IDs.roles.level30],
-  [50, IDs.roles.level50],
-  [70, IDs.roles.level70],
-  [100, IDs.roles.level100]
+  [10, IDs.roles.Level10],
+  [20, IDs.roles.Level20],
+  [30, IDs.roles.Level30],
+  [50, IDs.roles.Level50],
+  [70, IDs.roles.Level70],
+  [100, IDs.roles.Level100]
 ]);
 const ROLE_MULTIPLIERS = new Map([
-  [IDs.roles.customRoleAccessB, 3], // Donator
-  [IDs.roles.customRoleAccessA, 4], // VIP
-  [IDs.roles.plusColorBooster, 2]   // Booster
+  [IDs.roles.Donator, 3], // Donator
+  [IDs.roles.VIP, 4], // VIP
+  [IDs.roles.ServerBooster, 2]   // Booster
 ]);
 
 function pad2(value) {
@@ -73,7 +73,7 @@ function roundToNearest50(value) {
 
 function getLevelStep(level) {
   const safeLevel = Math.max(1, Math.floor(Number(level || 1)));
-  // Curva progressiva: livelli 1-10 facili, poi crescita sempre più dura.
+  // Curva progressiva: livelli 1-10 facili, poi crescita sempre piÃ¹ dura.
   if (safeLevel <= 10) {
     return 120 + (safeLevel - 1) * 25;
   }
@@ -635,6 +635,7 @@ module.exports = {
   getCurrentWeekKey,
   ROLE_MULTIPLIERS
 };
+
 
 
 

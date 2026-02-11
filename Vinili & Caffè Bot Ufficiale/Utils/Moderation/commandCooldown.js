@@ -1,9 +1,9 @@
 const { ExpUser } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../Config/ids');
 
-const ROLE_COOLDOWN_BYPASS = IDs.roles.staff;
-const ROLE_LEVEL_30 = IDs.roles.level30;
-const ROLE_LEVEL_50 = IDs.roles.level50;
+const ROLE_COOLDOWN_BYPASS = IDs.roles.Staff;
+const ROLE_LEVEL_30 = IDs.roles.Level30;
+const ROLE_LEVEL_50 = IDs.roles.Level50;
 
 function getBucket(client) {
   if (!client.commandCooldowns) {

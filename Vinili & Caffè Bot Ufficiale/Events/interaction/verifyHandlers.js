@@ -5,16 +5,16 @@ const path = require('path');
 const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_ROLE_IDS = [
-    IDs.roles.user,
-    IDs.roles.verifyExtraA,
-    IDs.roles.verifyExtraB,
-    IDs.roles.verifyExtraC,
-    IDs.roles.verifyExtraD
+    IDs.roles.Member,
+    IDs.roles.separatore6,
+    IDs.roles.separatore8,
+    IDs.roles.separatore5,
+    IDs.roles.separatore7
 ].filter(Boolean);
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
-const VERIFY_LOG_CHANNEL_ID = IDs.channels.antiRaidLog;
-const VERIFY_PING_CHANNEL_ID = IDs.channels.verifyPing;
+const VERIFY_LOG_CHANNEL_ID = IDs.channels.modLogs;
+const VERIFY_PING_CHANNEL_ID = IDs.channels.news;
 const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/communityOpsService');
 const verifyState = new Map();
 const fontPath = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');

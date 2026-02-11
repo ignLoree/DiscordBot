@@ -4,7 +4,7 @@ const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter
 const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
 const IDs = require('../../Utils/Config/ids');
-const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.staff;
+const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;

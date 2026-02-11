@@ -6,24 +6,28 @@ const { InviteTrack, ExpUser, ActivityUser, LevelHistory } = require('../Schemas
 const { MinigameUser } = require('../Schemas/Minigames/minigameSchema');
 const IDs = require('../Utils/Config/ids');
 const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
+const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
-    IDs.roles.partnerManager,
-    IDs.roles.staff,
-    IDs.roles.helper,
-    IDs.roles.moderator,
-    IDs.roles.coordinator,
-    IDs.roles.supervisor,
-    IDs.roles.admin,
-    IDs.roles.manager,
-    IDs.roles.coOwner,
-    IDs.roles.owner
+    IDs.roles.PartnerManager,
+    IDs.roles.Staff,
+    IDs.roles.Helper,
+    IDs.roles.Mod,
+    IDs.roles.Coordinator,
+    IDs.roles.Supervisor,
+    IDs.roles.Admin,
+    IDs.roles.Manager,
+    IDs.roles.CoFounder,
+    IDs.roles.Founder
 ]);
 
 module.exports = {
     name: 'guildMemberRemove',
     async execute(member, client) {
         try {
+            if (member?.user?.bot && member?.guild?.id) {
+                queueIdsCatalogSync(client, member.guild.id, 'botLeave');
+            }
             if (member?.guild?.id === IDs.guilds.main) {
                 scheduleStaffListRefresh(client, member.guild.id);
             }
@@ -34,16 +38,16 @@ module.exports = {
             ).catch(() => {});
 
             const guild = member.guild;
-            const totalVoice = guild.channels.cache.get(IDs.channels.totalVoiceCounter);
+            const totalVoice = guild.channels.cache.get(IDs.channels.countUtenti);
             if (totalVoice) {
                 totalVoice.setName(`༄☕︲ User: ${guild.memberCount}`).catch(() => {});
             }
             const openTickets = await Ticket.find({ userId: member.id, open: true }).catch(() => []);
             if (openTickets.length > 0) {
-                const logChannel = guild.channels.cache.get(IDs.channels.ticketCloseLogAlt)
-                    || await guild.channels.fetch(IDs.channels.ticketCloseLogAlt).catch(() => null)
-                    || guild.channels.cache.get(IDs.channels.commandError)
-                    || await guild.channels.fetch(IDs.channels.commandError).catch(() => null);
+                const logChannel = guild.channels.cache.get(IDs.channels.ticketLogs)
+                    || await guild.channels.fetch(IDs.channels.ticketLogs).catch(() => null)
+                    || guild.channels.cache.get(IDs.channels.serveBbotLogs)
+                    || await guild.channels.fetch(IDs.channels.serveBbotLogs).catch(() => null);
                 for (const ticket of openTickets) {
                     const channel = guild.channels.cache.get(ticket.channelId) || await guild.channels.fetch(ticket.channelId).catch(() => null);
                     if (!channel) {
@@ -98,14 +102,14 @@ module.exports = {
                 : false;
 
             if (hadTrackedStaffRole) {
-                const resignChannel = guild.channels.cache.get(IDs.channels.resignLog);
+                const resignChannel = guild.channels.cache.get(IDs.channels.pexDepex);
                 if (resignChannel) {
                     const highestTrackedRole = member.roles.cache
                         .filter((role) => STAFF_TRACKED_ROLE_IDS.has(role.id))
                         .sort((a, b) => b.position - a.position)
                         .first();
                     const roleLabel = highestTrackedRole?.name || "Staff/PM";
-                    const userRole = guild.roles.cache.get(IDs.roles.user);
+                    const userRole = guild.roles.cache.get(IDs.roles.Member);
                     const userRoleLabel = userRole?.name || "? User";
                     const msg =
                         `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
@@ -128,8 +132,8 @@ module.exports = {
             }).catch(() => []);
             if (partnerships.length > 0) {
                 try {
-                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerManagerLeaveLog)
-                        || await guild.channels.fetch(IDs.channels.partnerManagerLeaveLog).catch(() => null);
+                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerLogs)
+                        || await guild.channels.fetch(IDs.channels.partnerLogs).catch(() => null);
                     if (partnerLogChannel) {
                         for (const doc of partnerships) {
                             const lastPartner = Array.isArray(doc.partnerActions)
@@ -173,7 +177,7 @@ module.exports = {
                             const toRollback = actions.filter((action) => action?.managerId === member.id);
 
                             for (const action of toRollback) {
-                                const channelId = action?.partnershipChannelId || IDs.channels.partnershipPosts;
+                                const channelId = action?.partnershipChannelId || IDs.channels.partnerships;
                                 const channel = guild.channels.cache.get(channelId)
                                     || await guild.channels.fetch(channelId).catch(() => null);
                                 if (!channel?.isTextBased?.()) continue;

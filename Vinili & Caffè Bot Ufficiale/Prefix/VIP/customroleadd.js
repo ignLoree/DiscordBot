@@ -9,10 +9,10 @@ const { createCustomRoleGrantRequest } = require('../../Events/interaction/custo
 
 const REQUEST_TIMEOUT_MS = 60_000;
 const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  IDs.roles.customRoleAccessA,
-  IDs.roles.customRoleAccessB,
-  IDs.roles.customRoleAccessC,
-  IDs.roles.customRoleAccessD
+  IDs.roles.VIP,
+  IDs.roles.Donator,
+  IDs.roles.ServerBooster,
+  IDs.roles.Level70
 ];
 
 function hasCustomRoleAccess(member) {

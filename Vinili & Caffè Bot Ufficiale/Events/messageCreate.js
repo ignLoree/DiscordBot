@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
 const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
@@ -20,26 +20,26 @@ const {
     setGuildAutoResponderCache
 } = require('../Utils/Community/autoResponderCache');
 const IDs = require('../Utils/Config/ids');
-const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.staff;
+const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
-const VOTE_CHANNEL_ID = IDs.channels.thanks;
-const VOTE_ROLE_ID = IDs.roles.voteReward;
+const VOTE_CHANNEL_ID = IDs.channels.suppporters;
+const VOTE_ROLE_ID = IDs.roles.Voter;
 const VOTE_URL = IDs.links.vote;
 const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
 const { upsertVoteRole } = require('../Services/Community/communityOpsService');
 const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const FORCE_DELETE_CHANNEL_IDS = new Set(
-    [IDs.channels.forceDeleteAllMessages].filter(Boolean).map((id) => String(id))
+    [IDs.channels.separator7].filter(Boolean).map((id) => String(id))
 );
 
 const MEDIA_BLOCK_ROLE_IDS = [
-    IDs.roles.mediaBypass
+    IDs.roles.PicPerms
 ];
-const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.channels.mediaExemptCategory;
+const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([
-    IDs.channels.mediaExemptChannel
+    IDs.channels.media
 ]);
 
 function hasMediaPermission(member) {
@@ -273,7 +273,7 @@ async function handleVoteManagerMessage(message, client) {
             }
         } catch {}
     }
-    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}°` : '';
+    const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}Â°` : '';
     const embed = new EmbedBuilder()
             .setColor('#6f4e37')
             .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
@@ -281,12 +281,12 @@ async function handleVoteManagerMessage(message, client) {
                 `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
                 '',
                 '\`Hai guadagnato:\`',
-                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
-                `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+                `<a:VC_Events:1448688007438667796> â€¢ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
+                `<a:VC_Money:1448671284748746905> â€¢ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
                 '',
                 '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
             ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente' });
+            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierÃ : a volte sarÃ  piÃ¹ alto, altre volte piÃ¹ basso, mentre altre ancora uguale al precedente' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -338,8 +338,8 @@ module.exports = {
                             [
                                 `<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                                 "",
-                                "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
-                                `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.mediaBypass}>.`
+                                "<a:VC_StarPink:1330194976440848500> â€¢ **__Sblocca il permesso:__**",
+                                `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`
                             ].join("\n")
                         );
                     await message.channel.send({ content: `${message.author}`, embeds: [embed] });
@@ -395,7 +395,7 @@ module.exports = {
         })();
         if (!isEditedPrefixExecution) {
             try {
-                if (message.channelId === IDs.channels.inviteLog) {
+                if (message.channelId === IDs.channels.joinLeaveLogs) {
                     recordReminderActivity(message.channelId);
                 }
             } catch (error) {
@@ -531,8 +531,8 @@ module.exports = {
                         `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
                         '',
                         'Il cooldown si riduce con i ruoli:',
-                        `• <@&${IDs.roles.level30}> -> **15s**`,
-                        `• <@&${IDs.roles.level50}> -> **5s**`
+                        `â€¢ <@&${IDs.roles.Level30}> -> **15s**`,
+                        `â€¢ <@&${IDs.roles.Level50}> -> **5s**`
                     ].join('\n'));
                 await message.channel.send({ embeds: [embed] });
                 return;
@@ -666,7 +666,7 @@ module.exports = {
                         embeds: [
                             new EmbedBuilder()
                                 .setColor('Red')
-                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando è scaduto dopo 60 secondi. Prova di nuovo.')
+                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando Ã¨ scaduto dopo 60 secondi. Prova di nuovo.')
                         ]
                     }).catch(() => { });
                 }
@@ -719,7 +719,7 @@ module.exports = {
                 }
                 const feedback = new EmbedBuilder()
                     .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.
+                    .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
                 \`\`\`${error}\`\`\``);
                 return execMessage.reply({ embeds: [feedback] });
             } finally {
@@ -792,14 +792,14 @@ async function handleAfk(message) {
         else if (diff < 3600) timeAgo = `${Math.floor(diff / 60)}m fa`;
         else if (diff < 86400) timeAgo = `${Math.floor(diff / 3600)}h fa`;
         else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
-        await message.reply(`\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`);
+        await message.reply(`\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`);
     }
 }
 
 function getVoteManagerBotIds(client) {
     return new Set(
         [
-            IDs.bots.voteManager,
+            IDs.bots.VoteManager,
             client?.config?.voteManager?.botId,
             client?.config?.discadia?.botId,
             client?.config?.disboard?.botId
@@ -1088,3 +1088,4 @@ async function handleDiscadiaBump(message, client) {
     await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
     return true;
 }
+

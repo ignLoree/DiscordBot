@@ -1,9 +1,9 @@
-const { ChannelType, EmbedBuilder } = require('discord.js');
+﻿const { ChannelType, EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const CUSTOM_VOICE_CATEGORY_ID = IDs.channels.customVoiceCategory;
+const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
 
 function parseUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -35,7 +35,7 @@ function parseVoiceChannel(guild, raw) {
 module.exports = {
   name: 'customregister',
   aliases: ['customsync', 'registercustom'],
-  description: 'Registra custom role/vocale già esistenti nel sistema.',
+  description: 'Registra custom role/vocale giÃ  esistenti nel sistema.',
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;
@@ -53,7 +53,7 @@ module.exports = {
               '',
               'Note:',
               `- il canale vocale privato dovrebbe stare in <#${CUSTOM_VOICE_CATEGORY_ID}>`,
-              '- se il ruolo non è nel DB, viene registrato automaticamente'
+              '- se il ruolo non Ã¨ nel DB, viene registrato automaticamente'
             ].join('\n'))
         ],
         allowedMentions: { repliedUser: false }
@@ -147,7 +147,7 @@ module.exports = {
 
     const inExpectedCategory = voiceChannel.parentId === CUSTOM_VOICE_CATEGORY_ID;
     const categoryNote = inExpectedCategory
-      ? 'Canale già nella categoria corretta.'
+      ? 'Canale giÃ  nella categoria corretta.'
       : `Attenzione: canale non in <#${CUSTOM_VOICE_CATEGORY_ID}>.`;
 
     await safeMessageReply(message, {
@@ -166,5 +166,6 @@ module.exports = {
     });
   }
 };
+
 
 

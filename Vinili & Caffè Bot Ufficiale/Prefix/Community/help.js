@@ -9,17 +9,17 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const PAGE_ROLE_IDS = [
-  IDs.roles.partnerManager,
-  IDs.roles.staff,
-  IDs.roles.highStaff,
-  IDs.roles.owner
+  IDs.roles.PartnerManager,
+  IDs.roles.Staff,
+  IDs.roles.HighStaff,
+  IDs.roles.Founder
 ];
 const PAGE_TITLES = {
   utente: 'Comandi Utente',
-  [IDs.roles.partnerManager]: 'Comandi Partner Manager',
-  [IDs.roles.staff]: 'Comandi Staff',
-  [IDs.roles.highStaff]: 'Comandi High Staff',
-  [IDs.roles.owner]: 'Comandi Dev'
+  [IDs.roles.PartnerManager]: 'Comandi Partner Manager',
+  [IDs.roles.Staff]: 'Comandi Staff',
+  [IDs.roles.HighStaff]: 'Comandi High Staff',
+  [IDs.roles.Founder]: 'Comandi Dev'
 };
 const CATEGORY_LABELS = {
   community: 'Community',
@@ -95,8 +95,6 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   'level.multiplier': 'Imposta un moltiplicatore EXP temporaneo.',
   'level.ignore': 'Esclude un ruolo dal guadagno EXP.',
   'level.unignore': 'Riabilita un ruolo al guadagno EXP.',
-  'level.config': 'Mostra la configurazione attuale del sistema level.',
-  'level.audit': 'Mostra audit/stats level di un utente.',
   'ticket.add': 'Aggiunge uno o più utenti al ticket corrente.',
   'ticket.remove': 'Rimuove uno o più utenti dal ticket corrente.',
   'ticket.closerequest': 'Invia richiesta di chiusura ticket.',

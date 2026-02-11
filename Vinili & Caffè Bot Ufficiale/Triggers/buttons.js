@@ -286,12 +286,12 @@ module.exports = {
                     '1442569029263818906'
                 ],
                 personality_mentions: [
-                    IDs.roles.mentionEvents,
-                    IDs.roles.mentionNews,
-                    IDs.roles.mentionPolls,
-                    IDs.roles.mentionBump,
-                    IDs.roles.minigamesNotify,
-                    IDs.roles.forumNotify
+                    IDs.roles.Events,
+                    IDs.roles.News,
+                    IDs.roles.Polls,
+                    IDs.roles.Bump,
+                    IDs.roles.Minigames,
+                    IDs.roles.Forum
                 ],
                 personality_colors_1: [
                     '1442568958656905318',
@@ -326,17 +326,17 @@ module.exports = {
                     '1442568991150309578'
                 ],
                 personality_colors_plus: [
-                    IDs.roles.plusColorAllowedA,
-                    IDs.roles.plusColorAllowedB,
-                    IDs.roles.plusColorAllowedC,
-                    IDs.roles.plusColorAllowedD,
-                    IDs.roles.plusColorAllowedE,
-                    IDs.roles.plusColorAllowedF,
-                    IDs.roles.plusColorAllowedG,
-                    IDs.roles.plusColorAllowedH,
-                    IDs.roles.plusColorAllowedI,
-                    IDs.roles.plusColorAllowedJ,
-                    IDs.roles.plusColorAllowedK
+                    IDs.roles.redPlus,
+                    IDs.roles.orangePlus,
+                    IDs.roles.yellowPlus,
+                    IDs.roles.greenPlus,
+                    IDs.roles.bluePlus,
+                    IDs.roles.purplePlus,
+                    IDs.roles.pinkPlus,
+                    IDs.roles.blackPlus,
+                    IDs.roles.grayPlus,
+                    IDs.roles.whitePlus,
+                    IDs.roles.YinYangPlus
                 ]
             };
 
@@ -354,8 +354,8 @@ module.exports = {
                     });
                 }
                 if (menuId === 'personality_colors_plus') {
-                    const allowed = member.roles.cache.has(IDs.roles.plusColorBooster)
-                        || member.roles.cache.has(IDs.roles.level50);
+                    const allowed = member.roles.cache.has(IDs.roles.ServerBooster)
+                        || member.roles.cache.has(IDs.roles.Level50);
                     if (!allowed) {
                         return interaction.reply({
                             content: '<:vegax:1443934876440068179> Non puoi selezionare i Colori PLUS. Servono i ruoli richiesti.',
@@ -464,7 +464,7 @@ module.exports = {
             const embeds = [
                 new EmbedBuilder()
                     .setColor('#6f4e37')
-                    .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#${IDs.channels.ticketPanel}> \`Terza Categoria\`.
+                    .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#${IDs.channels.ticket}> \`Terza Categoria\`.
 
                     <:dot:1443660294596329582> **€1,50** <a:VC_Arrow:1448672967721615452> sponsor per **2** settimane
                     <:dot:1443660294596329582> **€3** <a:VC_Arrow:1448672967721615452> sponsor per **1 **mese
@@ -623,7 +623,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setTitle('<a:VC_Verified:1448687631109197978>・**__Verificati per ottenere vantaggi unici__**')
                 .setDescription([
-                    `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticketPanel}> e selezionare la terza categoria`,
+                    `Per verificare il tuo profilo dovrai andare in <#${IDs.channels.ticket}> e selezionare la terza categoria`,
                     '<:VC_Reply:1468262952934314131> successivamente, dovrete mandare una vostra foto in cui si vede bene il viso:',
                     'con il vostro nickname scritto su un foglio cartaceo o altrimenti con il cellulare nella schermata del vostro profilo discord',
                     '',
@@ -644,7 +644,7 @@ module.exports = {
                     'Un modo per sostenere il server è potenziarlo: se hai un Nitro Boost (quello da 9,99€) hai a disposizione 2 potenziamenti che puoi utilizzare in qualunque server tu voglia. Se deciderai di potenziare noi, __Vinili & Caffè__, sbloccherai un sacco di vantaggi.',
                     '**Non sai cos\'è Discord Nitro?** <:link:1470064815899803668> [Scoprilo qui](<https://discord.com/nitro>).',
                     '',
-                    `<:sparkledred:1470064814502973591>・Ruolo <@&${IDs.roles.plusColorBooster}> con badge speciale`,
+                    `<:sparkledred:1470064814502973591>・Ruolo <@&${IDs.roles.ServerBooster}> con badge speciale`,
                     '<:moon:1470064812615667827>・Permesso di allegare immagini e link in chat',
                     '<:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server',
                     '<:sparkle:1470064801811140866>・Permesso di usare le Soundboard del server',
@@ -658,7 +658,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    `Usa \`+customrolecreate\` in <#${IDs.channels.levelUp}> per creare e configurare il ruolo.`,
+                    `Usa \`+customrolecreate\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
                     'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
@@ -682,7 +682,7 @@ module.exports = {
                     'I livelli nel server rappresentano la tua attività: scrivendo in chat testuale e stando nei canali vocali, guadagnerai esperienza che verrà aggiunta al tuo livello globale. ',
                     'Una volta raggiunta una certa somma di esperienza, farai un **level up**!',
                     '',
-                    `<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#${IDs.channels.levelUp}>.`,
+                    `<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#${IDs.channels.commands}>.`,
                     '',
                     '<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**'
                 ].join('\n'))
@@ -690,7 +690,7 @@ module.exports = {
                     {
                         name: '\`LIVELLO 10-19\`',
                         value: [
-                            `<@&${IDs.roles.level10}>`,
+                            `<@&${IDs.roles.Level10}>`,
                             '<:VC_DoubleReply:1468713981152727120> Permesso di cambiare nickname',
                             '<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat',
                             '<:VC_Reply:1468262952934314131> Sblocchi il comando \`?quote\`'
@@ -700,7 +700,7 @@ module.exports = {
                     {
                         name: '\`LIVELLO 20-29\`',
                         value: [
-                            `<@&${IDs.roles.level20}>`,
+                            `<@&${IDs.roles.Level20}>`,
                             '९ Tutte le ricompense precedenti',
                             '<:VC_DoubleReply:1468713981152727120> Possibilità di aggiungere reazioni ai messaggi in chat'
                         ].join('\n'),
@@ -709,7 +709,7 @@ module.exports = {
                     {
                         name: '\`LIVELLO 30-49\`',
                         value: [
-                            `<@&${IDs.roles.level30}>`,
+                            `<@&${IDs.roles.Level30}>`,
                             '९ Tutte le ricompense precedenti',
                             '<:VC_DoubleReply:1468713981152727120> Permesso di usare soundboard di altri server',
                             '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 15 secondi).'
@@ -719,9 +719,9 @@ module.exports = {
                     {
                         name: '\`LIVELLO 50-69\`',
                         value: [
-                            `<@&${IDs.roles.level50}>`,
+                            `<@&${IDs.roles.Level50}>`,
                             '९ Tutte le ricompense precedenti',
-                            ` <:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#${IDs.channels.rolePanel}>`,
+                            ` <:VC_DoubleReply:1468713981152727120> Possibilità di usare i **colori PLUS** su <#${IDs.channels.ruoliColori}>`,
                             '<:VC_DoubleReply:1468713981152727120> Possibilità di creare un ruolo __personalizzato PERMANENTE__ e un canale vocale privato __personalizzato PERMANENTE__.',
                             '<:VC_Reply:1468262952934314131> Cooldown sui comandi del nostro bot ridotto (da 30 secondi a 5 secondi).'
                         ].join('\n'),
@@ -730,7 +730,7 @@ module.exports = {
                     {
                         name: '\`LIVELLO 70-99\`',
                         value: [
-                            `<@&${IDs.roles.level70}>`,
+                            `<@&${IDs.roles.Level70}>`,
                             '९ Tutte le ricompense precedenti',
                             '<:VC_DoubleReply:1468713981152727120> Permesso di usare stickers ed emoji di altri serve',
                             '<:VC_Reply:1468262952934314131> Aggiungi le reazioni al messaggio quando ti @menzionano in chat (max. 3)'
@@ -740,9 +740,9 @@ module.exports = {
                     {
                         name: '\`LIVELLO 100\`',
                         value: [
-                            `<@&${IDs.roles.level100}>`,
+                            `<@&${IDs.roles.Level100}>`,
                             '९ Tutte le ricompense precedenti',
-                            `<:VC_Reply:1468262952934314131> Votare per lo <@&${IDs.roles.bestStaff}>`
+                            `<:VC_Reply:1468262952934314131> Votare per lo <@&${IDs.roles.StafferDelMese}>`
                         ].join('\n'),
                         inline: true
                     }
@@ -754,7 +754,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    `Usa \`+customrolecreate\` in <#${IDs.channels.levelUp}> per creare e configurare il ruolo.`,
+                    `Usa \`+customrolecreate\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
                     'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
@@ -884,7 +884,7 @@ module.exports = {
                 .setTitle('<:VC_EXP:1468714279673925883> Informazioni sui moltiplicatori')
                 .setDescription([
                     'I moltiplicatori sono ruoli che ti consentono di avere un boost di exp sui messaggi in chat e minuti di vocale.',
-                    `I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#${IDs.channels.infoPerks}>`,
+                    `I ruoli sono sbloccabili in diversi modi, scopri come nel canale: <#${IDs.channels.info}>`,
                     '',
                     '**Moltiplicatori attivi:**',
                     ...lines,

@@ -2,18 +2,18 @@ const IDs = require('../Config/ids');
 
 const STAFF_LIST_MARKER = 'staff list';
 const ROLE_EMOJIS = {
-  [IDs.roles.partnerManager]: { emoji: '<:partnermanager:1443651916838998099>', number: '∞' },
-  [IDs.roles.helper]: { emoji: '<:helper:1443651909448630312>', number: '∞' },
-  [IDs.roles.moderator]: { emoji: '<:mod:1443651914209165454>', number: '6' },
-  [IDs.roles.coordinator]: { emoji: '<:coordinator:1443651923168202824>', number: '4' },
-  [IDs.roles.supervisor]: { emoji: '<:supervisor:1443651907900932157>', number: '4' },
-  [IDs.roles.admin]: { emoji: '<:admin:1443651911059247225>', number: '4' },
-  [IDs.roles.manager]: { emoji: '<:manager:1443651919829536940>', number: '1' },
-  [IDs.roles.coOwner]: { emoji: '<:cofounder:1443651915752804392>', number: '2' },
-  [IDs.roles.owner]: { emoji: '<:founder:1443651924674216128>', number: '1' }
+  [IDs.roles.PartnerManager]: { emoji: '<:partnermanager:1443651916838998099>', number: '∞' },
+  [IDs.roles.Helper]: { emoji: '<:helper:1443651909448630312>', number: '∞' },
+  [IDs.roles.Mod]: { emoji: '<:mod:1443651914209165454>', number: '6' },
+  [IDs.roles.Coordinator]: { emoji: '<:coordinator:1443651923168202824>', number: '4' },
+  [IDs.roles.Supervisor]: { emoji: '<:supervisor:1443651907900932157>', number: '4' },
+  [IDs.roles.Admin]: { emoji: '<:admin:1443651911059247225>', number: '4' },
+  [IDs.roles.Manager]: { emoji: '<:manager:1443651919829536940>', number: '1' },
+  [IDs.roles.CoFounder]: { emoji: '<:cofounder:1443651915752804392>', number: '2' },
+  [IDs.roles.Founder]: { emoji: '<:founder:1443651924674216128>', number: '1' }
 };
 const ROLE_EXCLUSIONS = {
-  [IDs.roles.partnerManager]: ['1442568907801100419']
+  [IDs.roles.PartnerManager]: ['1442568907801100419']
 };
 const STAFF_ROLE_IDS = Object.keys(ROLE_EMOJIS);
 
@@ -67,7 +67,7 @@ async function refreshStaffList(client, guildId = IDs.guilds.main, { force = fal
   const state = ensureState(client);
   const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
   if (!guild) return;
-  const channelId = IDs.channels.staffListChannel;
+  const channelId = IDs.channels.staffList;
   const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
   if (!channel?.isTextBased?.()) return;
 

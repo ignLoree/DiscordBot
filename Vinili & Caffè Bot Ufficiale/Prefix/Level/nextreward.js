@@ -4,12 +4,12 @@ const { getUserExpStats, getTotalExpForLevel } = require('../../Services/Communi
 const IDs = require('../../Utils/Config/ids');
 
 const LEVEL_REWARDS = [
-  { level: 10, roleId: IDs.roles.level10 },
-  { level: 20, roleId: IDs.roles.level20 },
-  { level: 30, roleId: IDs.roles.level30 },
-  { level: 50, roleId: IDs.roles.level50 },
-  { level: 70, roleId: IDs.roles.level70 },
-  { level: 100, roleId: IDs.roles.level100 }
+  { level: 10, roleId: IDs.roles.Level10 },
+  { level: 20, roleId: IDs.roles.Level20 },
+  { level: 30, roleId: IDs.roles.Level30 },
+  { level: 50, roleId: IDs.roles.Level50 },
+  { level: 70, roleId: IDs.roles.Level70 },
+  { level: 100, roleId: IDs.roles.Level100 }
 ];
 
 module.exports = {

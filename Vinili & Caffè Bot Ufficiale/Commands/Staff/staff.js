@@ -2,17 +2,17 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
-const ROLE_PARTNER_MANAGER = IDs.roles.partnerManager;
-const ROLE_STAFF = IDs.roles.staff;
-const ROLE_HIGH_STAFF = IDs.roles.highStaff;
-const ROLE_HELPER = IDs.roles.helper;
-const ROLE_MODERATOR = IDs.roles.moderator;
-const ROLE_COORDINATOR = IDs.roles.coordinator;
-const ROLE_SUPERVISOR = IDs.roles.supervisor;
-const ROLE_ADMIN = IDs.roles.admin;
-const ROLE_MANAGER = IDs.roles.manager;
-const ROLE_CO_OWNER = IDs.roles.coOwner;
-const ROLE_OWNER = IDs.roles.owner;
+const ROLE_PARTNER_MANAGER = IDs.roles.PartnerManager;
+const ROLE_STAFF = IDs.roles.Staff;
+const ROLE_HIGH_STAFF = IDs.roles.HighStaff;
+const ROLE_HELPER = IDs.roles.Helper;
+const ROLE_MODERATOR = IDs.roles.Mod;
+const ROLE_COORDINATOR = IDs.roles.Coordinator;
+const ROLE_SUPERVISOR = IDs.roles.Supervisor;
+const ROLE_ADMIN = IDs.roles.Admin;
+const ROLE_MANAGER = IDs.roles.Manager;
+const ROLE_CO_OWNER = IDs.roles.CoFounder;
+const ROLE_OWNER = IDs.roles.Founder;
 const STAFF_TRACKED_ROLE_IDS = new Set([
     ROLE_PARTNER_MANAGER,
     ROLE_STAFF,
@@ -150,8 +150,8 @@ module.exports = {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
         await interaction.deferReply()
-        const channel = interaction.guild.channels.cache.get(IDs.channels.resignLog)
-        const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnerOnboarding)
+        const channel = interaction.guild.channels.cache.get(IDs.channels.pexDepex)
+        const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnersChat)
         if (sub === 'pex') {
             try {
                 const utentee = interaction.options.getUser('user');
@@ -169,7 +169,7 @@ module.exports = {
                 }
                 const ruoloPrecedente = interaction.options.getRole('ruolo_precedente');
                 const ruoloSuccessivo = interaction.options.getRole('ruolo_successivo');
-                const staffchat = interaction.guild.channels.cache.get(IDs.channels.staffOnboarding);
+                const staffchat = interaction.guild.channels.cache.get(IDs.channels.staffChat);
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (interaction.user.id === utentee.id) {
@@ -375,7 +375,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
             try {
                 const utentee = interaction.options.getUser('staffer');
                 const reason = interaction.options.getString('motivo');
-                const warnChannel = interaction.guild.channels.cache.get(IDs.channels.staffWarnLog);
+                const warnChannel = interaction.guild.channels.cache.get(IDs.channels.warnStaff);
                 let Staff = await StaffModel.findOne({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff) Staff = new StaffModel({ guildId: interaction.guild.id, userId: utentee.id });
                 if (!Staff.idCount) Staff.idCount = 0;
@@ -419,7 +419,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
         if (group === 'resoconto') {
             if (sub === 'staffer') {
                 try {
-                    const rescoontoChannel = interaction.guild.channels.cache.get(IDs.channels.staffReportLog);
+                    const rescoontoChannel = interaction.guild.channels.cache.get(IDs.channels.resocontiStaff);
                     const staffer = interaction.options.getUser('staffer');
                     const ruolo = interaction.options.getRole('ruolo');
                     const azione = interaction.options.getString('azione');
@@ -481,7 +481,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
             }
             if (sub === 'pm') {
                 try {
-                    const channel = interaction.guild.channels.cache.get(IDs.channels.staffReportLog);
+                    const channel = interaction.guild.channels.cache.get(IDs.channels.resocontiStaff);
                     const staffer = interaction.options.getUser('staffer');
                     const azione = interaction.options.getString('azione');
                     const partner = interaction.options.getString('partner');

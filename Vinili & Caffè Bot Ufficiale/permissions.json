@@ -4,33 +4,33 @@
       "roles": null,
       "subcommands": {
         "emoji": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "sticker": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
     "dmbroadcast": {
       "roles": [
-        "roles.owner"
+        "roles.Founder"
       ]
     },
     "restart": {
       "roles": [
-        "roles.owner"
+        "roles.Founder"
       ]
     },
     "say": {
       "roles": [
-        "roles.owner"
+        "roles.Founder"
       ]
     },
     "set": {
       "roles": null,
       "subcommands": {
         "autojoin": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "voice": null
       }
@@ -40,10 +40,10 @@
       "subcommands": {
         "suggest": null,
         "accept": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "reject": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
@@ -52,32 +52,32 @@
     },
     "Partnership": {
       "roles": [
-        "roles.partnerManager"
+        "roles.PartnerManager"
       ]
     },
     "Moderate Name": {
       "roles": [
-        "roles.highStaff"
+        "roles.HighStaff"
       ]
     },
     "leaderboard": {
       "roles": [
-        "roles.partnerManager"
+        "roles.PartnerManager"
       ]
     },
     "partnership": {
       "roles": [
-        "roles.partnerManager"
+        "roles.PartnerManager"
       ]
     },
     "partner": {
       "roles": null,
       "subcommands": {
         "modifypoint.add": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "modifypoint.remove": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
@@ -85,13 +85,13 @@
       "roles": null,
       "subcommands": {
         "request": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "list": [
-          "roles.staff",
-          "roles.partnerManager",
-          "roles.highStaff"
+          "roles.Staff",
+          "roles.PartnerManager",
+          "roles.HighStaff"
         ]
       }
     },
@@ -99,13 +99,13 @@
       "roles": null,
       "subcommands": {
         "create": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "remove": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "edit": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
@@ -113,19 +113,19 @@
       "roles": null,
       "subcommands": {
         "pex": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "depex": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "warn": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "resoconto.staffer": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "resoconto.pm": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
@@ -133,19 +133,19 @@
       "roles": null,
       "subcommands": {
         "positiva.add": [
-          "roles.owner"
+          "roles.Founder"
         ],
         "positiva.remove": [
-          "roles.owner"
+          "roles.Founder"
         ],
         "negativa.add": [
-          "roles.owner"
+          "roles.Founder"
         ],
         "negativa.remove": [
-          "roles.owner"
+          "roles.Founder"
         ],
         "media": [
-          "roles.staff"
+          "roles.Staff"
         ]
       }
     }
@@ -161,14 +161,17 @@
     "membercount": null,
     "ping": null,
     "restart": [
-      "roles.owner"
+      "roles.Founder"
+    ],
+    "syncids": [
+      "roles.Founder"
     ],
     "reaction": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "no-dm": null,
     "no-dm-list": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "snipe": null,
     "join": null,
@@ -184,144 +187,144 @@
       "roles": null,
       "subcommands": {
         "add": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "remove": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "closerequest": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "close": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "claim": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "unclaim": [
-          "roles.staff",
-          "roles.partnerManager"
+          "roles.Staff",
+          "roles.PartnerManager"
         ],
         "switchpanel": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "rename": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
     "description": [
-      "roles.partnerManager"
+      "roles.PartnerManager"
     ],
     "gmulti": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "addlevel": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "removelevel": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "recensione": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "reviewlock": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "purge": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "health": [
-      "roles.owner"
+      "roles.Founder"
     ],
     "verify": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "customregister": [
-      "roles.highStaff"
+      "roles.HighStaff"
     ],
     "customrolecreate": [
       "roles.vip",
       "roles.donator",
-      "roles.customRoleAccessC",
-      "roles.customRoleAccessD"
+      "roles.ServerBooster",
+      "roles.Level70"
     ],
     "customroleadd": [
       "roles.vip",
       "roles.donator",
-      "roles.customRoleAccessC",
-      "roles.customRoleAccessD"
+      "roles.ServerBooster",
+      "roles.Level70"
     ],
     "customroleremove": [
       "roles.vip",
       "roles.donator",
-      "roles.customRoleAccessC",
-      "roles.customRoleAccessD"
+      "roles.ServerBooster",
+      "roles.Level70"
     ],
     "customrolemodify": [
       "roles.vip",
       "roles.donator",
-      "roles.customRoleAccessC",
-      "roles.customRoleAccessD"
+      "roles.ServerBooster",
+      "roles.Level70"
     ],
     "customvoc": [
       "roles.vip",
       "roles.donator",
-      "roles.customRoleAccessC",
-      "roles.customRoleAccessD"
+      "roles.ServerBooster",
+      "roles.Level70"
     ],
     "rewards": null,
     "nextreward": null,
     "level": {
       "roles": [
-        "roles.highStaff"
+        "roles.HighStaff"
       ],
       "subcommands": {
         "set": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "add": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "remove": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "reset": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "lock": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "unlock": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "multiplier": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "ignore": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "unignore": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "config": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ],
         "audit": [
-          "roles.highStaff"
+          "roles.HighStaff"
         ]
       }
     },
     "quote": [
-      "roles.customRoleAccessC",
+      "roles.ServerBooster",
       "roles.donator",
       "roles.vip",
-      "roles.level10"
+      "roles.Level10"
     ]
   }
 }

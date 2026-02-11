@@ -5,20 +5,20 @@ const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils'
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
-const PERK_ROLE_ID = IDs.roles.mediaBypass;
-const PLUS_COLOR_REQUIRED_ROLE_IDS = [IDs.roles.plusColorBooster, IDs.roles.level50];
+const PERK_ROLE_ID = IDs.roles.PicPerms;
+const PLUS_COLOR_REQUIRED_ROLE_IDS = [IDs.roles.ServerBooster, IDs.roles.Level50];
 const PLUS_COLOR_ROLE_IDS = [
-    IDs.roles.plusColorAllowedA,
-    IDs.roles.plusColorAllowedB,
-    IDs.roles.plusColorAllowedC,
-    IDs.roles.plusColorAllowedD,
-    IDs.roles.plusColorAllowedE,
-    IDs.roles.plusColorAllowedF,
-    IDs.roles.plusColorAllowedG,
-    IDs.roles.plusColorAllowedH,
-    IDs.roles.plusColorAllowedI,
-    IDs.roles.plusColorAllowedJ,
-    IDs.roles.plusColorAllowedK
+    IDs.roles.redPlus,
+    IDs.roles.orangePlus,
+    IDs.roles.yellowPlus,
+    IDs.roles.greenPlus,
+    IDs.roles.bluePlus,
+    IDs.roles.purplePlus,
+    IDs.roles.pinkPlus,
+    IDs.roles.blackPlus,
+    IDs.roles.grayPlus,
+    IDs.roles.whitePlus,
+    IDs.roles.YinYangPlus
 ];
 
 async function addPerkRoleIfPossible(member) {

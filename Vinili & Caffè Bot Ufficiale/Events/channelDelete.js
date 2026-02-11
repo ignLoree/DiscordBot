@@ -1,4 +1,5 @@
 const { queueCategoryRenumber } = require('../Services/Community/communityOpsService');
+const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 
 function isTicketsCategory(name) {
     return String(name || '').toLowerCase().includes('tickets');
@@ -28,6 +29,7 @@ module.exports = {
         } catch {}
 
         queueCategoryRenumber(client, channel.guildId);
+        queueIdsCatalogSync(client, channel.guildId, 'channelDelete');
     }
 };
 

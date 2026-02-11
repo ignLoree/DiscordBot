@@ -19,6 +19,7 @@ const { retroSyncGuildLevels } = require('../Services/Community/expService');
 const cron = require('node-cron');
 const IDs = require('../Utils/Config/ids');
 const startupPanelsTrigger = require('../Triggers/embeds');
+const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -194,8 +195,16 @@ module.exports = {
             runStartupPanels('retry+15s').catch(() => {});
         }, 15000);
         try {
+            const mainGuildId = IDs.guilds.main || client.guilds.cache.first()?.id;
+            if (mainGuildId) {
+                queueIdsCatalogSync(client, mainGuildId, 'startup', { delayMs: 5000 });
+            }
+        } catch (err) {
+            global.logger.error('[IDS AUTO SYNC] Startup queue failed', err);
+        }
+        try {
             cron.schedule("0 0 1 * *", async () => {
-                const channelId = IDs.channels.inviteLog;
+                const channelId = IDs.channels.joinLeaveLogs;
                 const channel = await getChannelSafe(client, channelId);
                 if (!channel) return;
                 await channel.send({

@@ -4,7 +4,7 @@ const { ChatReminderSchedule } = require('../../Schemas/Community/communitySchem
 const { ChatReminderRotation } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.inviteLog;
+const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const DEFAULT_TIME_ZONE = 'Europe/Rome';
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
@@ -59,7 +59,7 @@ const reminderPool = [
     .setTitle('🌐 Lascia una recensione su DISBOARD!')
     .setDescription(
       [
-        `Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticketPanel}> \`Terza Categoria\` e riceverai **5 livelli**!`,
+        `Lasciare una recensione aiuta il server a farci conoscere e crescere, una volta messa la recensione apri un <#${IDs.channels.ticket}> \`Terza Categoria\` e riceverai **5 livelli**!`,
         'Recensisci il nostro server qui: https://disboard.org/it/server/1329080093599076474'
       ].join('\n')
     ),
@@ -84,7 +84,7 @@ const reminderPool = [
     .setTitle('📩 Devi segnalare un utente, fare una partnership o ti serve supporto?')
     .setDescription(
       [
-        `Attraverso i ticket nel canale <#${IDs.channels.ticketPanel}> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`
+        `Attraverso i ticket nel canale <#${IDs.channels.ticket}> puoi contattare un membro dello Staff che ti darà una mano per ogni tua richiesta.`
       ].join('\n')
     ),
   () => new EmbedBuilder()
@@ -93,7 +93,7 @@ const reminderPool = [
     .setDescription(
       [
         'Puoi sbloccarli in modo veloce mettendo ".gg/viniliecaffe" nello stato del tuo profilo Discord, potenziando il server oppure salendo al Livello 10.',
-        `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost & livelli su: <#${IDs.channels.infoPerks}>`
+        `> <a:VC_Arrow:1448672967721615452> Scopri tutte le ricompense dei boost & livelli su: <#${IDs.channels.info}>`
       ].join('\n')
     ),
   () => new EmbedBuilder()

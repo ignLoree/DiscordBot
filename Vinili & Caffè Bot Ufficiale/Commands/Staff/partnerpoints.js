@@ -60,7 +60,7 @@ module.exports = {
         const value = interaction.options.getInteger('amount')
         const motivo = interaction.options.getString('motivo')
         const linkmessaggio = interaction.options.getString('linkmessaggio')
-        const channel = interaction.guild.channels.cache.get(IDs.channels.partnerPointsLog)
+        const channel = interaction.guild.channels.cache.get(IDs.channels.puntiTolti)
 
         if (value < 0)
             return await safeEditReply(interaction, { content: '<:vegax:1443934876440068179> Il valore deve essere positivo.', flags: 1 << 6 });

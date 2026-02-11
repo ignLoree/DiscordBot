@@ -6,7 +6,7 @@ module.exports = {
   async execute(thread) {
     try {
       if (!thread?.parent || thread.parent.type !== ChannelType.GuildForum) return;
-      await thread.send({ content: `<@&${IDs.roles.forumNotify}>` });
+      await thread.send({ content: `<@&${IDs.roles.Forum}>` });
     } catch (error) {
       global.logger.error(error);
     }
