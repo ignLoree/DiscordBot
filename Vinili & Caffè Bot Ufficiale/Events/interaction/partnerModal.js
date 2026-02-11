@@ -237,14 +237,23 @@ async function handlePartnerModal(interaction) {
 
 function parsePartnershipModalId(customId) {
     const raw = String(customId || '');
-    const parts = raw.split('_');
-    if (parts.length >= 3 && /^\d{16,20}$/.test(parts[1]) && /^\d{16,20}$/.test(parts[2])) {
-        return { openerId: parts[1], managerId: parts[2] };
+    const newFormat = raw.match(/^partnershipModal_(cmd|ctx)_(\d{16,20})_(\d{16,20})$/);
+    if (newFormat) {
+        return { source: newFormat[1], openerId: newFormat[2], managerId: newFormat[3] };
     }
-    if (parts.length >= 2 && /^\d{16,20}$/.test(parts[1])) {
-        return { openerId: null, managerId: parts[1] };
+
+    // Backward compatibility with old IDs: partnershipModal_<openerId>_<managerId>
+    const legacy = raw.match(/^partnershipModal_(\d{16,20})_(\d{16,20})$/);
+    if (legacy) {
+        return { source: 'legacy', openerId: legacy[1], managerId: legacy[2] };
     }
-    return { openerId: null, managerId: null };
+
+    // Very old fallback: partnershipModal_<managerId>
+    const legacyShort = raw.match(/^partnershipModal_(\d{16,20})$/);
+    if (legacyShort) {
+        return { source: 'legacy', openerId: null, managerId: legacyShort[1] };
+    }
+    return { source: null, openerId: null, managerId: null };
 }
 function splitMessage(message, maxLength = 2000) {
     if (!message) return [''];

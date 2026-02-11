@@ -42,13 +42,13 @@ async function resolveChannelLabel(guild, channelId) {
 
 async function resolveUserLabel(guild, userId) {
   const id = String(userId || '');
-  if (!id) return `@${id}`;
+  if (!id) return id;
   const member = guild.members?.cache?.get(id) || await guild.members?.fetch(id).catch(() => null);
-  if (member?.displayName) return `@${member.displayName}`;
-  if (member?.user?.username) return `@${member.user.username}`;
+  if (member?.user?.username) return member.user.username;
+  if (member?.displayName) return member.displayName;
   const user = await guild.client?.users?.fetch(id).catch(() => null);
-  if (user?.username) return `@${user.username}`;
-  return `@${id}`;
+  if (user?.username) return user.username;
+  return id;
 }
 
 async function enrichTops(guild, stats) {
@@ -64,8 +64,7 @@ async function enrichTops(guild, stats) {
 }
 
 module.exports = {
-  name: 'serveractivity',
-  aliases: ['server'],
+  name: 'server',
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
@@ -76,7 +75,7 @@ module.exports = {
     const d14 = safeWindow(stats?.windows, 'd14');
     const enriched = await enrichTops(message.guild, stats);
 
-    const imageName = `serveractivity-overview-${message.guild.id}-${lookbackDays}d.png`;
+    const imageName = `server-overview-${message.guild.id}-${lookbackDays}d.png`;
     let file = null;
     try {
       const buffer = await renderServerActivityCanvas({
@@ -95,7 +94,7 @@ module.exports = {
       });
       file = new AttachmentBuilder(buffer, { name: imageName });
     } catch (error) {
-      global.logger?.warn?.('[SERVERACTIVITY] Canvas render failed:', error?.message || error);
+      global.logger?.warn?.('[SERVER] Canvas render failed:', error?.message || error);
     }
 
     if (!wantsEmbed) {

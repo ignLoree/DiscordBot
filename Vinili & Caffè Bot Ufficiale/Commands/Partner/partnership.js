@@ -15,9 +15,16 @@ module.exports = {
 
     async execute(interaction) {
         const manager = interaction.options.getUser('manager');
+        if (!manager?.id) {
+            await safeReply(interaction, {
+                content: '<:vegax:1443934876440068179> Manager non valido.',
+                flags: 1 << 6
+            });
+            return;
+        }
 
         const modal = new ModalBuilder()
-            .setCustomId(`partnershipModal_${interaction.user.id}_${manager.id}`)
+            .setCustomId(`partnershipModal_cmd_${interaction.user.id}_${manager.id}`)
             .setTitle('Invia Partnership');
 
         const descriptionInput = new TextInputBuilder()

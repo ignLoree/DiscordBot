@@ -115,12 +115,50 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const baseline = options.baseline || ctx.textBaseline || "alphabetic";
   const color = options.color || ctx.fillStyle;
   const normalFont = fontStack(size, weight);
+  const tibetanFont = fontStackWithPrimary(TIBETAN_FONT, size, weight);
+  const hasTibetan = /[\u0F00-\u0FFF]/.test(value);
   ctx.save();
   ctx.fillStyle = color;
   ctx.textBaseline = baseline;
-  ctx.font = normalFont;
-  ctx.textAlign = align;
-  ctx.fillText(value, x, y);
+  if (!hasTibetan) {
+    ctx.font = normalFont;
+    ctx.textAlign = align;
+    ctx.fillText(value, x, y);
+    ctx.restore();
+    return;
+  }
+
+  const runs = [];
+  let current = "";
+  let currentFont = null;
+  for (const ch of Array.from(value)) {
+    const cp = ch.codePointAt(0);
+    const nextFont = cp >= 0x0f00 && cp <= 0x0fff ? tibetanFont : normalFont;
+    if (nextFont !== currentFont && current) {
+      runs.push({ text: current, font: currentFont });
+      current = "";
+    }
+    current += ch;
+    currentFont = nextFont;
+  }
+  if (current) runs.push({ text: current, font: currentFont });
+
+  let totalWidth = 0;
+  for (const run of runs) {
+    ctx.font = run.font;
+    totalWidth += ctx.measureText(run.text).width;
+  }
+
+  let cursorX = x;
+  if (align === "center") cursorX = x - (totalWidth / 2);
+  else if (align === "right") cursorX = x - totalWidth;
+
+  ctx.textAlign = "left";
+  for (const run of runs) {
+    ctx.font = run.font;
+    ctx.fillText(run.text, cursorX, y);
+    cursorX += ctx.measureText(run.text).width;
+  }
   ctx.restore();
 }
 

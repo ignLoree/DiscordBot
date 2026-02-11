@@ -28,7 +28,7 @@ function buildAutoPrefixDescription(command, folder) {
         classifica: 'Mostra la classifica livelli del server.',
         rank: 'Mostra il rank di un utente.',
         mstats: 'Mostra le statistiche minigiochi di un utente.',
-        myactivity: 'Mostra la tua attività settimanale.'
+        me: 'Mostra la tua attività settimanale.'
     };
     if (exact[name]) return exact[name];
 

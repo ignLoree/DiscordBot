@@ -3,9 +3,7 @@ const path = require('path');
 const IDs = require('../../Utils/Config/ids');
 
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags } = require('discord.js');
-
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-
 const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const PAGE_ROLE_IDS = [
@@ -45,31 +43,24 @@ const PREFIX_HELP_DESCRIPTIONS = {
   afk: 'Imposta il tuo stato AFK con un messaggio personalizzato.',
   avatar: 'Mostra l\'avatar server di un utente.',
   banner: 'Mostra il banner profilo di un utente.',
-  blockav: 'Blocca la visualizzazione del tuo avatar agli altri utenti.',
-  blockbanner: 'Blocca la visualizzazione del tuo banner agli altri utenti.',
-  blockquotes: 'Blocca la creazione di quote dei tuoi messaggi.',
+  block: 'Blocca privacy contenuti: avatar, banner, quotes.',
   invites: 'Mostra le statistiche inviti del server o di un utente.',
   membercount: 'Mostra il numero totale di membri del server.',
   'no-dm': 'Attiva/disattiva il blocco DM per gli annunci dello staff.',
   ping: 'Mostra latenza bot, database e informazioni di uptime.',
   ship: 'Calcola la compatibilità tra due utenti.',
   snipe: 'Recupera l\'ultimo messaggio eliminato nel canale.',
-  topinvites: 'Mostra la classifica inviti del server.',
   join: 'Fa entrare il bot nel tuo canale vocale.',
   leave: 'Fa uscire il bot dal canale vocale.',
-  unblockavatar: 'Sblocca la visualizzazione del tuo avatar.',
-  unblockbanner: 'Sblocca la visualizzazione del tuo banner.',
-  unblockquotes: 'Sblocca la creazione di quote dei tuoi messaggi.',
+  unblock: 'Sblocca privacy contenuti: avatar, banner, quotes.',
   classifica: 'Mostra la classifica livelli (totale/settimanale).',
-  minigamestats: 'Mostra statistiche minigiochi di un utente.',
-  myactivity: 'Mostra la tua attività settimanale.',
+  mstats: 'Mostra statistiche minigiochi di un utente.',
+  me: 'Mostra la tua attività settimanale.',
+  top: 'Mostra classifiche del server: text, voc, invites.',
   rank: 'Mostra livello, exp e posizione in classifica di un utente.',
-  toptext: 'Mostra top utenti per messaggi testuali.',
-  topvoc: 'Mostra top utenti per exp/attività vocale.',
   reaction: 'Gestisce reaction menzioni e autoresponder con parole/frasi trigger.',
   description: 'Manda la descrizione del server direttamente nel ticket.',
   addlevel: 'Aggiunge livelli/exp a un utente.',
-  customregister: 'Registra retroattivamente custom role/vocale già esistenti.',
   gmulti: 'Gestisce il moltiplicatore globale exp.',
   'no-dm-list': 'Mostra la lista utenti con blocco DM attivo.',
   purge: 'Elimina messaggi da un canale.',
@@ -77,7 +68,8 @@ const PREFIX_HELP_DESCRIPTIONS = {
   removelevel: 'Rimuove livelli/exp da un utente.',
   reviewlock: 'Blocca o sblocca premio recensione per un utente.',
   ticket: 'Gestisce i ticket.',
-  verify: 'Gestisce il flusso di verifica utenti.',
+  verify: 'Gestisce il flusso di verifica utenti.',  
+  customregister: 'Registra retroattivamente custom role/vocale già esistenti.',
   customroleadd: 'Aggiunge utenti al tuo ruolo personalizzato.',
   customrolecreate: 'Crea il tuo ruolo personalizzato.',
   customrolemodify: 'Apre il pannello di modifica del ruolo personalizzato.',
@@ -102,7 +94,16 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   'ticket.claim': 'Assegna il ticket a te.',
   'ticket.unclaim': 'Rimuove la presa in carico del ticket.',
   'ticket.switchpanel': 'Sposta il ticket a un pannello differente.',
-  'ticket.rename': 'Rinomina il canale ticket.'
+  'ticket.rename': 'Rinomina il canale ticket.',
+  'block.avatar': 'Blocca la visualizzazione del tuo avatar.',
+  'block.banner': 'Blocca la visualizzazione del tuo banner.',
+  'block.quotes': 'Blocca la creazione di quote dei tuoi messaggi.',
+  'unblock.avatar': 'Sblocca la visualizzazione del tuo avatar.',
+  'unblock.banner': 'Sblocca la visualizzazione del tuo banner.',
+  'unblock.quotes': 'Sblocca la creazione di quote dei tuoi messaggi.',
+  'top.text': 'Mostra la classifica utenti per messaggi testuali.',
+  'top.voc': 'Mostra la classifica utenti per attività vocale.',
+  'top.invites': 'Mostra la classifica utenti per inviti.'
 };
 const CONTEXT_HELP_DESCRIPTIONS = {
   'Show Avatar': 'Mostra rapidamente l\'avatar dell\'autore del messaggio selezionato.',
@@ -421,9 +422,13 @@ function filterByPage(entries, pageRoleId, memberRoles) {
   if (pageRoleId === 'utente') {
     return entries.filter((entry) => {
       if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
-      const isVipCategory = String(entry.category || '').toLowerCase() === 'vip';
-      if (!isVipCategory) return false;
-      return hasAnyRole(memberRoles, entry.roles);
+      const category = String(entry.category || '').toLowerCase();
+      const isVipCategory = category === 'vip';
+      const hasMemberRoleRequirement = entry.roles.includes(IDs.roles.Member);
+
+      if (hasMemberRoleRequirement) return hasAnyRole(memberRoles, entry.roles);
+      if (isVipCategory) return hasAnyRole(memberRoles, entry.roles);
+      return false;
     });
   }
   return entries.filter((entry) => Array.isArray(entry.roles) && entry.roles.includes(pageRoleId));

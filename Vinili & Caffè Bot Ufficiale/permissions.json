@@ -185,15 +185,22 @@
     "banner": [
       "roles.Member"
     ],
-    "blockav": [
-      "roles.Member"
-    ],
-    "blockbanner": [
-      "roles.Member"
-    ],
-    "blockquotes": [
-      "roles.Member"
-    ],
+    "block": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "avatar": [
+          "roles.Member"
+        ],
+        "banner": [
+          "roles.Member"
+        ],
+        "quotes": [
+          "roles.Member"
+        ]
+      }
+    },
     "membercount": [
       "roles.Member"
     ],
@@ -221,31 +228,51 @@
     "leave": [
       "roles.Member"
     ],
-    "unblockavatar": [
-      "roles.Member"
-    ],
-    "unblockbanner": [
-      "roles.Member"
-    ],
-    "unblockquotes": [
-      "roles.Member"
-    ],
+    "unblock": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "avatar": [
+          "roles.Member"
+        ],
+        "banner": [
+          "roles.Member"
+        ],
+        "quotes": [
+          "roles.Member"
+        ]
+      }
+    },
     "classifica": [
       "roles.Member"
     ],
     "mstats": [
       "roles.Member"
     ],
-    "myactivity": [
+    "me": [
       "roles.Member"
     ],
+    "server": [
+      "roles.Member"
+    ],
+    "top": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "text": [
+          "roles.Member"
+        ],
+        "voc": [
+          "roles.Member"
+        ],
+        "invites": [
+          "roles.Member"
+        ]
+      }
+    },
     "rank": [
-      "roles.Member"
-    ],
-    "rewards": [
-      "roles.Member"
-    ],
-    "nextreward": [
       "roles.Member"
     ],
     "ticket": {

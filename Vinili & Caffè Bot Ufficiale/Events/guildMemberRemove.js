@@ -141,6 +141,14 @@ module.exports = {
                                 : null;
                             const partnerName = lastPartner?.partner || 'Partner sconosciuta';
                             const inviteLink = lastPartner?.invite || 'Link non disponibile';
+                            const lastPartnerDate = lastPartner?.date ? new Date(lastPartner.date) : null;
+                            const hasValidDate = lastPartnerDate && !Number.isNaN(lastPartnerDate.getTime());
+                            const lastPartnerTimestamp = hasValidDate
+                                ? Math.floor(lastPartnerDate.getTime() / 1000)
+                                : null;
+                            const lastPartnerWhenText = lastPartnerTimestamp
+                                ? `<t:${lastPartnerTimestamp}:F> (<t:${lastPartnerTimestamp}:R>)`
+                                : 'Non disponibile';
                             await partnerLogChannel.send({
                                 embeds: [
                                     new EmbedBuilder()
@@ -149,7 +157,8 @@ module.exports = {
                                             `**<:vegax:1443934876440068179> Manager uscito dal server**\n` +
                                             `**Utente:** ${member.user}\n` +
                                             `**Partner:** ${partnerName}\n` +
-                                            `**Invito:** ${inviteLink}`
+                                            `**Invito:** ${inviteLink}\n` +
+                                            `**Ultima partner:** ${lastPartnerWhenText}`
                                         )
                                 ]
                             });
@@ -219,5 +228,4 @@ module.exports = {
         }
     }
 }
-
 

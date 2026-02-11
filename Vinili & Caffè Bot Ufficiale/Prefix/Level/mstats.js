@@ -33,9 +33,8 @@ async function resolveTargetUser(message, args = []) {
 }
 
 module.exports = {
-  name: 'minigamestats',
-  aliases: ['mstats'],
-
+  name: 'mstats',
+  
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const targetUser = await resolveTargetUser(message, args);

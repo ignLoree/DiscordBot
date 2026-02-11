@@ -5,6 +5,7 @@ const path = require('path');
 const child_process = require('child_process');
 
 const RESTART_FLAG = 'restart.json';
+const RESTART_CLEANUP_DELAY_MS = 2000;
 const VALID_SCOPES = new Set([
   'full',
   'handlers',
@@ -119,7 +120,7 @@ module.exports = {
       await client.reloadScope(scope);
       const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
 
-      await safeMessageReply(message, {
+      const doneMsg = await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor('#6f4e37')
@@ -127,9 +128,14 @@ module.exports = {
         ],
         allowedMentions: { repliedUser: false }
       });
+
+      setTimeout(() => {
+        message.delete().catch(() => {});
+        doneMsg?.delete?.().catch(() => {});
+      }, RESTART_CLEANUP_DELAY_MS);
     } catch (error) {
       global.logger.error(error);
-      await safeMessageReply(message, {
+      const failMsg = await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
@@ -137,6 +143,11 @@ module.exports = {
         ],
         allowedMentions: { repliedUser: false }
       });
+
+      setTimeout(() => {
+        message.delete().catch(() => {});
+        failMsg?.delete?.().catch(() => {});
+      }, RESTART_CLEANUP_DELAY_MS);
     }
   }
 };

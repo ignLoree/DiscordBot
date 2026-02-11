@@ -40,8 +40,7 @@ async function enrichChannels(guild, items = []) {
 }
 
 module.exports = {
-  name: 'myactivity',
-  aliases: ['me'],
+  name: 'me',
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
@@ -51,7 +50,7 @@ module.exports = {
     const topChannelsText = await enrichChannels(message.guild, stats.topChannelsText);
     const topChannelsVoice = await enrichChannels(message.guild, stats.topChannelsVoice);
 
-    const imageName = `myactivity-overview-${message.author.id}-${lookbackDays}d.png`;
+    const imageName = `me-overview-${message.author.id}-${lookbackDays}d.png`;
     let file = null;
     try {
       const buffer = await renderUserActivityCanvas({
@@ -70,7 +69,7 @@ module.exports = {
       });
       file = new AttachmentBuilder(buffer, { name: imageName });
     } catch (error) {
-      global.logger?.warn?.('[MYACTIVITY] Canvas render failed:', error?.message || error);
+      global.logger?.warn?.('[ME] Canvas render failed:', error?.message || error);
     }
 
     if (!wantsEmbed) {

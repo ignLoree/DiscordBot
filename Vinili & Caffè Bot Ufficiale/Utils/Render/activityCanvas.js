@@ -76,7 +76,7 @@ function prepareVisibleText(value) {
   out = out
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/\uFFFD/g, '')
-    .normalize('NFKC')
+    .normalize('NFC')
     .trim();
 
   for (const [char, token] of protectedMap.entries()) {
@@ -528,7 +528,7 @@ async function renderServerActivityCanvas({
     label: topUsersVoice?.[0]?.label || '-',
     value: formatHours(topUsersVoice?.[0]?.value || 0),
     unit: 'hours'
-  }, 20, 370, 600, 220);
+  }, 20, 370, 600, 220, { showRank: false });
 
   await drawTopCard(ctx, 'Top Channels', {
     label: topChannelsText?.[0]?.label || '#-',

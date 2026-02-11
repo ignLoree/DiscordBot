@@ -286,6 +286,47 @@ function normalizeSongGuess(raw) {
   return normalizeCountryName(raw);
 }
 
+function buildSongAnswerAliases(rawTitle) {
+  const raw = String(rawTitle || '').trim();
+  if (!raw) return [];
+
+  const aliases = new Set();
+  const add = (value) => {
+    const normalized = normalizeSongGuess(value);
+    if (normalized) aliases.add(normalized);
+  };
+
+  add(raw);
+
+  const withoutBrackets = raw
+    .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  add(withoutBrackets);
+
+  const withoutFeat = raw
+    .replace(/\s+(feat\.?|ft\.?|featuring|with)\s+.+$/i, '')
+    .trim();
+  add(withoutFeat);
+  add(
+    withoutFeat
+      .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  );
+
+  const dashParts = raw.split(/\s[-–—]\s/).map((p) => p.trim()).filter(Boolean);
+  if (dashParts.length >= 2) {
+    const left = dashParts[0];
+    const right = dashParts.slice(1).join(' ');
+    if (/(remaster|version|edit|mix|live|acoustic|karaoke|instrumental|bonus|mono|stereo|radio|explicit|clean|sped|slowed|rework|demo|deluxe|anniversary|session|soundtrack|from)\b/i.test(right)) {
+      add(left);
+    }
+  }
+
+  return Array.from(aliases.values());
+}
+
 const NATURAL_GUESS_STOP_TOKENS = new Set([
   'e', 'ed', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'uno',
   'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle',
@@ -1746,7 +1787,8 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessSong') {
-    if (isNaturalGuessCorrect(content, game.title, normalizeSongGuess)) {
+    const songAnswers = buildSongAnswerAliases(game.title);
+    if (isNaturalGuessCorrect(content, songAnswers.length ? songAnswers : game.title, normalizeSongGuess)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);

@@ -8,6 +8,7 @@ const { getChannelSafe } = require('../Utils/Logging/commandUsageLogger');
 
 const POLL_REMINDER_ROLE_ID = IDs.roles.HighStaff;
 const POLL_REMINDER_CHANNEL_ID = '1442569285909217301';
+const RESTART_CLEANUP_DELAY_MS = 2000;
 
 module.exports = {
   name: 'clientReady',
@@ -51,15 +52,23 @@ module.exports = {
             if (restartMsg) {
               setTimeout(() => {
                 restartMsg.delete().catch(() => { });
-              }, 5000);
+              }, RESTART_CLEANUP_DELAY_MS);
             }
             if (data?.notifyMessageId) {
               const notifyMsg = await channel.messages.fetch(data.notifyMessageId).catch(() => null);
-              if (notifyMsg) await notifyMsg.delete().catch(() => { });
+              if (notifyMsg) {
+                setTimeout(() => {
+                  notifyMsg.delete().catch(() => {});
+                }, RESTART_CLEANUP_DELAY_MS);
+              }
             }
             if (data?.commandMessageId) {
               const cmdMsg = await channel.messages.fetch(data.commandMessageId).catch(() => null);
-              if (cmdMsg) await cmdMsg.delete().catch(() => { });
+              if (cmdMsg) {
+                setTimeout(() => {
+                  cmdMsg.delete().catch(() => {});
+                }, RESTART_CLEANUP_DELAY_MS);
+              }
             }
           }
           fs.unlinkSync(restartNotifyPath);
@@ -75,7 +84,7 @@ module.exports = {
             if (restartMsg) {
               setTimeout(() => {
                 restartMsg.delete().catch(() => { });
-              }, 5000);
+              }, RESTART_CLEANUP_DELAY_MS);
             }
           }
           fs.unlinkSync('./restart.json');

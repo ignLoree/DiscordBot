@@ -41,7 +41,7 @@ module.exports = {
         }
 
         const modal = new ModalBuilder()
-            .setCustomId(`partnershipModal_${interaction.user.id}_${managerId}`)
+            .setCustomId(`partnershipModal_ctx_${interaction.user.id}_${managerId}`)
             .setTitle('Invia Partnership');
 
         const descriptionInput = new TextInputBuilder()
