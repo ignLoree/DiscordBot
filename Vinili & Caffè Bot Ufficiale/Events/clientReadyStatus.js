@@ -48,6 +48,14 @@ module.exports = {
             const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
             const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
             await channel.send(`<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`);
+            if (data?.notifyMessageId) {
+              const notifyMsg = await channel.messages.fetch(data.notifyMessageId).catch(() => null);
+              if (notifyMsg) await notifyMsg.delete().catch(() => { });
+            }
+            if (data?.commandMessageId) {
+              const cmdMsg = await channel.messages.fetch(data.commandMessageId).catch(() => null);
+              if (cmdMsg) await cmdMsg.delete().catch(() => { });
+            }
           }
           fs.unlinkSync(restartNotifyPath);
         } catch (err) {

@@ -8,6 +8,29 @@ const LOG_CHANNEL_ID = IDs.channels.ticketCloseLogAlt || IDs.channels.commandErr
 const STAFF_ROLE_ID = IDs.roles.staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.highStaff;
 const PARTNERMANAGER_ROLE_ID = IDs.roles.partnerManager;
+const STAFF_ROLE_IDS = [STAFF_ROLE_ID, HIGHSTAFF_ROLE_ID].filter(Boolean);
+
+function hasAnyRole(member, roleIds = []) {
+  return roleIds.some((roleId) => member?.roles?.cache?.has(roleId));
+}
+
+function canClaimTicket(member, ticketType) {
+  if (!member) return false;
+  const isSupport = ticketType === 'supporto' && hasAnyRole(member, STAFF_ROLE_IDS);
+  const isPartnership = ticketType === 'partnership'
+    && (member.roles.cache.has(PARTNERMANAGER_ROLE_ID) || member.roles.cache.has(HIGHSTAFF_ROLE_ID));
+  const isHigh = ticketType === 'high' && member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+  return isSupport || isPartnership || isHigh;
+}
+
+function canCloseTicket(member, ticketType) {
+  if (!member) return false;
+  const canCloseSupport = ticketType === 'supporto' && hasAnyRole(member, STAFF_ROLE_IDS);
+  const canClosePartnership = ticketType === 'partnership'
+    && (member.roles.cache.has(PARTNERMANAGER_ROLE_ID) || member.roles.cache.has(HIGHSTAFF_ROLE_ID));
+  const canCloseHigh = ticketType === 'high' && member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+  return canCloseSupport || canClosePartnership || canCloseHigh;
+}
 
 async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
   if (!target?.send) return null;
@@ -105,18 +128,6 @@ module.exports = {
     }
 
     const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
-    const requiresClaimOwnership = subcommand !== 'claim';
-    if (requiresClaimOwnership && !isHighStaffBypass && activeTicketInChannel.claimedBy !== message.author.id) {
-      await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Devi prima claimare questo ticket per usare questo comando.')
-        ],
-        allowedMentions: { repliedUser: false }
-      });
-      return;
-    }
 
     if (subcommand === 'add') {
       const user = await resolveUserFromArg(message, rest[0]);
@@ -174,6 +185,14 @@ module.exports = {
         });
         return;
       }
+      const canRequestClose = message.author.id === ticketDoc.claimedBy || isHighStaffBypass;
+      if (!canRequestClose) {
+        await safeMessageReply(message, {
+          embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo chi ha claimato il ticket può inviare la richiesta di chiusura.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
 
       const closeButton = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('accetta').setEmoji('<:vegacheckmark:1443666279058772028>').setLabel('Accetta e chiudi').setStyle(ButtonStyle.Success),
@@ -198,6 +217,20 @@ module.exports = {
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+      if (ticketDoc.userId === message.author.id) {
+        await safeMessageReply(message, {
+          embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+      if (!canCloseTicket(message.member, ticketDoc.ticketType)) {
+        await safeMessageReply(message, {
+          embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Non puoi chiudere questo ticket.')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -271,6 +304,13 @@ module.exports = {
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un canale ticket')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+      if (!canClaimTicket(message.member, ticketDoc.ticketType)) {
+        await safeMessageReply(message, {
+          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Solo il personale autorizzato può claimare questo ticket.').setColor('Red')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -354,13 +394,9 @@ module.exports = {
       }
 
       const oldClaimer = ticketDoc.claimedBy;
-      const hasAllowedRole =
-        message.member.roles.cache.has(STAFF_ROLE_ID)
-        || message.member.roles.cache.has(HIGHSTAFF_ROLE_ID)
-        || message.member.roles.cache.has(PARTNERMANAGER_ROLE_ID);
-      if (message.author.id !== oldClaimer && !hasAllowedRole) {
+      if (message.author.id !== oldClaimer) {
         await safeMessageReply(message, {
-          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Non puoi unclaimare questo ticket.').setColor('Red')],
+          embeds: [new EmbedBuilder().setTitle('Errore').setDescription('<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.').setColor('Red')],
           allowedMentions: { repliedUser: false }
         });
         return;
@@ -544,6 +580,27 @@ module.exports = {
 
         ticketDoc.ticketType = panelConfig.type;
         await ticketDoc.save().catch(() => { });
+
+        if (panelConfig.type === 'partnership' && !ticketDoc.descriptionSubmitted) {
+          if (ticketDoc.descriptionPromptMessageId) {
+            const oldPrompt = await targetChannel.messages.fetch(ticketDoc.descriptionPromptMessageId).catch(() => null);
+            if (oldPrompt) await oldPrompt.delete().catch(() => { });
+          }
+          const descriptionRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('ticket_open_desc_modal')
+              .setLabel('📝 Invia Descrizione')
+              .setStyle(ButtonStyle.Primary)
+          );
+          const descriptionPrompt = await targetChannel.send({
+            content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
+            components: [descriptionRow]
+          }).catch(() => null);
+          if (descriptionPrompt?.id) {
+            ticketDoc.descriptionPromptMessageId = descriptionPrompt.id;
+            await ticketDoc.save().catch(() => { });
+          }
+        }
 
         const msg = await fetchTicketMessage(targetChannel, ticketDoc.messageId);
         if (msg) {

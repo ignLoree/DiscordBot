@@ -112,14 +112,47 @@ const CONTEXT_HELP_DESCRIPTIONS = {
   'Moderate Name': 'Modera/cambia nickname dell utente selezionato.'
 };
 
+
+function resolveRoleReference(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{16,20}$/.test(raw)) return raw;
+
+  let key = raw;
+  if (key.startsWith('ids.roles.')) key = key.slice('ids.roles.'.length);
+  else if (key.startsWith('roles.')) key = key.slice('roles.'.length);
+
+  const resolved = IDs?.roles?.[key];
+  if (!resolved) return null;
+  return String(resolved);
+}
+
+function normalizeRoleList(roleIds) {
+  if (!Array.isArray(roleIds)) return roleIds;
+  return roleIds
+    .map((value) => resolveRoleReference(value))
+    .filter(Boolean);
+}
+
+function normalizePermissionTree(node) {
+  if (Array.isArray(node)) return normalizeRoleList(node);
+  if (!node || typeof node !== 'object') return node;
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    out[key] = normalizePermissionTree(value);
+  }
+  return out;
+}
+
 function loadPermissions() {
   try {
     if (!fs.existsSync(PERMISSIONS_PATH)) return { slash: {}, prefix: {} };
     const raw = fs.readFileSync(PERMISSIONS_PATH, 'utf8');
     const parsed = JSON.parse(raw);
     return {
-      slash: parsed?.slash || {},
-      prefix: parsed?.prefix || {}
+      slash: normalizePermissionTree(parsed?.slash || {}),
+      prefix: normalizePermissionTree(parsed?.prefix || {})
     };
   } catch {
     return { slash: {}, prefix: {} };

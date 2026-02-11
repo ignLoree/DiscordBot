@@ -2,25 +2,28 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
+const APP_ROOT = __dirname;
 const envCandidates = [
-    path.join(__dirname, '.env'),
-    path.join(__dirname, '..', '.env'),
+    path.join(APP_ROOT, '.env'),
+    path.join(APP_ROOT, '..', '.env'),
     path.join(process.cwd(), '.env')
 ];
+let envLoaded = false;
 for (const envPath of envCandidates) {
-    if (fs.existsSync(envPath)) {
+    if (!envLoaded && fs.existsSync(envPath)) {
         dotenv.config({ path: envPath, quiet: true });
+        envLoaded = true;
     }
 }
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
 const Logs = require('discord-logs');
-const functions = fs.readdirSync("./Handlers").filter((file) => file.endsWith(".js"));
-const triggerFiles = fs.existsSync("./Triggers")
-    ? fs.readdirSync("./Triggers").filter((file) => file.endsWith(".js"))
+const functions = fs.readdirSync(path.join(APP_ROOT, "Handlers")).filter((file) => file.endsWith(".js"));
+const triggerFiles = fs.existsSync(path.join(APP_ROOT, "Triggers"))
+    ? fs.readdirSync(path.join(APP_ROOT, "Triggers")).filter((file) => file.endsWith(".js"))
     : [];
-const pcommandFolders = fs.existsSync("./Prefix") ? fs.readdirSync('./Prefix') : [];
-const commandFolders = fs.existsSync("./Commands") ? fs.readdirSync("./Commands") : [];
+const pcommandFolders = fs.existsSync(path.join(APP_ROOT, "Prefix")) ? fs.readdirSync(path.join(APP_ROOT, 'Prefix')) : [];
+const commandFolders = fs.existsSync(path.join(APP_ROOT, "Commands")) ? fs.readdirSync(path.join(APP_ROOT, "Commands")) : [];
 let client;
 
 try {
@@ -66,9 +69,13 @@ const envToken = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL
 const envMongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI;
 client.config.token = envToken || client.config.token;
 client.config.mongoURL = envMongoUrl || client.config.mongoURL;
+if (!client.config.token) {
+    global.logger.error('[LOGIN] Missing bot token. Set DISCORD_TOKEN (or DISCORD_TOKEN_OFFICIAL) in .env.');
+    process.exit(1);
+}
 global.botClient = client;
 client.reloadScope = async (scope) => {
-    const baseDir = process.cwd();
+    const baseDir = APP_ROOT;
     const clearCacheByDir = (dirName) => {
         const abs = path.join(baseDir, dirName);
         if (!fs.existsSync(abs)) return;

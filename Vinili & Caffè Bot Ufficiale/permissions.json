@@ -4,33 +4,33 @@
       "roles": null,
       "subcommands": {
         "emoji": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "sticker": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
     "dmbroadcast": {
       "roles": [
-        "1442568886988963923"
+        "roles.owner"
       ]
     },
     "restart": {
       "roles": [
-        "1442568886988963923"
+        "roles.owner"
       ]
     },
     "say": {
       "roles": [
-        "1442568886988963923"
+        "roles.owner"
       ]
     },
     "set": {
       "roles": null,
       "subcommands": {
         "autojoin": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "voice": null
       }
@@ -40,10 +40,10 @@
       "subcommands": {
         "suggest": null,
         "accept": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "reject": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
@@ -52,32 +52,32 @@
     },
     "Partnership": {
       "roles": [
-        "1442568905582317740"
+        "roles.partnerManager"
       ]
     },
     "Moderate Name": {
       "roles": [
-        "1442568894349840435"
+        "roles.highStaff"
       ]
     },
     "leaderboard": {
       "roles": [
-        "1442568905582317740"
+        "roles.partnerManager"
       ]
     },
     "partnership": {
       "roles": [
-        "1442568905582317740"
+        "roles.partnerManager"
       ]
     },
     "partner": {
       "roles": null,
       "subcommands": {
         "modifypoint.add": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "modifypoint.remove": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
@@ -85,11 +85,13 @@
       "roles": null,
       "subcommands": {
         "request": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
-        "accept": [
-          "1442568894349840435"
+        "list": [
+          "roles.staff",
+          "roles.partnerManager",
+          "roles.highStaff"
         ]
       }
     },
@@ -97,13 +99,13 @@
       "roles": null,
       "subcommands": {
         "create": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "remove": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "edit": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
@@ -111,19 +113,19 @@
       "roles": null,
       "subcommands": {
         "pex": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "depex": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "warn": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "resoconto.staffer": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "resoconto.pm": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
@@ -131,19 +133,19 @@
       "roles": null,
       "subcommands": {
         "positiva.add": [
-          "1442568886988963923"
+          "roles.owner"
         ],
         "positiva.remove": [
-          "1442568886988963923"
+          "roles.owner"
         ],
         "negativa.add": [
-          "1442568886988963923"
+          "roles.owner"
         ],
         "negativa.remove": [
-          "1442568886988963923"
+          "roles.owner"
         ],
         "media": [
-          "1442568910070349985"
+          "roles.staff"
         ]
       }
     }
@@ -159,14 +161,14 @@
     "membercount": null,
     "ping": null,
     "restart": [
-      "1442568886988963923"
+      "roles.owner"
     ],
     "reaction": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "no-dm": null,
     "no-dm-list": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "snipe": null,
     "join": null,
@@ -182,147 +184,144 @@
       "roles": null,
       "subcommands": {
         "add": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "remove": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "closerequest": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "close": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "claim": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "unclaim": [
-          "1442568910070349985",
-          "1442568905582317740"
+          "roles.staff",
+          "roles.partnerManager"
         ],
         "switchpanel": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "rename": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
     "description": [
-      "1442568905582317740"
+      "roles.partnerManager"
     ],
     "gmulti": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "addlevel": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "removelevel": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "recensione": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "reviewlock": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "purge": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "health": [
-      "1442568886988963923"
+      "roles.owner"
     ],
     "verify": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "customregister": [
-      "1442568894349840435"
+      "roles.highStaff"
     ],
     "customrolecreate": [
-      "1442568950805430312",
-      "1442568916114346096",
-      "1329497467481493607",
-      "1442568931326824488"
+      "roles.vip",
+      "roles.donator",
+      "roles.customRoleAccessC",
+      "roles.customRoleAccessD"
     ],
     "customroleadd": [
-      "1442568950805430312",
-      "1442568916114346096",
-      "1329497467481493607",
-      "1442568931326824488"
+      "roles.vip",
+      "roles.donator",
+      "roles.customRoleAccessC",
+      "roles.customRoleAccessD"
     ],
     "customroleremove": [
-      "1442568950805430312",
-      "1442568916114346096",
-      "1329497467481493607",
-      "1442568931326824488"
+      "roles.vip",
+      "roles.donator",
+      "roles.customRoleAccessC",
+      "roles.customRoleAccessD"
     ],
     "customrolemodify": [
-      "1442568950805430312",
-      "1442568916114346096",
-      "1329497467481493607",
-      "1442568931326824488"
+      "roles.vip",
+      "roles.donator",
+      "roles.customRoleAccessC",
+      "roles.customRoleAccessD"
     ],
     "customvoc": [
-      "1442568950805430312",
-      "1442568916114346096",
-      "1329497467481493607",
-      "1442568931326824488"
+      "roles.vip",
+      "roles.donator",
+      "roles.customRoleAccessC",
+      "roles.customRoleAccessD"
     ],
     "rewards": null,
     "nextreward": null,
     "level": {
       "roles": [
-        "1442568894349840435"
+        "roles.highStaff"
       ],
       "subcommands": {
         "set": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "add": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "remove": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "reset": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "lock": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "unlock": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "multiplier": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "ignore": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "unignore": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "config": [
-          "1442568894349840435"
+          "roles.highStaff"
         ],
         "audit": [
-          "1442568894349840435"
+          "roles.highStaff"
         ]
       }
     },
     "quote": [
-      "1329497467481493607",
-      "1442568916114346096",
-      "1442568950805430312",
-      "1442568936423034940"
-    ],
-    "idlist": [
-      "1442568894349840435"
+      "roles.customRoleAccessC",
+      "roles.donator",
+      "roles.vip",
+      "roles.level10"
     ]
   }
 }

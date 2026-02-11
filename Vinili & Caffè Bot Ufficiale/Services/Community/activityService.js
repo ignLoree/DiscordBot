@@ -1,5 +1,4 @@
-const { ActivityUser } = require('../../Schemas/Community/communitySchemas');
-const ActivityDaily = require('../../Schemas/Community/activityDailySchema');
+const { ActivityUser, ActivityDaily } = require('../../Schemas/Community/communitySchemas');
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember } = require('./expService');
 const IDs = require('../../Utils/Config/ids');
 
@@ -116,7 +115,7 @@ function ensureVoiceKeys(doc, now) {
 
 async function recordMessageActivity(message) {
   if (!message?.guild || !message.author || message.author.bot) return;
-  const roleId = IDs.roles.verifiedUser;
+  const roleId = IDs.roles.user || IDs.roles.verifiedUser;
   const role = message.guild.roles.cache.get(roleId);
   if (!role) return;
   const permissions = message.channel?.permissionsFor?.(role);
@@ -176,7 +175,7 @@ async function handleVoiceActivity(oldState, newState) {
   const now = new Date();
   const wasInVoice = Boolean(oldState?.channelId);
   const isInVoice = Boolean(newState?.channelId);
-  const roleId = IDs.roles.verifiedUser;
+  const roleId = IDs.roles.user || IDs.roles.verifiedUser;
   const role = member.guild.roles.cache.get(roleId);
   if (!role) return;
 

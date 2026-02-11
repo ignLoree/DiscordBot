@@ -10,7 +10,7 @@ const VERIFY_ROLE_IDS = [
     IDs.roles.verifyExtraB,
     IDs.roles.verifyExtraC,
     IDs.roles.verifyExtraD
-];
+].filter(Boolean);
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const VERIFY_LOG_CHANNEL_ID = IDs.channels.antiRaidLog;
@@ -188,7 +188,8 @@ async function makeCaptchaPng(code) {
 }
 function isAlreadyVerified(member) {
     if (!member?.roles?.cache) return false;
-    return VERIFY_ROLE_IDS.every(id => member.roles.cache.has(id));
+    if (!VERIFY_ROLE_IDS.length) return false;
+    return VERIFY_ROLE_IDS.every((id) => member.roles.cache.has(id));
 }
 async function handleVerifyInteraction(interaction) {
     if (interaction.isButton()) {
@@ -270,7 +271,11 @@ async function handleVerifyInteraction(interaction) {
                 .setMaxLength(6);
             const row = new ActionRowBuilder().addComponents(input);
             modal.addComponents(row);
-            await interaction.showModal(modal);
+            try {
+                await interaction.showModal(modal);
+            } catch (error) {
+                if (!isUnknownInteraction(error)) throw error;
+            }
             return true;
         }
     }

@@ -1,8 +1,7 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
-const MentionReaction = require('../Schemas/Community/mentionReactionSchema');
-const AutoResponder = require('../Schemas/Community/autoResponderSchema');
+const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
 const { handleAiChatMessage, handleAiMentionChatMessage } = require('../Services/AI/aiChatService');
@@ -586,12 +585,29 @@ module.exports = {
                 commandChannel.send = (sendPayload) => {
                     const withFooter = applyDefaultFooterToEmbeds(sendPayload, execMessage.guild);
                     if (!hasSendablePayload(withFooter)) return Promise.resolve(null);
+                    const sendWithReferenceFallback = async (primaryPayload, fallbackPayload) => {
+                        try {
+                            return await originalChannelSend(primaryPayload);
+                        } catch (error) {
+                            const hasUnknownRef =
+                                error?.code === 50035
+                                && Boolean(error?.rawError?.errors?.message_reference);
+                            if (!hasUnknownRef) throw error;
+                            return originalChannelSend(fallbackPayload);
+                        }
+                    };
                     if (typeof withFooter === 'string') {
-                        return originalChannelSend({
+                        const primary = {
                             content: withFooter,
                             reply: { messageReference: execMessage.id, failIfNotExists: false },
+                            allowedMentions: { repliedUser: false },
+                            failIfNotExists: false
+                        };
+                        const fallback = {
+                            content: withFooter,
                             allowedMentions: { repliedUser: false }
-                        });
+                        };
+                        return sendWithReferenceFallback(primary, fallback);
                     }
                     if (!withFooter || typeof withFooter !== 'object') {
                         return originalChannelSend(withFooter);
@@ -599,12 +615,17 @@ module.exports = {
                     const normalized = {
                         ...withFooter,
                         reply: withFooter.reply || (withFooter.messageReference ? undefined : { messageReference: execMessage.id, failIfNotExists: false }),
+                        failIfNotExists: withFooter.failIfNotExists ?? false,
                         allowedMentions: {
                             ...(withFooter.allowedMentions || {}),
                             repliedUser: withFooter.allowedMentions?.repliedUser ?? false
                         }
                     };
-                    return originalChannelSend(normalized);
+                    const fallback = { ...normalized };
+                    delete fallback.reply;
+                    delete fallback.messageReference;
+                    delete fallback.failIfNotExists;
+                    return sendWithReferenceFallback(normalized, fallback);
                 };
             }
             const originalSendTyping = execMessage.channel?.sendTyping?.bind(execMessage.channel);

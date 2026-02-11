@@ -38,6 +38,37 @@ const expUserSchema = new Schema(
 );
 expUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
+const activityDailySchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    dateKey: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    textCount: { type: Number, default: 0 },
+    voiceSeconds: { type: Number, default: 0 },
+    textChannels: { type: Map, of: Number, default: {} },
+    voiceChannels: { type: Map, of: Number, default: {} }
+  },
+  { timestamps: true }
+);
+activityDailySchema.index({ guildId: 1, dateKey: 1, userId: 1 }, { unique: true });
+
+const levelHistorySchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    actorId: { type: String, default: null, index: true },
+    action: { type: String, required: true, index: true },
+    beforeExp: { type: Number, default: 0 },
+    afterExp: { type: Number, default: 0 },
+    beforeLevel: { type: Number, default: 0 },
+    afterLevel: { type: Number, default: 0 },
+    deltaExp: { type: Number, default: 0 },
+    note: { type: String, default: null }
+  },
+  { timestamps: true }
+);
+levelHistorySchema.index({ guildId: 1, userId: 1, createdAt: -1 });
+
 const globalSettingsSchema = new Schema(
   {
     guildId: { type: String, required: true, unique: true, index: true },
@@ -195,6 +226,8 @@ quotePrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
 const ActivityUser = models.ActivityUser || model('ActivityUser', activityUserSchema);
 const ExpUser = models.ExpUser || model('ExpUser', expUserSchema);
+const ActivityDaily = models.ActivityDaily || model('ActivityDaily', activityDailySchema);
+const LevelHistory = models.LevelHistory || model('LevelHistory', levelHistorySchema);
 const GlobalSettings = models.GlobalSettings || model('GlobalSettings', globalSettingsSchema);
 const VoteRole = models.VoteRole || model('VoteRole', voteRoleSchema);
 const VerificationTenure = models.VerificationTenure || model('VerificationTenure', verificationTenureSchema);
@@ -213,6 +246,8 @@ const QuotePrivacy = models.QuotePrivacy || model('QuotePrivacy', quotePrivacySc
 module.exports = {
   ActivityUser,
   ExpUser,
+  ActivityDaily,
+  LevelHistory,
   GlobalSettings,
   VoteRole,
   VerificationTenure,

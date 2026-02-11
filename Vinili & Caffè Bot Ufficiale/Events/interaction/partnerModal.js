@@ -34,11 +34,12 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setDescription('<:vegax:1443934876440068179> Non hai i permessi per fare partnership.')
                     .setColor('Red')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
-    const description = interaction.fields.getTextInputValue('serverDescription');
+    const rawDescription = interaction.fields.getTextInputValue('serverDescription');
+    const description = stripOuterCodeBlock(String(rawDescription || '').trim());
     const managerId = interaction.customId.split('_')[1];
     const PARTNER_BLACKLIST_ROLE = IDs.roles.ticketPartnerBlacklist;
     if (!managerId) {
@@ -47,7 +48,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('Red')
                     .setDescription('<:vegax:1443934876440068179> Errore interno: manager non trovato.')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
@@ -63,7 +64,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('Red')
                     .setDescription('<:vegax:1443934876440068179> Manager non trovato nel server.')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
@@ -77,7 +78,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('Red')
                     .setDescription('<:vegax:1443934876440068179> Questo utente non è verificato, fagli effettuare prima la verifica e poi riprova!')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
@@ -87,7 +88,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('#6f4e37')
                     .setDescription('Non puoi fare partner con questo manager poichè blacklistato!')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
@@ -98,7 +99,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('Red')
                     .setDescription('<:vegax:1443934876440068179> Devi inserire un link di invito Discord valido.')
-            ], flags: 1 << 6
+            ]
         });
         return true;
     }
@@ -213,7 +214,7 @@ async function handlePartnerModal(interaction) {
                 new EmbedBuilder()
                     .setColor('#e74c3c')
                     .setDescription(`<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.`)
-            ], flags: 1 << 6
+            ]
         });
     }
     return true;
@@ -242,6 +243,17 @@ function splitMessage(message, maxLength = 2000) {
     }
     if (current) parts.push(current);
     return parts;
+}
+
+function stripOuterCodeBlock(text) {
+    if (!text) return '';
+    const trimmed = text.trim();
+    const match = trimmed.match(/^```(?:[a-zA-Z0-9_-]+)?\n?([\s\S]*?)```$/);
+    if (match?.[1]) return match[1].trim();
+    return trimmed
+        .replace(/^```/, '')
+        .replace(/```$/, '')
+        .trim();
 }
 
 module.exports = { handlePartnerModal };

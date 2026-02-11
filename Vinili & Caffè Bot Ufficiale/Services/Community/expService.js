@@ -1,6 +1,4 @@
-const { ExpUser } = require('../../Schemas/Community/communitySchemas');
-const { GlobalSettings } = require('../../Schemas/Community/communitySchemas');
-const LevelHistory = require('../../Schemas/Community/levelHistorySchema');
+const { ExpUser, GlobalSettings, LevelHistory } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 const EXP_EXCLUDED_CATEGORY_IDS = new Set(
   [IDs.channels.expExcludedCategory].filter(Boolean).map((id) => String(id))

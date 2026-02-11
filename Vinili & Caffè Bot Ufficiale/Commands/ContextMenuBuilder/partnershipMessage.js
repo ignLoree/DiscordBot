@@ -22,10 +22,19 @@ module.exports = {
                 flags: 1 << 6
             });
         }
-        const manager = interaction.targetMessage?.author;
-        if (!manager) return;
+        const managerId = extractManagerId(interaction.targetMessage);
+        if (!managerId) {
+            return safeReply(interaction, {
+                embeds: [
+                    new EmbedBuilder()
+                        .setDescription('<:vegax:1443934876440068179> Non riesco a trovare il manager nel messaggio selezionato.')
+                        .setColor("Red")
+                ],
+                flags: 1 << 6
+            });
+        }
         const modal = new ModalBuilder()
-            .setCustomId(`partnershipModal_${manager.id}`)
+            .setCustomId(`partnershipModal_${managerId}`)
             .setTitle('Invia Partnership');
         const descriptionInput = new TextInputBuilder()
             .setCustomId('serverDescription')
@@ -33,14 +42,9 @@ module.exports = {
             .setStyle(TextInputStyle.Paragraph)
             .setPlaceholder("Inserisci qui la descrizione del server...")
             .setRequired(true);
-        const messageContent = (interaction.targetMessage?.content || '').trim();
-        if (messageContent) {
-            descriptionInput.setValue(messageContent.slice(0, 4000));
-        } else {
-            const embedDesc = interaction.targetMessage?.embeds?.[0]?.description || '';
-            if (embedDesc) {
-                descriptionInput.setValue(String(embedDesc).slice(0, 4000));
-            }
+        const extractedDescription = extractDescription(interaction.targetMessage);
+        if (extractedDescription) {
+            descriptionInput.setValue(extractedDescription.slice(0, 4000));
         }
         const row = new ActionRowBuilder().addComponents(descriptionInput);
         modal.addComponents(row);
@@ -59,3 +63,57 @@ module.exports = {
         }
     }
 };
+
+function extractManagerId(message) {
+    if (!message) return null;
+    const mentionRegex = /<@!?(\d+)>/;
+
+    if (message.content) {
+        const match = message.content.match(mentionRegex);
+        if (match?.[1]) return match[1];
+    }
+
+    const firstEmbed = message.embeds?.[0];
+    if (firstEmbed?.description) {
+        const match = String(firstEmbed.description).match(mentionRegex);
+        if (match?.[1]) return match[1];
+    }
+
+    if (firstEmbed?.fields?.length) {
+        for (const field of firstEmbed.fields) {
+            const value = `${field?.name || ''}\n${field?.value || ''}`;
+            const match = value.match(mentionRegex);
+            if (match?.[1]) return match[1];
+        }
+    }
+
+    return message.author?.id || null;
+}
+
+function extractDescription(message) {
+    if (!message) return '';
+    const firstEmbed = message.embeds?.[0];
+    const content = (message.content || '').trim();
+    const embedDescription = (firstEmbed?.description || '').trim();
+    const source = embedDescription || content;
+    if (!source) return '';
+
+    let normalized = source
+        .replace(/^\*\*manager:\*\*\s*<@!?(\d+)>\s*/i, '')
+        .replace(/^\*\*manager partner:\*\*\s*<@!?(\d+)>\s*/i, '')
+        .trim();
+
+    normalized = stripOuterCodeBlock(normalized);
+    return normalized.trim();
+}
+
+function stripOuterCodeBlock(text) {
+    if (!text) return '';
+    const trimmed = text.trim();
+    const match = trimmed.match(/^```(?:[a-zA-Z0-9_-]+)?\n?([\s\S]*?)```$/);
+    if (match?.[1]) return match[1].trim();
+    return trimmed
+        .replace(/^```/, '')
+        .replace(/```$/, '')
+        .trim();
+}

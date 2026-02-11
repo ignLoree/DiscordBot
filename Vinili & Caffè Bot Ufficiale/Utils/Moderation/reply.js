@@ -14,6 +14,26 @@ function isAlreadyAcknowledgedError(err) {
   return err?.code === 40060;
 }
 
+function isInteractionNotRepliedError(err) {
+  return err?.code === 'InteractionNotReplied';
+}
+
+function stripMessageReference(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  const next = { ...payload };
+  delete next.reply;
+  delete next.messageReference;
+  delete next.failIfNotExists;
+  if (next.allowedMentions && typeof next.allowedMentions === 'object') {
+    next.allowedMentions = { ...next.allowedMentions, repliedUser: false };
+  }
+  return next;
+}
+
+function isUnknownMessageReferenceError(err) {
+  return err?.code === 50035 && Boolean(err?.rawError?.errors?.message_reference);
+}
+
 function logReplyError(scope, err) {
   if (isUnknownInteractionError(err) || isAlreadyAcknowledgedError(err)) return;
   if (global?.logger?.error) {
@@ -70,11 +90,18 @@ async function safeReply(interaction, payload) {
 async function safeEditReply(interaction, payload) {
   if (!interaction) return null;
 
+  if (!interaction.deferred && !interaction.replied) {
+    return safeReply(interaction, payload);
+  }
+
   if (interaction.deferred || interaction.replied) {
     try {
       return await interaction.editReply(sanitizeEditPayload(payload));
     } catch (err) {
-      if (isUnknownInteractionError(err)) return null;
+      if (isUnknownInteractionError(err) || isAlreadyAcknowledgedError(err)) return null;
+      if (isInteractionNotRepliedError(err)) {
+        return safeReply(interaction, payload);
+      }
       logReplyError('editReply(primary)', err);
       if (interaction.deferred || interaction.replied) {
         try {
@@ -109,6 +136,15 @@ async function safeMessageReply(message, payload) {
     return await message.reply(payload);
   } catch (err) {
     if (err?.code === 10008) return null;
+    if (isUnknownMessageReferenceError(err)) {
+      try {
+        return await message.channel.send(stripMessageReference(payload));
+      } catch (fallbackErr) {
+        if (fallbackErr?.code === 10008) return null;
+        logReplyError('message.reply(reference-fallback)', fallbackErr);
+        return null;
+      }
+    }
     logReplyError('message.reply', err);
   }
   return null;
@@ -120,6 +156,15 @@ async function safeChannelSend(channel, payload) {
     return await channel.send(payload);
   } catch (err) {
     if (err?.code === 10008) return null;
+    if (isUnknownMessageReferenceError(err)) {
+      try {
+        return await channel.send(stripMessageReference(payload));
+      } catch (fallbackErr) {
+        if (fallbackErr?.code === 10008) return null;
+        logReplyError('channel.send(reference-fallback)', fallbackErr);
+        return null;
+      }
+    }
     logReplyError('channel.send', err);
   }
   return null;

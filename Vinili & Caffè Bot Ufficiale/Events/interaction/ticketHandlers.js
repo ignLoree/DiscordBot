@@ -785,14 +785,17 @@ async function handleTicketInteraction(interaction) {
             }
 
             const chunks = [];
-            const maxChunkLen = 3900;
+            const maxChunkLen = 3600;
             for (let i = 0; i < description.length; i += maxChunkLen) {
                 chunks.push(description.slice(i, i + maxChunkLen));
             }
-            const descriptionEmbeds = chunks.map((chunk) => {
+            const descriptionEmbeds = chunks.map((chunk, index) => {
+                const header = index === 0
+                    ? `**Manager:** <@${interaction.user.id}>\n\n`
+                    : '';
                 const embed = new EmbedBuilder()
                     .setColor('#6f4e37')
-                    .setDescription(`\`\`\`\n${chunk}\n\`\`\``);
+                    .setDescription(`${header}\`\`\`\n${chunk}\n\`\`\``);
                 return embed;
             });
             if (descriptionEmbeds.length > 0) {

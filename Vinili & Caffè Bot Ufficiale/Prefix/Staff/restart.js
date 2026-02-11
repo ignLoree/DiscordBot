@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
@@ -85,7 +85,7 @@ module.exports = {
       const channelId = message.channelId || message.channel?.id || null;
 
       if (scope === 'full') {
-        await safeMessageReply(message, {
+        const notifyMessage = await safeMessageReply(message, {
           embeds: [
             new EmbedBuilder()
               .setColor('#6f4e37')
@@ -97,7 +97,15 @@ module.exports = {
         const notifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
         fs.writeFileSync(
           notifyPath,
-          JSON.stringify({ channelId, by: message.author.id, at: requestedAt, scope: 'full' }, null, 2),
+          JSON.stringify({
+            channelId,
+            guildId: message.guild?.id || null,
+            by: message.author.id,
+            at: requestedAt,
+            scope: 'full',
+            commandMessageId: message.id || null,
+            notifyMessageId: notifyMessage?.id || null
+          }, null, 2),
           'utf8'
         );
 

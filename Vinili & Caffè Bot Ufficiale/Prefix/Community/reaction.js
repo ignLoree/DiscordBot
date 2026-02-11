@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const MentionReaction = require('../../Schemas/Community/mentionReactionSchema');
-const AutoResponder = require('../../Schemas/Community/autoResponderSchema');
+const { MentionReaction, AutoResponder } = require('../../Schemas/Community/autoInteractionSchemas');
 const { invalidateGuildAutoResponderCache } = require('../../Utils/Community/autoResponderCache');
 
 const MAX_REACTIONS = 6;

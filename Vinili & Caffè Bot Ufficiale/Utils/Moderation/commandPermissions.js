@@ -19,39 +19,63 @@ function loadPermissions() {
   }
 }
 
+
+function resolveRoleReference(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{16,20}$/.test(raw)) return raw;
+
+  let key = raw;
+  if (key.startsWith('ids.roles.')) key = key.slice('ids.roles.'.length);
+  else if (key.startsWith('roles.')) key = key.slice('roles.'.length);
+
+  const resolved = IDs?.roles?.[key];
+  if (!resolved) return null;
+  return String(resolved);
+}
+
+function normalizeRoleList(roleIds) {
+  if (!Array.isArray(roleIds)) return roleIds;
+  return roleIds
+    .map((value) => resolveRoleReference(value))
+    .filter(Boolean);
+}
+
 function hasAnyRole(member, roleIds) {
-  if (!Array.isArray(roleIds)) return true;
-  if (roleIds.length === 0) return false;
-  return roleIds.some((roleId) => member?.roles?.cache?.has(roleId));
+  const normalized = normalizeRoleList(roleIds);
+  if (!Array.isArray(normalized)) return true;
+  if (normalized.length === 0) return false;
+  return normalized.some((roleId) => member?.roles?.cache?.has(roleId));
 }
 
 function resolveSlashRoles(data, commandName, groupName, subcommandName) {
   const cmd = data?.slash?.[commandName];
   if (!cmd) return null;
-  if (Array.isArray(cmd)) return cmd;
+  if (Array.isArray(cmd)) return normalizeRoleList(cmd);
   if (typeof cmd !== 'object') return null;
   const subcommands = cmd.subcommands || {};
   if (groupName && subcommandName) {
     const key = `${groupName}.${subcommandName}`;
-    if (Array.isArray(subcommands[key])) return subcommands[key];
+    if (Array.isArray(subcommands[key])) return normalizeRoleList(subcommands[key]);
   }
   if (subcommandName && Array.isArray(subcommands[subcommandName])) {
-    return subcommands[subcommandName];
+    return normalizeRoleList(subcommands[subcommandName]);
   }
-  if (Array.isArray(cmd.roles)) return cmd.roles;
+  if (Array.isArray(cmd.roles)) return normalizeRoleList(cmd.roles);
   return null;
 }
 
 function resolvePrefixRoles(data, commandName, subcommandName = null) {
   const cmd = data?.prefix?.[commandName];
   if (!cmd) return null;
-  if (Array.isArray(cmd)) return cmd;
+  if (Array.isArray(cmd)) return normalizeRoleList(cmd);
   if (typeof cmd !== 'object') return null;
   const subcommands = cmd.subcommands || {};
   if (subcommandName && Array.isArray(subcommands[subcommandName])) {
-    return subcommands[subcommandName];
+    return normalizeRoleList(subcommands[subcommandName]);
   }
-  if (Array.isArray(cmd.roles)) return cmd.roles;
+  if (Array.isArray(cmd.roles)) return normalizeRoleList(cmd.roles);
   return null;
 }
 
