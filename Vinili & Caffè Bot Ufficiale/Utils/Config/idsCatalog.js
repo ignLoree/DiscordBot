@@ -140,6 +140,7 @@ const channelsRaw = `
 ༄🚩︲activity᲼logs -> 1442569299725385851
 ༄🛃︲join᲼leave᲼logs -> 1442569306608111776
 ༄🆙︲pex᲼depex -> 1442569234004709391
+༄🧠︲ai -> 1471108621629784104
 Animali -> 1461423795246989478
 Buoni propositi 2026 -> 1456349072473587936
 Spotify Wrapped/Apple Music Replay '25 -> 1445792081271587000

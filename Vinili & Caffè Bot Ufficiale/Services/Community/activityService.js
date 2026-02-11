@@ -315,6 +315,42 @@ async function getServerActivityStats(guildId, days = 7) {
     }
   }
 
+  // Fallback retroattivo parziale: prima del tracking daily non avevamo il dettaglio per canale.
+  if (rows.length === 0) {
+    const users = await ActivityUser.find({ guildId })
+      .select('userId messages.weekly messages.total voice.weeklySeconds voice.totalSeconds')
+      .lean()
+      .catch(() => []);
+
+    const retroUserText = new Map();
+    const retroUserVoice = new Map();
+    let retroTextTotal = 0;
+    let retroVoiceTotal = 0;
+    const useWeekly = Number(days || 7) <= 7;
+
+    for (const row of users) {
+      const textValue = Number(useWeekly ? row?.messages?.weekly : row?.messages?.total) || 0;
+      const voiceValue = Number(useWeekly ? row?.voice?.weeklySeconds : row?.voice?.totalSeconds) || 0;
+      pushMapValue(retroUserText, String(row?.userId || ''), textValue);
+      pushMapValue(retroUserVoice, String(row?.userId || ''), voiceValue);
+      retroTextTotal += textValue;
+      retroVoiceTotal += voiceValue;
+    }
+
+    return {
+      days: Math.max(1, Math.min(31, Number(days || 7))),
+      totals: {
+        text: retroTextTotal,
+        voiceSeconds: retroVoiceTotal
+      },
+      topUsersText: topNFromMap(retroUserText, 3),
+      topUsersVoice: topNFromMap(retroUserVoice, 3),
+      topChannelsText: [],
+      topChannelsVoice: [],
+      approximate: true
+    };
+  }
+
   return {
     days: Math.max(1, Math.min(31, Number(days || 7))),
     totals: {
@@ -324,7 +360,8 @@ async function getServerActivityStats(guildId, days = 7) {
     topUsersText: topNFromMap(userText, 3),
     topUsersVoice: topNFromMap(userVoice, 3),
     topChannelsText: topNFromMap(channelText, 3),
-    topChannelsVoice: topNFromMap(channelVoice, 3)
+    topChannelsVoice: topNFromMap(channelVoice, 3),
+    approximate: false
   };
 }
 

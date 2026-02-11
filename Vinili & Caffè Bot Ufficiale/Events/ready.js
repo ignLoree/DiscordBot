@@ -187,7 +187,6 @@ module.exports = {
             try {
                 if (typeof startupPanelsTrigger?.execute === 'function') {
                     await startupPanelsTrigger.execute(client);
-                    global.logger.info(`[CLIENT READY] Startup panels refresh executed (${label}).`);
                 }
             } catch (err) {
                 global.logger.error(`[CLIENT READY] Startup panels refresh failed (${label}):`, err);
