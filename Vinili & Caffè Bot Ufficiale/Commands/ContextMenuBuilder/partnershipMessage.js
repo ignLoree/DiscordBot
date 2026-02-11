@@ -34,7 +34,7 @@ module.exports = {
             });
         }
         const modal = new ModalBuilder()
-            .setCustomId(`partnershipModal_${managerId}`)
+            .setCustomId(`partnershipModal_${interaction.user.id}_${managerId}`)
             .setTitle('Invia Partnership');
         const descriptionInput = new TextInputBuilder()
             .setCustomId('serverDescription')

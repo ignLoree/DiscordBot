@@ -69,15 +69,7 @@ module.exports = {
                     valutazioniCount: 0
                 });
             }
-            const checkPermissions = () => {
-                const allowedRoleID = IDs.roles.Staff;
-                const stafferMember = interaction.guild.members.cache.get(utentee.id);
-                if (!stafferMember || !stafferMember.roles.cache.has(allowedRoleID)) return false;
-                if (interaction.user.id === utentee.id) return false;
-                return true;
-            };
             if (group === "positiva") {
-                if (!checkPermissions()) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!").setColor("Red")], flags: 1 << 6 });
                 if (sub === "add") {
                     StaffDoc.valutazioniCount++;
                     StaffDoc.positiveCount++;
@@ -114,7 +106,6 @@ module.exports = {
                 }
             }
             if (group === "negativa") {
-                if (!checkPermissions()) return await safeEditReply(interaction, { embeds: [new EmbedBuilder().setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando!").setColor("Red")], flags: 1 << 6 });
                 if (sub === "add") {
                     StaffDoc.valutazioniCount++;
                     StaffDoc.negativeCount++;

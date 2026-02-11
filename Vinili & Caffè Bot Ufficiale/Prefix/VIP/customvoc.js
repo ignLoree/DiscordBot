@@ -4,24 +4,6 @@ const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
 const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
-const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  IDs.roles.VIP,
-  IDs.roles.Donator,
-  IDs.roles.ServerBooster,
-  IDs.roles.Level70
-];
-
-function hasCustomRoleAccess(member) {
-  return CUSTOM_ROLE_ALLOWED_ROLE_IDS.some((id) => member?.roles?.cache?.has(id));
-}
-
-function buildNoPermEmbed() {
-  return new EmbedBuilder()
-    .setColor('Red')
-    .setTitle('<:VC_Lock:1468544444113617063> Non hai i permessi')
-    .setDescription('Questo comando Ã¨ riservato agli utenti VIP con accesso ai ruoli personalizzati.');
-}
-
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
     .replace(/[^\p{L}\p{N} _',.!?\-]/gu, '')
@@ -91,11 +73,6 @@ module.exports = {
 
   async execute(message) {
     if (!message.guild || !message.member) return;
-
-    if (!hasCustomRoleAccess(message.member)) {
-      await safeMessageReply(message, { embeds: [buildNoPermEmbed()], allowedMentions: { repliedUser: false } });
-      return;
-    }
 
     const { role: customRole, doc: customRoleDoc } = await resolveCustomRole(message.guild, message.author.id);
     if (!customRole) {

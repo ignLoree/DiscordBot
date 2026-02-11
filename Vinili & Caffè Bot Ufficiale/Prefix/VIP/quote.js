@@ -6,13 +6,6 @@ const { QuotePrivacy } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
 const QUOTE_CHANNEL_ID = IDs.channels.quotes;
-const ALLOWED_ROLE_IDS = [
-  IDs.roles.ServerBooster,
-  IDs.roles.Donator,
-  IDs.roles.VIP,
-  IDs.roles.Level10
-];
-
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
@@ -23,17 +16,6 @@ function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
       { name: "Creato da:", value: `<@${creatorId}>` }
     )
     .setFooter({ text: `Post totali: ${totalPosts}` });
-}
-
-function buildNoPermsEmbed() {
-  return new EmbedBuilder()
-    .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
-    .addFields({
-      name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
-      value: `ottieni uno dei seguenti ruoli: <@&${ALLOWED_ROLE_IDS[0]}>, <@&${ALLOWED_ROLE_IDS[1]}>, <@&${ALLOWED_ROLE_IDS[2]}>, <@&${ALLOWED_ROLE_IDS[3]}>`
-    });
 }
 
 module.exports = {
@@ -50,12 +32,6 @@ module.exports = {
         ],
         allowedMentions: { repliedUser: false }
       });
-    }
-
-    const memberRoles = message.member?.roles?.cache;
-    const hasRole = memberRoles?.some(role => ALLOWED_ROLE_IDS.includes(role.id));
-    if (!hasRole) {
-      return safeMessageReply(message, { embeds: [buildNoPermsEmbed()], allowedMentions: { repliedUser: false } });
     }
 
     const refId = message.reference?.messageId;

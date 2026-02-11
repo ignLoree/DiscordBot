@@ -40,7 +40,7 @@ async function handlePartnerModal(interaction) {
     }
     const rawDescription = interaction.fields.getTextInputValue('serverDescription');
     const description = stripOuterCodeBlock(String(rawDescription || '').trim());
-    const managerId = interaction.customId.split('_')[1];
+    const { managerId } = parsePartnershipModalId(interaction.customId);
     const PARTNER_BLACKLIST_ROLE = IDs.roles.blackilistPartner;
     if (!managerId) {
         await interaction.editReply({
@@ -218,6 +218,20 @@ async function handlePartnerModal(interaction) {
         });
     }
     return true;
+}
+
+function parsePartnershipModalId(customId) {
+    const raw = String(customId || '');
+    const parts = raw.split('_');
+    // New format: partnershipModal_<openerId>_<managerId>
+    if (parts.length >= 3 && /^\d{16,20}$/.test(parts[1]) && /^\d{16,20}$/.test(parts[2])) {
+        return { openerId: parts[1], managerId: parts[2] };
+    }
+    // Legacy format: partnershipModal_<managerId>
+    if (parts.length >= 2 && /^\d{16,20}$/.test(parts[1])) {
+        return { openerId: null, managerId: parts[1] };
+    }
+    return { openerId: null, managerId: null };
 }
 function splitMessage(message, maxLength = 2000) {
     if (!message) return [''];

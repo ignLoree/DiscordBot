@@ -1,8 +1,18 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
-const { checkSlashPermission } = require('../../Utils/Moderation/commandPermissions');
+const {
+    checkSlashPermission,
+    getSlashRequiredRoles,
+    buildGlobalPermissionDeniedEmbed
+} = require('../../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../../Utils/Moderation/commandCooldown');
+const {
+    buildCooldownErrorEmbed,
+    buildBusyCommandErrorEmbed,
+    buildCommandTimeoutErrorEmbed,
+    buildInternalCommandErrorEmbed
+} = require('../../Utils/Moderation/commandErrorEmbeds');
 const IDs = require('../../Utils/Config/ids');
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
@@ -49,8 +59,9 @@ async function handleSlashCommand(interaction, client) {
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
     if (!checkSlashPermission(interaction)) {
+        const requiredRoles = getSlashRequiredRoles(interaction);
         return interaction.reply({
-            content: "<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.",
+            embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles)],
             flags: 1 << 6
         });
     }
@@ -76,14 +87,14 @@ async function handleSlashCommand(interaction, client) {
         if (!cooldownResult.ok) {
             const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
             return interaction.reply({
-                content: `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
+                embeds: [buildCooldownErrorEmbed(remaining)],
                 flags: 1 << 6
             });
         }
     }
     if (client.interactionCommandLocks.has(interactionLockId)) {
         return interaction.reply({
-            content: "<:attentionfromvega:1443651874032062505> Hai già un comando in esecuzione, attendi un attimo.",
+            embeds: [buildBusyCommandErrorEmbed()],
             flags: 1 << 6
         });
     }
@@ -245,13 +256,9 @@ async function handleSlashCommand(interaction, client) {
                 } catch { }
             });
         }
-        const userEmbed = new EmbedBuilder()
-            .setColor('#e74c3c')
-            .setDescription(
-                error?.code === 'COMMAND_TIMEOUT'
-                    ? '<:attentionfromvega:1443651874032062505> Il comando è scaduto dopo 60 secondi. Riprova.'
-                    : `<:vegax:1443934876440068179> C'è stato un errore nell'esecuzione del comando.\n\`\`\`${errorText}\`\`\``
-            );
+        const userEmbed = error?.code === 'COMMAND_TIMEOUT'
+            ? buildCommandTimeoutErrorEmbed()
+            : buildInternalCommandErrorEmbed(errorText);
         await safeReply({
             embeds: [userEmbed],
             flags: 1 << 6

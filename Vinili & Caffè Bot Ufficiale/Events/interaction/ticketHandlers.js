@@ -18,7 +18,11 @@ async function handleTicketInteraction(interaction) {
         'unclaim'
     ]);
     const handledSelectMenus = new Set(['ticket_open_menu']);
-    const handledModals = new Set(['modal_close_ticket', 'ticket_open_desc_modal_submit']);
+    const isHandledTicketModalId = (id) =>
+        id === 'modal_close_ticket'
+        || id.startsWith('modal_close_ticket:')
+        || id === 'ticket_open_desc_modal_submit'
+        || id.startsWith('ticket_open_desc_modal_submit:');
     const selectedTicketAction = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId)
         ? interaction.values?.[0]
         : null;
@@ -26,7 +30,7 @@ async function handleTicketInteraction(interaction) {
 
     const isTicketButton = interaction.isButton && interaction.isButton() && handledButtons.has(interaction.customId);
     const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId);
-    const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && handledModals.has(interaction.customId);
+    const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && isHandledTicketModalId(String(interaction.customId || ''));
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
     const LOG_CHANNEL = IDs.channels.ticketLogs || IDs.channels.serveBbotLogs;
@@ -572,7 +576,7 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Hai già inviato la descrizione iniziale.')], flags: 1 << 6 });
                     return true;
                 }
-                const modal = new ModalBuilder().setCustomId('ticket_open_desc_modal_submit').setTitle('Descrizione Ticket');
+                const modal = new ModalBuilder().setCustomId(`ticket_open_desc_modal_submit:${interaction.user.id}`).setTitle('Descrizione Ticket');
                 const input = new TextInputBuilder()
                     .setCustomId('ticket_description')
                     .setLabel('Inserisci la descrizione')
@@ -610,6 +614,10 @@ async function handleTicketInteraction(interaction) {
                 }
                 if (!ticketDoc.claimedBy) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                    return true;
+                }
+                if (ticketDoc.userId === interaction.user.id) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Chi ha aperto il ticket non può usare questo pulsante.')], flags: 1 << 6 });
                     return true;
                 }
                 if (interaction.user.id !== ticketDoc.claimedBy) {
@@ -662,15 +670,15 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
                     return true;
                 }
-                const canCloseSupport = ticketDoc.ticketType === 'supporto' && STAFF_ROLES.some(r => interaction.member?.roles?.cache?.has(r));
-                const canClosePartnership = ticketDoc.ticketType === 'partnership'
-                    && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
-                const canCloseHigh = ticketDoc.ticketType === 'high' && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
-                if (!canCloseSupport && !canClosePartnership && !canCloseHigh) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
+                if (!ticketDoc.claimedBy) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
                     return true;
                 }
-                const modal = new ModalBuilder().setCustomId('modal_close_ticket').setTitle('Chiudi Ticket con Motivo');
+                if (ticketDoc.claimedBy !== interaction.user.id) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
+                    return true;
+                }
+                const modal = new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`).setTitle('Chiudi Ticket con Motivo');
                 const input = new TextInputBuilder().setCustomId('motivo').setLabel('Motivo della chiusura').setStyle(TextInputStyle.Paragraph).setRequired(true);
                 modal.addComponents(new ActionRowBuilder().addComponents(input));
                 const shown = await interaction.showModal(modal).then(() => true).catch(err => {
@@ -699,12 +707,12 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
                     return true;
                 }
-                const canCloseSupport = ticketDoc.ticketType === 'supporto' && STAFF_ROLES.some(r => interaction.member?.roles?.cache?.has(r));
-                const canClosePartnership = ticketDoc.ticketType === 'partnership'
-                    && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
-                const canCloseHigh = ticketDoc.ticketType === 'high' && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
-                if (!canCloseSupport && !canClosePartnership && !canCloseHigh) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
+                if (!ticketDoc.claimedBy) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                    return true;
+                }
+                if (ticketDoc.claimedBy !== interaction.user.id) {
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                     return true;
                 }
                 try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
@@ -750,7 +758,7 @@ async function handleTicketInteraction(interaction) {
                 return true;
             }
         }
-        if (isTicketModal && interaction.customId === 'ticket_open_desc_modal_submit') {
+        if (isTicketModal && String(interaction.customId || '').startsWith('ticket_open_desc_modal_submit')) {
             if (!interaction.channel) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
                 return true;
@@ -812,8 +820,25 @@ async function handleTicketInteraction(interaction) {
             await interaction.deleteReply().catch(() => { });
             return true;
         }
-        if (isTicketModal && interaction.customId === 'modal_close_ticket') {
+        if (isTicketModal && String(interaction.customId || '').startsWith('modal_close_ticket')) {
             try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
+            const ticketDoc = await Ticket.findOne({ channelId: interaction.channel?.id });
+            if (!ticketDoc) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                return true;
+            }
+            if (ticketDoc.userId === interaction.user.id) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
+                return true;
+            }
+            if (!ticketDoc.claimedBy) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                return true;
+            }
+            if (ticketDoc.claimedBy !== interaction.user.id) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
+                return true;
+            }
             const motivo = interaction.fields.getTextInputValue('motivo');
             await closeTicket(interaction, motivo, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
             return true;

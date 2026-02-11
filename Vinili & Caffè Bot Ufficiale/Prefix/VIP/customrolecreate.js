@@ -10,28 +10,6 @@ const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
 const ANCHOR_ROLE_ID = IDs.roles.separatore1;
-const CUSTOM_ROLE_ALLOWED_ROLE_IDS = [
-  IDs.roles.VIP,
-  IDs.roles.Donator,
-  IDs.roles.ServerBooster,
-  IDs.roles.Level70
-];
-
-function hasCustomRoleAccess(member) {
-  return CUSTOM_ROLE_ALLOWED_ROLE_IDS.some((id) => member?.roles?.cache?.has(id));
-}
-
-function buildNoPermEmbed() {
-  return new EmbedBuilder()
-    .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription("Questo comando è **VIP**, riservato ad una categoria di utenti specifici.")
-    .addFields({
-      name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
-      value: `ottieni uno dei seguenti ruoli: <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[0]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[1]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[2]}>, <@&${CUSTOM_ROLE_ALLOWED_ROLE_IDS[3]}>`
-    });
-}
-
 function trimRoleName(name) {
   const clean = String(name || '').replace(/\s+/g, ' ').trim();
   if (!clean) return 'Custom Role';
@@ -141,10 +119,6 @@ module.exports = {
 
   async execute(message) {
     if (!message.guild || !message.member) return;
-    if (!hasCustomRoleAccess(message.member)) {
-      await safeMessageReply(message, { embeds: [buildNoPermEmbed(message)], allowedMentions: { repliedUser: false } });
-      return;
-    }
 
     const { role, error } = await resolveOrCreateRole(message);
     if (error) {

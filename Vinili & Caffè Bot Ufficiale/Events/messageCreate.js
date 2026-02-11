@@ -13,8 +13,18 @@ const { recordReminderActivity } = require('../Services/Community/chatReminderSe
 const { recordMessageActivity } = require('../Services/Community/activityService');
 const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
-const { checkPrefixPermission } = require('../Utils/Moderation/commandPermissions');
+const {
+    checkPrefixPermission,
+    getPrefixRequiredRoles,
+    buildGlobalPermissionDeniedEmbed
+} = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
+const {
+    buildCooldownErrorEmbed,
+    buildMissingArgumentsErrorEmbed,
+    buildCommandTimeoutErrorEmbed,
+    buildInternalCommandErrorEmbed
+} = require('../Utils/Moderation/commandErrorEmbeds');
 const {
     getGuildAutoResponderCache,
     setGuildAutoResponderCache
@@ -488,18 +498,15 @@ module.exports = {
             args.unshift(prefixSubcommandFromAlias);
         }
         if (!checkPrefixPermission(message, command.name, prefixSubcommand)) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription("<:vegax:1443934876440068179> Non hai il permesso per fare questo comando.");
+            const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
+            const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
             return;
         }
         if (command?.args && !args.length) {
-            const embed = new EmbedBuilder()
-                .setColor("Red")
-                .setDescription(`<:vegax:1443934876440068179> Non hai **aggiunto** nessun argomento.`);
+            const embed = buildMissingArgumentsErrorEmbed();
             await deleteCommandMessage();
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 2000);
@@ -525,15 +532,7 @@ module.exports = {
             });
             if (!cooldownResult.ok) {
                 const remaining = Math.max(1, Math.ceil(cooldownResult.remainingMs / 1000));
-                const embed = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription([
-                        `<:attentionfromvega:1443651874032062505> Cooldown attivo: aspetta **${remaining}s** prima di usare un altro comando.`,
-                        '',
-                        'Il cooldown si riduce con i ruoli:',
-                        `â€¢ <@&${IDs.roles.Level30}> -> **15s**`,
-                        `â€¢ <@&${IDs.roles.Level50}> -> **5s**`
-                    ].join('\n'));
+                const embed = buildCooldownErrorEmbed(remaining);
                 await message.channel.send({ embeds: [embed] });
                 return;
             }
@@ -663,11 +662,7 @@ module.exports = {
                 if (error?.code === 'COMMAND_TIMEOUT') {
                     logEventError(client, 'PREFIX COMMAND TIMEOUT', error);
                     await execMessage.reply({
-                        embeds: [
-                            new EmbedBuilder()
-                                .setColor('Red')
-                                .setDescription('<:attentionfromvega:1443651874032062505> Il comando Ã¨ scaduto dopo 60 secondi. Prova di nuovo.')
-                        ]
+                        embeds: [buildCommandTimeoutErrorEmbed()]
                     }).catch(() => { });
                 }
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
@@ -717,10 +712,7 @@ module.exports = {
                         await sentError.edit({ embeds: [errorEmbed], components: [row] });
                     });
                 }
-                const feedback = new EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription(`<:vegax:1443934876440068179> C'Ã¨ stato un errore nell'esecuzione del comando.
-                \`\`\`${error}\`\`\``);
+                const feedback = buildInternalCommandErrorEmbed(error);
                 return execMessage.reply({ embeds: [feedback] });
             } finally {
                 commandFinished = true;

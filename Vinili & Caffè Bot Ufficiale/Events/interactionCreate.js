@@ -8,11 +8,19 @@ const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
 const { handleCustomRoleInteraction } = require('./interaction/customRoleHandlers');
 const { handlePauseButton } = require('./interaction/pauseHandlers');
+const {
+    checkButtonPermission,
+    checkStringSelectPermission,
+    checkModalPermission,
+    buildGlobalPermissionDeniedEmbed,
+    buildGlobalNotYourControlEmbed
+} = require('../Utils/Moderation/commandPermissions');
 
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         if (!interaction) return;
+        if (interaction.replied || interaction.deferred) return;
         try {
             if (await handleVerifyInteraction(interaction)) return;
             if (await handleDmBroadcastModal(interaction, client)) return;
@@ -27,6 +35,51 @@ module.exports = {
             if (interaction.isChatInputCommand()) {
                 await handleSlashCommand(interaction, client);
                 return;
+            }
+            if (interaction.isButton && interaction.isButton()) {
+                const gate = checkButtonPermission(interaction);
+                if (!gate.allowed) {
+                    const deniedEmbed = gate.reason === 'not_owner'
+                        ? buildGlobalNotYourControlEmbed()
+                        : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'bottone');
+                    const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply(payload).catch(() => {});
+                    } else {
+                        await interaction.followUp(payload).catch(() => {});
+                    }
+                    return;
+                }
+            }
+            if (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) {
+                const gate = checkStringSelectPermission(interaction);
+                if (!gate.allowed) {
+                    const deniedEmbed = gate.reason === 'not_owner'
+                        ? buildGlobalNotYourControlEmbed()
+                        : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'menu');
+                    const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply(payload).catch(() => {});
+                    } else {
+                        await interaction.followUp(payload).catch(() => {});
+                    }
+                    return;
+                }
+            }
+            if (interaction.isModalSubmit && interaction.isModalSubmit()) {
+                const gate = checkModalPermission(interaction);
+                if (!gate.allowed) {
+                    const deniedEmbed = gate.reason === 'not_owner'
+                        ? buildGlobalNotYourControlEmbed()
+                        : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'modulo');
+                    const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
+                    if (!interaction.replied && !interaction.deferred) {
+                        await interaction.reply(payload).catch(() => {});
+                    } else {
+                        await interaction.followUp(payload).catch(() => {});
+                    }
+                    return;
+                }
             }
             if (await handleTicketInteraction(interaction)) return;
             if (await handlePartnerModal(interaction)) return;

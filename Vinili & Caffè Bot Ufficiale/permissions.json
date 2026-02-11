@@ -1,7 +1,9 @@
 {
   "slash": {
     "copy": {
-      "roles": null,
+      "roles": [
+        "roles.HighStaff"
+      ],
       "subcommands": {
         "emoji": [
           "roles.HighStaff"
@@ -27,18 +29,26 @@
       ]
     },
     "set": {
-      "roles": null,
+      "roles": [
+        "roles.Member"
+      ],
       "subcommands": {
         "autojoin": [
           "roles.HighStaff"
         ],
-        "voice": null
+        "voice": [
+          "roles.Member"
+        ]
       }
     },
     "suggestion": {
-      "roles": null,
+      "roles": [
+        "roles.Member"
+      ],
       "subcommands": {
-        "suggest": null,
+        "suggest": [
+          "roles.Member"
+        ],
         "accept": [
           "roles.HighStaff"
         ],
@@ -71,7 +81,9 @@
       ]
     },
     "partner": {
-      "roles": null,
+      "roles": [
+        "roles.HighStaff"
+      ],
       "subcommands": {
         "modifypoint.add": [
           "roles.HighStaff"
@@ -82,7 +94,9 @@
       }
     },
     "pausa": {
-      "roles": null,
+      "roles": [
+        "roles.Staff"
+      ],
       "subcommands": {
         "request": [
           "roles.Staff",
@@ -96,7 +110,9 @@
       }
     },
     "poll": {
-      "roles": null,
+      "roles": [
+        "roles.HighStaff"
+      ],
       "subcommands": {
         "create": [
           "roles.HighStaff"
@@ -110,7 +126,9 @@
       }
     },
     "staff": {
-      "roles": null,
+      "roles": [
+        "roles.HighStaff"
+      ],
       "subcommands": {
         "pex": [
           "roles.HighStaff"
@@ -122,27 +140,31 @@
           "roles.HighStaff"
         ],
         "resoconto.staffer": [
-          "roles.HighStaff"
+          "roles.HighStaff",
+          "roles.Coordinator",
+          "roles.Supervisor"
         ],
         "resoconto.pm": [
-          "roles.HighStaff"
+          "roles.HighStaff",
+          "roles.Coordinator",
+          "roles.Supervisor"
         ]
       }
     },
     "valutazione": {
-      "roles": null,
+      "roles": "roles.HighStaff",
       "subcommands": {
         "positiva.add": [
-          "roles.Founder"
+          "roles.HighStaff"
         ],
         "positiva.remove": [
-          "roles.Founder"
+          "roles.HighStaff"
         ],
         "negativa.add": [
-          "roles.Founder"
+          "roles.HighStaff"
         ],
         "negativa.remove": [
-          "roles.Founder"
+          "roles.HighStaff"
         ],
         "media": [
           "roles.Staff"
@@ -151,40 +173,85 @@
     }
   },
   "prefix": {
-    "help": null,
-    "afk": null,
-    "avatar": null,
-    "banner": null,
-    "blockav": null,
-    "blockbanner": null,
-    "blockquotes": null,
-    "membercount": null,
-    "ping": null,
-    "restart": [
-      "roles.Founder"
+    "help": [
+      "roles.Member"
     ],
-    "syncids": [
+    "afk": [
+      "roles.Member"
+    ],
+    "avatar": [
+      "roles.Member"
+    ],
+    "banner": [
+      "roles.Member"
+    ],
+    "blockav": [
+      "roles.Member"
+    ],
+    "blockbanner": [
+      "roles.Member"
+    ],
+    "blockquotes": [
+      "roles.Member"
+    ],
+    "membercount": [
+      "roles.Member"
+    ],
+    "ping": [
+      "roles.Member"
+    ],
+    "restart": [
       "roles.Founder"
     ],
     "reaction": [
       "roles.HighStaff"
     ],
-    "no-dm": null,
+    "no-dm": [
+      "roles.Member"
+    ],
     "no-dm-list": [
       "roles.HighStaff"
     ],
-    "snipe": null,
-    "join": null,
-    "leave": null,
-    "unblockavatar": null,
-    "unblockbanner": null,
-    "unblockquotes": null,
-    "classifica": null,
-    "mstats": null,
-    "myactivity": null,
-    "rank": null,
+    "snipe": [
+      "roles.Member"
+    ],
+    "join": [
+      "roles.Member"
+    ],
+    "leave": [
+      "roles.Member"
+    ],
+    "unblockavatar": [
+      "roles.Member"
+    ],
+    "unblockbanner": [
+      "roles.Member"
+    ],
+    "unblockquotes": [
+      "roles.Member"
+    ],
+    "classifica": [
+      "roles.Member"
+    ],
+    "mstats": [
+      "roles.Member"
+    ],
+    "myactivity": [
+      "roles.Member"
+    ],
+    "rank": [
+      "roles.Member"
+    ],
+    "rewards": [
+      "roles.Member"
+    ],
+    "nextreward": [
+      "roles.Member"
+    ],
     "ticket": {
-      "roles": null,
+      "roles": [
+        "roles.Member"
+      ],
       "subcommands": {
         "add": [
           "roles.Staff",
@@ -233,14 +300,8 @@
     "recensione": [
       "roles.HighStaff"
     ],
-    "reviewlock": [
-      "roles.HighStaff"
-    ],
     "purge": [
       "roles.HighStaff"
-    ],
-    "health": [
-      "roles.Founder"
     ],
     "verify": [
       "roles.HighStaff"
@@ -248,38 +309,6 @@
     "customregister": [
       "roles.HighStaff"
     ],
-    "customrolecreate": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customroleadd": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customroleremove": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customrolemodify": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customvoc": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "rewards": null,
-    "nextreward": null,
     "level": {
       "roles": [
         "roles.HighStaff"
@@ -311,20 +340,274 @@
         ],
         "unignore": [
           "roles.HighStaff"
-        ],
-        "config": [
-          "roles.HighStaff"
-        ],
-        "audit": [
-          "roles.HighStaff"
         ]
       }
     },
+    "customrolecreate": [
+      "roles.vip",
+      "roles.donator",
+      "roles.ServerBooster",
+      "roles.Level70"
+    ],
+    "customroleadd": [
+      "roles.vip",
+      "roles.donator",
+      "roles.ServerBooster",
+      "roles.Level70"
+    ],
+    "customroleremove": [
+      "roles.vip",
+      "roles.donator",
+      "roles.ServerBooster",
+      "roles.Level70"
+    ],
+    "customrolemodify": [
+      "roles.vip",
+      "roles.donator",
+      "roles.ServerBooster",
+      "roles.Level70"
+    ],
+    "customvoc": [
+      "roles.vip",
+      "roles.donator",
+      "roles.ServerBooster",
+      "roles.Level70"
+    ],
     "quote": [
       "roles.ServerBooster",
       "roles.donator",
       "roles.vip",
       "roles.Level10"
     ]
+  },
+  "buttons": {
+    "verify_start": null,
+    "verify_enter": null,
+    "ticket_partnership": [
+      "roles.Member"
+    ],
+    "ticket_highstaff": [
+      "roles.Member"
+    ],
+    "ticket_supporto": null,
+    "ticket_open_desc_modal": {
+      "ownerFromMessageMention": true
+    },
+    "claim_ticket": [
+      "roles.Staff",
+      "roles.HighStaff",
+      "roles.PartnerManager"
+    ],
+    "unclaim": [
+      "roles.Staff",
+      "roles.HighStaff",
+      "roles.PartnerManager"
+    ],
+    "close_ticket": [
+      "roles.Staff",
+      "roles.HighStaff",
+      "roles.PartnerManager"
+    ],
+    "close_ticket_motivo": [
+      "roles.Staff",
+      "roles.HighStaff",
+      "roles.PartnerManager"
+    ],
+    "accetta": {
+      "ownerFromMessageMention": true
+    },
+    "rifiuta": {
+      "ownerFromMessageMention": true
+    },
+    "upv": [
+      "roles.Member"
+    ],
+    "downv": [
+      "roles.Member"
+    ],
+    "pause_accept:*": [
+      "roles.HighStaff"
+    ],
+    "pause_reject:*": [
+      "roles.HighStaff"
+    ],
+    "pause_cancel:*": [
+      "roles.HighStaff"
+    ],
+    "pause_list:*": {
+      "roles": [
+        "roles.Staff",
+        "roles.PartnerManager",
+        "roles.HighStaff"
+      ],
+      "ownerSegment": 1
+    },
+    "customrole_name:*": {
+      "ownerSegment": 1
+    },
+    "customrole_color:*": {
+      "ownerSegment": 1
+    },
+    "customrole_members:*": {
+      "ownerSegment": 1
+    },
+    "customrole_emoji:*": {
+      "ownerSegment": 1
+    },
+    "customrole_delete:*": {
+      "ownerSegment": 1
+    },
+    "customvoc_name:*": {
+      "ownerSegment": 1
+    },
+    "customvoc_emoji:*": {
+      "ownerSegment": 1
+    },
+    "customrole_grant:*": null,
+    "quote_remove:*": {
+      "ownerSegment": 1
+    },
+    "avatar_unblock:*": {
+      "ownerSegment": 1
+    },
+    "banner_unblock:*": {
+      "ownerSegment": 1
+    },
+    "error_pending": [
+      "roles.HighStaff"
+    ],
+    "error_solved": [
+      "roles.HighStaff"
+    ],
+    "error_unsolved": [
+      "roles.HighStaff"
+    ],
+    "prev": [
+      "roles.PartnerManager",
+      "roles.HighStaff"
+    ],
+    "next": [
+      "roles.PartnerManager",
+      "roles.HighStaff"
+    ],
+    "metodi": null,
+    "ping": null,
+    "info_rules": null,
+    "info_donations": null,
+    "info_verifica": null,
+    "info_boost_levels": null,
+    "info_levels": null,
+    "info_level": null,
+    "torna_indietro": null,
+    "info_badges_roles": null,
+    "r_multiplier_info": null,
+    "sanzioni": [
+      "roles.Staff"
+    ],
+    "warnstaff": [
+      "roles.Staff"
+    ],
+    "valutazioni": [
+      "roles.Staff"
+    ],
+    "pause": [
+      "roles.Staff"
+    ],
+    "limiti": [
+      "roles.Staff"
+    ],
+    "regolamento": [
+      "roles.Staff"
+    ],
+    "generalimoderazione": [
+      "roles.Staff"
+    ],
+    "testualimoderazione": [
+      "roles.Staff"
+    ],
+    "vocalimoderazione": [
+      "roles.Staff"
+    ],
+    "avatar_views": null,
+    "banner_views": null,
+    "customrole_add_select:*": {
+      "ownerSegment": 1
+    },
+    "minigame_song_preview:*": null
+  },
+  "selectMenus": {
+    "ticket_open_menu": null,
+    "personality_pronouns": null,
+    "personality_age": null,
+    "personality_region": null,
+    "personality_dm": null,
+    "personality_relationship": null,
+    "personality_mentions": null,
+    "personality_colors_1": null,
+    "personality_colors_2": null,
+    "personality_colors_plus": [
+      "roles.Donator",
+      "roles.vip",
+      "roles.Level70",
+      "roles.ServerBooster"
+    ],
+    "customrole_remove_select:*": {
+      "ownerSegment": 1
+    }
+  },
+  "modals": {
+    "customvoc_modal_emoji:*": {
+      "ownerSegment": 1
+    },
+    "customvoc_modal_name:*": {
+      "ownerSegment": 1
+    },
+    "customrole_modal_name:*": {
+      "ownerSegment": 1
+    },
+    "customrole_modal_color:*": {
+      "ownerSegment": 1
+    },
+    "customrole_modal_emoji:*": {
+      "ownerSegment": 1
+    },
+    "modal_close_ticket:*": {
+      "ownerSegment": 1
+    },
+    "partnershipModal_*": {
+      "ownerSegment": 1,
+      "ownerSeparator": "_"
+    },
+    "ticket_open_desc_modal_submit:*": {
+      "ownerSegment": 1
+    },
+    "verify_code:*": {
+      "ownerSegment": 1
+    },
+    "dm_broadcast:*": {
+      "ownerSegment": 1
+    },
+    "title": {
+      "ownerSegment": 1
+    },
+    "message": {
+      "ownerSegment": 1
+    },
+    "serverDescription": {
+      "ownerSegment": 1,
+      "ownerSeparator": "_"
+    },
+    "motivo": {
+      "ownerSegment": 1
+    },
+    "ticket_description": {
+      "ownerSegment": 1
+    },
+    "verify_input": {
+      "ownerSegment": 1
+    },
+    "value": {
+      "ownerSegment": 1
+    }
   }
 }

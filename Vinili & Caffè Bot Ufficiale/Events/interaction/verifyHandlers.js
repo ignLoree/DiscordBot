@@ -188,8 +188,12 @@ async function makeCaptchaPng(code) {
 }
 function isAlreadyVerified(member) {
     if (!member?.roles?.cache) return false;
-    if (!VERIFY_ROLE_IDS.length) return false;
-    return VERIFY_ROLE_IDS.every((id) => member.roles.cache.has(id));
+    const verifiedRoleIds = [
+        IDs.roles.Member,
+        IDs.roles.Verificato
+    ].filter(Boolean);
+    if (!verifiedRoleIds.length) return false;
+    return verifiedRoleIds.some((id) => member.roles.cache.has(id));
 }
 async function handleVerifyInteraction(interaction) {
     if (interaction.isButton()) {
@@ -260,7 +264,7 @@ async function handleVerifyInteraction(interaction) {
             state.promptMessage = interaction.message;
             verifyState.set(interaction.user.id, state);
             const modal = new ModalBuilder()
-                .setCustomId('verify_code')
+                .setCustomId(`verify_code:${interaction.user.id}`)
                 .setTitle('Captcha Answer');
             const input = new TextInputBuilder()
                 .setCustomId('verify_input')
@@ -279,7 +283,7 @@ async function handleVerifyInteraction(interaction) {
             return true;
         }
     }
-    if (interaction.isModalSubmit() && interaction.customId === 'verify_code') {
+    if (interaction.isModalSubmit() && String(interaction.customId || '').startsWith('verify_code:')) {
         const state = verifyState.get(interaction.user.id);
         if (!state || Date.now() > state.expiresAt) {
             verifyState.delete(interaction.user.id);

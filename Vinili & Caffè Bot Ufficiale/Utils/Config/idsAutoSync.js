@@ -56,7 +56,7 @@ async function runIdsCatalogSync(client, guildId) {
     delete require.cache[require.resolve('./idsCatalog')];
     delete require.cache[require.resolve('./ids')];
 
-    global.logger.info(`[IDS AUTO SYNC] idsCatalog aggiornato (guild=${gid}) triggers=${reasons.join(', ') || 'manual'}`);
+    // log silenziato su richiesta: sync completata senza output informativo
     return { changed: true, triggers: reasons };
   } catch (error) {
     global.logger.error('[IDS AUTO SYNC] Failed:', error);
@@ -91,4 +91,3 @@ module.exports = {
   queueIdsCatalogSync,
   runIdsCatalogSync
 };
-

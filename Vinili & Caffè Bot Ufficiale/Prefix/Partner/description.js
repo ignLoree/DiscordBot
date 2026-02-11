@@ -1,6 +1,5 @@
 ﻿const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const IDs = require('../../Utils/Config/ids');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 
 module.exports = {
@@ -28,23 +27,6 @@ module.exports = {
       return safeMessageReply(
         message,
         '<:vegax:1443934876440068179> Questo comando può essere usato **solo in un canale ticket aperto**.'
-      );
-    }
-
-    const partnerRoleId = message.client?.config?.partnerManager || IDs.roles.PartnerManager;
-    const partnerRole = message.guild?.roles?.cache?.get(partnerRoleId);
-
-    if (!partnerRole) {
-      return safeMessageReply(
-        message,
-        '<:vegax:1443934876440068179> Il ruolo **Partner Manager** non esiste nel server.'
-      );
-    }
-
-    if (!message.member.roles.cache.has(partnerRole.id)) {
-      return safeMessageReply(
-        message,
-        '<:vegax:1443934876440068179> Non hai il permesso per usare questo comando. Solo i **Partner Manager** possono farlo.'
       );
     }
 

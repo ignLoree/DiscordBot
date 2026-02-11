@@ -3,6 +3,12 @@ const { decrementQuoteCount } = require('../Utils/Quote/quoteCounter');
 const { ROLE_MULTIPLIERS } = require('../Services/Community/expService');
 const { AvatarPrivacy, BannerPrivacy } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
+const {
+    checkButtonPermission,
+    checkStringSelectPermission,
+    buildGlobalPermissionDeniedEmbed,
+    buildGlobalNotYourControlEmbed
+} = require('../Utils/Moderation/commandPermissions');
 const DIVIDER_URL = 'https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db';
 
 async function handleStaffButtons(interaction) {
@@ -250,6 +256,27 @@ module.exports = {
 
         if (!interaction.guild) return;
         if (!interaction.message) return;
+        if (interaction.replied || interaction.deferred) return;
+        if (interaction.isButton && interaction.isButton()) {
+            const gate = checkButtonPermission(interaction);
+            if (!gate.allowed) {
+                const deniedEmbed = gate.reason === 'not_owner'
+                    ? buildGlobalNotYourControlEmbed()
+                    : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'bottone');
+                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => {});
+                return;
+            }
+        }
+        if (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) {
+            const gate = checkStringSelectPermission(interaction);
+            if (!gate.allowed) {
+                const deniedEmbed = gate.reason === 'not_owner'
+                    ? buildGlobalNotYourControlEmbed()
+                    : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'menu');
+                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => {});
+                return;
+            }
+        }
         if (await handleStaffButtons(interaction)) return;
         if (interaction.isStringSelectMenu()) {
             const menuId = interaction.customId;
