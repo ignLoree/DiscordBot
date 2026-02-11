@@ -53,6 +53,25 @@ function parseItalianDate(value) {
 function parseUserDateInput(raw) {
     if (!raw || typeof raw !== 'string') return null;
     const value = raw.trim().toLowerCase();
+    if (value === 'oggi' || value === 'today') {
+        const today = getTodayUtc();
+        return {
+            day: today.getUTCDate(),
+            month: today.getUTCMonth() + 1,
+            year: today.getUTCFullYear(),
+            hasYear: true
+        };
+    }
+    if (value === 'domani' || value === 'tomorrow') {
+        const today = getTodayUtc();
+        const tomorrow = new Date(today.getTime() + MS_PER_DAY);
+        return {
+            day: tomorrow.getUTCDate(),
+            month: tomorrow.getUTCMonth() + 1,
+            year: tomorrow.getUTCFullYear(),
+            hasYear: true
+        };
+    }
 
     const slash = value.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
     if (slash) {
@@ -267,8 +286,8 @@ module.exports = {
         .addSubcommand(command =>
             command.setName('request')
                 .setDescription('Richiedi una pausa')
-                .addStringOption(option => option.setName('data_richiesta').setDescription('Data richiesta (GG/MM/AAAA)').setRequired(true))
-                .addStringOption(option => option.setName('data_ritorno').setDescription('Data ritorno (GG/MM/AAAA)').setRequired(true))
+                .addStringOption(option => option.setName('data_richiesta').setDescription('Data richiesta (es: oggi, domani, GG/MM, GG/MM/AAAA)').setRequired(true))
+                .addStringOption(option => option.setName('data_ritorno').setDescription('Data ritorno (es: oggi, domani, GG/MM, GG/MM/AAAA)').setRequired(true))
                 .addStringOption(option => option.setName('motivazione').setDescription('Motivo della pausa').setRequired(true))
         )
         .addSubcommand(command =>
@@ -292,7 +311,7 @@ module.exports = {
                 const normalizedDates = normalizePauseDates(rawDataRichiesta, rawDataRitorno);
                 if (!normalizedDates) {
                     return await safeEditReply(interaction, {
-                        content: '<:vegax:1443934876440068179> Date non valide. Formati supportati: `GG/MM`, `GG/MM/AAAA`, `1 agosto`, `1 agosto 2027`.',
+                        content: '<:vegax:1443934876440068179> Date non valide. Formati supportati: `oggi`, `domani`, `GG/MM`, `GG/MM/AAAA`, `1 agosto`, `1 agosto 2027`.',
                         flags: 1 << 6
                     });
                 }

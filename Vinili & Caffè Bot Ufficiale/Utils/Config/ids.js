@@ -159,7 +159,6 @@ const ids = {
     activityLogs: getByNameAt('channels', '༄🚩︲activity᲼logs', 0), // activity logs -> 1442569299725385851
     joinLeaveLogs: getByNameAt('channels', '༄🛃︲join᲼leave᲼logs', 0), // join leave logs -> 1442569306608111776
     pexDepex: getByNameAt('channels', '༄🆙︲pex᲼depex', 0), // pex depex -> 1442569234004709391
-    ai: getByNameAt('channels', '༄🧠︲ai', 0), // ai -> 1471108621629784104
     animaliForum: getByNameAt('channels', 'Animali', 0), // Animali -> 1461423795246989478
     propositiForum: getByNameAt('channels', 'Buoni propositi 2026', 0), // Buoni propositi 2026 -> 1456349072473587936
     wrapForum: getByNameAt('channels', 'Spotify Wrapped/Apple Music Replay \'25', 0), // Spotify Wrapped/Apple Music Replay '25 -> 1445792081271587000

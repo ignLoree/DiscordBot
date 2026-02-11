@@ -97,6 +97,14 @@ module.exports = {
 
     const subcommand = String(directAliasSub || args[0] || '').toLowerCase();
     const rest = directAliasSub ? args : args.slice(1);
+    const normalizedRest = Array.isArray(rest)
+      ? (() => {
+          if (!rest.length) return rest;
+          const first = String(rest[0] || '').toLowerCase();
+          if (first === subcommand) return rest.slice(1);
+          return rest;
+        })()
+      : [];
     const parentChannel = message.channel?.parent || null;
     const inTicketCategory = Boolean(
       parentChannel &&
@@ -130,7 +138,7 @@ module.exports = {
     const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
 
     if (subcommand === 'add') {
-      const user = await resolveUserFromArg(message, rest[0]);
+      const user = await resolveUserFromArg(message, normalizedRest[0]);
       if (!user) {
         await safeMessageReply(message, {
           embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Specifica un utente valido.')],
@@ -153,7 +161,7 @@ module.exports = {
     }
 
     if (subcommand === 'remove') {
-      const user = await resolveUserFromArg(message, rest[0]);
+      const user = await resolveUserFromArg(message, normalizedRest[0]);
       if (!user) {
         await safeMessageReply(message, {
           embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Specifica un utente valido.')],
@@ -176,7 +184,7 @@ module.exports = {
     }
 
     if (subcommand === 'closerequest') {
-      const reason = rest.join(' ').trim();
+      const reason = normalizedRest.join(' ').trim();
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
@@ -448,7 +456,7 @@ module.exports = {
       }
 
       const targetChannel = message.channel;
-      const categoryToken = String(rest[0] || '').toLowerCase();
+      const categoryToken = String(normalizedRest[0] || '').toLowerCase();
       const panelConfig = getTicketPanelConfig(categoryToken);
 
       if (!targetChannel || !targetChannel.isTextBased?.()) {
@@ -643,7 +651,7 @@ module.exports = {
         return;
       }
 
-      const rawNewName = rest.join(' ').trim();
+      const rawNewName = normalizedRest.join(' ').trim();
       if (!rawNewName) {
         await safeMessageReply(message, {
           embeds: [

@@ -273,6 +273,53 @@ async function getUserActivityStats(guildId, userId) {
   };
 }
 
+function safeTopRank(map, targetId) {
+  const rows = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+  const index = rows.findIndex(([id]) => String(id) === String(targetId));
+  return index >= 0 ? index + 1 : null;
+}
+
+function aggregateUserRows(rows = [], dateKeys = []) {
+  const dateSet = new Set(Array.isArray(dateKeys) ? dateKeys : []);
+  const channelText = new Map();
+  const channelVoice = new Map();
+  const chartByDay = new Map();
+  let text = 0;
+  let voiceSeconds = 0;
+
+  for (const row of rows) {
+    const dayKey = String(row?.dateKey || '');
+    if (!dateSet.has(dayKey)) continue;
+    const rowText = Number(row?.textCount || 0);
+    const rowVoice = Number(row?.voiceSeconds || 0);
+    text += rowText;
+    voiceSeconds += rowVoice;
+
+    const textChannels = row?.textChannels || {};
+    for (const [channelId, value] of Object.entries(textChannels)) {
+      pushMapValue(channelText, String(channelId || ''), Number(value || 0));
+    }
+
+    const voiceChannels = row?.voiceChannels || {};
+    for (const [channelId, value] of Object.entries(voiceChannels)) {
+      pushMapValue(channelVoice, String(channelId || ''), Number(value || 0));
+    }
+
+    const current = chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+    current.text += rowText;
+    current.voiceSeconds += rowVoice;
+    chartByDay.set(dayKey, current);
+  }
+
+  return {
+    text,
+    voiceSeconds,
+    topChannelsText: topNFromMap(channelText, 3),
+    topChannelsVoice: topNFromMap(channelVoice, 3),
+    chartByDay
+  };
+}
+
 function pushMapValue(target, key, amount) {
   if (!key || !Number.isFinite(amount) || amount <= 0) return;
   target.set(key, (target.get(key) || 0) + amount);
@@ -283,6 +330,57 @@ function topNFromMap(map, n = 3) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([id, value]) => ({ id, value }));
+}
+
+function aggregateFromRows(rows = [], dateKeys = []) {
+  const dateSet = new Set(Array.isArray(dateKeys) ? dateKeys : []);
+  const userText = new Map();
+  const userVoice = new Map();
+  const channelText = new Map();
+  const channelVoice = new Map();
+  const contributors = new Set();
+  const chartByDay = new Map();
+
+  for (const row of rows) {
+    if (!dateSet.has(String(row?.dateKey || ''))) continue;
+
+    const userId = String(row?.userId || '');
+    const textCount = Number(row?.textCount || 0);
+    const voiceSeconds = Number(row?.voiceSeconds || 0);
+
+    if (textCount > 0 || voiceSeconds > 0) contributors.add(userId);
+    pushMapValue(userText, userId, textCount);
+    pushMapValue(userVoice, userId, voiceSeconds);
+
+    const textChannels = row?.textChannels || {};
+    for (const [channelId, value] of Object.entries(textChannels)) {
+      pushMapValue(channelText, String(channelId || ''), Number(value || 0));
+    }
+
+    const voiceChannels = row?.voiceChannels || {};
+    for (const [channelId, value] of Object.entries(voiceChannels)) {
+      pushMapValue(channelVoice, String(channelId || ''), Number(value || 0));
+    }
+
+    const dayKey = String(row?.dateKey || '');
+    const current = chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+    current.text += textCount;
+    current.voiceSeconds += voiceSeconds;
+    chartByDay.set(dayKey, current);
+  }
+
+  return {
+    totals: {
+      text: Array.from(userText.values()).reduce((sum, value) => sum + value, 0),
+      voiceSeconds: Array.from(userVoice.values()).reduce((sum, value) => sum + value, 0)
+    },
+    contributors: contributors.size,
+    topUsersText: topNFromMap(userText, 3),
+    topUsersVoice: topNFromMap(userVoice, 3),
+    topChannelsText: topNFromMap(channelText, 3),
+    topChannelsVoice: topNFromMap(channelVoice, 3),
+    chartByDay
+  };
 }
 
 async function getServerActivityStats(guildId, days = 7) {
@@ -363,12 +461,183 @@ async function getServerActivityStats(guildId, days = 7) {
   };
 }
 
+async function getServerOverviewStats(guildId, lookbackDays = 14) {
+  const safeLookback = [7, 14, 21].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
+  const keys1 = getLastNDaysKeys(1);
+  const keys7 = getLastNDaysKeys(7);
+  const keys14 = getLastNDaysKeys(14);
+  const keysLookback = getLastNDaysKeys(safeLookback);
+
+  const allKeys = Array.from(new Set([...keys1, ...keys7, ...keys14, ...keysLookback]));
+  const rows = await ActivityDaily.find({
+    guildId,
+    dateKey: { $in: allKeys }
+  }).lean().catch(() => []);
+
+  const agg1 = aggregateFromRows(rows, keys1);
+  const agg7 = aggregateFromRows(rows, keys7);
+  const agg14 = aggregateFromRows(rows, keys14);
+  const aggLookback = aggregateFromRows(rows, keysLookback);
+
+  const chartPoints = keys14
+    .slice()
+    .reverse()
+    .map((dayKey) => {
+      const point = agg14.chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+      return {
+        dayKey,
+        text: Number(point.text || 0),
+        voiceSeconds: Number(point.voiceSeconds || 0)
+      };
+    });
+
+  const hasTrackedRows = rows.length > 0;
+  if (!hasTrackedRows) {
+    const users = await ActivityUser.find({ guildId })
+      .select('userId messages.weekly messages.total voice.weeklySeconds voice.totalSeconds')
+      .lean()
+      .catch(() => []);
+    const userText = new Map();
+    const userVoice = new Map();
+    let totalText7 = 0;
+    let totalVoice7 = 0;
+    let totalText14 = 0;
+    let totalVoice14 = 0;
+
+    for (const row of users) {
+      const id = String(row?.userId || '');
+      const textWeekly = Number(row?.messages?.weekly || 0);
+      const textTotal = Number(row?.messages?.total || 0);
+      const voiceWeekly = Number(row?.voice?.weeklySeconds || 0);
+      const voiceTotal = Number(row?.voice?.totalSeconds || 0);
+      totalText7 += textWeekly;
+      totalVoice7 += voiceWeekly;
+      totalText14 += textTotal;
+      totalVoice14 += voiceTotal;
+      pushMapValue(userText, id, textTotal);
+      pushMapValue(userVoice, id, voiceTotal);
+    }
+
+    return {
+      approximate: true,
+      lookbackDays: safeLookback,
+      windows: {
+        d1: { text: 0, voiceSeconds: 0, contributors: 0 },
+        d7: { text: totalText7, voiceSeconds: totalVoice7, contributors: 0 },
+        d14: { text: totalText14, voiceSeconds: totalVoice14, contributors: 0 }
+      },
+      topUsersText: topNFromMap(userText, 3),
+      topUsersVoice: topNFromMap(userVoice, 3),
+      topChannelsText: [],
+      topChannelsVoice: [],
+      chart: chartPoints
+    };
+  }
+
+  return {
+    approximate: false,
+    lookbackDays: safeLookback,
+    windows: {
+      d1: { text: agg1.totals.text, voiceSeconds: agg1.totals.voiceSeconds, contributors: agg1.contributors },
+      d7: { text: agg7.totals.text, voiceSeconds: agg7.totals.voiceSeconds, contributors: agg7.contributors },
+      d14: { text: agg14.totals.text, voiceSeconds: agg14.totals.voiceSeconds, contributors: agg14.contributors }
+    },
+    topUsersText: aggLookback.topUsersText,
+    topUsersVoice: aggLookback.topUsersVoice,
+    topChannelsText: aggLookback.topChannelsText,
+    topChannelsVoice: aggLookback.topChannelsVoice,
+    chart: chartPoints
+  };
+}
+
+async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
+  const safeLookback = [7, 14, 21].includes(Number(lookbackDays)) ? Number(lookbackDays) : 14;
+  const keys1 = getLastNDaysKeys(1);
+  const keys7 = getLastNDaysKeys(7);
+  const keys14 = getLastNDaysKeys(14);
+  const keysLookback = getLastNDaysKeys(safeLookback);
+  const allKeys = Array.from(new Set([...keys1, ...keys7, ...keys14, ...keysLookback]));
+
+  const userRows = await ActivityDaily.find({
+    guildId,
+    userId,
+    dateKey: { $in: allKeys }
+  }).lean().catch(() => []);
+
+  const agg1 = aggregateUserRows(userRows, keys1);
+  const agg7 = aggregateUserRows(userRows, keys7);
+  const agg14 = aggregateUserRows(userRows, keys14);
+  const aggLookback = aggregateUserRows(userRows, keysLookback);
+
+  const chart = keys14
+    .slice()
+    .reverse()
+    .map((dayKey) => {
+      const point = agg14.chartByDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+      return {
+        dayKey,
+        text: Number(point.text || 0),
+        voiceSeconds: Number(point.voiceSeconds || 0)
+      };
+    });
+
+  const guildRows14 = await ActivityDaily.find({
+    guildId,
+    dateKey: { $in: keys14 }
+  }).select('userId textCount voiceSeconds').lean().catch(() => []);
+
+  const rankTextMap = new Map();
+  const rankVoiceMap = new Map();
+  for (const row of guildRows14) {
+    const id = String(row?.userId || '');
+    pushMapValue(rankTextMap, id, Number(row?.textCount || 0));
+    pushMapValue(rankVoiceMap, id, Number(row?.voiceSeconds || 0));
+  }
+
+  let rankText = safeTopRank(rankTextMap, userId);
+  let rankVoice = safeTopRank(rankVoiceMap, userId);
+
+  if (!userRows.length) {
+    const doc = await ActivityUser.findOne({ guildId, userId }).lean().catch(() => null);
+    const fallback = {
+      d1: { text: Number(doc?.messages?.daily || 0), voiceSeconds: Number(doc?.voice?.dailySeconds || 0) },
+      d7: { text: Number(doc?.messages?.weekly || 0), voiceSeconds: Number(doc?.voice?.weeklySeconds || 0) },
+      d14: { text: Number(doc?.messages?.total || 0), voiceSeconds: Number(doc?.voice?.totalSeconds || 0) }
+    };
+    if (!rankText && fallback.d14.text > 0) rankText = 1;
+    if (!rankVoice && fallback.d14.voiceSeconds > 0) rankVoice = 1;
+    return {
+      approximate: true,
+      lookbackDays: safeLookback,
+      windows: fallback,
+      ranks: { text: rankText, voice: rankVoice },
+      topChannelsText: [],
+      topChannelsVoice: [],
+      chart
+    };
+  }
+
+  return {
+    approximate: false,
+    lookbackDays: safeLookback,
+    windows: {
+      d1: { text: agg1.text, voiceSeconds: agg1.voiceSeconds },
+      d7: { text: agg7.text, voiceSeconds: agg7.voiceSeconds },
+      d14: { text: agg14.text, voiceSeconds: agg14.voiceSeconds }
+    },
+    ranks: { text: rankText, voice: rankVoice },
+    topChannelsText: aggLookback.topChannelsText,
+    topChannelsVoice: aggLookback.topChannelsVoice,
+    chart
+  };
+}
+
 module.exports = {
   recordMessageActivity,
   handleVoiceActivity,
   getUserActivityStats,
-  getServerActivityStats
+  getServerActivityStats,
+  getServerOverviewStats,
+  getUserOverviewStats
 };
-
-
 

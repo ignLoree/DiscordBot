@@ -10,6 +10,13 @@ const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK = [
+  `"${COLOR_EMOJI_FONT}"`,
+  `"${SYMBOLS_FONT}"`,
+  `"${MATH_FONT}"`,
+  `"${TIBETAN_FONT}"`,
+  `"${FRAKTUR_FONT}"`,
+  `"${EMOJI_FONT}"`,
+  `"${FALLBACK_FONT}"`,
   "\"Arial\"",
   "sans-serif"
 ];

@@ -201,7 +201,7 @@ async function handlePartnerModal(interaction) {
 
         if (partnershipChannel) {
             const sentMessageIds = [];
-            const contentWithManager = `${filteredDescription}\n\nManager: <@${managerId}>`;
+            const contentWithManager = normalizeManagerLine(filteredDescription, managerId);
             const parts = splitMessage(contentWithManager);
             for (const part of parts) {
                 const sent = await partnershipChannel.send({ content: part }).catch(() => null);
@@ -270,6 +270,17 @@ function splitMessage(message, maxLength = 2000) {
     }
     if (current) parts.push(current);
     return parts;
+}
+
+function normalizeManagerLine(text, managerId) {
+    const content = String(text || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .trim()
+        .replace(/\n*Manager:\s*<@!?\d+>\s*$/gi, '')
+        .replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/gi, '')
+        .trim();
+    return `${content}\n\nManager: <@${managerId}>`;
 }
 
 function stripOuterCodeBlock(text) {

@@ -4,7 +4,6 @@ const AFK = require('../Schemas/Afk/afkSchema');
 const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
 const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
-const { handleAiChatMessage, handleAiMentionChatMessage } = require('../Services/AI/aiChatService');
 const { recordBump } = require('../Services/Bump/bumpService');
 const { recordDiscadiaBump } = require('../Services/Bump/bumpService');
 const { recordDiscadiaVote } = require('../Services/Bump/bumpService');
@@ -370,18 +369,6 @@ module.exports = {
         }
         if (message.author.bot || !message.guild || message.system || message.webhookId)
             return;
-        if (!isEditedPrefixExecution) {
-            try {
-                await handleAiChatMessage(message);
-            } catch (error) {
-                logEventError(client, 'AI CHAT ERROR', error);
-            }
-            try {
-                await handleAiMentionChatMessage(message);
-            } catch (error) {
-                logEventError(client, 'AI MENTION CHAT ERROR', error);
-            }
-        }
         let earlyOverridePrefix = null;
         const earlyOverrideMap = getPrefixOverrideMap(client);
         for (const prefix of earlyOverrideMap.keys()) {

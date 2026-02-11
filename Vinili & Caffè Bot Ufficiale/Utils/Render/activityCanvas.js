@@ -14,57 +14,104 @@ function roundRect(ctx, x, y, w, h, r = 14) {
 }
 
 function formatHours(seconds) {
-  return (Number(seconds || 0) / 3600).toFixed(1);
+  return (Number(seconds || 0) / 3600).toFixed(2);
 }
 
-function drawCard(ctx, x, y, w, h, title, value, subtitle) {
-  roundRect(ctx, x, y, w, h, 16);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
-  ctx.fill();
+function compactNumber(value) {
+  const n = Number(value || 0);
+  if (n >= 1000000) return `${(n / 1000000).toFixed(2)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
+  return `${n}`;
+}
 
-  drawTextWithSpecialFallback(ctx, title, x + 18, y + 24, {
-    size: 20,
-    weight: '700',
-    color: '#f8f5f0',
-    align: 'left',
+function drawLabel(ctx, text, x, y, size = 18, color = '#c4c9d1', weight = '600', align = 'left') {
+  drawTextWithSpecialFallback(ctx, text, x, y, {
+    size,
+    weight,
+    color,
+    align,
     baseline: 'middle'
   });
-  drawTextWithSpecialFallback(ctx, value, x + 18, y + 62, {
-    size: 30,
-    weight: '700',
-    color: '#ffd6a0',
-    align: 'left',
-    baseline: 'middle'
-  });
-  if (subtitle) {
-    drawTextWithSpecialFallback(ctx, subtitle, x + 18, y + 92, {
-      size: 16,
-      weight: '600',
-      color: 'rgba(248,245,240,0.8)',
-      align: 'left',
-      baseline: 'middle'
-    });
+}
+
+function drawTopChip(ctx, label, value, unit, x, y, w, h) {
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fillStyle = '#171c23';
+  ctx.fill();
+  drawLabel(ctx, label || '-', x + 16, y + (h / 2), 18, '#d8dbe1', '700');
+  drawLabel(ctx, `${value} ${unit || ''}`.trim(), x + w - 16, y + (h / 2), 16, '#cfd3db', '600', 'right');
+}
+
+function drawMetricPanel(ctx, title, icon, rows, x, y, w, h) {
+  roundRect(ctx, x, y, w, h, 18);
+  ctx.fillStyle = '#2f343d';
+  ctx.fill();
+  drawLabel(ctx, title, x + 16, y + 24, 22, '#d9dde3', '700');
+  drawLabel(ctx, icon, x + w - 24, y + 22, 22, '#d9dde3', '700', 'right');
+
+  const rowHeight = 56;
+  const startY = y + 44;
+  for (let i = 0; i < rows.length; i += 1) {
+    const ry = startY + (i * rowHeight);
+    roundRect(ctx, x + 14, ry, w - 28, 50, 10);
+    ctx.fillStyle = '#1d2229';
+    ctx.fill();
+
+    roundRect(ctx, x + 14, ry, 98, 50, 10);
+    ctx.fillStyle = '#13181f';
+    ctx.fill();
+
+    drawLabel(ctx, rows[i].label, x + 63, ry + 25, 16, '#dce0e6', '700', 'center');
+    drawLabel(ctx, rows[i].value, x + 126, ry + 25, 16, '#dce0e6', '600');
   }
 }
 
-function drawTitle(ctx, text, x, y, size = 38) {
-  drawTextWithSpecialFallback(ctx, text, x, y, {
-    size,
-    weight: '700',
-    color: '#ffffff',
-    align: 'left',
-    baseline: 'middle'
-  });
-}
+function drawChart(ctx, chart, x, y, w, h) {
+  roundRect(ctx, x, y, w, h, 18);
+  ctx.fillStyle = '#2f343d';
+  ctx.fill();
+  drawLabel(ctx, 'Charts', x + 16, y + 24, 22, '#d9dde3', '700');
+  drawLabel(ctx, '● Message', x + w - 220, y + 24, 16, '#3ec455', '700');
+  drawLabel(ctx, '● Voice', x + w - 92, y + 24, 16, '#d95095', '700');
 
-function drawSubtitle(ctx, text, x, y) {
-  drawTextWithSpecialFallback(ctx, text, x, y, {
-    size: 20,
-    weight: '600',
-    color: 'rgba(255,255,255,0.85)',
-    align: 'left',
-    baseline: 'middle'
+  const px = x + 16;
+  const py = y + 44;
+  const pw = w - 32;
+  const ph = h - 60;
+  roundRect(ctx, px, py, pw, ph, 12);
+  ctx.fillStyle = '#20252d';
+  ctx.fill();
+
+  const points = Array.isArray(chart) ? chart : [];
+  if (points.length < 2) return;
+
+  const msgValues = points.map((p) => Number(p?.text || 0));
+  const voiceValues = points.map((p) => Number(p?.voiceSeconds || 0) / 3600);
+  const maxV = Math.max(1, ...msgValues, ...voiceValues);
+
+  const projectX = (idx) => px + (idx * (pw / (points.length - 1)));
+  const projectY = (value) => py + ph - ((value / maxV) * (ph - 10)) - 5;
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#3ec455';
+  ctx.beginPath();
+  msgValues.forEach((v, i) => {
+    const cx = projectX(i);
+    const cy = projectY(v);
+    if (i === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
   });
+  ctx.stroke();
+
+  ctx.strokeStyle = '#d95095';
+  ctx.beginPath();
+  voiceValues.forEach((v, i) => {
+    const cx = projectX(i);
+    const cy = projectY(v);
+    if (i === 0) ctx.moveTo(cx, cy);
+    else ctx.lineTo(cx, cy);
+  });
+  ctx.stroke();
 }
 
 async function drawAvatarCircle(ctx, avatarUrl, x, y, size) {
@@ -80,82 +127,88 @@ async function drawAvatarCircle(ctx, avatarUrl, x, y, size) {
   ctx.restore();
   ctx.beginPath();
   ctx.arc(x + (size / 2), y + (size / 2), size / 2, 0, Math.PI * 2);
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3;
   ctx.strokeStyle = 'rgba(255,255,255,0.7)';
   ctx.stroke();
 }
 
-function drawTopList(ctx, title, items, x, y, w, h, formatter) {
-  roundRect(ctx, x, y, w, h, 16);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+function drawDateBadge(ctx, title, value, x, y, w = 300, h = 72) {
+  roundRect(ctx, x, y, w, h, 12);
+  ctx.fillStyle = '#31363f';
   ctx.fill();
-  drawTextWithSpecialFallback(ctx, title, x + 16, y + 22, {
-    size: 18,
-    weight: '700',
-    color: '#f8f5f0',
-    align: 'left',
-    baseline: 'middle'
-  });
+  roundRect(ctx, x + 10, y - 8, w - 20, 30, 9);
+  ctx.fillStyle = '#4a515c';
+  ctx.fill();
+  drawLabel(ctx, title, x + 20, y + 6, 14, '#dbe0e8', '700');
+  drawLabel(ctx, value, x + 20, y + 42, 18, '#e8ecf2', '600');
+}
 
-  if (!Array.isArray(items) || items.length === 0) {
-    drawTextWithSpecialFallback(ctx, 'Nessun dato disponibile', x + 16, y + 54, {
-      size: 15,
-      weight: '600',
-      color: 'rgba(248,245,240,0.75)',
-      align: 'left',
-      baseline: 'middle'
-    });
-    return;
-  }
-
-  let lineY = y + 54;
-  items.slice(0, 3).forEach((item, idx) => {
-    const text = formatter(item, idx);
-    drawTextWithSpecialFallback(ctx, `${idx + 1}. ${text}`, x + 16, lineY, {
-      size: 15,
-      weight: '600',
-      color: '#ffd6a0',
-      align: 'left',
-      baseline: 'middle'
-    });
-    lineY += 24;
-  });
+function dateText(value) {
+  if (!value) return 'N/A';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return 'N/A';
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 async function renderUserActivityCanvas({
   guildName,
   userTag,
+  displayName,
   avatarUrl,
-  messages,
-  voice
+  createdOn,
+  joinedOn,
+  lookbackDays,
+  windows,
+  ranks,
+  topChannelsText,
+  topChannelsVoice,
+  chart
 }) {
   registerCanvasFonts(canvasModule);
-  const width = 1200;
-  const height = 520;
+  const width = 1280;
+  const height = 700;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, '#2f2118');
-  bg.addColorStop(1, '#6f4e37');
-  ctx.fillStyle = bg;
+  ctx.fillStyle = '#1f242c';
   ctx.fillRect(0, 0, width, height);
+  roundRect(ctx, 0, 0, width, height, 28);
+  ctx.clip();
 
-  roundRect(ctx, 18, 18, width - 36, height - 36, 24);
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  await drawAvatarCircle(ctx, avatarUrl, 22, 20, 90);
+  drawLabel(ctx, `${displayName || userTag}`, 124, 52, 48, '#dfe4eb', '700');
+  drawLabel(ctx, `${guildName} • My Activity`, 124, 90, 22, '#b9c0ca', '600');
+
+  drawDateBadge(ctx, 'Created On', dateText(createdOn), 710, 22, 210, 78);
+  drawDateBadge(ctx, 'Joined On', dateText(joinedOn), 960, 22, 190, 78);
+
+  drawMetricPanel(ctx, 'Server Ranks', '🏆', [
+    { label: 'Text', value: `#${ranks?.text || '-'}` },
+    { label: 'Voice', value: `#${ranks?.voice || '-'}` }
+  ], 20, 132, 400, 236);
+
+  drawMetricPanel(ctx, 'Messages', '#', [
+    { label: '1d', value: `${compactNumber(windows?.d1?.text)} messages` },
+    { label: '7d', value: `${compactNumber(windows?.d7?.text)} messages` },
+    { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
+  ], 440, 132, 400, 236);
+
+  drawMetricPanel(ctx, 'Voice Activity', '🔊', [
+    { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
+    { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
+    { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
+  ], 860, 132, 400, 236);
+
+  roundRect(ctx, 20, 392, 610, 242, 18);
+  ctx.fillStyle = '#2f343d';
   ctx.fill();
+  drawLabel(ctx, 'Top Channels & Applications', 34, 422, 22, '#d9dde3', '700');
+  drawTopChip(ctx, (topChannelsText?.[0]?.label || '#-').replace(/^#/, ''), `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 34, 442, 582, 60);
+  drawTopChip(ctx, (topChannelsVoice?.[0]?.label || '#-').replace(/^#/, ''), `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 34, 510, 582, 60);
+  drawTopChip(ctx, '-', '-', '', 34, 578, 582, 42);
 
-  await drawAvatarCircle(ctx, avatarUrl, 44, 42, 130);
-  drawTitle(ctx, userTag, 196, 84, 42);
-  drawSubtitle(ctx, `${guildName} • My Activity`, 196, 124);
-
-  drawCard(ctx, 44, 206, 356, 120, 'Messaggi giornalieri', `${Number(messages?.daily || 0)}`, null);
-  drawCard(ctx, 422, 206, 356, 120, 'Messaggi settimanali', `${Number(messages?.weekly || 0)}`, null);
-  drawCard(ctx, 800, 206, 356, 120, 'Messaggi totali', `${Number(messages?.total || 0)}`, null);
-
-  drawCard(ctx, 44, 346, 356, 120, 'Ore vocali giornaliere', `${formatHours(voice?.dailySeconds)}`, null);
-  drawCard(ctx, 422, 346, 356, 120, 'Ore vocali settimanali', `${formatHours(voice?.weeklySeconds)}`, null);
-  drawCard(ctx, 800, 346, 356, 120, 'Ore vocali totali', `${formatHours(voice?.totalSeconds)}`, null);
+  drawChart(ctx, chart, 650, 392, 610, 242);
+  drawLabel(ctx, `Server Lookback: Last ${lookbackDays || 14} days`, 24, 670, 16, '#cdd2da', '700');
 
   return canvas.toBuffer('image/png');
 }
@@ -163,51 +216,68 @@ async function renderUserActivityCanvas({
 async function renderServerActivityCanvas({
   guildName,
   guildIconUrl,
-  days,
-  totals,
-  topChannelsText,
-  topChannelsVoice,
+  createdOn,
+  invitedBotOn,
+  lookbackDays,
+  windows,
   topUsersText,
   topUsersVoice,
-  approximate
+  topChannelsText,
+  topChannelsVoice,
+  chart
 }) {
   registerCanvasFonts(canvasModule);
-  const width = 1400;
-  const height = 760;
+  const width = 1280;
+  const height = 910;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  const bg = ctx.createLinearGradient(0, 0, width, height);
-  bg.addColorStop(0, '#2f2118');
-  bg.addColorStop(1, '#6f4e37');
-  ctx.fillStyle = bg;
+  ctx.fillStyle = '#1f242c';
   ctx.fillRect(0, 0, width, height);
+  roundRect(ctx, 0, 0, width, height, 28);
+  ctx.clip();
 
-  roundRect(ctx, 18, 18, width - 36, height - 36, 24);
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  await drawAvatarCircle(ctx, guildIconUrl, 26, 20, 90);
+  drawLabel(ctx, guildName, 124, 52, 48, '#dfe4eb', '700');
+  drawLabel(ctx, 'Server Overview', 124, 90, 22, '#b9c0ca', '600');
+
+  drawDateBadge(ctx, 'Created On', dateText(createdOn), 650, 22, 270, 80);
+  drawDateBadge(ctx, 'Invited Bot On', dateText(invitedBotOn), 940, 22, 300, 80);
+
+  drawMetricPanel(ctx, 'Messages', '#', [
+    { label: '1d', value: `${compactNumber(windows?.d1?.text)} messages` },
+    { label: '7d', value: `${compactNumber(windows?.d7?.text)} messages` },
+    { label: '14d', value: `${compactNumber(windows?.d14?.text)} messages` }
+  ], 20, 132, 400, 220);
+
+  drawMetricPanel(ctx, 'Voice Activity', '🔊', [
+    { label: '1d', value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
+    { label: '7d', value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
+    { label: '14d', value: `${formatHours(windows?.d14?.voiceSeconds)} hours` }
+  ], 440, 132, 400, 220);
+
+  drawMetricPanel(ctx, 'Contributors', '👤', [
+    { label: '1d', value: `${Number(windows?.d1?.contributors || 0)} members` },
+    { label: '7d', value: `${Number(windows?.d7?.contributors || 0)} members` },
+    { label: '14d', value: `${Number(windows?.d14?.contributors || 0)} members` }
+  ], 860, 132, 400, 220);
+
+  roundRect(ctx, 20, 370, 600, 220, 18);
+  ctx.fillStyle = '#2f343d';
   ctx.fill();
+  drawLabel(ctx, 'Top Members', 34, 402, 24, '#d9dde3', '700');
+  drawTopChip(ctx, (topUsersText?.[0]?.label || '-').replace(/^@/, ''), `${compactNumber(topUsersText?.[0]?.value || 0)}`, 'messages', 34, 424, 572, 72);
+  drawTopChip(ctx, (topUsersVoice?.[0]?.label || '-').replace(/^@/, ''), `${formatHours(topUsersVoice?.[0]?.value || 0)}`, 'hours', 34, 506, 572, 72);
 
-  await drawAvatarCircle(ctx, guildIconUrl, 44, 40, 100);
-  drawTitle(ctx, `${guildName} • Activity`, 168, 78, 44);
-  drawSubtitle(ctx, `Finestra: ${days} giorni`, 168, 116);
+  roundRect(ctx, 640, 370, 620, 220, 18);
+  ctx.fillStyle = '#2f343d';
+  ctx.fill();
+  drawLabel(ctx, 'Top Channels', 654, 402, 24, '#d9dde3', '700');
+  drawTopChip(ctx, (topChannelsText?.[0]?.label || '#-').replace(/^#/, ''), `${compactNumber(topChannelsText?.[0]?.value || 0)}`, 'messages', 654, 424, 592, 72);
+  drawTopChip(ctx, (topChannelsVoice?.[0]?.label || '#-').replace(/^#/, ''), `${formatHours(topChannelsVoice?.[0]?.value || 0)}`, 'hours', 654, 506, 592, 72);
 
-  drawCard(ctx, 44, 166, 640, 110, 'Messaggi totali', `${Number(totals?.text || 0)}`, null);
-  drawCard(ctx, 714, 166, 640, 110, 'Ore vocali totali', `${formatHours(totals?.voiceSeconds)}`, null);
-
-  drawTopList(ctx, 'Top 3 canali text', topChannelsText, 44, 304, 640, 190, (item) => `#${item.id} • ${item.value} msg`);
-  drawTopList(ctx, 'Top 3 canali voc', topChannelsVoice, 714, 304, 640, 190, (item) => `#${item.id} • ${formatHours(item.value)} h`);
-  drawTopList(ctx, 'Top 3 utenti text', topUsersText, 44, 516, 640, 190, (item) => `@${item.id} • ${item.value} msg`);
-  drawTopList(ctx, 'Top 3 utenti voc', topUsersVoice, 714, 516, 640, 190, (item) => `@${item.id} • ${formatHours(item.value)} h`);
-
-  if (approximate) {
-    drawTextWithSpecialFallback(ctx, 'Nota: dati retroattivi parziali, top canali disponibili dal nuovo tracking.', 52, 730, {
-      size: 15,
-      weight: '600',
-      color: 'rgba(255,255,255,0.75)',
-      align: 'left',
-      baseline: 'middle'
-    });
-  }
+  drawChart(ctx, chart, 20, 610, 1240, 240);
+  drawLabel(ctx, `Server Lookback: Last ${lookbackDays} days`, 28, 878, 16, '#cdd2da', '700');
 
   return canvas.toBuffer('image/png');
 }
@@ -216,4 +286,3 @@ module.exports = {
   renderUserActivityCanvas,
   renderServerActivityCanvas
 };
-

@@ -25,7 +25,7 @@ function buildCooldownErrorEmbed(remainingSeconds) {
 function buildBusyCommandErrorEmbed() {
   return buildBaseErrorEmbed(
     '<:attentionfromvega:1443651874032062505> Comando in esecuzione',
-    'Hai gia un comando in esecuzione, attendi un attimo.'
+    'Hai già un comando in esecuzione, attendi un attimo.'
   );
 }
 
@@ -39,7 +39,7 @@ function buildMissingArgumentsErrorEmbed() {
 function buildCommandTimeoutErrorEmbed() {
   return buildBaseErrorEmbed(
     '<:attentionfromvega:1443651874032062505> Comando scaduto',
-    'Il comando e scaduto dopo 60 secondi. Riprova.'
+    'Il comando è scaduto dopo 60 secondi. Riprova.'
   );
 }
 
@@ -48,7 +48,7 @@ function buildInternalCommandErrorEmbed(rawError) {
   const compact = raw.length > 900 ? `${raw.slice(0, 900)}...` : raw;
   return buildBaseErrorEmbed(
     '<:vegax:1443934876440068179> Errore comando',
-    `C'e stato un errore nell'esecuzione del comando.\n\`\`\`${compact}\`\`\``
+    `C'è stato un errore nell'esecuzione del comando.\n\`\`\`${compact}\`\`\``
   );
 }
 

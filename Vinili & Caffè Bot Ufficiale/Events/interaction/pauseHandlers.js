@@ -224,7 +224,8 @@ function buildAcceptedButtonsRow(userId, pauseId, options = {}) {
   components.push(
     new ButtonBuilder()
       .setCustomId(`pause_list:${userId}:${pauseId}`)
-      .setLabel('<:customprofile:1443925456972808304> Lista pause')
+      .setEmoji(`<:customprofile:1443925456972808304>`)
+      .setLabel('Lista pause')
       .setStyle(ButtonStyle.Secondary)
   );
   return new ActionRowBuilder().addComponents(components);

@@ -10,8 +10,12 @@ module.exports = {
   async execute(message, args = []) {
     await message.channel.sendTyping();
 
+    const tokens = Array.isArray(args) ? args.map((arg) => String(arg || '').trim()).filter(Boolean) : [];
+    const wantsEmbed = tokens.some((token) => token.toLowerCase() === 'embed');
+    const cleanArgs = tokens.filter((token) => token.toLowerCase() !== 'embed');
+
     const targetFromMention = message.mentions?.users?.first() || null;
-    const raw = Array.isArray(args) && args[0] ? String(args[0]) : '';
+    const raw = cleanArgs[0] ? String(cleanArgs[0]) : '';
     const id = raw.replace(/[<@!>]/g, '');
     const targetFromId = /^\d{16,20}$/.test(id)
       ? (await message.client.users.fetch(id).catch(() => null))
@@ -58,6 +62,14 @@ module.exports = {
         .setEmoji('<a:VC_HeartsPink:1468685897389052008>')
         .setStyle(ButtonStyle.Secondary)
     );
+
+    if (!wantsEmbed) {
+      await safeMessageReply(message, {
+        files: [file],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
 
     await safeMessageReply(message, {
       embeds: [embed],

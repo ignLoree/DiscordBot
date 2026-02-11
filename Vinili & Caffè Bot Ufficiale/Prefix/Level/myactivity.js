@@ -1,56 +1,97 @@
-﻿const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
+const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const { getUserActivityStats } = require('../../Services/Community/activityService');
+const { getUserOverviewStats } = require('../../Services/Community/activityService');
 const { renderUserActivityCanvas } = require('../../Utils/Render/activityCanvas');
 
+function parseWindowDays(rawValue) {
+  const parsed = Number(String(rawValue || '14').toLowerCase().replace(/d$/i, ''));
+  if ([7, 14, 21].includes(parsed)) return parsed;
+  return 14;
+}
+
+function parseMyActivityArgs(args = []) {
+  const tokens = Array.isArray(args) ? args.map((x) => String(x || '').trim()).filter(Boolean) : [];
+  const wantsEmbed = tokens.some((t) => t.toLowerCase() === 'embed');
+  const dayToken = tokens.find((t) => /^\d+d?$/i.test(t));
+  return {
+    lookbackDays: parseWindowDays(dayToken || '14'),
+    wantsEmbed
+  };
+}
+
 function formatHours(seconds) {
-  const value = Number(seconds || 0) / 3600;
-  return value.toFixed(1);
+  return (Number(seconds || 0) / 3600).toFixed(2);
+}
+
+async function resolveChannelLabel(guild, channelId) {
+  const id = String(channelId || '');
+  if (!id) return `#${id}`;
+  const channel = guild.channels?.cache?.get(id) || await guild.channels?.fetch(id).catch(() => null);
+  if (!channel) return `#${id}`;
+  return `#${channel.name}`;
+}
+
+async function enrichChannels(guild, items = []) {
+  const out = [];
+  for (const item of items) {
+    out.push({ ...item, label: await resolveChannelLabel(guild, item?.id) });
+  }
+  return out;
 }
 
 module.exports = {
   name: 'myactivity',
   aliases: ['me'],
 
-  async execute(message) {
+  async execute(message, args = []) {
     await message.channel.sendTyping();
 
-    const stats = await getUserActivityStats(message.guild.id, message.author.id);
-    const guildName = message.guild?.name || 'Server';
-    const guildIcon = message.guild?.iconURL({ size: 128 }) || null;
+    const { lookbackDays, wantsEmbed } = parseMyActivityArgs(args);
+    const stats = await getUserOverviewStats(message.guild.id, message.author.id, lookbackDays);
+    const topChannelsText = await enrichChannels(message.guild, stats.topChannelsText);
+    const topChannelsVoice = await enrichChannels(message.guild, stats.topChannelsVoice);
 
-    const imageName = `myactivity-${message.author.id}.png`;
+    const imageName = `myactivity-overview-${message.author.id}-${lookbackDays}d.png`;
     let file = null;
     try {
       const buffer = await renderUserActivityCanvas({
-        guildName,
+        guildName: message.guild?.name || 'Server',
         userTag: message.author.tag,
+        displayName: message.member?.displayName || message.author.username,
         avatarUrl: message.author.displayAvatarURL({ extension: 'png', size: 256 }),
-        messages: stats.messages,
-        voice: stats.voice
+        createdOn: message.author.createdAt || null,
+        joinedOn: message.member?.joinedAt || null,
+        lookbackDays,
+        windows: stats.windows,
+        ranks: stats.ranks,
+        topChannelsText,
+        topChannelsVoice,
+        chart: stats.chart
       });
       file = new AttachmentBuilder(buffer, { name: imageName });
     } catch (error) {
       global.logger?.warn?.('[MYACTIVITY] Canvas render failed:', error?.message || error);
     }
 
+    if (!wantsEmbed) {
+      await safeMessageReply(message, {
+        files: file ? [file] : [],
+        content: file ? null : '<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.',
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
     const embed = new EmbedBuilder()
       .setColor('#6f4e37')
-      .setAuthor({ name: guildName, iconURL: guildIcon })
+      .setAuthor({ name: `${message.author.tag} - My Activity ${lookbackDays}d`, iconURL: message.author.displayAvatarURL({ size: 128 }) })
       .setImage(file ? `attachment://${imageName}` : null)
       .setDescription([
-        `<a:VC_Flowers:1468687836055212174> **__${message.author.tag}__** le tue statistiche 𓂃★`,
-        '',
-        '<:channeltext:1443247596922470551> __Messaggi__:',
-        `<:dot:1443660294596329582> Giornalieri: **${stats.messages.daily}** _messaggi_`,
-        `<:dot:1443660294596329582> Settimanali: **${stats.messages.weekly}** _messaggi_`,
-        `<:dot:1443660294596329582> Totali: **${stats.messages.total}** _messaggi_`,
-        '',
-        '<:voice:1467639623735054509> __Ore in vocale__:',
-        `<:dot:1443660294596329582> Giornalieri: **${formatHours(stats.voice.dailySeconds)}** _ore_`,
-        `<:dot:1443660294596329582> Settimanali: **${formatHours(stats.voice.weeklySeconds)}** _ore_`,
-        `<:dot:1443660294596329582> Totali: **${formatHours(stats.voice.totalSeconds)}** _ore_`
-      ].join('\n'));
+        `Messaggi (1d/7d/14d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${stats.windows.d14.text}**`,
+        `Ore vocali (1d/7d/14d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(stats.windows.d14.voiceSeconds)}**`,
+        `Rank server (14d): **Text #${stats.ranks.text || '-'} • Voice #${stats.ranks.voice || '-'}**`,
+        stats.approximate ? '_Nota: dati retroattivi parziali._' : null
+      ].filter(Boolean).join('\n'));
 
     await safeMessageReply(message, {
       embeds: [embed],
