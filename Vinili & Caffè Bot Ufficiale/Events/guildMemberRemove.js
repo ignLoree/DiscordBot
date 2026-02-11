@@ -166,6 +166,10 @@ module.exports = {
                         await dmChannel.send({
                             content: `<:vegax:1443934876440068179> Sei uscito dal server! Rientra entro 5 minuti per non perdere la tua partnership.`,
                             components: [row]
+                        }).catch((error) => {
+                            if (error?.code !== 50007) {
+                                global.logger.error(error);
+                            }
                         });
                     }
                     setTimeout(async () => {
