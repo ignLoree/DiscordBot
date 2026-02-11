@@ -369,10 +369,10 @@ ids.aliasEntries = {
 
 function normalizeNameToKey(rawName) {
   const base = String(rawName || '')
-    .replace(/^\u0F04\s*/u, '')
+    .replace(/^༄\s*/u, '')
     .replace(/\s*->.*$/u, '')
-    .replace(/^.*?\uFE32/u, '')
-    .replace(/['\u2019`]/g, '')
+    .replace(/^.*?︲/u, '')
+    .replace(/['’`]/g, '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, ' ')

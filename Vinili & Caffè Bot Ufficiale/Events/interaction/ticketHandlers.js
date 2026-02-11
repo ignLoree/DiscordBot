@@ -96,6 +96,25 @@ async function handleTicketInteraction(interaction) {
         return normalized.includes('tickets');
     }
 
+    function sanitizeTicketDescriptionInput(value) {
+        let text = String(value || '');
+        text = text
+            .replace(/^```(?:[a-zA-Z0-9_-]+)?\n?/i, '')
+            .replace(/```$/i, '')
+            .replace(/<@!?\d+>/g, '')
+            .replace(/<@&\d+>/g, '')
+            .replace(/<#\d+>/g, '')
+            .replace(/@everyone|@here/gi, '')
+            .replace(/https?:\/\/(?!discord(?:app)?\.com\/invite\/|discord\.gg\/)\S+/gi, '');
+
+        const normalizedLines = text
+            .split(/\r?\n/)
+            .map((line) => line.replace(/\s+/g, ' ').trim())
+            .filter((line, index, arr) => line.length > 0 || (index > 0 && arr[index - 1]?.length > 0));
+
+        return normalizedLines.join('\n').trim();
+    }
+
     function buildOverflowTicketCategoryName(index) {
         return `${TICKETS_CATEGORY_NAME} #${index}`;
     }
@@ -766,7 +785,8 @@ async function handleTicketInteraction(interaction) {
             try {
                 await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
             } catch { }
-            const description = interaction.fields.getTextInputValue('ticket_description')?.trim();
+            const rawDescription = interaction.fields.getTextInputValue('ticket_description')?.trim();
+            const description = sanitizeTicketDescriptionInput(rawDescription);
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
             if (!ticketDoc) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
@@ -774,6 +794,10 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.user.id !== ticketDoc.userId) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
+                return true;
+            }
+            if (!description) {
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Dopo il filtro non c\'è testo valido da inviare.')], flags: 1 << 6 });
                 return true;
             }
             const updatedTicket = await Ticket.findOneAndUpdate(

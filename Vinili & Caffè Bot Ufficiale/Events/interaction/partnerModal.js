@@ -27,7 +27,7 @@ function isValidServerName(name) {
 
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
-    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { });
+    await interaction.deferReply().catch(() => {}).catch(() => { });
     if (!interaction.member.roles.cache.has(IDs.roles.PartnerManager)) {
         await interaction.editReply({
             embeds: [
@@ -137,9 +137,23 @@ async function handlePartnerModal(interaction) {
     }
 
     const filteredDescription = description
+        .replace(/<@!?\d+>/g, '')
+        .replace(/<@&\d+>/g, '')
+        .replace(/<#\d+>/g, '')
         .replace(/@everyone/g, '')
         .replace(/@here/g, '')
-        .replace(/https?:\/\/(?!discord\.gg)[^\s]+/g, '');
+        .replace(/https?:\/\/(?!discord(?:app)?\.com\/invite\/|discord\.gg\/)\S+/gi, '')
+        .trim();
+    if (!filteredDescription) {
+        await interaction.editReply({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor('Red')
+                    .setDescription('<:vegax:1443934876440068179> Dopo il filtro (link/tag) la descrizione è vuota. Inserisci testo descrittivo.')
+            ]
+        });
+        return true;
+    }
 
     try {
         let staffDoc = await Staff.findOne({
@@ -180,14 +194,14 @@ async function handlePartnerModal(interaction) {
 <:mariolevelup:1443679595084910634> Ora sei a **\`${totalPartners}\`** partner!
 <:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442579412280410194>`
             )
-            .setFooter({ text: `Partner effettuata con ${serverName}`, iconURL: serverIcon })
+            .setFooter({ text: serverName, iconURL: serverIcon })
             .setColor('#6f4e37')
             .setTimestamp()
             .setThumbnail(interaction.guild.iconURL());
 
         if (partnershipChannel) {
             const sentMessageIds = [];
-            const parts = splitMessage(`${filteredDescription}\n\nPartner effettuata con **<@${managerId}>**`);
+            const parts = splitMessage(filteredDescription);
             for (const part of parts) {
                 const sent = await partnershipChannel.send({ content: part }).catch(() => null);
                 if (sent?.id) sentMessageIds.push(sent.id);

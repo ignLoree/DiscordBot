@@ -8,13 +8,13 @@ const SKULL_EMOJI = '💀';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
 
 function normalizeEmojiName(value) {
-  return String(value || '').replace(/\uFE0F/g, '').trim();
+  return String(value || '').replace(/️/g, '').trim();
 }
 
 function isSkullReaction(reaction) {
   const name = normalizeEmojiName(reaction?.emoji?.name);
   if (name === normalizeEmojiName(SKULL_EMOJI)) return true;
-  if (name === '?') return true;
+  if (name === '☠') return true;
   return false;
 }
 
@@ -147,7 +147,7 @@ module.exports = {
 
       const confirmEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`Il messaggio � stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+        .setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
@@ -161,4 +161,3 @@ module.exports = {
     }
   }
 };
-
