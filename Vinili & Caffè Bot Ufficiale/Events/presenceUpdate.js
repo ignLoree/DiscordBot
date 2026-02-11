@@ -181,6 +181,15 @@ async function clearPersistedStatus(guildId, userId) {
     }
 }
 
+async function getPersistedStatus(guildId, userId) {
+    if (!isDbReady() || !guildId || !userId) return null;
+    try {
+        return await SupporterStatus.findOne({ guildId, userId }).lean();
+    } catch {
+        return null;
+    }
+}
+
 async function startPendingFlow(member, channel) {
     if (pendingChecks.has(member.id)) return;
     const existing = statusCache.get(member.id);
@@ -246,13 +255,12 @@ async function bootstrapSupporter(client) {
         for (const doc of persisted) {
             if (doc?.userId) {
                 bootstrappedUsers.add(doc.userId);
-                if (doc.lastMessageId) {
-                    statusCache.set(doc.userId, {
-                        hasLink: Boolean(doc.hasLink),
-                        lastAnnounced: doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : 0,
-                        lastMessageId: doc.lastMessageId
-                    });
-                }
+                statusCache.set(doc.userId, {
+                    hasLink: Boolean(doc.hasLink),
+                    lastAnnounced: doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : 0,
+                    lastMessageId: doc.lastMessageId || null,
+                    lastSeenOnlineAt: 0
+                });
             }
         }
         await guild.members.fetch({ withPresences: true }).catch(() => null);
@@ -311,7 +319,19 @@ module.exports = {
             startCleanupClock(member.client, member.guild.id);
 
             const userId = member.id;
-            const prev = statusCache.get(userId);
+            let prev = statusCache.get(userId);
+            if (!prev) {
+                const persisted = await getPersistedStatus(member.guild.id, userId);
+                if (persisted) {
+                    prev = {
+                        hasLink: Boolean(persisted.hasLink),
+                        lastAnnounced: persisted.lastSentAt ? new Date(persisted.lastSentAt).getTime() : 0,
+                        lastMessageId: persisted.lastMessageId || null,
+                        lastSeenOnlineAt: 0
+                    };
+                    statusCache.set(userId, prev);
+                }
+            }
             const prevHas = typeof prev?.hasLink === 'boolean'
                 ? prev.hasLink
                 : resolveInviteState(oldPresence, false);

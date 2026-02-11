@@ -65,7 +65,7 @@ async function enrichTops(guild, stats) {
 
 module.exports = {
   name: 'serveractivity',
-  aliases: ['sactivity', 'guildactivity'],
+  aliases: ['server'],
 
   async execute(message, args = []) {
     await message.channel.sendTyping();

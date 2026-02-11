@@ -1,6 +1,5 @@
 const { ActivityUser, ActivityDaily } = require('../../Schemas/Community/communitySchemas');
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember } = require('./expService');
-const IDs = require('../../Utils/Config/ids');
 
 const TIME_ZONE = 'Europe/Rome';
 
@@ -115,12 +114,6 @@ function ensureVoiceKeys(doc, now) {
 
 async function recordMessageActivity(message) {
   if (!message?.guild || !message.author || message.author.bot) return;
-  const roleId = IDs.roles.Member || IDs.roles.Verificato;
-  const role = message.guild.roles.cache.get(roleId);
-  if (!role) return;
-  const permissions = message.channel?.permissionsFor?.(role);
-  if (!permissions) return;
-  if (!permissions.has(['ViewChannel', 'SendMessages'])) return;
   const now = new Date();
   let doc = await ActivityUser.findOne({ guildId: message.guild.id, userId: message.author.id });
   if (!doc) {
@@ -158,13 +151,6 @@ async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
   }
 }
 
-function canRoleUseVoiceChannel(channel, role) {
-  if (!channel || !role) return false;
-  const permissions = channel.permissionsFor(role);
-  if (!permissions) return false;
-  return permissions.has(['ViewChannel', 'Connect', 'Speak']);
-}
-
 async function handleVoiceActivity(oldState, newState) {
   const member = newState?.member || oldState?.member;
   if (!member || member.user?.bot) return;
@@ -175,9 +161,6 @@ async function handleVoiceActivity(oldState, newState) {
   const now = new Date();
   const wasInVoice = Boolean(oldState?.channelId);
   const isInVoice = Boolean(newState?.channelId);
-  const roleId = IDs.roles.Member || IDs.roles.Verificato;
-  const role = member.guild.roles.cache.get(roleId);
-  if (!role) return;
 
   let doc = await ActivityUser.findOne({ guildId, userId });
   if (!doc) {
@@ -186,11 +169,6 @@ async function handleVoiceActivity(oldState, newState) {
 
   if (wasInVoice && !isInVoice) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
-    if (!canRoleUseVoiceChannel(oldChannel, role)) {
-      doc.voice.sessionStartedAt = null;
-      await doc.save();
-      return;
-    }
     const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
     const elapsedSeconds = startedAt
       ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
@@ -210,34 +188,25 @@ async function handleVoiceActivity(oldState, newState) {
 
   if (wasInVoice && isInVoice && oldState.channelId !== newState.channelId) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
-    if (canRoleUseVoiceChannel(oldChannel, role)) {
-      const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
-      const elapsedSeconds = startedAt
-        ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
-        : 0;
-      const ignored = await shouldIgnoreExpForMember({
-        guildId,
-        member,
-        channelId: oldChannel?.id || null
-      });
-      await recordVoiceSessionEnd(doc, now, member.guild, ignored);
-      if (oldChannel?.id) {
-        await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
-      }
-    } else {
-      doc.voice.sessionStartedAt = null;
+    const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
+    const elapsedSeconds = startedAt
+      ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
+      : 0;
+    const ignored = await shouldIgnoreExpForMember({
+      guildId,
+      member,
+      channelId: oldChannel?.id || null
+    });
+    await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    if (oldChannel?.id) {
+      await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
-    const newChannel = newState?.channel || newState?.guild?.channels?.cache?.get(newState.channelId);
-    if (canRoleUseVoiceChannel(newChannel, role)) {
-      doc.voice.sessionStartedAt = now;
-    }
+    doc.voice.sessionStartedAt = now;
     await doc.save();
     return;
   }
 
   if (!wasInVoice && isInVoice) {
-    const newChannel = newState?.channel || newState?.guild?.channels?.cache?.get(newState.channelId);
-    if (!canRoleUseVoiceChannel(newChannel, role)) return;
     doc.voice.sessionStartedAt = now;
     await doc.save();
   }
@@ -640,4 +609,3 @@ module.exports = {
   getServerOverviewStats,
   getUserOverviewStats
 };
-

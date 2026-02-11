@@ -60,11 +60,28 @@ function fitText(ctx, text, maxWidth, size = 16, weight = '600') {
 }
 
 function prepareVisibleText(value) {
-  const out = String(value || '')
+  const raw = String(value || '');
+  const protectedMap = new Map([
+    ['\u0F04', '__VC_KEEP_TIBETAN_MARK__'], // ༄
+    ['\u00B9', '__VC_KEEP_SUP_1__'], // ¹
+    ['\u00B2', '__VC_KEEP_SUP_2__'], // ²
+    ['\u00B3', '__VC_KEEP_SUP_3__'] // ³
+  ]);
+
+  let out = raw;
+  for (const [char, token] of protectedMap.entries()) {
+    out = out.split(char).join(token);
+  }
+
+  out = out
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/\uFFFD/g, '')
     .normalize('NFKC')
     .trim();
+
+  for (const [char, token] of protectedMap.entries()) {
+    out = out.split(token).join(char);
+  }
 
   return out || '-';
 }
@@ -133,15 +150,25 @@ function tokenizeEmojiText(text) {
     const cp = ch.codePointAt(0);
     const next = chars[i + 1];
     const nextCp = next ? next.codePointAt(0) : null;
-    const isJoiner = cp === 0x200d || cp === 0xfe0f;
+    const isJoiner = cp === 0x200d;
+    const isVariation = cp === 0xfe0f;
     const isEmoji = isEmojiCodePoint(cp);
 
-    if (isEmoji || (emoji && isJoiner)) {
+    if (isEmoji || (emoji && (isJoiner || isVariation))) {
       flushText();
       emoji += ch;
       const nextIsEmoji = isEmojiCodePoint(nextCp);
-      const nextIsJoiner = nextCp === 0x200d || nextCp === 0xfe0f;
-      if (!nextIsEmoji && !nextIsJoiner) flushEmoji();
+      const nextIsJoiner = nextCp === 0x200d;
+      const nextIsVariation = nextCp === 0xfe0f;
+      // Keep the same token only for emoji modifiers/ZWJ chains.
+      if (isJoiner || nextIsJoiner || nextIsVariation) {
+        continue;
+      }
+      if (isEmoji && nextIsEmoji) {
+        flushEmoji();
+        continue;
+      }
+      flushEmoji();
       continue;
     }
 
@@ -286,26 +313,32 @@ function drawMetricPanel(ctx, title, rows, x, y, w, h) {
     fillRoundRect(ctx, x + 14, rowY, w - 28, 50, 11, 'rgba(19, 26, 37, 0.92)');
     fillRoundRect(ctx, x + 14, rowY, 98, 50, 11, 'rgba(10, 16, 27, 0.95)');
 
-    drawLabel(ctx, rows[i].label, x + 63, rowY + 25, { size: 20, weight: '700', align: 'center', color: '#dbe1eb' });
-    drawLabel(ctx, fitText(ctx, rows[i].value, w - 170, 19, '600'), x + 126, rowY + 25, { size: 19, weight: '600', color: '#d2d9e5' });
+    drawLabel(ctx, rows[i].label, x + 63, rowY + 25, { size: 24, weight: '700', align: 'center', color: '#dbe1eb' });
+    drawLabel(ctx, fitText(ctx, rows[i].value, w - 170, 24, '700'), x + w - 26, rowY + 25, { size: 24, weight: '700', align: 'right', color: '#d2d9e5' });
   }
 }
 
-async function drawTopCard(ctx, title, first, second, x, y, w, h) {
+async function drawTopCard(ctx, title, first, second, x, y, w, h, options = {}) {
+  const showRank = options.showRank !== false;
   fillRoundRect(ctx, x, y, w, h, 18, 'rgba(46, 55, 70, 0.94)');
   strokeRoundRect(ctx, x, y, w, h, 18, 'rgba(255,255,255,0.05)', 1);
   drawLabel(ctx, title, x + 14, y + 24, { size: 27, weight: '700', color: '#e2e7ef' });
 
-  await drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', 1, x + 14, y + 44, w - 28, 72);
-  await drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', 2, x + 14, y + 126, w - 28, 72);
+  await drawTopChip(ctx, first?.label || '-', first?.value || '-', first?.unit || '', 1, x + 14, y + 44, w - 28, 72, { showRank });
+  await drawTopChip(ctx, second?.label || '-', second?.value || '-', second?.unit || '', 2, x + 14, y + 126, w - 28, 72, { showRank });
 }
 
-async function drawTopChip(ctx, label, value, unit, position, x, y, w, h) {
+async function drawTopChip(ctx, label, value, unit, position, x, y, w, h, options = {}) {
+  const showRank = options.showRank !== false;
   fillRoundRect(ctx, x, y, w, h, 12, 'rgba(12, 18, 28, 0.95)');
   const safeLabel = prepareVisibleText(label);
-  await drawLabelWithEmoji(ctx, fitText(ctx, safeLabel, w - 310, 22, '700'), x + 14, y + h / 2, { size: 22, weight: '700', color: '#e0e5ed', align: 'left' });
-  drawLabel(ctx, `${value}${unit ? ` ${unit}` : ''}`, x + w - 94, y + h / 2, { size: 20, weight: '700', align: 'right', color: '#d5dbe5' });
-  drawLabel(ctx, `#${Number(position || 0) || '-'}`, x + w - 14, y + h / 2, { size: 40, weight: '800', align: 'right', color: '#e8edf7' });
+  const labelMax = showRank ? (w - 360) : (w - 260);
+  const valueRight = showRank ? (x + w - 112) : (x + w - 14);
+  await drawLabelWithEmoji(ctx, fitText(ctx, safeLabel, labelMax, 24, '700'), x + 14, y + h / 2, { size: 24, weight: '700', color: '#e0e5ed', align: 'left' });
+  drawLabel(ctx, `${value}${unit ? ` ${unit}` : ''}`, valueRight, y + h / 2, { size: 30, weight: '800', align: 'right', color: '#d5dbe5' });
+  if (showRank) {
+    drawLabel(ctx, `#${Number(position || 0) || '-'}`, x + w - 14, y + h / 2, { size: 54, weight: '900', align: 'right', color: '#e8edf7' });
+  }
 }
 
 function drawChart(ctx, chart, x, y, w, h) {
@@ -429,7 +462,7 @@ async function renderUserActivityCanvas({
     label: topChannelsVoice?.[0]?.label || '#-',
     value: formatHours(topChannelsVoice?.[0]?.value || 0),
     unit: 'hours'
-  }, 20, 392, 610, 242);
+  }, 20, 392, 610, 242, { showRank: false });
 
   drawChart(ctx, chart, 650, 392, 610, 242);
   drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 24, 670, { size: 20, weight: '700', color: '#cfd6e2' });
@@ -505,7 +538,7 @@ async function renderServerActivityCanvas({
     label: topChannelsVoice?.[0]?.label || '#-',
     value: formatHours(topChannelsVoice?.[0]?.value || 0),
     unit: 'hours'
-  }, 640, 370, 620, 220);
+  }, 640, 370, 620, 220, { showRank: false });
 
   drawChart(ctx, chart, 20, 610, 1240, 240);
   drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 28, 878, { size: 20, weight: '700', color: '#cfd6e2' });
