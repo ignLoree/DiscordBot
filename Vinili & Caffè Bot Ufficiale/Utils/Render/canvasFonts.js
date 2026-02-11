@@ -93,7 +93,8 @@ function fontStackWithPrimary(primary, size, weight) {
 }
 
 function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
-  const value = text == null ? "" : String(text);
+  const rawValue = text == null ? "" : String(text);
+  const value = options.normalizeCompatibility ? rawValue.normalize("NFKC") : rawValue;
   const size = options.size || 16;
   const weight = options.weight || "";
   const align = options.align || ctx.textAlign || "left";

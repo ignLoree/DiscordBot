@@ -314,7 +314,6 @@ async function getServerActivityStats(guildId, days = 7) {
     }
   }
 
-  // Fallback retroattivo parziale: prima del tracking daily non avevamo il dettaglio per canale.
   if (rows.length === 0) {
     const users = await ActivityUser.find({ guildId })
       .select('userId messages.weekly messages.total voice.weeklySeconds voice.totalSeconds')

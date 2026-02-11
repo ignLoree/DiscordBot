@@ -372,7 +372,7 @@ function normalizeNameToKey(rawName) {
     .replace(/^\u0F04\s*/u, '')
     .replace(/\s*->.*$/u, '')
     .replace(/^.*?\uFE32/u, '')
-    .replace(/['â€™`]/g, '')
+    .replace(/['\u2019`]/g, '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9]+/g, ' ')
@@ -409,4 +409,3 @@ applyNormalizedAliases('roles', 'role');
 applyNormalizedAliases('bots', 'bot');
 
 module.exports = ids;
-

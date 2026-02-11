@@ -18,10 +18,10 @@ module.exports = {
         return ~~(Date.now() - Now);
       };
       const databasePing = await getDatabasePing();
-      const empty = '\u200b';
+      const empty = '​';
       const pingEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`<a:VC_GreenDot:1454118116392042711> Il ping del bot Ã¨ **\`${ws}ms\`**`)
+        .setDescription(`<a:VC_GreenDot:1454118116392042711> Il ping del bot è **\`${ws}ms\`**`)
         .addFields(
           { name: `<:Clock:1330530065133338685> **Uptime:** \`${uptimeString}\``, value: empty, inline: true },
           { name: `<a:VC_Loading:1448687876018540695> **API:** \`${msgEdit}ms\``, value: empty, inline: true },

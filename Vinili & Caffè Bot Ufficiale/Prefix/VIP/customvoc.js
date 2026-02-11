@@ -14,9 +14,9 @@ function sanitizeVoiceBaseName(name) {
 }
 
 function buildCustomVocName(emoji, baseName) {
-  const safeEmoji = String(emoji || 'ðŸŽ§').trim() || 'ðŸŽ§';
+  const safeEmoji = String(emoji || '🎧').trim() || '🎧';
   const safeBase = sanitizeVoiceBaseName(baseName);
-  const prefix = `à¼„${safeEmoji}ï¸²`;
+  const prefix = `༄${safeEmoji}︲`;
   const maxBaseLength = Math.max(1, 100 - prefix.length);
   return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
 }
@@ -126,7 +126,7 @@ module.exports = {
       return;
     }
 
-    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || 'ðŸŽ§', message.member.displayName || message.author.username);
+    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || '🎧', message.member.displayName || message.author.username);
     const channel = await message.guild.channels.create({
       name: channelName,
       type: ChannelType.GuildVoice,

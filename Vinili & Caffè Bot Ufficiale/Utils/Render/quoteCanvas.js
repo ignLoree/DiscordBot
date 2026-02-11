@@ -86,7 +86,8 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
   drawTextWithSpecialFallback(ctx, username || "", textX, y - 36, {
     size: 18,
     weight: "italic",
-    color: "rgba(255,255,255,0.7)"
+    color: "rgba(255,255,255,0.7)",
+    normalizeCompatibility: true
   });
 
   ctx.font = fontStack(fontSize, "600");

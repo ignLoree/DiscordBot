@@ -593,7 +593,7 @@ module.exports = {
               .setStyle(ButtonStyle.Primary)
           );
           const descriptionPrompt = await targetChannel.send({
-            content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
+            content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione.`,
             components: [descriptionRow]
           }).catch(() => null);
           if (descriptionPrompt?.id) {

@@ -23,9 +23,9 @@ const LEVEL_ROLE_MAP = new Map([
   [100, IDs.roles.Level100]
 ]);
 const ROLE_MULTIPLIERS = new Map([
-  [IDs.roles.Donator, 3], // Donator
-  [IDs.roles.VIP, 4], // VIP
-  [IDs.roles.ServerBooster, 2]   // Booster
+  [IDs.roles.Donator, 3],
+  [IDs.roles.VIP, 4],
+  [IDs.roles.ServerBooster, 2]
 ]);
 
 function pad2(value) {
@@ -73,7 +73,6 @@ function roundToNearest50(value) {
 
 function getLevelStep(level) {
   const safeLevel = Math.max(1, Math.floor(Number(level || 1)));
-  // Curva progressiva: livelli 1-10 facili, poi crescita sempre piÃ¹ dura.
   if (safeLevel <= 10) {
     return 120 + (safeLevel - 1) * 25;
   }

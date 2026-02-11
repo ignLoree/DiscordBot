@@ -266,7 +266,6 @@ function checkStringSelectPermission(interaction) {
   }
 
   const data = loadPermissions();
-  // Backward compatible: if selectMenus missing, fallback to buttons map.
   const rawPolicy =
     resolveComponentPolicy(data?.selectMenus, customId)
     ?? resolveComponentPolicy(data?.buttons, customId);
@@ -316,7 +315,6 @@ function checkModalPermission(interaction) {
   }
 
   const data = loadPermissions();
-  // Backward compatible: if modals missing, fallback to buttons map.
   const rawPolicy =
     resolveComponentPolicy(data?.modals, customId)
     ?? resolveComponentPolicy(data?.buttons, customId);

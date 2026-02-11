@@ -149,7 +149,7 @@ module.exports = {
     async execute(interaction) {
         const group = interaction.options.getSubcommandGroup(false)
         const sub = interaction.options.getSubcommand()
-        await interaction.deferReply()
+        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {})
         const channel = interaction.guild.channels.cache.get(IDs.channels.pexDepex)
         const pmchannel = interaction.guild.channels.cache.get(IDs.channels.partnersChat)
         if (sub === 'pex') {

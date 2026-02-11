@@ -27,7 +27,7 @@ function isValidServerName(name) {
 
 async function handlePartnerModal(interaction) {
     if (!interaction.isModalSubmit() || !interaction.customId.startsWith('partnershipModal_')) return false;
-    await interaction.deferReply().catch(() => { });
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { });
     if (!interaction.member.roles.cache.has(IDs.roles.PartnerManager)) {
         await interaction.editReply({
             embeds: [
@@ -223,11 +223,9 @@ async function handlePartnerModal(interaction) {
 function parsePartnershipModalId(customId) {
     const raw = String(customId || '');
     const parts = raw.split('_');
-    // New format: partnershipModal_<openerId>_<managerId>
     if (parts.length >= 3 && /^\d{16,20}$/.test(parts[1]) && /^\d{16,20}$/.test(parts[2])) {
         return { openerId: parts[1], managerId: parts[2] };
     }
-    // Legacy format: partnershipModal_<managerId>
     if (parts.length >= 2 && /^\d{16,20}$/.test(parts[1])) {
         return { openerId: null, managerId: parts[1] };
     }

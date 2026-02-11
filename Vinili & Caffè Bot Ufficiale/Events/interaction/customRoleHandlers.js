@@ -1,4 +1,4 @@
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js');
+﻿const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType } = require('discord.js');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const axios = require('axios');
 
@@ -442,23 +442,13 @@ function parseCustomVocName(rawName) {
   const name = String(rawName || '').trim();
   if (!name) return { emoji: '', baseName: 'privata' };
 
-  const separators = [
-    '\uFE32',
-    '︲',
-    'ï¸²',
-    'Ã¯Â¸Â²',
-    'ÃƒÂ¯Ã‚Â¸Ã‚Â²',
-    'ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â²'
-  ];
+  const separators = ['︲', 'ï¸²'];
   for (const separator of separators) {
     if (!name.includes(separator)) continue;
     const parts = name.split(separator);
     const left = String(parts.shift() || '')
-      .replace(/^\u0F04/u, '')
+      .replace(/^༄/u, '')
       .replace(/^à¼„/u, '')
-      .replace(/^Ã Â¼â€ž/u, '')
-      .replace(/^ÃƒÂ Ã‚Â¼Ã¢â‚¬Å¾/u, '')
-      .replace(/^ÃƒÆ’Ã‚Â Ãƒâ€šÃ‚Â¼ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾/u, '')
       .trim();
     const right = parts.join(separator).trim();
     return { emoji: left, baseName: right || 'privata' };
@@ -544,7 +534,7 @@ async function handleCustomVocModal(interaction) {
       return true;
     }
 
-    await interaction.deferReply().catch(() => {});
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
 
     const channel = interaction.guild?.channels?.cache?.get(channelId)
       || await interaction.guild?.channels?.fetch(channelId).catch(() => null);

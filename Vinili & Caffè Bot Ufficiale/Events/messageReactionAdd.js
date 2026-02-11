@@ -4,7 +4,7 @@ const communitySchemas = require('../Schemas/Community/communitySchemas');
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require('../Utils/Config/ids');
 
-const SKULL_EMOJI = '\uD83D\uDC80';
+const SKULL_EMOJI = '💀';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
 
 function normalizeEmojiName(value) {
@@ -14,7 +14,7 @@ function normalizeEmojiName(value) {
 function isSkullReaction(reaction) {
   const name = normalizeEmojiName(reaction?.emoji?.name);
   if (name === normalizeEmojiName(SKULL_EMOJI)) return true;
-  if (name === '\u2620') return true;
+  if (name === '?') return true;
   return false;
 }
 
@@ -147,7 +147,7 @@ module.exports = {
 
       const confirmEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+        .setDescription(`Il messaggio � stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
@@ -161,3 +161,4 @@ module.exports = {
     }
   }
 };
+

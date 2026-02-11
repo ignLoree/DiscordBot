@@ -94,7 +94,7 @@ async function handleDmBroadcastModal(interaction, client) {
     return true;
   }
 
-  await interaction.deferReply();
+  await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
 
   const staffRoleIds = getStaffRoleIds(client);
   const noDmSet = await getNoDmSet(interaction.guild.id);
@@ -112,7 +112,7 @@ async function handleDmBroadcastModal(interaction, client) {
     return !staffRoleIds.some((roleId) => member.roles.cache.has(roleId));
   });
 
-  const content = message.replace(/@everyone|@here/g, "@\u200beveryone");
+  const content = message.replace(/@everyone|@here/g, '@​everyone');
   const parts = splitMessage(content);
   const footerText = "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +no-dm nel server";
 

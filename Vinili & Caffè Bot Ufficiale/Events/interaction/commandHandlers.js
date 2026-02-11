@@ -55,6 +55,7 @@ async function handleSlashCommand(interaction, client) {
     const command = client.commands.get(getCommandKey(interaction.commandName, interaction.commandType));
     if (!command) return;
     const expectsModal = command?.expectsModal === true;
+    const isAdminCommand = String(command?.category || '').toLowerCase() === 'admin';
     if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
@@ -105,8 +106,17 @@ async function handleSlashCommand(interaction, client) {
     const originalEditReply = interaction.editReply.bind(interaction);
     const originalChannelSend = interaction.channel?.send?.bind(interaction.channel);
     const wrappedInteraction = Object.create(interaction);
-    // Keep acknowledge state on the original interaction object.
-    wrappedInteraction.deferReply = (...args) => interaction.deferReply(...args);
+    wrappedInteraction.deferReply = (...args) => {
+        if (isAdminCommand) return interaction.deferReply(...args);
+        const first = args?.[0];
+        if (!first || typeof first !== 'object' || Array.isArray(first)) {
+            return interaction.deferReply({ flags: 1 << 6 });
+        }
+        if (!Object.prototype.hasOwnProperty.call(first, 'flags')) {
+            return interaction.deferReply({ ...first, flags: 1 << 6 });
+        }
+        return interaction.deferReply(...args);
+    };
     wrappedInteraction.showModal = (...args) => interaction.showModal(...args);
     wrappedInteraction.deferUpdate = (...args) => interaction.deferUpdate(...args);
     wrappedInteraction.update = (...args) => interaction.update(...args);
@@ -162,7 +172,8 @@ async function handleSlashCommand(interaction, client) {
         if (!expectsModal) {
             deferTimer = setTimeout(() => {
                 if (!interaction.replied && !interaction.deferred) {
-                    interaction.deferReply().catch(() => { });
+                    const deferPayload = isAdminCommand ? {} : { flags: 1 << 6 };
+                    interaction.deferReply(deferPayload).catch(() => { });
                 }
             }, 1500);
         }
@@ -264,7 +275,6 @@ async function handleSlashCommand(interaction, client) {
             flags: 1 << 6
         });
     } finally {
-        // Hard safety net: never leave deferred interactions stuck on "thinking..."
         if (!expectsModal && interaction.deferred && !interaction.replied) {
             const fallbackPayload = commandFailed
                 ? { content: '<:vegax:1443934876440068179> Comando terminato con errore.' }

@@ -278,7 +278,7 @@ async function handleTicketInteraction(interaction) {
             if (config) {
                 if (!interaction.deferred && !interaction.replied) {
                     try {
-                        await interaction.deferReply({ flags: 1 << 6 });
+                        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
                     } catch { }
                 }
                 if (!interaction.client.ticketOpenLocks) {
@@ -412,7 +412,7 @@ async function handleTicketInteraction(interaction) {
                             .setStyle(ButtonStyle.Primary)
                     );
                     descriptionPrompt = await channel.send({
-                        content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione del ticket.`,
+                        content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione.`,
                         components: [descriptionRow]
                     }).catch(() => null);
                 }
@@ -715,7 +715,7 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                     return true;
                 }
-                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
+                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
                 await closeTicket(interaction, null, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
                 return true;
             }
@@ -734,7 +734,7 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
-                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
+                try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
                 const motivo = ticketDoc.closeReason || 'Nessun motivo inserito';
                 await closeTicket(interaction, motivo, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
                 return true;
@@ -764,7 +764,7 @@ async function handleTicketInteraction(interaction) {
                 return true;
             }
             try {
-                await interaction.deferReply({ flags: 1 << 6 });
+                await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
             } catch { }
             const description = interaction.fields.getTextInputValue('ticket_description')?.trim();
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
@@ -793,21 +793,18 @@ async function handleTicketInteraction(interaction) {
             }
 
             const chunks = [];
-            const maxChunkLen = 3600;
+            const managerFooter = `\n\nManager: <@${interaction.user.id}>`;
+            const maxChunkLen = 1900;
             for (let i = 0; i < description.length; i += maxChunkLen) {
                 chunks.push(description.slice(i, i + maxChunkLen));
             }
-            const descriptionEmbeds = chunks.map((chunk, index) => {
-                const header = index === 0
-                    ? `**Manager:** <@${interaction.user.id}>\n\n`
-                    : '';
-                const embed = new EmbedBuilder()
-                    .setColor('#6f4e37')
-                    .setDescription(`${header}\`\`\`\n${chunk}\n\`\`\``);
-                return embed;
-            });
-            if (descriptionEmbeds.length > 0) {
-                await interaction.channel.send({ embeds: descriptionEmbeds }).catch(() => { });
+            if (chunks.length === 0) chunks.push(description);
+            if (chunks.length > 0) {
+                for (let i = 0; i < chunks.length; i += 1) {
+                    const isLast = i === chunks.length - 1;
+                    const content = isLast ? `${chunks[i]}${managerFooter}` : chunks[i];
+                    await interaction.channel.send({ content }).catch(() => { });
+                }
             }
 
             const promptId = updatedTicket.descriptionPromptMessageId || ticketDoc.descriptionPromptMessageId || null;
@@ -821,7 +818,7 @@ async function handleTicketInteraction(interaction) {
             return true;
         }
         if (isTicketModal && String(interaction.customId || '').startsWith('modal_close_ticket')) {
-            try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => { }); } catch { }
+            try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel?.id });
             if (!ticketDoc) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });

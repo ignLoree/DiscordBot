@@ -1769,7 +1769,7 @@ async function handleMinigameButton(interaction, client) {
       await interaction.reply({ content: 'Anteprima non disponibile.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
-    await interaction.deferReply().catch(() => {});
+    await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
     if (!game.previewUrl) {
       await interaction.editReply({ content: 'Anteprima non disponibile.' }).catch(() => {});
       return true;

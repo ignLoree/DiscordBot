@@ -1,6 +1,6 @@
 ﻿const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
-
+const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
@@ -11,43 +11,54 @@ module.exports = {
 
     async execute(interaction) {
         if (!interaction.inGuild()) return;
-        const categoryId = interaction.channel?.parentId || interaction.channel?.parent?.id;
-        if (categoryId !== IDs.categories.categorChat) {
+
+        const channelId = interaction.channel?.id;
+        const isPartnershipChannel = channelId === IDs.channels.partnerships || channelId === IDs.channels.partnersChat;
+        const ticketDoc = await Ticket.findOne({ guildId: interaction.guild.id, channelId, open: true }).lean().catch(() => null);
+        const isPartnershipTicket = ticketDoc?.ticketType === 'partnership';
+
+        if (!isPartnershipChannel && !isPartnershipTicket) {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
-                        .setDescription('<:vegax:1443934876440068179> Questo comando Ã¨ disponibile solo nella categoria ticket.')
-                        .setColor("Red")
+                        .setDescription('<:vegax:1443934876440068179> Questo comando è disponibile solo nei ticket partnership o nel canale partnership.')
+                        .setColor('Red')
                 ],
                 flags: 1 << 6
             });
         }
+
         const managerId = extractManagerId(interaction.targetMessage);
         if (!managerId) {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()
                         .setDescription('<:vegax:1443934876440068179> Non riesco a trovare il manager nel messaggio selezionato.')
-                        .setColor("Red")
+                        .setColor('Red')
                 ],
                 flags: 1 << 6
             });
         }
+
         const modal = new ModalBuilder()
             .setCustomId(`partnershipModal_${interaction.user.id}_${managerId}`)
             .setTitle('Invia Partnership');
+
         const descriptionInput = new TextInputBuilder()
             .setCustomId('serverDescription')
-            .setLabel("Descrizione del server")
+            .setLabel('Descrizione del server')
             .setStyle(TextInputStyle.Paragraph)
-            .setPlaceholder("Inserisci qui la descrizione del server...")
+            .setPlaceholder('Inserisci qui la descrizione del server...')
             .setRequired(true);
+
         const extractedDescription = extractDescription(interaction.targetMessage);
         if (extractedDescription) {
             descriptionInput.setValue(extractedDescription.slice(0, 4000));
         }
+
         const row = new ActionRowBuilder().addComponents(descriptionInput);
         modal.addComponents(row);
+
         try {
             await interaction.showModal(modal);
         } catch (error) {
@@ -117,4 +128,3 @@ function stripOuterCodeBlock(text) {
         .replace(/```$/, '')
         .trim();
 }
-

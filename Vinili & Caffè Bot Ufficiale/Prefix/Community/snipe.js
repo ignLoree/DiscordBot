@@ -23,7 +23,7 @@ module.exports = {
         const safeContent = rawContent
             ? rawContent.replace(/```/g, '\\`\\`\\`')
             : "*<:vegax:1443934876440068179> Nessun contenuto*";
-        const maxFieldPayload = 980; // keep room for markdown wrapper
+        const maxFieldPayload = 980;
         const clippedContent =
             safeContent.length > maxFieldPayload
                 ? `${safeContent.slice(0, maxFieldPayload)}...`

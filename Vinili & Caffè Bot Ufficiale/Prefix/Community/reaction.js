@@ -378,7 +378,6 @@ module.exports = {
       return;
     }
 
-    // Backward compatibility: +reaction set/add/remove/clear/show
     await handleMentionReactions(message, args);
   }
 };

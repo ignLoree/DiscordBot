@@ -208,7 +208,6 @@ module.exports = {
                 }
             }
 
-            // Remove all user progression data when the member leaves.
             await Promise.allSettled([
                 ExpUser.deleteOne({ guildId: guild.id, userId: member.id }),
                 ActivityUser.deleteOne({ guildId: guild.id, userId: member.id }),
