@@ -2,12 +2,11 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_ROLE_IDS = [
-    IDs.roles.verifiedUser,
+    IDs.roles.user,
     IDs.roles.verifyExtraA,
     IDs.roles.verifyExtraB,
     IDs.roles.verifyExtraC,
-    IDs.roles.verifyExtraD,
-    IDs.roles.verifyExtraA
+    IDs.roles.verifyExtraD
 ];
 
 module.exports = {

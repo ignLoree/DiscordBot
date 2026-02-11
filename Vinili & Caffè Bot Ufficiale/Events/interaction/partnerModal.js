@@ -67,7 +67,11 @@ async function handlePartnerModal(interaction) {
         });
         return true;
     }
-    if (!managerMember.roles?.cache?.has(IDs.roles.verifiedUser)) {
+    const isVerifiedMember = Boolean(
+        managerMember.roles?.cache?.has(IDs.roles.user)
+        || managerMember.roles?.cache?.has(IDs.roles.verifiedUser)
+    );
+    if (!isVerifiedMember) {
         await interaction.editReply({
             embeds: [
                 new EmbedBuilder()
@@ -241,4 +245,3 @@ function splitMessage(message, maxLength = 2000) {
 }
 
 module.exports = { handlePartnerModal };
-
