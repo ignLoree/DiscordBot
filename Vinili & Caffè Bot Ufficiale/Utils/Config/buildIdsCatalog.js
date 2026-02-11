@@ -31,9 +31,16 @@ function keepPreviousOrder(items, previousEntries, getName) {
   const ordered = [];
 
   for (const prev of previous) {
+    const prevId = String(prev?.id || '');
     const prevName = String(prev?.name || '');
-    if (!prevName) continue;
-    const idx = list.findIndex((item, i) => !used.has(i) && String(getName(item)) === prevName);
+    if (!prevId && !prevName) continue;
+    let idx = -1;
+    if (prevId) {
+      idx = list.findIndex((item, i) => !used.has(i) && String(item?.id || '') === prevId);
+    }
+    if (idx === -1 && prevName) {
+      idx = list.findIndex((item, i) => !used.has(i) && String(getName(item)) === prevName);
+    }
     if (idx !== -1) {
       used.add(idx);
       ordered.push(list[idx]);
