@@ -1,4 +1,5 @@
-﻿const { EmbedBuilder, PermissionsBitField, ActivityType } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField, ActivityType } = require('discord.js');
+const mongoose = require('mongoose');
 const SupporterStatus = require('../Schemas/Supporter/supporterStatusSchema');
 const IDs = require('../Utils/Config/ids');
 
@@ -16,6 +17,10 @@ const REMOVE_CONFIRM_MS = 2 * 60 * 1000;
 let cleanupInterval = null;
 let bootstrapRan = false;
 const bootstrappedUsers = new Set();
+
+function isDbReady() {
+    return mongoose.connection?.readyState === 1;
+}
 
 function getCustomStatus(presence) {
     if (!presence?.activities?.length) return '';
@@ -142,6 +147,7 @@ function scheduleRemovalConfirm(member, channel) {
 }
 
 async function persistStatus(guildId, userId, payload) {
+    if (!isDbReady()) return;
     try {
         await SupporterStatus.updateOne(
             { guildId, userId },
@@ -154,6 +160,7 @@ async function persistStatus(guildId, userId, payload) {
 }
 
 async function clearPersistedStatus(guildId, userId) {
+    if (!isDbReady()) return;
     try {
         await SupporterStatus.deleteOne({ guildId, userId });
     } catch (error) {
@@ -178,12 +185,12 @@ async function startPendingFlow(member, channel) {
         .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
         .setDescription([
             `<@${member.id}>, \`hai sbloccato:\``,
-            `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
-            '<a:VC_Coffe:1448695567244066827> • \`x2\` di multi in **vocale** e **testuale**',
-            '<a:VC_Infinity:1448687797266288832> • Inviare **media** in __ogni chat__',
-            '<a:VC_HeartWhite:1448673535253024860> • Mandare **adesivi** __esterni__ in **qualsiasi chat**',
+            `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verr� dato entro **3 minuti** dal bot!`,
+            '<a:VC_Coffe:1448695567244066827> � \`x2\` di multi in **vocale** e **testuale**',
+            '<a:VC_Infinity:1448687797266288832> � Inviare **media** in __ogni chat__',
+            '<a:VC_HeartWhite:1448673535253024860> � Mandare **adesivi** __esterni__ in **qualsiasi chat**',
             '',
-            '<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status _!_ ☆',
+            '<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status _!_ ?',
         ].join('\n'))
         .setFooter({ text: 'Grazie per il tuo supporto!'});
 
@@ -216,10 +223,12 @@ async function bootstrapSupporter(client) {
         const channel = guild.channels.cache.get(CHANNEL_ID);
         if (!channel) continue;
         let persisted = [];
-        try {
-            persisted = await SupporterStatus.find({ guildId: guild.id }).lean();
-        } catch {
-            persisted = [];
+        if (isDbReady()) {
+            try {
+                persisted = await SupporterStatus.find({ guildId: guild.id }).lean();
+            } catch {
+                persisted = [];
+            }
         }
         for (const doc of persisted) {
             if (doc?.userId) {
@@ -378,3 +387,6 @@ module.exports = {
     ,
     bootstrapSupporter
 };
+
+
+
