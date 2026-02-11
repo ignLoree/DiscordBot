@@ -313,10 +313,12 @@ module.exports = {
                     new ButtonBuilder()
                         .setCustomId(`pause_accept:${userId}:${pauseId}`)
                         .setLabel('Accetta')
+                        .setEmoji(`<:vegacheckmark:1443666279058772028>`)
                         .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
                         .setCustomId(`pause_reject:${userId}:${pauseId}`)
                         .setLabel('Rifiuta')
+                        .setEmoji(`<:vegax:1443934876440068179>`)
                         .setStyle(ButtonStyle.Danger)
                 );
                 await safeEditReply(interaction, {

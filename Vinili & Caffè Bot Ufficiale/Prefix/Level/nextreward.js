@@ -24,7 +24,7 @@ module.exports = {
     if (!next) {
       const doneEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription('<:vegacheckmark:1443666279058772028> Hai gia sbloccato tutti i reward livello disponibili.');
+        .setDescription('<:vegacheckmark:1443666279058772028> Hai già sbloccato tutti i reward livello disponibili.');
       await safeMessageReply(message, { embeds: [doneEmbed], allowedMentions: { repliedUser: false } });
       return;
     }

@@ -196,10 +196,12 @@ function buildRequestButtonsRow(userId, pauseId, disabled = false) {
     new ButtonBuilder()
       .setCustomId(`pause_accept:${userId}:${pauseId}`)
       .setLabel('Accetta')
+      .setEmoji(`<:vegacheckmark:1443666279058772028>`)
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`pause_reject:${userId}:${pauseId}`)
       .setLabel('Rifiuta')
+      .setEmoji(`<:vegax:1443934876440068179>`)
       .setStyle(ButtonStyle.Danger)
   );
   if (disabled) row.components.forEach((c) => c.setDisabled(true));
@@ -213,7 +215,8 @@ function buildAcceptedButtonsRow(userId, pauseId, options = {}) {
     components.push(
       new ButtonBuilder()
         .setCustomId(`pause_cancel:${userId}:${pauseId}`)
-        .setLabel('Annulla pausa')
+        .setLabel('Annulla')
+        .setEmoji(`<:vegax:1443934876440068179>`)
         .setStyle(ButtonStyle.Danger)
         .setDisabled(disableCancel)
     );
@@ -221,7 +224,7 @@ function buildAcceptedButtonsRow(userId, pauseId, options = {}) {
   components.push(
     new ButtonBuilder()
       .setCustomId(`pause_list:${userId}:${pauseId}`)
-      .setLabel('Lista pause')
+      .setLabel('<:customprofile:1443925456972808304> Lista pause')
       .setStyle(ButtonStyle.Secondary)
   );
   return new ActionRowBuilder().addComponents(components);
@@ -244,7 +247,7 @@ async function handlePauseButton(interaction) {
 
   const isHighStaff = Boolean(interaction.member?.roles?.cache?.has(IDs.roles.highStaff));
   if ((action === 'pause_accept' || action === 'pause_reject' || action === 'pause_cancel') && !isHighStaff) {
-    await interaction.reply({ content: '<:vegax:1443934876440068179> Solo High Staff puo usare questi pulsanti.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:vegax:1443934876440068179> Solo High Staff può usare questi pulsanti.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
   if (action === 'pause_list' && !isHighStaff && interaction.user.id !== userId) {
@@ -290,13 +293,18 @@ async function handlePauseButton(interaction) {
       })
       .filter(Boolean);
 
+    const memberLabel =
+      interaction.guild?.members?.cache?.get(userId)?.displayName
+      || interaction.client?.users?.cache?.get(userId)?.username
+      || `User ${userId}`;
+
     const payload = rows.length === 0
       ? { content: `Utente: <@${userId}>\n<:attentionfromvega:1443651874032062505> Nessuna pausa trovata nell'anno **${year}**.`, flags: 1 << 6 }
       : {
           embeds: [
             new EmbedBuilder()
               .setColor('#6f4e37')
-              .setTitle(`Pause ${year} - <@${userId}>`)
+              .setTitle(`Pause ${year} - ${memberLabel}`)
               .setDescription(`Utente: <@${userId}>\n\n${rows.join('\n')}\n\nTotale giorni scalati anno corrente: \`${computeConsumedPauseDays(pauses)}\``)
           ],
           flags: 1 << 6
@@ -323,7 +331,7 @@ async function handlePauseButton(interaction) {
 
   if (action === 'pause_reject') {
     if (targetPause.status !== 'pending') {
-      await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa richiesta e gia stata gestita.', flags: 1 << 6 }).catch(() => {});
+      await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa richiesta è già stata gestita.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
     targetPause.status = 'rejected';
@@ -338,7 +346,7 @@ async function handlePauseButton(interaction) {
 
   if (action === 'pause_cancel') {
     if (targetPause.status !== 'accepted') {
-      await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa pausa non e annullabile.', flags: 1 << 6 }).catch(() => {});
+      await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa pausa non è annullabile.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
 
@@ -346,7 +354,7 @@ async function handlePauseButton(interaction) {
     const todayForExpiry = getTodayUtc();
     if (end && todayForExpiry > end) {
       await interaction.update({ components: [buildAcceptedButtonsRow(userId, pauseId, { hideCancel: true })] }).catch(() => {});
-      await interaction.followUp({ content: '<:attentionfromvega:1443651874032062505> La pausa e scaduta: il pulsante annulla non e piu disponibile.', flags: 1 << 6 }).catch(() => {});
+      await interaction.followUp({ content: '<:attentionfromvega:1443651874032062505> La pausa è scaduta: il pulsante annulla non e piu disponibile.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
 
@@ -378,7 +386,7 @@ async function handlePauseButton(interaction) {
     const giorniRimanenti = Math.max(0, maxGiorni - giorniTotaliUsati);
 
     const currentContent = interaction.message?.content || '';
-    const annullataTag = '❌ ANNULLATA';
+    const annullataTag = '<:vegax:1443934876440068179> **__\`ANNULLATA\`__**';
     const updatedContent = currentContent.includes(annullataTag)
       ? currentContent
       : `${currentContent}\n\n${annullataTag}`;
@@ -394,9 +402,8 @@ async function handlePauseButton(interaction) {
     return true;
   }
 
-  // pause_accept
   if (targetPause.status !== 'pending') {
-    await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa richiesta e gia stata gestita.', flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: '<:attentionfromvega:1443651874032062505> Questa richiesta è già stata gestita.', flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
