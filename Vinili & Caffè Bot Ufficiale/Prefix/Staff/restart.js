@@ -52,6 +52,7 @@ function buildUsageEmbed() {
 
 module.exports = {
   name: 'restart',
+  folder: 'Dev',
   aliases: ['rs', 'reload'],
   subcommands: ['full', 'handlers', 'commands', 'prefix', 'events', 'triggers', 'services', 'utils', 'schemas', 'all'],
 

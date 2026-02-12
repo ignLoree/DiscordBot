@@ -1,11 +1,11 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
 const communitySchemas = require('../Schemas/Community/communitySchemas');
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require('../Utils/Config/ids');
+const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
 
 const SKULL_EMOJI = '\u{1F480}';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
-const WEBHOOK_NAME = 'Skullboard Mirror';
 const MAX_CONTENT_LENGTH = 2000;
 
 function normalizeEmojiName(value) {
@@ -63,33 +63,63 @@ function buildBaseContent(message) {
     parts.push(stickerUrls.join('\n'));
   }
 
-  if (!parts.length && !(message?.attachments?.size > 0)) {
-    parts.push('[Messaggio vuoto]');
+  if (!parts.length) {
+    if (message?.attachments?.size > 0) {
+      const firstAttachment = [...message.attachments.values()][0];
+      const attachmentName = firstAttachment?.name || 'file';
+      if (firstAttachment?.contentType?.startsWith('image/')) {
+        parts.push('[Immagine]');
+      } else if (firstAttachment?.contentType?.startsWith('video/')) {
+        parts.push('[Video]');
+      } else {
+        parts.push(`[Allegato: ${attachmentName}]`);
+      }
+    } else if (message?.embeds?.length > 0) {
+      const embed = message.embeds[0];
+      if (embed.title || embed.description) {
+        const embedText = [embed.title, embed.description]
+          .filter(Boolean)
+          .join(' - ')
+          .slice(0, 100);
+        parts.push(`[Embed] ${embedText}`);
+      } else {
+        parts.push('[Embed]');
+      }
+    } else {
+      parts.push('[Messaggio vuoto]');
+    }
   }
 
   return parts.join('\n').trim();
 }
 
-async function getOrCreateWebhook(channel, clientUser) {
-  const hooks = await channel.fetchWebhooks().catch(() => null);
-  if (hooks) {
-    const existing = hooks.find((hook) => hook.owner?.id === clientUser.id && hook.token);
-    if (existing) return existing;
-  }
-
-  return channel.createWebhook({
-    name: WEBHOOK_NAME,
-    avatar: clientUser.displayAvatarURL({ extension: 'png', size: 256 })
-  }).catch(() => null);
+function getNameColor(member) {
+  if (!member) return null;
+  const color = member.roles?.highest?.color;
+  return color ? `#${color.toString(16).padStart(6, '0')}` : null;
 }
 
-function prependReplyQuote(content, repliedMessage, repliedMember) {
-  const authorName = repliedMember?.displayName || repliedMessage?.author?.username || 'Unknown';
-  const mention = repliedMessage?.author?.id ? `<@${repliedMessage.author.id}>` : `@${authorName}`;
-  const quoted = String(repliedMessage?.content || '').trim() || '[Messaggio senza testo]';
-  const quoteLine = `> ${mention}: ${clamp(quoted, 160)}`;
-  if (!content) return quoteLine;
-  return `${quoteLine}\n${content}`;
+function getRoleIcon(member) {
+  if (!member?.roles) return null;
+  const hoistedRole = member.roles.cache.find((role) => role.hoist && role.iconURL());
+  return hoistedRole?.iconURL({ extension: 'png', size: 64 }) || null;
+}
+
+async function prepareReplyData(message) {
+  if (!message.reference?.messageId) return null;
+
+  const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
+  if (!replied) return null;
+
+  const repliedMember = replied.member || await message.guild.members.fetch(replied.author.id).catch(() => null);
+
+  return {
+    content: String(replied.content || '').slice(0, 100),
+    author: sanitizeUsername(repliedMember, replied.author),
+    nameColor: getNameColor(repliedMember),
+    avatarUrl: replied.author.displayAvatarURL({ extension: 'png', size: 64 }),
+    roleIconUrl: getRoleIcon(repliedMember)
+  };
 }
 
 module.exports = {
@@ -119,20 +149,57 @@ module.exports = {
         || await message.guild.channels.fetch(SKULLBOARD_CHANNEL_ID).catch(() => null);
       if (!skullboardChannel?.isTextBased?.()) return;
 
-      const webhook = await getOrCreateWebhook(skullboardChannel, message.client.user);
-      if (!webhook) return;
-
       const author = message.author;
       const member = message.member || await message.guild.members.fetch(author.id).catch(() => null);
 
-      let content = buildBaseContent(message);
+      const content = buildBaseContent(message);
       const files = extractMessageFiles(message);
+      const replyData = await prepareReplyData(message);
+
+      const firstAttachment = files[0];
+      const mediaUrl = firstAttachment?.attachment || null;
+      const hasMedia = Boolean(mediaUrl);
+      const hasEmbedOnly = !content && message.embeds?.length > 0;
+
+      let canvasBuffer = null;
+      try {
+        canvasBuffer = await renderSkullboardCanvas({
+          avatarUrl: author.displayAvatarURL({ extension: 'png', size: 256 }),
+          username: sanitizeUsername(member, author),
+          message: content || '[Messaggio vuoto]',
+          nameColor: getNameColor(member),
+          createdAt: message.createdAt,
+          reply: replyData,
+          roleIconUrl: getRoleIcon(member),
+          mediaUrl,
+          hasMedia,
+          hasEmbedOnly
+        });
+      } catch (error) {
+        global.logger.error('[SKULLBOARD] Canvas render failed:', error);
+        return;
+      }
+
+      const imageAttachment = new AttachmentBuilder(canvasBuffer, { name: 'skullboard.png' });
+
+      const skullEmbed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setAuthor({
+          name: `${user.username} ha aggiunto ${SKULL_EMOJI} a questo messaggio`,
+          iconURL: user.displayAvatarURL({ extension: 'png', size: 64 })
+        })
+        .setDescription([
+          `**Autore:** ${author.toString()}`,
+          `**Canale:** <#${message.channel.id}>`,
+          `**Messaggio:** ${clamp(content || '[Messaggio vuoto]', 200)}`
+        ].join('\n'))
+        .setImage('attachment://skullboard.png')
+        .setFooter({ text: `ID Messaggio: ${message.id}` })
+        .setTimestamp(message.createdAt);
 
       const payload = {
-        username: sanitizeUsername(member, author),
-        avatarURL: author.displayAvatarURL({ extension: 'png', size: 256 }),
-        content: '',
-        files,
+        embeds: [skullEmbed],
+        files: [imageAttachment],
         allowedMentions: { parse: [] }
       };
 
@@ -148,19 +215,9 @@ module.exports = {
             payload.reply = { messageReference: mirroredMsg.id, failIfNotExists: false };
           }
         }
-
-        if (!payload.reply) {
-          const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
-          if (replied) {
-            const repliedMember = replied.member || await message.guild.members.fetch(replied.author.id).catch(() => null);
-            content = prependReplyQuote(content, replied, repliedMember);
-          }
-        }
       }
 
-      payload.content = clamp(content || '[Messaggio vuoto]', MAX_CONTENT_LENGTH);
-
-      const postMessage = await webhook.send({ ...payload, wait: true }).catch(() => null);
+      const postMessage = await skullboardChannel.send(payload).catch(() => null);
       if (!postMessage) return;
 
       await postMessage.react(SKULL_EMOJI).catch(() => {});

@@ -127,14 +127,17 @@ module.exports = async function renderSkullboardCanvas({
 
   const userColor = nameColor || "#f2f3f5";
   ctx.textBaseline = "top";
-  drawTextWithSpecialFallback(ctx, username || "", contentX, headerY, { size: 34 / 2, weight: "600", color: userColor });
+  const usernameSize = 34 / 2;
+  const usernameWeight = "600";
+  drawTextWithSpecialFallback(ctx, username || "", contentX, headerY, { size: usernameSize, weight: usernameWeight, color: userColor });
 
-  let cursorX = contentX + ctx.measureText(username || "").width + 6;
+  ctx.font = fontStack(usernameSize, usernameWeight);
+  let cursorX = contentX + ctx.measureText(username || "").width + 8;
   if (roleIconUrl) {
     const roleIcon = await loadImage(roleIconUrl).catch(() => null);
     if (roleIcon) {
       drawCircleImage(ctx, roleIcon, cursorX, headerY + 1, 14);
-      cursorX += 18;
+      cursorX += 22;
     }
   }
   drawTextWithSpecialFallback(ctx, formatTimestamp(createdAt || new Date()), cursorX, headerY + 1, {
