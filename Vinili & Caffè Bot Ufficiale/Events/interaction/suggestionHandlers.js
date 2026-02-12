@@ -183,8 +183,8 @@ async function handleSuggestionVote(interaction) {
             data.Downmembers.pull(interaction.user.id);
 
             const newEmbed = EmbedBuilder.from(message.embeds[0]).setFields(
-                { name: '<:thumbsup:1471292172145004768>', value: `**${data.upvotes + 1}**`, inline: false },
-                { name: '<:thumbsdown:1471292163957457013>', value: `**${downvotes}**`, inline: false }
+                { name: '<:thumbsup:1471292172145004768>', value: `**${data.upvotes + 1}**`, inline: true },
+                { name: '<:thumbsdown:1471292163957457013>', value: `**${downvotes}**`, inline: true }
             );
 
             await interaction.update({ embeds: [newEmbed], components: buildSuggestionRows() }).catch(() => {});
@@ -227,8 +227,8 @@ async function handleSuggestionVote(interaction) {
             data.Upmembers.pull(interaction.user.id);
 
             const newEmbed = EmbedBuilder.from(message.embeds[0]).setFields(
-                { name: '<:thumbsup:1471292172145004768>', value: `**${upvotes}**`, inline: false },
-                { name: '<:thumbsdown:1471292163957457013>', value: `**${data.downvotes + 1}**`, inline: false }
+                { name: '<:thumbsup:1471292172145004768>', value: `**${upvotes}**`, inline: true },
+                { name: '<:thumbsdown:1471292163957457013>', value: `**${data.downvotes + 1}**`, inline: true }
             );
 
             await interaction.update({ embeds: [newEmbed], components: buildSuggestionRows() }).catch(() => {});
