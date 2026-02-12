@@ -3,6 +3,7 @@ const communitySchemas = require('../Schemas/Community/communitySchemas');
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require('../Utils/Config/ids');
 const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
+const { cacheRoleIcon } = require('../Utils/Cache/roleIconCache');
 
 const SKULL_EMOJI = '\u{1F480}';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
@@ -99,10 +100,13 @@ function getNameColor(member) {
   return color ? `#${color.toString(16).padStart(6, '0')}` : null;
 }
 
-function getRoleIcon(member) {
+async function getRoleIcon(member) {
   if (!member?.roles) return null;
   const hoistedRole = member.roles.cache.find((role) => role.hoist && role.iconURL());
-  return hoistedRole?.iconURL({ extension: 'png', size: 64 }) || null;
+  const iconUrl = hoistedRole?.iconURL({ extension: 'png', size: 64 }) || null;
+  if (!iconUrl) return null;
+
+  return await cacheRoleIcon(iconUrl);
 }
 
 async function prepareReplyData(message) {
@@ -118,7 +122,7 @@ async function prepareReplyData(message) {
     author: sanitizeUsername(repliedMember, replied.author),
     nameColor: getNameColor(repliedMember),
     avatarUrl: replied.author.displayAvatarURL({ extension: 'png', size: 64 }),
-    roleIconUrl: getRoleIcon(repliedMember)
+    roleIconUrl: await getRoleIcon(repliedMember)
   };
 }
 
@@ -155,6 +159,7 @@ module.exports = {
       const content = buildBaseContent(message);
       const files = extractMessageFiles(message);
       const replyData = await prepareReplyData(message);
+      const cachedRoleIcon = await getRoleIcon(member);
 
       const firstAttachment = files[0];
       const mediaUrl = firstAttachment?.attachment || null;
@@ -170,7 +175,7 @@ module.exports = {
           nameColor: getNameColor(member),
           createdAt: message.createdAt,
           reply: replyData,
-          roleIconUrl: getRoleIcon(member),
+          roleIconUrl: cachedRoleIcon,
           mediaUrl,
           hasMedia,
           hasEmbedOnly
@@ -182,19 +187,43 @@ module.exports = {
 
       const imageAttachment = new AttachmentBuilder(canvasBuffer, { name: 'skullboard.png' });
 
+      const messageLink = `https://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`;
+      const formattedDate = new Intl.DateTimeFormat('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(message.createdAt);
+
       const skullEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setAuthor({
-          name: `${user.username} ha aggiunto ${SKULL_EMOJI} a questo messaggio`,
+          name: user.username,
           iconURL: user.displayAvatarURL({ extension: 'png', size: 64 })
         })
-        .setDescription([
-          `**Autore:** ${author.toString()}`,
-          `**Canale:** <#${message.channel.id}>`,
-          `**Messaggio:** ${clamp(content || '[Messaggio vuoto]', 200)}`
-        ].join('\n'))
+        .setDescription(`Aggiungi la reazione ${SKULL_EMOJI} ad un messaggio per pubblicarlo nella SkullBoard`)
+        .addFields(
+          {
+            name: 'Autore',
+            value: author.toString(),
+            inline: true
+          },
+          {
+            name: 'Canale',
+            value: `<#${message.channel.id}>`,
+            inline: true
+          },
+          {
+            name: 'Messaggio',
+            value: `[Cliccami](${messageLink})`,
+            inline: true
+          }
+        )
         .setImage('attachment://skullboard.png')
-        .setFooter({ text: `ID Messaggio: ${message.id}` })
+        .setFooter({ text: formattedDate })
         .setTimestamp(message.createdAt);
 
       const payload = {
@@ -230,7 +259,7 @@ module.exports = {
 
       const confirmEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`Il messaggio e stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+        .setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
 
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()

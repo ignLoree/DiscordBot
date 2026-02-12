@@ -49,7 +49,7 @@ function mapGrantError(reason) {
   if (reason === 'member_not_found') return 'L\'utente non e presente nel server.';
   if (reason === 'role_not_found') return 'Ruolo non trovato.';
   if (reason === 'missing_manage_roles') return 'Non ho `ManageRoles`.';
-  if (reason === 'role_above_bot') return 'Il ruolo e sopra il mio ruolo piu alto.';
+  if (reason === 'role_above_bot') return 'Il ruolo e sopra il mio ruolo più alto.';
   if (reason === 'add_failed') return 'Non riesco ad assegnare il ruolo (permessi/gerarchia).';
   if (reason === 'invalid_duration') return 'Durata non valida.';
   return 'Operazione non riuscita.';
@@ -153,7 +153,7 @@ module.exports = {
               `Durata: **${formatDuration(durationMs)}**`,
               `Scadenza: ${expiresText}`,
               result.hadRoleBefore
-                ? 'Nota: il ruolo era gia presente, quindi alla scadenza non verra rimosso.'
+                ? 'Nota: il ruolo era già presente, quindi alla scadenza non verra rimosso.'
                 : 'Alla scadenza il ruolo verra rimosso automaticamente.'
             ].join('\n'))
         ],

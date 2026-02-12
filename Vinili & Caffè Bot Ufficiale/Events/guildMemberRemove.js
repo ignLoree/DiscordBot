@@ -22,6 +22,18 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
     IDs.roles.Founder
 ]);
 
+const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
+
+function toUnix(date) {
+    return Math.floor(date.getTime() / 1000);
+}
+
+async function resolveGuildChannel(guild, channelId) {
+    if (!guild || !channelId) return null;
+    return guild.channels.cache.get(channelId)
+        || await guild.channels.fetch(channelId).catch(() => null);
+}
+
 module.exports = {
     name: 'guildMemberRemove',
     async execute(member, client) {
@@ -31,6 +43,26 @@ module.exports = {
             }
             if (member?.guild?.id === IDs.guilds.main) {
                 scheduleStaffListRefresh(client, member.guild.id);
+            }
+
+            // Send leave log
+            const joinLeaveLogChannel = await resolveGuildChannel(member.guild, JOIN_LEAVE_LOG_CHANNEL_ID);
+            if (joinLeaveLogChannel && !member.user?.bot) {
+                const leaveLogEmbed = new EmbedBuilder()
+                    .setColor('#ED4245')
+                    .setTitle('Member Left')
+                    .setDescription([
+                        `${member.user} ${member.user.tag}`,
+                        '',
+                        `**User ID:** ${member.user.id}`,
+                        `**Left At:** <t:${toUnix(new Date())}:F>`
+                    ].join('\n'))
+                    .setThumbnail(member.user.displayAvatarURL({ size: 128 }))
+                    .setTimestamp();
+
+                await joinLeaveLogChannel.send({ embeds: [leaveLogEmbed] }).catch((err) => {
+                    global.logger.error('[guildMemberRemove] Failed to send leave log:', err);
+                });
             }
 
             await InviteTrack.findOneAndUpdate(

@@ -38,7 +38,7 @@ module.exports = {
         .setTitle('Avatar bloccato')
         .setThumbnail('https://images-ext-1.discordapp.net/external/GrhQsfA7zwxEiX5aOQo9kfQ-EF9Z9VLS-JD0w5iJEZU/https/i.imgur.com/Qqn7J3d.png?format=webp&quality=lossless&width=640&height=640')
         .setDescription([
-          'Gli altri membri non potranno piu visualizzare il tuo avatar.',
+          'Gli altri membri non potranno più visualizzare il tuo avatar.',
           '',
           'Utilizza il pulsante qui sotto o il comando `?unblock avatar` se vuoi riattivare la visualizzazione.'
         ].join('\n'));
@@ -68,7 +68,7 @@ module.exports = {
         .setTitle('Banner bloccato')
         .setThumbnail('https://images-ext-1.discordapp.net/external/GrhQsfA7zwxEiX5aOQo9kfQ-EF9Z9VLS-JD0w5iJEZU/https/i.imgur.com/Qqn7J3d.png?format=webp&quality=lossless&width=640&height=640')
         .setDescription([
-          'Gli altri membri non potranno piu visualizzare il tuo banner.',
+          'Gli altri membri non potranno più visualizzare il tuo banner.',
           '',
           'Utilizza il pulsante qui sotto o il comando `?unblock banner` se vuoi riattivare la visualizzazione.'
         ].join('\n'));
@@ -104,7 +104,7 @@ module.exports = {
           'Le quote dei tuoi messaggi sono state bloccate con successo!',
           '',
           '**Cosa significa?**',
-          'Gli altri utenti non potranno piu creare quote dei tuoi messaggi.',
+          'Gli altri utenti non potranno più creare quote dei tuoi messaggi.',
           '',
           '**Per sbloccare**',
           'Usa il comando `?unblock quotes` quando vuoi riattivare le quote.'

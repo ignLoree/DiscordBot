@@ -355,7 +355,7 @@ async function handlePauseButton(interaction) {
     const todayForExpiry = getTodayUtc();
     if (end && todayForExpiry > end) {
       await interaction.update({ components: [buildAcceptedButtonsRow(userId, pauseId, { hideCancel: true })] }).catch(() => {});
-      await interaction.followUp({ content: '<:attentionfromvega:1443651874032062505> La pausa è scaduta: il pulsante annulla non e piu disponibile.', flags: 1 << 6 }).catch(() => {});
+      await interaction.followUp({ content: '<:attentionfromvega:1443651874032062505> La pausa è scaduta: il pulsante annulla non e più disponibile.', flags: 1 << 6 }).catch(() => {});
       return true;
     }
 

@@ -8,11 +8,28 @@ function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
 }
 
+function formatAccountAge(createdAt) {
+    const now = Date.now();
+    const ageMs = now - createdAt.getTime();
+    const days = Math.floor(ageMs / (24 * 60 * 60 * 1000));
+    const years = Math.floor(days / 365);
+    const months = Math.floor((days % 365) / 30);
+    const remainingDays = days % 30;
+
+    const parts = [];
+    if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+    if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+    if (remainingDays > 0 || parts.length === 0) parts.push(`${remainingDays} day${remainingDays !== 1 ? 's' : ''}`);
+
+    return parts.join(', ');
+}
+
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.suppporters;
 const INVITE_REWARD_ROLE_ID = IDs.roles.Promoter;
 const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || '1468938195348754515';
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
+const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 
 async function resolveInviteInfo(member) {
     const guild = member.guild;
@@ -276,6 +293,57 @@ module.exports = {
             }
 
             scheduleMemberCounterRefresh(member.guild, { delayMs: 250, secondPassMs: 1800 });
+
+            const joinLeaveLogChannel = await resolveGuildChannel(member.guild, JOIN_LEAVE_LOG_CHANNEL_ID);
+            if (joinLeaveLogChannel) {
+                const accountAge = formatAccountAge(member.user.createdAt);
+                const joinLogEmbed = new EmbedBuilder()
+                    .setColor('#57F287')
+                    .setTitle('Member Joined')
+                    .setDescription([
+                        `${member.user} ${member.user.tag}`,
+                        '',
+                        `**Account Age:** ${accountAge}`,
+                        `**User ID:** ${member.user.id}`,
+                        `**Joined At:** <t:${toUnix(new Date())}:F>`
+                    ].join('\n'))
+                    .setThumbnail(member.user.displayAvatarURL({ size: 128 }))
+                    .setTimestamp();
+
+                await joinLeaveLogChannel.send({ embeds: [joinLogEmbed] }).catch((err) => {
+                    global.logger.error('[guildMemberAdd] Failed to send join log:', err);
+                });
+            }
+
+            try {
+                const dmEmbed = new EmbedBuilder()
+                    .setColor('#6f4e37')
+                    .setTitle('<a:VC_RightWing:1448672889845973214> ₊⋆˚｡ Welcome to Vinili & Caffè!')
+                    .setDescription([
+                        `Ei **${member.displayName}**welcome, glad to have you here! `,
+                        '',
+                        '⭑.ᐟ Joining the server you automatically accept the rules',
+                        `⭑.ᐟ Entrando nel server accetti automaticamente le nostre regole`,
+                        `<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102236527853661>`,
+                        '────୨ৎ────',
+                        `<:VC_Dot:1443932948599668746> ⭑.ᐟ Check out our GUILD TAGS`,
+                        `♱ <:moon:1470064812615667827>[⭑.ᐟ](<https://discord.gg/E6vrm5zE6B>) <:VC_Luna1:1471613026158514246><:VC_Luna2:1471613140654489783> & <a:VC_Money:1448671284748746905>[⭑.ᐟ](<https://discord.gg/QnTN5P578g>) <:VC_Cash1:1471614972034547884><:VC_Cash2:1471615052435161162>`,
+                        `♱ <:VC_Firework:1470796227913322658>[⭑.ᐟ](<https://discord.gg/WMuZ4EMAkc>) <:VC_Porn1:1471615143434518661><:VC_Porn2:1471615225743675554> & <a:VC_PepeEggPlant:1331622686014570588>[⭑.ᐟ](<https://discord.gg/uqUNS9f5m5>) <:VC_SixNine1:1471615411639292047><:VC_SixNine2:1471615623044796519>`,
+                        `♱ <a:VC_PepeSmoke:1331590685673132103>[⭑.ᐟ](<https://discord.gg/SzBwnxHXNv>) <:VC_Weed1:1471615705601282119><:VC_Weed2:1471615783615463467> & <a:VC_PepeExcited:1331621719093284956>[⭑.ᐟ](<https://discord.gg/z3EXtJwvQH>) <:VC_Figa1:1471615881929818328><:VC_Figa2:1471615955955355873>`,
+                        `<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102239094767699>`,
+                        '────୨ৎ────',
+                        '<a:VC_Exclamation:1448687427836444854> Verify Yourself ⭑.ᐟ <https://discord.com/channels/1329080093599076474/1442569059983163403>'
+                    ].join('\n'))
+                    .setThumbnail(member.guild.iconURL({ size: 256 }))
+                    .setFooter({ text: `${member.guild.name} • Ora siamo in ${member.guild.memberCount}`, iconURL: member.guild.iconURL() })
+                    .setTimestamp();
+
+                await member.send({ embeds: [dmEmbed] }).catch((err) => {
+                    global.logger.warn(`[guildMemberAdd] Could not send DM to ${member.user.tag}:`, err.message);
+                });
+            } catch (error) {
+                global.logger.error('[guildMemberAdd] Failed to send DM welcome:', error);
+            }
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })

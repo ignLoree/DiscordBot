@@ -95,9 +95,9 @@ module.exports = async function renderSkullboardCanvas({
   }
 
   let y = topY;
-  const headerY = y;
-  const replyY = hasReply ? headerY + 22 : null;
-  const messageY = hasReply ? headerY + 44 : headerY + 26;
+  const replyY = hasReply ? y : null;
+  const headerY = hasReply ? y + 24 : y;
+  const messageY = headerY + 26;
   const messageH = messageLines.length ? messageLines.length * 20 : 0;
   y = messageY + messageH;
 
@@ -122,8 +122,54 @@ module.exports = async function renderSkullboardCanvas({
   ctx.fillStyle = "#313338";
   ctx.fillRect(0, 0, width, height);
 
+  if (hasReply) {
+    let rx = contentX;
+    const replyAvatarSize = 16;
+    if (reply.avatarUrl) {
+      const rAvatar = await loadImage(reply.avatarUrl).catch(() => null);
+      if (rAvatar) {
+        drawCircleImage(ctx, rAvatar, rx, replyY - 2, replyAvatarSize);
+        rx += replyAvatarSize + 6;
+      }
+    }
+
+    ctx.font = fontStack(12, "600");
+    const replyName = reply.author || "Unknown";
+    const replyNameColor = reply.nameColor || "#b9bbbe";
+    const replyTextY = replyY + 6;
+    drawTextWithSpecialFallback(ctx, replyName, rx, replyTextY, { size: 12, weight: "600", color: replyNameColor });
+    rx += ctx.measureText(replyName).width + 6;
+
+    if (reply.roleIconUrl) {
+      const replyIcon = await loadImage(reply.roleIconUrl).catch(() => null);
+      if (replyIcon) {
+        drawCircleImage(ctx, replyIcon, rx, replyTextY + 1, 12);
+        rx += 14;
+      }
+    }
+
+    const replyContent = String(reply.content || "").slice(0, 72);
+    drawTextWithSpecialFallback(ctx, replyContent, rx, replyTextY, { size: 12, weight: "500", color: "#949ba4" });
+
+    const connStartX = outerPad + avatarSize / 2;
+    const connStartY = headerY + 2;
+    const connEndX = contentX - 10;
+    const connEndY = replyY;
+    const radius = 8;
+
+    ctx.strokeStyle = "#4e5058";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(connStartX, connStartY);
+    ctx.lineTo(connStartX, connEndY + radius);
+    ctx.quadraticCurveTo(connStartX, connEndY, connStartX + radius, connEndY);
+    ctx.lineTo(connEndX, connEndY);
+    ctx.stroke();
+  }
+
   const avatar = await loadImage(avatarUrl);
-  drawCircleImage(ctx, avatar, outerPad, topY, avatarSize);
+  drawCircleImage(ctx, avatar, outerPad, headerY - avatarSize / 2 + 2, avatarSize);
 
   const userColor = nameColor || "#f2f3f5";
   ctx.textBaseline = "top";
@@ -145,49 +191,6 @@ module.exports = async function renderSkullboardCanvas({
     weight: "500",
     color: "#b5bac1"
   });
-
-  if (hasReply) {
-    const connStartX = outerPad + avatarSize - 3;
-    const connStartY = outerPad + avatarSize - 3;
-    const connEndX = contentX - 10;
-    const connEndY = replyY + 8;
-    const radius = 7;
-
-    ctx.strokeStyle = "#4e5058";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(connStartX, connStartY);
-    ctx.lineTo(connStartX, connEndY - radius);
-    ctx.quadraticCurveTo(connStartX, connEndY, connStartX + radius, connEndY);
-    ctx.lineTo(connEndX, connEndY);
-    ctx.stroke();
-
-    let rx = contentX;
-    if (reply.avatarUrl) {
-      const rAvatar = await loadImage(reply.avatarUrl).catch(() => null);
-      if (rAvatar) {
-        drawCircleImage(ctx, rAvatar, rx, replyY - 1, 14);
-        rx += 18;
-      }
-    }
-
-    const replyName = reply.author || "Unknown";
-    const replyNameColor = reply.nameColor || "#b9bbbe";
-    drawTextWithSpecialFallback(ctx, replyName, rx, replyY, { size: 12, weight: "600", color: replyNameColor });
-    rx += ctx.measureText(replyName).width + 4;
-
-    if (reply.roleIconUrl) {
-      const replyIcon = await loadImage(reply.roleIconUrl).catch(() => null);
-      if (replyIcon) {
-        drawCircleImage(ctx, replyIcon, rx, replyY + 1, 12);
-        rx += 16;
-      }
-    }
-
-    const replyContent = String(reply.content || "").slice(0, 72);
-    drawTextWithSpecialFallback(ctx, replyContent, rx, replyY, { size: 12, weight: "500", color: "#b9bbbe" });
-  }
 
   if (messageLines.length) {
     let lineY = messageY;

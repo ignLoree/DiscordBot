@@ -64,7 +64,7 @@ async function ensureOwnerCustomRoleActive(interaction, ownerId, expectedRoleId 
 
   if (state.status === 'none') {
     await replyEphemeral(interaction, {
-      content: '<:vegax:1443934876440068179> Non hai piu un custom role attivo. Usa `+customrole create`.',
+      content: '<:vegax:1443934876440068179> Non hai più un custom role attivo. Usa `+customrole create`.',
       flags: 1 << 6
     });
     return { ok: false, state };
@@ -92,7 +92,7 @@ async function ensureOwnerCustomRoleActive(interaction, ownerId, expectedRoleId 
 
   if (expectedRoleId && String(state.role?.id || '') !== String(expectedRoleId)) {
     await replyEphemeral(interaction, {
-      content: '<:vegax:1443934876440068179> Questo pannello non e piu allineato al tuo ruolo attuale. Riapri con `+customrole modify`.',
+      content: '<:vegax:1443934876440068179> Questo pannello non e più allineato al tuo ruolo attuale. Riapri con `+customrole modify`.',
       flags: 1 << 6
     });
     return { ok: false, state };

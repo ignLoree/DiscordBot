@@ -247,7 +247,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
         const used = Number(managerDailyCounter.get(managerId) || 0) + 1;
         managerDailyCounter.set(managerId, used);
         if (used > 5) {
-          reasons.push('Piu di 5 partner con lo stesso manager nello stesso giorno');
+          reasons.push('più di 5 partner con lo stesso manager nello stesso giorno');
         }
       }
       if (!managerMentions.length) {
@@ -263,7 +263,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
       } else {
         for (const inviteCode of inviteCodes) {
           if (seenInviteCodesSameDay.has(inviteCode)) {
-            reasons.push('Stessa partnership fatta piu di una volta nello stesso giorno');
+            reasons.push('Stessa partnership fatta più di una volta nello stesso giorno');
             break;
           }
         }

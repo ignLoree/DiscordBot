@@ -167,7 +167,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piu. Ricrealo con `+customrole create`.')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrole create`.')
         ],
         allowedMentions: { repliedUser: false }
       });

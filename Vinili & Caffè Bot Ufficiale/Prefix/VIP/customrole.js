@@ -101,7 +101,7 @@ async function resolveActiveCustomRole(message) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piu. Ricrealo con `+customrole create`.')
+          .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste più. Ricrealo con `+customrole create`.')
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -141,7 +141,7 @@ function buildPanelRows(ownerId, roleId) {
 
 function buildCreatePanelEmbed(role, guild, doc, durationOption) {
   const lines = [
-    '<a:VC_Flowers:1468687836055212174> Il tuo ruolo e stato creato/aggiornato. Personalizzalo con i bottoni sotto.',
+    '<a:VC_Flowers:1468687836055212174> Il tuo ruolo è stato creato/aggiornato. Personalizzalo con i bottoni sotto.',
     'Altri comandi li trovi con `+help`.',
     '',
     '**Ruolo:**',
@@ -234,7 +234,7 @@ async function resolveOrCreateRole(message, durationOption) {
 
     if (role.position >= me.roles.highest.position) {
       await role.delete().catch(() => {});
-      return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo piu in alto.' };
+      return { error: 'Non posso gestire quel ruolo: sposta il mio ruolo più in alto.' };
     }
 
     const anchor = guild.roles.cache.get(ANCHOR_ROLE_ID) || await guild.roles.fetch(ANCHOR_ROLE_ID).catch(() => null);
