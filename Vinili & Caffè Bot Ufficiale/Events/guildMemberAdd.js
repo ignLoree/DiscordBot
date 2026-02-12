@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const { InviteTrack } = require('../Schemas/Community/communitySchemas');
 const IDs = require('../Utils/Config/ids');
 const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
+const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
 
 function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
@@ -274,14 +275,7 @@ module.exports = {
                 global.logger.info("[guildMemberAdd] Welcome channel not found.");
             }
 
-            const totalvoicechannel = await resolveGuildChannel(member.guild, IDs.channels.countUtenti);
-            
-
-            const totalmembers = `${member.guild.memberCount}`;
-            if (totalvoicechannel) {
-                
-            await totalvoicechannel.setName(`༄☕︲ User: ${totalmembers}`).catch(() => { });
-            }
+            scheduleMemberCounterRefresh(member.guild, { delayMs: 250, secondPassMs: 1800 });
 
             const userEmbed = new EmbedBuilder()
                 .setAuthor({ name: member.user.username, iconURL: member.user.displayAvatarURL({ size: 128 }) })

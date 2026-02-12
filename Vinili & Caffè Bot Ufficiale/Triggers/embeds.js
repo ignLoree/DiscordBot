@@ -1,7 +1,10 @@
 async function runEmbedSponsorPanelAuto(client) {
 const IDs = require('../Utils/Config/ids');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const path = require('path');
 const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
+const SPONSOR_MEDIA_NAME = 'sponsor.gif';
+const SPONSOR_MEDIA_PATH = path.join(__dirname, '..', 'Photos', SPONSOR_MEDIA_NAME);
 
 const sponsorChannel = client.channels.cache.get(IDs.channels.infoSponsor)
       || await client.channels.fetch(IDs.channels.infoSponsor).catch(() => null);
@@ -19,6 +22,8 @@ const sponsorChannel = client.channels.cache.get(IDs.channels.infoSponsor)
 > <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)
 > <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)`);
 
+    sponsorEmbed.setImage(`attachment://${SPONSOR_MEDIA_NAME}`);
+    const sponsorAttachment = new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME });
     const rowSponsor = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('metodi')
@@ -34,14 +39,19 @@ const sponsorChannel = client.channels.cache.get(IDs.channels.infoSponsor)
 
     await upsertPanelMessage(sponsorChannel, client, {
       embeds: [sponsorEmbed],
-      components: [rowSponsor]
+      components: [rowSponsor],
+      files: [sponsorAttachment],
+      attachmentName: SPONSOR_MEDIA_NAME
     });
 }
 
 async function runEmbedCandidaturePanelAuto(client) {
 const IDs = require('../Utils/Config/ids');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+const path = require('path');
 const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
+const CANDIDATURE_MEDIA_NAME = 'candidature.gif';
+const CANDIDATURE_MEDIA_PATH = path.join(__dirname, '..', 'Photos', CANDIDATURE_MEDIA_NAME);
 
 const candidatureChannel = client.channels.cache.get(IDs.channels.candidatureStaff)
       || await client.channels.fetch(IDs.channels.candidatureStaff).catch(() => null);
@@ -61,6 +71,8 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 <:3_:1444099160294031471> Essere **maturi** e **attivi**
 <:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`);
 
+    candidatureEmbed.setImage(`attachment://${CANDIDATURE_MEDIA_NAME}`);
+    const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, { name: CANDIDATURE_MEDIA_NAME });
     const rowCandidature = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setLabel('︲HELPER')
@@ -76,7 +88,9 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 
     await upsertPanelMessage(candidatureChannel, client, {
       embeds: [candidatureEmbed],
-      components: [rowCandidature]
+      components: [rowCandidature],
+      files: [candidatureAttachment],
+      attachmentName: CANDIDATURE_MEDIA_NAME
     });
 }
 
@@ -248,12 +262,12 @@ const moderationChannel = client.channels.cache.get(IDs.channels.moderazioneStaf
 > Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li riceverà sia un __**High Staff**__ che un __**Low Staff**__. 
 
 <a:vegarightarrow:1443673039156936837> Il premio viene deciso in base all'**attività** e al **contributo** che lo staffer ha dato al server.
-<a:questionexclaimanimated:1443660299994533960>  **__QUALI SONO I VANTAGGI?__**
 
+<a:questionexclaimanimated:1443660299994533960>  **__QUALI SONO I VANTAGGI?__**
 > Lo __Staffer del Mese__ ha anche dei **vantaggi** che sono _uguali_ per entrambi gli staffer:
-  <:dot:1443660294596329582> Ruolo __<@&1442568895251611924>__
-  <:dot:1443660294596329582> Ruolo __<@&1442568950805430312>__  per quel mese
-  <:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`),
+<:dot:1443660294596329582> Ruolo __<@&1442568895251611924>__
+<:dot:1443660294596329582> Ruolo __<@&1442568950805430312>__  per quel mese
+<:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`),
       new EmbedBuilder()
         .setColor('#6f4e37')
         .setDescription(`<:discordstaff:1443651872258003005> La **__guida staff__** di __Vinili & Caffè__ serve per portar **ordine** tra lo __staff__, infatti son presenti delle **__regole__** che __tutti__ dovranno **rispettare**, in __caso__ vengano \`trasgredite\`, potreste andare in contro a **__sanzioni__**, come **__\`valutazioni negative\`__** o in casi estremi il **__\`depex\`__**.

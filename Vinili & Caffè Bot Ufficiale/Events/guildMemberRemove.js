@@ -7,6 +7,7 @@ const { MinigameUser } = require('../Schemas/Minigames/minigameSchema');
 const IDs = require('../Utils/Config/ids');
 const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
 const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
+const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
     IDs.roles.PartnerManager,
@@ -38,10 +39,7 @@ module.exports = {
             ).catch(() => {});
 
             const guild = member.guild;
-            const totalVoice = guild.channels.cache.get(IDs.channels.countUtenti);
-            if (totalVoice) {
-                totalVoice.setName(`༄☕︲ User: ${guild.memberCount}`).catch(() => {});
-            }
+            scheduleMemberCounterRefresh(guild, { delayMs: 300, secondPassMs: 2200 });
             const openTickets = await Ticket.find({ userId: member.id, open: true }).catch(() => []);
             if (openTickets.length > 0) {
                 const logChannel = guild.channels.cache.get(IDs.channels.ticketLogs)
@@ -206,7 +204,7 @@ module.exports = {
                             const removedCount = toRollback.length;
                             if (removedCount > 0) {
                                 doc.partnerActions = actions.filter((action) => action?.managerId !== member.id);
-                                doc.partnerCount = Math.max(0, Number(doc.partnerCount || 0) - removedCount);
+                                // Keep earned points even when partnership messages are auto-removed after leave timeout.
                             }
                             doc.managerId = null;
                             await doc.save().catch(() => {});
@@ -228,4 +226,3 @@ module.exports = {
         }
     }
 }
-

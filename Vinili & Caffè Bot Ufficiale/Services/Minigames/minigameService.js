@@ -337,12 +337,16 @@ function buildSongAnswerAliases(rawTitle) {
 }
 
 function isSongGuessCorrect(rawGuess, rawAnswers) {
-  const guess = normalizeSongGuess(rawGuess);
+  return isStrictAliasGuessCorrect(rawGuess, rawAnswers, normalizeSongGuess);
+}
+
+function isStrictAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCountryName) {
+  const guess = normalizer(rawGuess);
   if (!guess) return false;
 
   const answers = Array.isArray(rawAnswers)
-    ? rawAnswers.map((a) => normalizeSongGuess(a)).filter(Boolean)
-    : [normalizeSongGuess(rawAnswers)].filter(Boolean);
+    ? rawAnswers.map((a) => normalizer(a)).filter(Boolean)
+    : [normalizer(rawAnswers)].filter(Boolean);
   if (!answers.length) return false;
 
   const uniqueAnswers = Array.from(new Set(answers));
@@ -355,84 +359,6 @@ function isSongGuessCorrect(rawGuess, rawAnswers) {
   return false;
 }
 
-const NATURAL_GUESS_STOP_TOKENS = new Set([
-  'e', 'ed', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'uno',
-  'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle',
-  'a', 'ad', 'al', 'alla', 'allo', 'ai', 'agli', 'alle',
-  'in', 'nel', 'nella', 'nello', 'nei', 'negli', 'nelle',
-  'su', 'sul', 'sulla', 'sullo', 'sui', 'sugli', 'sulle',
-  'per', 'con', 'tra', 'fra', 'the', 'is', 'it', 'its', 'my',
-  'secondo', 'me', 'penso', 'direi', 'forse', 'sarà', 'sara', 'era',
-  'che', 'sia', 'sono', 'sei', 'ho', 'hai', 'ha', 'abbia', 'questa',
-  'questo', 'quello', 'quella', 'quindi'
-]);
-
-function buildNaturalGuessCandidates(raw, normalizer = normalizeCountryName) {
-  const normalized = normalizer(raw);
-  if (!normalized) return [];
-  const tokens = normalized.split(' ').filter(Boolean);
-  const filteredTokens = tokens.filter((t) => !NATURAL_GUESS_STOP_TOKENS.has(t));
-
-  const candidates = new Set();
-  candidates.add(normalized);
-  if (filteredTokens.length) {
-    candidates.add(filteredTokens.join(' '));
-  }
-  for (const token of filteredTokens) {
-    if (token.length >= 2) candidates.add(token);
-  }
-
-  const source = filteredTokens.length ? filteredTokens : tokens;
-  const maxNgram = Math.min(4, source.length);
-  for (let size = 2; size <= maxNgram; size += 1) {
-    for (let i = 0; i <= source.length - size; i += 1) {
-      const phrase = source.slice(i, i + size).join(' ').trim();
-      if (phrase) candidates.add(phrase);
-    }
-  }
-
-  return Array.from(candidates.values()).sort((a, b) => b.length - a.length);
-}
-
-function isNaturalGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCountryName) {
-  const answers = Array.isArray(rawAnswers)
-    ? rawAnswers.map((a) => normalizer(a)).filter(Boolean)
-    : [normalizer(rawAnswers)].filter(Boolean);
-  if (!answers.length) return false;
-
-  const candidates = buildNaturalGuessCandidates(rawGuess, normalizer);
-  if (!candidates.length) return false;
-
-  const answerCompacts = answers.map((a) => a.replace(/\s+/g, ''));
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    if (answers.includes(candidate)) return true;
-
-    const candidateCompact = candidate.replace(/\s+/g, '');
-    if (candidateCompact && answerCompacts.includes(candidateCompact)) return true;
-
-    const candidateTokens = candidate
-      .split(' ')
-      .filter(Boolean)
-      .filter((t) => t.length >= 2 && !NATURAL_GUESS_STOP_TOKENS.has(t));
-    if (!candidateTokens.length) continue;
-
-    for (const answer of answers) {
-      const answerTokens = answer.split(' ').filter(Boolean);
-      const allMatch = candidateTokens.every((token) => {
-        if (token.length < 3) return false;
-        return answerTokens.some((at) =>
-          at === token
-          || at.startsWith(token)
-          || (at.length >= 3 && token.startsWith(at))
-        );
-      });
-      if (allMatch) return true;
-    }
-  }
-
-  return false;
-}
 
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || '').toLowerCase();
@@ -444,55 +370,16 @@ function extractWordGuessCandidates(raw) {
   return Array.from(new Set(tokens));
 }
 
-function extractPlayerTokens(name) {
-  const normalized = normalizePlayerGuess(name);
-  if (!normalized) return [];
-  return normalized.split(' ').filter(Boolean);
-}
-
-function isPlayerGuessCorrect(guessRaw, fullAnswerRaw, answerTokensRaw) {
-  const guess = normalizePlayerGuess(guessRaw);
-  const fullAnswer = normalizePlayerGuess(fullAnswerRaw);
-  const answerTokens = Array.isArray(answerTokensRaw)
-    ? answerTokensRaw.map((token) => normalizePlayerGuess(token)).filter(Boolean)
-    : [];
-  if (!guess || !fullAnswer) return false;
-
-  if (guess === fullAnswer) return true;
-  const guessCompact = guess.replace(/\s+/g, '');
-  const fullCompact = fullAnswer.replace(/\s+/g, '');
-  if (guessCompact && (guessCompact === fullCompact || fullCompact.includes(guessCompact))) return true;
-  if (answerTokens.includes(guess)) return true;
-  if (guess.length >= 3 && fullAnswer.includes(guess)) return true;
-
-  const stopTokens = new Set([
-    'e', 'ed', 'il', 'lo', 'la', 'i', 'gli', 'le', 'un', 'una', 'uno',
-    'di', 'da', 'del', 'della', 'dello', 'dei', 'degli', 'delle',
-    'a', 'ad', 'al', 'alla', 'allo', 'ai', 'agli', 'alle',
-    'in', 'nel', 'nella', 'nello', 'nei', 'negli', 'nelle',
-    'su', 'sul', 'sulla', 'sullo', 'sui', 'sugli', 'sulle',
-    'per', 'con', 'tra', 'fra', 'the', 'is', 'it', 'its', 'my',
-    'secondo', 'me', 'penso', 'direi', 'forse', 'sarà', 'sara', 'era'
-  ]);
-  const guessTokens = guess
-    .split(' ')
-    .map((t) => t.trim())
-    .filter((t) => t.length >= 2 && !stopTokens.has(t));
-  if (!guessTokens.length) return false;
-
-  if (guessTokens.some((t) => t.length >= 3 && answerTokens.includes(t))) return true;
-
-  const allTokensMatch = guessTokens.every((token) => {
-    if (token.length < 3) return false;
-    return answerTokens.some((answerToken) =>
-      answerToken === token
-      || answerToken.startsWith(token)
-      || (answerToken.length >= 3 && token.startsWith(answerToken))
-    );
-  });
-  if (allTokensMatch) return true;
-
-  return false;
+function buildPlayerAnswerAliases(name, aliases = []) {
+  const out = new Set();
+  const add = (value) => {
+    const normalized = normalizePlayerGuess(value);
+    if (normalized) out.add(normalized);
+  };
+  add(name);
+  const extra = Array.isArray(aliases) ? aliases : [];
+  for (const alias of extra) add(alias);
+  return Array.from(out.values());
 }
 
 function buildPlayerAliases(player) {
@@ -1126,17 +1013,50 @@ async function getNextGameType(client, cfg) {
   const available = getAvailableGameTypes(cfg);
   if (available.length === 0) return null;
   const today = getRomeDateKey(new Date());
-  if (rotationDate !== today || rotationQueue.length === 0) {
+  if (rotationDate !== today) {
     rotationDate = today;
+    rotationQueue = [];
+  }
+  if (rotationQueue.length === 0) {
     rotationQueue = available.slice();
     for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [rotationQueue[i], rotationQueue[j]] = [rotationQueue[j], rotationQueue[i]];
     }
+  } else {
+    const allowed = new Set(available);
+    const seen = new Set();
+    const cleaned = [];
+    for (const type of rotationQueue) {
+      if (!allowed.has(type) || seen.has(type)) continue;
+      cleaned.push(type);
+      seen.add(type);
+    }
+    for (const type of available) {
+      if (!seen.has(type)) {
+        cleaned.push(type);
+        seen.add(type);
+      }
+    }
+    rotationQueue = cleaned;
   }
   const next = rotationQueue.shift() || available[0];
   await saveRotationState(client, cfg);
   return next;
+}
+
+async function requeueGameType(client, cfg, gameType) {
+  if (!gameType) return;
+  const available = getAvailableGameTypes(cfg);
+  if (!available.includes(gameType)) return;
+  const today = getRomeDateKey(new Date());
+  if (rotationDate !== today) {
+    rotationDate = today;
+    rotationQueue = available.slice();
+  }
+  rotationQueue = rotationQueue.filter((type) => type !== gameType);
+  rotationQueue.push(gameType);
+  await saveRotationState(client, cfg);
 }
 
 async function scheduleMinuteHint(client, hintChannelId, durationMs, channelId) {
@@ -1378,10 +1298,7 @@ async function startGuessPlayerGame(client, cfg) {
 
   activeGames.set(channelId, {
     type: 'guessPlayer',
-    answers: Array.from(new Set([
-      ...extractPlayerTokens(info.name),
-      ...(Array.isArray(info.aliases) ? info.aliases : [])
-    ])),
+    answers: buildPlayerAnswerAliases(info.name, info.aliases),
     fullAnswer: normalizePlayerGuess(info.name),
     displayName: info.name,
     rewardExp,
@@ -1394,7 +1311,13 @@ async function startGuessPlayerGame(client, cfg) {
 
   await saveActiveGame(client, cfg, {
     type: 'guessPlayer',
-    target: JSON.stringify({ name: info.name, team: info.team, nationality: info.nationality, image: info.image }),
+    target: JSON.stringify({
+      name: info.name,
+      team: info.team,
+      nationality: info.nationality,
+      image: info.image,
+      aliases: buildPlayerAnswerAliases(info.name, info.aliases)
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
@@ -1642,6 +1565,7 @@ async function maybeStartRandomGame(client, force = false) {
       pendingGames.delete(cfg.channelId);
       return;
     }
+    await requeueGameType(client, cfg, gameType);
     pendingGames.delete(cfg.channelId);
     pending = null;
   }
@@ -1759,7 +1683,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessFlag') {
-    if (isNaturalGuessCorrect(content, game.answers, normalizeCountryName)) {
+    if (isStrictAliasGuessCorrect(content, game.answers, normalizeCountryName)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -1770,13 +1694,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === 'guessPlayer') {
-    const byStoredAnswers = isPlayerGuessCorrect(content, game.fullAnswer, game.answers);
-    const byDisplayNameFallback = isPlayerGuessCorrect(
-      content,
-      game.displayName,
-      extractPlayerTokens(game.displayName)
-    );
-    if (byStoredAnswers || byDisplayNameFallback) {
+    if (isStrictAliasGuessCorrect(content, game.answers, normalizePlayerGuess)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -2017,7 +1935,7 @@ async function restoreActiveGames(client) {
     const hintTimeout = await scheduleFlagHint(client, cfg.channelId, remainingMs, `${team} • ${nationality}`);
     activeGames.set(cfg.channelId, {
       type: 'guessPlayer',
-      answers: extractPlayerTokens(name),
+      answers: buildPlayerAnswerAliases(name, parsed?.aliases),
       fullAnswer: normalizePlayerGuess(name),
       displayName: name,
       rewardExp: Number(state.rewardExp || 0),

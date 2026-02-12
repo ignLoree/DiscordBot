@@ -23,6 +23,7 @@ const cron = require('node-cron');
 const IDs = require('../Utils/Config/ids');
 const startupPanelsTrigger = require('../Triggers/embeds');
 const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
+const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -226,6 +227,11 @@ module.exports = {
             const mainGuildId = IDs.guilds.main || client.guilds.cache.first()?.id;
             if (mainGuildId) {
                 queueIdsCatalogSync(client, mainGuildId, 'startup', { delayMs: 5000 });
+                const guild = client.guilds.cache.get(mainGuildId)
+                    || await client.guilds.fetch(mainGuildId).catch(() => null);
+                if (guild) {
+                    scheduleMemberCounterRefresh(guild, { delayMs: 800, secondPassMs: 2400 });
+                }
             }
         } catch (err) {
             global.logger.error('[IDS AUTO SYNC] Startup queue failed', err);
@@ -252,4 +258,3 @@ module.exports = {
         client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
     },
 };
-

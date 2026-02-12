@@ -7,19 +7,21 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const PERMISSIONS_PATH = path.join(__dirname, '..', '..', 'permissions.json');
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const PAGE_ROLE_IDS = [
-  IDs.roles.PartnerManager,
   IDs.roles.Staff
 ];
 const PAGE_TITLES = {
   utente: 'Comandi Utente',
-  [IDs.roles.PartnerManager]: 'Comandi Partner Manager',
   [IDs.roles.Staff]: 'Comandi Staff',
   [IDs.roles.HighStaff]: 'Comandi High Staff',
   [IDs.roles.Founder]: 'Comandi Dev'
 };
 const CATEGORY_LABELS = {
+  utility: 'Utility',
   community: 'Community',
+  tts: 'TTS',
   level: 'Level',
+  minigames: 'Minigames',
+  stats: 'Stats',
   partner: 'Partner',
   staff: 'Staff',
   vip: 'VIP',
@@ -27,8 +29,12 @@ const CATEGORY_LABELS = {
   contextmenubuilder: 'Context Menu',
 };
 const CATEGORY_ORDER = [
+  'utility',
   'community',
+  'tts',
   'level',
+  'minigames',
+  'stats',
   'partner',
   'staff',
   'vip',
@@ -199,10 +205,22 @@ function prettifySubcommandName(name) {
     .trim();
 }
 
-function getPrefixSubcommandDescription(commandName, subcommandName) {
+function getPrefixSubcommandDescription(command, subcommandName) {
+  const commandName = String(command?.name || '').toLowerCase();
   const key = `${String(commandName || '').toLowerCase()}.${String(subcommandName || '').toLowerCase()}`;
   if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
     return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
+  }
+  const commandSubDesc =
+    command?.subcommandDescriptions
+    || command?.subcommandsDescriptions
+    || command?.subcommandHelp
+    || command?.subcommandsHelp
+    || null;
+  if (commandSubDesc && typeof commandSubDesc === 'object') {
+    const fromCommand = commandSubDesc[String(subcommandName || '').toLowerCase()]
+      || commandSubDesc[String(subcommandName || '').trim()];
+    if (String(fromCommand || '').trim()) return normalizeDescription(fromCommand);
   }
   const pretty = prettifySubcommandName(subcommandName);
   return `Subcommand \`${pretty}\` di \`+${String(commandName || '').toLowerCase()}\`.`;
@@ -216,6 +234,7 @@ function getPrefixBase(command) {
 function normalizeCategoryKey(value) {
   const key = String(value || 'misc').toLowerCase();
   if (key === 'admin') return 'dev';
+  if (key === 'utiliy') return 'utility';
   return key;
 }
 
@@ -353,7 +372,7 @@ function buildEntries(client, permissions) {
         entries.push({
           ...base,
           invoke: `${prefixBase}${command.name} ${sub}`,
-          description: getPrefixSubcommandDescription(command.name, sub, base.description),
+          description: getPrefixSubcommandDescription(command, sub),
           roles: Array.isArray(subcommandRoles[sub]) ? subcommandRoles[sub] : commandRoles,
           aliases: extractDirectAliasesForSubcommand(command, sub)
         });
@@ -456,11 +475,13 @@ function filterByPage(entries, pageRoleId, memberRoles) {
     });
   }
   if (pageRoleId === IDs.roles.Staff) {
+    const hasPartnerManager = Boolean(memberRoles?.has?.(IDs.roles.PartnerManager));
     const hasStaff = Boolean(memberRoles?.has?.(IDs.roles.Staff));
     const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
     const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
     return entries.filter((entry) => {
       if (!Array.isArray(entry.roles) || !entry.roles.length) return false;
+      if (hasPartnerManager && entry.roles.includes(IDs.roles.PartnerManager)) return true;
       if (hasStaff && entry.roles.includes(IDs.roles.Staff)) return true;
       if (hasHighStaff && entry.roles.includes(IDs.roles.HighStaff)) return true;
       if (hasFounder && entry.roles.includes(IDs.roles.Founder)) return true;
@@ -497,7 +518,9 @@ function renderPageText(page) {
 
   const sections = [];
   for (const categoryKey of orderedKeys) {
-    const categoryEntries = grouped.get(categoryKey) || [];
+    const categoryEntries = (grouped.get(categoryKey) || []).slice().sort((a, b) =>
+      String(a.invoke || '').localeCompare(String(b.invoke || ''), 'it')
+    );
     const categoryLabel = CATEGORY_LABELS[categoryKey] || (categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1));
     const rows = categoryEntries.map((entry) => {
       const aliasText = entry.type === 'prefix' && Array.isArray(entry.aliases) && entry.aliases.length
@@ -516,6 +539,7 @@ function renderPageText(page) {
       '',
       'Ecco la lista dei comandi disponibili.',
       'Usa il prefix, slash o context menu in base al comando.',
+      'Mini-help rapido: `+help <comando>`.',
       '',
       sections.join('\n\n'),
       '',
@@ -553,10 +577,638 @@ function buildHelpV2Container(page, navState) {
   };
 }
 
+function normalizeInvokeLookup(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^[/+?!.\-]+/, '')
+    .replace(/\s+/g, ' ');
+}
+
+function getCategoryIndex(entry) {
+  const key = String(entry?.category || 'misc').toLowerCase();
+  const idx = CATEGORY_ORDER.indexOf(key);
+  return idx === -1 ? CATEGORY_ORDER.length : idx;
+}
+
+function dedupeAndSortEntries(entries) {
+  const map = new Map();
+  for (const entry of entries) {
+    const key = `${entry.type}:${entry.invoke}`;
+    if (!map.has(key)) map.set(key, entry);
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    const catCmp = getCategoryIndex(a) - getCategoryIndex(b);
+    if (catCmp !== 0) return catCmp;
+    return String(a.invoke || '').localeCompare(String(b.invoke || ''), 'it');
+  });
+}
+
+function formatRoleMentions(roleIds) {
+  if (!Array.isArray(roleIds)) return 'Tutti';
+  if (!roleIds.length) return 'Nessun ruolo configurato';
+  return roleIds.map((roleId) => `<@&${roleId}>`).join(', ');
+}
+
+function getPrefixPermissionConfig(permissions, commandName) {
+  const raw = permissions?.prefix?.[commandName];
+  if (Array.isArray(raw)) {
+    return { roles: raw, subcommands: {} };
+  }
+  if (raw && typeof raw === 'object') {
+    return {
+      roles: Array.isArray(raw.roles) ? raw.roles : null,
+      subcommands: raw.subcommands && typeof raw.subcommands === 'object' ? raw.subcommands : {}
+    };
+  }
+  return { roles: null, subcommands: {} };
+}
+
+function pushChunkedField(fields, name, lines, inline = false, maxLen = 980) {
+  if (!Array.isArray(lines) || !lines.length) return;
+  let current = '';
+  let idx = 0;
+
+  const flush = () => {
+    if (!current.trim().length) return;
+    fields.push({
+      name: idx === 0 ? name : `${name} (cont.)`,
+      value: current.trim(),
+      inline
+    });
+    idx += 1;
+    current = '';
+  };
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || '').trim();
+    if (!line) continue;
+    const next = current.length ? `${current}\n${line}` : line;
+    if (next.length > maxLen) {
+      flush();
+      current = line;
+      continue;
+    }
+    current = next;
+  }
+  flush();
+}
+
+function collectCommandUsageSnippets(command, commandName, prefixBase) {
+  const snippets = new Set();
+  const name = String(commandName || '').toLowerCase();
+  const prefix = String(prefixBase || '+');
+  const knownAliases = Array.isArray(command?.aliases)
+    ? command.aliases.map((alias) => String(alias || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const addSnippet = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return;
+    if (text.length > 200) return;
+    snippets.add(text.replace(/\s+/g, ' '));
+  };
+
+  const candidateMeta = [
+    command?.usage,
+    command?.example,
+    command?.helpUsage,
+    ...(Array.isArray(command?.usages) ? command.usages : []),
+    ...(Array.isArray(command?.examples) ? command.examples : [])
+  ];
+  for (const candidate of candidateMeta) {
+    if (typeof candidate !== 'string') continue;
+    const lines = candidate.split('\n').map((line) => line.trim()).filter(Boolean);
+    for (const line of lines) addSnippet(line);
+  }
+
+  const src = String(command?.execute || '');
+  const backtickRegex = /`([^`\n]{3,200})`/g;
+  let match = null;
+  while ((match = backtickRegex.exec(src)) !== null) {
+    const snippet = String(match[1] || '').trim();
+    if (!snippet) continue;
+    const lower = snippet.toLowerCase();
+    if (lower.includes(`${prefix}${name}`) || lower.includes(`/${name}`)) {
+      addSnippet(snippet);
+      continue;
+    }
+    if (knownAliases.some((alias) => lower.includes(`${prefix}${alias}`))) {
+      addSnippet(snippet);
+    }
+  }
+
+  const ordered = Array.from(snippets.values())
+    .sort((a, b) => a.length - b.length);
+  return ordered.slice(0, 12);
+}
+
+function collectPrefixExampleLines(command, commandName, prefixBase, subEntries = [], requestedSub = null) {
+  const out = [];
+  const push = (line) => {
+    const value = String(line || '').trim();
+    if (!value) return;
+    if (!out.includes(value)) out.push(value);
+  };
+
+  const snippets = collectCommandUsageSnippets(command, commandName, prefixBase);
+  if (requestedSub) {
+    for (const row of snippets) {
+      const lower = row.toLowerCase();
+      if (lower.includes(`${prefixBase}${commandName} ${requestedSub}`) || lower.includes(` ${requestedSub} `)) {
+        push(`• \`${row}\``);
+      }
+    }
+  } else {
+    for (const row of snippets) push(`• \`${row}\``);
+  }
+
+  if (subEntries.length) {
+    for (const entry of subEntries) {
+      push(`• \`${entry.invoke}\``);
+    }
+  } else {
+    push(`• \`${prefixBase}${commandName}\``);
+  }
+
+  return out.slice(0, 16);
+}
+
+function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
+  const normalized = normalizeInvokeLookup(query);
+  const tokens = normalized.split(' ').filter(Boolean);
+  const queryToken = tokens[0] || '';
+  if (!queryToken) return null;
+
+  const commands = Array.from(context?.client?.pcommands?.values?.() || [])
+    .filter((cmd) => String(cmd?.name || '').trim().length);
+  if (!commands.length) return null;
+
+  let command = commands.find((cmd) => String(cmd.name || '').trim().toLowerCase() === queryToken) || null;
+  if (!command) {
+    command = commands.find((cmd) =>
+      Array.isArray(cmd.aliases)
+      && cmd.aliases.some((alias) => String(alias || '').trim().toLowerCase() === queryToken)
+    ) || null;
+  }
+  if (!command) return null;
+
+  const commandName = String(command.name || '').trim().toLowerCase();
+  const prefixBase = getPrefixBase(command);
+  const visibleForCommand = entries.filter((entry) => {
+    if (entry.type !== 'prefix') return false;
+    const invoke = normalizeInvokeLookup(entry.invoke);
+    return invoke.split(' ')[0] === commandName;
+  });
+  if (!visibleForCommand.length) return null;
+
+  const permissions = context?.permissions || {};
+  const permConfig = getPrefixPermissionConfig(permissions, commandName);
+  const subAliasesMap = command?.subcommandAliases && typeof command.subcommandAliases === 'object'
+    ? command.subcommandAliases
+    : {};
+
+  let requestedSub = tokens[1] || null;
+  if (requestedSub && subAliasesMap[requestedSub]) {
+    requestedSub = String(subAliasesMap[requestedSub] || '').trim().toLowerCase() || requestedSub;
+  }
+
+  const usageLines = [];
+  const allSubs = Array.from(new Set(visibleForCommand
+    .map((entry) => normalizeInvokeLookup(entry.invoke).split(' ')[1] || null)
+    .filter(Boolean)));
+  if (allSubs.length) {
+    usageLines.push(`\`${prefixBase}${commandName} <subcommand>\``);
+  } else {
+    usageLines.push(`\`${prefixBase}${commandName}\``);
+  }
+
+  const aliases = Array.isArray(command.aliases)
+    ? command.aliases.map((alias) => String(alias || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+  if (aliases.length) {
+    usageLines.push(`Alias comando: ${aliases.map((alias) => `\`${prefixBase}${alias}\``).join(', ')}`);
+  }
+  usageLines.push(`Ruoli richiesti: ${formatRoleMentions(permConfig.roles)}`);
+
+  const subEntries = visibleForCommand
+    .filter((entry) => normalizeInvokeLookup(entry.invoke).split(' ').length > 1)
+    .filter((entry) => {
+      if (!requestedSub) return true;
+      return normalizeInvokeLookup(entry.invoke).split(' ')[1] === requestedSub;
+    })
+    .sort((a, b) => String(a.invoke || '').localeCompare(String(b.invoke || ''), 'it'));
+
+  const subLines = [];
+  const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
+  for (const entry of subEntries) {
+    const subName = normalizeInvokeLookup(entry.invoke).split(' ')[1];
+    const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
+      ? permConfig.subcommands[subName]
+      : permConfig.roles;
+    const aliasesForSub = extractDirectAliasesForSubcommand(command, subName);
+    subLines.push(`• \`${prefixBase}${commandName} ${subName}\` - ${entry.description}`);
+    if (aliasesForSub.length) {
+      subLines.push(`  Alias: ${aliasesForSub.map((alias) => `\`${prefixBase}${commandName} ${alias}\``).join(', ')}`);
+    }
+    subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
+  }
+  if (requestedSub && !subLines.length) {
+    const allKnownSubs = listPrefixSubcommandsForCommand(command, commandName, permissions);
+    for (const sub of allKnownSubs) {
+      const invoke = `${prefixBase}${commandName} ${sub}`;
+      const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+      const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+      const subRoleIds = Array.isArray(permConfig.subcommands?.[sub])
+        ? permConfig.subcommands[sub]
+        : permConfig.roles;
+      subLines.push(`• \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`);
+      subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
+    }
+  }
+
+  const snippetLines = collectPrefixExampleLines(
+    command,
+    commandName,
+    prefixBase,
+    subEntries.map((entry) => ({ invoke: entry.invoke })),
+    requestedSub
+  );
+
+  const embed = new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle(`Guida comando: ${prefixBase}${commandName}`)
+    .setDescription(getPrefixDescription(command));
+
+  const fields = [];
+  pushChunkedField(fields, 'Sintassi', usageLines);
+  if (subLines.length) {
+    pushChunkedField(fields, requestedSub ? `Subcommand: ${requestedSub}` : 'Subcommands', subLines);
+  }
+  pushChunkedField(fields, 'Esempi di uso', snippetLines);
+  if (fields.length) embed.addFields(fields);
+  return embed;
+}
+
+function getOptionTypeLabel(type) {
+  const labels = {
+    1: 'Subcommand',
+    2: 'Gruppo',
+    3: 'String',
+    4: 'Integer',
+    5: 'Boolean',
+    6: 'User',
+    7: 'Channel',
+    8: 'Role',
+    9: 'Mentionable',
+    10: 'Number',
+    11: 'Attachment'
+  };
+  return labels[type] || 'Option';
+}
+
+function formatSlashOptionPlaceholder(option) {
+  if (!option?.name) return '';
+  return option.required ? `<${option.name}>` : `[${option.name}]`;
+}
+
+function getSlashSampleValueByType(optionType) {
+  if (optionType === 3) return 'testo';
+  if (optionType === 4) return '10';
+  if (optionType === 5) return 'true';
+  if (optionType === 6) return '@utente';
+  if (optionType === 7) return '#canale';
+  if (optionType === 8) return '@ruolo';
+  if (optionType === 9) return '@utente';
+  if (optionType === 10) return '1.5';
+  if (optionType === 11) return 'file';
+  return 'valore';
+}
+
+function buildSlashExampleLine(commandName, groupName, subName, optionList = []) {
+  const parts = [`/${commandName}`];
+  if (groupName) parts.push(groupName);
+  if (subName) parts.push(subName);
+  for (const opt of optionList) {
+    if (!opt?.name || opt.type < 3 || opt.type > 11) continue;
+    parts.push(getSlashSampleValueByType(opt.type));
+  }
+  return `• \`${parts.join(' ')}\``;
+}
+
+function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
+  const normalized = normalizeInvokeLookup(query);
+  const tokens = normalized.split(' ').filter(Boolean);
+  const queryToken = tokens[0] || '';
+  if (!queryToken) return null;
+
+  const seen = new Set();
+  const slashCommands = [];
+  for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
+    const dataJson = cmd?.data?.toJSON?.();
+    if (!dataJson?.name) continue;
+    const type = dataJson.type || ApplicationCommandType.ChatInput;
+    if (type !== ApplicationCommandType.ChatInput) continue;
+    const key = `${dataJson.name}:${type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    slashCommands.push({ cmd, dataJson });
+  }
+  if (!slashCommands.length) return null;
+
+  const hit = slashCommands.find(({ dataJson }) =>
+    String(dataJson.name || '').trim().toLowerCase() === queryToken
+  );
+  if (!hit) return null;
+
+  const commandName = String(hit.dataJson.name || '').trim().toLowerCase();
+  const visibleForCommand = entries.filter((entry) =>
+    entry.type === 'slash'
+    && normalizeInvokeLookup(entry.invoke).split(' ')[0] === commandName
+  );
+  if (!visibleForCommand.length) return null;
+
+  const options = Array.isArray(hit.dataJson.options) ? hit.dataJson.options : [];
+  const hasSub = options.some((opt) => opt?.type === 1 || opt?.type === 2);
+  const requestedSub = tokens[1] || null;
+
+  const syntaxLines = [];
+  const optionLines = [];
+  const exampleLines = [];
+
+  if (!hasSub) {
+    const placeholders = options
+      .filter((opt) => opt?.type >= 3 && opt?.type <= 11)
+      .map((opt) => formatSlashOptionPlaceholder(opt))
+      .filter(Boolean);
+    syntaxLines.push(`\`/${commandName}${placeholders.length ? ` ${placeholders.join(' ')}` : ''}\``);
+    exampleLines.push(buildSlashExampleLine(commandName, null, null, options));
+    for (const opt of options) {
+      if (!opt?.name || opt?.type < 3 || opt?.type > 11) continue;
+      const required = opt.required ? 'obbligatoria' : 'opzionale';
+      const choices = Array.isArray(opt.choices) && opt.choices.length
+        ? ` | scelte: ${opt.choices.map((c) => `\`${c.name}\``).join(', ')}`
+        : '';
+      optionLines.push(`• \`${opt.name}\` (${getOptionTypeLabel(opt.type)}, ${required}) - ${normalizeDescription(opt.description, 'Nessuna descrizione.')}${choices}`);
+    }
+  } else {
+    for (const opt of options) {
+      if (opt?.type === 1) {
+        const subName = String(opt.name || '').trim().toLowerCase();
+        if (requestedSub && requestedSub !== subName) continue;
+        const subPlaceholders = (Array.isArray(opt.options) ? opt.options : [])
+          .filter((child) => child?.type >= 3 && child?.type <= 11)
+          .map((child) => formatSlashOptionPlaceholder(child))
+          .filter(Boolean);
+        syntaxLines.push(`\`/${commandName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(' ')}` : ''}\``);
+        exampleLines.push(buildSlashExampleLine(commandName, null, subName, Array.isArray(opt.options) ? opt.options : []));
+        optionLines.push(`• \`${subName}\` - ${normalizeDescription(opt.description, 'Nessuna descrizione.')}`);
+        for (const child of (Array.isArray(opt.options) ? opt.options : [])) {
+          if (!child?.name || child?.type < 3 || child?.type > 11) continue;
+          const required = child.required ? 'obbligatoria' : 'opzionale';
+          const choices = Array.isArray(child.choices) && child.choices.length
+            ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(', ')}`
+            : '';
+          optionLines.push(`  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`);
+        }
+      }
+      if (opt?.type === 2 && Array.isArray(opt.options)) {
+        const groupName = String(opt.name || '').trim().toLowerCase();
+        for (const sub of opt.options) {
+          if (sub?.type !== 1 || !sub?.name) continue;
+          const subName = String(sub.name || '').trim().toLowerCase();
+          if (requestedSub && requestedSub !== groupName && requestedSub !== subName) continue;
+          const subPlaceholders = (Array.isArray(sub.options) ? sub.options : [])
+            .filter((child) => child?.type >= 3 && child?.type <= 11)
+            .map((child) => formatSlashOptionPlaceholder(child))
+            .filter(Boolean);
+          syntaxLines.push(`\`/${commandName} ${groupName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(' ')}` : ''}\``);
+          exampleLines.push(buildSlashExampleLine(commandName, groupName, subName, Array.isArray(sub.options) ? sub.options : []));
+          optionLines.push(`• \`${groupName} ${subName}\` - ${normalizeDescription(sub.description, 'Nessuna descrizione.')}`);
+          for (const child of (Array.isArray(sub.options) ? sub.options : [])) {
+            if (!child?.name || child?.type < 3 || child?.type > 11) continue;
+            const required = child.required ? 'obbligatoria' : 'opzionale';
+            const choices = Array.isArray(child.choices) && child.choices.length
+              ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(', ')}`
+              : '';
+            optionLines.push(`  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`);
+          }
+        }
+      }
+    }
+  }
+
+  const perm = context?.permissions?.slash?.[commandName];
+  const roleIds = Array.isArray(perm) ? perm : (Array.isArray(perm?.roles) ? perm.roles : null);
+  const effectiveSyntax = syntaxLines.length ? syntaxLines : [`\`/${commandName}\``];
+
+  const embed = new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle(`Guida comando: /${commandName}`)
+    .setDescription(normalizeDescription(hit.dataJson.description, 'Comando slash.'));
+
+  const fields = [];
+  pushChunkedField(fields, 'Sintassi', effectiveSyntax);
+  pushChunkedField(fields, 'Permessi', [`Ruoli richiesti: ${formatRoleMentions(roleIds)}`]);
+  if (optionLines.length) {
+    pushChunkedField(fields, 'Opzioni', optionLines);
+  }
+  if (requestedSub && !optionLines.length) {
+    const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
+    const fallbackSubLines = [];
+    for (const opt of options) {
+      if (opt?.type === 1 && opt?.name) {
+        const invoke = `/${commandName} ${opt.name}`;
+        const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+        const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+        fallbackSubLines.push(`• \`${invoke}\` - ${normalizeDescription(opt.description, 'Nessuna descrizione.')}${lock}`);
+      }
+      if (opt?.type === 2 && Array.isArray(opt.options)) {
+        for (const sub of opt.options) {
+          if (sub?.type !== 1 || !sub?.name) continue;
+          const invoke = `/${commandName} ${opt.name} ${sub.name}`;
+          const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+          const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+          fallbackSubLines.push(`• \`${invoke}\` - ${normalizeDescription(sub.description, 'Nessuna descrizione.')}${lock}`);
+        }
+      }
+    }
+    if (fallbackSubLines.length) {
+      pushChunkedField(fields, 'Subcommands disponibili', fallbackSubLines);
+    }
+  }
+  pushChunkedField(fields, 'Esempi di uso', exampleLines.length ? exampleLines : [`• \`/${commandName}\``]);
+  if (fields.length) embed.addFields(fields);
+  return embed;
+}
+
+function buildDetailedHelpEmbed(query, entries, context = {}) {
+  return buildPrefixDetailedHelpEmbed(query, entries, context)
+    || buildSlashDetailedHelpEmbed(query, entries, context)
+    || null;
+}
+
+function getVisibleInvokeSet(entries) {
+  const set = new Set();
+  for (const entry of Array.isArray(entries) ? entries : []) {
+    const invoke = normalizeInvokeLookup(entry?.invoke);
+    if (invoke) set.add(invoke);
+  }
+  return set;
+}
+
+function resolvePrefixCommandByToken(client, token) {
+  const safeToken = String(token || '').trim().toLowerCase();
+  if (!safeToken) return null;
+  const commands = Array.from(client?.pcommands?.values?.() || []);
+  for (const command of commands) {
+    const name = String(command?.name || '').trim().toLowerCase();
+    if (name && name === safeToken) return command;
+    const aliases = Array.isArray(command?.aliases)
+      ? command.aliases.map((alias) => String(alias || '').trim().toLowerCase())
+      : [];
+    if (aliases.includes(safeToken)) return command;
+  }
+  return null;
+}
+
+function listPrefixSubcommandsForCommand(command, commandName, permissions) {
+  const permConfig = getPrefixPermissionConfig(permissions, commandName);
+  const fromPerms = Object.keys(permConfig.subcommands || {})
+    .map((key) => String(key || '').trim().toLowerCase())
+    .filter(Boolean);
+  const subcommands = Array.from(new Set([
+    ...extractPrefixSubcommands(command),
+    ...(Array.isArray(command?.subcommands)
+      ? command.subcommands.map((s) => String(s || '').trim().toLowerCase()).filter(Boolean)
+      : []),
+    ...fromPerms
+  ]));
+  return subcommands.sort((a, b) => a.localeCompare(b, 'it'));
+}
+
+function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
+  const normalized = normalizeInvokeLookup(query);
+  const tokens = normalized.split(' ').filter(Boolean);
+  const queryToken = tokens[0] || '';
+  if (!queryToken) return null;
+
+  const permissions = context?.permissions || {};
+  const visibleInvokeSet = getVisibleInvokeSet(visibleEntries);
+
+  const prefixCommand = resolvePrefixCommandByToken(context?.client, queryToken);
+  if (prefixCommand) {
+    const commandName = String(prefixCommand.name || '').trim().toLowerCase();
+    const prefixBase = getPrefixBase(prefixCommand);
+    const subcommands = listPrefixSubcommandsForCommand(prefixCommand, commandName, permissions);
+    if (subcommands.length) {
+      const lines = subcommands.map((sub) => {
+        const invoke = `${prefixBase}${commandName} ${sub}`;
+        const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+        const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+        return `• \`${invoke}\` - ${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
+      });
+      return new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setTitle(`Subcommands: ${prefixBase}${commandName}`)
+        .setDescription(lines.join('\n'));
+    }
+  }
+
+  const seen = new Set();
+  const slashCommands = [];
+  for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
+    const dataJson = cmd?.data?.toJSON?.();
+    if (!dataJson?.name) continue;
+    const type = dataJson.type || ApplicationCommandType.ChatInput;
+    if (type !== ApplicationCommandType.ChatInput) continue;
+    const key = `${dataJson.name}:${type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    slashCommands.push({ cmd, dataJson });
+  }
+  const slashHit = slashCommands.find(({ dataJson }) =>
+    String(dataJson?.name || '').trim().toLowerCase() === queryToken
+  );
+  if (slashHit) {
+    const commandName = String(slashHit.dataJson.name || '').trim().toLowerCase();
+    const options = Array.isArray(slashHit.dataJson.options) ? slashHit.dataJson.options : [];
+    const subLines = [];
+    for (const opt of options) {
+      if (opt?.type === 1 && opt?.name) {
+        const invoke = `/${commandName} ${opt.name}`;
+        const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+        const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+        subLines.push(`• \`${invoke}\` - ${normalizeDescription(opt.description, 'Nessuna descrizione.')}${lock}`);
+      }
+      if (opt?.type === 2 && Array.isArray(opt.options)) {
+        for (const sub of opt.options) {
+          if (sub?.type !== 1 || !sub?.name) continue;
+          const invoke = `/${commandName} ${opt.name} ${sub.name}`;
+          const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+          const lock = isVisible ? '' : ' *(non accessibile con i tuoi ruoli)*';
+          subLines.push(`• \`${invoke}\` - ${normalizeDescription(sub.description, 'Nessuna descrizione.')}${lock}`);
+        }
+      }
+    }
+    if (subLines.length) {
+      return new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setTitle(`Subcommands: /${commandName}`)
+        .setDescription(subLines.join('\n'));
+    }
+  }
+
+  return null;
+}
+
+function buildMiniHelpEmbed(query, entries, context = {}) {
+  const detailed = buildDetailedHelpEmbed(query, entries, context);
+  if (detailed) return detailed;
+
+  const normalizedQuery = normalizeInvokeLookup(query);
+  const matches = entries.filter((entry) => {
+    const invoke = normalizeInvokeLookup(entry.invoke);
+    if (!invoke) return false;
+    const commandToken = invoke.split(' ')[0] || '';
+    const baseMatch =
+      invoke === normalizedQuery
+      || invoke.startsWith(`${normalizedQuery} `)
+      || commandToken === normalizedQuery;
+    if (baseMatch) return true;
+    if (entry.type !== 'prefix' || !Array.isArray(entry.aliases)) return false;
+    return entry.aliases.some((alias) => String(alias || '').toLowerCase() === normalizedQuery);
+  });
+
+  if (!matches.length) {
+    const fallback = buildSubcommandFallbackEmbed(query, entries, context);
+    if (fallback) return fallback;
+    return new EmbedBuilder()
+      .setColor('Red')
+      .setTitle('Mini Help')
+      .setDescription(`<:vegax:1443934876440068179> Nessun comando trovato per \`${query}\`.`);
+  }
+
+  const limited = matches.slice(0, 20);
+  const lines = limited.map((entry) => {
+    const categoryKey = String(entry.category || '').toLowerCase();
+    const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || 'Misc';
+    return `• \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}`;
+  });
+  const extra = matches.length > limited.length
+    ? `\n\n...e altri **${matches.length - limited.length}** risultati.`
+    : '';
+
+  return new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setTitle(`Mini Help: ${query}`)
+    .setDescription(`${lines.join('\n')}${extra}`);
+}
+
 module.exports = {
   name: 'help',
 
-  async execute(message, _args, client) {
+  async execute(message, args, client) {
     if (!message.guild || !message.member) return;
     await message.channel.sendTyping().catch(() => {});
 
@@ -567,12 +1219,26 @@ module.exports = {
     const resolvedMember = freshMember || message.member;
     const memberRoles = resolvedMember?.roles?.cache || new Map();
     const rolePages = PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId));
+    const hasPartnerManager = Boolean(memberRoles?.has?.(IDs.roles.PartnerManager));
     const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
     const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
-    if (!rolePages.includes(IDs.roles.Staff) && (hasHighStaff || hasFounder)) {
+    if (!rolePages.includes(IDs.roles.Staff) && (hasPartnerManager || hasHighStaff || hasFounder)) {
       rolePages.push(IDs.roles.Staff);
     }
     const visibleRoleIds = ['utente', ...rolePages];
+    const visibleEntries = dedupeAndSortEntries(
+      visibleRoleIds.flatMap((roleId) => filterByPage(allEntries, roleId, memberRoles))
+    );
+
+    const query = Array.isArray(args) ? args.join(' ').trim() : '';
+    if (query.length) {
+      const embed = buildMiniHelpEmbed(query, visibleEntries, { client, permissions });
+      await safeMessageReply(message, {
+        embeds: [embed],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
 
     const groupedPages = [];
     for (const roleId of visibleRoleIds) {

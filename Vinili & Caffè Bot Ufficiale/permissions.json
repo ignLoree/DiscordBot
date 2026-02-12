@@ -13,11 +13,7 @@
         ]
       }
     },
-    "dmbroadcast": {
-      "roles": [
-        "roles.Founder"
-      ]
-    },
+    "dmbroadcast": null,
     "say": {
       "roles": [
         "roles.Founder"

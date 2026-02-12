@@ -3,16 +3,24 @@ const { getNoDmSet } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
 
 const getDevIds = (client) => {
-  const raw =
-    client.config?.developers ??
-    "";
-  if (Array.isArray(raw)) {
-    return raw.map((id) => String(id).trim()).filter(Boolean);
-  }
-  return String(raw)
+  const fromIds = String(
+    IDs?.guilds?.developers
+    || IDs?.developers
+    || ""
+  )
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean);
+
+  const raw = client.config?.developers ?? "";
+  const fromConfig = Array.isArray(raw)
+    ? raw.map((id) => String(id).trim()).filter(Boolean)
+    : String(raw)
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+  return Array.from(new Set([...fromIds, ...fromConfig]));
 };
 
 const getStaffRoleIds = (client) => {
