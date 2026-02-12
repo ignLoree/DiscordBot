@@ -1,21 +1,95 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
-const renderSkullboardCanvas = require('../Utils/Render/skullboardCanvas');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const communitySchemas = require('../Schemas/Community/communitySchemas');
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require('../Utils/Config/ids');
 
-const SKULL_EMOJI = '💀';
+const SKULL_EMOJI = '\u{1F480}';
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
+const WEBHOOK_NAME = 'Skullboard Mirror';
+const MAX_CONTENT_LENGTH = 2000;
 
 function normalizeEmojiName(value) {
-  return String(value || '').replace(/️/g, '').trim();
+  return String(value || '').replace(/[\uFE0E\uFE0F]/g, '').trim();
 }
 
 function isSkullReaction(reaction) {
   const name = normalizeEmojiName(reaction?.emoji?.name);
   if (name === normalizeEmojiName(SKULL_EMOJI)) return true;
-  if (name === '☠') return true;
+  if (name === '\u2620') return true;
   return false;
+}
+
+function clamp(value, max) {
+  const text = String(value || '');
+  if (text.length <= max) return text;
+  return `${text.slice(0, Math.max(0, max - 3))}...`;
+}
+
+function sanitizeUsername(member, author) {
+  const fallback = author?.username || 'Unknown';
+  const raw = (member?.displayName || fallback).replace(/\n/g, ' ').trim();
+  return clamp(raw || fallback, 80);
+}
+
+function extractMessageFiles(message) {
+  const files = [];
+  const attachments = [...(message?.attachments?.values?.() || [])];
+  for (const attachment of attachments) {
+    if (!attachment?.url) continue;
+    files.push({
+      attachment: attachment.url,
+      name: attachment.name || `file-${files.length + 1}`
+    });
+    if (files.length >= 10) break;
+  }
+  return files;
+}
+
+function extractStickerUrls(message) {
+  const stickers = [...(message?.stickers?.values?.() || [])];
+  return stickers
+    .map((sticker) => sticker?.url || sticker?.imageURL?.() || null)
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function buildBaseContent(message) {
+  const parts = [];
+  const text = String(message?.content || '').trim();
+  if (text) parts.push(text);
+
+  const stickerUrls = extractStickerUrls(message);
+  if (stickerUrls.length) {
+    parts.push(stickerUrls.join('\n'));
+  }
+
+  if (!parts.length && !(message?.attachments?.size > 0)) {
+    parts.push('[Messaggio vuoto]');
+  }
+
+  return parts.join('\n').trim();
+}
+
+async function getOrCreateWebhook(channel, clientUser) {
+  const hooks = await channel.fetchWebhooks().catch(() => null);
+  if (hooks) {
+    const existing = hooks.find((hook) => hook.owner?.id === clientUser.id && hook.token);
+    if (existing) return existing;
+  }
+
+  return channel.createWebhook({
+    name: WEBHOOK_NAME,
+    avatar: clientUser.displayAvatarURL({ extension: 'png', size: 256 })
+  }).catch(() => null);
+}
+
+function prependReplyQuote(content, repliedMessage, repliedMember) {
+  const authorName = repliedMember?.displayName || repliedMessage?.author?.username || 'Unknown';
+  const mention = repliedMessage?.author?.id ? `<@${repliedMessage.author.id}>` : `@${authorName}`;
+  const quoted = String(repliedMessage?.content || '').trim() || '[Messaggio senza testo]';
+  const quoteLine = `> ${mention}: ${clamp(quoted, 160)}`;
+  if (!content) return quoteLine;
+  return `${quoteLine}\n${content}`;
 }
 
 module.exports = {
@@ -30,6 +104,7 @@ module.exports = {
       const message = reaction.message?.partial
         ? await reaction.message.fetch().catch(() => null)
         : reaction.message;
+
       if (!message || !message.guild) return;
       if (message.channel?.id === SKULLBOARD_CHANNEL_ID) return;
       if (!isSkullReaction(reaction)) return;
@@ -40,103 +115,54 @@ module.exports = {
       }).lean().catch(() => null);
       if (existing?.postMessageId) return;
 
-      const author = message.author;
-      const avatarUrl = author.displayAvatarURL({ extension: 'png', size: 256 });
-      const member = message.member || await message.guild.members.fetch(author.id).catch(() => null);
-      const nameColor = member?.displayHexColor && member.displayHexColor !== '#000000'
-        ? member.displayHexColor
-        : '#f2f3f5';
-
-      let roleIconUrl = null;
-      if (member?.roles?.cache?.size) {
-        const sortedRoles = [...member.roles.cache.values()]
-          .filter((r) => r.id !== message.guild.id)
-          .sort((a, b) => b.position - a.position);
-        for (const role of sortedRoles) {
-          const icon = role?.iconURL?.({ size: 32, extension: 'png' }) || null;
-          if (icon) {
-            roleIconUrl = icon;
-            break;
-          }
-        }
-      }
-
-      const text = message.content?.trim() || '';
-      const firstAttachment = message.attachments?.first?.() || null;
-      const firstSticker = message.stickers?.first?.() || null;
-      const firstEmbed = Array.isArray(message.embeds) && message.embeds.length ? message.embeds[0] : null;
-
-      const mediaUrlFromAttachment = firstAttachment?.url || null;
-      const mediaUrlFromSticker = firstSticker?.url || firstSticker?.imageURL?.() || null;
-      const mediaUrlFromEmbed = firstEmbed?.image?.url || null;
-      const mediaUrl = mediaUrlFromAttachment || mediaUrlFromSticker || mediaUrlFromEmbed || null;
-
-      const hasMedia = Boolean(mediaUrl);
-      const hasEmbedOnly = !text && !hasMedia && Array.isArray(message.embeds) && message.embeds.length > 0;
-
-      let reply = null;
-      if (message.reference?.messageId) {
-        const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
-        if (replied) {
-          const repliedMember = replied.member || await message.guild.members.fetch(replied.author.id).catch(() => null);
-          let replyRoleIconUrl = null;
-          if (repliedMember?.roles?.cache?.size) {
-            const sortedReplyRoles = [...repliedMember.roles.cache.values()]
-              .filter((r) => r.id !== message.guild.id)
-              .sort((a, b) => b.position - a.position);
-            for (const role of sortedReplyRoles) {
-              const icon = role?.iconURL?.({ size: 32, extension: 'png' }) || null;
-              if (icon) {
-                replyRoleIconUrl = icon;
-                break;
-              }
-            }
-          }
-          const replyNameColor = repliedMember?.displayHexColor && repliedMember.displayHexColor !== '#000000'
-            ? repliedMember.displayHexColor
-            : '#f2f3f5';
-          reply = {
-            author: repliedMember?.displayName || replied.author?.username || 'Unknown',
-            content: replied.content || '',
-            avatarUrl: replied.author?.displayAvatarURL({ extension: 'png', size: 128 }),
-            nameColor: replyNameColor,
-            roleIconUrl: replyRoleIconUrl
-          };
-        }
-      }
-
-      const screenshot = await renderSkullboardCanvas({
-        avatarUrl,
-        username: member?.displayName || author.username,
-        message: text || '[Messaggio vuoto]',
-        nameColor,
-        createdAt: message.createdAt,
-        reply,
-        roleIconUrl,
-        mediaUrl,
-        hasMedia,
-        hasEmbedOnly
-      });
-      const attachment = new AttachmentBuilder(screenshot, { name: 'skullboard.png' });
-
-      const postEmbed = new EmbedBuilder()
-        .setColor('#6f4e37')
-        .setAuthor({ name: author.username, iconURL: author.displayAvatarURL({ size: 64 }) })
-        .setDescription('Aggiungi la reazione 💀 ad un messaggio per pubblicarlo nella SkullBoard')
-        .addFields(
-          { name: 'Autore', value: `${author}`, inline: true },
-          { name: 'Canale', value: `${message.channel}`, inline: true },
-          { name: 'Messaggio', value: `[Cliccami](${message.url})`, inline: true }
-        )
-        .setImage('attachment://skullboard.png')
-        .setFooter({ text: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }) });
-
       const skullboardChannel = message.guild.channels.cache.get(SKULLBOARD_CHANNEL_ID)
         || await message.guild.channels.fetch(SKULLBOARD_CHANNEL_ID).catch(() => null);
       if (!skullboardChannel?.isTextBased?.()) return;
 
-      const postMessage = await skullboardChannel.send({ embeds: [postEmbed], files: [attachment] }).catch(() => null);
+      const webhook = await getOrCreateWebhook(skullboardChannel, message.client.user);
+      if (!webhook) return;
+
+      const author = message.author;
+      const member = message.member || await message.guild.members.fetch(author.id).catch(() => null);
+
+      let content = buildBaseContent(message);
+      const files = extractMessageFiles(message);
+
+      const payload = {
+        username: sanitizeUsername(member, author),
+        avatarURL: author.displayAvatarURL({ extension: 'png', size: 256 }),
+        content: '',
+        files,
+        allowedMentions: { parse: [] }
+      };
+
+      if (message.reference?.messageId) {
+        const mirroredReply = await SkullboardPost.findOne({
+          guildId: message.guild.id,
+          messageId: message.reference.messageId
+        }).lean().catch(() => null);
+
+        if (mirroredReply?.postMessageId) {
+          const mirroredMsg = await skullboardChannel.messages.fetch(mirroredReply.postMessageId).catch(() => null);
+          if (mirroredMsg) {
+            payload.reply = { messageReference: mirroredMsg.id, failIfNotExists: false };
+          }
+        }
+
+        if (!payload.reply) {
+          const replied = await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
+          if (replied) {
+            const repliedMember = replied.member || await message.guild.members.fetch(replied.author.id).catch(() => null);
+            content = prependReplyQuote(content, replied, repliedMember);
+          }
+        }
+      }
+
+      payload.content = clamp(content || '[Messaggio vuoto]', MAX_CONTENT_LENGTH);
+
+      const postMessage = await webhook.send({ ...payload, wait: true }).catch(() => null);
       if (!postMessage) return;
+
       await postMessage.react(SKULL_EMOJI).catch(() => {});
 
       await SkullboardPost.findOneAndUpdate(
@@ -147,7 +173,8 @@ module.exports = {
 
       const confirmEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+        .setDescription(`Il messaggio e stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`);
+
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
@@ -155,6 +182,7 @@ module.exports = {
           .setEmoji(SKULL_EMOJI)
           .setURL(postMessage.url)
       );
+
       await message.channel.send({ embeds: [confirmEmbed], components: [row] }).catch(() => {});
     } catch (err) {
       global.logger.error('[SKULLBOARD] Error:', err);

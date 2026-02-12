@@ -93,7 +93,6 @@ const ids = {
     partnersChat: getByNameAt('channels', '༄🌵︲partners', 0), // partners -> 1442569209849843823
     vocaleSquad3: getByNameAt('channels', '༄🍀︲Squad³', 0), // Squad3 -> 1470170601154150686
     birthday: getByNameAt('channels', '༄🎂︲birthday', 0), // birthday -> 1468233267458084884
-    events: getByNameAt('channels', '༄🎆︲events', 0), // events -> 1442569164488442129
     mudae: getByNameAt('channels', '༄🎎︲mudae', 0), // mudae -> 1442569182825681077
     vocaleDuo1: getByNameAt('channels', '༄🎏︲Duo¹', 0), // Duo1 -> 1442569113108218058
     vocaleSquad1: getByNameAt('channels', '༄🎡︲Squad¹', 0), // Squad1 -> 1442569134532726855
