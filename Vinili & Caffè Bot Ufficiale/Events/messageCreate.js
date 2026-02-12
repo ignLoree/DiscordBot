@@ -1109,7 +1109,7 @@ async function handleSuggestionChannelMessage(message) {
 
     const suggestionEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setDescription(`**<a:VC_CrownYellow:1330194103564238930> Mandato da:**\n${message.author.username}\n**<:pinnednew:1443670849990430750> Suggerimento:**\n${suggestionText}\n**<:infoglowingdot:1443660296823767110> Numero voti:**`)
+        .setDescription(`**<a:VC_CrownYellow:1330194103564238930> Mandato da:**\n${message.author.username}\n\n**<:pinnednew:1443670849990430750> Suggerimento:**\n\n${suggestionText}\n\n**<:infoglowingdot:1443660296823767110> Numero voti:**\n\n`)
         .setFields(
             { name: '<:thumbsup:1471292172145004768>', value: '0', inline: false },
             { name: '<:thumbsdown:1471292163957457013>', value: '0', inline: false }

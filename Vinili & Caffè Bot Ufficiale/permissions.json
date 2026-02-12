@@ -148,6 +148,12 @@
     "banner": [
       "roles.Member"
     ],
+    "invites": [
+      "roles.Member"
+    ],
+    "languages": [
+      "roles.Member"
+    ],
     "block": {
       "roles": [
         "roles.Member"
@@ -168,6 +174,9 @@
       "roles.Member"
     ],
     "ping": [
+      "roles.Member"
+    ],
+    "ship": [
       "roles.Member"
     ],
     "set": {
@@ -438,6 +447,12 @@
     "downv": [
       "roles.Member"
     ],
+    "suggestion_staff_accept": [
+      "roles.HighStaff"
+    ],
+    "suggestion_staff_reject": [
+      "roles.HighStaff"
+    ],
     "pause_accept:*": [
       "roles.HighStaff"
     ],
@@ -612,6 +627,11 @@
     },
     "motivo": {
       "ownerSegment": 1
+    },
+    "suggestion_staff_modal:*": {
+      "roles": [
+        "roles.HighStaff"
+      ]
     },
     "ticket_description": {
       "ownerSegment": 1

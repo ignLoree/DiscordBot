@@ -70,14 +70,42 @@ async function handleSuggestionVote(interaction) {
 
     if (interaction.isButton && interaction.isButton()) {
         if (!interaction.message) return false;
+        const customId = String(interaction.customId || '');
+        const isSuggestionControl = [
+            'upv',
+            'downv',
+            STAFF_ACCEPT_BUTTON_ID,
+            STAFF_REJECT_BUTTON_ID
+        ].includes(customId);
+        if (!isSuggestionControl) return false;
 
         const data = await suggestion.findOne({ GuildID: interaction.guild.id, Msg: interaction.message.id });
-        if (!data) return false;
+        if (!data) {
+            await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor('Red')
+                        .setDescription('<:vegax:1443934876440068179> Suggerimento non trovato nel database.')
+                ],
+                flags: 1 << 6
+            }).catch(() => {});
+            return true;
+        }
 
         const message = await interaction.channel.messages.fetch(data.Msg).catch(() => null);
-        if (!message || !Array.isArray(message.embeds) || message.embeds.length === 0) return false;
+        if (!message || !Array.isArray(message.embeds) || message.embeds.length === 0) {
+            await interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor('Red')
+                        .setDescription('<:vegax:1443934876440068179> Messaggio suggerimento non disponibile.')
+                ],
+                flags: 1 << 6
+            }).catch(() => {});
+            return true;
+        }
 
-        if (interaction.customId === STAFF_ACCEPT_BUTTON_ID || interaction.customId === STAFF_REJECT_BUTTON_ID) {
+        if (customId === STAFF_ACCEPT_BUTTON_ID || customId === STAFF_REJECT_BUTTON_ID) {
             if (!hasSuggestionStaffAccess(interaction)) {
                 await interaction.reply({
                     embeds: [
@@ -102,7 +130,7 @@ async function handleSuggestionVote(interaction) {
                 return true;
             }
 
-            const action = interaction.customId === STAFF_ACCEPT_BUTTON_ID ? 'accept' : 'reject';
+            const action = customId === STAFF_ACCEPT_BUTTON_ID ? 'accept' : 'reject';
             const modal = new ModalBuilder()
                 .setCustomId(`${STAFF_MODAL_PREFIX}:${action}:${message.id}`)
                 .setTitle(action === 'accept' ? 'Accetta suggerimento' : 'Rifiuta suggerimento');
@@ -121,7 +149,7 @@ async function handleSuggestionVote(interaction) {
             return true;
         }
 
-        if (interaction.customId === 'upv') {
+        if (customId === 'upv') {
             if (isSuggestionClosed(message)) {
                 await interaction.reply({
                     embeds: [
@@ -165,7 +193,7 @@ async function handleSuggestionVote(interaction) {
             return true;
         }
 
-        if (interaction.customId === 'downv') {
+        if (customId === 'downv') {
             if (isSuggestionClosed(message)) {
                 await interaction.reply({
                     embeds: [
