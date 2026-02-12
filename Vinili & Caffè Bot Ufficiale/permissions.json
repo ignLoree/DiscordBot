@@ -603,7 +603,7 @@
       "ownerSegment": 1
     },
     "partnershipModal_*": {
-      "ownerSegment": 1,
+      "ownerSegment": 2,
       "ownerSeparator": "_"
     },
     "ticket_open_desc_modal_submit:*": {
