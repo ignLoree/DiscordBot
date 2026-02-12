@@ -124,13 +124,22 @@ async function fetchInviteInfo(inviteCode) {
 
 async function fetchPartnerActionText(guild, action) {
   const channelId = action?.partnershipChannelId || IDs.channels.partnerships;
-  if (!channelId) return '';
+  if (!channelId) {
+    global.logger?.warn?.('[PARTNER AUDIT] No channel ID for action');
+    return '';
+  }
   const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
-  if (!channel?.isTextBased?.()) return '';
+  if (!channel?.isTextBased?.()) {
+    global.logger?.warn?.('[PARTNER AUDIT] Channel not found or not text-based:', channelId);
+    return '';
+  }
   const ids = Array.isArray(action?.partnerMessageIds) ? action.partnerMessageIds : [];
   const chunks = [];
   for (const messageId of ids) {
-    const msg = await channel.messages.fetch(messageId).catch(() => null);
+    const msg = await channel.messages.fetch(messageId).catch((err) => {
+      global.logger?.warn?.(`[PARTNER AUDIT] Failed to fetch message ${messageId}:`, err.message);
+      return null;
+    });
     if (!msg) continue;
     const content = String(msg.content || '').trim();
     if (content) chunks.push(content);
@@ -174,10 +183,14 @@ async function runDailyPartnerAudit(client, opts = {}) {
   if (!guild) return;
 
   const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
+  global.logger?.info?.(`[PARTNER AUDIT] Starting daily audit for date: ${targetDateKey}`);
   const docs = await Staff.find({
     guildId: guild.id,
     partnerActions: { $exists: true, $ne: [] }
   }).catch(() => []);
+
+  let totalChecked = 0;
+  let totalRemoved = 0;
 
   for (const doc of docs) {
     const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
@@ -195,6 +208,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
       .sort((a, b) => a.dateMs - b.dateMs);
 
     if (!dayCreates.length) continue;
+    totalChecked += dayCreates.length;
 
     const previousDayKey = getPreviousRomeDateKey(new Date(`${targetDateKey}T12:00:00.000Z`));
     const rowsFor12hCheck = allCreates
@@ -221,7 +235,15 @@ async function runDailyPartnerAudit(client, opts = {}) {
       const fromInviteField = extractInviteCodes(row.action?.invite || '');
       const actionText = await getActionTextCached(row);
       const fromText = extractInviteCodes(actionText);
-      row.inviteCodes = Array.from(new Set([...fromInviteField, ...fromText]));
+      const combined = Array.from(new Set([...fromInviteField, ...fromText]));
+
+      // FALLBACK: Se non troviamo codici ma c'è un link nel DB, prova a estrarlo
+      if (!combined.length && row.action?.invite) {
+        const singleCode = extractInviteCode(row.action.invite);
+        if (singleCode) combined.push(singleCode);
+      }
+
+      row.inviteCodes = combined;
       return row.inviteCodes;
     };
 
@@ -237,7 +259,14 @@ async function runDailyPartnerAudit(client, opts = {}) {
       const reasons = [];
       const actionText = await getActionTextCached(item);
       const descriptionFingerprint = buildDescriptionFingerprint(actionText);
-      const managerMentions = extractManagerMentions(descriptionFingerprint);
+      let managerMentions = extractManagerMentions(descriptionFingerprint);
+
+      // FALLBACK: Se il messaggio non è stato fetchato ma c'è managerId nel DB, usalo
+      if (!managerMentions.length && item.action?.managerId) {
+        managerMentions = [String(item.action.managerId)];
+        global.logger?.info?.(`[PARTNER AUDIT] Used DB fallback for managerId: ${item.action.managerId}`);
+      }
+
       const inviteCodes = await enrichInviteCodes(item);
 
       if (!managerMentions.length) {
@@ -314,21 +343,26 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
     if (!invalidIndices.size) continue;
 
-    let removed = 0;
+    // Solo log degli errori, NON cancellare le partnership
+    let flagged = 0;
     for (const index of invalidIndices) {
       const action = actions[index];
       if (!action) continue;
-      await deletePartnerActionMessages(guild, action);
-      await logPointRemoval(guild, doc.userId, invalidReasonsByIndex.get(index), action);
-      removed += 1;
+      // await deletePartnerActionMessages(guild, action); // DISABILITATO
+      await logPointRemoval(guild, doc.userId, `[SOLO LOG] ${invalidReasonsByIndex.get(index)}`, action);
+      flagged += 1;
     }
 
-    if (removed > 0) {
-      doc.partnerCount = Math.max(0, Number(doc.partnerCount || 0) - removed);
-      doc.partnerActions = actions.filter((_, idx) => !invalidIndices.has(idx));
-      await doc.save().catch(() => {});
+    if (flagged > 0) {
+      totalRemoved += flagged;
+      global.logger?.warn?.(`[PARTNER AUDIT] User ${doc.userId}: ${flagged} partnerships flagged but NOT removed`);
+      // doc.partnerCount = Math.max(0, Number(doc.partnerCount || 0) - removed); // DISABILITATO
+      // doc.partnerActions = actions.filter((_, idx) => !invalidIndices.has(idx)); // DISABILITATO
+      // await doc.save().catch(() => {}); // DISABILITATO
     }
   }
+
+  global.logger?.info?.(`[PARTNER AUDIT] Completed. Checked: ${totalChecked}, Removed: ${totalRemoved}`);
 }
 
 function startDailyPartnerAuditLoop(client) {
