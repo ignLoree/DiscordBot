@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { getNoDmSet } = require("../../Utils/noDmList");
+const IDs = require("../../Utils/Config/ids");
 
 const getDevIds = (client) => {
   const raw =
@@ -15,14 +16,13 @@ const getDevIds = (client) => {
 };
 
 const getStaffRoleIds = (client) => {
-  const fromArray = client?.config?.staffRoleIds;
-  if (Array.isArray(fromArray)) {
-    return fromArray.map((id) => String(id).trim()).filter(Boolean);
-  }
-  const fromString = client?.config?.staff || "";
-  return String(fromString)
-    .split(",")
-    .map((id) => id.trim())
+  void client;
+  return [
+    IDs.roles.Staff,
+    IDs.roles.PartnerManager,
+    IDs.roles.HighStaff
+  ]
+    .map((id) => String(id || "").trim())
     .filter(Boolean);
 };
 

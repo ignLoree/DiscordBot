@@ -1,5 +1,6 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const { handleMinigameButton } = require('../../Services/Minigames/minigameService');
+const IDs = require('../../Utils/Config/ids');
 
 async function handleButtonInteraction(interaction, client) {
     if (!interaction.isButton()) return false;
@@ -33,7 +34,7 @@ async function handleButtonInteraction(interaction, client) {
         await button.execute(interaction, client);
     } catch (error) {
         global.logger.error(`${color.red}[${getTimestamp()}] [BUTTON_CREATE]:`, error);
-        const channelID = `${client.config.commandErrorChannel}`;
+        const channelID = `${IDs.channels.serverBotLogs}`;
         const channel = client.channels.cache.get(channelID);
         if (!channel) return global.logger.error("Errore: Canale errori non trovato!");
 

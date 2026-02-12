@@ -4,7 +4,7 @@ const { ChatReminderSchedule } = require('../../Schemas/Community/communitySchem
 const { ChatReminderRotation } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 
-const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.joinLeaveLogs;
+const DEFAULT_REMINDER_CHANNEL_ID = IDs.channels.chat || IDs.channels.joinLeaveLogs;
 const DEFAULT_TIME_ZONE = 'Europe/Rome';
 const DEFAULT_START_HOUR = 9;
 const DEFAULT_END_HOUR = 21;
@@ -139,7 +139,8 @@ function getCfg(client) {
 }
 
 function getReminderChannelId(client) {
-  return getCfg(client)?.channelId || DEFAULT_REMINDER_CHANNEL_ID;
+  void client;
+  return DEFAULT_REMINDER_CHANNEL_ID;
 }
 
 function getTimeZone(client) {

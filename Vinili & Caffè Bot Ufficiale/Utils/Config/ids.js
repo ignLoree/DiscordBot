@@ -45,7 +45,8 @@ const fullCatalog = {
 
 const ids = {
   guilds: {
-    main: meta.guildMain || null
+    main: meta.guildMain || null,
+    developers: "295500038401163264"
   },
 
   categories: {
@@ -142,6 +143,7 @@ const ids = {
     riunioneStaff: getByNameAt('channels', '༄🔬︲Riunione Staff', 0), // Riunione Staff -> 1443958044802420798
     commands: getByNameAt('channels', '༄🕹️︲commands', 0), // commands -> 1442569138114662490
     serveBbotLogs: getByNameAt('channels', '༄🖥️︲server᲼bot᲼logs', 0), // server bot logs -> 1442577274783142039
+    serverBotLogs: getByNameAt('channels', '༄🖥️︲server᲼bot᲼logs', 0), // alias corretto
     highCmds: getByNameAt('channels', '༄🤖︲high᲼cmds', 0), // high cmds -> 1442569288161558528
     staffCmds: getByNameAt('channels', '༄🤖︲staff᲼cmds', 0), // staff cmds -> 1442569262689554444
     partnerships: getByNameAt('channels', '༄🤝︲partnerships', 0), // partnerships -> 1442569193470824448

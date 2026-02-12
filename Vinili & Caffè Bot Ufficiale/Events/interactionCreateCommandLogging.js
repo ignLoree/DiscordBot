@@ -1,5 +1,6 @@
 const { Events } = require('discord.js');
 const { logCommandUsage } = require('../Utils/Logging/commandUsageLogger');
+const IDs = require('../Utils/Config/ids');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -7,7 +8,7 @@ module.exports = {
     if (!interaction?.isChatInputCommand?.()) return;
     try {
       await logCommandUsage(client, {
-        channelId: client.config.slashCommandLoggingChannel,
+        channelId: IDs.channels.serverBotLogs,
         serverName: interaction.guild?.name || 'DM',
         user: interaction.user.username,
         userId: interaction.user.id,

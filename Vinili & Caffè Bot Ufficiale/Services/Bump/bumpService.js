@@ -1,6 +1,13 @@
 const { EmbedBuilder } = require('discord.js');
 const DisboardBump = require('../../Schemas/Disboard/disboardBumpSchema');
 const { DiscadiaBump, DiscadiaVoter } = require('../../Schemas/Discadia/discadiaSchemas');
+const IDs = require('../../Utils/Config/ids');
+const { getNoDmSet } = require('../../Utils/noDmList');
+
+const BUMP_REMINDER_CHANNEL_BY_KEY = {
+  disboard: IDs.channels.commands,
+  discadia: IDs.channels.commands
+};
 
 function createBumpReminderService(options) {
   const {
@@ -21,16 +28,20 @@ function createBumpReminderService(options) {
     return minutes * 60 * 1000;
   }
 
+  function getReminderChannelId() {
+    return BUMP_REMINDER_CHANNEL_BY_KEY[configKey] || null;
+  }
+
   async function sendReminder(client, guildId) {
-    const serviceConfig = client?.config?.[configKey];
-    if (!serviceConfig?.reminderChannelId) {
+    const reminderChannelId = getReminderChannelId();
+    if (!reminderChannelId) {
       global.logger.warn(`${errorTag} reminderChannelId missing for guild ${guildId}`);
       return;
     }
-    const channel = client.channels.cache.get(serviceConfig.reminderChannelId)
-      || await client.channels.fetch(serviceConfig.reminderChannelId).catch(() => null);
+    const channel = client.channels.cache.get(reminderChannelId)
+      || await client.channels.fetch(reminderChannelId).catch(() => null);
     if (!channel) {
-      global.logger.warn(`${errorTag} reminder channel not found (${serviceConfig.reminderChannelId}) for guild ${guildId}`);
+      global.logger.warn(`${errorTag} reminder channel not found (${reminderChannelId}) for guild ${guildId}`);
       return;
     }
 
@@ -155,13 +166,25 @@ function getVoteReminderText(client) {
     || 'Hey! Sono passate 24 ore: puoi votare di nuovo su Discadia. Grazie per il supporto!';
 }
 
-async function sendVoteFallbackChannelReminder(client, guildId, userId, message) {
+function buildVoteReminderEmbed(client) {
+  const text = getVoteReminderText(client);
+  return new EmbedBuilder()
+    .setColor(client?.config?.embedInfo || '#6f4e37')
+    .setTitle('Reminder voto Discadia')
+    .setDescription(text)
+    .setFooter({
+      text: "Per non ricevere più DM automatici usa +no-dm (blocca anche avvisi importanti)."
+    });
+}
+
+async function sendVoteFallbackChannelReminder(client, guildId, userId) {
   const fallbackId = client?.config?.discadiaVoteReminder?.fallbackChannelId;
   if (!fallbackId) return;
   const channel = client.channels.cache.get(fallbackId)
     || await client.channels.fetch(fallbackId).catch(() => null);
   if (!channel) return;
-  await channel.send({ content: `<@${userId}> ${message}` }).catch(() => {});
+  const embed = buildVoteReminderEmbed(client);
+  await channel.send({ content: `<@${userId}>`, embeds: [embed] }).catch(() => {});
 }
 
 async function recordDiscadiaVote(guildId, userId) {
@@ -191,21 +214,30 @@ async function sendDueDiscadiaVoteReminders(client) {
     ]
   }).lean();
   if (!due.length) return;
-  const message = getVoteReminderText(client);
+  const noDmByGuild = new Map();
+  const embed = buildVoteReminderEmbed(client);
   for (const doc of due) {
     if (!doc?.userId || !doc?.guildId) continue;
     if (now - new Date(doc.lastVoteAt).getTime() < cooldownMs) continue;
+
+    let noDmSet = noDmByGuild.get(doc.guildId);
+    if (!noDmSet) {
+      noDmSet = await getNoDmSet(doc.guildId).catch(() => new Set());
+      noDmByGuild.set(doc.guildId, noDmSet);
+    }
+    if (noDmSet.has(doc.userId)) continue;
+
     const user = client.users.cache.get(doc.userId)
       || await client.users.fetch(doc.userId).catch(() => null);
     if (!user) continue;
     try {
-      await user.send(message);
+      await user.send({ embeds: [embed] });
       await DiscadiaVoter.updateOne(
         { guildId: doc.guildId, userId: doc.userId },
         { $set: { lastRemindedAt: new Date() } }
       );
     } catch {
-      await sendVoteFallbackChannelReminder(client, doc.guildId, doc.userId, message);
+      await sendVoteFallbackChannelReminder(client, doc.guildId, doc.userId);
     }
   }
 }

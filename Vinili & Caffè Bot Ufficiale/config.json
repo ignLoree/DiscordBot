@@ -3,31 +3,7 @@
   "status": "idle",
   "logLevel": "debug",
   "eventListeners": 50,
-  "dev": "lXo",
-  "devBy": "| Developed by lXo",
-  "developers": "295500038401163264",
-  "clientid": "1329118940110127204",
-  "guildid": "1462458562507964584",
-  "adminRoleIds": "1442568894349840435",
-  "staff": "1442568910070349985",
-  "staffRoleIds": [
-    "1442568910070349985",
-    "1442568905582317740",
-    "1442568894349840435"
-  ],
-  "partnerManager": "1442568905582317740",
-  "boostChannelId": "1442569123426074736",
-  "slashCommandLoggingChannel": "1442577274783142039",
-  "prefixCommandLoggingChannel": "1442577274783142039",
-  "commandErrorChannel": "1442577274783142039",
-  "noPermsMessage": "**Non hai** i permessi per fare questo comando!",
-  "ownerOnlyCommand": "Questo comando e disponibile **solo** all'owner del bot!",
-  "filterMessage": "Il tuo messaggio contiene una parola **blacklistata**!",
-  "botServerInvite": "https://discord.gg/viniliecaffe",
-
   "disboard": {
-    "botId": "302050872383242240",
-    "reminderChannelId": "1442569138114662490",
     "cooldownMinutes": 120,
     "bumpSuccessPatterns": [
       "Bump done",
@@ -35,8 +11,6 @@
     ]
   },
   "discadia": {
-    "botId": "1222548162741538938",
-    "reminderChannelId": "1442569138114662490",
     "cooldownMinutes": 1440,
     "bumpSuccessPatterns": [
       "has been successfully bumped",
@@ -50,23 +24,8 @@
     "checkIntervalMinutes": 30,
     "message": "Ciao! Sono passate 24 ore, puoi votare di nuovo su Discadia: https://discadia.com/server/viniliecaffe/ Grazie per il supporto!"
   },
-  "morningReminder": {
-    "enabled": true,
-    "channelId": "1442569130573303898",
-    "roleId": "1442569009567629375",
-    "hour": 8,
-    "minute": 0,
-    "apiUrl": "https://opentdb.com/api.php",
-    "tokenUrl": "https://opentdb.com/api_token.php?command=request",
-    "tokenUrlBase": "https://opentdb.com/api_token.php",
-    "translateApiUrl": "https://api.mymemory.translated.net/get",
-    "maxAttempts": 5
-  },
   "tts": {
     "enabled": true,
-    "extraTextChannelIds": [
-      "1442569187376763010"
-    ],
     "lang": "it",
     "maxChars": 1000,
     "autojoin": true,
@@ -75,8 +34,6 @@
   },
   "minigames": {
     "enabled": true,
-    "channelId": "1442569130573303898",
-    "roleId": "1443955529352478830",
     "intervalMs": 1800000,
     "activityWindowMs": 1800000,
     "minMessages": 3,
@@ -127,12 +84,10 @@
     },
     "findBot": {
       "durationMs": 300000,
-      "rewardExp": 200,
-      "requiredRoleId": "1442568949605597264"
+      "rewardExp": 200
     }
   },
   "chatReminder": {
-    "channelId": "1442569130573303898",
     "timeZone": "Europe/Rome",
     "startHour": 9,
     "endHour": 21,

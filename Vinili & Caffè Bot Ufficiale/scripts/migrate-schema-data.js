@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const IDs = require('../Utils/Config/ids');
 
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env'), quiet: true });
 
@@ -10,7 +11,7 @@ const config = fs.existsSync(configPath)
   : {};
 
 const mongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI || config.mongoURL;
-const fallbackGuildId = String(config.guildid || '').trim() || 'unknown_guild';
+const fallbackGuildId = String(IDs.guilds?.main || '').trim() || 'unknown_guild';
 
 function log(msg, extra = '') {
   process.stdout.write(`${msg}${extra ? ` ${extra}` : ''}\n`);

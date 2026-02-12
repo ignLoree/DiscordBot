@@ -1,3 +1,7 @@
+const fs = require('fs');
+const crypto = require('crypto');
+const axios = require('axios');
+
 const CDN_ATTACHMENT_PATTERN = /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
 
 function normalizeDiscordAttachmentUrl(value) {
@@ -67,7 +71,49 @@ function buildEmbedSignatureFromMessage(msgEmbeds = []) {
   return normalizeText(`${first.title || ''}|${first.description || ''}`).slice(0, 400);
 }
 
-function shouldEditMessage(message, { embeds = [], components = [], attachmentName = null }) {
+function hashBuffer(bufferLike) {
+  const buffer = Buffer.isBuffer(bufferLike) ? bufferLike : Buffer.from(bufferLike);
+  return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+function resolvePayloadFileName(file) {
+  const json = typeof file?.toJSON === 'function' ? file.toJSON() : file;
+  const explicitName = file?.name || file?.data?.name || json?.name || null;
+  if (explicitName) return String(explicitName);
+
+  const src = file?.attachment ?? file;
+  if (typeof src === 'string') {
+    const normalized = src.replace(/\\/g, '/');
+    return normalized.split('/').pop() || null;
+  }
+  return null;
+}
+
+function readPayloadFileBuffer(file) {
+  const src = file?.attachment ?? file;
+  if (Buffer.isBuffer(src)) return src;
+  if (src instanceof Uint8Array) return Buffer.from(src);
+  if (typeof src === 'string' && fs.existsSync(src)) {
+    try {
+      return fs.readFileSync(src);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+async function fetchAttachmentHash(url) {
+  if (!url) return null;
+  try {
+    const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 20000 });
+    return hashBuffer(Buffer.from(res.data));
+  } catch {
+    return null;
+  }
+}
+
+async function shouldEditMessage(message, { embeds = [], components = [], files = [], attachmentName = null }) {
   const currentEmbeds = toComparableJson(message?.embeds || []);
   const nextEmbeds = toComparableJson(embeds);
   if (currentEmbeds !== nextEmbeds) return true;
@@ -75,6 +121,31 @@ function shouldEditMessage(message, { embeds = [], components = [], attachmentNa
   const currentComponents = toComparableJson(message?.components || []);
   const nextComponents = toComparableJson(components);
   if (currentComponents !== nextComponents) return true;
+
+  const payloadFiles = Array.isArray(files) ? files.filter(Boolean) : [];
+  if (payloadFiles.length > 0) {
+    const currentAttachments = [...(message?.attachments?.values?.() || [])];
+    if (currentAttachments.length !== payloadFiles.length) return true;
+
+    for (const payloadFile of payloadFiles) {
+      const expectedName = resolvePayloadFileName(payloadFile);
+      if (!expectedName) return true;
+      const currentAttachment = currentAttachments.find((a) => String(a?.name || '') === expectedName);
+      if (!currentAttachment) return true;
+
+      const payloadBuffer = readPayloadFileBuffer(payloadFile);
+      if (!payloadBuffer) continue;
+
+      if (Number.isFinite(currentAttachment?.size) && currentAttachment.size !== payloadBuffer.length) {
+        return true;
+      }
+
+      const payloadHash = hashBuffer(payloadBuffer);
+      const currentHash = await fetchAttachmentHash(currentAttachment?.url);
+      if (!currentHash || currentHash !== payloadHash) return true;
+    }
+    return false;
+  }
 
   if (attachmentName) {
     if ((message?.attachments?.size || 0) !== 1) return true;
@@ -119,7 +190,7 @@ async function upsertPanelMessage(channel, client, payload) {
     await channel.send(payload).catch(() => {});
     return;
   }
-  if (shouldEditMessage(existing, payload)) {
+  if (await shouldEditMessage(existing, payload)) {
     await existing.edit(payload).catch(() => {});
   }
 }

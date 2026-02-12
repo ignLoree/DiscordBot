@@ -191,7 +191,7 @@ async function handleSlashCommand(interaction, client) {
             `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
             error
         );
-        const errorChannelId = client.config?.commandErrorChannel;
+        const errorChannelId = IDs.channels.serverBotLogs;
         const errorChannel = errorChannelId
             ? client.channels.cache.get(errorChannelId)
             : null;

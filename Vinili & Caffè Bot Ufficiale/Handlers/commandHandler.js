@@ -2,7 +2,7 @@
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const ascii = require('ascii-table');
-const config = require('../config.json');
+const IDs = require('../Utils/Config/ids');
 
 module.exports = (client) => {
     client.handleCommands = async (commandFolders, basePath) => {
@@ -55,8 +55,8 @@ module.exports = (client) => {
         global.logger.info(table.toString());
         global.logger.info(`[COMMANDS] Loaded ${client.commands.size} SlashCommands.`);
 
-        const token = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL || config.token;
-        const clientId = process.env.DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID_OFFICIAL || config.clientid;
+        const token = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL || client?.config?.token;
+        const clientId = process.env.DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID_OFFICIAL || IDs.bots.ViniliCaffeBot;
         const rest = new REST({ version: '9' }).setToken(token);
 
         try {

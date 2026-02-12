@@ -8,6 +8,7 @@ const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
 const { handleCustomRoleInteraction } = require('./interaction/customRoleHandlers');
 const { handlePauseButton } = require('./interaction/pauseHandlers');
+const IDs = require('../Utils/Config/ids');
 const {
     checkButtonPermission,
     checkStringSelectPermission,
@@ -90,7 +91,7 @@ module.exports = {
         } catch (err) {
             global.logger.error(err);
             try {
-                const errorChannelId = client?.config?.commandErrorChannel;
+                const errorChannelId = IDs.channels.serverBotLogs;
                 const errorChannel = errorChannelId
                     ? client.channels.cache.get(errorChannelId)
                     : null;

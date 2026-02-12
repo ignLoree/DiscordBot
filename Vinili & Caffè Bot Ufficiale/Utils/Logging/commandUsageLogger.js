@@ -26,7 +26,6 @@ async function logCommandUsage(client, {
       { name: 'Utente', value: `${user} | ${userId}` }
     )
     .setTimestamp()
-    .setFooter({ text: `Log Comandi ${client.config.devBy}`, iconURL: userAvatarUrl });
   await channel.send({ embeds: [embed] });
 }
 

@@ -7,7 +7,6 @@ const IDs = require('../../Utils/Config/ids');
 const activeGames = new Map();
 const pendingGames = new Map();
 const loopState = new WeakSet();
-const forcedRunState = new Map();
 let rotationDate = null;
 let rotationQueue = [];
 const recentMessages = new Map();
@@ -42,7 +41,17 @@ let cachedSongsAt = 0;
 const SONG_CACHE_TTL_MS = 15 * 60 * 1000;
 
 function getConfig(client) {
-  return client?.config?.minigames || null;
+  const cfg = client?.config?.minigames || null;
+  if (!cfg) return null;
+  return {
+    ...cfg,
+    channelId: IDs.channels.chat,
+    roleId: IDs.roles.Minigames,
+    findBot: {
+      ...(cfg.findBot || {}),
+      requiredRoleId: IDs.roles.Member
+    }
+  };
 }
 
 function getChannelSafe(client, channelId) {
@@ -325,6 +334,25 @@ function buildSongAnswerAliases(rawTitle) {
   }
 
   return Array.from(aliases.values());
+}
+
+function isSongGuessCorrect(rawGuess, rawAnswers) {
+  const guess = normalizeSongGuess(rawGuess);
+  if (!guess) return false;
+
+  const answers = Array.isArray(rawAnswers)
+    ? rawAnswers.map((a) => normalizeSongGuess(a)).filter(Boolean)
+    : [normalizeSongGuess(rawAnswers)].filter(Boolean);
+  if (!answers.length) return false;
+
+  const uniqueAnswers = Array.from(new Set(answers));
+  const paddedGuess = ` ${guess} `;
+
+  for (const answer of uniqueAnswers) {
+    if (guess === answer) return true;
+    if (paddedGuess.includes(` ${answer} `)) return true;
+  }
+  return false;
 }
 
 const NATURAL_GUESS_STOP_TOKENS = new Set([
@@ -836,20 +864,6 @@ function getRomeParts(date) {
 function getRomeDateKey(date) {
   const parts = getRomeParts(date);
   return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
-}
-
-function getDateKey(now) {
-  const { year, month, day } = getRomeParts(now);
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-function shouldForceRun(now, hour, minute) {
-  const rome = getRomeParts(now);
-  if (rome.hour !== hour || rome.minute !== minute) return false;
-  const key = `${getDateKey(now)}_${hour}:${minute}`;
-  if (forcedRunState.get(key)) return false;
-  forcedRunState.set(key, true);
-  return true;
 }
 
 function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
@@ -1640,18 +1654,6 @@ function startMinigameLoop(client) {
   if (loopState.has(client)) return;
   loopState.add(client);
 
-  const runForcedCheck = async () => {
-    const cfg = getConfig(client);
-    if (!cfg?.enabled) return;
-    const now = new Date();
-    const shouldForce = shouldForceRun(now, 9, 0) || shouldForceRun(now, 23, 45);
-    if (!shouldForce) return;
-    const type = await getNextGameType(client, cfg);
-    if (!type) return;
-    pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
-    await maybeStartRandomGame(client, true);
-  };
-
   const tick = async () => {
     const cfg = getConfig(client);
     if (!cfg?.enabled) return;
@@ -1666,9 +1668,7 @@ function startMinigameLoop(client) {
   const cfg = getConfig(client);
   const intervalMs = Math.max(60 * 1000, Number(cfg?.intervalMs || 15 * 60 * 1000));
   tick();
-  runForcedCheck();
   setInterval(tick, intervalMs);
-  setInterval(runForcedCheck, 60 * 1000);
 }
 
 async function forceStartMinigame(client) {
@@ -1788,7 +1788,7 @@ async function handleMinigameMessage(message, client) {
 
   if (game.type === 'guessSong') {
     const songAnswers = buildSongAnswerAliases(game.title);
-    if (isNaturalGuessCorrect(content, songAnswers.length ? songAnswers : game.title, normalizeSongGuess)) {
+    if (isSongGuessCorrect(content, songAnswers.length ? songAnswers : game.title)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);

@@ -2,6 +2,7 @@
 const { Readable } = require('stream');
 const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
+const IDs = require('../../Utils/Config/ids');
 const ttsStates = new Map();
 const guildLocks = new Map();
 const lastSavedChannels = new Map();
@@ -21,9 +22,7 @@ function shouldHandleMessage(message, config, prefix) {
   if (prefix && message.content?.startsWith(prefix)) return false;
   if (message.content?.startsWith('-')) return false;
   const isVoiceChat = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
-  const extraTextIds = Array.isArray(config.tts.extraTextChannelIds)
-    ? config.tts.extraTextChannelIds
-    : [];
+  const extraTextIds = [IDs.channels.noMic].filter(Boolean);
   const isExtraText = extraTextIds.includes(message.channel.id);
   return isVoiceChat || isExtraText;
 }

@@ -181,19 +181,6 @@ const chatReminderRotationSchema = new Schema(
 );
 chatReminderRotationSchema.index({ guildId: 1 }, { unique: true });
 
-const morningReminderStateSchema = new Schema(
-  {
-    guildId: { type: String, required: true },
-    lastSentAt: { type: Date, default: null },
-    lastSentDate: { type: String, default: null },
-    usedQuestionIndexes: { type: [Number], default: [] },
-    usedQuestions: { type: [String], default: [] },
-    sessionToken: { type: String, default: null }
-  },
-  { timestamps: true }
-);
-morningReminderStateSchema.index({ guildId: 1 }, { unique: true });
-
 const avatarPrivacySchema = new Schema(
   {
     guildId: { type: String, required: true },
@@ -240,7 +227,6 @@ const InviteTrack = models.InviteTrack || model('InviteTrack', inviteTrackSchema
 const CustomRole = models.CustomRole || model('CustomRole', customRoleSchema);
 const ChatReminderSchedule = models.ChatReminderSchedule || model('ChatReminderSchedule', chatReminderScheduleSchema);
 const ChatReminderRotation = models.ChatReminderRotation || model('ChatReminderRotation', chatReminderRotationSchema);
-const MorningReminderState = models.MorningReminderState || model('MorningReminderState', morningReminderStateSchema);
 const AvatarPrivacy = models.AvatarPrivacy || model('AvatarPrivacy', avatarPrivacySchema);
 const BannerPrivacy = models.BannerPrivacy || model('BannerPrivacy', bannerPrivacySchema);
 const QuotePrivacy = models.QuotePrivacy || model('QuotePrivacy', quotePrivacySchema);
@@ -260,7 +246,6 @@ module.exports = {
   CustomRole,
   ChatReminderSchedule,
   ChatReminderRotation,
-  MorningReminderState,
   AvatarPrivacy,
   BannerPrivacy,
   QuotePrivacy

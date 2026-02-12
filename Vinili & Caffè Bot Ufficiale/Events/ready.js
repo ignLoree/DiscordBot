@@ -4,7 +4,6 @@ const { restorePendingReminders } = require('../Services/Bump/bumpService');
 const { restorePendingDiscadiaReminders } = require('../Services/Bump/bumpService');
 const { startDiscadiaVoteReminderLoop } = require('../Services/Bump/bumpService');
 const { bootstrapSupporter } = require('./presenceUpdate');
-const { maybeRunMorningReminder } = require('../Services/Community/morningReminderService');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
 const { startMinigameLoop, restoreActiveGames } = require('../Services/Minigames/minigameService');
@@ -34,7 +33,7 @@ module.exports = {
     name: 'clientReady',
     once: true,
     async execute(client) {
-        client.setMaxListeners(client.config.eventListeners || 20);
+        client.setMaxListeners(client.config.eventListeners || 50);
         const mongodbURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
         let dbConnected = false;
         if (!mongodbURL) {
@@ -123,7 +122,6 @@ module.exports = {
                 if (engagementTickRunning) return;
                 engagementTickRunning = true;
                 try {
-                    await maybeRunMorningReminder(client);
                     await runDueOneTimeReminders(client);
                 } catch (err) {
                     global.logger.error(err);
@@ -254,5 +252,4 @@ module.exports = {
         client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
     },
 };
-
 

@@ -657,7 +657,7 @@ module.exports = {
                     }).catch(() => { });
                 }
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
-                const channelID = client.config.commandErrorChannel;
+                const channelID = IDs.channels.serverBotLogs;
                 const errorChannel = client.channels.cache.get(channelID);
                 const errorEmbed = new EmbedBuilder()
                     .setColor("#6f4e37")
@@ -782,12 +782,12 @@ async function handleAfk(message) {
 }
 
 function getVoteManagerBotIds(client) {
+    void client;
     return new Set(
         [
             IDs.bots.VoteManager,
-            client?.config?.voteManager?.botId,
-            client?.config?.discadia?.botId,
-            client?.config?.disboard?.botId
+            IDs.bots.Discadia,
+            IDs.bots.DISBOARD
         ]
             .filter(Boolean)
             .map((id) => String(id))
@@ -983,7 +983,7 @@ async function handleDisboardBump(message, client) {
     const disboard = client?.config?.disboard;
     if (!disboard) return false;
     if (!message.guild) return false;
-    if (!message.author || message.author.id !== disboard.botId) return false;
+    if (!message.author || message.author.id !== IDs.bots.DISBOARD) return false;
     const patterns = Array.isArray(disboard.bumpSuccessPatterns)
         ? disboard.bumpSuccessPatterns
         : [];
@@ -1014,8 +1014,8 @@ async function handleDiscadiaBump(message, client) {
     if (!discadia) return false;
     if (!message.guild) return false;
 
-    const isDiscadiaAuthor = message.author?.id === discadia.botId;
-    const isDiscadiaApp = message.applicationId === discadia.botId;
+    const isDiscadiaAuthor = message.author?.id === IDs.bots.Discadia;
+    const isDiscadiaApp = message.applicationId === IDs.bots.Discadia;
     const isSlashBumpContext =
         String(message?.interaction?.commandName || '').toLowerCase() === 'bump'
         || String(message?.interactionMetadata?.name || '').toLowerCase() === 'bump';

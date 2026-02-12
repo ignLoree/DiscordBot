@@ -36,6 +36,24 @@ function extractInviteCode(text) {
   return null;
 }
 
+function extractInviteCodes(text) {
+  if (!text) return [];
+  const source = String(text || '');
+  const patterns = [
+    /discord\.gg\/([a-zA-Z0-9-]+)/gi,
+    /discord\.com\/invite\/([a-zA-Z0-9-]+)/gi,
+    /discordapp\.com\/invite\/([a-zA-Z0-9-]+)/gi
+  ];
+  const out = new Set();
+  for (const pattern of patterns) {
+    let match = null;
+    while ((match = pattern.exec(source)) !== null) {
+      if (match?.[1]) out.add(String(match[1]).toLowerCase());
+    }
+  }
+  return Array.from(out);
+}
+
 function buildDescriptionFingerprint(rawText) {
   const text = String(rawText || '')
     .replace(/\r\n/g, '\n')
@@ -46,6 +64,22 @@ function buildDescriptionFingerprint(rawText) {
   return text;
 }
 
+function extractManagerMentions(sourceText) {
+  const text = String(sourceText || '');
+  const managerLineMatches = Array.from(text.matchAll(/Manager:\s*<@!?(\d+)>/gi));
+  const ids = managerLineMatches
+    .map((m) => m?.[1])
+    .filter(Boolean)
+    .map((id) => String(id));
+  if (ids.length) return Array.from(new Set(ids));
+
+  const genericMentions = Array.from(text.matchAll(/<@!?(\d+)>/g))
+    .map((m) => m?.[1])
+    .filter(Boolean)
+    .map((id) => String(id));
+  return Array.from(new Set(genericMentions));
+}
+
 function containsExternalLinks(text) {
   const source = String(text || '');
   const urls = source.match(/(?:https?:\/\/|www\.)\S+/gi) || [];
@@ -53,6 +87,22 @@ function containsExternalLinks(text) {
   const all = [...urls, ...rawDiscord];
   if (!all.length) return false;
   return all.some((u) => !/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(u));
+}
+
+function findLatestPreviousInviteOccurrence(allCreates, inviteCode, dateMs, currentIndex) {
+  const safeCode = String(inviteCode || '').toLowerCase();
+  if (!safeCode || !Number.isFinite(dateMs)) return null;
+  let best = null;
+  for (const row of allCreates) {
+    if (!Array.isArray(row.inviteCodes) || !row.inviteCodes.includes(safeCode)) continue;
+    if (!Number.isFinite(row.dateMs) || row.dateMs <= 0) continue;
+    if (row.index === currentIndex) continue;
+    if (row.dateMs >= dateMs) continue;
+    if (!best || row.dateMs > best.dateMs) {
+      best = { dateMs: row.dateMs, index: row.index };
+    }
+  }
+  return best;
 }
 
 async function fetchInviteInfo(inviteCode) {
@@ -136,96 +186,124 @@ async function runDailyPartnerAudit(client, opts = {}) {
       .filter(({ action }) => String(action?.action || 'create') === 'create')
       .map(({ action, index }) => {
         const dateMs = new Date(action?.date || 0).getTime();
-        const inviteCode = String(extractInviteCode(action?.invite || '') || '').toLowerCase();
-        return { action, index, dateMs, inviteCode };
+        return { action, index, dateMs, inviteCodes: [] };
       })
       .sort((a, b) => a.dateMs - b.dateMs);
 
-    const previousByInviteForIndex = new Map();
-    const latestByInvite = new Map();
-    for (const row of allCreates) {
-      if (!row.inviteCode || !Number.isFinite(row.dateMs) || row.dateMs <= 0) continue;
-      const previous = latestByInvite.get(row.inviteCode);
-      if (previous) {
-        previousByInviteForIndex.set(row.index, previous);
-      }
-      latestByInvite.set(row.inviteCode, { dateMs: row.dateMs, index: row.index });
-    }
-
     const dayCreates = allCreates
-      .filter(({ action }) => getRomeDateKey(new Date(action?.date || Date.now())) === targetDateKey);
+      .filter(({ action }) => getRomeDateKey(new Date(action?.date || Date.now())) === targetDateKey)
+      .sort((a, b) => a.dateMs - b.dateMs);
 
     if (!dayCreates.length) continue;
 
-    const seenDescriptionFingerprints = new Set();
+    const previousDayKey = getPreviousRomeDateKey(new Date(`${targetDateKey}T12:00:00.000Z`));
+    const rowsFor12hCheck = allCreates
+      .filter((row) => {
+        const rowKey = getRomeDateKey(new Date(row?.action?.date || Date.now()));
+        return rowKey === targetDateKey || rowKey === previousDayKey;
+      })
+      .sort((a, b) => a.dateMs - b.dateMs);
+
+    const actionTextCache = new Map();
+    const inviteInfoCache = new Map();
+    const getActionTextCached = async (row) => {
+      if (!row?.action) return '';
+      if (actionTextCache.has(row.index)) return actionTextCache.get(row.index);
+      const text = await fetchPartnerActionText(guild, row.action);
+      actionTextCache.set(row.index, text || '');
+      return actionTextCache.get(row.index);
+    };
+    const enrichInviteCodes = async (row) => {
+      if (!row?.action) {
+        row.inviteCodes = [];
+        return row.inviteCodes;
+      }
+      const fromInviteField = extractInviteCodes(row.action?.invite || '');
+      const actionText = await getActionTextCached(row);
+      const fromText = extractInviteCodes(actionText);
+      row.inviteCodes = Array.from(new Set([...fromInviteField, ...fromText]));
+      return row.inviteCodes;
+    };
+
+    await Promise.all(rowsFor12hCheck.map((row) => enrichInviteCodes(row)));
+
+    const seenInviteCodesSameDay = new Set();
     const managerDailyCounter = new Map();
     const invalidIndices = new Set();
     const invalidReasonsByIndex = new Map();
 
     for (const item of dayCreates) {
-      const { action, index } = item;
+      const { index } = item;
       const reasons = [];
+      const actionText = await getActionTextCached(item);
+      const descriptionFingerprint = buildDescriptionFingerprint(actionText);
+      const managerMentions = extractManagerMentions(descriptionFingerprint);
+      const inviteCodes = await enrichInviteCodes(item);
 
-      const managerId = String(action?.managerId || '').trim();
-      if (managerId) {
+      if (!managerMentions.length) {
+        reasons.push('Manager mancante');
+      }
+      for (const managerId of managerMentions) {
         const used = Number(managerDailyCounter.get(managerId) || 0) + 1;
         managerDailyCounter.set(managerId, used);
         if (used > 5) {
-          reasons.push('Più di 5 partner con lo stesso manager nello stesso giorno');
-        }
-      } else {
-        reasons.push('Manager mancante');
-      }
-
-      const actionText = await fetchPartnerActionText(guild, action);
-      const descriptionFingerprint = buildDescriptionFingerprint(actionText);
-      if (descriptionFingerprint) {
-        if (seenDescriptionFingerprints.has(descriptionFingerprint)) {
-          reasons.push('Stessa partnership fatta più di una volta nello stesso giorno');
-        } else {
-          seenDescriptionFingerprints.add(descriptionFingerprint);
+          reasons.push('Piu di 5 partner con lo stesso manager nello stesso giorno');
         }
       }
-      if (!managerId || !new RegExp(`<@!?${managerId}>`).test(actionText)) {
+      if (!managerMentions.length) {
         reasons.push('Partner senza menzione del manager');
       }
 
-      if (containsExternalLinks(actionText)) {
+      if (containsExternalLinks(descriptionFingerprint)) {
         reasons.push('Contiene link esterni/immagini/gif non consentiti');
       }
 
-      const inviteCode = extractInviteCode(action?.invite || actionText);
-      if (!inviteCode) {
+      if (!inviteCodes.length) {
         reasons.push('Link invito Discord assente');
       } else {
-        const normalizedInvite = String(inviteCode || '').toLowerCase();
-        const previous = previousByInviteForIndex.get(index);
-        if (previous?.dateMs) {
-          const delta = Number(new Date(action?.date || Date.now()).getTime() - previous.dateMs);
-          if (Number.isFinite(delta) && delta >= 0 && delta < DUPLICATE_PARTNERSHIP_WINDOW_MS) {
-            reasons.push('Stessa partnership ripetuta prima di 12 ore');
+        for (const inviteCode of inviteCodes) {
+          if (seenInviteCodesSameDay.has(inviteCode)) {
+            reasons.push('Stessa partnership fatta piu di una volta nello stesso giorno');
+            break;
           }
-        } else if (normalizedInvite) {
-          const prior = allCreates
-            .filter((row) => row.index !== index && row.inviteCode === normalizedInvite && row.dateMs < new Date(action?.date || Date.now()).getTime())
-            .sort((a, b) => b.dateMs - a.dateMs)[0];
-          if (prior?.dateMs) {
-            const delta = Number(new Date(action?.date || Date.now()).getTime() - prior.dateMs);
+        }
+        for (const inviteCode of inviteCodes) {
+          seenInviteCodesSameDay.add(inviteCode);
+        }
+
+        for (const inviteCode of inviteCodes) {
+          const previous = findLatestPreviousInviteOccurrence(
+            rowsFor12hCheck,
+            inviteCode,
+            item.dateMs,
+            index
+          );
+          if (previous?.dateMs) {
+            const delta = Number(item.dateMs - previous.dateMs);
             if (Number.isFinite(delta) && delta >= 0 && delta < DUPLICATE_PARTNERSHIP_WINDOW_MS) {
               reasons.push('Stessa partnership ripetuta prima di 12 ore');
+              break;
             }
           }
         }
 
-        const inviteData = await fetchInviteInfo(inviteCode);
-        if (inviteData?.expired) {
-          reasons.push('Link invito Discord scaduto/non valido');
-        } else if (inviteData?.ok && inviteData?.data) {
-          const nsfwLevel = Number(inviteData.data?.guild?.nsfw_level || 0);
-          if (nsfwLevel > 0) {
-            reasons.push('Server NSFW non consentito');
+        let inviteExpired = false;
+        let inviteNsfw = false;
+        for (const inviteCode of inviteCodes) {
+          let inviteData = inviteInfoCache.get(inviteCode);
+          if (!inviteData) {
+            inviteData = await fetchInviteInfo(inviteCode);
+            inviteInfoCache.set(inviteCode, inviteData);
+          }
+          if (inviteData?.expired) {
+            inviteExpired = true;
+          } else if (inviteData?.ok && inviteData?.data) {
+            const nsfwLevel = Number(inviteData.data?.guild?.nsfw_level || 0);
+            if (nsfwLevel > 0) inviteNsfw = true;
           }
         }
+        if (inviteExpired) reasons.push('Link invito Discord scaduto/non valido');
+        if (inviteNsfw) reasons.push('Server NSFW non consentito');
       }
 
       if (reasons.length) {

@@ -66,12 +66,6 @@ function extractSmartTitleAndDescription(raw) {
     return { title: title || null, description };
   }
 
-  if (lines.length >= 2 && first.length > 0 && first.length <= 90) {
-    const title = first.slice(0, MAX_TITLE);
-    const description = lines.slice(1).join('\n').trim().slice(0, MAX_DESC);
-    return { title: title || null, description };
-  }
-
   return {
     title: null,
     description: normalized.slice(0, MAX_DESC)
@@ -89,8 +83,43 @@ function buildAllowedMentions({ pingEveryone, pingHere, userIds, roleIds }) {
   };
 }
 
+function buildNoPingOutsideContent(parsed, message) {
+  const guild = message?.guild || null;
+  const parts = [];
+
+  for (const token of parsed.mentionTokens) {
+    if (token === '@everyone' || token === '@here') {
+      parts.push(token);
+      continue;
+    }
+
+    const userMatch = token.match(/^<@(\d{16,20})>$/);
+    if (userMatch?.[1]) {
+      const userId = String(userMatch[1]);
+      const member = guild?.members?.cache?.get(userId) || null;
+      const username = member?.user?.username || message?.client?.users?.cache?.get(userId)?.username || `utente-${userId}`;
+      parts.push(`@${username}`);
+      continue;
+    }
+
+    const roleMatch = token.match(/^<@&(\d{16,20})>$/);
+    if (roleMatch?.[1]) {
+      const roleId = String(roleMatch[1]);
+      const role = guild?.roles?.cache?.get(roleId) || null;
+      const roleName = role?.name || `ruolo-${roleId}`;
+      parts.push(`@${roleName}`);
+      continue;
+    }
+
+    parts.push(token);
+  }
+
+  return parts.join(' ').trim();
+}
+
 async function getSourceText(message, args) {
-  const direct = String(args.join(' ') || '').trim();
+  const filteredArgs = args.filter((arg) => !['--ping', '-p', '--noping', '-np'].includes(String(arg || '').toLowerCase()));
+  const direct = String(filteredArgs.join(' ') || '').trim();
   if (direct) return direct;
 
   const reference = message.reference?.messageId;
@@ -105,6 +134,7 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
+    const shouldPing = !(args.includes('--noping') || args.includes('-np'));
 
     const sourceText = await getSourceText(message, args);
     if (!sourceText) {
@@ -113,7 +143,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor('Red')
             .setDescription(
-              '<:vegax:1443934876440068179> Uso: `+smartembed <testo>` oppure rispondi ad un messaggio di testo con `+smartembed`.'
+              '<:vegax:1443934876440068179> Uso: `+smartembed <testo>` oppure rispondi ad un messaggio con `+smartembed`. I ping sono reali di default; usa `--noping` per disattivarli. Per titolo embed usa `titolo: ...` oppure `title: ...`.'
             )
         ],
         allowedMentions: { repliedUser: false }
@@ -139,11 +169,15 @@ module.exports = {
       .setDescription(smart.description);
     if (smart.title) embed.setTitle(smart.title);
 
-    const pingContent = parsed.mentionTokens.join(' ').trim();
+    const pingContent = shouldPing
+      ? parsed.mentionTokens.join(' ').trim()
+      : buildNoPingOutsideContent(parsed, message);
     await message.channel.send({
       content: pingContent || undefined,
       embeds: [embed],
-      allowedMentions: buildAllowedMentions(parsed)
+      allowedMentions: shouldPing
+        ? buildAllowedMentions(parsed)
+        : { parse: [], users: [], roles: [], repliedUser: false }
     });
   }
 };

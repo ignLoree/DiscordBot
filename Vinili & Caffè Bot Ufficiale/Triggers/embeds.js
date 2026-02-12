@@ -189,7 +189,7 @@ const channel = client.channels.cache.get(INFO_CHANNEL_ID)
     }
 
     if (infoMessage1) {
-      if (shouldEditMessage(infoMessage1, { embeds: [embed1], components: [row1], attachmentName: INFO_MEDIA_NAME })) {
+      if (await shouldEditMessage(infoMessage1, { embeds: [embed1], components: [row1], files: [attachment], attachmentName: INFO_MEDIA_NAME })) {
         await infoMessage1.edit({
           files: [attachment],
           embeds: [embed1],
@@ -205,7 +205,7 @@ const channel = client.channels.cache.get(INFO_CHANNEL_ID)
     }
 
     if (infoMessage2) {
-      if (shouldEditMessage(infoMessage2, { embeds: [embed2], components: [row2] })) {
+      if (await shouldEditMessage(infoMessage2, { embeds: [embed2], components: [row2] })) {
         await infoMessage2.edit({
           embeds: [embed2],
           components: [row2]
@@ -425,7 +425,7 @@ const channel = client.channels.cache.get(VERIFY_CHANNEL_ID)
     }
 
     if (infoMessage) {
-      if (shouldEditMessage(infoMessage, { embeds: [verifyInfoEmbed], components: [], attachmentName: VERIFY_MEDIA_NAME })) {
+      if (await shouldEditMessage(infoMessage, { embeds: [verifyInfoEmbed], components: [], files: [attachment], attachmentName: VERIFY_MEDIA_NAME })) {
         await infoMessage.edit({ files: [attachment], embeds: [verifyInfoEmbed], components: [] }).catch(() => { });
       }
     } else {
@@ -433,7 +433,7 @@ const channel = client.channels.cache.get(VERIFY_CHANNEL_ID)
     }
 
     if (panelMessage) {
-      if (shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
+      if (await shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
         await panelMessage.edit({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => { });
       }
     } else {
@@ -733,7 +733,7 @@ const channel = client.channels.cache.get(CHANNEL_ID)
     }
 
     if (personalityMessage) {
-      if (shouldEditMessage(personalityMessage, { embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], attachmentName: IMAGE_NAME })) {
+      if (await shouldEditMessage(personalityMessage, { embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment], attachmentName: IMAGE_NAME })) {
         await personalityMessage.edit({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => {});
       }
     } else {
@@ -741,7 +741,7 @@ const channel = client.channels.cache.get(CHANNEL_ID)
     }
 
     if (mentionsMessage) {
-      if (shouldEditMessage(mentionsMessage, { embeds: [mentionsEmbed], components: [mentionsMenu], attachmentName: MENTIONS_IMAGE_NAME })) {
+      if (await shouldEditMessage(mentionsMessage, { embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment], attachmentName: MENTIONS_IMAGE_NAME })) {
         await mentionsMessage.edit({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => {});
       }
     } else {
@@ -749,7 +749,7 @@ const channel = client.channels.cache.get(CHANNEL_ID)
     }
 
     if (colorsMessage) {
-      if (shouldEditMessage(colorsMessage, { embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], attachmentName: COLORS_IMAGE_NAME })) {
+      if (await shouldEditMessage(colorsMessage, { embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment], attachmentName: COLORS_IMAGE_NAME })) {
         await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => {});
       }
     } else {
@@ -757,7 +757,7 @@ const channel = client.channels.cache.get(CHANNEL_ID)
     }
 
     if (plusColorsMessage) {
-      if (shouldEditMessage(plusColorsMessage, { embeds: [plusColorsEmbed], components: [plusColorsMenu], attachmentName: PLUS_COLORS_IMAGE_NAME })) {
+      if (await shouldEditMessage(plusColorsMessage, { embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment], attachmentName: PLUS_COLORS_IMAGE_NAME })) {
         await plusColorsMessage.edit({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => {});
       }
     } else {
@@ -866,7 +866,7 @@ const channel = client.channels.cache.get(TICKET_CHANNEL_ID)
     }
 
     if (infoMessage) {
-      if (shouldEditMessage(infoMessage, { embeds: [ticketInfoEmbed], components: [], attachmentName: TICKET_MEDIA_NAME })) {
+      if (await shouldEditMessage(infoMessage, { embeds: [ticketInfoEmbed], components: [], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
         await infoMessage.edit({ files: [attachment], embeds: [ticketInfoEmbed], components: [] }).catch(() => {});
       }
     } else {
@@ -874,7 +874,7 @@ const channel = client.channels.cache.get(TICKET_CHANNEL_ID)
     }
 
     if (panelMessage) {
-      if (shouldEditMessage(panelMessage, { embeds: [ticketPanelEmbed], components: [ticketSelectRow] })) {
+      if (await shouldEditMessage(panelMessage, { embeds: [ticketPanelEmbed], components: [ticketSelectRow] })) {
         await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => {});
       }
     } else {
