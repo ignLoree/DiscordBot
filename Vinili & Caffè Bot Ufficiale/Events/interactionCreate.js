@@ -37,7 +37,7 @@ module.exports = {
                 return;
             }
             if (interaction.isButton && interaction.isButton()) {
-                const gate = checkButtonPermission(interaction);
+                const gate = await checkButtonPermission(interaction);
                 if (!gate.allowed) {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()
@@ -52,7 +52,7 @@ module.exports = {
                 }
             }
             if (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) {
-                const gate = checkStringSelectPermission(interaction);
+                const gate = await checkStringSelectPermission(interaction);
                 if (!gate.allowed) {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()
@@ -67,7 +67,7 @@ module.exports = {
                 }
             }
             if (interaction.isModalSubmit && interaction.isModalSubmit()) {
-                const gate = checkModalPermission(interaction);
+                const gate = await checkModalPermission(interaction);
                 if (!gate.allowed) {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()

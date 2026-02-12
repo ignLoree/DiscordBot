@@ -488,7 +488,7 @@ module.exports = {
         if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
             args.unshift(prefixSubcommandFromAlias);
         }
-        if (!checkPrefixPermission(message, command.name, prefixSubcommand)) {
+        if (!(await checkPrefixPermission(message, command.name, prefixSubcommand))) {
             const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
             const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
             await deleteCommandMessage();

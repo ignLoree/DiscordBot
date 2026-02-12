@@ -152,7 +152,9 @@ const customRoleSchema = new Schema(
     guildId: { type: String, required: true },
     userId: { type: String, required: true },
     roleId: { type: String, required: true },
-    customVocEmoji: { type: String, default: null }
+    customVocEmoji: { type: String, default: null },
+    customVocChannelId: { type: String, default: null, index: true },
+    expiresAt: { type: Date, default: null, index: true }
   },
   { timestamps: true }
 );

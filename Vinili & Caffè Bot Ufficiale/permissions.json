@@ -18,11 +18,6 @@
         "roles.Founder"
       ]
     },
-    "restart": {
-      "roles": [
-        "roles.Founder"
-      ]
-    },
     "say": {
       "roles": [
         "roles.Founder"
@@ -328,6 +323,47 @@
     "verify": [
       "roles.HighStaff"
     ],
+    "perm": {
+      "roles": [
+        "roles.HighStaff"
+      ],
+      "subcommands": {
+        "grant": [
+          "roles.HighStaff"
+        ],
+        "revoke": [
+          "roles.HighStaff"
+        ],
+        "list": [
+          "roles.HighStaff"
+        ],
+        "clear": [
+          "roles.HighStaff"
+        ]
+      }
+    },
+    "temprole": {
+      "roles": [
+        "roles.HighStaff"
+      ],
+      "subcommands": {
+        "grant": [
+          "roles.HighStaff"
+        ],
+        "revoke": [
+          "roles.HighStaff"
+        ],
+        "list": [
+          "roles.HighStaff"
+        ],
+        "clear": [
+          "roles.HighStaff"
+        ]
+      }
+    },
+    "smartembed": [
+      "roles.HighStaff"
+    ],
     "customregister": [
       "roles.HighStaff"
     ],
@@ -365,30 +401,40 @@
         ]
       }
     },
-    "customrolecreate": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customroleadd": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customroleremove": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
-    "customrolemodify": [
-      "roles.vip",
-      "roles.donator",
-      "roles.ServerBooster",
-      "roles.Level70"
-    ],
+    "customrole": {
+      "roles": [
+        "roles.vip",
+        "roles.donator",
+        "roles.ServerBooster",
+        "roles.Level70"
+      ],
+      "subcommands": {
+        "create": [
+          "roles.vip",
+          "roles.donator",
+          "roles.ServerBooster",
+          "roles.Level70"
+        ],
+        "modify": [
+          "roles.vip",
+          "roles.donator",
+          "roles.ServerBooster",
+          "roles.Level70"
+        ],
+        "add": [
+          "roles.vip",
+          "roles.donator",
+          "roles.ServerBooster",
+          "roles.Level70"
+        ],
+        "remove": [
+          "roles.vip",
+          "roles.donator",
+          "roles.ServerBooster",
+          "roles.Level70"
+        ]
+      }
+    },
     "customvoc": [
       "roles.vip",
       "roles.donator",

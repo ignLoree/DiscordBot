@@ -59,7 +59,7 @@ async function handleSlashCommand(interaction, client) {
     if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
-    if (!checkSlashPermission(interaction)) {
+    if (!(await checkSlashPermission(interaction))) {
         const requiredRoles = getSlashRequiredRoles(interaction);
         return interaction.reply({
             embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles)],

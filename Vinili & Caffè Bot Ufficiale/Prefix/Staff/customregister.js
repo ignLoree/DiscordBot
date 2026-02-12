@@ -123,7 +123,7 @@ module.exports = {
 
     await CustomRole.findOneAndUpdate(
       { guildId: message.guild.id, userId: user.id },
-      { $set: { guildId: message.guild.id, userId: user.id, roleId: effectiveRole.id } },
+      { $set: { guildId: message.guild.id, userId: user.id, roleId: effectiveRole.id, customVocChannelId: voiceChannel.id } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).catch(() => null);
 
@@ -166,6 +166,5 @@ module.exports = {
     });
   }
 };
-
 
 

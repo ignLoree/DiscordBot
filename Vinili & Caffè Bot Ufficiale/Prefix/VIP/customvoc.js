@@ -1,9 +1,33 @@
-﻿const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { CustomRole } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
+const { formatDuration } = require('../../Utils/Moderation/moderation');
+const { parseFlexibleDuration } = require('../../Utils/Moderation/durationParser');
+const { resolveCustomRoleState, buildExpiryText } = require('../../Utils/Community/customRoleState');
 
 const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
+
+function parseOptionalDuration(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!value) return { provided: false, clear: false, ms: null, error: null };
+
+  if (['off', 'none', 'no', 'perma', 'permanent', 'permanente'].includes(value)) {
+    return { provided: true, clear: true, ms: null, error: null };
+  }
+
+  const ms = parseFlexibleDuration(value);
+  if (!ms) {
+    return {
+      provided: true,
+      clear: false,
+      ms: null,
+      error: 'Durata non valida. Esempi: `14d`, `2w`, `2 settimane`, oppure `permanente`.'
+    };
+  }
+  return { provided: true, clear: false, ms, error: null };
+}
+
 function sanitizeVoiceBaseName(name) {
   const clean = String(name || '')
     .replace(/[^\p{L}\p{N} _',.!?\-]/gu, '')
@@ -14,18 +38,11 @@ function sanitizeVoiceBaseName(name) {
 }
 
 function buildCustomVocName(emoji, baseName) {
-  const safeEmoji = String(emoji || '🎧').trim() || '🎧';
+  const safeEmoji = String(emoji || '\uD83C\uDFA7').trim() || '\uD83C\uDFA7';
   const safeBase = sanitizeVoiceBaseName(baseName);
-  const prefix = `༄${safeEmoji}︲`;
+  const prefix = `\u0F04${safeEmoji}\uFE32`;
   const maxBaseLength = Math.max(1, 100 - prefix.length);
   return `${prefix}${safeBase.slice(0, maxBaseLength)}`;
-}
-
-async function resolveCustomRole(guild, userId) {
-  const doc = await CustomRole.findOne({ guildId: guild.id, userId }).lean().catch(() => null);
-  if (!doc?.roleId) return { role: null, doc };
-  const role = guild.roles.cache.get(doc.roleId) || await guild.roles.fetch(doc.roleId).catch(() => null);
-  return { role: role || null, doc };
 }
 
 function findExistingVoiceChannel(guild, roleId) {
@@ -34,14 +51,14 @@ function findExistingVoiceChannel(guild, roleId) {
     if (ch.parentId !== CUSTOM_VOICE_CATEGORY_ID) return false;
     const overwrite = ch.permissionOverwrites.cache.get(roleId);
     if (!overwrite) return false;
-    return overwrite.allow.has(PermissionsBitField.Flags.ViewChannel) &&
-      overwrite.allow.has(PermissionsBitField.Flags.Connect) &&
-      overwrite.allow.has(PermissionsBitField.Flags.Speak);
+    return overwrite.allow.has(PermissionsBitField.Flags.ViewChannel)
+      && overwrite.allow.has(PermissionsBitField.Flags.Connect)
+      && overwrite.allow.has(PermissionsBitField.Flags.Speak);
   }) || null;
 }
 
-function buildVoicePanelEmbed(channel, customRole) {
-  return new EmbedBuilder()
+function buildVoicePanelEmbed(channel, customRole, doc, durationOption) {
+  const embed = new EmbedBuilder()
     .setColor('#6f4e37')
     .setTitle('Pannello Vocale Privata')
     .setDescription([
@@ -49,8 +66,18 @@ function buildVoicePanelEmbed(channel, customRole) {
       `<:dot:1443660294596329582> Categoria: <#${CUSTOM_VOICE_CATEGORY_ID}>`,
       `<:dot:1443660294596329582> Accesso consentito a chi possiede ${customRole}`,
       '',
-      'Usa il bottone per modificare il nome del canale.'
+      `Scadenza custom: ${buildExpiryText(doc)}`
     ].join('\n'));
+
+  if (durationOption?.provided && !durationOption.clear && durationOption.ms) {
+    embed.addFields({
+      name: 'Durata impostata',
+      value: `**${formatDuration(durationOption.ms)}**`,
+      inline: true
+    });
+  }
+
+  return embed;
 }
 
 function buildVoicePanelRow(ownerId, channelId) {
@@ -66,26 +93,89 @@ function buildVoicePanelRow(ownerId, channelId) {
   );
 }
 
+async function updateCustomRoleTiming(guildId, userId, durationOption, extraSet = {}) {
+  const setData = { ...extraSet };
+  if (durationOption?.provided) {
+    setData.expiresAt = durationOption.clear ? null : new Date(Date.now() + durationOption.ms);
+  }
+  if (!Object.keys(setData).length) return null;
+  return CustomRole.findOneAndUpdate(
+    { guildId, userId },
+    { $set: setData },
+    { new: true }
+  ).lean().catch(() => null);
+}
+
 module.exports = {
   name: 'customvoc',
   aliases: ['customvoice', 'crvoice', 'vocprivata'],
   description: 'Crea la tua vocale privata nella categoria dedicata usando il tuo ruolo personalizzato.',
 
-  async execute(message) {
+  async execute(message, args = []) {
     if (!message.guild || !message.member) return;
 
-    const { role: customRole, doc: customRoleDoc } = await resolveCustomRole(message.guild, message.author.id);
-    if (!customRole) {
+    const durationOption = parseOptionalDuration(args[0]);
+    if (durationOption.error) {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor('Red')
-            .setDescription('<:vegax:1443934876440068179> Non hai un ruolo personalizzato. Usa prima `+customrolecreate`.')
+            .setDescription(`<:vegax:1443934876440068179> ${durationOption.error}`)
         ],
         allowedMentions: { repliedUser: false }
       });
       return;
     }
+
+    const state = await resolveCustomRoleState({
+      guild: message.guild,
+      userId: message.author.id,
+      client: message.client,
+      cleanupExpired: true
+    });
+
+    if (state.status === 'none') {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> Non hai un ruolo personalizzato. Usa prima `+customrole create`.')
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    if (state.status === 'expired') {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription([
+              '<:vegax:1443934876440068179> Il tuo custom role temporaneo e scaduto.',
+              `Scadenza: ${buildExpiryText(state.doc)}`,
+              'Usa `+customrole create` per crearne uno nuovo.'
+            ].join('\n'))
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    if (state.status === 'missing_role') {
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor('Red')
+            .setDescription('<:vegax:1443934876440068179> Il tuo ruolo personalizzato non esiste piu. Ricrealo con `+customrole create`.')
+        ],
+        allowedMentions: { repliedUser: false }
+      });
+      return;
+    }
+
+    const customRole = state.role;
+    const customRoleDoc = state.doc;
 
     const me = message.guild.members.me || message.guild.members.cache.get(message.client.user.id);
     if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
@@ -116,9 +206,15 @@ module.exports = {
 
     const existing = findExistingVoiceChannel(message.guild, customRole.id);
     if (existing) {
+      const updatedDoc = await updateCustomRoleTiming(
+        message.guild.id,
+        message.author.id,
+        durationOption,
+        { customVocChannelId: existing.id }
+      );
       await safeMessageReply(message, {
         embeds: [
-          buildVoicePanelEmbed(existing, customRole)
+          buildVoicePanelEmbed(existing, customRole, updatedDoc || customRoleDoc, durationOption)
         ],
         components: [buildVoicePanelRow(message.author.id, existing.id)],
         allowedMentions: { repliedUser: false }
@@ -126,7 +222,11 @@ module.exports = {
       return;
     }
 
-    const channelName = buildCustomVocName(customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || '🎧', message.member.displayName || message.author.username);
+    const channelName = buildCustomVocName(
+      customRoleDoc?.customVocEmoji || customRole.unicodeEmoji || '\uD83C\uDFA7',
+      message.member.displayName || message.author.username
+    );
+
     const channel = await message.guild.channels.create({
       name: channelName,
       type: ChannelType.GuildVoice,
@@ -174,17 +274,19 @@ module.exports = {
       return;
     }
 
+    const updatedDoc = await updateCustomRoleTiming(
+      message.guild.id,
+      message.author.id,
+      durationOption,
+      { customVocChannelId: channel.id }
+    );
+
     await safeMessageReply(message, {
       embeds: [
-        buildVoicePanelEmbed(channel, customRole)
+        buildVoicePanelEmbed(channel, customRole, updatedDoc || customRoleDoc, durationOption)
       ],
       components: [buildVoicePanelRow(message.author.id, channel.id)],
       allowedMentions: { repliedUser: false }
     });
   }
 };
-
-
-
-
-

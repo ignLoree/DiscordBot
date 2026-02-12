@@ -2,6 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const { EmbedBuilder } = require('discord.js');
 const IDs = require('../Config/ids');
+const {
+  buildPrefixLookupKeys,
+  buildSlashLookupKeys,
+  hasTemporaryCommandPermission
+} = require('./temporaryCommandPermissions');
 
 const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
 const EMPTY_PERMISSIONS = { slash: {}, prefix: {}, buttons: {}, selectMenus: {}, modals: {} };
@@ -55,11 +60,60 @@ function normalizeRoleList(roleIds) {
     .filter(Boolean);
 }
 
+function collectMemberRoleIds(member) {
+  if (!member) return new Set();
+  const ids = new Set();
+
+  const cache = member?.roles?.cache;
+  if (cache && typeof cache.forEach === 'function') {
+    cache.forEach((_, roleId) => ids.add(String(roleId)));
+  }
+
+  const rawRoles = member?.roles;
+  if (Array.isArray(rawRoles)) {
+    for (const roleId of rawRoles) {
+      if (roleId) ids.add(String(roleId));
+    }
+  } else if (rawRoles && Array.isArray(rawRoles._roles)) {
+    for (const roleId of rawRoles._roles) {
+      if (roleId) ids.add(String(roleId));
+    }
+  }
+
+  const plainRoles = Array.isArray(member?._roles) ? member._roles : [];
+  for (const roleId of plainRoles) {
+    if (roleId) ids.add(String(roleId));
+  }
+
+  return ids;
+}
+
 function hasAnyRole(member, roleIds) {
   const normalized = normalizeRoleList(roleIds);
   if (!Array.isArray(normalized)) return true;
   if (normalized.length === 0) return false;
-  return normalized.some((roleId) => member?.roles?.cache?.has(roleId));
+  const memberRoleIds = collectMemberRoleIds(member);
+  if (!memberRoleIds.size) return false;
+  return normalized.some((roleId) => memberRoleIds.has(String(roleId)));
+}
+
+async function fetchLiveMember(entity) {
+  const guild = entity?.guild || entity?.member?.guild || null;
+  const userId =
+    entity?.user?.id
+    || entity?.author?.id
+    || entity?.member?.id
+    || entity?.member?.user?.id
+    || null;
+  if (!guild || !userId || typeof guild.members?.fetch !== 'function') return null;
+  return guild.members.fetch(userId).catch(() => null);
+}
+
+async function hasAnyRoleWithLiveFallback(entity, roleIds) {
+  if (hasAnyRole(entity?.member, roleIds)) return true;
+  const freshMember = await fetchLiveMember(entity);
+  if (!freshMember) return false;
+  return hasAnyRole(freshMember, roleIds);
 }
 
 function resolveSlashRoles(data, commandName, groupName, subcommandName) {
@@ -182,25 +236,43 @@ function extractOwnerIdFromMessageMention(message) {
   return null;
 }
 
-function checkSlashPermission(interaction) {
+async function checkSlashPermission(interaction) {
+  const guildId = interaction?.guildId || interaction?.guild?.id || null;
+  const userId = interaction?.user?.id || null;
+  if (guildId && userId) {
+    const group = interaction.options?.getSubcommandGroup?.(false) || null;
+    const sub = interaction.options?.getSubcommand?.(false) || null;
+    const keys = buildSlashLookupKeys(interaction.commandName, group, sub);
+    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
+    if (hasOverride) return true;
+  }
+
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
   if (!Array.isArray(roles)) return true;
   if (!interaction.inGuild()) return false;
-  return hasAnyRole(interaction.member, roles);
+  return hasAnyRoleWithLiveFallback(interaction, roles);
 }
 
-function checkPrefixPermission(message, commandName, subcommandName = null) {
+async function checkPrefixPermission(message, commandName, subcommandName = null) {
+  const guildId = message?.guild?.id || null;
+  const userId = message?.author?.id || null;
+  if (guildId && userId) {
+    const keys = buildPrefixLookupKeys(commandName, subcommandName);
+    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
+    if (hasOverride) return true;
+  }
+
   const data = loadPermissions();
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
   if (!Array.isArray(roles)) return true;
   if (!message.guild) return false;
-  return hasAnyRole(message.member, roles);
+  return hasAnyRoleWithLiveFallback(message, roles);
 }
 
-function checkButtonPermission(interaction) {
+async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || '');
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
@@ -246,7 +318,7 @@ function checkButtonPermission(interaction) {
         ownerId: null
       };
     }
-    if (!hasAnyRole(interaction.member, policy.roles)) {
+    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
         reason: 'missing_role',
@@ -259,7 +331,7 @@ function checkButtonPermission(interaction) {
   return { allowed: true, reason: null, requiredRoles: policy.roles || null, ownerId: null };
 }
 
-function checkStringSelectPermission(interaction) {
+async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || '');
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
@@ -286,6 +358,18 @@ function checkStringSelectPermission(interaction) {
     }
   }
 
+  if (policy.ownerFromMessageMention) {
+    const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
+    if (!ownerId || (interaction?.user?.id && interaction.user.id !== ownerId)) {
+      return {
+        allowed: false,
+        reason: 'not_owner',
+        requiredRoles: policy.roles || null,
+        ownerId: ownerId || null
+      };
+    }
+  }
+
   if (Array.isArray(policy.roles)) {
     if (!interaction?.inGuild?.()) {
       return {
@@ -295,7 +379,7 @@ function checkStringSelectPermission(interaction) {
         ownerId: null
       };
     }
-    if (!hasAnyRole(interaction.member, policy.roles)) {
+    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
         reason: 'missing_role',
@@ -308,7 +392,7 @@ function checkStringSelectPermission(interaction) {
   return { allowed: true, reason: null, requiredRoles: policy.roles || null, ownerId: null };
 }
 
-function checkModalPermission(interaction) {
+async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || '');
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
@@ -356,7 +440,7 @@ function checkModalPermission(interaction) {
         ownerId: null
       };
     }
-    if (!hasAnyRole(interaction.member, policy.roles)) {
+    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
         reason: 'missing_role',

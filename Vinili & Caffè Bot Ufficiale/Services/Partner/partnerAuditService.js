@@ -4,6 +4,7 @@ const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
 let dailyPartnerAuditTask = null;
+const DUPLICATE_PARTNERSHIP_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function getRomeDateKey(date) {
   const fmt = new Intl.DateTimeFormat('en-CA', {
@@ -130,11 +131,29 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
   for (const doc of docs) {
     const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
-    const dayCreates = actions
+    const allCreates = actions
       .map((action, index) => ({ action, index }))
       .filter(({ action }) => String(action?.action || 'create') === 'create')
-      .filter(({ action }) => getRomeDateKey(new Date(action?.date || Date.now())) === targetDateKey)
-      .sort((a, b) => new Date(a.action?.date || 0) - new Date(b.action?.date || 0));
+      .map(({ action, index }) => {
+        const dateMs = new Date(action?.date || 0).getTime();
+        const inviteCode = String(extractInviteCode(action?.invite || '') || '').toLowerCase();
+        return { action, index, dateMs, inviteCode };
+      })
+      .sort((a, b) => a.dateMs - b.dateMs);
+
+    const previousByInviteForIndex = new Map();
+    const latestByInvite = new Map();
+    for (const row of allCreates) {
+      if (!row.inviteCode || !Number.isFinite(row.dateMs) || row.dateMs <= 0) continue;
+      const previous = latestByInvite.get(row.inviteCode);
+      if (previous) {
+        previousByInviteForIndex.set(row.index, previous);
+      }
+      latestByInvite.set(row.inviteCode, { dateMs: row.dateMs, index: row.index });
+    }
+
+    const dayCreates = allCreates
+      .filter(({ action }) => getRomeDateKey(new Date(action?.date || Date.now())) === targetDateKey);
 
     if (!dayCreates.length) continue;
 
@@ -162,7 +181,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
       const descriptionFingerprint = buildDescriptionFingerprint(actionText);
       if (descriptionFingerprint) {
         if (seenDescriptionFingerprints.has(descriptionFingerprint)) {
-          reasons.push('Stessa descrizione partnership fatta più di una volta nello stesso giorno');
+          reasons.push('Stessa partnership fatta più di una volta nello stesso giorno');
         } else {
           seenDescriptionFingerprints.add(descriptionFingerprint);
         }
@@ -179,6 +198,25 @@ async function runDailyPartnerAudit(client, opts = {}) {
       if (!inviteCode) {
         reasons.push('Link invito Discord assente');
       } else {
+        const normalizedInvite = String(inviteCode || '').toLowerCase();
+        const previous = previousByInviteForIndex.get(index);
+        if (previous?.dateMs) {
+          const delta = Number(new Date(action?.date || Date.now()).getTime() - previous.dateMs);
+          if (Number.isFinite(delta) && delta >= 0 && delta < DUPLICATE_PARTNERSHIP_WINDOW_MS) {
+            reasons.push('Stessa partnership ripetuta prima di 12 ore');
+          }
+        } else if (normalizedInvite) {
+          const prior = allCreates
+            .filter((row) => row.index !== index && row.inviteCode === normalizedInvite && row.dateMs < new Date(action?.date || Date.now()).getTime())
+            .sort((a, b) => b.dateMs - a.dateMs)[0];
+          if (prior?.dateMs) {
+            const delta = Number(new Date(action?.date || Date.now()).getTime() - prior.dateMs);
+            if (Number.isFinite(delta) && delta >= 0 && delta < DUPLICATE_PARTNERSHIP_WINDOW_MS) {
+              reasons.push('Stessa partnership ripetuta prima di 12 ore');
+            }
+          }
+        }
+
         const inviteData = await fetchInviteInfo(inviteCode);
         if (inviteData?.expired) {
           reasons.push('Link invito Discord scaduto/non valido');

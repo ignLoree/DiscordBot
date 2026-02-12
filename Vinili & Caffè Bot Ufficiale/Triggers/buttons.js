@@ -258,7 +258,7 @@ module.exports = {
         if (!interaction.message) return;
         if (interaction.replied || interaction.deferred) return;
         if (interaction.isButton && interaction.isButton()) {
-            const gate = checkButtonPermission(interaction);
+            const gate = await checkButtonPermission(interaction);
             if (!gate.allowed) {
                 const deniedEmbed = gate.reason === 'not_owner'
                     ? buildGlobalNotYourControlEmbed()
@@ -268,7 +268,7 @@ module.exports = {
             }
         }
         if (interaction.isStringSelectMenu && interaction.isStringSelectMenu()) {
-            const gate = checkStringSelectPermission(interaction);
+            const gate = await checkStringSelectPermission(interaction);
             if (!gate.allowed) {
                 const deniedEmbed = gate.reason === 'not_owner'
                     ? buildGlobalNotYourControlEmbed()
@@ -685,7 +685,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    `Usa \`+customrolecreate\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
+                    `Usa \`+customrole create\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
                     'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));
@@ -781,7 +781,7 @@ module.exports = {
                 .setColor('#6f4e37')
                 .setTitle('<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**')
                 .setDescription([
-                    `Usa \`+customrolecreate\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
+                    `Usa \`+customrole create\` in <#${IDs.channels.commands}> per creare e configurare il ruolo.`,
                     'Poi usa \`+customvoc\` nello stesso canale per creare e configurare la vocale privata.',
                     'Digita \`+help\` per la lista completa dei comandi.'
                 ].join('\n'));

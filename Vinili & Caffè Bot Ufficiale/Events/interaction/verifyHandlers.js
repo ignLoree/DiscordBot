@@ -195,6 +195,16 @@ function isAlreadyVerified(member) {
     if (!verifiedRoleIds.length) return false;
     return verifiedRoleIds.some((id) => member.roles.cache.has(id));
 }
+async function resolveValidVerifyRoleIds(guild) {
+    if (!guild) return [];
+    const valid = [];
+    for (const roleId of VERIFY_ROLE_IDS) {
+        if (!roleId) continue;
+        const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
+        if (role?.id) valid.push(role.id);
+    }
+    return Array.from(new Set(valid));
+}
 async function handleVerifyInteraction(interaction) {
     if (interaction.isButton()) {
         if (interaction.customId === 'verify_start') {
@@ -208,6 +218,8 @@ async function handleVerifyInteraction(interaction) {
             }
             const existing = verifyState.get(interaction.user.id);
             if (existing?.timeoutId) clearTimeout(existing.timeoutId);
+            const deferred = await safeDeferReply(interaction, { flags: 1 << 6 });
+            if (!deferred) return true;
             const code = makeCode();
             const captchaPng = await makeCaptchaPng(code);
             const captchaFile = new AttachmentBuilder(captchaPng, { name: 'captcha.png' });
@@ -233,11 +245,10 @@ async function handleVerifyInteraction(interaction) {
                     .setLabel('Answer')
                     .setStyle(ButtonStyle.Primary)
             );
-            await safeReply(interaction, {
+            await safeEditReply(interaction, {
                 embeds: [embed],
                 components: [row],
                 files: [captchaFile],
-                flags: 1 << 6
             });
             try {
                 const replyMsg = await interaction.fetchReply();
@@ -324,7 +335,18 @@ async function handleVerifyInteraction(interaction) {
             });
             return true;
         }
-        const validRoleIds = VERIFY_ROLE_IDS.filter(id => interaction.guild?.roles?.cache?.has(id));
+        const validRoleIds = await resolveValidVerifyRoleIds(interaction.guild);
+        if (!validRoleIds.length) {
+            await safeReply(interaction, {
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor('Red')
+                        .setDescription('<:vegax:1443934876440068179> Ruoli verifica non configurati correttamente.')
+                ],
+                flags: 1 << 6
+            });
+            return true;
+        }
         const rolesToAdd = validRoleIds.filter(id => !member.roles.cache.has(id));
         const deferred = await safeDeferReply(interaction, { flags: 1 << 6 });
         try {

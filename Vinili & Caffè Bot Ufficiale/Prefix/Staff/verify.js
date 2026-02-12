@@ -7,21 +7,32 @@ const VERIFY_ROLE_IDS = [
     IDs.roles.separatore8,
     IDs.roles.separatore5,
     IDs.roles.separatore7
-];
+].filter(Boolean);
 
 module.exports = {
   name: 'verify',
   
-  async execute(message, args) {
+	  async execute(message, args) {
     await message.channel.sendTyping();
     await message.delete().catch(() => {});
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {
       return message.reply({ embeds: [buildNoMemberEmbed()] });
     }
-    const yesId = `verify_yes:${message.id}:${message.author.id}`;
-    const noId = `verify_no:${message.id}:${message.author.id}`;
-    const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
+	    const yesId = `verify_yes:${message.id}:${message.author.id}`;
+	    const noId = `verify_no:${message.id}:${message.author.id}`;
+	    const validVerifyRoleIds = await resolveValidVerifyRoleIds(message.guild);
+	    if (!validVerifyRoleIds.length) {
+	      return message.channel.send({
+	        embeds: [
+	          new EmbedBuilder()
+	            .setColor('Red')
+	            .setTitle('Unsuccessful Operation!')
+	            .setDescription('Nessun ruolo verifica valido configurato (IDs.roles).')
+	        ]
+	      }).catch(() => {});
+	    }
+	    const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
     const promptMsg = await message.channel.send({
       embeds: [buildPromptEmbed(targetMentions)],
       components: [buildConfirmRow(yesId, noId)]
@@ -36,10 +47,10 @@ module.exports = {
         return;
       }
       const success = [];
-      const fail = [];
-      for (const member of targets) {
-        const rolesToAdd = VERIFY_ROLE_IDS.filter((id) => !member.roles.cache.has(id));
-        const displayName = member.user?.username || member.displayName || member.id;
+	      const fail = [];
+	      for (const member of targets) {
+	        const rolesToAdd = validVerifyRoleIds.filter((id) => !member.roles.cache.has(id));
+	        const displayName = member.user?.username || member.displayName || member.id;
         try {
           if (rolesToAdd.length > 0) {
             await member.roles.add(rolesToAdd);
@@ -88,6 +99,17 @@ function formatUserList(list) {
     lines.push(`<:space:1461733157840621608> \`+${remaining} users\``);
   }
   return lines.join('\n');
+}
+
+async function resolveValidVerifyRoleIds(guild) {
+  if (!guild) return [];
+  const valid = [];
+  for (const roleId of VERIFY_ROLE_IDS) {
+    if (!roleId) continue;
+    const role = guild.roles.cache.get(roleId) || await guild.roles.fetch(roleId).catch(() => null);
+    if (role?.id) valid.push(role.id);
+  }
+  return Array.from(new Set(valid));
 }
 
 function buildPromptEmbed(targetTag) {

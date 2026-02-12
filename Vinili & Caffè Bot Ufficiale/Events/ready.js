@@ -13,6 +13,9 @@ const { startHourlyReminderLoop } = require('../Services/Community/chatReminderS
 const { startVerificationTenureLoop, backfillVerificationTenure } = require('../Services/Community/communityOpsService');
 const { runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/communityOpsService');
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
+const { startPhotoContestLoop } = require('../Services/Community/photoContestService');
+const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop } = require('../Services/Community/temporaryRoleService');
+const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop } = require('../Services/Community/customRoleExpiryService');
 const { startDailyPartnerAuditLoop } = require('../Services/Partner/partnerAuditService');
 const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
@@ -170,6 +173,23 @@ module.exports = {
                 startWeeklyActivityWinnersLoop(client);
             } catch (err) {
                 global.logger.error('[WEEKLY ACTIVITY] Failed to start loop', err);
+            }
+            try {
+                startPhotoContestLoop(client);
+            } catch (err) {
+                global.logger.error('[PHOTO CONTEST] Failed to start loop', err);
+            }
+            try {
+                await removeExpiredTemporaryRoles(client);
+                startTemporaryRoleCleanupLoop(client);
+            } catch (err) {
+                global.logger.error('[TEMP ROLE] Failed to start cleanup loop', err);
+            }
+            try {
+                await runExpiredCustomRolesSweep(client);
+                startCustomRoleExpiryLoop(client);
+            } catch (err) {
+                global.logger.error('[CUSTOM ROLE EXPIRY] Failed to start cleanup loop', err);
             }
             try {
                 startDailyPartnerAuditLoop(client);

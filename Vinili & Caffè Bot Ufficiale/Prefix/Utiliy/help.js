@@ -68,12 +68,12 @@ const PREFIX_HELP_DESCRIPTIONS = {
   reviewlock: 'Blocca o sblocca premio recensione per un utente.',
   ticket: 'Gestisce i ticket.',
   verify: 'Gestisce il flusso di verifica utenti.',  
+  perm: 'Gestisce permessi temporanei per utente e comandi.',
+  temprole: 'Gestisce assegnazioni di ruoli temporanei ad utenti.',
+  smartembed: 'Crea un embed intelligente spostando i ping fuori dall\'embed.',
   customregister: 'Registra retroattivamente custom role/vocale già esistenti.',
-  customroleadd: 'Aggiunge utenti al tuo ruolo personalizzato.',
-  customrolecreate: 'Crea il tuo ruolo personalizzato.',
-  customrolemodify: 'Apre il pannello di modifica del ruolo personalizzato.',
-  customroleremove: 'Rimuove utenti dal tuo ruolo personalizzato.',
-  customvoc: 'Crea e gestisce la tua vocale privata personalizzata.',
+  customrole: 'Gestisce il custom role: create, modify, add, remove.',
+  customvoc: 'Crea e gestisce la tua vocale privata (anche temporanea: es. `+customvoc 2w`).',
   quote: 'Genera una quote grafica da un messaggio.'
 };
 const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
@@ -106,7 +106,19 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   'set.voice': 'Imposta la lingua TTS personale.',
   'top.text': 'Mostra la classifica utenti per messaggi testuali.',
   'top.voc': 'Mostra la classifica utenti per attività vocale.',
-  'top.invites': 'Mostra la classifica utenti per inviti.'
+  'top.invites': 'Mostra la classifica utenti per inviti.',
+  'perm.grant': 'Assegna permessi temporanei ad un utente su uno o più comandi.',
+  'perm.revoke': 'Revoca permessi temporanei specifici ad un utente.',
+  'perm.list': 'Mostra i permessi temporanei attivi di un utente.',
+  'perm.clear': 'Rimuove tutti i permessi temporanei di un utente.',
+  'temprole.grant': 'Assegna un ruolo ad un utente per una durata temporanea.',
+  'temprole.revoke': 'Revoca una singola assegnazione di ruolo temporaneo.',
+  'temprole.list': 'Mostra i ruoli temporanei attivi di un utente.',
+  'temprole.clear': 'Rimuove tutte le assegnazioni di ruoli temporanei di un utente.',
+  'customrole.create': 'Crea o aggiorna il tuo ruolo personalizzato (durata opzionale).',
+  'customrole.modify': 'Apre il pannello di modifica del tuo ruolo personalizzato.',
+  'customrole.add': 'Aggiunge un utente al tuo ruolo personalizzato (con richiesta DM).',
+  'customrole.remove': 'Rimuove un utente dal tuo ruolo personalizzato.'
 };
 const CONTEXT_HELP_DESCRIPTIONS = {
   Partnership: 'Apre il modal partnership partendo dal messaggio selezionato.',
@@ -545,12 +557,15 @@ module.exports = {
   name: 'help',
 
   async execute(message, _args, client) {
+    if (!message.guild || !message.member) return;
     await message.channel.sendTyping().catch(() => {});
 
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
 
-    const memberRoles = message.member?.roles?.cache;
+    const freshMember = await message.guild.members.fetch(message.author.id).catch(() => null);
+    const resolvedMember = freshMember || message.member;
+    const memberRoles = resolvedMember?.roles?.cache || new Map();
     const rolePages = PAGE_ROLE_IDS.filter((roleId) => memberRoles?.has(roleId));
     const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
     const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
