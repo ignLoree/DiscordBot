@@ -15,7 +15,26 @@ const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const VERIFY_LOG_CHANNEL_ID = IDs.channels.modLogs;
 const VERIFY_PING_CHANNEL_ID = IDs.channels.news;
+const MAIN_GUILD_ID = '1329080093599076474';
+const SPONSOR_GUILD_IDS = [
+    '1471511676019933354',
+    '1471511928739201047',
+    '1471512183547498579',
+    '1471512555762483330',
+    '1471512797140484230',
+    '1471512808448458958'
+];
+const VERIFICATO_ROLE_NAME = '༄ Verificato';
+const VERIFICATO_ROLE_IDS = {
+    '1471511676019933354': '1471522935188623435',
+    '1471511928739201047': '1471522716099154091',
+    '1471512183547498579': '1471522479867433073',
+    '1471512555762483330': '1471522093484081300',
+    '1471512797140484230': '1471521864898838689',
+    '1471512808448458958': '1471521694698176726'
+};
 const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/communityOpsService');
+const { VerificationTenure } = require('../../Schemas/Community/communitySchemas');
 const verifyState = new Map();
 const fontPath = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');
 let captchaFontFamily = 'captcha';
@@ -357,6 +376,55 @@ async function handleVerifyInteraction(interaction) {
                 const record = await upsertVerifiedMember(interaction.guild.id, member.id, new Date());
                 await applyTenureForMember(member, record);
             } catch {}
+
+            if (SPONSOR_GUILD_IDS.includes(interaction.guild.id)) {
+                try {
+                    const mainGuildRecord = await VerificationTenure.findOne({
+                        guildId: MAIN_GUILD_ID,
+                        userId: member.id
+                    }).lean();
+
+                    if (mainGuildRecord) {
+                        let verificatoRole = interaction.guild.roles.cache.find(r => r.name === VERIFICATO_ROLE_NAME);
+                        if (!verificatoRole) {
+                            await interaction.guild.roles.fetch().catch(() => {});
+                            verificatoRole = interaction.guild.roles.cache.find(r => r.name === VERIFICATO_ROLE_NAME);
+                        }
+                        if (!verificatoRole && VERIFICATO_ROLE_IDS[interaction.guild.id]) {
+                            verificatoRole = interaction.guild.roles.cache.get(VERIFICATO_ROLE_IDS[interaction.guild.id]);
+                            if (!verificatoRole) {
+                                verificatoRole = await interaction.guild.roles.fetch(VERIFICATO_ROLE_IDS[interaction.guild.id]).catch(() => null);
+                            }
+                        }
+                        if (verificatoRole && !member.roles.cache.has(verificatoRole.id)) {
+                            await member.roles.add(verificatoRole.id).catch((error) => {
+                                global.logger.error('[VERIFY] Failed to add Verificato role:', error);
+                            });
+                        } else if (!verificatoRole) {
+                            global.logger.warn(`[VERIFY] Role "${VERIFICATO_ROLE_NAME}" not found in guild ${interaction.guild.id}`);
+                        }
+                    } else {
+                        const notVerifiedMessage = new EmbedBuilder()
+                            .setColor('Orange')
+                            .setTitle('<:alarm:1461725841451909183> Verifica Incompleta')
+                            .setDescription(
+                                '<:space:1461733157840621608> <:rightSort:1461726104422453298> Hai completato la verifica, ma per ottenere il ruolo **༄ Verificato** e accedere a tutte le funzionalità, devi prima unirti e verificarti nel server principale **Vinili & Caffè**.\n\n' +
+                                '<:space:1461733157840621608> <:rightSort:1461726104422453298> Link: https://discord.gg/viniliecaffe'
+                            );
+
+                        try {
+                            await interaction.user.send({ embeds: [notVerifiedMessage] });
+                        } catch {
+                            await safeReply(interaction, {
+                                embeds: [notVerifiedMessage],
+                                flags: 1 << 6
+                            });
+                        }
+                    }
+                } catch (error) {
+                    global.logger.error('[VERIFY] Cross-server check failed:', error);
+                }
+            }
             const logChannel = interaction.guild?.channels?.cache?.get(VERIFY_LOG_CHANNEL_ID);
             if (logChannel) {
                 const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
