@@ -11,6 +11,6 @@ const SponsorMainLeaveSchema = new Schema(
   { timestamps: true }
 );
 
-SponsorMainLeaveSchema.index({ kickAt: 1 }, { expireAfterSeconds: 48 * 60 * 60 });
+SponsorMainLeaveSchema.index({ expireAfterSeconds: 48 * 60 * 60 });
 
 module.exports = model('SponsorMainLeave', SponsorMainLeaveSchema);
