@@ -1,7 +1,7 @@
 const { PermissionsBitField } = require('discord.js');
 const IDs = require('../Config/ids');
 
-const COUNTER_PREFIX = '༄☕︲User:';
+const COUNTER_PREFIX = '༄☕︲User: ';
 const primaryTimers = new Map();
 const secondaryTimers = new Map();
 
