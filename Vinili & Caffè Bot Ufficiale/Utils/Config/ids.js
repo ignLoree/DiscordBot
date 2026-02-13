@@ -179,7 +179,7 @@ const ids = {
     fmbot: getByNameAt('roles', '༄ .fmbot', 0), // .fmbot -> 1468978359605395691
     Discadia: getByNameAt('roles', '༄ Discadia', 0), // Discadia -> 1468236145753067739
     PokeName: getByNameAt('roles', '༄ Poke Name', 0), // Poke Name -> 1468978249152594135
-    separatore1: getByNameAt('roles', '。.⠀・⠀゜✭⠀・.・⠀✫⠀・⠀゜・⠀。', 0), // . . -> 1442568885869215975
+    separatore1: '1442568885869215975', // . . (separatore)
     Perms1: getByNameAt('roles', '༄ 🔗', 0), // roles -> 1442568888096391260
     Founder: getByNameAt('roles', '༄ Founder', 0), // Founder -> 1442568886988963923
     BotUfficiale: getByNameAt('roles', '༄ Bot Ufficiale', 0), // Bot Ufficiale -> 1329119091348213854
@@ -195,7 +195,7 @@ const ids = {
     Helper: getByNameAt('roles', '༄ Helper', 0), // Helper -> 1442568904311570555
     PartnerManager: getByNameAt('roles', '༄ Partner Manager', 0), // Partner Manager -> 1442568905582317740
     Staff: getByNameAt('roles', '༄ Staff', 0), // Staff -> 1442568910070349985
-    separatore2: getByNameAt('roles', '。.⠀・⠀゜✭⠀・.・⠀✫⠀・⠀゜・⠀。', 1), // . . -> 1469759519159615620
+    separatore2: '1469759519159615620', // . . (separatore)
     redPlus: getByNameAt('roles', '༄ Red Gradientᵖˡᵘˢ', 0), // Red Gradientplus -> 1469759694930182284
     orangePlus: getByNameAt('roles', '༄ Orange Gradientᵖˡᵘˢ', 0), // Orange Gradientplus -> 1469759700944814231
     yellowPlus: getByNameAt('roles', '༄ Yellow Gradientᵖˡᵘˢ', 0), // Yellow Gradientplus -> 1469759704380084384
@@ -207,7 +207,7 @@ const ids = {
     grayPlus: getByNameAt('roles', '༄ Gray Gradientᵖˡᵘˢ', 0), // Gray Gradientplus -> 1469760931113336864
     whitePlus: getByNameAt('roles', '༄ White Gradientᵖˡᵘˢ', 0), // White Gradientplus -> 1469761030417809675
     YinYangPlus: getByNameAt('roles', '༄ Yin & Yangᵖˡᵘˢ', 0), // Yin & Yangplus -> 1469761114140315831
-    separatore3: getByNameAt('roles', '。.⠀・⠀゜✭⠀・.・⠀✫⠀・⠀゜・⠀。', 2), // . . -> 1469452818351001772
+    separatore3: '1469452818351001772', // . . (separatore)
     Cherry: getByNameAt('roles', '༄ Cherry', 0), // Cherry -> 1442568958656905318
     Blood: getByNameAt('roles', '༄ Blood', 0), // Blood -> 1442568956832645212
     Scarlet: getByNameAt('roles', '༄ Scarlet', 0), // Scarlet -> 1442568961077153994
@@ -236,7 +236,7 @@ const ids = {
     GreySmoke: getByNameAt('roles', '༄ Grey Smoke', 0), // Grey Smoke -> 1442568988961013821
     Grey: getByNameAt('roles', '༄ Grey', 0), // Grey -> 1442568989866725468
     White: getByNameAt('roles', '༄ White', 0), // White -> 1442568991150309578
-    separatore4: getByNameAt('roles', '。.⠀・⠀゜✭⠀・.・⠀✫⠀・⠀゜・⠀。', 3), // . . -> 1469452890761596981
+    separatore4: '1469452890761596981', // . . (separatore)
     customrole1: getByNameAt('roles', '༄ The Moon Is Beautiful, Isn\'t It?', 0), // The Moon Is Beautiful, Isn't It? -> 1442568940579459102
     customrole2: getByNameAt('roles', '༄ Poetry Crew', 0), // Poetry Crew -> 1442568942194393211
     customrole3: getByNameAt('roles', '༄ Jolly', 0), // Jolly -> 1442568943834234890
@@ -245,7 +245,7 @@ const ids = {
     blacklistTicket: getByNameAt('roles', '༄ No Ticket', 0), // No Ticket -> 1463248847768785038
     blacklistModuli: getByNameAt('roles', '༄ No Moduli', 0), // No Moduli -> 1463248874725576879
     Incense: getByNameAt('roles', '༄ Incense', 0), // Incense -> 1442568951912726628
-    separatore5: getByNameAt('roles', 'ㅤㅤㅤㅤ       ㅤ・BADGEs・ㅤ    ㅤㅤㅤ', 0), // BADGEs -> 1468674171213971568
+    separatore5: '1468674171213971568', // BADGEs (separatore)
     VIP: getByNameAt('roles', '༄ VIP', 0), // VIP -> 1442568950805430312
     Donator: getByNameAt('roles', '༄ Donator', 0), // Donator -> 1442568916114346096
     ServerBooster: getByNameAt('roles', '༄ Server Booster', 0), // Server Booster -> 1329497467481493607
@@ -261,7 +261,7 @@ const ids = {
     NuovoUtente: getByNameAt('roles', '༄ Nuovo Utente', 0), // Nuovo Utente -> 1469041461294268489
     Member: getByNameAt('roles', '༄ Member', 0), // Member -> 1442568949605597264
     Bots: getByNameAt('roles', '༄ Bots', 0), // Bots -> 1442568954181713982
-    separatore6: getByNameAt('roles', 'ㅤ ㅤㅤ   ㅤ       ㅤ・SPECIALI・ㅤㅤㅤㅤ', 0), // SPECIALI -> 1442568938457399299
+    separatore6: '1442568938457399299', // SPECIALI (separatore)
     PicPerms: getByNameAt('roles', '༄ PicPerms', 0), // PicPerms -> 1468938195348754515
     Strategist: getByNameAt('roles', '༄ Strategist⁺¹⁰⁰⁰⁰⁰', 0), // Strategist+100000 -> 1468675595058811075
     Mentor: getByNameAt('roles', '༄ Mentor⁺⁵⁰⁰⁰⁰', 0), // Mentor+50000 -> 1468675590747062355
@@ -272,14 +272,14 @@ const ids = {
     Scout: getByNameAt('roles', '༄ Scout⁺¹⁰⁰⁰', 0), // Scout+1000 -> 1468675570865803407
     Rookie: getByNameAt('roles', '༄ Rookie⁺⁵⁰⁰', 0), // Rookie+500 -> 1468675567015428239
     Initiate: getByNameAt('roles', '༄ Initiate⁺¹⁰⁰', 0), // Initiate+100 -> 1468675561948971058
-    separatore7: getByNameAt('roles', 'ㅤㅤㅤㅤㅤㅤㅤ・LIVELLI・ㅤ       ㅤㅤㅤ', 0), // LIVELLI -> 1442568928667631738
+    separatore7: '1442568928667631738', // LIVELLI (separatore)
     Level100: getByNameAt('roles', '༄ Level 100+', 0), // Level 100+ -> 1442568929930379285
     Level70: getByNameAt('roles', '༄ Level 70+', 0), // Level 70+ -> 1442568931326824488
     Level50: getByNameAt('roles', '༄ Level 50+', 0), // Level 50+ -> 1442568932136587297
     Level30: getByNameAt('roles', '༄ Level 30+', 0), // Level 30+ -> 1442568933591748688
     Level20: getByNameAt('roles', '༄ Level 20+', 0), // Level 20+ -> 1442568934510297226
     Level10: getByNameAt('roles', '༄ Level 10+', 0), // Level 10+ -> 1442568936423034940
-    separatore8: getByNameAt('roles', 'ㅤ    ㅤㅤㅤㅤㅤ・SELF ROLES・ㅤ    ㅤ ㅤ', 0), // SELF ROLES -> 1442568992459067423
+    separatore8: '1442568992459067423', // SELF ROLES (separatore)
     1314: getByNameAt('roles', '༄ 13-14', 0), // 13-14 -> 1442568993197265021
     1516: getByNameAt('roles', '༄ 15-16', 0), // 15-16 -> 1442568994581381170
     1718: getByNameAt('roles', '༄ 17-18', 0), // 17-18 -> 1442568995348807691

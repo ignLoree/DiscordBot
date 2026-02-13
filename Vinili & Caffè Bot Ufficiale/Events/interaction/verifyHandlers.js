@@ -6,10 +6,10 @@ const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_ROLE_IDS = [
     IDs.roles.Member,
-    '1442568938457399299', // separatore6 - SPECIALI
-    '1442568992459067423', // separatore8 - SELF ROLES
-    '1468674171213971568', // separatore5 - BADGEs
-    '1442568928667631738'  // separatore7 - LIVELLI
+    IDs.roles.separatore6,
+    IDs.roles.separatore8,
+    IDs.roles.separatore5,
+    IDs.roles.separatore7
 ].filter(Boolean);
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
