@@ -8,6 +8,7 @@ const { handleDmBroadcastModal } = require('./interaction/dmBroadcastModal');
 const { handleVerifyInteraction } = require('./interaction/verifyHandlers');
 const { handleCustomRoleInteraction } = require('./interaction/customRoleHandlers');
 const { handlePauseButton } = require('./interaction/pauseHandlers');
+const { handleEmbedBuilderInteraction } = require('./interaction/embedBuilderHandlers');
 const IDs = require('../Utils/Config/ids');
 const {
     checkButtonPermission,
@@ -83,6 +84,7 @@ module.exports = {
                 }
             }
             if (await handleTicketInteraction(interaction)) return;
+            if (await handleEmbedBuilderInteraction(interaction, client)) return;
             if (await handlePartnerModal(interaction)) return;
             if (await handleSuggestionVote(interaction)) return;
             if (await handlePauseButton(interaction)) return;

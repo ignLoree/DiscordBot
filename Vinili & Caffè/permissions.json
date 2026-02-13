@@ -258,6 +258,16 @@
         ]
       }
     },
+    "embed": {
+      "roles": [
+        "roles.HighStaff"
+      ],
+      "subcommands": {
+        "create": [
+          "roles.HighStaff"
+        ]
+      }
+    },
     "rank": [
       "roles.Member"
     ],

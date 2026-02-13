@@ -343,13 +343,11 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
     if (!invalidIndices.size) continue;
 
-    // Solo log degli errori, NON cancellare le partnership
     let flagged = 0;
     for (const index of invalidIndices) {
       const action = actions[index];
       if (!action) continue;
-      // await deletePartnerActionMessages(guild, action); // DISABILITATO
-      await logPointRemoval(guild, doc.userId, `[SOLO LOG] ${invalidReasonsByIndex.get(index)}`, action);
+      await logPointRemoval(guild, doc.userId, `${invalidReasonsByIndex.get(index)}`, action);
       flagged += 1;
     }
 

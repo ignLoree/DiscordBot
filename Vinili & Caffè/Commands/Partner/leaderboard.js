@@ -17,7 +17,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
+        await interaction.deferReply().catch(() => {});
         const tipo = interaction.options.getString('tipo') || 'totale';
         const isWeekly = tipo === 'settimanale';
         const weekAgo = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000));
