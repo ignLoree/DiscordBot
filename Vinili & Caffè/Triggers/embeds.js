@@ -1238,8 +1238,8 @@ async function runAllClientReadyPanels(client) {
 }
 
 module.exports = {
-  name: 'startupPanelsInternal',
-  once: false,
+  name: 'ready',
+  once: true,
   async execute(client) {
     await runAllClientReadyPanels(client);
   }
