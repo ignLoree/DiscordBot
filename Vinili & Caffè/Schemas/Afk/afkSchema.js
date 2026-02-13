@@ -19,5 +19,6 @@ const afkSchema = new mongoose.Schema({
     },
     originalName: String,
 });
+
 afkSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 module.exports = mongoose.models.AFK || mongoose.model('AFK', afkSchema);
