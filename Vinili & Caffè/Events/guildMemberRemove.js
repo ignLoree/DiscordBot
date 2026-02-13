@@ -8,6 +8,7 @@ const IDs = require('../Utils/Config/ids');
 const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
 const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
+const SponsorMainLeave = require('../Schemas/Tags/tagsSchema');
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
     IDs.roles.PartnerManager,
@@ -23,6 +24,38 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 ]);
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
+
+const MAIN_GUILD_ID = '1329080093599076474'
+const OFFICIAL_INVITE_URL = 'https://discord.gg/viniliecaffe'
+const SPONSOR_GUILD_IDS = [
+    '1471511676019933354',
+    '1471511928739201047',
+    '1471512183547498579',
+    '1471512555762483330',
+    '1471512797140484230',
+    '1471512808448458958'
+]
+
+function makeRejoinEmbed() {
+    return new EmbedBuilder()
+        .setColor('#ffb020')
+        .setTitle('Rientra nel server principale')
+        .setDescription(
+            'Hai lasciato il server principale **Vinili & Caffè**.\n\n' +
+            'Per mantenere l\'accesso ai server TAGS devi rientrare entro **24 ore**.\n\n' +
+            'Clicca il bottone qui sotto per rientrare.'
+        )
+        .setFooter({ text: 'Se non rientri entro 24h sarai rimosso dal server e perderai la TAG.' });
+}
+
+function makeRejoinRow() {
+    return new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel('Rientra nel server principale')
+            .setURL(OFFICIAL_INVITE_URL)
+    );
+}
 
 function toUnix(date) {
     return Math.floor(date.getTime() / 1000);
@@ -45,7 +78,6 @@ module.exports = {
                 scheduleStaffListRefresh(client, member.guild.id);
             }
 
-            // Send leave log
             const joinLeaveLogChannel = await resolveGuildChannel(member.guild, JOIN_LEAVE_LOG_CHANNEL_ID);
             if (joinLeaveLogChannel && !member.user?.bot) {
                 const leaveLogEmbed = new EmbedBuilder()
@@ -68,7 +100,42 @@ module.exports = {
             await InviteTrack.findOneAndUpdate(
                 { guildId: member.guild.id, userId: member.id, active: true },
                 { $set: { active: false, leftAt: new Date() } }
-            ).catch(() => {});
+            ).catch(() => { });
+
+            if (member?.guild?.id === MAIN_GUILD_ID && !member.user?.bot) {
+                const userId = member.id;
+
+                const inSomeSponsor = await (async () => {
+                    for (const sid of SPONSOR_GUILD_IDS) {
+                        const g = member.client.guilds.cache.get(sid);
+                        if (!g) continue;
+                        const m = await g.members.fetch(userId).catch(() => null);
+                        if (m) return true;
+                    }
+                    return false;
+                })();
+
+                if (inSomeSponsor) {
+                    const now = new Date();
+                    const kickAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+                    await SponsorMainLeave.updateOne(
+                        { userId },
+                        { $set: { userId, leftAt: now, kickAt, dmSent: false, dmFailed: false } },
+                        { upsert: true }
+                    ).catch(() => { });
+
+                    const dmOk = await member.user
+                        .send({ embeds: [makeRejoinEmbed()], components: [makeRejoinRow()] })
+                        .then(() => true)
+                        .catch(() => false);
+
+                    await SponsorMainLeave.updateOne(
+                        { userId },
+                        { $set: dmOk ? { dmSent: true } : { dmFailed: true } }
+                    ).catch(() => { });
+                }
+            }
 
             const guild = member.guild;
             scheduleMemberCounterRefresh(guild, { delayMs: 300, secondPassMs: 2200 });
@@ -84,7 +151,7 @@ module.exports = {
                         await Ticket.updateOne(
                             { _id: ticket._id },
                             { $set: { open: false, closeReason: "Utente uscito dal server", closedAt: new Date() } }
-                        ).catch(() => {});
+                        ).catch(() => { });
                         continue;
                     }
 
@@ -97,7 +164,7 @@ module.exports = {
                     ticket.transcript = transcriptTXT;
                     ticket.closeReason = "Utente uscito dal server";
                     ticket.closedAt = new Date();
-                    await ticket.save().catch(() => {});
+                    await ticket.save().catch(() => { });
 
                     const createdAtFormatted = ticket.createdAt
                         ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
@@ -122,9 +189,9 @@ module.exports = {
 `)
                                     .setColor("#6f4e37")
                             ]
-                        }).catch(() => {});
+                        }).catch(() => { });
                     }
-                    setTimeout(() => channel.delete().catch(() => {}), 1000);
+                    setTimeout(() => channel.delete().catch(() => { }), 1000);
                 }
             }
             const hadTrackedStaffRole = member.roles?.cache
@@ -145,13 +212,13 @@ module.exports = {
                         `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
 <:member_role_icon:1330530086792728618> \`${roleLabel}\` <a:vegarightarrow:1443673039156936837> \`${userRoleLabel}\`
 <:discordstaff:1443651872258003005> __Dimissioni (Esce dal server)__`;
-                    await resignChannel.send({ content: msg }).catch(() => {});
+                    await resignChannel.send({ content: msg }).catch(() => { });
                 }
 
                 await Staff.deleteOne({
                     guildId: guild.id,
                     userId: member.id
-                }).catch(() => {});
+                }).catch(() => { });
             }
             const partnerships = await Staff.find({
                 guildId: guild.id,
@@ -229,7 +296,7 @@ module.exports = {
                                 for (const messageId of messageIds) {
                                     if (!messageId) continue;
                                     const msg = await channel.messages.fetch(messageId).catch(() => null);
-                                    if (msg) await msg.delete().catch(() => {});
+                                    if (msg) await msg.delete().catch(() => { });
                                 }
                             }
 
@@ -239,7 +306,7 @@ module.exports = {
                                 // Keep earned points even when partnership messages are auto-removed after leave timeout.
                             }
                             doc.managerId = null;
-                            await doc.save().catch(() => {});
+                            await doc.save().catch(() => { });
                         }
                     }, 5 * 60 * 1000);
                 } catch (err) {

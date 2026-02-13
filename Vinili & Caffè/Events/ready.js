@@ -24,6 +24,7 @@ const IDs = require('../Utils/Config/ids');
 const startupPanelsTrigger = require('../Triggers/embeds');
 const { queueIdsCatalogSync } = require('../Utils/Config/idsAutoSync');
 const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
+const { startTagsLeaveWatcher } = require('../Services/Community/tagKickService');
 
 const getChannelSafe = async (client, channelId) => {
     if (!channelId) return null;
@@ -132,6 +133,11 @@ module.exports = {
             };
             await engagementTick();
             setInterval(engagementTick, 60 * 1000);
+            try {
+                startTagsLeaveWatcher(client);
+            } catch (err) {
+                global.logger.error('[TAGS] Failed to start loop', err)
+            }
             try {
                 startMinigameLoop(client);
             } catch (err) {
