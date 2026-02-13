@@ -1085,19 +1085,22 @@ async function runSponsorGuildTagPanelAuto(client) {
 
       const tagEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setTitle(`<:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`)
         .setDescription([
+          '## <:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}\'s Guild-TAG',
           dividerLine,
+          '',
           '',
           '**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:PinkQuestionMark:1471892611026391306>**',
           '────୨ৎ────',
           `<a:VC_Exclamation:1448687427836444854> Vi basterà essere parte di https://discord.gg/viniliecaffe oppure`,
           `Boostare questo server (<a:flyingnitroboost:1443652205705170986>⭑.ᐟ ${boosterRoleMention} )`,
           '',
+          '',
           '**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:PinkQuestionMark:1471892611026391306>**',
           '────୨ৎ────',
           `<a:VC_Exclamation:1448687427836444854> You just need to be part of https://discord.gg/viniliecaffe or boost`,
           `This server (<a:flyingnitroboost:1443652205705170986>⭑.ᐟ ${boosterRoleMention} )`,
+          '',
           '',
           '<:VC_PepeComfy:1331591439599272004>⭑.ᐟ Keep up! Nuovi aggiornamenti in arrivo...'
         ].join('\n'))
@@ -1238,8 +1241,8 @@ async function runAllClientReadyPanels(client) {
 }
 
 module.exports = {
-  name: 'ready',
-  once: true,
+  name: 'startupPanelsInternal',
+  once: false,
   async execute(client) {
     await runAllClientReadyPanels(client);
   }
