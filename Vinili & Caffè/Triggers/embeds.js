@@ -1,6 +1,6 @@
 async function runEmbedSponsorPanelAuto(client) {
   const IDs = require('../Utils/Config/ids');
-  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder } = require('discord.js');
   const path = require('path');
   const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
   const SPONSOR_MEDIA_NAME = 'sponsor.gif';
