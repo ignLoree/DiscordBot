@@ -1013,11 +1013,11 @@ async function runSponsorServersTicketPanelAuto(client) {
       }
 
       if (msg) {
-        if (await shouldEditMessage(msg, { embeds: [embed], components: [row], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
-          await msg.edit({ files: [attachment], embeds: [embed], components: [row] }).catch(() => { });
+        if (await shouldEditMessage(msg, { embeds: [embed], components: [ticketSelectRow], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
+          await msg.edit({ files: [attachment], embeds: [embed], components: [ticketSelectRow] }).catch(() => { });
         }
       } else {
-        msg = await channel.send({ files: [attachment], embeds: [embed], components: [row] }).catch(() => null);
+        msg = await channel.send({ files: [attachment], embeds: [embed], components: [ticketSelectRow] }).catch(() => null);
       }
 
       if (msg?.id) {
