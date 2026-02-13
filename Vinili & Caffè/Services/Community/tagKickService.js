@@ -1,4 +1,4 @@
-const SponsorMainLeave = require('../Schemas/Community/sponsorMainLeaveSchemas');
+const SponsorMainLeave = require('../../Schemas/Tags/tagsSchema');
 
 const MAIN_GUILD_ID = '1329080093599076474'
 const OFFICIAL_INVITE_URL = 'https://discord.gg/viniliecaffe' 
