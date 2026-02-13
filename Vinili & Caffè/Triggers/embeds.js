@@ -908,6 +908,127 @@ async function runTicketPanelAuto(client) {
   }
 }
 
+async function runSponsorServersTicketPanelAuto(client) {
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+  const path = require('path');
+  const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
+  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+
+  const SPONSOR_GUILD_IDS = {
+    '1471511676019933354': { tagName: 'Luna', emoji: '🌙' },
+    '1471511928739201047': { tagName: 'Cash', emoji: '💸' },
+    '1471512183547498579': { tagName: 'Porn', emoji: '🔞' },
+    '1471512555762483330': { tagName: '69', emoji: '😈' },
+    '1471512797140484230': { tagName: 'Weed', emoji: '🍃' },
+    '1471512808448458958': { tagName: 'Figa', emoji: '🍑' }
+  };
+
+  const TICKET_CHANNEL_IDS = {
+    '1471511676019933354': '1471974302109667410',
+    '1471511928739201047': '1471974355964657765',
+    '1471512183547498579': '1471974536357347570',
+    '1471512555762483330': '1471974622777049098',
+    '1471512797140484230': '1471974712958648412',
+    '1471512808448458958': '1471974799453720740'
+  };
+
+  const GUILDED_ROLE_IDS = {
+    "1471511676019933354": "1471627231637012572",
+    "1471511928739201047": "1471628245404483762",
+    "1471512183547498579": "1471628136172097638",
+    "1471512555762483330": "1471628002050838790",
+    "1471512797140484230": "1471627880575275008",
+    "1471512808448458958": "1471627711901470781"
+  };
+
+  let guildedRole = null;
+
+  const guildedRoleId = GUILDED_ROLE_IDS[guild.id];
+  if (guildedRoleId) {
+    guildedRole = await guild.roles.fetch(guildedRoleId).catch(() => null);
+  }
+
+  const guildedRoleMention = guildedRole
+    ? `<@&${guildedRole.id}>`
+    : '`༄ Guilded`';
+
+  const TICKET_MEDIA_NAME = 'ticket.gif';
+  const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
+
+  for (const [guildId, config] of Object.entries(SPONSOR_GUILD_IDS)) {
+    try {
+      const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+      if (!guild) continue;
+
+      await guild.channels.fetch().catch(() => { });
+
+      let channel = null;
+      const mappedId = TICKET_CHANNEL_IDS[guildId];
+      if (mappedId) {
+        channel = guild.channels.cache.get(mappedId) || await guild.channels.fetch(mappedId).catch(() => null);
+      }
+
+      if (!channel) {
+        channel = guild.channels.cache.find((ch) => {
+          if (!ch?.isTextBased?.()) return false;
+          const n = (ch.name || '').toLowerCase();
+          return n.includes('ticket') || n.includes('assistenza') || n.includes('support');
+        }) || null;
+      }
+
+      if (!channel?.isTextBased?.()) continue;
+
+      const attachment = new AttachmentBuilder(TICKET_MEDIA_PATH, { name: TICKET_MEDIA_NAME });
+
+      const embed = new EmbedBuilder()
+        .setColor('#6f4e37')
+        .setTitle(`༄${config.emoji}︲${config.tagName}'s Ticket`)
+        .setDescription(`Clicca sul pulsante per aprire un ticket e claimare il tuo ruolo <@&${guildedRoleMention}> su questo server e su quello principale.`)
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('ticket_supporto')
+          .setLabel('Apri ticket')
+          .setEmoji(`<a:S_News_3:1471891662786527253>`)
+          .setStyle(ButtonStyle.Primary)
+      );
+
+      let panelDoc = null;
+      try {
+        panelDoc = await Panel.findOneAndUpdate(
+          { guildId, channelId: channel.id },
+          { $setOnInsert: { guildId, channelId: channel.id } },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } catch {
+        panelDoc = null;
+      }
+
+      let msg = null;
+      if (panelDoc?.sponsorTicketPanelMessageId) {
+        msg = await channel.messages.fetch(panelDoc.sponsorTicketPanelMessageId).catch(() => null);
+      }
+
+      if (msg) {
+        if (await shouldEditMessage(msg, { embeds: [embed], components: [row], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
+          await msg.edit({ files: [attachment], embeds: [embed], components: [row] }).catch(() => { });
+        }
+      } else {
+        msg = await channel.send({ files: [attachment], embeds: [embed], components: [row] }).catch(() => null);
+      }
+
+      if (msg?.id) {
+        await Panel.updateOne(
+          { guildId, channelId: channel.id },
+          { $set: { sponsorTicketPanelMessageId: msg.id } }
+        ).catch(() => { });
+      }
+    } catch (err) {
+      global.logger?.error?.('[TAGS TICKET] Error processing guild:', guildId, err);
+    }
+  }
+}
+
 async function runSponsorServersVerifyPanelAuto(client) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
@@ -1055,6 +1176,17 @@ async function runSponsorGuildTagPanelAuto(client) {
         "1471512808448458958": "1471515516291121213"
       };
 
+      let boosterRole = null;
+
+      const boosterRoleId = BOOSTER_ROLE_IDS[guild.id];
+      if (boosterRoleId) {
+        boosterRole = await guild.roles.fetch(boosterRoleId).catch(() => null);
+      }
+
+      const boosterRoleMention = boosterRole
+        ? `<@&${boosterRole.id}>`
+        : '`༄ Server Booster`';
+
       if (!guild) {
         global.logger.warn('[GUILD TAG] Guild not found:', guildId);
         continue;
@@ -1069,17 +1201,6 @@ async function runSponsorGuildTagPanelAuto(client) {
         global.logger.warn('[GUILD TAG] Channel not found in guild:', guildId, config.channelId);
         continue;
       }
-
-      let boosterRole = null;
-
-      const boosterRoleId = BOOSTER_ROLE_IDS[guild.id];
-      if (boosterRoleId) {
-        boosterRole = await guild.roles.fetch(boosterRoleId).catch(() => null);
-      }
-
-      const boosterRoleMention = boosterRole
-        ? `<@&${boosterRole.id}>`
-        : '`༄ Server Booster`';
 
       const dividerLine = '<a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531>';
 
@@ -1216,6 +1337,11 @@ async function runEmbedWithButtonsSections(client) {
   }
   try {
     await runSponsorServersVerifyPanelAuto(client);
+    try {
+      await runSponsorServersTicketPanelAuto(client);
+    } catch (err) {
+      global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runSponsorServersTicketPanelAuto failed:', err);
+    }
   } catch (err) {
     global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runSponsorServersVerifyPanelAuto failed:', err);
   }

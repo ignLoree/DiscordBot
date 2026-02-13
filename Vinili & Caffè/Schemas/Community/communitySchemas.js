@@ -129,7 +129,8 @@ const personalityPanelSchema = new Schema({
   verifyInfoMessageId: { type: String, default: null },
   verifyPanelMessageId: { type: String, default: null },
   ticketInfoMessageId: { type: String, default: null },
-  ticketPanelMessageId: { type: String, default: null }
+  ticketPanelMessageId: { type: String, default: null },
+  sponsorTicketPanelMessageId: { type: String, default: null }
 });
 personalityPanelSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
