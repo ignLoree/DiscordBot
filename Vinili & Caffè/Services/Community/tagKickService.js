@@ -58,9 +58,9 @@ async function processSponsorLeaves(client) {
   }
 }
 
-function startSponsorLeaveWatcher(client) {
+function startTagsLeaveWatcher(client) {
   processSponsorLeaves(client).catch(() => {});
   setInterval(() => processSponsorLeaves(client).catch(() => {}), 10 * 60 * 1000);
 }
 
-module.exports = { startSponsorLeaveWatcher, processSponsorLeaves };
+module.exports = { startTagsLeaveWatcher, processSponsorLeaves };
