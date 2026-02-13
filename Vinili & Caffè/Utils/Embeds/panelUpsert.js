@@ -6,69 +6,20 @@ const CDN_ATTACHMENT_PATTERN = /(cdn\.discordapp\.com|media\.discordapp\.net)\/a
 
 function normalizeDiscordAttachmentUrl(value) {
   if (typeof value !== 'string') return value;
-  if (value.startsWith('attachment://')) {
-    return value.toLowerCase();
-  }
-  if (!CDN_ATTACHMENT_PATTERN.test(value)) {
-    return value;
-  }
+  if (value.startsWith('attachment://')) return value.toLowerCase();
+
+  if (!CDN_ATTACHMENT_PATTERN.test(value)) return value;
+
   const filenameMatch = value.match(/\/([^/?#]+)(?:\?|#|$)/);
   if (!filenameMatch?.[1]) return value;
+
   return `attachment://${filenameMatch[1].toLowerCase()}`;
 }
 
-function normalizeComparable(value) {
-  if (Array.isArray(value)) {
-    return value.map(normalizeComparable);
-  }
-  if (!value || typeof value !== 'object') {
-    return normalizeDiscordAttachmentUrl(value);
-  }
-
-  const normalized = {};
-  const entries = Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
-  for (const [key, raw] of entries) {
-    if (key === 'proxy_url' || key === 'proxyURL' || key === 'id') continue;
-    normalized[key] = normalizeComparable(raw);
-  }
-  return normalized;
-}
-
-const toComparableJson = (items = []) => JSON.stringify(
-  items.map((item) => normalizeComparable(typeof item?.toJSON === 'function' ? item.toJSON() : item))
-);
-
-function extractCustomIdsFromComponents(components = []) {
-  const ids = new Set();
-  for (const row of components || []) {
-    const rowJson = typeof row?.toJSON === 'function' ? row.toJSON() : row;
-    const children = Array.isArray(rowJson?.components) ? rowJson.components : [];
-    for (const component of children) {
-      const id = component?.custom_id || component?.customId || null;
-      if (id) ids.add(String(id));
-    }
-  }
-  return ids;
-}
-
 function normalizeText(value) {
-  return String(value || '')
+  return String(value ?? '')
     .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-function buildEmbedSignatureFromPayload(payloadEmbeds = []) {
-  const first = Array.isArray(payloadEmbeds) ? payloadEmbeds[0] : null;
-  const json = typeof first?.toJSON === 'function' ? first.toJSON() : first;
-  if (!json) return '';
-  return normalizeText(`${json.title || ''}|${json.description || ''}`).slice(0, 400);
-}
-
-function buildEmbedSignatureFromMessage(msgEmbeds = []) {
-  const first = Array.isArray(msgEmbeds) ? msgEmbeds[0] : null;
-  if (!first) return '';
-  return normalizeText(`${first.title || ''}|${first.description || ''}`).slice(0, 400);
+    .trim();
 }
 
 function hashBuffer(bufferLike) {
@@ -113,13 +64,113 @@ async function fetchAttachmentHash(url) {
   }
 }
 
+function simplifyEmbed(embed) {
+  const raw = typeof embed?.toJSON === 'function' ? embed.toJSON() : embed;
+  if (!raw || typeof raw !== 'object') return null;
+
+  const img = raw.image?.url ? normalizeDiscordAttachmentUrl(raw.image.url) : null;
+  const thumb = raw.thumbnail?.url ? normalizeDiscordAttachmentUrl(raw.thumbnail.url) : null;
+  const author = raw.author
+    ? {
+        name: normalizeText(raw.author.name),
+        icon_url: raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url) : null,
+        url: raw.author.url ? String(raw.author.url) : null
+      }
+    : null;
+
+  const footer = raw.footer
+    ? {
+        text: normalizeText(raw.footer.text),
+        icon_url: raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url) : null
+      }
+    : null;
+
+  const fields = Array.isArray(raw.fields)
+    ? raw.fields.map((f) => ({
+        name: normalizeText(f?.name),
+        value: normalizeText(f?.value),
+        inline: Boolean(f?.inline)
+      }))
+    : [];
+
+  return {
+    title: normalizeText(raw.title),
+    description: normalizeText(raw.description),
+    color: Number.isFinite(raw.color) ? raw.color : null,
+    url: raw.url ? String(raw.url) : null,
+    image: img,
+    thumbnail: thumb,
+    author,
+    footer,
+    fields
+  };
+}
+
+function simplifyComponents(components = []) {
+  const rows = Array.isArray(components) ? components : [];
+  return rows.map((row) => {
+    const r = typeof row?.toJSON === 'function' ? row.toJSON() : row;
+    const children = Array.isArray(r?.components) ? r.components : [];
+    return children.map((c) => ({
+      type: c?.type ?? null,
+      style: c?.style ?? null,
+      custom_id: c?.custom_id || c?.customId || null,
+      label: normalizeText(c?.label),
+      url: c?.url ? String(c.url) : null,
+      disabled: Boolean(c?.disabled),
+      emoji: c?.emoji
+        ? {
+            id: c.emoji.id ? String(c.emoji.id) : null,
+            name: c.emoji.name ? String(c.emoji.name) : null,
+            animated: Boolean(c.emoji.animated)
+          }
+        : null
+    }));
+  });
+}
+
+function toComparableEmbeds(embeds = []) {
+  const arr = Array.isArray(embeds) ? embeds : [];
+  return JSON.stringify(arr.map(simplifyEmbed).filter(Boolean));
+}
+
+function toComparableComponents(components = []) {
+  return JSON.stringify(simplifyComponents(components));
+}
+
+function extractCustomIdsFromComponents(components = []) {
+  const ids = new Set();
+  for (const row of components || []) {
+    const rowJson = typeof row?.toJSON === 'function' ? row.toJSON() : row;
+    const children = Array.isArray(rowJson?.components) ? rowJson.components : [];
+    for (const component of children) {
+      const id = component?.custom_id || component?.customId || null;
+      if (id) ids.add(String(id));
+    }
+  }
+  return ids;
+}
+
+function buildEmbedSignatureFromPayload(payloadEmbeds = []) {
+  const first = Array.isArray(payloadEmbeds) ? payloadEmbeds[0] : null;
+  const raw = typeof first?.toJSON === 'function' ? first.toJSON() : first;
+  if (!raw) return '';
+  return normalizeText(`${raw.title || ''}|${raw.description || ''}`).toLowerCase().slice(0, 400);
+}
+
+function buildEmbedSignatureFromMessage(msgEmbeds = []) {
+  const first = Array.isArray(msgEmbeds) ? msgEmbeds[0] : null;
+  if (!first) return '';
+  return normalizeText(`${first.title || ''}|${first.description || ''}`).toLowerCase().slice(0, 400);
+}
+
 async function shouldEditMessage(message, { embeds = [], components = [], files = [], attachmentName = null }) {
-  const currentEmbeds = toComparableJson(message?.embeds || []);
-  const nextEmbeds = toComparableJson(embeds);
+  const currentEmbeds = toComparableEmbeds(message?.embeds || []);
+  const nextEmbeds = toComparableEmbeds(embeds);
   if (currentEmbeds !== nextEmbeds) return true;
 
-  const currentComponents = toComparableJson(message?.components || []);
-  const nextComponents = toComparableJson(components);
+  const currentComponents = toComparableComponents(message?.components || []);
+  const nextComponents = toComparableComponents(components);
   if (currentComponents !== nextComponents) return true;
 
   const payloadFiles = Array.isArray(files) ? files.filter(Boolean) : [];
@@ -130,6 +181,7 @@ async function shouldEditMessage(message, { embeds = [], components = [], files 
     for (const payloadFile of payloadFiles) {
       const expectedName = resolvePayloadFileName(payloadFile);
       if (!expectedName) return true;
+
       const currentAttachment = currentAttachments.find((a) => String(a?.name || '') === expectedName);
       if (!currentAttachment) return true;
 
@@ -168,14 +220,15 @@ async function upsertPanelMessage(channel, client, payload) {
   let existing = null;
 
   if (payloadCustomIds.size > 0) {
-    existing = botMessages.find((msg) => {
-      const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
-      if (!msgCustomIds.size) return false;
-      for (const id of payloadCustomIds) {
-        if (!msgCustomIds.has(id)) return false;
-      }
-      return true;
-    }) || null;
+    existing =
+      botMessages.find((msg) => {
+        const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
+        if (!msgCustomIds.size) return false;
+        for (const id of payloadCustomIds) {
+          if (!msgCustomIds.has(id)) return false;
+        }
+        return true;
+      }) || null;
   }
 
   if (!existing && payloadSignature) {
@@ -190,6 +243,7 @@ async function upsertPanelMessage(channel, client, payload) {
     await channel.send(payload).catch(() => {});
     return;
   }
+
   if (await shouldEditMessage(existing, payload)) {
     await existing.edit(payload).catch(() => {});
   }

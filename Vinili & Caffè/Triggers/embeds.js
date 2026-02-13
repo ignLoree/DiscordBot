@@ -1045,7 +1045,16 @@ async function runSponsorGuildTagPanelAuto(client) {
 
   for (const [guildId, config] of Object.entries(GUILD_TAG_CONFIG)) {
     try {
-      const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+      const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null)
+      const BOOSTER_ROLE_IDS = {
+        "1471511676019933354": "1471512868494118975",
+        "1471511928739201047": "1471512411306459348",
+        "1471512183547498579": "1471513685976420443",
+        "1471512555762483330": "1471514106598260892",
+        "1471512797140484230": "1471514709420413111",
+        "1471512808448458958": "1471515516291121213"
+      };
+
       if (!guild) {
         global.logger.warn('[GUILD TAG] Guild not found:', guildId);
         continue;
@@ -1061,25 +1070,36 @@ async function runSponsorGuildTagPanelAuto(client) {
         continue;
       }
 
-      const dividerLine = '◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦';
+      let boosterRole = null;
+
+      const boosterRoleId = BOOSTER_ROLE_IDS[guild.id];
+      if (boosterRoleId) {
+        boosterRole = await guild.roles.fetch(boosterRoleId).catch(() => null);
+      }
+
+      const boosterRoleMention = boosterRole
+        ? `<@&${boosterRole.id}>`
+        : '`༄ Server Booster`';
+
+      const dividerLine = '<a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531>';
 
       const tagEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
-        .setTitle(`${config.emoji} ─ ─ .✦ 🐰 ₊˚ʚ ${config.tagName}'s Guild-TAG`)
+        .setTitle(`<:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`)
         .setDescription([
           dividerLine,
           '',
-          '**🌸 Come mantenere la Guild-TAG ?**',
-          '`─◦◇◦─`',
-          `❗ Vi basterà essere parte di https://discord.gg/viniliecaffe oppure`,
-          `Boostare questo server ( 〘👁•´¯👁 @ 🎨 ₊˚ ε Booster 🎭 )`,
+          '**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:PinkQuestionMark:1471892611026391306>**',
+          '────୨ৎ────',
+          `<a:VC_Exclamation:1448687427836444854> Vi basterà essere parte di https://discord.gg/viniliecaffe oppure`,
+          `Boostare questo server (<a:flyingnitroboost:1443652205705170986>⭑.ᐟ ${boosterRoleMention} )`,
           '',
-          '**🌸 How to keep the Guild-TAG ?**',
-          '`─◦◇◦─`',
-          `❗ You just need to be part of https://discord.gg/viniliecaffe or boost`,
-          `this server ( 〘👁•´¯👁 @ 🎨 ₊˚ ε Booster 🎭 )`,
+          '**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:PinkQuestionMark:1471892611026391306>**',
+          '────୨ৎ────',
+          `<a:VC_Exclamation:1448687427836444854> You just need to be part of https://discord.gg/viniliecaffe or boost`,
+          `This server (<a:flyingnitroboost:1443652205705170986>⭑.ᐟ ${boosterRoleMention} )`,
           '',
-          '🐰 •´¯ Keep up! Nuovi aggiornamenti in arrivo...'
+          '<:VC_PepeComfy:1331591439599272004>⭑.ᐟ Keep up! Nuovi aggiornamenti in arrivo...'
         ].join('\n'))
         .setFooter({ text: `.gg/viniliecaffe • ${new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` });
 
