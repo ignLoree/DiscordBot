@@ -28,7 +28,7 @@ const VERIFICATO_ROLE_IDS = {
   '1471512808448458958': '1471521694698176726'
 };
 
-const SPONSOR_VERIFY_NICKNAME = '.gg/italia';
+const SPONSOR_VERIFY_NICKNAME = '.gg/viniliecaffe';
 
 const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/communityOpsService');
 const { VerificationTenure } = require('../../Schemas/Community/communitySchemas');
