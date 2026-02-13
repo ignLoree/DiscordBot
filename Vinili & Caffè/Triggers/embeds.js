@@ -1086,7 +1086,7 @@ async function runSponsorGuildTagPanelAuto(client) {
       const tagEmbed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setDescription([
-          `## <:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}\'s Guild-TAG`,
+          `## <:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`,
           dividerLine,
           '',
           '',
