@@ -6,7 +6,6 @@ const temporaryCommandPermissionSchema = new Schema({
   userId: { type: String, required: true, index: true },
   commandKey: { type: String, required: true, index: true },
   grantedBy: { type: String, default: null },
-  expiresAt: { type: Date, required: true, index: true }
 }, { timestamps: true });
 
 temporaryCommandPermissionSchema.index({ guildId: 1, userId: 1, commandKey: 1 }, { unique: true });
