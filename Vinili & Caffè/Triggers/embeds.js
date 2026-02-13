@@ -989,7 +989,7 @@ async function runSponsorServersTicketPanelAuto(client) {
         .addOptions(
           {
             label: 'Prima categoria',
-            description: 'Supporto generale ▸ Segnalazioni ▸ Problemi',
+            description: 'Riscatto Ruolo',
             value: 'ticket_supporto',
             emoji: { id: '1443651872258003005', name: 'discordstaff' }
           },
@@ -1141,8 +1141,6 @@ async function runSponsorServersVerifyPanelAuto(client) {
           global.logger.error('[SPONSOR VERIFY] Failed to update panel doc:', err);
         });
       }
-
-      global.logger.info('[SPONSOR VERIFY] Panel updated for guild:', guildId);
     } catch (err) {
       global.logger.error('[SPONSOR VERIFY] Error processing guild:', guildId, err);
     }
