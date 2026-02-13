@@ -933,24 +933,13 @@ async function runSponsorServersTicketPanelAuto(client) {
   };
 
   const GUILDED_ROLE_IDS = {
-    "1471511676019933354": "1471627231637012572",
-    "1471511928739201047": "1471628245404483762",
-    "1471512183547498579": "1471628136172097638",
-    "1471512555762483330": "1471628002050838790",
-    "1471512797140484230": "1471627880575275008",
-    "1471512808448458958": "1471627711901470781"
+    '1471511676019933354': '1471627231637012572',
+    '1471511928739201047': '1471628245404483762',
+    '1471512183547498579': '1471628136172097638',
+    '1471512555762483330': '1471628002050838790',
+    '1471512797140484230': '1471627880575275008',
+    '1471512808448458958': '1471627711901470781'
   };
-
-  let guildedRole = null;
-
-  const guildedRoleId = GUILDED_ROLE_IDS[guild.id];
-  if (guildedRoleId) {
-    guildedRole = await guild.roles.fetch(guildedRoleId).catch(() => null);
-  }
-
-  const guildedRoleMention = guildedRole
-    ? `<@&${guildedRole.id}>`
-    : '`༄ Guilded`';
 
   const TICKET_MEDIA_NAME = 'ticket.gif';
   const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
@@ -961,6 +950,13 @@ async function runSponsorServersTicketPanelAuto(client) {
       if (!guild) continue;
 
       await guild.channels.fetch().catch(() => { });
+
+      let guildedRoleMention = '`༄ Guilded`';
+      const guildedRoleId = GUILDED_ROLE_IDS[guildId];
+      if (guildedRoleId) {
+        const role = await guild.roles.fetch(guildedRoleId).catch(() => null);
+        if (role) guildedRoleMention = `<@&${role.id}>`;
+      }
 
       let channel = null;
       const mappedId = TICKET_CHANNEL_IDS[guildId];
@@ -983,15 +979,22 @@ async function runSponsorServersTicketPanelAuto(client) {
       const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setTitle(`༄${config.emoji}︲${config.tagName}'s Ticket`)
-        .setDescription(`Clicca sul pulsante per aprire un ticket e claimare il tuo ruolo <@&${guildedRoleMention}> su questo server e su quello principale.`)
+        .setDescription(
+          `Clicca sul pulsante per aprire un ticket e claimare il tuo ruolo ${guildedRoleMention} su questo server e su quello principale.`
+        );
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('ticket_supporto')
-          .setLabel('Apri ticket')
-          .setEmoji(`<a:S_News_3:1471891662786527253>`)
-          .setStyle(ButtonStyle.Primary)
-      );
+      const ticketMenu = new StringSelectMenuBuilder()
+        .setCustomId('ticket_open_menu')
+        .setPlaceholder('🎫 Seleziona una categoria...')
+        .addOptions(
+          {
+            label: 'Prima categoria',
+            description: 'Supporto generale ▸ Segnalazioni ▸ Problemi',
+            value: 'ticket_supporto',
+            emoji: { id: '1443651872258003005', name: 'discordstaff' }
+          },
+        );
+      const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
 
       let panelDoc = null;
       try {
@@ -1024,7 +1027,7 @@ async function runSponsorServersTicketPanelAuto(client) {
         ).catch(() => { });
       }
     } catch (err) {
-      global.logger?.error?.('[TAGS TICKET] Error processing guild:', guildId, err);
+      global.logger?.error?.('[SPONSOR TICKET] Error processing guild:', guildId, err);
     }
   }
 }
@@ -1279,8 +1282,6 @@ async function runSponsorGuildTagPanelAuto(client) {
           global.logger.error('[GUILD TAG] Failed to update panel doc:', err);
         });
       }
-
-      global.logger.info('[GUILD TAG] Panel updated for guild:', guildId, 'Tag:', config.tagName);
     } catch (err) {
       global.logger.error('[GUILD TAG] Error processing guild:', guildId, err);
     }
