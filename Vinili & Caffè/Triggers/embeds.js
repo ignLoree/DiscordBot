@@ -1071,17 +1071,17 @@ async function runSponsorGuildTagPanelAuto(client) {
           '',
           '**🌸 Come mantenere la Guild-TAG ?**',
           '`─◦◇◦─`',
-          `❗ Vi basterà essere parte di https://discord.gg/italia oppure`,
+          `❗ Vi basterà essere parte di https://discord.gg/viniliecaffe oppure`,
           `Boostare questo server ( 〘👁•´¯👁 @ 🎨 ₊˚ ε Booster 🎭 )`,
           '',
           '**🌸 How to keep the Guild-TAG ?**',
           '`─◦◇◦─`',
-          `❗ You just need to be part of https://discord.gg/italia or boost`,
+          `❗ You just need to be part of https://discord.gg/viniliecaffe or boost`,
           `this server ( 〘👁•´¯👁 @ 🎨 ₊˚ ε Booster 🎭 )`,
           '',
           '🐰 •´¯ Keep up! Nuovi aggiornamenti in arrivo...'
         ].join('\n'))
-        .setFooter({ text: `.gg/italia • ${new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` });
+        .setFooter({ text: `.gg/viniliecaffe • ${new Date().toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}` });
 
       let attachment = null;
       try {
