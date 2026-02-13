@@ -1,17 +1,32 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionsBitField } = require('discord.js');
 const IDs = require('../Config/ids');
-const {
-  buildPrefixLookupKeys,
-  buildSlashLookupKeys,
-  hasTemporaryCommandPermission
-} = require('./temporaryCommandPermissions');
-
+const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission } = require('./temporaryCommandPermissions');
 const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
 const EMPTY_PERMISSIONS = { slash: {}, prefix: {}, buttons: {}, selectMenus: {}, modals: {} };
 let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
 let idsFallbackCache = null;
+
+const SPONSOR_GUILD_IDS = new Set([
+  '1471511676019933354',
+  '1471511928739201047',
+  '1471512183547498579',
+  '1471512555762483330',
+  '1471512797140484230',
+  '1471512808448458958'
+]);
+
+function isSponsorGuild(guildId) {
+  return SPONSOR_GUILD_IDS.has(String(guildId || ''));
+}
+
+function hasSponsorStaffPerms(member) {
+  if (!member) return false;
+  return member.permissions?.has(PermissionsBitField.Flags.Administrator)
+    || member.permissions?.has(PermissionsBitField.Flags.ManageChannels);
+}
+
 
 function getIdsConfig() {
   if (idsFallbackCache) return idsFallbackCache;
@@ -259,6 +274,20 @@ async function checkSlashPermission(interaction) {
 async function checkPrefixPermission(message, commandName, subcommandName = null) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
+  if (commandName === 'ticket' && isSponsorGuild(message?.guild?.id)) {
+    if (!subcommandName) return true;
+
+    const staffSubs = new Set([
+      'add', 'remove', 'closerequest', 'close', 'claim', 'unclaim', 'switchpanel', 'rename'
+    ]);
+
+    if (staffSubs.has(String(subcommandName))) {
+      return hasSponsorStaffPerms(message.member);
+    }
+
+    return true;
+  }
+
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
     const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
@@ -274,6 +303,22 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 
 async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || '');
+  if (isSponsorGuild(interaction?.guildId)) {
+    const staffTicketButtons = new Set([
+      'claim_ticket',
+      'unclaim',
+      'close_ticket',
+      'close_ticket_motivo'
+    ]);
+
+    if (staffTicketButtons.has(customId)) {
+      if (hasSponsorStaffPerms(interaction.member)) {
+        return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+      }
+      return { allowed: false, reason: 'missing_role', requiredRoles: ['Admin/ManageChannels'], ownerId: null };
+    }
+  }
+
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }

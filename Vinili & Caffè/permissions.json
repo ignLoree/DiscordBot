@@ -263,7 +263,7 @@
     ],
     "ticket": {
       "roles": [
-        "roles.Member"
+        "roles.Staff"
       ],
       "subcommands": {
         "add": [
