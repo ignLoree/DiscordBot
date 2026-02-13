@@ -909,7 +909,7 @@ async function runTicketPanelAuto(client) {
 }
 
 async function runSponsorServersTicketPanelAuto(client) {
-  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+  const { EmbedBuilder, ActionRowBuilder, AttachmentBuilder, StringSelectMenuBuilder } = require('discord.js');
   const path = require('path');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
   const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
