@@ -34,16 +34,7 @@ module.exports = {
   name: 'no-dm-list',
   aliases: ['nodmlist'],
 
-  async execute(message, args, client) {
-    const devIds = getDevIds(client);
-    if (!devIds.includes(message.author.id)) {
-      await safeMessageReply(message, {
-        content: '<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.',
-        allowedMentions: { repliedUser: false }
-      });
-      return;
-    }
-
+  async execute(message) {
     const set = await getNoDmSet(message.guild.id);
     const ids = Array.from(set);
     if (!ids.length) {

@@ -72,25 +72,25 @@ function simplifyEmbed(embed) {
   const thumb = raw.thumbnail?.url ? normalizeDiscordAttachmentUrl(raw.thumbnail.url) : null;
   const author = raw.author
     ? {
-        name: normalizeText(raw.author.name),
-        icon_url: raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url) : null,
-        url: raw.author.url ? String(raw.author.url) : null
-      }
+      name: normalizeText(raw.author.name),
+      icon_url: raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url) : null,
+      url: raw.author.url ? String(raw.author.url) : null
+    }
     : null;
 
   const footer = raw.footer
     ? {
-        text: normalizeText(raw.footer.text),
-        icon_url: raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url) : null
-      }
+      text: normalizeText(raw.footer.text),
+      icon_url: raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url) : null
+    }
     : null;
 
   const fields = Array.isArray(raw.fields)
     ? raw.fields.map((f) => ({
-        name: normalizeText(f?.name),
-        value: normalizeText(f?.value),
-        inline: Boolean(f?.inline)
-      }))
+      name: normalizeText(f?.name),
+      value: normalizeText(f?.value),
+      inline: Boolean(f?.inline)
+    }))
     : [];
 
   return {
@@ -120,10 +120,10 @@ function simplifyComponents(components = []) {
       disabled: Boolean(c?.disabled),
       emoji: c?.emoji
         ? {
-            id: c.emoji.id ? String(c.emoji.id) : null,
-            name: c.emoji.name ? String(c.emoji.name) : null,
-            animated: Boolean(c.emoji.animated)
-          }
+          id: c.emoji.id ? String(c.emoji.id) : null,
+          name: c.emoji.name ? String(c.emoji.name) : null,
+          animated: Boolean(c.emoji.animated)
+        }
         : null
     }));
   });
@@ -177,10 +177,10 @@ function normalizeEmbed(e) {
     thumbnail: e.thumbnail?.url || null,
     fields: Array.isArray(e.fields)
       ? e.fields.map(f => ({
-          name: f.name,
-          value: f.value,
-          inline: !!f.inline
-        }))
+        name: f.name,
+        value: f.value,
+        inline: !!f.inline
+      }))
       : []
   };
 }
@@ -201,16 +201,16 @@ function normalizeComponents(rows = []) {
 async function shouldEditMessage(message, payload) {
   if (!message) return true;
 
-  const oldEmbed = normalizeEmbed(message.embeds?.[0]);
-  const newEmbed = normalizeEmbed(payload.embeds?.[0]);
+  const oldEmbeds = toComparableEmbeds(message.embeds || []);
+  const newEmbeds = toComparableEmbeds(payload.embeds || []);
 
-  const oldComponents = normalizeComponents(message.components || []);
-  const newComponents = normalizeComponents(payload.components || []);
+  const oldComponents = toComparableComponents(message.components || []);
+  const newComponents = toComparableComponents(payload.components || []);
 
-  const embedChanged = JSON.stringify(oldEmbed) !== JSON.stringify(newEmbed);
-  const componentsChanged = JSON.stringify(oldComponents) !== JSON.stringify(newComponents);
+  const embedsChanged = oldEmbeds !== newEmbeds;
+  const componentsChanged = oldComponents !== newComponents;
 
-  return embedChanged || componentsChanged;
+  return embedsChanged || componentsChanged;
 }
 
 async function upsertPanelMessage(channel, client, payload) {
@@ -245,12 +245,12 @@ async function upsertPanelMessage(channel, client, payload) {
   }
 
   if (!existing) {
-    await channel.send(payload).catch(() => {});
+    await channel.send(payload).catch(() => { });
     return;
   }
 
   if (await shouldEditMessage(existing, payload)) {
-    await existing.edit(payload).catch(() => {});
+    await existing.edit(payload).catch(() => { });
   }
 }
 
