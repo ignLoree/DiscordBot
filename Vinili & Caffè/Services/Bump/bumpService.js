@@ -356,8 +356,6 @@ async function restorePendingVoteReminders(client) {
     scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, syntheticLastVote);
     restored++;
   }
-
-  global.logger?.info?.(`[DISCADIA] Restored ${restored} reminders, skipped ${skipped} (too old)`);
 }
 
 
