@@ -1,4 +1,5 @@
-const { Schema, model, models } = require('mongoose');
+const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
 const SponsorMainLeaveSchema = new Schema(
   {
@@ -13,4 +14,6 @@ const SponsorMainLeaveSchema = new Schema(
 
 SponsorMainLeaveSchema.index({ kickAt: 1 }, { expireAfterSeconds: 48 * 60 * 60 });
 
-module.exports = models.SponsorMainLeave || model('SponsorMainLeave', SponsorMainLeaveSchema);
+module.exports =
+  mongoose.models.SponsorMainLeave ||
+  mongoose.model('SponsorMainLeave', SponsorMainLeaveSchema);

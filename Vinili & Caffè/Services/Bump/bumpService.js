@@ -153,8 +153,12 @@ const discadiaBumpService = createBumpReminderService({
 let discadiaVoteReminderLoopHandle = null;
 
 function getVoteCooldownMs(client) {
-  const hours = client?.config?.discadiaVoteReminder?.cooldownHours || 24;
-  return hours * 60 * 60 * 1000;
+  const raw = client?.config?.discadiaVoteReminder?.cooldownHours;
+  const hours = Number(raw);
+
+  const safeHours = Number.isFinite(hours) && hours > 0 ? hours : 24;
+
+  return safeHours * 60 * 60 * 1000;
 }
 
 function getVoteCheckIntervalMs(client) {

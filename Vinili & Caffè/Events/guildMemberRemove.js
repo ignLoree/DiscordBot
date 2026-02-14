@@ -220,17 +220,23 @@ module.exports = {
                     userId: member.id
                 }).catch(() => { });
             }
+            const mainGuildId = IDs.guilds.main;
             const partnerships = await Staff.find({
-                guildId: guild.id,
+                guildId: mainGuildId,
                 $or: [
                     { managerId: member.id },
                     { 'partnerActions.managerId': member.id }
                 ]
             }).catch(() => []);
+
             if (partnerships.length > 0) {
                 try {
-                    const partnerLogChannel = guild.channels.cache.get(IDs.channels.partnerLogs)
-                        || await guild.channels.fetch(IDs.channels.partnerLogs).catch(() => null);
+                    const mainGuild = client.guilds.cache.get(mainGuildId) || await client.guilds.fetch(mainGuildId).catch(() => null);
+                    if (!mainGuild) return;
+
+                    const partnerLogChannel =
+                        mainGuild.channels.cache.get(IDs.channels.partnerLogs)
+                        || await mainGuild.channels.fetch(IDs.channels.partnerLogs).catch(() => null);
                     if (partnerLogChannel) {
                         for (const doc of partnerships) {
                             const lastPartner = Array.isArray(doc.partnerActions)
@@ -260,8 +266,11 @@ module.exports = {
                                 ]
                             });
                         }
+                        global.logger.info('[PM LEAVE] found docs:', partnerships.length, 'member:', member.id);
+                        global.logger.info('[PM LEAVE] partnerLogs:', IDs.channels.partnerLogs);
+
                     }
-                    const dmChannel = await member.createDM().catch(() => null);
+                    const dmChannel = await member.user.createDM().catch(() => null);
                     if (dmChannel) {
                         const row = new ActionRowBuilder().addComponents(
                             new ButtonBuilder()
