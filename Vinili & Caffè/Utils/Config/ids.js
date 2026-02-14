@@ -27,7 +27,13 @@ const fullCatalog = {
 const ids = {
   guilds: {
     main: meta.guildMain || null,
-    developers: "295500038401163264"
+    developers: "295500038401163264",
+    luna: '1471511676019933354',
+    cash: '1471511928739201047',
+    porn: '1471512183547498579',
+    69: '1471512555762483330',
+    weed: '1471512797140484230',
+    figa: '1471512808448458958'
   },
 
   categories: {

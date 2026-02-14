@@ -3,18 +3,6 @@ const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
 const IDs = require('../../Utils/Config/ids');
-const MAIN_GUILD_ID = IDs.guilds?.main || '1329080093599076474';
-const SPONSOR_GUILD_IDS = [
-  '1471511676019933354',
-  '1471511928739201047',
-  '1471512183547498579',
-  '1471512555762483330',
-  '1471512797140484230',
-  '1471512808448458958'
-];
-function isSponsorGuild(guildId) {
-  return guildId && guildId !== MAIN_GUILD_ID && SPONSOR_GUILD_IDS.includes(guildId);
-}
 
 async function handleTicketInteraction(interaction) {
     const handledButtons = new Set([
@@ -64,17 +52,6 @@ async function handleTicketInteraction(interaction) {
         PermissionFlagsBits.ReadMessageHistory,
         PermissionFlagsBits.AddReactions
     ];
-
-const IS_SPONSOR_GUILD = isSponsorGuild(interaction.guild?.id);
-
-async function resolveSponsorStaffRoleIds(guild) {
-    if (!guild) return [];
-    await guild.roles.fetch().catch(() => {});
-    const roles = guild.roles.cache
-        .filter((r) => !r.managed && (r.permissions.has(PermissionFlagsBits.Administrator) || r.permissions.has(PermissionFlagsBits.ManageChannels)))
-        .sort((a, b) => (b.position - a.position));
-    return roles.map((r) => r.id).slice(0, 10);
-}
 
     async function safeReply(target, payload) {
         return safeReplyHelper(target, payload);
@@ -237,19 +214,6 @@ async function resolveSponsorStaffRoleIds(guild) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida (fuori dal server).')], flags: 1 << 6 });
                 return true;
             }
-
-// Sponsor servers: only allow the single support ticket category
-if (IS_SPONSOR_GUILD) {
-    const allowed = new Set(['ticket_supporto', 'ticket_open_menu', 'ticket_open_desc_modal', 'ticket_open_desc_modal_submit']);
-    const action = String(ticketActionId || '');
-    if (action && action.startsWith('ticket_') && !allowed.has(action)) {
-        await safeReply(interaction, {
-            embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> In questo server sponsor è disponibile solo la categoria **Supporto**.')],
-            flags: 1 << 6
-        });
-        return true;
-    }
-}
             const partnerOpenButtons = ['ticket_partnership'];
             if (partnerOpenButtons.includes(ticketActionId) && interaction.member?.roles?.cache?.has(ROLE_TICKETPARTNER_BLACKLIST)) {
                 await safeReply(interaction, {
@@ -279,23 +243,7 @@ if (IS_SPONSOR_GUILD) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
                 return true;
             }
-            const ticketConfig = IS_SPONSOR_GUILD ? {
-                ticket_supporto: {
-                    type: "supporto",
-                    emoji: "⭐",
-                    name: "supporto",
-                    role: ROLE_STAFF,
-                    requiredRoles: [],
-                    embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
-                        .setDescription(
-                            "Hai aperto un ticket nel server sponsor.\n\n" +
-                            "<a:loading:1443934440614264924> 🠆 Attendi lo staff.\n" +
-                            "<:reportmessage:1443670575376765130> ➥ Spiega in modo chiaro la tua richiesta."
-                        )
-                        .setColor("#6f4e37")
-                }
-            } : {
+            const ticketConfig = {
                 ticket_supporto: {
                     type: "supporto",
                     emoji: "⭐",
@@ -390,52 +338,72 @@ if (IS_SPONSOR_GUILD) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket')], flags: 1 << 6 });
                     return true;
                 }
-                
-
-const sponsorStaffRoleIds = IS_SPONSOR_GUILD
-    ? await resolveSponsorStaffRoleIds(interaction.guild)
-    : [];
-
-const staffOverwrites = [];
-if (IS_SPONSOR_GUILD) {
-    for (const rid of sponsorStaffRoleIds) {
-        staffOverwrites.push({ id: rid, allow: TICKET_PERMISSIONS });
-    }
-} else {
-    if (config.type === 'supporto') {
-        if (ROLE_STAFF) staffOverwrites.push({ id: ROLE_STAFF, allow: TICKET_PERMISSIONS });
-        if (ROLE_HIGHSTAFF) staffOverwrites.push({ id: ROLE_HIGHSTAFF, allow: TICKET_PERMISSIONS });
-        if (ROLE_PARTNERMANAGER) staffOverwrites.push({ id: ROLE_PARTNERMANAGER, deny: [PermissionFlagsBits.ViewChannel] });
-    } else if (config.type === 'partnership') {
-        if (ROLE_PARTNERMANAGER) staffOverwrites.push({ id: ROLE_PARTNERMANAGER, allow: TICKET_PERMISSIONS });
-        if (ROLE_HIGHSTAFF) staffOverwrites.push({
-            id: ROLE_HIGHSTAFF,
-            allow: [
-                PermissionFlagsBits.ViewChannel,
-                PermissionFlagsBits.SendMessages,
-                PermissionFlagsBits.EmbedLinks,
-                PermissionFlagsBits.AttachFiles,
-                PermissionFlagsBits.ReadMessageHistory,
-                PermissionFlagsBits.AddReactions
-            ]
-        });
-    } else if (config.type === 'high') {
-        if (ROLE_HIGHSTAFF) staffOverwrites.push({ id: ROLE_HIGHSTAFF, allow: TICKET_PERMISSIONS });
-    }
-}const channel = await interaction.guild.channels.create({
+                const channel = await interaction.guild.channels.create({
                     name: `༄${config.emoji}︲${config.name}᲼${interaction.user.username}`,
                     type: 0,
                     parent: ticketsCategory.id,
                     permissionOverwrites: [
                         {
-                            id: interaction.guild.roles.everyone.id,
+                            id: interaction.guild.roles.everyone,
                             deny: [PermissionFlagsBits.ViewChannel]
                         },
                         {
                             id: interaction.user.id,
                             allow: TICKET_PERMISSIONS
                         },
-                        ...staffOverwrites
+                        ...(config.type === 'supporto'
+                            ? [
+                                {
+                                    id: ROLE_STAFF,
+                                    allow: TICKET_PERMISSIONS
+                                },
+                                {
+                                    id: ROLE_HIGHSTAFF,
+                                    allow: TICKET_PERMISSIONS
+                                },
+                                {
+                                    id: ROLE_PARTNERMANAGER,
+                                    deny: [PermissionFlagsBits.ViewChannel]
+                                }
+                            ]
+                            : []),
+                        ...(config.type === 'partnership'
+                            ? [
+                                {
+                                    id: ROLE_PARTNERMANAGER,
+                                    allow: TICKET_PERMISSIONS
+                                },
+                                {
+                                    id: ROLE_HIGHSTAFF,
+                                    allow: [
+                                        PermissionFlagsBits.ViewChannel,
+                                        PermissionFlagsBits.SendMessages,
+                                        PermissionFlagsBits.ReadMessageHistory
+                                    ],
+                                    deny: []
+                                },
+                                {
+                                    id: ROLE_STAFF,
+                                    deny: [PermissionFlagsBits.ViewChannel]
+                                }
+                            ]
+                            : []),
+                        ...(config.type === 'high'
+                            ? [
+                                {
+                                    id: ROLE_HIGHSTAFF,
+                                    allow: TICKET_PERMISSIONS
+                                },
+                                {
+                                    id: ROLE_STAFF,
+                                    deny: [PermissionFlagsBits.ViewChannel]
+                                },
+                                {
+                                    id: ROLE_PARTNERMANAGER,
+                                    deny: [PermissionFlagsBits.ViewChannel]
+                                }
+                            ]
+                            : [])
                     ]
                 }).catch(err => {
                     global.logger.error(err);
@@ -500,11 +468,7 @@ if (IS_SPONSOR_GUILD) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
-                const canClaimSupport = ticket.ticketType === 'supporto' && (
-                    (IS_SPONSOR_GUILD && interaction.memberPermissions?.has(PermissionFlagsBits.ManageChannels))
-                    || (IS_SPONSOR_GUILD && interaction.memberPermissions?.has(PermissionFlagsBits.Administrator))
-                    || STAFF_ROLES.some(r => interaction.member?.roles?.cache?.has(r))
-                );
+                const canClaimSupport = ticket.ticketType === 'supporto' && STAFF_ROLES.some(r => interaction.member?.roles?.cache?.has(r));
                 const canClaimPartnership = ticket.ticketType === 'partnership'
                     && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
                 const canClaimHigh = ticket.ticketType === 'high' && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
@@ -941,9 +905,21 @@ if (IS_SPONSOR_GUILD) {
             const createdAtFormatted = ticket.createdAt
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';
-            const logChannel = targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL)
+            // Always send transcripts to the MAIN guild log channel, even when the ticket is in sponsor servers.
+            const IDs = require('../../Utils/Config/ids');
+            const mainGuildId = IDs?.guilds?.main || null;
+            const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL;
+
+            const mainGuild = mainGuildId
+                ? (interaction.client.guilds.cache.get(mainGuildId) || await interaction.client.guilds.fetch(mainGuildId).catch(() => null))
+                : null;
+
+            const logChannel = mainGuild?.channels?.cache?.get(mainLogChannelId)
+                || (mainGuild ? await mainGuild.channels.fetch(mainLogChannelId).catch(() => null) : null)
+                || targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL)
                 || await targetInteraction.guild?.channels?.fetch(LOG_CHANNEL).catch(() => null);
-            if (logChannel) {
+
+            if (logChannel?.isTextBased?.()) {
                 await sendTranscriptWithBrowserLink(logChannel, {
                     files: transcriptHtmlPath
                         ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]

@@ -257,8 +257,20 @@ module.exports = {
         ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
         : 'Data non disponibile';
 
-      const logChannel = message.guild.channels.cache.get(LOG_CHANNEL_ID) || await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
-      if (logChannel) {
+      // Always send transcripts to the MAIN guild log channel, even when the ticket is in sponsor servers.
+      const mainGuildId = IDs?.guilds?.main || null;
+      const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL_ID;
+
+      const mainGuild = mainGuildId
+        ? (client.guilds.cache.get(mainGuildId) || await client.guilds.fetch(mainGuildId).catch(() => null))
+        : null;
+
+      const logChannel = mainGuild?.channels?.cache?.get(mainLogChannelId)
+        || (mainGuild ? await mainGuild.channels.fetch(mainLogChannelId).catch(() => null) : null)
+        || message.guild.channels.cache.get(LOG_CHANNEL_ID)
+        || await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null);
+
+      if (logChannel?.isTextBased?.()) {
         await sendTranscriptWithBrowserLink(logChannel, {
           files: transcriptHtmlPath
             ? [{ attachment: transcriptHtmlPath, name: `transcript_${message.channel.id}.html` }]

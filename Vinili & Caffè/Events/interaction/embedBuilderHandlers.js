@@ -32,6 +32,7 @@ function buildRows(ownerId) {
     new ButtonBuilder().setCustomId(`eb:author:${ownerId}`).setLabel('Autore').setStyle(ButtonStyle.Secondary)
   );
   const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`eb:content:${ownerId}`).setLabel('Testo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:thumbnail:${ownerId}`).setLabel('Thumbnail URL').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:image:${ownerId}`).setLabel('Image URL').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:send:${ownerId}`).setLabel('Invia').setStyle(ButtonStyle.Success)
@@ -43,6 +44,12 @@ function buildEditModal(kind, ownerId, messageId, currentValue) {
   const modal = new ModalBuilder().setCustomId(`ebm:${kind}:${ownerId}:${messageId}`).setTitle('Modifica embed');
   const input = new TextInputBuilder().setCustomId('value');
 
+  if (kind === 'content') {
+    input
+      .setLabel('Testo fuori dall\'embed (vuoto = rimuovi)')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(false);
+  } else
   if (kind === 'description') {
     input.setLabel('Descrizione (vuoto = rimuovi)').setStyle(TextInputStyle.Paragraph).setRequired(false);
   } else if (kind === 'color') {
@@ -87,7 +94,11 @@ function isValidUrl(url) {
 async function updatePreview(interaction, session) {
   const msg = interaction.message || await interaction.channel.messages.fetch(interaction.message?.id).catch(() => null);
   if (!msg) return;
+  const outside = String(session?.content || '').trim();
+  const header = '🧩 **Embed Builder** (solo tu puoi modificarlo) — quando hai finito premi **Invia**';
+  const outsidePreview = outside ? `\n\n📝 **Testo:** ${outside.length > 300 ? outside.slice(0, 300) + '…' : outside}` : '';
   await msg.edit({
+    content: header + outsidePreview,
     embeds: [buildPreviewEmbed(session.embed)],
     components: buildRows(session.ownerId)
   }).catch(() => {});
@@ -123,7 +134,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
       return true;
     }
 
-    const current = session.embed?.[kind] || null;
+    const current = kind === 'content' ? (session.content || null) : (session.embed?.[kind] || null);
     await interaction.showModal(buildEditModal(kind, ownerId, messageId, current)).catch(() => {});
     return true;
   }
@@ -166,6 +177,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
       }
 
       await channel.send({
+        content: String(session?.content || '').trim() || undefined,
         embeds: [buildPreviewEmbed(session.embed)],
         components: []
       }).catch(() => null);
@@ -177,7 +189,9 @@ async function handleEmbedBuilderInteraction(interaction, client) {
     let value = String(interaction.fields.getTextInputValue('value') || '').trim();
 
     if (!session.embed) session.embed = {};
-    if (!value) {
+    if (kind === 'content') {
+      session.content = value || '';
+    } else if (!value) {
       // remove field / reset color
       if (kind === 'color') session.embed.color = '#6f4e37';
       else delete session.embed[kind];
@@ -202,14 +216,8 @@ async function handleEmbedBuilderInteraction(interaction, client) {
 
     client.embedBuilderSessions.set(messageId, session);
 
-    // Update preview message
-    const previewMsg = await interaction.channel.messages.fetch(messageId).catch(() => null);
-    if (previewMsg) {
-      await previewMsg.edit({
-        embeds: [buildPreviewEmbed(session.embed)],
-        components: buildRows(ownerId)
-      }).catch(() => {});
-    }
+    // Update preview message (embed + outside text preview)
+    await updatePreview(interaction, session);
 
     await interaction.reply({ content: '✅ Anteprima aggiornata.', flags: 1 << 6 }).catch(() => {});
     return true;

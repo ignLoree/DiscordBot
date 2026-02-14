@@ -42,6 +42,7 @@ function buildRows(userId) {
   );
 
   const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId(`eb:content:${userId}`).setLabel('Testo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:thumbnail:${userId}`).setLabel('Thumbnail URL').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:image:${userId}`).setLabel('Image URL').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:send:${userId}`).setLabel('Invia').setStyle(ButtonStyle.Success)
@@ -93,6 +94,7 @@ module.exports = {
     message.client.embedBuilderSessions.set(preview.id, {
       ownerId: userId,
       embed: initial,
+      content: '',
       createdAt: Date.now()
     });
   }

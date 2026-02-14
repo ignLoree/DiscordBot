@@ -3,6 +3,7 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
+const IDs = require('../../Utils/Config/ids');
 
 const RESTART_FLAG = 'restart.json';
 const RESTART_CLEANUP_DELAY_MS = 2000;
@@ -57,6 +58,15 @@ module.exports = {
   subcommands: ['full', 'handlers', 'commands', 'prefix', 'events', 'triggers', 'services', 'utils', 'schemas', 'all'],
 
   async execute(message, args = [], client) {
+    // Can be used in any server, but only by the developer/owner.
+    const devId = String(IDs?.guilds?.developers || '');
+    if (devId && message?.author?.id !== devId) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
+        allowedMentions: { repliedUser: false }
+      });
+    }
+
     await message.channel.sendTyping().catch(() => {});
 
     const rawScope = String(args[0] || 'full').toLowerCase();
