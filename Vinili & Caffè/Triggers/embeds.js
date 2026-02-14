@@ -204,11 +204,16 @@ async function runInfoPanelAuto(client) {
 
   if (infoMessage1) {
     if (await shouldEditMessage(infoMessage1, { embeds: [embed1], components: [row1], files: [attachment], attachmentName: INFO_MEDIA_NAME })) {
-      await infoMessage1.edit({
-        files: [attachment],
+      const editPayload = {
         embeds: [embed1],
-        components: [row1]
-      }).catch(() => { });
+        components: row1
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await infoMessage1.edit(editPayload).catch(() => { });
     }
   } else {
     infoMessage1 = await channel.send({
@@ -220,10 +225,16 @@ async function runInfoPanelAuto(client) {
 
   if (infoMessage2) {
     if (await shouldEditMessage(infoMessage2, { embeds: [embed2], components: [row2] })) {
-      await infoMessage2.edit({
+      const editPayload = {
         embeds: [embed2],
         components: [row2]
-      }).catch(() => { });
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await infoMessage2.edit(editPayload).catch(() => { });
     }
   } else {
     infoMessage2 = await channel.send({
@@ -440,7 +451,16 @@ async function runVerifyPanelAuto(client) {
 
   if (infoMessage) {
     if (await shouldEditMessage(infoMessage, { embeds: [verifyInfoEmbed], components: [], files: [attachment], attachmentName: VERIFY_MEDIA_NAME })) {
-      await infoMessage.edit({ files: [attachment], embeds: [verifyInfoEmbed], components: [] }).catch(() => { });
+      const editPayload = {
+        embeds: [verifyInfoEmbed],
+        components: []
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await infoMessage.edit(editPayload).catch(() => { });
     }
   } else {
     infoMessage = await channel.send({ files: [attachment], embeds: [verifyInfoEmbed] }).catch(() => null);
@@ -448,7 +468,15 @@ async function runVerifyPanelAuto(client) {
 
   if (panelMessage) {
     if (await shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
-      await panelMessage.edit({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => { });
+      const editPayload = {
+        embeds: [verifyPanelEmbed],
+        components: [verifyRow]
+      };
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await panelMessage.edit(editPayload);
     }
   } else {
     panelMessage = await channel.send({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => null);
@@ -748,7 +776,16 @@ async function runRuoliPanelAuto(client) {
 
   if (personalityMessage) {
     if (await shouldEditMessage(personalityMessage, { embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment], attachmentName: IMAGE_NAME })) {
-      await personalityMessage.edit({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => { });
+      const editPayload = {
+        embeds: [embed],
+        components: [pronouns, age, region, dmStatus, relationship]
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await personalityMessage.edit(editPayload).catch(() => { });
     }
   } else {
     personalityMessage = await channel.send({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => null);
@@ -756,7 +793,16 @@ async function runRuoliPanelAuto(client) {
 
   if (mentionsMessage) {
     if (await shouldEditMessage(mentionsMessage, { embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment], attachmentName: MENTIONS_IMAGE_NAME })) {
-      await mentionsMessage.edit({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => { });
+      const editPayload = {
+        embeds: [mentionsEmbed],
+        components: [mentionsMenu]
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await mentionsMessage.edit(editPayload).catch(() => { });
     }
   } else {
     mentionsMessage = await channel.send({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => null);
@@ -764,7 +810,16 @@ async function runRuoliPanelAuto(client) {
 
   if (colorsMessage) {
     if (await shouldEditMessage(colorsMessage, { embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment], attachmentName: COLORS_IMAGE_NAME })) {
-      await colorsMessage.edit({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => { });
+      const editPayload = {
+        embeds: [colorsEmbed],
+        components: [colorsMenu1, colorsMenu2]
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await colorsMessage.edit(editPayload).catch(() => { });
     }
   } else {
     colorsMessage = await channel.send({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => null);
@@ -772,7 +827,16 @@ async function runRuoliPanelAuto(client) {
 
   if (plusColorsMessage) {
     if (await shouldEditMessage(plusColorsMessage, { embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment], attachmentName: PLUS_COLORS_IMAGE_NAME })) {
-      await plusColorsMessage.edit({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => { });
+      const editPayload = {
+        embeds: [plusColorsEmbed],
+        components: [plusColorsMenu]
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await plusColorsMessage.edit(editPayload).catch(() => { });
     }
   } else {
     plusColorsMessage = await channel.send({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => null);
@@ -881,7 +945,16 @@ async function runTicketPanelAuto(client) {
 
   if (infoMessage) {
     if (await shouldEditMessage(infoMessage, { embeds: [ticketInfoEmbed], components: [], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
-      await infoMessage.edit({ files: [attachment], embeds: [ticketInfoEmbed], components: [] }).catch(() => { });
+      const editPayload = {
+        embeds: [ticketInfoEmbed],
+        components: []
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await infoMessage.edit(editPayload).catch(() => { });
     }
   } else {
     infoMessage = await channel.send({ files: [attachment], embeds: [ticketInfoEmbed] }).catch(() => null);
@@ -889,7 +962,16 @@ async function runTicketPanelAuto(client) {
 
   if (panelMessage) {
     if (await shouldEditMessage(panelMessage, { embeds: [ticketPanelEmbed], components: [ticketSelectRow] })) {
-      await panelMessage.edit({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => { });
+      const editPayload = {
+        embeds: [ticketPanelEmbed],
+        components: [ticketSelectRow]
+      };
+
+      if (!msg.embeds?.[0]?.image?.url) {
+        editPayload.files = [attachment];
+      }
+
+      await panelMessage.edit(editPayload).catch(() => { });
     }
   } else {
     panelMessage = await channel.send({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => null);
@@ -1014,7 +1096,16 @@ async function runSponsorServersTicketPanelAuto(client) {
 
       if (msg) {
         if (await shouldEditMessage(msg, { embeds: [embed], components: [ticketSelectRow], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
-          await msg.edit({ files: [attachment], embeds: [embed], components: [ticketSelectRow] }).catch(() => { });
+          const editPayload = {
+            embeds: [embed],
+            components: [ticketSelectRow]
+          };
+
+          if (!msg.embeds?.[0]?.image?.url) {
+            editPayload.files = [attachment];
+          }
+
+          await msg.edit(editPayload).catch(() => { });
         }
       } else {
         msg = await channel.send({ files: [attachment], embeds: [embed], components: [ticketSelectRow] }).catch(() => null);
@@ -1122,7 +1213,16 @@ async function runSponsorServersVerifyPanelAuto(client) {
 
       if (panelMessage) {
         if (await shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
-          await panelMessage.edit({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch((err) => {
+          const editPayload = {
+            embeds: [verifyPanelEmbed],
+            components: [verifyRow]
+          };
+
+          if (!msg.embeds?.[0]?.image?.url) {
+            editPayload.files = [attachment];
+          }
+
+          await panelMessage.edit(editPayload).catch((err) => {
             global.logger.error('[SPONSOR VERIFY] Failed to edit message:', err);
           });
         }
@@ -1253,24 +1353,29 @@ async function runSponsorGuildTagPanelAuto(client) {
         tagMessage = await channel.messages.fetch(panelDoc.infoMessageId1).catch(() => null);
       }
 
-      const messagePayload = {
+      const basePayload = {
         embeds: [tagEmbed],
-        components: [],
-        ...(attachment ? { files: [attachment] } : {})
+        components: []
       };
 
       if (tagMessage) {
-        if (await shouldEditMessage(tagMessage, { ...messagePayload, attachmentName: TAG_IMAGE_NAME })) {
-          await tagMessage.edit(messagePayload).catch((err) => {
+        if (await shouldEditMessage(tagMessage, basePayload)) {
+          await tagMessage.edit(basePayload).catch((err) => {
             global.logger.error('[GUILD TAG] Failed to edit message:', err);
           });
         }
       } else {
-        tagMessage = await channel.send(messagePayload).catch((err) => {
+        const sendPayload = {
+          ...basePayload,
+          ...(attachment ? { files: [attachment] } : {})
+        };
+
+        tagMessage = await channel.send(sendPayload).catch((err) => {
           global.logger.error('[GUILD TAG] Failed to send message:', err);
           return null;
         });
       }
+
 
       if (tagMessage?.id) {
         await Panel.updateOne(

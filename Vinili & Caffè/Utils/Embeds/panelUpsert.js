@@ -164,48 +164,53 @@ function buildEmbedSignatureFromMessage(msgEmbeds = []) {
   return normalizeText(`${first.title || ''}|${first.description || ''}`).toLowerCase().slice(0, 400);
 }
 
-async function shouldEditMessage(message, { embeds = [], components = [], files = [], attachmentName = null }) {
-  const currentEmbeds = toComparableEmbeds(message?.embeds || []);
-  const nextEmbeds = toComparableEmbeds(embeds);
-  if (currentEmbeds !== nextEmbeds) return true;
+function normalizeEmbed(e) {
+  if (!e) return null;
 
-  const currentComponents = toComparableComponents(message?.components || []);
-  const nextComponents = toComparableComponents(components);
-  if (currentComponents !== nextComponents) return true;
+  return {
+    title: e.title || null,
+    description: e.description || null,
+    color: e.color || null,
+    footer: e.footer?.text || null,
+    author: e.author?.name || null,
+    image: e.image?.url || null,
+    thumbnail: e.thumbnail?.url || null,
+    fields: Array.isArray(e.fields)
+      ? e.fields.map(f => ({
+          name: f.name,
+          value: f.value,
+          inline: !!f.inline
+        }))
+      : []
+  };
+}
 
-  const payloadFiles = Array.isArray(files) ? files.filter(Boolean) : [];
-  if (payloadFiles.length > 0) {
-    const currentAttachments = [...(message?.attachments?.values?.() || [])];
-    if (currentAttachments.length !== payloadFiles.length) return true;
+function normalizeComponents(rows = []) {
+  return rows.map(row => ({
+    components: row.components.map(c => ({
+      type: c.type,
+      customId: c.customId || null,
+      label: c.label || null,
+      style: c.style || null,
+      url: c.url || null,
+      emoji: c.emoji?.id || c.emoji?.name || null
+    }))
+  }));
+}
 
-    for (const payloadFile of payloadFiles) {
-      const expectedName = resolvePayloadFileName(payloadFile);
-      if (!expectedName) return true;
+async function shouldEditMessage(message, payload) {
+  if (!message) return true;
 
-      const currentAttachment = currentAttachments.find((a) => String(a?.name || '') === expectedName);
-      if (!currentAttachment) return true;
+  const oldEmbed = normalizeEmbed(message.embeds?.[0]);
+  const newEmbed = normalizeEmbed(payload.embeds?.[0]);
 
-      const payloadBuffer = readPayloadFileBuffer(payloadFile);
-      if (!payloadBuffer) continue;
+  const oldComponents = normalizeComponents(message.components || []);
+  const newComponents = normalizeComponents(payload.components || []);
 
-      if (Number.isFinite(currentAttachment?.size) && currentAttachment.size !== payloadBuffer.length) {
-        return true;
-      }
+  const embedChanged = JSON.stringify(oldEmbed) !== JSON.stringify(newEmbed);
+  const componentsChanged = JSON.stringify(oldComponents) !== JSON.stringify(newComponents);
 
-      const payloadHash = hashBuffer(payloadBuffer);
-      const currentHash = await fetchAttachmentHash(currentAttachment?.url);
-      if (!currentHash || currentHash !== payloadHash) return true;
-    }
-    return false;
-  }
-
-  if (attachmentName) {
-    if ((message?.attachments?.size || 0) !== 1) return true;
-    const currentName = message.attachments.first()?.name || null;
-    if (currentName !== attachmentName) return true;
-  }
-
-  return false;
+  return embedChanged || componentsChanged;
 }
 
 async function upsertPanelMessage(channel, client, payload) {
