@@ -205,7 +205,7 @@ function startDailyPartnerAuditLoop(client) {
   if (dailyPartnerAuditTask) return dailyPartnerAuditTask;
   dailyPartnerAuditTask = cron.schedule('0 0 * * *', async () => {
     try {
-      await runDailyPartnerAudit(client);
+      await dailyPartnerAuditTask(client);
     } catch (err) {
       global.logger.error('[PARTNER AUDIT] Daily audit failed', err);
     }
@@ -213,4 +213,4 @@ function startDailyPartnerAuditLoop(client) {
   return dailyPartnerAuditTask;
 }
 
-module.exports = { startDailyPartnerAuditLoop, runDailyPartnerAudit };
+module.exports = { startDailyPartnerAuditLoop };
