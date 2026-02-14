@@ -184,7 +184,7 @@
       }
     },
     "restart": [
-      "roles.Founder"
+      "guilds.developers"
     ],
     "reaction": [
       "roles.HighStaff"
