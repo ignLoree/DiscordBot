@@ -946,8 +946,6 @@ async function runSponsorServersVerifyPanelAuto(client) {
           global.logger.error('[SPONSOR VERIFY] Failed to update panel doc:', err);
         });
       }
-
-      global.logger.info('[SPONSOR VERIFY] Panel updated for guild:', guildId);
     } catch (err) {
       global.logger.error('[SPONSOR VERIFY] Error processing guild:', guildId, err);
     }
@@ -1073,8 +1071,6 @@ async function runSponsorGuildTagPanelAuto(client) {
           global.logger.error('[GUILD TAG] Failed to update panel doc:', err);
         });
       }
-
-      global.logger.info('[GUILD TAG] Panel updated for guild:', guildId, 'Tag:', config.tagName);
     } catch (err) {
       global.logger.error('[GUILD TAG] Error processing guild:', guildId, err);
     }

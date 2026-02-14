@@ -42,9 +42,9 @@ function buildRows(userId) {
   );
 
   const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(`eb:content:${userId}`).setLabel('Testo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:thumbnail:${userId}`).setLabel('Thumbnail URL').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:image:${userId}`).setLabel('Image URL').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId(`eb:content:${userId}`).setLabel('Testo').setStyle(ButtonStyle.Secondary),
     new ButtonBuilder().setCustomId(`eb:send:${userId}`).setLabel('Invia').setStyle(ButtonStyle.Success)
   );
 
@@ -78,7 +78,6 @@ module.exports = {
     const initial = { color: '#6f4e37' };
 
     const preview = await message.channel.send({
-      content: `🧩 **Embed Builder** (solo tu puoi modificarlo) — quando hai finito premi **Invia**`,
       embeds: [buildPreviewEmbed(initial)],
       components: buildRows(userId)
     }).catch(() => null);

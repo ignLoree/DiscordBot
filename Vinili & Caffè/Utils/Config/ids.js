@@ -28,6 +28,7 @@ const ids = {
   guilds: {
     main: meta.guildMain || null,
     developers: "295500038401163264",
+    test: '1462458562507964584',
     luna: '1471511676019933354',
     cash: '1471511928739201047',
     porn: '1471512183547498579',

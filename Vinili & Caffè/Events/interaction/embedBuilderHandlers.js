@@ -95,10 +95,9 @@ async function updatePreview(interaction, session) {
   const msg = interaction.message || await interaction.channel.messages.fetch(interaction.message?.id).catch(() => null);
   if (!msg) return;
   const outside = String(session?.content || '').trim();
-  const header = '🧩 **Embed Builder** (solo tu puoi modificarlo) — quando hai finito premi **Invia**';
-  const outsidePreview = outside ? `\n\n📝 **Testo:** ${outside.length > 300 ? outside.slice(0, 300) + '…' : outside}` : '';
+  const outsidePreview = outside ? `\n\n ${outside.length > 300 ? outside.slice(0, 300) + '…' : outside}` : '';
   await msg.edit({
-    content: header + outsidePreview,
+    content: outsidePreview,
     embeds: [buildPreviewEmbed(session.embed)],
     components: buildRows(session.ownerId)
   }).catch(() => {});
@@ -110,9 +109,8 @@ async function handleEmbedBuilderInteraction(interaction, client) {
 
   if (!client.embedBuilderSessions) client.embedBuilderSessions = new Map();
 
-  // Buttons
   if (interaction.isButton && interaction.isButton()) {
-    const parts = cid.split(':'); // eb:kind:ownerId
+    const parts = cid.split(':');
     const kind = parts[1];
     const ownerId = parts[2];
     const messageId = interaction.message?.id;
@@ -139,9 +137,8 @@ async function handleEmbedBuilderInteraction(interaction, client) {
     return true;
   }
 
-  // Modals
   if (interaction.isModalSubmit && interaction.isModalSubmit()) {
-    const parts = cid.split(':'); // ebm:kind:ownerId:messageId
+    const parts = cid.split(':');
     const kind = parts[1];
     const ownerId = parts[2];
     const messageId = parts[3];
@@ -166,7 +163,6 @@ async function handleEmbedBuilderInteraction(interaction, client) {
         return true;
       }
 
-      // permission check (must be able to send)
       const me = channel.guild?.members?.me || (channel.guild ? await channel.guild.members.fetchMe().catch(() => null) : null);
       if (me) {
         const perms = channel.permissionsFor(me);
@@ -192,7 +188,6 @@ async function handleEmbedBuilderInteraction(interaction, client) {
     if (kind === 'content') {
       session.content = value || '';
     } else if (!value) {
-      // remove field / reset color
       if (kind === 'color') session.embed.color = '#6f4e37';
       else delete session.embed[kind];
     } else if (kind === 'color') {
@@ -209,14 +204,12 @@ async function handleEmbedBuilderInteraction(interaction, client) {
       await interaction.reply({ content: '<:vegax:1443934876440068179> URL non valido (usa http/https).', flags: 1 << 6 }).catch(() => {});
       return true;
     } else {
-      // clamp
       const maxLen = kind === 'description' ? 4096 : (kind === 'footer' ? 2048 : 256);
       session.embed[kind] = value.slice(0, maxLen);
     }
 
     client.embedBuilderSessions.set(messageId, session);
 
-    // Update preview message (embed + outside text preview)
     await updatePreview(interaction, session);
 
     await interaction.reply({ content: '✅ Anteprima aggiornata.', flags: 1 << 6 }).catch(() => {});
