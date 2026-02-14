@@ -58,6 +58,14 @@ module.exports = {
   subcommands: ['full', 'handlers', 'commands', 'prefix', 'events', 'triggers', 'services', 'utils', 'schemas', 'all'],
 
   async execute(message, args = [], client) {
+    const devId = '295500038401163264';
+    if (devId && message?.author?.id !== devId) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
+        allowedMentions: { repliedUser: false }
+      });
+    }
+
     await message.channel.sendTyping().catch(() => {});
 
     const rawScope = String(args[0] || 'full').toLowerCase();

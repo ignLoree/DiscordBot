@@ -183,9 +183,6 @@
         ]
       }
     },
-    "restart": [
-      "guilds.developers"
-    ],
     "reaction": [
       "roles.HighStaff"
     ],
