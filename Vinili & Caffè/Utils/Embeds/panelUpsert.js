@@ -207,14 +207,23 @@ async function shouldEditMessage(message, payload) {
   const oldComponents = toComparableComponents(message.components || []);
   const newComponents = toComparableComponents(payload.components || []);
 
-  const embedsChanged = oldEmbeds !== newEmbeds;
-  const componentsChanged = oldComponents !== newComponents;
-
-  return embedsChanged || componentsChanged;
+  return oldEmbeds !== newEmbeds || oldComponents !== newComponents;
 }
 
 async function upsertPanelMessage(channel, client, payload) {
-  const messages = await channel.messages.fetch({ limit: 80 }).catch(() => null);
+  const wantedId = payload?.messageId || null;
+  if (wantedId) {
+    const direct = await channel.messages.fetch(wantedId).catch(() => null);
+    if (direct) {
+      if (await shouldEditMessage(direct, payload)) {
+        await direct.edit(payload).catch(() => { });
+      }
+      return direct;
+    }
+  }
+
+  const messages = await channel.messages.fetch({ limit: 15 }).catch(() => null);
+
   const botMessages = messages
     ? [...messages.values()].filter((msg) => msg.author?.id === client.user?.id && msg.embeds?.length)
     : [];
@@ -225,15 +234,14 @@ async function upsertPanelMessage(channel, client, payload) {
   let existing = null;
 
   if (payloadCustomIds.size > 0) {
-    existing =
-      botMessages.find((msg) => {
-        const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
-        if (!msgCustomIds.size) return false;
-        for (const id of payloadCustomIds) {
-          if (!msgCustomIds.has(id)) return false;
-        }
-        return true;
-      }) || null;
+    existing = botMessages.find((msg) => {
+      const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
+      if (!msgCustomIds.size) return false;
+      for (const id of payloadCustomIds) {
+        if (!msgCustomIds.has(id)) return false;
+      }
+      return true;
+    }) || null;
   }
 
   if (!existing && payloadSignature) {
@@ -241,17 +249,15 @@ async function upsertPanelMessage(channel, client, payload) {
   }
 
   if (!existing) {
-    existing = botMessages.find((msg) => msg.author?.id === client.user?.id && msg.embeds?.length) || null;
-  }
-
-  if (!existing) {
-    await channel.send(payload).catch(() => { });
-    return;
+    const sent = await channel.send(payload).catch(() => null);
+    return sent;
   }
 
   if (await shouldEditMessage(existing, payload)) {
     await existing.edit(payload).catch(() => { });
   }
+
+  return existing;
 }
 
 module.exports = { shouldEditMessage, upsertPanelMessage };
