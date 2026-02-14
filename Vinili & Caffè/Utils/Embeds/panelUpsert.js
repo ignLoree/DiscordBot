@@ -72,25 +72,25 @@ function simplifyEmbed(embed) {
   const thumb = raw.thumbnail?.url ? normalizeDiscordAttachmentUrl(raw.thumbnail.url) : null;
   const author = raw.author
     ? {
-      name: normalizeText(raw.author.name),
-      icon_url: raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url) : null,
-      url: raw.author.url ? String(raw.author.url) : null
-    }
+        name: normalizeText(raw.author.name),
+        icon_url: raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url) : null,
+        url: raw.author.url ? String(raw.author.url) : null
+      }
     : null;
 
   const footer = raw.footer
     ? {
-      text: normalizeText(raw.footer.text),
-      icon_url: raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url) : null
-    }
+        text: normalizeText(raw.footer.text),
+        icon_url: raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url) : null
+      }
     : null;
 
   const fields = Array.isArray(raw.fields)
     ? raw.fields.map((f) => ({
-      name: normalizeText(f?.name),
-      value: normalizeText(f?.value),
-      inline: Boolean(f?.inline)
-    }))
+        name: normalizeText(f?.name),
+        value: normalizeText(f?.value),
+        inline: Boolean(f?.inline)
+      }))
     : [];
 
   return {
@@ -120,10 +120,10 @@ function simplifyComponents(components = []) {
       disabled: Boolean(c?.disabled),
       emoji: c?.emoji
         ? {
-          id: c.emoji.id ? String(c.emoji.id) : null,
-          name: c.emoji.name ? String(c.emoji.name) : null,
-          animated: Boolean(c.emoji.animated)
-        }
+            id: c.emoji.id ? String(c.emoji.id) : null,
+            name: c.emoji.name ? String(c.emoji.name) : null,
+            animated: Boolean(c.emoji.animated)
+          }
         : null
     }));
   });
@@ -164,66 +164,40 @@ function buildEmbedSignatureFromMessage(msgEmbeds = []) {
   return normalizeText(`${first.title || ''}|${first.description || ''}`).toLowerCase().slice(0, 400);
 }
 
-function normalizeEmbed(e) {
-  if (!e) return null;
-
-  return {
-    title: e.title || null,
-    description: e.description || null,
-    color: e.color || null,
-    footer: e.footer?.text || null,
-    author: e.author?.name || null,
-    image: e.image?.url || null,
-    thumbnail: e.thumbnail?.url || null,
-    fields: Array.isArray(e.fields)
-      ? e.fields.map(f => ({
-        name: f.name,
-        value: f.value,
-        inline: !!f.inline
-      }))
-      : []
-  };
-}
-
-function normalizeComponents(rows = []) {
-  return rows.map(row => ({
-    components: row.components.map(c => ({
-      type: c.type,
-      customId: c.customId || null,
-      label: c.label || null,
-      style: c.style || null,
-      url: c.url || null,
-      emoji: c.emoji?.id || c.emoji?.name || null
-    }))
-  }));
-}
-
 async function shouldEditMessage(message, payload) {
   if (!message) return true;
 
-  const oldEmbeds = toComparableEmbeds(message.embeds || []);
-  const newEmbeds = toComparableEmbeds(payload.embeds || []);
+  const currentEmbeds = toComparableEmbeds(message?.embeds || []);
+  const nextEmbeds = toComparableEmbeds(payload?.embeds || []);
+  if (currentEmbeds !== nextEmbeds) return true;
 
-  const oldComponents = toComparableComponents(message.components || []);
-  const newComponents = toComparableComponents(payload.components || []);
+  const currentComponents = toComparableComponents(message?.components || []);
+  const nextComponents = toComparableComponents(payload?.components || []);
+  if (currentComponents !== nextComponents) return true;
 
-  return oldEmbeds !== newEmbeds || oldComponents !== newComponents;
+  // NOTE: We intentionally ignore "files"/attachments for change detection.
+  // Re-uploading attachments on every restart causes unnecessary edits.
+  return false;
 }
 
+
 async function upsertPanelMessage(channel, client, payload) {
-  const wantedId = payload?.messageId || null;
-  if (wantedId) {
-    const direct = await channel.messages.fetch(wantedId).catch(() => null);
+  // Fast path: if we already know the messageId, fetch and update that message only.
+  const messageId = payload?.messageId || null;
+  if (messageId) {
+    const direct = await channel.messages.fetch(messageId).catch(() => null);
     if (direct) {
-      if (await shouldEditMessage(direct, payload)) {
-        await direct.edit(payload).catch(() => { });
+      const editPayload = { ...payload };
+      delete editPayload.messageId;
+
+      if (await shouldEditMessage(direct, editPayload)) {
+        await direct.edit(editPayload).catch(() => { });
       }
       return direct;
     }
   }
 
   const messages = await channel.messages.fetch({ limit: 15 }).catch(() => null);
-
   const botMessages = messages
     ? [...messages.values()].filter((msg) => msg.author?.id === client.user?.id && msg.embeds?.length)
     : [];
@@ -234,30 +208,35 @@ async function upsertPanelMessage(channel, client, payload) {
   let existing = null;
 
   if (payloadCustomIds.size > 0) {
-    existing = botMessages.find((msg) => {
-      const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
-      if (!msgCustomIds.size) return false;
-      for (const id of payloadCustomIds) {
-        if (!msgCustomIds.has(id)) return false;
-      }
-      return true;
-    }) || null;
+    existing =
+      botMessages.find((msg) => {
+        const msgCustomIds = extractCustomIdsFromComponents(msg.components || []);
+        if (!msgCustomIds.size) return false;
+        for (const id of payloadCustomIds) {
+          if (!msgCustomIds.has(id)) return false;
+        }
+        return true;
+      }) || null;
   }
 
   if (!existing && payloadSignature) {
     existing = botMessages.find((msg) => buildEmbedSignatureFromMessage(msg.embeds || []) === payloadSignature) || null;
   }
 
+  const cleanPayload = { ...payload };
+  delete cleanPayload.messageId;
+
   if (!existing) {
-    const sent = await channel.send(payload).catch(() => null);
+    const sent = await channel.send(cleanPayload).catch(() => null);
     return sent;
   }
 
-  if (await shouldEditMessage(existing, payload)) {
-    await existing.edit(payload).catch(() => { });
+  if (await shouldEditMessage(existing, cleanPayload)) {
+    await existing.edit(cleanPayload).catch(() => { });
   }
 
   return existing;
 }
+
 
 module.exports = { shouldEditMessage, upsertPanelMessage };

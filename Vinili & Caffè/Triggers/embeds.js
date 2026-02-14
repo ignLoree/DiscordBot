@@ -1,6 +1,6 @@
 async function runEmbedSponsorPanelAuto(client) {
   const IDs = require('../Utils/Config/ids');
-  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, StringSelectMenuBuilder } = require('discord.js');
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
   const path = require('path');
   const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
   const SPONSOR_MEDIA_NAME = 'sponsor.gif';
@@ -99,7 +99,7 @@ async function runInfoPanelAuto(client) {
   const path = require('path');
   const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
   const IDs = require('../Utils/Config/ids');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const INFO_CHANNEL_ID = IDs.channels.info;
   const INFO_MEDIA_NAME = 'info.gif';
@@ -107,7 +107,7 @@ async function runInfoPanelAuto(client) {
 
   const channel = client.channels.cache.get(INFO_CHANNEL_ID)
     || await client.channels.fetch(INFO_CHANNEL_ID).catch(() => null);
-  if (!channel) return;
+  if (!channel?.isTextBased?.()) return;
 
   const attachment = new AttachmentBuilder(INFO_MEDIA_PATH, { name: INFO_MEDIA_NAME });
 
@@ -142,6 +142,7 @@ async function runInfoPanelAuto(client) {
         inline: true
       }
     );
+
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('info_rules')
@@ -164,9 +165,7 @@ async function runInfoPanelAuto(client) {
     .setColor('#6f4e37')
     .setFooter({ text: 'Usa i bottoni sottostanti per accedere ad altre categorie del server:' })
     .setTitle('<:VC_PurpleFlower:1469463879149944943> Sblocca dei vantaggi, permessi e ruoli:')
-    .setDescription([
-      'Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.',
-    ].join('\n'));
+    .setDescription('Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.');
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -193,63 +192,33 @@ async function runInfoPanelAuto(client) {
     );
   } catch { }
 
-  let infoMessage1 = null;
-  let infoMessage2 = null;
-  if (panel?.infoMessageId1) {
-    infoMessage1 = await channel.messages.fetch(panel.infoMessageId1).catch(() => null);
-  }
-  if (panel?.infoMessageId2) {
-    infoMessage2 = await channel.messages.fetch(panel.infoMessageId2).catch(() => null);
-  }
+  const msg1 = await upsertPanelMessage(channel, client, {
+    messageId: panel?.infoMessageId1 || null,
+    files: [attachment],
+    embeds: [embed1],
+    components: [row1],
+    attachmentName: INFO_MEDIA_NAME
+  });
 
-  if (infoMessage1) {
-    if (await shouldEditMessage(infoMessage1, { embeds: [embed1], components: [row1], files: [attachment], attachmentName: INFO_MEDIA_NAME })) {
-      const editPayload = {
-        embeds: [embed1],
-        components: row1
-      };
+  const msg2 = await upsertPanelMessage(channel, client, {
+    messageId: panel?.infoMessageId2 || null,
+    embeds: [embed2],
+    components: [row2]
+  });
 
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await infoMessage1.edit(editPayload).catch(() => { });
-    }
-  } else {
-    infoMessage1 = await channel.send({
-      files: [attachment],
-      embeds: [embed1],
-      components: [row1]
-    }).catch(() => null);
-  }
-
-  if (infoMessage2) {
-    if (await shouldEditMessage(infoMessage2, { embeds: [embed2], components: [row2] })) {
-      const editPayload = {
-        embeds: [embed2],
-        components: [row2]
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await infoMessage2.edit(editPayload).catch(() => { });
-    }
-  } else {
-    infoMessage2 = await channel.send({
-      embeds: [embed2],
-      components: [row2]
-    }).catch(() => null);
-  }
-
-  if (infoMessage1 || infoMessage2) {
+  if (msg1?.id || msg2?.id) {
     await PersonalityPanel.updateOne(
       { guildId, channelId: INFO_CHANNEL_ID },
-      { $set: { infoMessageId1: infoMessage1?.id || panel?.infoMessageId1 || null, infoMessageId2: infoMessage2?.id || panel?.infoMessageId2 || null } }
+      {
+        $set: {
+          infoMessageId1: msg1?.id || panel?.infoMessageId1 || null,
+          infoMessageId2: msg2?.id || panel?.infoMessageId2 || null
+        }
+      }
     ).catch(() => { });
   }
 }
+
 
 async function runStaffEmbedAuto(client) {
   const IDs = require('../Utils/Config/ids');
@@ -383,11 +352,10 @@ async function runStaffEmbedAuto(client) {
 
 async function runVerifyPanelAuto(client) {
   const IDs = require('../Utils/Config/ids');
-
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
   const path = require('path');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const VERIFY_CHANNEL_ID = IDs.channels.verify;
   const VERIFY_MEDIA_NAME = 'verifica.gif';
@@ -396,7 +364,7 @@ async function runVerifyPanelAuto(client) {
 
   const channel = client.channels.cache.get(VERIFY_CHANNEL_ID)
     || await client.channels.fetch(VERIFY_CHANNEL_ID).catch(() => null);
-  if (!channel) return;
+  if (!channel?.isTextBased?.()) return;
 
   const guildId = channel.guild?.id;
   if (!guildId) return;
@@ -421,7 +389,7 @@ async function runVerifyPanelAuto(client) {
     .setDescription(
       '<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `' + serverName + '` devi prima verificarti.**\n' +
       '<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.'
-    )
+    );
 
   const verifyRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -439,48 +407,19 @@ async function runVerifyPanelAuto(client) {
     );
   } catch { }
 
-  let infoMessage = null;
-  let panelMessage = null;
+  const infoMessage = await upsertPanelMessage(channel, client, {
+    messageId: panelDoc?.verifyInfoMessageId || null,
+    files: [attachment],
+    embeds: [verifyInfoEmbed],
+    components: [],
+    attachmentName: VERIFY_MEDIA_NAME
+  });
 
-  if (panelDoc?.verifyInfoMessageId) {
-    infoMessage = await channel.messages.fetch(panelDoc.verifyInfoMessageId).catch(() => null);
-  }
-  if (panelDoc?.verifyPanelMessageId) {
-    panelMessage = await channel.messages.fetch(panelDoc.verifyPanelMessageId).catch(() => null);
-  }
-
-  if (infoMessage) {
-    if (await shouldEditMessage(infoMessage, { embeds: [verifyInfoEmbed], components: [], files: [attachment], attachmentName: VERIFY_MEDIA_NAME })) {
-      const editPayload = {
-        embeds: [verifyInfoEmbed],
-        components: []
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await infoMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    infoMessage = await channel.send({ files: [attachment], embeds: [verifyInfoEmbed] }).catch(() => null);
-  }
-
-  if (panelMessage) {
-    if (await shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
-      const editPayload = {
-        embeds: [verifyPanelEmbed],
-        components: [verifyRow]
-      };
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await panelMessage.edit(editPayload);
-    }
-  } else {
-    panelMessage = await channel.send({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch(() => null);
-  }
+  const panelMessage = await upsertPanelMessage(channel, client, {
+    messageId: panelDoc?.verifyPanelMessageId || null,
+    embeds: [verifyPanelEmbed],
+    components: [verifyRow]
+  });
 
   if (infoMessage?.id || panelMessage?.id) {
     await Panel.updateOne(
@@ -495,12 +434,13 @@ async function runVerifyPanelAuto(client) {
   }
 }
 
+
 async function runRuoliPanelAuto(client) {
   const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
   const path = require('path');
   const { PersonalityPanel } = require('../Schemas/Community/communitySchemas');
   const IDs = require('../Utils/Config/ids');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const CHANNEL_ID = IDs.channels.ruoliColori;
   const IMAGE_NAME = 'personalità.gif';
@@ -756,91 +696,38 @@ async function runRuoliPanelAuto(client) {
     } catch { }
   };
 
-  let personalityMessage = null;
-  let mentionsMessage = null;
-  let colorsMessage = null;
-  let plusColorsMessage = null;
+ 
+  const personalityMessage = await upsertPanelMessage(channel, client, {
+    messageId: panel?.personalityMessageId || null,
+    embeds: [embed],
+    components: [pronouns, age, region, dmStatus, relationship],
+    files: [attachment],
+    attachmentName: IMAGE_NAME
+  });
 
-  if (panel?.personalityMessageId) {
-    personalityMessage = await channel.messages.fetch(panel.personalityMessageId).catch(() => null);
-  }
-  if (panel?.mentionsMessageId) {
-    mentionsMessage = await channel.messages.fetch(panel.mentionsMessageId).catch(() => null);
-  }
-  if (panel?.colorsMessageId) {
-    colorsMessage = await channel.messages.fetch(panel.colorsMessageId).catch(() => null);
-  }
-  if (panel?.plusColorsMessageId) {
-    plusColorsMessage = await channel.messages.fetch(panel.plusColorsMessageId).catch(() => null);
-  }
+  const mentionsMessage = await upsertPanelMessage(channel, client, {
+    messageId: panel?.mentionsMessageId || null,
+    embeds: [mentionsEmbed],
+    components: [mentionsMenu],
+    files: [mentionsAttachment],
+    attachmentName: MENTIONS_IMAGE_NAME
+  });
 
-  if (personalityMessage) {
-    if (await shouldEditMessage(personalityMessage, { embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment], attachmentName: IMAGE_NAME })) {
-      const editPayload = {
-        embeds: [embed],
-        components: [pronouns, age, region, dmStatus, relationship]
-      };
+  const colorsMessage = await upsertPanelMessage(channel, client, {
+    messageId: panel?.colorsMessageId || null,
+    embeds: [colorsEmbed],
+    components: [colorsMenu1, colorsMenu2],
+    files: [colorsAttachment],
+    attachmentName: COLORS_IMAGE_NAME
+  });
 
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await personalityMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    personalityMessage = await channel.send({ embeds: [embed], components: [pronouns, age, region, dmStatus, relationship], files: [attachment] }).catch(() => null);
-  }
-
-  if (mentionsMessage) {
-    if (await shouldEditMessage(mentionsMessage, { embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment], attachmentName: MENTIONS_IMAGE_NAME })) {
-      const editPayload = {
-        embeds: [mentionsEmbed],
-        components: [mentionsMenu]
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await mentionsMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    mentionsMessage = await channel.send({ embeds: [mentionsEmbed], components: [mentionsMenu], files: [mentionsAttachment] }).catch(() => null);
-  }
-
-  if (colorsMessage) {
-    if (await shouldEditMessage(colorsMessage, { embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment], attachmentName: COLORS_IMAGE_NAME })) {
-      const editPayload = {
-        embeds: [colorsEmbed],
-        components: [colorsMenu1, colorsMenu2]
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await colorsMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    colorsMessage = await channel.send({ embeds: [colorsEmbed], components: [colorsMenu1, colorsMenu2], files: [colorsAttachment] }).catch(() => null);
-  }
-
-  if (plusColorsMessage) {
-    if (await shouldEditMessage(plusColorsMessage, { embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment], attachmentName: PLUS_COLORS_IMAGE_NAME })) {
-      const editPayload = {
-        embeds: [plusColorsEmbed],
-        components: [plusColorsMenu]
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await plusColorsMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    plusColorsMessage = await channel.send({ embeds: [plusColorsEmbed], components: [plusColorsMenu], files: [plusColorsAttachment] }).catch(() => null);
-  }
+  const plusColorsMessage = await upsertPanelMessage(channel, client, {
+    messageId: panel?.plusColorsMessageId || null,
+    embeds: [plusColorsEmbed],
+    components: [plusColorsMenu],
+    files: [plusColorsAttachment],
+    attachmentName: PLUS_COLORS_IMAGE_NAME
+  });
 
   if (personalityMessage || mentionsMessage || colorsMessage || plusColorsMessage) {
     await updatePanel(
@@ -852,13 +739,13 @@ async function runRuoliPanelAuto(client) {
   }
 }
 
+
 async function runTicketPanelAuto(client) {
   const IDs = require('../Utils/Config/ids');
-
   const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder } = require('discord.js');
   const path = require('path');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const TICKET_CHANNEL_ID = IDs.channels.ticket;
   const TICKET_MEDIA_NAME = 'ticket.gif';
@@ -867,7 +754,7 @@ async function runTicketPanelAuto(client) {
 
   const channel = client.channels.cache.get(TICKET_CHANNEL_ID)
     || await client.channels.fetch(TICKET_CHANNEL_ID).catch(() => null);
-  if (!channel) return;
+  if (!channel?.isTextBased?.()) return;
 
   const guildId = channel.guild?.id;
   if (!guildId) return;
@@ -922,6 +809,7 @@ async function runTicketPanelAuto(client) {
         emoji: { id: '1443670575376765130', name: 'reportmessage' }
       }
     );
+
   const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
 
   let panelDoc = null;
@@ -933,49 +821,19 @@ async function runTicketPanelAuto(client) {
     );
   } catch { }
 
-  let infoMessage = null;
-  let panelMessage = null;
+  const infoMessage = await upsertPanelMessage(channel, client, {
+    messageId: panelDoc?.ticketInfoMessageId || null,
+    files: [attachment],
+    embeds: [ticketInfoEmbed],
+    components: [],
+    attachmentName: TICKET_MEDIA_NAME
+  });
 
-  if (panelDoc?.ticketInfoMessageId) {
-    infoMessage = await channel.messages.fetch(panelDoc.ticketInfoMessageId).catch(() => null);
-  }
-  if (panelDoc?.ticketPanelMessageId) {
-    panelMessage = await channel.messages.fetch(panelDoc.ticketPanelMessageId).catch(() => null);
-  }
-
-  if (infoMessage) {
-    if (await shouldEditMessage(infoMessage, { embeds: [ticketInfoEmbed], components: [], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
-      const editPayload = {
-        embeds: [ticketInfoEmbed],
-        components: []
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await infoMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    infoMessage = await channel.send({ files: [attachment], embeds: [ticketInfoEmbed] }).catch(() => null);
-  }
-
-  if (panelMessage) {
-    if (await shouldEditMessage(panelMessage, { embeds: [ticketPanelEmbed], components: [ticketSelectRow] })) {
-      const editPayload = {
-        embeds: [ticketPanelEmbed],
-        components: [ticketSelectRow]
-      };
-
-      if (!msg.embeds?.[0]?.image?.url) {
-        editPayload.files = [attachment];
-      }
-
-      await panelMessage.edit(editPayload).catch(() => { });
-    }
-  } else {
-    panelMessage = await channel.send({ embeds: [ticketPanelEmbed], components: [ticketSelectRow] }).catch(() => null);
-  }
+  const panelMessage = await upsertPanelMessage(channel, client, {
+    messageId: panelDoc?.ticketPanelMessageId || null,
+    embeds: [ticketPanelEmbed],
+    components: [ticketSelectRow]
+  });
 
   if (infoMessage?.id || panelMessage?.id) {
     await Panel.updateOne(
@@ -990,143 +848,11 @@ async function runTicketPanelAuto(client) {
   }
 }
 
-async function runSponsorServersTicketPanelAuto(client) {
-  const { EmbedBuilder, ActionRowBuilder, AttachmentBuilder, StringSelectMenuBuilder } = require('discord.js');
-  const path = require('path');
-  const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
-
-  const SPONSOR_GUILD_IDS = {
-    '1471511676019933354': { tagName: 'Luna', emoji: '🌙' },
-    '1471511928739201047': { tagName: 'Cash', emoji: '💸' },
-    '1471512183547498579': { tagName: 'Porn', emoji: '🔞' },
-    '1471512555762483330': { tagName: '69', emoji: '😈' },
-    '1471512797140484230': { tagName: 'Weed', emoji: '🍃' },
-    '1471512808448458958': { tagName: 'Figa', emoji: '🍑' }
-  };
-
-  const TICKET_CHANNEL_IDS = {
-    '1471511676019933354': '1471974302109667410',
-    '1471511928739201047': '1471974355964657765',
-    '1471512183547498579': '1471974536357347570',
-    '1471512555762483330': '1471974622777049098',
-    '1471512797140484230': '1471974712958648412',
-    '1471512808448458958': '1471974799453720740'
-  };
-
-  const GUILDED_ROLE_IDS = {
-    '1471511676019933354': '1471627231637012572',
-    '1471511928739201047': '1471628245404483762',
-    '1471512183547498579': '1471628136172097638',
-    '1471512555762483330': '1471628002050838790',
-    '1471512797140484230': '1471627880575275008',
-    '1471512808448458958': '1471627711901470781'
-  };
-
-  const TICKET_MEDIA_NAME = 'ticket.gif';
-  const TICKET_MEDIA_PATH = path.join(__dirname, '..', 'Photos', TICKET_MEDIA_NAME);
-
-  for (const [guildId, config] of Object.entries(SPONSOR_GUILD_IDS)) {
-    try {
-      const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
-      if (!guild) continue;
-
-      await guild.channels.fetch().catch(() => { });
-
-      let guildedRoleMention = '`༄ Guilded`';
-      const guildedRoleId = GUILDED_ROLE_IDS[guildId];
-      if (guildedRoleId) {
-        const role = await guild.roles.fetch(guildedRoleId).catch(() => null);
-        if (role) guildedRoleMention = `<@&${role.id}>`;
-      }
-
-      let channel = null;
-      const mappedId = TICKET_CHANNEL_IDS[guildId];
-      if (mappedId) {
-        channel = guild.channels.cache.get(mappedId) || await guild.channels.fetch(mappedId).catch(() => null);
-      }
-
-      if (!channel) {
-        channel = guild.channels.cache.find((ch) => {
-          if (!ch?.isTextBased?.()) return false;
-          const n = (ch.name || '').toLowerCase();
-          return n.includes('ticket') || n.includes('assistenza') || n.includes('support');
-        }) || null;
-      }
-
-      if (!channel?.isTextBased?.()) continue;
-
-      const attachment = new AttachmentBuilder(TICKET_MEDIA_PATH, { name: TICKET_MEDIA_NAME });
-
-      const embed = new EmbedBuilder()
-        .setColor('#6f4e37')
-        .setTitle(`༄${config.emoji}︲${config.tagName}'s Ticket`)
-        .setDescription(
-          `Clicca sul pulsante per aprire un ticket e claimare il tuo ruolo ${guildedRoleMention} su questo server e su quello principale.`
-        );
-
-      const ticketMenu = new StringSelectMenuBuilder()
-        .setCustomId('ticket_open_menu')
-        .setPlaceholder('🎫 Seleziona una categoria...')
-        .addOptions(
-          {
-            label: 'Prima categoria',
-            description: 'Riscatto Ruolo',
-            value: 'ticket_supporto',
-            emoji: { id: '1443651872258003005', name: 'discordstaff' }
-          },
-        );
-      const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
-
-      let panelDoc = null;
-      try {
-        panelDoc = await Panel.findOneAndUpdate(
-          { guildId, channelId: channel.id },
-          { $setOnInsert: { guildId, channelId: channel.id } },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-      } catch {
-        panelDoc = null;
-      }
-
-      let msg = null;
-      if (panelDoc?.sponsorTicketPanelMessageId) {
-        msg = await channel.messages.fetch(panelDoc.sponsorTicketPanelMessageId).catch(() => null);
-      }
-
-      if (msg) {
-        if (await shouldEditMessage(msg, { embeds: [embed], components: [ticketSelectRow], files: [attachment], attachmentName: TICKET_MEDIA_NAME })) {
-          const editPayload = {
-            embeds: [embed],
-            components: [ticketSelectRow]
-          };
-
-          if (!msg.embeds?.[0]?.image?.url) {
-            editPayload.files = [attachment];
-          }
-
-          await msg.edit(editPayload).catch(() => { });
-        }
-      } else {
-        msg = await channel.send({ files: [attachment], embeds: [embed], components: [ticketSelectRow] }).catch(() => null);
-      }
-
-      if (msg?.id) {
-        await Panel.updateOne(
-          { guildId, channelId: channel.id },
-          { $set: { sponsorTicketPanelMessageId: msg.id } }
-        ).catch(() => { });
-      }
-    } catch (err) {
-      global.logger?.error?.('[SPONSOR TICKET] Error processing guild:', guildId, err);
-    }
-  }
-}
 
 async function runSponsorServersVerifyPanelAuto(client) {
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const SPONSOR_GUILD_IDS = [
     '1471511676019933354',
@@ -1206,32 +932,11 @@ async function runSponsorServersVerifyPanelAuto(client) {
         continue;
       }
 
-      let panelMessage = null;
-      if (panelDoc?.verifyPanelMessageId) {
-        panelMessage = await channel.messages.fetch(panelDoc.verifyPanelMessageId).catch(() => null);
-      }
-
-      if (panelMessage) {
-        if (await shouldEditMessage(panelMessage, { embeds: [verifyPanelEmbed], components: [verifyRow] })) {
-          const editPayload = {
-            embeds: [verifyPanelEmbed],
-            components: [verifyRow]
-          };
-
-          if (!msg.embeds?.[0]?.image?.url) {
-            editPayload.files = [attachment];
-          }
-
-          await panelMessage.edit(editPayload).catch((err) => {
-            global.logger.error('[SPONSOR VERIFY] Failed to edit message:', err);
-          });
-        }
-      } else {
-        panelMessage = await channel.send({ embeds: [verifyPanelEmbed], components: [verifyRow] }).catch((err) => {
-          global.logger.error('[SPONSOR VERIFY] Failed to send message:', err);
-          return null;
-        });
-      }
+      const panelMessage = await upsertPanelMessage(channel, client, {
+        messageId: panelDoc?.verifyPanelMessageId || null,
+        embeds: [verifyPanelEmbed],
+        components: [verifyRow]
+      });
 
       if (panelMessage?.id) {
         await Panel.updateOne(
@@ -1241,17 +946,20 @@ async function runSponsorServersVerifyPanelAuto(client) {
           global.logger.error('[SPONSOR VERIFY] Failed to update panel doc:', err);
         });
       }
+
+      global.logger.info('[SPONSOR VERIFY] Panel updated for guild:', guildId);
     } catch (err) {
       global.logger.error('[SPONSOR VERIFY] Error processing guild:', guildId, err);
     }
   }
 }
 
+
 async function runSponsorGuildTagPanelAuto(client) {
   const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
   const path = require('path');
   const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
-  const { shouldEditMessage } = require('../Utils/Embeds/panelUpsert');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
   const GUILD_TAG_CONFIG = {
     '1471511676019933354': { channelId: '1471522979706835018', tagName: 'Luna', emoji: '🌙' },
@@ -1277,17 +985,6 @@ async function runSponsorGuildTagPanelAuto(client) {
         "1471512808448458958": "1471515516291121213"
       };
 
-      let boosterRole = null;
-
-      const boosterRoleId = BOOSTER_ROLE_IDS[guild.id];
-      if (boosterRoleId) {
-        boosterRole = await guild.roles.fetch(boosterRoleId).catch(() => null);
-      }
-
-      const boosterRoleMention = boosterRole
-        ? `<@&${boosterRole.id}>`
-        : '`༄ Server Booster`';
-
       if (!guild) {
         global.logger.warn('[GUILD TAG] Guild not found:', guildId);
         continue;
@@ -1302,6 +999,17 @@ async function runSponsorGuildTagPanelAuto(client) {
         global.logger.warn('[GUILD TAG] Channel not found in guild:', guildId, config.channelId);
         continue;
       }
+
+      let boosterRole = null;
+
+      const boosterRoleId = BOOSTER_ROLE_IDS[guild.id];
+      if (boosterRoleId) {
+        boosterRole = await guild.roles.fetch(boosterRoleId).catch(() => null);
+      }
+
+      const boosterRoleMention = boosterRole
+        ? `<@&${boosterRole.id}>`
+        : '`༄ Server Booster`';
 
       const dividerLine = '<a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531>';
 
@@ -1348,34 +1056,14 @@ async function runSponsorGuildTagPanelAuto(client) {
         continue;
       }
 
-      let tagMessage = null;
-      if (panelDoc?.infoMessageId1) {
-        tagMessage = await channel.messages.fetch(panelDoc.infoMessageId1).catch(() => null);
-      }
-
-      const basePayload = {
+      const messagePayload = {
+        messageId: panelDoc?.infoMessageId1 || null,
         embeds: [tagEmbed],
-        components: []
+        components: [],
+        ...(attachment ? { files: [attachment] } : {})
       };
 
-      if (tagMessage) {
-        if (await shouldEditMessage(tagMessage, basePayload)) {
-          await tagMessage.edit(basePayload).catch((err) => {
-            global.logger.error('[GUILD TAG] Failed to edit message:', err);
-          });
-        }
-      } else {
-        const sendPayload = {
-          ...basePayload,
-          ...(attachment ? { files: [attachment] } : {})
-        };
-
-        tagMessage = await channel.send(sendPayload).catch((err) => {
-          global.logger.error('[GUILD TAG] Failed to send message:', err);
-          return null;
-        });
-      }
-
+      const tagMessage = await upsertPanelMessage(channel, client, messagePayload);
 
       if (tagMessage?.id) {
         await Panel.updateOne(
@@ -1385,11 +1073,14 @@ async function runSponsorGuildTagPanelAuto(client) {
           global.logger.error('[GUILD TAG] Failed to update panel doc:', err);
         });
       }
+
+      global.logger.info('[GUILD TAG] Panel updated for guild:', guildId, 'Tag:', config.tagName);
     } catch (err) {
       global.logger.error('[GUILD TAG] Error processing guild:', guildId, err);
     }
   }
 }
+
 
 async function runStaffListAuto(client) {
   const IDs = require('../Utils/Config/ids');
@@ -1441,11 +1132,6 @@ async function runEmbedWithButtonsSections(client) {
   }
   try {
     await runSponsorServersVerifyPanelAuto(client);
-    try {
-      await runSponsorServersTicketPanelAuto(client);
-    } catch (err) {
-      global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runSponsorServersTicketPanelAuto failed:', err);
-    }
   } catch (err) {
     global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runSponsorServersVerifyPanelAuto failed:', err);
   }
