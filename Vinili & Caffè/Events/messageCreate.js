@@ -1,50 +1,35 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const math = require('mathjs');
+const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
-const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
-const math = require('mathjs');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
-const { recordBump } = require('../Services/Bump/bumpService');
-const { recordDiscadiaBump } = require('../Services/Bump/bumpService');
-const { recordDiscadiaVote } = require('../Services/Bump/bumpService');
+const { recordDiscadiaBump, restorePendingVoteReminders, recordDiscadiaVote, recordBump } = require('../Services/Bump/bumpService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
 const { addExpWithLevel } = require('../Services/Community/expService');
 const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
-const {
-    checkPrefixPermission,
-    getPrefixRequiredRoles,
-    buildGlobalPermissionDeniedEmbed
-} = require('../Utils/Moderation/commandPermissions');
+const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
-const {
-    buildCooldownErrorEmbed,
-    buildMissingArgumentsErrorEmbed,
-    buildCommandTimeoutErrorEmbed,
-    buildInternalCommandErrorEmbed
-} = require('../Utils/Moderation/commandErrorEmbeds');
-const {
-    getGuildAutoResponderCache,
-    setGuildAutoResponderCache
-} = require('../Utils/Community/autoResponderCache');
+const { buildCooldownErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require('../Utils/Moderation/commandErrorEmbeds');
+const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require('../Utils/Community/autoResponderCache');
 const { safeMessageReply } = require('../Utils/Moderation/reply');
+const { upsertVoteRole } = require('../Services/Community/communityOpsService');
 const IDs = require('../Utils/Config/ids');
 const SuggestionCount = require('../Schemas/Suggestion/suggestionSchema');
+
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
-
 const VOTE_CHANNEL_ID = IDs.channels.suppporters;
 const VOTE_ROLE_ID = IDs.roles.Voter;
 const VOTE_URL = IDs.links.vote;
 const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
-const { upsertVoteRole } = require('../Services/Community/communityOpsService');
 const COUNTING_CHANNEL_ID = IDs.channels.counting;
 const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const FORCE_DELETE_CHANNEL_IDS = new Set(
     [IDs.channels.separator7].filter(Boolean).map((id) => String(id))
 );
-
 const MEDIA_BLOCK_ROLE_IDS = [
     IDs.roles.PicPerms
 ];
@@ -264,40 +249,40 @@ async function handleVoteManagerMessage(message, client) {
     let resolvedVoteCount = voteCount;
     if (user?.id && message.guild?.id) {
         try {
-            const count = await recordDiscadiaVote(message.guild.id, user.id);
+            const count = await recordDiscadiaVote(message.client, message.guild.id, user.id);
             if (typeof count === 'number') {
                 resolvedVoteCount = count;
             }
             if (count === 1) {
                 expValue = 250;
             }
-        } catch {}
+        } catch { }
         try {
             await addExpWithLevel(message.guild, user.id, Number(expValue || 0), false, false);
-        } catch {}
+        } catch { }
         try {
             const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
             await upsertVoteRole(message.guild.id, user.id, expiresAt);
             const member = message.guild.members.cache.get(user.id) || await message.guild.members.fetch(user.id).catch(() => null);
             if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
-                await member.roles.add(VOTE_ROLE_ID).catch(() => {});
+                await member.roles.add(VOTE_ROLE_ID).catch(() => { });
             }
-        } catch {}
+        } catch { }
     }
     const voteLabel = typeof resolvedVoteCount === 'number' ? `${resolvedVoteCount}°` : '';
     const embed = new EmbedBuilder()
-            .setColor('#6f4e37')
-            .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
-            .setDescription([
-                `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
-                '',
-                '\`Hai guadagnato:\`',
-                `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
-                `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
-                '',
-                '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
-            ].join('\n'))
-            .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente' });
+        .setColor('#6f4e37')
+        .setTitle('Un nuovo voto! <a:VC_StarPink:1330194976440848500>')
+        .setDescription([
+            `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
+            '',
+            '\`Hai guadagnato:\`',
+            `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : '**voto**'}`,
+            `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+            '',
+            '<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.',
+        ].join('\n'))
+        .setFooter({ text: 'Ogni volta che voterai il valore dell\'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente' });
 
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -316,7 +301,7 @@ async function handleVoteManagerMessage(message, client) {
         global.logger.error('[VOTE EMBED] Failed to send embed:', detail);
     }
     if (sent) {
-        await message.delete().catch(() => {});
+        await message.delete().catch(() => { });
     }
     return true;
 }
@@ -327,7 +312,7 @@ module.exports = {
         const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
         const defaultPrefix = '+';
         if (FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || '')) && !message?.system) {
-            await message.delete().catch(() => {});
+            await message.delete().catch(() => { });
             return;
         }
         try {
@@ -434,6 +419,11 @@ module.exports = {
             } catch (error) {
                 logEventError(client, 'COUNTING ERROR', error);
             }
+            try {
+                await restorePendingVoteReminders(client);
+            } catch (err) {
+                global.logger?.error?.('[DISCADIA] restorePendingVoteReminders failed:', err);
+            }
         }
         let overrideCommand = null;
         let overridePrefix = null;
@@ -478,7 +468,7 @@ module.exports = {
         let command = overrideCommand
             || client.pcommands.get(cmd)
             || client.pcommands.get(client.aliases.get(cmd));
-            
+
         if (!command) return;
         const prefixSubcommandFromArgs = args[0] ? String(args[0]).toLowerCase() : null;
         const prefixSubcommandFromAlias = !prefixSubcommandFromArgs && command?.subcommandAliases
@@ -1157,16 +1147,16 @@ async function handleSuggestionChannelMessage(message) {
         Upmembers: [],
         Downmembers: [],
         sID: suggestionId
-    }).catch(() => {});
+    }).catch(() => { });
 
     const thread = await posted.startThread({
         name: `Thread per il suggerimento ${suggestionId}`,
         autoArchiveDuration: 10080
     }).catch(() => null);
     if (thread) {
-        await thread.send(`Ho creato questo thread per discutere del suggerimento di <@${message.author.id}>`).catch(() => {});
+        await thread.send(`Ho creato questo thread per discutere del suggerimento di <@${message.author.id}>`).catch(() => { });
     }
 
-    await message.delete().catch(() => {});
+    await message.delete().catch(() => { });
     return true;
 }

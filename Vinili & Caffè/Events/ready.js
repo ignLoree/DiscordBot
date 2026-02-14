@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const { restorePendingReminders } = require('../Services/Bump/bumpService');
 const { restorePendingDiscadiaReminders } = require('../Services/Bump/bumpService');
-const { startDiscadiaVoteReminderLoop } = require('../Services/Bump/bumpService');
+const { restorePendingVoteReminders } = require('../Services/Bump/bumpService')
 const { bootstrapSupporter } = require('./presenceUpdate');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
 const { runDueOneTimeReminders } = require('../Services/Reminders/oneTimeReminderService');
@@ -77,7 +77,7 @@ module.exports = {
                 global.logger.error('[DISCADIA REMINDER ERROR]', err);
             }
             try {
-                startDiscadiaVoteReminderLoop(client);
+                await restorePendingVoteReminders(client);
             } catch (err) {
                 global.logger.error('[DISCADIA VOTE REMINDER ERROR]', err);
             }

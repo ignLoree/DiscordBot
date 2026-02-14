@@ -3,6 +3,7 @@ const DisboardBump = require('../../Schemas/Disboard/disboardBumpSchema');
 const { DiscadiaBump, DiscadiaVoter } = require('../../Schemas/Discadia/discadiaSchemas');
 const IDs = require('../../Utils/Config/ids');
 const { getNoDmSet } = require('../../Utils/noDmList');
+const discadiaVoteTimers = new Map(); // key: `${guildId}:${userId}`
 
 const BUMP_REMINDER_CHANNEL_BY_KEY = {
   disboard: IDs.channels.commands,
@@ -187,7 +188,7 @@ async function sendVoteFallbackChannelReminder(client, guildId, userId) {
   await channel.send({ content: `<@${userId}>`, embeds: [embed] }).catch(() => {});
 }
 
-async function recordDiscadiaVote(guildId, userId) {
+async function recordDiscadiaVote(client, guildId, userId) {
   const now = new Date();
   const doc = await DiscadiaVoter.findOneAndUpdate(
     { guildId, userId },
@@ -198,8 +199,167 @@ async function recordDiscadiaVote(guildId, userId) {
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+
+  scheduleDiscadiaVoteReminder(client, guildId, userId, now);
+
   return doc?.voteCount || 1;
 }
+
+function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
+  const enabled = client?.config?.discadiaVoteReminder?.enabled;
+  if (!enabled) return;
+
+  const key = `${guildId}:${userId}`;
+  const existing = discadiaVoteTimers.get(key);
+  if (existing) clearTimeout(existing);
+
+  const cooldownMs = getVoteCooldownMs(client);
+  const targetTime = new Date(lastVoteAt).getTime() + cooldownMs;
+  const delay = targetTime - Date.now();
+
+  const run = async () => {
+    try {
+      const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean();
+      if (!doc?.lastVoteAt) return;
+      if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMs) return;
+
+      const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
+      if (noDmSet.has(userId)) return;
+
+      const user = client.users.cache.get(userId) || await client.users.fetch(userId).catch(() => null);
+      if (!user) return;
+
+      const embed = buildVoteReminderEmbed(client);
+
+      try {
+        await user.send({ embeds: [embed] });
+      } catch {
+        await sendVoteFallbackChannelReminder(client, guildId, userId);
+      }
+
+      await DiscadiaVoter.updateOne(
+        { guildId, userId },
+        { $set: { lastRemindedAt: new Date() } }
+      ).catch(() => {});
+    } finally {
+      discadiaVoteTimers.delete(key);
+    }
+  };
+
+  if (delay <= 0) {
+    void run();
+    return;
+  }
+
+  discadiaVoteTimers.set(key, setTimeout(() => run().catch(() => {}), delay));
+}
+
+
+function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
+  const enabled = client?.config?.discadiaVoteReminder?.enabled;
+  if (!enabled) return;
+
+  const key = `${guildId}:${userId}`;
+  const existing = discadiaVoteTimers.get(key);
+  if (existing) clearTimeout(existing);
+
+  const cooldownMs = getVoteCooldownMs(client);
+  const target = new Date(lastVoteAt).getTime() + cooldownMs;
+  const delay = target - Date.now();
+
+  const run = async () => {
+    try {
+      const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean();
+      if (!doc?.lastVoteAt) return;
+      if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMs) return;
+
+      if (doc.lastRemindedAt && Date.now() - new Date(doc.lastRemindedAt).getTime() < cooldownMs - 60_000) return;
+
+      const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
+      if (noDmSet.has(userId)) return;
+
+      const user = client.users.cache.get(userId) || await client.users.fetch(userId).catch(() => null);
+      if (!user) return;
+
+      const embed = buildVoteReminderEmbed(client);
+      try {
+        await user.send({ embeds: [embed] });
+      } catch {
+        await sendVoteFallbackChannelReminder(client, guildId, userId);
+      }
+
+      await DiscadiaVoter.updateOne(
+        { guildId, userId },
+        { $set: { lastRemindedAt: new Date() } }
+      ).catch(() => {});
+    } finally {
+      discadiaVoteTimers.delete(key);
+    }
+  };
+
+  if (delay <= 0) {
+    void run();
+    return;
+  }
+
+  discadiaVoteTimers.set(key, setTimeout(() => run().catch(() => {}), delay));
+}
+
+async function restorePendingVoteReminders(client) {
+  const enabled = client?.config?.discadiaVoteReminder?.enabled;
+  if (!enabled) return;
+
+  const cooldownMs = getVoteCooldownMs(client);
+
+  const SEND_IMMEDIATELY_IF_LATE_MS = 2 * 60 * 60 * 1000; 
+  const SKIP_IF_LATE_MS = 24 * 60 * 60 * 1000;
+
+  const docs = await DiscadiaVoter.find(
+    { lastVoteAt: { $exists: true } },
+    { guildId: 1, userId: 1, lastVoteAt: 1 }
+  ).lean().catch(() => []);
+
+  let restored = 0;
+  let skipped = 0;
+
+  for (const d of docs) {
+    if (!d?.guildId || !d?.userId || !d?.lastVoteAt) continue;
+
+    const lastVoteAt = new Date(d.lastVoteAt);
+    const target = lastVoteAt.getTime() + cooldownMs;
+    const lateBy = Date.now() - target;
+
+    const key = `${d.guildId}:${d.userId}`;
+    const existing = discadiaVoteTimers.get(key);
+    if (existing) clearTimeout(existing);
+
+    if (lateBy <= 0) {
+      scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, lastVoteAt);
+      restored++;
+      continue;
+    }
+
+    if (lateBy > SKIP_IF_LATE_MS) {
+      skipped++;
+      continue;
+    }
+
+    if (lateBy <= SEND_IMMEDIATELY_IF_LATE_MS) {
+      scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, lastVoteAt);
+      restored++;
+      continue;
+    }
+
+    const jitter = 5 * 60 * 1000 + Math.floor(Math.random() * 10 * 60 * 1000);
+    const syntheticLastVote = new Date(Date.now() - cooldownMs + jitter);
+
+    scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, syntheticLastVote);
+    restored++;
+  }
+
+  global.logger?.info?.(`[DISCADIA] Restored ${restored} reminders, skipped ${skipped} (too old)`);
+}
+
 
 async function sendDueDiscadiaVoteReminders(client) {
   const enabled = client?.config?.discadiaVoteReminder?.enabled;
@@ -263,6 +423,7 @@ module.exports = {
   restorePendingDiscadiaReminders: discadiaBumpService.restorePendingReminders,
   recordDiscadiaVote,
   sendDueReminders: sendDueDiscadiaVoteReminders,
-  startDiscadiaVoteReminderLoop
+  startDiscadiaVoteReminderLoop,
+  restorePendingVoteReminders
 };
 
