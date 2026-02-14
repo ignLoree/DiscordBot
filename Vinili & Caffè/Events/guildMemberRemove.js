@@ -266,8 +266,6 @@ module.exports = {
                                 ]
                             });
                         }
-                        global.logger.info('[PM LEAVE] found docs:', partnerships.length, 'member:', member.id);
-                        global.logger.info('[PM LEAVE] partnerLogs:', IDs.channels.partnerLogs);
 
                     }
                     const dmChannel = await member.user.createDM().catch(() => null);
