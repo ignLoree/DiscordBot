@@ -397,7 +397,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 if (warnChannel) {
                     await warnChannel.send({ content: `${utentee}`, embeds: [warnstaff] });
                 }
-                await safeEditReply(interaction, {
+                return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
                             .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -460,7 +460,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`
                     });
-                    await safeEditReply(interaction, {
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
@@ -515,7 +515,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`
                     });
-                    await safeEditReply(interaction, {
+                    return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
                                 .setDescription(`<:vegacheckmark:1443666279058772028> Azione eseguita con successo da ${interaction.user.username}.`)
