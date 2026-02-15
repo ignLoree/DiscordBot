@@ -12,7 +12,7 @@ const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weekly
 const { startPhotoContestLoop } = require('../Services/Community/photoContestService');
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop } = require('../Services/Community/temporaryRoleService');
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop } = require('../Services/Community/customRoleExpiryService');
-const { startDailyPartnerAuditLoop, runDailyPartnerAudit } = require('../Services/Partner/partnerAuditService');
+const { startDailyPartnerAuditLoop } = require('../Services/Partner/partnerAuditService');
 const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { retroSyncGuildLevels } = require('../Services/Community/expService');
@@ -60,7 +60,7 @@ module.exports = {
             client.logs.success('[DATABASE] Connected to MongoDB successfully.');
         }
         require('events').EventEmitter.defaultMaxListeners = config.eventListeners;
-        const primaryScheduler = true;
+        const primaryScheduler = !client.shard || client.shard.ids?.[0] === 0;
         if (primaryScheduler) {
             try {
                 await restorePendingReminders(client);

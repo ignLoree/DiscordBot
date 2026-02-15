@@ -313,16 +313,35 @@ async function restorePendingVoteReminders(client) {
   const cooldownMs = getVoteCooldownMs(client);
 
   const SEND_IMMEDIATELY_IF_LATE_MS = 2 * 60 * 60 * 1000;
-  const SKIP_IF_LATE_MS = 24 * 60 * 60 * 1000;
-  const docs = await DiscadiaVoter.find(
-    { lastVoteAt: { $exists: true } },
-    { guildId: 1, userId: 1, lastVoteAt: 1 }
-  ).lean().catch(() => []);
+  const SKIP_IF_TOO_OLD_MS = 24 * 60 * 60 * 1000;
+  let docs = [];
+  try {
+    docs = await DiscadiaVoter.find(
+      { lastVoteAt: { $exists: true } },
+      { guildId: 1, userId: 1, lastVoteAt: 1 }
+    ).lean();
+  } catch (err) {
+    global.logger?.error?.('[DISCADIA] Failed fetching vote docs:', err);
+    return;
+  }
+
+  if (!docs.length) return;
+
   const latestByUser = new Map();
+
   for (const doc of docs) {
     if (!doc?.userId || !doc?.lastVoteAt) continue;
+
     const prev = latestByUser.get(doc.userId);
-    if (!prev || new Date(doc.lastVoteAt).getTime() > new Date(prev.lastVoteAt).getTime()) {
+    const currentTs = new Date(doc.lastVoteAt).getTime();
+
+    if (!prev) {
+      latestByUser.set(doc.userId, doc);
+      continue;
+    }
+
+    const prevTs = new Date(prev.lastVoteAt).getTime();
+    if (currentTs > prevTs) {
       latestByUser.set(doc.userId, doc);
     }
   }
@@ -335,8 +354,8 @@ async function restorePendingVoteReminders(client) {
     const guildId = String(doc.guildId);
     const lastVoteAt = new Date(doc.lastVoteAt);
 
-    const target = lastVoteAt.getTime() + cooldownMs;
-    const lateBy = Date.now() - target;
+    const targetTime = lastVoteAt.getTime() + cooldownMs;
+    const lateBy = Date.now() - targetTime;
 
     if (lateBy <= 0) {
       scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt);
@@ -344,7 +363,7 @@ async function restorePendingVoteReminders(client) {
       continue;
     }
 
-    if (lateBy > SKIP_IF_LATE_MS) {
+    if (lateBy > SKIP_IF_TOO_OLD_MS) {
       skipped++;
       continue;
     }
@@ -354,12 +373,25 @@ async function restorePendingVoteReminders(client) {
       restored++;
       continue;
     }
-    const jitter = 5 * 60 * 1000 + Math.floor(Math.random() * 10 * 60 * 1000);
+    const jitter =
+      5 * 60 * 1000 +
+      Math.floor(Math.random() * 10 * 60 * 1000);
+
     const syntheticLastVote = new Date(Date.now() - cooldownMs + jitter);
-    scheduleDiscadiaVoteReminder(client, guildId, userId, syntheticLastVote);
+
+    scheduleDiscadiaVoteReminder(
+      client,
+      guildId,
+      userId,
+      syntheticLastVote
+    );
+
     restored++;
   }
 
+  global.logger?.info?.(
+    `[DISCADIA] Restored ${restored} vote reminders, skipped ${skipped} (too old)`
+  );
 }
 
 async function sendDueDiscadiaVoteReminders(client) {
