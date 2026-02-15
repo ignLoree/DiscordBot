@@ -184,7 +184,7 @@ module.exports = {
 **<:member_role_icon:1330530086792728618> Aperto da:** <@${ticket.userId}>
 **<:discordstaff:1443651872258003005> Chiuso da:** Sistema
 **<:Clock:1330530065133338685> Aperto il:** ${createdAtFormatted}
-**? Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Non claimato"}
+**<a:VC_Verified:1448687631109197978> Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Non claimato"}
 **<:reportmessage:1443670575376765130> Motivo:** Utente uscito dal server
 `)
                                     .setColor("#6f4e37")

@@ -263,7 +263,7 @@ module.exports = {
                 const deniedEmbed = gate.reason === 'not_owner'
                     ? buildGlobalNotYourControlEmbed()
                     : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'bottone');
-                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => {});
+                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => { });
                 return;
             }
         }
@@ -273,7 +273,7 @@ module.exports = {
                 const deniedEmbed = gate.reason === 'not_owner'
                     ? buildGlobalNotYourControlEmbed()
                     : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'menu');
-                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => {});
+                await interaction.reply({ embeds: [deniedEmbed], flags: 1 << 6 }).catch(() => { });
                 return;
             }
         }
@@ -867,6 +867,15 @@ module.exports = {
                             'Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)',
                             '<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.',
                             '<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.'
+                        ].join('\n'),
+                        inline: true
+                    },
+                    {
+                        name: '\`GUILDED\`',
+                        value: [
+                            '<@&1471955147692179497>',
+                            'Ottenibile mettendo una delle nostre [Guild Tags](<https://discord.com/channels/1329080093599076474/1442569115972669541/1472309478555652360>)',
+                            '९ Esclusività del ruolo.'
                         ].join('\n'),
                         inline: true
                     },

@@ -277,7 +277,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setTitle('Ticket Chiuso')
-              .setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${message.author}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
+              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticketDoc.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
               .setColor('#6f4e37')
           ]
         }, Boolean(transcriptHtmlPath));
@@ -293,7 +293,7 @@ module.exports = {
             embeds: [
               new EmbedBuilder()
                 .setTitle('Ticket Chiuso')
-                .setDescription(`**Aperto da:** <@${ticketDoc.userId}>\n**Chiuso da:** ${message.author}\n**Aperto il:** ${createdAtFormatted}\n**Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n**Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
+                .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticketDoc.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
                 .setColor('#6f4e37')
             ]
           }, Boolean(transcriptHtmlPath));
