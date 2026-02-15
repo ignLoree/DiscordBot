@@ -9,7 +9,6 @@ const { startMinigameLoop, restoreActiveGames } = require('../Services/Minigames
 const { startHourlyReminderLoop } = require('../Services/Community/chatReminderService');
 const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop } = require('../Services/Community/communityOpsService');
 const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weeklyActivityWinnersService');
-const { startPhotoContestLoop } = require('../Services/Community/photoContestService');
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop } = require('../Services/Community/temporaryRoleService');
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop } = require('../Services/Community/customRoleExpiryService');
 const { startDailyPartnerAuditLoop } = require('../Services/Partner/partnerAuditService');
