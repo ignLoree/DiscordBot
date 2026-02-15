@@ -200,17 +200,206 @@ ${preview}`
   }).catch(() => { });
 }
 
+async function runDailyPartnerAudit(client, opts = {}) {
+  const guildId = IDs.guilds.main || client.guilds.cache.first()?.id;
+  if (!guildId) return;
+  const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+  if (!guild) return;
+
+  const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
+  global.logger?.info?.(`[PARTNER AUDIT] Starting daily audit for date: ${targetDateKey}`);
+  const docs = await Staff.find({
+    guildId: guild.id,
+    partnerActions: { $exists: true, $ne: [] }
+  }).catch(() => []);
+
+  let totalChecked = 0;
+  let totalRemoved = 0;
+
+  for (const doc of docs) {
+    const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
+    const allCreates = actions
+      .map((action, index) => ({ action, index }))
+      .filter(({ action }) => String(action?.action || 'create') === 'create')
+      .map(({ action, index }) => {
+        const dateMs = new Date(action?.date || 0).getTime();
+        return { action, index, dateMs, inviteCodes: [] };
+      })
+      .sort((a, b) => a.dateMs - b.dateMs);
+
+    const dayCreates = allCreates
+      .filter(({ action }) => getRomeDateKey(new Date(action?.date || Date.now())) === targetDateKey)
+      .sort((a, b) => a.dateMs - b.dateMs);
+
+    if (!dayCreates.length) continue;
+    totalChecked += dayCreates.length;
+
+    const previousDayKey = getPreviousRomeDateKey(new Date(`${targetDateKey}T12:00:00.000Z`));
+    const rowsFor12hCheck = allCreates
+      .filter((row) => {
+        const rowKey = getRomeDateKey(new Date(row?.action?.date || Date.now()));
+        return rowKey === targetDateKey || rowKey === previousDayKey;
+      })
+      .sort((a, b) => a.dateMs - b.dateMs);
+
+    const actionTextCache = new Map();
+    const inviteInfoCache = new Map();
+    const getActionTextCached = async (row) => {
+      if (!row?.action) return '';
+      if (actionTextCache.has(row.index)) return actionTextCache.get(row.index);
+      const text = await fetchPartnerActionText(guild, row.action);
+      actionTextCache.set(row.index, text || '');
+      return actionTextCache.get(row.index);
+    };
+    const enrichInviteCodes = async (row) => {
+      if (!row?.action) {
+        row.inviteCodes = [];
+        return row.inviteCodes;
+      }
+      const fromInviteField = extractInviteCodes(row.action?.invite || '');
+      const actionText = await getActionTextCached(row);
+      const fromText = extractInviteCodes(actionText);
+      const combined = Array.from(new Set([...fromInviteField, ...fromText]));
+
+      if (!combined.length && row.action?.invite) {
+        const singleCode = extractInviteCode(row.action.invite);
+        if (singleCode) combined.push(singleCode);
+      }
+
+      row.inviteCodes = combined;
+      return row.inviteCodes;
+    };
+
+    await Promise.all(rowsFor12hCheck.map((row) => enrichInviteCodes(row)));
+
+    const seenInviteCodesSameDay = new Set();
+    const managerDailyCounter = new Map();
+    const invalidIndices = new Set();
+    const invalidReasonsByIndex = new Map();
+
+    for (const item of dayCreates) {
+      const { index } = item;
+      const reasons = [];
+      const actionText = await getActionTextCached(item);
+      const descriptionFingerprint = buildDescriptionFingerprint(actionText);
+      let managerMentions = extractManagerMentions(descriptionFingerprint);
+
+      if (!managerMentions.length && item.action?.managerId) {
+        managerMentions = [String(item.action.managerId)];
+        global.logger?.info?.(`[PARTNER AUDIT] Used DB fallback for managerId: ${item.action.managerId}`);
+      }
+
+      const inviteCodes = await enrichInviteCodes(item);
+
+      if (!managerMentions.length) {
+        reasons.push('Manager mancante');
+      }
+      for (const managerId of managerMentions) {
+        const used = Number(managerDailyCounter.get(managerId) || 0) + 1;
+        managerDailyCounter.set(managerId, used);
+        if (used > 5) {
+          reasons.push('più di 5 partner con lo stesso manager nello stesso giorno');
+        }
+      }
+      if (!managerMentions.length) {
+        reasons.push('Partner senza menzione del manager');
+      }
+
+      if (containsExternalLinks(descriptionFingerprint)) {
+        reasons.push('Contiene link esterni/immagini/gif non consentiti');
+      }
+
+      if (!inviteCodes.length) {
+        reasons.push('Link invito Discord assente');
+      } else {
+        for (const inviteCode of inviteCodes) {
+          if (seenInviteCodesSameDay.has(inviteCode)) {
+            reasons.push('Stessa partnership fatta più di una volta nello stesso giorno');
+            break;
+          }
+        }
+        for (const inviteCode of inviteCodes) {
+          seenInviteCodesSameDay.add(inviteCode);
+        }
+
+        for (const inviteCode of inviteCodes) {
+          const previous = findLatestPreviousInviteOccurrence(
+            rowsFor12hCheck,
+            inviteCode,
+            item.dateMs,
+            index
+          );
+          if (previous?.dateMs) {
+            const delta = Number(item.dateMs - previous.dateMs);
+            if (Number.isFinite(delta) && delta >= 0 && delta < DUPLICATE_PARTNERSHIP_WINDOW_MS) {
+              reasons.push('Stessa partnership ripetuta prima di 12 ore');
+              break;
+            }
+          }
+        }
+
+        let inviteExpired = false;
+        let inviteNsfw = false;
+        for (const inviteCode of inviteCodes) {
+          let inviteData = inviteInfoCache.get(inviteCode);
+          if (!inviteData) {
+            inviteData = await fetchInviteInfo(inviteCode);
+            inviteInfoCache.set(inviteCode, inviteData);
+          }
+          if (inviteData?.expired) {
+            inviteExpired = true;
+          } else if (inviteData?.ok && inviteData?.data) {
+            const nsfwLevel = Number(inviteData.data?.guild?.nsfw_level || 0);
+            if (nsfwLevel > 0) inviteNsfw = true;
+          }
+        }
+        if (inviteExpired) reasons.push('Link invito Discord scaduto/non valido');
+        if (inviteNsfw) reasons.push('Server NSFW non consentito');
+      }
+
+      if (reasons.length) {
+        invalidIndices.add(index);
+        invalidReasonsByIndex.set(index, reasons.join(' | '));
+      }
+    }
+
+    if (!invalidIndices.size) continue;
+
+    let flagged = 0;
+    for (const index of invalidIndices) {
+      const action = actions[index];
+      if (!action) continue;
+      await logPointRemoval(guild, doc.userId, `[SOLO LOG] ${invalidReasonsByIndex.get(index)}`, action);
+      await logPointRemoval(guild, doc.userId, `${invalidReasonsByIndex.get(index)}`, action);
+      flagged += 1;
+    }
+
+    if (flagged > 0) {
+      totalRemoved += flagged;
+      global.logger?.warn?.(`[PARTNER AUDIT] User ${doc.userId}: ${flagged} partnerships flagged but NOT removed`);
+
+    }
+  }
+
+  global.logger?.info?.(`[PARTNER AUDIT] Completed. Checked: ${totalChecked}, Removed: ${totalRemoved}`);
+}
 
 function startDailyPartnerAuditLoop(client) {
   if (dailyPartnerAuditTask) return dailyPartnerAuditTask;
-  dailyPartnerAuditTask = cron.schedule('0 0 * * *', async () => {
-    try {
-      await dailyPartnerAuditTask(client);
-    } catch (err) {
-      global.logger.error('[PARTNER AUDIT] Daily audit failed', err);
-    }
-  }, { timezone: 'Europe/Rome' });
+
+  dailyPartnerAuditTask = cron.schedule(
+    '0 0 * * *',
+    async () => {
+      try {
+        await runDailyPartnerAudit(client);
+      } catch (err) {
+        global.logger?.error?.('[PARTNER AUDIT] Daily audit failed', err);
+      }
+    },
+    { timezone: 'Europe/Rome' }
+  );
+
   return dailyPartnerAuditTask;
 }
 
-module.exports = { startDailyPartnerAuditLoop };
+module.exports = { startDailyPartnerAuditLoop, runDailyPartnerAudit };

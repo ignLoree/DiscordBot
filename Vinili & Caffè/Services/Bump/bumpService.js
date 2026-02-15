@@ -314,35 +314,52 @@ async function restorePendingVoteReminders(client) {
 
   const SEND_IMMEDIATELY_IF_LATE_MS = 2 * 60 * 60 * 1000;
   const SKIP_IF_LATE_MS = 24 * 60 * 60 * 1000;
-
   const docs = await DiscadiaVoter.find(
     { lastVoteAt: { $exists: true } },
     { guildId: 1, userId: 1, lastVoteAt: 1 }
   ).lean().catch(() => []);
+  const latestByUser = new Map();
+  for (const doc of docs) {
+    if (!doc?.userId || !doc?.lastVoteAt) continue;
+    const prev = latestByUser.get(doc.userId);
+    if (!prev || new Date(doc.lastVoteAt).getTime() > new Date(prev.lastVoteAt).getTime()) {
+      latestByUser.set(doc.userId, doc);
+    }
+  }
 
   let restored = 0;
   let skipped = 0;
 
-  const latestByUser = new Map();
+  for (const doc of latestByUser.values()) {
+    const userId = String(doc.userId);
+    const guildId = String(doc.guildId);
+    const lastVoteAt = new Date(doc.lastVoteAt);
 
-  for (const d of docs) {
-    if (!d?.userId || !d?.lastVoteAt) continue;
+    const target = lastVoteAt.getTime() + cooldownMs;
+    const lateBy = Date.now() - target;
 
-    const prev = latestByUser.get(d.userId);
-    if (!prev || new Date(d.lastVoteAt).getTime() > new Date(prev.lastVoteAt).getTime()) {
-      latestByUser.set(d.userId, d);
+    if (lateBy <= 0) {
+      scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt);
+      restored++;
+      continue;
     }
+
+    if (lateBy > SKIP_IF_LATE_MS) {
+      skipped++;
+      continue;
+    }
+
+    if (lateBy <= SEND_IMMEDIATELY_IF_LATE_MS) {
+      scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt);
+      restored++;
+      continue;
+    }
+    const jitter = 5 * 60 * 1000 + Math.floor(Math.random() * 10 * 60 * 1000);
+    const syntheticLastVote = new Date(Date.now() - cooldownMs + jitter);
+    scheduleDiscadiaVoteReminder(client, guildId, userId, syntheticLastVote);
+    restored++;
   }
 
-  for (const d of latestByUser.values()) {
-    scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, new Date(d.lastVoteAt));
-  }
-
-  const jitter = 5 * 60 * 1000 + Math.floor(Math.random() * 10 * 60 * 1000);
-  const syntheticLastVote = new Date(Date.now() - cooldownMs + jitter);
-
-  scheduleDiscadiaVoteReminder(client, d.guildId, d.userId, syntheticLastVote);
-  restored++;
 }
 
 async function sendDueDiscadiaVoteReminders(client) {

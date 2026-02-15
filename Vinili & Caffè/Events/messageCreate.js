@@ -4,7 +4,7 @@ const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInt
 const countschema = require('../Schemas/Counting/countingSchema');
 const AFK = require('../Schemas/Afk/afkSchema');
 const { handleTtsMessage } = require('../Services/TTS/ttsService');
-const { recordDiscadiaBump, restorePendingVoteReminders, recordDiscadiaVote, recordBump } = require('../Services/Bump/bumpService');
+const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require('../Services/Bump/bumpService');
 const { handleMinigameMessage } = require('../Services/Minigames/minigameService');
 const { recordReminderActivity } = require('../Services/Community/chatReminderService');
 const { recordMessageActivity } = require('../Services/Community/activityService');
@@ -418,11 +418,6 @@ module.exports = {
                 await handleCounting(message, client);
             } catch (error) {
                 logEventError(client, 'COUNTING ERROR', error);
-            }
-            try {
-                await restorePendingVoteReminders(client);
-            } catch (err) {
-                global.logger?.error?.('[DISCADIA] restorePendingVoteReminders failed:', err);
             }
         }
         let overrideCommand = null;

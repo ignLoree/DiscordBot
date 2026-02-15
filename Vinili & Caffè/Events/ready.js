@@ -12,7 +12,7 @@ const { startWeeklyActivityWinnersLoop } = require('../Services/Community/weekly
 const { startPhotoContestLoop } = require('../Services/Community/photoContestService');
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop } = require('../Services/Community/temporaryRoleService');
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop } = require('../Services/Community/customRoleExpiryService');
-const { startDailyPartnerAuditLoop } = require('../Services/Partner/partnerAuditService');
+const { startDailyPartnerAuditLoop, runDailyPartnerAudit } = require('../Services/Partner/partnerAuditService');
 const { startTicketAutoClosePromptLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { startTranscriptCleanupLoop } = require('../Services/Ticket/ticketMaintenanceService');
 const { retroSyncGuildLevels } = require('../Services/Community/expService');
@@ -76,6 +76,11 @@ module.exports = {
                 await restorePendingVoteReminders(client);
             } catch (err) {
                 global.logger.error('[DISCADIA VOTE REMINDER ERROR]', err);
+            }
+            try {
+                await startDailyPartnerAuditLoop(client);
+            } catch (err) {
+                global.logger.error('[DAILY PARTNER AUDIT ERROR]', err);
             }
         }
         try {
@@ -193,11 +198,6 @@ module.exports = {
                 global.logger.error('[CUSTOM ROLE EXPIRY] Failed to start cleanup loop', err);
             }
             try {
-                startDailyPartnerAuditLoop(client);
-            } catch (err) {
-                global.logger.error('[PARTNER AUDIT] Failed to start loop', err);
-            }
-            try {
                 startTicketAutoClosePromptLoop(client);
             } catch (err) {
                 global.logger.error('[TICKET AUTO CLOSE PROMPT] Failed to start loop', err);
@@ -223,7 +223,7 @@ module.exports = {
         };
         await runStartupPanels('immediate');
         setTimeout(() => {
-            runStartupPanels('retry+15s').catch(() => {});
+            runStartupPanels('retry+15s').catch(() => { });
         }, 15000);
         try {
             const mainGuildId = IDs.guilds.main || client.guilds.cache.first()?.id;
