@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require('discord.js/typings');
+const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
