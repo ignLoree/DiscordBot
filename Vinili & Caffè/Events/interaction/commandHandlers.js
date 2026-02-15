@@ -13,6 +13,7 @@ const {
     buildCommandTimeoutErrorEmbed,
     buildInternalCommandErrorEmbed
 } = require('../../Utils/Moderation/commandErrorEmbeds');
+const { buildErrorLogEmbed } = require('../../Utils/Logging/errorLogEmbed');
 const IDs = require('../../Utils/Config/ids');
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
@@ -187,31 +188,19 @@ async function handleSlashCommand(interaction, client) {
         );
     } catch (error) {
         commandFailed = true;
-        if (error?.code === 'COMMAND_TIMEOUT') {
-            global.logger.warn(`[INTERACTION TIMEOUT] ${interaction.commandName || 'unknown'} by ${interaction.user?.tag || interaction.user?.id}`);
-        }
-        global.logger.error(
-            `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
-            error
-        );
-        const errorChannelId = IDs.channels.errorLogChannel;
+        const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
         const errorChannel = errorChannelId
             ? client.channels.cache.get(errorChannelId)
             : null;
-        const rawErrorText =
-            error?.stack?.slice(0, 1900) ||
-            error?.message ||
-            '<:vegax:1443934876440068179> Errore sconosciuto';
+        const staffEmbed = buildErrorLogEmbed({
+            contextLabel: 'Comando',
+            contextValue: interaction.commandName || 'unknown',
+            userTag: interaction.user?.tag || interaction.user?.id || '—',
+            error
+        });
         const errorText =
-            rawErrorText.length > 1000 ? `${rawErrorText.slice(0, 1000)}...` : rawErrorText;
-        const staffEmbed = new EmbedBuilder()
-            .setColor('#6f4e37')
-            .addFields(
-                { name: '<:dot:1443660294596329582> Comando', value: `\`\`\`${interaction.commandName}\`\`\`` },
-                { name: '<:dot:1443660294596329582> Utente', value: `\`\`\`${interaction.user.tag}\`\`\`` },
-                { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${errorText}\`\`\`` }
-            )
-            .setTimestamp();
+            (error?.stack || error?.message || String(error))?.slice(0, 1000) ||
+            '<:vegax:1443934876440068179> Errore sconosciuto';
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId('error_pending')
@@ -233,9 +222,7 @@ async function handleSlashCommand(interaction, client) {
                     embeds: [staffEmbed],
                     components: [row]
                 });
-            } catch (err) {
-                global.logger.error(err);
-            }
+            } catch (_) {}
         }
         if (msg) {
             const collector = msg.createMessageComponentCollector({
@@ -259,9 +246,7 @@ async function handleSlashCommand(interaction, client) {
                     if (btn.customId === 'error_unsolved')
                         updatedEmbed.setColor('#e74c3c');
                     await msg.edit({ embeds: [updatedEmbed] });
-                } catch (err) {
-                    global.logger.error(err);
-                }
+                } catch (_) {}
             });
             collector.on('end', async () => {
                 try {

@@ -89,12 +89,12 @@ client.reloadScope = async (scope) => {
     const reloadCommands = async () => {
         clearCacheByDir('Commands');
         const commandFolders = fs.readdirSync(path.join(baseDir, 'Commands'));
-        await client.handleCommands(commandFolders, './Commands');
+        await client.handleCommands(commandFolders, path.join(baseDir, 'Commands'));
     };
     const reloadPrefix = async () => {
         clearCacheByDir('Prefix');
         const folders = fs.readdirSync(path.join(baseDir, 'Prefix'));
-        await client.prefixCommands(folders, './Prefix');
+        await client.prefixCommands(folders, path.join(baseDir, 'Prefix'));
     };
     const reloadEvents = () => {
         clearCacheByDir('Events');

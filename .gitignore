@@ -134,3 +134,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Cursor IDE
+.cursor/
+
+# Scripts (Vinili & Caffè)
+Vinili & Caffè/scripts/

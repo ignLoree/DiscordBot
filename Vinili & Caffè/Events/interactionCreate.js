@@ -10,6 +10,7 @@ const { handleCustomRoleInteraction } = require('./interaction/customRoleHandler
 const { handlePauseButton } = require('./interaction/pauseHandlers');
 const { handleEmbedBuilderInteraction } = require('./interaction/embedBuilderHandlers');
 const IDs = require('../Utils/Config/ids');
+const { buildErrorLogEmbed } = require('../Utils/Logging/errorLogEmbed');
 const {
     checkButtonPermission,
     checkStringSelectPermission,
@@ -91,29 +92,19 @@ module.exports = {
             if (await handleCustomRoleInteraction(interaction)) return;
             if (await handleButtonInteraction(interaction, client)) return;
         } catch (err) {
-            global.logger.error(err);
             try {
-                const errorChannelId = IDs.channels.errorLogChannel;
+                const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
                 const errorChannel = errorChannelId
                     ? client.channels.cache.get(errorChannelId)
                     : null;
                 if (errorChannel) {
-                    const rawErrorText =
-                        err?.stack?.slice(0, 1900) ||
-                        err?.message ||
-                        '<:vegax:1443934876440068179> Errore sconosciuto';
-                    const errorText =
-                        rawErrorText.length > 1000 ? `${rawErrorText.slice(0, 1000)}...` : rawErrorText;
-                    const cmdName = interaction?.commandName || interaction?.customId || 'unknown';
-                    const userTag = interaction?.user?.tag || 'unknown';
-                    const staffEmbed = new EmbedBuilder()
-                        .setColor('#6f4e37')
-                        .addFields(
-                            { name: '<:dot:1443660294596329582> Comando', value: `\`\`\`${cmdName}\`\`\`` },
-                            { name: '<:dot:1443660294596329582> Utente', value: `\`\`\`${userTag}\`\`\`` },
-                            { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${errorText}\`\`\`` }
-                        )
-                        .setTimestamp();
+                    const contextValue = interaction?.commandName || interaction?.customId || 'unknown';
+                    const staffEmbed = buildErrorLogEmbed({
+                        contextLabel: 'Contesto',
+                        contextValue,
+                        userTag: interaction?.user?.tag || 'unknown',
+                        error: err
+                    });
                     await errorChannel.send({ embeds: [staffEmbed] });
                 }
                 if (interaction?.isRepliable?.()) {
@@ -127,9 +118,7 @@ module.exports = {
                         await interaction.followUp(payload);
                     }
                 }
-            } catch (innerErr) {
-                global.logger.error('[INTERACTION ERROR HANDLER] Failed to send error feedback:', innerErr);
-            }
+            } catch (_) {}
         }
     },
 };

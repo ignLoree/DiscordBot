@@ -13,6 +13,7 @@ const { applyDefaultFooterToEmbeds } = require('../Utils/Embeds/defaultFooter');
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require('../Utils/Moderation/commandPermissions');
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require('../Utils/Moderation/commandCooldown');
 const { buildCooldownErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require('../Utils/Moderation/commandErrorEmbeds');
+const { buildErrorLogEmbed } = require('../Utils/Logging/errorLogEmbed');
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require('../Utils/Community/autoResponderCache');
 const { safeMessageReply } = require('../Utils/Moderation/reply');
 const { upsertVoteRole } = require('../Services/Community/communityOpsService');
@@ -640,21 +641,18 @@ module.exports = {
                 );
             } catch (error) {
                 if (error?.code === 'COMMAND_TIMEOUT') {
-                    logEventError(client, 'PREFIX COMMAND TIMEOUT', error);
                     await execMessage.reply({
                         embeds: [buildCommandTimeoutErrorEmbed()]
                     }).catch(() => { });
                 }
-                logEventError(client, 'PREFIX COMMAND ERROR', error);
-                const channelID = IDs.channels.errorLogChannel;
+                const channelID = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
                 const errorChannel = client.channels.cache.get(channelID);
-                const errorEmbed = new EmbedBuilder()
-                    .setColor("#6f4e37")
-                    .addFields(
-                        { name: '<:dot:1443660294596329582> Comando', value: `\`${execCommand?.name || 'unknown'}\`` },
-                        { name: '<:dot:1443660294596329582> Utente', value: `${execMessage.author?.tag || 'unknown'}` },
-                        { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${error}\`\`\`` }
-                    );
+                const errorEmbed = buildErrorLogEmbed({
+                    contextLabel: 'Comando',
+                    contextValue: execCommand?.name || 'unknown',
+                    userTag: execMessage.author?.tag || 'unknown',
+                    error
+                });
                 if (errorChannel) {
                     const pendingBtn = new ButtonBuilder()
                         .setCustomId('error_pending')

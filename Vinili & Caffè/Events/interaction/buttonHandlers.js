@@ -1,5 +1,6 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const { handleMinigameButton } = require('../../Services/Minigames/minigameService');
+const { buildErrorLogEmbed } = require('../../Utils/Logging/errorLogEmbed');
 const IDs = require('../../Utils/Config/ids');
 
 async function handleButtonInteraction(interaction, client) {
@@ -33,18 +34,19 @@ async function handleButtonInteraction(interaction, client) {
     try {
         await button.execute(interaction, client);
     } catch (error) {
-        global.logger.error(`${color.red}[${getTimestamp()}] [BUTTON_CREATE]:`, error);
-        const channelID = `${IDs.channels.errorLogChannel}`;
-        const channel = client.channels.cache.get(channelID);
-        if (!channel) return global.logger.error("Errore: Canale errori non trovato!");
+        const channelID = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
+        const channel = channelID ? client.channels.cache.get(channelID) : null;
+        if (!channel) {
+            await interaction.reply({ content: '<:vegax:1443934876440068179> Errore durante l\'esecuzione.', flags: 1 << 6 }).catch(() => {});
+            return true;
+        }
 
-        const embed = new EmbedBuilder()
-            .setColor('#6f4e37')
-            .addFields(
-                { name: '<:dot:1443660294596329582> Bottone', value: `\`\`\`${interaction.customId}\`\`\`` },
-                { name: '<:dot:1443660294596329582> Utente', value: `\`\`\`${interaction.user.username}#${interaction.user.discriminator}\`\`\`` },
-                { name: '<:dot:1443660294596329582> Errore', value: `\`\`\`${error}\`\`\`` }
-            );
+        const embed = buildErrorLogEmbed({
+            contextLabel: 'Bottone',
+            contextValue: interaction.customId || '—',
+            userTag: interaction.user?.tag || `${interaction.user?.username || '—'}#${interaction.user?.discriminator || '0'}`,
+            error
+        });
 
         const pendingBtn = new ButtonBuilder()
             .setCustomId('error_pending')
