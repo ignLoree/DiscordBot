@@ -77,7 +77,7 @@ module.exports = {
     ticketremove: 'remove'
   },
 
-  async execute(message, args = []) {
+  async execute(client, message, args = []) {
     if (!message.inGuild?.() || !message.guild || !message.member) {
       await safeMessageReply(message, {
         content: '<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.',
@@ -257,7 +257,6 @@ module.exports = {
         ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
         : 'Data non disponibile';
 
-      // Always send transcripts to the MAIN guild log channel, even when the ticket is in sponsor servers.
       const mainGuildId = IDs?.guilds?.main || null;
       const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL_ID;
 
