@@ -207,7 +207,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
   if (!guild) return;
 
   const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
-  global.logger?.info?.(`[PARTNER AUDIT] Starting daily audit for date: ${targetDateKey}`);
   const docs = await Staff.find({
     guildId: guild.id,
     partnerActions: { $exists: true, $ne: [] }
@@ -286,7 +285,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
       if (!managerMentions.length && item.action?.managerId) {
         managerMentions = [String(item.action.managerId)];
-        global.logger?.info?.(`[PARTNER AUDIT] Used DB fallback for managerId: ${item.action.managerId}`);
       }
 
       const inviteCodes = await enrichInviteCodes(item);
@@ -380,8 +378,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
     }
   }
-
-  global.logger?.info?.(`[PARTNER AUDIT] Completed. Checked: ${totalChecked}, Removed: ${totalRemoved}`);
 }
 
 function startDailyPartnerAuditLoop(client) {

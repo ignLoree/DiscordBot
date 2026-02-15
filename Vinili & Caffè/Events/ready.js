@@ -181,11 +181,6 @@ module.exports = {
                 global.logger.error('[WEEKLY ACTIVITY] Failed to start loop', err);
             }
             try {
-                startPhotoContestLoop(client);
-            } catch (err) {
-                global.logger.error('[PHOTO CONTEST] Failed to start loop', err);
-            }
-            try {
                 await removeExpiredTemporaryRoles(client);
                 startTemporaryRoleCleanupLoop(client);
             } catch (err) {

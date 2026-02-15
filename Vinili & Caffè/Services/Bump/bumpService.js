@@ -388,10 +388,6 @@ async function restorePendingVoteReminders(client) {
 
     restored++;
   }
-
-  global.logger?.info?.(
-    `[DISCADIA] Restored ${restored} vote reminders, skipped ${skipped} (too old)`
-  );
 }
 
 async function sendDueDiscadiaVoteReminders(client) {
