@@ -1,4 +1,4 @@
-﻿const { safeReply } = require('../../Utils/Moderation/reply');
+﻿const { safeReply, safeEditReply } = require('../../Utils/Moderation/reply');
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require("discord.js");
 const IDs = require('../../Utils/Config/ids');
 
@@ -45,7 +45,7 @@ module.exports = {
   async execute(interaction, client) {
     const devId = '295500038401163264';
     if (devId && interaction?.author?.id !== devId) {
-      return safeMessageReply(interaction, {
+      return safeEditReply(interaction, {
         embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
         allowedMentions: { repliedUser: false }
       });
