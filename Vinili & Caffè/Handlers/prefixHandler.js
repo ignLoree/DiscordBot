@@ -45,8 +45,8 @@ function buildAutoPrefixDescription(command, folder) {
 module.exports = (client) => {
     client.prefixCommands = async (folders, basePath) => {
         const prefixBase = basePath || path.join(process.cwd(), 'Prefix');
-        client.pcommands.clear();
-        client.aliases.clear();
+        const newPcommands = new (client.pcommands.constructor)();
+        const newAliases = new (client.aliases.constructor)();
         const statusMap = new Map();
 
         for (const folder of folders) {
@@ -55,27 +55,37 @@ module.exports = (client) => {
             for (const file of files) {
                 const fullPath = path.join(prefixBase, folder, file);
                 const key = `${folder}/${file}`;
-                delete require.cache[require.resolve(fullPath)];
-                const command = require(fullPath);
-                if (!command || !command.name) {
-                    statusMap.set(key, 'Missing name');
-                    continue;
-                }
-                if (command.skipLoad || command.skipPrefix) {
-                    statusMap.set(key, 'Skipped');
-                    continue;
-                }
-                command.folder = command.folder || folder;
-                if (!String(command.description || '').trim()) {
-                    command.description = buildAutoPrefixDescription(command, folder);
-                }
-                client.pcommands.set(command.name, command);
-                statusMap.set(key, 'Loaded');
-                if (Array.isArray(command.aliases)) {
-                    for (const alias of command.aliases) client.aliases.set(alias, command.name);
+                try {
+                    delete require.cache[require.resolve(fullPath)];
+                    const command = require(fullPath);
+                    if (!command || !command.name) {
+                        statusMap.set(key, 'Missing name');
+                        continue;
+                    }
+                    if (command.skipLoad || command.skipPrefix) {
+                        statusMap.set(key, 'Skipped');
+                        continue;
+                    }
+                    command.folder = command.folder || folder;
+                    if (!String(command.description || '').trim()) {
+                        command.description = buildAutoPrefixDescription(command, folder);
+                    }
+                    newPcommands.set(command.name, command);
+                    statusMap.set(key, 'Loaded');
+                    if (Array.isArray(command.aliases)) {
+                        for (const alias of command.aliases) newAliases.set(alias, command.name);
+                    }
+                } catch (err) {
+                    statusMap.set(key, 'Error loading');
+                    global.logger.error(`[PREFIX_COMMANDS] Failed to load ${key}:`, err);
                 }
             }
         }
+
+        client.pcommands.clear();
+        client.aliases.clear();
+        for (const [k, v] of newPcommands) client.pcommands.set(k, v);
+        for (const [k, v] of newAliases) client.aliases.set(k, v);
 
         const table = new ascii().setHeading('Folder', 'File', 'Status');
         for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
