@@ -646,7 +646,7 @@ module.exports = {
                     }).catch(() => { });
                 }
                 logEventError(client, 'PREFIX COMMAND ERROR', error);
-                const channelID = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
+                const channelID = IDs.channels.errorLogChannel;
                 const errorChannel = client.channels.cache.get(channelID);
                 const errorEmbed = new EmbedBuilder()
                     .setColor("#6f4e37")

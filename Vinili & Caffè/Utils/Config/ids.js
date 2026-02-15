@@ -128,7 +128,6 @@ const ids = {
     counting: "1442569179743125554",
     riunioneStaff: "1443958044802420798",
     commands: "1442569138114662490",
-    serverBotLogs: "1442577274783142039",
     highCmds: "1442569288161558528",
     staffCmds: "1442569262689554444",
     partnerships: "1442569193470824448",

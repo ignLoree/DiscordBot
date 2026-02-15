@@ -143,8 +143,6 @@ module.exports = {
             if (openTickets.length > 0) {
                 const logChannel = guild.channels.cache.get(IDs.channels.ticketLogs)
                     || await guild.channels.fetch(IDs.channels.ticketLogs).catch(() => null)
-                    || guild.channels.cache.get(IDs.channels.serverBotLogs)
-                    || await guild.channels.fetch(IDs.channels.serverBotLogs).catch(() => null);
                 for (const ticket of openTickets) {
                     const channel = guild.channels.cache.get(ticket.channelId) || await guild.channels.fetch(ticket.channelId).catch(() => null);
                     if (!channel) {

@@ -19,7 +19,7 @@ module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction, client) {
     if (!isCommandInteraction(interaction)) return;
-    const channelId = IDs.channels.commandLogChannel || IDs.channels.serverBotLogs;
+    const channelId = IDs.channels.commandLogChannel;
     try {
       await logCommandUsage(client, {
         channelId,

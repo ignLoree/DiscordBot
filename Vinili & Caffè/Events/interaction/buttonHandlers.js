@@ -34,7 +34,7 @@ async function handleButtonInteraction(interaction, client) {
         await button.execute(interaction, client);
     } catch (error) {
         global.logger.error(`${color.red}[${getTimestamp()}] [BUTTON_CREATE]:`, error);
-        const channelID = `${IDs.channels.serverBotLogs}`;
+        const channelID = `${IDs.channels.errorLogChannel}`;
         const channel = client.channels.cache.get(channelID);
         if (!channel) return global.logger.error("Errore: Canale errori non trovato!");
 
