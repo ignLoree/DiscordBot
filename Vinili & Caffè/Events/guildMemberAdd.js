@@ -25,7 +25,7 @@ function formatAccountAge(createdAt) {
 }
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
-const THANKS_CHANNEL_ID = IDs.channels.suppporters;
+const THANKS_CHANNEL_ID = IDs.channels.supporters;
 const INVITE_REWARD_ROLE_ID = IDs.roles.Promoter;
 const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || '1468938195348754515';
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;

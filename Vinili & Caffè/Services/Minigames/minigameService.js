@@ -1,4 +1,4 @@
-﻿const axios = require('axios');
+const axios = require('axios');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder } = require('discord.js');
 const { MinigameUser, MinigameState, MinigameRotation } = require('../../Schemas/Minigames/minigameSchema');
 const { addExpWithLevel } = require('../Community/expService');
@@ -21,7 +21,7 @@ const EXP_REWARDS = [
   { exp: 1000, roleId: IDs.roles.Scout },
   { exp: 1500, roleId: IDs.roles.Explorer },
   { exp: 2500, roleId: IDs.roles.Tracker },
-  { exp: 5000, roleId: IDs.roles.Achivier },
+  { exp: 5000, roleId: IDs.roles.Achiever },
   { exp: 10000, roleId: IDs.roles.Vanguard },
   { exp: 50000, roleId: IDs.roles.Mentor },
   { exp: 100000, roleId: IDs.roles.Strategist }

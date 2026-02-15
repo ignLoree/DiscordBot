@@ -18,7 +18,7 @@ async function logCommandUsage(client, {
   if (!channel) return;
   const embed = new EmbedBuilder()
     .setColor('#6f4e37')
-    .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.avatarURL({ dynamic: true }) })
+    .setAuthor({ name: `${user} ha usato un comando.`, iconURL: client.user.displayAvatarURL({ size: 64 }) })
     .setTitle(`${client.user.username} Log Comandi`)
     .addFields(
       { name: 'Nome Server', value: `${serverName}` },

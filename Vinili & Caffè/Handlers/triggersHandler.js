@@ -1,4 +1,4 @@
-﻿const ascii = require('ascii-table');
+const ascii = require('ascii-table');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,7 +11,7 @@ function listTriggerFiles(root) {
 module.exports = (client) => {
     if (!client._triggerHandlers) client._triggerHandlers = new Map();
 
-    client.handleTriggers = async () => {
+    client.handleTriggers = async (triggerFilesArg, basePath) => {
         if (client._triggerHandlers && client._triggerHandlers.size) {
             for (const [eventName, handlers] of client._triggerHandlers.entries()) {
                 for (const handler of handlers) client.removeListener(eventName, handler);
@@ -19,13 +19,15 @@ module.exports = (client) => {
             client._triggerHandlers.clear();
         }
 
-        const files = listTriggerFiles(process.cwd());
+        const root = basePath || process.cwd();
+        const files = listTriggerFiles(root);
         const statusMap = new Map();
         let loaded = 0;
+        const triggersRoot = path.join(root, 'Triggers');
 
         for (const file of files) {
             try {
-                const triggerPath = path.join(process.cwd(), 'Triggers', file);
+                const triggerPath = path.join(triggersRoot, file);
                 delete require.cache[require.resolve(triggerPath)];
                 const trigger = require(triggerPath);
                 if (!trigger?.name) {

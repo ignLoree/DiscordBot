@@ -1,5 +1,5 @@
-﻿const { REST } = require('@discordjs/rest');
-const { Routes } = require('discord-api-types/v9');
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v10');
 const fs = require('fs');
 const ascii = require('ascii-table');
 const IDs = require('../Utils/Config/ids');
@@ -57,7 +57,7 @@ module.exports = (client) => {
 
         const token = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL || client?.config?.token;
         const clientId = process.env.DISCORD_CLIENT_ID || process.env.DISCORD_CLIENT_ID_OFFICIAL || IDs.bots.ViniliCaffeBot;
-        const rest = new REST({ version: '9' }).setToken(token);
+        const rest = new REST({ version: '10' }).setToken(token);
 
         try {
             client.logs.info('[FUNCTION] Refreshing application (/) commands...');

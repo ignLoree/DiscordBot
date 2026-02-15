@@ -5,7 +5,7 @@ const IDs = require('../Utils/Config/ids');
 
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
-const CHANNEL_ID = IDs.channels.suppporters;
+const CHANNEL_ID = IDs.channels.supporters;
 const INVITE_REGEX = /(?:discord\.gg|\.gg)\/viniliecaffe/i;
 const statusCache = new Map();
 const pendingChecks = new Map();

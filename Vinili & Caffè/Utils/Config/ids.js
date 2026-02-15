@@ -1,4 +1,4 @@
-﻿const catalog = require('./idsCatalog');
+const catalog = require('./idsCatalog');
 
 const maps = catalog.maps || {};
 const multi = catalog.multi || {};
@@ -141,7 +141,7 @@ const ids = {
     sponsor4: "1461369145860816947",
     midChat: "1442569268666568897",
     vocaleTrio1: "1442569121350025306",
-    suppporters: "1442569123426074736",
+    supporters: "1442569123426074736",
     moderazioneStaff: "1442569243626307634",
     modLogs: "1442569294796820541",
     activityLogs: "1442569299725385851",
@@ -160,7 +160,7 @@ const ids = {
     ActivityRank: "1458422199957586065",
     Mudae: "1442929251103014923",
     VoteManager: "1468279483038437521",
-    DISBAORD: "1442940553087025244",
+    DISBOARD: "1442940553087025244",
     Poketwo: "1442929519705980998",
     JockieMusic: "1442946823340691552",
     fmbot: "1468978359605395691",
@@ -253,7 +253,7 @@ const ids = {
     Strategist: "1468675595058811075",
     Mentor: "1468675590747062355",
     Vanguard: "1468675587747877028",
-    Achivier: "1468675584094769427",
+    Achiever: "1468675584094769427",
     Tracker: "1468675580609429536",
     Explorer: "1468675576326918302",
     Scout: "1468675570865803407",

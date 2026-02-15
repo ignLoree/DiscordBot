@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const { MinigameUser } = require('../../Schemas/Minigames/minigameSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -9,7 +9,7 @@ const EXP_REWARDS = [
   { exp: 1000, roleId: IDs.roles.Scout },
   { exp: 1500, roleId: IDs.roles.Explorer },
   { exp: 2500, roleId: IDs.roles.Tracker },
-  { exp: 5000, roleId: IDs.roles.Achivier },
+  { exp: 5000, roleId: IDs.roles.Achiever },
   { exp: 10000, roleId: IDs.roles.Vanguard },
   { exp: 50000, roleId: IDs.roles.Mentor },
   { exp: 100000, roleId: IDs.roles.Strategist },

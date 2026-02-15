@@ -1,4 +1,4 @@
-﻿function parseNameIdText(text) {
+function parseNameIdText(text) {
   return String(text || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -246,7 +246,7 @@ const rolesRaw = `
 ༄ Strategist⁺¹⁰⁰⁰⁰⁰ -> 1468675595058811075
 ༄ Mentor⁺⁵⁰⁰⁰⁰ -> 1468675590747062355
 ༄ Vanguard⁺¹⁰⁰⁰⁰ -> 1468675587747877028
-༄ Achivier⁺⁵⁰⁰⁰ -> 1468675584094769427
+༄ Achiever⁺⁵⁰⁰⁰ -> 1468675584094769427
 ༄ Tracker⁺²⁵⁰⁰ -> 1468675580609429536
 ༄ Explorer⁺¹⁵⁰⁰ -> 1468675576326918302
 ༄ Scout⁺¹⁰⁰⁰ -> 1468675570865803407

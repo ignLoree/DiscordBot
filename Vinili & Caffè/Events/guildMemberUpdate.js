@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require('../Utils/Config/ids');
 const { scheduleStaffListRefresh } = require('../Utils/Community/staffListUtils');
 const boostCountCache = new Map();
@@ -93,7 +93,7 @@ module.exports = {
             await removePlusColorsIfNotEligible(newMember);
 
             const boostAnnounceChannel =
-                newMember.guild.channels.cache.get(IDs.channels.suppporters);
+                newMember.guild.channels.cache.get(IDs.channels.supporters);
             if (!boostAnnounceChannel) return;
             const oldBoostTs = oldMember.premiumSinceTimestamp || 0;
             const newBoostTs = newMember.premiumSinceTimestamp || 0;

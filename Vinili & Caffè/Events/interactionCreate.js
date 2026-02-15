@@ -127,7 +127,9 @@ module.exports = {
                         await interaction.followUp(payload);
                     }
                 }
-            } catch {}
+            } catch (innerErr) {
+                global.logger.error('[INTERACTION ERROR HANDLER] Failed to send error feedback:', innerErr);
+            }
         }
     },
 };

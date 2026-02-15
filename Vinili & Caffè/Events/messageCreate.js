@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
 const math = require('mathjs');
 const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
 const countschema = require('../Schemas/Counting/countingSchema');
@@ -21,7 +21,7 @@ const SuggestionCount = require('../Schemas/Suggestion/suggestionSchema');
 
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
-const VOTE_CHANNEL_ID = IDs.channels.suppporters;
+const VOTE_CHANNEL_ID = IDs.channels.supporters;
 const VOTE_ROLE_ID = IDs.roles.Voter;
 const VOTE_URL = IDs.links.vote;
 const VOTE_ROLE_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -518,11 +518,15 @@ module.exports = {
         const userId = message.author.id;
         const queueLockId = `${message.guild.id}:${userId}`;
         const enqueueCommand = async () => {
-            const emoji = message.client?.emojis?.cache?.get(IDs.emojis.loadingAnimatedId);
+            const loadingEmojiId = IDs.emojis?.loadingAnimatedId;
+            const fallbackEmojiId = IDs.emojis?.loadingFallbackId;
+            const emoji = loadingEmojiId ? message.client?.emojis?.cache?.get(loadingEmojiId) : null;
             if (emoji) {
                 await message.react(emoji).catch(() => { });
+            } else if (fallbackEmojiId) {
+                await message.react(fallbackEmojiId).catch(() => { });
             } else {
-                await message.react(IDs.emojis.loadingFallbackId).catch(() => { });
+                await message.react('⏳').catch(() => { });
             }
             if (!client.prefixCommandQueue.has(queueLockId)) {
                 client.prefixCommandQueue.set(queueLockId, []);
@@ -704,12 +708,14 @@ module.exports = {
             client.prefixCommandLocks.delete(lockId);
             const removeLoadingReaction = async (msg) => {
                 try {
-                    const emoji = msg.client?.emojis?.cache?.get(IDs.emojis.loadingAnimatedId);
+                    const loadingId = IDs.emojis?.loadingAnimatedId;
+                    const fallbackId = IDs.emojis?.loadingFallbackId;
+                    const emoji = loadingId ? msg.client?.emojis?.cache?.get(loadingId) : null;
                     if (emoji) {
                         const react = msg.reactions.resolve(emoji.id);
                         if (react) await react.users.remove(client.user.id);
                     }
-                    const fallback = msg.reactions.resolve('VC_Loading') || msg.reactions.resolve(IDs.emojis.loadingFallbackId);
+                    const fallback = msg.reactions.resolve('VC_Loading') || (fallbackId ? msg.reactions.resolve(fallbackId) : null);
                     if (fallback) await fallback.users.remove(client.user.id);
                 } catch { }
             };

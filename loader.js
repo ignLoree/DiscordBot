@@ -1,6 +1,7 @@
-﻿const child_process = require('child_process');
+const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const baseDir = __dirname;
 
@@ -70,7 +71,7 @@ function runfile(options = {}) {
                     '--build-from-resource',
                     '--no-bin-links',
                     '--cache',
-                    '/tmp/.npm-global',
+                    path.join(os.tmpdir(), '.npm-global'),
                     '--update-notifier',
                     'false',
                     '--prefix',

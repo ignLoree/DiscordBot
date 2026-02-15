@@ -1,5 +1,6 @@
-﻿const ascii = require('ascii-table');
+const ascii = require('ascii-table');
 const fs = require('fs');
+const path = require('path');
 
 function humanizeCommandName(name) {
     return String(name || '')
@@ -42,19 +43,20 @@ function buildAutoPrefixDescription(command, folder) {
 }
 
 module.exports = (client) => {
-    client.prefixCommands = async (folders) => {
+    client.prefixCommands = async (folders, basePath) => {
+        const prefixBase = basePath || path.join(process.cwd(), 'Prefix');
         client.pcommands.clear();
         client.aliases.clear();
         const statusMap = new Map();
 
         for (const folder of folders) {
-            const folderPath = `./Prefix/${folder}`;
+            const folderPath = path.join(prefixBase, folder);
             const files = fs.readdirSync(folderPath).filter((f) => f.endsWith('.js'));
             for (const file of files) {
-                const filePath = `../Prefix/${folder}/${file}`;
+                const fullPath = path.join(prefixBase, folder, file);
                 const key = `${folder}/${file}`;
-                delete require.cache[require.resolve(filePath)];
-                const command = require(filePath);
+                delete require.cache[require.resolve(fullPath)];
+                const command = require(fullPath);
                 if (!command || !command.name) {
                     statusMap.set(key, 'Missing name');
                     continue;

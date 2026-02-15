@@ -1,4 +1,4 @@
-﻿const { Client, GatewayIntentBits, Collection, Partials } = require(`discord.js`);
+const { Client, GatewayIntentBits, Collection, Partials } = require(`discord.js`);
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -62,7 +62,8 @@ try {
     })
 } catch (error) {
     global.logger.error('[ERROR] Error while creating the client.', error);
-};
+    process.exit(1);
+}
 client.logs = require('./Utils/Moderation/logs');
 client.config = require('./config.json');
 const envToken = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL;
@@ -97,12 +98,12 @@ client.reloadScope = async (scope) => {
     };
     const reloadEvents = () => {
         clearCacheByDir('Events');
-        client.handleEvents('./Events');
+        client.handleEvents(path.join(baseDir, 'Events'));
     };
     const reloadTriggers = () => {
         clearCacheByDir('Triggers');
         const triggerFiles = fs.readdirSync(path.join(baseDir, 'Triggers')).filter((f) => f.endsWith('.js'));
-        client.handleTriggers(triggerFiles, './Triggers');
+        client.handleTriggers(triggerFiles, baseDir);
     };
     if (scope === 'commands') await reloadCommands();
     else if (scope === 'prefix') await reloadPrefix();
@@ -136,10 +137,10 @@ client.snipes = new Map();
     for (const file of functions) {
         require(`./Handlers/${file}`)(client);
     }
-    client.handleEvents("./Events");
-    client.handleTriggers(triggerFiles, "./Triggers");
-    await client.handleCommands(commandFolders, "./Commands");
-    await client.prefixCommands(pcommandFolders, './Prefix');
+    client.handleEvents(path.join(APP_ROOT, 'Events'));
+    client.handleTriggers(triggerFiles, APP_ROOT);
+    await client.handleCommands(commandFolders, path.join(APP_ROOT, 'Commands'));
+    await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, 'Prefix'));
     if (typeof client.logBootTables === 'function') {
         client.logBootTables();
     }

@@ -1,4 +1,4 @@
-﻿const {
+const {
     EmbedBuilder,
     ButtonBuilder,
     ButtonStyle,
@@ -343,7 +343,7 @@ async function handleSuggestionVote(interaction) {
                 global.logger?.error?.('[SUGGESTION ACCEPT REWARD ERROR]', error);
             }
 
-            const supportersChannelId = IDs?.channels?.suppporters;
+            const supportersChannelId = IDs?.channels?.supporters;
             const supportersChannel = supportersChannelId
                 ? (interaction.guild.channels.cache.get(supportersChannelId)
                     || await interaction.guild.channels.fetch(supportersChannelId).catch(() => null))

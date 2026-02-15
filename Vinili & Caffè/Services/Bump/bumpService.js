@@ -61,7 +61,7 @@ function createBumpReminderService(options) {
     await model.updateOne(
       { guildId },
       { $set: { reminderSentAt: new Date() } }
-    );
+    ).catch((err) => global.logger.error(`${errorTag} updateOne reminderSentAt failed:`, err));
   }
 
   function scheduleReminder(client, guildId, lastBumpAt) {
@@ -75,7 +75,7 @@ function createBumpReminderService(options) {
 
     if (remaining <= 0) {
       bumpTimers.delete(guildId);
-      void sendReminder(client, guildId);
+      sendReminder(client, guildId).catch((err) => global.logger.error(`${errorTag} sendReminder failed:`, err));
       return;
     }
 
