@@ -44,8 +44,8 @@ module.exports = {
 
   async execute(interaction, client) {
     const devId = '295500038401163264';
-    if (devId && message?.author?.id !== devId) {
-      return safeMessageReply(message, {
+    if (devId && interaction?.author?.id !== devId) {
+      return safeMessageReply(interaction, {
         embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
         allowedMentions: { repliedUser: false }
       });
