@@ -80,7 +80,7 @@ function resolveCommandFromContent(message, client) {
 
 function resolvePrefixLogChannelId(client) {
   void client;
-  return IDs.channels.serverBotLogs || null;
+  return IDs.channels.commandLogChannel || IDs.channels.serverBotLogs || null;
 }
 
 module.exports = {

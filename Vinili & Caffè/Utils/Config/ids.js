@@ -128,7 +128,6 @@ const ids = {
     counting: "1442569179743125554",
     riunioneStaff: "1443958044802420798",
     commands: "1442569138114662490",
-    serveBbotLogs: "1442577274783142039",
     serverBotLogs: "1442577274783142039",
     highCmds: "1442569288161558528",
     staffCmds: "1442569262689554444",
@@ -149,7 +148,10 @@ const ids = {
     pexDepex: "1442569234004709391",
     animaliForum: "1461423795246989478",
     propositiForum: "1456349072473587936",
-    wrapForum: "1445792081271587000"
+    wrapForum: "1445792081271587000",
+
+    commandLogChannel: "1472733599496409292", // Canale per i log dei comandi
+    errorLogChannel: "1472733599496409292", // Canale per i log degli errori
   },
 
   roles: {

@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder} = require('discord.js');
+const { EmbedBuilder} = require('discord.js');
 const axios = require('axios');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -286,7 +286,7 @@ function normalizeManagerLine(text, managerId) {
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
         .trim()
-        .replace(/\n*Manager:\s*<@!?\d+>\s*$/gi, '')
+        .replace(/\n*Manager:\s*(<@!?\d+>)?\s*$/gi, '')
         .replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/gi, '')
         .trim();
     return `${content}\n\nManager: <@${managerId}>`;

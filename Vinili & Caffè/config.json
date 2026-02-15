@@ -3,6 +3,7 @@
   "status": "idle",
   "logLevel": "debug",
   "eventListeners": 50,
+  "developers": ["295500038401163264"],
   "disboard": {
     "cooldownMinutes": 120,
     "bumpSuccessPatterns": [

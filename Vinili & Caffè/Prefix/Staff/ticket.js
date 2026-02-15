@@ -1,10 +1,10 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
 const IDs = require('../../Utils/Config/ids');
 
-const LOG_CHANNEL_ID = IDs.channels.ticketLogs || IDs.channels.serveBbotLogs;
+const LOG_CHANNEL_ID = IDs.channels.ticketLogs || IDs.channels.serverBotLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.HighStaff;
 const PARTNERMANAGER_ROLE_ID = IDs.roles.PartnerManager;
@@ -43,10 +43,16 @@ async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
   });
   if (attachment?.url) {
     const baseContent = typeof payload?.content === 'string' ? payload.content.trim() : '';
-    const nextContent = baseContent
-      ? `${baseContent}\nApri transcript HTML: ${attachment.url}`
-      : `Apri transcript HTML: ${attachment.url}`;
-    await sent.edit({ content: nextContent }).catch(() => {});
+    const transcriptButton = new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setURL(attachment.url)
+      .setLabel('View Online Transcript')
+      .setEmoji('📁');
+    const row = new ActionRowBuilder().addComponents(transcriptButton);
+    await sent.edit({
+      content: baseContent || undefined,
+      components: [row]
+    }).catch(() => {});
   }
   return sent;
 }

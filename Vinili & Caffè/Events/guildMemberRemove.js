@@ -143,8 +143,8 @@ module.exports = {
             if (openTickets.length > 0) {
                 const logChannel = guild.channels.cache.get(IDs.channels.ticketLogs)
                     || await guild.channels.fetch(IDs.channels.ticketLogs).catch(() => null)
-                    || guild.channels.cache.get(IDs.channels.serveBbotLogs)
-                    || await guild.channels.fetch(IDs.channels.serveBbotLogs).catch(() => null);
+                    || guild.channels.cache.get(IDs.channels.serverBotLogs)
+                    || await guild.channels.fetch(IDs.channels.serverBotLogs).catch(() => null);
                 for (const ticket of openTickets) {
                     const channel = guild.channels.cache.get(ticket.channelId) || await guild.channels.fetch(ticket.channelId).catch(() => null);
                     if (!channel) {
@@ -182,7 +182,7 @@ module.exports = {
                                     .setTitle("Ticket Chiuso")
                                     .setDescription(`
 **<:member_role_icon:1330530086792728618> Aperto da:** <@${ticket.userId}>
-**<:discordstaff:1443651872258003005> Chiuso da:** Sistema
+**<:discordstaff:1443651872258003005> Chiuso da:** ${member.client.user}
 **<:Clock:1330530065133338685> Aperto il:** ${createdAtFormatted}
 **<a:VC_Verified:1448687631109197978> Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Non claimato"}
 **<:reportmessage:1443670575376765130> Motivo:** Utente uscito dal server
@@ -238,10 +238,20 @@ module.exports = {
                         mainGuild.channels.cache.get(IDs.channels.partnerLogs)
                         || await mainGuild.channels.fetch(IDs.channels.partnerLogs).catch(() => null);
                     if (partnerLogChannel) {
+                        const allWithThisManager = [];
                         for (const doc of partnerships) {
-                            const lastPartner = Array.isArray(doc.partnerActions)
-                                ? [...doc.partnerActions].reverse().find((action) => action?.managerId === member.id) || doc.partnerActions[doc.partnerActions.length - 1]
-                                : null;
+                            const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
+                            for (const action of actions) {
+                                if (action?.managerId === member.id) {
+                                    const dateMs = action?.date ? new Date(action.date).getTime() : 0;
+                                    allWithThisManager.push({ doc, action, dateMs });
+                                }
+                            }
+                        }
+                        allWithThisManager.sort((a, b) => b.dateMs - a.dateMs);
+                        const mostRecent = allWithThisManager[0];
+                        if (mostRecent) {
+                            const { action: lastPartner, doc: ownerDoc } = mostRecent;
                             const partnerName = lastPartner?.partner || 'Partner sconosciuta';
                             const inviteLink = lastPartner?.invite || 'Link non disponibile';
                             const lastPartnerDate = lastPartner?.date ? new Date(lastPartner.date) : null;
@@ -252,6 +262,10 @@ module.exports = {
                             const lastPartnerWhenText = lastPartnerTimestamp
                                 ? `<t:${lastPartnerTimestamp}:F> (<t:${lastPartnerTimestamp}:R>)`
                                 : 'Non disponibile';
+                            const totalCount = allWithThisManager.length;
+                            const extraLine = totalCount > 1
+                                ? `\n**Partnership totali con questo manager:** ${totalCount} (mostrata la più recente)`
+                                : '';
                             await partnerLogChannel.send({
                                 embeds: [
                                     new EmbedBuilder()
@@ -259,14 +273,14 @@ module.exports = {
                                         .setDescription(
                                             `**<:vegax:1443934876440068179> Manager uscito dal server**\n` +
                                             `**Utente:** ${member.user}\n` +
+                                            `**PM:** <@${ownerDoc.userId}>\n` +
                                             `**Partner:** ${partnerName}\n` +
                                             `**Invito:** ${inviteLink}\n` +
-                                            `**Ultima partner:** ${lastPartnerWhenText}`
+                                            `**Ultima partner:** ${lastPartnerWhenText}${extraLine}`
                                         )
                                 ]
                             });
                         }
-
                     }
                     const dmChannel = await member.user.createDM().catch(() => null);
                     if (dmChannel) {

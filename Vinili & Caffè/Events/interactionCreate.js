@@ -93,7 +93,7 @@ module.exports = {
         } catch (err) {
             global.logger.error(err);
             try {
-                const errorChannelId = IDs.channels.serverBotLogs;
+                const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
                 const errorChannel = errorChannelId
                     ? client.channels.cache.get(errorChannelId)
                     : null;

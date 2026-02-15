@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const {
@@ -61,8 +61,11 @@ async function handleSlashCommand(interaction, client) {
 
     if (!(await checkSlashPermission(interaction))) {
         const requiredRoles = getSlashRequiredRoles(interaction);
+        const embed = interaction.commandName === 'dmbroadcast'
+            ? buildGlobalPermissionDeniedEmbed([], 'comando', 'Solo i developer del bot possono usare questo comando.')
+            : buildGlobalPermissionDeniedEmbed(requiredRoles);
         return interaction.reply({
-            embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles)],
+            embeds: [embed],
             flags: 1 << 6
         });
     }
@@ -191,7 +194,7 @@ async function handleSlashCommand(interaction, client) {
             `\x1b[31m[${getTimestamp()}] [INTERACTION_CREATE]\x1b[0m`,
             error
         );
-        const errorChannelId = IDs.channels.serverBotLogs;
+        const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
         const errorChannel = errorChannelId
             ? client.channels.cache.get(errorChannelId)
             : null;

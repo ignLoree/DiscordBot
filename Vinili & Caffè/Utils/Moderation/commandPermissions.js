@@ -251,9 +251,29 @@ function extractOwnerIdFromMessageMention(message) {
   return null;
 }
 
+function getDevIds(client) {
+  const rawIds = IDs?.developers ?? IDs?.guilds?.developers ?? '';
+  const fromIds = Array.isArray(rawIds)
+    ? rawIds.map((id) => String(id).trim()).filter(Boolean)
+    : String(rawIds).split(',').map((id) => id.trim()).filter(Boolean);
+  const raw = client?.config?.developers ?? '';
+  const fromConfig = Array.isArray(raw)
+    ? raw.map((id) => String(id).trim()).filter(Boolean)
+    : String(raw).split(',').map((id) => id.trim()).filter(Boolean);
+  return Array.from(new Set([...fromIds, ...fromConfig]));
+}
+
 async function checkSlashPermission(interaction) {
-  const guildId = interaction?.guildId || interaction?.guild?.id || null;
   const userId = interaction?.user?.id || null;
+
+  if (interaction.commandName === 'dmbroadcast') {
+    const client = interaction.client;
+    const devIds = getDevIds(client);
+    if (devIds.length === 0) return false;
+    return devIds.includes(userId);
+  }
+
+  const guildId = interaction?.guildId || interaction?.guild?.id || null;
   if (guildId && userId) {
     const group = interaction.options?.getSubcommandGroup?.(false) || null;
     const sub = interaction.options?.getSubcommand?.(false) || null;
@@ -499,6 +519,9 @@ async function checkModalPermission(interaction) {
 }
 
 function getSlashRequiredRoles(interaction) {
+  if (interaction.commandName === 'dmbroadcast') {
+    return [];
+  }
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
@@ -510,20 +533,26 @@ function getPrefixRequiredRoles(commandName, subcommandName = null) {
   return resolvePrefixRoles(data, commandName, subcommandName);
 }
 
-function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = 'comando') {
+function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = 'comando', customDescription = null) {
   const roles = Array.isArray(requiredRoleIds) ? requiredRoleIds.filter(Boolean) : [];
   const rolesText = roles.length
     ? roles.map((id) => `<@&${id}>`).join(', ')
     : 'Nessun ruolo configurato.';
+  const description = customDescription != null
+    ? customDescription
+    : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor('Red')
     .setTitle('<:VC_Lock:1468544444113617063> **Non hai i permessi**')
-    .setDescription(`Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`)
-    .addFields({
+    .setDescription(description);
+  if (roles.length > 0) {
+    embed.addFields({
       name: '<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**',
       value: `Ottieni uno dei seguenti ruoli: ${rolesText}`
     });
+  }
+  return embed;
 }
 
 function buildGlobalNotYourControlEmbed() {

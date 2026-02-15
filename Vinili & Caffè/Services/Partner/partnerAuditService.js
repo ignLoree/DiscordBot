@@ -105,12 +105,16 @@ function findLatestPreviousInviteOccurrence(allCreates, inviteCode, dateMs, curr
   return best;
 }
 
-async function fetchInviteInfo(inviteCode) {
+async function fetchInviteInfo(inviteCode, botToken = null) {
   if (!inviteCode) return null;
+  const headers = { Accept: 'application/json' };
+  if (botToken) {
+    headers.Authorization = `Bot ${botToken}`;
+  }
   try {
     const res = await axios.get(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`, {
       timeout: 15000,
-      headers: { Accept: 'application/json' }
+      headers
     });
     return { ok: true, data: res?.data || null, expired: false, transient: false };
   } catch (err) {
@@ -183,9 +187,6 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
     ? `https://discord.com/channels/${guild.id}/${action.partnershipChannelId || IDs.channels.partnerships}/${action.partnerMessageIds[0]}`
     : 'N/D';
 
-  const previewFull = await fetchPartnerActionText(guild, action).catch(() => '');
-  const preview = String(previewFull || '').slice(0, 1500) || '*[nessun testo trovato]*';
-
   const inviteDb = action?.invite ? String(action.invite).slice(0, 300) : 'N/D';
 
   await channel.send({
@@ -193,10 +194,7 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
       `<:Discord_Mention:1329524304790028328> <@${staffUserId}>
 <:discordchannelwhite:1443308552536985810> ${reason}
 <:partneredserverowner:1443651871125409812> Messaggio: ${msgRef}
-🔗 Invite (DB): ${inviteDb}
-
-📌 Anteprima:
-${preview}`
+🔗 Invite (DB): ${inviteDb}`
   }).catch(() => { });
 }
 
@@ -205,6 +203,8 @@ async function runDailyPartnerAudit(client, opts = {}) {
   if (!guildId) return;
   const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
   if (!guild) return;
+
+  const botToken = client.token || client.config?.token || process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL || null;
 
   const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
   const docs = await Staff.find({
@@ -341,7 +341,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
         for (const inviteCode of inviteCodes) {
           let inviteData = inviteInfoCache.get(inviteCode);
           if (!inviteData) {
-            inviteData = await fetchInviteInfo(inviteCode);
+            inviteData = await fetchInviteInfo(inviteCode, botToken);
             inviteInfoCache.set(inviteCode, inviteData);
           }
           if (inviteData?.expired) {

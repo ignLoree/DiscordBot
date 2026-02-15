@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
@@ -33,7 +33,7 @@ async function handleTicketInteraction(interaction) {
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && isHandledTicketModalId(String(interaction.customId || ''));
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
     const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
-    const LOG_CHANNEL = IDs.channels.ticketLogs || IDs.channels.serveBbotLogs;
+    const LOG_CHANNEL = IDs.channels.ticketLogs || IDs.channels.serverBotLogs;
     const ROLE_STAFF = IDs.roles.Staff;
     const ROLE_HIGHSTAFF = IDs.roles.HighStaff;
     const ROLE_PARTNERMANAGER = IDs.roles.PartnerManager;
@@ -76,10 +76,16 @@ async function handleTicketInteraction(interaction) {
         });
         if (attachment?.url) {
             const baseContent = typeof payload?.content === 'string' ? payload.content.trim() : '';
-            const nextContent = baseContent
-                ? `${baseContent}\nApri transcript HTML: ${attachment.url}`
-                : `Apri transcript HTML: ${attachment.url}`;
-            await sent.edit({ content: nextContent }).catch(() => { });
+            const transcriptButton = new ButtonBuilder()
+                .setStyle(ButtonStyle.Link)
+                .setURL(attachment.url)
+                .setLabel('View Online Transcript')
+                .setEmoji('📁');
+            const row = new ActionRowBuilder().addComponents(transcriptButton);
+            await sent.edit({
+                content: baseContent || undefined,
+                components: [row]
+            }).catch(() => { });
         }
         return sent;
     }
@@ -151,7 +157,12 @@ async function handleTicketInteraction(interaction) {
             }
         } else if (ticketCategories.length > 0) {
             const firstTicketCategory = ticketCategories[0];
-            await firstTicketCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+            const nameAlreadyUsed = guild.channels.cache.some(
+                (ch) => ch.type === 4 && ch.id !== firstTicketCategory.id && ch.name === TICKETS_CATEGORY_NAME
+            );
+            if (!nameAlreadyUsed) {
+                await firstTicketCategory.setName(TICKETS_CATEGORY_NAME).catch(() => { });
+            }
             if (getChildrenCount(firstTicketCategory.id) < 50) {
                 interaction.client.ticketCategoryCache.set(guild.id, firstTicketCategory.id);
                 return firstTicketCategory;
@@ -167,6 +178,13 @@ async function handleTicketInteraction(interaction) {
         }
 
         if (ticketCategories.length === 0) {
+            const existingWithExactName = guild.channels.cache.find(
+                (ch) => ch.type === 4 && ch.name === TICKETS_CATEGORY_NAME
+            );
+            if (existingWithExactName && getChildrenCount(existingWithExactName.id) < 50) {
+                interaction.client.ticketCategoryCache.set(guild.id, existingWithExactName.id);
+                return existingWithExactName;
+            }
             const category = await guild.channels.create({
                 name: TICKETS_CATEGORY_NAME,
                 type: 4,
