@@ -1,9 +1,8 @@
-﻿const { EmbedBuilder } = require('discord.js');
+﻿const { EmbedBuilder } = require('discord.js/typings');
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
-const IDs = require('../../Utils/Config/ids');
 
 const RESTART_FLAG = 'restart.json';
 const RESTART_CLEANUP_DELAY_MS = 2000;
