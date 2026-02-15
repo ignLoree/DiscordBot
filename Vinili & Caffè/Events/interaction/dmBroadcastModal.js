@@ -89,11 +89,11 @@ async function handleDmBroadcastModal(interaction, client) {
     return true;
   }
 
-  const devIds = getDevIds(client);
+ /* const devIds = getDevIds(client);
   if (!devIds.includes(interaction.user.id)) {
     await interaction.reply({ content: "<:vegax:1443934876440068179> Comando riservato al developer.", flags: 1 << 6 });
     return true;
-  }
+  }*/
 
   const title = interaction.fields.getTextInputValue("title")?.trim();
   const message = interaction.fields.getTextInputValue("message")?.trim();
