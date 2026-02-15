@@ -43,11 +43,11 @@ module.exports = {
     ),
 
   async execute(interaction, client) {
-    const devIds = getDevIds(client);
-    if (!devIds.includes(interaction.user.id)) {
-      return safeReply(interaction, {
-        content: "<:vegax:1443934876440068179> Questo comando è disponibile solo al developer del bot.",
-        flags: 1 << 6
+    const devId = '295500038401163264';
+    if (devId && message?.author?.id !== devId) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
+        allowedMentions: { repliedUser: false }
       });
     }
 
