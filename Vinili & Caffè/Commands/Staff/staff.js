@@ -535,14 +535,5 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                 }
             }
         }
-
-        return await safeEditReply(interaction, {
-            embeds: [
-                new EmbedBuilder()
-                    .setDescription("<:vegax:1443934876440068179> Subcomando non valido.")
-                    .setColor("Red")
-            ],
-            flags: 1 << 6
-        });
     }
 }
