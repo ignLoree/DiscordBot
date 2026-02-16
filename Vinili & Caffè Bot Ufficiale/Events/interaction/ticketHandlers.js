@@ -33,6 +33,17 @@ async function handleTicketInteraction(interaction) {
     const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId);
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && isHandledTicketModalId(String(interaction.customId || ''));
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
+    const sponsorGuildIds = [
+        IDs.guilds.luna,
+        IDs.guilds.cash,
+        IDs.guilds.porn,
+        IDs.guilds[69],
+        IDs.guilds.weed,
+        IDs.guilds.figa
+    ].filter(Boolean);
+    if (interaction.guild && sponsorGuildIds.includes(interaction.guild.id)) {
+        return false;
+    }
     const LOG_CHANNEL = IDs.channels.ticketLogs;
     const ROLE_STAFF = IDs.roles.Staff;
     const ROLE_HIGHSTAFF = IDs.roles.HighStaff;

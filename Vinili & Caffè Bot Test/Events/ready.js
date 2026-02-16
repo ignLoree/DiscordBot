@@ -12,9 +12,16 @@ module.exports = {
         global.logger.info('[Bot Test] Bot avviato: ' + c.user.tag + ' (Application ID: ' + appId + ')');
 
         try {
-            c.user.setPresence({ status: 'invisible' });
+            client.user.setPresence({
+                status: client.config?.status || 'idle',
+                activities: [{
+                    type: ActivityType.Custom,
+                    name: 'irrelevant',
+                    state: '☕📀 discord.gg/viniliecaffe'
+                }]
+            });
         } catch (err) {
-            global.logger.warn('[Bot Test] setPresence invisible:', err?.message || err);
+            client.logs.error('[STATUS] Errore impostazione presence:', err?.message || err);
         }
 
         const mongodbURL = process.env.MONGO_URL || c.config.mongoURL;
@@ -85,6 +92,19 @@ module.exports = {
                     global.logger.warn('[Bot Test] Questo bot (Application ID: ' + (c.application?.id || c.user?.id) + ') non è in nessuno dei server sponsor. L\'API Discord restituisce "Unknown Guild": invita QUESTO bot (stesso token/DISCORD_TOKEN_TEST) nei 6 server sponsor, non un altro bot (es. il bot ufficiale).');
                 }
             }
+        }
+
+        try {
+            const { refreshTodoMessage } = require('../Utils/Todo/todoListService');
+            await refreshTodoMessage(c);
+        } catch (err) {
+            global.logger.error('[Bot Test] To-do list refresh on ready:', err?.message || err);
+        }
+        try {
+            const { refreshBugMessage } = require('../Utils/Bug/bugListService');
+            await refreshBugMessage(c);
+        } catch (err) {
+            global.logger.error('[Bot Test] Bug list refresh on ready:', err?.message || err);
         }
     }
 };

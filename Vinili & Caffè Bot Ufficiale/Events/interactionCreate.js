@@ -45,7 +45,7 @@ module.exports = {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()
                         : gate.reason === 'mono_guild'
-                            ? buildGlobalPermissionDeniedEmbed([], 'bottone', 'Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.')
+                            ? buildGlobalPermissionDeniedEmbed([], 'bottone', 'Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.')
                             : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'bottone');
                     const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
                     if (!interaction.replied && !interaction.deferred) {
@@ -62,7 +62,7 @@ module.exports = {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()
                         : gate.reason === 'mono_guild'
-                            ? buildGlobalPermissionDeniedEmbed([], 'menu', 'Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.')
+                            ? buildGlobalPermissionDeniedEmbed([], 'menu', 'Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.')
                             : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'menu');
                     const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
                     if (!interaction.replied && !interaction.deferred) {
@@ -79,7 +79,7 @@ module.exports = {
                     const deniedEmbed = gate.reason === 'not_owner'
                         ? buildGlobalNotYourControlEmbed()
                         : gate.reason === 'mono_guild'
-                            ? buildGlobalPermissionDeniedEmbed([], 'modulo', 'Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.')
+                            ? buildGlobalPermissionDeniedEmbed([], 'modulo', 'Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.')
                             : buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], 'modulo');
                     const payload = { embeds: [deniedEmbed], flags: 1 << 6 };
                     if (!interaction.replied && !interaction.deferred) {

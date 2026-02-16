@@ -58,6 +58,11 @@ function getNextWeekKey(date) {
   return getWeekKey(next);
 }
 
+function getWeekdayRome(date) {
+  const formatter = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, weekday: 'short' });
+  return formatter.format(date);
+}
+
 function buildEmptyLine(kind) {
   return ` •  Nessun dato disponibile per ${kind}.`;
 }
@@ -150,14 +155,14 @@ async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
   return { messageWinner, voiceWinner };
 }
 
-async function publishWeeklyActivityWinners(client) {
+async function publishWeeklyActivityWinners(client, options = {}) {
   const channel = client.channels.cache.get(TARGET_CHANNEL_ID)
     || await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null);
   if (!channel || !channel.guild) return;
 
   const guild = channel.guild;
   const now = new Date();
-  const currentWeekKey = getWeekKey(now);
+  const currentWeekKey = options.weekKey != null ? options.weekKey : getWeekKey(now);
 
   const [messageDocs, voiceDocs] = await Promise.all([
     ActivityUser.find({
@@ -241,14 +246,14 @@ _ _`, embeds: [embed], components: [button] }).catch((error) => {
   });
 }
 
-async function resetWeeklyActivityCounters(client) {
+async function resetWeeklyActivityCounters(client, options = {}) {
   const channel = client.channels.cache.get(TARGET_CHANNEL_ID)
     || await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null);
   const guildId = channel?.guild?.id;
   if (!guildId) return;
 
   const now = new Date();
-  const nextWeekKey = getNextWeekKey(now);
+  const nextWeekKey = options.nextWeekKey != null ? options.nextWeekKey : getNextWeekKey(now);
 
   await Promise.all([
     ActivityUser.updateMany(
@@ -283,6 +288,30 @@ function startWeeklyActivityWinnersLoop(client) {
       global.logger.error('[WEEKLY ACTIVITY] Scheduled execution failed:', error);
     }
   }, { timezone: TIME_ZONE });
+
+  const runRecoveryIfNeeded = async () => {
+    const now = new Date();
+    const weekday = getWeekdayRome(now);
+    if (weekday !== 'Mon' && weekday !== 'Tue') return;
+    const channel = client.channels.cache.get(TARGET_CHANNEL_ID) || await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null);
+    const guildId = channel?.guild?.id;
+    if (!guildId) return;
+    const currentWeekKey = getWeekKey(now);
+    const alreadyReset = await ActivityUser.exists({ guildId, 'messages.weeklyKey': currentWeekKey }).catch(() => false);
+    if (alreadyReset) return;
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const previousWeekKey = getWeekKey(yesterday);
+    if (previousWeekKey === currentWeekKey) return;
+    try {
+      global.logger.info('[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).');
+      await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey });
+      await resetWeeklyActivityCounters(client, { nextWeekKey: currentWeekKey });
+    } catch (error) {
+      global.logger.error('[WEEKLY ACTIVITY] Recovery run failed:', error);
+    }
+  };
+
+  runRecoveryIfNeeded();
 }
 
 module.exports = {

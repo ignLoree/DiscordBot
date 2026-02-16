@@ -92,6 +92,18 @@ module.exports = {
       return;
     }
 
+    const sponsorGuildIds = [
+      IDs.guilds.luna,
+      IDs.guilds.cash,
+      IDs.guilds.porn,
+      IDs.guilds[69],
+      IDs.guilds.weed,
+      IDs.guilds.figa
+    ].filter(Boolean);
+    if (message.guild.id && sponsorGuildIds.includes(message.guild.id)) {
+      return;
+    }
+
     const defaultPrefix = '+';
     const rawContent = String(message.content || '').trim();
     const invokedToken = rawContent.startsWith(defaultPrefix)

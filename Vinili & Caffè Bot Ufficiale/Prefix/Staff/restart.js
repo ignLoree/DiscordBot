@@ -3,6 +3,7 @@ const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const fs = require('fs');
 const path = require('path');
 const child_process = require('child_process');
+const IDs = require('../../Utils/Config/ids');
 
 const RESTART_FLAG = 'restart.json';
 const RESTART_CLEANUP_DELAY_MS = 2000;
@@ -62,6 +63,14 @@ module.exports = {
     if (devId && message?.author?.id !== devId) {
       return safeMessageReply(message, {
         embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
+        allowedMentions: { repliedUser: false }
+      });
+    }
+
+    const mainGuildId = IDs.guilds?.main || null;
+    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Il comando `+restart` è utilizzabile solo nel **server principale** (main guild).')],
         allowedMentions: { repliedUser: false }
       });
     }

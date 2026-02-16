@@ -542,10 +542,12 @@ module.exports = {
                 return;
             }
         }
-        const MAIN_GUILD_ID = IDs.guilds?.main || null;
-        if (MAIN_GUILD_ID && message.guild?.id && message.guild.id !== MAIN_GUILD_ID) {
+        const ALLOWED_GUILD_IDS = new Set(
+            [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map(String)
+        );
+        if (message.guild?.id && !ALLOWED_GUILD_IDS.has(String(message.guild.id))) {
             await deleteCommandMessage();
-            const embed = buildGlobalPermissionDeniedEmbed([], 'comando', 'Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.');
+            const embed = buildGlobalPermissionDeniedEmbed([], 'comando', 'Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.');
             const msg = await message.channel.send({ embeds: [embed] });
             setTimeout(() => msg.delete().catch(() => { }), 5000);
             return;

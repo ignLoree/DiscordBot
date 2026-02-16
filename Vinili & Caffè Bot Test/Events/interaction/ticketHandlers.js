@@ -8,8 +8,6 @@ const IDs = require('../../Utils/Config/ids');
 
 async function handleTicketInteraction(interaction) {
     const handledButtons = new Set([
-        'ticket_partnership',
-        'ticket_highstaff',
         'ticket_supporto',
         'ticket_open_desc_modal',
         'claim_ticket',
@@ -221,30 +219,10 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida (fuori dal server).')], flags: 1 << 6 });
                 return true;
             }
-            // Bot Test: solo Administrator può usare i bottoni del pannello ticket e i controlli staff
-            const ticketPanelOpenIds = new Set(['ticket_partnership', 'ticket_supporto', 'ticket_highstaff', 'ticket_open_desc_modal']);
+            const ticketPanelOpenIds = new Set(['ticket_supporto', 'ticket_open_desc_modal']);
             const isOpeningTicket = isTicketSelect || ticketPanelOpenIds.has(ticketActionId);
-            const staffButtonIds = new Set(['claim_ticket', 'close_ticket', 'close_ticket_motivo', 'unclaim', 'accetta', 'rifiuta']);
-            if (isOpeningTicket || staffButtonIds.has(interaction.customId)) {
-                if (!hasAdmin(interaction.member)) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Accesso negato', '<:vegax:1472992044140990526> Solo gli **Administrator** possono usare i controlli ticket in questo server.')], flags: 1 << 6 });
-                    return true;
-                }
-            }
-            const partnerOpenButtons = ['ticket_partnership'];
-            if (partnerOpenButtons.includes(ticketActionId) && interaction.member?.roles?.cache?.has(ROLE_TICKETPARTNER_BLACKLIST)) {
-                await safeReply(interaction, {
-                    embeds: [
-                        new EmbedBuilder()
-                            .setColor('#6f4e37')
-                            .setDescription(`<:vegax:1472992044140990526> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``)
-                    ],
-                    flags: 1 << 6
-                });
-                return true;
-            }
-            const ticketOpenButtons = ['ticket_partnership', 'ticket_supporto', 'ticket_highstaff'];
-            if (ticketOpenButtons.includes(ticketActionId) && interaction.member?.roles?.cache?.has(ROLE_TICKET_BLACKLIST)) {
+            const ticketOpenValues = ['ticket_supporto'];
+            if (ticketOpenValues.includes(ticketActionId) && interaction.member?.roles?.cache?.has(ROLE_TICKET_BLACKLIST)) {
                 await safeReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
@@ -255,7 +233,7 @@ async function handleTicketInteraction(interaction) {
                 });
                 return true;
             }
-            const userOnlyTickets = ['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'];
+            const userOnlyTickets = ['ticket_supporto'];
             if (ROLE_USER != null && !hasAdmin(interaction.member) && userOnlyTickets.includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
                 return true;
@@ -272,28 +250,6 @@ async function handleTicketInteraction(interaction) {
                         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
                         .setColor("#6f4e37")
                 },
-                ticket_partnership: {
-                    type: "partnership",
-                    emoji: "🤝",
-                    name: "partnership",
-                    role: ROLE_PARTNERMANAGER,
-                    requiredRoles: ROLE_USER ? [ROLE_USER] : [],
-                    embed: new EmbedBuilder()
-                        .setTitle("<:ticket:1472994083524837396> • **__TICKET PARTNERSHIP__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`)
-                        .setColor("#6f4e37")
-                },
-                ticket_highstaff: {
-                    type: "high",
-                    emoji: "✨",
-                    name: "highstaff",
-                    role: ROLE_HIGHSTAFF,
-                    requiredRoles: ROLE_USER ? [ROLE_USER] : [],
-                    embed: new EmbedBuilder()
-                        .setTitle("<:ticket:1472994083524837396> • **__TICKET HIGH STAFF__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
-                        .setColor("#6f4e37")
-                }
             };
             const config = ticketConfig[ticketActionId];
             if (!config && ![
@@ -330,7 +286,7 @@ async function handleTicketInteraction(interaction) {
                 }
                 interaction.client.ticketOpenLocks.add(ticketLockKey);
                 try {
-                if (ROLE_USER != null && !hasAdmin(interaction.member) && ['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'].includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
+                if (ROLE_USER != null && !hasAdmin(interaction.member) && ticketActionId === 'ticket_supporto' && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
                     return true;
                 }

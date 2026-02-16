@@ -9,6 +9,12 @@ let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
 let idsFallbackCache = null;
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
+const ALLOWED_GUILD_IDS = new Set(
+  [IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String)
+);
+function isAllowedGuildUfficiale(guildId) {
+  return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
+}
 
 const TICKET_BUTTON_IDS = new Set([
   'ticket_partnership', 'ticket_highstaff', 'ticket_supporto', 'ticket_open_desc_modal',
@@ -275,7 +281,7 @@ async function checkSlashPermission(interaction, options = {}) {
   }
 
   const guildId = interaction?.guildId || interaction?.guild?.id || null;
-  if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) return false;
+  if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
 
   if (guildId && userId) {
     const group = interaction.options?.getSubcommandGroup?.(false) || null;
@@ -298,7 +304,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
 
-  if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) return false;
+  if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
 
   if (commandName === 'restart') {
     const client = message?.client;
@@ -324,7 +330,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+  if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
       return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
     }
@@ -391,7 +397,7 @@ async function checkButtonPermission(interaction) {
 async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+  if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
       return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
     }
@@ -458,7 +464,7 @@ async function checkStringSelectPermission(interaction) {
 async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
-  if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+  if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
       return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
     }

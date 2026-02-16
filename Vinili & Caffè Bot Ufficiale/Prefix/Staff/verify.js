@@ -13,6 +13,14 @@ module.exports = {
   name: 'verify',
   
 	  async execute(message, args) {
+    const { safeMessageReply } = require('../../Utils/Moderation/reply');
+    const mainGuildId = IDs.guilds?.main || null;
+    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo nel **server principale** (main guild).')],
+        allowedMentions: { repliedUser: false }
+      });
+    }
     await message.channel.sendTyping();
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {

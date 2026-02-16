@@ -1,13 +1,26 @@
 const { EmbedBuilder } = require('discord.js');
 const IDs = require('../Utils/Config/ids');
 
-// Bot Test: multi-guild (server sponsor). Ignora la main guild: niente bottoni/menu/comandi lì (il bot può starci per altri motivi, es. guildMemberRemove).
+const MAIN_GUILD_ID = IDs.guilds?.main || null;
+const TEST_GUILD_ID = IDs.guilds?.test || '1462458562507964584';
+
+function isSponsorGuild(guildId) {
+    const list = IDs.guilds?.sponsorGuildIds || [];
+    return Array.isArray(list) && list.includes(guildId);
+}
+
+function isAllowedGuildTest(guildId) {
+    if (!guildId) return false;
+    if (guildId === MAIN_GUILD_ID) return false;
+    return guildId === TEST_GUILD_ID || isSponsorGuild(guildId);
+}
+
+// Bot Test: risponde solo in server sponsor e server test/developer.
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         if (!interaction || interaction.replied || interaction.deferred) return;
-        const mainId = client?.config?.mainGuildId || IDs.guilds?.main;
-        if (interaction.guildId && mainId && interaction.guildId === mainId) return;
+        if (interaction.guildId && !isAllowedGuildTest(interaction.guildId)) return;
         if (!interaction.guildId && (interaction.isButton?.() || interaction.isStringSelectMenu?.() || interaction.isModalSubmit?.())) {
             if (interaction.isRepliable?.()) await interaction.reply({ content: 'Questo comando va usato in un server.', flags: 1 << 6 }).catch(() => {});
             return;

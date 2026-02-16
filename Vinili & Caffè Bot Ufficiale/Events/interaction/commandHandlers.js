@@ -111,9 +111,11 @@ async function handleSlashCommand(interaction, client) {
     if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
 
-    const MAIN_GUILD_ID = IDs.guilds?.main || null;
-    if (MAIN_GUILD_ID && interaction.guildId && interaction.guildId !== MAIN_GUILD_ID) {
-        const embed = buildGlobalPermissionDeniedEmbed([], 'comando', 'Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.');
+    const ALLOWED_GUILD_IDS = new Set(
+        [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map(String)
+    );
+    if (interaction.guildId && !ALLOWED_GUILD_IDS.has(String(interaction.guildId))) {
+        const embed = buildGlobalPermissionDeniedEmbed([], 'comando', 'Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.');
         return interaction.reply({ embeds: [embed], flags: 1 << 6 });
     }
 
