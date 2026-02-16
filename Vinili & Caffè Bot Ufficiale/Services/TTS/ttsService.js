@@ -19,12 +19,16 @@ try { nodeEmoji = require('node-emoji'); } catch (error) {
 function shouldHandleMessage(message, config, prefix) {
   if (!config?.tts?.enabled) return false;
   if (!message?.channel) return false;
-  if (prefix && message.content?.startsWith(prefix)) return false;
-  if (message.content?.startsWith('-')) return false;
-  const isVoiceChat = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
-  const extraTextIds = [IDs.channels.noMic].filter(Boolean);
-  const isExtraText = extraTextIds.includes(message.channel.id);
-  return isVoiceChat || isExtraText;
+  const rawContent = String(message.content ?? '');
+  if (prefix && rawContent.startsWith(prefix)) return false;
+  if (rawContent.startsWith('-')) return false;
+  const isVoiceChannel = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
+  const isVoiceChannelThread = message.channel.isThread?.() && message.channel.parent?.isVoiceBased?.();
+  const extraTextIds = [IDs.channels.noMic].filter(Boolean).map((id) => String(id));
+  const channelIdStr = String(message.channel?.id ?? '');
+  const parentIdStr = message.channel?.parentId ? String(message.channel.parentId) : '';
+  const isExtraText = extraTextIds.some((id) => id === channelIdStr || id === parentIdStr);
+  return isVoiceChannel || isVoiceChannelThread || isExtraText;
 }
 
 function sanitizeText(text) {
@@ -118,10 +122,17 @@ async function createTtsStream(text, lang) {
   }
   try {
     const googleTTS = require('google-tts-api');
-    const url = googleTTS.getAudioUrl(String(text || '').slice(0, 200), { lang: String(lang || 'it'), slow: false });
-    if (url) {
-      const data = await fetchTtsAudio(url);
-      if (data) return Readable.from(Buffer.from(data));
+    const langStr = String(lang || 'it');
+    const textStr = String(text || '').slice(0, 200);
+    const hostsToTry = ['https://translate.google.com.vn', 'https://translate.google.com'];
+    for (const host of hostsToTry) {
+      try {
+        const url = googleTTS.getAudioUrl(textStr, { lang: langStr, slow: false, host });
+        if (url) {
+          const data = await fetchTtsAudio(url);
+          if (data) return Readable.from(Buffer.from(data));
+        }
+      } catch (_) {}
     }
   } catch (_) {}
   throw lastErr || new Error('TTS fetch failed (all sources unavailable)');
@@ -154,15 +165,17 @@ function getState(voiceChannel) {
   return state;
 }
 function getLockedChannelId(guildId) {
-  return guildLocks.get(guildId) || null;
+  if (guildId == null) return null;
+  return guildLocks.get(String(guildId)) || null;
 }
 function setLockedChannel(guildId, channelId) {
-  guildLocks.set(guildId, channelId);
+  if (guildId != null && channelId != null) guildLocks.set(String(guildId), String(channelId));
 }
 function clearLockedChannel(guildId, channelId) {
-  const locked = guildLocks.get(guildId);
-  if (locked && locked === channelId) {
-    guildLocks.delete(guildId);
+  if (guildId == null) return;
+  const locked = guildLocks.get(String(guildId));
+  if (locked && String(locked) === String(channelId)) {
+    guildLocks.delete(String(guildId));
   }
 }
 async function ensureConnection(state, voiceChannel) {
@@ -230,8 +243,14 @@ async function handleTtsMessage(message, client, prefix) {
       message.member = await message.guild.members.fetch(message.author?.id).catch(() => null) || message.member;
     } catch (_) {}
   }
-  const isVoiceChat = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
-  const voiceChannel = isVoiceChat ? message.channel : message.member?.voice?.channel;
+  let voiceChannel = null;
+  if (message.channel.isVoiceBased?.() && !message.channel.isThread?.()) {
+    voiceChannel = message.channel;
+  } else if (message.channel.isThread?.() && message.channel.parent?.isVoiceBased?.()) {
+    voiceChannel = message.channel.parent;
+  } else {
+    voiceChannel = message.member?.voice?.channel;
+  }
   if (!voiceChannel) {
     const warn = await message.reply("<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.");
     setTimeout(() => warn.delete().catch(() => {}), 5000);
@@ -252,8 +271,9 @@ async function handleTtsMessage(message, client, prefix) {
   const maxChars = config?.tts?.maxChars || 200;
   const includeUsername = config?.tts?.includeUsername !== false;
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
-  const baseText = sanitizeText(message.cleanContent || message.content || "");
-  if (!baseText) return;
+  const rawMessageText = message.cleanContent ?? message.content ?? '';
+  const baseText = sanitizeText(typeof rawMessageText === 'string' ? rawMessageText : String(rawMessageText));
+  if (!baseText || !baseText.trim()) return;
   const name = message.member?.displayName || message.member?.user?.username || message.author?.username || "Utente";
   const text = includeUsername ? `${name}: ${baseText}` : baseText;
   const clipped = text.slice(0, maxChars);
@@ -265,8 +285,23 @@ async function joinTtsChannel(voiceChannel) {
   if (!connection) return { ok: false, reason: "locked" };
   return { ok: true };
 }
+function findLockedChannelIdByGuild(guildId) {
+  if (guildId == null) return null;
+  const gid = String(guildId);
+  for (const [channelId, state] of ttsStates.entries()) {
+    if (state?.guildId && String(state.guildId) === gid && state.connection) {
+      return channelId;
+    }
+  }
+  return null;
+}
+
 async function leaveTtsGuild(guildId) {
-  const lockedChannelId = getLockedChannelId(guildId);
+  let lockedChannelId = getLockedChannelId(guildId);
+  if (!lockedChannelId) {
+    lockedChannelId = findLockedChannelIdByGuild(guildId);
+    if (lockedChannelId) setLockedChannel(guildId, lockedChannelId);
+  }
   if (!lockedChannelId) return { ok: false, reason: "not_connected" };
   const state = ttsStates.get(lockedChannelId);
   if (state) {
@@ -282,6 +317,7 @@ async function leaveTtsGuild(guildId) {
       state.connection = null;
     }
     clearLockedChannel(guildId, lockedChannelId);
+    ttsStates.delete(lockedChannelId);
   } else {
     clearLockedChannel(guildId, lockedChannelId);
   }
