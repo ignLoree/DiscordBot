@@ -802,6 +802,67 @@ async function runTicketPanelAuto(client) {
 }
 
 
+async function runSponsorPanelAuto(client) {
+  const IDs = require('../Utils/Config/ids');
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
+  const path = require('path');
+  const fs = require('fs');
+  const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
+
+  const SPONSOR_MEDIA_NAME = 'sponsor.gif';
+  const SPONSOR_MEDIA_PATH = path.join(__dirname, '..', 'Photos', SPONSOR_MEDIA_NAME);
+  const channelId = IDs.channels?.infoSponsor || IDs.channels?.sponsor1;
+  if (!channelId) return;
+
+  const sponsorChannel = client.channels.cache.get(channelId)
+    || await client.channels.fetch(channelId).catch(() => null);
+  if (!sponsorChannel?.isTextBased?.()) {
+    global.logger.warn('[CLIENT READY] Sponsor panel channel missing:', channelId);
+    return;
+  }
+
+  const sponsorEmbed = new EmbedBuilder()
+    .setColor('#6f4e37')
+    .setDescription(
+      '<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n' +
+      '> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n' +
+      '> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n' +
+      '> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n' +
+      '> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)'
+    );
+
+  try {
+    sponsorEmbed.setImage(`attachment://${SPONSOR_MEDIA_NAME}`);
+  } catch (e) {}
+
+  const rowSponsor = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('metodi')
+      .setLabel('︲METODI')
+      .setEmoji('<:Money:1330544713463500970>')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('ping')
+      .setLabel('︲PING')
+      .setEmoji('<:Discord_Mention:1329524304790028328>')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const files = [];
+  try {
+    if (fs.existsSync(SPONSOR_MEDIA_PATH)) {
+      files.push(new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME }));
+    }
+  } catch (e) {}
+
+  await upsertPanelMessage(sponsorChannel, client, {
+    embeds: [sponsorEmbed],
+    components: [rowSponsor],
+    files: files.length ? files : undefined,
+    attachmentName: files.length ? SPONSOR_MEDIA_NAME : undefined
+  });
+}
+
 async function runStaffListAuto(client) {
   const IDs = require('../Utils/Config/ids');
   const { refreshStaffList } = require('../Utils/Community/staffListUtils');
@@ -844,6 +905,11 @@ async function runEmbedWithButtonsSections(client) {
     await runVerifyPanelAuto(client);
   } catch (err) {
     global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runVerifyPanelAuto failed:', err);
+  }
+  try {
+    await runSponsorPanelAuto(client);
+  } catch (err) {
+    global.logger.error('[CLIENT READY:runEmbedWithButtonsSections] runSponsorPanelAuto failed:', err);
   }
 }
 

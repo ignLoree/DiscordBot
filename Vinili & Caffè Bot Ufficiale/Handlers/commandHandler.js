@@ -60,11 +60,24 @@ module.exports = (client) => {
         const rest = new REST({ version: '10' }).setToken(token);
 
         try {
+            const me = await rest.get(Routes.currentApplication());
+            const tokenAppId = me?.id || null;
+            if (tokenAppId && String(tokenAppId) !== String(clientId)) {
+                global.logger.warn(`[COMMANDS] Token appartiene all'app ${tokenAppId}, ma in codice usi clientId ${clientId}. Imposta DISCORD_CLIENT_ID uguale all'Application ID dell'app del token.`);
+            }
+        } catch (e) {
+            global.logger.warn('[COMMANDS] Impossibile verificare app del token:', e?.message || e);
+        }
+
+        try {
             client.logs.info('[FUNCTION] Refreshing application (/) commands...');
             await rest.put(Routes.applicationCommands(clientId), { body: client.commandArray });
             client.logs.success('[FUNCTION] Successfully reloaded application (/) commands.');
         } catch (error) {
             global.logger.error('[COMMANDS] Failed to deploy commands:', error);
+            if (error?.code === 20012 || error?.status === 403) {
+                global.logger.error('[COMMANDS] 20012/403: Se token e ID sono giusti, controlla su Developer Portal che l\'app NON sia in un Team, oppure che il tuo account abbia permesso "Admin" sul Team. Le app in Team possono registrare comandi solo da chi ha i permessi sul Team.');
+            }
             client.logs.error('[FUNCTION] Error loading slash commands.');
         }
     };
