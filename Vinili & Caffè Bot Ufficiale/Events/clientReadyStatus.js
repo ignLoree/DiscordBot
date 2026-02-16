@@ -16,7 +16,6 @@ module.exports = {
   async execute(client) {
     try {
       client.user.setStatus(client.config.status);
-      client.logs.success(`[STATUS] Bot status loaded as ${client.config.status}.`);
       client.user.setActivity({
         type: ActivityType.Custom,
         name: 'irrelevant',

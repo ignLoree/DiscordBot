@@ -36,11 +36,12 @@ const client = new Client({
 });
 
 client.config = require('./config.json');
-client.config.token = process.env.DISCORD_TOKEN_TEST || process.env.DISCORD_TOKEN || client.config.token;
+// Bot Test deve usare SOLO il suo token: niente fallback su DISCORD_TOKEN (quello è per l'ufficiale)
+client.config.token = process.env.DISCORD_TOKEN_TEST || client.config.token;
 client.config.mongoURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
 
 if (!client.config.token) {
-    global.logger.error('Manca DISCORD_TOKEN. Imposta .env o config.json.');
+    global.logger.error('[Bot Test] Manca DISCORD_TOKEN_TEST nel .env. Aggiungi DISCORD_TOKEN_TEST=<token del Bot Test> nel file .env (nella cartella principale del progetto). Non usare il token del bot ufficiale.');
     process.exit(1);
 }
 

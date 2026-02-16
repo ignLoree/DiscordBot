@@ -83,7 +83,7 @@ module.exports = {
     ticketremove: 'remove'
   },
 
-  async execute(client, message, args = []) {
+  async execute(message, args = [], client) {
     if (!message.inGuild?.() || !message.guild || !message.member) {
       await safeMessageReply(message, {
         content: '<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.',

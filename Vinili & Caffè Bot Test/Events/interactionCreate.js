@@ -1,10 +1,13 @@
 const { EmbedBuilder } = require('discord.js');
+const IDs = require('../Utils/Config/ids');
 
-// Bot Test: multi-guild (server sponsor). Nessun blocco monoguild: ticket e verify funzionano in tutti i server in cui il bot è presente (config.sponsorGuildIds / sponsorVerifyChannelIds / verificatoRoleIds).
+// Bot Test: multi-guild (server sponsor). Ignora la main guild: niente bottoni/menu/comandi lì (il bot può starci per altri motivi, es. guildMemberRemove).
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         if (!interaction || interaction.replied || interaction.deferred) return;
+        const mainId = client?.config?.mainGuildId || IDs.guilds?.main;
+        if (interaction.guildId && mainId && interaction.guildId === mainId) return;
 
         try {
             const handleVerify = require('./interaction/verifyHandlers');

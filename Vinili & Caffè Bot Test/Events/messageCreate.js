@@ -7,6 +7,7 @@ const IDs = require('../Utils/Config/ids');
 
 const PREFIXES = ['+', '?', '-'];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
+const MAIN_GUILD_ID = IDs.guilds?.main || null;
 
 function isSponsorGuild(guildId) {
     const list = IDs.guilds?.sponsorGuildIds || [];
@@ -17,6 +18,7 @@ module.exports = {
     name: 'messageCreate',
     async execute(message, client) {
         if (!message?.guild || message.author?.bot) return;
+        if (MAIN_GUILD_ID && message.guild.id === MAIN_GUILD_ID) return;
 
         const content = (message.content || '').trim();
         if (!content) return;

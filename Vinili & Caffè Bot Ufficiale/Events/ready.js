@@ -196,7 +196,6 @@ module.exports = {
                     state: '☕📀 discord.gg/viniliecaffe'
                 }]
             });
-            client.logs.success('[STATUS] Custom status impostato (idle + link).');
         } catch (err) {
             client.logs.error('[STATUS] Errore impostazione presence:', err?.message || err);
         }

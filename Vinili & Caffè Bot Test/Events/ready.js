@@ -8,7 +8,8 @@ module.exports = {
     once: true,
     async execute(_readyClient, client) {
         const c = client || _readyClient;
-        global.logger.info('[Bot Test] Bot avviato: ' + c.user.tag);
+        const appId = c.application?.id || c.user?.id;
+        global.logger.info('[Bot Test] Bot avviato: ' + c.user.tag + ' (Application ID: ' + appId + ')');
 
         const mongodbURL = process.env.MONGO_URL || c.config.mongoURL;
         if (mongodbURL) {
@@ -17,7 +18,6 @@ module.exports = {
                     serverSelectionTimeoutMS: 15000,
                     connectTimeoutMS: 15000
                 });
-                global.logger.info('[Bot Test] MongoDB connesso.');
             } catch (err) {
                 global.logger.error('[Bot Test] MongoDB:', err.message);
             }
@@ -27,9 +27,6 @@ module.exports = {
 
         const sponsorIds = Array.isArray(c.config?.sponsorGuildIds) ? c.config.sponsorGuildIds : Object.keys(c.config?.sponsorVerifyChannelIds || {});
         const verifyChannels = c.config?.sponsorVerifyChannelIds || {};
-        global.logger.info('[Bot Test] Server in cache (subito dopo ready): ' + c.guilds.cache.size);
-        global.logger.info('[Bot Test] Config sponsor: ' + sponsorIds.length + ' guild, ' + Object.keys(verifyChannels).length + ' canali verify.');
-
         // Delay: Discord a volte invia le guild dopo il ready.
         await new Promise((r) => setTimeout(r, 3000));
 
@@ -46,8 +43,7 @@ module.exports = {
             }
         }
         const guildList = c.guilds.cache.map(g => g.name + ' (' + g.id + ')').join(', ') || 'nessuno';
-        global.logger.info('[Bot Test] Server in cache dopo fetch: ' + c.guilds.cache.size + ' → ' + guildList);
-
+        
         const runPanels = async () => {
             try {
                 await sponsorPanels.runSponsorPanel(c);
@@ -77,6 +73,12 @@ module.exports = {
         }
         if (result.verifySent === 0 && result.ticketSent === 0) {
             global.logger.warn('[Bot Test] Dopo il retry: ancora 0 panel. Verifica che il bot sia invitato in ogni server sponsor (config.sponsorGuildIds), sponsorVerifyChannelIds per la verifica e sponsorTicketChannelIds per i ticket.');
+            if (sponsorIds.length > 0 && c.guilds.cache.size > 0) {
+                const inSponsor = sponsorIds.filter(id => c.guilds.cache.has(id));
+                if (inSponsor.length === 0) {
+                    global.logger.warn('[Bot Test] Questo bot (Application ID: ' + (c.application?.id || c.user?.id) + ') non è in nessuno dei server sponsor. L\'API Discord restituisce "Unknown Guild": invita QUESTO bot (stesso token/DISCORD_TOKEN_TEST) nei 6 server sponsor, non un altro bot (es. il bot ufficiale).');
+                }
+            }
         }
     }
 };
