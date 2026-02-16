@@ -1,6 +1,6 @@
 /**
  * Come nel bot ufficiale: se l'utente modifica un messaggio e il nuovo contenuto
- * è un comando a prefisso (+ / ?), viene rieseguito come messageCreate.
+ * è un comando a prefisso (- / ?), viene rieseguito come messageCreate.
  */
 module.exports = {
     name: 'messageUpdate',
@@ -22,7 +22,7 @@ module.exports = {
         const after = String(updated?.content || '');
         if (!after || before === after) return;
 
-        const looksLikePrefix = after.startsWith('+') || after.startsWith('?');
+        const looksLikePrefix = after.startsWith('-') || after.startsWith('?');
         if (!looksLikePrefix) return;
 
         updated.__fromMessageUpdatePrefix = true;

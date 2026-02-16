@@ -1,7 +1,11 @@
+const path = require('path');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const config = require('../config.json');
 const IDs = require('../Utils/Config/ids');
 const sponsorPanels = require('../Triggers/embeds');
+
+const RESTART_CLEANUP_DELAY_MS = 2000;
 
 module.exports = {
     name: 'ready',
@@ -105,6 +109,34 @@ module.exports = {
             await refreshBugMessage(c);
         } catch (err) {
             global.logger.error('[Bot Test] Bug list refresh on ready:', err?.message || err);
+        }
+
+        const restartNotifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
+        if (fs.existsSync(restartNotifyPath)) {
+            try {
+                const raw = fs.readFileSync(restartNotifyPath, 'utf8');
+                const data = JSON.parse(raw);
+                const channel = c.channels.cache.get(data?.channelId) || await c.channels.fetch(data?.channelId).catch(() => null);
+                if (channel) {
+                    const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
+                    const elapsed = Number.isFinite(elapsedMs) ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s` : '';
+                    const restartMsg = await channel.send(`<:vegacheckmark:1472992042203349084> Bot Test riavviato con successo${elapsed}.`).catch(() => null);
+                    if (restartMsg) {
+                        setTimeout(() => restartMsg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
+                    }
+                    if (data?.notifyMessageId) {
+                        const notifyMsg = await channel.messages.fetch(data.notifyMessageId).catch(() => null);
+                        if (notifyMsg) setTimeout(() => notifyMsg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
+                    }
+                    if (data?.commandMessageId) {
+                        const cmdMsg = await channel.messages.fetch(data.commandMessageId).catch(() => null);
+                        if (cmdMsg) setTimeout(() => cmdMsg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
+                    }
+                }
+                fs.unlinkSync(restartNotifyPath);
+            } catch (err) {
+                global.logger.error('[Bot Test] Errore post-restart (restart_notify.json):', err?.message || err);
+            }
         }
     }
 };

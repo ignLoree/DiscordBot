@@ -1,8 +1,8 @@
 /**
- * Comando +bug solo nella guild test. Canale bug fisso.
- * +bug report "descrizione" "online|inattivo|pausa|offline" → aggiunge
- * +bug "descrizione" fatto → rimuove
- * +bug "descrizione" test → imposta online + **[TEST]**
+ * Comando -bug solo nella guild test. Canale bug fisso.
+ * -bug report "descrizione" "online|inattivo|pausa|offline" → aggiunge
+ * -bug "descrizione" fatto → rimuove
+ * -bug "descrizione" test → imposta online + **[TEST]**
  */
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../Moderation/reply');
@@ -104,7 +104,7 @@ async function runBugCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1472992044140990526> Il comando `+bug` è utilizzabile solo nel **server test**.')
+          .setDescription('<:vegax:1472992044140990526> Il comando `-bug` è utilizzabile solo nel **server test**.')
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -120,10 +120,10 @@ async function runBugCommand(message, args, client) {
           .setColor('Red')
           .setDescription(
             '**Uso:**\n' +
-            '`+bug report "descrizione" "online"` | `"inattivo"` | `"pausa"` | `"offline"`\n' +
-            '`+bug modify "descrizione" "nuova gravità"` — modifica la gravità\n' +
-            '`+bug "descrizione" fatto` — rimuove il bug\n' +
-            '`+bug "descrizione" test` — segna in test (online + **[TEST]**)'
+            '`-bug report "descrizione" "online"` | `"inattivo"` | `"pausa"` | `"offline"`\n' +
+            '`-bug modify "descrizione" "nuova gravità"` — modifica la gravità\n' +
+            '`-bug "descrizione" fatto` — rimuove il bug\n' +
+            '`-bug "descrizione" test` — segna in test (online + **[TEST]**)'
           )
       ],
       allowedMentions: { repliedUser: false }

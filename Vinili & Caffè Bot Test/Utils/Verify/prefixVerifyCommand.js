@@ -1,5 +1,5 @@
 /**
- * Comando prefix +verify per server sponsor (Bot Test).
+ * Comando prefix -verify per server sponsor (Bot Test).
  * Solo staff (sponsorStaffRoleIds) può usarlo; assegna il ruolo verificato (verificatoRoleIds) ai target.
  */
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -124,7 +124,7 @@ async function runVerifyCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1472992044140990526> Solo lo **staff** può usare il comando `+verify` su questo server.')
+          .setDescription('<:vegax:1472992044140990526> Solo lo **staff** può usare il comando `-verify` su questo server.')
       ],
       allowedMentions: { repliedUser: false }
     });

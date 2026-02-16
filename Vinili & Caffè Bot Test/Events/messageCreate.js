@@ -3,12 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const IDs = require('../Utils/Config/ids');
 
-const PREFIXES = ['+', '?', '-'];
+const PREFIXES = ['-'];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
 const MAIN_GUILD_ID = IDs.guilds?.main || null;
 const TEST_GUILD_ID = IDs.guilds?.test || '1462458562507964584';
 const DEV_ID = '295500038401163264';
 const RESTART_FLAG = 'restart.json';
+const RESTART_CLEANUP_DELAY_MS = 2000;
 
 function isSponsorGuild(guildId) {
     const list = IDs.guilds?.sponsorGuildIds || [];
@@ -23,7 +24,7 @@ function isAllowedGuildTest(guildId) {
 
 function isRestartCommand(content) {
     const lower = (content || '').trim().toLowerCase();
-    return lower === '+rs' || lower === '+restart' || lower.startsWith('+rs ') || lower.startsWith('+restart ');
+    return lower === '-rs' || lower === '-restart' || lower.startsWith('-rs ') || lower.startsWith('-restart ');
 }
 
 module.exports = {
@@ -42,25 +43,55 @@ module.exports = {
         if (message.author.id === DEV_ID && isRestartCommand(content)) {
             if (message.guild?.id !== TEST_GUILD_ID) {
                 await message.reply({
-                    embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Il comando `+rs` è utilizzabile solo nel **server test**.')],
+                    embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Il comando `-rs` è utilizzabile solo nel **server test**.')],
                     allowedMentions: { repliedUser: false }
                 }).catch(() => {});
                 return;
             }
+            const requestedAt = new Date().toISOString();
+            const channelId = message.channelId || message.channel?.id || null;
             try {
+                const notifyMessage = await message.reply({
+                    embeds: [
+                        new EmbedBuilder()
+                            .setColor('#6f4e37')
+                            .setDescription('<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando è completato.')
+                    ],
+                    allowedMentions: { repliedUser: false }
+                }).catch(() => null);
+
+                const notifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
                 const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
+                fs.writeFileSync(
+                    notifyPath,
+                    JSON.stringify({
+                        channelId,
+                        guildId: message.guild?.id || null,
+                        by: message.author.id,
+                        at: requestedAt,
+                        scope: 'full',
+                        commandMessageId: message.id || null,
+                        notifyMessageId: notifyMessage?.id || null
+                    }, null, 2),
+                    'utf8'
+                );
                 fs.writeFileSync(flagPath, JSON.stringify({
-                    at: new Date().toISOString(),
+                    at: requestedAt,
                     by: message.author.id,
                     bot: 'test'
                 }, null, 2), 'utf8');
-                await message.reply({
-                    embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1472992042203349084> Riavvio **Bot Test** richiesto. Il loader riavvierà solo questo bot.')],
-                    allowedMentions: { repliedUser: false }
-                }).catch(() => {});
             } catch (err) {
-                global.logger?.error?.('[Bot Test] +rs write flag:', err);
-                await message.reply({ content: 'Errore durante la scrittura del flag di restart.', allowedMentions: { repliedUser: false } }).catch(() => {});
+                global.logger?.error?.('[Bot Test] -rs write flag:', err);
+                const failMsg = await message.reply({
+                    embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Errore durante la scrittura del file di restart.')],
+                    allowedMentions: { repliedUser: false }
+                }).catch(() => null);
+                if (failMsg) {
+                    setTimeout(() => {
+                        message.delete().catch(() => {});
+                        failMsg.delete().catch(() => {});
+                    }, RESTART_CLEANUP_DELAY_MS);
+                }
             }
             return;
         }

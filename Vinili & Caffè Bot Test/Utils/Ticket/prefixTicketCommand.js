@@ -1,5 +1,5 @@
 /**
- * Comando prefix +ticket per server sponsor (Bot Test).
+ * Comando prefix -ticket per server sponsor (Bot Test).
  * Solo staff (sponsorStaffRoleIds) può usare i subcomandi; solo ticket tipo supporto.
  */
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -109,7 +109,7 @@ async function runTicketCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1472992044140990526> Uso: `+ticket <add|remove|closerequest|close|claim|unclaim|rename>`')
+          .setDescription('<:vegax:1472992044140990526> Uso: `-ticket <add|remove|closerequest|close|claim|unclaim|rename>`')
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -421,7 +421,7 @@ async function runTicketCommand(message, args, client) {
     const rawNewName = normalizedRest.join(' ').trim();
     if (!rawNewName) {
       await safeMessageReply(message, {
-        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Uso: `+ticket rename <nuovo nome>`')],
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Uso: `-ticket rename <nuovo nome>`')],
         allowedMentions: { repliedUser: false }
       });
       return true;

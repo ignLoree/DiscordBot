@@ -1,8 +1,8 @@
 /**
- * Comando +to-do / +todo solo nella guild test. Canale to-do fisso.
- * +to-do "task" "online|inattivo|pausa|offline" → aggiunge
- * +to-do "task" fatto → rimuove
- * +to-do "task" test → imposta online + **[TEST]**
+ * Comando -to-do / -todo solo nella guild test. Canale to-do fisso.
+ * -to-do "task" "online|inattivo|pausa|offline" → aggiunge
+ * -to-do "task" fatto → rimuove
+ * -to-do "task" test → imposta online + **[TEST]**
  */
 const { EmbedBuilder } = require('discord.js');
 const { safeMessageReply } = require('../Moderation/reply');
@@ -94,7 +94,7 @@ async function runTodoCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1472992044140990526> I comandi `+to-do` / `+todo` sono utilizzabili solo nel **server test**.')
+          .setDescription('<:vegax:1472992044140990526> I comandi `-to-do` / `-todo` sono utilizzabili solo nel **server test**.')
       ],
       allowedMentions: { repliedUser: false }
     });
