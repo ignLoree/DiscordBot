@@ -30,6 +30,8 @@ const STAFF_ALLOWED_CHANNEL_IDS = new Set([
     String(IDs.channels?.staffCmds || ''),
     String(IDs.channels?.highCmds || '')
 ].filter(Boolean));
+/** Guild in cui le restrizioni canale per slash non si applicano (comandi usabili in qualsiasi canale). */
+const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
 
 function isChannelInTicketCategory(channel) {
     if (!channel?.guild?.channels?.cache) return false;
@@ -42,6 +44,7 @@ function isChannelInTicketCategory(channel) {
 
 function getSlashChannelRestrictionError(commandName, command, channel) {
     if (!command || !channel) return null;
+    if (GUILD_ALLOWED_COMMANDS_ANY_CHANNEL && channel.guild?.id === GUILD_ALLOWED_COMMANDS_ANY_CHANNEL) return null;
     const category = String(command.category || '').toLowerCase();
     const name = String(commandName || '').toLowerCase();
     const channelId = channel.id;

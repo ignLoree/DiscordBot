@@ -45,6 +45,8 @@ const ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS = new Set(
 );
 const TTS_ALLOWED_CHANNEL_ID = IDs.channels.noMic || null;
 const SHIP_ALLOWED_CHANNEL_ID = IDs.channels.ship || null;
+/** Guild in cui i comandi senza canale obbligatorio (no TTS, no ship, no restrizioni canale) sono usabili in qualsiasi canale. */
+const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
 const ALLOWED_EXCEPTION_NAMES = new Set(['ticket', 'description', 'afk', 'avatar', 'banner', 'snipe', 'quote']);
 const ALLOWED_EXCEPTION_FOLDERS = new Set(['Level', 'Staff']);
 
@@ -510,32 +512,35 @@ module.exports = {
         if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
             args.unshift(prefixSubcommandFromAlias);
         }
-        if (String(command.folder || '').trim() === 'TTS') {
-            if (!isTtsCommandAllowedInChannel(command, message.channel)) {
+        const isGuildAllowedAnyChannel = GUILD_ALLOWED_COMMANDS_ANY_CHANNEL && message.guild?.id === GUILD_ALLOWED_COMMANDS_ANY_CHANNEL;
+        if (!isGuildAllowedAnyChannel) {
+            if (String(command.folder || '').trim() === 'TTS') {
+                if (!isTtsCommandAllowedInChannel(command, message.channel)) {
+                    await deleteCommandMessage();
+                    const msg = await message.channel.send({
+                        content: `Il comando TTS è usabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`
+                    });
+                    setTimeout(() => msg.delete().catch(() => { }), 5000);
+                    return;
+                }
+            } else if (String(command.name || '').toLowerCase() === 'ship') {
+                if (SHIP_ALLOWED_CHANNEL_ID && message.channelId !== SHIP_ALLOWED_CHANNEL_ID) {
+                    await deleteCommandMessage();
+                    const msg = await message.channel.send({
+                        content: `Il comando ship è usabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`
+                    });
+                    setTimeout(() => msg.delete().catch(() => { }), 5000);
+                    return;
+                }
+            } else if (ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.size > 0 && !ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.has(String(message.channelId)) && !isPrefixCommandAllowedOutsideChannel(command)) {
                 await deleteCommandMessage();
+                const channelsList = [...ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
                 const msg = await message.channel.send({
-                    content: `Il comando TTS è usabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`
+                    content: `Questo comando è usabile solo in ${channelsList}.`
                 });
                 setTimeout(() => msg.delete().catch(() => { }), 5000);
                 return;
             }
-        } else if (String(command.name || '').toLowerCase() === 'ship') {
-            if (SHIP_ALLOWED_CHANNEL_ID && message.channelId !== SHIP_ALLOWED_CHANNEL_ID) {
-                await deleteCommandMessage();
-                const msg = await message.channel.send({
-                    content: `Il comando ship è usabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`
-                });
-                setTimeout(() => msg.delete().catch(() => { }), 5000);
-                return;
-            }
-        } else if (ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.size > 0 && !ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.has(String(message.channelId)) && !isPrefixCommandAllowedOutsideChannel(command)) {
-            await deleteCommandMessage();
-            const channelsList = [...ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
-            const msg = await message.channel.send({
-                content: `Questo comando è usabile solo in ${channelsList}.`
-            });
-            setTimeout(() => msg.delete().catch(() => { }), 5000);
-            return;
         }
         if (!(await checkPrefixPermission(message, command.name, prefixSubcommand))) {
             const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
