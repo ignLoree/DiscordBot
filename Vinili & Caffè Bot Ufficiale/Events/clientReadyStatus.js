@@ -42,7 +42,8 @@ module.exports = {
       const restartNotifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
       if (fs.existsSync(restartNotifyPath)) {
         try {
-          const data = JSON.parse(fs.readFileSync(restartNotifyPath, 'utf8'));
+          const raw = fs.readFileSync(restartNotifyPath, 'utf8');
+          const data = JSON.parse(raw);
           const channel = await getChannelSafe(client, data?.channelId);
           if (channel) {
             const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
@@ -72,23 +73,7 @@ module.exports = {
           }
           fs.unlinkSync(restartNotifyPath);
         } catch (err) {
-          global.logger.error('Errore durante il post-restart:', err);
-        }
-      } else if (fs.existsSync('./restart.json')) {
-        try {
-          const data = JSON.parse(fs.readFileSync('./restart.json', 'utf8'));
-          const channel = await getChannelSafe(client, data?.channelID);
-          if (channel) {
-            const restartMsg = await channel.send('<:vegacheckmark:1443666279058772028> Il bot è stato riavviato con successo!').catch(() => null);
-            if (restartMsg) {
-              setTimeout(() => {
-                restartMsg.delete().catch(() => { });
-              }, RESTART_CLEANUP_DELAY_MS);
-            }
-          }
-          fs.unlinkSync('./restart.json');
-        } catch (err) {
-          global.logger.error('Errore durante il post-restart:', err);
+          global.logger.error('Errore durante il post-restart (restart_notify.json):', err?.message || err);
         }
       }
     } catch (error) {

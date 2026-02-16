@@ -34,9 +34,18 @@ async function handleTicketInteraction(interaction) {
     const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId);
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && isHandledTicketModalId(String(interaction.customId || ''));
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
+    if (!interaction.guild) {
+        try {
+            await interaction.reply({ content: 'Questo comando va usato in un server.', flags: 1 << 6 }).catch((e) => { global.logger?.warn?.('[Bot Test TICKET] reply no-guild', e?.message || e); });
+        } catch (_) {}
+        return true;
+    }
     if (mongoose.connection.readyState !== 1) {
         try {
-            await interaction.reply({ content: 'Database non ancora connesso. Riprova tra qualche secondo.', flags: 1 << 6 }).catch(() => interaction.followUp({ content: 'Database non connesso.', flags: 1 << 6 }).catch(() => {}));
+            await interaction.reply({ content: 'Database non ancora connesso. Riprova tra qualche secondo.', flags: 1 << 6 }).catch((e) => {
+                global.logger?.warn?.('[Bot Test TICKET] reply DB not ready', e?.message || e);
+                interaction.followUp({ content: 'Database non connesso.', flags: 1 << 6 }).catch(() => {});
+            });
         } catch (_) {}
         return true;
     }
@@ -967,7 +976,7 @@ async function handleTicketInteraction(interaction) {
             await Ticket.updateOne(
                 { channelId: targetInteraction.channel.id },
                 { $set: { transcript: transcriptTXT, closeReason: motivo || null, claimedBy: ticket.claimedBy || null } }
-            ).catch(() => { });
+            ).catch((e) => { global.logger?.warn?.('[Bot Test TICKET] updateOne close', e?.message || e); });
             const createdAtFormatted = ticket.createdAt
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';

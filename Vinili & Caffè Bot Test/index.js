@@ -22,6 +22,9 @@ for (const envPath of envCandidates) {
 
 global.logger = require('./Utils/Moderation/logger');
 
+const installProcessHandlers = require('./Handlers/processHandler');
+installProcessHandlers();
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -37,7 +40,12 @@ const client = new Client({
     presence: { status: 'invisible' }
 });
 
-client.config = require('./config.json');
+try {
+    client.config = require('./config.json');
+} catch (err) {
+    global.logger.error('[Bot Test] config.json mancante o non valido:', err?.message || err);
+    process.exit(1);
+}
 // Bot Test deve usare SOLO il suo token: niente fallback su DISCORD_TOKEN (quello è per l'ufficiale)
 client.config.token = process.env.DISCORD_TOKEN_TEST || client.config.token;
 client.config.mongoURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;

@@ -182,8 +182,10 @@ setInterval(() => {
     let payload = null;
     try {
         payload = JSON.parse(fs.readFileSync(RESTART_FLAG, 'utf8'));
-    } catch {
-        payload = null;
+    } catch (err) {
+        console.error('[Loader] restart.json read/parse failed:', err?.message || err);
+        try { fs.unlinkSync(RESTART_FLAG); } catch { }
+        return;
     }
     try { fs.unlinkSync(RESTART_FLAG); } catch { }
     const targetBot = payload?.bot || 'official';

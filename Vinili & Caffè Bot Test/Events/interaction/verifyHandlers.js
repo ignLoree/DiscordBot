@@ -3,6 +3,7 @@ const PImage = require('pureimage');
 const { PassThrough } = require('stream');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
@@ -252,11 +253,15 @@ async function finalizeVerification(interaction, member) {
   try {
     const record = await upsertVerifiedMember(guildId, member.id, new Date());
     await applyTenureForMember(member, record);
-  } catch (_) {}
+  } catch (err) {
+    global.logger?.warn?.('[Bot Test VERIFY] upsertVerifiedMember/applyTenure:', err?.message || err);
+  }
 
   try {
     if ((member.nickname || '') !== SPONSOR_VERIFY_NICKNAME && member.manageable !== false) {
-      await member.setNickname(SPONSOR_VERIFY_NICKNAME).catch(() => {});
+      await member.setNickname(SPONSOR_VERIFY_NICKNAME).catch((err) => {
+        global.logger?.warn?.('[Bot Test VERIFY] setNickname:', err?.message || err);
+      });
     }
   } catch (_) {}
 
@@ -275,7 +280,7 @@ async function finalizeVerification(interaction, member) {
           `<:space:1472990350795866265><:success:1472990339223781456> \`${safeUsername}\` has passed verification successfully.`
       )
       .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
-    await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+    await logChannel.send({ embeds: [logEmbed] }).catch((err) => { global.logger?.warn?.('[Bot Test VERIFY] logChannel.send', err?.message || err); });
   }
 
   const pingChannel = VERIFY_PING_CHANNEL_ID ? guild?.channels?.cache?.get(VERIFY_PING_CHANNEL_ID) : null;
@@ -294,6 +299,14 @@ async function finalizeVerification(interaction, member) {
 }
 
 async function handleVerifyInteraction(interaction) {
+  if (!interaction.guild) {
+    await safeReply(interaction, { content: 'Usa questo comando in un server.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
+  if (mongoose.connection.readyState !== 1) {
+    await safeReply(interaction, { content: 'Database non ancora connesso. Riprova tra qualche secondo.', flags: 1 << 6 }).catch(() => {});
+    return true;
+  }
   if (interaction.isButton()) {
     if (interaction.customId === 'verify_start') {
       const guildId = interaction.guild?.id;

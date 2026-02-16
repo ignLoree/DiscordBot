@@ -110,27 +110,35 @@ module.exports = {
         });
 
         const notifyPath = path.resolve(process.cwd(), '..', 'restart_notify.json');
-        fs.writeFileSync(
-          notifyPath,
-          JSON.stringify({
-            channelId,
-            guildId: message.guild?.id || null,
-            by: message.author.id,
-            at: requestedAt,
-            scope: 'full',
-            commandMessageId: message.id || null,
-            notifyMessageId: notifyMessage?.id || null
-          }, null, 2),
-          'utf8'
-        );
-
         const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
-        fs.writeFileSync(flagPath, JSON.stringify({
-          at: requestedAt,
-          by: message.author.id,
-          bot: isFullBoth ? 'all' : 'official',
-          respectDelay: isFullBoth
-        }, null, 2), 'utf8');
+        try {
+          fs.writeFileSync(
+            notifyPath,
+            JSON.stringify({
+              channelId,
+              guildId: message.guild?.id || null,
+              by: message.author.id,
+              at: requestedAt,
+              scope: 'full',
+              commandMessageId: message.id || null,
+              notifyMessageId: notifyMessage?.id || null
+            }, null, 2),
+            'utf8'
+          );
+          fs.writeFileSync(flagPath, JSON.stringify({
+            at: requestedAt,
+            by: message.author.id,
+            bot: isFullBoth ? 'all' : 'official',
+            respectDelay: isFullBoth
+          }, null, 2), 'utf8');
+        } catch (writeErr) {
+          global.logger.error('[restart] Scrittura flag/notify fallita:', writeErr?.message || writeErr);
+          await safeMessageReply(message, {
+            embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Errore durante la scrittura del file di restart.')],
+            allowedMentions: { repliedUser: false }
+          }).catch(() => {});
+          return;
+        }
         return;
       }
 

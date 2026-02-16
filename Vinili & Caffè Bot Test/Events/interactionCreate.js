@@ -8,6 +8,10 @@ module.exports = {
         if (!interaction || interaction.replied || interaction.deferred) return;
         const mainId = client?.config?.mainGuildId || IDs.guilds?.main;
         if (interaction.guildId && mainId && interaction.guildId === mainId) return;
+        if (!interaction.guildId && (interaction.isButton?.() || interaction.isStringSelectMenu?.() || interaction.isModalSubmit?.())) {
+            if (interaction.isRepliable?.()) await interaction.reply({ content: 'Questo comando va usato in un server.', flags: 1 << 6 }).catch(() => {});
+            return;
+        }
 
         try {
             const handleVerify = require('./interaction/verifyHandlers');
