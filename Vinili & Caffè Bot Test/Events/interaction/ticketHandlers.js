@@ -885,7 +885,14 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                 return true;
             }
-            const motivo = interaction.fields.getTextInputValue('motivo');
+            let motivo = null;
+            try {
+                motivo = interaction.fields.getTextInputValue('motivo')?.trim() || null;
+            } catch (_) {}
+            if (!motivo && interaction.fields?.fields) {
+                const first = interaction.fields.fields.first();
+                if (first?.value) motivo = String(first.value).trim() || null;
+            }
             await closeTicket(interaction, motivo, { safeReply, safeEditReply, makeErrorEmbed, LOG_CHANNEL });
             return true;
         }
@@ -936,6 +943,7 @@ async function handleTicketInteraction(interaction) {
             const createdAtFormatted = ticket.createdAt
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';
+            const motivoDisplay = (motivo && String(motivo).trim()) ? String(motivo).trim().slice(0, 1500) : 'Nessun motivo inserito';
             // Always send transcripts to the MAIN guild log channel, even when the ticket is in sponsor servers.
             const IDs = require('../../Utils/Config/ids');
             const mainGuildId = IDs?.guilds?.main || null;
@@ -958,7 +966,7 @@ async function handleTicketInteraction(interaction) {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle('Ticket Chiuso')
-                            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`)
+                            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivoDisplay}`)
                             .setColor('#6f4e37')
                     ],
                 }, Boolean(transcriptHtmlPath));
@@ -970,7 +978,7 @@ async function handleTicketInteraction(interaction) {
                         files: transcriptHtmlPath
                             ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
                             : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
-                        embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`).setColor('#6f4e37')]
+                        embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivoDisplay}`).setColor('#6f4e37')]
                     }, Boolean(transcriptHtmlPath));
                 } catch (err) {
                     if (err.code !== 50007) {

@@ -220,6 +220,10 @@ module.exports = {
         return;
       }
 
+      await Ticket.updateOne(
+        { channelId: message.channel.id },
+        { $set: { closeReason: reason || null } }
+      ).catch(() => { });
       const closeButton = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('accetta').setEmoji('<:vegacheckmark:1443666279058772028>').setLabel('Accetta e chiudi').setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId('rifiuta').setEmoji('<:vegax:1443934876440068179>').setLabel('Rifiuta e mantieni aperto').setStyle(ButtonStyle.Secondary)
@@ -239,6 +243,7 @@ module.exports = {
     }
 
     if (subcommand === 'close') {
+      const motivoFromArgs = normalizedRest.join(' ').trim() || null;
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
@@ -276,6 +281,8 @@ module.exports = {
         return;
       }
 
+      const closeReason = motivoFromArgs || claimed.closeReason || null;
+      const motivoDisplay = closeReason || 'Nessun motivo inserito';
       const transcriptTXT = await createTranscript(message.channel).catch(() => '');
       const transcriptHTML = await createTranscriptHtml(message.channel).catch(() => '');
       const transcriptHtmlPath = transcriptHTML
@@ -283,7 +290,7 @@ module.exports = {
         : null;
       await Ticket.updateOne(
         { channelId: message.channel.id },
-        { $set: { transcript: transcriptTXT, closeReason: claimed.closeReason || null, claimedBy: claimed.claimedBy || null } }
+        { $set: { transcript: transcriptTXT, closeReason, claimedBy: claimed.claimedBy || null } }
       ).catch(() => { });
 
       const createdAtFormatted = claimed.createdAt
@@ -310,7 +317,7 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setTitle('Ticket Chiuso')
-              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason ? claimed.closeReason : 'Nessun motivo inserito'}`)
+              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`)
               .setColor('#6f4e37')
           ]
         }, Boolean(transcriptHtmlPath));
@@ -326,7 +333,7 @@ module.exports = {
             embeds: [
               new EmbedBuilder()
                 .setTitle('Ticket Chiuso')
-                .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason ? claimed.closeReason : 'Nessun motivo inserito'}`)
+                .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`)
                 .setColor('#6f4e37')
             ]
           }, Boolean(transcriptHtmlPath));

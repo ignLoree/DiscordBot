@@ -211,6 +211,10 @@ async function runTicketCommand(message, args, client) {
       });
       return true;
     }
+    await Ticket.updateOne(
+      { channelId: message.channel.id },
+      { $set: { closeReason: reason || null } }
+    ).catch(() => {});
     const closeButton = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId('accetta').setEmoji('<:vegacheckmark:1472992042203349084>').setLabel('Accetta e chiudi').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId('rifiuta').setEmoji('<:vegax:1472992044140990526>').setLabel('Rifiuta e mantieni aperto').setStyle(ButtonStyle.Secondary)
@@ -229,6 +233,7 @@ async function runTicketCommand(message, args, client) {
   }
 
   if (subcommand === 'close') {
+    const motivoFromArgs = normalizedRest.join(' ').trim() || null;
     const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
     if (!ticketDoc) {
       await safeMessageReply(message, {
@@ -256,12 +261,14 @@ async function runTicketCommand(message, args, client) {
       });
       return true;
     }
+    const closeReason = motivoFromArgs || claimed.closeReason || null;
+    const motivoDisplay = closeReason || 'Nessun motivo inserito';
     const transcriptTXT = await createTranscript(message.channel).catch(() => '');
     const transcriptHTML = await createTranscriptHtml(message.channel).catch(() => '');
     const transcriptHtmlPath = transcriptHTML ? await saveTranscriptHtml(message.channel, transcriptHTML).catch(() => null) : null;
     await Ticket.updateOne(
       { channelId: message.channel.id },
-      { $set: { transcript: transcriptTXT, closeReason: claimed.closeReason || null, claimedBy: claimed.claimedBy || null } }
+      { $set: { transcript: transcriptTXT, closeReason, claimedBy: claimed.claimedBy || null } }
     ).catch(() => {});
 
     const createdAtFormatted = claimed.createdAt ? `<t:${Math.floor(claimed.createdAt.getTime() / 1000)}:F>` : 'Data non disponibile';
@@ -274,7 +281,7 @@ async function runTicketCommand(message, args, client) {
         embeds: [
           new EmbedBuilder()
             .setTitle('Ticket Chiuso')
-            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason || 'Nessun motivo inserito'}`)
+            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`)
             .setColor('#6f4e37')
         ]
       }, Boolean(transcriptHtmlPath));
@@ -289,7 +296,7 @@ async function runTicketCommand(message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setTitle('Ticket Chiuso')
-              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason || 'Nessun motivo inserito'}`)
+              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`)
               .setColor('#6f4e37')
           ]
         }, Boolean(transcriptHtmlPath));
