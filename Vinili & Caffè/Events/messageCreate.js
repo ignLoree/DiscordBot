@@ -542,7 +542,10 @@ module.exports = {
                 return;
             }
         }
-        if (!(await checkPrefixPermission(message, command.name, prefixSubcommand))) {
+        const isChannelRestrictedPrefixCommand = String(command.folder || '').trim() !== 'TTS'
+            && String(command.name || '').toLowerCase() !== 'ship'
+            && !isPrefixCommandAllowedOutsideChannel(command);
+        if (!(await checkPrefixPermission(message, command.name, prefixSubcommand, { channelRestrictedCommand: isChannelRestrictedPrefixCommand }))) {
             const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
             const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
             await deleteCommandMessage();

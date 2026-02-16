@@ -272,7 +272,7 @@ function getDevIds(client) {
   return Array.from(new Set([...fromIds, ...fromConfig]));
 }
 
-async function checkSlashPermission(interaction) {
+async function checkSlashPermission(interaction, options = {}) {
   const userId = interaction?.user?.id || null;
 
   if (interaction.commandName === 'dmbroadcast') {
@@ -297,12 +297,26 @@ async function checkSlashPermission(interaction) {
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
   if (!Array.isArray(roles)) return true;
   if (!interaction.inGuild()) return false;
+  if (options?.channelRestrictedCommand) {
+    if (hasAdministrator(interaction.member)) return true;
+    const liveMember = await fetchLiveMember(interaction);
+    if (liveMember && hasAdministrator(liveMember)) return true;
+  }
   return hasAnyRoleWithLiveFallback(interaction, roles);
 }
 
-async function checkPrefixPermission(message, commandName, subcommandName = null) {
+async function checkPrefixPermission(message, commandName, subcommandName = null, options = {}) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
+
+  if (commandName === 'restart') {
+    const client = message?.client;
+    if (!client) return false;
+    const devIds = getDevIds(client);
+    if (devIds.length === 0) return false;
+    return devIds.includes(userId);
+  }
+
   if (commandName === 'ticket' && isSponsorGuild(message?.guild?.id)) {
     if (!subcommandName) return true;
 
@@ -331,6 +345,11 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
   if (!Array.isArray(roles)) return true;
   if (!message.guild) return false;
+  if (options?.channelRestrictedCommand) {
+    if (message.member && hasAdministrator(message.member)) return true;
+    const liveMember = await fetchLiveMember(message);
+    if (liveMember && hasAdministrator(liveMember)) return true;
+  }
   return hasAnyRoleWithLiveFallback(message, roles);
 }
 

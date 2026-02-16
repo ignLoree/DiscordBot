@@ -125,7 +125,9 @@ async function handleSlashCommand(interaction, client) {
         }
     }
 
-    if (!(await checkSlashPermission(interaction))) {
+    const slashCategory = String(command?.category || '').toLowerCase();
+    const isChannelRestrictedSlashCommand = slashCategory === 'partner' || slashCategory === 'staff';
+    if (!(await checkSlashPermission(interaction, { channelRestrictedCommand: isChannelRestrictedSlashCommand }))) {
         const requiredRoles = getSlashRequiredRoles(interaction);
         const embed = interaction.commandName === 'dmbroadcast'
             ? buildGlobalPermissionDeniedEmbed([], 'comando', 'Solo i developer del bot possono usare questo comando.')
