@@ -4,7 +4,7 @@ const IDs = require('../Utils/Config/ids');
 const sponsorPanels = require('../Triggers/sponsorPanels');
 
 module.exports = {
-    name: 'ready',
+    name: 'clientReady',
     once: true,
     async execute(client) {
         global.logger.info('[Bot Test] Bot avviato: ' + client.user.tag);

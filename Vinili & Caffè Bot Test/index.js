@@ -8,11 +8,17 @@ const path = require('path');
 
 const APP_ROOT = __dirname;
 
-// .env
 const dotenv = require('dotenv');
-const envPath = path.join(APP_ROOT, '.env');
-if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath, quiet: true });
+const envCandidates = [
+    path.join(APP_ROOT, '.env'),
+    path.join(APP_ROOT, '..', '.env'),
+    path.join(process.cwd(), '.env')
+];
+for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath, quiet: true });
+        break;
+    }
 }
 
 global.logger = require('./Utils/Moderation/logger');
@@ -31,8 +37,8 @@ const client = new Client({
 });
 
 client.config = require('./config.json');
-client.config.token = process.env.DISCORD_TOKEN || client.config.token;
-client.config.mongoURL = process.env.MONGO_URL || client.config.mongoURL;
+client.config.token = process.env.DISCORD_TOKEN_TEST || process.env.DISCORD_TOKEN || client.config.token;
+client.config.mongoURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
 
 if (!client.config.token) {
     global.logger.error('Manca DISCORD_TOKEN. Imposta .env o config.json.');

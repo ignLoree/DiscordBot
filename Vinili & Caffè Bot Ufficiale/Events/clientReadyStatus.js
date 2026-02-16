@@ -11,7 +11,7 @@ const POLL_REMINDER_CHANNEL_ID = '1442569285909217301';
 const RESTART_CLEANUP_DELAY_MS = 2000;
 
 module.exports = {
-  name: 'ready',
+  name: 'clientReady',
   once: true,
   async execute(client) {
     try {
