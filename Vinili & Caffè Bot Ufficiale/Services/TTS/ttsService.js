@@ -1,4 +1,4 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
 const { Readable } = require('stream');
 const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
@@ -105,27 +105,53 @@ async function fetchTtsAudio(url) {
   return data;
 }
 
+const LANG_TO_VOICERSS = { it: 'it-it', en: 'en-gb', es: 'es-es', fr: 'fr-fr', de: 'de-de', pt: 'pt-pt', ru: 'ru-ru', pl: 'pl-pl', nl: 'nl-nl', tr: 'tr-tr', ja: 'ja-jp', zh: 'zh-cn' };
+
 async function createTtsStream(text, lang) {
-  const hosts = ['https://translate.google.com', 'https://translate.google.com.vn'];
+  const textStr = String(text || '').slice(0, 300).trim();
+  if (!textStr) throw new Error('TTS: testo vuoto');
+  const langStr = String(lang || 'it').toLowerCase().slice(0, 2);
   let lastErr = null;
-  for (const baseHost of hosts) {
+
+  const voicerssKey = typeof process !== 'undefined' && process.env && process.env.TTS_VOICERSS_KEY;
+  if (voicerssKey && textStr.length <= 1000) {
     try {
-      const url = buildGoogleTtsUrl(text, lang, baseHost);
+      const hl = LANG_TO_VOICERSS[langStr] || 'it-it';
+      const url = `https://api.voicerss.org/?key=${encodeURIComponent(voicerssKey)}&hl=${hl}&src=${encodeURIComponent(textStr)}&c=MP3`;
       const data = await fetchTtsAudio(url);
-      if (data) {
-        return Readable.from(Buffer.from(data));
-      }
+      if (data) return Readable.from(Buffer.from(data));
     } catch (err) {
       lastErr = err;
-      global.logger?.warn?.('[TTS] Fallback host:', baseHost, err?.message || err);
+    }
+  }
+
+  try {
+    const gtts = require('node-gtts')(langStr);
+    const chunks = [];
+    await new Promise((resolve, reject) => {
+      const s = gtts.stream(textStr);
+      s.on('data', (ch) => chunks.push(ch));
+      s.on('end', resolve);
+      s.on('error', reject);
+    });
+    if (chunks.length > 0) {
+      return Readable.from(Buffer.concat(chunks));
+    }
+  } catch (_) {}
+
+  const hosts = ['https://translate.google.com.vn', 'https://translate.google.com'];
+  for (const baseHost of hosts) {
+    try {
+      const url = buildGoogleTtsUrl(textStr, langStr, baseHost);
+      const data = await fetchTtsAudio(url);
+      if (data) return Readable.from(Buffer.from(data));
+    } catch (err) {
+      lastErr = err;
     }
   }
   try {
     const googleTTS = require('google-tts-api');
-    const langStr = String(lang || 'it');
-    const textStr = String(text || '').slice(0, 200);
-    const hostsToTry = ['https://translate.google.com.vn', 'https://translate.google.com'];
-    for (const host of hostsToTry) {
+    for (const host of ['https://translate.google.com.vn', 'https://translate.google.com']) {
       try {
         const url = googleTTS.getAudioUrl(textStr, { lang: langStr, slow: false, host });
         if (url) {
@@ -135,7 +161,7 @@ async function createTtsStream(text, lang) {
       } catch (_) {}
     }
   } catch (_) {}
-  throw lastErr || new Error('TTS fetch failed (all sources unavailable)');
+  throw lastErr || new Error('TTS: nessuna sorgente disponibile. Imposta TTS_VOICERSS_KEY nel .env (chiave gratuita su voicerss.org) per usare VoiceRSS.');
 }
 
 function getState(voiceChannel) {
@@ -221,7 +247,7 @@ async function playNext(state) {
       return;
     }
     const stream = await createTtsStream(item.text, item.lang);
-    const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
+    const resource = createAudioResource(stream, { inlineVolume: false });
     state.player.play(resource);
   } catch (err) {
     global.logger.error("[TTS PLAY ERROR]", err);
