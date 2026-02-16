@@ -132,12 +132,41 @@
     "afk": [
       "roles.Member"
     ],
-    "avatar": [
-      "roles.Member"
-    ],
-    "banner": [
-      "roles.Member"
-    ],
+    "avatar": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "get": [
+          "roles.Member"
+        ],
+        "server": [
+          "roles.Member"
+        ],
+        "user": [
+          "roles.Member"
+        ],
+        "guild": [
+          "roles.Member"
+        ]
+      }
+    },
+    "banner": {
+      "roles": [
+        "roles.Member"
+      ],
+      "subcommands": {
+        "user": [
+          "roles.Member"
+        ],
+        "server": [
+          "roles.Member"
+        ],
+        "guild": [
+          "roles.Member"
+        ]
+      }
+    },
     "invites": [
       "roles.Member"
     ],

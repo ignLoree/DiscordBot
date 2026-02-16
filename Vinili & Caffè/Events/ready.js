@@ -1,4 +1,4 @@
-﻿const config = require('../config.json');
+const config = require('../config.json');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders } = require('../Services/Bump/bumpService')

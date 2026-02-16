@@ -149,7 +149,7 @@ const ids = {
     propositiForum: "1456349072473587936",
     wrapForum: "1445792081271587000",
 
-    commandLogChannel: "1472733599496409292", // Canale per i log dei comandi
+    commandLogChannel: "1466489404867481802", // Canale per i log dei comandi
     errorLogChannel: "1472733599496409292", // Canale per i log degli errori
   },
 

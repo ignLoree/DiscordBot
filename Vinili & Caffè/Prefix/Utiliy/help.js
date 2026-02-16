@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const IDs = require('../../Utils/Config/ids');
 
@@ -45,8 +45,8 @@ const HELP_PAGE_SIZE = 18;
 const PREFIX_HELP_DESCRIPTIONS = {
   help: 'Mostra il pannello con tutti i comandi disponibili in base ai tuoi ruoli.',
   afk: 'Imposta il tuo stato AFK con un messaggio personalizzato.',
-  avatar: 'Mostra l\'avatar server di un utente.',
-  banner: 'Mostra il banner profilo di un utente.',
+  avatar: 'Mostra l\'avatar di un utente (get/server/user) o l\'icona del server (guild).',
+  banner: 'Mostra il banner di un utente o del server (server/guild).',
   block: 'Blocca privacy contenuti: avatar, banner, quotes.',
   invites: 'Mostra le statistiche inviti del server o di un utente.',
   languages: 'Mostra le lingue TTS disponibili per il comando set voice.',
@@ -104,6 +104,13 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   'ticket.unclaim': 'Rimuove la presa in carico del ticket.',
   'ticket.switchpanel': 'Sposta il ticket a un pannello differente.',
   'ticket.rename': 'Rinomina il canale ticket.',
+  'avatar.get': 'Avatar globale dell\'utente (default).',
+  'avatar.server': 'Avatar dell\'utente solo in questo server.',
+  'avatar.user': 'Avatar globale dell\'utente.',
+  'avatar.guild': 'Icona del server.',
+  'banner.user': 'Banner profilo dell\'utente (default).',
+  'banner.server': 'Banner del server.',
+  'banner.guild': 'Banner del server.',
   'block.avatar': 'Blocca la visualizzazione del tuo avatar.',
   'block.banner': 'Blocca la visualizzazione del tuo banner.',
   'block.quotes': 'Blocca la creazione di quote dei tuoi messaggi.',

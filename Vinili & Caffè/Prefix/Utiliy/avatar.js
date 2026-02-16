@@ -47,8 +47,28 @@ module.exports = {
     }
 
     const subRaw = args[0] ? String(args[0]).toLowerCase() : '';
-    const sub = ['get', 'server', 'user'].includes(subRaw) ? subRaw : 'get';
-    const query = ['get', 'server', 'user'].includes(subRaw) ? args.slice(1).join(' ') : args.join(' ');
+    const sub = ['get', 'server', 'user', 'guild'].includes(subRaw) ? subRaw : 'get';
+    const query = ['get', 'server', 'user', 'guild'].includes(subRaw) ? args.slice(1).join(' ') : args.join(' ');
+
+    if (sub === 'guild') {
+      const iconUrl = message.guild.iconURL({ size: 4096 });
+      if (!iconUrl) {
+        return safeChannelSend(message.channel, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Questo server non ha un\'icona impostata.')
+          ]
+        });
+      }
+      const embed = new EmbedBuilder()
+        .setTitle('Icona del server')
+        .setImage(iconUrl)
+        .setAuthor({ name: message.guild.name, iconURL: iconUrl })
+        .setColor('#6f4e37');
+      return safeChannelSend(message.channel, { embeds: [embed] });
+    }
+
     const member = await resolveMember(message, query) || message.member;
     const user = member?.user || message.author;
 

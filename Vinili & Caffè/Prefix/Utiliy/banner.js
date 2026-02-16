@@ -46,7 +46,29 @@ module.exports = {
       });
     }
 
-    const query = args.join(' ');
+    const subRaw = args[0] ? String(args[0]).toLowerCase() : '';
+    const sub = ['user', 'server', 'guild'].includes(subRaw) ? subRaw : null;
+    const query = sub ? args.slice(1).join(' ') : args.join(' ');
+
+    if (sub === 'server' || sub === 'guild') {
+      const bannerUrl = message.guild.bannerURL({ size: 4096 });
+      if (!bannerUrl) {
+        return safeChannelSend(message.channel, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor('Red')
+              .setDescription('<:vegax:1443934876440068179> Questo server non ha un banner impostato.')
+          ]
+        });
+      }
+      const embed = new EmbedBuilder()
+        .setTitle('Banner del server')
+        .setImage(bannerUrl)
+        .setAuthor({ name: message.guild.name, iconURL: message.guild.iconURL() })
+        .setColor('#6f4e37');
+      return safeChannelSend(message.channel, { embeds: [embed] });
+    }
+
     const member = await resolveMember(message, query) || message.member;
     const user = member?.user || message.author;
 
