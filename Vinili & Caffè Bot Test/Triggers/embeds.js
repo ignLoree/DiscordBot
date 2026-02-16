@@ -3,10 +3,6 @@ async function runSponsorPanel(client) {
     return;
 }
 
-async function runSponsorPanel(client) {
-    return;
-}
-
 async function runSponsorVerifyPanels(client) {
     const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
     const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');

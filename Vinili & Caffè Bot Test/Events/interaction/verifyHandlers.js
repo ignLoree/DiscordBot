@@ -365,7 +365,21 @@ async function handleVerifyInteraction(interaction) {
       const state = verifyState.get(interaction.user.id);
       if (!state || Date.now() > state.expiresAt) {
         verifyState.delete(interaction.user.id);
-        await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+        try {
+          await interaction.deferUpdate();
+          const retryRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('verify_start').setLabel('Verify').setStyle(ButtonStyle.Success)
+          );
+          await interaction.message.edit({
+            embeds: [makeExpiredEmbed()],
+            components: [retryRow],
+            files: []
+          }).catch(() => {});
+        } catch {
+          if (!interaction.replied && !interaction.deferred) {
+            await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+          }
+        }
         return true;
       }
 
@@ -397,7 +411,21 @@ async function handleVerifyInteraction(interaction) {
     const state = verifyState.get(interaction.user.id);
     if (!state || Date.now() > state.expiresAt) {
       verifyState.delete(interaction.user.id);
-      await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+      try {
+        await interaction.deferUpdate();
+        const retryRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('verify_start').setLabel('Verify').setStyle(ButtonStyle.Success)
+        );
+        await interaction.message.edit({
+          embeds: [makeExpiredEmbed()],
+          components: [retryRow],
+          files: []
+        }).catch(() => {});
+      } catch {
+        if (!interaction.replied && !interaction.deferred) {
+          await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+        }
+      }
       return true;
     }
 
@@ -406,7 +434,21 @@ async function handleVerifyInteraction(interaction) {
       state.attemptsLeft -= 1;
       if (state.attemptsLeft <= 0) {
         verifyState.delete(interaction.user.id);
-        await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+        try {
+          await interaction.deferUpdate();
+          const retryRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId('verify_start').setLabel('Verify').setStyle(ButtonStyle.Success)
+          );
+          await interaction.message.edit({
+            embeds: [makeExpiredEmbed()],
+            components: [retryRow],
+            files: []
+          }).catch(() => {});
+        } catch {
+          if (!interaction.replied && !interaction.deferred) {
+            await safeReply(interaction, { embeds: [makeExpiredEmbed()], flags: 1 << 6 });
+          }
+        }
         return true;
       }
       verifyState.set(interaction.user.id, state);

@@ -1111,20 +1111,13 @@ async function handleDiscadiaBump(message, client) {
     const joined = normalized.join('\n');
 
     const hasPattern = patterns.some((pattern) => joined.includes(pattern));
-    const hasDiscadiaWord = joined.includes('discadia');
-    const hasBumpWord = /\bbump(?:ed|ing)?\b/i.test(joined);
-    const hasSuccessWord =
-        /\bsuccess(?:ful|fully)?\b/i.test(joined) ||
-        /has been bumped|bumped successfully|bump done|thank you for bumping|thanks for bumping|next bump|bumpato con successo|bump eseguito/i.test(joined);
     const hasFailureWord =
         /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(joined);
-    const fallbackTrustedSource = Boolean(
-        message.author?.bot
-        && (hasPattern || (hasBumpWord && hasSuccessWord))
-    );
-    const likelyDiscadiaMessage = isDiscadiaAuthor || isDiscadiaApp || isSlashBumpContext || fallbackTrustedSource || hasDiscadiaWord;
-    const trustedSlashReply = (isDiscadiaAuthor || isDiscadiaApp) && isSlashBumpContext;
-    const isBump = likelyDiscadiaMessage && !hasFailureWord && (hasPattern || (hasBumpWord && hasSuccessWord) || trustedSlashReply);
+
+    // Solo messaggi del bot Discadia e solo se: risposta a /bump O testo con pattern di successo configurati
+    const fromDiscadiaBot = isDiscadiaAuthor || isDiscadiaApp;
+    const isSlashBumpReply = fromDiscadiaBot && isSlashBumpContext;
+    const isBump = fromDiscadiaBot && !hasFailureWord && (isSlashBumpReply || hasPattern);
     if (!isBump) return false;
 
     const bumpUserId =

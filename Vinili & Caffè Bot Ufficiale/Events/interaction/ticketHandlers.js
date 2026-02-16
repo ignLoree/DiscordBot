@@ -221,14 +221,14 @@ async function handleTicketInteraction(interaction) {
                 });
                 return true;
             }
-            const userOnlyTickets = ['ticket_partnership', 'ticket_highstaff'];
+            const userOnlyTickets = ['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'];
             if (userOnlyTickets.includes(ticketActionId)) {
                 if (!ROLE_USER) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ruolo verifica (Member) non configurato. Contatta lo staff.')], flags: 1 << 6 });
                     return true;
                 }
                 if (!interaction.member?.roles?.cache?.has(ROLE_USER)) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire ticket Partnership o HighStaff.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
                     return true;
                 }
             }
@@ -238,7 +238,7 @@ async function handleTicketInteraction(interaction) {
                     emoji: "⭐",
                     name: "supporto",
                     role: ROLE_STAFF,
-                    requiredRoles: [],
+                    requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
                         .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
                         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
@@ -302,7 +302,7 @@ async function handleTicketInteraction(interaction) {
                 }
                 interaction.client.ticketOpenLocks.add(ticketLockKey);
                 try {
-                if (['ticket_partnership', 'ticket_highstaff', 'accetta', 'rifiuta', 'unclaim'].includes(ticketActionId)) {
+                if (['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'].includes(ticketActionId)) {
                     if (!ROLE_USER || !interaction.member?.roles?.cache?.has(ROLE_USER)) {
                         await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire questo ticket.')], flags: 1 << 6 });
                         return true;
