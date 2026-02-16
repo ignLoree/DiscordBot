@@ -34,7 +34,8 @@ function buildUsageEmbed() {
     .setColor('#6f4e37')
     .setTitle('Comando restart')
     .setDescription([
-      '`+restart full`',
+      '`+restart full` — riavvia solo il bot Ufficiale',
+      '`+restart full both` — riavvia entrambi i bot (Ufficiale + Test)',
       '`+restart handlers`',
       '`+restart commands`',
       '`+restart prefix`',
@@ -68,7 +69,9 @@ module.exports = {
     await message.channel.sendTyping().catch(() => {});
 
     const rawScope = String(args[0] || 'full').toLowerCase();
+    const rawSecond = String(args[1] || '').toLowerCase();
     const scope = rawScope === 'help' || rawScope === 'uso' ? 'help' : rawScope;
+    const isFullBoth = scope === 'full' && rawSecond === 'both';
 
     if (scope === 'help') {
       await safeMessageReply(message, {
@@ -99,7 +102,9 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setColor('#6f4e37')
-              .setDescription('<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.')
+              .setDescription(isFullBoth
+                ? '<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato.'
+                : '<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.')
           ],
           allowedMentions: { repliedUser: false }
         });
@@ -120,7 +125,11 @@ module.exports = {
         );
 
         const flagPath = path.resolve(process.cwd(), '..', RESTART_FLAG);
-        fs.writeFileSync(flagPath, JSON.stringify({ at: requestedAt, by: message.author.id }, null, 2), 'utf8');
+        fs.writeFileSync(flagPath, JSON.stringify({
+          at: requestedAt,
+          by: message.author.id,
+          bot: isFullBoth ? 'all' : 'official'
+        }, null, 2), 'utf8');
         return;
       }
 

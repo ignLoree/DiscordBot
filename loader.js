@@ -7,7 +7,7 @@ const baseDir = __dirname;
 
 const BOTS = [
     { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 3000 }
+    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 6500 }
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
@@ -30,7 +30,7 @@ function killPidTree(pid) {
         } else {
             process.kill(pid, 'SIGTERM');
         }
-    } catch {}
+    } catch { }
 }
 
 function cleanupStalePid(botKey) {
@@ -44,7 +44,7 @@ function cleanupStalePid(botKey) {
     }
     if (processRefs[botKey] && pid && processRefs[botKey].pid === pid) return;
     if (pid && !Number.isNaN(pid)) killPidTree(pid);
-    try { fs.unlinkSync(file); } catch {}
+    try { fs.unlinkSync(file); } catch { }
 }
 
 function writePid(botKey, pid) {
@@ -101,7 +101,7 @@ function runfile(bot, options = {}) {
                 processRefs[botKey] = proc;
                 writePid(botKey, proc.pid);
                 proc.on('exit', (code) => {
-                    try { fs.unlinkSync(pidFile(botKey)); } catch {}
+                    try { fs.unlinkSync(pidFile(botKey)); } catch { }
                     processRefs[botKey] = null;
                     console.log(`[Loader] ${bot.label} fermato (code ${code})`);
                     resolve();
@@ -153,7 +153,7 @@ function restartBot(botKey, options = {}) {
     if (proc && !proc.killed) {
         console.log(`[Loader] Restart ${bot.label}...`);
         const forceTimer = setTimeout(() => {
-            try { killPidTree(proc.pid); } catch {}
+            try { killPidTree(proc.pid); } catch { }
         }, 8000);
 
         proc.once('exit', () => {
@@ -186,7 +186,12 @@ setInterval(() => {
     } catch {
         payload = null;
     }
-    try { fs.unlinkSync(RESTART_FLAG); } catch {}
+    try { fs.unlinkSync(RESTART_FLAG); } catch { }
     const targetBot = payload?.bot || 'official';
-    restartBot(targetBot, { respectDelay: Boolean(payload?.respectDelay) });
+    const respectDelay = Boolean(payload?.respectDelay);
+    if (targetBot === 'all') {
+      BOTS.forEach(bot => restartBot(bot.key, { respectDelay }));
+    } else {
+      restartBot(targetBot, { respectDelay });
+    }
 }, POLL_INTERVAL_MS);
