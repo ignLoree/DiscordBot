@@ -1,7 +1,8 @@
-﻿const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const IDs = require('../../Utils/Config/ids');
+const { isChannelInTicketCategory } = require('../../Utils/Ticket/ticketCategoryUtils');
 
 module.exports = {
     expectsModal: true,
@@ -16,8 +17,9 @@ module.exports = {
         const isPartnershipChannel = channelId === IDs.channels.partnerships || channelId === IDs.channels.partnersChat;
         const ticketDoc = await Ticket.findOne({ guildId: interaction.guild.id, channelId, open: true }).lean().catch(() => null);
         const isPartnershipTicket = ticketDoc?.ticketType === 'partnership';
+        const isInTicketCategory = isChannelInTicketCategory(interaction.channel);
 
-        if (!isPartnershipChannel && !isPartnershipTicket) {
+        if (!isPartnershipChannel && !isPartnershipTicket && !isInTicketCategory) {
             return safeReply(interaction, {
                 embeds: [
                     new EmbedBuilder()

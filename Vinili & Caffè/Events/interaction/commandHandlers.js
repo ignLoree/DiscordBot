@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const {
@@ -15,11 +15,9 @@ const {
 } = require('../../Utils/Moderation/commandErrorEmbeds');
 const { buildErrorLogEmbed } = require('../../Utils/Logging/errorLogEmbed');
 const IDs = require('../../Utils/Config/ids');
+const { isChannelInTicketCategory } = require('../../Utils/Ticket/ticketCategoryUtils');
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
-
-/** Nome della categoria ticket (stesso usato in ticketHandlers) per consentire comandi Partner nelle chat ticket. */
-const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
 
 const PARTNER_LEADERBOARD_CHANNEL_IDS = new Set([
     IDs.channels?.partnersChat,
@@ -32,15 +30,6 @@ const STAFF_ALLOWED_CHANNEL_IDS = new Set([
 ].filter(Boolean));
 /** Guild in cui le restrizioni canale per slash non si applicano (comandi usabili in qualsiasi canale). */
 const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
-
-function isChannelInTicketCategory(channel) {
-    if (!channel?.guild?.channels?.cache) return false;
-    const cache = channel.guild.channels.cache;
-    const first = channel.parent ?? (channel.parentId ? cache.get(channel.parentId) : null);
-    if (!first) return false;
-    const category = first.type === ChannelType.GuildCategory ? first : (first.parentId ? cache.get(first.parentId) : null);
-    return category && category.name === TICKETS_CATEGORY_NAME;
-}
 
 function getSlashChannelRestrictionError(commandName, command, channel) {
     if (!command || !channel) return null;

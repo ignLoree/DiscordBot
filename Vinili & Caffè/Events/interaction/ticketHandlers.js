@@ -1,6 +1,7 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits } = require('discord.js');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
+const { TICKETS_CATEGORY_NAME, buildOverflowTicketCategoryName } = require('../../Utils/Ticket/ticketCategoryUtils');
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper } = require('../../Utils/Moderation/reply');
 const IDs = require('../../Utils/Config/ids');
 
@@ -32,7 +33,6 @@ async function handleTicketInteraction(interaction) {
     const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu() && handledSelectMenus.has(interaction.customId);
     const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit() && isHandledTicketModalId(String(interaction.customId || ''));
     if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
-    const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
     const LOG_CHANNEL = IDs.channels.ticketLogs;
     const ROLE_STAFF = IDs.roles.Staff;
     const ROLE_HIGHSTAFF = IDs.roles.HighStaff;
@@ -120,10 +120,6 @@ async function handleTicketInteraction(interaction) {
             .filter((line, index, arr) => line.length > 0 || (index > 0 && arr[index - 1]?.length > 0));
 
         return normalizedLines.join('\n').trim();
-    }
-
-    function buildOverflowTicketCategoryName(index) {
-        return `${TICKETS_CATEGORY_NAME} #${index}`;
     }
 
     async function createTicketsCategory(guild) {
