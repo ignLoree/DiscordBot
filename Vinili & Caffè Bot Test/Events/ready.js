@@ -11,6 +11,12 @@ module.exports = {
         const appId = c.application?.id || c.user?.id;
         global.logger.info('[Bot Test] Bot avviato: ' + c.user.tag + ' (Application ID: ' + appId + ')');
 
+        try {
+            c.user.setPresence({ status: 'invisible' });
+        } catch (err) {
+            global.logger.warn('[Bot Test] setPresence invisible:', err?.message || err);
+        }
+
         const mongodbURL = process.env.MONGO_URL || c.config.mongoURL;
         if (mongodbURL) {
             try {
