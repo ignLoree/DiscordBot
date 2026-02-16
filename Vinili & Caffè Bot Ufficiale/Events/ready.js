@@ -26,7 +26,7 @@ const getChannelSafe = async (client, channelId) => {
 };
 
 module.exports = {
-    name: 'clientReady',
+    name: 'ready',
     once: true,
     async execute(client) {
         client.setMaxListeners(client.config.eventListeners || 50);

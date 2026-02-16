@@ -14,24 +14,28 @@ module.exports = {
   
 	  async execute(message, args) {
     await message.channel.sendTyping();
-    await message.delete().catch(() => {});
     const targets = await resolveTargetsFlexible(message, args);
     if (!targets.length) {
-      return message.reply({ embeds: [buildNoMemberEmbed()] });
+      const reply = await message.reply({ embeds: [buildNoMemberEmbed()] }).catch(() => null);
+      await message.delete().catch(() => {});
+      return reply;
     }
 	    const yesId = `verify_yes:${message.id}:${message.author.id}`;
 	    const noId = `verify_no:${message.id}:${message.author.id}`;
 	    const validVerifyRoleIds = await resolveValidVerifyRoleIds(message.guild);
 	    if (!validVerifyRoleIds.length) {
-	      return message.channel.send({
+	      const sent = await message.channel.send({
 	        embeds: [
 	          new EmbedBuilder()
 	            .setColor('Red')
 	            .setTitle('Unsuccessful Operation!')
 	            .setDescription('Nessun ruolo verifica valido configurato (IDs.roles).')
 	        ]
-	      }).catch(() => {});
+	      }).catch(() => null);
+	      await message.delete().catch(() => {});
+	      return sent;
 	    }
+	    await message.delete().catch(() => {});
 	    const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
     const promptMsg = await message.channel.send({
       embeds: [buildPromptEmbed(targetMentions)],

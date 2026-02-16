@@ -13,8 +13,8 @@ module.exports = {
         if (mongodbURL) {
             try {
                 await mongoose.connect(mongodbURL, {
-                    serverSelectionTimeoutMS: 5000,
-                    connectTimeoutMS: 5000
+                    serverSelectionTimeoutMS: 15000,
+                    connectTimeoutMS: 15000
                 });
                 global.logger.info('[Bot Test] MongoDB connesso.');
             } catch (err) {
