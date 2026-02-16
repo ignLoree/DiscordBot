@@ -1,0 +1,16 @@
+{
+  "name": "vinili-caffe-sponsor-bot",
+  "version": "1.0.0",
+  "description": "Bot per i server sponsor (ticket, verify, panel). Esegue solo le funzionalità sponsor.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "17.2.3",
+    "mongoose": "8.9.5",
+    "axios": "^1.12.2",
+    "pureimage": "0.4.18"
+  }
+}
