@@ -27,6 +27,15 @@ function hasSponsorStaffPerms(member) {
     || member.permissions?.has(PermissionsBitField.Flags.ManageChannels);
 }
 
+function hasAdministrator(member) {
+  return Boolean(member?.permissions?.has(PermissionsBitField.Flags.Administrator));
+}
+
+const TICKET_BUTTON_IDS = new Set([
+  'ticket_partnership', 'ticket_highstaff', 'ticket_supporto', 'ticket_open_desc_modal',
+  'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo'
+]);
+
 
 function getIdsConfig() {
   if (idsFallbackCache) return idsFallbackCache;
@@ -308,6 +317,10 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
     return true;
   }
 
+  if ((commandName === 'ticket' || commandName === 'verify') && message.guild && message.member && hasAdministrator(message.member)) {
+    return true;
+  }
+
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
     const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
@@ -323,6 +336,9 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 
 async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || '');
+  if (TICKET_BUTTON_IDS.has(customId) && interaction?.member && hasAdministrator(interaction.member)) {
+    return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+  }
   if (isSponsorGuild(interaction?.guildId)) {
     const staffTicketButtons = new Set([
       'claim_ticket',
@@ -401,7 +417,6 @@ async function checkStringSelectPermission(interaction) {
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
-
   const data = loadPermissions();
   const rawPolicy =
     resolveComponentPolicy(data?.selectMenus, customId)

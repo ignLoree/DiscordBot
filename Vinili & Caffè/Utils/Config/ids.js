@@ -336,7 +336,10 @@ const ids = {
     bots: { ...(maps?.bots || {}) },
     emojis: { ...(meta?.emojis || {}) },
     links: { ...(meta?.links || {}) }
-  }
+  },
+
+  /** Canale in cui i comandi (prefix/slash) sono obbligatori, salvo eccezioni (ticket, level, staff, TTS, description, afk, avatar, banner, snipe, quote). */
+  allowedPrefixCommandsChannelId: '1442569138114662490'
 };
 
 ids.aliases = {

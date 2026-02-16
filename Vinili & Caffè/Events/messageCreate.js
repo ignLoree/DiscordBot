@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
 const math = require('mathjs');
 const { MentionReaction, AutoResponder } = require('../Schemas/Community/autoInteractionSchemas');
 const countschema = require('../Schemas/Counting/countingSchema');
@@ -38,6 +38,42 @@ const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([
     IDs.channels.media
 ]);
+
+const ALLOWED_PREFIX_COMMANDS_CHANNEL_ID = IDs.allowedPrefixCommandsChannelId || null;
+const ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS = new Set(
+    [ALLOWED_PREFIX_COMMANDS_CHANNEL_ID, IDs.channels?.staffCmds, IDs.channels?.highCmds].filter(Boolean).map(String)
+);
+const TTS_ALLOWED_CHANNEL_ID = IDs.channels.noMic || null;
+const SHIP_ALLOWED_CHANNEL_ID = IDs.channels.ship || null;
+const ALLOWED_EXCEPTION_NAMES = new Set(['ticket', 'description', 'afk', 'avatar', 'banner', 'snipe', 'quote']);
+const ALLOWED_EXCEPTION_FOLDERS = new Set(['Level', 'Staff']);
+
+function isChannelInVoiceCategory(channel) {
+    if (!channel?.guild?.channels?.cache) return false;
+    const parentId = channel.parentId || channel.parent?.id;
+    if (!parentId) return false;
+    const hasVoice = channel.guild.channels.cache.some(
+        (ch) => ch.parentId === parentId && (ch.type === ChannelType.GuildVoice || ch.type === ChannelType.GuildStageVoice)
+    );
+    return hasVoice;
+}
+
+function isPrefixCommandAllowedOutsideChannel(command) {
+    if (!command) return false;
+    const name = String(command.name || '').toLowerCase();
+    const folder = String(command.folder || '').trim();
+    if (ALLOWED_EXCEPTION_NAMES.has(name)) return true;
+    if (ALLOWED_EXCEPTION_FOLDERS.has(folder)) return true;
+    return false;
+}
+
+function isTtsCommandAllowedInChannel(command, channel) {
+    if (!command || String(command.folder || '').trim() !== 'TTS') return true;
+    if (!TTS_ALLOWED_CHANNEL_ID) return true;
+    if (channel?.id === TTS_ALLOWED_CHANNEL_ID) return true;
+    if (isChannelInVoiceCategory(channel)) return true;
+    return false;
+}
 
 function hasMediaPermission(member) {
     return MEDIA_BLOCK_ROLE_IDS.some(roleId => member?.roles?.cache?.has(roleId));
@@ -473,6 +509,33 @@ module.exports = {
         const prefixSubcommand = prefixSubcommandFromArgs || prefixSubcommandFromAlias || null;
         if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
             args.unshift(prefixSubcommandFromAlias);
+        }
+        if (String(command.folder || '').trim() === 'TTS') {
+            if (!isTtsCommandAllowedInChannel(command, message.channel)) {
+                await deleteCommandMessage();
+                const msg = await message.channel.send({
+                    content: `Il comando TTS è usabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`
+                });
+                setTimeout(() => msg.delete().catch(() => { }), 5000);
+                return;
+            }
+        } else if (String(command.name || '').toLowerCase() === 'ship') {
+            if (SHIP_ALLOWED_CHANNEL_ID && message.channelId !== SHIP_ALLOWED_CHANNEL_ID) {
+                await deleteCommandMessage();
+                const msg = await message.channel.send({
+                    content: `Il comando ship è usabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`
+                });
+                setTimeout(() => msg.delete().catch(() => { }), 5000);
+                return;
+            }
+        } else if (ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.size > 0 && !ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.has(String(message.channelId)) && !isPrefixCommandAllowedOutsideChannel(command)) {
+            await deleteCommandMessage();
+            const channelsList = [...ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
+            const msg = await message.channel.send({
+                content: `Questo comando è usabile solo in ${channelsList}.`
+            });
+            setTimeout(() => msg.delete().catch(() => { }), 5000);
+            return;
         }
         if (!(await checkPrefixPermission(message, command.name, prefixSubcommand))) {
             const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);

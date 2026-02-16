@@ -41,6 +41,7 @@ async function handleTicketInteraction(interaction) {
     const ROLE_TICKETPARTNER_BLACKLIST = IDs.roles.blackilistPartner;
     const ROLE_TICKET_BLACKLIST = IDs.roles.blacklistTicket;
     const STAFF_ROLES = [ROLE_STAFF, ROLE_HIGHSTAFF];
+    const hasAdmin = (m) => Boolean(m?.permissions?.has(PermissionFlagsBits.Administrator));
     if (!interaction.client.ticketCloseLocks) {
         interaction.client.ticketCloseLocks = new Set();
     }
@@ -257,7 +258,7 @@ async function handleTicketInteraction(interaction) {
                 return true;
             }
             const userOnlyTickets = ['ticket_partnership', 'ticket_highstaff'];
-            if (userOnlyTickets.includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
+            if (!hasAdmin(interaction.member) && userOnlyTickets.includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
                 await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
                 return true;
             }
@@ -331,11 +332,11 @@ async function handleTicketInteraction(interaction) {
                 }
                 interaction.client.ticketOpenLocks.add(ticketLockKey);
                 try {
-                if (['ticket_partnership', 'ticket_highstaff', 'accetta', 'rifiuta', 'unclaim'].includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
+                if (!hasAdmin(interaction.member) && ['ticket_partnership', 'ticket_highstaff', 'accetta', 'rifiuta', 'unclaim'].includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi avere il ruolo **USER** per aprire questo ticket')], flags: 1 << 6 });
                     return true;
                 }
-                if (config.requiredRoles?.length > 0) {
+                if (!hasAdmin(interaction.member) && config.requiredRoles?.length > 0) {
                     const hasRole = config.requiredRoles.some(r => interaction.member?.roles?.cache?.has(r));
                     if (!hasRole) {
                         await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non hai i requisiti per aprire questo ticket')], flags: 1 << 6 });
@@ -490,7 +491,8 @@ async function handleTicketInteraction(interaction) {
                 const canClaimPartnership = ticket.ticketType === 'partnership'
                     && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
                 const canClaimHigh = ticket.ticketType === 'high' && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
-                if (!canClaimSupport && !canClaimPartnership && !canClaimHigh) {
+                const canClaimByAdmin = hasAdmin(interaction.member);
+                if (!canClaimSupport && !canClaimPartnership && !canClaimHigh && !canClaimByAdmin) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo lo staff può claimare i ticket')], flags: 1 << 6 });
                     return true;
                 }

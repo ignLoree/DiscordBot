@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType } = require('discord.js');
 const { safeReply: safeReplyHelper } = require('../../Utils/Moderation/reply');
 const { applyDefaultFooterToEmbeds } = require('../../Utils/Embeds/defaultFooter');
 const {
@@ -17,6 +17,61 @@ const { buildErrorLogEmbed } = require('../../Utils/Logging/errorLogEmbed');
 const IDs = require('../../Utils/Config/ids');
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
+
+/** Nome della categoria ticket (stesso usato in ticketHandlers) per consentire comandi Partner nelle chat ticket. */
+const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
+
+const PARTNER_LEADERBOARD_CHANNEL_IDS = new Set([
+    IDs.channels?.partnersChat,
+    IDs.channels?.staffCmds,
+    IDs.channels?.highCmds
+].filter(Boolean).map(String));
+const STAFF_ALLOWED_CHANNEL_IDS = new Set([
+    String(IDs.channels?.staffCmds || ''),
+    String(IDs.channels?.highCmds || '')
+].filter(Boolean));
+
+function isChannelInTicketCategory(channel) {
+    if (!channel?.guild?.channels?.cache) return false;
+    const cache = channel.guild.channels.cache;
+    const first = channel.parent ?? (channel.parentId ? cache.get(channel.parentId) : null);
+    if (!first) return false;
+    const category = first.type === ChannelType.GuildCategory ? first : (first.parentId ? cache.get(first.parentId) : null);
+    return category && category.name === TICKETS_CATEGORY_NAME;
+}
+
+function getSlashChannelRestrictionError(commandName, command, channel) {
+    if (!command || !channel) return null;
+    const category = String(command.category || '').toLowerCase();
+    const name = String(commandName || '').toLowerCase();
+    const channelId = channel.id;
+
+    if (category === 'admin') return null;
+
+    if (category === 'partner') {
+        if (name === 'leaderboard') {
+            if (PARTNER_LEADERBOARD_CHANNEL_IDS.size > 0 && !PARTNER_LEADERBOARD_CHANNEL_IDS.has(String(channelId))) {
+                const list = [...PARTNER_LEADERBOARD_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
+                return `Il comando leaderboard è usabile solo in ${list}.`;
+            }
+            return null;
+        }
+        if (!isChannelInTicketCategory(channel)) {
+            return 'Questo comando Partner è usabile solo nei canali della categoria ticket.';
+        }
+        return null;
+    }
+
+    if (category === 'staff') {
+        if (!STAFF_ALLOWED_CHANNEL_IDS.has(String(channelId))) {
+            const channels = [...STAFF_ALLOWED_CHANNEL_IDS].map((id) => `<#${id}>`).join(' e ');
+            return `I comandi Staff sono usabili solo in ${channels}.`;
+        }
+        return null;
+    }
+
+    return null;
+}
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -59,6 +114,13 @@ async function handleSlashCommand(interaction, client) {
     const isAdminCommand = String(command?.category || '').toLowerCase() === 'admin';
     if (!client.interactionCommandLocks) client.interactionCommandLocks = new Set();
     const interactionLockId = `${interaction.guildId || 'dm'}:${interaction.user.id}`;
+
+    if (interaction.guildId && interaction.channel) {
+        const channelError = getSlashChannelRestrictionError(interaction.commandName, command, interaction.channel);
+        if (channelError) {
+            return interaction.reply({ content: channelError, flags: 1 << 6 });
+        }
+    }
 
     if (!(await checkSlashPermission(interaction))) {
         const requiredRoles = getSlashRequiredRoles(interaction);
