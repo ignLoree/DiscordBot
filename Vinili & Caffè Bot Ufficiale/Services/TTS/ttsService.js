@@ -1,6 +1,8 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
 const { Readable } = require('stream');
 const fs = require('fs');
+let prism = null;
+try { prism = require('prism-media'); } catch (_) { global.logger?.warn?.('[TTS] prism-media non installato: installa con npm install prism-media --legacy-peer-deps per riproduzione TTS.'); }
 const path = require('path');
 const os = require('os');
 const axios = require('axios');
@@ -254,7 +256,6 @@ async function playNext(state) {
   }
   const item = state.queue.shift();
   state.playing = true;
-  let tmpPath = null;
   try {
     const connection = await ensureConnection(state, item.voiceChannel);
     if (!connection) {
@@ -264,14 +265,24 @@ async function playNext(state) {
     }
     const buffer = await createTtsBuffer(item.text, item.lang);
     if (!buffer || buffer.length === 0) throw new Error('TTS buffer vuoto');
-    tmpPath = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
-    fs.writeFileSync(tmpPath, buffer);
-    state.currentTtsFile = tmpPath;
-    const resource = createAudioResource(tmpPath);
+    let resource;
+    if (prism) {
+      const inputStream = Readable.from(buffer);
+      const ffmpeg = new prism.FFmpeg({
+        args: ['-analyzeduration', '0', '-loglevel', '0', '-i', '-', '-f', 's16le', '-ar', '48000', '-ac', '2']
+      });
+      const pcmStream = inputStream.pipe(ffmpeg);
+      resource = createAudioResource(pcmStream, { inputType: StreamType.Raw });
+    } else {
+      const tmpPath = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
+      fs.writeFileSync(tmpPath, buffer);
+      state.currentTtsFile = tmpPath;
+      resource = createAudioResource(tmpPath);
+    }
     state.player.play(resource);
   } catch (err) {
     global.logger.error("[TTS PLAY ERROR]", err);
-    if (tmpPath) try { fs.unlinkSync(tmpPath); } catch (_) {}
+    if (state.currentTtsFile) try { fs.unlinkSync(state.currentTtsFile); } catch (_) {}
     state.currentTtsFile = null;
     state.playing = false;
     playNext(state);
