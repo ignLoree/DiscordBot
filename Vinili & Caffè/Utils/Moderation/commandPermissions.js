@@ -297,7 +297,7 @@ async function checkSlashPermission(interaction, options = {}) {
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
   if (!Array.isArray(roles)) return true;
   if (!interaction.inGuild()) return false;
-  if (options?.channelRestrictedCommand) {
+  if (options?.allowedOnAnyServer) {
     if (hasAdministrator(interaction.member)) return true;
     const liveMember = await fetchLiveMember(interaction);
     if (liveMember && hasAdministrator(liveMember)) return true;
@@ -345,7 +345,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
   if (!Array.isArray(roles)) return true;
   if (!message.guild) return false;
-  if (options?.channelRestrictedCommand) {
+  if (options?.allowedOnAnyServer) {
     if (message.member && hasAdministrator(message.member)) return true;
     const liveMember = await fetchLiveMember(message);
     if (liveMember && hasAdministrator(liveMember)) return true;

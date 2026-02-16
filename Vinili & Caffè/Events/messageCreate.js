@@ -542,10 +542,9 @@ module.exports = {
                 return;
             }
         }
-        const isChannelRestrictedPrefixCommand = String(command.folder || '').trim() !== 'TTS'
-            && String(command.name || '').toLowerCase() !== 'ship'
-            && !isPrefixCommandAllowedOutsideChannel(command);
-        if (!(await checkPrefixPermission(message, command.name, prefixSubcommand, { channelRestrictedCommand: isChannelRestrictedPrefixCommand }))) {
+        const requiresSpecificChannelOrMonoGuild = String(command.folder || '').trim() === 'TTS' || String(command.name || '').toLowerCase() === 'ship';
+        const isAllowedOnAnyServerPrefix = !requiresSpecificChannelOrMonoGuild;
+        if (!(await checkPrefixPermission(message, command.name, prefixSubcommand, { allowedOnAnyServer: isAllowedOnAnyServerPrefix }))) {
             const requiredRoles = getPrefixRequiredRoles(command.name, prefixSubcommand);
             const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
             await deleteCommandMessage();
