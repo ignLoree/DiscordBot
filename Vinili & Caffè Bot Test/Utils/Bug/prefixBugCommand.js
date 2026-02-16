@@ -153,7 +153,7 @@ async function runBugCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Bug segnalato: **${parsed.task}** (gravità: ${parsed.status})`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Bug segnalato: **${parsed.task}** (gravità: ${parsed.status})`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -178,7 +178,7 @@ async function runBugCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Bug rimosso: **${parsed.task}**`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Bug rimosso: **${parsed.task}**`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -209,7 +209,7 @@ async function runBugCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Gravità aggiornata: **${parsed.task}** → **${parsed.status}**`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Gravità aggiornata: **${parsed.task}** → **${parsed.status}**`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -234,7 +234,7 @@ async function runBugCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Bug in **test**: **${parsed.task}** (online + **[TEST]**)`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Bug in **test**: **${parsed.task}** (online + **[TEST]**)`)
       ],
       allowedMentions: { repliedUser: false }
     });

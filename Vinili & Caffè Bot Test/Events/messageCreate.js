@@ -55,7 +55,7 @@ module.exports = {
                     bot: 'test'
                 }, null, 2), 'utf8');
                 await message.reply({
-                    embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1443666279058772028> Riavvio **Bot Test** richiesto. Il loader riavvierà solo questo bot.')],
+                    embeds: [new EmbedBuilder().setColor('#6f4e37').setDescription('<:vegacheckmark:1472992042203349084> Riavvio **Bot Test** richiesto. Il loader riavvierà solo questo bot.')],
                     allowedMentions: { repliedUser: false }
                 }).catch(() => {});
             } catch (err) {

@@ -144,7 +144,7 @@ async function runTodoCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Aggiunto: **${parsed.task}** (${parsed.status})`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Aggiunto: **${parsed.task}** (${parsed.status})`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -169,7 +169,7 @@ async function runTodoCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Voce rimossa: **${parsed.task}**`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Voce rimossa: **${parsed.task}**`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -200,7 +200,7 @@ async function runTodoCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Stato aggiornato: **${parsed.task}** → **${parsed.status}**`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Stato aggiornato: **${parsed.task}** → **${parsed.status}**`)
       ],
       allowedMentions: { repliedUser: false }
     });
@@ -225,7 +225,7 @@ async function runTodoCommand(message, args, client) {
       embeds: [
         new EmbedBuilder()
           .setColor('#6f4e37')
-          .setDescription(`<:vegacheckmark:1443666279058772028> Voce in **test**: **${parsed.task}** (online + **[TEST]**)`)
+          .setDescription(`<:vegacheckmark:1472992042203349084> Voce in **test**: **${parsed.task}** (online + **[TEST]**)`)
       ],
       allowedMentions: { repliedUser: false }
     });
