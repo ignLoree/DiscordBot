@@ -1,5 +1,8 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
 const { Readable } = require('stream');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -164,6 +167,13 @@ async function createTtsStream(text, lang) {
   throw lastErr || new Error('TTS: nessuna sorgente disponibile. Imposta TTS_VOICERSS_KEY nel .env (chiave gratuita su voicerss.org) per usare VoiceRSS.');
 }
 
+async function createTtsBuffer(text, lang) {
+  const stream = await createTtsStream(text, lang);
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  return Buffer.concat(chunks);
+}
+
 function getState(voiceChannel) {
   const key = voiceChannel.id;
   let state = ttsStates.get(key);
@@ -175,9 +185,14 @@ function getState(voiceChannel) {
       connection: null,
       guildId: voiceChannel.guild.id,
       channelId: voiceChannel.id,
-      playing: false
+      playing: false,
+      currentTtsFile: null
     };
     player.on(AudioPlayerStatus.Idle, () => {
+      if (state.currentTtsFile) {
+        try { fs.unlinkSync(state.currentTtsFile); } catch (_) {}
+        state.currentTtsFile = null;
+      }
       state.playing = false;
       playNext(state);
     });
@@ -239,6 +254,7 @@ async function playNext(state) {
   }
   const item = state.queue.shift();
   state.playing = true;
+  let tmpPath = null;
   try {
     const connection = await ensureConnection(state, item.voiceChannel);
     if (!connection) {
@@ -246,11 +262,17 @@ async function playNext(state) {
       playNext(state);
       return;
     }
-    const stream = await createTtsStream(item.text, item.lang);
-    const resource = createAudioResource(stream, { inlineVolume: false });
+    const buffer = await createTtsBuffer(item.text, item.lang);
+    if (!buffer || buffer.length === 0) throw new Error('TTS buffer vuoto');
+    tmpPath = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
+    fs.writeFileSync(tmpPath, buffer);
+    state.currentTtsFile = tmpPath;
+    const resource = createAudioResource(tmpPath);
     state.player.play(resource);
   } catch (err) {
     global.logger.error("[TTS PLAY ERROR]", err);
+    if (tmpPath) try { fs.unlinkSync(tmpPath); } catch (_) {}
+    state.currentTtsFile = null;
     state.playing = false;
     playNext(state);
   }
@@ -322,24 +344,47 @@ function findLockedChannelIdByGuild(guildId) {
   return null;
 }
 
-async function leaveTtsGuild(guildId) {
+async function leaveTtsGuild(guildId, client) {
   let lockedChannelId = getLockedChannelId(guildId);
   if (!lockedChannelId) {
     lockedChannelId = findLockedChannelIdByGuild(guildId);
     if (lockedChannelId) setLockedChannel(guildId, lockedChannelId);
+  }
+  if (!lockedChannelId && client) {
+    const guild = client.guilds?.cache?.get(guildId) || await client.guilds?.fetch(guildId).catch(() => null);
+    if (guild) {
+      const me = guild.members?.me ?? await guild.members?.fetch(client.user?.id).catch(() => null);
+      const channelId = me?.voice?.channelId;
+      if (channelId) {
+        try {
+          const channel = client.channels?.cache?.get(channelId) || await client.channels?.fetch(channelId).catch(() => null);
+          if (channel?.isVoiceBased?.()) {
+            const conn = joinVoiceChannel({
+              channelId: channel.id,
+              guildId: guild.id,
+              adapterCreator: guild.voiceAdapterCreator,
+              selfDeaf: false
+            });
+            conn.destroy();
+          }
+        } catch (_) {}
+      }
+    }
+    await clearVoiceState(guildId);
+    return { ok: true };
   }
   if (!lockedChannelId) return { ok: false, reason: "not_connected" };
   const state = ttsStates.get(lockedChannelId);
   if (state) {
     state.queue = [];
     state.playing = false;
-    try {
-      state.player.stop();
-    } catch {}
+    if (state.currentTtsFile) {
+      try { fs.unlinkSync(state.currentTtsFile); } catch (_) {}
+      state.currentTtsFile = null;
+    }
+    try { state.player.stop(); } catch {}
     if (state.connection) {
-      try {
-        state.connection.destroy();
-      } catch {}
+      try { state.connection.destroy(); } catch {}
       state.connection = null;
     }
     clearLockedChannel(guildId, lockedChannelId);

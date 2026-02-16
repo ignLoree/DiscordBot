@@ -1,4 +1,4 @@
-﻿const { leaveTtsGuild } = require('../Services/TTS/ttsService');
+const { leaveTtsGuild } = require('../Services/TTS/ttsService');
 const { handleVoiceActivity } = require('../Services/Community/activityService');
 
 module.exports = {
@@ -17,7 +17,7 @@ module.exports = {
         const guild = newState.guild || oldState.guild;
         if (!guild) return;
         if (oldState.id === client.user.id && oldState.channelId && !newState.channelId) {
-            await leaveTtsGuild(guild.id);
+            await leaveTtsGuild(guild.id, client);
             return;
         }
         const botMember = guild.members.me || guild.members.cache.get(client.user.id);
@@ -25,7 +25,7 @@ module.exports = {
         if (!botChannel) return;
         const humans = botChannel.members.filter(m => !m.user.bot);
         if (humans.size === 0) {
-            await leaveTtsGuild(guild.id);
+            await leaveTtsGuild(guild.id, client);
         }
     }
 };
