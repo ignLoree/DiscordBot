@@ -182,14 +182,21 @@ function buildVoteReminderEmbed(client) {
     });
 }
 
+const lastVoteFallbackSentAt = new Map();
+const VOTE_FALLBACK_COOLDOWN_MS = 60 * 60 * 1000;
+
 async function sendVoteFallbackChannelReminder(client, guildId, userId) {
   const fallbackId = client?.config?.discadiaVoteReminder?.fallbackChannelId;
   if (!fallbackId) return;
+  const now = Date.now();
+  const key = String(guildId || fallbackId);
+  if (lastVoteFallbackSentAt.get(key) && (now - lastVoteFallbackSentAt.get(key)) < VOTE_FALLBACK_COOLDOWN_MS) return;
   const channel = client.channels.cache.get(fallbackId)
     || await client.channels.fetch(fallbackId).catch(() => null);
   if (!channel) return;
   const embed = buildVoteReminderEmbed(client);
   await channel.send({ content: `<@${userId}>`, embeds: [embed] }).catch(() => { });
+  lastVoteFallbackSentAt.set(key, now);
 }
 
 async function recordDiscadiaVote(client, guildId, userId) {
@@ -222,22 +229,19 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
     try {
       const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean();
       if (!doc?.lastVoteAt) return;
-      if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMs) return;
-
+      const cooldownMsRun = getVoteCooldownMs(client);
+      if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMsRun) return;
+      if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= new Date(doc.lastVoteAt).getTime()) return;
       const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
       if (noDmSet.has(userId)) return;
-
       const user = client.users.cache.get(userId) || await client.users.fetch(userId).catch(() => null);
       if (!user) return;
-
       const embed = buildVoteReminderEmbed(client);
-
       try {
         await user.send({ embeds: [embed] });
       } catch {
         await sendVoteFallbackChannelReminder(client, guildId, userId);
       }
-
       await DiscadiaVoter.updateOne(
         { guildId, userId },
         { $set: { lastRemindedAt: new Date() } }
@@ -391,50 +395,7 @@ async function restorePendingVoteReminders(client) {
 }
 
 async function sendDueDiscadiaVoteReminders(client) {
-  const enabled = client?.config?.discadiaVoteReminder?.enabled;
-  if (!enabled) return;
-  const cooldownMs = getVoteCooldownMs(client);
-  const now = Date.now();
-  const due = await DiscadiaVoter.find({
-    lastVoteAt: { $exists: true },
-    $or: [
-      { lastRemindedAt: null },
-      { lastRemindedAt: { $lt: new Date(now - cooldownMs) } }
-    ]
-  }).lean();
-  if (!due.length) return;
-  const noDmByGuild = new Map();
-  const embed = buildVoteReminderEmbed(client);
-  for (const doc of due) {
-    const key = `vote:${doc.userId}`;
-    if (discadiaVoteTimers.has(key)) continue;
-    if (!doc?.userId || !doc?.guildId) continue;
-    if (now - new Date(doc.lastVoteAt).getTime() < cooldownMs) continue;
-
-    let noDmSet = noDmByGuild.get(doc.guildId);
-    if (!noDmSet) {
-      noDmSet = await getNoDmSet(doc.guildId).catch(() => new Set());
-      noDmByGuild.set(doc.guildId, noDmSet);
-    }
-    if (noDmSet.has(doc.userId)) continue;
-
-    const user = client.users.cache.get(doc.userId)
-      || await client.users.fetch(doc.userId).catch(() => null);
-    if (!user) continue;
-    try {
-      await user.send({ embeds: [embed] });
-      await DiscadiaVoter.updateOne(
-        { guildId: doc.guildId, userId: doc.userId },
-        { $set: { lastRemindedAt: new Date() } }
-      );
-    } catch {
-      await sendVoteFallbackChannelReminder(client, doc.guildId, doc.userId);
-      await DiscadiaVoter.updateOne(
-        { guildId: doc.guildId, userId: doc.userId },
-        { $set: { lastRemindedAt: new Date() } }
-      ).catch(() => { });
-    }
-  }
+  return;
 }
 
 function startDiscadiaVoteReminderLoop(client) {
