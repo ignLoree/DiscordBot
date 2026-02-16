@@ -24,6 +24,10 @@ module.exports = {
             global.logger.warn('[Bot Test] MONGO_URL non impostato.');
         }
 
+        // Breve delay così la cache delle guild è popolata (Discord può inviare guild dopo ready).
+        await new Promise((r) => setTimeout(r, 2000));
+
+        // Solo panel sponsor + verify + ticket. NON aggiungere qui Staff list, staff pagato, guida staff, best staff, moderazione (restano solo nel Bot Ufficiale).
         try {
             await sponsorPanels.runSponsorPanel(client);
         } catch (err) {
@@ -33,6 +37,11 @@ module.exports = {
             await sponsorPanels.runSponsorVerifyPanels(client);
         } catch (err) {
             global.logger.error('[Bot Test] runSponsorVerifyPanels:', err);
+        }
+        try {
+            await sponsorPanels.runSponsorTicketPanels(client);
+        } catch (err) {
+            global.logger.error('[Bot Test] runSponsorTicketPanels:', err);
         }
     }
 };

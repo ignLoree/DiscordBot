@@ -61,30 +61,39 @@ async function runSponsorVerifyPanels(client) {
     const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
     const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-    const SPONSOR_GUILD_IDS = client.config.sponsorGuildIds || Object.keys(IDs.sponsorVerifyChannelIds || {});
-    const VERIFY_CHANNEL_IDS = IDs.sponsorVerifyChannelIds || client.config.sponsorVerifyChannelIds || {};
+    const fromConfig = Array.isArray(client.config?.sponsorGuildIds) ? client.config.sponsorGuildIds : [];
+    const fromIds = Object.keys(IDs.sponsorVerifyChannelIds || {});
+    const SPONSOR_GUILD_IDS = fromConfig.length > 0 ? fromConfig : fromIds;
+    const VERIFY_CHANNEL_IDS = IDs.sponsorVerifyChannelIds || client.config?.sponsorVerifyChannelIds || {};
+
+    if (SPONSOR_GUILD_IDS.length === 0) {
+        global.logger.warn('[Bot Test] runSponsorVerifyPanels: nessuna guild in config (sponsorGuildIds o sponsorVerifyChannelIds). Controlla config.json.');
+        return;
+    }
+    global.logger.info('[Bot Test] runSponsorVerifyPanels: ' + SPONSOR_GUILD_IDS.length + ' guild sponsor da elaborare.');
 
     for (const guildId of SPONSOR_GUILD_IDS) {
         try {
             const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
             if (!guild) {
-                global.logger.warn('[Bot Test] Guild non trovata:', guildId);
+                global.logger.warn('[Bot Test] Verify panel: guild non trovata (bot non nel server?): ' + guildId);
                 continue;
             }
             await guild.channels.fetch().catch(() => {});
 
-            let channel = VERIFY_CHANNEL_IDS[guildId]
-                ? (guild.channels.cache.get(VERIFY_CHANNEL_IDS[guildId]) || await guild.channels.fetch(VERIFY_CHANNEL_IDS[guildId]).catch(() => null))
+            const channelId = VERIFY_CHANNEL_IDS[guildId];
+            let channel = channelId
+                ? (guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null))
                 : guild.channels.cache.find(ch => ch.name?.toLowerCase().includes('start'));
 
             if (!channel?.isTextBased?.()) {
-                global.logger.warn('[Bot Test] Canale verify non trovato in guild:', guildId);
+                global.logger.warn('[Bot Test] Verify panel: canale non trovato o non testuale in guild ' + guild.name + ' (' + guildId + '). sponsorVerifyChannelIds corretti in config.json?');
                 continue;
             }
 
             const serverName = guild.name || 'this server';
             const verifyPanelEmbed = new EmbedBuilder()
-                .setColor(client.config.embedVerify || '#6f4e37')
+                .setColor(client.config?.embedVerify || '#6f4e37')
                 .setTitle('<:verification:1461725843125571758> **`Verification Required!`**')
                 .setDescription(
                     '<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `' + serverName + '` devi prima verificarti.**\n' +
@@ -102,7 +111,7 @@ async function runSponsorVerifyPanels(client) {
                     { upsert: true, new: true, setDefaultsOnInsert: true }
                 );
             } catch (err) {
-                global.logger.error('[Bot Test] Panel doc:', err);
+                global.logger.error('[Bot Test] Verify panel: errore MongoDB per guild ' + guildId + ':', err?.message || err);
                 continue;
             }
 
@@ -116,11 +125,118 @@ async function runSponsorVerifyPanels(client) {
                     { guildId, channelId: channel.id },
                     { $set: { verifyPanelMessageId: panelMessage.id } }
                 ).catch(() => {});
+                global.logger.info('[Bot Test] Verify panel inviato/aggiornato in ' + guild.name + ' (# ' + channel.name + ').');
+            } else {
+                global.logger.warn('[Bot Test] Verify panel: upsertPanelMessage non ha restituito messaggio in ' + guild.name);
             }
         } catch (err) {
-            global.logger.error('[Bot Test] runSponsorVerifyPanels guild ' + guildId, err);
+            global.logger.error('[Bot Test] runSponsorVerifyPanels guild ' + guildId + ':', err?.message || err);
         }
     }
 }
 
-module.exports = { runSponsorPanel, runSponsorVerifyPanels };
+async function runSponsorTicketPanels(client) {
+    const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
+    const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
+    const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
+
+    const fromConfig = Array.isArray(client.config?.sponsorGuildIds) ? client.config.sponsorGuildIds : [];
+    const fromIds = Object.keys(IDs.sponsorVerifyChannelIds || {});
+    const SPONSOR_GUILD_IDS = fromConfig.length > 0 ? fromConfig : fromIds;
+    const VERIFY_CHANNEL_IDS = IDs.sponsorVerifyChannelIds || client.config?.sponsorVerifyChannelIds || {};
+    const TICKET_CHANNEL_IDS = client.config?.sponsorTicketChannelIds || {};
+    // Se non c'è canale ticket dedicato, usiamo il canale verify (stesso canale per verify + ticket)
+    const getChannelId = (guildId) => TICKET_CHANNEL_IDS[guildId] || VERIFY_CHANNEL_IDS[guildId];
+
+    if (SPONSOR_GUILD_IDS.length === 0) return;
+    global.logger.info('[Bot Test] runSponsorTicketPanels: ' + SPONSOR_GUILD_IDS.length + ' guild.');
+
+    for (const guildId of SPONSOR_GUILD_IDS) {
+        try {
+            const channelId = getChannelId(guildId);
+            if (!channelId) {
+                global.logger.warn('[Bot Test] Ticket panel: nessun canale per guild ' + guildId + ' (sponsorVerifyChannelIds o sponsorTicketChannelIds).');
+                continue;
+            }
+            const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+            if (!guild) {
+                global.logger.warn('[Bot Test] Ticket panel: guild non trovata: ' + guildId);
+                continue;
+            }
+            await guild.channels.fetch().catch(() => {});
+            const channel = guild.channels.cache.get(channelId) || await guild.channels.fetch(channelId).catch(() => null);
+            if (!channel?.isTextBased?.()) {
+                global.logger.warn('[Bot Test] Ticket panel: canale non trovato in ' + guild.name + ': ' + channelId);
+                continue;
+            }
+
+            let panelDoc = null;
+            try {
+                panelDoc = await Panel.findOneAndUpdate(
+                    { guildId, channelId: channel.id },
+                    { $setOnInsert: { guildId, channelId: channel.id } },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
+                );
+            } catch (err) {
+                global.logger.error('[Bot Test] Ticket panel: MongoDB guild ' + guildId, err?.message || err);
+                continue;
+            }
+
+            const ticketInfoEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setDescription(
+                    '<:reportmessage:1443670575376765130> Apri un **ticket** in base alle tue _esigenze_.\n' +
+                    '<:dot:1443660294596329582> Massimo **1** ticket alla volta.\n' +
+                    '<:dot:1443660294596329582> Scegli la sezione corretta.'
+                );
+
+            const ticketPanelEmbed = new EmbedBuilder()
+                .setColor('#6f4e37')
+                .setAuthor({ name: 'Contatta lo Staff', iconURL: guild.iconURL() || undefined })
+                .setDescription(
+                    'Seleziona una categoria qui sotto per aprire un ticket.\n' +
+                    '<:VC_1:1444099819680563200> **Supporto** – segnalazioni, problemi, informazioni.\n' +
+                    '<:VC_2:1444099781864722535> **Partnership** – partnership con il server.\n' +
+                    '<:VC_3:1444099746116534282> **HighStaff** – verifica selfie, donazioni, sponsor, admin.'
+                );
+
+            const ticketMenu = new StringSelectMenuBuilder()
+                .setCustomId('ticket_open_menu')
+                .setPlaceholder('Seleziona una categoria...')
+                .addOptions(
+                    { label: 'Supporto', description: 'Segnalazioni, problemi, informazioni', value: 'ticket_supporto', emoji: { id: '1443651872258003005', name: 'discordstaff' } },
+                    { label: 'Partnership', description: 'Partnership con il server', value: 'ticket_partnership', emoji: { id: '1443651871125409812', name: 'partneredserverowner' } },
+                    { label: 'HighStaff', description: 'Verifica Selfie, Donazioni, Sponsor', value: 'ticket_highstaff', emoji: { id: '1443670575376765130', name: 'reportmessage' } }
+                );
+            const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
+
+            const infoMessage = await upsertPanelMessage(channel, client, {
+                messageId: panelDoc?.ticketInfoMessageId || null,
+                embeds: [ticketInfoEmbed],
+                components: []
+            });
+            const panelMessage = await upsertPanelMessage(channel, client, {
+                messageId: panelDoc?.ticketPanelMessageId || null,
+                embeds: [ticketPanelEmbed],
+                components: [ticketSelectRow]
+            });
+
+            if (infoMessage?.id || panelMessage?.id) {
+                await Panel.updateOne(
+                    { guildId, channelId: channel.id },
+                    {
+                        $set: {
+                            ticketInfoMessageId: infoMessage?.id || panelDoc?.ticketInfoMessageId || null,
+                            ticketPanelMessageId: panelMessage?.id || panelDoc?.ticketPanelMessageId || null
+                        }
+                    }
+                ).catch(() => {});
+                global.logger.info('[Bot Test] Ticket panel inviato/aggiornato in ' + guild.name + ' (# ' + channel.name + ').');
+            }
+        } catch (err) {
+            global.logger.error('[Bot Test] runSponsorTicketPanels guild ' + guildId + ':', err?.message || err);
+        }
+    }
+}
+
+module.exports = { runSponsorPanel, runSponsorVerifyPanels, runSponsorTicketPanels };
