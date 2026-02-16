@@ -6,20 +6,10 @@ module.exports = {
         if (!interaction || interaction.replied || interaction.deferred) return;
 
         try {
-            let handleVerify = null;
-            let handleTicket = null;
-            try {
-                handleVerify = require('../../SponsorBot/Events/interaction/verifyHandlers');
-            } catch (e) {
-                global.logger.warn('[Bot Test] verifyHandlers non caricato. Esegui: node copy-deps.js');
-            }
-            try {
-                handleTicket = require('../../SponsorBot/Events/interaction/ticketHandlers');
-            } catch (e) {
-                global.logger.warn('[Bot Test] ticketHandlers non caricato. Esegui: node copy-deps.js');
-            }
+            const handleVerify = require('./interaction/verifyHandlers');
+            const handleTicket = require('./interaction/ticketHandlers');
 
-            if (handleVerify && (await handleVerify.handleVerifyInteraction(interaction))) return;
+            if (await handleVerify.handleVerifyInteraction(interaction)) return;
             if (interaction.isButton?.() || interaction.isStringSelectMenu?.()) {
                 const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed } = require('../Utils/Moderation/commandPermissions');
                 const gate = interaction.isButton() ? await checkButtonPermission(interaction) : await checkStringSelectPermission(interaction);
@@ -29,7 +19,7 @@ module.exports = {
                     return;
                 }
             }
-            if (handleTicket && (await handleTicket.handleTicketInteraction(interaction))) return;
+            if (await handleTicket.handleTicketInteraction(interaction)) return;
         } catch (err) {
             global.logger.error('[Bot Test] interactionCreate', err);
             if (interaction?.isRepliable?.()) {

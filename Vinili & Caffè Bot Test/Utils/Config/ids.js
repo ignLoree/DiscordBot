@@ -30,7 +30,9 @@ const IDs = {
     },
     channels: {
         infoSponsor: config.channels?.infoSponsor || '1442569211611185323',
-        ticketLogs: config.channels?.ticketLogs || '1442569290682208296'
+        ticketLogs: config.channels?.ticketLogs || '1442569290682208296',
+        verifyLog: config.channels?.verifyLog || null,
+        verifyPing: config.channels?.verifyPing || null
     },
     sponsorVerifyChannelIds: config.sponsorVerifyChannelIds || {},
     verificatoRoleIds: config.verificatoRoleIds || {},

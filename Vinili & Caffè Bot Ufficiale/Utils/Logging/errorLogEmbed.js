@@ -8,15 +8,6 @@ function getFullErrorText(error) {
   return typeof raw === 'string' ? raw : String(raw);
 }
 
-/**
- * Embed per il canale log errori: stesso stile del log comandi (riquadro con code block).
- * @param {Object} options
- * @param {string} options.contextLabel - Es. "Comando", "Bottone"
- * @param {string} options.contextValue - Es. nome comando o customId
- * @param {string} options.userTag - Utente (tag o username)
- * @param {Error|string} options.error - Errore (stack completo nel riquadro)
- * @param {string} [options.title] - Titolo embed (default "Log errori")
- */
 function buildErrorLogEmbed({ contextLabel, contextValue, userTag, error, title = 'Log errori' }) {
   const fullError = getFullErrorText(error);
   const errorInBlock = fullError.length > ERROR_TEXT_MAX

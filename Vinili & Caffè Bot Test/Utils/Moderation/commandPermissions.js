@@ -1,5 +1,11 @@
 const { PermissionsBitField } = require('discord.js');
-const appConfig = require('../../config.json');
+
+let appConfig = {};
+try {
+  appConfig = require('../../config.json');
+} catch (e) {
+  // config.json opzionale
+}
 
 const SPONSOR_GUILD_IDS = new Set(
   (appConfig.sponsorGuildIds || [

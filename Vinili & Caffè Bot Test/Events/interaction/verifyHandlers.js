@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBu
 const PImage = require('pureimage');
 const { PassThrough } = require('stream');
 const path = require('path');
+const fs = require('fs');
 const IDs = require('../../Utils/Config/ids');
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
@@ -11,15 +12,17 @@ const VERIFY_PING_CHANNEL_ID = IDs.channels?.verifyPing || null;
 
 const SPONSOR_VERIFY_NICKNAME = '.gg/viniliecaffe';
 
-const { upsertVerifiedMember, applyTenureForMember } = require('../../../Vinili & Caffè Bot Test/Services/Community/communityOpsService');
-const { VerificationTenure } = require('../../../Vinili & Caffè Bot Test/Schemas/Community/communitySchemas');
+const { upsertVerifiedMember, applyTenureForMember } = require('../../Services/Community/communityOpsService');
+const { VerificationTenure } = require('../../Schemas/Community/communitySchemas');
 
 const verifyState = new Map();
 
-const fontPath = path.join(__dirname, '..', '..', '..', 'Vinili & Caffè Bot Ufficiale', 'UI', 'Fonts', 'Mojangles.ttf');
+const fontPathLocal = path.join(__dirname, '..', '..', 'UI', 'Fonts', 'Mojangles.ttf');
+const fontPathUfficiale = path.join(__dirname, '..', '..', '..', 'Vinili & Caffè Bot Ufficiale', 'UI', 'Fonts', 'Mojangles.ttf');
 let captchaFontFamily = 'captcha';
 
 try {
+  const fontPath = fs.existsSync(fontPathLocal) ? fontPathLocal : fontPathUfficiale;
   PImage.registerFont(fontPath, 'captcha').loadSync();
 } catch (err) {
   captchaFontFamily = 'Arial';

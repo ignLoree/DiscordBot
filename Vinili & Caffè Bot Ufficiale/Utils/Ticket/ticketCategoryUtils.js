@@ -1,20 +1,12 @@
 const { ChannelType } = require('discord.js');
 
-/** Nome della categoria ticket (usato per creazione e riconoscimento). */
 const TICKETS_CATEGORY_NAME = '⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・';
-
-/** Suffisso per le categorie overflow (evita # che può dare problemi in Discord). */
 const TICKETS_OVERFLOW_SEPARATOR = ' ・ ';
 
 function buildOverflowTicketCategoryName(index) {
     return `${TICKETS_CATEGORY_NAME}${TICKETS_OVERFLOW_SEPARATOR}${index}`;
 }
 
-/**
- * Restituisce true se il canale è in una categoria ticket (esatta o overflow creata dal bot).
- * @param {import('discord.js').GuildChannel|import('discord.js').ThreadChannel} channel
- * @returns {boolean}
- */
 function isChannelInTicketCategory(channel) {
     if (!channel?.guild?.channels?.cache) return false;
     const cache = channel.guild.channels.cache;

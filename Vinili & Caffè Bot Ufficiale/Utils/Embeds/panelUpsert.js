@@ -175,14 +175,11 @@ async function shouldEditMessage(message, payload) {
   const nextComponents = toComparableComponents(payload?.components || []);
   if (currentComponents !== nextComponents) return true;
 
-  // NOTE: We intentionally ignore "files"/attachments for change detection.
-  // Re-uploading attachments on every restart causes unnecessary edits.
   return false;
 }
 
 
 async function upsertPanelMessage(channel, client, payload) {
-  // Fast path: if we already know the messageId, fetch and update that message only.
   const messageId = payload?.messageId || null;
   if (messageId) {
     const direct = await channel.messages.fetch(messageId).catch(() => null);

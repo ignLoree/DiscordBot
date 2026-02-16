@@ -1,4 +1,4 @@
-﻿const path = require('path');
+const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { ActivityType } = require('discord.js');
@@ -11,7 +11,7 @@ const POLL_REMINDER_CHANNEL_ID = '1442569285909217301';
 const RESTART_CLEANUP_DELAY_MS = 2000;
 
 module.exports = {
-  name: 'clientReady',
+  name: 'ready',
   once: true,
   async execute(client) {
     try {

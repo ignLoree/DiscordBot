@@ -5,21 +5,22 @@ const os = require('os');
 
 const baseDir = __dirname;
 
-const bot = {
-    key: 'official',
-    label: 'Ufficiale',
-    start: './Vinili & Caffè/index.js',
-    startupDelayMs: 0
-};
+const BOTS = [
+    { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
+    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 3000 }
+];
 
-const PID_FILE = path.resolve(baseDir, `.shard_${bot.key}.pid`);
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
 const POLL_INTERVAL_MS = 5000;
 
-let processRef = null;
-let restarting = false;
+const processRefs = {};
+const restarting = {};
 
-console.log('[Loader] Loading 1 file');
+function pidFile(botKey) {
+    return path.resolve(baseDir, `.shard_${botKey}.pid`);
+}
+
+console.log('[Loader] Loading', BOTS.length, 'bot(s)');
 
 function killPidTree(pid) {
     if (!pid || Number.isNaN(pid)) return;
@@ -32,22 +33,23 @@ function killPidTree(pid) {
     } catch {}
 }
 
-function cleanupStalePid() {
-    if (!fs.existsSync(PID_FILE)) return;
+function cleanupStalePid(botKey) {
+    const file = pidFile(botKey);
+    if (!fs.existsSync(file)) return;
     let pid = null;
     try {
-        pid = Number(fs.readFileSync(PID_FILE, 'utf8').trim());
+        pid = Number(fs.readFileSync(file, 'utf8').trim());
     } catch {
         pid = null;
     }
-    if (processRef && pid && processRef.pid === pid) return;
+    if (processRefs[botKey] && pid && processRefs[botKey].pid === pid) return;
     if (pid && !Number.isNaN(pid)) killPidTree(pid);
-    try { fs.unlinkSync(PID_FILE); } catch {}
+    try { fs.unlinkSync(file); } catch {}
 }
 
-function writePid(pid) {
+function writePid(botKey, pid) {
     try {
-        fs.writeFileSync(PID_FILE, String(pid), 'utf8');
+        fs.writeFileSync(pidFile(botKey), String(pid), 'utf8');
     } catch (err) {
         console.log('[Loader] Could not write PID file:', err?.message || err);
     }
@@ -67,15 +69,16 @@ function needNpmInstall(workingDir) {
     }
 }
 
-function runfile(options = {}) {
+function runfile(bot, options = {}) {
     return new Promise((resolve) => {
         const workingDir = path.resolve(baseDir, bot.start.split('/').slice(0, -1).join('/'));
         const file = bot.start.split('/').at(-1);
         const skipGitPull = Boolean(options.skipGitPull);
         const bypassDelay = Boolean(options.bypassDelay);
+        const botKey = bot.key;
 
         const start = () => {
-            cleanupStalePid();
+            cleanupStalePid(botKey);
 
             const repoRoot = fs.existsSync(path.join(baseDir, '.git')) ? baseDir : workingDir;
             if (!skipGitPull && fs.existsSync(path.join(repoRoot, '.git'))) {
@@ -90,15 +93,17 @@ function runfile(options = {}) {
             }
 
             const doSpawn = () => {
-                console.log(`[Loader] Opening file ${bot.start}`);
-                processRef = child_process.spawn(process.execPath, [file], {
+                console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
+                const proc = child_process.spawn(process.execPath, [file], {
                     cwd: workingDir,
                     stdio: 'inherit'
                 });
-                writePid(processRef.pid);
-                processRef.on('exit', (code) => {
-                    try { fs.unlinkSync(PID_FILE); } catch {}
-                    console.log(`[Loader] File ${bot.start} stopped (code ${code})`);
+                processRefs[botKey] = proc;
+                writePid(botKey, proc.pid);
+                proc.on('exit', (code) => {
+                    try { fs.unlinkSync(pidFile(botKey)); } catch {}
+                    processRefs[botKey] = null;
+                    console.log(`[Loader] ${bot.label} fermato (code ${code})`);
                     resolve();
                 });
             };
@@ -108,7 +113,7 @@ function runfile(options = {}) {
                 return;
             }
 
-            console.log(`[Loader] Installing dependencies in ${workingDir}`);
+            console.log(`[Loader] npm install in ${workingDir}`);
             const npm = child_process.spawn('npm', [
                 'install',
                 '--build-from-resource',
@@ -121,7 +126,7 @@ function runfile(options = {}) {
 
             npm.on('exit', (code) => {
                 if (code !== 0) {
-                    console.log(`[Loader] npm install failed (code ${code}), starting bot anyway.`);
+                    console.log(`[Loader] npm install fallito (code ${code}), avvio bot comunque.`);
                 }
                 doSpawn();
             });
@@ -129,7 +134,7 @@ function runfile(options = {}) {
 
         const delay = bypassDelay ? 0 : Number(bot.startupDelayMs || 0);
         if (delay > 0) {
-            console.log(`[Loader] Delaying ${bot.label} startup by ${delay}ms`);
+            console.log(`[Loader] Ritardo avvio ${bot.label}: ${delay}ms`);
             setTimeout(start, delay);
             return;
         }
@@ -137,37 +142,41 @@ function runfile(options = {}) {
     });
 }
 
-function restartBot(options = {}) {
+function restartBot(botKey, options = {}) {
+    const bot = BOTS.find(b => b.key === botKey);
+    if (!bot) return;
     const respectDelay = Boolean(options.respectDelay);
-    if (restarting) return;
-    restarting = true;
+    if (restarting[botKey]) return;
+    restarting[botKey] = true;
 
-    if (processRef && !processRef.killed) {
-        console.log(`[Loader] Restarting ${bot.label}...`);
+    const proc = processRefs[botKey];
+    if (proc && !proc.killed) {
+        console.log(`[Loader] Restart ${bot.label}...`);
         const forceTimer = setTimeout(() => {
-            try { killPidTree(processRef.pid); } catch {}
+            try { killPidTree(proc.pid); } catch {}
         }, 8000);
 
-        processRef.once('exit', () => {
+        proc.once('exit', () => {
             clearTimeout(forceTimer);
-            restarting = false;
-            runfile({ bypassDelay: !respectDelay, skipGitPull: false });
+            restarting[botKey] = false;
+            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
         });
 
         try {
-            processRef.kill();
+            proc.kill();
         } catch {
-            restarting = false;
-            runfile({ bypassDelay: !respectDelay, skipGitPull: false });
+            restarting[botKey] = false;
+            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
         }
         return;
     }
 
-    restarting = false;
-    runfile({ bypassDelay: !respectDelay, skipGitPull: false });
+    restarting[botKey] = false;
+    runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
 }
 
-runfile({ skipGitPull: true });
+// Avvio tutti i bot (il delay è gestito dentro runfile per ogni bot)
+BOTS.forEach(bot => runfile(bot, { skipGitPull: true }));
 
 setInterval(() => {
     if (!fs.existsSync(RESTART_FLAG)) return;
@@ -178,5 +187,6 @@ setInterval(() => {
         payload = null;
     }
     try { fs.unlinkSync(RESTART_FLAG); } catch {}
-    restartBot({ respectDelay: Boolean(payload?.respectDelay) });
+    const targetBot = payload?.bot || 'official';
+    restartBot(targetBot, { respectDelay: Boolean(payload?.respectDelay) });
 }, POLL_INTERVAL_MS);

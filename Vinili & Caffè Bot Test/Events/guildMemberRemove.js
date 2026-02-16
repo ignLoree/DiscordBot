@@ -1,12 +1,9 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const SponsorMainLeave = require('../Schemas/Tags/tagsSchema');
-const config = require('../config.json');
+const IDs = require('../Utils/Config/ids');
 
-const MAIN_GUILD_ID = config.mainGuildId || '1329080093599076474';
-const SPONSOR_GUILD_IDS = config.sponsorGuildIds || [
-    '1471511676019933354', '1471511928739201047', '1471512183547498579',
-    '1471512555762483330', '1471512797140484230', '1471512808448458958'
-];
+const MAIN_GUILD_ID = IDs.guilds?.main || '1329080093599076474';
+const SPONSOR_GUILD_IDS = IDs.guilds?.sponsorGuildIds || [];
 const OFFICIAL_INVITE_URL = 'https://discord.gg/viniliecaffe';
 
 function makeRejoinEmbed() {

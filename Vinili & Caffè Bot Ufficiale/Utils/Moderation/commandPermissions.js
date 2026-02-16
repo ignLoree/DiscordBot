@@ -15,7 +15,6 @@ const TICKET_BUTTON_IDS = new Set([
   'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo'
 ]);
 
-
 function getIdsConfig() {
   if (idsFallbackCache) return idsFallbackCache;
   try {

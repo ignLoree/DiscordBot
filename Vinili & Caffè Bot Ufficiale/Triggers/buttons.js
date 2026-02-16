@@ -285,8 +285,6 @@ module.exports = {
         if (interaction.isStringSelectMenu()) {
             const menuId = interaction.customId;
             const values = Array.isArray(interaction.values) ? interaction.values : [];
-
-            /// EMBED RUOLI
             const categories = {
                 personality_pronouns: [
                     '1442568997848743997',
@@ -409,7 +407,6 @@ module.exports = {
         }
         if (!interaction.isButton()) return;
 
-        /// AVATAR 
         if (interaction.customId && interaction.customId.startsWith('avatar_unblock:')) {
             const targetId = interaction.customId.split(':')[1];
             if (interaction.user.id !== targetId) {
@@ -429,7 +426,6 @@ module.exports = {
             return interaction.reply({ embeds: [embed] });
         }
 
-        /// BANNER
         if (interaction.customId && interaction.customId.startsWith('banner_unblock:')) {
             const targetId = interaction.customId.split(':')[1];
             if (interaction.user.id !== targetId) {
@@ -449,7 +445,6 @@ module.exports = {
             return interaction.reply({ embeds: [embed] });
         }
 
-        /// QUOTE
         if (interaction.customId && interaction.customId.startsWith('quote_remove:')) {
             const parts = interaction.customId.split(':');
             const targetId = parts[1];
@@ -490,7 +485,6 @@ module.exports = {
             });
         }
 
-        /// SPONSOR
         if (interaction.customId == 'metodi') {
             const embeds = [
                 new EmbedBuilder()
@@ -516,7 +510,6 @@ module.exports = {
             await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
         }
 
-        /// INFO RULES
         if (interaction.customId == 'info_rules') {
             const commonEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -579,7 +572,6 @@ module.exports = {
             await interaction.reply({ embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed], flags: 1 << 6 });
         }
 
-        /// INFO DONATIONS
         if (interaction.customId == 'info_donations') {
             const donations = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -648,7 +640,6 @@ module.exports = {
             return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
         };
 
-        /// INFO VERIFICA
         if (interaction.customId == 'info_verifica') {
             const verifyEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -666,7 +657,6 @@ module.exports = {
             await interaction.reply({ embeds: [verifyEmbed], flags: 1 << 6 });
         }
 
-        /// INFO BOOST E LIVELLI
         const buildBoostLevelsPayload = () => {
             const boostEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -821,7 +811,6 @@ module.exports = {
             return sendUpdatedView(buildBoostLevelsPayload());
         }
 
-        /// INFO BADGES
         if (interaction.customId == 'info_badges_roles') {
             const badgesEmbed = new EmbedBuilder()
                 .setColor('#6f4e37')
@@ -907,7 +896,6 @@ module.exports = {
             await interaction.reply({ embeds: [badgesEmbed], flags: 1 << 6 });
         }
 
-        /// INFO MULTIPLIER
         if (interaction.customId == 'r_multiplier_info') {
             const entries = ROLE_MULTIPLIERS instanceof Map
                 ? Array.from(ROLE_MULTIPLIERS.entries())
@@ -938,7 +926,6 @@ module.exports = {
             await interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
 
-        /// CLASSIFICA AVATAR
         if (interaction.customId == 'avatar_views') {
             const guildId = interaction.guild.id;
             const top = await AvatarPrivacy.find({ guildId })
@@ -991,7 +978,6 @@ module.exports = {
             return interaction.reply({ embeds: [embed], flags: 1 << 6 });
         }
 
-        /// CLASSIFICA BANNER
         if (interaction.customId == 'banner_views') {
             const guildId = interaction.guild.id;
             const top = await BannerPrivacy.find({ guildId })
