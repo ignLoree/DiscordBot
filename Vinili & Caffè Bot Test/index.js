@@ -10,14 +10,13 @@ const APP_ROOT = __dirname;
 
 const dotenv = require('dotenv');
 const envCandidates = [
-    path.join(APP_ROOT, '.env'),
     path.join(APP_ROOT, '..', '.env'),
-    path.join(process.cwd(), '.env')
+    path.join(process.cwd(), '.env'),
+    path.join(APP_ROOT, '.env')
 ];
 for (const envPath of envCandidates) {
     if (fs.existsSync(envPath)) {
-        dotenv.config({ path: envPath, quiet: true });
-        break;
+        dotenv.config({ path: envPath, quiet: true, override: false });
     }
 }
 

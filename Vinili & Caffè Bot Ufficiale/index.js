@@ -4,15 +4,13 @@ const path = require('path');
 const dotenv = require('dotenv');
 const APP_ROOT = __dirname;
 const envCandidates = [
-    path.join(APP_ROOT, '.env'),
     path.join(APP_ROOT, '..', '.env'),
-    path.join(process.cwd(), '.env')
+    path.join(process.cwd(), '.env'),
+    path.join(APP_ROOT, '.env')
 ];
-let envLoaded = false;
 for (const envPath of envCandidates) {
-    if (!envLoaded && fs.existsSync(envPath)) {
-        dotenv.config({ path: envPath, quiet: true });
-        envLoaded = true;
+    if (fs.existsSync(envPath)) {
+        dotenv.config({ path: envPath, quiet: true, override: false });
     }
 }
 global.logger = require('./Utils/Moderation/logger');
