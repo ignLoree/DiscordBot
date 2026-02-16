@@ -4,7 +4,7 @@ const IDs = require('../Utils/Config/ids');
 const sponsorPanels = require('../Triggers/embeds');
 
 module.exports = {
-    name: 'ready',
+    name: 'clientReady',
     once: true,
     async execute(_readyClient, client) {
         const c = client || _readyClient;
