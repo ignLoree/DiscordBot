@@ -128,7 +128,8 @@ module.exports = {
         fs.writeFileSync(flagPath, JSON.stringify({
           at: requestedAt,
           by: message.author.id,
-          bot: isFullBoth ? 'all' : 'official'
+          bot: isFullBoth ? 'all' : 'official',
+          respectDelay: isFullBoth
         }, null, 2), 'utf8');
         return;
       }
