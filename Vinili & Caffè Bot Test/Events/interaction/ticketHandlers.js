@@ -44,6 +44,11 @@ async function handleTicketInteraction(interaction) {
     const ROLE_TICKET_BLACKLIST = '0';
     const STAFF_ROLES = sponsorStaffRole ? [sponsorStaffRole] : [];
     const hasAdmin = (m) => Boolean(m?.permissions?.has(PermissionFlagsBits.Administrator));
+    const hasStaffLikePermission = (m) => !m ? false : (
+        m.permissions.has(PermissionFlagsBits.Administrator) ||
+        m.permissions.has(PermissionFlagsBits.ManageChannels) ||
+        m.permissions.has(PermissionFlagsBits.ManageGuild)
+    );
     if (!interaction.client.ticketCloseLocks) {
         interaction.client.ticketCloseLocks = new Set();
     }
@@ -439,6 +444,16 @@ async function handleTicketInteraction(interaction) {
                     global.logger.error(err);
                     return null;
                 });
+                const existingAgain = await Ticket.findOne({
+                    guildId: interaction.guild.id,
+                    userId: interaction.user.id,
+                    open: true
+                });
+                if (existingAgain) {
+                    await channel.delete().catch(() => {});
+                    await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingAgain.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
+                    return true;
+                }
                 let descriptionPrompt = null;
                 if (config.type === 'partnership') {
                     const descriptionRow = new ActionRowBuilder().addComponents(
@@ -452,16 +467,34 @@ async function handleTicketInteraction(interaction) {
                         components: [descriptionRow]
                     }).catch(() => null);
                 }
-                await Ticket.create({
-                    guildId: interaction.guild.id,
-                    userId: interaction.user.id,
-                    channelId: channel.id,
-                    ticketType: config.type,
-                    open: true,
-                    messageId: mainMsg?.id || null,
-                    descriptionPromptMessageId: descriptionPrompt?.id || null,
-                    descriptionSubmitted: false
-                }).catch(err => global.logger.error(err));
+                let ticketCreated = false;
+                try {
+                    await Ticket.create({
+                        guildId: interaction.guild.id,
+                        userId: interaction.user.id,
+                        channelId: channel.id,
+                        ticketType: config.type,
+                        open: true,
+                        messageId: mainMsg?.id || null,
+                        descriptionPromptMessageId: descriptionPrompt?.id || null,
+                        descriptionSubmitted: false
+                    });
+                    ticketCreated = true;
+                } catch (err) {
+                    const isDuplicate = err?.code === 11000 || (err?.message && String(err.message).includes('E11000'));
+                    if (isDuplicate) {
+                        await channel.delete().catch(() => {});
+                        const other = await Ticket.findOne({ guildId: interaction.guild.id, userId: interaction.user.id, open: true }).catch(() => null);
+                        await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ': <#' + other.channelId + '>' : '.'}`).setColor('#6f4e37')], flags: 1 << 6 });
+                        return true;
+                    }
+                    global.logger.error(err);
+                }
+                if (!ticketCreated) {
+                    await channel.delete().catch(() => {});
+                    await safeEditReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.')], flags: 1 << 6 });
+                    return true;
+                }
                 let tagRole = config.type === 'partnership' ? ROLE_PARTNERMANAGER : config.role;
                 const mentionMsg = await channel.send(`<@${interaction.user.id}> ${tagRole ? `<@&${tagRole}>` : ''}`).catch(() => null);
                 if (mentionMsg) {
@@ -490,7 +523,8 @@ async function handleTicketInteraction(interaction) {
                     && (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) || interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
                 const canClaimHigh = ticket.ticketType === 'high' && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
                 const canClaimByAdmin = hasAdmin(interaction.member);
-                if (!canClaimSupport && !canClaimPartnership && !canClaimHigh && !canClaimByAdmin) {
+                const canClaimByPerms = hasStaffLikePermission(interaction.member);
+                if (!canClaimSupport && !canClaimPartnership && !canClaimHigh && !canClaimByAdmin && !canClaimByPerms) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo lo staff può claimare i ticket')], flags: 1 << 6 });
                     return true;
                 }
@@ -498,32 +532,46 @@ async function handleTicketInteraction(interaction) {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi claimare il ticket che hai aperto tu.')], flags: 1 << 6 });
                     return true;
                 }
-                if (ticket.claimedBy) {
+                const claimedByVal = ticket.claimedBy != null ? String(ticket.claimedBy).trim() : '';
+                if (claimedByVal !== '') {
                     await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
                     return true;
                 }
-                const claimedTicket = await Ticket.findOneAndUpdate(
+                let claimedTicket = await Ticket.findOneAndUpdate(
                     {
                         channelId: interaction.channel.id,
-                        $or: [{ claimedBy: null }, { claimedBy: { $exists: false } }]
+                        $or: [
+                            { claimedBy: null },
+                            { claimedBy: { $exists: false } },
+                            { claimedBy: '' }
+                        ]
                     },
                     { $set: { claimedBy: interaction.user.id } },
                     { new: true }
                 ).catch(() => null);
                 if (!claimedTicket) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
-                    return true;
+                    await Ticket.updateOne(
+                        { channelId: interaction.channel.id },
+                        { $set: { claimedBy: interaction.user.id } }
+                    ).catch(() => null);
+                    claimedTicket = await Ticket.findOne({ channelId: interaction.channel.id }).catch(() => null);
+                    if (!claimedTicket) {
+                        await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
+                        return true;
+                    }
                 }
                 if (interaction.channel) {
                     try {
-                        await interaction.channel.permissionOverwrites.edit(ticket.userId, {
-                            ViewChannel: true,
-                            SendMessages: true,
-                            EmbedLinks: true,
-                            AttachFiles: true,
-                            ReadMessageHistory: true,
-                            AddReactions: true
-                        });
+                        if (ticket.userId) {
+                            await interaction.channel.permissionOverwrites.edit(ticket.userId, {
+                                ViewChannel: true,
+                                SendMessages: true,
+                                EmbedLinks: true,
+                                AttachFiles: true,
+                                ReadMessageHistory: true,
+                                AddReactions: true
+                            });
+                        }
                         await interaction.channel.permissionOverwrites.edit(interaction.user.id, {
                             ViewChannel: true,
                             SendMessages: true,
@@ -534,31 +582,39 @@ async function handleTicketInteraction(interaction) {
                         });
                         if (ticket.ticketType === 'supporto') {
                             for (const r of STAFF_ROLES) {
-                                await interaction.channel.permissionOverwrites.edit(r, {
+                                if (r) {
+                                    await interaction.channel.permissionOverwrites.edit(r, {
+                                        ViewChannel: true,
+                                        SendMessages: false,
+                                        ReadMessageHistory: true
+                                    });
+                                }
+                            }
+                        }
+                        if (ticket.ticketType === 'partnership') {
+                            if (ROLE_PARTNERMANAGER) {
+                                await interaction.channel.permissionOverwrites.edit(ROLE_PARTNERMANAGER, {
                                     ViewChannel: true,
                                     SendMessages: false,
                                     ReadMessageHistory: true
                                 });
                             }
-                        }
-                        if (ticket.ticketType === 'partnership') {
-                            await interaction.channel.permissionOverwrites.edit(ROLE_PARTNERMANAGER, {
-                                ViewChannel: true,
-                                SendMessages: false,
-                                ReadMessageHistory: true
-                            });
-                            await interaction.channel.permissionOverwrites.edit(ROLE_HIGHSTAFF, {
-                                ViewChannel: true,
-                                SendMessages: false,
-                                ReadMessageHistory: true
-                            });
+                            if (ROLE_HIGHSTAFF) {
+                                await interaction.channel.permissionOverwrites.edit(ROLE_HIGHSTAFF, {
+                                    ViewChannel: true,
+                                    SendMessages: false,
+                                    ReadMessageHistory: true
+                                });
+                            }
                         } else if (ticket.ticketType === 'high') {
-                            await interaction.channel.permissionOverwrites.edit(ROLE_HIGHSTAFF, {
-                                ViewChannel: true,
-                                SendMessages: false,
-                                ReadMessageHistory: true
-                            });
-                        } else {
+                            if (ROLE_HIGHSTAFF) {
+                                await interaction.channel.permissionOverwrites.edit(ROLE_HIGHSTAFF, {
+                                    ViewChannel: true,
+                                    SendMessages: false,
+                                    ReadMessageHistory: true
+                                });
+                            }
+                        } else if (ROLE_PARTNERMANAGER) {
                             await interaction.channel.permissionOverwrites.edit(ROLE_PARTNERMANAGER, {
                                 ViewChannel: false
                             });
@@ -907,9 +963,14 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida')], flags: 1 << 6 });
                 return;
             }
-            const ticket = await Ticket.findOne({ channelId: targetInteraction.channel.id });
+            // Atomic close: only one closer sends transcript (avoids duplicate from prefix+button or duplicate events)
+            const ticket = await Ticket.findOneAndUpdate(
+                { channelId: targetInteraction.channel.id, open: true },
+                { $set: { open: false, closedAt: new Date() } },
+                { new: true }
+            );
             if (!ticket) {
-                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Info', '<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.')], flags: 1 << 6 });
                 return;
             }
             const transcriptTXT = await createTranscript(targetInteraction.channel).catch(() => '');
@@ -917,9 +978,10 @@ async function handleTicketInteraction(interaction) {
             const transcriptHtmlPath = transcriptHTML
                 ? await saveTranscriptHtml(targetInteraction.channel, transcriptHTML).catch(() => null)
                 : null;
-            ticket.open = false;
-            ticket.transcript = transcriptTXT;
-            await ticket.save().catch(() => { });
+            await Ticket.updateOne(
+                { channelId: targetInteraction.channel.id },
+                { $set: { transcript: transcriptTXT, closeReason: motivo || null, claimedBy: ticket.claimedBy || null } }
+            ).catch(() => { });
             const createdAtFormatted = ticket.createdAt
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';
@@ -965,7 +1027,6 @@ async function handleTicketInteraction(interaction) {
                     }
                 }
             }
-            await Ticket.updateOne({ channelId: targetInteraction.channel.id }, { $set: { open: false, transcript: transcriptTXT, claimedBy: ticket.claimedBy || null, closeReason: motivo || null, closedAt: new Date() } }).catch(() => { });
             await safeEditReply(targetInteraction, { embeds: [new EmbedBuilder().setDescription("🔒 Il ticket verrà chiuso...").setColor('#6f4e37')]});
             setTimeout(() => {
                 if (targetInteraction.channel) targetInteraction.channel.delete().catch(() => { });

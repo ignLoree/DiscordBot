@@ -1,77 +1,24 @@
-const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require('discord.js');
-const IDs = require('../Utils/Config/ids');
-
-const SPONSOR_MEDIA_NAME = 'sponsor.gif';
-const SPONSOR_MEDIA_PATH = path.join(__dirname, '..', 'Photos', SPONSOR_MEDIA_NAME);
-
-async function runSponsorPanel(client) {
-    const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
-    const sponsorChannel = client.channels.cache.get(IDs.channels.infoSponsor)
-        || await client.channels.fetch(IDs.channels.infoSponsor).catch(() => null);
-    if (!sponsorChannel?.isTextBased?.()) {
-        global.logger.warn('[Bot Test] Canale sponsor non trovato:', IDs.channels.infoSponsor);
-        return;
-    }
-
-    const sponsorEmbed = new EmbedBuilder()
-        .setColor('#6f4e37')
-        .setDescription(
-            '<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n' +
-            '> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n' +
-            '> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n' +
-            '> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n' +
-            '> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)'
-        );
-
-    try {
-        sponsorEmbed.setImage(`attachment://${SPONSOR_MEDIA_NAME}`);
-    } catch (e) {}
-
-    const rowSponsor = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-            .setCustomId('metodi')
-            .setLabel('︲METODI')
-            .setEmoji('<:Money:1330544713463500970>')
-            .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId('ping')
-            .setLabel('︲PING')
-            .setEmoji('<:Discord_Mention:1329524304790028328>')
-            .setStyle(ButtonStyle.Secondary)
-    );
-
-    const files = [];
-    try {
-        if (require('fs').existsSync(SPONSOR_MEDIA_PATH)) {
-            files.push(new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME }));
-        }
-    } catch (e) {}
-
-    await upsertPanelMessage(sponsorChannel, client, {
-        embeds: [sponsorEmbed],
-        components: [rowSponsor],
-        files: files.length ? files : undefined,
-        attachmentName: files.length ? SPONSOR_MEDIA_NAME : undefined
-    });
-}
-
 async function runSponsorVerifyPanels(client) {
     const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
     const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
     const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-    const fromConfig = Array.isArray(client.config?.sponsorGuildIds) ? client.config.sponsorGuildIds : [];
-    const fromIds = Object.keys(IDs.sponsorVerifyChannelIds || {});
-    const SPONSOR_GUILD_IDS = fromConfig.length > 0 ? fromConfig : fromIds;
-    const VERIFY_CHANNEL_IDS = IDs.sponsorVerifyChannelIds || client.config?.sponsorVerifyChannelIds || {};
+    let SPONSOR_GUILD_IDS = Array.isArray(client.config?.sponsorGuildIds) ? [...client.config.sponsorGuildIds] : [];
+    const VERIFY_CHANNEL_IDS = client.config?.sponsorVerifyChannelIds || {};
+    if (SPONSOR_GUILD_IDS.length === 0) {
+        SPONSOR_GUILD_IDS = Object.keys(VERIFY_CHANNEL_IDS);
+    }
 
     if (SPONSOR_GUILD_IDS.length === 0) {
         global.logger.warn('[Bot Test] runSponsorVerifyPanels: nessuna guild in config (sponsorGuildIds o sponsorVerifyChannelIds). Controlla config.json.');
-        return;
+        return 0;
     }
-    global.logger.info('[Bot Test] runSponsorVerifyPanels: ' + SPONSOR_GUILD_IDS.length + ' guild sponsor da elaborare.');
+    const botGuildIds = client.guilds.cache.map(g => g.id);
+    const inSponsor = SPONSOR_GUILD_IDS.filter(id => botGuildIds.includes(id));
+    const missing = SPONSOR_GUILD_IDS.filter(id => !botGuildIds.includes(id));
+    global.logger.info('[Bot Test] Verify: bot in ' + client.guilds.cache.size + ' server. Sponsor da config: ' + SPONSOR_GUILD_IDS.length + '. Bot nei sponsor: ' + inSponsor.length + (missing.length ? '. Mancano (invita il bot): ' + missing.join(', ') : ''));
 
+    let sent = 0;
     for (const guildId of SPONSOR_GUILD_IDS) {
         try {
             const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
@@ -126,6 +73,7 @@ async function runSponsorVerifyPanels(client) {
                     { $set: { verifyPanelMessageId: panelMessage.id } }
                 ).catch(() => {});
                 global.logger.info('[Bot Test] Verify panel inviato/aggiornato in ' + guild.name + ' (# ' + channel.name + ').');
+                sent++;
             } else {
                 global.logger.warn('[Bot Test] Verify panel: upsertPanelMessage non ha restituito messaggio in ' + guild.name);
             }
@@ -133,6 +81,7 @@ async function runSponsorVerifyPanels(client) {
             global.logger.error('[Bot Test] runSponsorVerifyPanels guild ' + guildId + ':', err?.message || err);
         }
     }
+    return sent;
 }
 
 async function runSponsorTicketPanels(client) {
@@ -140,22 +89,22 @@ async function runSponsorTicketPanels(client) {
     const { PersonalityPanel: Panel } = require('../Schemas/Community/communitySchemas');
     const { upsertPanelMessage } = require('../Utils/Embeds/panelUpsert');
 
-    const fromConfig = Array.isArray(client.config?.sponsorGuildIds) ? client.config.sponsorGuildIds : [];
-    const fromIds = Object.keys(IDs.sponsorVerifyChannelIds || {});
-    const SPONSOR_GUILD_IDS = fromConfig.length > 0 ? fromConfig : fromIds;
-    const VERIFY_CHANNEL_IDS = IDs.sponsorVerifyChannelIds || client.config?.sponsorVerifyChannelIds || {};
+    let SPONSOR_GUILD_IDS = Array.isArray(client.config?.sponsorGuildIds) ? [...client.config.sponsorGuildIds] : [];
     const TICKET_CHANNEL_IDS = client.config?.sponsorTicketChannelIds || {};
-    // Se non c'è canale ticket dedicato, usiamo il canale verify (stesso canale per verify + ticket)
-    const getChannelId = (guildId) => TICKET_CHANNEL_IDS[guildId] || VERIFY_CHANNEL_IDS[guildId];
+    if (SPONSOR_GUILD_IDS.length === 0) {
+        SPONSOR_GUILD_IDS = Object.keys(TICKET_CHANNEL_IDS);
+    }
+    // Ticket panel solo nel canale ticket dedicato (sponsorTicketChannelIds), non in quello di verifica
+    if (SPONSOR_GUILD_IDS.length === 0) return 0;
+    global.logger.info('[Bot Test] Ticket panel: ' + SPONSOR_GUILD_IDS.length + ' guild, canali da sponsorTicketChannelIds.');
 
-    if (SPONSOR_GUILD_IDS.length === 0) return;
-    global.logger.info('[Bot Test] runSponsorTicketPanels: ' + SPONSOR_GUILD_IDS.length + ' guild.');
+    let sent = 0;
 
     for (const guildId of SPONSOR_GUILD_IDS) {
         try {
-            const channelId = getChannelId(guildId);
+            const channelId = TICKET_CHANNEL_IDS[guildId];
             if (!channelId) {
-                global.logger.warn('[Bot Test] Ticket panel: nessun canale per guild ' + guildId + ' (sponsorVerifyChannelIds o sponsorTicketChannelIds).');
+                global.logger.warn('[Bot Test] Ticket panel: nessun canale ticket per guild ' + guildId + ' (aggiungi sponsorTicketChannelIds in config.json).');
                 continue;
             }
             const guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
@@ -232,11 +181,13 @@ async function runSponsorTicketPanels(client) {
                     }
                 ).catch(() => {});
                 global.logger.info('[Bot Test] Ticket panel inviato/aggiornato in ' + guild.name + ' (# ' + channel.name + ').');
+                sent++;
             }
         } catch (err) {
             global.logger.error('[Bot Test] runSponsorTicketPanels guild ' + guildId + ':', err?.message || err);
         }
     }
+    return sent;
 }
 
 module.exports = { runSponsorPanel, runSponsorVerifyPanels, runSponsorTicketPanels };

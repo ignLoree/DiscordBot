@@ -24,6 +24,10 @@ const PARTNER_LEADERBOARD_CHANNEL_IDS = new Set([
     IDs.channels?.staffCmds,
     IDs.channels?.highCmds
 ].filter(Boolean).map(String));
+const PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS = new Set([
+    IDs.channels?.partnerships,
+    IDs.channels?.partnersChat
+].filter(Boolean).map(String));
 const STAFF_ALLOWED_CHANNEL_IDS = new Set([
     String(IDs.channels?.staffCmds || ''),
     String(IDs.channels?.highCmds || '')
@@ -48,10 +52,10 @@ function getSlashChannelRestrictionError(commandName, command, channel) {
             }
             return null;
         }
-        if (!isChannelInTicketCategory(channel)) {
-            return 'Questo comando Partner è utilizzabile solo nei canali della categoria ticket.';
-        }
-        return null;
+        if (PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS.has(String(channelId))) return null;
+        if (isChannelInTicketCategory(channel)) return null;
+        const allowedList = [...PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
+        return `Il comando partnership è utilizzabile nei ticket partnership oppure in ${allowedList}.`;
     }
 
     if (category === 'staff') {

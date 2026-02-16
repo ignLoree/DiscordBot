@@ -250,17 +250,32 @@ module.exports = {
         return;
       }
 
+      // Atomic close: only one closer sends transcript (avoids duplicate with button/modal close)
+      const claimed = await Ticket.findOneAndUpdate(
+        { channelId: message.channel.id, open: true },
+        { $set: { open: false, closedAt: new Date() } },
+        { new: true }
+      );
+      if (!claimed) {
+        await safeMessageReply(message, {
+          embeds: [new EmbedBuilder().setColor('Orange').setDescription('<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.')],
+          allowedMentions: { repliedUser: false }
+        });
+        return;
+      }
+
       const transcriptTXT = await createTranscript(message.channel).catch(() => '');
       const transcriptHTML = await createTranscriptHtml(message.channel).catch(() => '');
       const transcriptHtmlPath = transcriptHTML
         ? await saveTranscriptHtml(message.channel, transcriptHTML).catch(() => null)
         : null;
-      ticketDoc.open = false;
-      ticketDoc.transcript = transcriptTXT;
-      await ticketDoc.save().catch(() => { });
+      await Ticket.updateOne(
+        { channelId: message.channel.id },
+        { $set: { transcript: transcriptTXT, closeReason: claimed.closeReason || null, claimedBy: claimed.claimedBy || null } }
+      ).catch(() => { });
 
-      const createdAtFormatted = ticketDoc.createdAt
-        ? `<t:${Math.floor(ticketDoc.createdAt.getTime() / 1000)}:F>`
+      const createdAtFormatted = claimed.createdAt
+        ? `<t:${Math.floor(claimed.createdAt.getTime() / 1000)}:F>`
         : 'Data non disponibile';
 
       const mainGuildId = IDs?.guilds?.main || null;
@@ -283,13 +298,13 @@ module.exports = {
           embeds: [
             new EmbedBuilder()
               .setTitle('Ticket Chiuso')
-              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticketDoc.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
+              .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason ? claimed.closeReason : 'Nessun motivo inserito'}`)
               .setColor('#6f4e37')
           ]
         }, Boolean(transcriptHtmlPath));
       }
 
-      const member = await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
+      const member = await message.guild.members.fetch(claimed.userId).catch(() => null);
       if (member) {
         try {
           await sendTranscriptWithBrowserLink(member, {
@@ -299,7 +314,7 @@ module.exports = {
             embeds: [
               new EmbedBuilder()
                 .setTitle('Ticket Chiuso')
-                .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticketDoc.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticketDoc.claimedBy ? `<@${ticketDoc.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${ticketDoc.closeReason ? ticketDoc.closeReason : 'Nessun motivo inserito'}`)
+                .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${claimed.closeReason ? claimed.closeReason : 'Nessun motivo inserito'}`)
                 .setColor('#6f4e37')
             ]
           }, Boolean(transcriptHtmlPath));
@@ -307,11 +322,6 @@ module.exports = {
           if (err?.code !== 50007) global.logger.error('[DM ERROR]', err);
         }
       }
-
-      await Ticket.updateOne(
-        { channelId: message.channel.id },
-        { $set: { open: false, transcript: transcriptTXT, claimedBy: ticketDoc.claimedBy || null, closeReason: ticketDoc.closeReason || null, closedAt: new Date() } }
-      ).catch(() => { });
 
       await safeMessageReply(message, {
         embeds: [new EmbedBuilder().setDescription('🔒 Il ticket verrà chiuso...').setColor('#6f4e37')],

@@ -132,6 +132,18 @@ async function safeEditReply(interaction, payload) {
 
 async function safeMessageReply(message, payload) {
   if (!message) return null;
+  if (typeof message.reply !== 'function') {
+    if (message.channel?.send) {
+      try {
+        return await message.channel.send(stripMessageReference(payload));
+      } catch (err) {
+        if (err?.code === 10008) return null;
+        logReplyError('message.channel.send(fallback)', err);
+        return null;
+      }
+    }
+    return null;
+  }
   try {
     return await message.reply(payload);
   } catch (err) {

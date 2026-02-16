@@ -20,5 +20,9 @@ const ticketSchema = new mongoose.Schema({
 });
 ticketSchema.index({ guildId: 1, userId: 1, open: 1 });
 ticketSchema.index({ userId: 1, open: 1 });
+ticketSchema.index(
+    { guildId: 1, userId: 1 },
+    { unique: true, partialFilterExpression: { open: true } }
+);
 
 module.exports = mongoose.models.Ticket || mongoose.model('Ticket', ticketSchema);

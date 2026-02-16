@@ -21,7 +21,8 @@ function isSponsorGuild(guildId) {
 function hasSponsorStaffPerms(member) {
   if (!member) return false;
   return member.permissions?.has(PermissionsBitField.Flags.Administrator)
-    || member.permissions?.has(PermissionsBitField.Flags.ManageChannels);
+    || member.permissions?.has(PermissionsBitField.Flags.ManageChannels)
+    || member.permissions?.has(PermissionsBitField.Flags.ManageGuild);
 }
 
 const TICKET_BUTTON_IDS = new Set([

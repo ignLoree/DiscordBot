@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 
+// Bot Test: multi-guild (server sponsor). Nessun blocco monoguild: ticket e verify funzionano in tutti i server in cui il bot è presente (config.sponsorGuildIds / sponsorVerifyChannelIds / verificatoRoleIds).
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {

@@ -15,6 +15,20 @@ const TICKET_BUTTON_IDS = new Set([
   'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo'
 ]);
 
+const VERIFY_OR_TICKET_IDS = new Set([
+  'verify_start', 'verify_enter',
+  'ticket_partnership', 'ticket_highstaff', 'ticket_supporto', 'ticket_open_desc_modal',
+  'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo',
+  'ticket_open_menu'
+]);
+function isVerifyOrTicketInteraction(customId) {
+  if (!customId || typeof customId !== 'string') return false;
+  const id = String(customId).trim();
+  if (VERIFY_OR_TICKET_IDS.has(id)) return true;
+  if (id.startsWith('verify_code:') || id.startsWith('modal_close_ticket') || id.startsWith('ticket_open_desc_modal_submit:')) return true;
+  return false;
+}
+
 function getIdsConfig() {
   if (idsFallbackCache) return idsFallbackCache;
   try {
@@ -311,6 +325,9 @@ async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+    if (isVerifyOrTicketInteraction(customId)) {
+      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+    }
     return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
   }
 
@@ -375,6 +392,9 @@ async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+    if (isVerifyOrTicketInteraction(customId)) {
+      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+    }
     return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
   }
   if (!customId) {
@@ -439,6 +459,9 @@ async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || '');
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (MAIN_GUILD_ID && guildId && guildId !== MAIN_GUILD_ID) {
+    if (isVerifyOrTicketInteraction(customId)) {
+      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+    }
     return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
   }
   if (!customId) {

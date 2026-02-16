@@ -285,8 +285,10 @@ async function finalizeVerification(interaction, member) {
   }
 
   const serverName = guild?.name || 'this server';
-  await safeEditReply(interaction, { content: '<:vegacheckmark:1443666279058772028> Verification done.' });
-  await safeReply(interaction, { embeds: [makeVerifiedEmbed(serverName)], flags: 1 << 6 });
+  await safeEditReply(interaction, {
+    content: '<:vegacheckmark:1443666279058772028> Verification done.',
+    embeds: [makeVerifiedEmbed(serverName)]
+  });
 
   return true;
 }

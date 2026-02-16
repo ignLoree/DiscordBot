@@ -35,6 +35,7 @@ const IDs = {
         verifyPing: config.channels?.verifyPing || null
     },
     sponsorVerifyChannelIds: config.sponsorVerifyChannelIds || {},
+    sponsorTicketChannelIds: config.sponsorTicketChannelIds || {},
     verificatoRoleIds: config.verificatoRoleIds || {},
     roles: {
         sponsorStaffRoleIds

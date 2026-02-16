@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const config = require('../config.json');
 const IDs = require('../Utils/Config/ids');
-const sponsorPanels = require('../Triggers/sponsorPanels');
+const sponsorPanels = require('../Triggers/embeds');
 
 module.exports = {
     name: 'clientReady',
@@ -24,24 +24,44 @@ module.exports = {
             global.logger.warn('[Bot Test] MONGO_URL non impostato.');
         }
 
-        // Breve delay così la cache delle guild è popolata (Discord può inviare guild dopo ready).
-        await new Promise((r) => setTimeout(r, 2000));
+        const guildList = client.guilds.cache.map(g => g.name + ' (' + g.id + ')').join(', ') || 'nessuno';
+        const sponsorIds = client.config?.sponsorGuildIds || [];
+        const verifyChannels = client.config?.sponsorVerifyChannelIds || {};
+        global.logger.info('[Bot Test] Server in cui sono: ' + client.guilds.cache.size + ' → ' + guildList);
+        global.logger.info('[Bot Test] Config sponsorGuildIds: ' + (sponsorIds.length || 0) + ', sponsorVerifyChannelIds: ' + Object.keys(verifyChannels).length + ' canali.');
 
-        // Solo panel sponsor + verify + ticket. NON aggiungere qui Staff list, staff pagato, guida staff, best staff, moderazione (restano solo nel Bot Ufficiale).
-        try {
-            await sponsorPanels.runSponsorPanel(client);
-        } catch (err) {
-            global.logger.error('[Bot Test] runSponsorPanel:', err);
+        // Delay per cache guild (Discord può inviare guild dopo ready).
+        await new Promise((r) => setTimeout(r, 5000));
+
+        const runPanels = async () => {
+            try {
+                await sponsorPanels.runSponsorPanel(client);
+            } catch (err) {
+                global.logger.error('[Bot Test] runSponsorPanel:', err);
+            }
+            let verifySent = 0;
+            let ticketSent = 0;
+            try {
+                verifySent = await sponsorPanels.runSponsorVerifyPanels(client);
+            } catch (err) {
+                global.logger.error('[Bot Test] runSponsorVerifyPanels:', err);
+            }
+            try {
+                ticketSent = await sponsorPanels.runSponsorTicketPanels(client);
+            } catch (err) {
+                global.logger.error('[Bot Test] runSponsorTicketPanels:', err);
+            }
+            return { verifySent, ticketSent };
+        };
+
+        let result = await runPanels();
+        if (result.verifySent === 0 && result.ticketSent === 0 && client.guilds.cache.size > 0) {
+            global.logger.warn('[Bot Test] Nessun panel verify/ticket inviato. Riprovo tra 5 secondi...');
+            await new Promise((r) => setTimeout(r, 5000));
+            result = await runPanels();
         }
-        try {
-            await sponsorPanels.runSponsorVerifyPanels(client);
-        } catch (err) {
-            global.logger.error('[Bot Test] runSponsorVerifyPanels:', err);
-        }
-        try {
-            await sponsorPanels.runSponsorTicketPanels(client);
-        } catch (err) {
-            global.logger.error('[Bot Test] runSponsorTicketPanels:', err);
+        if (result.verifySent === 0 && result.ticketSent === 0) {
+            global.logger.warn('[Bot Test] Dopo il retry: ancora 0 panel. Verifica che il bot sia invitato in ogni server sponsor (config.sponsorGuildIds), sponsorVerifyChannelIds per la verifica e sponsorTicketChannelIds per i ticket.');
         }
     }
 };
