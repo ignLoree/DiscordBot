@@ -260,7 +260,7 @@ async function handleTicketInteraction(interaction) {
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
                         .setTitle("<:ticket:1472994083524837396> • **__TICKET SUPPORTO__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
                         .setColor("#6f4e37")
                 },
                 ticket_partnership: {
@@ -271,7 +271,7 @@ async function handleTicketInteraction(interaction) {
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
                         .setTitle("<:ticket:1472994083524837396> • **__TICKET PARTNERSHIP__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`)
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`)
                         .setColor("#6f4e37")
                 },
                 ticket_highstaff: {
@@ -282,7 +282,7 @@ async function handleTicketInteraction(interaction) {
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
                         .setTitle("<:ticket:1472994083524837396> • **__TICKET HIGH STAFF__**")
-                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
+                        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1472995820659015792> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
                         .setColor("#6f4e37")
                 }
             };
@@ -993,7 +993,7 @@ async function handleTicketInteraction(interaction) {
                     embeds: [
                         new EmbedBuilder()
                             .setTitle('Ticket Chiuso')
-                            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`)
+                            .setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`)
                             .setColor('#6f4e37')
                     ],
                 }, Boolean(transcriptHtmlPath));
@@ -1005,7 +1005,7 @@ async function handleTicketInteraction(interaction) {
                         files: transcriptHtmlPath
                             ? [{ attachment: transcriptHtmlPath, name: `transcript_${targetInteraction.channel.id}.html` }]
                             : [{ attachment: Buffer.from(transcriptTXT, 'utf-8'), name: `transcript_${targetInteraction.channel.id}.txt` }],
-                        embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`).setColor('#6f4e37')]
+                        embeds: [new EmbedBuilder().setTitle('Ticket Chiuso').setDescription(`<:member_role_icon:1330530086792728618> **Aperto da:** <@${ticket.userId}>\n<:discordstaff:1472995589179572224> **Chiuso da:** ${targetInteraction.user}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : 'Non claimato'}\n<:reportmessage:1472995820659015792> **Motivo:** ${motivo ? motivo : 'Nessun motivo inserito'}`).setColor('#6f4e37')]
                     }, Boolean(transcriptHtmlPath));
                 } catch (err) {
                     if (err.code !== 50007) {
