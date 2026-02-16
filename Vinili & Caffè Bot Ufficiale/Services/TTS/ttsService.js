@@ -225,6 +225,11 @@ function enqueue(state, item) {
 async function handleTtsMessage(message, client, prefix) {
   const config = client?.config;
   if (!shouldHandleMessage(message, config, prefix)) return;
+  if (!message.member && message.guild?.members?.fetch) {
+    try {
+      message.member = await message.guild.members.fetch(message.author?.id).catch(() => null) || message.member;
+    } catch (_) {}
+  }
   const isVoiceChat = message.channel.isVoiceBased?.() && !message.channel.isThread?.();
   const voiceChannel = isVoiceChat ? message.channel : message.member?.voice?.channel;
   if (!voiceChannel) {
@@ -241,6 +246,9 @@ async function handleTtsMessage(message, client, prefix) {
   if (!autojoin && !lockedChannelId) {
     return;
   }
+  const state = getState(voiceChannel);
+  const connection = await ensureConnection(state, voiceChannel).catch(() => null);
+  if (!connection) return;
   const maxChars = config?.tts?.maxChars || 200;
   const includeUsername = config?.tts?.includeUsername !== false;
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
@@ -249,7 +257,6 @@ async function handleTtsMessage(message, client, prefix) {
   const name = message.member?.displayName || message.member?.user?.username || message.author?.username || "Utente";
   const text = includeUsername ? `${name}: ${baseText}` : baseText;
   const clipped = text.slice(0, maxChars);
-  const state = getState(voiceChannel);
   enqueue(state, { voiceChannel, text: clipped, lang });
 }
 async function joinTtsChannel(voiceChannel) {
