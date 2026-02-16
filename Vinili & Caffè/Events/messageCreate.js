@@ -518,7 +518,7 @@ module.exports = {
                 if (!isTtsCommandAllowedInChannel(command, message.channel)) {
                     await deleteCommandMessage();
                     const msg = await message.channel.send({
-                        content: `Il comando TTS è usabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`
+                        content: `Il comando TTS è utilizzabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`
                     });
                     setTimeout(() => msg.delete().catch(() => { }), 5000);
                     return;
@@ -527,7 +527,7 @@ module.exports = {
                 if (SHIP_ALLOWED_CHANNEL_ID && message.channelId !== SHIP_ALLOWED_CHANNEL_ID) {
                     await deleteCommandMessage();
                     const msg = await message.channel.send({
-                        content: `Il comando ship è usabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`
+                        content: `Il comando ship è utilizzabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`
                     });
                     setTimeout(() => msg.delete().catch(() => { }), 5000);
                     return;
@@ -536,7 +536,7 @@ module.exports = {
                 await deleteCommandMessage();
                 const channelsList = [...ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
                 const msg = await message.channel.send({
-                    content: `Questo comando è usabile solo in ${channelsList}.`
+                    content: `Questo comando è utilizzabile solo in ${channelsList}.`
                 });
                 setTimeout(() => msg.delete().catch(() => { }), 5000);
                 return;

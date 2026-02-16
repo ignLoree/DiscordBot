@@ -44,12 +44,12 @@ function getSlashChannelRestrictionError(commandName, command, channel) {
         if (name === 'leaderboard') {
             if (PARTNER_LEADERBOARD_CHANNEL_IDS.size > 0 && !PARTNER_LEADERBOARD_CHANNEL_IDS.has(String(channelId))) {
                 const list = [...PARTNER_LEADERBOARD_CHANNEL_IDS].map((id) => `<#${id}>`).join(', ');
-                return `Il comando leaderboard è usabile solo in ${list}.`;
+                return `Il comando leaderboard è utilizzabile solo in ${list}.`;
             }
             return null;
         }
         if (!isChannelInTicketCategory(channel)) {
-            return 'Questo comando Partner è usabile solo nei canali della categoria ticket.';
+            return 'Questo comando Partner è utilizzabile solo nei canali della categoria ticket.';
         }
         return null;
     }
