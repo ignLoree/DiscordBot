@@ -1,10 +1,12 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
 const { Readable } = require('stream');
 const fs = require('fs');
-let prism = null;
-try { prism = require('prism-media'); } catch (_) { global.logger?.warn?.('[TTS] prism-media non installato: installa con npm install prism-media --legacy-peer-deps per riproduzione TTS.'); }
 const path = require('path');
 const os = require('os');
+let prism = null;
+let ffmpegPath = null;
+try { prism = require('prism-media'); } catch (_) { global.logger?.warn?.('[TTS] prism-media non installato.'); }
+try { ffmpegPath = require('ffmpeg-static'); } catch (_) {}
 const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -256,32 +258,35 @@ async function playNext(state) {
   }
   const item = state.queue.shift();
   state.playing = true;
+  const tmpPath = path.resolve(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
+  state.currentTtsFile = tmpPath;
   try {
     const connection = await ensureConnection(state, item.voiceChannel);
     if (!connection) {
       state.playing = false;
+      if (state.currentTtsFile) try { fs.unlinkSync(state.currentTtsFile); } catch (_) {}
+      state.currentTtsFile = null;
       playNext(state);
       return;
     }
     const buffer = await createTtsBuffer(item.text, item.lang);
     if (!buffer || buffer.length === 0) throw new Error('TTS buffer vuoto');
+    fs.writeFileSync(tmpPath, buffer);
     let resource;
     if (prism) {
-      const inputStream = Readable.from(buffer);
-      const ffmpeg = new prism.FFmpeg({
+      const opts = {
         args: ['-analyzeduration', '0', '-loglevel', '0', '-i', '-', '-f', 's16le', '-ar', '48000', '-ac', '2']
-      });
-      const pcmStream = inputStream.pipe(ffmpeg);
+      };
+      if (ffmpegPath) opts.cmd = ffmpegPath;
+      const ffmpeg = new prism.FFmpeg(opts);
+      const pcmStream = fs.createReadStream(tmpPath).pipe(ffmpeg);
       resource = createAudioResource(pcmStream, { inputType: StreamType.Raw });
     } else {
-      const tmpPath = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
-      fs.writeFileSync(tmpPath, buffer);
-      state.currentTtsFile = tmpPath;
       resource = createAudioResource(tmpPath);
     }
     state.player.play(resource);
   } catch (err) {
-    global.logger.error("[TTS PLAY ERROR]", err);
+    global.logger.error('[TTS PLAY ERROR]', err?.message || err);
     if (state.currentTtsFile) try { fs.unlinkSync(state.currentTtsFile); } catch (_) {}
     state.currentTtsFile = null;
     state.playing = false;
