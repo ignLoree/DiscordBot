@@ -27,7 +27,7 @@ module.exports = {
         } catch (err) {
             global.logger.error('[Bot Test] interactionCreate', err);
             if (interaction?.isRepliable?.()) {
-                await interaction.reply({ content: '<:vegax:1443934876440068179> Errore.', flags: 1 << 6 }).catch(() => {});
+                await interaction.reply({ content: '<:vegax:1472992044140990526> Errore.', flags: 1 << 6 }).catch(() => {});
             }
         }
     }

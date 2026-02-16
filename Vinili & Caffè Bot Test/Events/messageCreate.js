@@ -1,7 +1,3 @@
-/**
- * Bot Test non ha comandi prefix/slash: gestisce solo ticket e verifica sui server sponsor.
- * Se qualcuno usa un prefix (es. + o ?) rispondiamo con un messaggio chiaro.
- */
 const { EmbedBuilder } = require('discord.js');
 const IDs = require('../Utils/Config/ids');
 
@@ -33,7 +29,7 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor('#6f4e37')
             .setDescription(
-                '<:vsl_ticket:1329520261053022208> **Bot Test** gestisce solo **ticket** e **verifica** su questo server.\n' +
+                '<:ticket:1472994083524837396> **Bot Test** gestisce solo **ticket** e **verifica** su questo server.\n' +
                 'I comandi (prefix e slash) sono sul **bot principale** (Vinili & Caffè Bot).\n' +
                 'Usa i **bottoni** e il **menu** nel canale ticket per aprire un ticket.'
             );

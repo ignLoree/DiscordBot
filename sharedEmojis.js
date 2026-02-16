@@ -1,12 +1,3 @@
-/**
- * Emoji condivise tra Bot Ufficiale e Bot Test.
- * Le emoji custom sono del server (guild), non del bot: se entrambi i bot sono
- * nello stesso server, queste stringhe funzionano in entrambi.
- *
- * Uso dal Bot Ufficiale:  const E = require('../sharedEmojis');
- * Uso dal Bot Test:       const E = require('../sharedEmojis');
- * Poi in un messaggio:    E.VC_Arrow, E.xdivisore, ecc.
- */
 module.exports = {
   VC_Arrow: '<a:VC_Arrow:1448672967721615452>',
   VC_RightWing: '<a:VC_RightWing:1448672889845973214>',
@@ -19,7 +10,7 @@ module.exports = {
   dot: '<:dot:1443660294596329582>',
   reportmessage: '<:reportmessage:1443670575376765130>',
   discordstaff: '<:discordstaff:1443651872258003005>',
-  attentionfromvega: '<:attentionfromvega:1443651874032062505>',
-  vegax: '<:vegax:1443934876440068179>',
-  vegacheckmark: '<:vegacheckmark:1443666279058772028>'
+  attentionfromvega: '<:attentionfromvega:1472992040601260042>',
+  vegax: '<:vegax:1472992044140990526>',
+  vegacheckmark: '<:vegacheckmark:1472992042203349084>'
 };

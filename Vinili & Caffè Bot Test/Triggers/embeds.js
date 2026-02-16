@@ -172,10 +172,10 @@ async function runSponsorVerifyPanels(client) {
             const serverName = guild.name || 'this server';
             const verifyPanelEmbed = new EmbedBuilder()
                 .setColor(client.config?.embedVerify || '#6f4e37')
-                .setTitle('<:verification:1461725843125571758> **`Verification Required!`**')
+                .setTitle('<:verification:1472989484059459758> **`Verification Required!`**')
                 .setDescription(
-                    '<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `' + serverName + '` devi prima verificarti.**\n' +
-                    '<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.'
+                    '<:space:1472990350795866265> <:alarm:1472990352968253511> **Per accedere a `' + serverName + '` devi prima verificarti.**\n' +
+                    '<:space:1472990350795866265><:space:1472990350795866265> <:rightSort:1472990348086087791> Clicca il pulsante **Verify** qui sotto per iniziare.'
                 );
             const verifyRow = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('verify_start').setLabel('Verify').setStyle(ButtonStyle.Success)

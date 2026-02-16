@@ -209,7 +209,7 @@ async function handleTicketInteraction(interaction) {
     try {
         if (isTicketButton || isTicketSelect) {
             if (!interaction.guild || !interaction.member) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida (fuori dal server).')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida (fuori dal server).')], flags: 1 << 6 });
                 return true;
             }
             // Bot Test: solo Administrator può usare i bottoni del pannello ticket e i controlli staff
@@ -218,7 +218,7 @@ async function handleTicketInteraction(interaction) {
             const staffButtonIds = new Set(['claim_ticket', 'close_ticket', 'close_ticket_motivo', 'unclaim', 'accetta', 'rifiuta']);
             if (isOpeningTicket || staffButtonIds.has(interaction.customId)) {
                 if (!hasAdmin(interaction.member)) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Accesso negato', '<:vegax:1443934876440068179> Solo gli **Administrator** possono usare i controlli ticket in questo server.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Accesso negato', '<:vegax:1472992044140990526> Solo gli **Administrator** possono usare i controlli ticket in questo server.')], flags: 1 << 6 });
                     return true;
                 }
             }
@@ -228,7 +228,7 @@ async function handleTicketInteraction(interaction) {
                     embeds: [
                         new EmbedBuilder()
                             .setColor('#6f4e37')
-                            .setDescription(`<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``)
+                            .setDescription(`<:vegax:1472992044140990526> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``)
                     ],
                     flags: 1 << 6
                 });
@@ -240,7 +240,7 @@ async function handleTicketInteraction(interaction) {
                     embeds: [
                         new EmbedBuilder()
                             .setColor('#6f4e37')
-                            .setDescription(`<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dai ticket.`)
+                            .setDescription(`<:vegax:1472992044140990526> Non puoi usare questo bottone poichè sei blacklistato dai ticket.`)
                     ],
                     flags: 1 << 6
                 });
@@ -248,7 +248,7 @@ async function handleTicketInteraction(interaction) {
             }
             const userOnlyTickets = ['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'];
             if (ROLE_USER != null && !hasAdmin(interaction.member) && userOnlyTickets.includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
                 return true;
             }
             const ticketConfig = {
@@ -259,7 +259,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_STAFF,
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
+                        .setTitle("<:ticket:1472994083524837396> • **__TICKET SUPPORTO__**")
                         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
                         .setColor("#6f4e37")
                 },
@@ -270,7 +270,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_PARTNERMANAGER,
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
+                        .setTitle("<:ticket:1472994083524837396> • **__TICKET PARTNERSHIP__**")
                         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`)
                         .setColor("#6f4e37")
                 },
@@ -281,7 +281,7 @@ async function handleTicketInteraction(interaction) {
                     role: ROLE_HIGHSTAFF,
                     requiredRoles: ROLE_USER ? [ROLE_USER] : [],
                     embed: new EmbedBuilder()
-                        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**")
+                        .setTitle("<:ticket:1472994083524837396> • **__TICKET HIGH STAFF__**")
                         .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
                         .setColor("#6f4e37")
                 }
@@ -297,7 +297,7 @@ async function handleTicketInteraction(interaction) {
                 'ticket_open_desc_modal'
             ].includes(interaction.customId)) {
                 await safeReply(interaction, {
-                    embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Categoria ticket non valida. Riprova dal pannello.')],
+                    embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Categoria ticket non valida. Riprova dal pannello.')],
                     flags: 1 << 6
                 });
                 return true;
@@ -314,7 +314,7 @@ async function handleTicketInteraction(interaction) {
                 const ticketLockKey = `${interaction.guild.id}:${interaction.user.id}`;
                 if (interaction.client.ticketOpenLocks.has(ticketLockKey)) {
                     await safeReply(interaction, {
-                        embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1443651874032062505> Sto già aprendo un ticket per te, aspetta un attimo.')],
+                        embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1472992040601260042> Sto già aprendo un ticket per te, aspetta un attimo.')],
                         flags: 1 << 6
                     });
                     return true;
@@ -322,13 +322,13 @@ async function handleTicketInteraction(interaction) {
                 interaction.client.ticketOpenLocks.add(ticketLockKey);
                 try {
                 if (ROLE_USER != null && !hasAdmin(interaction.member) && ['ticket_partnership', 'ticket_highstaff', 'ticket_supporto'].includes(ticketActionId) && !interaction.member?.roles?.cache?.has(ROLE_USER)) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Devi aver completato la **verifica** per aprire un ticket.')], flags: 1 << 6 });
                     return true;
                 }
                 if (!hasAdmin(interaction.member) && config.requiredRoles?.length > 0) {
                     const hasRole = config.requiredRoles.some(r => interaction.member?.roles?.cache?.has(r));
                     if (!hasRole) {
-                        await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non hai i requisiti per aprire questo ticket')], flags: 1 << 6 });
+                        await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non hai i requisiti per aprire questo ticket')], flags: 1 << 6 });
                         return true;
                     }
                 }
@@ -338,12 +338,12 @@ async function handleTicketInteraction(interaction) {
                     open: true
                 });
                 if (existing) {
-                    await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1472992044140990526> Hai già un ticket aperto: <#${existing.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketsCategory = await createTicketsCategory(interaction.guild);
                 if (!ticketsCategory) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Impossibile creare o trovare la categoria ticket')], flags: 1 << 6 });
                     return true;
                 }
                 const channel = await interaction.guild.channels.create({
@@ -418,7 +418,7 @@ async function handleTicketInteraction(interaction) {
                     return null;
                 });
                 if (!channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare il canale ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Impossibile creare il canale ticket')], flags: 1 << 6 });
                     return true;
                 }
                 const row = new ActionRowBuilder().addComponents(
@@ -437,7 +437,7 @@ async function handleTicketInteraction(interaction) {
                 });
                 if (existingAgain) {
                     await channel.delete().catch(() => {});
-                    await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingAgain.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
+                    await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1472992044140990526> Hai già un ticket aperto: <#${existingAgain.channelId}>`).setColor('#6f4e37')], flags: 1 << 6 });
                     return true;
                 }
                 let descriptionPrompt = null;
@@ -471,14 +471,14 @@ async function handleTicketInteraction(interaction) {
                     if (isDuplicate) {
                         await channel.delete().catch(() => {});
                         const other = await Ticket.findOne({ guildId: interaction.guild.id, userId: interaction.user.id, open: true }).catch(() => null);
-                        await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ': <#' + other.channelId + '>' : '.'}`).setColor('#6f4e37')], flags: 1 << 6 });
+                        await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('Ticket Aperto').setDescription(`<:vegax:1472992044140990526> Hai già un ticket aperto${other?.channelId ? ': <#' + other.channelId + '>' : '.'}`).setColor('#6f4e37')], flags: 1 << 6 });
                         return true;
                     }
                     global.logger.error(err);
                 }
                 if (!ticketCreated) {
                     await channel.delete().catch(() => {});
-                    await safeEditReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.')], flags: 1 << 6 });
+                    await safeEditReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Impossibile creare il ticket, riprova.')], flags: 1 << 6 });
                     return true;
                 }
                 let tagRole = config.type === 'partnership' ? ROLE_PARTNERMANAGER : config.role;
@@ -488,7 +488,7 @@ async function handleTicketInteraction(interaction) {
                         mentionMsg.delete().catch(() => { });
                     }, 100);
                 }
-                await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('<:vegacheckmark:1443666279058772028> Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
+                await safeEditReply(interaction, { embeds: [new EmbedBuilder().setTitle('<:vegacheckmark:1472992042203349084> Ticket Creato').setDescription(`Aperto un nuovo ticket: ${channel}`).setColor('#6f4e37')], flags: 1 << 6 });
                 return true;
                 } finally {
                     interaction.client.ticketOpenLocks.delete(ticketLockKey);
@@ -496,12 +496,12 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'claim_ticket') {
                 if (!interaction.channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                     return true;
                 }
                 const ticket = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticket) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
                 const canClaimSupport = ticket.ticketType === 'supporto' && STAFF_ROLES.some(r => interaction.member?.roles?.cache?.has(r));
@@ -511,16 +511,16 @@ async function handleTicketInteraction(interaction) {
                 const canClaimByAdmin = hasAdmin(interaction.member);
                 const canClaimByPerms = hasStaffLikePermission(interaction.member);
                 if (!canClaimSupport && !canClaimPartnership && !canClaimHigh && !canClaimByAdmin && !canClaimByPerms) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo lo staff può claimare i ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo lo staff può claimare i ticket')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticket.userId === interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi claimare il ticket che hai aperto tu.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi claimare il ticket che hai aperto tu.')], flags: 1 << 6 });
                     return true;
                 }
                 const claimedByVal = ticket.claimedBy != null ? String(ticket.claimedBy).trim() : '';
                 if (claimedByVal !== '') {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket già claimato')], flags: 1 << 6 });
                     return true;
                 }
                 let claimedTicket = await Ticket.findOneAndUpdate(
@@ -542,7 +542,7 @@ async function handleTicketInteraction(interaction) {
                     ).catch(() => null);
                     claimedTicket = await Ticket.findOne({ channelId: interaction.channel.id }).catch(() => null);
                     if (!claimedTicket) {
-                        await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket già claimato')], flags: 1 << 6 });
+                        await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket già claimato')], flags: 1 << 6 });
                         return true;
                     }
                 }
@@ -639,20 +639,20 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'ticket_open_desc_modal') {
                 if (!interaction.channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
                 if (interaction.user.id !== ticketDoc.userId) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc.descriptionSubmitted) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Hai già inviato la descrizione iniziale.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Hai già inviato la descrizione iniziale.')], flags: 1 << 6 });
                     return true;
                 }
                 const modal = new ModalBuilder().setCustomId(`ticket_open_desc_modal_submit:${interaction.user.id}`).setTitle('Descrizione Ticket');
@@ -670,7 +670,7 @@ async function handleTicketInteraction(interaction) {
                 });
                 if (!shown) {
                     await safeReply(interaction, {
-                        embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.')],
+                        embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Impossibile aprire il modulo, riprova.')],
                         flags: 1 << 6
                     });
                 }
@@ -678,7 +678,7 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'unclaim') {
                 if (!interaction.channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketButtonsOriginal = new ActionRowBuilder().addComponents(
@@ -688,19 +688,19 @@ async function handleTicketInteraction(interaction) {
                 );
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo non è un ticket valido.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Questo non è un ticket valido.')], flags: 1 << 6 });
                     return true;
                 }
                 if (!ticketDoc.claimedBy) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Questo ticket non è claimato.')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc.userId === interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Chi ha aperto il ticket non può usare questo pulsante.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Chi ha aperto il ticket non può usare questo pulsante.')], flags: 1 << 6 });
                     return true;
                 }
                 if (interaction.user.id !== ticketDoc.claimedBy) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato può unclaimare il ticket.')], flags: 1 << 6 });
                     return true;
                 }
                 const unclaimedTicket = await Ticket.findOneAndUpdate(
@@ -709,7 +709,7 @@ async function handleTicketInteraction(interaction) {
                     { new: true }
                 ).catch(() => null);
                 if (!unclaimedTicket) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato può unclaimare il ticket.')], flags: 1 << 6 });
                     return true;
                 }
                 try {
@@ -737,24 +737,24 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'close_ticket_motivo') {
                 if (!interaction.member) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel?.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc && ticketDoc.userId === interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
                     return true;
                 }
                 if (!ticketDoc.claimedBy) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Questo ticket non è claimato.')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc.claimedBy !== interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                     return true;
                 }
                 const modal = new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`).setTitle('Chiudi Ticket con Motivo');
@@ -766,7 +766,7 @@ async function handleTicketInteraction(interaction) {
                 });
                 if (!shown) {
                     await safeReply(interaction, {
-                        embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.')],
+                        embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Impossibile aprire il modulo, riprova.')],
                         flags: 1 << 6
                     });
                 }
@@ -774,24 +774,24 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'close_ticket') {
                 if (!interaction.member) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel?.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc && ticketDoc.userId === interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
                     return true;
                 }
                 if (!ticketDoc.claimedBy) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Questo ticket non è claimato.')], flags: 1 << 6 });
                     return true;
                 }
                 if (ticketDoc.claimedBy !== interaction.user.id) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                     return true;
                 }
                 try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
@@ -800,17 +800,17 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'accetta') {
                 if (!interaction.channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi chiudere questo ticket')], flags: 1 << 6 });
                     return true;
                 }
                 const canHandleCloseRequest = interaction.user.id === ticketDoc.userId || interaction.user.id === ticketDoc.claimedBy;
                 if (!canHandleCloseRequest) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
                 try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
@@ -820,26 +820,26 @@ async function handleTicketInteraction(interaction) {
             }
             if (interaction.customId === 'rifiuta') {
                 if (!interaction.channel) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                     return true;
                 }
                 const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
                 if (!ticketDoc) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere questo ticket')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi chiudere questo ticket')], flags: 1 << 6 });
                     return true;
                 }
                 const canHandleCloseRequest = interaction.user.id === ticketDoc.userId || interaction.user.id === ticketDoc.claimedBy;
                 if (!canHandleCloseRequest) {
-                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
+                    await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo opener o claimer possono gestire questa richiesta.')], flags: 1 << 6 });
                     return true;
                 }
-                await interaction.update({ embeds: [new EmbedBuilder().setTitle('Richiesta di chiusura').setDescription(`<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta di chiusura`).setColor('Red')], components: [] }).catch(() => { });
+                await interaction.update({ embeds: [new EmbedBuilder().setTitle('Richiesta di chiusura').setDescription(`<:vegax:1472992044140990526> ${interaction.user} ha rifiutato la richiesta di chiusura`).setColor('Red')], components: [] }).catch(() => { });
                 return true;
             }
         }
         if (isTicketModal && String(interaction.customId || '').startsWith('ticket_open_desc_modal_submit')) {
             if (!interaction.channel) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione fuori canale')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione fuori canale')], flags: 1 << 6 });
                 return true;
             }
             try {
@@ -849,15 +849,15 @@ async function handleTicketInteraction(interaction) {
             const description = sanitizeTicketDescriptionInput(rawDescription);
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel.id });
             if (!ticketDoc) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                 return true;
             }
             if (interaction.user.id !== ticketDoc.userId) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha aperto il ticket può inviare la descrizione.')], flags: 1 << 6 });
                 return true;
             }
             if (!description) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Dopo il filtro non c\'è testo valido da inviare.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Dopo il filtro non c\'è testo valido da inviare.')], flags: 1 << 6 });
                 return true;
             }
             const updatedTicket = await Ticket.findOneAndUpdate(
@@ -872,7 +872,7 @@ async function handleTicketInteraction(interaction) {
                 { new: true }
             ).catch(() => null);
             if (!updatedTicket) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> La descrizione è già stata inviata.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> La descrizione è già stata inviata.')], flags: 1 << 6 });
                 return true;
             }
 
@@ -905,19 +905,19 @@ async function handleTicketInteraction(interaction) {
             try { await interaction.deferReply({ flags: 1 << 6 }).catch(() => {}).catch(() => { }); } catch { }
             const ticketDoc = await Ticket.findOne({ channelId: interaction.channel?.id });
             if (!ticketDoc) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Ticket non trovato')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Ticket non trovato')], flags: 1 << 6 });
                 return true;
             }
             if (ticketDoc.userId === interaction.user.id) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Non puoi chiudere da solo il ticket che hai aperto.')], flags: 1 << 6 });
                 return true;
             }
             if (!ticketDoc.claimedBy) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Questo ticket non è claimato.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Questo ticket non è claimato.')], flags: 1 << 6 });
                 return true;
             }
             if (ticketDoc.claimedBy !== interaction.user.id) {
-                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
+                await safeReply(interaction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Solo chi ha claimato il ticket può chiuderlo.')], flags: 1 << 6 });
                 return true;
             }
             const motivo = interaction.fields.getTextInputValue('motivo');
@@ -927,7 +927,7 @@ async function handleTicketInteraction(interaction) {
     } catch (err) {
         global.logger.error(err);
         try {
-            await safeReply(interaction, { embeds: [makeErrorEmbed('Errore Interno', '<:vegax:1443934876440068179> Si è verificato un errore durante l\'elaborazione.')], flags: 1 << 6 }).catch(() => { });
+            await safeReply(interaction, { embeds: [makeErrorEmbed('Errore Interno', '<:vegax:1472992044140990526> Si è verificato un errore durante l\'elaborazione.')], flags: 1 << 6 }).catch(() => { });
         } catch (e) {
             global.logger.info(e);
         }
@@ -938,7 +938,7 @@ async function handleTicketInteraction(interaction) {
         const closeLockKey = `${targetInteraction?.guildId || 'noguild'}:${targetInteraction?.channelId || targetInteraction?.channel?.id || 'nochannel'}`;
         if (interaction.client.ticketCloseLocks.has(closeLockKey)) {
             await safeReply(targetInteraction, {
-                embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1443651874032062505> Chiusura ticket già in corso, attendi un attimo.')],
+                embeds: [makeErrorEmbed('Attendi', '<:attentionfromvega:1472992040601260042> Chiusura ticket già in corso, attendi un attimo.')],
                 flags: 1 << 6
             });
             return;
@@ -946,7 +946,7 @@ async function handleTicketInteraction(interaction) {
         interaction.client.ticketCloseLocks.add(closeLockKey);
         try {
             if (!targetInteraction || !targetInteraction.channel) {
-                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1443934876440068179> Interazione non valida')], flags: 1 << 6 });
+                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida')], flags: 1 << 6 });
                 return;
             }
             // Atomic close: only one closer sends transcript (avoids duplicate from prefix+button or duplicate events)
@@ -956,7 +956,7 @@ async function handleTicketInteraction(interaction) {
                 { new: true }
             );
             if (!ticket) {
-                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Info', '<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.')], flags: 1 << 6 });
+                await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Info', '<:attentionfromvega:1472992040601260042> Ticket già chiuso o chiusura già in corso.')], flags: 1 << 6 });
                 return;
             }
             const transcriptTXT = await createTranscript(targetInteraction.channel).catch(() => '');
@@ -1019,7 +1019,7 @@ async function handleTicketInteraction(interaction) {
             }, 2000);
         } catch (err) {
             global.logger.error(err);
-            await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', "<:vegax:1443934876440068179> Errore durante la chiusura del ticket")], flags: 1 << 6 }).catch(() => { });
+            await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', "<:vegax:1472992044140990526> Errore durante la chiusura del ticket")], flags: 1 << 6 }).catch(() => { });
         } finally {
             interaction.client.ticketCloseLocks.delete(closeLockKey);
         }

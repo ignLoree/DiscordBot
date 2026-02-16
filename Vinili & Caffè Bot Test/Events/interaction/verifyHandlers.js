@@ -37,35 +37,35 @@ function isSponsorGuild(guildId) {
 function makeExpiredEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
-    .setTitle('<:cancel:1461730653677551691> Unsuccessful Operation!')
-    .setDescription('<:space:1461733157840621608> <:rightSort:1461726104422453298> Your verification has expired, you need to press Verify again.');
+    .setTitle('<:cancel:1472990340557312041> Unsuccessful Operation!')
+    .setDescription('<:space:1472990350795866265> <:rightSort:1472990348086087791> Your verification has expired, you need to press Verify again.');
 }
 
 function makeWrongAnswerEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
-    .setTitle('<:cancel:1461730653677551691> Unsuccessful Operation!')
-    .setDescription("<:space:1461733157840621608> <:rightSort:1461726104422453298> Wrong answer, try again before it's too late.");
+    .setTitle('<:cancel:1472990340557312041> Unsuccessful Operation!')
+    .setDescription("<:space:1472990350795866265> <:rightSort:1472990348086087791> Wrong answer, try again before it's too late.");
 }
 
 function makeVerifiedEmbed(serverName) {
   return new EmbedBuilder()
     .setColor('#57f287')
     .setTitle('**You have been verified!**')
-    .setDescription(`<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\``);
+    .setDescription(`<:success:1472990339223781456> You passed the verification successfully. You can now access \`${serverName}\``);
 }
 
 function makeAlreadyVerifiedEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
-    .setTitle('<:alarm:1461725841451909183> **You are verified already!**');
+    .setTitle('<:alarm:1472990352968253511> **You are verified already!**');
 }
 
 function makeOwnerEmbed() {
   return new EmbedBuilder()
     .setColor('Red')
-    .setTitle('<:cancel:1461730653677551691> Unsuccessful Operation!')
-    .setDescription('<:space:1461733157840621608> <:rightSort:1461726104422453298> You are the owner, why would an owner try to verify?');
+    .setTitle('<:cancel:1472990340557312041> Unsuccessful Operation!')
+    .setDescription('<:space:1472990350795866265> <:rightSort:1472990348086087791> You are the owner, why would an owner try to verify?');
 }
 
 function isUnknownInteraction(error) {
@@ -233,7 +233,7 @@ async function finalizeVerification(interaction, member) {
       embeds: [
         new EmbedBuilder()
           .setColor('Red')
-          .setDescription('<:vegax:1443934876440068179> Ruoli verifica non configurati correttamente.')
+          .setDescription('<:vegax:1472992044140990526> Ruoli verifica non configurati correttamente.')
       ],
       flags: 1 << 6
     });
@@ -269,10 +269,10 @@ async function finalizeVerification(interaction, member) {
       .setColor('#6f4e37')
       .setTitle(`**${safeUsername}'s Verification Result:**`)
       .setDescription(
-        `<:profile:1461732907508039834> **Member**: ${safeUsername} **[${interaction.user.id}]**\n` +
-          `<:creation:1461732905016492220> Creation: ${createdAtText}\n\n` +
+        `<:profile:1472990335297912907> **Member**: ${safeUsername} **[${interaction.user.id}]**\n` +
+          `<:creation:1472990337361379428> Creation: ${createdAtText}\n\n` +
           'Status:\n' +
-          `<:space:1461733157840621608><:success:1461731530333229226> \`${safeUsername}\` has passed verification successfully.`
+          `<:space:1472990350795866265><:success:1472990339223781456> \`${safeUsername}\` has passed verification successfully.`
       )
       .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
     await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
@@ -286,7 +286,7 @@ async function finalizeVerification(interaction, member) {
 
   const serverName = guild?.name || 'this server';
   await safeEditReply(interaction, {
-    content: '<:vegacheckmark:1443666279058772028> Verification done.',
+    content: '<:vegacheckmark:1472992042203349084> Verification done.',
     embeds: [makeVerifiedEmbed(serverName)]
   });
 
@@ -327,12 +327,12 @@ async function handleVerifyInteraction(interaction) {
       const embed = new EmbedBuilder()
         .setColor('#6f4e37')
         .setDescription(
-          `<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n` +
+          `<:verification:1472989484059459758> Hello! Are you human? Let's find out!\n` +
             '`Please type the captcha below to be able to access this server!`\n\n' +
             '**Additional Notes:**\n' +
-            '<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n' +
-            '<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n' +
-            '<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n'
+            '<:tracedColored:1472990341916266561> Type out the traced colored characters from left to right.\n' +
+            '<:decoy:1472990344093110334> Ignore the decoy characters spread-around.\n' +
+            '<:nocases:1472990346429468784> You do not have to respect characters cases (upper/lower case)!\n\n'
         )
         .setFooter({ text: 'Verification Period: 5 minutes' })
         .setImage('attachment://captcha.png');
@@ -461,7 +461,7 @@ async function handleVerifyInteraction(interaction) {
     const member = interaction.member;
     if (!member || !member.roles) {
       await safeReply(interaction, {
-        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Errore interno: membro non trovato.')],
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1472992044140990526> Errore interno: membro non trovato.')],
         flags: 1 << 6
       });
       return true;
@@ -470,7 +470,7 @@ async function handleVerifyInteraction(interaction) {
     if (state.promptMessage) {
       await state.promptMessage
         .edit({
-          content: '<:vegacheckmark:1443666279058772028> Verification done.',
+          content: '<:vegacheckmark:1472992042203349084> Verification done.',
           embeds: [],
           components: []
         })

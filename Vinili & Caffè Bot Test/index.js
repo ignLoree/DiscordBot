@@ -32,7 +32,9 @@ const client = new Client({
         GatewayIntentBits.GuildMessageReactions,
         GatewayIntentBits.GuildModeration
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember]
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember],
+    // status 'invisible' = pallino grigio (offline) ma bot connesso e funzionante
+    presence: { status: 'invisible' }
 });
 
 client.config = require('./config.json');
