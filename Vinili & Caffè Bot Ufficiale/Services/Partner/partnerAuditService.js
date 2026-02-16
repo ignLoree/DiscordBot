@@ -25,9 +25,9 @@ function getPreviousRomeDateKey(baseDate = new Date()) {
 function extractInviteCode(text) {
   if (!text) return null;
   const patterns = [
-    /discord\.gg\/([a-zA-Z0-9-]+)/i,
-    /discord\.com\/invite\/([a-zA-Z0-9-]+)/i,
-    /discordapp\.com\/invite\/([a-zA-Z0-9-]+)/i
+    /discord\.gg\/([a-zA-Z0-9_-]+)/i,
+    /discord\.com\/invite\/([a-zA-Z0-9_-]+)/i,
+    /discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/i
   ];
   for (const pattern of patterns) {
     const match = String(text).match(pattern);
@@ -40,9 +40,9 @@ function extractInviteCodes(text) {
   if (!text) return [];
   const source = String(text || '');
   const patterns = [
-    /discord\.gg\/([a-zA-Z0-9-]+)/gi,
-    /discord\.com\/invite\/([a-zA-Z0-9-]+)/gi,
-    /discordapp\.com\/invite\/([a-zA-Z0-9-]+)/gi
+    /discord\.gg\/([a-zA-Z0-9_-]+)/gi,
+    /discord\.com\/invite\/([a-zA-Z0-9_-]+)/gi,
+    /discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/gi
   ];
   const out = new Set();
   for (const pattern of patterns) {
@@ -336,6 +336,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
           }
         }
 
+        let hasValidInvite = false;
         let inviteExpired = false;
         let inviteNsfw = false;
         for (const inviteCode of inviteCodes) {
@@ -347,11 +348,12 @@ async function runDailyPartnerAudit(client, opts = {}) {
           if (inviteData?.expired) {
             inviteExpired = true;
           } else if (inviteData?.ok && inviteData?.data) {
+            hasValidInvite = true;
             const nsfwLevel = Number(inviteData.data?.guild?.nsfw_level || 0);
             if (nsfwLevel > 0) inviteNsfw = true;
           }
         }
-        if (inviteExpired) reasons.push('Link invito Discord scaduto/non valido');
+        if (inviteExpired && !hasValidInvite) reasons.push('Link invito Discord scaduto/non valido');
         if (inviteNsfw) reasons.push('Server NSFW non consentito');
       }
 
@@ -367,7 +369,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
     for (const index of invalidIndices) {
       const action = actions[index];
       if (!action) continue;
-      await logPointRemoval(guild, doc.userId, `[SOLO LOG] ${invalidReasonsByIndex.get(index)}`, action);
       await logPointRemoval(guild, doc.userId, `${invalidReasonsByIndex.get(index)}`, action);
       flagged += 1;
     }

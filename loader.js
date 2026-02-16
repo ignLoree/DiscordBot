@@ -15,6 +15,7 @@ const POLL_INTERVAL_MS = 5000;
 
 const processRefs = {};
 const restarting = {};
+let npmInstallInProgress = null;
 
 function pidFile(botKey) {
     return path.resolve(baseDir, `.shard_${botKey}.pid`);
@@ -55,15 +56,31 @@ function writePid(botKey, pid) {
     }
 }
 
-function needNpmInstall(workingDir) {
-    const nodeModules = path.join(workingDir, 'node_modules');
-    const packageJson = path.join(workingDir, 'package.json');
-    if (!fs.existsSync(nodeModules)) return true;
-    if (!fs.existsSync(packageJson)) return false;
+function hasWorkspacesConfig() {
+    const rootPackageJson = path.join(baseDir, 'package.json');
+    if (!fs.existsSync(rootPackageJson)) return false;
     try {
+        const pkg = JSON.parse(fs.readFileSync(rootPackageJson, 'utf8'));
+        return Array.isArray(pkg?.workspaces) && pkg.workspaces.length > 0;
+    } catch {
+        return false;
+    }
+}
+
+function needNpmInstall(workingDir, useWorkspaces = false) {
+    const installDir = useWorkspaces ? baseDir : workingDir;
+    const nodeModules = path.join(installDir, 'node_modules');
+    const packageJson = path.join(installDir, 'package.json');
+    const packageLock = path.join(installDir, 'package-lock.json');
+
+    try {
+        if (!fs.existsSync(nodeModules)) return true;
+        if (!fs.existsSync(packageJson)) return false;
+
         const pkgMtime = fs.statSync(packageJson).mtimeMs;
+        const lockMtime = fs.existsSync(packageLock) ? fs.statSync(packageLock).mtimeMs : 0;
         const nmMtime = fs.statSync(nodeModules).mtimeMs;
-        return pkgMtime > nmMtime;
+        return Math.max(pkgMtime, lockMtime) > nmMtime;
     } catch {
         return true;
     }
@@ -76,6 +93,7 @@ function runfile(bot, options = {}) {
         const skipGitPull = Boolean(options.skipGitPull);
         const bypassDelay = Boolean(options.bypassDelay);
         const botKey = bot.key;
+        const useWorkspaces = hasWorkspacesConfig();
 
         const start = () => {
             cleanupStalePid(botKey);
@@ -108,27 +126,35 @@ function runfile(bot, options = {}) {
                 });
             };
 
-            if (!needNpmInstall(workingDir)) {
+            if (!needNpmInstall(workingDir, useWorkspaces)) {
                 doSpawn();
                 return;
             }
 
-            console.log(`[Loader] npm install in ${workingDir}`);
-            const npm = child_process.spawn('npm', [
-                'install',
-                '--no-bin-links',
-                '--prefer-offline',
-                '--cache', path.join(os.tmpdir(), '.npm-global'),
-                '--update-notifier', 'false',
-                '--prefix', workingDir
-            ], { cwd: workingDir, stdio: 'inherit' });
-
-            npm.on('exit', (code) => {
-                if (code !== 0) {
-                    console.log(`[Loader] npm install fallito (code ${code}), avvio bot comunque.`);
-                }
-                doSpawn();
-            });
+            const installDir = useWorkspaces ? baseDir : workingDir;
+            if (!npmInstallInProgress) {
+                npmInstallInProgress = new Promise((resolveInstall) => {
+                    console.log(`[Loader] npm install in ${installDir}`);
+                    const npm = child_process.spawn('npm', [
+                        'install',
+                        '--no-bin-links',
+                        '--prefer-offline',
+                        '--cache', path.join(os.tmpdir(), '.npm-global'),
+                        '--update-notifier', 'false'
+                    ], { cwd: installDir, stdio: 'inherit' });
+                    npm.on('exit', (code) => {
+                        if (code !== 0) {
+                            console.log(`[Loader] npm install fallito (code ${code}), avvio bot comunque.`);
+                        }
+                        resolveInstall();
+                    });
+                }).finally(() => {
+                    npmInstallInProgress = null;
+                });
+            } else {
+                console.log('[Loader] npm install gia in corso, attendo completamento...');
+            }
+            npmInstallInProgress.finally(() => doSpawn());
         };
 
         const delay = bypassDelay ? 0 : Number(bot.startupDelayMs || 0);

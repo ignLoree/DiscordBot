@@ -24,7 +24,12 @@ function normalizeTtsLanguageInput(raw) {
   if (Object.prototype.hasOwnProperty.call(TTS_LANGUAGE_MAP, value)) return value;
 
   for (const [code, locale] of Object.entries(TTS_LANGUAGE_MAP)) {
-    if (locale.toLowerCase() === value) return code;
+    if (locale.toLowerCase() === value) return locale;
+  }
+
+  if (/^[a-z]{2}[-_][a-z]{2}$/i.test(value)) {
+    const [lang, region] = value.replace('_', '-').split('-');
+    return `${lang.toLowerCase()}-${region.toUpperCase()}`;
   }
 
   return null;
