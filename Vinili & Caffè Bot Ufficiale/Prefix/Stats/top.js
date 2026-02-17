@@ -14,6 +14,7 @@ const {
 const IDs = require("../../Utils/Config/ids");
 const {
   getServerOverviewStats,
+  getLiveVoiceOverlay,
 } = require("../../Services/Community/activityService");
 const {
   renderTopStatisticsCanvas,
@@ -133,18 +134,45 @@ async function buildTopTextEmbed(message) {
 async function buildTopVocEmbed(message) {
   const rows = await ActivityUser.find({ guildId: message.guild.id })
     .sort({ "voice.totalSeconds": -1 })
-    .limit(TOP_LIMIT)
+    .limit(TOP_LIMIT * 8)
     .lean();
+  const liveOverlay = await getLiveVoiceOverlay(message.guild.id, null);
+  const merged = rows.map((row) => {
+    const userId = String(row?.userId || "");
+    const baseSeconds = Number(row?.voice?.totalSeconds || 0);
+    const liveSeconds = Number(liveOverlay?.userVoice?.get(userId) || 0);
+    return {
+      ...row,
+      __voiceSecondsWithLive: baseSeconds + liveSeconds,
+    };
+  });
+  const extraLiveUsers = [];
+  for (const [userId, liveSeconds] of liveOverlay.userVoice.entries()) {
+    const exists = merged.some((row) => String(row?.userId || "") === userId);
+    if (exists) continue;
+    extraLiveUsers.push({
+      userId,
+      voice: { totalSeconds: 0 },
+      __voiceSecondsWithLive: Number(liveSeconds || 0),
+    });
+  }
+  const rankedRows = [...merged, ...extraLiveUsers]
+    .sort(
+      (a, b) =>
+        Number(b?.__voiceSecondsWithLive || 0) -
+        Number(a?.__voiceSecondsWithLive || 0),
+    )
+    .slice(0, TOP_LIMIT);
 
   const members = await fetchMembers(
     message.guild,
-    rows.map((r) => r.userId),
+    rankedRows.map((r) => r.userId),
   );
   const lines = [];
-  rows.forEach((row, index) => {
+  rankedRows.forEach((row, index) => {
     const member = members.get(row.userId);
     const label = formatUserLabel(member, row.userId);
-    const totalSeconds = Number(row?.voice?.totalSeconds || 0);
+    const totalSeconds = Number(row?.__voiceSecondsWithLive || 0);
     lines.push(`${rankLabel(index)} ${label}`);
     lines.push(
       `<:VC_Reply:1468262952934314131> Tempo vocale totale: **${formatHours(totalSeconds)}** ore`,
@@ -396,12 +424,27 @@ function isTextChannelUnderVoiceCategory(guild, channel) {
   if (!guild || !channel) return false;
   const parentId = channel.parentId || channel.parent?.id;
   if (!parentId) return false;
-  return guild.channels?.cache?.some(
-    (ch) =>
-      ch.parentId === parentId &&
-      (ch.type === ChannelType.GuildVoice ||
-        ch.type === ChannelType.GuildStageVoice),
-  );
+  const siblings = guild.channels?.cache?.filter((ch) => ch.parentId === parentId);
+  if (!siblings?.size) return false;
+  let voiceCount = 0;
+  let textCount = 0;
+  for (const ch of siblings.values()) {
+    if (
+      ch.type === ChannelType.GuildVoice ||
+      ch.type === ChannelType.GuildStageVoice
+    ) {
+      voiceCount += 1;
+      continue;
+    }
+    if (
+      ch.type === ChannelType.GuildText ||
+      ch.type === ChannelType.GuildAnnouncement
+    ) {
+      textCount += 1;
+    }
+  }
+  // Treat as "voice chat companion text" only when category is mostly voice.
+  return voiceCount >= 2 && textCount <= 2;
 }
 
 async function resolveTopTextChannelEntries(guild, entries = []) {
@@ -412,7 +455,10 @@ async function resolveTopTextChannelEntries(guild, entries = []) {
     const channel =
       guild.channels?.cache?.get(channelId) ||
       (await guild.channels?.fetch(channelId).catch(() => null));
-    if (!channel) continue;
+    if (!channel) {
+      out.push(row);
+      continue;
+    }
     if (isTextChannelUnderVoiceCategory(guild, channel)) continue;
     out.push(row);
   }
@@ -440,7 +486,7 @@ async function buildTopChannelPayload(message, lookbackDays = 14, controlsView =
     stats.topChannelsVoice || [],
   );
 
-  const imageName = `top-channel-${message.guild.id}-${safeLookback}d.png`;
+  const imageName = `top-channel-${message.guild.id}-${safeLookback}d-${Date.now()}.png`;
 
   try {
     const buffer = await renderTopStatisticsCanvas({

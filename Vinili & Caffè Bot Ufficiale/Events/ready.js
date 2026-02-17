@@ -29,6 +29,10 @@ const {
   startWeeklyActivityWinnersLoop,
 } = require("../Services/Community/weeklyActivityWinnersService");
 const {
+  syncLiveVoiceSessionsFromGateway,
+  startLiveVoiceExpLoop,
+} = require("../Services/Community/activityService");
+const {
   removeExpiredTemporaryRoles,
   startTemporaryRoleCleanupLoop,
 } = require("../Services/Community/temporaryRoleService");
@@ -138,10 +142,11 @@ async function restoreBumpReminders(client) {
 }
 
 async function restoreCoreStartupState(client) {
-  const [bootstrap, inviteCache, tts] = await Promise.allSettled([
+  const [bootstrap, inviteCache, tts, liveVoiceSync] = await Promise.allSettled([
     bootstrapSupporter(client),
     primeInviteCache(client),
     restoreTtsConnections(client),
+    syncLiveVoiceSessionsFromGateway(client),
   ]);
 
   if (bootstrap.status === "rejected")
@@ -150,6 +155,8 @@ async function restoreCoreStartupState(client) {
     global.logger.error("[INVITE CACHE] Failed to prime:", inviteCache.reason);
   if (tts.status === "rejected")
     global.logger.error("[TTS RESTORE ERROR]", tts.reason);
+  if (liveVoiceSync.status === "rejected")
+    global.logger.error("[VOICE LIVE SYNC ERROR]", liveVoiceSync.reason);
 }
 
 async function runStartupPanels(client, label = "immediate") {
@@ -218,6 +225,7 @@ function startPrimaryLoops(client, engagementTick) {
   };
 
   const loopStarters = [
+    ["[LIVE VOICE EXP] Failed to start loop", () => startLiveVoiceExpLoop(client)],
     ["[MINIGAMES] Failed to start loop", () => startMinigameLoop(client)],
     [
       "[VOTE ROLE] Failed to start cleanup loop",

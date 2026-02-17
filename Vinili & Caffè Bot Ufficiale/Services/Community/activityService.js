@@ -338,12 +338,20 @@ async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
   doc.voice.weeklySeconds =
     Number(doc.voice.weeklySeconds || 0) + elapsedSeconds;
   doc.voice.sessionStartedAt = null;
-  const minutes = Math.floor(elapsedSeconds / 60);
-  if (!skipExp && minutes > 0) {
+  doc.voice.sessionChannelId = null;
+  const alreadyAwardedSeconds = Math.max(
+    0,
+    Number(doc.voice.expAwardedSeconds || 0),
+  );
+  const totalMinutes = Math.floor(elapsedSeconds / 60);
+  const alreadyAwardedMinutes = Math.floor(alreadyAwardedSeconds / 60);
+  const remainingMinutes = Math.max(0, totalMinutes - alreadyAwardedMinutes);
+  doc.voice.expAwardedSeconds = 0;
+  if (!skipExp && remainingMinutes > 0) {
     await addExpWithLevel(
       guild,
       doc.userId,
-      minutes * VOICE_EXP_PER_MINUTE,
+      remainingMinutes * VOICE_EXP_PER_MINUTE,
       true,
     );
   }
@@ -391,6 +399,8 @@ async function handleVoiceActivity(oldState, newState) {
       );
     } else {
       doc.voice.sessionStartedAt = null;
+      doc.voice.sessionChannelId = null;
+      doc.voice.expAwardedSeconds = 0;
     }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
@@ -419,12 +429,18 @@ async function handleVoiceActivity(oldState, newState) {
       );
     } else {
       doc.voice.sessionStartedAt = null;
+      doc.voice.sessionChannelId = null;
+      doc.voice.expAwardedSeconds = 0;
     }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
       await bumpHourlyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
     doc.voice.sessionStartedAt = isCountable ? now : null;
+    doc.voice.sessionChannelId = isCountable
+      ? String(newState?.channelId || "")
+      : null;
+    doc.voice.expAwardedSeconds = 0;
     await doc.save();
     return;
   }
@@ -456,6 +472,8 @@ async function handleVoiceActivity(oldState, newState) {
 
     if (!wasCountable && isCountable) {
       doc.voice.sessionStartedAt = now;
+      doc.voice.sessionChannelId = String(newState?.channelId || "");
+      doc.voice.expAwardedSeconds = 0;
       await doc.save();
       return;
     }
@@ -463,6 +481,10 @@ async function handleVoiceActivity(oldState, newState) {
 
   if (!wasInVoice && isInVoice) {
     doc.voice.sessionStartedAt = isCountable ? now : null;
+    doc.voice.sessionChannelId = isCountable
+      ? String(newState?.channelId || "")
+      : null;
+    doc.voice.expAwardedSeconds = 0;
     await doc.save();
     return;
   }
@@ -557,6 +579,70 @@ function topNFromMap(map, n = 3) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([id, value]) => ({ id, value }));
+}
+
+function toMapFromTopList(list = []) {
+  const out = new Map();
+  for (const row of Array.isArray(list) ? list : []) {
+    const id = String(row?.id || "");
+    const value = Number(row?.value || 0);
+    if (!id || value <= 0) continue;
+    out.set(id, (out.get(id) || 0) + value);
+  }
+  return out;
+}
+
+function secondsInLastNDays(startedAt, days, nowMs = Date.now()) {
+  const safeDays = Math.max(1, Math.min(31, Number(days || 1)));
+  const startMs = new Date(startedAt).getTime();
+  if (!Number.isFinite(startMs)) return 0;
+  const windowStartMs = nowMs - safeDays * DAY_MS;
+  const effectiveStartMs = Math.max(startMs, windowStartMs);
+  if (effectiveStartMs >= nowMs) return 0;
+  return Math.max(0, Math.floor((nowMs - effectiveStartMs) / 1000));
+}
+
+async function loadLiveVoiceSessions(guildId) {
+  const docs = await ActivityUser.find({
+    guildId,
+    "voice.sessionStartedAt": { $ne: null },
+  })
+    .select("userId voice.sessionStartedAt voice.sessionChannelId")
+    .lean()
+    .catch(() => []);
+  return Array.isArray(docs) ? docs : [];
+}
+
+async function getLiveVoiceOverlay(guildId, days = null) {
+  const userVoice = new Map();
+  const channelVoice = new Map();
+  let totalVoiceSeconds = 0;
+  const rows = await loadLiveVoiceSessions(guildId);
+  if (!rows.length) return { userVoice, channelVoice, totalVoiceSeconds };
+
+  const nowMs = Date.now();
+  const safeDays =
+    days == null ? null : Math.max(1, Math.min(31, Number(days || 1)));
+
+  for (const row of rows) {
+    const userId = String(row?.userId || "");
+    const startedAt = row?.voice?.sessionStartedAt;
+    const channelId = String(row?.voice?.sessionChannelId || "");
+    if (!userId || !startedAt) continue;
+    const addSeconds =
+      safeDays == null
+        ? Math.max(
+            0,
+            Math.floor((nowMs - new Date(startedAt).getTime()) / 1000),
+          )
+        : secondsInLastNDays(startedAt, safeDays, nowMs);
+    if (!addSeconds) continue;
+    pushMapValue(userVoice, userId, addSeconds);
+    if (channelId) pushMapValue(channelVoice, channelId, addSeconds);
+    totalVoiceSeconds += addSeconds;
+  }
+
+  return { userVoice, channelVoice, totalVoiceSeconds };
 }
 
 function aggregateFromRows(rows = [], dateKeys = []) {
@@ -662,6 +748,7 @@ function aggregateFromHourlyRows(rows = [], hourKeys = []) {
     topUsersVoice: topNFromMap(userVoice, 3),
     topChannelsText: topNFromMap(channelText, 3),
     topChannelsVoice: topNFromMap(channelVoice, 3),
+    contributorIds: contributors,
   };
 }
 
@@ -746,6 +833,13 @@ async function getServerActivityStats(guildId, days = 7) {
       pushMapValue(channelVoice, String(channelId || ""), Number(value || 0));
     }
   }
+  const liveOverlay = await getLiveVoiceOverlay(guildId, days);
+  for (const [userId, value] of liveOverlay.userVoice.entries()) {
+    pushMapValue(userVoice, userId, value);
+  }
+  for (const [channelId, value] of liveOverlay.channelVoice.entries()) {
+    pushMapValue(channelVoice, channelId, value);
+  }
 
   if (rows.length === 0) {
     const users = await ActivityUser.find({ guildId })
@@ -773,6 +867,10 @@ async function getServerActivityStats(guildId, days = 7) {
       retroTextTotal += textValue;
       retroVoiceTotal += voiceValue;
     }
+    for (const [userId, value] of liveOverlay.userVoice.entries()) {
+      pushMapValue(retroUserVoice, userId, value);
+    }
+    retroVoiceTotal += Number(liveOverlay.totalVoiceSeconds || 0);
 
     return {
       days: Math.max(1, Math.min(31, Number(days || 7))),
@@ -864,6 +962,65 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
         voiceSeconds: Number(point.voiceSeconds || 0),
       };
     });
+
+  const liveOverlayLookback = await getLiveVoiceOverlay(guildId, safeLookback);
+  if (liveOverlayLookback.totalVoiceSeconds > 0) {
+    const liveSessions = await loadLiveVoiceSessions(guildId);
+    const nowMs = Date.now();
+    const byUserLookback = toMapFromTopList(aggLookback.topUsersVoice);
+    const byChannelLookback = toMapFromTopList(aggLookback.topChannelsVoice);
+    const contributorSets = {
+      d1: new Set(agg1?.contributorIds || []),
+      d7: new Set(agg7?.contributorIds || []),
+      d14: new Set(agg14?.contributorIds || []),
+      d21: new Set(agg21?.contributorIds || []),
+      d30: new Set(agg30?.contributorIds || []),
+    };
+    const windowsAgg = {
+      d1: agg1,
+      d7: agg7,
+      d14: agg14,
+      d21: agg21,
+      d30: agg30,
+    };
+
+    for (const row of liveSessions) {
+      const userId = String(row?.userId || "");
+      const startedAt = row?.voice?.sessionStartedAt;
+      const channelId = String(row?.voice?.sessionChannelId || "");
+      if (!userId || !startedAt) continue;
+
+      for (const days of [1, 7, 14, 21, 30]) {
+        const key = `d${days}`;
+        const addSeconds = secondsInLastNDays(startedAt, days, nowMs);
+        if (!addSeconds) continue;
+        windowsAgg[key].totals.voiceSeconds += addSeconds;
+        contributorSets[key].add(userId);
+      }
+
+      const addLookback =
+        Number(liveOverlayLookback.userVoice.get(userId) || 0) || 0;
+      if (addLookback > 0) {
+        byUserLookback.set(userId, (byUserLookback.get(userId) || 0) + addLookback);
+        if (channelId) {
+          byChannelLookback.set(
+            channelId,
+            (byChannelLookback.get(channelId) || 0) + addLookback,
+          );
+        }
+        const lastPoint = chartPoints[chartPoints.length - 1];
+        if (lastPoint) lastPoint.voiceSeconds += addLookback;
+      }
+    }
+
+    agg1.contributors = contributorSets.d1.size;
+    agg7.contributors = contributorSets.d7.size;
+    agg14.contributors = contributorSets.d14.size;
+    agg21.contributors = contributorSets.d21.size;
+    agg30.contributors = contributorSets.d30.size;
+    aggLookback.topUsersVoice = topNFromMap(byUserLookback, 3);
+    aggLookback.topChannelsVoice = topNFromMap(byChannelLookback, 3);
+  }
 
   const hasTrackedRows = hourlyRows.length > 0;
   if (!hasTrackedRows) {
@@ -1018,6 +1175,41 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
       };
     });
 
+  const liveDoc = await ActivityUser.findOne({
+    guildId,
+    userId,
+    "voice.sessionStartedAt": { $ne: null },
+  })
+    .select("voice.sessionStartedAt voice.sessionChannelId")
+    .lean()
+    .catch(() => null);
+
+  if (liveDoc?.voice?.sessionStartedAt) {
+    const nowMs = Date.now();
+    const startedAt = liveDoc.voice.sessionStartedAt;
+    const channelId = String(liveDoc?.voice?.sessionChannelId || "");
+    const add1 = secondsInLastNDays(startedAt, 1, nowMs);
+    const add7 = secondsInLastNDays(startedAt, 7, nowMs);
+    const add14 = secondsInLastNDays(startedAt, 14, nowMs);
+    const add21 = secondsInLastNDays(startedAt, 21, nowMs);
+    const add30 = secondsInLastNDays(startedAt, 30, nowMs);
+    const addLookback = secondsInLastNDays(startedAt, safeLookback, nowMs);
+    agg1.voiceSeconds += add1;
+    agg7.voiceSeconds += add7;
+    agg14.voiceSeconds += add14;
+    agg21.voiceSeconds += add21;
+    agg30.voiceSeconds += add30;
+    if (addLookback > 0) {
+      if (channelId) {
+        const byChannel = toMapFromTopList(aggLookback.topChannelsVoice);
+        byChannel.set(channelId, (byChannel.get(channelId) || 0) + addLookback);
+        aggLookback.topChannelsVoice = topNFromMap(byChannel, 3);
+      }
+      const lastPoint = chart[chart.length - 1];
+      if (lastPoint) lastPoint.voiceSeconds += addLookback;
+    }
+  }
+
   const guildRows14 = await ActivityHourly.find({
     guildId,
     hourKey: { $in: hourKeysLookback },
@@ -1032,6 +1224,19 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
     const id = String(row?.userId || "");
     pushMapValue(rankTextMap, id, Number(row?.textCount || 0));
     pushMapValue(rankVoiceMap, id, Number(row?.voiceSeconds || 0));
+  }
+
+  const liveGuildSessions = await loadLiveVoiceSessions(guildId);
+  if (liveGuildSessions.length) {
+    const nowMs = Date.now();
+    for (const row of liveGuildSessions) {
+      const id = String(row?.userId || "");
+      const startedAt = row?.voice?.sessionStartedAt;
+      if (!id || !startedAt) continue;
+      const add = secondsInLastNDays(startedAt, safeLookback, nowMs);
+      if (!add) continue;
+      pushMapValue(rankVoiceMap, id, add);
+    }
   }
 
   let rankText = safeTopRank(rankTextMap, userId);
@@ -1098,6 +1303,155 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
   };
 }
 
+async function syncLiveVoiceSessionsFromGateway(client) {
+  if (!client?.guilds?.cache) return;
+  const now = new Date();
+
+  for (const guild of client.guilds.cache.values()) {
+    const guildId = String(guild?.id || "");
+    if (!guildId) continue;
+
+    const activeUserIds = new Set();
+    for (const state of guild.voiceStates?.cache?.values?.() || []) {
+      const member = state?.member;
+      if (!member || member.user?.bot) continue;
+      if (!isCountableVoiceState(state)) continue;
+      const userId = String(member.id || "");
+      if (!userId) continue;
+      activeUserIds.add(userId);
+
+      await ActivityUser.updateOne(
+        { guildId, userId, "voice.sessionStartedAt": { $eq: null } },
+        {
+          $set: {
+            "voice.sessionStartedAt": now,
+            "voice.sessionChannelId": String(state.channelId || ""),
+            "voice.expAwardedSeconds": 0,
+          },
+          $setOnInsert: { guildId, userId },
+        },
+        { upsert: true },
+      ).catch(() => {});
+
+      await ActivityUser.updateOne(
+        { guildId, userId, "voice.sessionStartedAt": { $ne: null } },
+        {
+          $set: {
+            "voice.sessionChannelId": String(state.channelId || ""),
+          },
+        },
+      ).catch(() => {});
+    }
+
+    const openSessions = await ActivityUser.find({
+      guildId,
+      "voice.sessionStartedAt": { $ne: null },
+    })
+      .select("userId")
+      .lean()
+      .catch(() => []);
+
+    for (const row of openSessions) {
+      const userId = String(row?.userId || "");
+      if (!userId || activeUserIds.has(userId)) continue;
+      await ActivityUser.updateOne(
+        { guildId, userId },
+        {
+          $set: {
+            "voice.sessionStartedAt": null,
+            "voice.sessionChannelId": null,
+            "voice.expAwardedSeconds": 0,
+          },
+        },
+      ).catch(() => {});
+    }
+  }
+}
+
+async function runLiveVoiceExpTick(client) {
+  if (!client?.guilds?.cache) return;
+  const nowMs = Date.now();
+  const rows = await ActivityUser.find({
+    "voice.sessionStartedAt": { $ne: null },
+  })
+    .select("guildId userId voice.sessionStartedAt voice.sessionChannelId voice.expAwardedSeconds")
+    .lean()
+    .catch(() => []);
+
+  for (const row of rows) {
+    const guildId = String(row?.guildId || "");
+    const userId = String(row?.userId || "");
+    const startedAt = row?.voice?.sessionStartedAt;
+    const channelId = String(row?.voice?.sessionChannelId || "");
+    if (!guildId || !userId || !startedAt || !channelId) continue;
+
+    const guild =
+      client.guilds.cache.get(guildId) ||
+      (await client.guilds.fetch(guildId).catch(() => null));
+    if (!guild) continue;
+
+    const member =
+      guild.members?.cache?.get(userId) ||
+      (await guild.members?.fetch(userId).catch(() => null));
+    if (!member || member.user?.bot) continue;
+
+    const elapsedSeconds = Math.max(
+      0,
+      Math.floor((nowMs - new Date(startedAt).getTime()) / 1000),
+    );
+    const alreadyAwardedSeconds = Math.max(
+      0,
+      Number(row?.voice?.expAwardedSeconds || 0),
+    );
+    const grantableMinutes = Math.floor(
+      Math.max(0, elapsedSeconds - alreadyAwardedSeconds) / 60,
+    );
+    if (grantableMinutes <= 0) continue;
+
+    const grantableSeconds = grantableMinutes * 60;
+    const ignored = await shouldIgnoreExpForMember({
+      guildId,
+      member,
+      channelId,
+    });
+
+    if (!ignored) {
+      await addExpWithLevel(
+        guild,
+        userId,
+        grantableMinutes * VOICE_EXP_PER_MINUTE,
+        true,
+      ).catch(() => {});
+    }
+
+    await ActivityUser.updateOne(
+      {
+        guildId,
+        userId,
+        "voice.sessionStartedAt": row?.voice?.sessionStartedAt || null,
+      },
+      {
+        $inc: { "voice.expAwardedSeconds": grantableSeconds },
+      },
+    ).catch(() => {});
+  }
+}
+
+function startLiveVoiceExpLoop(client, intervalMs = 15000) {
+  const safeInterval = Math.max(5000, Number(intervalMs || 15000));
+  if (client?._liveVoiceExpInterval) return client._liveVoiceExpInterval;
+  const runner = () =>
+    runLiveVoiceExpTick(client).catch((error) => {
+      global.logger?.warn?.(
+        "[LIVE VOICE EXP] Tick failed:",
+        error?.message || error,
+      );
+    });
+  runner();
+  client._liveVoiceExpInterval = setInterval(runner, safeInterval);
+  return client._liveVoiceExpInterval;
+}
+
 module.exports = {
   recordMessageActivity,
   handleVoiceActivity,
@@ -1105,4 +1459,8 @@ module.exports = {
   getServerActivityStats,
   getServerOverviewStats,
   getUserOverviewStats,
+  getLiveVoiceOverlay,
+  syncLiveVoiceSessionsFromGateway,
+  runLiveVoiceExpTick,
+  startLiveVoiceExpLoop,
 };

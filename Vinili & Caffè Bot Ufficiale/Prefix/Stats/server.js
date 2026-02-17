@@ -88,12 +88,26 @@ function isTextChannelUnderVoiceCategory(guild, channel) {
   if (!guild || !channel) return false;
   const parentId = channel.parentId || channel.parent?.id;
   if (!parentId) return false;
-  return guild.channels?.cache?.some(
-    (ch) =>
-      ch.parentId === parentId &&
-      (ch.type === ChannelType.GuildVoice ||
-        ch.type === ChannelType.GuildStageVoice),
-  );
+  const siblings = guild.channels?.cache?.filter((ch) => ch.parentId === parentId);
+  if (!siblings?.size) return false;
+  let voiceCount = 0;
+  let textCount = 0;
+  for (const ch of siblings.values()) {
+    if (
+      ch.type === ChannelType.GuildVoice ||
+      ch.type === ChannelType.GuildStageVoice
+    ) {
+      voiceCount += 1;
+      continue;
+    }
+    if (
+      ch.type === ChannelType.GuildText ||
+      ch.type === ChannelType.GuildAnnouncement
+    ) {
+      textCount += 1;
+    }
+  }
+  return voiceCount >= 2 && textCount <= 2;
 }
 
 async function resolveUserLabel(guild, userId) {
@@ -176,7 +190,7 @@ async function buildServerOverviewPayload(guild, lookbackDays = 14, wantsEmbed =
   const dLookback = safeWindow(stats?.windows, lookbackKey);
   const enriched = await enrichTops(guild, stats);
 
-  const imageName = `server-overview-${guild.id}-${lookbackDays}d.png`;
+  const imageName = `server-overview-${guild.id}-${lookbackDays}d-${Date.now()}.png`;
   let file = null;
   try {
     const buffer = await renderServerActivityCanvas({

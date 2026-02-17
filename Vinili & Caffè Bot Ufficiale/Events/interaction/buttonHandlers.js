@@ -24,8 +24,15 @@ const MAX_ROWS_PER_MESSAGE = 5;
 
 function parseServerRefreshCustomId(customId) {
   const raw = String(customId || "");
-  if (!raw.startsWith(`${SERVER_REFRESH_CUSTOM_ID_PREFIX}:`)) return null;
-  const [, lookbackRaw, modeRaw] = raw.split(":");
+  if (
+    raw !== SERVER_REFRESH_CUSTOM_ID_PREFIX &&
+    !raw.startsWith(`${SERVER_REFRESH_CUSTOM_ID_PREFIX}:`)
+  ) {
+    return null;
+  }
+  const parts = raw.split(":");
+  const lookbackRaw = parts[1] || "14";
+  const modeRaw = parts[2] || "image";
   const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
   const safeLookback = [7, 14, 21, 30].includes(lookback) ? lookback : 14;
   const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
@@ -40,10 +47,14 @@ function parseMeCustomId(rawCustomId) {
     ME_PERIOD_SET_CUSTOM_ID_PREFIX,
     ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
   ];
-  const prefix = prefixes.find((item) => raw.startsWith(`${item}:`));
+  const prefix = prefixes.find(
+    (item) => raw === item || raw.startsWith(`${item}:`),
+  );
   if (!prefix) return null;
 
-  const [, lookbackRaw, modeRaw] = raw.split(":");
+  const parts = raw.split(":");
+  const lookbackRaw = parts[1] || "14";
+  const modeRaw = parts[2] || "image";
   const lookbackDays = normalizeLookbackDays(lookbackRaw || "14");
   const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
   return { prefix, lookbackDays, wantsEmbed };
@@ -57,9 +68,12 @@ function parseTopChannelCustomId(rawCustomId) {
     TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
     TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
   ];
-  const prefix = prefixes.find((item) => raw.startsWith(`${item}:`));
+  const prefix = prefixes.find(
+    (item) => raw === item || raw.startsWith(`${item}:`),
+  );
   if (!prefix) return null;
-  const [, lookbackRaw] = raw.split(":");
+  const parts = raw.split(":");
+  const lookbackRaw = parts[1] || "14";
   const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
   const lookbackDays = [1, 7, 14, 21, 30].includes(lookback) ? lookback : 14;
   return { prefix, lookbackDays };

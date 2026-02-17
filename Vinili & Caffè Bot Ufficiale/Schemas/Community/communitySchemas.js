@@ -19,6 +19,8 @@ const activityUserSchema = new Schema(
       dailyKey: { type: String, default: "" },
       weeklyKey: { type: String, default: "" },
       sessionStartedAt: { type: Date, default: null },
+      sessionChannelId: { type: String, default: null },
+      expAwardedSeconds: { type: Number, default: 0 },
     },
   },
   { timestamps: true },
