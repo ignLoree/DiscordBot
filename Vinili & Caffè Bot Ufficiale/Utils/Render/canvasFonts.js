@@ -11,6 +11,15 @@ const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK = [
   `"${COLOR_EMOJI_FONT}"`,
+  '"Noto Sans CJK JP"',
+  '"Noto Sans CJK SC"',
+  '"Noto Sans CJK TC"',
+  '"Noto Sans JP"',
+  '"Noto Sans KR"',
+  '"Noto Sans SC"',
+  '"Noto Sans TC"',
+  '"Arial Unicode MS"',
+  '"DejaVu Sans"',
   '"Segoe UI"',
   '"Calibri"',
   '"Tahoma"',

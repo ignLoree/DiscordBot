@@ -77,7 +77,7 @@ function buildPeriodControlsRows(lookbackDays, wantsEmbed) {
       .setCustomId(
         `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
-      .setLabel("<")
+      .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:1:${mode}`)

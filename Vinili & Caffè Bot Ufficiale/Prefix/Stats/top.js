@@ -20,6 +20,11 @@ const {
 
 const TOP_LIMIT = 10;
 const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
+const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set(
+  [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
+    .filter(Boolean)
+    .map(String),
+);
 const TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX = "stats_top_channel_refresh";
 const TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_top_channel_period_open";
 const TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX = "stats_top_channel_period_set";
@@ -279,6 +284,11 @@ function normalizeLookbackDays(raw) {
   return [1, 7, 14, 21, 30].includes(parsed) ? parsed : 14;
 }
 
+function hasReadableLatinOrNumber(value) {
+  const text = String(value || "");
+  return /[A-Za-z0-9À-ÖØ-öø-ÿ]/.test(text);
+}
+
 function buildTopChannelMainControlsRow(lookbackDays) {
   const safeLookback = normalizeLookbackDays(lookbackDays);
   return new ActionRowBuilder().addComponents(
@@ -298,7 +308,7 @@ function buildTopChannelPeriodControlsRows(lookbackDays) {
   const topRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeLookback}`)
-      .setLabel("<")
+      .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:1`)
@@ -339,7 +349,10 @@ async function resolveTopUserEntries(guild, entries = []) {
   const out = [];
   for (const item of entries) {
     const userId = String(item?.id || "");
-    const displayName = await resolveDisplayName(guild, userId);
+    const rawDisplayName = await resolveDisplayName(guild, userId);
+    const displayName = hasReadableLatinOrNumber(rawDisplayName)
+      ? rawDisplayName
+      : `<@${userId}>`;
     out.push({
       id: userId,
       label: displayName,
@@ -350,15 +363,22 @@ async function resolveTopUserEntries(guild, entries = []) {
 }
 
 async function resolveTopChannelEntries(guild, entries = []) {
+  const afkIds = new Set(
+    [guild?.afkChannelId, IDs.channels?.vocaleAFK]
+      .filter(Boolean)
+      .map((x) => String(x)),
+  );
   const out = [];
   for (const item of entries) {
     const channelId = String(item?.id || "");
+    if (afkIds.has(channelId)) continue;
     const channel =
       guild.channels?.cache?.get(channelId) ||
       (await guild.channels?.fetch(channelId).catch(() => null));
+    const rawLabel = channel ? `#${channel.name}` : `#${channelId}`;
     out.push({
       id: channelId,
-      label: channel ? `#${channel.name}` : `#${channelId}`,
+      label: hasReadableLatinOrNumber(rawLabel) ? rawLabel : `#${channelId}`,
       value: Number(item?.value || 0),
     });
   }
@@ -400,29 +420,16 @@ async function buildTopChannelPayload(message, lookbackDays = 14, controlsView =
     });
     return {
       files: [new AttachmentBuilder(buffer, { name: imageName })],
-      embeds: [
-        new EmbedBuilder()
-          .setColor("#6f4e37")
-          .setTitle(`Top Channel • ${safeLookback}d`)
-          .setImage(`attachment://${imageName}`),
-      ],
+      embeds: [],
+      content: null,
       components: buildTopChannelComponents(safeLookback, controlsView),
     };
   } catch (error) {
     global.logger?.warn?.("[TOP CHANNEL] Canvas render failed:", error);
-    const fallback = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle(`Top Channel • ${safeLookback}d`)
-      .setDescription(
-        [
-          `Messaggi utenti: ${topUsersText.map((x) => `**${x.label}** (${x.value})`).join(", ") || "N/A"}`,
-          `Messaggi canali: ${topChannelsText.map((x) => `**${x.label}** (${x.value})`).join(", ") || "N/A"}`,
-          `Vocale utenti: ${topUsersVoice.map((x) => `**${x.label}** (${formatHours(x.value)}h)`).join(", ") || "N/A"}`,
-          `Vocale canali: ${topChannelsVoice.map((x) => `**${x.label}** (${formatHours(x.value)}h)`).join(", ") || "N/A"}`,
-        ].join("\n"),
-      );
     return {
-      embeds: [fallback],
+      embeds: [],
+      content:
+        "<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine top channel.",
       components: buildTopChannelComponents(safeLookback, controlsView),
     };
   }
@@ -436,7 +443,11 @@ async function sendLeaderboardPayload(message, payload, mode) {
     channel: { noun: "canali", button: "Vai alla classifica canali" },
   };
   const meta = labels[mode] || labels.text;
-  const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
+  const channelId = String(message.channel.id || "");
+  const shouldRedirect =
+    mode === "channel"
+      ? !TOP_CHANNEL_DIRECT_CHANNEL_IDS.has(channelId)
+      : channelId !== LEADERBOARD_CHANNEL_ID;
 
   if (!shouldRedirect) {
     await safeMessageReply(message, {

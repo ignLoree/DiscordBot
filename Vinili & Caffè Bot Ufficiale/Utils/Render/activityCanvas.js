@@ -70,12 +70,12 @@ function fitText(ctx, text, maxWidth, size = 16, weight = "600") {
 function prepareVisibleText(value) {
   const raw = String(value || "");
   const protectedMap = new Map([
-    ["\u0F04", "__VC_KEEP_TIBETAN_MARK__"],
     ["\u00B9", "__VC_KEEP_SUP_1__"],
     ["\u00B2", "__VC_KEEP_SUP_2__"],
     ["\u00B3", "__VC_KEEP_SUP_3__"],
   ]);
   const compatibilityMap = new Map([
+    // Hard fallback for hosts where U+0F04 (༄) is not rendered by canvas/font stack
     ["\u0F04", "\u2736"],
     ["\uFE32", "\u2502"],
     ["\u1CBC", "\u00B7"],
@@ -566,23 +566,23 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
   fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
   strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
   drawLabel(ctx, title, x + 14, y + 24, {
-    size: 27,
+    size: 22,
     weight: "700",
     color: "#e2e7ef",
   });
 
-  const rowHeight = 72;
-  const gap = 10;
+  const rowHeight = 70;
+  const gap = 8;
   const startY = y + 44;
 
   for (let i = 0; i < 3; i += 1) {
     const row = rows?.[i] || { label: "N/A", value: 0 };
     const rowY = startY + i * (rowHeight + gap);
     fillRoundRect(ctx, x + 14, rowY, w - 28, rowHeight, 12, "rgba(12, 18, 28, 0.95)");
-    fillRoundRect(ctx, x + 14, rowY, 78, rowHeight, 12, "rgba(10, 16, 27, 0.95)");
+    fillRoundRect(ctx, x + 14, rowY, 74, rowHeight, 12, "rgba(10, 16, 27, 0.95)");
 
-    drawLabel(ctx, String(i + 1), x + 53, rowY + rowHeight / 2, {
-      size: 24,
+    drawLabel(ctx, String(i + 1), x + 51, rowY + rowHeight / 2, {
+      size: 22,
       weight: "800",
       color: "#e0e5ed",
       align: "center",
@@ -591,18 +591,31 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
     await drawLabelWithEmoji(
       ctx,
       fitText(ctx, prepareVisibleText(row.label || "N/A"), w - 280, 24, "700"),
-      x + 104,
+      x + 96,
       rowY + rowHeight / 2,
       { size: 24, weight: "700", color: "#e0e5ed", align: "left" },
     );
 
-    drawLabel(
-      ctx,
-      unit ? `${row.value} ${unit}` : String(row.value ?? 0),
-      x + w - 26,
-      rowY + rowHeight / 2,
-      { size: 24, weight: "800", color: "#d5dbe5", align: "right" },
+    const valueText = unit ? `${row.value} ${unit}` : String(row.value ?? 0);
+    const valueWidth = Math.min(
+      w - 260,
+      Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),
     );
+    fillRoundRect(
+      ctx,
+      x + w - 14 - valueWidth,
+      rowY + 10,
+      valueWidth,
+      rowHeight - 20,
+      10,
+      "rgba(30, 39, 54, 0.95)",
+    );
+    drawLabel(ctx, valueText, x + w - 26, rowY + rowHeight / 2, {
+      size: 24,
+      weight: "800",
+      color: "#d5dbe5",
+      align: "right",
+    });
   }
 }
 
@@ -934,10 +947,10 @@ async function renderTopStatisticsCanvas({
   await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
   await drawLabelWithEmoji(
     ctx,
-    fitText(ctx, guildName || "Server", 820, 52, "700"),
+    fitText(ctx, guildName || "Server", 820, 46, "700"),
     124,
     52,
-    { size: 52, weight: "700", color: "#eef3fb" },
+    { size: 46, weight: "700", color: "#eef3fb" },
   );
   drawLabel(ctx, "Top Statistics", 124, 88, {
     size: 28,
@@ -945,8 +958,8 @@ async function renderTopStatisticsCanvas({
     color: "#bfc8d6",
   });
 
-  drawLabel(ctx, "# Messages", 24, 152, {
-    size: 48,
+  drawLabel(ctx, "# Messages", 24, 150, {
+    size: 44,
     weight: "700",
     color: "#e2e7ef",
   });
@@ -979,8 +992,8 @@ async function renderTopStatisticsCanvas({
     { unit: "msg" },
   );
 
-  drawLabel(ctx, "Voice Activity", 24, 512, {
-    size: 48,
+  drawLabel(ctx, "Voice Activity", 24, 510, {
+    size: 44,
     weight: "700",
     color: "#e2e7ef",
   });
@@ -1013,11 +1026,17 @@ async function renderTopStatisticsCanvas({
     { unit: "h" },
   );
 
-  drawLabel(ctx, `Lookback: Last ${safeLookback} days • Timezone: Europe/Rome`, 24, 844, {
-    size: 20,
-    weight: "700",
-    color: "#cfd6e2",
-  });
+  drawLabel(
+    ctx,
+    `Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`,
+    24,
+    844,
+    {
+      size: 20,
+      weight: "700",
+      color: "#cfd6e2",
+    },
+  );
 
   return canvas.toBuffer("image/png");
 }
