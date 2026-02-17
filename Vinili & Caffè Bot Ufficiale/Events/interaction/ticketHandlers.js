@@ -201,12 +201,7 @@ async function handleTicketInteraction(interaction) {
     if (!interaction.client.ticketCategoryCache) {
       interaction.client.ticketCategoryCache = new Map();
     }
-    const getTopCategoryPosition = () => {
-      const categories = guild.channels.cache.filter((ch) => ch.type === 4);
-      if (!categories.size) return 1;
-      const maxRaw = Math.max(...categories.map((ch) => Number(ch.rawPosition || 0)));
-      return maxRaw + 1;
-    };
+    const getTopCategoryPosition = () => 0;
     const moveCategoryToTop = async (category) => {
       if (!category || category.type !== 4) return;
       const topPos = getTopCategoryPosition();
@@ -234,10 +229,10 @@ async function handleTicketInteraction(interaction) {
     }
 
     await guild.channels.fetch().catch(() => null);
-    const ticketCategories = guild.channels.cache
+      const ticketCategories = guild.channels.cache
       .filter((ch) => ch.type === 4 && isTicketCategoryName(ch.name))
       .sort(
-        (a, b) => b.rawPosition - a.rawPosition || a.id.localeCompare(b.id),
+        (a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id),
       );
 
     const exactCategory = ticketCategories.find(

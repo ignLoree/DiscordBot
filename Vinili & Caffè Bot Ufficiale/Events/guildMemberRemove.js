@@ -46,6 +46,15 @@ function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
 }
 
+function formatTodayAt(date = new Date()) {
+  return new Intl.DateTimeFormat("it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Rome",
+  }).format(date);
+}
+
 async function resolveGuildChannel(guild, channelId) {
   if (!guild || !channelId) return null;
   return (
@@ -59,21 +68,20 @@ async function sendLeaveLog(member) {
     member.guild,
     JOIN_LEAVE_LOG_CHANNEL_ID,
   );
-  if (!channel || member.user?.bot) return;
+  if (!channel) return;
 
+  const now = new Date();
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Left")
     .setDescription(
       [
-        `${member.user} ${member.user.tag}`,
+        `${member.user} ${member.user.tag}.`,
         "",
-        `**User ID:** ${member.user.id}`,
-        `**Left At:** <t:${toUnix(new Date())}:F>`,
+        `ID: ${member.user.id} • Oggi alle ${formatTodayAt(now)}`,
       ].join("\n"),
     )
-    .setThumbnail(member.user.displayAvatarURL({ size: 128 }))
-    .setTimestamp();
+    .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await channel.send({ embeds: [embed] }).catch((err) => {
     global.logger.error("[guildMemberRemove] Failed to send leave log:", err);

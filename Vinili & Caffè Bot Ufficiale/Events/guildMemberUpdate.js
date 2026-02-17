@@ -1,4 +1,8 @@
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const {
+  EmbedBuilder,
+  PermissionsBitField,
+  AuditLogEvent,
+} = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
@@ -28,6 +32,135 @@ const PLUS_COLOR_ROLE_IDS = [
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
+
+function formatRomeDate(date = new Date()) {
+  return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Rome",
+  }).format(date);
+}
+
+function toRelativeDiscordTime(value) {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return null;
+  return `<t:${Math.floor(ms / 1000)}:R>`;
+}
+
+async function resolveActivityLogChannel(guild) {
+  const channelId = IDs.channels.activityLogs;
+  if (!guild || !channelId) return null;
+  return (
+    guild.channels.cache.get(channelId) ||
+    (await guild.channels.fetch(channelId).catch(() => null))
+  );
+}
+
+function didNickChange(oldMember, newMember) {
+  return String(oldMember?.nickname || "") !== String(newMember?.nickname || "");
+}
+
+function didTimeoutChange(oldMember, newMember) {
+  const oldTs = oldMember?.communicationDisabledUntilTimestamp || 0;
+  const newTs = newMember?.communicationDisabledUntilTimestamp || 0;
+  return Number(oldTs) !== Number(newTs);
+}
+
+function buildNickChangeLine(oldMember, newMember) {
+  const oldNick = String(oldMember?.nickname || "").trim() || "❌";
+  const newNick = String(newMember?.nickname || "").trim() || "❌";
+  return `${oldNick} 〉 ${newNick}`;
+}
+
+function buildTimeoutChangeLine(oldMember, newMember) {
+  const oldTs = oldMember?.communicationDisabledUntilTimestamp || 0;
+  const newTs = newMember?.communicationDisabledUntilTimestamp || 0;
+  const oldLabel = oldTs ? toRelativeDiscordTime(oldTs) : "❌";
+  const newLabel = newTs ? toRelativeDiscordTime(newTs) : "❌ (Reset)";
+  return `${oldLabel} 〉 ${newLabel}`;
+}
+
+async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
+  if (
+    !guild?.members?.me?.permissions?.has?.(
+      PermissionsBitField.Flags.ViewAuditLog,
+    )
+  ) {
+    return { executor: guild?.client?.user || null, reason: null };
+  }
+
+  const logs = await guild
+    .fetchAuditLogs({ type: AuditLogEvent.MemberUpdate, limit: 8 })
+    .catch(() => null);
+  if (!logs?.entries?.size) {
+    return { executor: guild?.client?.user || null, reason: null };
+  }
+
+  const nowMs = Date.now();
+  const entry = logs.entries.find((item) => {
+    const createdMs = Number(item?.createdTimestamp || 0);
+    const targetId = String(item?.target?.id || "");
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    return withinWindow && targetId === String(targetUserId || "");
+  });
+
+  return {
+    executor: entry?.executor || guild?.client?.user || null,
+    reason: entry?.reason || null,
+  };
+}
+
+async function sendMemberUpdateLog(oldMember, newMember) {
+  const guild = newMember?.guild || oldMember?.guild;
+  if (!guild || !newMember?.user) return;
+
+  const nickChanged = didNickChange(oldMember, newMember);
+  const timeoutChanged = didTimeoutChange(oldMember, newMember);
+  if (!nickChanged && !timeoutChanged) return;
+
+  const logChannel = await resolveActivityLogChannel(guild);
+  if (!logChannel?.isTextBased?.()) return;
+
+  const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
+  const responsibleText = audit.executor
+    ? `${audit.executor} \`${audit.executor.id}\``
+    : "sconosciuto";
+
+  const lines = [
+    `▸ **Responsible:** ${responsibleText}`,
+    `▸ **Target:** ${newMember.user} \`${newMember.user.id}\``,
+    `▸ ${formatRomeDate(new Date())}`,
+  ];
+
+  if (audit.reason) {
+    lines.push(`▸ **Reason:** ${audit.reason}`);
+  }
+
+  lines.push("", "**Changes**");
+
+  if (timeoutChanged) {
+    lines.push("▸ **Communication Disabled Until**");
+    lines.push(`  ${buildTimeoutChangeLine(oldMember, newMember)}`);
+  }
+
+  if (nickChanged) {
+    lines.push("▸ **Nick**");
+    lines.push(`  ${buildNickChangeLine(oldMember, newMember)}`);
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Update")
+    .setDescription(lines.join("\n"));
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
 
 function hasManageRolesPermission(member) {
   const me = member.guild.members.me;
@@ -216,6 +349,8 @@ module.exports = {
   name: "guildMemberUpdate",
   async execute(oldMember, newMember, client) {
     try {
+      await sendMemberUpdateLog(oldMember, newMember);
+
       if (
         newMember?.guild?.id === IDs.guilds.main &&
         rolesChanged(oldMember, newMember)

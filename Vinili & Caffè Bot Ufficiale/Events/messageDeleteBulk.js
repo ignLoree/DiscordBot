@@ -1,0 +1,143 @@
+﻿const {
+  EmbedBuilder,
+  AttachmentBuilder,
+  AuditLogEvent,
+  PermissionsBitField,
+} = require("discord.js");
+const IDs = require("../Utils/Config/ids");
+
+function formatRomeDate(date = new Date()) {
+  return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Rome",
+  }).format(date);
+}
+
+function sanitizeText(value) {
+  return String(value || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildPurgeLogText(messages, channelId) {
+  const rows = [];
+  const ordered = Array.from(messages?.values?.() || []).sort((a, b) => {
+    const at = Number(a?.createdTimestamp || 0);
+    const bt = Number(b?.createdTimestamp || 0);
+    return at - bt;
+  });
+
+  rows.push(`------ ${channelId || "unknown"}`);
+  rows.push("");
+
+  for (const msg of ordered) {
+    const authorId = String(msg?.author?.id || "sconosciuto");
+    const content = sanitizeText(msg?.content || "(vuoto)");
+    rows.push(`[${authorId}] ${content}`);
+
+    const attachments = msg?.attachments ? Array.from(msg.attachments.values()) : [];
+    if (attachments.length) {
+      const list = attachments
+        .map((a) => String(a?.url || a?.name || ""))
+        .filter(Boolean)
+        .join(", ");
+      if (list) rows.push(`attachments: ${list}`);
+    }
+    rows.push("");
+  }
+
+  rows.push("--------------------");
+  rows.push("");
+  return rows.join("\n");
+}
+
+async function resolveActivityLogChannel(guild) {
+  const channelId = IDs.channels.activityLogs;
+  if (!guild || !channelId) return null;
+  return (
+    guild.channels.cache.get(channelId) ||
+    (await guild.channels.fetch(channelId).catch(() => null))
+  );
+}
+
+async function resolvePurgeResponsible(guild, channelId, deletedCount, fallbackUser) {
+  if (
+    !guild?.members?.me?.permissions?.has?.(
+      PermissionsBitField.Flags.ViewAuditLog,
+    )
+  ) {
+    return fallbackUser;
+  }
+
+  const logs = await guild
+    .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 6 })
+    .catch(() => null);
+  if (!logs?.entries?.size) return fallbackUser;
+
+  const nowMs = Date.now();
+  const entry = logs.entries.find((item) => {
+    const createdMs = Number(item?.createdTimestamp || 0);
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    const sameChannel = String(item?.extra?.channel?.id || "") === String(channelId || "");
+    const count = Number(item?.extra?.count || 0);
+    const countCompatible = !count || count === Number(deletedCount || 0);
+    return withinWindow && sameChannel && countCompatible;
+  });
+
+  return entry?.executor || fallbackUser;
+}
+
+module.exports = {
+  name: "messageDeleteBulk",
+  async execute(messages, client) {
+    if (!messages?.size) return;
+
+    const sample = messages.first();
+    const guild = sample?.guild;
+    const channel = sample?.channel;
+    if (!guild || !channel) return;
+
+    const logChannel = await resolveActivityLogChannel(guild);
+    if (!logChannel?.isTextBased?.()) return;
+
+    const count = Number(messages.size || 0);
+    if (count <= 0) return;
+
+    const responsible = await resolvePurgeResponsible(
+      guild,
+      channel.id,
+      count,
+      client?.user || null,
+    );
+
+    const nowText = formatRomeDate(new Date());
+    const embed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setTitle("Messages Purged")
+      .setDescription(
+        [
+          `▸ **Responsible:** ${responsible ? `${responsible} \`${responsible.id}\`` : "sconosciuto"}`,
+          `▸ **Target:** ${channel} \`${channel.id}\``,
+          `▸ ${nowText}`,
+          "",
+          "**Additional Information**",
+          `〉 **Count:** ${count}`,
+        ].join("\n"),
+      );
+
+    const txt = buildPurgeLogText(messages, channel.id);
+    const fileName = `${channel.id}_${sample?.id || Date.now()}.txt`;
+    const file = new AttachmentBuilder(Buffer.from(txt, "utf8"), {
+      name: fileName,
+    });
+
+    await logChannel.send({ embeds: [embed], files: [file] }).catch(() => {});
+  },
+};

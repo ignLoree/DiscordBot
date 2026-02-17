@@ -18,6 +18,15 @@ function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
 }
 
+function formatTodayAt(date = new Date()) {
+  return new Intl.DateTimeFormat("it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Rome",
+  }).format(date);
+}
+
 function formatAccountAge(createdAt) {
   const now = Date.now();
   const ageMs = now - createdAt.getTime();
@@ -398,20 +407,21 @@ async function sendJoinLog(member) {
   if (!joinLeaveLogChannel) return;
 
   const accountAge = formatAccountAge(member.user.createdAt);
+  const now = new Date();
   const joinLogEmbed = new EmbedBuilder()
     .setColor("#57F287")
     .setTitle("Member Joined")
     .setDescription(
       [
-        `${member.user} ${member.user.tag}`,
+        `${member.user} ${member.user.tag}.`,
         "",
-        `**Account Age:** ${accountAge}`,
-        `**User ID:** ${member.user.id}`,
-        `**Joined At:** <t:${toUnix(new Date())}:F>`,
+        "**Account Age**",
+        accountAge,
+        "",
+        `ID: ${member.user.id} • Oggi alle ${formatTodayAt(now)}`,
       ].join("\n"),
     )
-    .setThumbnail(member.user.displayAvatarURL({ size: 128 }))
-    .setTimestamp();
+    .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await joinLeaveLogChannel.send({ embeds: [joinLogEmbed] }).catch((err) => {
     global.logger.error("[guildMemberAdd] Failed to send join log:", err);
@@ -471,6 +481,7 @@ module.exports = {
   async execute(member) {
     try {
       if (member.user?.bot) {
+        await sendJoinLog(member);
         await handleBotJoin(member);
         return;
       }
