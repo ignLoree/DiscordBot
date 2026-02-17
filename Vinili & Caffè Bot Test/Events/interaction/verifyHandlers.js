@@ -85,6 +85,15 @@ function makeWrongAnswerEmbed() {
     );
 }
 
+function makeVerifyStartRow() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("verify_start")
+      .setLabel("Verify")
+      .setStyle(ButtonStyle.Success),
+  );
+}
+
 function makeVerifiedEmbed(serverName) {
   return new EmbedBuilder()
     .setColor("#57f287")
@@ -113,6 +122,11 @@ function isUnknownInteraction(error) {
   return error?.code === 10062;
 }
 
+function isAlreadyAcknowledged(error) {
+  const code = error?.code || error?.rawError?.code;
+  return code === 40060 || code === "InteractionAlreadyReplied";
+}
+
 function sanitizeEmbedText(value) {
   return String(value || "")
     .replace(/[\\`*_~|>]/g, "\\$&")
@@ -127,6 +141,18 @@ async function safeReply(interaction, payload) {
     else await interaction.reply(payload);
   } catch (error) {
     if (isUnknownInteraction(error)) return false;
+    if (isAlreadyAcknowledged(error)) {
+      try {
+        if (interaction.deferred && !interaction.replied)
+          await interaction.editReply(payload);
+        else await interaction.followUp(payload);
+      } catch (nestedError) {
+        if (isUnknownInteraction(nestedError) || isAlreadyAcknowledged(nestedError))
+          return false;
+        throw nestedError;
+      }
+      return true;
+    }
     throw error;
   }
   return true;
@@ -138,6 +164,7 @@ async function safeDeferReply(interaction, payload) {
       await interaction.deferReply(payload);
   } catch (error) {
     if (isUnknownInteraction(error)) return false;
+    if (isAlreadyAcknowledged(error)) return true;
     throw error;
   }
   return true;
@@ -145,11 +172,24 @@ async function safeDeferReply(interaction, payload) {
 
 async function safeEditReply(interaction, payload) {
   try {
-    if (interaction.deferred || interaction.replied)
+    if (interaction.deferred)
       await interaction.editReply(payload);
+    else if (interaction.replied) await interaction.followUp(payload);
     else await interaction.reply(payload);
   } catch (error) {
     if (isUnknownInteraction(error)) return false;
+    if (isAlreadyAcknowledged(error)) {
+      try {
+        if (interaction.deferred && !interaction.replied)
+          await interaction.editReply(payload);
+        else await interaction.followUp(payload);
+      } catch (nestedError) {
+        if (isUnknownInteraction(nestedError) || isAlreadyAcknowledged(nestedError))
+          return false;
+        throw nestedError;
+      }
+      return true;
+    }
     throw error;
   }
   return true;
@@ -464,12 +504,7 @@ async function handleVerifyInteraction(interaction) {
         verifyState.delete(interaction.user.id);
         try {
           await interaction.deferUpdate();
-          const retryRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("verify_start")
-              .setLabel("Verify")
-              .setStyle(ButtonStyle.Success),
-          );
+          const retryRow = makeVerifyStartRow();
           await interaction.message
             .edit({
               embeds: [makeExpiredEmbed()],
@@ -481,6 +516,7 @@ async function handleVerifyInteraction(interaction) {
           if (!interaction.replied && !interaction.deferred) {
             await safeReply(interaction, {
               embeds: [makeExpiredEmbed()],
+              components: [makeVerifyStartRow()],
               flags: 1 << 6,
             });
           }
@@ -521,29 +557,21 @@ async function handleVerifyInteraction(interaction) {
     const state = verifyState.get(interaction.user.id);
     if (!state || Date.now() > state.expiresAt) {
       verifyState.delete(interaction.user.id);
-      try {
-        await interaction.deferUpdate();
-        const retryRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("verify_start")
-            .setLabel("Verify")
-            .setStyle(ButtonStyle.Success),
-        );
-        await interaction.message
+      const retryRow = makeVerifyStartRow();
+      if (state?.promptMessage) {
+        await state.promptMessage
           .edit({
             embeds: [makeExpiredEmbed()],
             components: [retryRow],
             files: [],
           })
           .catch(() => {});
-      } catch {
-        if (!interaction.replied && !interaction.deferred) {
-          await safeReply(interaction, {
-            embeds: [makeExpiredEmbed()],
-            flags: 1 << 6,
-          });
-        }
       }
+      await safeReply(interaction, {
+        embeds: [makeExpiredEmbed()],
+        components: [makeVerifyStartRow()],
+        flags: 1 << 6,
+      });
       return true;
     }
 
@@ -554,29 +582,21 @@ async function handleVerifyInteraction(interaction) {
       state.attemptsLeft -= 1;
       if (state.attemptsLeft <= 0) {
         verifyState.delete(interaction.user.id);
-        try {
-          await interaction.deferUpdate();
-          const retryRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("verify_start")
-              .setLabel("Verify")
-              .setStyle(ButtonStyle.Success),
-          );
-          await interaction.message
+        const retryRow = makeVerifyStartRow();
+        if (state?.promptMessage) {
+          await state.promptMessage
             .edit({
               embeds: [makeExpiredEmbed()],
               components: [retryRow],
               files: [],
             })
             .catch(() => {});
-        } catch {
-          if (!interaction.replied && !interaction.deferred) {
-            await safeReply(interaction, {
-              embeds: [makeExpiredEmbed()],
-              flags: 1 << 6,
-            });
-          }
         }
+        await safeReply(interaction, {
+          embeds: [makeExpiredEmbed()],
+          components: [makeVerifyStartRow()],
+          flags: 1 << 6,
+        });
         return true;
       }
       verifyState.set(interaction.user.id, state);

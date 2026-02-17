@@ -201,6 +201,17 @@ async function handleTicketInteraction(interaction) {
     if (!interaction.client.ticketCategoryCache) {
       interaction.client.ticketCategoryCache = new Map();
     }
+    const getTopCategoryPosition = () => {
+      const categories = guild.channels.cache.filter((ch) => ch.type === 4);
+      if (!categories.size) return 1;
+      const maxRaw = Math.max(...categories.map((ch) => Number(ch.rawPosition || 0)));
+      return maxRaw + 1;
+    };
+    const moveCategoryToTop = async (category) => {
+      if (!category || category.type !== 4) return;
+      const topPos = getTopCategoryPosition();
+      await category.setPosition(topPos).catch(() => {});
+    };
     const getChildrenCount = (categoryId) =>
       guild.channels.cache.filter((ch) => ch.parentId === categoryId).size;
 
@@ -214,7 +225,10 @@ async function handleTicketInteraction(interaction) {
       if (cachedCategory && cachedCategory.type === 4) {
         if (isTicketCategoryName(cachedCategory.name)) {
           const isFull = getChildrenCount(cachedCategory.id) >= 50;
-          if (!isFull) return cachedCategory;
+          if (!isFull) {
+            await moveCategoryToTop(cachedCategory);
+            return cachedCategory;
+          }
         }
       }
     }
@@ -223,7 +237,7 @@ async function handleTicketInteraction(interaction) {
     const ticketCategories = guild.channels.cache
       .filter((ch) => ch.type === 4 && isTicketCategoryName(ch.name))
       .sort(
-        (a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id),
+        (a, b) => b.rawPosition - a.rawPosition || a.id.localeCompare(b.id),
       );
 
     const exactCategory = ticketCategories.find(
@@ -231,6 +245,7 @@ async function handleTicketInteraction(interaction) {
     );
     if (exactCategory) {
       if (getChildrenCount(exactCategory.id) < 50) {
+        await moveCategoryToTop(exactCategory);
         interaction.client.ticketCategoryCache.set(guild.id, exactCategory.id);
         return exactCategory;
       }
@@ -250,6 +265,7 @@ async function handleTicketInteraction(interaction) {
         }
       }
       if (getChildrenCount(firstTicketCategory.id) < 50) {
+        await moveCategoryToTop(firstTicketCategory);
         interaction.client.ticketCategoryCache.set(
           guild.id,
           firstTicketCategory.id,
@@ -266,6 +282,7 @@ async function handleTicketInteraction(interaction) {
       existingWithExactName &&
       getChildrenCount(existingWithExactName.id) < 50
     ) {
+      await moveCategoryToTop(existingWithExactName);
       interaction.client.ticketCategoryCache.set(
         guild.id,
         existingWithExactName.id,
@@ -275,6 +292,7 @@ async function handleTicketInteraction(interaction) {
     const category = await guild.channels
       .create({
         name: TICKETS_CATEGORY_NAME,
+        position: getTopCategoryPosition(),
         type: 4,
         permissionOverwrites: [
           {
@@ -285,7 +303,7 @@ async function handleTicketInteraction(interaction) {
       })
       .catch(() => null);
     if (!category) return null;
-    await category.setPosition(0).catch(() => {});
+    await moveCategoryToTop(category);
     interaction.client.ticketCategoryCache.set(guild.id, category.id);
     return category;
   }

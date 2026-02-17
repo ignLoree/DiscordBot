@@ -142,25 +142,7 @@ async function runPanelsWithRetry(client, sponsorIds) {
 }
 
 async function refreshLists(client) {
-  try {
-    const { refreshTodoMessage } = require("../Utils/Todo/todoListService");
-    await refreshTodoMessage(client);
-  } catch (err) {
-    global.logger.error(
-      "[Bot Test] To-do list refresh on ready:",
-      err?.message || err,
-    );
-  }
-
-  try {
-    const { refreshBugMessage } = require("../Utils/Bug/bugListService");
-    await refreshBugMessage(client);
-  } catch (err) {
-    global.logger.error(
-      "[Bot Test] Bug list refresh on ready:",
-      err?.message || err,
-    );
-  }
+  return client;
 }
 
 async function cleanupMessage(channel, messageId) {

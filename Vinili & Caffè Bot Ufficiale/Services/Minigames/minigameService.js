@@ -1,4 +1,5 @@
 const axios = require("axios");
+const { createCanvas } = require("canvas");
 const {
   EmbedBuilder,
   ActionRowBuilder,
@@ -27,6 +28,8 @@ const lastSentAtByChannel = new Map();
 const startingChannels = new Set();
 
 const REWARD_CHANNEL_ID = IDs.channels.commands;
+const MINIGAME_WIN_EMOJI = "<a:VC_Verified:1448687631109197978>";
+const MINIGAMES_ITALIAN_ONLY = true;
 const EXP_REWARDS = [
   { exp: 100, roleId: IDs.roles.Initiate },
   { exp: 500, roleId: IDs.roles.Rookie },
@@ -387,6 +390,19 @@ const HANGMAN_WORDS = [
   "patente",
 ];
 
+const ITALIAN_GK_DEFAULT_CATEGORIES = [
+  "cultura-generale",
+  "storia",
+  "geografia",
+  "scienza",
+  "arte",
+  "musica",
+  "sport",
+  "letteratura",
+  "cinema",
+  "tecnologia",
+];
+
 function getConfig(client) {
   const cfg = client?.config?.minigames || null;
   if (!cfg) return null;
@@ -578,10 +594,6 @@ async function loadWordList(cfg) {
     } catch {}
   }
 
-  if (!list.length) {
-    list = Array.isArray(cfg?.guessWord?.words) ? cfg.guessWord.words : [];
-  }
-
   const filtered = list.map(normalizeWord).filter(isValidWord);
 
   cachedWords = filtered;
@@ -597,6 +609,8 @@ function collectCountryNames(country) {
     const compact = buildCompactAlias(value);
     if (compact) names.add(compact);
   };
+  add(country?.translations?.ita?.common);
+  add(country?.translations?.ita?.official);
   add(country?.name?.common);
   add(country?.name?.official);
   const nativeNames = country?.name?.nativeName || {};
@@ -638,7 +652,10 @@ async function loadCountryList(cfg) {
       const flagUrl =
         country?.flags?.png || country?.flags?.svg || country?.flags?.[0];
       const displayName =
-        country?.name?.common || country?.name?.official || null;
+        country?.translations?.ita?.common ||
+        country?.name?.common ||
+        country?.name?.official ||
+        null;
       if (!names.length || !flagUrl || !displayName) return null;
       return { names, flagUrl, displayName };
     })
@@ -669,6 +686,147 @@ function decodeHtmlEntities(value) {
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
+}
+
+function safeDecodeURIComponent(value) {
+  try {
+    return decodeURIComponent(String(value || ""));
+  } catch {
+    return String(value || "");
+  }
+}
+
+function decodeQuizText(value) {
+  return decodeHtmlEntities(safeDecodeURIComponent(value));
+}
+
+function isLikelyItalianText(value) {
+  const normalized = normalizeCountryName(value);
+  if (!normalized) return false;
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  if (!tokens.length) return false;
+
+  const italianHints = new Set([
+    "il",
+    "lo",
+    "la",
+    "i",
+    "gli",
+    "le",
+    "un",
+    "una",
+    "di",
+    "del",
+    "della",
+    "che",
+    "con",
+    "per",
+    "quale",
+    "quando",
+    "dove",
+    "come",
+    "chi",
+    "quanti",
+    "cosa",
+  ]);
+  const englishHints = new Set([
+    "the",
+    "what",
+    "which",
+    "when",
+    "where",
+    "who",
+    "how",
+    "is",
+    "are",
+    "was",
+    "were",
+    "of",
+    "in",
+    "on",
+  ]);
+
+  let itScore = 0;
+  let enScore = 0;
+  for (const token of tokens) {
+    if (italianHints.has(token)) itScore += 1;
+    if (englishHints.has(token)) enScore += 1;
+  }
+
+  return itScore >= enScore;
+}
+
+function buildItalianGkApiUrls(cfg) {
+  const rawUrls = Array.isArray(cfg?.italianGK?.apiUrls)
+    ? cfg.italianGK.apiUrls
+    : cfg?.italianGK?.apiUrl
+      ? [cfg.italianGK.apiUrl]
+      : [];
+
+  const categories =
+    Array.isArray(cfg?.italianGK?.categories) && cfg.italianGK.categories.length
+      ? cfg.italianGK.categories
+      : ITALIAN_GK_DEFAULT_CATEGORIES;
+
+  const out = [];
+  for (const raw of rawUrls) {
+    const base = String(raw || "").trim();
+    if (!base) continue;
+
+    if (base.includes("{category}")) {
+      const shuffled = categories.slice();
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      for (const category of shuffled) {
+        out.push(
+          base
+            .replace(/\{category\}/g, encodeURIComponent(category))
+            .replace(/\{lang\}/g, "it"),
+        );
+      }
+      continue;
+    }
+
+    out.push(base.replace(/\{lang\}/g, "it"));
+  }
+
+  return out;
+}
+
+function parseItalianGkQuestionFromPayload(payload) {
+  const direct = payload && typeof payload === "object" ? payload : null;
+  if (direct?.question && (direct?.answer || direct?.correct_answer)) {
+    return {
+      question: decodeQuizText(direct.question),
+      answers: buildAliases([
+        decodeQuizText(direct.answer || direct.correct_answer),
+      ]),
+    };
+  }
+
+  const list = Array.isArray(direct?.data)
+    ? direct.data
+    : Array.isArray(direct?.results)
+      ? direct.results
+      : Array.isArray(payload)
+        ? payload
+        : [];
+  if (!list.length) return null;
+
+  const pick = pickRandomItem(list);
+  if (!pick) return null;
+  const question =
+    pick.question || pick.domanda || pick.q || pick.text || null;
+  const answer =
+    pick.answer || pick.correct_answer || pick.risposta || pick.a || null;
+  if (!question || !answer) return null;
+
+  return {
+    question: decodeQuizText(question),
+    answers: buildAliases([decodeQuizText(answer)]),
+  };
 }
 
 async function fetchWikiRegionImage(regionName) {
@@ -729,13 +887,7 @@ async function loadCapitalQuestionBank(cfg) {
     }
   } catch {}
 
-  cachedCapitalQuestions = out.length
-    ? out
-    : CAPITAL_QUIZ_BANK.map((x) => ({
-        country: x.country,
-        answers: buildAliases(x.answers),
-        image: null,
-      }));
+  cachedCapitalQuestions = out;
   cachedCapitalQuestionsAt = now;
   return cachedCapitalQuestions;
 }
@@ -772,12 +924,7 @@ async function loadRegionCapitalQuestionBank(cfg) {
     } catch {}
   }
 
-  cachedRegionCapitalQuestions = out.length
-    ? out
-    : ITALIAN_REGION_CAPITAL_BANK.map((x) => ({
-        region: x.region,
-        answers: buildAliases(x.answers),
-      }));
+  cachedRegionCapitalQuestions = out;
   cachedRegionCapitalQuestionsAt = now;
   return cachedRegionCapitalQuestions;
 }
@@ -793,7 +940,18 @@ async function loadFootballTeamsFromApi(cfg) {
   const leagues =
     Array.isArray(cfg?.guessTeam?.leagues) && cfg.guessTeam.leagues.length
       ? cfg.guessTeam.leagues
-      : ["Italian Serie A", "English Premier League", "Spanish La Liga"];
+      : ["Italian Serie A",
+        "English Premier League",
+        "Spanish La Liga",
+        "German Bundesliga",
+        "French Ligue 1",
+        "Dutch Eredivisie",
+        "Belgian Pro League",
+        "Portuguese Primeira Liga",
+        "Saudi Pro League",
+        "Italian Serie B",
+        "English League Championship",
+        "American Major League Soccer"];
   const out = [];
   for (const league of leagues) {
     try {
@@ -813,13 +971,7 @@ async function loadFootballTeamsFromApi(cfg) {
     } catch {}
   }
 
-  cachedTeams = out.length
-    ? out
-    : FOOTBALL_TEAM_BANK.map((x) => ({
-        team: x.team,
-        answers: buildAliases(x.answers),
-        image: x.image,
-      }));
+  cachedTeams = out;
   cachedTeamsAt = now;
   return cachedTeams;
 }
@@ -849,13 +1001,7 @@ async function loadSingersFromApi(cfg) {
     }
   } catch {}
 
-  cachedSingers = out.length
-    ? out
-    : SINGER_BANK.map((x) => ({
-        name: x.name,
-        answers: buildAliases(x.answers),
-        image: x.image,
-      }));
+  cachedSingers = out;
   cachedSingersAt = now;
   return cachedSingers;
 }
@@ -886,14 +1032,7 @@ async function loadAlbumsFromApi(cfg) {
     }
   } catch {}
 
-  cachedAlbums = out.length
-    ? out
-    : ALBUM_BANK.map((x) => ({
-        album: x.album,
-        artist: x.artist,
-        answers: buildAliases(x.answers),
-        image: x.image,
-      }));
+  cachedAlbums = out;
   cachedAlbumsAt = now;
   return cachedAlbums;
 }
@@ -1025,8 +1164,8 @@ function isSongGuessCorrect(rawGuess, rawAnswers) {
 function normalizeTruthValue(raw) {
   const v = normalizeCountryName(raw);
   if (!v) return null;
-  if (["vero", "true", "v"].includes(v)) return true;
-  if (["falso", "false", "f"].includes(v)) return false;
+  if (["vero", "v"].includes(v)) return true;
+  if (["falso", "f"].includes(v)) return false;
   return null;
 }
 
@@ -1042,26 +1181,110 @@ function buildAliases(values = []) {
 }
 
 function createMathQuestion() {
-  const ops = ["+", "-", "*", "/"];
-  const op = ops[randomBetween(0, ops.length - 1)];
-  let a = randomBetween(2, 35);
-  let b = randomBetween(2, 20);
-  if (op === "-") {
-    if (b > a) [a, b] = [b, a];
-    return { expression: `${a} - ${b}`, answer: String(a - b) };
+  const formatAnswer = (value) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return String(value);
+    if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
+    return String(Number(num.toFixed(2)));
+  };
+
+  const generators = [
+    () => {
+      const a = randomBetween(2, 60);
+      const b = randomBetween(2, 60);
+      const c = randomBetween(2, 40);
+      return {
+        expression: `${a} + ${b} + ${c}`,
+        answer: formatAnswer(a + b + c),
+      };
+    },
+    () => {
+      let a = randomBetween(40, 120);
+      const b = randomBetween(2, 50);
+      const c = randomBetween(2, 30);
+      if (a < b + c) a = b + c + randomBetween(5, 25);
+      return {
+        expression: `${a} - ${b} - ${c}`,
+        answer: formatAnswer(a - b - c),
+      };
+    },
+    () => {
+      const a = randomBetween(2, 14);
+      const b = randomBetween(2, 12);
+      const c = randomBetween(2, 6);
+      return {
+        expression: `${a} × ${b} × ${c}`,
+        answer: formatAnswer(a * b * c),
+      };
+    },
+    () => {
+      const divisor = randomBetween(2, 12);
+      const result = randomBetween(2, 20);
+      const dividend = divisor * result;
+      return {
+        expression: `${dividend} ÷ ${divisor}`,
+        answer: formatAnswer(result),
+      };
+    },
+    () => {
+      const root = randomBetween(2, 20);
+      const n = root * root;
+      return {
+        expression: `√${n}`,
+        answer: formatAnswer(root),
+      };
+    },
+    () => {
+      const a = randomBetween(2, 18);
+      const b = randomBetween(2, 12);
+      const c = randomBetween(2, 20);
+      const d = randomBetween(2, 14);
+      const left = a * b;
+      return {
+        expression: `(${a} × ${b}) + ${c} - ${d}`,
+        answer: formatAnswer(left + c - d),
+      };
+    },
+    () => {
+      const root = randomBetween(2, 12);
+      const n = root * root;
+      const a = randomBetween(2, 30);
+      const b = randomBetween(2, 20);
+      return {
+        expression: `√${n} + ${a} - ${b}`,
+        answer: formatAnswer(root + a - b),
+      };
+    },
+  ];
+
+  const pick = generators[randomBetween(0, generators.length - 1)];
+  return pick();
+}
+
+function buildMathExpressionImageAttachment(expression) {
+  try {
+    const width = 1200;
+    const height = 420;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#171717";
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "#6f4e37";
+    ctx.fillRect(24, 24, width - 48, height - 48);
+
+    ctx.fillStyle = "#f7f1e8";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 120px Sans";
+    ctx.fillText(String(expression || ""), width / 2, height / 2);
+
+    const name = "math_expression.png";
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), { name });
+  } catch {
+    return null;
   }
-  if (op === "*") {
-    a = randomBetween(2, 12);
-    b = randomBetween(2, 12);
-    return { expression: `${a} x ${b}`, answer: String(a * b) };
-  }
-  if (op === "/") {
-    b = randomBetween(2, 12);
-    const result = randomBetween(2, 12);
-    a = b * result;
-    return { expression: `${a} : ${b}`, answer: String(result) };
-  }
-  return { expression: `${a} + ${b}`, answer: String(a + b) };
 }
 
 function maskHangmanWord(word, guessed = new Set()) {
@@ -1205,11 +1428,18 @@ function buildPlayerAnswerAliases(name, aliases = []) {
     const compact = buildCompactAlias(value);
     if (compact) out.add(compact);
     const tokens = normalized ? normalized.split(/\s+/).filter(Boolean) : [];
+    if (tokens.length > 0) {
+      for (const token of tokens) {
+        if (token.length >= 3) out.add(token);
+      }
+    }
     if (tokens.length > 1) {
       const surname = tokens[tokens.length - 1];
-      if (surname && surname.length >= 4) out.add(surname);
+      if (surname && surname.length >= 3) out.add(surname);
       const knownName = tokens[0];
-      if (knownName && knownName.length >= 4) out.add(knownName);
+      if (knownName && knownName.length >= 3) out.add(knownName);
+      const compoundSurname = tokens.slice(-2).join(" ").trim();
+      if (compoundSurname.length >= 5) out.add(compoundSurname);
     }
   };
   add(name);
@@ -1302,30 +1532,7 @@ async function fetchFamousPlayer(cfg) {
   const customNames = Array.isArray(cfg?.guessPlayer?.famousNames)
     ? cfg.guessPlayer.famousNames
     : [];
-  const defaultNames = [
-    "Kylian Mbappe",
-    "Erling Haaland",
-    "Jude Bellingham",
-    "Vinicius Junior",
-    "Robert Lewandowski",
-    "Mohamed Salah",
-    "Kevin De Bruyne",
-    "Harry Kane",
-    "Bukayo Saka",
-    "Phil Foden",
-    "Rodri",
-    "Lautaro Martinez",
-    "Victor Osimhen",
-    "Nicolas Barella",
-    "Pedri",
-    "Antoine Griezmann",
-    "Bruno Fernandes",
-    "Son Heung-min",
-    "Florian Wirtz",
-    "Jamal Musiala",
-  ];
-
-  const names = (customNames.length ? customNames : defaultNames)
+  const names = customNames
     .map((name) => String(name || "").trim())
     .filter(Boolean);
   if (!names.length) return null;
@@ -1453,7 +1660,10 @@ async function loadPopularSongList(cfg) {
 
   const feeds = Array.isArray(cfg?.guessSong?.popularFeeds)
     ? cfg.guessSong.popularFeeds
-    : [];
+    : [
+        "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
+        "https://itunes.apple.com/us/rss/topsongs/limit=100/json",
+      ];
   for (const feed of feeds) {
     if (!feed) continue;
     try {
@@ -1876,9 +2086,14 @@ function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
     );
 }
 
-function buildMathExpressionEmbed(expression, rewardExp, durationMs) {
+function buildMathExpressionEmbed(
+  expression,
+  rewardExp,
+  durationMs,
+  imageName = null,
+) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  return new EmbedBuilder()
+  const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Espressione matematica .")
     .setDescription(
@@ -1888,6 +2103,8 @@ function buildMathExpressionEmbed(expression, rewardExp, durationMs) {
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
+  if (imageName) embed.setImage(`attachment://${imageName}`);
+  return embed;
 }
 
 function buildFindBotEmbed(durationMs) {
@@ -2177,22 +2394,20 @@ function buildTimeoutMathEmbed(answer) {
 
 function getAvailableGameTypes(cfg) {
   const types = [];
-  if (cfg?.guessNumber) types.push("guessNumber");
-  if (cfg?.guessWord) types.push("guessWord");
-  if (cfg?.guessFlag) types.push("guessFlag");
-  if (cfg?.guessPlayer) types.push("guessPlayer");
+  if (cfg?.guessWord?.apiUrl) types.push("guessWord");
+  if (cfg?.guessFlag?.apiUrl) types.push("guessFlag");
+  if (cfg?.guessPlayer?.apiUrl) types.push("guessPlayer");
   if (cfg?.guessSong) types.push("guessSong");
   if (cfg?.guessCapital !== false) types.push("guessCapital");
-  if (cfg?.guessRegionCapital !== false) types.push("guessRegionCapital");
-  if (cfg?.fastType !== false) types.push("fastType");
-  if (cfg?.guessTeam !== false) types.push("guessTeam");
-  if (cfg?.guessSinger !== false) types.push("guessSinger");
-  if (cfg?.guessAlbum !== false) types.push("guessAlbum");
-  if (cfg?.hangman !== false) types.push("hangman");
-  if (cfg?.italianGK !== false) types.push("italianGK");
-  if (cfg?.drivingQuiz !== false) types.push("drivingQuiz");
+  if (cfg?.guessRegionCapital?.apiUrl) types.push("guessRegionCapital");
+  if (cfg?.fastType?.apiUrl) types.push("fastType");
+  if (cfg?.guessTeam) types.push("guessTeam");
+  if (cfg?.guessSinger) types.push("guessSinger");
+  if (cfg?.guessAlbum) types.push("guessAlbum");
+  if (cfg?.hangman?.apiUrl) types.push("hangman");
+  if (cfg?.italianGK?.apiUrl) types.push("italianGK");
+  if (cfg?.drivingQuiz?.apiUrl) types.push("drivingQuiz");
   if (cfg?.mathExpression !== false) types.push("mathExpression");
-  if (cfg?.findBot) types.push("findBot");
   return types;
 }
 
@@ -2575,18 +2790,8 @@ async function startGuessPlayerGame(client, cfg) {
     (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  const onlyFamous = cfg?.guessPlayer?.onlyFamous !== false;
   let info = await fetchFamousPlayer(cfg);
-  if (!info) {
-    const names = await loadPlayerList(cfg);
-    if (names.length) {
-      const randomName = names[randomBetween(0, names.length - 1)];
-      info = await fetchPlayerInfo(cfg, randomName);
-    }
-  }
-  if (!info && !onlyFamous) {
-    info = await fetchPlayerFromRandomLetter(cfg);
-  }
+  if (!info) info = await fetchPlayerFromRandomLetter(cfg);
   if (!info) return false;
 
   const roleId = cfg.roleId;
@@ -2920,11 +3125,14 @@ async function startFastTypeGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const phrases =
-    Array.isArray(cfg?.fastType?.phrases) && cfg.fastType.phrases.length
-      ? cfg.fastType.phrases
-      : FAST_TYPING_PHRASES;
-  const phrase = String(pickRandomItem(phrases) || "").trim();
+  const apiUrl = cfg?.fastType?.apiUrl || null;
+  if (!apiUrl) return false;
+  let phrase = "";
+  try {
+    const res = await axios.get(apiUrl, { timeout: 15000 });
+    const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
+    phrase = String(payload?.phrase || payload?.text || payload || "").trim();
+  } catch {}
   if (!phrase) return false;
 
   const rewardExp = Number(cfg?.fastType?.rewardExp || 100);
@@ -3203,10 +3411,20 @@ async function startHangmanGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const words =
-    Array.isArray(cfg?.hangman?.words) && cfg.hangman.words.length
-      ? cfg.hangman.words
-      : HANGMAN_WORDS;
+  const apiUrl = cfg?.hangman?.apiUrl || null;
+  if (!apiUrl) return false;
+  let words = [];
+  try {
+    const res = await axios.get(apiUrl, { timeout: 15000 });
+    const list = Array.isArray(res?.data)
+      ? res.data
+      : Array.isArray(res?.data?.words)
+        ? res.data.words
+        : [];
+    words = list.map((v) => String(v || "").trim()).filter(Boolean);
+  } catch {}
+  if (!words.length) return false;
+
   const word = normalizeCountryName(pickRandomItem(words));
   if (!word) return false;
 
@@ -3281,30 +3499,21 @@ async function startItalianGkGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const apiUrl = cfg?.italianGK?.apiUrl || null;
+  const apiUrls = buildItalianGkApiUrls(cfg);
+  if (!apiUrls.length) return false;
   let questionRow = null;
-  if (apiUrl) {
+  const requireItalian = cfg?.italianGK?.requireItalian !== false;
+  for (const apiUrl of apiUrls) {
     try {
       const res = await axios.get(apiUrl, { timeout: 15000 });
-      const payload = Array.isArray(res?.data)
-        ? pickRandomItem(res.data)
-        : res?.data;
-      if (payload?.question && payload?.answer) {
-        questionRow = {
-          question: decodeHtmlEntities(payload.question),
-          answers: buildAliases([decodeHtmlEntities(payload.answer)]),
-        };
-      }
+      const parsed = parseItalianGkQuestionFromPayload(res?.data);
+      if (!parsed?.question || !parsed?.answers?.length) continue;
+      if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
+      questionRow = parsed;
+      break;
     } catch {}
   }
-  if (!questionRow) {
-    const fallback = pickRandomItem(ITALIAN_GK_BANK);
-    if (!fallback) return false;
-    questionRow = {
-      question: fallback.question,
-      answers: buildAliases(fallback.answers),
-    };
-  }
+  if (!questionRow) return false;
   if (!questionRow.answers.length) return false;
 
   const rewardExp = Number(cfg?.italianGK?.rewardExp || 140);
@@ -3378,7 +3587,24 @@ async function startItalianGkGame(client, cfg) {
 async function startDrivingQuizGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
-  const row = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
+  const apiUrl = cfg?.drivingQuiz?.apiUrl || null;
+  if (!apiUrl) return false;
+  let row = null;
+  try {
+    const res = await axios.get(apiUrl, { timeout: 15000 });
+    const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
+    if (payload?.statement != null && payload?.answer != null) {
+      const parsedAnswer =
+        typeof payload.answer === "boolean"
+          ? payload.answer
+          : normalizeTruthValue(String(payload.answer));
+      if (parsedAnswer === null) return false;
+      row = {
+        statement: String(payload.statement),
+        answer: parsedAnswer,
+      };
+    }
+  } catch {}
   if (!row) return false;
 
   const rewardExp = Number(cfg?.drivingQuiz?.rewardExp || 120);
@@ -3462,9 +3688,19 @@ async function startMathExpressionGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const expressionAttachment = buildMathExpressionImageAttachment(row.expression);
+  const files = expressionAttachment ? [expressionAttachment] : [];
   const gameMessage = await channel
     .send({
-      embeds: [buildMathExpressionEmbed(row.expression, rewardExp, durationMs)],
+      embeds: [
+        buildMathExpressionEmbed(
+          row.expression,
+          rewardExp,
+          durationMs,
+          expressionAttachment?.name || null,
+        ),
+      ],
+      files,
     })
     .catch(() => null);
 
@@ -3655,6 +3891,33 @@ async function startFindBotGame(client, cfg) {
   return true;
 }
 
+async function safeStartGameByType(client, cfg, gameType) {
+  try {
+    if (gameType === "guessWord") return startGuessWordGame(client, cfg);
+    if (gameType === "guessFlag") return startGuessFlagGame(client, cfg);
+    if (gameType === "guessPlayer") return startGuessPlayerGame(client, cfg);
+    if (gameType === "guessSong") return startGuessSongGame(client, cfg);
+    if (gameType === "guessCapital") return startGuessCapitalGame(client, cfg);
+    if (gameType === "guessRegionCapital")
+      return startGuessRegionCapitalGame(client, cfg);
+    if (gameType === "fastType") return startFastTypeGame(client, cfg);
+    if (gameType === "guessTeam") return startGuessTeamGame(client, cfg);
+    if (gameType === "guessSinger") return startGuessSingerGame(client, cfg);
+    if (gameType === "guessAlbum") return startGuessAlbumGame(client, cfg);
+    if (gameType === "hangman") return startHangmanGame(client, cfg);
+    if (gameType === "italianGK") return startItalianGkGame(client, cfg);
+    if (gameType === "drivingQuiz") return startDrivingQuizGame(client, cfg);
+    if (gameType === "mathExpression")
+      return startMathExpressionGame(client, cfg);
+    if (gameType === "findBot") return startFindBotGame(client, cfg);
+    if (gameType === "guessNumber") return startGuessNumberGame(client, cfg);
+    return false;
+  } catch (error) {
+    global.logger.error(`[MINIGAMES] Start failed for ${gameType}:`, error);
+    return false;
+  }
+}
+
 async function maybeStartRandomGame(client, force = false) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return;
@@ -3707,38 +3970,7 @@ async function maybeStartRandomGame(client, force = false) {
       }
       tried.add(gameType);
 
-      let started = false;
-      if (gameType === "guessWord")
-        started = await startGuessWordGame(client, cfg);
-      else if (gameType === "guessFlag")
-        started = await startGuessFlagGame(client, cfg);
-      else if (gameType === "guessPlayer")
-        started = await startGuessPlayerGame(client, cfg);
-      else if (gameType === "guessSong")
-        started = await startGuessSongGame(client, cfg);
-      else if (gameType === "guessCapital")
-        started = await startGuessCapitalGame(client, cfg);
-      else if (gameType === "guessRegionCapital")
-        started = await startGuessRegionCapitalGame(client, cfg);
-      else if (gameType === "fastType")
-        started = await startFastTypeGame(client, cfg);
-      else if (gameType === "guessTeam")
-        started = await startGuessTeamGame(client, cfg);
-      else if (gameType === "guessSinger")
-        started = await startGuessSingerGame(client, cfg);
-      else if (gameType === "guessAlbum")
-        started = await startGuessAlbumGame(client, cfg);
-      else if (gameType === "hangman")
-        started = await startHangmanGame(client, cfg);
-      else if (gameType === "italianGK")
-        started = await startItalianGkGame(client, cfg);
-      else if (gameType === "drivingQuiz")
-        started = await startDrivingQuizGame(client, cfg);
-      else if (gameType === "mathExpression")
-        started = await startMathExpressionGame(client, cfg);
-      else if (gameType === "findBot")
-        started = await startFindBotGame(client, cfg);
-      else started = await startGuessNumberGame(client, cfg);
+      const started = await safeStartGameByType(client, cfg, gameType);
 
       if (started) {
         pendingGames.delete(cfg.channelId);
@@ -3807,6 +4039,7 @@ async function awardWinAndReply(message, rewardExp) {
       false,
     );
   } catch {}
+  await message.react(MINIGAME_WIN_EMOJI).catch(() => {});
   await message
     .reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] })
     .catch(() => {});
@@ -4131,15 +4364,19 @@ async function handleMinigameMessage(message, client) {
       .replace(",", ".")
       .trim();
     if (!/^-?\d+(\.\d+)?$/.test(numeric)) return false;
-    if (numeric === String(game.answer)) {
+    const guessNum = Number(numeric);
+    const answerNum = Number(String(game.answer).replace(",", "."));
+    if (
+      Number.isFinite(guessNum) &&
+      Number.isFinite(answerNum) &&
+      Math.abs(guessNum - answerNum) <= 0.01
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    const guessNum = Number(numeric);
-    const answerNum = Number(game.answer);
     if (
       Number.isFinite(guessNum) &&
       Number.isFinite(answerNum) &&

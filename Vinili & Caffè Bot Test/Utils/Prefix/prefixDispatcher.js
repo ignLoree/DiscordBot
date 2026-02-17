@@ -1,5 +1,10 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
+const {
+  checkPrefixPermission,
+  getPrefixRequiredRoles,
+  buildGlobalPermissionDeniedEmbed,
+} = require("../Moderation/commandPermissions");
 
 const PREFIXES = ["-"];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
@@ -45,6 +50,25 @@ async function dispatchPrefixMessage(message, client) {
   const args = tokens;
 
   if (command) {
+    const subcommandName = args[0] ? String(args[0]).toLowerCase() : null;
+    const allowed = await checkPrefixPermission(
+      message,
+      String(command.name || invokedName).toLowerCase(),
+      subcommandName,
+    );
+    if (!allowed) {
+      const requiredRoles = getPrefixRequiredRoles(
+        String(command.name || invokedName).toLowerCase(),
+        subcommandName,
+      );
+      await message
+        .reply({
+          embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
+        })
+        .catch(() => {});
+      return true;
+    }
+
     try {
       const result = await command.execute(message, args, client, {
         invokedName,
@@ -56,12 +80,20 @@ async function dispatchPrefixMessage(message, client) {
     }
   }
 
+  const availableCommands = Array.from(client.pcommands.keys())
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => `\`${PREFIXES[0]}${name}\``)
+    .join(", ");
+
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
       "<:ticket:1472994083524837396> **Bot Test** gestisce solo **ticket** e **verifica** su questo server.\n" +
-        "I comandi (prefix e slash) sono sul **bot principale** (Vinili & Caffe Bot).\n" +
-        "Usa i **bottoni** e il **menù** nel canale ticket per aprire un ticket.",
+        "I comandi (prefix e slash) principali sono sul **bot ufficiale**.\n" +
+        (availableCommands
+          ? `Comandi disponibili qui: ${availableCommands}\n`
+          : "") +
+        "Usa i **bottoni** e il **menu** nel canale ticket per aprire un ticket.",
     );
   await message.reply({ embeds: [embed] }).catch(() => {});
   return true;

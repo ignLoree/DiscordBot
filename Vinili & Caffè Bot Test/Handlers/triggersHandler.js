@@ -1,4 +1,5 @@
-﻿const fs = require("fs");
+const ascii = require("ascii-table");
+const fs = require("fs");
 const path = require("path");
 
 const LEGACY_READY_EVENT = "ready";
@@ -37,7 +38,7 @@ module.exports = (client) => {
     const root = basePath || process.cwd();
     const files = listTriggerFiles(root);
     const triggersRoot = path.join(root, "Triggers");
-    const statusRows = [];
+    const statusMap = new Map();
     let loaded = 0;
 
     for (const file of files) {
@@ -45,37 +46,43 @@ module.exports = (client) => {
         const triggerPath = path.join(triggersRoot, file);
         delete require.cache[require.resolve(triggerPath)];
         const trigger = require(triggerPath);
-        if (!trigger?.name || typeof trigger.execute !== "function") {
-          statusRows.push({ file, status: "Skipped non-trigger module" });
+        if (!trigger?.name) {
+          statusMap.set(file, "Missing name");
           continue;
         }
 
         const eventName = normalizeEventName(trigger.name);
         const handler = (...args) => trigger.execute(...args, client);
-        const bind = trigger.once
-          ? client.once.bind(client)
-          : client.on.bind(client);
-        bind(eventName, handler);
+
+        if (trigger.once) {
+          if (eventName === READY_EVENT_ALIAS && client.isReady()) {
+            Promise.resolve(handler(client)).catch((err) => {
+              global.logger.error(`[TRIGGERS] Failed to run ${file} on hot-reload:`, err);
+            });
+          } else {
+            client.once(eventName, handler);
+          }
+        } else {
+          client.on(eventName, handler);
+        }
 
         trackBoundHandler(client, "_triggerHandlers", eventName, handler);
-        statusRows.push({
-          file,
-          status:
-            eventName === trigger.name ? "Loaded" : `Loaded as ${eventName}`,
-        });
+        statusMap.set(file, eventName === trigger.name ? "Loaded" : `Loaded as ${eventName}`);
         loaded += 1;
       } catch (err) {
-        statusRows.push({ file, status: "Error loading" });
-        global.logger.error(
-          `[Bot Test][TRIGGERS] Failed to load ${file}:`,
-          err,
-        );
+        statusMap.set(file, "Error loading");
+        global.logger.error(`[TRIGGERS] Failed to load ${file}:`, err);
       }
     }
 
-    for (const row of statusRows.sort((a, b) => a.file.localeCompare(b.file))) {
-      global.logger.info(`[Bot Test][TRIGGERS] ${row.status} ${row.file}`);
+    const table = new ascii().setHeading("Folder", "File", "Status");
+    for (const [file, status] of Array.from(statusMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0]),
+    )) {
+      table.addRow("root", file, status);
     }
-    global.logger.info(`[Bot Test][TRIGGERS] Loaded ${loaded} trigger(s).`);
+
+    global.logger.info(table.toString());
+    global.logger.info(`[TRIGGERS] Loaded ${loaded} triggers.`);
   };
 };

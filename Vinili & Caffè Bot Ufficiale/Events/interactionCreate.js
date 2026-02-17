@@ -30,6 +30,15 @@ const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED =
   "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffe.";
 
+function isAckError(error) {
+  const code = error?.code || error?.rawError?.code;
+  return (
+    code === 40060 ||
+    code === 10062 ||
+    code === "InteractionAlreadyReplied"
+  );
+}
+
 function buildDeniedEmbed(gate, controlLabel) {
   if (gate.reason === "not_owner") {
     return buildGlobalNotYourControlEmbed();
@@ -52,12 +61,22 @@ function buildDeniedEmbed(gate, controlLabel) {
 async function sendPrivateInteractionResponse(interaction, payload) {
   if (!interaction?.isRepliable?.()) return;
 
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.reply(payload).catch(() => {});
-    return;
-  }
+  try {
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply(payload);
+      return;
+    }
 
-  await interaction.followUp(payload).catch(() => {});
+    if (interaction.deferred && !interaction.replied) {
+      await interaction.editReply(payload);
+      return;
+    }
+
+    await interaction.followUp(payload);
+  } catch (error) {
+    if (isAckError(error)) return;
+    throw error;
+  }
 }
 
 async function runPermissionGate(interaction) {
@@ -123,6 +142,7 @@ async function logInteractionError(interaction, client, err) {
       flags: PRIVATE_FLAG,
     });
   } catch (nestedErr) {
+    if (isAckError(nestedErr)) return;
     global.logger?.error?.(
       "[interactionCreate] nested error handling failed",
       nestedErr,

@@ -83,6 +83,7 @@ const ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS = new Set(
 );
 const TTS_ALLOWED_CHANNEL_ID = IDs.channels.noMic || null;
 const SHIP_ALLOWED_CHANNEL_ID = IDs.channels.ship || null;
+const processedBumpMessages = new Map();
 
 const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
 const ALLOWED_EXCEPTION_NAMES = new Set([
@@ -194,6 +195,18 @@ function extractUserIdFromText(text) {
   if (!text) return null;
   const match = text.match(/<@!?(\d+)>/);
   return match ? match[1] : null;
+}
+
+function shouldSkipProcessedBump(key, ttlMs = 5 * 60 * 1000) {
+  if (!key) return false;
+  const now = Date.now();
+  const last = processedBumpMessages.get(key) || 0;
+  if (last && now - last < ttlMs) return true;
+  processedBumpMessages.set(key, now);
+  for (const [k, ts] of processedBumpMessages.entries()) {
+    if (now - ts > ttlMs) processedBumpMessages.delete(k);
+  }
+  return false;
 }
 
 function extractNameFromText(text) {
@@ -1341,6 +1354,8 @@ async function handleDisboardBump(message, client) {
     haystacks.some((text) => text.includes(pattern)),
   );
   if (!isBump) return false;
+  const dedupeKey = `disboard:${message.guild.id}:${message.id}`;
+  if (shouldSkipProcessedBump(dedupeKey)) return true;
   const bumpUserId = message.interaction?.user?.id;
   const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
   const thanksMessage =
@@ -1396,6 +1411,8 @@ async function handleDiscadiaBump(message, client) {
   const fromDiscadiaBot = isDiscadiaAuthor || isDiscadiaApp;
   const isBump = fromDiscadiaBot && !hasFailureWord && hasPattern;
   if (!isBump) return false;
+  const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
+  if (shouldSkipProcessedBump(dedupeKey)) return true;
 
   const bumpUserId =
     message.interaction?.user?.id ||

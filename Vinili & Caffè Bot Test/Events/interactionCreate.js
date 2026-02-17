@@ -1,68 +1,120 @@
-const { EmbedBuilder } = require("discord.js");
+const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const { safeReply } = require("../Utils/Moderation/reply");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
+const {
+  checkSlashPermission,
+  checkButtonPermission,
+  checkStringSelectPermission,
+  checkModalPermission,
+  getSlashRequiredRoles,
+  buildGlobalPermissionDeniedEmbed,
+  buildGlobalNotYourControlEmbed,
+} = require("../Utils/Moderation/commandPermissions");
 
-const MAIN_GUILD_ID = IDs.guilds?.main || null;
-const TEST_GUILD_ID = IDs.guilds?.test || "1462458562507964584";
 const PRIVATE_FLAG = 1 << 6;
+const MONO_GUILD_DENIED =
+  "Questo bot e utilizzabile solo sul server test e sui server sponsor configurati.";
+const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
 
-function isSponsorGuild(guildId) {
-  const sponsorGuildIds = IDs.guilds?.sponsorGuildIds || [];
-  return Array.isArray(sponsorGuildIds) && sponsorGuildIds.includes(guildId);
+const getCommandKey = (name, type) => `${name}:${type || 1}`;
+
+function markInteractionSeen(client, interactionId) {
+  if (!interactionId) return false;
+  if (!client._interactionSeenAt) client._interactionSeenAt = new Map();
+  const seenAtMap = client._interactionSeenAt;
+  const now = Date.now();
+  const lastSeen = seenAtMap.get(interactionId) || 0;
+  if (lastSeen && now - lastSeen < INTERACTION_DEDUPE_TTL_MS) return true;
+
+  seenAtMap.set(interactionId, now);
+  for (const [id, ts] of seenAtMap.entries()) {
+    if (now - ts > INTERACTION_DEDUPE_TTL_MS) seenAtMap.delete(id);
+  }
+  return false;
 }
 
-function isAllowedGuildTest(guildId) {
-  if (!guildId) return false;
-  if (guildId === MAIN_GUILD_ID) return false;
-  return guildId === TEST_GUILD_ID || isSponsorGuild(guildId);
+function buildDeniedEmbed(gate, controlLabel) {
+  if (gate.reason === "not_owner") return buildGlobalNotYourControlEmbed();
+  if (gate.reason === "mono_guild") {
+    return buildGlobalPermissionDeniedEmbed([], controlLabel, MONO_GUILD_DENIED);
+  }
+  return buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], controlLabel);
 }
 
-function isComponentOrModal(interaction) {
-  return (
-    interaction.isButton?.() ||
-    interaction.isStringSelectMenu?.() ||
-    interaction.isModalSubmit?.()
-  );
+async function sendPrivateInteractionResponse(interaction, payload) {
+  if (!interaction?.isRepliable?.()) return;
+  if (!interaction.replied && !interaction.deferred) {
+    await interaction.reply(payload).catch(() => {});
+    return;
+  }
+  await interaction.followUp(payload).catch(() => {});
 }
 
-async function replyServerOnly(interaction) {
-  if (!interaction.isRepliable?.()) return;
-  await interaction
-    .reply({
-      content: "Questo comando va usato in un server.",
-      flags: PRIVATE_FLAG,
-    })
-    .catch(() => {});
-}
-
-async function checkUiPermission(interaction) {
-  if (!(interaction.isButton?.() || interaction.isStringSelectMenu?.())) {
-    return { allowed: true };
+async function runPermissionGate(interaction) {
+  if (interaction.isButton?.()) {
+    const gate = await checkButtonPermission(interaction);
+    if (!gate.allowed) {
+      await sendPrivateInteractionResponse(interaction, {
+        embeds: [buildDeniedEmbed(gate, "bottone")],
+        flags: PRIVATE_FLAG,
+      });
+      return false;
+    }
   }
 
-  const {
-    checkButtonPermission,
-    checkStringSelectPermission,
-    buildGlobalPermissionDeniedEmbed,
-  } = require("../Utils/Moderation/commandPermissions");
+  if (interaction.isStringSelectMenu?.()) {
+    const gate = await checkStringSelectPermission(interaction);
+    if (!gate.allowed) {
+      await sendPrivateInteractionResponse(interaction, {
+        embeds: [buildDeniedEmbed(gate, "menu")],
+        flags: PRIVATE_FLAG,
+      });
+      return false;
+    }
+  }
 
-  const gate = interaction.isButton()
-    ? await checkButtonPermission(interaction)
-    : await checkStringSelectPermission(interaction);
+  if (interaction.isModalSubmit?.()) {
+    const gate = await checkModalPermission(interaction);
+    if (!gate.allowed) {
+      await sendPrivateInteractionResponse(interaction, {
+        embeds: [buildDeniedEmbed(gate, "modulo")],
+        flags: PRIVATE_FLAG,
+      });
+      return false;
+    }
+  }
 
-  if (gate.allowed) return gate;
+  return true;
+}
 
-  const embed = buildGlobalPermissionDeniedEmbed(
-    gate.requiredRoles || [],
-    interaction.isButton() ? "bottone" : "menu",
+async function handleAutocomplete(interaction, client) {
+  const command = client.commands.get(
+    getCommandKey(interaction.commandName, interaction.commandType),
   );
-  if (interaction.isRepliable?.()) {
+  if (!command?.autocomplete) return;
+  await command.autocomplete(interaction, client);
+}
+
+async function handleSlashCommand(interaction, client) {
+  const command = client.commands.get(
+    getCommandKey(interaction.commandName, interaction.commandType),
+  );
+  if (!command) return false;
+
+  const allowed = await checkSlashPermission(interaction);
+  if (!allowed) {
+    const requiredRoles = getSlashRequiredRoles(interaction);
     await interaction
-      .reply({ embeds: [embed], flags: PRIVATE_FLAG })
+      .reply({
+        embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
+        flags: PRIVATE_FLAG,
+      })
       .catch(() => {});
+    return true;
   }
-  return gate;
+
+  await Promise.resolve(command.execute(interaction, client));
+  return true;
 }
 
 async function logInteractionError(interaction, client, err) {
@@ -74,19 +126,30 @@ async function logInteractionError(interaction, client, err) {
         (await client.channels.fetch(errorChannelId).catch(() => null))
       : null;
 
-    if (!errorChannel?.isTextBased?.()) return;
+    if (errorChannel?.isTextBased?.()) {
+      const contextValue =
+        interaction?.commandName || interaction?.customId || "unknown";
+      const embed = buildErrorLogEmbed({
+        contextLabel: "Contesto",
+        contextValue,
+        userTag: interaction?.user?.tag || "unknown",
+        error: err,
+      });
+      await errorChannel.send({ embeds: [embed] }).catch(() => {});
+    }
 
-    const contextValue =
-      interaction?.commandName || interaction?.customId || "unknown";
-    const embed = buildErrorLogEmbed({
-      contextLabel: "Contesto",
-      contextValue,
-      userTag: interaction?.user?.tag || "unknown",
-      error: err,
+    await sendPrivateInteractionResponse(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setColor("Red")
+          .setDescription(
+            "<:vegax:1472992044140990526> Errore durante l'esecuzione dell'interazione.",
+          ),
+      ],
+      flags: PRIVATE_FLAG,
     });
-    await errorChannel.send({ embeds: [embed] }).catch(() => {});
-  } catch (logErr) {
-    global.logger.error("[Bot Test] interactionCreate error-log", logErr);
+  } catch (nestedErr) {
+    global.logger.error("[Bot Test] interactionCreate error-log", nestedErr);
   }
 }
 
@@ -94,39 +157,34 @@ module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
     if (!interaction || interaction.replied || interaction.deferred) return;
-    if (interaction.guildId && !isAllowedGuildTest(interaction.guildId)) return;
-
-    if (!interaction.guildId && isComponentOrModal(interaction)) {
-      await replyServerOnly(interaction);
-      return;
-    }
+    if (markInteractionSeen(client, interaction.id)) return;
 
     try {
-      const handleVerify = require("./interaction/verifyHandlers");
-      const handleTicket = require("./interaction/ticketHandlers");
+      const { handleVerifyInteraction } = require("./interaction/verifyHandlers");
+      const { handleTicketInteraction } = require("./interaction/ticketHandlers");
 
-      if (await handleVerify.handleVerifyInteraction(interaction)) return;
+      if (await handleVerifyInteraction(interaction)) return;
 
-      const gate = await checkUiPermission(interaction);
-      if (!gate.allowed) return;
+      if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
+        await handleAutocomplete(interaction, client);
+        return;
+      }
 
-      if (await handleTicket.handleTicketInteraction(interaction)) return;
+      if (interaction.isMessageContextMenuCommand?.()) {
+        if (await handleSlashCommand(interaction, client)) return;
+      }
+
+      if (interaction.isChatInputCommand?.()) {
+        if (await handleSlashCommand(interaction, client)) return;
+      }
+
+      const allowedByGate = await runPermissionGate(interaction);
+      if (!allowedByGate) return;
+
+      if (await handleTicketInteraction(interaction)) return;
     } catch (err) {
       global.logger.error("[Bot Test] interactionCreate", err);
       await logInteractionError(interaction, client, err);
-
-      if (interaction?.isRepliable?.()) {
-        await safeReply(interaction, {
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Red")
-              .setDescription(
-                "<:vegax:1472992044140990526> Errore durante l'esecuzione dell'interazione.",
-              ),
-          ],
-          flags: PRIVATE_FLAG,
-        });
-      }
     }
   },
 };
