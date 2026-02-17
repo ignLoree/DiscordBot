@@ -7,7 +7,7 @@ const baseDir = __dirname;
 
 const BOTS = [
     { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 6500 }
+    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
