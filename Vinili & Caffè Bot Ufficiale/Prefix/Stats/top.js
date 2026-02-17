@@ -48,6 +48,7 @@ const TOP_VIEWS = [
   "message_channels",
   "voice_channels",
 ];
+const TOP_PAGE_DATA_LIMIT = 100;
 
 function normalizeLookbackDays(raw) {
   const parsed = Number(
@@ -390,11 +391,6 @@ function buildTopChannelComponents(
   const safeControls = normalizeControlsView(controlsView);
 
   const rows = [buildTopChannelSelectRow(lookbackDays, safeView)];
-  rows.push(buildTopChannelMainControlsRow(lookbackDays, safeView, page));
-  if (safeControls === "period") {
-    rows.push(...buildTopChannelPeriodControlsRows(lookbackDays, safeView, page));
-  }
-
   if (safeView !== "overview") {
     rows.push(
       buildTopChannelPaginationRow(
@@ -405,6 +401,11 @@ function buildTopChannelComponents(
         safeControls,
       ),
     );
+  }
+
+  rows.push(buildTopChannelMainControlsRow(lookbackDays, safeView, page));
+  if (safeControls === "period") {
+    rows.push(...buildTopChannelPeriodControlsRows(lookbackDays, safeView, page));
   }
 
   return rows;
@@ -462,7 +463,11 @@ async function buildTopChannelPayload(
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
-  const stats = await getServerOverviewStats(message.guild.id, safeLookback);
+  const stats = await getServerOverviewStats(
+    message.guild.id,
+    safeLookback,
+    TOP_PAGE_DATA_LIMIT,
+  );
 
   const topUsersText = await resolveTopUserEntries(
     message.guild,

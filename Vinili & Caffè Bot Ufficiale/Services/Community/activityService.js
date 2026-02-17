@@ -702,7 +702,8 @@ function aggregateFromRows(rows = [], dateKeys = []) {
   };
 }
 
-function aggregateFromHourlyRows(rows = [], hourKeys = []) {
+function aggregateFromHourlyRows(rows = [], hourKeys = [], topLimit = 3) {
+  const safeTopLimit = Math.max(1, Math.min(500, Number(topLimit || 3)));
   const hourSet = new Set(Array.isArray(hourKeys) ? hourKeys : []);
   const userText = new Map();
   const userVoice = new Map();
@@ -744,10 +745,10 @@ function aggregateFromHourlyRows(rows = [], hourKeys = []) {
       ),
     },
     contributors: contributors.size,
-    topUsersText: topNFromMap(userText, 3),
-    topUsersVoice: topNFromMap(userVoice, 3),
-    topChannelsText: topNFromMap(channelText, 3),
-    topChannelsVoice: topNFromMap(channelVoice, 3),
+    topUsersText: topNFromMap(userText, safeTopLimit),
+    topUsersVoice: topNFromMap(userVoice, safeTopLimit),
+    topChannelsText: topNFromMap(channelText, safeTopLimit),
+    topChannelsVoice: topNFromMap(channelVoice, safeTopLimit),
     contributorIds: contributors,
   };
 }
@@ -906,7 +907,8 @@ async function getServerActivityStats(guildId, days = 7) {
   };
 }
 
-async function getServerOverviewStats(guildId, lookbackDays = 14) {
+async function getServerOverviewStats(guildId, lookbackDays = 14, topLimit = 3) {
+  const safeTopLimit = Math.max(1, Math.min(500, Number(topLimit || 3)));
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
@@ -937,12 +939,16 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
     .lean()
     .catch(() => []);
 
-  const agg1 = aggregateFromHourlyRows(hourlyRows, hourKeys1);
-  const agg7 = aggregateFromHourlyRows(hourlyRows, hourKeys7);
-  const agg14 = aggregateFromHourlyRows(hourlyRows, hourKeys14);
-  const agg21 = aggregateFromHourlyRows(hourlyRows, hourKeys21);
-  const agg30 = aggregateFromHourlyRows(hourlyRows, hourKeys30);
-  const aggLookback = aggregateFromHourlyRows(hourlyRows, hourKeysLookback);
+  const agg1 = aggregateFromHourlyRows(hourlyRows, hourKeys1, safeTopLimit);
+  const agg7 = aggregateFromHourlyRows(hourlyRows, hourKeys7, safeTopLimit);
+  const agg14 = aggregateFromHourlyRows(hourlyRows, hourKeys14, safeTopLimit);
+  const agg21 = aggregateFromHourlyRows(hourlyRows, hourKeys21, safeTopLimit);
+  const agg30 = aggregateFromHourlyRows(hourlyRows, hourKeys30, safeTopLimit);
+  const aggLookback = aggregateFromHourlyRows(
+    hourlyRows,
+    hourKeysLookback,
+    safeTopLimit,
+  );
   const chartByDay = buildChartByDayFromHourlyRows(
     hourlyRows,
     hourKeysLookback,
@@ -1018,8 +1024,8 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
     agg14.contributors = contributorSets.d14.size;
     agg21.contributors = contributorSets.d21.size;
     agg30.contributors = contributorSets.d30.size;
-    aggLookback.topUsersVoice = topNFromMap(byUserLookback, 3);
-    aggLookback.topChannelsVoice = topNFromMap(byChannelLookback, 3);
+    aggLookback.topUsersVoice = topNFromMap(byUserLookback, safeTopLimit);
+    aggLookback.topChannelsVoice = topNFromMap(byChannelLookback, safeTopLimit);
   }
 
   const hasTrackedRows = hourlyRows.length > 0;
@@ -1071,8 +1077,8 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
       approximate: true,
       lookbackDays: safeLookback,
       windows: fallbackWindows,
-      topUsersText: topNFromMap(userText, 3),
-      topUsersVoice: topNFromMap(userVoice, 3),
+      topUsersText: topNFromMap(userText, safeTopLimit),
+      topUsersVoice: topNFromMap(userVoice, safeTopLimit),
       topChannelsText: [],
       topChannelsVoice: [],
       chart: chartPoints,

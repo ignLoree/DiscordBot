@@ -1125,7 +1125,7 @@ async function renderTopStatisticsSingleCanvas({
   return canvas.toBuffer("image/png");
 }
 
-function drawTopRowsColumn(
+async function drawTopRowsColumn(
   ctx,
   rows,
   {
@@ -1138,8 +1138,10 @@ function drawTopRowsColumn(
     rowGap = 8,
   },
 ) {
-  for (let i = 0; i < 5; i += 1) {
-    const row = rows?.[i] || null;
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) return;
+  for (let i = 0; i < list.length; i += 1) {
+    const row = list[i];
     const rowY = y + i * (rowHeight + rowGap);
     fillRoundRect(ctx, x, rowY, w, rowHeight, 12, "rgba(12, 18, 28, 0.95)");
     fillRoundRect(ctx, x, rowY, 72, rowHeight, 12, "rgba(10, 16, 27, 0.95)");
@@ -1152,17 +1154,8 @@ function drawTopRowsColumn(
       align: "center",
     });
 
-    if (!row) {
-      drawLabel(ctx, "N/A", x + 90, rowY + rowHeight / 2, {
-        size: 22,
-        weight: "700",
-        color: "#cfd6e2",
-      });
-      continue;
-    }
-
     const labelMaxWidth = w - 260;
-    drawLabelWithEmoji(
+    await drawLabelWithEmoji(
       ctx,
       fitText(ctx, prepareVisibleText(row.label || "N/A"), labelMaxWidth, 24, "700"),
       x + 90,
@@ -1211,6 +1204,22 @@ async function renderTopLeaderboardPageCanvas({
   const safePage = Math.max(1, Number(page || 1));
   const safeTotalPages = Math.max(1, Number(totalPages || 1));
 
+  const mappedRows = (Array.isArray(rows) ? rows : []).map((row) => ({
+    label: row?.label || "N/A",
+    value:
+      mode === "voice"
+        ? formatHours(row?.value || 0)
+        : compactNumber(row?.value || 0),
+  }));
+
+  const totalRows = mappedRows.length;
+  const splitAt = totalRows > 5 ? 5 : Math.ceil(totalRows / 2);
+  const leftRows = mappedRows.slice(0, splitAt);
+  const rightRows = mappedRows.slice(splitAt, 10);
+  const panelHeight = 560;
+  const panelY = 216;
+  const footerY = 824;
+
   const width = 1280;
   const height = 860;
   const canvas = createCanvas(width, height);
@@ -1241,37 +1250,58 @@ async function renderTopLeaderboardPageCanvas({
     color: "#e2e7ef",
   });
 
-  fillRoundRect(ctx, 20, 216, 1240, 560, 18, "rgba(46, 55, 70, 0.92)");
-  strokeRoundRect(ctx, 20, 216, 1240, 560, 18, "rgba(255,255,255,0.05)", 1);
+  fillRoundRect(ctx, 20, panelY, 1240, panelHeight, 18, "rgba(46, 55, 70, 0.92)");
+  strokeRoundRect(ctx, 20, panelY, 1240, panelHeight, 18, "rgba(255,255,255,0.05)", 1);
 
-  const mappedRows = (Array.isArray(rows) ? rows : []).map((row) => ({
-    label: row?.label || "N/A",
-    value:
-      mode === "voice"
-        ? formatHours(row?.value || 0)
-        : compactNumber(row?.value || 0),
-  }));
+  const panelInnerTop = 236;
+  const panelInnerBottom = panelY + panelHeight - 20;
+  const panelInnerHeight = panelInnerBottom - panelInnerTop;
+  const computeColumnLayout = (count) => {
+    const safeCount = Math.max(1, Number(count || 0));
+    const rowGap = safeCount > 1 ? 10 : 0;
+    const rowHeight = Math.max(
+      48,
+      Math.floor((panelInnerHeight - rowGap * (safeCount - 1)) / safeCount),
+    );
+    return { rowHeight, rowGap };
+  };
 
-  drawTopRowsColumn(ctx, mappedRows.slice(0, 5), {
+  const leftLayout = computeColumnLayout(leftRows.length);
+  const rightLayout = computeColumnLayout(rightRows.length);
+
+  await drawTopRowsColumn(ctx, leftRows, {
     x: 34,
-    y: 236,
+    y: panelInnerTop,
     w: 600,
     rankStart: (safePage - 1) * 10 + 1,
     unit,
+    rowHeight: leftLayout.rowHeight,
+    rowGap: leftLayout.rowGap,
   });
-  drawTopRowsColumn(ctx, mappedRows.slice(5, 10), {
+  await drawTopRowsColumn(ctx, rightRows, {
     x: 646,
-    y: 236,
+    y: panelInnerTop,
     w: 600,
-    rankStart: (safePage - 1) * 10 + 6,
+    rankStart: (safePage - 1) * 10 + leftRows.length + 1,
     unit,
+    rowHeight: rightLayout.rowHeight,
+    rowGap: rightLayout.rowGap,
   });
+
+  if (!leftRows.length && !rightRows.length) {
+    drawLabel(ctx, "Nessun dato disponibile", width / 2, panelY + panelHeight / 2, {
+      size: 34,
+      weight: "700",
+      color: "#cfd6e2",
+      align: "center",
+    });
+  }
 
   drawLabel(
     ctx,
     `Page ${safePage}/${safeTotalPages} | Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`,
     24,
-    824,
+    footerY,
     {
       size: 20,
       weight: "700",
