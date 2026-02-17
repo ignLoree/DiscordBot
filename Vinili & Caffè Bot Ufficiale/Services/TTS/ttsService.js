@@ -197,28 +197,7 @@ async function createTtsStream(text, lang) {
   const googleLangCandidates = Array.from(
     new Set([langLocale, langBase].filter(Boolean)),
   );
-  const gttsLangCandidates = Array.from(
-    new Set([langBase, langLocale.toLowerCase()].filter(Boolean)),
-  );
   let lastErr = null;
-
-  for (const gttsLang of gttsLangCandidates) {
-    try {
-      const gtts = require("node-gtts")(gttsLang);
-      const chunks = [];
-      await new Promise((resolve, reject) => {
-        const s = gtts.stream(textStr);
-        s.on("data", (ch) => chunks.push(ch));
-        s.on("end", resolve);
-        s.on("error", reject);
-      });
-      if (chunks.length > 0) {
-        return Readable.from(Buffer.concat(chunks));
-      }
-    } catch (err) {
-      lastErr = err;
-    }
-  }
 
   const hosts = [
     "https://translate.google.com.vn",
@@ -238,36 +217,6 @@ async function createTtsStream(text, lang) {
       }
     }
   }
-
-  try {
-    const googleTTS = require("google-tts-api");
-    for (const host of [
-      "https://translate.google.com.vn",
-      "https://translate.google.com",
-    ]) {
-      for (const googleLang of googleLangCandidates) {
-        try {
-          const url = googleTTS.getAudioUrl(textStr, {
-            lang: googleLang,
-            slow: false,
-            host,
-          });
-          if (url) {
-            const data = await fetchTtsAudio(
-              url,
-              `google-tts-api:${host}:${googleLang}`,
-            );
-            if (data) return Readable.from(Buffer.from(data));
-          }
-        } catch (err) {
-          lastErr = err;
-        }
-      }
-    }
-  } catch (err) {
-    lastErr = err;
-  }
-
   const voicerssKey =
     typeof process !== "undefined" &&
     process.env &&

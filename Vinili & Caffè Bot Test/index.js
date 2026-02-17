@@ -6,6 +6,7 @@
 } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const dotenv = require("dotenv");
 const APP_ROOT = __dirname;
 
@@ -32,8 +33,68 @@ function listJsFilesIfExists(dirPath) {
   return fs.readdirSync(dirPath).filter((file) => file.endsWith(".js"));
 }
 
+function isPidAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function acquireSingleInstanceLock(lockName) {
+  const lockPath = path.join(os.tmpdir(), `${lockName}.lock`);
+  const pid = process.pid;
+
+  const writeLock = () =>
+    fs.writeFileSync(lockPath, String(pid), { flag: "wx", encoding: "utf8" });
+
+  try {
+    writeLock();
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+
+    let existingPid = null;
+    try {
+      existingPid = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
+    } catch {}
+
+    if (isPidAlive(existingPid)) {
+      global.logger?.error?.(
+        `[LOGIN] Another instance is already running (PID: ${existingPid}). Exiting.`,
+      );
+      process.exit(1);
+    }
+
+    try {
+      fs.unlinkSync(lockPath);
+    } catch {}
+
+    writeLock();
+  }
+
+  const release = () => {
+    try {
+      const current = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
+      if (current === pid) fs.unlinkSync(lockPath);
+    } catch {}
+  };
+
+  process.on("exit", release);
+  process.on("SIGINT", () => {
+    release();
+    process.exit();
+  });
+  process.on("SIGTERM", () => {
+    release();
+    process.exit();
+  });
+}
+
 loadEnvFiles();
 global.logger = require("./Utils/Moderation/logger");
+acquireSingleInstanceLock("vinili-caffe-test-bot");
 
 const installProcessHandlers = require("./Handlers/processHandler");
 installProcessHandlers();
