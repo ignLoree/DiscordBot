@@ -267,22 +267,9 @@
     "server": [
       "roles.Member"
     ],
-    "top": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "text": [
-          "roles.Member"
-        ],
-        "voc": [
-          "roles.Member"
-        ],
-        "invites": [
-          "roles.Member"
-        ]
-      }
-    },
+    "top": [
+      "roles.Member"
+    ],
     "embed": {
       "roles": [
         "roles.HighStaff"

@@ -1045,8 +1045,247 @@ async function renderTopStatisticsCanvas({
   return canvas.toBuffer("image/png");
 }
 
+async function renderTopStatisticsSingleCanvas({
+  guildName,
+  guildIconUrl,
+  lookbackDays = 14,
+  title = "Top Statistics",
+  rows = [],
+  unit = "msg",
+  mode = "messages",
+}) {
+  registerCanvasFonts(canvasModule);
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
+    ? Number(lookbackDays)
+    : 14;
+
+  const width = 1280;
+  const height = 860;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  drawBackground(ctx, width, height);
+
+  fillRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(32, 42, 57, 0.9)");
+  strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
+
+  await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
+  await drawLabelWithEmoji(
+    ctx,
+    fitText(ctx, guildName || "Server", 820, 46, "700"),
+    124,
+    52,
+    { size: 46, weight: "700", color: "#eef3fb" },
+  );
+  drawLabel(ctx, "Top Statistics", 124, 88, {
+    size: 28,
+    weight: "600",
+    color: "#bfc8d6",
+  });
+
+  drawLabel(ctx, fitText(ctx, title, 1220, 62, "700"), 24, 172, {
+    size: 62,
+    weight: "700",
+    color: "#e2e7ef",
+  });
+
+  const normalizedRows = Array.isArray(rows)
+    ? rows.map((x) => ({
+        label: x?.label || "N/A",
+        value:
+          mode === "voice"
+            ? formatHours(x?.value || 0)
+            : compactNumber(x?.value || 0),
+      }))
+    : [];
+
+  await drawTopListCard(
+    ctx,
+    "Top 3",
+    normalizedRows,
+    20,
+    240,
+    1240,
+    520,
+    { unit },
+  );
+
+  drawLabel(
+    ctx,
+    `Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`,
+    24,
+    824,
+    {
+      size: 20,
+      weight: "700",
+      color: "#cfd6e2",
+    },
+  );
+
+  return canvas.toBuffer("image/png");
+}
+
+function drawTopRowsColumn(
+  ctx,
+  rows,
+  {
+    x,
+    y,
+    w,
+    rankStart = 1,
+    unit = "msg",
+    rowHeight = 62,
+    rowGap = 8,
+  },
+) {
+  for (let i = 0; i < 5; i += 1) {
+    const row = rows?.[i] || null;
+    const rowY = y + i * (rowHeight + rowGap);
+    fillRoundRect(ctx, x, rowY, w, rowHeight, 12, "rgba(12, 18, 28, 0.95)");
+    fillRoundRect(ctx, x, rowY, 72, rowHeight, 12, "rgba(10, 16, 27, 0.95)");
+
+    const rank = rankStart + i;
+    drawLabel(ctx, String(rank), x + 36, rowY + rowHeight / 2, {
+      size: 22,
+      weight: "800",
+      color: "#e0e5ed",
+      align: "center",
+    });
+
+    if (!row) {
+      drawLabel(ctx, "N/A", x + 90, rowY + rowHeight / 2, {
+        size: 22,
+        weight: "700",
+        color: "#cfd6e2",
+      });
+      continue;
+    }
+
+    const labelMaxWidth = w - 260;
+    drawLabelWithEmoji(
+      ctx,
+      fitText(ctx, prepareVisibleText(row.label || "N/A"), labelMaxWidth, 24, "700"),
+      x + 90,
+      rowY + rowHeight / 2,
+      { size: 24, weight: "700", color: "#e0e5ed", align: "left" },
+    );
+
+    const valueText = `${row.value} ${unit}`;
+    const valueWidth = Math.min(
+      w - 240,
+      Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),
+    );
+    fillRoundRect(
+      ctx,
+      x + w - valueWidth - 10,
+      rowY + 9,
+      valueWidth,
+      rowHeight - 18,
+      10,
+      "rgba(30, 39, 54, 0.95)",
+    );
+    drawLabel(ctx, valueText, x + w - 18, rowY + rowHeight / 2, {
+      size: 24,
+      weight: "800",
+      color: "#d5dbe5",
+      align: "right",
+    });
+  }
+}
+
+async function renderTopLeaderboardPageCanvas({
+  guildName,
+  guildIconUrl,
+  lookbackDays = 14,
+  title = "Top Statistics",
+  page = 1,
+  totalPages = 1,
+  rows = [],
+  unit = "msg",
+  mode = "messages",
+}) {
+  registerCanvasFonts(canvasModule);
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
+    ? Number(lookbackDays)
+    : 14;
+  const safePage = Math.max(1, Number(page || 1));
+  const safeTotalPages = Math.max(1, Number(totalPages || 1));
+
+  const width = 1280;
+  const height = 860;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  drawBackground(ctx, width, height);
+
+  fillRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(32, 42, 57, 0.9)");
+  strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
+
+  await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
+  await drawLabelWithEmoji(
+    ctx,
+    fitText(ctx, guildName || "Server", 820, 46, "700"),
+    124,
+    52,
+    { size: 46, weight: "700", color: "#eef3fb" },
+  );
+  drawLabel(ctx, "Top Statistics", 124, 88, {
+    size: 28,
+    weight: "600",
+    color: "#bfc8d6",
+  });
+
+  drawLabel(ctx, fitText(ctx, title, 1220, 56, "700"), 24, 164, {
+    size: 56,
+    weight: "700",
+    color: "#e2e7ef",
+  });
+
+  fillRoundRect(ctx, 20, 216, 1240, 560, 18, "rgba(46, 55, 70, 0.92)");
+  strokeRoundRect(ctx, 20, 216, 1240, 560, 18, "rgba(255,255,255,0.05)", 1);
+
+  const mappedRows = (Array.isArray(rows) ? rows : []).map((row) => ({
+    label: row?.label || "N/A",
+    value:
+      mode === "voice"
+        ? formatHours(row?.value || 0)
+        : compactNumber(row?.value || 0),
+  }));
+
+  drawTopRowsColumn(ctx, mappedRows.slice(0, 5), {
+    x: 34,
+    y: 236,
+    w: 600,
+    rankStart: (safePage - 1) * 10 + 1,
+    unit,
+  });
+  drawTopRowsColumn(ctx, mappedRows.slice(5, 10), {
+    x: 646,
+    y: 236,
+    w: 600,
+    rankStart: (safePage - 1) * 10 + 6,
+    unit,
+  });
+
+  drawLabel(
+    ctx,
+    `Page ${safePage}/${safeTotalPages} | Lookback: Last ${safeLookback} days | Timezone: Europe/Rome`,
+    24,
+    824,
+    {
+      size: 20,
+      weight: "700",
+      color: "#cfd6e2",
+    },
+  );
+
+  return canvas.toBuffer("image/png");
+}
+
 module.exports = {
   renderUserActivityCanvas,
   renderServerActivityCanvas,
   renderTopStatisticsCanvas,
+  renderTopStatisticsSingleCanvas,
+  renderTopLeaderboardPageCanvas,
 };

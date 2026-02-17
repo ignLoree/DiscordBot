@@ -1,9 +1,4 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
@@ -25,17 +20,27 @@ function rankLabel(index) {
   return `${index + 1}°`;
 }
 
+function escapeInlineMarkdown(value) {
+  return String(value || "")
+    .replace(/([\\`*_~|>])/g, "\\$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
 function formatUserLabel(member, userId) {
   if (member) {
-    const username =
+    const username = escapeInlineMarkdown(
       member.user?.username ||
-      member.user?.tag ||
-      member.displayName ||
-      "utente";
+        member.user?.tag ||
+        member.displayName ||
+        "utente",
+    );
     return `${member} (${username})`;
   }
   return `<@${userId}>`;
 }
+
 
 async function fetchMembers(guild, userIds) {
   const unique = Array.from(new Set(userIds));
@@ -92,7 +97,7 @@ async function buildWeeklyEmbed(message) {
     .setThumbnail(message.guild.iconURL({ size: 128 }))
     .setDescription(
       [
-        "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana (aggiornata ogni Lunedi)",
+        "<a:VC_Sparkles:1468546911936974889> I 10 utenti con più exp guadagnati in settimana (aggiornata ogni Lunedì)",
         "",
         lines.join("\n"),
       ].join("\n"),
@@ -225,7 +230,7 @@ module.exports = {
       .setColor("#6f4e37")
       .setDescription(
         `Per evitare di intasare la chat, la classifica ${isWeekly ? "settimanale" : "generale"} ` +
-          `e stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>. ` +
+          `è stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>. ` +
           `[Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`,
       );
 

@@ -72,10 +72,10 @@ const PREFIX_HELP_DESCRIPTIONS = {
   unblock: "Sblocca privacy contenuti: avatar, banner, quotes.",
   classifica: "Mostra la classifica livelli (totale/settimanale).",
   mstats: "Mostra statistiche minigiochi di un utente.",
-  me: "Mostra la tua attività settimanale.",
+  me: "Mostra le tue statistiche attività (1d/7d/14d/21d/30d) con refresh live.",
   server:
-    "Mostra statistiche e attività del server (messaggi, vocali, top utenti e canali).",
-  top: "Mostra classifiche del server: text, voc, invites.",
+    "Mostra statistiche server (1d/7d/14d/21d/30d), top e grafici con aggiornamento live.",
+  top: "Mostra la top completa utenti/canali (testo+vocale) con canvas, refresh e periodo.",
   rank: "Mostra livello, exp e posizione in classifica di un utente.",
   reaction:
     "Gestisce reaction menzioni e autoresponder con parole/frasi trigger.",
@@ -137,9 +137,6 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "classifica.weekly": "Mostra la classifica settimanale exp.",
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
-  "top.text": "Mostra la classifica utenti per messaggi testuali.",
-  "top.voc": "Mostra la classifica utenti per attività vocale.",
-  "top.invites": "Mostra la classifica utenti per inviti.",
   "perm.grant":
     "Assegna permessi temporanei ad un utente su uno o più comandi.",
   "perm.revoke": "Revoca permessi temporanei specifici ad un utente.",

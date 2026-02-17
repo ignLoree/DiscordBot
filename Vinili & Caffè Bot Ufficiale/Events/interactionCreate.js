@@ -14,6 +14,9 @@ const {
 } = require("./interaction/customRoleHandlers");
 const { handlePauseButton } = require("./interaction/pauseHandlers");
 const {
+  handleTopPaginationModal,
+} = require("./interaction/topPaginationHandlers");
+const {
   handleEmbedBuilderInteraction,
 } = require("./interaction/embedBuilderHandlers");
 const IDs = require("../Utils/Config/ids");
@@ -30,7 +33,7 @@ const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
-  "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.";
+  "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;
@@ -203,7 +206,7 @@ async function logInteractionError(interaction, client, err) {
 
     await sendPrivateInteractionResponse(interaction, {
       content:
-        "<:vegax:1443934876440068179>  C'Ã¨ stato un errore nell'esecuzione del comando.",
+        "<:vegax:1443934876440068179>  C'è stato un errore nell'esecuzione del comando.",
       flags: PRIVATE_FLAG,
     });
   } catch (nestedErr) {
@@ -259,6 +262,7 @@ module.exports = {
       if (!allowedByGate) return;
 
       if (await handleTicketInteraction(interaction)) return;
+      if (await handleTopPaginationModal(interaction)) return;
       if (await handleEmbedBuilderInteraction(interaction, client)) return;
       if (await handlePartnerModal(interaction)) return;
       if (await handleSuggestionVote(interaction)) return;

@@ -15,7 +15,7 @@ const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
-  "Questo bot Ã¨ utilizzabile solo sul server test e sui server sponsor configurati.";
+  "Questo bot è utilizzabile solo sul server test e sui server sponsor configurati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
