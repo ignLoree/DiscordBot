@@ -1,5 +1,6 @@
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const IDs = require("../../Utils/Config/ids");
 const {
   getServerOverviewStats,
 } = require("../../Services/Community/activityService");
@@ -52,6 +53,29 @@ async function resolveChannelLabel(guild, channelId) {
   return `#${channel.name}`;
 }
 
+async function resolveMemberVisibilityRole(guild) {
+  if (!guild) return null;
+  const configuredId = String(IDs.roles?.Member || "").trim();
+  if (configuredId) {
+    const role =
+      guild.roles?.cache?.get(configuredId) ||
+      (await guild.roles?.fetch(configuredId).catch(() => null));
+    if (role) return role;
+  }
+  return guild.roles?.everyone || null;
+}
+
+async function isChannelVisibleToMemberRole(guild, channelId, memberRole) {
+  const id = String(channelId || "");
+  if (!id || !guild || !memberRole) return false;
+  const channel =
+    guild.channels?.cache?.get(id) ||
+    (await guild.channels?.fetch(id).catch(() => null));
+  if (!channel) return false;
+  const perms = channel.permissionsFor(memberRole);
+  return Boolean(perms?.has("ViewChannel"));
+}
+
 async function resolveUserLabel(guild, userId) {
   const id = String(userId || "");
   if (!id) return id;
@@ -66,6 +90,7 @@ async function resolveUserLabel(guild, userId) {
 }
 
 async function enrichTops(guild, stats) {
+  const memberRole = await resolveMemberVisibilityRole(guild);
   const topUsersText = [];
   for (const item of stats.topUsersText || [])
     topUsersText.push({
@@ -79,17 +104,31 @@ async function enrichTops(guild, stats) {
       label: await resolveUserLabel(guild, item.id),
     });
   const topChannelsText = [];
-  for (const item of stats.topChannelsText || [])
+  for (const item of stats.topChannelsText || []) {
+    const visible = await isChannelVisibleToMemberRole(
+      guild,
+      item?.id,
+      memberRole,
+    );
+    if (!visible) continue;
     topChannelsText.push({
       ...item,
       label: await resolveChannelLabel(guild, item.id),
     });
+  }
   const topChannelsVoice = [];
-  for (const item of stats.topChannelsVoice || [])
+  for (const item of stats.topChannelsVoice || []) {
+    const visible = await isChannelVisibleToMemberRole(
+      guild,
+      item?.id,
+      memberRole,
+    );
+    if (!visible) continue;
     topChannelsVoice.push({
       ...item,
       label: await resolveChannelLabel(guild, item.id),
     });
+  }
   return { topUsersText, topUsersVoice, topChannelsText, topChannelsVoice };
 }
 

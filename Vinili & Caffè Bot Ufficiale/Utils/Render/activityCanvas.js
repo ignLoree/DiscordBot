@@ -74,10 +74,17 @@ function prepareVisibleText(value) {
     ["\u00B2", "__VC_KEEP_SUP_2__"],
     ["\u00B3", "__VC_KEEP_SUP_3__"],
   ]);
+  const compatibilityMap = new Map([
+    ["\uFE32", "\u2502"],
+    ["\u1CBC", "\u00B7"],
+  ]);
 
   let out = raw;
   for (const [char, token] of protectedMap.entries()) {
     out = out.split(char).join(token);
+  }
+  for (const [char, replacement] of compatibilityMap.entries()) {
+    out = out.split(char).join(replacement);
   }
 
   out = out
