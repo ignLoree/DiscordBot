@@ -151,16 +151,11 @@ async function ensureHourlyBackfillForGuild(guildId) {
     const chunks = chunkArray(operations, HOURLY_BACKFILL_BATCH);
     let insertedCount = 0;
     for (const ops of chunks) {
-      // ordered=false: skip single bad op without aborting whole migration
       const result = await ActivityHourly.bulkWrite(ops, { ordered: false }).catch(
         () => null,
       );
       insertedCount += Number(result?.upsertedCount || 0);
     }
-
-    global.logger?.info?.(
-      `[ACTIVITY] Hourly backfill completed for guild ${safeGuildId}: ${insertedCount} inserted / ${operations.length} checked.`,
-    );
     return insertedCount > 0;
   })()
     .catch((error) => {

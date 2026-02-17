@@ -145,7 +145,7 @@ function buildRefreshRow(lookbackDays, wantsEmbed) {
       .setCustomId(
         `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${Number(lookbackDays || 14)}:${wantsEmbed ? "embed" : "image"}`,
       )
-      .setLabel("Aggiorna")
+      .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
   );
 }

@@ -1,5 +1,6 @@
 const {
   EmbedBuilder,
+  AttachmentBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -10,9 +11,19 @@ const {
   InviteTrack,
 } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getServerOverviewStats,
+} = require("../../Services/Community/activityService");
+const {
+  renderTopStatisticsCanvas,
+} = require("../../Utils/Render/activityCanvas");
 
 const TOP_LIMIT = 10;
 const LEADERBOARD_CHANNEL_ID = IDs.channels.commands;
+const TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX = "stats_top_channel_refresh";
+const TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_top_channel_period_open";
+const TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX = "stats_top_channel_period_set";
+const TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX = "stats_top_channel_period_back";
 const INVITE_THUMBNAIL_URL =
   "https://images-ext-1.discordapp.net/external/qGJ0Tl7_BO1f7ichIGhodCqFJDuvfRdwagvKo44IhrE/https/i.imgur.com/9zzrBbk.png?format=webp&quality=lossless&width=120&height=114";
 
@@ -254,21 +265,182 @@ function normalizeMode(raw) {
   if (["voc", "voice", "vocale", "topvoc"].includes(value)) return "voc";
   if (["invites", "invite", "inviti", "topinvites"].includes(value))
     return "invites";
+  if (["channel", "channels", "canali", "topchannel"].includes(value))
+    return "channel";
   return null;
 }
 
-async function sendLeaderboard(message, embed, mode) {
+function normalizeLookbackDays(raw) {
+  const parsed = Number(
+    String(raw || "14")
+      .toLowerCase()
+      .replace(/d$/i, ""),
+  );
+  return [1, 7, 14, 21, 30].includes(parsed) ? parsed : 14;
+}
+
+function buildTopChannelMainControlsRow(lookbackDays) {
+  const safeLookback = normalizeLookbackDays(lookbackDays);
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX}:${safeLookback}`)
+      .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeLookback}`)
+      .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+function buildTopChannelPeriodControlsRows(lookbackDays) {
+  const safeLookback = normalizeLookbackDays(lookbackDays);
+  const topRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeLookback}`)
+      .setLabel("<")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:1`)
+      .setLabel("1d")
+      .setStyle(safeLookback === 1 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:7`)
+      .setLabel("7d")
+      .setStyle(safeLookback === 7 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:14`)
+      .setLabel("14d")
+      .setStyle(safeLookback === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
+  );
+
+  const bottomRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:21`)
+      .setLabel("21d")
+      .setStyle(safeLookback === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:30`)
+      .setLabel("30d")
+      .setStyle(safeLookback === 30 ? ButtonStyle.Success : ButtonStyle.Primary),
+  );
+
+  return [topRow, bottomRow];
+}
+
+function buildTopChannelComponents(lookbackDays, controlsView = "main") {
+  if (controlsView === "period") {
+    return buildTopChannelPeriodControlsRows(lookbackDays);
+  }
+  return [buildTopChannelMainControlsRow(lookbackDays)];
+}
+
+async function resolveTopUserEntries(guild, entries = []) {
+  const out = [];
+  for (const item of entries) {
+    const userId = String(item?.id || "");
+    const displayName = await resolveDisplayName(guild, userId);
+    out.push({
+      id: userId,
+      label: displayName,
+      value: Number(item?.value || 0),
+    });
+  }
+  return out;
+}
+
+async function resolveTopChannelEntries(guild, entries = []) {
+  const out = [];
+  for (const item of entries) {
+    const channelId = String(item?.id || "");
+    const channel =
+      guild.channels?.cache?.get(channelId) ||
+      (await guild.channels?.fetch(channelId).catch(() => null));
+    out.push({
+      id: channelId,
+      label: channel ? `#${channel.name}` : `#${channelId}`,
+      value: Number(item?.value || 0),
+    });
+  }
+  return out;
+}
+
+async function buildTopChannelPayload(message, lookbackDays = 14, controlsView = "main") {
+  const safeLookback = normalizeLookbackDays(lookbackDays);
+  const stats = await getServerOverviewStats(message.guild.id, safeLookback);
+
+  const topUsersText = await resolveTopUserEntries(
+    message.guild,
+    stats.topUsersText || [],
+  );
+  const topChannelsText = await resolveTopChannelEntries(
+    message.guild,
+    stats.topChannelsText || [],
+  );
+  const topUsersVoice = await resolveTopUserEntries(
+    message.guild,
+    stats.topUsersVoice || [],
+  );
+  const topChannelsVoice = await resolveTopChannelEntries(
+    message.guild,
+    stats.topChannelsVoice || [],
+  );
+
+  const imageName = `top-channel-${message.guild.id}-${safeLookback}d.png`;
+
+  try {
+    const buffer = await renderTopStatisticsCanvas({
+      guildName: message.guild?.name || "Server",
+      guildIconUrl: message.guild?.iconURL?.({ extension: "png", size: 256 }),
+      lookbackDays: safeLookback,
+      topUsersText,
+      topChannelsText,
+      topUsersVoice,
+      topChannelsVoice,
+    });
+    return {
+      files: [new AttachmentBuilder(buffer, { name: imageName })],
+      embeds: [
+        new EmbedBuilder()
+          .setColor("#6f4e37")
+          .setTitle(`Top Channel • ${safeLookback}d`)
+          .setImage(`attachment://${imageName}`),
+      ],
+      components: buildTopChannelComponents(safeLookback, controlsView),
+    };
+  } catch (error) {
+    global.logger?.warn?.("[TOP CHANNEL] Canvas render failed:", error);
+    const fallback = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .setTitle(`Top Channel • ${safeLookback}d`)
+      .setDescription(
+        [
+          `Messaggi utenti: ${topUsersText.map((x) => `**${x.label}** (${x.value})`).join(", ") || "N/A"}`,
+          `Messaggi canali: ${topChannelsText.map((x) => `**${x.label}** (${x.value})`).join(", ") || "N/A"}`,
+          `Vocale utenti: ${topUsersVoice.map((x) => `**${x.label}** (${formatHours(x.value)}h)`).join(", ") || "N/A"}`,
+          `Vocale canali: ${topChannelsVoice.map((x) => `**${x.label}** (${formatHours(x.value)}h)`).join(", ") || "N/A"}`,
+        ].join("\n"),
+      );
+    return {
+      embeds: [fallback],
+      components: buildTopChannelComponents(safeLookback, controlsView),
+    };
+  }
+}
+
+async function sendLeaderboardPayload(message, payload, mode) {
   const labels = {
     text: { noun: "messaggi", button: "Vai alla classifica messaggi" },
     voc: { noun: "vocale", button: "Vai alla classifica vocale" },
     invites: { noun: "inviti", button: "Vai alla classifica inviti" },
+    channel: { noun: "canali", button: "Vai alla classifica canali" },
   };
   const meta = labels[mode] || labels.text;
   const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
 
   if (!shouldRedirect) {
     await safeMessageReply(message, {
-      embeds: [embed],
+      ...payload,
       allowedMentions: { repliedUser: false },
     });
     return;
@@ -289,7 +461,7 @@ async function sendLeaderboard(message, embed, mode) {
   }
 
   const sent = await leaderboardChannel
-    .send({ embeds: [embed] })
+    .send(payload)
     .catch(() => null);
   if (!sent) {
     await safeMessageReply(message, {
@@ -323,11 +495,12 @@ async function sendLeaderboard(message, embed, mode) {
 module.exports = {
   name: "top",
   aliases: ["toptext", "topvoc", "topinvites"],
-  subcommands: ["text", "voc", "invites"],
+  subcommands: ["text", "voc", "invites", "channel"],
   subcommandAliases: {
     toptext: "text",
     topvoc: "voc",
     topinvites: "invites",
+    topchannel: "channel",
   },
 
   async execute(message, args = []) {
@@ -337,17 +510,26 @@ module.exports = {
     if (!mode) {
       await safeMessageReply(message, {
         content:
-          "<:vegax:1443934876440068179> Usa: `+top text` | `+top voc` | `+top invites`",
+          "<:vegax:1443934876440068179> Usa: `+top text` | `+top voc` | `+top invites` | `+top channel [1d|7d|14d|21d|30d]`",
         allowedMentions: { repliedUser: false },
       });
       return;
     }
 
-    let embed = null;
-    if (mode === "text") embed = await buildTopTextEmbed(message);
-    else if (mode === "voc") embed = await buildTopVocEmbed(message);
-    else embed = await buildTopInvitesEmbed(message);
+    let payload = null;
+    if (mode === "text") payload = { embeds: [await buildTopTextEmbed(message)] };
+    else if (mode === "voc") payload = { embeds: [await buildTopVocEmbed(message)] };
+    else if (mode === "invites")
+      payload = { embeds: [await buildTopInvitesEmbed(message)] };
+    else payload = await buildTopChannelPayload(message, args[1]);
 
-    await sendLeaderboard(message, embed, mode);
+    await sendLeaderboardPayload(message, payload, mode);
   },
+  TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
+  TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+  TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
+  TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  buildTopChannelPayload,
+  buildTopChannelComponents,
+  normalizeLookbackDays,
 };

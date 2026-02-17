@@ -561,6 +561,51 @@ function drawChart(ctx, chart, x, y, w, h) {
   ctx.stroke();
 }
 
+async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
+  const unit = String(options.unit || "");
+  fillRoundRect(ctx, x, y, w, h, 18, "rgba(46, 55, 70, 0.94)");
+  strokeRoundRect(ctx, x, y, w, h, 18, "rgba(255,255,255,0.05)", 1);
+  drawLabel(ctx, title, x + 14, y + 24, {
+    size: 27,
+    weight: "700",
+    color: "#e2e7ef",
+  });
+
+  const rowHeight = 72;
+  const gap = 10;
+  const startY = y + 44;
+
+  for (let i = 0; i < 3; i += 1) {
+    const row = rows?.[i] || { label: "N/A", value: 0 };
+    const rowY = startY + i * (rowHeight + gap);
+    fillRoundRect(ctx, x + 14, rowY, w - 28, rowHeight, 12, "rgba(12, 18, 28, 0.95)");
+    fillRoundRect(ctx, x + 14, rowY, 78, rowHeight, 12, "rgba(10, 16, 27, 0.95)");
+
+    drawLabel(ctx, String(i + 1), x + 53, rowY + rowHeight / 2, {
+      size: 24,
+      weight: "800",
+      color: "#e0e5ed",
+      align: "center",
+    });
+
+    await drawLabelWithEmoji(
+      ctx,
+      fitText(ctx, prepareVisibleText(row.label || "N/A"), w - 280, 24, "700"),
+      x + 104,
+      rowY + rowHeight / 2,
+      { size: 24, weight: "700", color: "#e0e5ed", align: "left" },
+    );
+
+    drawLabel(
+      ctx,
+      unit ? `${row.value} ${unit}` : String(row.value ?? 0),
+      x + w - 26,
+      rowY + rowHeight / 2,
+      { size: 24, weight: "800", color: "#d5dbe5", align: "right" },
+    );
+  }
+}
+
 function dateText(value) {
   if (!value) return "N/A";
   const d = new Date(value);
@@ -862,7 +907,123 @@ async function renderServerActivityCanvas({
   return canvas.toBuffer("image/png");
 }
 
+async function renderTopStatisticsCanvas({
+  guildName,
+  guildIconUrl,
+  lookbackDays = 14,
+  topUsersText = [],
+  topChannelsText = [],
+  topUsersVoice = [],
+  topChannelsVoice = [],
+}) {
+  registerCanvasFonts(canvasModule);
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
+    ? Number(lookbackDays)
+    : 14;
+
+  const width = 1280;
+  const height = 860;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  drawBackground(ctx, width, height);
+
+  fillRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(32, 42, 57, 0.9)");
+  strokeRoundRect(ctx, 20, 16, 1240, 96, 22, "rgba(255,255,255,0.06)", 1);
+
+  await drawAvatarCircle(ctx, guildIconUrl, 28, 24, 80);
+  await drawLabelWithEmoji(
+    ctx,
+    fitText(ctx, guildName || "Server", 820, 52, "700"),
+    124,
+    52,
+    { size: 52, weight: "700", color: "#eef3fb" },
+  );
+  drawLabel(ctx, "Top Statistics", 124, 88, {
+    size: 28,
+    weight: "600",
+    color: "#bfc8d6",
+  });
+
+  drawLabel(ctx, "# Messages", 24, 152, {
+    size: 48,
+    weight: "700",
+    color: "#e2e7ef",
+  });
+
+  await drawTopListCard(
+    ctx,
+    "Top Users",
+    topUsersText.map((x) => ({
+      label: x?.label || "N/A",
+      value: compactNumber(x?.value || 0),
+    })),
+    20,
+    176,
+    610,
+    288,
+    { unit: "msg" },
+  );
+
+  await drawTopListCard(
+    ctx,
+    "Top Channels",
+    topChannelsText.map((x) => ({
+      label: x?.label || "N/A",
+      value: compactNumber(x?.value || 0),
+    })),
+    650,
+    176,
+    610,
+    288,
+    { unit: "msg" },
+  );
+
+  drawLabel(ctx, "Voice Activity", 24, 512, {
+    size: 48,
+    weight: "700",
+    color: "#e2e7ef",
+  });
+
+  await drawTopListCard(
+    ctx,
+    "Top Users",
+    topUsersVoice.map((x) => ({
+      label: x?.label || "N/A",
+      value: formatHours(x?.value || 0),
+    })),
+    20,
+    536,
+    610,
+    288,
+    { unit: "h" },
+  );
+
+  await drawTopListCard(
+    ctx,
+    "Top Channels",
+    topChannelsVoice.map((x) => ({
+      label: x?.label || "N/A",
+      value: formatHours(x?.value || 0),
+    })),
+    650,
+    536,
+    610,
+    288,
+    { unit: "h" },
+  );
+
+  drawLabel(ctx, `Lookback: Last ${safeLookback} days • Timezone: Europe/Rome`, 24, 844, {
+    size: 20,
+    weight: "700",
+    color: "#cfd6e2",
+  });
+
+  return canvas.toBuffer("image/png");
+}
+
 module.exports = {
   renderUserActivityCanvas,
   renderServerActivityCanvas,
+  renderTopStatisticsCanvas,
 };

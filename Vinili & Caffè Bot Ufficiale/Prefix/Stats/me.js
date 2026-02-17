@@ -58,14 +58,14 @@ function buildMainControlsRow(lookbackDays, wantsEmbed) {
       .setCustomId(
         `${ME_REFRESH_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
-      .setLabel("Aggiorna")
+      .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(
         `${ME_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
-      .setLabel("Periodo")
-      .setStyle(ButtonStyle.Primary),
+      .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
+      .setStyle(ButtonStyle.Secondary),
   );
 }
 
