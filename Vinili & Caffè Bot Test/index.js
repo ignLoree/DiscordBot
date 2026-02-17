@@ -121,6 +121,10 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
     });
   }
 
+  if (typeof client.logBootTables === "function") {
+    client.logBootTables();
+  }
+
   client.login(client.config.token).catch((err) => {
     global.logger.error("Login fallito:", err);
     process.exit(1);

@@ -13,7 +13,6 @@ function listJsFiles(dir) {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name.toLowerCase() === "interaction") continue;
       files.push(...listJsFiles(fullPath));
       continue;
     }
@@ -58,8 +57,8 @@ module.exports = (client) => {
       try {
         delete require.cache[require.resolve(file)];
         const event = require(file);
-        if (!event?.name) {
-          statusMap.set(rel, "Missing name");
+        if (!event?.name || typeof event.execute !== "function") {
+          statusMap.set(rel, "Skipped (not event)");
           continue;
         }
 
@@ -89,7 +88,8 @@ module.exports = (client) => {
     )) {
       const folder = path.dirname(rel).replace(/\\/g, "/");
       const file = path.basename(rel);
-      table.addRow(folder === "." ? "root" : folder, file, status);
+      const folderLabel = folder === "." ? "Events" : `Events/${folder}`;
+      table.addRow(folderLabel, file, status);
     }
 
     global.logger.info(table.toString());

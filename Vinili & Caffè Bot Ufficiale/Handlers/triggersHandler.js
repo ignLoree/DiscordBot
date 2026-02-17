@@ -8,7 +8,26 @@ const READY_EVENT_ALIAS = "clientReady";
 function listTriggerFiles(root) {
   const triggersRoot = path.join(root, "Triggers");
   if (!fs.existsSync(triggersRoot)) return [];
-  return fs.readdirSync(triggersRoot).filter((file) => file.endsWith(".js"));
+
+  const listJsFiles = (dir) => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...listJsFiles(fullPath));
+        continue;
+      }
+      if (entry.isFile() && entry.name.endsWith(".js")) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  };
+
+  return listJsFiles(triggersRoot).map((fullPath) =>
+    path.relative(triggersRoot, fullPath).replace(/\\/g, "/"),
+  );
 }
 
 function normalizeEventName(eventName) {
@@ -41,13 +60,13 @@ module.exports = (client) => {
     const statusMap = new Map();
     let loaded = 0;
 
-    for (const file of files) {
+    for (const rel of files) {
       try {
-        const triggerPath = path.join(triggersRoot, file);
+        const triggerPath = path.join(triggersRoot, rel);
         delete require.cache[require.resolve(triggerPath)];
         const trigger = require(triggerPath);
-        if (!trigger?.name) {
-          statusMap.set(file, "Missing name");
+        if (!trigger?.name || typeof trigger.execute !== "function") {
+          statusMap.set(rel, "Skipped (not trigger)");
           continue;
         }
 
@@ -58,7 +77,7 @@ module.exports = (client) => {
           if (eventName === READY_EVENT_ALIAS && client.isReady()) {
             Promise.resolve(handler(client)).catch((err) => {
               global.logger.error(
-                `[TRIGGERS] Failed to run ${file} on hot-reload:`,
+                `[TRIGGERS] Failed to run ${rel} on hot-reload:`,
                 err,
               );
             });
@@ -71,21 +90,24 @@ module.exports = (client) => {
 
         trackBoundHandler(client, "_triggerHandlers", eventName, handler);
         statusMap.set(
-          file,
+          rel,
           eventName === trigger.name ? "Loaded" : `Loaded as ${eventName}`,
         );
         loaded += 1;
       } catch (err) {
-        statusMap.set(file, "Error loading");
-        global.logger.error(`[TRIGGERS] Failed to load ${file}:`, err);
+        statusMap.set(rel, "Error loading");
+        global.logger.error(`[TRIGGERS] Failed to load ${rel}:`, err);
       }
     }
 
     const table = new ascii().setHeading("Folder", "File", "Status");
-    for (const [file, status] of Array.from(statusMap.entries()).sort((a, b) =>
+    for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) =>
       a[0].localeCompare(b[0]),
     )) {
-      table.addRow("root", file, status);
+      const folder = path.dirname(rel).replace(/\\/g, "/");
+      const file = path.basename(rel);
+      const folderLabel = folder === "." ? "Triggers" : `Triggers/${folder}`;
+      table.addRow(folderLabel, file, status);
     }
 
     global.logger.info(table.toString());
