@@ -17,11 +17,28 @@ const processRefs = {};
 const restarting = {};
 let npmInstallInProgress = null;
 
+function runNpmInstall(installDir, extraArgs = []) {
+    return new Promise((resolveInstall) => {
+        const args = [
+            'install',
+            '--legacy-peer-deps',
+            '--no-bin-links',
+            '--prefer-offline',
+            '--cache', path.join(os.tmpdir(), '.npm-global'),
+            '--update-notifier', 'false',
+            ...extraArgs
+        ];
+        const npm = child_process.spawn('npm', args, { cwd: installDir, stdio: 'inherit' });
+        npm.on('exit', (code) => resolveInstall(code || 0));
+    });
+}
+
 function pidFile(botKey) {
     return path.resolve(baseDir, `.shard_${botKey}.pid`);
 }
 
 console.log('[Loader] Loading', BOTS.length, 'bot(s)');
+console.log('[Loader] Build marker: 2026-02-17-fix-install-and-ready');
 
 function killPidTree(pid) {
     if (!pid || Number.isNaN(pid)) return;
@@ -135,19 +152,18 @@ function runfile(bot, options = {}) {
             if (!npmInstallInProgress) {
                 npmInstallInProgress = new Promise((resolveInstall) => {
                     console.log(`[Loader] npm install in ${installDir}`);
-                    const npm = child_process.spawn('npm', [
-                        'install',
-                        '--legacy-peer-deps',
-                        '--no-bin-links',
-                        '--prefer-offline',
-                        '--cache', path.join(os.tmpdir(), '.npm-global'),
-                        '--update-notifier', 'false'
-                    ], { cwd: installDir, stdio: 'inherit' });
-                    npm.on('exit', (code) => {
-                        if (code !== 0) {
-                            console.log(`[Loader] npm install fallito (code ${code}), avvio bot comunque.`);
+                    runNpmInstall(installDir).then((code) => {
+                        if (code === 0) {
+                            resolveInstall();
+                            return;
                         }
-                        resolveInstall();
+                        console.log(`[Loader] npm install fallito (code ${code}), retry con --force...`);
+                        runNpmInstall(installDir, ['--force']).then((retryCode) => {
+                            if (retryCode !== 0) {
+                                console.log(`[Loader] npm install fallito anche con --force (code ${retryCode}), avvio bot comunque.`);
+                            }
+                            resolveInstall();
+                        });
                     });
                 }).finally(() => {
                     npmInstallInProgress = null;
@@ -202,7 +218,7 @@ function restartBot(botKey, options = {}) {
 }
 
 // Avvio tutti i bot (il delay è gestito dentro runfile per ogni bot)
-BOTS.forEach(bot => runfile(bot, { skipGitPull: true }));
+BOTS.forEach(bot => runfile(bot, { skipGitPull: false }));
 
 setInterval(() => {
     if (!fs.existsSync(RESTART_FLAG)) return;
