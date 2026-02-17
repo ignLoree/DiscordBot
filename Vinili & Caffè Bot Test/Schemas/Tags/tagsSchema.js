@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const SponsorMainLeaveSchema = new Schema(
@@ -7,13 +7,16 @@ const SponsorMainLeaveSchema = new Schema(
     leftAt: { type: Date, required: true },
     kickAt: { type: Date, required: true },
     dmSent: { type: Boolean, default: false },
-    dmFailed: { type: Boolean, default: false }
+    dmFailed: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-SponsorMainLeaveSchema.index({ kickAt: 1 }, { expireAfterSeconds: 48 * 60 * 60 });
+SponsorMainLeaveSchema.index(
+  { kickAt: 1 },
+  { expireAfterSeconds: 48 * 60 * 60 },
+);
 
 module.exports =
   mongoose.models.SponsorMainLeave ||
-  mongoose.model('SponsorMainLeave', SponsorMainLeaveSchema);
+  mongoose.model("SponsorMainLeave", SponsorMainLeaveSchema);

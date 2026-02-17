@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema, model, models } = mongoose;
 
 const verificationTenureSchema = new Schema({
   guildId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
   verifiedAt: { type: Date, required: true },
-  stage: { type: Number, default: 1 }
+  stage: { type: Number, default: 1 },
 });
 verificationTenureSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -22,11 +22,14 @@ const personalityPanelSchema = new Schema({
   verifyPanelMessageId: { type: String, default: null },
   ticketInfoMessageId: { type: String, default: null },
   ticketPanelMessageId: { type: String, default: null },
-  sponsorTicketPanelMessageId: { type: String, default: null }
+  sponsorTicketPanelMessageId: { type: String, default: null },
 });
 personalityPanelSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
-const VerificationTenure = models.VerificationTenure || model('VerificationTenure', verificationTenureSchema);
-const PersonalityPanel = models.PersonalityPanel || model('PersonalityPanel', personalityPanelSchema);
+const VerificationTenure =
+  models.VerificationTenure ||
+  model("VerificationTenure", verificationTenureSchema);
+const PersonalityPanel =
+  models.PersonalityPanel || model("PersonalityPanel", personalityPanelSchema);
 
 module.exports = { VerificationTenure, PersonalityPanel };
