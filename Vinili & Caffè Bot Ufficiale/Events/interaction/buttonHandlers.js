@@ -11,6 +11,8 @@ const {
   buildMeComponents,
   normalizeLookbackDays,
 } = require("../../Prefix/Stats/me");
+const MAX_COMPONENTS_PER_ROW = 5;
+const MAX_ROWS_PER_MESSAGE = 5;
 
 function parseServerRefreshCustomId(customId) {
   const raw = String(customId || "");
@@ -39,6 +41,37 @@ function parseMeCustomId(rawCustomId) {
   return { prefix, lookbackDays, wantsEmbed };
 }
 
+function chunk(items = [], size = MAX_COMPONENTS_PER_ROW) {
+  const out = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
+function normalizeComponentsForDiscord(components) {
+  if (!Array.isArray(components) || components.length === 0) return components;
+
+  const normalized = [];
+  for (const row of components) {
+    const asJson = row?.toJSON ? row.toJSON() : row;
+    const rowComponents = Array.isArray(asJson?.components)
+      ? asJson.components
+      : [];
+    if (!rowComponents.length) continue;
+
+    const chunks = chunk(rowComponents, MAX_COMPONENTS_PER_ROW);
+    for (const piece of chunks) {
+      normalized.push({ type: 1, components: piece });
+      if (normalized.length >= MAX_ROWS_PER_MESSAGE) {
+        return normalized;
+      }
+    }
+  }
+
+  return normalized;
+}
+
 module.exports = {
   async handleButtonInteraction(interaction) {
     if (!interaction?.isButton?.()) return false;
@@ -50,10 +83,12 @@ module.exports = {
 
         if (parsedMe.prefix === ME_PERIOD_OPEN_CUSTOM_ID_PREFIX) {
           await interaction.message.edit({
-            components: buildMeComponents(
-              parsedMe.lookbackDays,
-              parsedMe.wantsEmbed,
-              "period",
+            components: normalizeComponentsForDiscord(
+              buildMeComponents(
+                parsedMe.lookbackDays,
+                parsedMe.wantsEmbed,
+                "period",
+              ),
             ),
           });
           return true;
@@ -61,10 +96,12 @@ module.exports = {
 
         if (parsedMe.prefix === ME_PERIOD_BACK_CUSTOM_ID_PREFIX) {
           await interaction.message.edit({
-            components: buildMeComponents(
-              parsedMe.lookbackDays,
-              parsedMe.wantsEmbed,
-              "main",
+            components: normalizeComponentsForDiscord(
+              buildMeComponents(
+                parsedMe.lookbackDays,
+                parsedMe.wantsEmbed,
+                "main",
+              ),
             ),
           });
           return true;
@@ -82,6 +119,7 @@ module.exports = {
         );
         await interaction.message.edit({
           ...payload,
+          components: normalizeComponentsForDiscord(payload?.components),
           content: payload.content || null,
         });
       } catch (error) {
@@ -103,6 +141,7 @@ module.exports = {
       );
       await interaction.message.edit({
         ...payload,
+        components: normalizeComponentsForDiscord(payload?.components),
         content: payload.content || null,
       });
     } catch (error) {

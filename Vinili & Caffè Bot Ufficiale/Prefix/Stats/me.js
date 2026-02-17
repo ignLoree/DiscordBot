@@ -69,33 +69,45 @@ function buildMainControlsRow(lookbackDays, wantsEmbed) {
   );
 }
 
-function buildPeriodControlsRow(lookbackDays, wantsEmbed) {
+function buildPeriodControlsRows(lookbackDays, wantsEmbed) {
   const mode = wantsEmbed ? "embed" : "image";
   const current = normalizeLookbackDays(lookbackDays);
-  const row = new ActionRowBuilder().addComponents(
+  const topRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
         `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setLabel("<")
       .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:1:${mode}`)
+      .setLabel("1d")
+      .setStyle(current === 1 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:7:${mode}`)
+      .setLabel("7d")
+      .setStyle(current === 7 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:14:${mode}`)
+      .setLabel("14d")
+      .setStyle(current === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
-
-  for (const day of VALID_LOOKBACKS) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${day}:${mode}`)
-        .setLabel(`${day}d`)
-        .setStyle(day === current ? ButtonStyle.Success : ButtonStyle.Primary),
-    );
-  }
-
-  return row;
+  const bottomRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:21:${mode}`)
+      .setLabel("21d")
+      .setStyle(current === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:30:${mode}`)
+      .setLabel("30d")
+      .setStyle(current === 30 ? ButtonStyle.Success : ButtonStyle.Primary),
+  );
+  return [topRow, bottomRow];
 }
 
 function buildMeComponents(lookbackDays, wantsEmbed, controlsView = "main") {
   if (controlsView === "period") {
-    return [buildPeriodControlsRow(lookbackDays, wantsEmbed)];
+    return buildPeriodControlsRows(lookbackDays, wantsEmbed);
   }
   return [buildMainControlsRow(lookbackDays, wantsEmbed)];
 }

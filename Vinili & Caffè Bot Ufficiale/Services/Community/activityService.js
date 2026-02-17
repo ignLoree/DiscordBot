@@ -12,6 +12,9 @@ const {
 
 const TIME_ZONE = "Europe/Rome";
 const DAY_MS = 24 * 60 * 60 * 1000;
+const BACKFILL_HOUR_SUFFIX = "T12";
+const HOURLY_BACKFILL_BATCH = 500;
+const hourlyBackfillByGuild = new Map();
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -80,6 +83,97 @@ function getLastNHourKeys(hours) {
     keys.push(getHourKey(d));
   }
   return keys;
+}
+
+function chunkArray(items = [], size = 500) {
+  const out = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
+function buildIncFromDailyRow(row) {
+  const inc = {
+    textCount: Math.max(0, Number(row?.textCount || 0)),
+    voiceSeconds: Math.max(0, Number(row?.voiceSeconds || 0)),
+  };
+
+  for (const [channelId, value] of Object.entries(row?.textChannels || {})) {
+    const amount = Math.max(0, Number(value || 0));
+    if (!channelId || amount <= 0) continue;
+    inc[`textChannels.${channelId}`] = amount;
+  }
+
+  for (const [channelId, value] of Object.entries(row?.voiceChannels || {})) {
+    const amount = Math.max(0, Number(value || 0));
+    if (!channelId || amount <= 0) continue;
+    inc[`voiceChannels.${channelId}`] = amount;
+  }
+
+  return inc;
+}
+
+async function ensureHourlyBackfillForGuild(guildId) {
+  const safeGuildId = String(guildId || "");
+  if (!safeGuildId) return false;
+
+  if (hourlyBackfillByGuild.has(safeGuildId)) {
+    return hourlyBackfillByGuild.get(safeGuildId);
+  }
+
+  const task = (async () => {
+    const alreadyTracked = await ActivityHourly.exists({ guildId: safeGuildId });
+    if (alreadyTracked) return false;
+
+    const dailyRows = await ActivityDaily.find({ guildId: safeGuildId })
+      .select("guildId dateKey userId textCount voiceSeconds textChannels voiceChannels")
+      .lean()
+      .catch(() => []);
+
+    if (!dailyRows.length) return false;
+
+    const operations = [];
+    for (const row of dailyRows) {
+      const dateKey = String(row?.dateKey || "");
+      const userId = String(row?.userId || "");
+      if (!dateKey || !userId) continue;
+      const hourKey = `${dateKey}${BACKFILL_HOUR_SUFFIX}`;
+      operations.push({
+        updateOne: {
+          filter: { guildId: safeGuildId, hourKey, userId },
+          update: { $inc: buildIncFromDailyRow(row) },
+          upsert: true,
+        },
+      });
+    }
+
+    if (!operations.length) return false;
+
+    const chunks = chunkArray(operations, HOURLY_BACKFILL_BATCH);
+    for (const ops of chunks) {
+      // ordered=false: skip single bad op without aborting whole migration
+      await ActivityHourly.bulkWrite(ops, { ordered: false }).catch(() => {});
+    }
+
+    global.logger?.info?.(
+      `[ACTIVITY] Hourly backfill completed for guild ${safeGuildId}: ${operations.length} row(s).`,
+    );
+    return true;
+  })()
+    .catch((error) => {
+      global.logger?.warn?.(
+        `[ACTIVITY] Hourly backfill failed for guild ${safeGuildId}:`,
+        error?.message || error,
+      );
+      return false;
+    })
+    .finally(() => {
+      hourlyBackfillByGuild.delete(safeGuildId);
+    });
+
+  hourlyBackfillByGuild.set(safeGuildId, task);
+  return task;
 }
 
 async function bumpDailyText(guildId, userId, channelId, amount = 1) {
@@ -718,9 +812,10 @@ async function getServerActivityStats(guildId, days = 7) {
 }
 
 async function getServerOverviewStats(guildId, lookbackDays = 14) {
-  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
+  await ensureHourlyBackfillForGuild(guildId);
   const lookbackKey = `d${safeLookback}`;
   const hourKeys1 = getLastNHourKeys(24);
   const hourKeys7 = getLastNHourKeys(24 * 7);
@@ -869,9 +964,10 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
 }
 
 async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
-  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
+  await ensureHourlyBackfillForGuild(guildId);
   const lookbackKey = `d${safeLookback}`;
   const hourKeys1 = getLastNHourKeys(24);
   const hourKeys7 = getLastNHourKeys(24 * 7);

@@ -7,6 +7,7 @@ const {
 } = require("./canvasFonts");
 const emojiImageCache = new Map();
 const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;
+const ROME_TIME_ZONE = "Europe/Rome";
 
 function roundRectPath(ctx, x, y, w, h, r = 16) {
   const radius = Math.max(0, Math.min(r, w / 2, h / 2));
@@ -565,6 +566,7 @@ function dateText(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "N/A";
   return d.toLocaleDateString("en-US", {
+    timeZone: ROME_TIME_ZONE,
     month: "long",
     day: "numeric",
     year: "numeric",
