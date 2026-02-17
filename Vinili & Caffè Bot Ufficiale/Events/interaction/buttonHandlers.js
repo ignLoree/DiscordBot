@@ -168,6 +168,32 @@ function normalizeComponentsForDiscord(components) {
   return normalized;
 }
 
+function disableComponentsForLoading(components) {
+  if (!Array.isArray(components) || components.length === 0) return [];
+  const out = [];
+  for (const row of components) {
+    const asJson = row?.toJSON ? row.toJSON() : row;
+    const rowType = Number(asJson?.type || 1);
+    const rowComponents = Array.isArray(asJson?.components)
+      ? asJson.components
+      : [];
+    if (!rowComponents.length) continue;
+
+    out.push({
+      type: rowType,
+      components: rowComponents.map((component) => {
+        if (!component || typeof component !== "object") return component;
+        const type = Number(component.type || 0);
+        if (type === 2 || type === 3 || type === 5 || type === 6 || type === 7 || type === 8) {
+          return { ...component, disabled: true };
+        }
+        return component;
+      }),
+    });
+  }
+  return out;
+}
+
 module.exports = {
   async handleButtonInteraction(interaction) {
     if (!interaction?.isButton?.() && !interaction?.isStringSelectMenu?.()) {
@@ -180,6 +206,11 @@ module.exports = {
 
       try {
         await interaction.deferUpdate();
+        await interaction.message
+          .edit({
+            components: disableComponentsForLoading(interaction.message?.components),
+          })
+          .catch(() => {});
         const selectedValue = normalizeTopView(interaction.values?.[0] || "overview");
         const payload = await buildTopChannelPayload(
           { guild: interaction.guild },

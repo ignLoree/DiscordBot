@@ -2,6 +2,9 @@ const {
   queueCategoryRenumber,
 } = require("../Services/Community/communityOpsService");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
+const {
+  markDeletedChannelSnapshot,
+} = require("../Utils/Community/channelSnapshotUtils");
 
 function isTicketsCategory(name) {
   return String(name || "")
@@ -13,6 +16,7 @@ module.exports = {
   name: "channelDelete",
   async execute(channel, client) {
     if (!channel?.guildId) return;
+    await markDeletedChannelSnapshot(channel).catch(() => {});
 
     try {
       const parentId = channel.parentId;

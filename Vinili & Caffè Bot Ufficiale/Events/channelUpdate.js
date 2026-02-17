@@ -2,6 +2,9 @@ const {
   queueCategoryRenumber,
 } = require("../Services/Community/communityOpsService");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
+const {
+  upsertChannelSnapshot,
+} = require("../Utils/Community/channelSnapshotUtils");
 
 module.exports = {
   name: "channelUpdate",
@@ -14,6 +17,7 @@ module.exports = {
     const nameChanged = oldChannel?.name !== newChannel?.name;
     if (!parentChanged && !positionChanged && !nameChanged) return;
 
+    await upsertChannelSnapshot(newChannel || oldChannel).catch(() => {});
     queueCategoryRenumber(client, guildId);
     queueIdsCatalogSync(client, guildId, "channelUpdate");
   },

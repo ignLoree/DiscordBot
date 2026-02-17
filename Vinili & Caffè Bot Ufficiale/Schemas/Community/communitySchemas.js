@@ -236,6 +236,19 @@ const quotePrivacySchema = new Schema(
 );
 quotePrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
+const channelSnapshotSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    channelId: { type: String, required: true, index: true },
+    name: { type: String, default: "" },
+    type: { type: Number, default: null },
+    parentId: { type: String, default: null },
+    deletedAt: { type: Date, default: null, index: true },
+  },
+  { timestamps: true },
+);
+channelSnapshotSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
+
 const ActivityUser =
   models.ActivityUser || model("ActivityUser", activityUserSchema);
 const ExpUser = models.ExpUser || model("ExpUser", expUserSchema);
@@ -272,6 +285,8 @@ const BannerPrivacy =
   models.BannerPrivacy || model("BannerPrivacy", bannerPrivacySchema);
 const QuotePrivacy =
   models.QuotePrivacy || model("QuotePrivacy", quotePrivacySchema);
+const ChannelSnapshot =
+  models.ChannelSnapshot || model("ChannelSnapshot", channelSnapshotSchema);
 
 module.exports = {
   ActivityUser,
@@ -292,4 +307,5 @@ module.exports = {
   AvatarPrivacy,
   BannerPrivacy,
   QuotePrivacy,
+  ChannelSnapshot,
 };

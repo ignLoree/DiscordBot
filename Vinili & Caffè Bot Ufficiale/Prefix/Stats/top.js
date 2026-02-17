@@ -18,6 +18,11 @@ const {
   renderTopStatisticsCanvas,
   renderTopLeaderboardPageCanvas,
 } = require("../../Utils/Render/activityCanvas");
+const {
+  upsertChannelSnapshot,
+  syncGuildChannelSnapshots,
+  getChannelSnapshotMap,
+} = require("../../Utils/Community/channelSnapshotUtils");
 
 const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set(
   [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
@@ -139,7 +144,7 @@ async function resolveTopUserEntries(guild, entries = []) {
   return out;
 }
 
-async function resolveTopChannelEntries(guild, entries = []) {
+async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new Map()) {
   const afkIds = new Set(
     [guild?.afkChannelId, IDs.channels?.vocaleAFK]
       .filter(Boolean)
@@ -154,19 +159,26 @@ async function resolveTopChannelEntries(guild, entries = []) {
     const channel =
       guild.channels?.cache?.get(channelId) ||
       (await guild.channels?.fetch(channelId).catch(() => null));
-
-    const rawLabel = channel ? `#${channel.name}` : "";
+    if (channel) {
+      await upsertChannelSnapshot(channel).catch(() => {});
+    }
+    const snapshotName = String(snapshotMap.get(channelId) || "").trim();
+    const rawLabel = channel
+      ? `#${channel.name}`
+      : snapshotName
+        ? `#${snapshotName}`
+        : `#canale-${channelId.slice(-6) || "eliminato"}`;
     out.push({
       id: channelId,
-      label: normalizeCanvasLabel(rawLabel, "#canale-sconosciuto"),
+      label: normalizeCanvasLabel(rawLabel, `#canale-${channelId.slice(-6) || "eliminato"}`),
       value: Number(item?.value || 0),
     });
   }
   return out;
 }
 
-async function resolveTopTextChannelEntries(guild, entries = []) {
-  const rows = await resolveTopChannelEntries(guild, entries);
+async function resolveTopTextChannelEntries(guild, entries = [], snapshotMap = new Map()) {
+  const rows = await resolveTopChannelEntries(guild, entries, snapshotMap);
   const out = [];
 
   for (const row of rows) {
@@ -463,11 +475,20 @@ async function buildTopChannelPayload(
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
+  await syncGuildChannelSnapshots(message.guild).catch(() => {});
   const stats = await getServerOverviewStats(
     message.guild.id,
     safeLookback,
     TOP_PAGE_DATA_LIMIT,
   );
+  const channelIds = Array.from(
+    new Set(
+      [...(stats.topChannelsText || []), ...(stats.topChannelsVoice || [])]
+        .map((item) => String(item?.id || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const snapshotMap = await getChannelSnapshotMap(message.guild.id, channelIds);
 
   const topUsersText = await resolveTopUserEntries(
     message.guild,
@@ -476,6 +497,7 @@ async function buildTopChannelPayload(
   const topChannelsText = await resolveTopTextChannelEntries(
     message.guild,
     stats.topChannelsText || [],
+    snapshotMap,
   );
   const topUsersVoice = await resolveTopUserEntries(
     message.guild,
@@ -484,6 +506,7 @@ async function buildTopChannelPayload(
   const topChannelsVoice = await resolveTopChannelEntries(
     message.guild,
     stats.topChannelsVoice || [],
+    snapshotMap,
   );
 
   const source = {
