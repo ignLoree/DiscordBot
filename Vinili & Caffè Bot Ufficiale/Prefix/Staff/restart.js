@@ -100,7 +100,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Il comando `+restart` è utilizzabile solo nel **server principale** (main guild).",
+              "<:vegax:1443934876440068179> Il comando `+restart` è utilizzabile solo nel **server principale**.",
             ),
         ],
         allowedMentions: { repliedUser: false },

@@ -633,6 +633,7 @@ module.exports = {
     if (overridePrefix) {
       const prefixCommands = overrideMap.get(overridePrefix);
       overrideCommand = prefixCommands?.get(cmd) || null;
+      if (!overrideCommand) return;
     }
     let command =
       overrideCommand ||

@@ -30,7 +30,7 @@ async function sendGuildError(message) {
     .reply({
       embeds: [
         errorEmbed(
-          "<:vegax:1472992044140990526> Il comando `-rs` e utilizzabile solo nel **server test**.",
+          "<:vegax:1472992044140990526> Il comando `-rs` è utilizzabile solo nel **server test**.",
         ),
       ],
       allowedMentions: { repliedUser: false },
@@ -45,7 +45,7 @@ async function sendStartNotice(message) {
         new EmbedBuilder()
           .setColor("#6f4e37")
           .setDescription(
-            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando e completato.",
+            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando è completato.",
           ),
       ],
       allowedMentions: { repliedUser: false },
