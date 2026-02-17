@@ -1,4 +1,10 @@
-const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
+const {
+  EmbedBuilder,
+  AttachmentBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const {
@@ -8,13 +14,19 @@ const {
   renderUserActivityCanvas,
 } = require("../../Utils/Render/activityCanvas");
 
+const ME_REFRESH_CUSTOM_ID_PREFIX = "stats_me_refresh";
+const ME_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_me_period_open";
+const ME_PERIOD_SET_CUSTOM_ID_PREFIX = "stats_me_period_set";
+const ME_PERIOD_BACK_CUSTOM_ID_PREFIX = "stats_me_period_back";
+const VALID_LOOKBACKS = [1, 7, 14, 21, 30];
+
 function parseWindowDays(rawValue) {
   const parsed = Number(
     String(rawValue || "14")
       .toLowerCase()
       .replace(/d$/i, ""),
   );
-  if ([7, 14, 21].includes(parsed)) return parsed;
+  if ([1, 7, 14, 21, 30].includes(parsed)) return parsed;
   return 14;
 }
 
@@ -32,6 +44,60 @@ function parseMyActivityArgs(args = []) {
 
 function formatHours(seconds) {
   return (Number(seconds || 0) / 3600).toFixed(2);
+}
+
+function normalizeLookbackDays(value) {
+  const n = Number.parseInt(String(value || "14"), 10);
+  return VALID_LOOKBACKS.includes(n) ? n : 14;
+}
+
+function buildMainControlsRow(lookbackDays, wantsEmbed) {
+  const mode = wantsEmbed ? "embed" : "image";
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(
+        `${ME_REFRESH_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+      )
+      .setLabel("Aggiorna")
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId(
+        `${ME_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+      )
+      .setLabel("Periodo")
+      .setStyle(ButtonStyle.Primary),
+  );
+}
+
+function buildPeriodControlsRow(lookbackDays, wantsEmbed) {
+  const mode = wantsEmbed ? "embed" : "image";
+  const current = normalizeLookbackDays(lookbackDays);
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(
+        `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+      )
+      .setLabel("<")
+      .setStyle(ButtonStyle.Secondary),
+  );
+
+  for (const day of VALID_LOOKBACKS) {
+    row.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${day}:${mode}`)
+        .setLabel(`${day}d`)
+        .setStyle(day === current ? ButtonStyle.Success : ButtonStyle.Primary),
+    );
+  }
+
+  return row;
+}
+
+function buildMeComponents(lookbackDays, wantsEmbed, controlsView = "main") {
+  if (controlsView === "period") {
+    return [buildPeriodControlsRow(lookbackDays, wantsEmbed)];
+  }
+  return [buildMainControlsRow(lookbackDays, wantsEmbed)];
 }
 
 async function resolveChannelLabel(guild, channelId) {
@@ -82,87 +148,110 @@ async function enrichChannels(guild, items = []) {
   return out;
 }
 
+async function buildMeOverviewPayload(
+  guild,
+  user,
+  member,
+  lookbackDays = 14,
+  wantsEmbed = false,
+  controlsView = "main",
+) {
+  const safeLookback = normalizeLookbackDays(lookbackDays);
+  const stats = await getUserOverviewStats(guild.id, user.id, safeLookback);
+  const lookbackKey = `d${safeLookback}`;
+  const lookbackWindow = stats?.windows?.[lookbackKey] || stats?.windows?.d14 || {
+    text: 0,
+    voiceSeconds: 0,
+  };
+  const topChannelsText = await enrichChannels(guild, stats.topChannelsText);
+  const topChannelsVoice = await enrichChannels(guild, stats.topChannelsVoice);
+
+  const imageName = `me-overview-${user.id}-${safeLookback}d.png`;
+  let file = null;
+  try {
+    const buffer = await renderUserActivityCanvas({
+      guildName: guild?.name || "Server",
+      userTag: user.tag,
+      displayName: member?.displayName || user.username,
+      avatarUrl: user.displayAvatarURL({
+        extension: "png",
+        size: 256,
+      }),
+      createdOn: user.createdAt || null,
+      joinedOn: member?.joinedAt || null,
+      lookbackDays: safeLookback,
+      windows: stats.windows,
+      ranks: stats.ranks,
+      topChannelsText,
+      topChannelsVoice,
+      chart: stats.chart,
+    });
+    file = new AttachmentBuilder(buffer, { name: imageName });
+  } catch (error) {
+    global.logger?.warn?.("[ME] Canvas render failed:", error?.message || error);
+  }
+
+  const components = buildMeComponents(safeLookback, wantsEmbed, controlsView);
+
+  if (!wantsEmbed) {
+    return {
+      files: file ? [file] : [],
+      content: file
+        ? null
+        : "<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.",
+      components,
+    };
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setAuthor({
+      name: `${user.tag} - My Activity ${safeLookback}d`,
+      iconURL: user.displayAvatarURL({ size: 128 }),
+    })
+    .setImage(file ? `attachment://${imageName}` : null)
+    .setDescription(
+      [
+        `Messaggi (1d/7d/${safeLookback}d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${lookbackWindow.text}**`,
+        `Ore vocali (1d/7d/${safeLookback}d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(lookbackWindow.voiceSeconds)}**`,
+        `Rank server (${safeLookback}d): **Text #${stats.ranks.text || "-"} - Voice #${stats.ranks.voice || "-"}**`,
+        stats.approximate ? "_Nota: dati retroattivi parziali._" : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+
+  return {
+    embeds: [embed],
+    files: file ? [file] : [],
+    components,
+  };
+}
+
 module.exports = {
   name: "me",
+  ME_REFRESH_CUSTOM_ID_PREFIX,
+  ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+  ME_PERIOD_SET_CUSTOM_ID_PREFIX,
+  ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  buildMeOverviewPayload,
+  buildMeComponents,
+  normalizeLookbackDays,
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
-
     const { lookbackDays, wantsEmbed } = parseMyActivityArgs(args);
-    const stats = await getUserOverviewStats(
-      message.guild.id,
-      message.author.id,
+    const payload = await buildMeOverviewPayload(
+      message.guild,
+      message.author,
+      message.member,
       lookbackDays,
+      wantsEmbed,
+      "main",
     );
-    const topChannelsText = await enrichChannels(
-      message.guild,
-      stats.topChannelsText,
-    );
-    const topChannelsVoice = await enrichChannels(
-      message.guild,
-      stats.topChannelsVoice,
-    );
-
-    const imageName = `me-overview-${message.author.id}-${lookbackDays}d.png`;
-    let file = null;
-    try {
-      const buffer = await renderUserActivityCanvas({
-        guildName: message.guild?.name || "Server",
-        userTag: message.author.tag,
-        displayName: message.member?.displayName || message.author.username,
-        avatarUrl: message.author.displayAvatarURL({
-          extension: "png",
-          size: 256,
-        }),
-        createdOn: message.author.createdAt || null,
-        joinedOn: message.member?.joinedAt || null,
-        lookbackDays,
-        windows: stats.windows,
-        ranks: stats.ranks,
-        topChannelsText,
-        topChannelsVoice,
-        chart: stats.chart,
-      });
-      file = new AttachmentBuilder(buffer, { name: imageName });
-    } catch (error) {
-      global.logger?.warn?.(
-        "[ME] Canvas render failed:",
-        error?.message || error,
-      );
-    }
-
-    if (!wantsEmbed) {
-      await safeMessageReply(message, {
-        files: file ? [file] : [],
-        content: file
-          ? null
-          : "<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.",
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setAuthor({
-        name: `${message.author.tag} - My Activity ${lookbackDays}d`,
-        iconURL: message.author.displayAvatarURL({ size: 128 }),
-      })
-      .setImage(file ? `attachment://${imageName}` : null)
-      .setDescription(
-        [
-          `Messaggi (1d/7d/14d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${stats.windows.d14.text}**`,
-          `Ore vocali (1d/7d/14d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(stats.windows.d14.voiceSeconds)}**`,
-          `Rank server (14d): **Text #${stats.ranks.text || "-"} • Voice #${stats.ranks.voice || "-"}**`,
-          stats.approximate ? "_Nota: dati retroattivi parziali._" : null,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
 
     await safeMessageReply(message, {
-      embeds: [embed],
-      files: file ? [file] : [],
+      ...payload,
       allowedMentions: { repliedUser: false },
     });
   },

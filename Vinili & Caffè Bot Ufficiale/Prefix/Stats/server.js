@@ -1,4 +1,10 @@
-const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
+const {
+  EmbedBuilder,
+  AttachmentBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const {
@@ -7,6 +13,7 @@ const {
 const {
   renderServerActivityCanvas,
 } = require("../../Utils/Render/activityCanvas");
+const SERVER_REFRESH_CUSTOM_ID_PREFIX = "stats_server_refresh";
 
 function parseWindowDays(rawValue) {
   const parsed = Number(
@@ -14,7 +21,7 @@ function parseWindowDays(rawValue) {
       .toLowerCase()
       .replace(/d$/i, ""),
   );
-  if ([7, 14, 21].includes(parsed)) return parsed;
+  if ([7, 14, 21, 30].includes(parsed)) return parsed;
   return 14;
 }
 
@@ -132,76 +139,105 @@ async function enrichTops(guild, stats) {
   return { topUsersText, topUsersVoice, topChannelsText, topChannelsVoice };
 }
 
+function buildRefreshRow(lookbackDays, wantsEmbed) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(
+        `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${Number(lookbackDays || 14)}:${wantsEmbed ? "embed" : "image"}`,
+      )
+      .setLabel("Aggiorna")
+      .setStyle(ButtonStyle.Secondary),
+  );
+}
+
+async function buildServerOverviewPayload(guild, lookbackDays = 14, wantsEmbed = false) {
+  const stats = await getServerOverviewStats(guild.id, lookbackDays);
+  const lookbackKey = `d${lookbackDays}`;
+  const d1 = safeWindow(stats?.windows, "d1");
+  const d7 = safeWindow(stats?.windows, "d7");
+  const dLookback = safeWindow(stats?.windows, lookbackKey);
+  const enriched = await enrichTops(guild, stats);
+
+  const imageName = `server-overview-${guild.id}-${lookbackDays}d.png`;
+  let file = null;
+  try {
+    const buffer = await renderServerActivityCanvas({
+      guildName: guild?.name || "Server",
+      guildIconUrl: guild?.iconURL({ extension: "png", size: 256 }) || null,
+      createdOn: guild?.createdAt || null,
+      invitedBotOn: guild?.members?.me?.joinedAt || null,
+      lookbackDays,
+      windows: {
+        d1,
+        d7,
+        d14: dLookback,
+        [lookbackKey]: dLookback,
+      },
+      topUsersText: enriched.topUsersText,
+      topUsersVoice: enriched.topUsersVoice,
+      topChannelsText: enriched.topChannelsText,
+      topChannelsVoice: enriched.topChannelsVoice,
+      chart: Array.isArray(stats?.chart) ? stats.chart : [],
+      approximate: Boolean(stats?.approximate),
+    });
+    file = new AttachmentBuilder(buffer, { name: imageName });
+  } catch (error) {
+    global.logger?.warn?.(
+      "[SERVER] Canvas render failed:",
+      error?.message || error,
+    );
+  }
+
+  if (!wantsEmbed) {
+    return {
+      files: file ? [file] : [],
+      content: file
+        ? null
+        : "<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.",
+      components: [buildRefreshRow(lookbackDays, wantsEmbed)],
+    };
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setAuthor({
+      name: `${guild?.name || "Server"} - Overview ${lookbackDays}d`,
+      iconURL: guild?.iconURL({ size: 128 }) || null,
+    })
+    .setImage(file ? `attachment://${imageName}` : null)
+    .setDescription(
+      [
+        `Messaggi (1d/7d/${lookbackDays}d): **${d1.text} / ${d7.text} / ${dLookback.text}**`,
+        `Ore vocali (1d/7d/${lookbackDays}d): **${formatHours(d1.voiceSeconds)} / ${formatHours(d7.voiceSeconds)} / ${formatHours(dLookback.voiceSeconds)}**`,
+        `Contributori (1d/7d/${lookbackDays}d): **${d1.contributors} / ${d7.contributors} / ${dLookback.contributors}**`,
+        stats?.approximate ? "_Nota: dati retroattivi parziali._" : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+
+  return {
+    embeds: [embed],
+    files: file ? [file] : [],
+    components: [buildRefreshRow(lookbackDays, wantsEmbed)],
+  };
+}
+
 module.exports = {
   name: "server",
+  SERVER_REFRESH_CUSTOM_ID_PREFIX,
+  buildServerOverviewPayload,
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const { lookbackDays, wantsEmbed } = parseServerActivityArgs(args);
-    const stats = await getServerOverviewStats(message.guild.id, lookbackDays);
-    const d1 = safeWindow(stats?.windows, "d1");
-    const d7 = safeWindow(stats?.windows, "d7");
-    const d14 = safeWindow(stats?.windows, "d14");
-    const enriched = await enrichTops(message.guild, stats);
-
-    const imageName = `server-overview-${message.guild.id}-${lookbackDays}d.png`;
-    let file = null;
-    try {
-      const buffer = await renderServerActivityCanvas({
-        guildName: message.guild?.name || "Server",
-        guildIconUrl:
-          message.guild?.iconURL({ extension: "png", size: 256 }) || null,
-        createdOn: message.guild?.createdAt || null,
-        invitedBotOn: message.guild?.members?.me?.joinedAt || null,
-        lookbackDays,
-        windows: { d1, d7, d14 },
-        topUsersText: enriched.topUsersText,
-        topUsersVoice: enriched.topUsersVoice,
-        topChannelsText: enriched.topChannelsText,
-        topChannelsVoice: enriched.topChannelsVoice,
-        chart: Array.isArray(stats?.chart) ? stats.chart : [],
-        approximate: Boolean(stats?.approximate),
-      });
-      file = new AttachmentBuilder(buffer, { name: imageName });
-    } catch (error) {
-      global.logger?.warn?.(
-        "[SERVER] Canvas render failed:",
-        error?.message || error,
-      );
-    }
-
-    if (!wantsEmbed) {
-      await safeMessageReply(message, {
-        files: file ? [file] : [],
-        content: file
-          ? null
-          : "<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.",
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setAuthor({
-        name: `${message.guild?.name || "Server"} - Overview ${lookbackDays}d`,
-        iconURL: message.guild?.iconURL({ size: 128 }) || null,
-      })
-      .setImage(file ? `attachment://${imageName}` : null)
-      .setDescription(
-        [
-          `Messaggi (1d/7d/14d): **${d1.text} / ${d7.text} / ${d14.text}**`,
-          `Ore vocali (1d/7d/14d): **${formatHours(d1.voiceSeconds)} / ${formatHours(d7.voiceSeconds)} / ${formatHours(d14.voiceSeconds)}**`,
-          `Contributori (1d/7d/14d): **${d1.contributors} / ${d7.contributors} / ${d14.contributors}**`,
-          stats?.approximate ? "_Nota: dati retroattivi parziali._" : null,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
-
+    const payload = await buildServerOverviewPayload(
+      message.guild,
+      lookbackDays,
+      wantsEmbed,
+    );
     await safeMessageReply(message, {
-      embeds: [embed],
-      files: file ? [file] : [],
+      ...payload,
       allowedMentions: { repliedUser: false },
     });
   },

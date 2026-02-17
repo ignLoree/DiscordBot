@@ -1,55 +1,20 @@
-const {
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  PermissionFlagsBits,
-  ChannelType,
-} = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits, ChannelType, } = require("discord.js");
 const math = require("mathjs");
-const {
-  MentionReaction,
-  AutoResponder,
-} = require("../Schemas/Community/autoInteractionSchemas");
+const { MentionReaction, AutoResponder } = require("../Schemas/Community/autoInteractionSchemas");
 const countschema = require("../Schemas/Counting/countingSchema");
 const AFK = require("../Schemas/Afk/afkSchema");
 const { handleTtsMessage } = require("../Services/TTS/ttsService");
-const {
-  recordDiscadiaBump,
-  recordDiscadiaVote,
-  recordBump,
-} = require("../Services/Bump/bumpService");
-const {
-  handleMinigameMessage,
-} = require("../Services/Minigames/minigameService");
-const {
-  recordReminderActivity,
-} = require("../Services/Community/chatReminderService");
-const {
-  recordMessageActivity,
-} = require("../Services/Community/activityService");
+const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../Services/Bump/bumpService");
+const { handleMinigameMessage } = require("../Services/Minigames/minigameService");
+const { recordReminderActivity } = require("../Services/Community/chatReminderService");
+const { recordMessageActivity } = require("../Services/Community/activityService");
 const { addExpWithLevel } = require("../Services/Community/expService");
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
-const {
-  checkPrefixPermission,
-  getPrefixRequiredRoles,
-  buildGlobalPermissionDeniedEmbed,
-} = require("../Utils/Moderation/commandPermissions");
-const {
-  getUserCommandCooldownSeconds,
-  consumeUserCooldown,
-} = require("../Utils/Moderation/commandCooldown");
-const {
-  buildCooldownErrorEmbed,
-  buildMissingArgumentsErrorEmbed,
-  buildCommandTimeoutErrorEmbed,
-  buildInternalCommandErrorEmbed,
-} = require("../Utils/Moderation/commandErrorEmbeds");
+const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
+const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
+const { buildCooldownErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const {
-  getGuildAutoResponderCache,
-  setGuildAutoResponderCache,
-} = require("../Utils/Community/autoResponderCache");
+const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
 const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
 const IDs = require("../Utils/Config/ids");
@@ -405,7 +370,7 @@ async function handleVoteManagerMessage(message, client) {
       if (count === 1) {
         expValue = 250;
       }
-    } catch {}
+    } catch { }
     try {
       await addExpWithLevel(
         message.guild,
@@ -414,7 +379,7 @@ async function handleVoteManagerMessage(message, client) {
         false,
         false,
       );
-    } catch {}
+    } catch { }
     try {
       const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
       await upsertVoteRole(message.guild.id, user.id, expiresAt);
@@ -422,9 +387,9 @@ async function handleVoteManagerMessage(message, client) {
         message.guild.members.cache.get(user.id) ||
         (await message.guild.members.fetch(user.id).catch(() => null));
       if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
-        await member.roles.add(VOTE_ROLE_ID).catch(() => {});
+        await member.roles.add(VOTE_ROLE_ID).catch(() => { });
       }
-    } catch {}
+    } catch { }
   }
   const voteLabel =
     typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
@@ -467,7 +432,7 @@ async function handleVoteManagerMessage(message, client) {
     global.logger.error("[VOTE EMBED] Failed to send embed:", detail);
   }
   if (sent) {
-    await message.delete().catch(() => {});
+    await message.delete().catch(() => { });
   }
   return true;
 }
@@ -481,7 +446,7 @@ module.exports = {
       FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || "")) &&
       !message?.system
     ) {
-      await message.delete().catch(() => {});
+      await message.delete().catch(() => { });
       return;
     }
     try {
@@ -496,7 +461,7 @@ module.exports = {
           message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID &&
           !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
         ) {
-          await message.delete().catch(() => {});
+          await message.delete().catch(() => { });
           const embed = new EmbedBuilder()
             .setColor("#6f4e37")
             .setDescription(
@@ -564,12 +529,10 @@ module.exports = {
       } catch (error) {
         logEventError(client, "REMINDER ACTIVITY ERROR", error);
       }
-      if (!isPrefixMessage) {
-        try {
-          await recordMessageActivity(message);
-        } catch (error) {
-          logEventError(client, "ACTIVITY MESSAGE ERROR", error);
-        }
+      try {
+        await recordMessageActivity(message);
+      } catch (error) {
+        logEventError(client, "ACTIVITY MESSAGE ERROR", error);
       }
       try {
         await handleMinigameMessage(message, client);
@@ -615,7 +578,7 @@ module.exports = {
     const shouldDeleteCommandMessage = true;
     const deleteCommandMessage = async () => {
       if (!shouldDeleteCommandMessage) return;
-      await message.delete().catch(() => {});
+      await message.delete().catch(() => { });
     };
     if (!overridePrefix && !startsWithDefault) return;
 
@@ -663,7 +626,7 @@ module.exports = {
           const msg = await message.channel.send({
             content: `Il comando TTS è utilizzabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`,
           });
-          setTimeout(() => msg.delete().catch(() => {}), 5000);
+          setTimeout(() => msg.delete().catch(() => { }), 5000);
           return;
         }
       } else if (String(command.name || "").toLowerCase() === "ship") {
@@ -675,7 +638,7 @@ module.exports = {
           const msg = await message.channel.send({
             content: `Il comando ship è utilizzabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`,
           });
-          setTimeout(() => msg.delete().catch(() => {}), 5000);
+          setTimeout(() => msg.delete().catch(() => { }), 5000);
           return;
         }
       } else if (
@@ -690,7 +653,7 @@ module.exports = {
         const msg = await message.channel.send({
           content: `Questo comando è utilizzabile solo in ${channelsList}.`,
         });
-        setTimeout(() => msg.delete().catch(() => {}), 5000);
+        setTimeout(() => msg.delete().catch(() => { }), 5000);
         return;
       }
     }
@@ -705,7 +668,7 @@ module.exports = {
         "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
       );
       const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => {}), 5000);
+      setTimeout(() => msg.delete().catch(() => { }), 5000);
       return;
     }
     const requiresSpecificChannelOrMonoGuild =
@@ -724,14 +687,14 @@ module.exports = {
       const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
       await deleteCommandMessage();
       const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => {}), 2000);
+      setTimeout(() => msg.delete().catch(() => { }), 2000);
       return;
     }
     if (command?.args && !args.length) {
       const embed = buildMissingArgumentsErrorEmbed();
       await deleteCommandMessage();
       const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => {}), 2000);
+      setTimeout(() => msg.delete().catch(() => { }), 2000);
       return;
     }
     let hasPrefixCooldownBypass = Boolean(
@@ -779,11 +742,11 @@ module.exports = {
         ? message.client?.emojis?.cache?.get(loadingEmojiId)
         : null;
       if (emoji) {
-        await message.react(emoji).catch(() => {});
+        await message.react(emoji).catch(() => { });
       } else if (fallbackEmojiId) {
-        await message.react(fallbackEmojiId).catch(() => {});
+        await message.react(fallbackEmojiId).catch(() => { });
       } else {
-        await message.react("⏳").catch(() => {});
+        await message.react("⏳").catch(() => { });
       }
       if (!client.prefixCommandQueue.has(queueLockId)) {
         client.prefixCommandQueue.set(queueLockId, []);
@@ -915,7 +878,7 @@ module.exports = {
           if (commandFinished) return;
           try {
             await originalSendTyping();
-          } catch {}
+          } catch { }
         };
         typingStartTimer = setTimeout(async () => {
           if (commandFinished) return;
@@ -945,7 +908,7 @@ module.exports = {
             .reply({
               embeds: [buildCommandTimeoutErrorEmbed()],
             })
-            .catch(() => {});
+            .catch(() => { });
         }
         const channelID =
           IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
@@ -1040,7 +1003,7 @@ module.exports = {
             msg.reactions.resolve("VC_Loading") ||
             (fallbackId ? msg.reactions.resolve(fallbackId) : null);
           if (fallback) await fallback.users.remove(client.user.id);
-        } catch {}
+        } catch { }
       };
       let queue = client.prefixCommandQueue.get(lockId);
       while (queue && queue.length > 0) {
@@ -1069,7 +1032,7 @@ async function handleAfk(message) {
   if (afkData) {
     const member = message.guild.members.cache.get(userId);
     if (member && afkData.originalName) {
-      await member.setNickname(afkData.originalName).catch(() => {});
+      await member.setNickname(afkData.originalName).catch(() => { });
     }
     await AFK.deleteOne({ guildId, userId: userId });
     const msg = await safeMessageReply(
@@ -1078,7 +1041,7 @@ async function handleAfk(message) {
     );
     if (msg) {
       setTimeout(() => {
-        msg.delete().catch(() => {});
+        msg.delete().catch(() => { });
       }, 5000);
     }
   }
@@ -1126,23 +1089,23 @@ async function getGuildAutoResponders(guildId) {
     .catch(() => []);
   const rules = Array.isArray(docs)
     ? docs
-        .map((doc) => ({
-          triggerLower: String(doc?.triggerLower || "")
-            .trim()
-            .toLowerCase(),
-          triggerLoose: normalizeForTriggerMatch(
-            doc?.triggerLower || doc?.trigger || "",
-          ),
-          triggerTokens: normalizeForTriggerMatch(
-            doc?.triggerLower || doc?.trigger || "",
-          )
-            .split(/\s+/)
-            .filter((token) => token.length >= 3),
-          response: String(doc?.response || ""),
-          reactions: Array.isArray(doc?.reactions) ? doc.reactions : [],
-        }))
-        .filter((doc) => Boolean(doc.triggerLower))
-        .sort((a, b) => b.triggerLower.length - a.triggerLower.length)
+      .map((doc) => ({
+        triggerLower: String(doc?.triggerLower || "")
+          .trim()
+          .toLowerCase(),
+        triggerLoose: normalizeForTriggerMatch(
+          doc?.triggerLower || doc?.trigger || "",
+        ),
+        triggerTokens: normalizeForTriggerMatch(
+          doc?.triggerLower || doc?.trigger || "",
+        )
+          .split(/\s+/)
+          .filter((token) => token.length >= 3),
+        response: String(doc?.response || ""),
+        reactions: Array.isArray(doc?.reactions) ? doc.reactions : [],
+      }))
+      .filter((doc) => Boolean(doc.triggerLower))
+      .sort((a, b) => b.triggerLower.length - a.triggerLower.length)
     : [];
   setGuildAutoResponderCache(guildId, rules);
   return rules;
@@ -1201,7 +1164,7 @@ async function handleAutoResponders(message) {
         content: response,
         allowedMentions: { repliedUser: false },
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   const seen = new Set();
@@ -1210,7 +1173,7 @@ async function handleAutoResponders(message) {
     const emoji = resolveReactionToken(token);
     if (!emoji || seen.has(emoji)) continue;
     seen.add(emoji);
-    await message.react(emoji).catch(() => {});
+    await message.react(emoji).catch(() => { });
   }
 }
 
@@ -1252,7 +1215,7 @@ async function handleMentionAutoReactions(message) {
   for (const token of uniqueTokens) {
     const emoji = resolveReactionToken(token);
     if (!emoji) continue;
-    await message.react(emoji).catch(() => {});
+    await message.react(emoji).catch(() => { });
   }
 }
 async function handleCounting(message, client) {
@@ -1271,7 +1234,7 @@ async function handleCounting(message, client) {
   }
   if (message.channel.id !== countchannel.id) return;
   if (!COUNTING_ALLOWED_REGEX.test(message.content)) {
-    return message.delete().catch(() => {});
+    return message.delete().catch(() => { });
   }
   let messageValue;
   try {
@@ -1281,7 +1244,7 @@ async function handleCounting(message, client) {
       .replace(/:/g, "/");
     messageValue = math.evaluate(expression);
   } catch {
-    return message.delete().catch(() => {});
+    return message.delete().catch(() => { });
   }
   let reaction = "<:vegacheckmark:1443666279058772028>";
   if (message.author.id === countdata.LastUser) {
@@ -1378,10 +1341,10 @@ async function handleDiscadiaBump(message, client) {
   const patterns = Array.isArray(discadia.bumpSuccessPatterns)
     ? discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
     : [
-        "has been successfully bumped",
-        "successfully bumped",
-        "bumped successfully",
-      ];
+      "has been successfully bumped",
+      "successfully bumped",
+      "bumped successfully",
+    ];
 
   const haystacks = [];
   if (message.content) haystacks.push(message.content);
@@ -1521,7 +1484,7 @@ async function handleSuggestionChannelMessage(message) {
     Upmembers: [],
     Downmembers: [],
     sID: suggestionId,
-  }).catch(() => {});
+  }).catch(() => { });
 
   const thread = await posted
     .startThread({
@@ -1534,9 +1497,9 @@ async function handleSuggestionChannelMessage(message) {
       .send(
         `Ho creato questo thread per discutere del suggerimento di <@${message.author.id}>`,
       )
-      .catch(() => {});
+      .catch(() => { });
   }
 
-  await message.delete().catch(() => {});
+  await message.delete().catch(() => { });
   return true;
 }

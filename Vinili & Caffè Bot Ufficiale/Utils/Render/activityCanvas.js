@@ -75,6 +75,7 @@ function prepareVisibleText(value) {
     ["\u00B3", "__VC_KEEP_SUP_3__"],
   ]);
   const compatibilityMap = new Map([
+    ["\u0F04", "\u2736"],
     ["\uFE32", "\u2502"],
     ["\u1CBC", "\u00B7"],
   ]);
@@ -520,7 +521,8 @@ function drawChart(ctx, chart, x, y, w, h) {
 
   const msgValues = points.map((p) => Number(p?.text || 0));
   const voiceValues = points.map((p) => Number(p?.voiceSeconds || 0) / 3600);
-  const maxV = Math.max(1, ...msgValues, ...voiceValues);
+  const maxMsg = Math.max(1, ...msgValues);
+  const maxVoice = Math.max(1, ...voiceValues);
 
   ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 1;
@@ -533,14 +535,15 @@ function drawChart(ctx, chart, x, y, w, h) {
   }
 
   const projectX = (idx) => px + idx * (pw / (points.length - 1));
-  const projectY = (value) => py + ph - (value / maxV) * (ph - 16) - 8;
+  const projectY = (value, seriesMax) =>
+    py + ph - (value / Math.max(1, seriesMax)) * (ph - 16) - 8;
 
   ctx.lineWidth = 2.5;
   ctx.strokeStyle = "#3ec455";
   ctx.beginPath();
   msgValues.forEach((v, i) => {
     const cx = projectX(i);
-    const cy = projectY(v);
+    const cy = projectY(v, maxMsg);
     if (i === 0) ctx.moveTo(cx, cy);
     else ctx.lineTo(cx, cy);
   });
@@ -550,7 +553,7 @@ function drawChart(ctx, chart, x, y, w, h) {
   ctx.beginPath();
   voiceValues.forEach((v, i) => {
     const cx = projectX(i);
-    const cy = projectY(v);
+    const cy = projectY(v, maxVoice);
     if (i === 0) ctx.moveTo(cx, cy);
     else ctx.lineTo(cx, cy);
   });
@@ -583,6 +586,11 @@ async function renderUserActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(canvasModule);
+  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+    ? Number(lookbackDays)
+    : 14;
+  const lookbackKey = `d${safeLookback}`;
+  const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
 
   const width = 1280;
   const height = 700;
@@ -632,7 +640,10 @@ async function renderUserActivityCanvas({
     [
       { label: "1d", value: `${compactNumber(windows?.d1?.text)} messages` },
       { label: "7d", value: `${compactNumber(windows?.d7?.text)} messages` },
-      { label: "14d", value: `${compactNumber(windows?.d14?.text)} messages` },
+      {
+        label: `${safeLookback}d`,
+        value: `${compactNumber(lookbackWindow?.text)} messages`,
+      },
     ],
     440,
     132,
@@ -647,8 +658,8 @@ async function renderUserActivityCanvas({
       { label: "1d", value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
       { label: "7d", value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
       {
-        label: "14d",
-        value: `${formatHours(windows?.d14?.voiceSeconds)} hours`,
+        label: `${safeLookback}d`,
+        value: `${formatHours(lookbackWindow?.voiceSeconds)} hours`,
       },
     ],
     860,
@@ -678,7 +689,7 @@ async function renderUserActivityCanvas({
   );
 
   drawChart(ctx, chart, 650, 392, 610, 242);
-  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 24, 670, {
+  drawLabel(ctx, `Lookback: Last ${safeLookback} days`, 24, 670, {
     size: 20,
     weight: "700",
     color: "#cfd6e2",
@@ -701,6 +712,11 @@ async function renderServerActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(canvasModule);
+  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+    ? Number(lookbackDays)
+    : 14;
+  const lookbackKey = `d${safeLookback}`;
+  const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
 
   const width = 1280;
   const height = 910;
@@ -743,7 +759,10 @@ async function renderServerActivityCanvas({
     [
       { label: "1d", value: `${compactNumber(windows?.d1?.text)} messages` },
       { label: "7d", value: `${compactNumber(windows?.d7?.text)} messages` },
-      { label: "14d", value: `${compactNumber(windows?.d14?.text)} messages` },
+      {
+        label: `${safeLookback}d`,
+        value: `${compactNumber(lookbackWindow?.text)} messages`,
+      },
     ],
     20,
     132,
@@ -758,8 +777,8 @@ async function renderServerActivityCanvas({
       { label: "1d", value: `${formatHours(windows?.d1?.voiceSeconds)} hours` },
       { label: "7d", value: `${formatHours(windows?.d7?.voiceSeconds)} hours` },
       {
-        label: "14d",
-        value: `${formatHours(windows?.d14?.voiceSeconds)} hours`,
+        label: `${safeLookback}d`,
+        value: `${formatHours(lookbackWindow?.voiceSeconds)} hours`,
       },
     ],
     440,
@@ -781,8 +800,8 @@ async function renderServerActivityCanvas({
         value: `${Number(windows?.d7?.contributors || 0)} members`,
       },
       {
-        label: "14d",
-        value: `${Number(windows?.d14?.contributors || 0)} members`,
+        label: `${safeLookback}d`,
+        value: `${Number(lookbackWindow?.contributors || 0)} members`,
       },
     ],
     860,
@@ -832,7 +851,7 @@ async function renderServerActivityCanvas({
   );
 
   drawChart(ctx, chart, 20, 610, 1240, 240);
-  drawLabel(ctx, `Lookback: Last ${lookbackDays || 14} days`, 28, 878, {
+  drawLabel(ctx, `Lookback: Last ${safeLookback} days`, 28, 878, {
     size: 20,
     weight: "700",
     color: "#cfd6e2",

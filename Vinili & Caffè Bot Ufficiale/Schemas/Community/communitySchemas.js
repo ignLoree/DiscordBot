@@ -55,6 +55,23 @@ activityDailySchema.index(
   { unique: true },
 );
 
+const activityHourlySchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    hourKey: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    textCount: { type: Number, default: 0 },
+    voiceSeconds: { type: Number, default: 0 },
+    textChannels: { type: Map, of: Number, default: {} },
+    voiceChannels: { type: Map, of: Number, default: {} },
+  },
+  { timestamps: true },
+);
+activityHourlySchema.index(
+  { guildId: 1, hourKey: 1, userId: 1 },
+  { unique: true },
+);
+
 const levelHistorySchema = new Schema(
   {
     guildId: { type: String, required: true, index: true },
@@ -222,6 +239,8 @@ const ActivityUser =
 const ExpUser = models.ExpUser || model("ExpUser", expUserSchema);
 const ActivityDaily =
   models.ActivityDaily || model("ActivityDaily", activityDailySchema);
+const ActivityHourly =
+  models.ActivityHourly || model("ActivityHourly", activityHourlySchema);
 const LevelHistory =
   models.LevelHistory || model("LevelHistory", levelHistorySchema);
 const GlobalSettings =
@@ -256,6 +275,7 @@ module.exports = {
   ActivityUser,
   ExpUser,
   ActivityDaily,
+  ActivityHourly,
   LevelHistory,
   GlobalSettings,
   VoteRole,

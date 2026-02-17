@@ -1,0 +1,114 @@
+const {
+  SERVER_REFRESH_CUSTOM_ID_PREFIX,
+  buildServerOverviewPayload,
+} = require("../../Prefix/Stats/server");
+const {
+  ME_REFRESH_CUSTOM_ID_PREFIX,
+  ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+  ME_PERIOD_SET_CUSTOM_ID_PREFIX,
+  ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  buildMeOverviewPayload,
+  buildMeComponents,
+  normalizeLookbackDays,
+} = require("../../Prefix/Stats/me");
+
+function parseServerRefreshCustomId(customId) {
+  const raw = String(customId || "");
+  if (!raw.startsWith(`${SERVER_REFRESH_CUSTOM_ID_PREFIX}:`)) return null;
+  const [, lookbackRaw, modeRaw] = raw.split(":");
+  const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
+  const safeLookback = [7, 14, 21, 30].includes(lookback) ? lookback : 14;
+  const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
+  return { lookbackDays: safeLookback, wantsEmbed };
+}
+
+function parseMeCustomId(rawCustomId) {
+  const raw = String(rawCustomId || "");
+  const prefixes = [
+    ME_REFRESH_CUSTOM_ID_PREFIX,
+    ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+    ME_PERIOD_SET_CUSTOM_ID_PREFIX,
+    ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  ];
+  const prefix = prefixes.find((item) => raw.startsWith(`${item}:`));
+  if (!prefix) return null;
+
+  const [, lookbackRaw, modeRaw] = raw.split(":");
+  const lookbackDays = normalizeLookbackDays(lookbackRaw || "14");
+  const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
+  return { prefix, lookbackDays, wantsEmbed };
+}
+
+module.exports = {
+  async handleButtonInteraction(interaction) {
+    if (!interaction?.isButton?.()) return false;
+
+    const parsedMe = parseMeCustomId(interaction.customId);
+    if (parsedMe) {
+      try {
+        await interaction.deferUpdate();
+
+        if (parsedMe.prefix === ME_PERIOD_OPEN_CUSTOM_ID_PREFIX) {
+          await interaction.message.edit({
+            components: buildMeComponents(
+              parsedMe.lookbackDays,
+              parsedMe.wantsEmbed,
+              "period",
+            ),
+          });
+          return true;
+        }
+
+        if (parsedMe.prefix === ME_PERIOD_BACK_CUSTOM_ID_PREFIX) {
+          await interaction.message.edit({
+            components: buildMeComponents(
+              parsedMe.lookbackDays,
+              parsedMe.wantsEmbed,
+              "main",
+            ),
+          });
+          return true;
+        }
+
+        const controlsView =
+          parsedMe.prefix === ME_PERIOD_SET_CUSTOM_ID_PREFIX ? "period" : "main";
+        const payload = await buildMeOverviewPayload(
+          interaction.guild,
+          interaction.user,
+          interaction.member,
+          parsedMe.lookbackDays,
+          parsedMe.wantsEmbed,
+          controlsView,
+        );
+        await interaction.message.edit({
+          ...payload,
+          content: payload.content || null,
+        });
+      } catch (error) {
+        global.logger?.error?.("[ME BUTTON] Failed:", error);
+      }
+
+      return true;
+    }
+
+    const parsed = parseServerRefreshCustomId(interaction.customId);
+    if (!parsed) return false;
+
+    try {
+      await interaction.deferUpdate();
+      const payload = await buildServerOverviewPayload(
+        interaction.guild,
+        parsed.lookbackDays,
+        parsed.wantsEmbed,
+      );
+      await interaction.message.edit({
+        ...payload,
+        content: payload.content || null,
+      });
+    } catch (error) {
+      global.logger?.error?.("[SERVER REFRESH BUTTON] Failed:", error);
+    }
+
+    return true;
+  },
+};

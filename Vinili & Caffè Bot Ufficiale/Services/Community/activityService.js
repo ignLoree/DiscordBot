@@ -1,6 +1,7 @@
 const {
   ActivityUser,
   ActivityDaily,
+  ActivityHourly,
 } = require("../../Schemas/Community/communitySchemas");
 const {
   addExpWithLevel,
@@ -42,6 +43,23 @@ function getDayKey(date) {
   return `${year}-${pad2(month)}-${pad2(day)}`;
 }
 
+function getHourKey(date) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== "literal") map[part.type] = part.value;
+  }
+  return `${map.year}-${map.month}-${map.day}T${map.hour}`;
+}
+
 function getLastNDaysKeys(days) {
   const safeDays = Math.max(1, Math.min(31, Number(days || 7)));
   const keys = [];
@@ -49,6 +67,17 @@ function getLastNDaysKeys(days) {
   for (let i = 0; i < safeDays; i += 1) {
     const d = new Date(now.getTime() - i * DAY_MS);
     keys.push(getDayKey(d));
+  }
+  return keys;
+}
+
+function getLastNHourKeys(hours) {
+  const safeHours = Math.max(1, Math.min(24 * 31, Number(hours || 24)));
+  const keys = [];
+  const now = new Date();
+  for (let i = 0; i < safeHours; i += 1) {
+    const d = new Date(now.getTime() - i * 60 * 60 * 1000);
+    keys.push(getHourKey(d));
   }
   return keys;
 }
@@ -69,12 +98,44 @@ async function bumpDailyText(guildId, userId, channelId, amount = 1) {
   ).catch(() => {});
 }
 
+async function bumpHourlyText(guildId, userId, channelId, amount = 1) {
+  const inc = Math.max(0, Number(amount || 0));
+  if (!guildId || !userId || !channelId || !inc) return;
+  const hourKey = getHourKey(new Date());
+  await ActivityHourly.updateOne(
+    { guildId, hourKey, userId },
+    {
+      $inc: {
+        textCount: inc,
+        [`textChannels.${channelId}`]: inc,
+      },
+    },
+    { upsert: true },
+  ).catch(() => {});
+}
+
 async function bumpDailyVoice(guildId, userId, channelId, seconds = 0) {
   const inc = Math.max(0, Math.floor(Number(seconds || 0)));
   if (!guildId || !userId || !channelId || !inc) return;
   const dateKey = getDayKey(new Date());
   await ActivityDaily.updateOne(
     { guildId, dateKey, userId },
+    {
+      $inc: {
+        voiceSeconds: inc,
+        [`voiceChannels.${channelId}`]: inc,
+      },
+    },
+    { upsert: true },
+  ).catch(() => {});
+}
+
+async function bumpHourlyVoice(guildId, userId, channelId, seconds = 0) {
+  const inc = Math.max(0, Math.floor(Number(seconds || 0)));
+  if (!guildId || !userId || !channelId || !inc) return;
+  const hourKey = getHourKey(new Date());
+  await ActivityHourly.updateOne(
+    { guildId, hourKey, userId },
     {
       $inc: {
         voiceSeconds: inc,
@@ -149,6 +210,12 @@ async function recordMessageActivity(message) {
   doc.messages.weekly = Number(doc.messages.weekly || 0) + 1;
   await doc.save();
   await bumpDailyText(
+    message.guild.id,
+    message.author.id,
+    message.channelId,
+    1,
+  );
+  await bumpHourlyText(
     message.guild.id,
     message.author.id,
     message.channelId,
@@ -236,6 +303,7 @@ async function handleVoiceActivity(oldState, newState) {
     }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
+      await bumpHourlyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
     await doc.save();
     return;
@@ -263,6 +331,7 @@ async function handleVoiceActivity(oldState, newState) {
     }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
+      await bumpHourlyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
     doc.voice.sessionStartedAt = isCountable ? now : null;
     await doc.save();
@@ -288,6 +357,7 @@ async function handleVoiceActivity(oldState, newState) {
       );
       if (channel?.id) {
         await bumpDailyVoice(guildId, userId, channel.id, elapsedSeconds);
+        await bumpHourlyVoice(guildId, userId, channel.id, elapsedSeconds);
       }
       await doc.save();
       return;
@@ -455,6 +525,106 @@ function aggregateFromRows(rows = [], dateKeys = []) {
   };
 }
 
+function aggregateFromHourlyRows(rows = [], hourKeys = []) {
+  const hourSet = new Set(Array.isArray(hourKeys) ? hourKeys : []);
+  const userText = new Map();
+  const userVoice = new Map();
+  const channelText = new Map();
+  const channelVoice = new Map();
+  const contributors = new Set();
+
+  for (const row of rows) {
+    if (!hourSet.has(String(row?.hourKey || ""))) continue;
+
+    const userId = String(row?.userId || "");
+    const textCount = Number(row?.textCount || 0);
+    const voiceSeconds = Number(row?.voiceSeconds || 0);
+
+    if (textCount > 0 || voiceSeconds > 0) contributors.add(userId);
+    pushMapValue(userText, userId, textCount);
+    pushMapValue(userVoice, userId, voiceSeconds);
+
+    const textChannels = row?.textChannels || {};
+    for (const [channelId, value] of Object.entries(textChannels)) {
+      pushMapValue(channelText, String(channelId || ""), Number(value || 0));
+    }
+
+    const voiceChannels = row?.voiceChannels || {};
+    for (const [channelId, value] of Object.entries(voiceChannels)) {
+      pushMapValue(channelVoice, String(channelId || ""), Number(value || 0));
+    }
+  }
+
+  return {
+    totals: {
+      text: Array.from(userText.values()).reduce(
+        (sum, value) => sum + value,
+        0,
+      ),
+      voiceSeconds: Array.from(userVoice.values()).reduce(
+        (sum, value) => sum + value,
+        0,
+      ),
+    },
+    contributors: contributors.size,
+    topUsersText: topNFromMap(userText, 3),
+    topUsersVoice: topNFromMap(userVoice, 3),
+    topChannelsText: topNFromMap(channelText, 3),
+    topChannelsVoice: topNFromMap(channelVoice, 3),
+  };
+}
+
+function aggregateUserHourlyRows(rows = [], hourKeys = []) {
+  const hourSet = new Set(Array.isArray(hourKeys) ? hourKeys : []);
+  const channelText = new Map();
+  const channelVoice = new Map();
+  let text = 0;
+  let voiceSeconds = 0;
+
+  for (const row of rows) {
+    if (!hourSet.has(String(row?.hourKey || ""))) continue;
+    const rowText = Number(row?.textCount || 0);
+    const rowVoice = Number(row?.voiceSeconds || 0);
+    text += rowText;
+    voiceSeconds += rowVoice;
+
+    const textChannels = row?.textChannels || {};
+    for (const [channelId, value] of Object.entries(textChannels)) {
+      pushMapValue(channelText, String(channelId || ""), Number(value || 0));
+    }
+
+    const voiceChannels = row?.voiceChannels || {};
+    for (const [channelId, value] of Object.entries(voiceChannels)) {
+      pushMapValue(channelVoice, String(channelId || ""), Number(value || 0));
+    }
+  }
+
+  return {
+    text,
+    voiceSeconds,
+    topChannelsText: topNFromMap(channelText, 3),
+    topChannelsVoice: topNFromMap(channelVoice, 3),
+  };
+}
+
+function buildChartByDayFromHourlyRows(rows = [], hourKeys = []) {
+  const hourSet = new Set(Array.isArray(hourKeys) ? hourKeys : []);
+  const byDay = new Map();
+
+  for (const row of rows) {
+    const hourKey = String(row?.hourKey || "");
+    if (!hourSet.has(hourKey)) continue;
+    const dayKey = hourKey.split("T")[0] || "";
+    if (!dayKey) continue;
+    const current = byDay.get(dayKey) || { text: 0, voiceSeconds: 0 };
+    current.text += Number(row?.textCount || 0);
+    current.voiceSeconds += Number(row?.voiceSeconds || 0);
+    byDay.set(dayKey, current);
+  }
+
+  return byDay;
+}
+
 async function getServerActivityStats(guildId, days = 7) {
   const dateKeys = getLastNDaysKeys(days);
   const rows = await ActivityDaily.find({
@@ -548,34 +718,51 @@ async function getServerActivityStats(guildId, days = 7) {
 }
 
 async function getServerOverviewStats(guildId, lookbackDays = 14) {
-  const safeLookback = [7, 14, 21].includes(Number(lookbackDays))
+  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
-  const keys1 = getLastNDaysKeys(1);
-  const keys7 = getLastNDaysKeys(7);
-  const keys14 = getLastNDaysKeys(14);
-  const keysLookback = getLastNDaysKeys(safeLookback);
-
-  const allKeys = Array.from(
-    new Set([...keys1, ...keys7, ...keys14, ...keysLookback]),
+  const lookbackKey = `d${safeLookback}`;
+  const hourKeys1 = getLastNHourKeys(24);
+  const hourKeys7 = getLastNHourKeys(24 * 7);
+  const hourKeys14 = getLastNHourKeys(24 * 14);
+  const hourKeys21 = getLastNHourKeys(24 * 21);
+  const hourKeys30 = getLastNHourKeys(24 * 30);
+  const hourKeysLookback = getLastNHourKeys(24 * safeLookback);
+  const allHourKeys = Array.from(
+    new Set([
+      ...hourKeys1,
+      ...hourKeys7,
+      ...hourKeys14,
+      ...hourKeys21,
+      ...hourKeys30,
+      ...hourKeysLookback,
+    ]),
   );
-  const rows = await ActivityDaily.find({
+  const dayKeysLookback = getLastNDaysKeys(safeLookback);
+
+  const hourlyRows = await ActivityHourly.find({
     guildId,
-    dateKey: { $in: allKeys },
+    hourKey: { $in: allHourKeys },
   })
     .lean()
     .catch(() => []);
 
-  const agg1 = aggregateFromRows(rows, keys1);
-  const agg7 = aggregateFromRows(rows, keys7);
-  const agg14 = aggregateFromRows(rows, keys14);
-  const aggLookback = aggregateFromRows(rows, keysLookback);
+  const agg1 = aggregateFromHourlyRows(hourlyRows, hourKeys1);
+  const agg7 = aggregateFromHourlyRows(hourlyRows, hourKeys7);
+  const agg14 = aggregateFromHourlyRows(hourlyRows, hourKeys14);
+  const agg21 = aggregateFromHourlyRows(hourlyRows, hourKeys21);
+  const agg30 = aggregateFromHourlyRows(hourlyRows, hourKeys30);
+  const aggLookback = aggregateFromHourlyRows(hourlyRows, hourKeysLookback);
+  const chartByDay = buildChartByDayFromHourlyRows(
+    hourlyRows,
+    hourKeysLookback,
+  );
 
-  const chartPoints = keys14
+  const chartPoints = dayKeysLookback
     .slice()
     .reverse()
     .map((dayKey) => {
-      const point = agg14.chartByDay.get(dayKey) || {
+      const point = chartByDay.get(dayKey) || {
         text: 0,
         voiceSeconds: 0,
       };
@@ -586,7 +773,7 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
       };
     });
 
-  const hasTrackedRows = rows.length > 0;
+  const hasTrackedRows = hourlyRows.length > 0;
   if (!hasTrackedRows) {
     const users = await ActivityUser.find({ guildId })
       .select(
@@ -600,6 +787,10 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
     let totalVoice7 = 0;
     let totalText14 = 0;
     let totalVoice14 = 0;
+    let totalText21 = 0;
+    let totalVoice21 = 0;
+    let totalText30 = 0;
+    let totalVoice30 = 0;
 
     for (const row of users) {
       const id = String(row?.userId || "");
@@ -611,18 +802,26 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
       totalVoice7 += voiceWeekly;
       totalText14 += textTotal;
       totalVoice14 += voiceTotal;
+      totalText21 += textTotal;
+      totalVoice21 += voiceTotal;
+      totalText30 += textTotal;
+      totalVoice30 += voiceTotal;
       pushMapValue(userText, id, textTotal);
       pushMapValue(userVoice, id, voiceTotal);
     }
 
+    const fallbackWindows = {
+      d1: { text: 0, voiceSeconds: 0, contributors: 0 },
+      d7: { text: totalText7, voiceSeconds: totalVoice7, contributors: 0 },
+      d14: { text: totalText14, voiceSeconds: totalVoice14, contributors: 0 },
+      d21: { text: totalText21, voiceSeconds: totalVoice21, contributors: 0 },
+      d30: { text: totalText30, voiceSeconds: totalVoice30, contributors: 0 },
+    };
+
     return {
       approximate: true,
       lookbackDays: safeLookback,
-      windows: {
-        d1: { text: 0, voiceSeconds: 0, contributors: 0 },
-        d7: { text: totalText7, voiceSeconds: totalVoice7, contributors: 0 },
-        d14: { text: totalText14, voiceSeconds: totalVoice14, contributors: 0 },
-      },
+      windows: fallbackWindows,
       topUsersText: topNFromMap(userText, 3),
       topUsersVoice: topNFromMap(userVoice, 3),
       topChannelsText: [],
@@ -650,6 +849,16 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
         voiceSeconds: agg14.totals.voiceSeconds,
         contributors: agg14.contributors,
       },
+      d21: {
+        text: agg21.totals.text,
+        voiceSeconds: agg21.totals.voiceSeconds,
+        contributors: agg21.contributors,
+      },
+      d30: {
+        text: agg30.totals.text,
+        voiceSeconds: agg30.totals.voiceSeconds,
+        contributors: agg30.contributors,
+      },
     },
     topUsersText: aggLookback.topUsersText,
     topUsersVoice: aggLookback.topUsersVoice,
@@ -660,35 +869,52 @@ async function getServerOverviewStats(guildId, lookbackDays = 14) {
 }
 
 async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
-  const safeLookback = [7, 14, 21].includes(Number(lookbackDays))
+  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
-  const keys1 = getLastNDaysKeys(1);
-  const keys7 = getLastNDaysKeys(7);
-  const keys14 = getLastNDaysKeys(14);
-  const keysLookback = getLastNDaysKeys(safeLookback);
-  const allKeys = Array.from(
-    new Set([...keys1, ...keys7, ...keys14, ...keysLookback]),
+  const lookbackKey = `d${safeLookback}`;
+  const hourKeys1 = getLastNHourKeys(24);
+  const hourKeys7 = getLastNHourKeys(24 * 7);
+  const hourKeys14 = getLastNHourKeys(24 * 14);
+  const hourKeys21 = getLastNHourKeys(24 * 21);
+  const hourKeys30 = getLastNHourKeys(24 * 30);
+  const hourKeysLookback = getLastNHourKeys(24 * safeLookback);
+  const allHourKeys = Array.from(
+    new Set([
+      ...hourKeys1,
+      ...hourKeys7,
+      ...hourKeys14,
+      ...hourKeys21,
+      ...hourKeys30,
+      ...hourKeysLookback,
+    ]),
   );
+  const dayKeysLookback = getLastNDaysKeys(safeLookback);
 
-  const userRows = await ActivityDaily.find({
+  const userRows = await ActivityHourly.find({
     guildId,
     userId,
-    dateKey: { $in: allKeys },
+    hourKey: { $in: allHourKeys },
   })
     .lean()
     .catch(() => []);
 
-  const agg1 = aggregateUserRows(userRows, keys1);
-  const agg7 = aggregateUserRows(userRows, keys7);
-  const agg14 = aggregateUserRows(userRows, keys14);
-  const aggLookback = aggregateUserRows(userRows, keysLookback);
+  const agg1 = aggregateUserHourlyRows(userRows, hourKeys1);
+  const agg7 = aggregateUserHourlyRows(userRows, hourKeys7);
+  const agg14 = aggregateUserHourlyRows(userRows, hourKeys14);
+  const agg21 = aggregateUserHourlyRows(userRows, hourKeys21);
+  const agg30 = aggregateUserHourlyRows(userRows, hourKeys30);
+  const aggLookback = aggregateUserHourlyRows(userRows, hourKeysLookback);
+  const userChartByDay = buildChartByDayFromHourlyRows(
+    userRows,
+    hourKeysLookback,
+  );
 
-  const chart = keys14
+  const chart = dayKeysLookback
     .slice()
     .reverse()
     .map((dayKey) => {
-      const point = agg14.chartByDay.get(dayKey) || {
+      const point = userChartByDay.get(dayKey) || {
         text: 0,
         voiceSeconds: 0,
       };
@@ -699,11 +925,11 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
       };
     });
 
-  const guildRows14 = await ActivityDaily.find({
+  const guildRows14 = await ActivityHourly.find({
     guildId,
-    dateKey: { $in: keys14 },
+    hourKey: { $in: hourKeysLookback },
   })
-    .select("userId textCount voiceSeconds")
+    .select("userId textCount voiceSeconds hourKey")
     .lean()
     .catch(() => []);
 
@@ -735,9 +961,19 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
         text: Number(doc?.messages?.total || 0),
         voiceSeconds: Number(doc?.voice?.totalSeconds || 0),
       },
+      d21: {
+        text: Number(doc?.messages?.total || 0),
+        voiceSeconds: Number(doc?.voice?.totalSeconds || 0),
+      },
+      d30: {
+        text: Number(doc?.messages?.total || 0),
+        voiceSeconds: Number(doc?.voice?.totalSeconds || 0),
+      },
     };
-    if (!rankText && fallback.d14.text > 0) rankText = 1;
-    if (!rankVoice && fallback.d14.voiceSeconds > 0) rankVoice = 1;
+    if (!rankText && Number(fallback?.[lookbackKey]?.text || 0) > 0)
+      rankText = 1;
+    if (!rankVoice && Number(fallback?.[lookbackKey]?.voiceSeconds || 0) > 0)
+      rankVoice = 1;
     return {
       approximate: true,
       lookbackDays: safeLookback,
@@ -753,9 +989,14 @@ async function getUserOverviewStats(guildId, userId, lookbackDays = 14) {
     approximate: false,
     lookbackDays: safeLookback,
     windows: {
-      d1: { text: agg1.text, voiceSeconds: agg1.voiceSeconds },
+      d1: {
+        text: agg1.text,
+        voiceSeconds: agg1.voiceSeconds,
+      },
       d7: { text: agg7.text, voiceSeconds: agg7.voiceSeconds },
       d14: { text: agg14.text, voiceSeconds: agg14.voiceSeconds },
+      d21: { text: agg21.text, voiceSeconds: agg21.voiceSeconds },
+      d30: { text: agg30.text, voiceSeconds: agg30.voiceSeconds },
     },
     ranks: { text: rankText, voice: rankVoice },
     topChannelsText: aggLookback.topChannelsText,
