@@ -1,10 +1,10 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName("valutazione")
         .setDescription("Gestisci le valutazioni degli staffer")
         .addSubcommandGroup(group =>
@@ -95,7 +95,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE POSITIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è¨ stata **rimossa** una _Valutazione Positiva!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ � stata **rimossa** una _Valutazione Positiva!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Positive Aggiornato__", value: `Ora sei a \`${StaffDoc.positiveCount}\` valutazioni!`, inline: false },
@@ -131,7 +131,7 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setAuthor({ name: `Valutazione rimossa da ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() })
                         .setTitle(`**__VALUTAZIONE NEGATIVA RIMOSSA__**`)
-                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ è stata **rimossa** una _Valutazione Negativa!_`)
+                        .setDescription(`<:reportmessage:1443670575376765130> A __${utentee}__ � stata **rimossa** una _Valutazione Negativa!_`)
                         .addFields(
                             { name: "Motivazione:", value: `${reason}`, inline: false },
                             { name: "__Numero Valutazioni Negativa Aggiornato__", value: `Ora sei a \`${StaffDoc.negativeCount}\` valutazioni!`, inline: false },

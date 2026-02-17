@@ -22,6 +22,9 @@ function runNpmInstall(installDir, extraArgs = []) {
         const args = [
             'install',
             '--legacy-peer-deps',
+            '--loglevel', 'error',
+            '--no-audit',
+            '--no-fund',
             '--no-bin-links',
             '--prefer-offline',
             '--cache', path.join(os.tmpdir(), '.npm-global'),

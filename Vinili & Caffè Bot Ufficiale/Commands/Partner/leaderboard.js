@@ -1,9 +1,9 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const PartnershipCount = require('../../Schemas/Staff/staffSchema');
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('leaderboard')
         .setDescription('Guarda la classifica delle partnership')
         .addStringOption(option =>

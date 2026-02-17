@@ -1,5 +1,5 @@
-ï»¿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { EmbedBuilder, ChatInputCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
@@ -82,7 +82,7 @@ function parseUserDateInput(raw) {
         return { day, month, year, hasYear: year !== null };
     }
 
-    const words = value.match(/^(\d{1,2})\s+([a-zÃ Ã¨Ã©Ã¬Ã²Ã¹]+)(?:\s+(\d{2,4}))?$/i);
+    const words = value.match(/^(\d{1,2})\s+([a-zàèéìòù]+)(?:\s+(\d{2,4}))?$/i);
     if (words) {
         const day = Number(words[1]);
         const monthName = words[2]
@@ -280,7 +280,7 @@ module.exports = {
         request: [IDs.roles.PartnerManager, IDs.roles.Staff],
         list: [IDs.roles.PartnerManager, IDs.roles.Staff, IDs.roles.HighStaff]
     },
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('pausa')
         .setDescription('Gestione pause staffer')
         .addSubcommand(command =>
@@ -343,7 +343,7 @@ module.exports = {
                 await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa Ã¨ stata inviata all'High Staff")
+                            .setDescription("<:vegacheckmark:1443666279058772028> La tua richiesta di pausa è stata inviata all'High Staff")
                             .setColor('#6f4e37')
                     ],
                     flags: 1 << 6

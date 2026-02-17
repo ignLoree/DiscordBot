@@ -1,9 +1,9 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { ChatInputCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 
 module.exports = {
     expectsModal: true,
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('partnership')
         .setDescription('Invia una partnership per il tuo server.')
         .addUserOption(option =>

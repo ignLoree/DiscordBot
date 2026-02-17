@@ -1,8 +1,8 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder } = require('discord.js')
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder } = require('discord.js')
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('say')
         .setDescription('Quello che vorresti che il bot dicesse al posto tuo')
         .addStringOption(option => option.setName('messaggio').setDescription('Il messaggio che vuoi che scriva il bot').setRequired(true))

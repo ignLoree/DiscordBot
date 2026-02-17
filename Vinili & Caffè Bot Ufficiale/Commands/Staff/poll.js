@@ -1,10 +1,10 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName("poll")
         .setDescription("Crea un poll.")
         .addSubcommand(sub =>
@@ -132,7 +132,7 @@ module.exports = {
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>?<@&1442569014474965033>`
                 });
 
                 for (const emoji of validReactions) {
@@ -214,7 +214,7 @@ ${answersText}
                 return await safeEditReply(interaction, {
                     embeds: [
                         new EmbedBuilder()
-                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) è stato rimosso.`)
+                            .setDescription(`<:VC_Trash:1460645075242451025> L'ultimo poll (#${lastPoll.pollcount}) � stato rimosso.`)
                             .setColor('#6f4e37')
                     ]
                 });
@@ -270,7 +270,7 @@ ${answersText}
                     return await safeEditReply(interaction, {
                         embeds: [
                             new EmbedBuilder()
-                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste più.`)
+                                .setDescription(`<:vegax:1443934876440068179> Il messaggio del poll non esiste pi�.`)
                                 .setColor("Red")
                         ],
                         flags: 1 << 6
@@ -330,7 +330,7 @@ ${answersText}
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`
+<:Discord_Mention:1329524304790028328>?<@&1442569014474965033>`
                 });
 
                 await pollMessage.reactions.removeAll().catch(() => { });

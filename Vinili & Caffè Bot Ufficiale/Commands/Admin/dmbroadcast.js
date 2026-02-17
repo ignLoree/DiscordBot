@@ -1,5 +1,5 @@
-﻿const { safeReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require("discord.js");
+const { safeReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder } = require("discord.js");
 const IDs = require('../../Utils/Config/ids');
 
 const getDevIds = (client) => {
@@ -25,7 +25,7 @@ const getDevIds = (client) => {
 
 module.exports = {
   expectsModal: true,
-  data: new SlashCommandBuilder()
+  data: new ChatInputCommandBuilder()
     .setName("dmbroadcast")
     .setDescription("Invia un DM a tutti gli utenti")
     .setDMPermission(false)

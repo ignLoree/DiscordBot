@@ -30,9 +30,7 @@ module.exports = () => {
         error(`UNHANDLED REJECTION: ${err?.stack || err}`);
     });
 
-    process.on('warning', (warning) => {
-        warn(warning);
-    });
+    process.on('warning', () => {});
 
     logs.success('[PROCESS] Process handlers loaded.');
 };

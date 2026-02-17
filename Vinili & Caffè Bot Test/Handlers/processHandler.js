@@ -27,11 +27,7 @@ module.exports = function installProcessHandlers() {
         log('UNHANDLED REJECTION: ' + (err?.stack || err));
     });
 
-    process.on('warning', (w) => {
-        try {
-            if (global?.logger?.warn) global.logger.warn('[Bot Test]', w);
-        } catch (_) {}
-    });
+    process.on('warning', () => {});
 
     if (global?.logger?.info) global.logger.info('[Bot Test] Process handlers loaded.');
 };

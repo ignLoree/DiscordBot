@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 const ROLE_PARTNER_MANAGER = IDs.roles.PartnerManager;
@@ -27,7 +27,7 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 ]);
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('staff')
         .setDescription('Gestisci lo staff di Vinili & Caffè ')
         .addSubcommand(command =>
@@ -425,7 +425,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const azione = interaction.options.getString('azione');
                     const messaggi = interaction.options.getString('messaggi');
                     const oreInVoc = interaction.options.getString('ore');
-                    const grado_attività = interaction.options.getString('grado_attività');
+                    const grado_attivita = interaction.options.getString('grado_attività');
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = ROLE_STAFF;
@@ -455,7 +455,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
 <:dot:1443660294596329582> **Ruolo:** __${ruolo}__
 <:dot:1443660294596329582> **Messaggi in una settimana:** __${messaggi}__
 <:dot:1443660294596329582> **Ore in una settimana:** __${oreInVoc}__
-<:dot:1443660294596329582> **Attività:** __${grado_attività}__
+<:dot:1443660294596329582> **Attività:** __${grado_attivita}__
 <:dot:1443660294596329582> **Condotta:** __${grado_condotta}__
 <:dot:1443660294596329582> **Azione:** __${azione}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`

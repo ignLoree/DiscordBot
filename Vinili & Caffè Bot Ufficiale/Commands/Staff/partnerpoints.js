@@ -1,10 +1,10 @@
-﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { safeEditReply } = require('../../Utils/Moderation/reply');
+const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
-    data: new SlashCommandBuilder()
+    data: new ChatInputCommandBuilder()
         .setName('partner')
         .setDescription('Modifica i punti partner dei PM')
         .addSubcommandGroup(subcommandGroup =>
