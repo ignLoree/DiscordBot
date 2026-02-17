@@ -4,7 +4,8 @@
   "description": "Bot di test sponsor (ticket, verify, panel)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "check:mojibake": "node scripts/check-mojibake.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

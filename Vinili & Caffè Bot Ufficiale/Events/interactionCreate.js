@@ -124,7 +124,9 @@ module.exports = {
                         await interaction.followUp(payload);
                     }
                 }
-            } catch (_) {}
+            } catch (nestedErr) {
+                global.logger?.error?.('[interactionCreate] nested error handling failed', nestedErr);
+            }
         }
     },
 };

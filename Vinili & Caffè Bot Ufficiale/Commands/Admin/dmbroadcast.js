@@ -43,13 +43,7 @@ module.exports = {
     ),
 
   async execute(interaction, client) {
-    /*const devId = '295500038401163264';
-    if (devId && interaction?.author?.id !== devId) {
-      return safeReply(interaction, {
-        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Solo il developer può usare questo comando.')],
-        allowedMentions: { repliedUser: false }
-      });
-    }*/
+    
 
     const targetUser = interaction.options.getUser("utente");
     const confirmAll = interaction.options.getBoolean("all") === true;

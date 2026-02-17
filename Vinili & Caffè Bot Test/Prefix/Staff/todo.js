@@ -1,12 +1,6 @@
-/**
- * Comando -to-do / -todo solo nella guild test. Canale to-do fisso.
- * -to-do "task" "online|inattivo|pausa|offline" → aggiunge
- * -to-do "task" fatto → rimuove
- * -to-do "task" test → imposta online + **[TEST]**
- */
 const { EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../Moderation/reply');
-const IDs = require('../Config/ids');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const IDs = require('../../Utils/Config/ids');
 const TEST_GUILD_ID = IDs.guilds?.test || '1462458562507964584';
 const {
   addItem,
@@ -16,7 +10,7 @@ const {
   refreshTodoMessage,
   normalizeStatus,
   STATUS_ORDER
-} = require('./todoListService');
+} = require('../../Utils/Todo/todoListService');
 
 function parseTodoArgs(rest) {
   const raw = String(rest || '').trim();
@@ -81,14 +75,8 @@ function parseTodoArgs(rest) {
   return null;
 }
 
-function isTodoCommand(args) {
-  const first = (args[0] || '').toLowerCase();
-  return first === 'to-do' || first === 'todo';
-}
-
 async function runTodoCommand(message, args, client) {
   if (!message?.guild || !message.member) return false;
-  if (!isTodoCommand(args)) return false;
   if (message.guild.id !== TEST_GUILD_ID) {
     await safeMessageReply(message, {
       embeds: [
@@ -123,7 +111,7 @@ async function runTodoCommand(message, args, client) {
   }
 
   if (parsed.action === 'add') {
-    const result = addItem(parsed.task, parsed.status);
+    const result = await addItem(parsed.task, parsed.status);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -152,7 +140,7 @@ async function runTodoCommand(message, args, client) {
   }
 
   if (parsed.action === 'fatto') {
-    const result = removeItem(parsed.task);
+    const result = await removeItem(parsed.task);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -177,7 +165,7 @@ async function runTodoCommand(message, args, client) {
   }
 
   if (parsed.action === 'modify') {
-    const result = setItemStatus(parsed.task, parsed.status);
+    const result = await setItemStatus(parsed.task, parsed.status);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -208,7 +196,7 @@ async function runTodoCommand(message, args, client) {
   }
 
   if (parsed.action === 'test') {
-    const result = setItemTest(parsed.task, true);
+    const result = await setItemTest(parsed.task, true);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -235,4 +223,11 @@ async function runTodoCommand(message, args, client) {
   return true;
 }
 
-module.exports = { runTodoCommand, isTodoCommand };
+module.exports = {
+  name: 'todo',
+  aliases: ['to-do'],
+  async execute(message, args, client, context = {}) {
+    const invoked = String(context?.invokedName || 'todo').toLowerCase();
+    return runTodoCommand(message, [invoked, ...(Array.isArray(args) ? args : [])], client);
+  }
+};

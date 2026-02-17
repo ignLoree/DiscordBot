@@ -2,6 +2,15 @@
 const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const ping = require('../../Schemas/Ping/pingSchema');
 
+
+
+function formatUptime(uptime) {
+  const minutes = Math.floor((uptime / 60) % 60);
+  const hours = Math.floor((uptime / (60 * 60)) % 24);
+  const days = Math.floor(uptime / (60 * 60 * 24));
+  return `${days}d ${hours}h ${minutes}m`;
+}
+
 module.exports = {
   name: 'ping',
 
@@ -36,10 +45,3 @@ module.exports = {
     }
   },
 };
-
-function formatUptime(uptime) {
-  const minutes = Math.floor((uptime / 60) % 60);
-  const hours = Math.floor((uptime / (60 * 60)) % 24);
-  const days = Math.floor(uptime / (60 * 60 * 24));
-  return `${days}d ${hours}h ${minutes}m`;
-}

@@ -138,7 +138,7 @@ async function recordMessageActivity(message) {
 
 async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
   const startedAt = doc.voice.sessionStartedAt;
-  if (!startedAt) return;
+  if (!startedAt) return 0;
   const elapsedSeconds = Math.max(0, Math.floor((now.getTime() - new Date(startedAt).getTime()) / 1000));
   ensureVoiceKeys(doc, now);
   doc.voice.totalSeconds = Number(doc.voice.totalSeconds || 0) + elapsedSeconds;
@@ -149,6 +149,14 @@ async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
   if (!skipExp && minutes > 0) {
     await addExpWithLevel(guild, doc.userId, minutes * VOICE_EXP_PER_MINUTE, true);
   }
+  return elapsedSeconds;
+}
+
+function isCountableVoiceState(state) {
+  if (!state?.channelId) return false;
+  
+  if (state.selfMute && state.selfDeaf) return false;
+  return true;
 }
 
 async function handleVoiceActivity(oldState, newState) {
@@ -161,6 +169,8 @@ async function handleVoiceActivity(oldState, newState) {
   const now = new Date();
   const wasInVoice = Boolean(oldState?.channelId);
   const isInVoice = Boolean(newState?.channelId);
+  const wasCountable = isCountableVoiceState(oldState);
+  const isCountable = isCountableVoiceState(newState);
 
   let doc = await ActivityUser.findOne({ guildId, userId });
   if (!doc) {
@@ -169,16 +179,17 @@ async function handleVoiceActivity(oldState, newState) {
 
   if (wasInVoice && !isInVoice) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
-    const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
-    const elapsedSeconds = startedAt
-      ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
-      : 0;
-    const ignored = await shouldIgnoreExpForMember({
-      guildId,
-      member,
-      channelId: oldChannel?.id || null
-    });
-    await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    let elapsedSeconds = 0;
+    if (wasCountable) {
+      const ignored = await shouldIgnoreExpForMember({
+        guildId,
+        member,
+        channelId: oldChannel?.id || null
+      });
+      elapsedSeconds = await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    } else {
+      doc.voice.sessionStartedAt = null;
+    }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
@@ -188,27 +199,52 @@ async function handleVoiceActivity(oldState, newState) {
 
   if (wasInVoice && isInVoice && oldState.channelId !== newState.channelId) {
     const oldChannel = oldState?.channel || oldState?.guild?.channels?.cache?.get(oldState.channelId);
-    const startedAt = doc.voice.sessionStartedAt ? new Date(doc.voice.sessionStartedAt) : null;
-    const elapsedSeconds = startedAt
-      ? Math.max(0, Math.floor((now.getTime() - startedAt.getTime()) / 1000))
-      : 0;
-    const ignored = await shouldIgnoreExpForMember({
-      guildId,
-      member,
-      channelId: oldChannel?.id || null
-    });
-    await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    let elapsedSeconds = 0;
+    if (wasCountable) {
+      const ignored = await shouldIgnoreExpForMember({
+        guildId,
+        member,
+        channelId: oldChannel?.id || null
+      });
+      elapsedSeconds = await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+    } else {
+      doc.voice.sessionStartedAt = null;
+    }
     if (oldChannel?.id) {
       await bumpDailyVoice(guildId, userId, oldChannel.id, elapsedSeconds);
     }
-    doc.voice.sessionStartedAt = now;
+    doc.voice.sessionStartedAt = isCountable ? now : null;
     await doc.save();
     return;
   }
 
+  if (wasInVoice && isInVoice && oldState.channelId === newState.channelId) {
+    if (wasCountable && !isCountable) {
+      const channel = oldState?.channel || newState?.channel || newState?.guild?.channels?.cache?.get(newState.channelId);
+      const ignored = await shouldIgnoreExpForMember({
+        guildId,
+        member,
+        channelId: channel?.id || null
+      });
+      const elapsedSeconds = await recordVoiceSessionEnd(doc, now, member.guild, ignored);
+      if (channel?.id) {
+        await bumpDailyVoice(guildId, userId, channel.id, elapsedSeconds);
+      }
+      await doc.save();
+      return;
+    }
+
+    if (!wasCountable && isCountable) {
+      doc.voice.sessionStartedAt = now;
+      await doc.save();
+      return;
+    }
+  }
+
   if (!wasInVoice && isInVoice) {
-    doc.voice.sessionStartedAt = now;
+    doc.voice.sessionStartedAt = isCountable ? now : null;
     await doc.save();
+    return;
   }
 }
 

@@ -143,7 +143,7 @@ function scheduleRemovalConfirm(member, channel) {
     const timeout = setTimeout(async () => {
         removalChecks.delete(userId);
         const stillHas = hasInviteNow(member, userId);
-        // Remove only if Discord explicitly reports custom status without invite.
+        
         if (stillHas !== false) return;
         await removeRoleIfPossible(member);
         try {
@@ -296,7 +296,7 @@ function startCleanupClock(client, guildId) {
             if (pendingChecks.has(userId)) {
                 continue;
             }
-            // Schedule removal only when link is explicitly missing from custom status.
+            
             if (hasLink === false) {
                 if (recentlyOnline(info)) {
                     continue;

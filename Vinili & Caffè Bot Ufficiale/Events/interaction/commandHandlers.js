@@ -32,7 +32,7 @@ const STAFF_ALLOWED_CHANNEL_IDS = new Set([
     String(IDs.channels?.staffCmds || ''),
     String(IDs.channels?.highCmds || '')
 ].filter(Boolean));
-/** Guild in cui le restrizioni canale per slash non si applicano (comandi usabili in qualsiasi canale). */
+
 const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
 
 function getSlashChannelRestrictionError(commandName, command, channel) {
@@ -291,7 +291,9 @@ async function handleSlashCommand(interaction, client) {
                     embeds: [staffEmbed],
                     components: [row]
                 });
-            } catch (_) {}
+            } catch (sendErr) {
+                global.logger?.error?.('[commandHandlers] failed to send error embed', sendErr);
+            }
         }
         if (msg) {
             const collector = msg.createMessageComponentCollector({
@@ -315,7 +317,9 @@ async function handleSlashCommand(interaction, client) {
                     if (btn.customId === 'error_unsolved')
                         updatedEmbed.setColor('#e74c3c');
                     await msg.edit({ embeds: [updatedEmbed] });
-                } catch (_) {}
+                } catch (collectorErr) {
+                    global.logger?.error?.('[commandHandlers] error collector failure', collectorErr);
+                }
             });
             collector.on('end', async () => {
                 try {

@@ -62,7 +62,7 @@
     },
     "guessFlag": {
       "durationMs": 180000,
-      "rewardExp": 100,
+      "rewardExp": 150,
       "apiUrl": "https://restcountries.com/v3.1/all?fields=name,translations,flags,altSpellings"
     },
     "guessPlayer": {
@@ -82,6 +82,65 @@
         "https://itunes.apple.com/it/rss/topsongs/limit=100/json",
         "https://itunes.apple.com/us/rss/topsongs/limit=100/json"
       ]
+    },
+    "guessCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://restcountries.com/v3.1/all?fields=name,translations,capital,flags"
+    },
+    "guessRegionCapital": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "fastType": {
+      "durationMs": 120000,
+      "rewardExp": 200
+    },
+    "guessTeam": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?l=",
+      "leagues": [
+        "Italian Serie A",
+        "English Premier League",
+        "Spanish La Liga",
+        "German Bundesliga",
+        "French Ligue 1",
+        "Dutch Eredivisie",
+        "Belgian Pro League",
+        "Portuguese Primeira Liga",
+        "Saudi Pro League",
+        "Italian Serie B",
+        "English League Championship",
+        "American Major League Soccer"
+      ]
+    },
+    "guessSinger": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://api.deezer.com/chart/0/artists?limit=100"
+    },
+    "guessAlbum": {
+      "durationMs": 180000,
+      "rewardExp": 150,
+      "apiUrl": "https://api.deezer.com/chart/0/albums?limit=100"
+    },
+    "hangman": {
+      "durationMs": 240000,
+      "rewardExp": 200,
+      "maxMisses": 7
+    },
+    "italianGK": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "drivingQuiz": {
+      "durationMs": 180000,
+      "rewardExp": 150
+    },
+    "mathExpression": {
+      "durationMs": 150000,
+      "rewardExp": 200
     },
     "findBot": {
       "durationMs": 300000,

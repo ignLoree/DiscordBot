@@ -1,7 +1,4 @@
-/**
- * Come nel bot ufficiale: se l'utente modifica un messaggio e il nuovo contenuto
- * è un comando a prefisso (- / ?), viene rieseguito come messageCreate.
- */
+
 module.exports = {
     name: 'messageUpdate',
     async execute(oldMessage, newMessage, client) {

@@ -149,8 +149,8 @@ const ids = {
     propositiForum: "1456349072473587936",
     wrapForum: "1445792081271587000",
 
-    commandLogChannel: "1466489404867481802", // Canale per i log dei comandi
-    errorLogChannel: "1472733599496409292", // Canale per i log degli errori
+    commandLogChannel: "1466489404867481802", 
+    errorLogChannel: "1472733599496409292", 
   },
 
   roles: {
@@ -338,7 +338,7 @@ const ids = {
     links: { ...(meta?.links || {}) }
   },
 
-  /** Canale in cui i comandi (prefix/slash) sono obbligatori, salvo eccezioni (ticket, level, staff, TTS, description, afk, avatar, banner, snipe, quote). */
+  
   allowedPrefixCommandsChannelId: '1442569138114662490'
 };
 

@@ -29,13 +29,18 @@ module.exports = (client) => {
         }
 
         const absBase = path.resolve(baseDir);
+        const statusRows = [];
         let loaded = 0;
 
         for (const file of listJsFiles(absBase)) {
+            const rel = path.relative(absBase, file).replace(/\\/g, '/');
             try {
                 delete require.cache[require.resolve(file)];
                 const event = require(file);
-                if (!event?.name) continue;
+                if (!event?.name) {
+                    statusRows.push({ rel, status: 'Missing name' });
+                    continue;
+                }
 
                 const handler = (...args) => event.execute(...args, client);
                 if (event.once) client.once(event.name, handler);
@@ -44,11 +49,16 @@ module.exports = (client) => {
                 if (!client._eventHandlers.has(event.name)) client._eventHandlers.set(event.name, []);
                 client._eventHandlers.get(event.name).push(handler);
                 loaded++;
+                statusRows.push({ rel, status: 'Loaded' });
             } catch (err) {
-                global.logger.error('[EVENTS] Failed to load ' + path.relative(absBase, file), err);
+                statusRows.push({ rel, status: 'Error loading' });
+                global.logger.error('[EVENTS] Failed to load ' + rel, err);
             }
         }
 
+        for (const row of statusRows.sort((a, b) => a.rel.localeCompare(b.rel))) {
+            global.logger.info(`[Bot Test][EVENTS] ${row.status} ${row.rel}`);
+        }
         global.logger.info('[Bot Test] Loaded ' + loaded + ' events.');
     };
 };

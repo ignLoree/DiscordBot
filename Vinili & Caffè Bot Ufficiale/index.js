@@ -15,7 +15,6 @@ for (const envPath of envCandidates) {
 }
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
-const Logs = require('discord-logs');
 const functions = fs.readdirSync(path.join(APP_ROOT, "Handlers")).filter((file) => file.endsWith(".js"));
 const triggerFiles = fs.existsSync(path.join(APP_ROOT, "Triggers"))
     ? fs.readdirSync(path.join(APP_ROOT, "Triggers")).filter((file) => file.endsWith(".js"))
@@ -146,7 +145,3 @@ client.snipes = new Map();
         global.logger.error('[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.', error);
     });
 })();
-
-Logs(client, {
-    debug: false
-});

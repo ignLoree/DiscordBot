@@ -45,7 +45,7 @@ const ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS = new Set(
 );
 const TTS_ALLOWED_CHANNEL_ID = IDs.channels.noMic || null;
 const SHIP_ALLOWED_CHANNEL_ID = IDs.channels.ship || null;
-/** Guild in cui i comandi senza canale obbligatorio (no TTS, no ship, no restrizioni canale) sono usabili in qualsiasi canale. */
+
 const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
 const ALLOWED_EXCEPTION_NAMES = new Set(['ticket', 'description', 'afk', 'avatar', 'banner', 'snipe', 'quote']);
 const ALLOWED_EXCEPTION_FOLDERS = new Set(['Level', 'Staff']);
@@ -1085,9 +1085,6 @@ async function handleDiscadiaBump(message, client) {
 
     const isDiscadiaAuthor = message.author?.id === IDs.bots.Discadia;
     const isDiscadiaApp = message.applicationId === IDs.bots.Discadia;
-    const isSlashBumpContext =
-        String(message?.interaction?.commandName || '').toLowerCase() === 'bump'
-        || String(message?.interactionMetadata?.name || '').toLowerCase() === 'bump';
     const patterns = Array.isArray(discadia.bumpSuccessPatterns)
         ? discadia.bumpSuccessPatterns.map(p => String(p).toLowerCase())
         : ['has been successfully bumped', 'successfully bumped', 'bumped successfully'];
@@ -1116,10 +1113,8 @@ async function handleDiscadiaBump(message, client) {
     const hasFailureWord =
         /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(joined);
 
-    // Solo messaggi del bot Discadia e solo se: risposta a /bump O testo con pattern di successo configurati
     const fromDiscadiaBot = isDiscadiaAuthor || isDiscadiaApp;
-    const isSlashBumpReply = fromDiscadiaBot && isSlashBumpContext;
-    const isBump = fromDiscadiaBot && !hasFailureWord && (isSlashBumpReply || hasPattern);
+    const isBump = fromDiscadiaBot && !hasFailureWord && hasPattern;
     if (!isBump) return false;
 
     const bumpUserId =

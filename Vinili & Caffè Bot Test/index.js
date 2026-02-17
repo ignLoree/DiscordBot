@@ -1,8 +1,5 @@
-/**
- * Vinili & Caffè Bot Test – funzionalità server sponsor (ticket, verify, panel).
- * Usa lo stesso MongoDB del bot principale. Token Discord separato.
- */
-const { Client, GatewayIntentBits, Partials } = require('discord.js');
+
+const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -36,7 +33,7 @@ const client = new Client({
         GatewayIntentBits.GuildModeration
     ],
     partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember],
-    // status 'invisible' = pallino grigio (offline) ma bot connesso e funzionante
+    
     presence: { status: 'invisible' }
 });
 
@@ -46,7 +43,7 @@ try {
     global.logger.error('[Bot Test] config.json mancante o non valido:', err?.message || err);
     process.exit(1);
 }
-// Bot Test deve usare SOLO il suo token: niente fallback su DISCORD_TOKEN (quello è per l'ufficiale)
+
 client.config.token = process.env.DISCORD_TOKEN_TEST || client.config.token;
 client.config.mongoURL = process.env.MONGO_URL || process.env.MONGODB_URI || client.config.mongoURL;
 
@@ -57,13 +54,46 @@ if (!client.config.token) {
 
 client.logs = global.logger;
 
-// Handlers
-const eventHandler = require('./Handlers/eventHandler');
-eventHandler(client);
+client.commands = new Collection();
+client.pcommands = new Collection();
+client.aliases = new Collection();
+client.buttons = new Collection();
 
-// Carica eventi e avvia
-client.handleEvents(path.join(APP_ROOT, 'Events'));
-client.login(client.config.token).catch((err) => {
-    global.logger.error('Login fallito:', err);
-    process.exit(1);
-});
+
+const handlerFiles = fs.readdirSync(path.join(APP_ROOT, 'Handlers')).filter((f) => f.endsWith('.js'));
+for (const file of handlerFiles) {
+    require(path.join(APP_ROOT, 'Handlers', file))(client);
+}
+
+
+const commandFolders = fs.existsSync(path.join(APP_ROOT, 'Commands')) ? fs.readdirSync(path.join(APP_ROOT, 'Commands')) : [];
+const prefixFolders = fs.existsSync(path.join(APP_ROOT, 'Prefix')) ? fs.readdirSync(path.join(APP_ROOT, 'Prefix')) : [];
+const triggerFiles = fs.existsSync(path.join(APP_ROOT, 'Triggers'))
+    ? fs.readdirSync(path.join(APP_ROOT, 'Triggers')).filter((f) => f.endsWith('.js'))
+    : [];
+
+(async () => {
+    if (typeof client.handleCommands === 'function') {
+        await client.handleCommands(commandFolders, path.join(APP_ROOT, 'Commands')).catch((err) => {
+            global.logger.error('[Bot Test] handleCommands:', err);
+        });
+    }
+    if (typeof client.prefixCommands === 'function') {
+        await client.prefixCommands(prefixFolders, path.join(APP_ROOT, 'Prefix')).catch((err) => {
+            global.logger.error('[Bot Test] prefixCommands:', err);
+        });
+    }
+    if (typeof client.handleEvents === 'function') {
+        client.handleEvents(path.join(APP_ROOT, 'Events'));
+    }
+    if (typeof client.handleTriggers === 'function') {
+        await client.handleTriggers(triggerFiles, APP_ROOT).catch((err) => {
+            global.logger.error('[Bot Test] handleTriggers:', err);
+        });
+    }
+
+    client.login(client.config.token).catch((err) => {
+        global.logger.error('Login fallito:', err);
+        process.exit(1);
+    });
+})();

@@ -9,93 +9,7 @@ const VERIFY_ROLE_IDS = [
     IDs.roles.separatore7
 ].filter(Boolean);
 
-module.exports = {
-  name: 'verify',
-  
-	  async execute(message, args) {
-    const { safeMessageReply } = require('../../Utils/Moderation/reply');
-    const mainGuildId = IDs.guilds?.main || null;
-    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
-      return safeMessageReply(message, {
-        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo nel **server principale** (main guild).')],
-        allowedMentions: { repliedUser: false }
-      });
-    }
-    await message.channel.sendTyping();
-    const targets = await resolveTargetsFlexible(message, args);
-    if (!targets.length) {
-      const reply = await message.reply({ embeds: [buildNoMemberEmbed()] }).catch(() => null);
-      await message.delete().catch(() => {});
-      return reply;
-    }
-	    const yesId = `verify_yes:${message.id}:${message.author.id}`;
-	    const noId = `verify_no:${message.id}:${message.author.id}`;
-	    const validVerifyRoleIds = await resolveValidVerifyRoleIds(message.guild);
-	    if (!validVerifyRoleIds.length) {
-	      const sent = await message.channel.send({
-	        embeds: [
-	          new EmbedBuilder()
-	            .setColor('Red')
-	            .setTitle('Unsuccessful Operation!')
-	            .setDescription('Nessun ruolo verifica valido configurato (IDs.roles).')
-	        ]
-	      }).catch(() => null);
-	      await message.delete().catch(() => {});
-	      return sent;
-	    }
-	    await message.delete().catch(() => {});
-	    const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
-    const promptMsg = await message.channel.send({
-      embeds: [buildPromptEmbed(targetMentions)],
-      components: [buildConfirmRow(yesId, noId)]
-    });
-    const filter = (i) => i.user.id === message.author.id && (i.customId === yesId || i.customId === noId);
-    const collector = promptMsg.createMessageComponentCollector({ filter, time: 10_000, max: 1 });
-    collector.on('collect', async (i) => {
-      if (i.customId === noId) {
-        try {
-          await i.update({ embeds: [buildCancelledEmbed()], components: [] });
-        } catch {}
-        return;
-      }
-      const success = [];
-	      const fail = [];
-	      for (const member of targets) {
-	        const rolesToAdd = validVerifyRoleIds.filter((id) => !member.roles.cache.has(id));
-	        const displayName = member.user?.username || member.displayName || member.id;
-        try {
-          if (rolesToAdd.length > 0) {
-            await member.roles.add(rolesToAdd);
-            success.push(displayName);
-          } else {
-            fail.push(displayName);
-          }
-        } catch (err) {
-          global.logger.error(err);
-          fail.push(displayName);
-        }
-      }
-      try {
-        if (!i.deferred && !i.replied) {
-          await i.deferUpdate();
-        }
-      } catch {}
-      await promptMsg.delete().catch(() => {});
-      await message.delete().catch(() => {});
-      const resultMsg = await message.channel.send({
-        embeds: [buildResultEmbed(message.author.id, message.guild?.ownerId, success, fail)],
-        allowedMentions: { users: [] }
-      });
-      setTimeout(() => {
-        resultMsg.delete().catch(() => {});
-      }, 5000);
-    });
-    collector.on('end', async (collected) => {
-      if (collected.size > 0) return;
-      await promptMsg.edit({ embeds: [buildTimeoutEmbed()], components: [] }).catch(() => {});
-    });
-  }
-};
+
 
 function formatUserList(list) {
   if (!Array.isArray(list) || list.length === 0) return 'None';
@@ -231,3 +145,90 @@ async function resolveTargetsFlexible(message, args) {
   return member ? [member] : [];
 }
 
+module.exports = {
+  name: 'verify',
+  
+	  async execute(message, args) {
+    const { safeMessageReply } = require('../../Utils/Moderation/reply');
+    const mainGuildId = IDs.guilds?.main || null;
+    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
+      return safeMessageReply(message, {
+        embeds: [new EmbedBuilder().setColor('Red').setDescription('<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo nel **server principale** (main guild).')],
+        allowedMentions: { repliedUser: false }
+      });
+    }
+    await message.channel.sendTyping();
+    const targets = await resolveTargetsFlexible(message, args);
+    if (!targets.length) {
+      const reply = await message.reply({ embeds: [buildNoMemberEmbed()] }).catch(() => null);
+      await message.delete().catch(() => {});
+      return reply;
+    }
+	    const yesId = `verify_yes:${message.id}:${message.author.id}`;
+	    const noId = `verify_no:${message.id}:${message.author.id}`;
+	    const validVerifyRoleIds = await resolveValidVerifyRoleIds(message.guild);
+	    if (!validVerifyRoleIds.length) {
+	      const sent = await message.channel.send({
+	        embeds: [
+	          new EmbedBuilder()
+	            .setColor('Red')
+	            .setTitle('Unsuccessful Operation!')
+	            .setDescription('Nessun ruolo verifica valido configurato (IDs.roles).')
+	        ]
+	      }).catch(() => null);
+	      await message.delete().catch(() => {});
+	      return sent;
+	    }
+	    await message.delete().catch(() => {});
+	    const targetMentions = targets.map((member) => member.user?.username || member.displayName || member.id);
+    const promptMsg = await message.channel.send({
+      embeds: [buildPromptEmbed(targetMentions)],
+      components: [buildConfirmRow(yesId, noId)]
+    });
+    const filter = (i) => i.user.id === message.author.id && (i.customId === yesId || i.customId === noId);
+    const collector = promptMsg.createMessageComponentCollector({ filter, time: 10_000, max: 1 });
+    collector.on('collect', async (i) => {
+      if (i.customId === noId) {
+        try {
+          await i.update({ embeds: [buildCancelledEmbed()], components: [] });
+        } catch {}
+        return;
+      }
+      const success = [];
+	      const fail = [];
+	      for (const member of targets) {
+	        const rolesToAdd = validVerifyRoleIds.filter((id) => !member.roles.cache.has(id));
+	        const displayName = member.user?.username || member.displayName || member.id;
+        try {
+          if (rolesToAdd.length > 0) {
+            await member.roles.add(rolesToAdd);
+            success.push(displayName);
+          } else {
+            fail.push(displayName);
+          }
+        } catch (err) {
+          global.logger.error(err);
+          fail.push(displayName);
+        }
+      }
+      try {
+        if (!i.deferred && !i.replied) {
+          await i.deferUpdate();
+        }
+      } catch {}
+      await promptMsg.delete().catch(() => {});
+      await message.delete().catch(() => {});
+      const resultMsg = await message.channel.send({
+        embeds: [buildResultEmbed(message.author.id, message.guild?.ownerId, success, fail)],
+        allowedMentions: { users: [] }
+      });
+      setTimeout(() => {
+        resultMsg.delete().catch(() => {});
+      }, 5000);
+    });
+    collector.on('end', async (collected) => {
+      if (collected.size > 0) return;
+      await promptMsg.edit({ embeds: [buildTimeoutEmbed()], components: [] }).catch(() => {});
+    });
+  }
+};

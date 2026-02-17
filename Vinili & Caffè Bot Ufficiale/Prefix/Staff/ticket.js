@@ -57,6 +57,88 @@ async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
   return sent;
 }
 
+
+
+function makeErrorEmbed(title, description) {
+  return new EmbedBuilder()
+    .setTitle(title)
+    .setDescription(description)
+    .setColor('#6f4e37');
+}
+
+async function resolveUserFromArg(message, rawArg) {
+  const fromMention = message.mentions?.users?.first();
+  if (fromMention) return fromMention;
+  if (!rawArg) return null;
+
+  const id = String(rawArg).match(/^<@!?(\d+)>$/)?.[1] || (String(rawArg).match(/^\d{17,20}$/) ? String(rawArg) : null);
+  if (!id) return null;
+  return message.client.users.fetch(id).catch(() => null);
+}
+
+async function fetchTicketMessage(channel, messageId) {
+  if (messageId) {
+    const found = await channel.messages.fetch(messageId).catch(() => null);
+    if (found) return found;
+  }
+  const fallback = await channel.messages.fetch({ limit: 5 }).catch(() => null);
+  return fallback?.first() || null;
+}
+
+function getTicketPanelConfig(raw) {
+  const key = String(raw || '').toLowerCase();
+  const configs = {
+    supporto: {
+      type: "supporto",
+      emoji: "⭐",
+      name: "supporto",
+      label: "Supporto",
+      embed: new EmbedBuilder()
+        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
+        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
+        .setColor("#6f4e37")
+    },
+    partnership: {
+      type: "partnership",
+      emoji: "🤝",
+      name: "partnership",
+      label: "Partnership",
+      embed: new EmbedBuilder()
+        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
+        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`)
+        .setColor("#6f4e37")
+    },
+    highstaff: {
+      type: "high",
+      emoji: "✨",
+      name: "highstaff",
+      label: "High Staff",
+      embed: new EmbedBuilder()
+        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**")
+        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
+        .setColor("#6f4e37")
+    }
+  };
+  const aliases = {
+    supporto: 'supporto',
+    prima: 'supporto',
+    '1': 'supporto',
+    first: 'supporto',
+    partnership: 'partnership',
+    partner: 'partnership',
+    seconda: 'partnership',
+    '2': 'partnership',
+    second: 'partnership',
+    highstaff: 'highstaff',
+    high: 'highstaff',
+    terza: 'highstaff',
+    '3': 'highstaff',
+    third: 'highstaff'
+  };
+  const resolved = aliases[key] || key;
+  return configs[resolved] || null;
+}
+
 module.exports = {
   name: 'ticket',
   aliases: ['add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'switchpanel', 'rename', 'ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketswitchpanel', 'ticketrename', 'trename', 'tadd', 'tremove', 'ticketadd', 'ticketremove'],
@@ -267,7 +349,7 @@ module.exports = {
         return;
       }
 
-      // Atomic close: only one closer sends transcript (avoids duplicate with button/modal close)
+      
       const claimed = await Ticket.findOneAndUpdate(
         { channelId: message.channel.id, open: true },
         { $set: { open: false, closedAt: new Date() } },
@@ -552,7 +634,9 @@ module.exports = {
           });
           return;
         }
-        if (ticketDoc.ticketType === panelConfig.type) {
+        const previousTicketType = String(ticketDoc.ticketType || '');
+
+        if (previousTicketType === panelConfig.type) {
           await safeMessageReply(message, {
             embeds: [makeErrorEmbed('Info', `<:attentionfromvega:1443651874032062505> Questo ticket è già impostato su **${panelConfig.label}**.`)],
             allowedMentions: { repliedUser: false }
@@ -633,6 +717,15 @@ module.exports = {
         }
 
         ticketDoc.ticketType = panelConfig.type;
+
+        if (previousTicketType === 'partnership' && panelConfig.type !== 'partnership') {
+          if (ticketDoc.descriptionPromptMessageId) {
+            const oldPrompt = await targetChannel.messages.fetch(ticketDoc.descriptionPromptMessageId).catch(() => null);
+            if (oldPrompt) await oldPrompt.delete().catch(() => { });
+          }
+          ticketDoc.descriptionPromptMessageId = null;
+        }
+
         await ticketDoc.save().catch(() => { });
 
         if (panelConfig.type === 'partnership' && !ticketDoc.descriptionSubmitted) {
@@ -775,83 +868,3 @@ module.exports = {
     });
   }
 };
-
-function makeErrorEmbed(title, description) {
-  return new EmbedBuilder()
-    .setTitle(title)
-    .setDescription(description)
-    .setColor('#6f4e37');
-}
-
-async function resolveUserFromArg(message, rawArg) {
-  const fromMention = message.mentions?.users?.first();
-  if (fromMention) return fromMention;
-  if (!rawArg) return null;
-
-  const id = String(rawArg).match(/^<@!?(\d+)>$/)?.[1] || (String(rawArg).match(/^\d{17,20}$/) ? String(rawArg) : null);
-  if (!id) return null;
-  return message.client.users.fetch(id).catch(() => null);
-}
-
-async function fetchTicketMessage(channel, messageId) {
-  if (messageId) {
-    const found = await channel.messages.fetch(messageId).catch(() => null);
-    if (found) return found;
-  }
-  const fallback = await channel.messages.fetch({ limit: 5 }).catch(() => null);
-  return fallback?.first() || null;
-}
-
-function getTicketPanelConfig(raw) {
-  const key = String(raw || '').toLowerCase();
-  const configs = {
-    supporto: {
-      type: "supporto",
-      emoji: "⭐",
-      name: "supporto",
-      label: "Supporto",
-      embed: new EmbedBuilder()
-        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
-        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`)
-        .setColor("#6f4e37")
-    },
-    partnership: {
-      type: "partnership",
-      emoji: "🤝",
-      name: "partnership",
-      label: "Partnership",
-      embed: new EmbedBuilder()
-        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**")
-        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`)
-        .setColor("#6f4e37")
-    },
-    highstaff: {
-      type: "high",
-      emoji: "✨",
-      name: "highstaff",
-      label: "High Staff",
-      embed: new EmbedBuilder()
-        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**")
-        .setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`)
-        .setColor("#6f4e37")
-    }
-  };
-  const aliases = {
-    supporto: 'supporto',
-    prima: 'supporto',
-    '1': 'supporto',
-    first: 'supporto',
-    partnership: 'partnership',
-    partner: 'partnership',
-    seconda: 'partnership',
-    '2': 'partnership',
-    second: 'partnership',
-    highstaff: 'highstaff',
-    high: 'highstaff',
-    terza: 'highstaff',
-    '3': 'highstaff',
-    third: 'highstaff'
-  };
-  const resolved = aliases[key] || key;
-  return configs[resolved] || null;
-}

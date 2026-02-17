@@ -1,6 +1,4 @@
-/**
- * To-do list solo nella guild test. Canale fisso; ordine per importanza (online > inattivo > pausa > offline).
- */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -15,6 +13,7 @@ const STATUS_EMOJI = {
 };
 
 const STATUS_ORDER = ['online', 'inattivo', 'pausa', 'offline'];
+let mutationQueue = Promise.resolve();
 
 function load() {
   try {
@@ -29,7 +28,14 @@ function load() {
 function save(data) {
   const dir = path.dirname(TODO_FILE);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(TODO_FILE, JSON.stringify({ items: data.items, messageId: data.messageId }, null, 2), 'utf8');
+  const tmp = `${TODO_FILE}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify({ items: data.items, messageId: data.messageId }, null, 2), 'utf8');
+  fs.renameSync(tmp, TODO_FILE);
+}
+
+function enqueueMutation(task) {
+  mutationQueue = mutationQueue.then(task, task);
+  return mutationQueue;
 }
 
 function normalizeStatus(s) {
@@ -46,32 +52,36 @@ function sortByImportance(items) {
   });
 }
 
-function addItem(text, status) {
-  const data = load();
-  const normalized = normalizeStatus(status);
-  if (!normalized) return { ok: false, error: 'status_invalid' };
-  const trimmed = String(text || '').trim();
-  if (!trimmed) return { ok: false, error: 'task_empty' };
-  data.items.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
-    text: trimmed,
-    status: normalized,
-    test: false,
-    createdAt: Date.now()
+async function addItem(text, status) {
+  return enqueueMutation(async () => {
+    const data = load();
+    const normalized = normalizeStatus(status);
+    if (!normalized) return { ok: false, error: 'status_invalid' };
+    const trimmed = String(text || '').trim();
+    if (!trimmed) return { ok: false, error: 'task_empty' };
+    data.items.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+      text: trimmed,
+      status: normalized,
+      test: false,
+      createdAt: Date.now()
+    });
+    save(data);
+    return { ok: true, data };
   });
-  save(data);
-  return { ok: true, data };
 }
 
-function removeItem(taskText) {
-  const data = load();
-  const query = String(taskText || '').trim().toLowerCase();
-  if (!query) return { ok: false, error: 'task_empty' };
-  const idx = data.items.findIndex((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
-  if (idx === -1) return { ok: false, error: 'not_found' };
-  data.items.splice(idx, 1);
-  save(data);
-  return { ok: true, data };
+async function removeItem(taskText) {
+  return enqueueMutation(async () => {
+    const data = load();
+    const query = String(taskText || '').trim().toLowerCase();
+    if (!query) return { ok: false, error: 'task_empty' };
+    const idx = data.items.findIndex((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
+    if (idx === -1) return { ok: false, error: 'not_found' };
+    data.items.splice(idx, 1);
+    save(data);
+    return { ok: true, data };
+  });
 }
 
 function findItem(taskText) {
@@ -81,29 +91,33 @@ function findItem(taskText) {
   return data.items.find((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
 }
 
-function setItemTest(taskText, test) {
-  const data = load();
-  const query = String(taskText || '').trim().toLowerCase();
-  if (!query) return { ok: false, error: 'task_empty' };
-  const item = data.items.find((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
-  if (!item) return { ok: false, error: 'not_found' };
-  item.test = Boolean(test);
-  item.status = 'online';
-  save(data);
-  return { ok: true, data };
+async function setItemTest(taskText, test) {
+  return enqueueMutation(async () => {
+    const data = load();
+    const query = String(taskText || '').trim().toLowerCase();
+    if (!query) return { ok: false, error: 'task_empty' };
+    const item = data.items.find((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
+    if (!item) return { ok: false, error: 'not_found' };
+    item.test = Boolean(test);
+    item.status = 'online';
+    save(data);
+    return { ok: true, data };
+  });
 }
 
-function setItemStatus(taskText, status) {
-  const data = load();
-  const normalized = normalizeStatus(status);
-  if (!normalized) return { ok: false, error: 'status_invalid' };
-  const query = String(taskText || '').trim().toLowerCase();
-  if (!query) return { ok: false, error: 'task_empty' };
-  const item = data.items.find((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
-  if (!item) return { ok: false, error: 'not_found' };
-  item.status = normalized;
-  save(data);
-  return { ok: true, data };
+async function setItemStatus(taskText, status) {
+  return enqueueMutation(async () => {
+    const data = load();
+    const normalized = normalizeStatus(status);
+    if (!normalized) return { ok: false, error: 'status_invalid' };
+    const query = String(taskText || '').trim().toLowerCase();
+    if (!query) return { ok: false, error: 'task_empty' };
+    const item = data.items.find((item) => item.text.toLowerCase().includes(query) || query.includes(item.text.toLowerCase()));
+    if (!item) return { ok: false, error: 'not_found' };
+    item.status = normalized;
+    save(data);
+    return { ok: true, data };
+  });
 }
 
 function buildListContent(data) {

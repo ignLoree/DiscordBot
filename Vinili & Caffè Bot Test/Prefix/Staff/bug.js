@@ -1,12 +1,6 @@
-/**
- * Comando -bug solo nella guild test. Canale bug fisso.
- * -bug report "descrizione" "online|inattivo|pausa|offline" → aggiunge
- * -bug "descrizione" fatto → rimuove
- * -bug "descrizione" test → imposta online + **[TEST]**
- */
 const { EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../Moderation/reply');
-const IDs = require('../Config/ids');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const IDs = require('../../Utils/Config/ids');
 const TEST_GUILD_ID = IDs.guilds?.test || '1462458562507964584';
 const {
   addItem,
@@ -16,7 +10,7 @@ const {
   refreshBugMessage,
   normalizeStatus,
   STATUS_ORDER
-} = require('./bugListService');
+} = require('../../Utils/Bug/bugListService');
 
 function parseBugArgs(args) {
   const first = (args[0] || '').toLowerCase();
@@ -91,14 +85,8 @@ function parseBugArgs(args) {
   return null;
 }
 
-function isBugCommand(args) {
-  const first = (args[0] || '').toLowerCase();
-  return first === 'bug';
-}
-
 async function runBugCommand(message, args, client) {
   if (!message?.guild || !message.member) return false;
-  if (!isBugCommand(args)) return false;
   if (message.guild.id !== TEST_GUILD_ID) {
     await safeMessageReply(message, {
       embeds: [
@@ -132,7 +120,7 @@ async function runBugCommand(message, args, client) {
   }
 
   if (parsed.action === 'add') {
-    const result = addItem(parsed.task, parsed.status);
+    const result = await addItem(parsed.task, parsed.status);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -161,7 +149,7 @@ async function runBugCommand(message, args, client) {
   }
 
   if (parsed.action === 'fatto') {
-    const result = removeItem(parsed.task);
+    const result = await removeItem(parsed.task);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -186,7 +174,7 @@ async function runBugCommand(message, args, client) {
   }
 
   if (parsed.action === 'modify') {
-    const result = setItemStatus(parsed.task, parsed.status);
+    const result = await setItemStatus(parsed.task, parsed.status);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -217,7 +205,7 @@ async function runBugCommand(message, args, client) {
   }
 
   if (parsed.action === 'test') {
-    const result = setItemTest(parsed.task, true);
+    const result = await setItemTest(parsed.task, true);
     if (!result.ok) {
       await safeMessageReply(message, {
         embeds: [
@@ -244,4 +232,11 @@ async function runBugCommand(message, args, client) {
   return true;
 }
 
-module.exports = { runBugCommand, isBugCommand };
+module.exports = {
+  name: 'bug',
+  aliases: [],
+  async execute(message, args, client, context = {}) {
+    const invoked = String(context?.invokedName || 'bug').toLowerCase();
+    return runBugCommand(message, [invoked, ...(Array.isArray(args) ? args : [])], client);
+  }
+};

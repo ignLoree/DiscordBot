@@ -1,12 +1,8 @@
-/**
- * Comando prefix -ticket per server sponsor (Bot Test).
- * Solo staff (sponsorStaffRoleIds) può usare i subcomandi; solo ticket tipo supporto.
- */
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../Moderation/reply');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
-const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('./transcriptUtils');
-const IDs = require('../Config/ids');
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml } = require('../../Utils/Ticket/transcriptUtils');
+const IDs = require('../../Utils/Config/ids');
 
 const SUBCOMMAND_ALIASES = {
   add: 'add',
@@ -26,16 +22,6 @@ const SUBCOMMAND_ALIASES = {
   trename: 'rename',
   ticketrename: 'rename'
 };
-
-const TICKET_FIRST_TOKENS = new Set([
-  'ticket',
-  ...Object.keys(SUBCOMMAND_ALIASES)
-]);
-
-function isTicketCommand(args) {
-  const first = (args[0] || '').toLowerCase();
-  return first === 'ticket' || SUBCOMMAND_ALIASES[first] != null;
-}
 
 function parseTicketArgs(args) {
   const first = (args[0] || '').toLowerCase();
@@ -97,7 +83,6 @@ async function fetchTicketMessage(channel, messageId) {
 
 async function runTicketCommand(message, args, client) {
   if (!message?.inGuild?.() || !message.guild || !message.member) return false;
-  if (!isTicketCommand(args)) return false;
 
   const guildId = message.guild.id;
   const staffRoleId = (IDs.roles?.sponsorStaffRoleIds || {})[guildId];
@@ -484,4 +469,11 @@ async function runTicketCommand(message, args, client) {
   return true;
 }
 
-module.exports = { runTicketCommand, isTicketCommand, TICKET_FIRST_TOKENS };
+module.exports = {
+  name: 'ticket',
+  aliases: ['ticketclose', 'ticketclaim', 'ticketunclaim', 'ticketadd', 'ticketremove', 'trename', 'ticketrename', 'tadd', 'tremove', 'add', 'remove', 'close', 'closerequest', 'claim', 'unclaim', 'rename'],
+  async execute(message, args, client, context = {}) {
+    const invoked = String(context?.invokedName || 'ticket').toLowerCase();
+    return runTicketCommand(message, [invoked, ...(Array.isArray(args) ? args : [])], client);
+  }
+};

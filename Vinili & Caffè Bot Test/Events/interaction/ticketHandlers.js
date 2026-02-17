@@ -921,7 +921,7 @@ async function handleTicketInteraction(interaction) {
                 await safeReply(targetInteraction, { embeds: [makeErrorEmbed('Errore', '<:vegax:1472992044140990526> Interazione non valida')], flags: 1 << 6 });
                 return;
             }
-            // Atomic close: only one closer sends transcript (avoids duplicate from prefix+button or duplicate events)
+            
             const ticket = await Ticket.findOneAndUpdate(
                 { channelId: targetInteraction.channel.id, open: true },
                 { $set: { open: false, closedAt: new Date() } },
@@ -944,7 +944,7 @@ async function handleTicketInteraction(interaction) {
                 ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
                 : 'Data non disponibile';
             const motivoDisplay = (motivo && String(motivo).trim()) ? String(motivo).trim().slice(0, 1500) : 'Nessun motivo inserito';
-            // Always send transcripts to the MAIN guild log channel, even when the ticket is in sponsor servers.
+            
             const IDs = require('../../Utils/Config/ids');
             const mainGuildId = IDs?.guilds?.main || null;
             const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL;

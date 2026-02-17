@@ -254,7 +254,7 @@ module.exports = {
                             const removedCount = toRollback.length;
                             if (removedCount > 0) {
                                 doc.partnerActions = actions.filter((action) => action?.managerId !== member.id);
-                                // Keep earned points even when partnership messages are auto-removed after leave timeout.
+                                
                             }
                             doc.managerId = null;
                             await doc.save().catch(() => { });

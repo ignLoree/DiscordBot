@@ -1,10 +1,6 @@
-/**
- * Comando prefix -verify per server sponsor (Bot Test).
- * Solo staff (sponsorStaffRoleIds) può usarlo; assegna il ruolo verificato (verificatoRoleIds) ai target.
- */
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { safeMessageReply } = require('../Moderation/reply');
-const IDs = require('../Config/ids');
+const { safeMessageReply } = require('../../Utils/Moderation/reply');
+const IDs = require('../../Utils/Config/ids');
 
 function formatUserList(list) {
   if (!Array.isArray(list) || list.length === 0) return 'None';
@@ -100,14 +96,8 @@ async function resolveTargetsFlexible(message, args) {
   return member ? [member] : [];
 }
 
-function isVerifyCommand(args) {
-  const first = (args[0] || '').toLowerCase();
-  return first === 'verify';
-}
-
 async function runVerifyCommand(message, args, client) {
   if (!message?.inGuild?.() || !message.guild || !message.member) return false;
-  if (!isVerifyCommand(args)) return false;
 
   const guildId = message.guild.id;
   const sponsorGuildIds = IDs.guilds?.sponsorGuildIds || [];
@@ -210,4 +200,11 @@ async function runVerifyCommand(message, args, client) {
   return true;
 }
 
-module.exports = { runVerifyCommand, isVerifyCommand };
+module.exports = {
+  name: 'verify',
+  aliases: [],
+  async execute(message, args, client, context = {}) {
+    const invoked = String(context?.invokedName || 'verify').toLowerCase();
+    return runVerifyCommand(message, [invoked, ...(Array.isArray(args) ? args : [])], client);
+  }
+};

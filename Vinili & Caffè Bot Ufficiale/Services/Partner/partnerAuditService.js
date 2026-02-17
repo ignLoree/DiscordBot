@@ -369,16 +369,30 @@ async function runDailyPartnerAudit(client, opts = {}) {
     for (const index of invalidIndices) {
       const action = actions[index];
       if (!action) continue;
+      const alreadyPenalized = Array.isArray(action.auditPenaltyDates)
+        && action.auditPenaltyDates.includes(targetDateKey);
+      if (alreadyPenalized) continue;
+
       await logPointRemoval(guild, doc.userId, `${invalidReasonsByIndex.get(index)}`, action);
+      action.auditPenaltyDates = Array.isArray(action.auditPenaltyDates) ? action.auditPenaltyDates : [];
+      action.auditPenaltyDates.push(targetDateKey);
       flagged += 1;
     }
 
     if (flagged > 0) {
-      totalRemoved += flagged;
-      global.logger?.warn?.(`[PARTNER AUDIT] User ${doc.userId}: ${flagged} partnerships flagged but NOT removed`);
-
+      const currentCount = Number(doc.partnerCount || 0);
+      doc.partnerCount = Math.max(0, currentCount - flagged);
+      try {
+        await doc.save();
+        totalRemoved += flagged;
+        global.logger?.warn?.(`[PARTNER AUDIT] User ${doc.userId}: penalized ${flagged} invalid partnerships (messages preserved)`);
+      } catch (saveErr) {
+        global.logger?.error?.(`[PARTNER AUDIT] User ${doc.userId}: failed to persist penalties`, saveErr);
+      }
     }
   }
+
+  global.logger?.info?.(`[PARTNER AUDIT] checked=${totalChecked} removed=${totalRemoved} date=${targetDateKey}`);
 }
 
 function startDailyPartnerAuditLoop(client) {

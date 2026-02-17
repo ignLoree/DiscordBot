@@ -1,6 +1,4 @@
-/**
- * Service minimo per verify sui server sponsor: solo upsert VerificationTenure e assegnazione ruolo verificato + nickname.
- */
+
 const { VerificationTenure } = require('../../Schemas/Community/communitySchemas');
 const IDs = require('../../Utils/Config/ids');
 

@@ -4,14 +4,14 @@ let appConfig = {};
 try {
   appConfig = require('../../config.json');
 } catch (e) {
-  // config.json opzionale
+  
 }
 
 let IDs = {};
 try {
   IDs = require('../Config/ids');
 } catch (e) {
-  // ids opzionale
+  
 }
 
 const SPONSOR_GUILD_IDS = new Set(

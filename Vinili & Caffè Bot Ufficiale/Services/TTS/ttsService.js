@@ -1,12 +1,8 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, StreamType } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus } = require('@discordjs/voice');
 const { Readable } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-let prism = null;
-let ffmpegPath = null;
-try { prism = require('prism-media'); } catch (_) { global.logger?.warn?.('[TTS] prism-media non installato.'); }
-try { ffmpegPath = require('ffmpeg-static'); } catch (_) {}
 const axios = require('axios');
 const VoiceState = require('../../Schemas/Voice/voiceStateSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -311,18 +307,7 @@ async function playNext(state) {
     const buffer = await createTtsBuffer(item.text, item.lang);
     if (!buffer || buffer.length === 0) throw new Error('TTS buffer vuoto');
     fs.writeFileSync(tmpPath, buffer);
-    let resource;
-    if (prism) {
-      const opts = {
-        args: ['-analyzeduration', '0', '-loglevel', '0', '-i', '-', '-f', 's16le', '-ar', '48000', '-ac', '2']
-      };
-      if (ffmpegPath) opts.cmd = ffmpegPath;
-      const ffmpeg = new prism.FFmpeg(opts);
-      const pcmStream = fs.createReadStream(tmpPath).pipe(ffmpeg);
-      resource = createAudioResource(pcmStream, { inputType: StreamType.Raw });
-    } else {
-      resource = createAudioResource(tmpPath);
-    }
+    const resource = createAudioResource(tmpPath);
     state.player.play(resource);
   } catch (err) {
     global.logger.error('[TTS PLAY ERROR]', err?.message || err);
@@ -383,6 +368,8 @@ async function handleTtsMessage(message, client, prefix) {
   enqueue(state, { voiceChannel, text: clipped, lang });
 }
 async function joinTtsChannel(voiceChannel) {
+  if (!voiceChannel) return { ok: false, reason: "no_voice_channel" };
+  if (!voiceChannel.joinable) return { ok: false, reason: "not_joinable" };
   const state = getState(voiceChannel);
   const connection = await ensureConnection(state, voiceChannel);
   if (!connection) return { ok: false, reason: "locked" };

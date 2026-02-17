@@ -173,7 +173,7 @@ async function runInfoPanelAuto(client) {
 }
 
 
-// Solo Bot Ufficiale: Best staff, Guida staff, Moderazione, Staff pagato + bottoni (REGOLE, LIMITI, PAUSE, VALUTAZIONI, SANZIONI, WARN STAFF, GENERALI, TESTUALI, VOCALI). NON copiare nel Bot Test.
+
 async function runStaffEmbedAuto(client) {
   const IDs = require('../Utils/Config/ids');
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
@@ -864,8 +864,8 @@ async function runSponsorPanelAuto(client) {
   });
 }
 
-// Solo Bot Ufficiale: Staff list (refresh). NON copiare nel Bot Test.
-// Solo Bot Ufficiale: Staff list (refresh). NON copiare nel Bot Test.
+
+
 async function runStaffListAuto(client) {
   const IDs = require('../Utils/Config/ids');
   const { refreshStaffList } = require('../Utils/Community/staffListUtils');

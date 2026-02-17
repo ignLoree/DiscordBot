@@ -62,10 +62,10 @@ function fitText(ctx, text, maxWidth, size = 16, weight = '600') {
 function prepareVisibleText(value) {
   const raw = String(value || '');
   const protectedMap = new Map([
-    ['\u0F04', '__VC_KEEP_TIBETAN_MARK__'], // ༄
-    ['\u00B9', '__VC_KEEP_SUP_1__'], // ¹
-    ['\u00B2', '__VC_KEEP_SUP_2__'], // ²
-    ['\u00B3', '__VC_KEEP_SUP_3__'] // ³
+    ['\u0F04', '__VC_KEEP_TIBETAN_MARK__'], 
+    ['\u00B9', '__VC_KEEP_SUP_1__'], 
+    ['\u00B2', '__VC_KEEP_SUP_2__'], 
+    ['\u00B3', '__VC_KEEP_SUP_3__'] 
   ]);
 
   let out = raw;
@@ -160,7 +160,7 @@ function tokenizeEmojiText(text) {
       const nextIsEmoji = isEmojiCodePoint(nextCp);
       const nextIsJoiner = nextCp === 0x200d;
       const nextIsVariation = nextCp === 0xfe0f;
-      // Keep the same token only for emoji modifiers/ZWJ chains.
+      
       if (isJoiner || nextIsJoiner || nextIsVariation) {
         continue;
       }

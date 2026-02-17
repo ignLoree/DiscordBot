@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const { ActivityType } = require('discord.js');
 const config = require('../config.json');
 const IDs = require('../Utils/Config/ids');
 const sponsorPanels = require('../Triggers/embeds');
@@ -8,7 +9,7 @@ const sponsorPanels = require('../Triggers/embeds');
 const RESTART_CLEANUP_DELAY_MS = 2000;
 
 module.exports = {
-    name: 'ready',
+    name: 'clientReady',
     once: true,
     async execute(_readyClient, client) {
         const c = client || _readyClient;
@@ -16,8 +17,8 @@ module.exports = {
         global.logger.info('[Bot Test] Bot avviato: ' + c.user.tag + ' (Application ID: ' + appId + ')');
 
         try {
-            client.user.setPresence({
-                status: client.config?.status || 'idle',
+            c.user.setPresence({
+                status: c.config?.status || 'idle',
                 activities: [{
                     type: ActivityType.Custom,
                     name: 'irrelevant',
@@ -25,7 +26,7 @@ module.exports = {
                 }]
             });
         } catch (err) {
-            client.logs.error('[STATUS] Errore impostazione presence:', err?.message || err);
+            c.logs.error('[STATUS] Errore impostazione presence:', err?.message || err);
         }
 
         const mongodbURL = process.env.MONGO_URL || c.config.mongoURL;
@@ -44,10 +45,10 @@ module.exports = {
 
         const sponsorIds = Array.isArray(c.config?.sponsorGuildIds) ? c.config.sponsorGuildIds : Object.keys(c.config?.sponsorVerifyChannelIds || {});
         const verifyChannels = c.config?.sponsorVerifyChannelIds || {};
-        // Delay: Discord a volte invia le guild dopo il ready.
+        
         await new Promise((r) => setTimeout(r, 3000));
 
-        // Warm-up: forza fetch dall'API per ogni server sponsor così la cache è piena anche se il gateway era in ritardo.
+        
         for (const guildId of sponsorIds) {
             try {
                 await c.guilds.fetch(guildId).catch((err) => {

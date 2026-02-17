@@ -242,13 +242,13 @@ function parsePartnershipModalId(customId) {
         return { source: newFormat[1], openerId: newFormat[2], managerId: newFormat[3] };
     }
 
-    // Backward compatibility with old IDs: partnershipModal_<openerId>_<managerId>
+    
     const legacy = raw.match(/^partnershipModal_(\d{16,20})_(\d{16,20})$/);
     if (legacy) {
         return { source: 'legacy', openerId: legacy[1], managerId: legacy[2] };
     }
 
-    // Very old fallback: partnershipModal_<managerId>
+    
     const legacyShort = raw.match(/^partnershipModal_(\d{16,20})$/);
     if (legacyShort) {
         return { source: 'legacy', openerId: null, managerId: legacyShort[1] };

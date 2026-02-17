@@ -29,6 +29,7 @@ const StaffSchema = new Schema({
             managerId: String,
             partnershipChannelId: String,
             partnerMessageIds: { type: [String], default: [] },
+            auditPenaltyDates: { type: [String], default: [] },
             date: { type: Date, default: Date.now }
         }
     ],

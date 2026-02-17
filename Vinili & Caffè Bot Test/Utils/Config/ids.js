@@ -1,14 +1,11 @@
-/**
- * Configurazione ID per Vinili & Caffè Bot Test (server sponsor). Usa config.json e .env.
- * Il bot principale resta la fonte di verità; qui solo ciò che serve per sponsor.
- */
+
 const path = require('path');
 const configPath = path.join(__dirname, '..', '..', 'config.json');
 let config = {};
 try {
     config = require(configPath);
 } catch (e) {
-    // config potrebbe non esistere
+    
 }
 
 const MAIN_GUILD_ID = config.mainGuildId || process.env.MAIN_GUILD_ID || '1329080093599076474';
@@ -19,7 +16,7 @@ const SPONSOR_GUILD_IDS = Array.isArray(config.sponsorGuildIds) ? config.sponsor
 
 const sponsorStaffRoleIds = config.sponsorStaffRoleIds || {};
 
-/** ID guild test (stesso del bot ufficiale). */
+
 const GUILD_TEST_ID = '1462458562507964584';
 
 const IDs = {
@@ -32,7 +29,9 @@ const IDs = {
         infoSponsor: config.channels?.infoSponsor || '1442569211611185323',
         ticketLogs: config.channels?.ticketLogs || '1442569290682208296',
         verifyLog: config.channels?.verifyLog || null,
-        verifyPing: config.channels?.verifyPing || null
+        verifyPing: config.channels?.verifyPing || null,
+        errorLogChannel: config.channels?.errorLogChannel || '1466489404867481802',
+        serverBotLogs: config.channels?.serverBotLogs || '1472733599496409292'
     },
     sponsorVerifyChannelIds: config.sponsorVerifyChannelIds || {},
     sponsorTicketChannelIds: config.sponsorTicketChannelIds || {},

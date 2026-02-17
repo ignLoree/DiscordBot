@@ -3,7 +3,7 @@ const DisboardBump = require('../../Schemas/Disboard/disboardBumpSchema');
 const { DiscadiaBump, DiscadiaVoter } = require('../../Schemas/Discadia/discadiaSchemas');
 const IDs = require('../../Utils/Config/ids');
 const { getNoDmSet } = require('../../Utils/noDmList');
-const discadiaVoteTimers = new Map(); // key: `${guildId}:${userId}`
+const discadiaVoteTimers = new Map(); 
 
 const BUMP_REMINDER_CHANNEL_BY_KEY = {
   disboard: IDs.channels.commands,
