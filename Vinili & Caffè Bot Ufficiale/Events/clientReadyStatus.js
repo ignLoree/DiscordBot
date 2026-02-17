@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
-const { ActivityType } = require('discord.js');
 const IDs = require('../Utils/Config/ids');
 const { checkAndInstallPackages } = require('../Utils/Moderation/checkPackages');
 const { getChannelSafe } = require('../Utils/Logging/commandUsageLogger');
@@ -17,7 +16,7 @@ module.exports = {
     try {
       client.user.setStatus(client.config.status);
       client.user.setActivity({
-        type: ActivityType.Custom,
+        type: 4,
         name: 'irrelevant',
         state: '☕📀 discord.gg/viniliecaffe'
       });

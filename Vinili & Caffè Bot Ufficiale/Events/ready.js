@@ -1,7 +1,6 @@
 const config = require('../config.json');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
-const { ActivityType } = require('discord.js');
 const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders } = require('../Services/Bump/bumpService')
 const { bootstrapSupporter } = require('./presenceUpdate');
 const { restoreTtsConnections } = require('../Services/TTS/ttsService');
@@ -191,7 +190,7 @@ module.exports = {
             client.user.setPresence({
                 status: client.config?.status || 'idle',
                 activities: [{
-                    type: ActivityType.Custom,
+                    type: 4,
                     name: 'irrelevant',
                     state: '☕📀 discord.gg/viniliecaffe'
                 }]

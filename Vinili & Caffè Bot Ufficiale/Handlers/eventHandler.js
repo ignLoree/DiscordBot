@@ -43,14 +43,15 @@ module.exports = (client) => {
                     continue;
                 }
 
+                const eventName = event.name === 'ready' ? 'clientReady' : event.name;
                 const handler = (...args) => event.execute(...args, client);
-                if (event.once) client.once(event.name, handler);
-                else client.on(event.name, handler);
+                if (event.once) client.once(eventName, handler);
+                else client.on(eventName, handler);
 
-                if (!client._eventHandlers.has(event.name)) client._eventHandlers.set(event.name, []);
-                client._eventHandlers.get(event.name).push(handler);
+                if (!client._eventHandlers.has(eventName)) client._eventHandlers.set(eventName, []);
+                client._eventHandlers.get(eventName).push(handler);
 
-                statusMap.set(rel, 'Loaded');
+                statusMap.set(rel, eventName === event.name ? 'Loaded' : `Loaded as ${eventName}`);
                 loaded += 1;
             } catch (err) {
                 statusMap.set(rel, 'Error loading');

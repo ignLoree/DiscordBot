@@ -1,7 +1,6 @@
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
-const { ActivityType } = require('discord.js');
 const config = require('../config.json');
 const IDs = require('../Utils/Config/ids');
 const sponsorPanels = require('../Triggers/embeds');
@@ -20,7 +19,7 @@ module.exports = {
             c.user.setPresence({
                 status: c.config?.status || 'idle',
                 activities: [{
-                    type: ActivityType.Custom,
+                    type: 4,
                     name: 'irrelevant',
                     state: '☕📀 discord.gg/viniliecaffe'
                 }]

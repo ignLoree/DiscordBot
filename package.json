@@ -15,5 +15,8 @@
   },
   "dependencies": {
     "discord.js": "15.0.0-dev.1770595415-a3e189df0"
+  },
+  "overrides": {
+    "opusscript": "0.0.8"
   }
 }
