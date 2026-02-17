@@ -137,6 +137,7 @@ function runfile(bot, options = {}) {
                     console.log(`[Loader] npm install in ${installDir}`);
                     const npm = child_process.spawn('npm', [
                         'install',
+                        '--legacy-peer-deps',
                         '--no-bin-links',
                         '--prefer-offline',
                         '--cache', path.join(os.tmpdir(), '.npm-global'),

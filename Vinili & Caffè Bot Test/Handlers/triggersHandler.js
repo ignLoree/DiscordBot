@@ -34,13 +34,14 @@ module.exports = (client) => {
                     continue;
                 }
 
+                const eventName = trigger.name === 'ready' ? 'clientReady' : trigger.name;
                 const handler = (...args) => trigger.execute(...args, client);
-                if (trigger.once) client.once(trigger.name, handler);
-                else client.on(trigger.name, handler);
+                if (trigger.once) client.once(eventName, handler);
+                else client.on(eventName, handler);
 
-                if (!client._triggerHandlers.has(trigger.name)) client._triggerHandlers.set(trigger.name, []);
-                client._triggerHandlers.get(trigger.name).push(handler);
-                statusRows.push({ file, status: 'Loaded' });
+                if (!client._triggerHandlers.has(eventName)) client._triggerHandlers.set(eventName, []);
+                client._triggerHandlers.get(eventName).push(handler);
+                statusRows.push({ file, status: eventName === trigger.name ? 'Loaded' : `Loaded as ${eventName}` });
                 loaded += 1;
             } catch (err) {
                 statusRows.push({ file, status: 'Error loading' });

@@ -35,23 +35,24 @@ module.exports = (client) => {
                     continue;
                 }
 
+                const eventName = trigger.name === 'ready' ? 'clientReady' : trigger.name;
                 const handler = (...args) => trigger.execute(...args, client);
                 if (trigger.once) {
-                    if (trigger.name === 'clientReady' && client.isReady()) {
+                    if (eventName === 'clientReady' && client.isReady()) {
                         Promise.resolve(handler(client)).catch((err) => {
                             global.logger.error(`[TRIGGERS] Failed to run ${file} on hot-reload:`, err);
                         });
                     } else {
-                        client.once(trigger.name, handler);
+                        client.once(eventName, handler);
                     }
                 } else {
-                    client.on(trigger.name, handler);
+                    client.on(eventName, handler);
                 }
 
-                if (!client._triggerHandlers.has(trigger.name)) client._triggerHandlers.set(trigger.name, []);
-                client._triggerHandlers.get(trigger.name).push(handler);
+                if (!client._triggerHandlers.has(eventName)) client._triggerHandlers.set(eventName, []);
+                client._triggerHandlers.get(eventName).push(handler);
 
-                statusMap.set(file, 'Loaded');
+                statusMap.set(file, eventName === trigger.name ? 'Loaded' : `Loaded as ${eventName}`);
                 loaded += 1;
             } catch (err) {
                 statusMap.set(file, 'Error loading');
