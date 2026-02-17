@@ -370,7 +370,6 @@ const DRIVING_TRUE_FALSE_BANK = [
 ];
 
 const FAST_TYPING_PHRASES = [
-  "vinili e caffe community",
   "la costanza batte il talento",
   "non mollare proprio adesso",
   "la musica unisce le persone",

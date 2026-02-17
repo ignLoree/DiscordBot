@@ -17,7 +17,7 @@ function setPresence(client) {
   client.user.setActivity({
     type: 4,
     name: "irrelevant",
-    state: "discord.gg/viniliecaffe",
+    state: "☕📀 discord.gg/viniliecaffe",
   });
 }
 

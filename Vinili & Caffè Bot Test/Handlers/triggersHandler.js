@@ -46,8 +46,7 @@ module.exports = (client) => {
         const triggerPath = path.join(triggersRoot, file);
         delete require.cache[require.resolve(triggerPath)];
         const trigger = require(triggerPath);
-        if (!trigger?.name) {
-          statusMap.set(file, "Missing name");
+        if (!trigger?.name || typeof trigger.execute !== "function") {
           continue;
         }
 

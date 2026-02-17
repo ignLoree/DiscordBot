@@ -315,7 +315,7 @@ function setClientPresence(client) {
         {
           type: 4,
           name: "irrelevant",
-          state: "discord.gg/viniliecaffe",
+          state: "☕📀 discord.gg/viniliecaffe",
         },
       ],
     });

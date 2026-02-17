@@ -1,12 +1,6 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const SponsorMainLeave = require("../Schemas/Tags/tagsSchema");
 const IDs = require("../Utils/Config/ids");
-
 const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
 const SPONSOR_GUILD_IDS = IDs.guilds?.sponsorGuildIds || [];
 const OFFICIAL_INVITE_URL = "https://discord.gg/viniliecaffe";
@@ -17,7 +11,7 @@ function makeRejoinEmbed() {
     .setColor("#ffb020")
     .setTitle("Rientra nel server principale")
     .setDescription(
-      "Hai lasciato il server principale **Vinili & Caffe**.\n\n" +
+      "Hai lasciato il server principale **Vinili & Caffè**.\n\n" +
         "Per mantenere l'accesso ai server TAGS devi rientrare entro **24 ore**.\n\n" +
         "Clicca il bottone qui sotto per rientrare.",
     )

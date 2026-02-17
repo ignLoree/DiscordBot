@@ -227,7 +227,7 @@ function buildWelcomeEmbed(member) {
       iconURL: member.user.displayAvatarURL({ size: 128 }),
     })
     .setTitle(
-      "<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffe <a:VC_HeartsPink:1468685897389052008>",
+      "<a:VC_HeartsPink:1468685897389052008> Benvenuto/a su Vinili & Caffè <a:VC_HeartsPink:1468685897389052008>",
     )
     .setDescription(
       `__${member.displayName}__ benvenuto/a nella nostra community <a:VC_Sparkles:1468546911936974889>\n` +
@@ -244,7 +244,7 @@ function buildWelcomeEmbed(member) {
 function buildDmWelcomeEmbed(member) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_RightWing:1448672889845973214> Welcome to Vinili & Caffe!")
+    .setTitle("<a:VC_RightWing:1448672889845973214> Welcome to Vinili & Caffè!")
     .setDescription(
       [
         `Ei **${member.displayName}** welcome, glad to have you here!`,

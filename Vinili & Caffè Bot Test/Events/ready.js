@@ -3,7 +3,7 @@ const fs = require("fs");
 const mongoose = require("mongoose");
 const sponsorPanels = require("../Triggers/embeds");
 
-const PRESENCE_STATE = "discord.gg/viniliecaffe";
+const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
 const WARMUP_DELAY_MS = 3000;
 const WARMUP_BETWEEN_GUILDS_MS = 300;
@@ -205,14 +205,7 @@ module.exports = {
   once: true,
   async execute(_readyClient, client) {
     const activeClient = client || _readyClient;
-    const appId = activeClient.application?.id || activeClient.user?.id;
-    global.logger.info(
-      "[Bot Test] Bot avviato: " +
-        activeClient.user.tag +
-        " (Application ID: " +
-        appId +
-        ")",
-    );
+    global.logger.info(`[BOT] ${client.user.username} has been launched!`);
 
     await setPresence(activeClient);
     await connectMongo(activeClient);

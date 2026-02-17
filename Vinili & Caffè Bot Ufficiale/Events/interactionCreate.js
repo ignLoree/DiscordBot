@@ -28,7 +28,7 @@ const {
 
 const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffe.";
+  "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;

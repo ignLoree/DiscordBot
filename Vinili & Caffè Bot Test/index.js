@@ -79,7 +79,7 @@ if (!client.config.token) {
   process.exit(1);
 }
 
-client.logs = global.logger;
+client.logs = require("./Utils/Moderation/logs");
 client.commands = new Collection();
 client.pcommands = new Collection();
 client.aliases = new Collection();
