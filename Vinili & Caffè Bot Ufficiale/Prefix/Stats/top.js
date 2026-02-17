@@ -54,6 +54,10 @@ const TOP_VIEWS = [
   "voice_channels",
 ];
 const TOP_PAGE_DATA_LIMIT = 100;
+const TOP_SOURCE_CACHE_TTL_MS = 15 * 1000;
+const SNAPSHOT_SYNC_INTERVAL_MS = 10 * 60 * 1000;
+const topSourceCache = new Map();
+const snapshotSyncByGuild = new Map();
 
 function normalizeLookbackDays(raw) {
   const parsed = Number(
@@ -156,21 +160,19 @@ async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new M
     const channelId = String(item?.id || "");
     if (afkIds.has(channelId)) continue;
 
-    const channel =
-      guild.channels?.cache?.get(channelId) ||
-      (await guild.channels?.fetch(channelId).catch(() => null));
+    const channel = guild.channels?.cache?.get(channelId) || null;
     if (channel) {
-      await upsertChannelSnapshot(channel).catch(() => {});
+      upsertChannelSnapshot(channel).catch(() => {});
     }
     const snapshotName = String(snapshotMap.get(channelId) || "").trim();
     const rawLabel = channel
       ? `#${channel.name}`
       : snapshotName
         ? `#${snapshotName}`
-        : `#canale-${channelId.slice(-6) || "eliminato"}`;
+        : "#canale-eliminato";
     out.push({
       id: channelId,
-      label: normalizeCanvasLabel(rawLabel, `#canale-${channelId.slice(-6) || "eliminato"}`),
+      label: normalizeCanvasLabel(rawLabel, "#canale-eliminato"),
       value: Number(item?.value || 0),
     });
   }
@@ -183,9 +185,7 @@ async function resolveTopTextChannelEntries(guild, entries = [], snapshotMap = n
 
   for (const row of rows) {
     const channelId = String(row?.id || "");
-    const channel =
-      guild.channels?.cache?.get(channelId) ||
-      (await guild.channels?.fetch(channelId).catch(() => null));
+    const channel = guild.channels?.cache?.get(channelId) || null;
 
     if (!channel) {
       out.push(row);
@@ -196,6 +196,68 @@ async function resolveTopTextChannelEntries(guild, entries = [], snapshotMap = n
   }
 
   return out;
+}
+
+function buildSourceCacheKey(guildId, lookbackDays) {
+  return `${String(guildId || "")}:${Number(lookbackDays || 14)}`;
+}
+
+function scheduleSnapshotSync(guild) {
+  const guildId = String(guild?.id || "");
+  if (!guildId) return;
+  const now = Date.now();
+  const nextAllowed = Number(snapshotSyncByGuild.get(guildId) || 0);
+  if (nextAllowed > now) return;
+  snapshotSyncByGuild.set(guildId, now + SNAPSHOT_SYNC_INTERVAL_MS);
+  syncGuildChannelSnapshots(guild).catch(() => {});
+}
+
+async function getTopSource(guild, lookbackDays) {
+  const safeLookback = normalizeLookbackDays(lookbackDays);
+  const cacheKey = buildSourceCacheKey(guild?.id, safeLookback);
+  const now = Date.now();
+  const cached = topSourceCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  scheduleSnapshotSync(guild);
+
+  const stats = await getServerOverviewStats(
+    guild.id,
+    safeLookback,
+    TOP_PAGE_DATA_LIMIT,
+  );
+  const channelIds = Array.from(
+    new Set(
+      [...(stats.topChannelsText || []), ...(stats.topChannelsVoice || [])]
+        .map((item) => String(item?.id || "").trim())
+        .filter(Boolean),
+    ),
+  );
+  const snapshotMap = await getChannelSnapshotMap(guild.id, channelIds);
+
+  const topUsersText = await resolveTopUserEntries(guild, stats.topUsersText || []);
+  const topChannelsText = await resolveTopTextChannelEntries(
+    guild,
+    stats.topChannelsText || [],
+    snapshotMap,
+  );
+  const topUsersVoice = await resolveTopUserEntries(guild, stats.topUsersVoice || []);
+  const topChannelsVoice = await resolveTopChannelEntries(
+    guild,
+    stats.topChannelsVoice || [],
+    snapshotMap,
+  );
+
+  const value = {
+    topUsersText,
+    topChannelsText,
+    topUsersVoice,
+    topChannelsVoice,
+  };
+  topSourceCache.set(cacheKey, { expiresAt: now + TOP_SOURCE_CACHE_TTL_MS, value });
+  return value;
 }
 
 function resolveViewConfig(selectedView, source) {
@@ -475,46 +537,7 @@ async function buildTopChannelPayload(
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
-  await syncGuildChannelSnapshots(message.guild).catch(() => {});
-  const stats = await getServerOverviewStats(
-    message.guild.id,
-    safeLookback,
-    TOP_PAGE_DATA_LIMIT,
-  );
-  const channelIds = Array.from(
-    new Set(
-      [...(stats.topChannelsText || []), ...(stats.topChannelsVoice || [])]
-        .map((item) => String(item?.id || "").trim())
-        .filter(Boolean),
-    ),
-  );
-  const snapshotMap = await getChannelSnapshotMap(message.guild.id, channelIds);
-
-  const topUsersText = await resolveTopUserEntries(
-    message.guild,
-    stats.topUsersText || [],
-  );
-  const topChannelsText = await resolveTopTextChannelEntries(
-    message.guild,
-    stats.topChannelsText || [],
-    snapshotMap,
-  );
-  const topUsersVoice = await resolveTopUserEntries(
-    message.guild,
-    stats.topUsersVoice || [],
-  );
-  const topChannelsVoice = await resolveTopChannelEntries(
-    message.guild,
-    stats.topChannelsVoice || [],
-    snapshotMap,
-  );
-
-  const source = {
-    topUsersText,
-    topChannelsText,
-    topUsersVoice,
-    topChannelsVoice,
-  };
+  const source = await getTopSource(message.guild, safeLookback);
 
   const isOverview = safeView === "overview";
   const viewConfig = !isOverview ? resolveViewConfig(safeView, source) : null;
