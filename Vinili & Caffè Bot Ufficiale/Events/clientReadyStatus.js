@@ -47,7 +47,7 @@ function schedulePollReminder(client) {
       if (!channel) return;
 
       await channel.send({
-        content: `<:attentionfromvega:1443651874032062505> <@&${POLL_REMINDER_ROLE_ID}> ricordatevi di mettere il poll usando il comando dedicato! </poll create:1467597234387419478>`,
+        content: `<:attentionfromvega:1443651874032062505> <@&${POLL_REMINDER_ROLE_ID}> ricordatevi di mettere il poll usando il comando dedicato! </poll create:1473280351462752399>`,
       });
     },
     { timezone: "Europe/Rome" },

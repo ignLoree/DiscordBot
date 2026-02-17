@@ -1336,6 +1336,11 @@ async function handleDiscadiaBump(message, client) {
   if (!discadia) return false;
   if (!message.guild) return false;
 
+  const authorName = String(
+    message.author?.globalName || message.author?.username || "",
+  );
+  const isDiscadiaNamedBot =
+    Boolean(message.author?.bot) && /discadia/i.test(authorName);
   const isDiscadiaAuthor = message.author?.id === IDs.bots.Discadia;
   const isDiscadiaApp = message.applicationId === IDs.bots.Discadia;
   const patterns = Array.isArray(discadia.bumpSuccessPatterns)
@@ -1363,7 +1368,9 @@ async function handleDiscadiaBump(message, client) {
     }
   }
 
-  const normalized = haystacks.map((text) => String(text).toLowerCase());
+  const normalized = haystacks
+    .map((text) => String(text).toLowerCase())
+    .map((text) => text.replace(/\s+/g, " ").trim());
   const joined = normalized.join("\n");
 
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
@@ -1372,7 +1379,8 @@ async function handleDiscadiaBump(message, client) {
       joined,
     );
 
-  const fromDiscadiaBot = isDiscadiaAuthor || isDiscadiaApp;
+  const fromDiscadiaBot =
+    isDiscadiaAuthor || isDiscadiaApp || isDiscadiaNamedBot;
   const isBump = fromDiscadiaBot && !hasFailureWord && hasPattern;
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
