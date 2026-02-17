@@ -588,7 +588,7 @@ async function renderUserActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(canvasModule);
-  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
   const lookbackKey = `d${safeLookback}`;
@@ -714,7 +714,7 @@ async function renderServerActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(canvasModule);
-  const safeLookback = [7, 14, 21, 30].includes(Number(lookbackDays))
+  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
   const lookbackKey = `d${safeLookback}`;

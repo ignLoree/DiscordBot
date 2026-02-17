@@ -1,4 +1,4 @@
-const { InteractionType } = require("discord.js");
+﻿const { InteractionType } = require("discord.js");
 const {
   handleAutocomplete,
   handleSlashCommand,
@@ -27,8 +27,10 @@ const {
 } = require("../Utils/Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
+const BUTTON_SPAM_COOLDOWN_MS = 1200;
+const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
+  "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.";
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;
@@ -37,6 +39,69 @@ function isAckError(error) {
     code === 10062 ||
     code === "InteractionAlreadyReplied"
   );
+}
+
+function getButtonSpamState(client) {
+  if (!client._buttonSpamState) {
+    client._buttonSpamState = {
+      cooldownByUser: new Map(),
+      inFlightByAction: new Map(),
+    };
+  }
+  return client._buttonSpamState;
+}
+
+function pruneExpiredMap(map, nowTs) {
+  if (!map || map.size === 0) return;
+  for (const [key, expiresAt] of map.entries()) {
+    if (!Number.isFinite(expiresAt) || expiresAt <= nowTs) {
+      map.delete(key);
+    }
+  }
+}
+
+function acquireButtonSpamGuard(interaction, client) {
+  const isButton = Boolean(interaction?.isButton?.());
+  const isSelect = Boolean(interaction?.isStringSelectMenu?.());
+  if (!isButton && !isSelect) {
+    return {
+      blocked: false,
+      release: () => {},
+    };
+  }
+
+  const state = getButtonSpamState(client);
+  const nowTs = Date.now();
+  pruneExpiredMap(state.cooldownByUser, nowTs);
+  pruneExpiredMap(state.inFlightByAction, nowTs);
+
+  const guildId = String(interaction.guildId || "dm");
+  const userId = String(interaction.user?.id || "unknown");
+  const messageId = String(interaction.message?.id || "no-message");
+  const customId = String(interaction.customId || "no-custom-id");
+
+  const userKey = `${guildId}:${userId}`;
+  const actionKey = `${guildId}:${userId}:${messageId}:${customId}`;
+
+  const userCooldownUntil = Number(state.cooldownByUser.get(userKey) || 0);
+  const inFlightUntil = Number(state.inFlightByAction.get(actionKey) || 0);
+
+  if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
+    return {
+      blocked: true,
+      release: () => {},
+    };
+  }
+
+  state.cooldownByUser.set(userKey, nowTs + BUTTON_SPAM_COOLDOWN_MS);
+  state.inFlightByAction.set(actionKey, nowTs + BUTTON_INFLIGHT_TTL_MS);
+
+  return {
+    blocked: false,
+    release: () => {
+      state.inFlightByAction.delete(actionKey);
+    },
+  };
 }
 
 function buildDeniedEmbed(gate, controlLabel) {
@@ -138,7 +203,7 @@ async function logInteractionError(interaction, client, err) {
 
     await sendPrivateInteractionResponse(interaction, {
       content:
-        "<:vegax:1443934876440068179>  C'è stato un errore nell'esecuzione del comando.",
+        "<:vegax:1443934876440068179>  C'Ã¨ stato un errore nell'esecuzione del comando.",
       flags: PRIVATE_FLAG,
     });
   } catch (nestedErr) {
@@ -156,7 +221,22 @@ module.exports = {
     if (!interaction) return;
     if (interaction.replied || interaction.deferred) return;
 
+    let releaseButtonGuard = null;
+
     try {
+      const buttonGuard = acquireButtonSpamGuard(interaction, client);
+      releaseButtonGuard = buttonGuard.release;
+      if (buttonGuard.blocked) {
+        if (
+          !interaction.replied &&
+          !interaction.deferred &&
+          (interaction.isButton?.() || interaction.isStringSelectMenu?.())
+        ) {
+          await interaction.deferUpdate().catch(() => {});
+        }
+        return;
+      }
+
       if (await handleVerifyInteraction(interaction)) return;
       if (await handleDmBroadcastModal(interaction, client)) return;
 
@@ -187,6 +267,10 @@ module.exports = {
       if (await handleButtonInteraction(interaction, client)) return;
     } catch (err) {
       await logInteractionError(interaction, client, err);
+    } finally {
+      if (typeof releaseButtonGuard === "function") {
+        releaseButtonGuard();
+      }
     }
   },
 };

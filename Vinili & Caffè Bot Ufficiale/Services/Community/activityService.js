@@ -93,25 +93,14 @@ function chunkArray(items = [], size = 500) {
   return out;
 }
 
-function buildIncFromDailyRow(row) {
-  const inc = {
-    textCount: Math.max(0, Number(row?.textCount || 0)),
-    voiceSeconds: Math.max(0, Number(row?.voiceSeconds || 0)),
-  };
-
-  for (const [channelId, value] of Object.entries(row?.textChannels || {})) {
+function sanitizeChannelsMap(raw = {}) {
+  const out = {};
+  for (const [channelId, value] of Object.entries(raw || {})) {
     const amount = Math.max(0, Number(value || 0));
     if (!channelId || amount <= 0) continue;
-    inc[`textChannels.${channelId}`] = amount;
+    out[String(channelId)] = amount;
   }
-
-  for (const [channelId, value] of Object.entries(row?.voiceChannels || {})) {
-    const amount = Math.max(0, Number(value || 0));
-    if (!channelId || amount <= 0) continue;
-    inc[`voiceChannels.${channelId}`] = amount;
-  }
-
-  return inc;
+  return out;
 }
 
 async function ensureHourlyBackfillForGuild(guildId) {
@@ -123,9 +112,6 @@ async function ensureHourlyBackfillForGuild(guildId) {
   }
 
   const task = (async () => {
-    const alreadyTracked = await ActivityHourly.exists({ guildId: safeGuildId });
-    if (alreadyTracked) return false;
-
     const dailyRows = await ActivityDaily.find({ guildId: safeGuildId })
       .select("guildId dateKey userId textCount voiceSeconds textChannels voiceChannels")
       .lean()
@@ -139,10 +125,22 @@ async function ensureHourlyBackfillForGuild(guildId) {
       const userId = String(row?.userId || "");
       if (!dateKey || !userId) continue;
       const hourKey = `${dateKey}${BACKFILL_HOUR_SUFFIX}`;
+      const textChannels = sanitizeChannelsMap(row?.textChannels || {});
+      const voiceChannels = sanitizeChannelsMap(row?.voiceChannels || {});
       operations.push({
         updateOne: {
           filter: { guildId: safeGuildId, hourKey, userId },
-          update: { $inc: buildIncFromDailyRow(row) },
+          update: {
+            $setOnInsert: {
+              guildId: safeGuildId,
+              hourKey,
+              userId,
+              textCount: Math.max(0, Number(row?.textCount || 0)),
+              voiceSeconds: Math.max(0, Number(row?.voiceSeconds || 0)),
+              textChannels,
+              voiceChannels,
+            },
+          },
           upsert: true,
         },
       });
@@ -151,15 +149,19 @@ async function ensureHourlyBackfillForGuild(guildId) {
     if (!operations.length) return false;
 
     const chunks = chunkArray(operations, HOURLY_BACKFILL_BATCH);
+    let insertedCount = 0;
     for (const ops of chunks) {
       // ordered=false: skip single bad op without aborting whole migration
-      await ActivityHourly.bulkWrite(ops, { ordered: false }).catch(() => {});
+      const result = await ActivityHourly.bulkWrite(ops, { ordered: false }).catch(
+        () => null,
+      );
+      insertedCount += Number(result?.upsertedCount || 0);
     }
 
     global.logger?.info?.(
-      `[ACTIVITY] Hourly backfill completed for guild ${safeGuildId}: ${operations.length} row(s).`,
+      `[ACTIVITY] Hourly backfill completed for guild ${safeGuildId}: ${insertedCount} inserted / ${operations.length} checked.`,
     );
-    return true;
+    return insertedCount > 0;
   })()
     .catch((error) => {
       global.logger?.warn?.(

@@ -1,4 +1,4 @@
-const { InteractionType, EmbedBuilder } = require("discord.js");
+﻿const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const {
@@ -12,8 +12,10 @@ const {
 } = require("../Utils/Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
+const BUTTON_SPAM_COOLDOWN_MS = 1200;
+const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server test e sui server sponsor configurati.";
+  "Questo bot Ã¨ utilizzabile solo sul server test e sui server sponsor configurati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
@@ -31,6 +33,69 @@ function markInteractionSeen(client, interactionId) {
     if (now - ts > INTERACTION_DEDUPE_TTL_MS) seenAtMap.delete(id);
   }
   return false;
+}
+
+function getButtonSpamState(client) {
+  if (!client._buttonSpamState) {
+    client._buttonSpamState = {
+      cooldownByUser: new Map(),
+      inFlightByAction: new Map(),
+    };
+  }
+  return client._buttonSpamState;
+}
+
+function pruneExpiredMap(map, nowTs) {
+  if (!map || map.size === 0) return;
+  for (const [key, expiresAt] of map.entries()) {
+    if (!Number.isFinite(expiresAt) || expiresAt <= nowTs) {
+      map.delete(key);
+    }
+  }
+}
+
+function acquireButtonSpamGuard(interaction, client) {
+  const isButton = Boolean(interaction?.isButton?.());
+  const isSelect = Boolean(interaction?.isStringSelectMenu?.());
+  if (!isButton && !isSelect) {
+    return {
+      blocked: false,
+      release: () => {},
+    };
+  }
+
+  const state = getButtonSpamState(client);
+  const nowTs = Date.now();
+  pruneExpiredMap(state.cooldownByUser, nowTs);
+  pruneExpiredMap(state.inFlightByAction, nowTs);
+
+  const guildId = String(interaction.guildId || "dm");
+  const userId = String(interaction.user?.id || "unknown");
+  const messageId = String(interaction.message?.id || "no-message");
+  const customId = String(interaction.customId || "no-custom-id");
+
+  const userKey = `${guildId}:${userId}`;
+  const actionKey = `${guildId}:${userId}:${messageId}:${customId}`;
+
+  const userCooldownUntil = Number(state.cooldownByUser.get(userKey) || 0);
+  const inFlightUntil = Number(state.inFlightByAction.get(actionKey) || 0);
+
+  if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
+    return {
+      blocked: true,
+      release: () => {},
+    };
+  }
+
+  state.cooldownByUser.set(userKey, nowTs + BUTTON_SPAM_COOLDOWN_MS);
+  state.inFlightByAction.set(actionKey, nowTs + BUTTON_INFLIGHT_TTL_MS);
+
+  return {
+    blocked: false,
+    release: () => {
+      state.inFlightByAction.delete(actionKey);
+    },
+  };
 }
 
 function buildDeniedEmbed(gate, controlLabel) {
@@ -159,7 +224,22 @@ module.exports = {
     if (!interaction || interaction.replied || interaction.deferred) return;
     if (markInteractionSeen(client, interaction.id)) return;
 
+    let releaseButtonGuard = null;
+
     try {
+      const buttonGuard = acquireButtonSpamGuard(interaction, client);
+      releaseButtonGuard = buttonGuard.release;
+      if (buttonGuard.blocked) {
+        if (
+          !interaction.replied &&
+          !interaction.deferred &&
+          (interaction.isButton?.() || interaction.isStringSelectMenu?.())
+        ) {
+          await interaction.deferUpdate().catch(() => {});
+        }
+        return;
+      }
+
       const { handleVerifyInteraction } = require("./interaction/verifyHandlers");
       const { handleTicketInteraction } = require("./interaction/ticketHandlers");
 
@@ -185,6 +265,10 @@ module.exports = {
     } catch (err) {
       global.logger.error("[Bot Test] interactionCreate", err);
       await logInteractionError(interaction, client, err);
+    } finally {
+      if (typeof releaseButtonGuard === "function") {
+        releaseButtonGuard();
+      }
     }
   },
 };
