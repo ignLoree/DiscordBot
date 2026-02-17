@@ -141,3 +141,7 @@ dist
 # Scripts
 Vinili & Caffè Bot Test/scripts/
 Vinili & Caffè Bot Ufficiale/scripts/
+
+# Restart
+restart_notify.json
+restart.json
