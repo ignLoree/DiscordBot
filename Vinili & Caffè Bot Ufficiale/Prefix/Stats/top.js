@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   AttachmentBuilder,
   ActionRowBuilder,
@@ -284,9 +284,14 @@ function normalizeLookbackDays(raw) {
   return [1, 7, 14, 21, 30].includes(parsed) ? parsed : 14;
 }
 
-function hasReadableLatinOrNumber(value) {
-  const text = String(value || "");
-  return /[A-Za-z0-9À-ÖØ-öø-ÿ]/.test(text);
+function normalizeCanvasLabel(value, fallback) {
+  const text = String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return fallback;
+  if (/^<@!?\d+>$/.test(text)) return fallback;
+  if (/^<#\d+>$/.test(text)) return fallback;
+  return text;
 }
 
 function buildTopChannelMainControlsRow(lookbackDays) {
@@ -350,9 +355,10 @@ async function resolveTopUserEntries(guild, entries = []) {
   for (const item of entries) {
     const userId = String(item?.id || "");
     const rawDisplayName = await resolveDisplayName(guild, userId);
-    const displayName = hasReadableLatinOrNumber(rawDisplayName)
-      ? rawDisplayName
-      : `<@${userId}>`;
+    const displayName = normalizeCanvasLabel(
+      rawDisplayName,
+      `utente_${String(userId).slice(-6)}`,
+    );
     out.push({
       id: userId,
       label: displayName,
@@ -375,10 +381,10 @@ async function resolveTopChannelEntries(guild, entries = []) {
     const channel =
       guild.channels?.cache?.get(channelId) ||
       (await guild.channels?.fetch(channelId).catch(() => null));
-    const rawLabel = channel ? `#${channel.name}` : `#${channelId}`;
+    const rawLabel = channel ? `#${channel.name}` : "";
     out.push({
       id: channelId,
-      label: hasReadableLatinOrNumber(rawLabel) ? rawLabel : `#${channelId}`,
+      label: normalizeCanvasLabel(rawLabel, "#canale-sconosciuto"),
       value: Number(item?.value || 0),
     });
   }
@@ -544,3 +550,4 @@ module.exports = {
   buildTopChannelComponents,
   normalizeLookbackDays,
 };
+
