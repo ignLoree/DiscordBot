@@ -7,6 +7,7 @@ const IDs = require("../../Utils/Config/ids");
 
 const RESTART_FLAG = "restart.json";
 const RESTART_CLEANUP_DELAY_MS = 2000;
+const PROCESS_EXIT_DELAY_MS = 1200;
 const VALID_SCOPES = new Set([
   "full",
   "handlers",
@@ -209,6 +210,7 @@ module.exports = {
           }).catch(() => {});
           return;
         }
+        setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
         return;
       }
 

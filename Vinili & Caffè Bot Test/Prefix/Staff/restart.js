@@ -7,6 +7,7 @@ const DEV_ID = "295500038401163264";
 const TEST_GUILD_ID = IDs.guilds?.test || "1462458562507964584";
 const RESTART_FLAG = "restart.json";
 const RESTART_NOTIFY_FILE = "restart_notify.json";
+const PROCESS_EXIT_DELAY_MS = 1200;
 
 function errorEmbed(description) {
   return new EmbedBuilder().setColor("Red").setDescription(description);
@@ -110,6 +111,7 @@ module.exports = {
     try {
       const notifyMessage = await sendStartNotice(message);
       writeRestartFiles(message, notifyMessage, requestedAt);
+      setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
     } catch (err) {
       global.logger?.error?.("[Bot Test] -rs write flag:", err);
       await message
