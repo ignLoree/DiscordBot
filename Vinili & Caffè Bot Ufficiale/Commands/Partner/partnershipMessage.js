@@ -1,4 +1,4 @@
-const { MessageContextCommandBuilder, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { safeReply } = require('../../Utils/Moderation/reply');
 const Ticket = require('../../Schemas/Ticket/ticketSchema');
 const IDs = require('../../Utils/Config/ids');
@@ -6,8 +6,9 @@ const { isChannelInTicketCategory } = require('../../Utils/Ticket/ticketCategory
 
 module.exports = {
     expectsModal: true,
-    data: new MessageContextCommandBuilder()
-        .setName('Partnership'),
+    data: new ContextMenuCommandBuilder()
+        .setName('Partnership')
+        .setType(ApplicationCommandType.Message),
 
     async execute(interaction) {
         if (!interaction.inGuild()) return;

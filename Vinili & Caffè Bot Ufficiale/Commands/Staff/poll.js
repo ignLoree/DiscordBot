@@ -1,10 +1,10 @@
 const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const poll = require('../../Schemas/Poll/pollSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
-    data: new ChatInputCommandBuilder()
+    data: new SlashCommandBuilder()
         .setName("poll")
         .setDescription("Crea un poll.")
         .addSubcommand(sub =>

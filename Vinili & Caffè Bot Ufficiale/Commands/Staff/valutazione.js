@@ -1,10 +1,10 @@
 const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
 module.exports = {
-    data: new ChatInputCommandBuilder()
+    data: new SlashCommandBuilder()
         .setName("valutazione")
         .setDescription("Gestisci le valutazioni degli staffer")
         .addSubcommandGroup(group =>

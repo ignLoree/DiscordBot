@@ -1,5 +1,5 @@
 const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { EmbedBuilder, ChatInputCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const Staff = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 
@@ -280,7 +280,7 @@ module.exports = {
         request: [IDs.roles.PartnerManager, IDs.roles.Staff],
         list: [IDs.roles.PartnerManager, IDs.roles.Staff, IDs.roles.HighStaff]
     },
-    data: new ChatInputCommandBuilder()
+    data: new SlashCommandBuilder()
         .setName('pausa')
         .setDescription('Gestione pause staffer')
         .addSubcommand(command =>

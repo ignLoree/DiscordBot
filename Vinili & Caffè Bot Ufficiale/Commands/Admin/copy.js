@@ -1,9 +1,9 @@
 const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js')
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js')
 const { default: axios } = require('axios');
 
 module.exports = {
-    data: new ChatInputCommandBuilder()
+    data: new SlashCommandBuilder()
         .setName('copy')
         .setDescription('Ruba e aggiungi sul tuo server.')
         .addSubcommand(sub =>

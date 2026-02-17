@@ -1,10 +1,7 @@
-const { installWarningSilencer } = require('../warningSilencer');
-installWarningSilencer();
 const { Client, GatewayIntentBits, Collection, Partials } = require(`discord.js`);
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { installDiscordV15Compat } = require('../discordV15Compat');
 const APP_ROOT = __dirname;
 const envCandidates = [
     path.join(APP_ROOT, '..', '.env'),
@@ -18,7 +15,6 @@ for (const envPath of envCandidates) {
 }
 global.logger = require('./Utils/Moderation/logger');
 const { installEmbedFooterPatch } = require('./Utils/Embeds/defaultFooter');
-const { installCommandBuilderCompat } = require('./Utils/Discord/commandBuilderCompat');
 const functions = fs.readdirSync(path.join(APP_ROOT, "Handlers")).filter((file) => file.endsWith(".js"));
 const triggerFiles = fs.existsSync(path.join(APP_ROOT, "Triggers"))
     ? fs.readdirSync(path.join(APP_ROOT, "Triggers")).filter((file) => file.endsWith(".js"))
@@ -28,8 +24,6 @@ const commandFolders = fs.existsSync(path.join(APP_ROOT, "Commands")) ? fs.readd
 let client;
 
 try {
-    installDiscordV15Compat();
-    installCommandBuilderCompat();
     installEmbedFooterPatch();
     client = new Client({
         intents: [

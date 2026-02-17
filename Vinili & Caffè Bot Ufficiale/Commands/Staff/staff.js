@@ -1,5 +1,5 @@
 ﻿const { safeEditReply } = require('../../Utils/Moderation/reply');
-const { ChatInputCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const StaffModel = require('../../Schemas/Staff/staffSchema');
 const IDs = require('../../Utils/Config/ids');
 const ROLE_PARTNER_MANAGER = IDs.roles.PartnerManager;
@@ -27,7 +27,7 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 ]);
 
 module.exports = {
-    data: new ChatInputCommandBuilder()
+    data: new SlashCommandBuilder()
         .setName('staff')
         .setDescription('Gestisci lo staff di Vinili & Caffè ')
         .addSubcommand(command =>
@@ -86,7 +86,7 @@ module.exports = {
                                 .setDescription('Ore trascorse in vocale in una settimana.')
                                 .setRequired(true))
                         .addStringOption(option =>
-                            option.setName('grado_attività')
+                            option.setName('grado_attivita')
                                 .setDescription('Seleziona l\'attività avuta durante la settimana.')
                                 .setRequired(true)
                                 .addChoices(
@@ -425,7 +425,7 @@ __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103
                     const azione = interaction.options.getString('azione');
                     const messaggi = interaction.options.getString('messaggi');
                     const oreInVoc = interaction.options.getString('ore');
-                    const grado_attivita = interaction.options.getString('grado_attività');
+                    const grado_attivita = interaction.options.getString('grado_attivita');
                     const grado_condotta = interaction.options.getString('grado_condotta');
                     const stafferMember = interaction.guild.members.cache.get(staffer.id);
                     const allowedRoleID = ROLE_STAFF;

@@ -1,9 +1,6 @@
-const { installWarningSilencer } = require('../warningSilencer');
-installWarningSilencer();
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { installDiscordV15Compat } = require('../discordV15Compat');
 
 const APP_ROOT = __dirname;
 
@@ -23,7 +20,6 @@ global.logger = require('./Utils/Moderation/logger');
 
 const installProcessHandlers = require('./Handlers/processHandler');
 installProcessHandlers();
-installDiscordV15Compat();
 
 const client = new Client({
     intents: [
