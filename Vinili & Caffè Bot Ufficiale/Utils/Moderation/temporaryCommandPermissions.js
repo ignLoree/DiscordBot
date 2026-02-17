@@ -1,26 +1,30 @@
-const TemporaryCommandPermission = require('../../Schemas/Moderation/temporaryCommandPermissionSchema');
+const TemporaryCommandPermission = require("../../Schemas/Moderation/temporaryCommandPermissionSchema");
 
-const VALID_TYPES = new Set(['prefix', 'slash', 'any']);
+const VALID_TYPES = new Set(["prefix", "slash", "any"]);
 
 function normalizeToken(raw) {
-  const input = String(raw || '').trim().toLowerCase();
+  const input = String(raw || "")
+    .trim()
+    .toLowerCase();
   if (!input) return null;
 
   const typed = input.match(/^(prefix|slash|any):(.+)$/);
   if (typed) {
     const type = typed[1];
-    const key = String(typed[2] || '').trim().replace(/\s+/g, '');
+    const key = String(typed[2] || "")
+      .trim()
+      .replace(/\s+/g, "");
     if (!key) return null;
     return `${type}:${key}`;
   }
 
-  const withoutPrefix = input.replace(/^[+/?-]+/, '').trim();
+  const withoutPrefix = input.replace(/^[+/?-]+/, "").trim();
   if (!withoutPrefix) return null;
   return `any:${withoutPrefix}`;
 }
 
 function parseCommandTokenList(rawText) {
-  const parts = String(rawText || '')
+  const parts = String(rawText || "")
     .split(/[,\s]+/g)
     .map((chunk) => normalizeToken(chunk))
     .filter(Boolean);
@@ -30,25 +34,29 @@ function parseCommandTokenList(rawText) {
 function expandRevokeToken(token) {
   const normalized = normalizeToken(token);
   if (!normalized) return [];
-  const [type, key] = normalized.split(':');
+  const [type, key] = normalized.split(":");
   if (!type || !key) return [];
-  if (VALID_TYPES.has(type) && type !== 'any') return [normalized];
+  if (VALID_TYPES.has(type) && type !== "any") return [normalized];
   return [`any:${key}`, `prefix:${key}`, `slash:${key}`];
 }
 
 function parseRevokeTokenList(rawText) {
-  const chunks = String(rawText || '')
+  const chunks = String(rawText || "")
     .split(/[,\s]+/g)
-    .map((value) => String(value || '').trim())
+    .map((value) => String(value || "").trim())
     .filter(Boolean);
   const keys = chunks.flatMap((token) => expandRevokeToken(token));
   return Array.from(new Set(keys));
 }
 
 function buildPrefixLookupKeys(commandName, subcommandName = null) {
-  const command = String(commandName || '').trim().toLowerCase();
+  const command = String(commandName || "")
+    .trim()
+    .toLowerCase();
   if (!command) return [];
-  const sub = String(subcommandName || '').trim().toLowerCase();
+  const sub = String(subcommandName || "")
+    .trim()
+    .toLowerCase();
   const keys = [];
   if (sub) {
     keys.push(`prefix:${command}.${sub}`, `any:${command}.${sub}`);
@@ -57,15 +65,28 @@ function buildPrefixLookupKeys(commandName, subcommandName = null) {
   return Array.from(new Set(keys));
 }
 
-function buildSlashLookupKeys(commandName, groupName = null, subcommandName = null) {
-  const command = String(commandName || '').trim().toLowerCase();
+function buildSlashLookupKeys(
+  commandName,
+  groupName = null,
+  subcommandName = null,
+) {
+  const command = String(commandName || "")
+    .trim()
+    .toLowerCase();
   if (!command) return [];
-  const group = String(groupName || '').trim().toLowerCase();
-  const sub = String(subcommandName || '').trim().toLowerCase();
+  const group = String(groupName || "")
+    .trim()
+    .toLowerCase();
+  const sub = String(subcommandName || "")
+    .trim()
+    .toLowerCase();
   const keys = [];
 
   if (group && sub) {
-    keys.push(`slash:${command}.${group}.${sub}`, `any:${command}.${group}.${sub}`);
+    keys.push(
+      `slash:${command}.${group}.${sub}`,
+      `any:${command}.${group}.${sub}`,
+    );
     keys.push(`slash:${command}.${sub}`, `any:${command}.${sub}`);
   } else if (sub) {
     keys.push(`slash:${command}.${sub}`, `any:${command}.${sub}`);
@@ -83,17 +104,32 @@ async function hasTemporaryCommandPermission({ guildId, userId, keys }) {
       guildId: String(guildId),
       userId: String(userId),
       commandKey: { $in: keys.map((key) => String(key).toLowerCase()) },
-      expiresAt: { $gt: now }
-    }).select('_id').lean();
+      expiresAt: { $gt: now },
+    })
+      .select("_id")
+      .lean();
     return Boolean(row?._id);
   } catch {
     return false;
   }
 }
 
-async function grantTemporaryCommandPermissions({ guildId, userId, grantedBy = null, commandKeys = [], durationMs }) {
+async function grantTemporaryCommandPermissions({
+  guildId,
+  userId,
+  grantedBy = null,
+  commandKeys = [],
+  durationMs,
+}) {
   const safeDuration = Number(durationMs || 0);
-  if (!guildId || !userId || !Array.isArray(commandKeys) || !commandKeys.length || !Number.isFinite(safeDuration) || safeDuration <= 0) {
+  if (
+    !guildId ||
+    !userId ||
+    !Array.isArray(commandKeys) ||
+    !commandKeys.length ||
+    !Number.isFinite(safeDuration) ||
+    safeDuration <= 0
+  ) {
     return { upserted: 0, modified: 0, expiresAt: null };
   }
 
@@ -103,42 +139,49 @@ async function grantTemporaryCommandPermissions({ guildId, userId, grantedBy = n
       filter: {
         guildId: String(guildId),
         userId: String(userId),
-        commandKey: String(rawKey).toLowerCase()
+        commandKey: String(rawKey).toLowerCase(),
       },
       update: {
         $set: {
           grantedBy: grantedBy ? String(grantedBy) : null,
-          expiresAt
+          expiresAt,
         },
         $setOnInsert: {
           guildId: String(guildId),
           userId: String(userId),
-          commandKey: String(rawKey).toLowerCase()
-        }
+          commandKey: String(rawKey).toLowerCase(),
+        },
       },
-      upsert: true
-    }
+      upsert: true,
+    },
   }));
 
   try {
-    const result = await TemporaryCommandPermission.bulkWrite(ops, { ordered: false });
+    const result = await TemporaryCommandPermission.bulkWrite(ops, {
+      ordered: false,
+    });
     return {
       upserted: Number(result?.upsertedCount || 0),
       modified: Number(result?.modifiedCount || 0),
-      expiresAt
+      expiresAt,
     };
   } catch {
     return { upserted: 0, modified: 0, expiresAt };
   }
 }
 
-async function revokeTemporaryCommandPermissions({ guildId, userId, commandKeys = [] }) {
-  if (!guildId || !userId || !Array.isArray(commandKeys) || !commandKeys.length) return 0;
+async function revokeTemporaryCommandPermissions({
+  guildId,
+  userId,
+  commandKeys = [],
+}) {
+  if (!guildId || !userId || !Array.isArray(commandKeys) || !commandKeys.length)
+    return 0;
   try {
     const result = await TemporaryCommandPermission.deleteMany({
       guildId: String(guildId),
       userId: String(userId),
-      commandKey: { $in: commandKeys.map((key) => String(key).toLowerCase()) }
+      commandKey: { $in: commandKeys.map((key) => String(key).toLowerCase()) },
     });
     return Number(result?.deletedCount || 0);
   } catch {
@@ -151,7 +194,7 @@ async function clearTemporaryCommandPermissionsForUser({ guildId, userId }) {
   try {
     const result = await TemporaryCommandPermission.deleteMany({
       guildId: String(guildId),
-      userId: String(userId)
+      userId: String(userId),
     });
     return Number(result?.deletedCount || 0);
   } catch {
@@ -166,8 +209,10 @@ async function listTemporaryCommandPermissionsForUser({ guildId, userId }) {
     return TemporaryCommandPermission.find({
       guildId: String(guildId),
       userId: String(userId),
-      expiresAt: { $gt: now }
-    }).sort({ expiresAt: 1, commandKey: 1 }).lean();
+      expiresAt: { $gt: now },
+    })
+      .sort({ expiresAt: 1, commandKey: 1 })
+      .lean();
   } catch {
     return [];
   }
@@ -182,5 +227,5 @@ module.exports = {
   grantTemporaryCommandPermissions,
   revokeTemporaryCommandPermissions,
   clearTemporaryCommandPermissionsForUser,
-  listTemporaryCommandPermissionsForUser
+  listTemporaryCommandPermissionsForUser,
 };

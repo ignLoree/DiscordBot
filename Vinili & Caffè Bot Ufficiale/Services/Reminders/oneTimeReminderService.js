@@ -5,7 +5,7 @@ async function ensureOneTimeReminder({ key, userId, message, sendAt }) {
   return OneTimeReminder.findOneAndUpdate(
     { key },
     { $setOnInsert: { key, userId, message, sendAt } },
-    { upsert: true, new: true }
+    { upsert: true, new: true },
   );
 }
 
@@ -13,13 +13,14 @@ async function runDueOneTimeReminders(client) {
   const now = new Date();
   const due = await OneTimeReminder.find({
     sentAt: null,
-    sendAt: { $lte: now }
+    sendAt: { $lte: now },
   });
   if (!due.length) return;
   for (const reminder of due) {
     try {
-      const user = client.users.cache.get(reminder.userId)
-        || await client.users.fetch(reminder.userId).catch(() => null);
+      const user =
+        client.users.cache.get(reminder.userId) ||
+        (await client.users.fetch(reminder.userId).catch(() => null));
       if (!user) continue;
       await user.send(reminder.message);
       reminder.sentAt = new Date();

@@ -1,4 +1,4 @@
-const child_process = require('child_process');
+﻿const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -12,13 +12,31 @@ const BOTS = [
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
 const POLL_INTERVAL_MS = 5000;
+const FORCE_KILL_DELAY_MS = 8000;
+const NPM_CACHE_DIR = path.join(os.tmpdir(), '.npm-global');
 
 const processRefs = {};
 const restarting = {};
 let npmInstallInProgress = null;
+
 const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
     ? { ...process.env }
     : { ...process.env, NODE_NO_WARNINGS: '1' };
+
+const WORKSPACES_ENABLED = hasWorkspacesConfig();
+
+function splitStartPath(startPath) {
+    const normalized = String(startPath).replace(/\\/g, '/');
+    const parts = normalized.split('/');
+    return {
+        workingDir: path.resolve(baseDir, parts.slice(0, -1).join('/')),
+        file: parts.at(-1)
+    };
+}
+
+function pidFile(botKey) {
+    return path.resolve(baseDir, `.shard_${botKey}.pid`);
+}
 
 function runNpmInstall(installDir, extraArgs = []) {
     return new Promise((resolveInstall) => {
@@ -30,42 +48,44 @@ function runNpmInstall(installDir, extraArgs = []) {
             '--no-fund',
             '--no-bin-links',
             '--prefer-offline',
-            '--cache', path.join(os.tmpdir(), '.npm-global'),
+            '--cache', NPM_CACHE_DIR,
             '--update-notifier', 'false',
             ...extraArgs
         ];
-        const npm = child_process.spawn('npm', args, { cwd: installDir, stdio: 'inherit', env: silencedEnv });
+
+        const npm = child_process.spawn('npm', args, {
+            cwd: installDir,
+            stdio: 'inherit',
+            env: silencedEnv
+        });
+
         npm.on('exit', (code) => resolveInstall(code || 0));
     });
 }
-
-function pidFile(botKey) {
-    return path.resolve(baseDir, `.shard_${botKey}.pid`);
-}
-
-console.log('[Loader] Loading', BOTS.length, 'bot(s)');
-console.log('[Loader] Build marker: 2026-02-17-fix-install-and-ready');
 
 function killPidTree(pid) {
     if (!pid || Number.isNaN(pid)) return;
     try {
         if (process.platform === 'win32') {
             child_process.spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
-        } else {
-            process.kill(pid, 'SIGTERM');
+            return;
         }
-    } catch { }
+        process.kill(pid, 'SIGTERM');
+    } catch {
+    }
 }
 
 function cleanupStalePid(botKey) {
     const file = pidFile(botKey);
     if (!fs.existsSync(file)) return;
+
     let pid = null;
     try {
         pid = Number(fs.readFileSync(file, 'utf8').trim());
     } catch {
         pid = null;
     }
+
     if (processRefs[botKey] && pid && processRefs[botKey].pid === pid) return;
     if (pid && !Number.isNaN(pid)) killPidTree(pid);
     try { fs.unlinkSync(file); } catch { }
@@ -82,6 +102,7 @@ function writePid(botKey, pid) {
 function hasWorkspacesConfig() {
     const rootPackageJson = path.join(baseDir, 'package.json');
     if (!fs.existsSync(rootPackageJson)) return false;
+
     try {
         const pkg = JSON.parse(fs.readFileSync(rootPackageJson, 'utf8'));
         return Array.isArray(pkg?.workspaces) && pkg.workspaces.length > 0;
@@ -109,76 +130,87 @@ function needNpmInstall(workingDir, useWorkspaces = false) {
     }
 }
 
+function updateRepo(repoRoot) {
+    if (!fs.existsSync(path.join(repoRoot, '.git'))) return;
+
+    try {
+        console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
+        const branch = process.env.GIT_BRANCH || 'main';
+        child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
+        child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
+    } catch (err) {
+        console.log(`[Loader] Git pull failed: ${err?.message || err}`);
+    }
+}
+
+function ensureDependencies(workingDir, useWorkspaces) {
+    if (!needNpmInstall(workingDir, useWorkspaces)) return Promise.resolve();
+
+    const installDir = useWorkspaces ? baseDir : workingDir;
+    if (!npmInstallInProgress) {
+        npmInstallInProgress = new Promise((resolveInstall) => {
+            console.log(`[Loader] npm install in ${installDir}`);
+            runNpmInstall(installDir).then((code) => {
+                if (code === 0) {
+                    resolveInstall();
+                    return;
+                }
+
+                console.log(`[Loader] npm install fallito (code ${code}), retry con --force...`);
+                runNpmInstall(installDir, ['--force']).then((retryCode) => {
+                    if (retryCode !== 0) {
+                        console.log(`[Loader] npm install fallito anche con --force (code ${retryCode}), avvio bot comunque.`);
+                    }
+                    resolveInstall();
+                });
+            });
+        }).finally(() => {
+            npmInstallInProgress = null;
+        });
+    } else {
+        console.log('[Loader] npm install già in corso, attendo completamento...');
+    }
+
+    return npmInstallInProgress;
+}
+
+function spawnBotProcess(bot, workingDir, file, resolve) {
+    console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
+
+    const proc = child_process.spawn(process.execPath, [file], {
+        cwd: workingDir,
+        stdio: 'inherit',
+        env: silencedEnv
+    });
+
+    processRefs[bot.key] = proc;
+    writePid(bot.key, proc.pid);
+
+    proc.on('exit', (code) => {
+        try { fs.unlinkSync(pidFile(bot.key)); } catch { }
+        processRefs[bot.key] = null;
+        console.log(`[Loader] ${bot.label} fermato (code ${code})`);
+        resolve();
+    });
+}
+
 function runfile(bot, options = {}) {
     return new Promise((resolve) => {
-        const workingDir = path.resolve(baseDir, bot.start.split('/').slice(0, -1).join('/'));
-        const file = bot.start.split('/').at(-1);
+        const { workingDir, file } = splitStartPath(bot.start);
         const skipGitPull = Boolean(options.skipGitPull);
         const bypassDelay = Boolean(options.bypassDelay);
-        const botKey = bot.key;
-        const useWorkspaces = hasWorkspacesConfig();
+        const useWorkspaces = WORKSPACES_ENABLED;
 
         const start = () => {
-            cleanupStalePid(botKey);
+            cleanupStalePid(bot.key);
 
             const repoRoot = fs.existsSync(path.join(baseDir, '.git')) ? baseDir : workingDir;
-            if (!skipGitPull && fs.existsSync(path.join(repoRoot, '.git'))) {
-                try {
-                    console.log(`[Loader] Pulling latest changes in ${repoRoot}`);
-                    const branch = process.env.GIT_BRANCH || 'main';
-                    child_process.spawnSync('git', ['pull', 'origin', branch, '--ff-only'], { cwd: repoRoot, stdio: 'inherit' });
-                    child_process.spawnSync('git', ['submodule', 'update', '--init', '--recursive'], { cwd: repoRoot, stdio: 'inherit' });
-                } catch (err) {
-                    console.log(`[Loader] Git pull failed: ${err?.message || err}`);
-                }
+            if (!skipGitPull) {
+                updateRepo(repoRoot);
             }
 
-            const doSpawn = () => {
-                console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
-                const proc = child_process.spawn(process.execPath, [file], {
-                    cwd: workingDir,
-                    stdio: 'inherit',
-                    env: silencedEnv
-                });
-                processRefs[botKey] = proc;
-                writePid(botKey, proc.pid);
-                proc.on('exit', (code) => {
-                    try { fs.unlinkSync(pidFile(botKey)); } catch { }
-                    processRefs[botKey] = null;
-                    console.log(`[Loader] ${bot.label} fermato (code ${code})`);
-                    resolve();
-                });
-            };
-
-            if (!needNpmInstall(workingDir, useWorkspaces)) {
-                doSpawn();
-                return;
-            }
-
-            const installDir = useWorkspaces ? baseDir : workingDir;
-            if (!npmInstallInProgress) {
-                npmInstallInProgress = new Promise((resolveInstall) => {
-                    console.log(`[Loader] npm install in ${installDir}`);
-                    runNpmInstall(installDir).then((code) => {
-                        if (code === 0) {
-                            resolveInstall();
-                            return;
-                        }
-                        console.log(`[Loader] npm install fallito (code ${code}), retry con --force...`);
-                        runNpmInstall(installDir, ['--force']).then((retryCode) => {
-                            if (retryCode !== 0) {
-                                console.log(`[Loader] npm install fallito anche con --force (code ${retryCode}), avvio bot comunque.`);
-                            }
-                            resolveInstall();
-                        });
-                    });
-                }).finally(() => {
-                    npmInstallInProgress = null;
-                });
-            } else {
-                console.log('[Loader] npm install gia in corso, attendo completamento...');
-            }
-            npmInstallInProgress.finally(() => doSpawn());
+            ensureDependencies(workingDir, useWorkspaces)
+                .finally(() => spawnBotProcess(bot, workingDir, file, resolve));
         };
 
         const delay = bypassDelay ? 0 : Number(bot.startupDelayMs || 0);
@@ -187,13 +219,15 @@ function runfile(bot, options = {}) {
             setTimeout(start, delay);
             return;
         }
+
         start();
     });
 }
 
 function restartBot(botKey, options = {}) {
-    const bot = BOTS.find(b => b.key === botKey);
+    const bot = BOTS.find((entry) => entry.key === botKey);
     if (!bot) return;
+
     const respectDelay = Boolean(options.respectDelay);
     if (restarting[botKey]) return;
     restarting[botKey] = true;
@@ -201,9 +235,10 @@ function restartBot(botKey, options = {}) {
     const proc = processRefs[botKey];
     if (proc && !proc.killed) {
         console.log(`[Loader] Restart ${bot.label}...`);
+
         const forceTimer = setTimeout(() => {
             try { killPidTree(proc.pid); } catch { }
-        }, 8000);
+        }, FORCE_KILL_DELAY_MS);
 
         proc.once('exit', () => {
             clearTimeout(forceTimer);
@@ -224,25 +259,31 @@ function restartBot(botKey, options = {}) {
     runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
 }
 
-// Avvio tutti i bot (il delay è gestito dentro runfile per ogni bot)
-BOTS.forEach(bot => runfile(bot, { skipGitPull: false }));
+function readRestartPayload() {
+    if (!fs.existsSync(RESTART_FLAG)) return null;
 
-setInterval(() => {
-    if (!fs.existsSync(RESTART_FLAG)) return;
-    let payload = null;
     try {
-        payload = JSON.parse(fs.readFileSync(RESTART_FLAG, 'utf8'));
+        return JSON.parse(fs.readFileSync(RESTART_FLAG, 'utf8'));
     } catch (err) {
         console.error('[Loader] restart.json read/parse failed:', err?.message || err);
+        return null;
+    } finally {
         try { fs.unlinkSync(RESTART_FLAG); } catch { }
-        return;
     }
-    try { fs.unlinkSync(RESTART_FLAG); } catch { }
+}
+
+BOTS.forEach((bot) => runfile(bot, { skipGitPull: false }));
+
+setInterval(() => {
+    const payload = readRestartPayload();
+    if (!payload) return;
+
     const targetBot = payload?.bot || 'official';
     const respectDelay = Boolean(payload?.respectDelay);
+
     if (targetBot === 'all') {
-      BOTS.forEach(bot => restartBot(bot.key, { respectDelay }));
+        BOTS.forEach((bot) => restartBot(bot.key, { respectDelay }));
     } else {
-      restartBot(targetBot, { respectDelay });
+        restartBot(targetBot, { respectDelay });
     }
 }, POLL_INTERVAL_MS);

@@ -3,11 +3,7 @@ const { getNoDmSet } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
 
 const getDevIds = (client) => {
-  const fromIds = String(
-    IDs?.guilds?.developers
-    || IDs?.developers
-    || ""
-  )
+  const fromIds = String(IDs?.guilds?.developers || IDs?.developers || "")
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean);
@@ -16,20 +12,16 @@ const getDevIds = (client) => {
   const fromConfig = Array.isArray(raw)
     ? raw.map((id) => String(id).trim()).filter(Boolean)
     : String(raw)
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
 
   return Array.from(new Set([...fromIds, ...fromConfig]));
 };
 
 const getStaffRoleIds = (client) => {
   void client;
-  return [
-    IDs.roles.Staff,
-    IDs.roles.PartnerManager,
-    IDs.roles.HighStaff
-  ]
+  return [IDs.roles.Staff, IDs.roles.PartnerManager, IDs.roles.HighStaff]
     .map((id) => String(id || "").trim())
     .filter(Boolean);
 };
@@ -74,27 +66,38 @@ function chunkLines(lines, maxLen = 1800) {
 }
 
 async function handleDmBroadcastModal(interaction, client) {
-  if (!interaction.isModalSubmit() || !interaction.customId.startsWith("dm_broadcast:")) return false;
+  if (
+    !interaction.isModalSubmit() ||
+    !interaction.customId.startsWith("dm_broadcast:")
+  )
+    return false;
   const partsId = interaction.customId.split(":");
   const userId = partsId[1];
   const rawTargetId = partsId[2];
   const allConfirmed = partsId[3] === "1";
   const targetId = rawTargetId && rawTargetId !== "all" ? rawTargetId : null;
   if (!targetId && !allConfirmed) {
-    await interaction.reply({ content: "<:vegax:1443934876440068179> Invio globale non confermato.", flags: 1 << 6 });
+    await interaction.reply({
+      content: "<:vegax:1443934876440068179> Invio globale non confermato.",
+      flags: 1 << 6,
+    });
     return true;
   }
   if (interaction.user.id !== userId) {
-    await interaction.reply({ content: "<:vegax:1443934876440068179> Non puoi usare questo modal.", flags: 1 << 6 });
+    await interaction.reply({
+      content: "<:vegax:1443934876440068179> Non puoi usare questo modal.",
+      flags: 1 << 6,
+    });
     return true;
   }
-
- 
 
   const title = interaction.fields.getTextInputValue("title")?.trim();
   const message = interaction.fields.getTextInputValue("message")?.trim();
   if (!message) {
-    await interaction.reply({ content: "<:vegax:1443934876440068179> Messaggio vuoto.", flags: 1 << 6 });
+    await interaction.reply({
+      content: "<:vegax:1443934876440068179> Messaggio vuoto.",
+      flags: 1 << 6,
+    });
     return true;
   }
 
@@ -116,9 +119,10 @@ async function handleDmBroadcastModal(interaction, client) {
     return !staffRoleIds.some((roleId) => member.roles.cache.has(roleId));
   });
 
-  const content = message.replace(/@everyone|@here/g, '@​everyone');
+  const content = message.replace(/@everyone|@here/g, "@​everyone");
   const parts = splitMessage(content);
-  const footerText = "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +no-dm nel server";
+  const footerText =
+    "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +no-dm nel server";
 
   let sent = 0;
   let failed = 0;
@@ -127,12 +131,12 @@ async function handleDmBroadcastModal(interaction, client) {
   const total = targets.size;
 
   const progressEmbed = (text) =>
-    new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setDescription(text);
+    new EmbedBuilder().setColor("#6f4e37").setDescription(text);
 
   await interaction.editReply({
-    embeds: [progressEmbed(`Invio DM in corso...\nUtenti target: **${total}**`)]
+    embeds: [
+      progressEmbed(`Invio DM in corso...\nUtenti target: **${total}**`),
+    ],
   });
 
   for (const member of targets.values()) {
@@ -156,9 +160,9 @@ async function handleDmBroadcastModal(interaction, client) {
       await interaction.editReply({
         embeds: [
           progressEmbed(
-            `Invio DM in corso...\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`
-          )
-        ]
+            `Invio DM in corso...\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
+          ),
+        ],
       });
     }
     await new Promise((r) => setTimeout(r, 750));
@@ -167,9 +171,9 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.editReply({
     embeds: [
       progressEmbed(
-        `Invio completato.\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`
-      )
-    ]
+        `Invio completato.\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
+      ),
+    ],
   });
 
   if (failedIds.length || skippedNoDm.length) {

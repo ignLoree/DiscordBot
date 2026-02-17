@@ -1,10 +1,16 @@
 const canvasModule = require("canvas");
-const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
+const {
+  registerCanvasFonts,
+  fontStack,
+  drawTextWithSpecialFallback,
+} = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth) {
   const lines = [];
-  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const words = String(text || "")
+    .split(/\s+/)
+    .filter(Boolean);
   let line = "";
   for (const word of words) {
     const test = line ? `${line} ${word}` : word;
@@ -52,7 +58,7 @@ function fitInside(sourceW, sourceH, maxW, maxH) {
   const ratio = Math.min(maxW / sourceW, maxH / sourceH, 1);
   return {
     width: Math.round(sourceW * ratio),
-    height: Math.round(sourceH * ratio)
+    height: Math.round(sourceH * ratio),
   };
 }
 
@@ -72,7 +78,7 @@ module.exports = async function renderSkullboardCanvas({
   roleIconUrl,
   mediaUrl,
   hasMedia,
-  hasEmbedOnly
+  hasEmbedOnly,
 }) {
   if (!canvasModule) throw new Error("Canvas module not available");
   registerCanvasFonts(canvasModule);
@@ -86,7 +92,9 @@ module.exports = async function renderSkullboardCanvas({
 
   const probe = createCanvas(width, 10).getContext("2d");
   probe.font = fontStack(16, "500");
-  const messageLines = hasEmbedOnly ? [] : wrapLines(probe, message || "", textMaxWidth);
+  const messageLines = hasEmbedOnly
+    ? []
+    : wrapLines(probe, message || "", textMaxWidth);
   const hasReply = Boolean(reply && (reply.content || reply.author));
 
   let mediaImage = null;
@@ -110,7 +118,7 @@ module.exports = async function renderSkullboardCanvas({
       x: contentX,
       y: y + 10,
       width: fitted.width,
-      height: fitted.height
+      height: fitted.height,
     };
     y = mediaLayout.y + mediaLayout.height;
   }
@@ -137,7 +145,11 @@ module.exports = async function renderSkullboardCanvas({
     const replyName = reply.author || "Unknown";
     const replyNameColor = reply.nameColor || "#b9bbbe";
     const replyTextY = replyY + 6;
-    drawTextWithSpecialFallback(ctx, replyName, rx, replyTextY, { size: 12, weight: "600", color: replyNameColor });
+    drawTextWithSpecialFallback(ctx, replyName, rx, replyTextY, {
+      size: 12,
+      weight: "600",
+      color: replyNameColor,
+    });
     rx += ctx.measureText(replyName).width + 6;
 
     if (reply.roleIconUrl) {
@@ -149,7 +161,11 @@ module.exports = async function renderSkullboardCanvas({
     }
 
     const replyContent = String(reply.content || "").slice(0, 72);
-    drawTextWithSpecialFallback(ctx, replyContent, rx, replyTextY, { size: 12, weight: "500", color: "#949ba4" });
+    drawTextWithSpecialFallback(ctx, replyContent, rx, replyTextY, {
+      size: 12,
+      weight: "500",
+      color: "#949ba4",
+    });
 
     const connStartX = outerPad + avatarSize / 2;
     const connStartY = headerY + 2;
@@ -169,13 +185,23 @@ module.exports = async function renderSkullboardCanvas({
   }
 
   const avatar = await loadImage(avatarUrl);
-  drawCircleImage(ctx, avatar, outerPad, headerY - avatarSize / 2 + 2, avatarSize);
+  drawCircleImage(
+    ctx,
+    avatar,
+    outerPad,
+    headerY - avatarSize / 2 + 2,
+    avatarSize,
+  );
 
   const userColor = nameColor || "#f2f3f5";
   ctx.textBaseline = "top";
   const usernameSize = 34 / 2;
   const usernameWeight = "600";
-  drawTextWithSpecialFallback(ctx, username || "", contentX, headerY, { size: usernameSize, weight: usernameWeight, color: userColor });
+  drawTextWithSpecialFallback(ctx, username || "", contentX, headerY, {
+    size: usernameSize,
+    weight: usernameWeight,
+    color: userColor,
+  });
 
   ctx.font = fontStack(usernameSize, usernameWeight);
   let cursorX = contentX + ctx.measureText(username || "").width + 8;
@@ -186,24 +212,41 @@ module.exports = async function renderSkullboardCanvas({
       cursorX += 22;
     }
   }
-  drawTextWithSpecialFallback(ctx, formatTimestamp(createdAt || new Date()), cursorX, headerY + 1, {
-    size: 12,
-    weight: "500",
-    color: "#b5bac1"
-  });
+  drawTextWithSpecialFallback(
+    ctx,
+    formatTimestamp(createdAt || new Date()),
+    cursorX,
+    headerY + 1,
+    {
+      size: 12,
+      weight: "500",
+      color: "#b5bac1",
+    },
+  );
 
   if (messageLines.length) {
     let lineY = messageY;
     for (const line of messageLines) {
-      drawTextWithSpecialFallback(ctx, line, contentX, lineY, { size: 33 / 2, weight: "500", color: "#f2f3f5" });
+      drawTextWithSpecialFallback(ctx, line, contentX, lineY, {
+        size: 33 / 2,
+        weight: "500",
+        color: "#f2f3f5",
+      });
       lineY += 20;
     }
   }
 
   if (mediaLayout && mediaImage) {
-    drawRoundedImage(ctx, mediaImage, mediaLayout.x, mediaLayout.y, mediaLayout.width, mediaLayout.height, 4);
+    drawRoundedImage(
+      ctx,
+      mediaImage,
+      mediaLayout.x,
+      mediaLayout.y,
+      mediaLayout.width,
+      mediaLayout.height,
+      4,
+    );
   }
 
   return canvas.toBuffer("image/png");
 };
-

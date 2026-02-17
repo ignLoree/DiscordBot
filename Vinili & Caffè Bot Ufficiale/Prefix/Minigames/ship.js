@@ -1,25 +1,28 @@
-﻿const { AttachmentBuilder, EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const renderShipCanvas = require('../../Utils/Render/shipCanvas');
+﻿const { AttachmentBuilder, EmbedBuilder } = require("discord.js");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const renderShipCanvas = require("../../Utils/Render/shipCanvas");
 
 function extractId(raw) {
   if (!raw) return null;
-  const clean = String(raw).replace(/[<@!>]/g, '');
+  const clean = String(raw).replace(/[<@!>]/g, "");
   return /^\d{16,20}$/.test(clean) ? clean : null;
 }
 
 async function resolveUser(guild, token) {
   const id = extractId(token);
   if (!id) return null;
-  const member = guild.members.cache.get(id) || await guild.members.fetch(id).catch(() => null);
+  const member =
+    guild.members.cache.get(id) ||
+    (await guild.members.fetch(id).catch(() => null));
   return member?.user || null;
 }
 
 async function resolveReplyUser(message) {
   const ref = message.reference?.messageId;
   if (!ref) return null;
-  const replied = message.channel?.messages?.cache?.get(ref)
-    || await message.channel.messages.fetch(ref).catch(() => null);
+  const replied =
+    message.channel?.messages?.cache?.get(ref) ||
+    (await message.channel.messages.fetch(ref).catch(() => null));
   return replied?.author || null;
 }
 
@@ -29,7 +32,9 @@ async function resolveRandomGuildUser(guild, excludedIds = []) {
     await guild.members.fetch().catch(() => null);
   }
   const excluded = new Set(excludedIds.filter(Boolean));
-  const pool = guild.members.cache.filter((m) => !m.user?.bot && !excluded.has(m.user.id));
+  const pool = guild.members.cache.filter(
+    (m) => !m.user?.bot && !excluded.has(m.user.id),
+  );
   if (!pool.size) return null;
   const values = Array.from(pool.values());
   const member = values[Math.floor(Math.random() * values.length)];
@@ -37,7 +42,7 @@ async function resolveRandomGuildUser(guild, excludedIds = []) {
 }
 
 function trimName(name) {
-  const v = String(name || '').trim();
+  const v = String(name || "").trim();
   return v.length > 16 ? `${v.slice(0, 16)}...` : v;
 }
 
@@ -46,7 +51,7 @@ function randomPercent() {
 }
 
 module.exports = {
-  name: 'ship',
+  name: "ship",
 
   async execute(message, args) {
     await message.channel.sendTyping();
@@ -87,45 +92,59 @@ module.exports = {
 
     if (!right) {
       const warn = new EmbedBuilder()
-        .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.');
-      await safeMessageReply(message, { embeds: [warn], allowedMentions: { repliedUser: false } });
+        .setColor("Red")
+        .setDescription(
+          "<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.",
+        );
+      await safeMessageReply(message, {
+        embeds: [warn],
+        allowedMentions: { repliedUser: false },
+      });
       return;
     }
 
     if (left.id === right.id) {
       const warn = new EmbedBuilder()
-        .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Scegli due utenti diversi.');
-      await safeMessageReply(message, { embeds: [warn], allowedMentions: { repliedUser: false } });
+        .setColor("Red")
+        .setDescription(
+          "<:vegax:1443934876440068179> Scegli due utenti diversi.",
+        );
+      await safeMessageReply(message, {
+        embeds: [warn],
+        allowedMentions: { repliedUser: false },
+      });
       return;
     }
 
     try {
       const percent = randomPercent();
       const image = await renderShipCanvas({
-        leftAvatarUrl: left.displayAvatarURL({ extension: 'png', size: 512 }),
-        rightAvatarUrl: right.displayAvatarURL({ extension: 'png', size: 512 }),
+        leftAvatarUrl: left.displayAvatarURL({ extension: "png", size: 512 }),
+        rightAvatarUrl: right.displayAvatarURL({ extension: "png", size: 512 }),
         leftName: trimName(left.username),
         rightName: trimName(right.username),
         leftId: left.id,
         rightId: right.id,
-        percent
+        percent,
       });
 
-      const file = new AttachmentBuilder(image, { name: 'ship.png' });
+      const file = new AttachmentBuilder(image, { name: "ship.png" });
       await safeMessageReply(message, {
         content: `${left} e ${right}`,
         files: [file],
-        allowedMentions: { repliedUser: false, users: [left.id, right.id] }
+        allowedMentions: { repliedUser: false, users: [left.id, right.id] },
       });
     } catch (error) {
-      global.logger.error('[SHIP COMMAND] Render error:', error);
+      global.logger.error("[SHIP COMMAND] Render error:", error);
       const fail = new EmbedBuilder()
-        .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Non sono riuscito a generare la ship image.');
-      await safeMessageReply(message, { embeds: [fail], allowedMentions: { repliedUser: false } });
+        .setColor("Red")
+        .setDescription(
+          "<:vegax:1443934876440068179> Non sono riuscito a generare la ship image.",
+        );
+      await safeMessageReply(message, {
+        embeds: [fail],
+        allowedMentions: { repliedUser: false },
+      });
     }
-  }
+  },
 };
-

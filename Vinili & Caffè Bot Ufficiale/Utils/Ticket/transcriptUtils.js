@@ -1,54 +1,63 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function formatDate(timestamp) {
   try {
     const value = new Date(timestamp);
-    if (Number.isNaN(value.getTime())) return String(timestamp || '');
-    return value.toLocaleString('it-IT');
+    if (Number.isNaN(value.getTime())) return String(timestamp || "");
+    return value.toLocaleString("it-IT");
   } catch {
-    return String(timestamp || '');
+    return String(timestamp || "");
   }
 }
 
-const RICH_TOKEN_REGEX = /<a?:([a-zA-Z0-9_]+):(\d{17,20})>|<@!?(\d{17,20})>|<@&(\d{17,20})>|<#(\d{17,20})>/g;
+const RICH_TOKEN_REGEX =
+  /<a?:([a-zA-Z0-9_]+):(\d{17,20})>|<@!?(\d{17,20})>|<@&(\d{17,20})>|<#(\d{17,20})>/g;
 
 function getUserMentionLabel(message, userId) {
-  const member = message.guild?.members?.cache?.get(userId) || message.mentions?.members?.get?.(userId);
+  const member =
+    message.guild?.members?.cache?.get(userId) ||
+    message.mentions?.members?.get?.(userId);
   if (member?.displayName) return `@${member.displayName}`;
 
-  const user = message.client?.users?.cache?.get(userId) || message.mentions?.users?.get?.(userId);
+  const user =
+    message.client?.users?.cache?.get(userId) ||
+    message.mentions?.users?.get?.(userId);
   if (user?.username) return `@${user.username}`;
 
   return `@user-${userId}`;
 }
 
 function getRoleMentionLabel(message, roleId) {
-  const role = message.guild?.roles?.cache?.get(roleId) || message.mentions?.roles?.get?.(roleId);
+  const role =
+    message.guild?.roles?.cache?.get(roleId) ||
+    message.mentions?.roles?.get?.(roleId);
   if (role?.name) return `@${role.name}`;
   return `@role-${roleId}`;
 }
 
 function getChannelMentionLabel(message, channelId) {
-  const channel = message.guild?.channels?.cache?.get(channelId) || message.mentions?.channels?.get?.(channelId);
+  const channel =
+    message.guild?.channels?.cache?.get(channelId) ||
+    message.mentions?.channels?.get?.(channelId);
   if (channel?.name) return `#${channel.name}`;
   return `#channel-${channelId}`;
 }
 
 function renderRichTextHtml(message, text) {
-  const input = String(text || '');
-  let out = '';
+  const input = String(text || "");
+  let out = "";
   let last = 0;
-  const regex = new RegExp(RICH_TOKEN_REGEX.source, 'g');
+  const regex = new RegExp(RICH_TOKEN_REGEX.source, "g");
   let match;
 
   while ((match = regex.exec(input)) !== null) {
@@ -62,8 +71,8 @@ function renderRichTextHtml(message, text) {
     const channelId = match[5];
 
     if (emojiId) {
-      const animated = full.startsWith('<a:');
-      const ext = animated ? 'gif' : 'png';
+      const animated = full.startsWith("<a:");
+      const ext = animated ? "gif" : "png";
       const url = `https://cdn.discordapp.com/emojis/${emojiId}.${ext}?size=64&quality=lossless`;
       out += `<img class="custom-emoji" src="${escapeHtml(url)}" alt="${escapeHtml(`:${emojiName}:`)}" title="${escapeHtml(`:${emojiName}:`)}" loading="lazy">`;
     } else if (userId) {
@@ -80,35 +89,39 @@ function renderRichTextHtml(message, text) {
   }
 
   out += escapeHtml(input.slice(last));
-  return out.replace(/\n/g, '<br>');
+  return out.replace(/\n/g, "<br>");
 }
 
 function renderRichTextPlain(message, text) {
-  return String(text || '').replace(RICH_TOKEN_REGEX, (full, emojiName, emojiId, userId, roleId, channelId) => {
-    if (emojiId) return `:${emojiName}:`;
-    if (userId) return getUserMentionLabel(message, userId);
-    if (roleId) return getRoleMentionLabel(message, roleId);
-    if (channelId) return getChannelMentionLabel(message, channelId);
-    return full;
-  });
+  return String(text || "").replace(
+    RICH_TOKEN_REGEX,
+    (full, emojiName, emojiId, userId, roleId, channelId) => {
+      if (emojiId) return `:${emojiName}:`;
+      if (userId) return getUserMentionLabel(message, userId);
+      if (roleId) return getRoleMentionLabel(message, roleId);
+      if (channelId) return getChannelMentionLabel(message, channelId);
+      return full;
+    },
+  );
 }
 
 function messageContentToHtml(message) {
-  let body = '';
+  let body = "";
   if (message.content) {
     body += `<div class="content">${renderRichTextHtml(message, message.content)}</div>`;
   }
 
   if (Array.isArray(message.embeds) && message.embeds.length > 0) {
     for (const embed of message.embeds) {
-      const fieldsHtml = Array.isArray(embed.fields) && embed.fields.length > 0
-        ? `<div class="embed-fields">${embed.fields.map((field) => `<div class="embed-field"><div class="embed-field-name">${renderRichTextHtml(message, field.name)}</div><div class="embed-field-value">${renderRichTextHtml(message, field.value)}</div></div>`).join('')}</div>`
-        : '';
+      const fieldsHtml =
+        Array.isArray(embed.fields) && embed.fields.length > 0
+          ? `<div class="embed-fields">${embed.fields.map((field) => `<div class="embed-field"><div class="embed-field-name">${renderRichTextHtml(message, field.name)}</div><div class="embed-field-value">${renderRichTextHtml(message, field.value)}</div></div>`).join("")}</div>`
+          : "";
 
       body += `
         <div class="embed">
-          ${embed.title ? `<div class="embed-title">${renderRichTextHtml(message, embed.title)}</div>` : ''}
-          ${embed.description ? `<div class="embed-description">${renderRichTextHtml(message, embed.description)}</div>` : ''}
+          ${embed.title ? `<div class="embed-title">${renderRichTextHtml(message, embed.title)}</div>` : ""}
+          ${embed.description ? `<div class="embed-description">${renderRichTextHtml(message, embed.description)}</div>` : ""}
           ${fieldsHtml}
         </div>
       `;
@@ -117,8 +130,11 @@ function messageContentToHtml(message) {
 
   if (message.attachments?.size > 0) {
     const attachmentItems = Array.from(message.attachments.values())
-      .map((attachment) => `<li><a href="${escapeHtml(attachment.url)}" target="_blank" rel="noreferrer">${escapeHtml(attachment.name || attachment.url)}</a></li>`)
-      .join('');
+      .map(
+        (attachment) =>
+          `<li><a href="${escapeHtml(attachment.url)}" target="_blank" rel="noreferrer">${escapeHtml(attachment.name || attachment.url)}</a></li>`,
+      )
+      .join("");
     body += `<ul class="attachments">${attachmentItems}</ul>`;
   }
 
@@ -134,7 +150,9 @@ async function fetchAllMessages(channel, maxMessages = 2000) {
   let beforeId = null;
 
   while (results.length < maxMessages) {
-    const chunk = await channel.messages.fetch({ limit: 100, ...(beforeId ? { before: beforeId } : {}) }).catch(() => null);
+    const chunk = await channel.messages
+      .fetch({ limit: 100, ...(beforeId ? { before: beforeId } : {}) })
+      .catch(() => null);
     if (!chunk || chunk.size === 0) break;
 
     const list = Array.from(chunk.values());
@@ -145,19 +163,23 @@ async function fetchAllMessages(channel, maxMessages = 2000) {
     if (!beforeId) break;
   }
 
-  return results.sort((a, b) => a.createdTimestamp - b.createdTimestamp).slice(0, maxMessages);
+  return results
+    .sort((a, b) => a.createdTimestamp - b.createdTimestamp)
+    .slice(0, maxMessages);
 }
 
 async function createTranscript(channel) {
   const sorted = await fetchAllMessages(channel);
   let txt = `Transcript of: ${channel.name}\n\n`;
   sorted.forEach((msg) => {
-    let content = renderRichTextPlain(msg, msg.content || '');
+    let content = renderRichTextPlain(msg, msg.content || "");
     if (msg.embeds.length > 0) {
       msg.embeds.forEach((embed, i) => {
         content += `\n[Embed ${i + 1}]\n`;
-        if (embed.title) content += `Title: ${renderRichTextPlain(msg, embed.title)}\n`;
-        if (embed.description) content += `Description: ${renderRichTextPlain(msg, embed.description)}\n`;
+        if (embed.title)
+          content += `Title: ${renderRichTextPlain(msg, embed.title)}\n`;
+        if (embed.description)
+          content += `Description: ${renderRichTextPlain(msg, embed.description)}\n`;
         if (embed.fields) {
           embed.fields.forEach((f) => {
             content += `${renderRichTextPlain(msg, f.name)}: ${renderRichTextPlain(msg, f.value)}\n`;
@@ -170,7 +192,7 @@ async function createTranscript(channel) {
         content += `\n[Attachment] ${att.url}`;
       });
     }
-    if (!content) content = '*No message content*';
+    if (!content) content = "*No message content*";
     txt += `[${new Date(msg.createdTimestamp).toLocaleString()}] ${msg.author.tag}: ${content}\n\n`;
   });
   return txt;
@@ -178,16 +200,19 @@ async function createTranscript(channel) {
 
 async function createTranscriptHtml(channel) {
   const messages = await fetchAllMessages(channel);
-  const guildName = escapeHtml(channel.guild?.name || 'Server');
-  const channelName = escapeHtml(channel.name || 'ticket');
+  const guildName = escapeHtml(channel.guild?.name || "Server");
+  const channelName = escapeHtml(channel.name || "ticket");
 
-  const rows = messages.map((message) => {
-    const avatar = message.author?.displayAvatarURL?.({ extension: 'png', size: 64 }) || '';
-    const author = escapeHtml(message.author?.tag || 'Unknown User');
-    const time = escapeHtml(formatDate(message.createdTimestamp));
-    const messageBody = messageContentToHtml(message);
+  const rows = messages
+    .map((message) => {
+      const avatar =
+        message.author?.displayAvatarURL?.({ extension: "png", size: 64 }) ||
+        "";
+      const author = escapeHtml(message.author?.tag || "Unknown User");
+      const time = escapeHtml(formatDate(message.createdTimestamp));
+      const messageBody = messageContentToHtml(message);
 
-    return `
+      return `
       <article class="msg">
         <img class="avatar" src="${escapeHtml(avatar)}" alt="avatar">
         <div class="right">
@@ -196,7 +221,8 @@ async function createTranscriptHtml(channel) {
         </div>
       </article>
     `;
-  }).join('');
+    })
+    .join("");
 
   return `<!doctype html>
 <html lang="it">
@@ -313,16 +339,20 @@ async function createTranscriptHtml(channel) {
 }
 
 async function saveTranscriptHtml(channel, html) {
-  const basePath = path.join(process.cwd(), 'local_transcripts', String(channel.guild?.id || 'global'));
+  const basePath = path.join(
+    process.cwd(),
+    "local_transcripts",
+    String(channel.guild?.id || "global"),
+  );
   fs.mkdirSync(basePath, { recursive: true });
   const filename = `transcript_${channel.id}_${Date.now()}.html`;
   const filepath = path.join(basePath, filename);
-  fs.writeFileSync(filepath, html, 'utf8');
+  fs.writeFileSync(filepath, html, "utf8");
   return filepath;
 }
 
 module.exports = {
   createTranscript,
   createTranscriptHtml,
-  saveTranscriptHtml
+  saveTranscriptHtml,
 };

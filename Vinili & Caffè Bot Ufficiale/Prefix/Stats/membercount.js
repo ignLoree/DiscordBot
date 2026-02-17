@@ -1,26 +1,26 @@
-﻿const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const { EmbedBuilder } = require('discord.js');
+﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
-    name: 'membercount',
-    prefixOverride: "?",
+  name: "membercount",
+  prefixOverride: "?",
 
-    async execute(message) {
-        await message.channel.sendTyping();
-        const guild = message.guild;
-        const totalMembers = guild.memberCount;
+  async execute(message) {
+    await message.channel.sendTyping();
+    const guild = message.guild;
+    const totalMembers = guild.memberCount;
 
-        const embed = new EmbedBuilder()
-            .setColor('#6f4e37')
-            .addFields(
-                {
-                    name: `**<:member_role_icon:1330530086792728618> Members**`,
-                    value: `${totalMembers}`
-                }
-            )
-            .setTimestamp()
+    const embed = new EmbedBuilder()
+      .setColor("#6f4e37")
+      .addFields({
+        name: `**<:member_role_icon:1330530086792728618> Members**`,
+        value: `${totalMembers}`,
+      })
+      .setTimestamp();
 
-        await safeMessageReply(message, { embeds: [embed], allowedMentions: { repliedUser: false } });
-    }
-}
-
+    await safeMessageReply(message, {
+      embeds: [embed],
+      allowedMentions: { repliedUser: false },
+    });
+  },
+};

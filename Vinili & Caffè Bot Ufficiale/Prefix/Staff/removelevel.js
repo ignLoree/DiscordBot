@@ -1,7 +1,10 @@
-const { EmbedBuilder } = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const { ExpUser } = require('../../Schemas/Community/communitySchemas');
-const { getLevelInfo, syncLevelRolesForMember } = require('../../Services/Community/expService');
+const { EmbedBuilder } = require("discord.js");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { ExpUser } = require("../../Schemas/Community/communitySchemas");
+const {
+  getLevelInfo,
+  syncLevelRolesForMember,
+} = require("../../Services/Community/expService");
 
 function roundToNearest50(value) {
   return Math.round(value / 50) * 50;
@@ -13,13 +16,13 @@ function getLevelStep(level) {
 
   if (safeLevel >= 10) {
     const over10 = safeLevel - 9;
-    step += 120 + (over10 * 28) + Math.floor((over10 * over10) * 1.3);
+    step += 120 + over10 * 28 + Math.floor(over10 * over10 * 1.3);
   }
   if (safeLevel >= 30) {
-    step += 120 + ((safeLevel - 30) * 18);
+    step += 120 + (safeLevel - 30) * 18;
   }
   if (safeLevel >= 50) {
-    step += 220 + ((safeLevel - 50) * 25);
+    step += 220 + (safeLevel - 50) * 25;
   }
 
   return Math.max(110, step);
@@ -39,14 +42,14 @@ function getTotalExpForLevel(level) {
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
   if (fromMention) return fromMention;
-  const id = String(raw || '').replace(/[<@!>]/g, '');
+  const id = String(raw || "").replace(/[<@!>]/g, "");
   if (!/^\d{16,20}$/.test(id)) return null;
   return message.client.users.fetch(id).catch(() => null);
 }
 
 module.exports = {
-  name: 'removelevel',
-  aliases: ['removelvl', 'levelremove', 'dellvl'],
+  name: "removelevel",
+  aliases: ["removelvl", "levelremove", "dellvl"],
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
@@ -56,9 +59,14 @@ module.exports = {
 
     if (!target || !Number.isInteger(amount) || amount <= 0) {
       const help = new EmbedBuilder()
-        .setColor('Red')
-        .setDescription('<:vegax:1443934876440068179> Uso corretto: `+removelevel <@utente|id> <livelli>`');
-      await safeMessageReply(message, { embeds: [help], allowedMentions: { repliedUser: false } });
+        .setColor("Red")
+        .setDescription(
+          "<:vegax:1443934876440068179> Uso corretto: `+removelevel <@utente|id> <livelli>`",
+        );
+      await safeMessageReply(message, {
+        embeds: [help],
+        allowedMentions: { repliedUser: false },
+      });
       return;
     }
 
@@ -82,22 +90,25 @@ module.exports = {
     await syncLevelRolesForMember(message.guild, target.id, doc.level);
 
     const done = new EmbedBuilder()
-      .setColor('#6f4e37')
-      .setTitle('<:vegacheckmark:1443666279058772028> Livelli Aggiornati')
-      .setDescription(`Ho rimosso **${Math.min(amount, currentLevel)} livelli** a ${target}.`)
+      .setColor("#6f4e37")
+      .setTitle("<:vegacheckmark:1443666279058772028> Livelli Aggiornati")
+      .setDescription(
+        `Ho rimosso **${Math.min(amount, currentLevel)} livelli** a ${target}.`,
+      )
       .addFields(
-        { name: 'Livello', value: `\`${currentLevel}\` -> \`${doc.level}\``, inline: true },
-        { name: 'EXP Rimossa', value: `\`-${removedExp}\``, inline: true },
-        { name: 'EXP Totale', value: `\`${finalExp}\``, inline: true }
+        {
+          name: "Livello",
+          value: `\`${currentLevel}\` -> \`${doc.level}\``,
+          inline: true,
+        },
+        { name: "EXP Rimossa", value: `\`-${removedExp}\``, inline: true },
+        { name: "EXP Totale", value: `\`${finalExp}\``, inline: true },
       )
       .setThumbnail(target.displayAvatarURL({ size: 256 }));
 
     await safeMessageReply(message, {
       embeds: [done],
-      allowedMentions: { repliedUser: false, users: [target.id] }
+      allowedMentions: { repliedUser: false, users: [target.id] },
     });
-  }
+  },
 };
-
-
-

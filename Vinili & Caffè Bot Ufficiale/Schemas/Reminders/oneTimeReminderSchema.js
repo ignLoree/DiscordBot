@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { model, Schema } = mongoose;
 
 const oneTimeReminderSchema = new Schema({
@@ -7,7 +7,9 @@ const oneTimeReminderSchema = new Schema({
   message: { type: String, required: true },
   sendAt: { type: Date, required: true },
   sentAt: { type: Date, default: null },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.models.OneTimeReminder || model('OneTimeReminder', oneTimeReminderSchema);
+module.exports =
+  mongoose.models.OneTimeReminder ||
+  model("OneTimeReminder", oneTimeReminderSchema);

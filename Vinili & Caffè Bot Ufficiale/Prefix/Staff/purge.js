@@ -1,6 +1,13 @@
-﻿const { EmbedBuilder } = require('discord.js');
-const { resolveTarget, extractUserId } = require('../../Utils/Moderation/prefixModeration');
-const { getModConfig, createModCase, logModCase } = require('../../Utils/Moderation/moderation');
+﻿const { EmbedBuilder } = require("discord.js");
+const {
+  resolveTarget,
+  extractUserId,
+} = require("../../Utils/Moderation/prefixModeration");
+const {
+  getModConfig,
+  createModCase,
+  logModCase,
+} = require("../../Utils/Moderation/moderation");
 
 const DISCORD_BULK_DELETE_MAX = 100;
 const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -18,11 +25,13 @@ function chunkArray(array, size) {
 }
 
 function normalizeArgToken(raw) {
-  return String(raw || '').trim().toLowerCase();
+  return String(raw || "")
+    .trim()
+    .toLowerCase();
 }
 
 function isMentionToken(raw) {
-  return /^<@!?(\d+)>$/.test(String(raw || '').trim());
+  return /^<@!?(\d+)>$/.test(String(raw || "").trim());
 }
 
 function pickAmountToken(args) {
@@ -34,13 +43,13 @@ function pickAmountToken(args) {
   let invalidToken = null;
 
   for (const rawArg of args) {
-    const raw = String(rawArg || '').trim();
+    const raw = String(rawArg || "").trim();
     const normalized = normalizeArgToken(raw);
     if (!normalized) continue;
     if (isMentionToken(raw)) continue;
     if (/^\d{17,20}$/.test(normalized)) continue;
-    if (normalized === 'all') {
-      token = 'all';
+    if (normalized === "all") {
+      token = "all";
       continue;
     }
     if (/^\d+$/.test(normalized)) {
@@ -56,20 +65,30 @@ function pickAmountToken(args) {
 }
 
 module.exports = {
-  name: 'purge',
+  name: "purge",
 
   async execute(message, args, client) {
     await message.channel.sendTyping();
 
     const userArgIndex = Array.isArray(args)
-      ? args.findIndex((arg) => Boolean(extractUserId(String(arg || ''), message)))
+      ? args.findIndex((arg) =>
+          Boolean(extractUserId(String(arg || ""), message)),
+        )
       : -1;
-    const { user } = await resolveTarget(message, args, userArgIndex >= 0 ? userArgIndex : 0);
+    const { user } = await resolveTarget(
+      message,
+      args,
+      userArgIndex >= 0 ? userArgIndex : 0,
+    );
     const config = await getModConfig(message.guild.id);
 
-    const deleteLater = (msg) => setTimeout(() => msg.delete().catch(() => {}), 5000);
+    const deleteLater = (msg) =>
+      setTimeout(() => msg.delete().catch(() => {}), 5000);
     const replyTemp = async (payload) => {
-      const msg = await message.channel.send({ ...payload, allowedMentions: { repliedUser: false } });
+      const msg = await message.channel.send({
+        ...payload,
+        allowedMentions: { repliedUser: false },
+      });
       deleteLater(msg);
       return msg;
     };
@@ -79,14 +98,23 @@ module.exports = {
     const { token: amountToken, invalidToken } = pickAmountToken(args);
     const requestedRaw = normalizeArgToken(amountToken);
     const requestedAmount = Number(requestedRaw);
-    const hasNumericAmount = Number.isFinite(requestedAmount) && requestedAmount > 0;
+    const hasNumericAmount =
+      Number.isFinite(requestedAmount) && requestedAmount > 0;
 
-    if ((requestedRaw && requestedRaw !== 'all' && !hasNumericAmount) || (!requestedRaw && invalidToken)) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Quantità non valida. Usa un numero positivo oppure `all`.' });
+    if (
+      (requestedRaw && requestedRaw !== "all" && !hasNumericAmount) ||
+      (!requestedRaw && invalidToken)
+    ) {
+      await replyTemp({
+        content:
+          "<:vegax:1443934876440068179> Quantità non valida. Usa un numero positivo oppure `all`.",
+      });
       return;
     }
 
-    const targetCount = hasNumericAmount ? requestedAmount : Number.POSITIVE_INFINITY;
+    const targetCount = hasNumericAmount
+      ? requestedAmount
+      : Number.POSITIVE_INFINITY;
 
     let scanned = 0;
     let cursor = null;
@@ -94,10 +122,12 @@ module.exports = {
     const candidates = [];
 
     while (candidates.length < targetCount) {
-      const batch = await message.channel.messages.fetch({
-        limit: DISCORD_BULK_DELETE_MAX,
-        ...(cursor ? { before: cursor } : {})
-      }).catch(() => null);
+      const batch = await message.channel.messages
+        .fetch({
+          limit: DISCORD_BULK_DELETE_MAX,
+          ...(cursor ? { before: cursor } : {}),
+        })
+        .catch(() => null);
 
       if (!batch?.size) break;
 
@@ -124,7 +154,9 @@ module.exports = {
     }
 
     if (!candidates.length) {
-      await replyTemp({ content: '<:vegax:1443934876440068179> Nessun messaggio da eliminare.' });
+      await replyTemp({
+        content: "<:vegax:1443934876440068179> Nessun messaggio da eliminare.",
+      });
       return;
     }
 
@@ -144,43 +176,48 @@ module.exports = {
 
     const recentChunks = chunkArray(recent, DISCORD_BULK_DELETE_MAX);
     for (const chunk of recentChunks) {
-      const deleted = await message.channel.bulkDelete(chunk, true).catch(() => null);
+      const deleted = await message.channel
+        .bulkDelete(chunk, true)
+        .catch(() => null);
       if (deleted?.size) deletedCount += deleted.size;
       await sleep(250);
     }
 
     for (const msg of old) {
-      const ok = await msg.delete().then(() => true).catch(() => false);
+      const ok = await msg
+        .delete()
+        .then(() => true)
+        .catch(() => false);
       if (ok) deletedCount += 1;
       await sleep(400);
     }
 
     const { doc } = await createModCase({
       guildId: message.guild.id,
-      action: 'PURGE',
+      action: "PURGE",
       userId: user ? user.id : `CHANNEL:${message.channel.id}`,
       modId: message.author.id,
       reason: user
         ? `Purge ${deletedCount} messaggi di ${user.tag}`
         : `Purge ${deletedCount} messaggi in #${message.channel.name}`,
-      context: { channelId: message.channel.id }
+      context: { channelId: message.channel.id },
     });
 
     await logModCase({ client, guild: message.guild, modCase: doc, config });
 
     const summary = new EmbedBuilder()
-      .setColor(client.config?.embedModLight || '#6f4e37')
+      .setColor(client.config?.embedModLight || "#6f4e37")
       .setDescription(
         `<a:VC_Channel:1448670215444631706> Canale: <#${message.channel.id}>\n` +
-        `<a:VC_Staff:1448670376736456787> Staffer: <@${message.author.id}>\n` +
-        `<:VC_Chat:1448694742237053061> Messaggi scansionati: ${scanned}\n` +
-        `<:VC_Stats:1448695844923510884> Richiesta: ${Number.isFinite(targetCount) ? targetCount : 'ALL'}\n` +
-        `<:VC_Search:1460657088899584265> Messaggi identificati: ${candidates.length}\n` +
-        `<:VC_Trash:1460645075242451025> Messaggi cancellati: ${deletedCount}\n` +
-        `<:dot:1443660294596329582> Bulk (<14 giorni): ${recent.length}\n` +
-        `<:dot:1443660294596329582> Singoli (>=14 giorni): ${old.length}`
+          `<a:VC_Staff:1448670376736456787> Staffer: <@${message.author.id}>\n` +
+          `<:VC_Chat:1448694742237053061> Messaggi scansionati: ${scanned}\n` +
+          `<:VC_Stats:1448695844923510884> Richiesta: ${Number.isFinite(targetCount) ? targetCount : "ALL"}\n` +
+          `<:VC_Search:1460657088899584265> Messaggi identificati: ${candidates.length}\n` +
+          `<:VC_Trash:1460645075242451025> Messaggi cancellati: ${deletedCount}\n` +
+          `<:dot:1443660294596329582> Bulk (<14 giorni): ${recent.length}\n` +
+          `<:dot:1443660294596329582> Singoli (>=14 giorni): ${old.length}`,
       );
 
     await replyTemp({ embeds: [summary] });
-  }
+  },
 };

@@ -1,10 +1,16 @@
 const canvasModule = require("canvas");
-const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback } = require("./canvasFonts");
+const {
+  registerCanvasFonts,
+  fontStack,
+  drawTextWithSpecialFallback,
+} = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth, maxLines = Infinity) {
   const lines = [];
-  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const words = String(text || "")
+    .split(/\s+/)
+    .filter(Boolean);
   let line = "";
   for (const word of words) {
     const test = line ? `${line} ${word}` : word;
@@ -30,7 +36,12 @@ function drawImageCover(ctx, image, x, y, w, h) {
   ctx.drawImage(image, sx, sy, sw, sh, x, y, w, h);
 }
 
-module.exports = async function renderQuoteCanvas({ avatarUrl, message, username, footerText }) {
+module.exports = async function renderQuoteCanvas({
+  avatarUrl,
+  message,
+  username,
+  footerText,
+}) {
   if (!canvasModule) {
     throw new Error("Canvas module not available");
   }
@@ -87,7 +98,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
     size: 18,
     weight: "italic",
     color: "rgba(255,255,255,0.7)",
-    normalizeCompatibility: true
+    normalizeCompatibility: true,
   });
 
   ctx.font = fontStack(fontSize, "600");
@@ -96,7 +107,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
     drawTextWithSpecialFallback(ctx, line, textX, y, {
       size: fontSize,
       weight: "600",
-      color: "#f7f7f7"
+      color: "#f7f7f7",
     });
     y += lineHeight;
   }
@@ -107,7 +118,7 @@ module.exports = async function renderQuoteCanvas({ avatarUrl, message, username
     drawTextWithSpecialFallback(ctx, footerText, width - 40, height - 40, {
       size: 20,
       weight: "700",
-      color: "rgba(255,255,255,0.9)"
+      color: "rgba(255,255,255,0.9)",
     });
   }
 

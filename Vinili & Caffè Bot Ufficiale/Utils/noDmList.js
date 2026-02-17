@@ -46,5 +46,5 @@ async function removeNoDm(guildId, userId) {
 module.exports = {
   getNoDmSet,
   addNoDm,
-  removeNoDm
+  removeNoDm,
 };

@@ -1,7 +1,7 @@
-const { PermissionsBitField } = require('discord.js');
-const IDs = require('../Config/ids');
+const { PermissionsBitField } = require("discord.js");
+const IDs = require("../Config/ids");
 
-const COUNTER_PREFIX = '༄☕︲User: ';
+const COUNTER_PREFIX = "༄☕︲User: ";
 const primaryTimers = new Map();
 const secondaryTimers = new Map();
 
@@ -14,8 +14,10 @@ async function resolveCounterChannel(guild) {
   if (!guild) return null;
   const channelId = IDs.channels.countUtenti;
   if (!channelId) return null;
-  return guild.channels.cache.get(channelId)
-    || await guild.channels.fetch(channelId).catch(() => null);
+  return (
+    guild.channels.cache.get(channelId) ||
+    (await guild.channels.fetch(channelId).catch(() => null))
+  );
 }
 
 async function resolveReliableMemberCount(guild) {
@@ -36,11 +38,13 @@ async function updateMemberCounterNow(guild) {
   const channel = await resolveCounterChannel(guild);
   if (!channel) return false;
 
-  const me = guild.members.me || await guild.members.fetchMe().catch(() => null);
-  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) return false;
+  const me =
+    guild.members.me || (await guild.members.fetchMe().catch(() => null));
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels))
+    return false;
 
   const nextName = buildCounterName(await resolveReliableMemberCount(guild));
-  if (String(channel.name || '') === nextName) return true;
+  if (String(channel.name || "") === nextName) return true;
 
   await channel.setName(nextName).catch(() => {});
   return true;
@@ -82,5 +86,5 @@ function scheduleMemberCounterRefresh(guild, options = {}) {
 module.exports = {
   buildCounterName,
   updateMemberCounterNow,
-  scheduleMemberCounterRefresh
+  scheduleMemberCounterRefresh,
 };

@@ -1,5 +1,5 @@
-const { ExpUser } = require('../../Schemas/Community/communitySchemas');
-const IDs = require('../Config/ids');
+const { ExpUser } = require("../../Schemas/Community/communitySchemas");
+const IDs = require("../Config/ids");
 
 const ROLE_COOLDOWN_BYPASS = IDs.roles.Staff;
 const ROLE_LEVEL_30 = IDs.roles.Level30;
@@ -16,7 +16,7 @@ function hasRole(member, roleId) {
   if (!member || !roleId) return false;
   const roles = member.roles;
   if (!roles) return false;
-  if (roles.cache && typeof roles.cache.has === 'function') {
+  if (roles.cache && typeof roles.cache.has === "function") {
     return roles.cache.has(roleId);
   }
   if (Array.isArray(roles)) {
@@ -43,7 +43,9 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
   let level = 0;
   if (guildId && userId) {
     try {
-      const user = await ExpUser.findOne({ guildId, userId }).select('level').lean();
+      const user = await ExpUser.findOne({ guildId, userId })
+        .select("level")
+        .lean();
       level = Number(user?.level || 0);
     } catch {
       level = 0;
@@ -59,26 +61,23 @@ function consumeUserCooldown({ client, guildId, userId, cooldownSeconds }) {
   }
 
   const bucket = getBucket(client);
-  const key = `${guildId || 'dm'}:${userId}`;
+  const key = `${guildId || "dm"}:${userId}`;
   const now = Date.now();
   const endsAt = bucket.get(key) || 0;
 
   if (endsAt > now) {
     return {
       ok: false,
-      remainingMs: endsAt - now
+      remainingMs: endsAt - now,
     };
   }
 
-  bucket.set(key, now + (seconds * 1000));
+  bucket.set(key, now + seconds * 1000);
   return { ok: true, remainingMs: 0 };
 }
 
 module.exports = {
   computeCooldownSeconds,
   getUserCommandCooldownSeconds,
-  consumeUserCooldown
+  consumeUserCooldown,
 };
-
-
-

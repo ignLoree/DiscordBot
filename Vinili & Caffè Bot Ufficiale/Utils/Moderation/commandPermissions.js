@@ -1,44 +1,72 @@
-const fs = require('fs');
-const path = require('path');
-const { EmbedBuilder, PermissionsBitField } = require('discord.js');
-const IDs = require('../Config/ids');
-const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission } = require('./temporaryCommandPermissions');
-const PERMISSIONS_PATH = path.join(process.cwd(), 'permissions.json');
-const EMPTY_PERMISSIONS = { slash: {}, prefix: {}, buttons: {}, selectMenus: {}, modals: {} };
+const fs = require("fs");
+const path = require("path");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const IDs = require("../Config/ids");
+const {
+  buildPrefixLookupKeys,
+  buildSlashLookupKeys,
+  hasTemporaryCommandPermission,
+} = require("./temporaryCommandPermissions");
+const PERMISSIONS_PATH = path.join(process.cwd(), "permissions.json");
+const EMPTY_PERMISSIONS = {
+  slash: {},
+  prefix: {},
+  buttons: {},
+  selectMenus: {},
+  modals: {},
+};
 let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
 let idsFallbackCache = null;
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const ALLOWED_GUILD_IDS = new Set(
-  [IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String)
+  [IDs?.guilds?.main, IDs?.guilds?.test].filter(Boolean).map(String),
 );
 function isAllowedGuildUfficiale(guildId) {
   return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
 }
 
 const TICKET_BUTTON_IDS = new Set([
-  'ticket_partnership', 'ticket_highstaff', 'ticket_supporto', 'ticket_open_desc_modal',
-  'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo'
+  "ticket_partnership",
+  "ticket_highstaff",
+  "ticket_supporto",
+  "ticket_open_desc_modal",
+  "claim_ticket",
+  "unclaim",
+  "close_ticket",
+  "close_ticket_motivo",
 ]);
 
 const VERIFY_OR_TICKET_IDS = new Set([
-  'verify_start', 'verify_enter',
-  'ticket_partnership', 'ticket_highstaff', 'ticket_supporto', 'ticket_open_desc_modal',
-  'claim_ticket', 'unclaim', 'close_ticket', 'close_ticket_motivo',
-  'ticket_open_menu'
+  "verify_start",
+  "verify_enter",
+  "ticket_partnership",
+  "ticket_highstaff",
+  "ticket_supporto",
+  "ticket_open_desc_modal",
+  "claim_ticket",
+  "unclaim",
+  "close_ticket",
+  "close_ticket_motivo",
+  "ticket_open_menu",
 ]);
 function isVerifyOrTicketInteraction(customId) {
-  if (!customId || typeof customId !== 'string') return false;
+  if (!customId || typeof customId !== "string") return false;
   const id = String(customId).trim();
   if (VERIFY_OR_TICKET_IDS.has(id)) return true;
-  if (id.startsWith('verify_code:') || id.startsWith('modal_close_ticket') || id.startsWith('ticket_open_desc_modal_submit:')) return true;
+  if (
+    id.startsWith("verify_code:") ||
+    id.startsWith("modal_close_ticket") ||
+    id.startsWith("ticket_open_desc_modal_submit:")
+  )
+    return true;
   return false;
 }
 
 function getIdsConfig() {
   if (idsFallbackCache) return idsFallbackCache;
   try {
-    idsFallbackCache = require('../Config/ids');
+    idsFallbackCache = require("../Config/ids");
     return idsFallbackCache;
   } catch {
     return {};
@@ -50,7 +78,7 @@ function loadPermissions() {
     if (!fs.existsSync(PERMISSIONS_PATH)) return EMPTY_PERMISSIONS;
     const stat = fs.statSync(PERMISSIONS_PATH);
     if (cache.data && cache.mtimeMs === stat.mtimeMs) return cache.data;
-    const raw = fs.readFileSync(PERMISSIONS_PATH, 'utf-8');
+    const raw = fs.readFileSync(PERMISSIONS_PATH, "utf-8");
     const parsed = JSON.parse(raw);
     cache = { mtimeMs: stat.mtimeMs, data: parsed || EMPTY_PERMISSIONS };
     return cache.data;
@@ -66,10 +94,10 @@ function resolveRoleReference(value) {
   if (/^\d{16,20}$/.test(raw)) return raw;
 
   let key = raw;
-  if (key.startsWith('ids.roles.')) key = key.slice('ids.roles.'.length);
-  else if (key.startsWith('roles.')) key = key.slice('roles.'.length);
+  if (key.startsWith("ids.roles.")) key = key.slice("ids.roles.".length);
+  else if (key.startsWith("roles.")) key = key.slice("roles.".length);
 
-  const idsCfg = (typeof IDs !== 'undefined' && IDs) ? IDs : getIdsConfig();
+  const idsCfg = typeof IDs !== "undefined" && IDs ? IDs : getIdsConfig();
   const resolved = idsCfg?.roles?.[key];
   if (!resolved) return null;
   return String(resolved);
@@ -77,9 +105,7 @@ function resolveRoleReference(value) {
 
 function normalizeRoleList(roleIds) {
   if (!Array.isArray(roleIds)) return roleIds;
-  return roleIds
-    .map((value) => resolveRoleReference(value))
-    .filter(Boolean);
+  return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
 }
 
 function collectMemberRoleIds(member) {
@@ -87,7 +113,7 @@ function collectMemberRoleIds(member) {
   const ids = new Set();
 
   const cache = member?.roles?.cache;
-  if (cache && typeof cache.forEach === 'function') {
+  if (cache && typeof cache.forEach === "function") {
     cache.forEach((_, roleId) => ids.add(String(roleId)));
   }
 
@@ -122,12 +148,13 @@ function hasAnyRole(member, roleIds) {
 async function fetchLiveMember(entity) {
   const guild = entity?.guild || entity?.member?.guild || null;
   const userId =
-    entity?.user?.id
-    || entity?.author?.id
-    || entity?.member?.id
-    || entity?.member?.user?.id
-    || null;
-  if (!guild || !userId || typeof guild.members?.fetch !== 'function') return null;
+    entity?.user?.id ||
+    entity?.author?.id ||
+    entity?.member?.id ||
+    entity?.member?.user?.id ||
+    null;
+  if (!guild || !userId || typeof guild.members?.fetch !== "function")
+    return null;
   return guild.members.fetch(userId).catch(() => null);
 }
 
@@ -142,17 +169,18 @@ function resolveSlashRoles(data, commandName, groupName, subcommandName) {
   const cmd = data?.slash?.[commandName];
   if (!cmd) return null;
   if (Array.isArray(cmd)) return normalizeRoleList(cmd);
-  if (typeof cmd !== 'object') return null;
+  if (typeof cmd !== "object") return null;
   const subcommands = cmd.subcommands || {};
   if (groupName && subcommandName) {
     const key = `${groupName}.${subcommandName}`;
-    if (Array.isArray(subcommands[key])) return normalizeRoleList(subcommands[key]);
+    if (Array.isArray(subcommands[key]))
+      return normalizeRoleList(subcommands[key]);
   }
   if (subcommandName && Array.isArray(subcommands[subcommandName])) {
     return normalizeRoleList(subcommands[subcommandName]);
   }
   if (Array.isArray(cmd.roles)) return normalizeRoleList(cmd.roles);
-  if (typeof cmd.roles === 'string') {
+  if (typeof cmd.roles === "string") {
     const resolved = resolveRoleReference(cmd.roles);
     return resolved ? [resolved] : [];
   }
@@ -163,13 +191,13 @@ function resolvePrefixRoles(data, commandName, subcommandName = null) {
   const cmd = data?.prefix?.[commandName];
   if (!cmd) return null;
   if (Array.isArray(cmd)) return normalizeRoleList(cmd);
-  if (typeof cmd !== 'object') return null;
+  if (typeof cmd !== "object") return null;
   const subcommands = cmd.subcommands || {};
   if (subcommandName && Array.isArray(subcommands[subcommandName])) {
     return normalizeRoleList(subcommands[subcommandName]);
   }
   if (Array.isArray(cmd.roles)) return normalizeRoleList(cmd.roles);
-  if (typeof cmd.roles === 'string') {
+  if (typeof cmd.roles === "string") {
     const resolved = resolveRoleReference(cmd.roles);
     return resolved ? [resolved] : [];
   }
@@ -177,14 +205,14 @@ function resolvePrefixRoles(data, commandName, subcommandName = null) {
 }
 
 function resolveComponentPolicy(map, customId) {
-  if (!map || typeof map !== 'object') return null;
+  if (!map || typeof map !== "object") return null;
 
   if (Object.prototype.hasOwnProperty.call(map, customId)) {
     return map[customId];
   }
 
   const wildcardKeys = Object.keys(map)
-    .filter((key) => key.endsWith('*'))
+    .filter((key) => key.endsWith("*"))
     .sort((a, b) => b.length - a.length);
 
   for (const key of wildcardKeys) {
@@ -198,7 +226,7 @@ function resolveComponentPolicy(map, customId) {
 function normalizeButtonPolicy(policy) {
   if (policy == null) return null;
 
-  if (typeof policy === 'string') {
+  if (typeof policy === "string") {
     const resolved = resolveRoleReference(policy);
     return { roles: resolved ? [resolved] : [] };
   }
@@ -207,20 +235,24 @@ function normalizeButtonPolicy(policy) {
     return { roles: normalizeRoleList(policy) };
   }
 
-  if (typeof policy === 'object') {
+  if (typeof policy === "object") {
     let roles = null;
     if (Array.isArray(policy.roles)) {
       roles = normalizeRoleList(policy.roles);
-    } else if (typeof policy.roles === 'string') {
+    } else if (typeof policy.roles === "string") {
       const resolved = resolveRoleReference(policy.roles);
       roles = resolved ? [resolved] : [];
     }
 
     const parsedOwnerSegment = Number.parseInt(policy.ownerSegment, 10);
-    const ownerSegment = Number.isFinite(parsedOwnerSegment) ? parsedOwnerSegment : null;
-    const ownerSeparator = typeof policy.ownerSeparator === 'string' && policy.ownerSeparator.length > 0
-      ? policy.ownerSeparator
-      : ':';
+    const ownerSegment = Number.isFinite(parsedOwnerSegment)
+      ? parsedOwnerSegment
+      : null;
+    const ownerSeparator =
+      typeof policy.ownerSeparator === "string" &&
+      policy.ownerSeparator.length > 0
+        ? policy.ownerSeparator
+        : ":";
     const ownerFromMessageMention = Boolean(policy.ownerFromMessageMention);
 
     return { roles, ownerSegment, ownerSeparator, ownerFromMessageMention };
@@ -233,7 +265,7 @@ function extractOwnerIdFromMessageMention(message) {
   if (!message) return null;
 
   const scan = (text) => {
-    const match = String(text || '').match(/<@!?(\d{16,20})>/);
+    const match = String(text || "").match(/<@!?(\d{16,20})>/);
     return match?.[1] || null;
   };
 
@@ -259,21 +291,27 @@ function extractOwnerIdFromMessageMention(message) {
 }
 
 function getDevIds(client) {
-  const rawIds = IDs?.developers ?? IDs?.guilds?.developers ?? '';
+  const rawIds = IDs?.developers ?? IDs?.guilds?.developers ?? "";
   const fromIds = Array.isArray(rawIds)
     ? rawIds.map((id) => String(id).trim()).filter(Boolean)
-    : String(rawIds).split(',').map((id) => id.trim()).filter(Boolean);
-  const raw = client?.config?.developers ?? '';
+    : String(rawIds)
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
+  const raw = client?.config?.developers ?? "";
   const fromConfig = Array.isArray(raw)
     ? raw.map((id) => String(id).trim()).filter(Boolean)
-    : String(raw).split(',').map((id) => id.trim()).filter(Boolean);
+    : String(raw)
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean);
   return Array.from(new Set([...fromIds, ...fromConfig]));
 }
 
 async function checkSlashPermission(interaction, options = {}) {
   const userId = interaction?.user?.id || null;
 
-  if (interaction.commandName === 'dmbroadcast') {
+  if (interaction.commandName === "dmbroadcast") {
     const client = interaction.client;
     const devIds = getDevIds(client);
     if (devIds.length === 0) return false;
@@ -287,7 +325,11 @@ async function checkSlashPermission(interaction, options = {}) {
     const group = interaction.options?.getSubcommandGroup?.(false) || null;
     const sub = interaction.options?.getSubcommand?.(false) || null;
     const keys = buildSlashLookupKeys(interaction.commandName, group, sub);
-    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
+    const hasOverride = await hasTemporaryCommandPermission({
+      guildId,
+      userId,
+      keys,
+    });
     if (hasOverride) return true;
   }
 
@@ -300,13 +342,18 @@ async function checkSlashPermission(interaction, options = {}) {
   return hasAnyRoleWithLiveFallback(interaction, roles);
 }
 
-async function checkPrefixPermission(message, commandName, subcommandName = null, options = {}) {
+async function checkPrefixPermission(
+  message,
+  commandName,
+  subcommandName = null,
+  options = {},
+) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
 
   if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
 
-  if (commandName === 'restart') {
+  if (commandName === "restart") {
     const client = message?.client;
     if (!client) return false;
     const devIds = getDevIds(client);
@@ -316,7 +363,11 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
-    const hasOverride = await hasTemporaryCommandPermission({ guildId, userId, keys });
+    const hasOverride = await hasTemporaryCommandPermission({
+      guildId,
+      userId,
+      keys,
+    });
     if (hasOverride) return true;
   }
 
@@ -328,13 +379,23 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 }
 
 async function checkButtonPermission(interaction) {
-  const customId = String(interaction?.customId || '');
+  const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
-      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
     }
-    return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
+    return {
+      allowed: false,
+      reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
   }
 
   if (!customId) {
@@ -349,25 +410,29 @@ async function checkButtonPermission(interaction) {
   }
 
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId = customId.split(policy.ownerSeparator || ':')[policy.ownerSegment] || null;
+    const ownerId =
+      customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId
+        ownerId,
       };
     }
   }
 
   if (policy.ownerFromMessageMention) {
     const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
-    if (!ownerId || (interaction?.user?.id && interaction.user.id !== ownerId)) {
+    if (
+      !ownerId ||
+      (interaction?.user?.id && interaction.user.id !== ownerId)
+    ) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId: ownerId || null
+        ownerId: ownerId || null,
       };
     }
   }
@@ -376,65 +441,84 @@ async function checkButtonPermission(interaction) {
     if (!interaction?.inGuild?.()) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
     if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
   }
 
-  return { allowed: true, reason: null, requiredRoles: policy.roles || null, ownerId: null };
+  return {
+    allowed: true,
+    reason: null,
+    requiredRoles: policy.roles || null,
+    ownerId: null,
+  };
 }
 
 async function checkStringSelectPermission(interaction) {
-  const customId = String(interaction?.customId || '');
+  const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
-      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
     }
-    return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
+    return {
+      allowed: false,
+      reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
   }
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.selectMenus, customId)
-    ?? resolveComponentPolicy(data?.buttons, customId);
+    resolveComponentPolicy(data?.selectMenus, customId) ??
+    resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId = customId.split(policy.ownerSeparator || ':')[policy.ownerSegment] || null;
+    const ownerId =
+      customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId
+        ownerId,
       };
     }
   }
 
   if (policy.ownerFromMessageMention) {
     const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
-    if (!ownerId || (interaction?.user?.id && interaction.user.id !== ownerId)) {
+    if (
+      !ownerId ||
+      (interaction?.user?.id && interaction.user.id !== ownerId)
+    ) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId: ownerId || null
+        ownerId: ownerId || null,
       };
     }
   }
@@ -443,32 +527,47 @@ async function checkStringSelectPermission(interaction) {
     if (!interaction?.inGuild?.()) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
     if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
   }
 
-  return { allowed: true, reason: null, requiredRoles: policy.roles || null, ownerId: null };
+  return {
+    allowed: true,
+    reason: null,
+    requiredRoles: policy.roles || null,
+    ownerId: null,
+  };
 }
 
 async function checkModalPermission(interaction) {
-  const customId = String(interaction?.customId || '');
+  const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
     if (isVerifyOrTicketInteraction(customId)) {
-      return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
     }
-    return { allowed: false, reason: 'mono_guild', requiredRoles: null, ownerId: null };
+    return {
+      allowed: false,
+      reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
   }
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
@@ -476,33 +575,37 @@ async function checkModalPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.modals, customId)
-    ?? resolveComponentPolicy(data?.buttons, customId);
+    resolveComponentPolicy(data?.modals, customId) ??
+    resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId = customId.split(policy.ownerSeparator || ':')[policy.ownerSegment] || null;
+    const ownerId =
+      customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId
+        ownerId,
       };
     }
   }
 
   if (policy.ownerFromMessageMention) {
     const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
-    if (!ownerId || (interaction?.user?.id && interaction.user.id !== ownerId)) {
+    if (
+      !ownerId ||
+      (interaction?.user?.id && interaction.user.id !== ownerId)
+    ) {
       return {
         allowed: false,
-        reason: 'not_owner',
+        reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId: ownerId || null
+        ownerId: ownerId || null,
       };
     }
   }
@@ -511,26 +614,31 @@ async function checkModalPermission(interaction) {
     if (!interaction?.inGuild?.()) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
     if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
       return {
         allowed: false,
-        reason: 'missing_role',
+        reason: "missing_role",
         requiredRoles: policy.roles,
-        ownerId: null
+        ownerId: null,
       };
     }
   }
 
-  return { allowed: true, reason: null, requiredRoles: policy.roles || null, ownerId: null };
+  return {
+    allowed: true,
+    reason: null,
+    requiredRoles: policy.roles || null,
+    ownerId: null,
+  };
 }
 
 function getSlashRequiredRoles(interaction) {
-  if (interaction.commandName === 'dmbroadcast') {
+  if (interaction.commandName === "dmbroadcast") {
     return [];
   }
   const data = loadPermissions();
@@ -544,23 +652,30 @@ function getPrefixRequiredRoles(commandName, subcommandName = null) {
   return resolvePrefixRoles(data, commandName, subcommandName);
 }
 
-function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = 'comando', customDescription = null) {
-  const roles = Array.isArray(requiredRoleIds) ? requiredRoleIds.filter(Boolean) : [];
+function buildGlobalPermissionDeniedEmbed(
+  requiredRoleIds = [],
+  entityLabel = "comando",
+  customDescription = null,
+) {
+  const roles = Array.isArray(requiredRoleIds)
+    ? requiredRoleIds.filter(Boolean)
+    : [];
   const rolesText = roles.length
-    ? roles.map((id) => `<@&${id}>`).join(', ')
-    : 'Nessun ruolo configurato.';
-  const description = customDescription != null
-    ? customDescription
-    : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
+    ? roles.map((id) => `<@&${id}>`).join(", ")
+    : "Nessun ruolo configurato.";
+  const description =
+    customDescription != null
+      ? customDescription
+      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
-    .setColor('Red')
-    .setTitle('<:VC_Lock:1468544444113617063> **Non hai i permessi**')
+    .setColor("Red")
+    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
     .setDescription(description);
   if (roles.length > 0) {
     embed.addFields({
-      name: '<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**',
-      value: `Ottieni uno dei seguenti ruoli: ${rolesText}`
+      name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
+      value: `Ottieni uno dei seguenti ruoli: ${rolesText}`,
     });
   }
   return embed;
@@ -568,9 +683,9 @@ function buildGlobalPermissionDeniedEmbed(requiredRoleIds = [], entityLabel = 'c
 
 function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
-    .setColor('Red')
-    .setTitle('<:VC_Lock:1468544444113617063> **Accesso negato**')
-    .setDescription('Questo controllo non è associato al tuo comando.');
+    .setColor("Red")
+    .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
+    .setDescription("Questo controllo non è associato al tuo comando.");
 }
 
 module.exports = {
@@ -583,5 +698,5 @@ module.exports = {
   getPrefixRequiredRoles,
   buildGlobalPermissionDeniedEmbed,
   buildGlobalNotYourControlEmbed,
-  hasAnyRole
+  hasAnyRole,
 };

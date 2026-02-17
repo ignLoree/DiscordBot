@@ -1,7 +1,9 @@
-const { scheduleMemberCounterRefresh } = require('../Utils/Community/memberCounterUtils');
+const {
+  scheduleMemberCounterRefresh,
+} = require("../Utils/Community/memberCounterUtils");
 
 module.exports = {
-  name: 'guildBanAdd',
+  name: "guildBanAdd",
   async execute(ban) {
     try {
       const guild = ban?.guild;
@@ -10,5 +12,5 @@ module.exports = {
     } catch (error) {
       global.logger.error(error);
     }
-  }
+  },
 };

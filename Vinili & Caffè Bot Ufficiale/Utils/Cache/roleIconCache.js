@@ -1,34 +1,36 @@
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const http = require('http');
-const crypto = require('crypto');
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+const http = require("http");
+const crypto = require("crypto");
 
-const CACHE_DIR = path.join(__dirname, '..', '..', 'UI', 'RoleIcons');
+const CACHE_DIR = path.join(__dirname, "..", "..", "UI", "RoleIcons");
 
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
 function generateIconHash(url) {
-  return crypto.createHash('md5').update(url).digest('hex');
+  return crypto.createHash("md5").update(url).digest("hex");
 }
 
 function downloadImage(url) {
   return new Promise((resolve, reject) => {
-    const client = url.startsWith('https') ? https : http;
+    const client = url.startsWith("https") ? https : http;
 
-    client.get(url, (response) => {
-      if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download: ${response.statusCode}`));
-        return;
-      }
+    client
+      .get(url, (response) => {
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download: ${response.statusCode}`));
+          return;
+        }
 
-      const chunks = [];
-      response.on('data', (chunk) => chunks.push(chunk));
-      response.on('end', () => resolve(Buffer.concat(chunks)));
-      response.on('error', reject);
-    }).on('error', reject);
+        const chunks = [];
+        response.on("data", (chunk) => chunks.push(chunk));
+        response.on("end", () => resolve(Buffer.concat(chunks)));
+        response.on("error", reject);
+      })
+      .on("error", reject);
   });
 }
 
@@ -37,7 +39,7 @@ async function cacheRoleIcon(iconUrl) {
 
   try {
     const hash = generateIconHash(iconUrl);
-    const ext = path.extname(new URL(iconUrl).pathname) || '.png';
+    const ext = path.extname(new URL(iconUrl).pathname) || ".png";
     const filename = `${hash}${ext}`;
     const filepath = path.join(CACHE_DIR, filename);
 
@@ -50,7 +52,7 @@ async function cacheRoleIcon(iconUrl) {
 
     return filepath;
   } catch (error) {
-    global.logger?.error?.('[ROLE_ICON_CACHE] Failed to cache icon:', error);
+    global.logger?.error?.("[ROLE_ICON_CACHE] Failed to cache icon:", error);
     return iconUrl;
   }
 }
@@ -69,7 +71,10 @@ function cleanOldIcons(maxAgeMs = 30 * 24 * 60 * 60 * 1000) {
       }
     }
   } catch (error) {
-    global.logger?.error?.('[ROLE_ICON_CACHE] Failed to clean old icons:', error);
+    global.logger?.error?.(
+      "[ROLE_ICON_CACHE] Failed to clean old icons:",
+      error,
+    );
   }
 }
 
@@ -77,5 +82,5 @@ setInterval(() => cleanOldIcons(), 24 * 60 * 60 * 1000);
 
 module.exports = {
   cacheRoleIcon,
-  cleanOldIcons
+  cleanOldIcons,
 };

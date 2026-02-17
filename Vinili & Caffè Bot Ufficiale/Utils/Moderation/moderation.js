@@ -1,28 +1,32 @@
-const { EmbedBuilder } = require('discord.js');
-const { ModConfig } = require('../../Schemas/Moderation/moderationSchemas');
-const { ModCase } = require('../../Schemas/Moderation/moderationSchemas');
+const { EmbedBuilder } = require("discord.js");
+const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
+const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 
 async function getModConfig(guildId) {
   return ModConfig.findOneAndUpdate(
     { guildId },
     { $setOnInsert: { guildId } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   );
 }
 
 function isExempt(member, config, channelId) {
   if (!member) return true;
   if (Array.isArray(config?.exemptRoles) && config.exemptRoles.length > 0) {
-    if (member.roles.cache.some(r => config.exemptRoles.includes(r.id))) return true;
+    if (member.roles.cache.some((r) => config.exemptRoles.includes(r.id)))
+      return true;
   }
-  if (Array.isArray(config?.exemptChannels) && config.exemptChannels.length > 0) {
+  if (
+    Array.isArray(config?.exemptChannels) &&
+    config.exemptChannels.length > 0
+  ) {
     if (channelId && config.exemptChannels.includes(channelId)) return true;
   }
   return false;
 }
 
 function formatDuration(ms) {
-  if (!ms || ms <= 0) return 'N/A';
+  if (!ms || ms <= 0) return "N/A";
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
   const h = Math.floor((s % 86400) / 3600);
@@ -32,7 +36,7 @@ function formatDuration(ms) {
   if (h) parts.push(`${h}h`);
   if (m) parts.push(`${m}m`);
   if (!parts.length) parts.push(`${s}s`);
-  return parts.join(' ');
+  return parts.join(" ");
 }
 
 function parseDuration(input) {
@@ -43,15 +47,30 @@ function parseDuration(input) {
   const val = Number(match[1]);
   const unit = match[2];
   if (!Number.isFinite(val) || val <= 0) return null;
-  const mult = unit === 's' ? 1000 : unit === 'm' ? 60000 : unit === 'h' ? 3600000 : 86400000;
+  const mult =
+    unit === "s"
+      ? 1000
+      : unit === "m"
+        ? 60000
+        : unit === "h"
+          ? 3600000
+          : 86400000;
   return val * mult;
 }
 
-async function createModCase({ guildId, action, userId, modId, reason, durationMs, context }) {
+async function createModCase({
+  guildId,
+  action,
+  userId,
+  modId,
+  reason,
+  durationMs,
+  context,
+}) {
   const cfg = await ModConfig.findOneAndUpdate(
     { guildId },
     { $inc: { caseCounter: 1 }, $setOnInsert: { guildId } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   );
   const caseId = cfg.caseCounter;
   const expiresAt = durationMs ? new Date(Date.now() + durationMs) : null;
@@ -61,13 +80,13 @@ async function createModCase({ guildId, action, userId, modId, reason, durationM
     action,
     userId,
     modId,
-    reason: reason || 'Nessun motivo fornito',
+    reason: reason || "Nessun motivo fornito",
     durationMs: durationMs || null,
     expiresAt,
     context: {
       channelId: context?.channelId || null,
-      messageId: context?.messageId || null
-    }
+      messageId: context?.messageId || null,
+    },
   });
   return { doc, config: cfg };
 }
@@ -77,23 +96,31 @@ async function logModCase({ client, guild, modCase, config }) {
   if (!channelId) return;
   const channel = guild.channels.cache.get(channelId);
   if (!channel) return;
-  const duration = modCase.durationMs ? formatDuration(modCase.durationMs) : null;
+  const duration = modCase.durationMs
+    ? formatDuration(modCase.durationMs)
+    : null;
   const isUserId = /^\d{17,20}$/.test(String(modCase.userId));
-  const userLabel = isUserId ? `<@${modCase.userId}> (\`${modCase.userId}\`)` : String(modCase.userId);
+  const userLabel = isUserId
+    ? `<@${modCase.userId}> (\`${modCase.userId}\`)`
+    : String(modCase.userId);
   const embed = new EmbedBuilder()
-    .setColor(client?.config?.embedModLight || '#6f4e37')
+    .setColor(client?.config?.embedModLight || "#6f4e37")
     .setTitle(`Case #${modCase.caseId} - ${modCase.action}`)
     .addFields(
-      { name: 'Utente', value: userLabel, inline: true },
-      { name: 'Moderatore', value: `<@${modCase.modId}>`, inline: true },
-      { name: 'Motivo', value: modCase.reason || 'Nessun motivo fornito' }
+      { name: "Utente", value: userLabel, inline: true },
+      { name: "Moderatore", value: `<@${modCase.modId}>`, inline: true },
+      { name: "Motivo", value: modCase.reason || "Nessun motivo fornito" },
     )
     .setTimestamp();
   if (duration) {
-    embed.addFields({ name: 'Durata', value: duration, inline: true });
+    embed.addFields({ name: "Durata", value: duration, inline: true });
   }
   if (modCase.context?.channelId) {
-    embed.addFields({ name: 'Canale', value: `<#${modCase.context.channelId}>`, inline: true });
+    embed.addFields({
+      name: "Canale",
+      value: `<#${modCase.context.channelId}>`,
+      inline: true,
+    });
   }
   await channel.send({ embeds: [embed] }).catch(() => {});
 }
@@ -101,7 +128,7 @@ async function logModCase({ client, guild, modCase, config }) {
 async function tryDmUser(user, content) {
   if (!user) return false;
   try {
-    if (typeof content === 'string') {
+    if (typeof content === "string") {
       await user.send({ content });
     } else {
       await user.send(content);
@@ -111,5 +138,12 @@ async function tryDmUser(user, content) {
     return false;
   }
 }
-module.exports = { getModConfig, isExempt, createModCase, logModCase, formatDuration, parseDuration, tryDmUser };
-
+module.exports = {
+  getModConfig,
+  isExempt,
+  createModCase,
+  logModCase,
+  formatDuration,
+  parseDuration,
+  tryDmUser,
+};

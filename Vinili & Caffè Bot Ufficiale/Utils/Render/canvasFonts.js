@@ -11,86 +11,124 @@ const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
 const BASE_STACK = [
   `"${COLOR_EMOJI_FONT}"`,
-  "\"Segoe UI\"",
-  "\"Calibri\"",
-  "\"Tahoma\"",
-  "\"Segoe UI Emoji\"",
-  "\"Apple Color Emoji\"",
-  "\"Noto Emoji\"",
+  '"Segoe UI"',
+  '"Calibri"',
+  '"Tahoma"',
+  '"Segoe UI Emoji"',
+  '"Apple Color Emoji"',
+  '"Noto Emoji"',
   `"${SYMBOLS_FONT}"`,
-  "\"Segoe UI Symbol\"",
+  '"Segoe UI Symbol"',
   `"${MATH_FONT}"`,
   `"${TIBETAN_FONT}"`,
   `"${FRAKTUR_FONT}"`,
   `"${EMOJI_FONT}"`,
   `"${FALLBACK_FONT}"`,
-  "\"Arial\"",
-  "sans-serif"
+  '"Arial"',
+  "sans-serif",
 ];
-const FONT_STACK = [
-  `"${PRIMARY_FONT}"`,
-  ...BASE_STACK
-].join(", ");
+const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
 
 let registered = false;
 
 function registerCanvasFonts(canvasModule) {
   if (registered || !canvasModule?.registerFont) return;
-  const notoPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSans-Regular.ttf");
-  const tibetanPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSerifTibetan-Regular.ttf");
-  const symbolsPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSansSymbols2-Regular.ttf");
-  const colorEmojiPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoColorEmoji_WindowsCompatible.ttf");
-  const mojanglesPath = path.join(__dirname, "..", "..", "UI", "Fonts", "Mojangles.ttf");
-  const frakturPath = path.join(__dirname, "..", "..", "UI", "Fonts", "UnifrakturMaguntia-Regular.ttf");
-  const mathPath = path.join(__dirname, "..", "..", "UI", "Fonts", "NotoSansMath-Regular.ttf");
+  const notoPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "NotoSans-Regular.ttf",
+  );
+  const tibetanPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "NotoSerifTibetan-Regular.ttf",
+  );
+  const symbolsPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "NotoSansSymbols2-Regular.ttf",
+  );
+  const colorEmojiPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "NotoColorEmoji_WindowsCompatible.ttf",
+  );
+  const mojanglesPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "Mojangles.ttf",
+  );
+  const frakturPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "UnifrakturMaguntia-Regular.ttf",
+  );
+  const mathPath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "UI",
+    "Fonts",
+    "NotoSansMath-Regular.ttf",
+  );
   const yuPath = path.join(__dirname, "..", "..", "UI", "Fonts", "YuGothR.ttc");
   if (fs.existsSync(notoPath)) {
     try {
       canvasModule.registerFont(notoPath, { family: PRIMARY_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(tibetanPath)) {
     try {
       canvasModule.registerFont(tibetanPath, { family: TIBETAN_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(symbolsPath)) {
     try {
       canvasModule.registerFont(symbolsPath, { family: SYMBOLS_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(colorEmojiPath)) {
     try {
       canvasModule.registerFont(colorEmojiPath, { family: COLOR_EMOJI_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(mojanglesPath)) {
     try {
       canvasModule.registerFont(mojanglesPath, { family: EMOJI_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(frakturPath)) {
     try {
       canvasModule.registerFont(frakturPath, { family: FRAKTUR_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(mathPath)) {
     try {
       canvasModule.registerFont(mathPath, { family: MATH_FONT });
-    } catch {
-    }
+    } catch {}
   }
   if (fs.existsSync(yuPath)) {
     try {
       canvasModule.registerFont(yuPath, { family: FALLBACK_FONT });
-    } catch {
-    }
+    } catch {}
   }
   registered = true;
 }
@@ -108,7 +146,9 @@ function fontStackWithPrimary(primary, size, weight) {
 
 function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const rawValue = text == null ? "" : String(text);
-  const value = options.normalizeCompatibility ? rawValue.normalize("NFKC") : rawValue;
+  const value = options.normalizeCompatibility
+    ? rawValue.normalize("NFKC")
+    : rawValue;
   const size = options.size || 16;
   const weight = options.weight || "";
   const align = options.align || ctx.textAlign || "left";
@@ -150,7 +190,7 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   }
 
   let cursorX = x;
-  if (align === "center") cursorX = x - (totalWidth / 2);
+  if (align === "center") cursorX = x - totalWidth / 2;
   else if (align === "right") cursorX = x - totalWidth;
 
   ctx.textAlign = "left";
@@ -162,4 +202,18 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   ctx.restore();
 }
 
-module.exports = { registerCanvasFonts, fontStack, fontStackWithPrimary, drawTextWithSpecialFallback, PRIMARY_FONT, TIBETAN_FONT, SYMBOLS_FONT, COLOR_EMOJI_FONT, EMOJI_FONT, FRAKTUR_FONT, MATH_FONT, FALLBACK_FONT, FONT_STACK };
+module.exports = {
+  registerCanvasFonts,
+  fontStack,
+  fontStackWithPrimary,
+  drawTextWithSpecialFallback,
+  PRIMARY_FONT,
+  TIBETAN_FONT,
+  SYMBOLS_FONT,
+  COLOR_EMOJI_FONT,
+  EMOJI_FONT,
+  FRAKTUR_FONT,
+  MATH_FONT,
+  FALLBACK_FONT,
+  FONT_STACK,
+};

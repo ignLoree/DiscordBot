@@ -5,7 +5,7 @@ async function nextQuoteCount(guildId) {
   const doc = await QuoteCount.findOneAndUpdate(
     { guildId },
     { $inc: { count: 1 } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   );
   return doc?.count || 1;
 }
@@ -15,7 +15,7 @@ async function decrementQuoteCount(guildId) {
   const doc = await QuoteCount.findOneAndUpdate(
     { guildId },
     { $inc: { count: -1 } },
-    { new: true }
+    { new: true },
   );
   if (!doc) return 0;
   if (doc.count < 0) {

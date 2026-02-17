@@ -1,8 +1,20 @@
-const axios = require('axios');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder } = require('discord.js');
-const { MinigameUser, MinigameState, MinigameRotation } = require('../../Schemas/Minigames/minigameSchema');
-const { addExpWithLevel } = require('../Community/expService');
-const IDs = require('../../Utils/Config/ids');
+const axios = require("axios");
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  PermissionsBitField,
+  AttachmentBuilder,
+} = require("discord.js");
+const {
+  MinigameUser,
+  MinigameState,
+  MinigameRotation,
+} = require("../../Schemas/Minigames/minigameSchema");
+const { addExpWithLevel } = require("../Community/expService");
+const IDs = require("../../Utils/Config/ids");
 
 const activeGames = new Map();
 const pendingGames = new Map();
@@ -24,7 +36,7 @@ const EXP_REWARDS = [
   { exp: 5000, roleId: IDs.roles.Achiever },
   { exp: 10000, roleId: IDs.roles.Vanguard },
   { exp: 50000, roleId: IDs.roles.Mentor },
-  { exp: 100000, roleId: IDs.roles.Strategist }
+  { exp: 100000, roleId: IDs.roles.Strategist },
 ];
 
 let cachedWords = null;
@@ -57,129 +69,322 @@ let cachedAlbumsAt = 0;
 const ALBUM_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
 const CAPITAL_QUIZ_BANK = [
-  { country: 'Italia', answers: ['Roma'] },
-  { country: 'Francia', answers: ['Parigi', 'Paris'] },
-  { country: 'Spagna', answers: ['Madrid'] },
-  { country: 'Germania', answers: ['Berlino', 'Berlin'] },
-  { country: 'Regno Unito', answers: ['Londra', 'London'] },
-  { country: 'Portogallo', answers: ['Lisbona', 'Lisbon'] },
-  { country: 'Paesi Bassi', answers: ['Amsterdam'] },
-  { country: 'Belgio', answers: ['Bruxelles', 'Brussels'] },
-  { country: 'Austria', answers: ['Vienna', 'Wien'] },
-  { country: 'Grecia', answers: ['Atene', 'Athens'] },
-  { country: 'Polonia', answers: ['Varsavia', 'Warsaw'] },
-  { country: 'Irlanda', answers: ['Dublino', 'Dublin'] },
-  { country: 'Svezia', answers: ['Stoccolma', 'Stockholm'] },
-  { country: 'Norvegia', answers: ['Oslo'] },
-  { country: 'Danimarca', answers: ['Copenaghen', 'Copenhagen'] },
-  { country: 'Svizzera', answers: ['Berna', 'Bern'] },
-  { country: 'Stati Uniti', answers: ['Washington', 'Washington DC'] },
-  { country: 'Canada', answers: ['Ottawa'] },
-  { country: 'Giappone', answers: ['Tokyo'] },
-  { country: 'Brasile', answers: ['Brasilia', 'Brasília'] }
+  { country: "Italia", answers: ["Roma"] },
+  { country: "Francia", answers: ["Parigi", "Paris"] },
+  { country: "Spagna", answers: ["Madrid"] },
+  { country: "Germania", answers: ["Berlino", "Berlin"] },
+  { country: "Regno Unito", answers: ["Londra", "London"] },
+  { country: "Portogallo", answers: ["Lisbona", "Lisbon"] },
+  { country: "Paesi Bassi", answers: ["Amsterdam"] },
+  { country: "Belgio", answers: ["Bruxelles", "Brussels"] },
+  { country: "Austria", answers: ["Vienna", "Wien"] },
+  { country: "Grecia", answers: ["Atene", "Athens"] },
+  { country: "Polonia", answers: ["Varsavia", "Warsaw"] },
+  { country: "Irlanda", answers: ["Dublino", "Dublin"] },
+  { country: "Svezia", answers: ["Stoccolma", "Stockholm"] },
+  { country: "Norvegia", answers: ["Oslo"] },
+  { country: "Danimarca", answers: ["Copenaghen", "Copenhagen"] },
+  { country: "Svizzera", answers: ["Berna", "Bern"] },
+  { country: "Stati Uniti", answers: ["Washington", "Washington DC"] },
+  { country: "Canada", answers: ["Ottawa"] },
+  { country: "Giappone", answers: ["Tokyo"] },
+  { country: "Brasile", answers: ["Brasilia", "Brasília"] },
 ];
 
 const ITALIAN_REGION_CAPITAL_BANK = [
-  { region: 'Abruzzo', answers: ['L Aquila', "L'Aquila"] },
-  { region: 'Basilicata', answers: ['Potenza'] },
-  { region: 'Calabria', answers: ['Catanzaro'] },
-  { region: 'Campania', answers: ['Napoli'] },
-  { region: 'Emilia Romagna', answers: ['Bologna'] },
-  { region: 'Friuli Venezia Giulia', answers: ['Trieste'] },
-  { region: 'Lazio', answers: ['Roma'] },
-  { region: 'Liguria', answers: ['Genova'] },
-  { region: 'Lombardia', answers: ['Milano'] },
-  { region: 'Marche', answers: ['Ancona'] },
-  { region: 'Molise', answers: ['Campobasso'] },
-  { region: 'Piemonte', answers: ['Torino'] },
-  { region: 'Puglia', answers: ['Bari'] },
-  { region: 'Sardegna', answers: ['Cagliari'] },
-  { region: 'Sicilia', answers: ['Palermo'] },
-  { region: 'Toscana', answers: ['Firenze'] },
-  { region: 'Trentino Alto Adige', answers: ['Trento'] },
-  { region: 'Umbria', answers: ['Perugia'] },
-  { region: "Valle d'Aosta", answers: ['Aosta'] },
-  { region: 'Veneto', answers: ['Venezia'] }
+  { region: "Abruzzo", answers: ["L Aquila", "L'Aquila"] },
+  { region: "Basilicata", answers: ["Potenza"] },
+  { region: "Calabria", answers: ["Catanzaro"] },
+  { region: "Campania", answers: ["Napoli"] },
+  { region: "Emilia Romagna", answers: ["Bologna"] },
+  { region: "Friuli Venezia Giulia", answers: ["Trieste"] },
+  { region: "Lazio", answers: ["Roma"] },
+  { region: "Liguria", answers: ["Genova"] },
+  { region: "Lombardia", answers: ["Milano"] },
+  { region: "Marche", answers: ["Ancona"] },
+  { region: "Molise", answers: ["Campobasso"] },
+  { region: "Piemonte", answers: ["Torino"] },
+  { region: "Puglia", answers: ["Bari"] },
+  { region: "Sardegna", answers: ["Cagliari"] },
+  { region: "Sicilia", answers: ["Palermo"] },
+  { region: "Toscana", answers: ["Firenze"] },
+  { region: "Trentino Alto Adige", answers: ["Trento"] },
+  { region: "Umbria", answers: ["Perugia"] },
+  { region: "Valle d'Aosta", answers: ["Aosta"] },
+  { region: "Veneto", answers: ["Venezia"] },
 ];
 
 const FOOTBALL_TEAM_BANK = [
-  { team: 'Real Madrid', answers: ['Real Madrid'], image: 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg' },
-  { team: 'Barcelona', answers: ['Barcellona', 'Barcelona'], image: 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg' },
-  { team: 'Juventus', answers: ['Juventus', 'Juve'], image: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Juventus_FC_2017_logo.svg' },
-  { team: 'Milan', answers: ['Milan', 'AC Milan'], image: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg' },
-  { team: 'Inter', answers: ['Inter', 'Internazionale'], image: 'https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg' },
-  { team: 'Manchester City', answers: ['Manchester City', 'Man City'], image: 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg' },
-  { team: 'Manchester United', answers: ['Manchester United', 'Man United'], image: 'https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg' },
-  { team: 'Liverpool', answers: ['Liverpool'], image: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg' },
-  { team: 'Bayern Monaco', answers: ['Bayern Monaco', 'Bayern Munich', 'Bayern'], image: 'https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_München_logo_%282024%29.svg' },
-  { team: 'Paris Saint Germain', answers: ['Paris Saint Germain', 'PSG', 'Paris SG'], image: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg' }
+  {
+    team: "Real Madrid",
+    answers: ["Real Madrid"],
+    image: "https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg",
+  },
+  {
+    team: "Barcelona",
+    answers: ["Barcellona", "Barcelona"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg",
+  },
+  {
+    team: "Juventus",
+    answers: ["Juventus", "Juve"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/1/15/Juventus_FC_2017_logo.svg",
+  },
+  {
+    team: "Milan",
+    answers: ["Milan", "AC Milan"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg",
+  },
+  {
+    team: "Inter",
+    answers: ["Inter", "Internazionale"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg",
+  },
+  {
+    team: "Manchester City",
+    answers: ["Manchester City", "Man City"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg",
+  },
+  {
+    team: "Manchester United",
+    answers: ["Manchester United", "Man United"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/7/7a/Manchester_United_FC_crest.svg",
+  },
+  {
+    team: "Liverpool",
+    answers: ["Liverpool"],
+    image: "https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg",
+  },
+  {
+    team: "Bayern Monaco",
+    answers: ["Bayern Monaco", "Bayern Munich", "Bayern"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_München_logo_%282024%29.svg",
+  },
+  {
+    team: "Paris Saint Germain",
+    answers: ["Paris Saint Germain", "PSG", "Paris SG"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg",
+  },
 ];
 
 const SINGER_BANK = [
-  { name: 'Ultimo', answers: ['Ultimo'], image: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/Ultimo_2019.jpg' },
-  { name: 'Marracash', answers: ['Marracash'], image: 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Marracash_2022.jpg' },
-  { name: 'Blanco', answers: ['Blanco'], image: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Blanco_2022.jpg' },
-  { name: 'Sfera Ebbasta', answers: ['Sfera Ebbasta', 'Sfera'], image: 'https://upload.wikimedia.org/wikipedia/commons/7/78/Sfera_Ebbasta.jpg' },
-  { name: 'The Weeknd', answers: ['The Weeknd', 'Weeknd'], image: 'https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png' },
-  { name: 'Taylor Swift', answers: ['Taylor Swift', 'Taylor'], image: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Taylor_Swift_The_Eras_Tour_at_Sofi_Stadium_%28August_2023%29_109.jpg' },
-  { name: 'Ed Sheeran', answers: ['Ed Sheeran', 'Sheeran'], image: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Ed_Sheeran-6886_%28cropped%29.jpg' },
-  { name: 'Dua Lipa', answers: ['Dua Lipa'], image: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Dua_Lipa_2022.jpg' },
-  { name: 'Ariana Grande', answers: ['Ariana Grande', 'Ariana'], image: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Ariana_Grande_2016.jpg' },
-  { name: 'Billie Eilish', answers: ['Billie Eilish', 'Billie'], image: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Billie_Eilish_2019_by_Glenn_Francis.jpg' }
+  {
+    name: "Ultimo",
+    answers: ["Ultimo"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/7/7a/Ultimo_2019.jpg",
+  },
+  {
+    name: "Marracash",
+    answers: ["Marracash"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/2/2d/Marracash_2022.jpg",
+  },
+  {
+    name: "Blanco",
+    answers: ["Blanco"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/5/5d/Blanco_2022.jpg",
+  },
+  {
+    name: "Sfera Ebbasta",
+    answers: ["Sfera Ebbasta", "Sfera"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/7/78/Sfera_Ebbasta.jpg",
+  },
+  {
+    name: "The Weeknd",
+    answers: ["The Weeknd", "Weeknd"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/9/95/The_Weeknd_Cannes_2023.png",
+  },
+  {
+    name: "Taylor Swift",
+    answers: ["Taylor Swift", "Taylor"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/f/f6/Taylor_Swift_The_Eras_Tour_at_Sofi_Stadium_%28August_2023%29_109.jpg",
+  },
+  {
+    name: "Ed Sheeran",
+    answers: ["Ed Sheeran", "Sheeran"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/4/45/Ed_Sheeran-6886_%28cropped%29.jpg",
+  },
+  {
+    name: "Dua Lipa",
+    answers: ["Dua Lipa"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/0/0d/Dua_Lipa_2022.jpg",
+  },
+  {
+    name: "Ariana Grande",
+    answers: ["Ariana Grande", "Ariana"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a7/Ariana_Grande_2016.jpg",
+  },
+  {
+    name: "Billie Eilish",
+    answers: ["Billie Eilish", "Billie"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/5/58/Billie_Eilish_2019_by_Glenn_Francis.jpg",
+  },
 ];
 
 const ALBUM_BANK = [
-  { album: 'Abbey Road', artist: 'The Beatles', answers: ['Abbey Road'], image: 'https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg' },
-  { album: 'Thriller', artist: 'Michael Jackson', answers: ['Thriller'], image: 'https://upload.wikimedia.org/wikipedia/en/5/55/Michael_Jackson_-_Thriller.png' },
-  { album: 'Back in Black', artist: 'AC/DC', answers: ['Back in Black'], image: 'https://upload.wikimedia.org/wikipedia/commons/9/92/ACDC_Back_in_Black.png' },
-  { album: 'The Dark Side of the Moon', artist: 'Pink Floyd', answers: ['The Dark Side of the Moon', 'Dark Side of the Moon'], image: 'https://upload.wikimedia.org/wikipedia/en/3/3b/Dark_Side_of_the_Moon.png' },
-  { album: 'Random Access Memories', artist: 'Daft Punk', answers: ['Random Access Memories'], image: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Random_Access_Memories.jpg' },
-  { album: 'Fuori dall hype', artist: 'Pinguini Tattici Nucleari', answers: ['Fuori dall hype', "Fuori dall'hype"], image: 'https://upload.wikimedia.org/wikipedia/en/4/4a/Fuori_dall%27hype.jpg' },
-  { album: 'Persona', artist: 'Marracash', answers: ['Persona'], image: 'https://upload.wikimedia.org/wikipedia/en/0/02/Marracash_-_Persona.png' },
-  { album: 'Evolve', artist: 'Imagine Dragons', answers: ['Evolve'], image: 'https://upload.wikimedia.org/wikipedia/en/b/b5/ImagineDragonsEvolve.jpg' }
+  {
+    album: "Abbey Road",
+    artist: "The Beatles",
+    answers: ["Abbey Road"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg",
+  },
+  {
+    album: "Thriller",
+    artist: "Michael Jackson",
+    answers: ["Thriller"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/5/55/Michael_Jackson_-_Thriller.png",
+  },
+  {
+    album: "Back in Black",
+    artist: "AC/DC",
+    answers: ["Back in Black"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/9/92/ACDC_Back_in_Black.png",
+  },
+  {
+    album: "The Dark Side of the Moon",
+    artist: "Pink Floyd",
+    answers: ["The Dark Side of the Moon", "Dark Side of the Moon"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/3/3b/Dark_Side_of_the_Moon.png",
+  },
+  {
+    album: "Random Access Memories",
+    artist: "Daft Punk",
+    answers: ["Random Access Memories"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/a/a7/Random_Access_Memories.jpg",
+  },
+  {
+    album: "Fuori dall hype",
+    artist: "Pinguini Tattici Nucleari",
+    answers: ["Fuori dall hype", "Fuori dall'hype"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/4/4a/Fuori_dall%27hype.jpg",
+  },
+  {
+    album: "Persona",
+    artist: "Marracash",
+    answers: ["Persona"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/0/02/Marracash_-_Persona.png",
+  },
+  {
+    album: "Evolve",
+    artist: "Imagine Dragons",
+    answers: ["Evolve"],
+    image:
+      "https://upload.wikimedia.org/wikipedia/en/b/b5/ImagineDragonsEvolve.jpg",
+  },
 ];
 
 const ITALIAN_GK_BANK = [
-  { question: 'Qual è il fiume più lungo d Italia?', answers: ['Po'] },
-  { question: 'In che anno è stata proclamata l unità d Italia?', answers: ['1861'] },
-  { question: 'Qual è la regione italiana con più abitanti?', answers: ['Lombardia'] },
-  { question: 'Qual è il capoluogo della Puglia?', answers: ['Bari'] },
-  { question: 'Chi ha scritto la Divina Commedia?', answers: ['Dante Alighieri', 'Dante'] },
-  { question: 'Qual è la montagna più alta d Italia?', answers: ['Monte Bianco', 'Mont Blanc'] },
-  { question: 'Qual è il mare a est dell Italia?', answers: ['Adriatico', 'Mar Adriatico'] },
-  { question: 'Qual è il simbolo della Repubblica Italiana in cucina più famoso nel mondo?', answers: ['Pizza'] }
+  { question: "Qual è il fiume più lungo d Italia?", answers: ["Po"] },
+  {
+    question: "In che anno è stata proclamata l unità d Italia?",
+    answers: ["1861"],
+  },
+  {
+    question: "Qual è la regione italiana con più abitanti?",
+    answers: ["Lombardia"],
+  },
+  { question: "Qual è il capoluogo della Puglia?", answers: ["Bari"] },
+  {
+    question: "Chi ha scritto la Divina Commedia?",
+    answers: ["Dante Alighieri", "Dante"],
+  },
+  {
+    question: "Qual è la montagna più alta d Italia?",
+    answers: ["Monte Bianco", "Mont Blanc"],
+  },
+  {
+    question: "Qual è il mare a est dell Italia?",
+    answers: ["Adriatico", "Mar Adriatico"],
+  },
+  {
+    question:
+      "Qual è il simbolo della Repubblica Italiana in cucina più famoso nel mondo?",
+    answers: ["Pizza"],
+  },
 ];
 
 const DRIVING_TRUE_FALSE_BANK = [
-  { statement: 'In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.', answer: true },
-  { statement: 'Con semaforo rosso puoi passare se non arriva nessuno.', answer: false },
-  { statement: 'È obbligatorio usare le cinture anche nei sedili posteriori.', answer: true },
-  { statement: 'Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.', answer: false },
-  { statement: 'La distanza di sicurezza serve a evitare tamponamenti.', answer: true },
-  { statement: 'Il triangolo va posizionato a circa 50 metri fuori dai centri abitati.', answer: true },
-  { statement: 'È consentito sorpassare in prossimità delle curve sempre e comunque.', answer: false },
-  { statement: 'Con pioggia intensa bisogna ridurre la velocità.', answer: true }
+  {
+    statement:
+      "In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.",
+    answer: true,
+  },
+  {
+    statement: "Con semaforo rosso puoi passare se non arriva nessuno.",
+    answer: false,
+  },
+  {
+    statement: "È obbligatorio usare le cinture anche nei sedili posteriori.",
+    answer: true,
+  },
+  {
+    statement:
+      "Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.",
+    answer: false,
+  },
+  {
+    statement: "La distanza di sicurezza serve a evitare tamponamenti.",
+    answer: true,
+  },
+  {
+    statement:
+      "Il triangolo va posizionato a circa 50 metri fuori dai centri abitati.",
+    answer: true,
+  },
+  {
+    statement:
+      "È consentito sorpassare in prossimità delle curve sempre e comunque.",
+    answer: false,
+  },
+  {
+    statement: "Con pioggia intensa bisogna ridurre la velocità.",
+    answer: true,
+  },
 ];
 
 const FAST_TYPING_PHRASES = [
-  'vinili e caffe community',
-  'la costanza batte il talento',
-  'non mollare proprio adesso',
-  'la musica unisce le persone',
-  'oggi vinco io'
+  "vinili e caffe community",
+  "la costanza batte il talento",
+  "non mollare proprio adesso",
+  "la musica unisce le persone",
+  "oggi vinco io",
 ];
 
 const HANGMAN_WORDS = [
-  'computer',
-  'tastiera',
-  'discord',
-  'capitale',
-  'bandiera',
-  'calciatore',
-  'canzone',
-  'album',
-  'regione',
-  'patente'
+  "computer",
+  "tastiera",
+  "discord",
+  "capitale",
+  "bandiera",
+  "calciatore",
+  "canzone",
+  "album",
+  "regione",
+  "patente",
 ];
 
 function getConfig(client) {
@@ -191,8 +396,8 @@ function getConfig(client) {
     roleId: IDs.roles.Minigames,
     findBot: {
       ...(cfg.findBot || {}),
-      requiredRoleId: IDs.roles.Member
-    }
+      requiredRoleId: IDs.roles.Member,
+    },
   };
 }
 
@@ -267,14 +472,16 @@ async function saveActiveGame(client, cfg, payload) {
   if (!channelId) return;
   let guildId = cfg?.guildId || null;
   if (!guildId) {
-    const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+    const channel =
+      getChannelSafe(client, channelId) ||
+      (await client.channels.fetch(channelId).catch(() => null));
     guildId = channel?.guild?.id || null;
   }
   if (!guildId) return;
   await MinigameState.findOneAndUpdate(
     { guildId, channelId },
     { $set: { guildId, channelId, ...payload } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   ).catch(() => {});
 }
 
@@ -283,7 +490,9 @@ async function clearActiveGame(client, cfg) {
   if (!channelId) return;
   let guildId = cfg?.guildId || null;
   if (!guildId) {
-    const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+    const channel =
+      getChannelSafe(client, channelId) ||
+      (await client.channels.fetch(channelId).catch(() => null));
     guildId = channel?.guild?.id || null;
   }
   if (!guildId) return;
@@ -297,46 +506,51 @@ function randomBetween(min, max) {
 }
 
 function shuffleString(value) {
-  const arr = String(value || '').split('');
+  const arr = String(value || "").split("");
   for (let i = arr.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return arr.join('');
+  return arr.join("");
 }
 
 function normalizeWord(raw) {
-  return String(raw || '').trim().toLowerCase();
+  return String(raw || "")
+    .trim()
+    .toLowerCase();
 }
 
 function normalizeCountryName(raw) {
   const specials = {
-    'ß': 'ss',
-    'ẞ': 'ss',
-    'æ': 'ae',
-    'Æ': 'ae',
-    'œ': 'oe',
-    'Œ': 'oe',
-    'ø': 'o',
-    'Ø': 'o',
-    'å': 'a',
-    'Å': 'a',
-    'ł': 'l',
-    'Ł': 'l',
-    'đ': 'd',
-    'Đ': 'd',
-    'ð': 'd',
-    'Ð': 'd',
-    'þ': 'th',
-    'Þ': 'th'
+    ß: "ss",
+    ẞ: "ss",
+    æ: "ae",
+    Æ: "ae",
+    œ: "oe",
+    Œ: "oe",
+    ø: "o",
+    Ø: "o",
+    å: "a",
+    Å: "a",
+    ł: "l",
+    Ł: "l",
+    đ: "d",
+    Đ: "d",
+    ð: "d",
+    Ð: "d",
+    þ: "th",
+    Þ: "th",
   };
-  const replaced = String(raw || '').replace(/[ßẞæÆœŒøØåÅłŁđĐðÐþÞ]/g, (ch) => specials[ch] || ch);
+  const replaced = String(raw || "").replace(
+    /[ßẞæÆœŒøØåÅłŁđĐðÐþÞ]/g,
+    (ch) => specials[ch] || ch,
+  );
   return replaced
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -348,7 +562,8 @@ function isValidWord(word) {
 
 async function loadWordList(cfg) {
   const now = Date.now();
-  if (cachedWords && (now - cachedWordsAt) < WORD_CACHE_TTL_MS) return cachedWords;
+  if (cachedWords && now - cachedWordsAt < WORD_CACHE_TTL_MS)
+    return cachedWords;
 
   const apiUrl = cfg?.guessWord?.apiUrl;
   let list = [];
@@ -367,9 +582,7 @@ async function loadWordList(cfg) {
     list = Array.isArray(cfg?.guessWord?.words) ? cfg.guessWord.words : [];
   }
 
-  const filtered = list
-    .map(normalizeWord)
-    .filter(isValidWord);
+  const filtered = list.map(normalizeWord).filter(isValidWord);
 
   cachedWords = filtered;
   cachedWordsAt = now;
@@ -396,14 +609,17 @@ function collectCountryNames(country) {
     add(translations[key]?.common);
     add(translations[key]?.official);
   }
-  const altSpellings = Array.isArray(country?.altSpellings) ? country.altSpellings : [];
+  const altSpellings = Array.isArray(country?.altSpellings)
+    ? country.altSpellings
+    : [];
   for (const alt of altSpellings) add(alt);
   return Array.from(names.values());
 }
 
 async function loadCountryList(cfg) {
   const now = Date.now();
-  if (cachedCountries && (now - cachedCountriesAt) < COUNTRY_CACHE_TTL_MS) return cachedCountries;
+  if (cachedCountries && now - cachedCountriesAt < COUNTRY_CACHE_TTL_MS)
+    return cachedCountries;
 
   const apiUrl = cfg?.guessFlag?.apiUrl;
   let list = [];
@@ -419,8 +635,10 @@ async function loadCountryList(cfg) {
   const mapped = list
     .map((country) => {
       const names = collectCountryNames(country);
-      const flagUrl = country?.flags?.png || country?.flags?.svg || country?.flags?.[0];
-      const displayName = country?.name?.common || country?.name?.official || null;
+      const flagUrl =
+        country?.flags?.png || country?.flags?.svg || country?.flags?.[0];
+      const displayName =
+        country?.name?.common || country?.name?.official || null;
       if (!names.length || !flagUrl || !displayName) return null;
       return { names, flagUrl, displayName };
     })
@@ -436,31 +654,42 @@ function pickRandomItem(list = []) {
   return list[randomBetween(0, list.length - 1)] || null;
 }
 
+function parseStateTarget(rawTarget, fallback = {}) {
+  try {
+    const parsed = JSON.parse(rawTarget || "{}");
+    if (parsed && typeof parsed === "object") return parsed;
+  } catch {}
+  return fallback;
+}
+
 function decodeHtmlEntities(value) {
-  return String(value || '')
+  return String(value || "")
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 async function fetchWikiRegionImage(regionName) {
-  const normalized = String(regionName || '').trim();
+  const normalized = String(regionName || "").trim();
   if (!normalized) return null;
   if (regionImageCache.has(normalized)) return regionImageCache.get(normalized);
 
   const titles = [
     normalized,
     `${normalized} (regione italiana)`,
-    `Regione ${normalized}`
+    `Regione ${normalized}`,
   ];
 
   for (const title of titles) {
     const url = `https://it.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
     try {
       const res = await axios.get(url, { timeout: 12000 });
-      const image = res?.data?.thumbnail?.source || res?.data?.originalimage?.source || null;
+      const image =
+        res?.data?.thumbnail?.source ||
+        res?.data?.originalimage?.source ||
+        null;
       if (image) {
         regionImageCache.set(normalized, image);
         return image;
@@ -474,17 +703,23 @@ async function fetchWikiRegionImage(regionName) {
 
 async function loadCapitalQuestionBank(cfg) {
   const now = Date.now();
-  if (cachedCapitalQuestions && (now - cachedCapitalQuestionsAt) < CAPITAL_CACHE_TTL_MS) {
+  if (
+    cachedCapitalQuestions &&
+    now - cachedCapitalQuestionsAt < CAPITAL_CACHE_TTL_MS
+  ) {
     return cachedCapitalQuestions;
   }
 
-  const apiUrl = cfg?.guessCapital?.apiUrl || 'https://restcountries.com/v3.1/all?fields=name,translations,capital,flags';
+  const apiUrl =
+    cfg?.guessCapital?.apiUrl ||
+    "https://restcountries.com/v3.1/all?fields=name,translations,capital,flags";
   const out = [];
   try {
     const res = await axios.get(apiUrl, { timeout: 15000 });
     const list = Array.isArray(res?.data) ? res.data : [];
     for (const country of list) {
-      const countryDisplay = country?.translations?.ita?.common || country?.name?.common || null;
+      const countryDisplay =
+        country?.translations?.ita?.common || country?.name?.common || null;
       const capitals = Array.isArray(country?.capital) ? country.capital : [];
       const image = country?.flags?.png || country?.flags?.svg || null;
       if (!countryDisplay || !capitals.length) continue;
@@ -496,14 +731,21 @@ async function loadCapitalQuestionBank(cfg) {
 
   cachedCapitalQuestions = out.length
     ? out
-    : CAPITAL_QUIZ_BANK.map((x) => ({ country: x.country, answers: buildAliases(x.answers), image: null }));
+    : CAPITAL_QUIZ_BANK.map((x) => ({
+        country: x.country,
+        answers: buildAliases(x.answers),
+        image: null,
+      }));
   cachedCapitalQuestionsAt = now;
   return cachedCapitalQuestions;
 }
 
 async function loadRegionCapitalQuestionBank(cfg) {
   const now = Date.now();
-  if (cachedRegionCapitalQuestions && (now - cachedRegionCapitalQuestionsAt) < REGION_CAPITAL_CACHE_TTL_MS) {
+  if (
+    cachedRegionCapitalQuestions &&
+    now - cachedRegionCapitalQuestionsAt < REGION_CAPITAL_CACHE_TTL_MS
+  ) {
     return cachedRegionCapitalQuestions;
   }
 
@@ -512,12 +754,18 @@ async function loadRegionCapitalQuestionBank(cfg) {
   if (apiUrl) {
     try {
       const res = await axios.get(apiUrl, { timeout: 15000 });
-      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.data) ? res.data.data : [];
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+          ? res.data.data
+          : [];
       for (const row of list) {
         const region = row?.region || row?.regione || row?.name || null;
         const capital = row?.capital || row?.capoluogo || null;
         if (!region || !capital) continue;
-        const answers = buildAliases(Array.isArray(capital) ? capital : [capital]);
+        const answers = buildAliases(
+          Array.isArray(capital) ? capital : [capital],
+        );
         if (!answers.length) continue;
         out.push({ region: String(region), answers });
       }
@@ -526,19 +774,26 @@ async function loadRegionCapitalQuestionBank(cfg) {
 
   cachedRegionCapitalQuestions = out.length
     ? out
-    : ITALIAN_REGION_CAPITAL_BANK.map((x) => ({ region: x.region, answers: buildAliases(x.answers) }));
+    : ITALIAN_REGION_CAPITAL_BANK.map((x) => ({
+        region: x.region,
+        answers: buildAliases(x.answers),
+      }));
   cachedRegionCapitalQuestionsAt = now;
   return cachedRegionCapitalQuestions;
 }
 
 async function loadFootballTeamsFromApi(cfg) {
   const now = Date.now();
-  if (cachedTeams && (now - cachedTeamsAt) < TEAM_CACHE_TTL_MS) return cachedTeams;
+  if (cachedTeams && now - cachedTeamsAt < TEAM_CACHE_TTL_MS)
+    return cachedTeams;
 
-  const apiBase = cfg?.guessTeam?.apiUrl || 'https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?l=';
-  const leagues = Array.isArray(cfg?.guessTeam?.leagues) && cfg.guessTeam.leagues.length
-    ? cfg.guessTeam.leagues
-    : ['Italian Serie A', 'English Premier League', 'Spanish La Liga'];
+  const apiBase =
+    cfg?.guessTeam?.apiUrl ||
+    "https://www.thesportsdb.com/api/v1/json/123/search_all_teams.php?l=";
+  const leagues =
+    Array.isArray(cfg?.guessTeam?.leagues) && cfg.guessTeam.leagues.length
+      ? cfg.guessTeam.leagues
+      : ["Italian Serie A", "English Premier League", "Spanish La Liga"];
   const out = [];
   for (const league of leagues) {
     try {
@@ -549,59 +804,96 @@ async function loadFootballTeamsFromApi(cfg) {
         const name = team?.strTeam;
         const badge = team?.strBadge || null;
         if (!name || !badge) continue;
-        const aliases = buildAliases([name, team?.strTeamShort, team?.strTeamAlternate].filter(Boolean));
+        const aliases = buildAliases(
+          [name, team?.strTeamShort, team?.strTeamAlternate].filter(Boolean),
+        );
         if (!aliases.length) continue;
         out.push({ team: name, answers: aliases, image: badge });
       }
     } catch {}
   }
 
-  cachedTeams = out.length ? out : FOOTBALL_TEAM_BANK.map((x) => ({ team: x.team, answers: buildAliases(x.answers), image: x.image }));
+  cachedTeams = out.length
+    ? out
+    : FOOTBALL_TEAM_BANK.map((x) => ({
+        team: x.team,
+        answers: buildAliases(x.answers),
+        image: x.image,
+      }));
   cachedTeamsAt = now;
   return cachedTeams;
 }
 
 async function loadSingersFromApi(cfg) {
   const now = Date.now();
-  if (cachedSingers && (now - cachedSingersAt) < SINGER_CACHE_TTL_MS) return cachedSingers;
+  if (cachedSingers && now - cachedSingersAt < SINGER_CACHE_TTL_MS)
+    return cachedSingers;
 
-  const apiUrl = cfg?.guessSinger?.apiUrl || 'https://api.deezer.com/chart/0/artists?limit=100';
+  const apiUrl =
+    cfg?.guessSinger?.apiUrl ||
+    "https://api.deezer.com/chart/0/artists?limit=100";
   const out = [];
   try {
     const res = await axios.get(apiUrl, { timeout: 15000 });
     const list = Array.isArray(res?.data?.data) ? res.data.data : [];
     for (const artist of list) {
       const name = artist?.name;
-      const image = artist?.picture_xl || artist?.picture_big || artist?.picture_medium || artist?.picture || null;
+      const image =
+        artist?.picture_xl ||
+        artist?.picture_big ||
+        artist?.picture_medium ||
+        artist?.picture ||
+        null;
       if (!name || !image) continue;
       out.push({ name, answers: buildAliases([name]), image });
     }
   } catch {}
 
-  cachedSingers = out.length ? out : SINGER_BANK.map((x) => ({ name: x.name, answers: buildAliases(x.answers), image: x.image }));
+  cachedSingers = out.length
+    ? out
+    : SINGER_BANK.map((x) => ({
+        name: x.name,
+        answers: buildAliases(x.answers),
+        image: x.image,
+      }));
   cachedSingersAt = now;
   return cachedSingers;
 }
 
 async function loadAlbumsFromApi(cfg) {
   const now = Date.now();
-  if (cachedAlbums && (now - cachedAlbumsAt) < ALBUM_CACHE_TTL_MS) return cachedAlbums;
+  if (cachedAlbums && now - cachedAlbumsAt < ALBUM_CACHE_TTL_MS)
+    return cachedAlbums;
 
-  const apiUrl = cfg?.guessAlbum?.apiUrl || 'https://api.deezer.com/chart/0/albums?limit=100';
+  const apiUrl =
+    cfg?.guessAlbum?.apiUrl ||
+    "https://api.deezer.com/chart/0/albums?limit=100";
   const out = [];
   try {
     const res = await axios.get(apiUrl, { timeout: 15000 });
     const list = Array.isArray(res?.data?.data) ? res.data.data : [];
     for (const album of list) {
       const title = album?.title;
-      const artist = album?.artist?.name || 'Artista sconosciuto';
-      const image = album?.cover_xl || album?.cover_big || album?.cover_medium || album?.cover || null;
+      const artist = album?.artist?.name || "Artista sconosciuto";
+      const image =
+        album?.cover_xl ||
+        album?.cover_big ||
+        album?.cover_medium ||
+        album?.cover ||
+        null;
       if (!title || !image) continue;
       out.push({ album: title, artist, answers: buildAliases([title]), image });
     }
   } catch {}
 
-  cachedAlbums = out.length ? out : ALBUM_BANK.map((x) => ({ album: x.album, artist: x.artist, answers: buildAliases(x.answers), image: x.image }));
+  cachedAlbums = out.length
+    ? out
+    : ALBUM_BANK.map((x) => ({
+        album: x.album,
+        artist: x.artist,
+        answers: buildAliases(x.answers),
+        image: x.image,
+      }));
   cachedAlbumsAt = now;
   return cachedAlbums;
 }
@@ -615,14 +907,36 @@ function normalizeSongGuess(raw) {
 }
 
 const LOOSE_STOPWORDS = new Set([
-  'a', 'an', 'the', 'of', 'and', 'or',
-  'di', 'del', 'della', 'dello', 'dei', 'degli', 'da', 'de', 'd', 'l',
-  'il', 'lo', 'la', 'i', 'gli', 'le',
-  'feat', 'ft', 'featuring', 'with'
+  "a",
+  "an",
+  "the",
+  "of",
+  "and",
+  "or",
+  "di",
+  "del",
+  "della",
+  "dello",
+  "dei",
+  "degli",
+  "da",
+  "de",
+  "d",
+  "l",
+  "il",
+  "lo",
+  "la",
+  "i",
+  "gli",
+  "le",
+  "feat",
+  "ft",
+  "featuring",
+  "with",
 ]);
 
 function toMeaningfulTokens(raw, minTokenLength = 3) {
-  return String(raw || '')
+  return String(raw || "")
     .split(/\s+/)
     .map((t) => t.trim())
     .filter(Boolean)
@@ -635,13 +949,16 @@ function buildCompactAlias(value) {
   if (!normalized) return null;
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (tokens.length <= 1) return null;
-  const compact = tokens.filter((t) => t.length > 1).join(' ').trim();
+  const compact = tokens
+    .filter((t) => t.length > 1)
+    .join(" ")
+    .trim();
   if (!compact || compact === normalized) return null;
   return compact;
 }
 
 function buildSongAnswerAliases(rawTitle) {
-  const raw = String(rawTitle || '').trim();
+  const raw = String(rawTitle || "").trim();
   if (!raw) return [];
 
   const aliases = new Set();
@@ -655,32 +972,42 @@ function buildSongAnswerAliases(rawTitle) {
   add(raw);
 
   const withoutBrackets = raw
-    .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
   add(withoutBrackets);
 
   const withoutFeat = raw
-    .replace(/\s+(feat\.?|ft\.?|featuring|with)\s+.+$/i, '')
+    .replace(/\s+(feat\.?|ft\.?|featuring|with)\s+.+$/i, "")
     .trim();
   add(withoutFeat);
   add(
     withoutFeat
-      .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
+      .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
   );
 
-  const dashParts = raw.split(/\s[-–—]\s/).map((p) => p.trim()).filter(Boolean);
+  const dashParts = raw
+    .split(/\s[-–—]\s/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   if (dashParts.length >= 2) {
     const left = dashParts[0];
-    const right = dashParts.slice(1).join(' ');
-    if (/(remaster|version|edit|mix|live|acoustic|karaoke|instrumental|bonus|mono|stereo|radio|explicit|clean|sped|slowed|rework|demo|deluxe|anniversary|session|soundtrack|from)\b/i.test(right)) {
+    const right = dashParts.slice(1).join(" ");
+    if (
+      /(remaster|version|edit|mix|live|acoustic|karaoke|instrumental|bonus|mono|stereo|radio|explicit|clean|sped|slowed|rework|demo|deluxe|anniversary|session|soundtrack|from)\b/i.test(
+        right,
+      )
+    ) {
       add(left);
     }
   }
 
-  for (const part of raw.split(/[\/|]/g).map((p) => p.trim()).filter(Boolean)) {
+  for (const part of raw
+    .split(/[\/|]/g)
+    .map((p) => p.trim())
+    .filter(Boolean)) {
     add(part);
   }
 
@@ -691,15 +1018,15 @@ function isSongGuessCorrect(rawGuess, rawAnswers) {
   return isLooseAliasGuessCorrect(rawGuess, rawAnswers, normalizeSongGuess, {
     minGuessLength: 4,
     minTokenLength: 3,
-    singleTokenMinLength: 6
+    singleTokenMinLength: 6,
   });
 }
 
 function normalizeTruthValue(raw) {
   const v = normalizeCountryName(raw);
   if (!v) return null;
-  if (['vero', 'true', 'v'].includes(v)) return true;
-  if (['falso', 'false', 'f'].includes(v)) return false;
+  if (["vero", "true", "v"].includes(v)) return true;
+  if (["falso", "false", "f"].includes(v)) return false;
   return null;
 }
 
@@ -715,20 +1042,20 @@ function buildAliases(values = []) {
 }
 
 function createMathQuestion() {
-  const ops = ['+', '-', '*', '/'];
+  const ops = ["+", "-", "*", "/"];
   const op = ops[randomBetween(0, ops.length - 1)];
   let a = randomBetween(2, 35);
   let b = randomBetween(2, 20);
-  if (op === '-') {
+  if (op === "-") {
     if (b > a) [a, b] = [b, a];
     return { expression: `${a} - ${b}`, answer: String(a - b) };
   }
-  if (op === '*') {
+  if (op === "*") {
     a = randomBetween(2, 12);
     b = randomBetween(2, 12);
     return { expression: `${a} x ${b}`, answer: String(a * b) };
   }
-  if (op === '/') {
+  if (op === "/") {
     b = randomBetween(2, 12);
     const result = randomBetween(2, 12);
     a = b * result;
@@ -738,15 +1065,15 @@ function createMathQuestion() {
 }
 
 function maskHangmanWord(word, guessed = new Set()) {
-  return String(word || '')
-    .split('')
-    .map((ch) => (guessed.has(ch) ? ch : '_'))
-    .join(' ');
+  return String(word || "")
+    .split("")
+    .map((ch) => (guessed.has(ch) ? ch : "_"))
+    .join(" ");
 }
 
 function levenshteinDistance(aRaw, bRaw) {
-  const a = String(aRaw || '');
-  const b = String(bRaw || '');
+  const a = String(aRaw || "");
+  const b = String(bRaw || "");
   if (!a.length) return b.length;
   if (!b.length) return a.length;
   const prev = new Array(b.length + 1);
@@ -756,11 +1083,7 @@ function levenshteinDistance(aRaw, bRaw) {
     curr[0] = i;
     for (let j = 1; j <= b.length; j += 1) {
       const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min(
-        prev[j] + 1,
-        curr[j - 1] + 1,
-        prev[j - 1] + cost
-      );
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
     }
     for (let j = 0; j <= b.length; j += 1) prev[j] = curr[j];
   }
@@ -769,7 +1092,8 @@ function levenshteinDistance(aRaw, bRaw) {
 
 function isNearTextGuess(rawGuess, rawAnswers, options = {}) {
   const guess = normalizeCountryName(rawGuess);
-  if (!guess || guess.length < Number(options?.minGuessLength || 3)) return false;
+  if (!guess || guess.length < Number(options?.minGuessLength || 3))
+    return false;
   const answers = Array.isArray(rawAnswers)
     ? rawAnswers.map((x) => normalizeCountryName(x)).filter(Boolean)
     : [normalizeCountryName(rawAnswers)].filter(Boolean);
@@ -781,12 +1105,16 @@ function isNearTextGuess(rawGuess, rawAnswers, options = {}) {
     if (!answer || guess === answer) continue;
     const dist = levenshteinDistance(guess, answer);
     const base = Math.max(guess.length, answer.length);
-    if (dist <= maxAbs && (dist / Math.max(1, base)) <= maxRatio) return true;
+    if (dist <= maxAbs && dist / Math.max(1, base) <= maxRatio) return true;
   }
   return false;
 }
 
-function isStrictAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCountryName) {
+function isStrictAliasGuessCorrect(
+  rawGuess,
+  rawAnswers,
+  normalizer = normalizeCountryName,
+) {
   const guess = normalizer(rawGuess);
   if (!guess) return false;
 
@@ -805,7 +1133,12 @@ function isStrictAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeC
   return false;
 }
 
-function isLooseAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCountryName, options = {}) {
+function isLooseAliasGuessCorrect(
+  rawGuess,
+  rawAnswers,
+  normalizer = normalizeCountryName,
+  options = {},
+) {
   const guess = normalizer(rawGuess);
   if (!guess) return false;
 
@@ -814,7 +1147,8 @@ function isLooseAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCo
     : [normalizer(rawAnswers)].filter(Boolean);
   if (!answers.length) return false;
 
-  if (isStrictAliasGuessCorrect(guess, answers, (v) => String(v || ''))) return true;
+  if (isStrictAliasGuessCorrect(guess, answers, (v) => String(v || "")))
+    return true;
 
   const uniqueAnswers = Array.from(new Set(answers));
   const minGuessLength = Number(options?.minGuessLength || 4);
@@ -842,7 +1176,8 @@ function isLooseAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCo
     }
 
     if (guessTokens.length === 1) {
-      if (guessTokens[0].length >= singleTokenMinLength && matched === 1) return true;
+      if (guessTokens[0].length >= singleTokenMinLength && matched === 1)
+        return true;
       continue;
     }
 
@@ -852,9 +1187,8 @@ function isLooseAliasGuessCorrect(rawGuess, rawAnswers, normalizer = normalizeCo
   return false;
 }
 
-
 function extractWordGuessCandidates(raw) {
-  const lower = String(raw || '').toLowerCase();
+  const lower = String(raw || "").toLowerCase();
   const tokens = lower
     .split(/[^a-zà-öø-ÿ]+/i)
     .map((t) => t.trim())
@@ -904,15 +1238,17 @@ async function fetchPlayerInfo(cfg, name) {
     const res = await axios.get(url, { timeout: 15000 });
     const players = res?.data?.player;
     if (!Array.isArray(players) || players.length === 0) return null;
-    const player = players.find((p) => (p?.strThumb || p?.strCutout) && p?.strPlayer) || players[0];
+    const player =
+      players.find((p) => (p?.strThumb || p?.strCutout) && p?.strPlayer) ||
+      players[0];
     if (!player?.strPlayer) return null;
     if (!player.strThumb && !player.strCutout) return null;
     return {
       name: player.strPlayer,
-      team: player.strTeam || 'Squadra sconosciuta',
-      nationality: player.strNationality || 'Nazionalità sconosciuta',
+      team: player.strTeam || "Squadra sconosciuta",
+      nationality: player.strNationality || "Nazionalità sconosciuta",
       image: player.strThumb || player.strCutout || null,
-      aliases: buildPlayerAliases(player)
+      aliases: buildPlayerAliases(player),
     };
   } catch {
     return null;
@@ -922,7 +1258,7 @@ async function fetchPlayerInfo(cfg, name) {
 async function fetchPlayerFromRandomLetter(cfg) {
   const apiBase = cfg?.guessPlayer?.apiUrl;
   if (!apiBase) return null;
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const letters = "abcdefghijklmnopqrstuvwxyz";
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const letter = letters[randomBetween(0, letters.length - 1)];
     const url = `${apiBase}${encodeURIComponent(letter)}`;
@@ -937,10 +1273,10 @@ async function fetchPlayerFromRandomLetter(cfg) {
       if (!player.strThumb && !player.strCutout) continue;
       return {
         name: player.strPlayer,
-        team: player.strTeam || 'Squadra sconosciuta',
-        nationality: player.strNationality || 'Nazionalità sconosciuta',
+        team: player.strTeam || "Squadra sconosciuta",
+        nationality: player.strNationality || "Nazionalità sconosciuta",
         image: player.strThumb || player.strCutout || null,
-        aliases: buildPlayerAliases(player)
+        aliases: buildPlayerAliases(player),
       };
     } catch {}
   }
@@ -949,9 +1285,14 @@ async function fetchPlayerFromRandomLetter(cfg) {
 
 async function loadPlayerList(cfg) {
   const now = Date.now();
-  if (cachedPlayers && (now - cachedPlayersAt) < PLAYER_CACHE_TTL_MS) return cachedPlayers;
-  const list = Array.isArray(cfg?.guessPlayer?.names) ? cfg.guessPlayer.names : [];
-  const filtered = list.map((name) => String(name || '').trim()).filter(Boolean);
+  if (cachedPlayers && now - cachedPlayersAt < PLAYER_CACHE_TTL_MS)
+    return cachedPlayers;
+  const list = Array.isArray(cfg?.guessPlayer?.names)
+    ? cfg.guessPlayer.names
+    : [];
+  const filtered = list
+    .map((name) => String(name || "").trim())
+    .filter(Boolean);
   cachedPlayers = filtered;
   cachedPlayersAt = now;
   return cachedPlayers;
@@ -962,30 +1303,30 @@ async function fetchFamousPlayer(cfg) {
     ? cfg.guessPlayer.famousNames
     : [];
   const defaultNames = [
-    'Kylian Mbappe',
-    'Erling Haaland',
-    'Jude Bellingham',
-    'Vinicius Junior',
-    'Robert Lewandowski',
-    'Mohamed Salah',
-    'Kevin De Bruyne',
-    'Harry Kane',
-    'Bukayo Saka',
-    'Phil Foden',
-    'Rodri',
-    'Lautaro Martinez',
-    'Victor Osimhen',
-    'Nicolas Barella',
-    'Pedri',
-    'Antoine Griezmann',
-    'Bruno Fernandes',
-    'Son Heung-min',
-    'Florian Wirtz',
-    'Jamal Musiala'
+    "Kylian Mbappe",
+    "Erling Haaland",
+    "Jude Bellingham",
+    "Vinicius Junior",
+    "Robert Lewandowski",
+    "Mohamed Salah",
+    "Kevin De Bruyne",
+    "Harry Kane",
+    "Bukayo Saka",
+    "Phil Foden",
+    "Rodri",
+    "Lautaro Martinez",
+    "Victor Osimhen",
+    "Nicolas Barella",
+    "Pedri",
+    "Antoine Griezmann",
+    "Bruno Fernandes",
+    "Son Heung-min",
+    "Florian Wirtz",
+    "Jamal Musiala",
   ];
 
   const names = (customNames.length ? customNames : defaultNames)
-    .map((name) => String(name || '').trim())
+    .map((name) => String(name || "").trim())
     .filter(Boolean);
   if (!names.length) return null;
 
@@ -1011,35 +1352,51 @@ async function fetchFamousPlayer(cfg) {
 async function fetchRandomSong(cfg) {
   const apiBase = cfg?.guessSong?.apiUrl;
   if (!apiBase) return null;
-  const popularTerms = Array.isArray(cfg?.guessSong?.popularTerms) && cfg.guessSong.popularTerms.length
-    ? cfg.guessSong.popularTerms
-    : [
-      'the weeknd', 'dua lipa', 'ed sheeran', 'drake', 'ariana grande',
-      'post malone', 'taylor swift', 'billie eilish', 'maneskin', 'elodie',
-      'sfera ebbasta', 'thasup', 'bad bunny', 'eminem', 'coldplay'
-    ];
+  const popularTerms =
+    Array.isArray(cfg?.guessSong?.popularTerms) &&
+    cfg.guessSong.popularTerms.length
+      ? cfg.guessSong.popularTerms
+      : [
+          "the weeknd",
+          "dua lipa",
+          "ed sheeran",
+          "drake",
+          "ariana grande",
+          "post malone",
+          "taylor swift",
+          "billie eilish",
+          "maneskin",
+          "elodie",
+          "sfera ebbasta",
+          "thasup",
+          "bad bunny",
+          "eminem",
+          "coldplay",
+        ];
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const term = popularTerms[randomBetween(0, popularTerms.length - 1)];
     const url = `${apiBase}${encodeURIComponent(term)}&entity=song&limit=50`;
     try {
       const res = await axios.get(url, { timeout: 15000 });
       const results = Array.isArray(res?.data?.results) ? res.data.results : [];
-      const songs = results.filter((item) => item?.trackName && item?.artistName && item?.previewUrl);
+      const songs = results.filter(
+        (item) => item?.trackName && item?.artistName && item?.previewUrl,
+      );
       if (!songs.length) continue;
       const song = songs[randomBetween(0, songs.length - 1)];
       const artwork = song.artworkUrl100
-        ? song.artworkUrl100.replace('100x100bb', '600x600bb')
+        ? song.artworkUrl100.replace("100x100bb", "600x600bb")
         : null;
-      const genre = song.primaryGenreName || 'Genere sconosciuto';
+      const genre = song.primaryGenreName || "Genere sconosciuto";
       const artistCountry = await fetchArtistCountry(cfg, song.artistName);
       return {
         title: song.trackName,
         artist: song.artistName,
-        album: song.collectionName || 'Album sconosciuto',
+        album: song.collectionName || "Album sconosciuto",
         artwork,
         genre,
-        artistCountry: artistCountry || 'Nazionalità sconosciuta',
-        previewUrl: song.previewUrl || null
+        artistCountry: artistCountry || "Nazionalità sconosciuta",
+        previewUrl: song.previewUrl || null,
       };
     } catch {}
   }
@@ -1049,7 +1406,10 @@ async function fetchRandomSong(cfg) {
 async function fetchAudioAttachment(url) {
   if (!url) return null;
   try {
-    const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 15000 });
+    const res = await axios.get(url, {
+      responseType: "arraybuffer",
+      timeout: 15000,
+    });
     const data = Buffer.from(res.data);
     if (!data || !data.length) return null;
     return data;
@@ -1060,42 +1420,65 @@ async function fetchAudioAttachment(url) {
 
 async function loadPopularSongList(cfg) {
   const now = Date.now();
-  if (cachedSongs && (now - cachedSongsAt) < SONG_CACHE_TTL_MS) return cachedSongs;
+  if (cachedSongs && now - cachedSongsAt < SONG_CACHE_TTL_MS)
+    return cachedSongs;
   const all = [];
 
-  const deezerChartUrl = cfg?.guessSong?.deezerChartUrl || 'https://api.deezer.com/chart/0/tracks?limit=100';
+  const deezerChartUrl =
+    cfg?.guessSong?.deezerChartUrl ||
+    "https://api.deezer.com/chart/0/tracks?limit=100";
   try {
     const chartRes = await axios.get(deezerChartUrl, { timeout: 15000 });
-    const tracks = Array.isArray(chartRes?.data?.data) ? chartRes.data.data : [];
+    const tracks = Array.isArray(chartRes?.data?.data)
+      ? chartRes.data.data
+      : [];
     for (const track of tracks) {
       if (!track?.title || !track?.artist?.name) continue;
       all.push({
-        source: 'deezer',
-        id: String(track.id || ''),
+        source: "deezer",
+        id: String(track.id || ""),
         title: track.title,
         artist: track.artist.name,
-        album: track?.album?.title || 'Album sconosciuto',
-        artwork: track?.album?.cover_xl || track?.album?.cover_big || track?.album?.cover_medium || null,
-        genre: 'Popolare',
-        previewUrl: track.preview || null
+        album: track?.album?.title || "Album sconosciuto",
+        artwork:
+          track?.album?.cover_xl ||
+          track?.album?.cover_big ||
+          track?.album?.cover_medium ||
+          null,
+        genre: "Popolare",
+        previewUrl: track.preview || null,
       });
     }
   } catch {}
 
-  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds) ? cfg.guessSong.popularFeeds : [];
+  const feeds = Array.isArray(cfg?.guessSong?.popularFeeds)
+    ? cfg.guessSong.popularFeeds
+    : [];
   for (const feed of feeds) {
     if (!feed) continue;
     try {
       const res = await axios.get(feed, { timeout: 15000 });
-      const entries = Array.isArray(res?.data?.feed?.entry) ? res.data.feed.entry : [];
+      const entries = Array.isArray(res?.data?.feed?.entry)
+        ? res.data.feed.entry
+        : [];
       for (const entry of entries) {
-        const id = entry?.id?.attributes?.['im:id'] || entry?.id?.attributes?.im_id;
-        const title = entry?.['im:name']?.label || entry?.title?.label;
-        const artist = entry?.['im:artist']?.label || entry?.['im:artist']?.name;
-        const images = Array.isArray(entry?.['im:image']) ? entry['im:image'] : [];
+        const id =
+          entry?.id?.attributes?.["im:id"] || entry?.id?.attributes?.im_id;
+        const title = entry?.["im:name"]?.label || entry?.title?.label;
+        const artist =
+          entry?.["im:artist"]?.label || entry?.["im:artist"]?.name;
+        const images = Array.isArray(entry?.["im:image"])
+          ? entry["im:image"]
+          : [];
         const artwork = images.length ? images[images.length - 1].label : null;
         if (!id || !title || !artist) continue;
-        all.push({ source: 'itunes_feed', id: String(id), title, artist, artwork });
+        all.push({
+          source: "itunes_feed",
+          id: String(id),
+          title,
+          artist,
+          artwork,
+        });
       }
     } catch {}
   }
@@ -1112,16 +1495,16 @@ async function fetchPopularSong(cfg) {
   const pick = pool[randomBetween(0, pool.length - 1)];
   if (!pick?.id) return null;
 
-  if (pick.source === 'deezer') {
+  if (pick.source === "deezer") {
     const artistCountry = await fetchArtistCountry(cfg, pick.artist);
     return {
       title: pick.title,
       artist: pick.artist,
-      album: pick.album || 'Album sconosciuto',
+      album: pick.album || "Album sconosciuto",
       artwork: pick.artwork || null,
-      genre: pick.genre || 'Genere sconosciuto',
-      artistCountry: artistCountry || 'Nazionalità sconosciuta',
-      previewUrl: pick.previewUrl || null
+      genre: pick.genre || "Genere sconosciuto",
+      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      previewUrl: pick.previewUrl || null,
     };
   }
 
@@ -1130,16 +1513,18 @@ async function fetchPopularSong(cfg) {
     const res = await axios.get(lookupUrl, { timeout: 15000 });
     const item = Array.isArray(res?.data?.results) ? res.data.results[0] : null;
     if (!item?.trackName || !item?.artistName) return null;
-    const genre = item?.primaryGenreName || 'Genere sconosciuto';
+    const genre = item?.primaryGenreName || "Genere sconosciuto";
     const artistCountry = await fetchArtistCountry(cfg, pick.artist);
     return {
       title: item?.trackName || pick.title,
       artist: item?.artistName || pick.artist,
-      album: item?.collectionName || 'Album sconosciuto',
-      artwork: item?.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : pick.artwork,
+      album: item?.collectionName || "Album sconosciuto",
+      artwork: item?.artworkUrl100
+        ? item.artworkUrl100.replace("100x100bb", "600x600bb")
+        : pick.artwork,
       genre,
-      artistCountry: artistCountry || 'Nazionalità sconosciuta',
-      previewUrl: item?.previewUrl || null
+      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      previewUrl: item?.previewUrl || null,
     };
   } catch {
     return null;
@@ -1147,19 +1532,19 @@ async function fetchPopularSong(cfg) {
 }
 
 function normalizeArtistLabel(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/\((feat|ft)\.?[^)]*\)/g, ' ')
-    .replace(/\b(feat|ft)\.?[\s\S]*$/g, ' ')
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\((feat|ft)\.?[^)]*\)/g, " ")
+    .replace(/\b(feat|ft)\.?[\s\S]*$/g, " ")
+    .replace(/[^\w\s]/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function buildArtistSearchTerms(artistName) {
-  const raw = String(artistName || '').trim();
+  const raw = String(artistName || "").trim();
   const normalized = normalizeArtistLabel(raw);
   const terms = new Set();
   if (raw) terms.add(raw);
@@ -1178,7 +1563,8 @@ function pickBestArtistCandidate(candidates, artistName) {
       let nameScore = 0;
       if (artistLabel && target) {
         if (artistLabel === target) nameScore = 120;
-        else if (artistLabel.includes(target) || target.includes(artistLabel)) nameScore = 60;
+        else if (artistLabel.includes(target) || target.includes(artistLabel))
+          nameScore = 60;
       }
       const countryBonus = hasCountry ? 30 : 0;
       return { artist, score: mbScore + nameScore + countryBonus };
@@ -1189,15 +1575,21 @@ function pickBestArtistCandidate(candidates, artistName) {
 
 async function fetchArtistCountry(cfg, artistName) {
   if (!artistName) return null;
-  const apiBase = cfg?.guessSong?.artistApiUrl || 'https://musicbrainz.org/ws/2/artist/?query=artist:';
+  const apiBase =
+    cfg?.guessSong?.artistApiUrl ||
+    "https://musicbrainz.org/ws/2/artist/?query=artist:";
   const terms = buildArtistSearchTerms(artistName);
   const urls = [];
 
   for (const term of terms) {
     urls.push(`${apiBase}${encodeURIComponent(term)}&fmt=json&limit=8`);
   }
-  urls.push(`https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artistName)}&fmt=json&limit=8`);
-  urls.push(`https://musicbrainz.org/ws/2/artist/?query=artist:%22${encodeURIComponent(artistName)}%22&fmt=json&limit=8`);
+  urls.push(
+    `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artistName)}&fmt=json&limit=8`,
+  );
+  urls.push(
+    `https://musicbrainz.org/ws/2/artist/?query=artist:%22${encodeURIComponent(artistName)}%22&fmt=json&limit=8`,
+  );
 
   const seen = new Set();
   for (const url of urls) {
@@ -1207,10 +1599,12 @@ async function fetchArtistCountry(cfg, artistName) {
       const res = await axios.get(url, {
         timeout: 15000,
         headers: {
-          'User-Agent': 'ViniliCaffeBot/1.0 (discord bot)'
-        }
+          "User-Agent": "ViniliCaffeBot/1.0 (discord bot)",
+        },
       });
-      const candidates = Array.isArray(res?.data?.artists) ? res.data.artists : [];
+      const candidates = Array.isArray(res?.data?.artists)
+        ? res.data.artists
+        : [];
       const artist = pickBestArtistCandidate(candidates, artistName);
       const country = artist?.country || artist?.area?.name || null;
       if (country) return country;
@@ -1228,80 +1622,88 @@ function isWithinAllowedWindow(now, start, end) {
 }
 
 function getRomeParts(date) {
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
-    if (part.type !== 'literal') map[part.type] = part.value;
+    if (part.type !== "literal") map[part.type] = part.value;
   }
   return {
     year: Number(map.year),
     month: Number(map.month),
     day: Number(map.day),
     hour: Number(map.hour),
-    minute: Number(map.minute)
+    minute: Number(map.minute),
   };
 }
 
 function getRomeDateKey(date) {
   const parts = getRomeParts(date);
-  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
 
 function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina il numero .ᐟ ✧')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚﹒`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina il numero .ᐟ ✧")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚﹒`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    );
 }
 
 function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina la parola .ᐟ ✧')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚﹒`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina la parola .ᐟ ✧")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚﹒`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    );
 }
 
 function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina la bandiera .ᐟ ✧')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'))
+    .setColor("#6f4e37")
+    .setTitle("Indovina la bandiera .ᐟ ✧")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    )
     .setImage(flagUrl);
 }
 
 function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina il calciatore .ᐟ ✧')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina il calciatore .ᐟ ✧")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    );
   if (imageUrl) {
     embed.setImage(imageUrl);
   }
@@ -1311,39 +1713,55 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
 function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina la canzone .ᐟ ✧')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**˚﹒`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina la canzone .ᐟ ✧")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**˚﹒`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    );
   if (artworkUrl) embed.setImage(artworkUrl);
   return embed;
 }
 
-function buildGuessCapitalEmbed(country, rewardExp, durationMs, imageUrl = null) {
+function buildGuessCapitalEmbed(
+  country,
+  rewardExp,
+  durationMs,
+  imageUrl = null,
+) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina la capitale .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Qual e la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina la capitale .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Qual e la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
+      ].join("\n"),
+    );
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
 
-function buildGuessRegionCapitalEmbed(region, rewardExp, durationMs, imageUrl = null) {
+function buildGuessRegionCapitalEmbed(
+  region,
+  rewardExp,
+  durationMs,
+  imageUrl = null,
+) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina il capoluogo .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Qual e il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina il capoluogo .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Qual e il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
+      ].join("\n"),
+    );
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
@@ -1351,24 +1769,28 @@ function buildGuessRegionCapitalEmbed(region, rewardExp, durationMs, imageUrl = 
 function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Scrivi prima la frase .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
-      `\`${phrase}\``,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Scrivi prima la frase .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
+        `\`${phrase}\``,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
 }
 
 function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina la squadra .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina la squadra .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
@@ -1376,12 +1798,14 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
 function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina il cantante .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina il cantante .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
@@ -1389,117 +1813,137 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
 function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Indovina l album .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Indovina l album dalla copertina e vinci **${rewardExp} exp**.`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Indovina l album .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Indovina l album dalla copertina e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
   if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
 
-function buildHangmanEmbed(maskedWord, misses, maxMisses, rewardExp, durationMs) {
+function buildHangmanEmbed(
+  maskedWord,
+  misses,
+  maxMisses,
+  rewardExp,
+  durationMs,
+) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Impiccato .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
-      `Parola: **${maskedWord}**`,
-      `Errori: **${misses}/${maxMisses}**`,
-      `Ricompensa: **${rewardExp} exp**`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Impiccato .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
+        `Parola: **${maskedWord}**`,
+        `Errori: **${misses}/${maxMisses}**`,
+        `Ricompensa: **${rewardExp} exp**`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
 }
 
 function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Cultura generale italiana .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
-      `Ricompensa: **${rewardExp} exp**`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Cultura generale italiana .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
+        `Ricompensa: **${rewardExp} exp**`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
 }
 
 function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Quiz patente .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
-      'Rispondi con `vero` o `falso`.',
-      `Ricompensa: **${rewardExp} exp**`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Quiz patente .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
+        "Rispondi con `vero` o `falso`.",
+        `Ricompensa: **${rewardExp} exp**`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
 }
 
 function buildMathExpressionEmbed(expression, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Espressione matematica .')
-    .setDescription([
-      `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
-      `Ricompensa: **${rewardExp} exp**`,
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Espressione matematica .")
+    .setDescription(
+      [
+        `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
+        `Ricompensa: **${rewardExp} exp**`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+      ].join("\n"),
+    );
 }
 
 function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Trova il bot .ᐟ ✧')
-    .setDescription([
-      '<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!',
-      `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per trovarlo!`,
-      `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`
-    ].join('\n'))
+    .setColor("#6f4e37")
+    .setTitle("Trova il bot .ᐟ ✧")
+    .setDescription(
+      [
+        "<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!",
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per trovarlo!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
+      ].join("\n"),
+    );
 }
 
 function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('Sei vicino al bot .ᐟ ✧')
-    .setDescription([
-      '<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!',
-      `> <a:VC_Time:1468641957038526696> Tempo rimasto: **${minutes} minuti**`,
-      `> <:VC_Dot:1443932948599668746> Solo il primo che clicca vince.`
-    ].join('\n'));
+    .setColor("#6f4e37")
+    .setTitle("Sei vicino al bot .ᐟ ✧")
+    .setDescription(
+      [
+        "<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!",
+        `> <a:VC_Time:1468641957038526696> Tempo rimasto: **${minutes} minuti**`,
+        `> <:VC_Dot:1443932948599668746> Solo il primo che clicca vince.`,
+      ].join("\n"),
+    );
 }
 
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
     .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
     .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildGenericHintEmbed(text) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('<a:VC_Heart:1448672728822448141>⁺Indizio')
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
     .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${text}`);
 }
 
 function buildMaskedTextHint(value) {
   const normalized = normalizeCountryName(value);
   if (!normalized) return null;
-  const plain = normalized.replace(/\s+/g, '');
-  if (plain.length <= 2) return `Inizia con **${plain[0] || '?'}**`;
+  const plain = normalized.replace(/\s+/g, "");
+  if (plain.length <= 2) return `Inizia con **${plain[0] || "?"}**`;
   return `Inizia con **${plain[0]}** e termina con **${plain[plain.length - 1]}** (${plain.length} lettere)`;
 }
 
@@ -1515,21 +1959,29 @@ function buildNumberNearHint(target, min, max) {
 
 function buildHintEmbed(isHigher) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(isHigher ? '📈 <a:VC_Arrow:1448672967721615452> Più alto!' : '📉 <a:VC_Arrow:1448672967721615452> Più basso!');
+    .setColor("#6f4e37")
+    .setDescription(
+      isHigher
+        ? "📈 <a:VC_Arrow:1448672967721615452> Più alto!"
+        : "📉 <a:VC_Arrow:1448672967721615452> Più basso!",
+    );
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setTitle('<a:VC_Events:1448688007438667796> Un utente ha vinto !')
-    .setDescription([
-      `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
-      '',
-      '📊 **Le tue statistiche:**',
-      `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
-    ].join('\n'))
-    .setFooter({ text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi' });
+    .setColor("#6f4e37")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto !")
+    .setDescription(
+      [
+        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
+        "",
+        "📊 **Le tue statistiche:**",
+        `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
+      ].join("\n"),
+    )
+    .setFooter({
+      text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi',
+    });
 }
 
 function getHighestEligibleReward(totalExp) {
@@ -1548,24 +2000,31 @@ function getNextReward(totalExp) {
 
 function buildRewardEmbed(member, reward, totalExp) {
   const nextReward = getNextReward(totalExp);
-  const remaining = nextReward ? Math.max(0, nextReward.exp - Number(totalExp || 0)) : 0;
+  const remaining = nextReward
+    ? Math.max(0, nextReward.exp - Number(totalExp || 0))
+    : 0;
 
   const description = [
-    '<a:VC_Flower:1468685050966179841> Premio ricevuto <a:VC_Flower:1468685050966179841>',
-    '',
+    "<a:VC_Flower:1468685050966179841> Premio ricevuto <a:VC_Flower:1468685050966179841>",
+    "",
     `<a:VC_Events:1448688007438667796> **__<@${member.id}>__**`,
     `hai ottenuto il ruolo <@&${reward.roleId}> per aver raggiunto **${reward.exp}** punti ai **Minigiochi** <a:VC_HeartsPink:1468685897389052008>`,
-    '',
+    "",
     nextReward
       ? `<a:VC_HeartsBlue:1468686100045369404> / ti mancano **${remaining}** punti per la prossima ricompensa!`
-      : '<a:VC_HeartsBlue:1468686100045369404> / hai raggiunto la ricompensa **massima**!',
-  ].join('\n');
+      : "<a:VC_HeartsBlue:1468686100045369404> / hai raggiunto la ricompensa **massima**!",
+  ].join("\n");
 
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setAuthor({ name: member.displayName || member.user?.username || 'Utente', iconURL: member.displayAvatarURL() })
+    .setColor("#6f4e37")
+    .setAuthor({
+      name: member.displayName || member.user?.username || "Utente",
+      iconURL: member.displayAvatarURL(),
+    })
     .setDescription(description)
-    .setFooter({ text: 'Gli exp guadagnati si sommano al tuo livello globale! Controlla le tue statistiche con il comando `+mstats`' });
+    .setFooter({
+      text: "Gli exp guadagnati si sommano al tuo livello globale! Controlla le tue statistiche con il comando `+mstats`",
+    });
 }
 
 async function handleExpReward(client, member, totalExp) {
@@ -1576,136 +2035,179 @@ async function handleExpReward(client, member, totalExp) {
 
   await member.roles.add(reward.roleId).catch(() => {});
 
-  const rewardChannel = getChannelSafe(client, REWARD_CHANNEL_ID) || await member.guild.channels.fetch(REWARD_CHANNEL_ID).catch(() => null);
+  const rewardChannel =
+    getChannelSafe(client, REWARD_CHANNEL_ID) ||
+    (await member.guild.channels.fetch(REWARD_CHANNEL_ID).catch(() => null));
   if (!rewardChannel) return;
-  await rewardChannel.send({ content: `${member}`, embeds: [buildRewardEmbed(member, reward, totalExp)] }).catch(() => {});
+  await rewardChannel
+    .send({
+      content: `${member}`,
+      embeds: [buildRewardEmbed(member, reward, totalExp)],
+    })
+    .catch(() => {});
 }
 
 function buildTimeoutNumberEmbed(number) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il numero era **${number}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Il numero era **${number}**.`,
+    );
 }
 
 function buildTimeoutWordEmbed(word) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La parola era **${word}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La parola era **${word}**.`,
+    );
 }
 
 function buildTimeoutFlagEmbed(name) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La bandiera era **${name}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La bandiera era **${name}**.`,
+    );
 }
 
 function buildTimeoutPlayerEmbed(name) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il calciatore era **${name}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Il calciatore era **${name}**.`,
+    );
 }
 
 function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`,
+    );
 }
 
 function buildTimeoutFindBotEmbed() {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription('<a:VC_Timer:1462779065625739344> Tempo scaduto! Nessuno ha trovato il bot.');
+    .setColor("#6f4e37")
+    .setDescription(
+      "<a:VC_Timer:1462779065625739344> Tempo scaduto! Nessuno ha trovato il bot.",
+    );
 }
 
 function buildTimeoutCapitalEmbed(country, answer) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La capitale di **${country}** era **${answer}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La capitale di **${country}** era **${answer}**.`,
+    );
 }
 
 function buildTimeoutRegionCapitalEmbed(region, answer) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il capoluogo di **${region}** era **${answer}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Il capoluogo di **${region}** era **${answer}**.`,
+    );
 }
 
 function buildTimeoutFastTypeEmbed(phrase) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La frase era \`${phrase}\`.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La frase era \`${phrase}\`.`,
+    );
 }
 
 function buildTimeoutTeamEmbed(team) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La squadra era **${team}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La squadra era **${team}**.`,
+    );
 }
 
 function buildTimeoutSingerEmbed(name) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il cantante era **${name}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Il cantante era **${name}**.`,
+    );
 }
 
 function buildTimeoutAlbumEmbed(name, artist) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${name}** di ${artist}.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${name}** di ${artist}.`,
+    );
 }
 
 function buildTimeoutHangmanEmbed(word) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La parola era **${word}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La parola era **${word}**.`,
+    );
 }
 
 function buildTimeoutItalianGkEmbed(answer) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La risposta era **${answer}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La risposta era **${answer}**.`,
+    );
 }
 
 function buildTimeoutDrivingQuizEmbed(answerBool) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! La risposta corretta era **${answerBool ? 'vero' : 'falso'}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La risposta corretta era **${answerBool ? "vero" : "falso"}**.`,
+    );
 }
 
 function buildTimeoutMathEmbed(answer) {
   return new EmbedBuilder()
-    .setColor('#6f4e37')
-    .setDescription(`<a:VC_Timer:1462779065625739344> Tempo scaduto! Il risultato corretto era **${answer}**.`);
+    .setColor("#6f4e37")
+    .setDescription(
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Il risultato corretto era **${answer}**.`,
+    );
 }
 
 function getAvailableGameTypes(cfg) {
   const types = [];
-  if (cfg?.guessNumber) types.push('guessNumber');
-  if (cfg?.guessWord) types.push('guessWord');
-  if (cfg?.guessFlag) types.push('guessFlag');
-  if (cfg?.guessPlayer) types.push('guessPlayer');
-  if (cfg?.guessSong) types.push('guessSong');
-  if (cfg?.guessCapital !== false) types.push('guessCapital');
-  if (cfg?.guessRegionCapital !== false) types.push('guessRegionCapital');
-  if (cfg?.fastType !== false) types.push('fastType');
-  if (cfg?.guessTeam !== false) types.push('guessTeam');
-  if (cfg?.guessSinger !== false) types.push('guessSinger');
-  if (cfg?.guessAlbum !== false) types.push('guessAlbum');
-  if (cfg?.hangman !== false) types.push('hangman');
-  if (cfg?.italianGK !== false) types.push('italianGK');
-  if (cfg?.drivingQuiz !== false) types.push('drivingQuiz');
-  if (cfg?.mathExpression !== false) types.push('mathExpression');
-  if (cfg?.findBot) types.push('findBot');
+  if (cfg?.guessNumber) types.push("guessNumber");
+  if (cfg?.guessWord) types.push("guessWord");
+  if (cfg?.guessFlag) types.push("guessFlag");
+  if (cfg?.guessPlayer) types.push("guessPlayer");
+  if (cfg?.guessSong) types.push("guessSong");
+  if (cfg?.guessCapital !== false) types.push("guessCapital");
+  if (cfg?.guessRegionCapital !== false) types.push("guessRegionCapital");
+  if (cfg?.fastType !== false) types.push("fastType");
+  if (cfg?.guessTeam !== false) types.push("guessTeam");
+  if (cfg?.guessSinger !== false) types.push("guessSinger");
+  if (cfg?.guessAlbum !== false) types.push("guessAlbum");
+  if (cfg?.hangman !== false) types.push("hangman");
+  if (cfg?.italianGK !== false) types.push("italianGK");
+  if (cfg?.drivingQuiz !== false) types.push("drivingQuiz");
+  if (cfg?.mathExpression !== false) types.push("mathExpression");
+  if (cfg?.findBot) types.push("findBot");
   return types;
 }
 
 async function loadRotationState(client, cfg) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   const dateKey = getRomeDateKey(new Date());
-  const doc = await MinigameRotation.findOne({ guildId, channelId }).lean().catch(() => null);
+  const doc = await MinigameRotation.findOne({ guildId, channelId })
+    .lean()
+    .catch(() => null);
   if (doc && Array.isArray(doc.queue)) {
     rotationDate = doc.dateKey || dateKey;
     rotationQueue = doc.queue.slice();
@@ -1716,21 +2218,23 @@ async function loadRotationState(client, cfg) {
   await MinigameRotation.findOneAndUpdate(
     { guildId, channelId },
     { $set: { dateKey, queue: [] } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   ).catch(() => {});
 }
 
 async function saveRotationState(client, cfg) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   const dateKey = rotationDate || getRomeDateKey(new Date());
   await MinigameRotation.findOneAndUpdate(
     { guildId, channelId },
     { $set: { dateKey, queue: rotationQueue } },
-    { upsert: true, new: true, setDefaultsOnInsert: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true },
   ).catch(() => {});
 }
 
@@ -1742,7 +2246,10 @@ async function getNextGameType(client, cfg) {
     rotationQueue = available.slice();
     for (let i = rotationQueue.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
-      [rotationQueue[i], rotationQueue[j]] = [rotationQueue[j], rotationQueue[i]];
+      [rotationQueue[i], rotationQueue[j]] = [
+        rotationQueue[j],
+        rotationQueue[i],
+      ];
     }
   } else {
     const allowed = new Set(available);
@@ -1776,19 +2283,30 @@ async function requeueGameType(client, cfg, gameType) {
   await saveRotationState(client, cfg);
 }
 
-async function scheduleMinuteHint(client, hintChannelId, durationMs, channelId) {
+async function scheduleMinuteHint(
+  client,
+  hintChannelId,
+  durationMs,
+  channelId,
+) {
   if (!hintChannelId || !durationMs || durationMs <= 60 * 1000) return null;
-  const mainChannel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const mainChannel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!mainChannel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
-    await mainChannel.send({ embeds: [buildMinuteHintEmbed(hintChannelId)] }).catch(() => {});
+    await mainChannel
+      .send({ embeds: [buildMinuteHintEmbed(hintChannelId)] })
+      .catch(() => {});
   }, delay);
 }
 
 async function scheduleFlagHint(client, channelId, durationMs, name) {
   if (!channelId || !durationMs || durationMs <= 60 * 1000) return null;
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
@@ -1797,12 +2315,17 @@ async function scheduleFlagHint(client, channelId, durationMs, name) {
 }
 
 async function scheduleGenericHint(client, channelId, durationMs, hintText) {
-  if (!channelId || !durationMs || durationMs <= 60 * 1000 || !hintText) return null;
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  if (!channelId || !durationMs || durationMs <= 60 * 1000 || !hintText)
+    return null;
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
-    await channel.send({ embeds: [buildGenericHintEmbed(hintText)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildGenericHintEmbed(hintText)] })
+      .catch(() => {});
   }, delay);
 }
 
@@ -1814,9 +2337,14 @@ async function startGuessNumberGame(client, cfg) {
   const min = Math.max(1, Number(cfg?.guessNumber?.min || 1));
   const max = Math.max(min, Number(cfg?.guessNumber?.max || 100));
   const rewardExp = Number(cfg?.guessNumber?.rewardExp || 100);
-  const durationMs = Math.max(60000, Number(cfg?.guessNumber?.durationMs || 180000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessNumber?.durationMs || 180000),
+  );
 
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
   const target = randomBetween(min, max);
@@ -1825,20 +2353,29 @@ async function startGuessNumberGame(client, cfg) {
   if (roleId) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
-  const gameMessage = await channel.send({ embeds: [buildGuessNumberEmbed(min, max, rewardExp, durationMs)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({ embeds: [buildGuessNumberEmbed(min, max, rewardExp, durationMs)] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutNumberEmbed(game.target)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutNumberEmbed(game.target)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
-  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, buildNumberNearHint(target, min, max));
+  const hintTimeout = await scheduleGenericHint(
+    client,
+    channelId,
+    durationMs,
+    buildNumberNearHint(target, min, max),
+  );
 
   activeGames.set(channelId, {
-    type: 'guessNumber',
+    type: "guessNumber",
     target,
     min,
     max,
@@ -1847,18 +2384,18 @@ async function startGuessNumberGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessNumber',
+    type: "guessNumber",
     target: String(target),
     min,
     max,
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -1875,12 +2412,19 @@ async function startGuessWordGame(client, cfg) {
   if (!words.length) return false;
 
   const rewardExp = Number(cfg?.guessWord?.rewardExp || 150);
-  const durationMs = Math.max(60000, Number(cfg?.guessWord?.durationMs || 180000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessWord?.durationMs || 180000),
+  );
 
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  const target = String(words[randomBetween(0, words.length - 1)] || '').toLowerCase();
+  const target = String(
+    words[randomBetween(0, words.length - 1)] || "",
+  ).toLowerCase();
   if (!target) return false;
 
   const roleId = cfg.roleId;
@@ -1888,41 +2432,45 @@ async function startGuessWordGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
   const scrambled = shuffleString(target);
-  const gameMessage = await channel.send({ embeds: [buildGuessWordEmbed(scrambled, rewardExp, durationMs)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({ embeds: [buildGuessWordEmbed(scrambled, rewardExp, durationMs)] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutWordEmbed(game.target)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutWordEmbed(game.target)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Parola da **${target.length}** lettere. ${buildMaskedTextHint(target)}`
+    `Parola da **${target.length}** lettere. ${buildMaskedTextHint(target)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessWord',
+    type: "guessWord",
     target,
     rewardExp,
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessWord',
+    type: "guessWord",
     target,
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -1939,9 +2487,14 @@ async function startGuessFlagGame(client, cfg) {
   if (!countries.length) return false;
 
   const rewardExp = Number(cfg?.guessFlag?.rewardExp || 150);
-  const durationMs = Math.max(60000, Number(cfg?.guessFlag?.durationMs || 180000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessFlag?.durationMs || 180000),
+  );
 
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
   const target = countries[randomBetween(0, countries.length - 1)];
@@ -1952,14 +2505,20 @@ async function startGuessFlagGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
 
-  const gameMessage = await channel.send({ embeds: [buildGuessFlagEmbed(target.flagUrl, rewardExp, durationMs)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({
+      embeds: [buildGuessFlagEmbed(target.flagUrl, rewardExp, durationMs)],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
 
@@ -1967,11 +2526,11 @@ async function startGuessFlagGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `La nazione ha **${normalizeCountryName(target.displayName).replace(/\s+/g, '').length}** lettere. ${buildMaskedTextHint(target.displayName)}`
+    `La nazione ha **${normalizeCountryName(target.displayName).replace(/\s+/g, "").length}** lettere. ${buildMaskedTextHint(target.displayName)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessFlag',
+    type: "guessFlag",
     answers: target.names,
     displayName: target.displayName,
     rewardExp,
@@ -1979,16 +2538,20 @@ async function startGuessFlagGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessFlag',
-    target: JSON.stringify({ names: target.names, displayName: target.displayName, flagUrl: target.flagUrl }),
+    type: "guessFlag",
+    target: JSON.stringify({
+      names: target.names,
+      displayName: target.displayName,
+      flagUrl: target.flagUrl,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2002,9 +2565,14 @@ async function startGuessPlayerGame(client, cfg) {
   if (activeGames.has(channelId)) return false;
 
   const rewardExp = Number(cfg?.guessPlayer?.rewardExp || 100);
-  const durationMs = Math.max(60000, Number(cfg?.guessPlayer?.durationMs || 180000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessPlayer?.durationMs || 180000),
+  );
 
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
   const onlyFamous = cfg?.guessPlayer?.onlyFamous !== false;
@@ -2026,14 +2594,20 @@ async function startGuessPlayerGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
 
-  const gameMessage = await channel.send({ embeds: [buildGuessPlayerEmbed(rewardExp, durationMs, info.image)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({
+      embeds: [buildGuessPlayerEmbed(rewardExp, durationMs, info.image)],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
 
@@ -2041,11 +2615,11 @@ async function startGuessPlayerGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.team} • ${info.nationality} • ${buildMaskedTextHint(info.name)}`
+    `${info.team} • ${info.nationality} • ${buildMaskedTextHint(info.name)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessPlayer',
+    type: "guessPlayer",
     answers: buildPlayerAnswerAliases(info.name, info.aliases),
     fullAnswer: normalizePlayerGuess(info.name),
     displayName: info.name,
@@ -2054,22 +2628,22 @@ async function startGuessPlayerGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessPlayer',
+    type: "guessPlayer",
     target: JSON.stringify({
       name: info.name,
       team: info.team,
       nationality: info.nationality,
       image: info.image,
-      aliases: buildPlayerAnswerAliases(info.name, info.aliases)
+      aliases: buildPlayerAnswerAliases(info.name, info.aliases),
     }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2082,9 +2656,14 @@ async function startGuessSongGame(client, cfg) {
   if (activeGames.has(channelId)) return false;
 
   const rewardExp = Number(cfg?.guessSong?.rewardExp || 100);
-  const durationMs = Math.max(60000, Number(cfg?.guessSong?.durationMs || 180000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessSong?.durationMs || 180000),
+  );
 
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
   const onlyFamous = cfg?.guessSong?.onlyFamous !== false;
@@ -2103,22 +2682,26 @@ async function startGuessSongGame(client, cfg) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(previewCustomId)
-      .setLabel('Ascolta anteprima')
+      .setLabel("Ascolta anteprima")
       .setEmoji(`<:VC_Preview:1462941162393309431>`)
       .setStyle(ButtonStyle.Secondary)
-      .setDisabled(!info.previewUrl)
+      .setDisabled(!info.previewUrl),
   );
-  const gameMessage = await channel.send({
-    embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)],
-    components: [row]
-  }).catch(() => null);
+  const gameMessage = await channel
+    .send({
+      embeds: [buildGuessSongEmbed(rewardExp, durationMs, info.artwork)],
+      components: [row],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
 
@@ -2126,11 +2709,11 @@ async function startGuessSongGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.artistCountry} • ${info.genre} • ${buildMaskedTextHint(info.title)}`
+    `${info.artistCountry} • ${info.genre} • ${buildMaskedTextHint(info.title)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessSong',
+    type: "guessSong",
     title: info.title,
     artist: info.artist,
     previewUrl: info.previewUrl || null,
@@ -2140,17 +2723,25 @@ async function startGuessSongGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessSong',
-    target: JSON.stringify({ title: info.title, artist: info.artist, album: info.album, artwork: info.artwork, genre: info.genre, artistCountry: info.artistCountry, previewUrl: info.previewUrl }),
+    type: "guessSong",
+    target: JSON.stringify({
+      title: info.title,
+      artist: info.artist,
+      album: info.album,
+      artwork: info.artwork,
+      genre: info.genre,
+      artistCountry: info.artistCountry,
+      previewUrl: info.previewUrl,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
     gameMessageId: gameMessage?.id || null,
-    customId: previewCustomId
+    customId: previewCustomId,
   });
 
   markSent(channelId);
@@ -2163,33 +2754,55 @@ async function startGuessCapitalGame(client, cfg) {
 
   const questions = await loadCapitalQuestionBank(cfg);
   const pick = pickRandomItem(questions);
-  if (!pick?.country || !Array.isArray(pick?.answers) || !pick.answers.length) return false;
+  if (!pick?.country || !Array.isArray(pick?.answers) || !pick.answers.length)
+    return false;
 
   const rewardExp = Number(cfg?.guessCapital?.rewardExp || 120);
-  const durationMs = Math.max(60000, Number(cfg?.guessCapital?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessCapital?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildGuessCapitalEmbed(pick.country, rewardExp, durationMs, pick.image || null)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({
+      embeds: [
+        buildGuessCapitalEmbed(
+          pick.country,
+          rewardExp,
+          durationMs,
+          pick.image || null,
+        ),
+      ],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutCapitalEmbed(game.country, game.displayAnswer)] }).catch(() => {});
+    await channel
+      .send({
+        embeds: [buildTimeoutCapitalEmbed(game.country, game.displayAnswer)],
+      })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
-  const displayAnswer = String(pick.answers[0] || 'sconosciuta');
+  const displayAnswer = String(pick.answers[0] || "sconosciuta");
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Capitale: ${buildMaskedTextHint(displayAnswer)}`
+    `Capitale: ${buildMaskedTextHint(displayAnswer)}`,
   );
   activeGames.set(channelId, {
-    type: 'guessCapital',
+    type: "guessCapital",
     country: pick.country,
     answers: pick.answers,
     image: pick.image || null,
@@ -2199,16 +2812,21 @@ async function startGuessCapitalGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessCapital',
-    target: JSON.stringify({ country: pick.country, answers: pick.answers, image: pick.image || null, displayAnswer }),
+    type: "guessCapital",
+    target: JSON.stringify({
+      country: pick.country,
+      answers: pick.answers,
+      image: pick.image || null,
+      displayAnswer,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2221,34 +2839,53 @@ async function startGuessRegionCapitalGame(client, cfg) {
 
   const questions = await loadRegionCapitalQuestionBank(cfg);
   const pick = pickRandomItem(questions);
-  if (!pick?.region || !Array.isArray(pick?.answers) || !pick.answers.length) return false;
+  if (!pick?.region || !Array.isArray(pick?.answers) || !pick.answers.length)
+    return false;
 
   const rewardExp = Number(cfg?.guessRegionCapital?.rewardExp || 120);
-  const durationMs = Math.max(60000, Number(cfg?.guessRegionCapital?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessRegionCapital?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
   const image = await fetchWikiRegionImage(pick.region);
-  const gameMessage = await channel.send({ embeds: [buildGuessRegionCapitalEmbed(pick.region, rewardExp, durationMs, image)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({
+      embeds: [
+        buildGuessRegionCapitalEmbed(pick.region, rewardExp, durationMs, image),
+      ],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutRegionCapitalEmbed(game.region, game.displayAnswer)] }).catch(() => {});
+    await channel
+      .send({
+        embeds: [
+          buildTimeoutRegionCapitalEmbed(game.region, game.displayAnswer),
+        ],
+      })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
-  const displayAnswer = String(pick.answers[0] || 'sconosciuto');
+  const displayAnswer = String(pick.answers[0] || "sconosciuto");
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Capoluogo: ${buildMaskedTextHint(displayAnswer)}`
+    `Capoluogo: ${buildMaskedTextHint(displayAnswer)}`,
   );
   activeGames.set(channelId, {
-    type: 'guessRegionCapital',
+    type: "guessRegionCapital",
     region: pick.region,
     answers: pick.answers,
     image,
@@ -2258,16 +2895,21 @@ async function startGuessRegionCapitalGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessRegionCapital',
-    target: JSON.stringify({ region: pick.region, answers: pick.answers, image, displayAnswer }),
+    type: "guessRegionCapital",
+    target: JSON.stringify({
+      region: pick.region,
+      answers: pick.answers,
+      image,
+      displayAnswer,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2278,35 +2920,48 @@ async function startFastTypeGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const phrases = Array.isArray(cfg?.fastType?.phrases) && cfg.fastType.phrases.length ? cfg.fastType.phrases : FAST_TYPING_PHRASES;
-  const phrase = String(pickRandomItem(phrases) || '').trim();
+  const phrases =
+    Array.isArray(cfg?.fastType?.phrases) && cfg.fastType.phrases.length
+      ? cfg.fastType.phrases
+      : FAST_TYPING_PHRASES;
+  const phrase = String(pickRandomItem(phrases) || "").trim();
   if (!phrase) return false;
 
   const rewardExp = Number(cfg?.fastType?.rewardExp || 100);
-  const durationMs = Math.max(60000, Number(cfg?.fastType?.durationMs || 120000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.fastType?.durationMs || 120000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildFastTypeEmbed(phrase, rewardExp, durationMs)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({ embeds: [buildFastTypeEmbed(phrase, rewardExp, durationMs)] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutFastTypeEmbed(game.phrase)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutFastTypeEmbed(game.phrase)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Frase da scrivere: ${buildMaskedTextHint(phrase)}`
+    `Frase da scrivere: ${buildMaskedTextHint(phrase)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'fastType',
+    type: "fastType",
     phrase,
     normalizedPhrase: normalizeCountryName(phrase),
     rewardExp,
@@ -2314,16 +2969,19 @@ async function startFastTypeGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'fastType',
-    target: JSON.stringify({ phrase, normalizedPhrase: normalizeCountryName(phrase) }),
+    type: "fastType",
+    target: JSON.stringify({
+      phrase,
+      normalizedPhrase: normalizeCountryName(phrase),
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2338,30 +2996,40 @@ async function startGuessTeamGame(client, cfg) {
   if (!pick?.team || !pick?.answers?.length) return false;
 
   const rewardExp = Number(cfg?.guessTeam?.rewardExp || 130);
-  const durationMs = Math.max(60000, Number(cfg?.guessTeam?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessTeam?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildGuessTeamEmbed(rewardExp, durationMs, pick.image)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({ embeds: [buildGuessTeamEmbed(rewardExp, durationMs, pick.image)] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutTeamEmbed(game.team)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutTeamEmbed(game.team)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Squadra: ${buildMaskedTextHint(pick.team)}`
+    `Squadra: ${buildMaskedTextHint(pick.team)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessTeam',
+    type: "guessTeam",
     team: pick.team,
     answers: pick.answers,
     rewardExp,
@@ -2369,16 +3037,20 @@ async function startGuessTeamGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessTeam',
-    target: JSON.stringify({ team: pick.team, answers: pick.answers, image: pick.image || null }),
+    type: "guessTeam",
+    target: JSON.stringify({
+      team: pick.team,
+      answers: pick.answers,
+      image: pick.image || null,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2393,30 +3065,42 @@ async function startGuessSingerGame(client, cfg) {
   if (!pick?.name || !pick?.answers?.length) return false;
 
   const rewardExp = Number(cfg?.guessSinger?.rewardExp || 130);
-  const durationMs = Math.max(60000, Number(cfg?.guessSinger?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessSinger?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildGuessSingerEmbed(rewardExp, durationMs, pick.image)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({
+      embeds: [buildGuessSingerEmbed(rewardExp, durationMs, pick.image)],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutSingerEmbed(game.name)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutSingerEmbed(game.name)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Cantante: ${buildMaskedTextHint(pick.name)}`
+    `Cantante: ${buildMaskedTextHint(pick.name)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessSinger',
+    type: "guessSinger",
     name: pick.name,
     answers: pick.answers,
     rewardExp,
@@ -2424,16 +3108,20 @@ async function startGuessSingerGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessSinger',
-    target: JSON.stringify({ name: pick.name, answers: pick.answers, image: pick.image || null }),
+    type: "guessSinger",
+    target: JSON.stringify({
+      name: pick.name,
+      answers: pick.answers,
+      image: pick.image || null,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2448,30 +3136,40 @@ async function startGuessAlbumGame(client, cfg) {
   if (!pick?.album || !pick?.answers?.length) return false;
 
   const rewardExp = Number(cfg?.guessAlbum?.rewardExp || 130);
-  const durationMs = Math.max(60000, Number(cfg?.guessAlbum?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.guessAlbum?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildGuessAlbumEmbed(rewardExp, durationMs, pick.image)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({ embeds: [buildGuessAlbumEmbed(rewardExp, durationMs, pick.image)] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Artista: **${pick.artist}** • Album: ${buildMaskedTextHint(pick.album)}`
+    `Artista: **${pick.artist}** • Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'guessAlbum',
+    type: "guessAlbum",
     album: pick.album,
     artist: pick.artist,
     answers: pick.answers,
@@ -2480,16 +3178,21 @@ async function startGuessAlbumGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'guessAlbum',
-    target: JSON.stringify({ album: pick.album, artist: pick.artist, answers: pick.answers, image: pick.image || null }),
+    type: "guessAlbum",
+    target: JSON.stringify({
+      album: pick.album,
+      artist: pick.artist,
+      answers: pick.answers,
+      image: pick.image || null,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2500,38 +3203,55 @@ async function startHangmanGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const words = Array.isArray(cfg?.hangman?.words) && cfg.hangman.words.length ? cfg.hangman.words : HANGMAN_WORDS;
+  const words =
+    Array.isArray(cfg?.hangman?.words) && cfg.hangman.words.length
+      ? cfg.hangman.words
+      : HANGMAN_WORDS;
   const word = normalizeCountryName(pickRandomItem(words));
   if (!word) return false;
 
   const rewardExp = Number(cfg?.hangman?.rewardExp || 150);
-  const durationMs = Math.max(60000, Number(cfg?.hangman?.durationMs || 240000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.hangman?.durationMs || 240000),
+  );
   const maxMisses = Math.max(3, Number(cfg?.hangman?.maxMisses || 7));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
   const guessedLetters = [];
   const maskedWord = maskHangmanWord(word, new Set(guessedLetters));
-  const gameMessage = await channel.send({ embeds: [buildHangmanEmbed(maskedWord, 0, maxMisses, rewardExp, durationMs)] }).catch(() => null);
+  const gameMessage = await channel
+    .send({
+      embeds: [
+        buildHangmanEmbed(maskedWord, 0, maxMisses, rewardExp, durationMs),
+      ],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutHangmanEmbed(game.word)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutHangmanEmbed(game.word)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `La parola contiene **${word.length}** lettere.`
+    `La parola contiene **${word.length}** lettere.`,
   );
 
   activeGames.set(channelId, {
-    type: 'hangman',
+    type: "hangman",
     word,
     guessedLetters,
     misses: 0,
@@ -2541,16 +3261,16 @@ async function startHangmanGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'hangman',
+    type: "hangman",
     target: JSON.stringify({ word, guessedLetters, misses: 0, maxMisses }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2566,45 +3286,67 @@ async function startItalianGkGame(client, cfg) {
   if (apiUrl) {
     try {
       const res = await axios.get(apiUrl, { timeout: 15000 });
-      const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
+      const payload = Array.isArray(res?.data)
+        ? pickRandomItem(res.data)
+        : res?.data;
       if (payload?.question && payload?.answer) {
-        questionRow = { question: decodeHtmlEntities(payload.question), answers: buildAliases([decodeHtmlEntities(payload.answer)]) };
+        questionRow = {
+          question: decodeHtmlEntities(payload.question),
+          answers: buildAliases([decodeHtmlEntities(payload.answer)]),
+        };
       }
     } catch {}
   }
   if (!questionRow) {
     const fallback = pickRandomItem(ITALIAN_GK_BANK);
     if (!fallback) return false;
-    questionRow = { question: fallback.question, answers: buildAliases(fallback.answers) };
+    questionRow = {
+      question: fallback.question,
+      answers: buildAliases(fallback.answers),
+    };
   }
   if (!questionRow.answers.length) return false;
 
   const rewardExp = Number(cfg?.italianGK?.rewardExp || 140);
-  const durationMs = Math.max(60000, Number(cfg?.italianGK?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.italianGK?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildItalianGkEmbed(questionRow.question, rewardExp, durationMs)] }).catch(() => null);
-  const displayAnswer = String(questionRow.answers[0] || 'sconosciuta');
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({
+      embeds: [
+        buildItalianGkEmbed(questionRow.question, rewardExp, durationMs),
+      ],
+    })
+    .catch(() => null);
+  const displayAnswer = String(questionRow.answers[0] || "sconosciuta");
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutItalianGkEmbed(game.displayAnswer)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutItalianGkEmbed(game.displayAnswer)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    `Risposta: ${buildMaskedTextHint(displayAnswer)}`
+    `Risposta: ${buildMaskedTextHint(displayAnswer)}`,
   );
 
   activeGames.set(channelId, {
-    type: 'italianGK',
+    type: "italianGK",
     question: questionRow.question,
     answers: questionRow.answers,
     displayAnswer,
@@ -2613,16 +3355,20 @@ async function startItalianGkGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'italianGK',
-    target: JSON.stringify({ question: questionRow.question, answers: questionRow.answers, displayAnswer }),
+    type: "italianGK",
+    target: JSON.stringify({
+      question: questionRow.question,
+      answers: questionRow.answers,
+      displayAnswer,
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2636,30 +3382,42 @@ async function startDrivingQuizGame(client, cfg) {
   if (!row) return false;
 
   const rewardExp = Number(cfg?.drivingQuiz?.rewardExp || 120);
-  const durationMs = Math.max(60000, Number(cfg?.drivingQuiz?.durationMs || 180000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.drivingQuiz?.durationMs || 180000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildDrivingQuizEmbed(row.statement, rewardExp, durationMs)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({
+      embeds: [buildDrivingQuizEmbed(row.statement, rewardExp, durationMs)],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
     durationMs,
-    'Nel dubbio nel quiz patente prevale sempre la scelta più prudente.'
+    "Nel dubbio nel quiz patente prevale sempre la scelta più prudente.",
   );
 
   activeGames.set(channelId, {
-    type: 'drivingQuiz',
+    type: "drivingQuiz",
     statement: row.statement,
     answer: Boolean(row.answer),
     rewardExp,
@@ -2667,16 +3425,19 @@ async function startDrivingQuizGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'drivingQuiz',
-    target: JSON.stringify({ statement: row.statement, answer: Boolean(row.answer) }),
+    type: "drivingQuiz",
+    target: JSON.stringify({
+      statement: row.statement,
+      answer: Boolean(row.answer),
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2690,29 +3451,46 @@ async function startMathExpressionGame(client, cfg) {
   if (!row?.expression) return false;
 
   const rewardExp = Number(cfg?.mathExpression?.rewardExp || 110);
-  const durationMs = Math.max(60000, Number(cfg?.mathExpression?.durationMs || 150000));
-  const channel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.mathExpression?.durationMs || 150000),
+  );
+  const channel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) return false;
 
-  if (cfg.roleId) await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const gameMessage = await channel.send({ embeds: [buildMathExpressionEmbed(row.expression, rewardExp, durationMs)] }).catch(() => null);
+  if (cfg.roleId)
+    await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gameMessage = await channel
+    .send({
+      embeds: [buildMathExpressionEmbed(row.expression, rewardExp, durationMs)],
+    })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
     if (!game) return;
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
-    await channel.send({ embeds: [buildTimeoutMathEmbed(game.answer)] }).catch(() => {});
+    await channel
+      .send({ embeds: [buildTimeoutMathEmbed(game.answer)] })
+      .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
   const answerNum = Number(row.answer);
   const hintRangeText = Number.isFinite(answerNum)
     ? `Il risultato è compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
-    : 'Il risultato è un numero intero.';
-  const hintTimeout = await scheduleGenericHint(client, channelId, durationMs, hintRangeText);
+    : "Il risultato è un numero intero.";
+  const hintTimeout = await scheduleGenericHint(
+    client,
+    channelId,
+    durationMs,
+    hintRangeText,
+  );
 
   activeGames.set(channelId, {
-    type: 'mathExpression',
+    type: "mathExpression",
     expression: row.expression,
     answer: String(row.answer),
     rewardExp,
@@ -2720,16 +3498,19 @@ async function startMathExpressionGame(client, cfg) {
     endsAt: Date.now() + durationMs,
     timeout,
     hintTimeout,
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'mathExpression',
-    target: JSON.stringify({ expression: row.expression, answer: String(row.answer) }),
+    type: "mathExpression",
+    target: JSON.stringify({
+      expression: row.expression,
+      answer: String(row.answer),
+    }),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
-    gameMessageId: gameMessage?.id || null
+    gameMessageId: gameMessage?.id || null,
   });
 
   markSent(channelId);
@@ -2742,10 +3523,26 @@ async function pickRandomFindBotChannel(guild, requiredRoleId) {
   const me = guild.members.me || guild.members.cache.get(guild.client.user.id);
 
   const channels = guild.channels.cache.filter((channel) => {
-    if (channel.type !== ChannelType.GuildText && channel.type !== ChannelType.GuildAnnouncement) return false;
+    if (
+      channel.type !== ChannelType.GuildText &&
+      channel.type !== ChannelType.GuildAnnouncement
+    )
+      return false;
     if (!channel.viewable) return false;
-    if (!channel.permissionsFor(me)?.has([PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages])) return false;
-    if (role && !channel.permissionsFor(role)?.has(PermissionsBitField.Flags.ViewChannel)) return false;
+    if (
+      !channel
+        .permissionsFor(me)
+        ?.has([
+          PermissionsBitField.Flags.ViewChannel,
+          PermissionsBitField.Flags.SendMessages,
+        ])
+    )
+      return false;
+    if (
+      role &&
+      !channel.permissionsFor(role)?.has(PermissionsBitField.Flags.ViewChannel)
+    )
+      return false;
     return true;
   });
 
@@ -2759,14 +3556,22 @@ async function startFindBotGame(client, cfg) {
   if (!channelId) return false;
   if (activeGames.has(channelId)) return false;
 
-  const durationMs = Math.max(60000, Number(cfg?.findBot?.durationMs || 300000));
+  const durationMs = Math.max(
+    60000,
+    Number(cfg?.findBot?.durationMs || 300000),
+  );
   const rewardExp = Number(cfg?.findBot?.rewardExp || 100);
   const requiredRoleId = cfg?.findBot?.requiredRoleId || null;
 
-  const mainChannel = getChannelSafe(client, channelId) || await client.channels.fetch(channelId).catch(() => null);
+  const mainChannel =
+    getChannelSafe(client, channelId) ||
+    (await client.channels.fetch(channelId).catch(() => null));
   if (!mainChannel?.guild) return false;
 
-  const targetChannel = await pickRandomFindBotChannel(mainChannel.guild, requiredRoleId);
+  const targetChannel = await pickRandomFindBotChannel(
+    mainChannel.guild,
+    requiredRoleId,
+  );
   if (!targetChannel) return false;
 
   const roleId = cfg.roleId;
@@ -2774,17 +3579,21 @@ async function startFindBotGame(client, cfg) {
     await mainChannel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
 
-  const mainMessage = await mainChannel.send({ embeds: [buildFindBotEmbed(durationMs)] }).catch(() => null);
+  const mainMessage = await mainChannel
+    .send({ embeds: [buildFindBotEmbed(durationMs)] })
+    .catch(() => null);
 
   const customId = `minigame_findbot:${Date.now()}`;
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(customId)
       .setEmoji(`<a:VC_Heart:1448672728822448141>`)
-      .setLabel('Clicca qui per vincere!')
-      .setStyle(ButtonStyle.Primary)
+      .setLabel("Clicca qui per vincere!")
+      .setStyle(ButtonStyle.Primary),
   );
-  const gameMessage = await targetChannel.send({ embeds: [buildFindBotButtonEmbed(durationMs)], components: [row] }).catch(() => null);
+  const gameMessage = await targetChannel
+    .send({ embeds: [buildFindBotButtonEmbed(durationMs)], components: [row] })
+    .catch(() => null);
 
   const timeout = setTimeout(async () => {
     const game = activeGames.get(channelId);
@@ -2792,22 +3601,33 @@ async function startFindBotGame(client, cfg) {
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
     if (game.channelId && game.messageId) {
-      const ch = mainChannel.guild.channels.cache.get(game.channelId) || await mainChannel.guild.channels.fetch(game.channelId).catch(() => null);
+      const ch =
+        mainChannel.guild.channels.cache.get(game.channelId) ||
+        (await mainChannel.guild.channels
+          .fetch(game.channelId)
+          .catch(() => null));
       if (ch) {
         const msg = await ch.messages.fetch(game.messageId).catch(() => null);
         if (msg) {
           await msg.delete().catch(() => {});
         }
-        await mainChannel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+        await mainChannel
+          .send({ embeds: [buildTimeoutFindBotEmbed()] })
+          .catch(() => {});
       }
     }
     await clearActiveGame(client, cfg);
   }, durationMs);
 
-  const hintTimeout = await scheduleMinuteHint(client, targetChannel.id, durationMs, channelId);
+  const hintTimeout = await scheduleMinuteHint(
+    client,
+    targetChannel.id,
+    durationMs,
+    channelId,
+  );
 
   activeGames.set(channelId, {
-    type: 'findBot',
+    type: "findBot",
     rewardExp,
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
@@ -2816,18 +3636,18 @@ async function startFindBotGame(client, cfg) {
     channelId: targetChannel.id,
     messageId: gameMessage?.id || null,
     mainMessageId: mainMessage?.id || null,
-    customId
+    customId,
   });
 
   await saveActiveGame(client, cfg, {
-    type: 'findBot',
+    type: "findBot",
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
     targetChannelId: targetChannel.id,
     gameMessageId: gameMessage?.id || null,
     mainMessageId: mainMessage?.id || null,
-    customId
+    customId,
   });
 
   markSent(channelId);
@@ -2842,75 +3662,92 @@ async function maybeStartRandomGame(client, force = false) {
   if (startingChannels.has(cfg.channelId)) return;
   startingChannels.add(cfg.channelId);
   try {
-  if (activeGames.has(cfg.channelId)) {
-    const game = activeGames.get(cfg.channelId);
-    if (game?.endsAt && Date.now() >= game.endsAt) {
-      if (game.timeout) clearTimeout(game.timeout);
-      if (game.hintTimeout) clearTimeout(game.hintTimeout);
-      activeGames.delete(cfg.channelId);
-      await clearActiveGame(client, cfg);
-    } else {
-      return;
+    if (activeGames.has(cfg.channelId)) {
+      const game = activeGames.get(cfg.channelId);
+      if (game?.endsAt && Date.now() >= game.endsAt) {
+        if (game.timeout) clearTimeout(game.timeout);
+        if (game.hintTimeout) clearTimeout(game.hintTimeout);
+        activeGames.delete(cfg.channelId);
+        await clearActiveGame(client, cfg);
+      } else {
+        return;
+      }
     }
-  }
 
-  const now = new Date();
-  if (!force) {
-    const windowStart = cfg?.timeWindow?.start;
-    const windowEnd = cfg?.timeWindow?.end;
-    if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
-    if (!canStartByInterval(cfg)) return;
-    const readyByActivity = isReadyByActivity(cfg);
-    const failsafeDue = isFailsafeDue(cfg);
-    if (!readyByActivity && !failsafeDue) {
-      standbyChannels.add(cfg.channelId);
-      return;
+    const now = new Date();
+    if (!force) {
+      const windowStart = cfg?.timeWindow?.start;
+      const windowEnd = cfg?.timeWindow?.end;
+      if (!isWithinAllowedWindow(now, windowStart, windowEnd)) return;
+      if (!canStartByInterval(cfg)) return;
+      const readyByActivity = isReadyByActivity(cfg);
+      const failsafeDue = isFailsafeDue(cfg);
+      if (!readyByActivity && !failsafeDue) {
+        standbyChannels.add(cfg.channelId);
+        return;
+      }
     }
-  }
 
-  const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
-  if (!channel) return;
+    const channel =
+      getChannelSafe(client, cfg.channelId) ||
+      (await client.channels.fetch(cfg.channelId).catch(() => null));
+    if (!channel) return;
 
-  const available = getAvailableGameTypes(cfg);
-  if (!available.length) return;
-  const tried = new Set();
-  let pending = pendingGames.get(cfg.channelId);
+    const available = getAvailableGameTypes(cfg);
+    if (!available.length) return;
+    const tried = new Set();
+    let pending = pendingGames.get(cfg.channelId);
 
-  while (tried.size < available.length) {
-    const gameType = pending?.type || await getNextGameType(client, cfg);
-    if (!gameType) return;
-    if (tried.has(gameType)) {
-      pending = null;
-      continue;
-    }
-    tried.add(gameType);
+    while (tried.size < available.length) {
+      const gameType = pending?.type || (await getNextGameType(client, cfg));
+      if (!gameType) return;
+      if (tried.has(gameType)) {
+        pending = null;
+        continue;
+      }
+      tried.add(gameType);
 
-    let started = false;
-    if (gameType === 'guessWord') started = await startGuessWordGame(client, cfg);
-    else if (gameType === 'guessFlag') started = await startGuessFlagGame(client, cfg);
-    else if (gameType === 'guessPlayer') started = await startGuessPlayerGame(client, cfg);
-    else if (gameType === 'guessSong') started = await startGuessSongGame(client, cfg);
-    else if (gameType === 'guessCapital') started = await startGuessCapitalGame(client, cfg);
-    else if (gameType === 'guessRegionCapital') started = await startGuessRegionCapitalGame(client, cfg);
-    else if (gameType === 'fastType') started = await startFastTypeGame(client, cfg);
-    else if (gameType === 'guessTeam') started = await startGuessTeamGame(client, cfg);
-    else if (gameType === 'guessSinger') started = await startGuessSingerGame(client, cfg);
-    else if (gameType === 'guessAlbum') started = await startGuessAlbumGame(client, cfg);
-    else if (gameType === 'hangman') started = await startHangmanGame(client, cfg);
-    else if (gameType === 'italianGK') started = await startItalianGkGame(client, cfg);
-    else if (gameType === 'drivingQuiz') started = await startDrivingQuizGame(client, cfg);
-    else if (gameType === 'mathExpression') started = await startMathExpressionGame(client, cfg);
-    else if (gameType === 'findBot') started = await startFindBotGame(client, cfg);
-    else started = await startGuessNumberGame(client, cfg);
+      let started = false;
+      if (gameType === "guessWord")
+        started = await startGuessWordGame(client, cfg);
+      else if (gameType === "guessFlag")
+        started = await startGuessFlagGame(client, cfg);
+      else if (gameType === "guessPlayer")
+        started = await startGuessPlayerGame(client, cfg);
+      else if (gameType === "guessSong")
+        started = await startGuessSongGame(client, cfg);
+      else if (gameType === "guessCapital")
+        started = await startGuessCapitalGame(client, cfg);
+      else if (gameType === "guessRegionCapital")
+        started = await startGuessRegionCapitalGame(client, cfg);
+      else if (gameType === "fastType")
+        started = await startFastTypeGame(client, cfg);
+      else if (gameType === "guessTeam")
+        started = await startGuessTeamGame(client, cfg);
+      else if (gameType === "guessSinger")
+        started = await startGuessSingerGame(client, cfg);
+      else if (gameType === "guessAlbum")
+        started = await startGuessAlbumGame(client, cfg);
+      else if (gameType === "hangman")
+        started = await startHangmanGame(client, cfg);
+      else if (gameType === "italianGK")
+        started = await startItalianGkGame(client, cfg);
+      else if (gameType === "drivingQuiz")
+        started = await startDrivingQuizGame(client, cfg);
+      else if (gameType === "mathExpression")
+        started = await startMathExpressionGame(client, cfg);
+      else if (gameType === "findBot")
+        started = await startFindBotGame(client, cfg);
+      else started = await startGuessNumberGame(client, cfg);
 
-    if (started) {
+      if (started) {
+        pendingGames.delete(cfg.channelId);
+        return;
+      }
+      await requeueGameType(client, cfg, gameType);
       pendingGames.delete(cfg.channelId);
-      return;
+      pending = null;
     }
-    await requeueGameType(client, cfg, gameType);
-    pendingGames.delete(cfg.channelId);
-    pending = null;
-  }
   } finally {
     startingChannels.delete(cfg.channelId);
   }
@@ -2932,7 +3769,10 @@ function startMinigameLoop(client) {
   };
 
   const cfg = getConfig(client);
-  const intervalMs = Math.max(60 * 1000, Number(cfg?.intervalMs || 15 * 60 * 1000));
+  const intervalMs = Math.max(
+    60 * 1000,
+    Number(cfg?.intervalMs || 15 * 60 * 1000),
+  );
   tick();
   setInterval(tick, intervalMs);
 }
@@ -2954,15 +3794,25 @@ async function awardWinAndReply(message, rewardExp) {
     const doc = await MinigameUser.findOneAndUpdate(
       { guildId: message.guild.id, userId: message.author.id },
       { $inc: { totalExp: Number(rewardExp || 0) } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
     nextTotal = Number(doc?.totalExp || nextTotal);
   } catch {}
   try {
-    await addExpWithLevel(message.guild, message.author.id, Number(rewardExp || 0), false, false);
+    await addExpWithLevel(
+      message.guild,
+      message.author.id,
+      Number(rewardExp || 0),
+      false,
+      false,
+    );
   } catch {}
-  await message.reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] }).catch(() => {});
-  const member = message.member || await message.guild.members.fetch(message.author.id).catch(() => null);
+  await message
+    .reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] })
+    .catch(() => {});
+  const member =
+    message.member ||
+    (await message.guild.members.fetch(message.author.id).catch(() => null));
   if (member) {
     await handleExpReward(message.client, member, nextTotal);
   }
@@ -2979,7 +3829,8 @@ async function handleMinigameMessage(message, client) {
   if (standbyChannels.has(cfg.channelId)) {
     if (canStartByInterval(cfg) && isReadyByActivity(cfg)) {
       const type = await getNextGameType(client, cfg);
-      if (type) pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
+      if (type)
+        pendingGames.set(cfg.channelId, { type, createdAt: Date.now() });
       standbyChannels.delete(cfg.channelId);
       await maybeStartRandomGame(client, false);
     }
@@ -2988,9 +3839,9 @@ async function handleMinigameMessage(message, client) {
   const game = activeGames.get(cfg.channelId);
   if (!game) return false;
 
-  const content = String(message.content || '').trim();
+  const content = String(message.content || "").trim();
 
-  if (game.type === 'guessNumber') {
+  if (game.type === "guessNumber") {
     if (!/^\d+$/.test(content)) return false;
     const guess = Number(content);
     if (!Number.isFinite(guess)) return false;
@@ -3000,7 +3851,7 @@ async function handleMinigameMessage(message, client) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
-      await message.react('<a:VC_Events:1448688007438667796>').catch(() => {});
+      await message.react("<a:VC_Events:1448688007438667796>").catch(() => {});
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
@@ -3008,14 +3859,16 @@ async function handleMinigameMessage(message, client) {
     const range = Math.max(1, Number(game.max || 100) - Number(game.min || 1));
     const nearThreshold = Math.max(2, Math.round(range * 0.05));
     if (Math.abs(guess - game.target) <= nearThreshold) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
 
-    await message.reply({ embeds: [buildHintEmbed(guess < game.target)] }).catch(() => {});
+    await message
+      .reply({ embeds: [buildHintEmbed(guess < game.target)] })
+      .catch(() => {});
     return true;
   }
 
-  if (game.type === 'guessWord') {
+  if (game.type === "guessWord") {
     const guessCandidates = extractWordGuessCandidates(content);
     if (!guessCandidates.length) {
       return false;
@@ -3028,102 +3881,133 @@ async function handleMinigameMessage(message, client) {
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (guessCandidates.some((candidate) => isNearTextGuess(candidate, game.target, { maxDistance: 1, maxRatio: 0.25 }))) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      guessCandidates.some((candidate) =>
+        isNearTextGuess(candidate, game.target, {
+          maxDistance: 1,
+          maxRatio: 0.25,
+        }),
+      )
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
       return false;
     }
-    await message.react('<:vegax:1443934876440068179>').catch(() => {});
+    await message.react("<:vegax:1443934876440068179>").catch(() => {});
     return false;
   }
 
-  if (game.type === 'guessFlag') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 4,
-      minTokenLength: 3,
-      singleTokenMinLength: 5
-    })) {
+  if (game.type === "guessFlag") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 4,
+        minTokenLength: 3,
+        singleTokenMinLength: 5,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessPlayer') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizePlayerGuess, {
-      minGuessLength: 3,
-      minTokenLength: 3,
-      singleTokenMinLength: 4
-    })) {
+  if (game.type === "guessPlayer") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizePlayerGuess, {
+        minGuessLength: 3,
+        minTokenLength: 3,
+        singleTokenMinLength: 4,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessSong') {
+  if (game.type === "guessSong") {
     const songAnswers = buildSongAnswerAliases(game.title);
-    if (isSongGuessCorrect(content, songAnswers.length ? songAnswers : game.title)) {
+    if (
+      isSongGuessCorrect(content, songAnswers.length ? songAnswers : game.title)
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, songAnswers.length ? songAnswers : [game.title], { maxDistance: 3, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(
+        content,
+        songAnswers.length ? songAnswers : [game.title],
+        { maxDistance: 3, maxRatio: 0.25 },
+      )
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessCapital') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 3,
-      minTokenLength: 3,
-      singleTokenMinLength: 4
-    })) {
+  if (game.type === "guessCapital") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 3,
+        minTokenLength: 3,
+        singleTokenMinLength: 4,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessRegionCapital') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 3,
-      minTokenLength: 3,
-      singleTokenMinLength: 4
-    })) {
+  if (game.type === "guessRegionCapital") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 3,
+        minTokenLength: 3,
+        singleTokenMinLength: 4,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'fastType') {
+  if (game.type === "fastType") {
     if (normalizeCountryName(content) === game.normalizedPhrase) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
@@ -3131,49 +4015,63 @@ async function handleMinigameMessage(message, client) {
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, [game.normalizedPhrase], { maxDistance: 2, maxRatio: 0.2, minGuessLength: 6 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, [game.normalizedPhrase], {
+        maxDistance: 2,
+        maxRatio: 0.2,
+        minGuessLength: 6,
+      })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessTeam') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 3,
-      minTokenLength: 3,
-      singleTokenMinLength: 3
-    })) {
+  if (game.type === "guessTeam") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 3,
+        minTokenLength: 3,
+        singleTokenMinLength: 3,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessSinger') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 3,
-      minTokenLength: 3,
-      singleTokenMinLength: 3
-    })) {
+  if (game.type === "guessSinger") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 3,
+        minTokenLength: 3,
+        singleTokenMinLength: 3,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'guessAlbum') {
+  if (game.type === "guessAlbum") {
     if (isSongGuessCorrect(content, game.answers)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
@@ -3181,31 +4079,41 @@ async function handleMinigameMessage(message, client) {
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 3, maxRatio: 0.25 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, { maxDistance: 3, maxRatio: 0.25 })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'italianGK') {
-    if (isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-      minGuessLength: 2,
-      minTokenLength: 2,
-      singleTokenMinLength: 2
-    })) {
+  if (game.type === "italianGK") {
+    if (
+      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
+        minGuessLength: 2,
+        minTokenLength: 2,
+        singleTokenMinLength: 2,
+      })
+    ) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }
-    if (isNearTextGuess(content, game.answers, { maxDistance: 2, maxRatio: 0.25, minGuessLength: 2 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      isNearTextGuess(content, game.answers, {
+        maxDistance: 2,
+        maxRatio: 0.25,
+        minGuessLength: 2,
+      })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'drivingQuiz') {
+  if (game.type === "drivingQuiz") {
     const guess = normalizeTruthValue(content);
     if (guess === null) return false;
     if (guess === game.answer) {
@@ -3218,8 +4126,10 @@ async function handleMinigameMessage(message, client) {
     return false;
   }
 
-  if (game.type === 'mathExpression') {
-    const numeric = String(content || '').replace(',', '.').trim();
+  if (game.type === "mathExpression") {
+    const numeric = String(content || "")
+      .replace(",", ".")
+      .trim();
     if (!/^-?\d+(\.\d+)?$/.test(numeric)) return false;
     if (numeric === String(game.answer)) {
       clearTimeout(game.timeout);
@@ -3230,13 +4140,17 @@ async function handleMinigameMessage(message, client) {
     }
     const guessNum = Number(numeric);
     const answerNum = Number(game.answer);
-    if (Number.isFinite(guessNum) && Number.isFinite(answerNum) && Math.abs(guessNum - answerNum) <= 1) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      Number.isFinite(guessNum) &&
+      Number.isFinite(answerNum) &&
+      Math.abs(guessNum - answerNum) <= 1
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
     return false;
   }
 
-  if (game.type === 'hangman') {
+  if (game.type === "hangman") {
     const normalized = normalizeCountryName(content);
     if (!normalized) return false;
 
@@ -3248,19 +4162,28 @@ async function handleMinigameMessage(message, client) {
       return true;
     }
 
-    if (normalized.length > 1 && isNearTextGuess(normalized, [game.word], { maxDistance: 2, maxRatio: 0.28, minGuessLength: 4 })) {
-      await message.react('<a:VC_Flame:1473106990493335665>').catch(() => {});
+    if (
+      normalized.length > 1 &&
+      isNearTextGuess(normalized, [game.word], {
+        maxDistance: 2,
+        maxRatio: 0.28,
+        minGuessLength: 4,
+      })
+    ) {
+      await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
 
     const letter = normalized.length === 1 ? normalized : null;
     if (!letter || !/^[a-z0-9]$/.test(letter)) return false;
-    const guessed = new Set(Array.isArray(game.guessedLetters) ? game.guessedLetters : []);
+    const guessed = new Set(
+      Array.isArray(game.guessedLetters) ? game.guessedLetters : [],
+    );
     if (guessed.has(letter)) return false;
     guessed.add(letter);
     game.guessedLetters = Array.from(guessed.values());
     if (!game.word.includes(letter)) game.misses = Number(game.misses || 0) + 1;
 
-    const solved = game.word.split('').every((ch) => guessed.has(ch));
+    const solved = game.word.split("").every((ch) => guessed.has(ch));
     if (solved) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
@@ -3273,27 +4196,39 @@ async function handleMinigameMessage(message, client) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
-      await message.channel.send({ embeds: [buildTimeoutHangmanEmbed(game.word)] }).catch(() => {});
+      await message.channel
+        .send({ embeds: [buildTimeoutHangmanEmbed(game.word)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
       return true;
     }
 
     const maskedWord = maskHangmanWord(game.word, guessed);
-    await message.channel.send({
-      embeds: [buildHangmanEmbed(maskedWord, Number(game.misses || 0), Number(game.maxMisses || 7), game.rewardExp, Math.max(1000, game.endsAt - Date.now()))]
-    }).catch(() => {});
+    await message.channel
+      .send({
+        embeds: [
+          buildHangmanEmbed(
+            maskedWord,
+            Number(game.misses || 0),
+            Number(game.maxMisses || 7),
+            game.rewardExp,
+            Math.max(1000, game.endsAt - Date.now()),
+          ),
+        ],
+      })
+      .catch(() => {});
     await saveActiveGame(client, cfg, {
-      type: 'hangman',
+      type: "hangman",
       target: JSON.stringify({
         word: game.word,
         guessedLetters: game.guessedLetters,
         misses: Number(game.misses || 0),
-        maxMisses: Number(game.maxMisses || 7)
+        maxMisses: Number(game.maxMisses || 7),
       }),
       rewardExp: Number(game.rewardExp || 0),
       startedAt: new Date(game.startedAt || Date.now()),
       endsAt: new Date(game.endsAt || Date.now()),
-      gameMessageId: game.gameMessageId || null
+      gameMessageId: game.gameMessageId || null,
     });
     return true;
   }
@@ -3306,25 +4241,41 @@ async function handleMinigameButton(interaction, client) {
   const cfg = getConfig(client);
   if (!cfg?.enabled) return false;
   const game = activeGames.get(cfg.channelId);
-  if (interaction.customId.startsWith('minigame_song_preview:')) {
-    if (!game || game.type !== 'guessSong' || interaction.customId !== game.previewCustomId) {
-      await interaction.reply({ content: 'Anteprima non disponibile.', flags: 1 << 6 }).catch(() => {});
+  if (interaction.customId.startsWith("minigame_song_preview:")) {
+    if (
+      !game ||
+      game.type !== "guessSong" ||
+      interaction.customId !== game.previewCustomId
+    ) {
+      await interaction
+        .reply({ content: "Anteprima non disponibile.", flags: 1 << 6 })
+        .catch(() => {});
       return true;
     }
     await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
     if (!game.previewUrl) {
-      await interaction.editReply({ content: 'Anteprima non disponibile.' }).catch(() => {});
+      await interaction
+        .editReply({ content: "Anteprima non disponibile." })
+        .catch(() => {});
       return true;
     }
     const audio = await fetchAudioAttachment(game.previewUrl);
     if (!audio) {
-      await interaction.editReply({ content: `Non riesco ad allegare il file, ascoltala qui:\n${game.previewUrl}` }).catch(() => {});
+      await interaction
+        .editReply({
+          content: `Non riesco ad allegare il file, ascoltala qui:\n${game.previewUrl}`,
+        })
+        .catch(() => {});
       return true;
     }
-    await interaction.editReply({ files: [new AttachmentBuilder(audio, { name: 'anteprima.m4a' })] }).catch(() => {});
+    await interaction
+      .editReply({
+        files: [new AttachmentBuilder(audio, { name: "anteprima.m4a" })],
+      })
+      .catch(() => {});
     return true;
   }
-  if (!game || game.type !== 'findBot') return false;
+  if (!game || game.type !== "findBot") return false;
   if (interaction.customId !== game.customId) return false;
 
   clearTimeout(game.timeout);
@@ -3337,22 +4288,35 @@ async function handleMinigameButton(interaction, client) {
     const doc = await MinigameUser.findOneAndUpdate(
       { guildId: interaction.guild.id, userId: interaction.user.id },
       { $inc: { totalExp: Number(rewardExp || 0) } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true },
     );
     nextTotal = Number(doc?.totalExp || nextTotal);
   } catch {}
   try {
-    await addExpWithLevel(interaction.guild, interaction.user.id, Number(rewardExp || 0), false, false);
+    await addExpWithLevel(
+      interaction.guild,
+      interaction.user.id,
+      Number(rewardExp || 0),
+      false,
+      false,
+    );
   } catch {}
 
   const winEmbed = buildWinEmbed(interaction.user.id, rewardExp, nextTotal);
-  const mainChannel = getChannelSafe(interaction.client, cfg.channelId)
-    || await interaction.client.channels.fetch(cfg.channelId).catch(() => null);
+  const mainChannel =
+    getChannelSafe(interaction.client, cfg.channelId) ||
+    (await interaction.client.channels.fetch(cfg.channelId).catch(() => null));
   if (mainChannel) {
     await mainChannel.send({ embeds: [winEmbed] }).catch(() => {});
   }
-  await interaction.reply({ content: 'Hai vinto!', flags: 1 << 6 }).catch(() => {});
-  const member = interaction.member || await interaction.guild.members.fetch(interaction.user.id).catch(() => null);
+  await interaction
+    .reply({ content: "Hai vinto!", flags: 1 << 6 })
+    .catch(() => {});
+  const member =
+    interaction.member ||
+    (await interaction.guild.members
+      .fetch(interaction.user.id)
+      .catch(() => null));
   if (member) {
     await handleExpReward(interaction.client, member, nextTotal);
   }
@@ -3360,7 +4324,9 @@ async function handleMinigameButton(interaction, client) {
 
   try {
     const channel = interaction.channel;
-    const message = await channel.messages.fetch(game.messageId).catch(() => null);
+    const message = await channel.messages
+      .fetch(game.messageId)
+      .catch(() => null);
     if (message) {
       await message.delete().catch(() => {});
     }
@@ -3372,145 +4338,203 @@ async function handleMinigameButton(interaction, client) {
 async function restoreActiveGames(client) {
   const cfg = getConfig(client);
   if (!cfg?.enabled || !cfg.channelId) return;
-  const channel = getChannelSafe(client, cfg.channelId) || await client.channels.fetch(cfg.channelId).catch(() => null);
+  const channel =
+    getChannelSafe(client, cfg.channelId) ||
+    (await client.channels.fetch(cfg.channelId).catch(() => null));
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   await loadRotationState(client, cfg);
-  const state = await MinigameState.findOne({ guildId, channelId: cfg.channelId }).lean().catch(() => null);
+  const state = await MinigameState.findOne({
+    guildId,
+    channelId: cfg.channelId,
+  })
+    .lean()
+    .catch(() => null);
   if (!state) return;
   const now = Date.now();
   const endsAt = new Date(state.endsAt).getTime();
   if (endsAt <= now) {
-    if (state.type === 'guessNumber') {
-      await channel.send({ embeds: [buildTimeoutNumberEmbed(Number(state.target))] }).catch(() => {});
-    } else if (state.type === 'guessWord') {
-      await channel.send({ embeds: [buildTimeoutWordEmbed(String(state.target))] }).catch(() => {});
-    } else if (state.type === 'guessFlag') {
-      let name = 'la bandiera';
+    if (state.type === "guessNumber") {
+      await channel
+        .send({ embeds: [buildTimeoutNumberEmbed(Number(state.target))] })
+        .catch(() => {});
+    } else if (state.type === "guessWord") {
+      await channel
+        .send({ embeds: [buildTimeoutWordEmbed(String(state.target))] })
+        .catch(() => {});
+    } else if (state.type === "guessFlag") {
+      let name = "la bandiera";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         name = parsed?.displayName || name;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutFlagEmbed(name)] }).catch(() => {});
-    } else if (state.type === 'guessPlayer') {
-      let name = 'il calciatore';
+      await channel
+        .send({ embeds: [buildTimeoutFlagEmbed(name)] })
+        .catch(() => {});
+    } else if (state.type === "guessPlayer") {
+      let name = "il calciatore";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         name = parsed?.name || name;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutPlayerEmbed(name)] }).catch(() => {});
-    } else if (state.type === 'guessSong') {
-      let title = 'la canzone';
-      let artist = '';
+      await channel
+        .send({ embeds: [buildTimeoutPlayerEmbed(name)] })
+        .catch(() => {});
+    } else if (state.type === "guessSong") {
+      let title = "la canzone";
+      let artist = "";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         title = parsed?.title || title;
-        artist = parsed?.artist || '';
+        artist = parsed?.artist || "";
       } catch {}
-      await channel.send({ embeds: [buildTimeoutSongEmbed(title, artist)] }).catch(() => {});
-    } else if (state.type === 'guessCapital') {
-      let country = 'nazione sconosciuta';
-      let displayAnswer = 'sconosciuta';
+      await channel
+        .send({ embeds: [buildTimeoutSongEmbed(title, artist)] })
+        .catch(() => {});
+    } else if (state.type === "guessCapital") {
+      let country = "nazione sconosciuta";
+      let displayAnswer = "sconosciuta";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         country = parsed?.country || country;
-        displayAnswer = parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
+        displayAnswer =
+          parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutCapitalEmbed(country, displayAnswer)] }).catch(() => {});
-    } else if (state.type === 'guessRegionCapital') {
-      let region = 'regione sconosciuta';
-      let displayAnswer = 'sconosciuto';
+      await channel
+        .send({ embeds: [buildTimeoutCapitalEmbed(country, displayAnswer)] })
+        .catch(() => {});
+    } else if (state.type === "guessRegionCapital") {
+      let region = "regione sconosciuta";
+      let displayAnswer = "sconosciuto";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         region = parsed?.region || region;
-        displayAnswer = parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
+        displayAnswer =
+          parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutRegionCapitalEmbed(region, displayAnswer)] }).catch(() => {});
-    } else if (state.type === 'fastType') {
-      let phrase = 'frase sconosciuta';
+      await channel
+        .send({
+          embeds: [buildTimeoutRegionCapitalEmbed(region, displayAnswer)],
+        })
+        .catch(() => {});
+    } else if (state.type === "fastType") {
+      let phrase = "frase sconosciuta";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         phrase = parsed?.phrase || phrase;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutFastTypeEmbed(phrase)] }).catch(() => {});
-    } else if (state.type === 'guessTeam') {
-      let team = 'squadra sconosciuta';
+      await channel
+        .send({ embeds: [buildTimeoutFastTypeEmbed(phrase)] })
+        .catch(() => {});
+    } else if (state.type === "guessTeam") {
+      let team = "squadra sconosciuta";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         team = parsed?.team || team;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutTeamEmbed(team)] }).catch(() => {});
-    } else if (state.type === 'guessSinger') {
-      let name = 'cantante sconosciuto';
+      await channel
+        .send({ embeds: [buildTimeoutTeamEmbed(team)] })
+        .catch(() => {});
+    } else if (state.type === "guessSinger") {
+      let name = "cantante sconosciuto";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         name = parsed?.name || name;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutSingerEmbed(name)] }).catch(() => {});
-    } else if (state.type === 'guessAlbum') {
-      let album = 'album sconosciuto';
-      let artist = 'artista sconosciuto';
+      await channel
+        .send({ embeds: [buildTimeoutSingerEmbed(name)] })
+        .catch(() => {});
+    } else if (state.type === "guessAlbum") {
+      let album = "album sconosciuto";
+      let artist = "artista sconosciuto";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         album = parsed?.album || album;
         artist = parsed?.artist || artist;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutAlbumEmbed(album, artist)] }).catch(() => {});
-    } else if (state.type === 'hangman') {
-      let word = 'parola sconosciuta';
+      await channel
+        .send({ embeds: [buildTimeoutAlbumEmbed(album, artist)] })
+        .catch(() => {});
+    } else if (state.type === "hangman") {
+      let word = "parola sconosciuta";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         word = parsed?.word || word;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutHangmanEmbed(word)] }).catch(() => {});
-    } else if (state.type === 'italianGK') {
-      let displayAnswer = 'sconosciuta';
+      await channel
+        .send({ embeds: [buildTimeoutHangmanEmbed(word)] })
+        .catch(() => {});
+    } else if (state.type === "italianGK") {
+      let displayAnswer = "sconosciuta";
       try {
-        const parsed = JSON.parse(state.target || '{}');
-        displayAnswer = parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
+        const parsed = JSON.parse(state.target || "{}");
+        displayAnswer =
+          parsed?.displayAnswer || parsed?.answers?.[0] || displayAnswer;
       } catch {}
-      await channel.send({ embeds: [buildTimeoutItalianGkEmbed(displayAnswer)] }).catch(() => {});
-    } else if (state.type === 'drivingQuiz') {
+      await channel
+        .send({ embeds: [buildTimeoutItalianGkEmbed(displayAnswer)] })
+        .catch(() => {});
+    } else if (state.type === "drivingQuiz") {
       let answer = false;
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         answer = Boolean(parsed?.answer);
       } catch {}
-      await channel.send({ embeds: [buildTimeoutDrivingQuizEmbed(answer)] }).catch(() => {});
-    } else if (state.type === 'mathExpression') {
-      let answer = '0';
+      await channel
+        .send({ embeds: [buildTimeoutDrivingQuizEmbed(answer)] })
+        .catch(() => {});
+    } else if (state.type === "mathExpression") {
+      let answer = "0";
       try {
-        const parsed = JSON.parse(state.target || '{}');
+        const parsed = JSON.parse(state.target || "{}");
         answer = String(parsed?.answer || answer);
       } catch {}
-      await channel.send({ embeds: [buildTimeoutMathEmbed(answer)] }).catch(() => {});
-    } else if (state.type === 'findBot') {
-      await channel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
-      const targetChannel = channel.guild.channels.cache.get(state.targetChannelId) || await channel.guild.channels.fetch(state.targetChannelId).catch(() => null);
+      await channel
+        .send({ embeds: [buildTimeoutMathEmbed(answer)] })
+        .catch(() => {});
+    } else if (state.type === "findBot") {
+      await channel
+        .send({ embeds: [buildTimeoutFindBotEmbed()] })
+        .catch(() => {});
+      const targetChannel =
+        channel.guild.channels.cache.get(state.targetChannelId) ||
+        (await channel.guild.channels
+          .fetch(state.targetChannelId)
+          .catch(() => null));
       if (targetChannel && state.gameMessageId && state.customId) {
-        const msg = await targetChannel.messages.fetch(state.gameMessageId).catch(() => null);
+        const msg = await targetChannel.messages
+          .fetch(state.gameMessageId)
+          .catch(() => null);
         if (msg) {
           const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setCustomId(state.customId).setLabel('trova il bot').setStyle(ButtonStyle.Primary).setDisabled(true)
+            new ButtonBuilder()
+              .setCustomId(state.customId)
+              .setLabel("trova il bot")
+              .setStyle(ButtonStyle.Primary)
+              .setDisabled(true),
           );
           await msg.edit({ components: [row] }).catch(() => {});
         }
       }
     }
-    await MinigameState.deleteOne({ guildId, channelId: cfg.channelId }).catch(() => {});
+    await MinigameState.deleteOne({ guildId, channelId: cfg.channelId }).catch(
+      () => {},
+    );
     return;
   }
   const remainingMs = endsAt - now;
-  if (state.type === 'guessNumber') {
+  if (state.type === "guessNumber") {
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutNumberEmbed(game.target)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutNumberEmbed(game.target)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessNumber',
+      type: "guessNumber",
       target: Number(state.target),
       min: Number(state.min),
       max: Number(state.max),
@@ -3518,54 +4542,53 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessWord') {
+  if (state.type === "guessWord") {
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutWordEmbed(game.target)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutWordEmbed(game.target)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessWord',
-      target: String(state.target || '').toLowerCase(),
+      type: "guessWord",
+      target: String(state.target || "").toLowerCase(),
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessFlag') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
+  if (state.type === "guessFlag") {
+    const parsed = parseStateTarget(state.target);
     const answers = Array.isArray(parsed?.names) ? parsed.names : [];
-    const displayName = parsed?.displayName || 'la bandiera';
+    const displayName = parsed?.displayName || "la bandiera";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
-      await channel.send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutFlagEmbed(game.displayName)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     const hintTimeout = await scheduleGenericHint(
       client,
       cfg.channelId,
       remainingMs,
-      `La nazione ha **${normalizeCountryName(displayName).replace(/\s+/g, '').length}** lettere. ${buildMaskedTextHint(displayName)}`
+      `La nazione ha **${normalizeCountryName(displayName).replace(/\s+/g, "").length}** lettere. ${buildMaskedTextHint(displayName)}`,
     );
     activeGames.set(cfg.channelId, {
-      type: 'guessFlag',
+      type: "guessFlag",
       answers,
       displayName,
       rewardExp: Number(state.rewardExp || 0),
@@ -3573,36 +4596,33 @@ async function restoreActiveGames(client) {
       endsAt,
       timeout,
       hintTimeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessPlayer') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const name = parsed?.name || 'il calciatore';
-    const team = parsed?.team || 'Squadra sconosciuta';
-    const nationality = parsed?.nationality || 'Nazionalità sconosciuta';
+  if (state.type === "guessPlayer") {
+    const parsed = parseStateTarget(state.target);
+    const name = parsed?.name || "il calciatore";
+    const team = parsed?.team || "Squadra sconosciuta";
+    const nationality = parsed?.nationality || "Nazionalità sconosciuta";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
-      await channel.send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutPlayerEmbed(game.displayName)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     const hintTimeout = await scheduleGenericHint(
       client,
       cfg.channelId,
       remainingMs,
-      `${team} • ${nationality} • ${buildMaskedTextHint(name)}`
+      `${team} • ${nationality} • ${buildMaskedTextHint(name)}`,
     );
     activeGames.set(cfg.channelId, {
-      type: 'guessPlayer',
+      type: "guessPlayer",
       answers: buildPlayerAnswerAliases(name, parsed?.aliases),
       fullAnswer: normalizePlayerGuess(name),
       displayName: name,
@@ -3611,37 +4631,34 @@ async function restoreActiveGames(client) {
       endsAt,
       timeout,
       hintTimeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessSong') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const title = parsed?.title || 'la canzone';
-    const artist = parsed?.artist || '';
-    const artistCountry = parsed?.artistCountry || 'Nazionalità sconosciuta';
-    const genre = parsed?.genre || 'Genere sconosciuto';
+  if (state.type === "guessSong") {
+    const parsed = parseStateTarget(state.target);
+    const title = parsed?.title || "la canzone";
+    const artist = parsed?.artist || "";
+    const artistCountry = parsed?.artistCountry || "Nazionalità sconosciuta";
+    const genre = parsed?.genre || "Genere sconosciuto";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
-      await channel.send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutSongEmbed(game.title, game.artist)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     const hintTimeout = await scheduleGenericHint(
       client,
       cfg.channelId,
       remainingMs,
-      `${artistCountry} • ${genre} • ${buildMaskedTextHint(title)}`
+      `${artistCountry} • ${genre} • ${buildMaskedTextHint(title)}`,
     );
     activeGames.set(cfg.channelId, {
-      type: 'guessSong',
+      type: "guessSong",
       title,
       artist,
       previewUrl: parsed?.previewUrl || null,
@@ -3651,29 +4668,28 @@ async function restoreActiveGames(client) {
       endsAt,
       timeout,
       hintTimeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessCapital') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const country = parsed?.country || 'nazione sconosciuta';
+  if (state.type === "guessCapital") {
+    const parsed = parseStateTarget(state.target);
+    const country = parsed?.country || "nazione sconosciuta";
     const answers = Array.isArray(parsed?.answers) ? parsed.answers : [];
-    const displayAnswer = parsed?.displayAnswer || answers[0] || 'sconosciuta';
+    const displayAnswer = parsed?.displayAnswer || answers[0] || "sconosciuta";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutCapitalEmbed(game.country, game.displayAnswer)] }).catch(() => {});
+      await channel
+        .send({
+          embeds: [buildTimeoutCapitalEmbed(game.country, game.displayAnswer)],
+        })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessCapital',
+      type: "guessCapital",
       country,
       answers,
       displayAnswer,
@@ -3681,29 +4697,30 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessRegionCapital') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const region = parsed?.region || 'regione sconosciuta';
+  if (state.type === "guessRegionCapital") {
+    const parsed = parseStateTarget(state.target);
+    const region = parsed?.region || "regione sconosciuta";
     const answers = Array.isArray(parsed?.answers) ? parsed.answers : [];
-    const displayAnswer = parsed?.displayAnswer || answers[0] || 'sconosciuto';
+    const displayAnswer = parsed?.displayAnswer || answers[0] || "sconosciuto";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutRegionCapitalEmbed(game.region, game.displayAnswer)] }).catch(() => {});
+      await channel
+        .send({
+          embeds: [
+            buildTimeoutRegionCapitalEmbed(game.region, game.displayAnswer),
+          ],
+        })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessRegionCapital',
+      type: "guessRegionCapital",
       region,
       answers,
       displayAnswer,
@@ -3711,113 +4728,108 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'fastType') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const phrase = parsed?.phrase || '';
-    const normalizedPhrase = parsed?.normalizedPhrase || normalizeCountryName(phrase);
+  if (state.type === "fastType") {
+    const parsed = parseStateTarget(state.target);
+    const phrase = parsed?.phrase || "";
+    const normalizedPhrase =
+      parsed?.normalizedPhrase || normalizeCountryName(phrase);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutFastTypeEmbed(game.phrase)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutFastTypeEmbed(game.phrase)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'fastType',
+      type: "fastType",
       phrase,
       normalizedPhrase,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessTeam') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const team = parsed?.team || 'squadra sconosciuta';
-    const answers = Array.isArray(parsed?.answers) ? parsed.answers : buildAliases([team]);
+  if (state.type === "guessTeam") {
+    const parsed = parseStateTarget(state.target);
+    const team = parsed?.team || "squadra sconosciuta";
+    const answers = Array.isArray(parsed?.answers)
+      ? parsed.answers
+      : buildAliases([team]);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutTeamEmbed(game.team)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutTeamEmbed(game.team)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessTeam',
+      type: "guessTeam",
       team,
       answers,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessSinger') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const name = parsed?.name || 'cantante sconosciuto';
-    const answers = Array.isArray(parsed?.answers) ? parsed.answers : buildAliases([name]);
+  if (state.type === "guessSinger") {
+    const parsed = parseStateTarget(state.target);
+    const name = parsed?.name || "cantante sconosciuto";
+    const answers = Array.isArray(parsed?.answers)
+      ? parsed.answers
+      : buildAliases([name]);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutSingerEmbed(game.name)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutSingerEmbed(game.name)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessSinger',
+      type: "guessSinger",
       name,
       answers,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'guessAlbum') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const album = parsed?.album || 'album sconosciuto';
-    const artist = parsed?.artist || 'artista sconosciuto';
-    const answers = Array.isArray(parsed?.answers) ? parsed.answers : buildAliases([album]);
+  if (state.type === "guessAlbum") {
+    const parsed = parseStateTarget(state.target);
+    const album = parsed?.album || "album sconosciuto";
+    const artist = parsed?.artist || "artista sconosciuto";
+    const answers = Array.isArray(parsed?.answers)
+      ? parsed.answers
+      : buildAliases([album]);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutAlbumEmbed(game.album, game.artist)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'guessAlbum',
+      type: "guessAlbum",
       album,
       artist,
       answers,
@@ -3825,30 +4837,29 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'hangman') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const word = normalizeCountryName(parsed?.word || '');
-    const guessedLetters = Array.isArray(parsed?.guessedLetters) ? parsed.guessedLetters : [];
+  if (state.type === "hangman") {
+    const parsed = parseStateTarget(state.target);
+    const word = normalizeCountryName(parsed?.word || "");
+    const guessedLetters = Array.isArray(parsed?.guessedLetters)
+      ? parsed.guessedLetters
+      : [];
     const misses = Number(parsed?.misses || 0);
     const maxMisses = Number(parsed?.maxMisses || 7);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutHangmanEmbed(game.word)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutHangmanEmbed(game.word)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'hangman',
+      type: "hangman",
       word,
       guessedLetters,
       misses,
@@ -3857,29 +4868,26 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'italianGK') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const question = parsed?.question || 'Domanda';
+  if (state.type === "italianGK") {
+    const parsed = parseStateTarget(state.target);
+    const question = parsed?.question || "Domanda";
     const answers = Array.isArray(parsed?.answers) ? parsed.answers : [];
-    const displayAnswer = parsed?.displayAnswer || answers[0] || 'sconosciuta';
+    const displayAnswer = parsed?.displayAnswer || answers[0] || "sconosciuta";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutItalianGkEmbed(game.displayAnswer)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutItalianGkEmbed(game.displayAnswer)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'italianGK',
+      type: "italianGK",
       question,
       answers,
       displayAnswer,
@@ -3887,72 +4895,66 @@ async function restoreActiveGames(client) {
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'drivingQuiz') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const statement = parsed?.statement || '';
+  if (state.type === "drivingQuiz") {
+    const parsed = parseStateTarget(state.target);
+    const statement = parsed?.statement || "";
     const answer = Boolean(parsed?.answer);
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'drivingQuiz',
+      type: "drivingQuiz",
       statement,
       answer,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'mathExpression') {
-    let parsed = null;
-    try {
-      parsed = JSON.parse(state.target || '{}');
-    } catch {
-      parsed = null;
-    }
-    const expression = parsed?.expression || '';
-    const answer = String(parsed?.answer || '0');
+  if (state.type === "mathExpression") {
+    const parsed = parseStateTarget(state.target);
+    const expression = parsed?.expression || "";
+    const answer = String(parsed?.answer || "0");
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
-      await channel.send({ embeds: [buildTimeoutMathEmbed(game.answer)] }).catch(() => {});
+      await channel
+        .send({ embeds: [buildTimeoutMathEmbed(game.answer)] })
+        .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
     activeGames.set(cfg.channelId, {
-      type: 'mathExpression',
+      type: "mathExpression",
       expression,
       answer,
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
       timeout,
-      gameMessageId: state.gameMessageId || null
+      gameMessageId: state.gameMessageId || null,
     });
     return;
   }
-  if (state.type === 'findBot') {
+  if (state.type === "findBot") {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(state.customId)
-        .setLabel('trova il bot')
-        .setStyle(ButtonStyle.Primary)
+        .setLabel("trova il bot")
+        .setStyle(ButtonStyle.Primary),
     );
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
@@ -3960,23 +4962,34 @@ async function restoreActiveGames(client) {
       activeGames.delete(cfg.channelId);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       if (game.channelId && game.messageId) {
-        const ch = channel.guild.channels.cache.get(game.channelId) || await channel.guild.channels.fetch(game.channelId).catch(() => null);
+        const ch =
+          channel.guild.channels.cache.get(game.channelId) ||
+          (await channel.guild.channels
+            .fetch(game.channelId)
+            .catch(() => null));
         if (ch) {
           const msg = await ch.messages.fetch(game.messageId).catch(() => null);
           if (msg) {
             const disabledRow = new ActionRowBuilder().addComponents(
-              ButtonBuilder.from(row.components[0]).setDisabled(true)
+              ButtonBuilder.from(row.components[0]).setDisabled(true),
             );
             await msg.edit({ components: [disabledRow] }).catch(() => {});
           }
-          await channel.send({ embeds: [buildTimeoutFindBotEmbed()] }).catch(() => {});
+          await channel
+            .send({ embeds: [buildTimeoutFindBotEmbed()] })
+            .catch(() => {});
         }
       }
       await clearActiveGame(client, cfg);
     }, remainingMs);
-    const hintTimeout = await scheduleMinuteHint(client, state.targetChannelId, remainingMs, cfg.channelId);
+    const hintTimeout = await scheduleMinuteHint(
+      client,
+      state.targetChannelId,
+      remainingMs,
+      cfg.channelId,
+    );
     activeGames.set(cfg.channelId, {
-      type: 'findBot',
+      type: "findBot",
       rewardExp: Number(state.rewardExp || 0),
       startedAt: new Date(state.startedAt).getTime(),
       endsAt,
@@ -3985,10 +4998,15 @@ async function restoreActiveGames(client) {
       channelId: state.targetChannelId,
       messageId: state.gameMessageId || null,
       mainMessageId: state.mainMessageId || null,
-      customId: state.customId
+      customId: state.customId,
     });
   }
 }
 
-module.exports = { startMinigameLoop, forceStartMinigame, restoreActiveGames, handleMinigameMessage, handleMinigameButton };
-
+module.exports = {
+  startMinigameLoop,
+  forceStartMinigame,
+  restoreActiveGames,
+  handleMinigameMessage,
+  handleMinigameButton,
+};

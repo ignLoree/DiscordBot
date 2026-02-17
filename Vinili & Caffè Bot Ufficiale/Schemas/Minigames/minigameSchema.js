@@ -1,12 +1,12 @@
-﻿const mongoose = require('mongoose');
+﻿const mongoose = require("mongoose");
 
 const minigameUserSchema = new mongoose.Schema(
   {
     guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
-    totalExp: { type: Number, default: 0 }
+    totalExp: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 minigameUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -24,9 +24,9 @@ const minigameStateSchema = new mongoose.Schema(
     gameMessageId: { type: String, default: null },
     targetChannelId: { type: String, default: null },
     customId: { type: String, default: null },
-    mainMessageId: { type: String, default: null }
+    mainMessageId: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 minigameStateSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
@@ -35,14 +35,20 @@ const minigameRotationSchema = new mongoose.Schema(
     guildId: { type: String, required: true },
     channelId: { type: String, required: true, index: true },
     dateKey: { type: String, required: true },
-    queue: { type: [String], default: [] }
+    queue: { type: [String], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 minigameRotationSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
-const MinigameUser = mongoose.models.MinigameUser || mongoose.model('MinigameUser', minigameUserSchema);
-const MinigameState = mongoose.models.MinigameState || mongoose.model('MinigameState', minigameStateSchema);
-const MinigameRotation = mongoose.models.MinigameRotation || mongoose.model('MinigameRotation', minigameRotationSchema);
+const MinigameUser =
+  mongoose.models.MinigameUser ||
+  mongoose.model("MinigameUser", minigameUserSchema);
+const MinigameState =
+  mongoose.models.MinigameState ||
+  mongoose.model("MinigameState", minigameStateSchema);
+const MinigameRotation =
+  mongoose.models.MinigameRotation ||
+  mongoose.model("MinigameRotation", minigameRotationSchema);
 
 module.exports = { MinigameUser, MinigameState, MinigameRotation };

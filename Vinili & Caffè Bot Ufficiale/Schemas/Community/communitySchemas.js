@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { Schema, model, models } = mongoose;
 
 const activityUserSchema = new Schema(
@@ -9,19 +9,19 @@ const activityUserSchema = new Schema(
       total: { type: Number, default: 0 },
       daily: { type: Number, default: 0 },
       weekly: { type: Number, default: 0 },
-      dailyKey: { type: String, default: '' },
-      weeklyKey: { type: String, default: '' }
+      dailyKey: { type: String, default: "" },
+      weeklyKey: { type: String, default: "" },
     },
     voice: {
       totalSeconds: { type: Number, default: 0 },
       dailySeconds: { type: Number, default: 0 },
       weeklySeconds: { type: Number, default: 0 },
-      dailyKey: { type: String, default: '' },
-      weeklyKey: { type: String, default: '' },
-      sessionStartedAt: { type: Date, default: null }
-    }
+      dailyKey: { type: String, default: "" },
+      weeklyKey: { type: String, default: "" },
+      sessionStartedAt: { type: Date, default: null },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 activityUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -32,9 +32,9 @@ const expUserSchema = new Schema(
     totalExp: { type: Number, default: 0 },
     weeklyExp: { type: Number, default: 0 },
     level: { type: Number, default: 0 },
-    weeklyKey: { type: String, default: '' }
+    weeklyKey: { type: String, default: "" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 expUserSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -46,11 +46,14 @@ const activityDailySchema = new Schema(
     textCount: { type: Number, default: 0 },
     voiceSeconds: { type: Number, default: 0 },
     textChannels: { type: Map, of: Number, default: {} },
-    voiceChannels: { type: Map, of: Number, default: {} }
+    voiceChannels: { type: Map, of: Number, default: {} },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-activityDailySchema.index({ guildId: 1, dateKey: 1, userId: 1 }, { unique: true });
+activityDailySchema.index(
+  { guildId: 1, dateKey: 1, userId: 1 },
+  { unique: true },
+);
 
 const levelHistorySchema = new Schema(
   {
@@ -63,9 +66,9 @@ const levelHistorySchema = new Schema(
     beforeLevel: { type: Number, default: 0 },
     afterLevel: { type: Number, default: 0 },
     deltaExp: { type: Number, default: 0 },
-    note: { type: String, default: null }
+    note: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 levelHistorySchema.index({ guildId: 1, userId: 1, createdAt: -1 });
 
@@ -76,18 +79,18 @@ const globalSettingsSchema = new Schema(
     expEventMultiplier: { type: Number, default: 1 },
     expEventMultiplierExpiresAt: { type: Date, default: null },
     expLockedChannelIds: { type: [String], default: [] },
-    expIgnoredRoleIds: { type: [String], default: [] }
+    expIgnoredRoleIds: { type: [String], default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const voteRoleSchema = new Schema(
   {
     guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
-    expiresAt: { type: Date, required: true }
+    expiresAt: { type: Date, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 voteRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -95,14 +98,14 @@ const verificationTenureSchema = new Schema({
   guildId: { type: String, required: true },
   userId: { type: String, required: true, index: true },
   verifiedAt: { type: Date, required: true },
-  stage: { type: Number, default: 1 }
+  stage: { type: Number, default: 1 },
 });
 verificationTenureSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
 const skullboardPostSchema = new Schema({
   guildId: { type: String, required: true },
   messageId: { type: String, required: true, index: true },
-  postMessageId: { type: String, default: null }
+  postMessageId: { type: String, default: null },
 });
 skullboardPostSchema.index({ guildId: 1, messageId: 1 }, { unique: true });
 
@@ -111,9 +114,9 @@ const reviewRewardSchema = new Schema(
     guildId: { type: String, required: true, index: true },
     userId: { type: String, required: true, index: true },
     rewardedBy: { type: String, default: null },
-    rewardedAt: { type: Date, default: Date.now }
+    rewardedAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 reviewRewardSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -130,7 +133,7 @@ const personalityPanelSchema = new Schema({
   verifyPanelMessageId: { type: String, default: null },
   ticketInfoMessageId: { type: String, default: null },
   ticketPanelMessageId: { type: String, default: null },
-  sponsorTicketPanelMessageId: { type: String, default: null }
+  sponsorTicketPanelMessageId: { type: String, default: null },
 });
 personalityPanelSchema.index({ guildId: 1, channelId: 1 }, { unique: true });
 
@@ -141,9 +144,9 @@ const inviteTrackSchema = new Schema(
     inviterId: { type: String, required: true, index: true },
     active: { type: Boolean, default: true, index: true },
     joinedAt: { type: Date, default: Date.now },
-    leftAt: { type: Date, default: null }
+    leftAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 inviteTrackSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 inviteTrackSchema.index({ guildId: 1, inviterId: 1 });
@@ -155,9 +158,9 @@ const customRoleSchema = new Schema(
     roleId: { type: String, required: true },
     customVocEmoji: { type: String, default: null },
     customVocChannelId: { type: String, default: null, index: true },
-    expiresAt: { type: Date, default: null, index: true }
+    expiresAt: { type: Date, default: null, index: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 customRoleSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -165,9 +168,9 @@ const chatReminderScheduleSchema = new Schema(
   {
     guildId: { type: String, required: true },
     fireAt: { type: Date, required: true },
-    kind: { type: String, default: 'first' }
+    kind: { type: String, default: "first" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 chatReminderScheduleSchema.index({ guildId: 1, fireAt: 1 });
 
@@ -176,9 +179,9 @@ const chatReminderRotationSchema = new Schema(
     guildId: { type: String, required: true },
     dateKey: { type: String, required: true },
     queue: { type: [Number], default: [] },
-    lastSentAt: { type: Date, default: null }
+    lastSentAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 chatReminderRotationSchema.index({ guildId: 1 }, { unique: true });
 
@@ -187,9 +190,9 @@ const avatarPrivacySchema = new Schema(
     guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     blocked: { type: Boolean, default: false },
-    views: { type: Number, default: 0 }
+    views: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 avatarPrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -198,9 +201,9 @@ const bannerPrivacySchema = new Schema(
     guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
     blocked: { type: Boolean, default: false },
-    views: { type: Number, default: 0 }
+    views: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 bannerPrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
@@ -208,29 +211,46 @@ const quotePrivacySchema = new Schema(
   {
     guildId: { type: String, required: true },
     userId: { type: String, required: true, index: true },
-    blocked: { type: Boolean, default: false }
+    blocked: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 quotePrivacySchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
-const ActivityUser = models.ActivityUser || model('ActivityUser', activityUserSchema);
-const ExpUser = models.ExpUser || model('ExpUser', expUserSchema);
-const ActivityDaily = models.ActivityDaily || model('ActivityDaily', activityDailySchema);
-const LevelHistory = models.LevelHistory || model('LevelHistory', levelHistorySchema);
-const GlobalSettings = models.GlobalSettings || model('GlobalSettings', globalSettingsSchema);
-const VoteRole = models.VoteRole || model('VoteRole', voteRoleSchema);
-const VerificationTenure = models.VerificationTenure || model('VerificationTenure', verificationTenureSchema);
-const SkullboardPost = models.SkullboardPost || model('SkullboardPost', skullboardPostSchema);
-const ReviewReward = models.ReviewReward || model('ReviewReward', reviewRewardSchema);
-const PersonalityPanel = models.PersonalityPanel || model('PersonalityPanel', personalityPanelSchema);
-const InviteTrack = models.InviteTrack || model('InviteTrack', inviteTrackSchema);
-const CustomRole = models.CustomRole || model('CustomRole', customRoleSchema);
-const ChatReminderSchedule = models.ChatReminderSchedule || model('ChatReminderSchedule', chatReminderScheduleSchema);
-const ChatReminderRotation = models.ChatReminderRotation || model('ChatReminderRotation', chatReminderRotationSchema);
-const AvatarPrivacy = models.AvatarPrivacy || model('AvatarPrivacy', avatarPrivacySchema);
-const BannerPrivacy = models.BannerPrivacy || model('BannerPrivacy', bannerPrivacySchema);
-const QuotePrivacy = models.QuotePrivacy || model('QuotePrivacy', quotePrivacySchema);
+const ActivityUser =
+  models.ActivityUser || model("ActivityUser", activityUserSchema);
+const ExpUser = models.ExpUser || model("ExpUser", expUserSchema);
+const ActivityDaily =
+  models.ActivityDaily || model("ActivityDaily", activityDailySchema);
+const LevelHistory =
+  models.LevelHistory || model("LevelHistory", levelHistorySchema);
+const GlobalSettings =
+  models.GlobalSettings || model("GlobalSettings", globalSettingsSchema);
+const VoteRole = models.VoteRole || model("VoteRole", voteRoleSchema);
+const VerificationTenure =
+  models.VerificationTenure ||
+  model("VerificationTenure", verificationTenureSchema);
+const SkullboardPost =
+  models.SkullboardPost || model("SkullboardPost", skullboardPostSchema);
+const ReviewReward =
+  models.ReviewReward || model("ReviewReward", reviewRewardSchema);
+const PersonalityPanel =
+  models.PersonalityPanel || model("PersonalityPanel", personalityPanelSchema);
+const InviteTrack =
+  models.InviteTrack || model("InviteTrack", inviteTrackSchema);
+const CustomRole = models.CustomRole || model("CustomRole", customRoleSchema);
+const ChatReminderSchedule =
+  models.ChatReminderSchedule ||
+  model("ChatReminderSchedule", chatReminderScheduleSchema);
+const ChatReminderRotation =
+  models.ChatReminderRotation ||
+  model("ChatReminderRotation", chatReminderRotationSchema);
+const AvatarPrivacy =
+  models.AvatarPrivacy || model("AvatarPrivacy", avatarPrivacySchema);
+const BannerPrivacy =
+  models.BannerPrivacy || model("BannerPrivacy", bannerPrivacySchema);
+const QuotePrivacy =
+  models.QuotePrivacy || model("QuotePrivacy", quotePrivacySchema);
 
 module.exports = {
   ActivityUser,
@@ -249,5 +269,5 @@ module.exports = {
   ChatReminderRotation,
   AvatarPrivacy,
   BannerPrivacy,
-  QuotePrivacy
+  QuotePrivacy,
 };

@@ -1,6 +1,6 @@
 module.exports = {
-  name: 'error',
+  name: "error",
   async execute(error) {
-    global.logger.error('[CLIENT ERROR]', error);
-  }
+    global.logger.error("[CLIENT ERROR]", error);
+  },
 };

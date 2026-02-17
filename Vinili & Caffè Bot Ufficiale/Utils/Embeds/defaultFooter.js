@@ -43,7 +43,10 @@ function applyDefaultFooter(embed, guild) {
   const iconURL = getBotIconUrl(guild) || getGuildIconUrl(guild);
   if (typeof embed.setFooter === "function") {
     if (!hasFooter(embed)) {
-      embed.setFooter({ text: DEFAULT_FOOTER_TEXT, iconURL: iconURL || undefined });
+      embed.setFooter({
+        text: DEFAULT_FOOTER_TEXT,
+        iconURL: iconURL || undefined,
+      });
     } else if (iconURL) {
       const current = embed.data?.footer || embed.footer || {};
       if (!current.icon_url && !current.iconURL) {
@@ -64,7 +67,7 @@ function applyDefaultFooter(embed, guild) {
   return {
     ...embed,
     footer,
-    color: embed.color || colorValue || embed.color
+    color: embed.color || colorValue || embed.color,
   };
 }
 function applyDefaultFooterToEmbeds(payload, guild) {
@@ -74,7 +77,7 @@ function applyDefaultFooterToEmbeds(payload, guild) {
   if (!Array.isArray(payload.embeds)) return payload;
   return {
     ...payload,
-    embeds: payload.embeds.map(embed => applyDefaultFooter(embed, guild))
+    embeds: payload.embeds.map((embed) => applyDefaultFooter(embed, guild)),
   };
 }
 

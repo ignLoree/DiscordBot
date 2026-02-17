@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const { ChannelType } = require('discord.js');
+const fs = require("fs");
+const path = require("path");
+const { ChannelType } = require("discord.js");
 
 const CATEGORY_TYPES = new Set([ChannelType.GuildCategory]);
 const NON_CATEGORY_TYPES = new Set([
@@ -8,18 +8,18 @@ const NON_CATEGORY_TYPES = new Set([
   ChannelType.GuildAnnouncement,
   ChannelType.GuildForum,
   ChannelType.GuildVoice,
-  ChannelType.GuildStageVoice
+  ChannelType.GuildStageVoice,
 ]);
 
 function sanitizeLineValue(value) {
-  return String(value || '')
-    .replace(/\r?\n/g, ' ')
-    .replace(/\s+/g, ' ')
+  return String(value || "")
+    .replace(/\r?\n/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 function toNameIdLine(name, id) {
-  return `${sanitizeLineValue(name)} -> ${String(id || '').trim()}`;
+  return `${sanitizeLineValue(name)} -> ${String(id || "").trim()}`;
 }
 
 function keepPreviousOrder(items, previousEntries, getName) {
@@ -31,15 +31,19 @@ function keepPreviousOrder(items, previousEntries, getName) {
   const ordered = [];
 
   for (const prev of previous) {
-    const prevId = String(prev?.id || '');
-    const prevName = String(prev?.name || '');
+    const prevId = String(prev?.id || "");
+    const prevName = String(prev?.name || "");
     if (!prevId && !prevName) continue;
     let idx = -1;
     if (prevId) {
-      idx = list.findIndex((item, i) => !used.has(i) && String(item?.id || '') === prevId);
+      idx = list.findIndex(
+        (item, i) => !used.has(i) && String(item?.id || "") === prevId,
+      );
     }
     if (idx === -1 && prevName) {
-      idx = list.findIndex((item, i) => !used.has(i) && String(getName(item)) === prevName);
+      idx = list.findIndex(
+        (item, i) => !used.has(i) && String(getName(item)) === prevName,
+      );
     }
     if (idx !== -1) {
       used.add(idx);
@@ -58,29 +62,43 @@ function sortChannels(a, b) {
   const catA = a.parent?.rawPosition ?? -1;
   const catB = b.parent?.rawPosition ?? -1;
   if (catA !== catB) return catA - catB;
-  if ((a.parentId || '') !== (b.parentId || '')) return String(a.parentId || '').localeCompare(String(b.parentId || ''));
-  if ((a.rawPosition ?? 0) !== (b.rawPosition ?? 0)) return (a.rawPosition ?? 0) - (b.rawPosition ?? 0);
+  if ((a.parentId || "") !== (b.parentId || ""))
+    return String(a.parentId || "").localeCompare(String(b.parentId || ""));
+  if ((a.rawPosition ?? 0) !== (b.rawPosition ?? 0))
+    return (a.rawPosition ?? 0) - (b.rawPosition ?? 0);
   return String(a.id).localeCompare(String(b.id));
 }
 
 function sortRoles(a, b) {
-  if ((a.position ?? 0) !== (b.position ?? 0)) return (b.position ?? 0) - (a.position ?? 0);
+  if ((a.position ?? 0) !== (b.position ?? 0))
+    return (b.position ?? 0) - (a.position ?? 0);
   return String(a.id).localeCompare(String(b.id));
 }
 
 function templateEscape(text) {
-  return String(text || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/`/g, '\\`')
-    .replace(/\$\{/g, '\\${');
+  return String(text || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$\{/g, "\\${");
 }
 
 function buildRawBlock(lines) {
-  const body = (Array.isArray(lines) ? lines : []).join('\n');
+  const body = (Array.isArray(lines) ? lines : []).join("\n");
   return `\`\n${templateEscape(body)}\n\``;
 }
 
-function renderCatalogFile({ categoriesLines, channelsLines, rolesLines, botsLines, emojisLines, guildId, voteLink, inviteLink, loadingAnimatedId, loadingFallbackId }) {
+function renderCatalogFile({
+  categoriesLines,
+  channelsLines,
+  rolesLines,
+  botsLines,
+  emojisLines,
+  guildId,
+  voteLink,
+  inviteLink,
+  loadingAnimatedId,
+  loadingFallbackId,
+}) {
   return `'use strict';
 
 function parseNameIdText(text) {
@@ -180,54 +198,59 @@ async function collectGuildCatalog(guild, ids) {
 
   const categories = keepPreviousOrder(
     guild.channels.cache
-    .filter((ch) => CATEGORY_TYPES.has(ch.type))
-    .sort((a, b) => (a.rawPosition ?? 0) - (b.rawPosition ?? 0))
-    .map((ch) => ({ name: ch.name, id: ch.id })),
+      .filter((ch) => CATEGORY_TYPES.has(ch.type))
+      .sort((a, b) => (a.rawPosition ?? 0) - (b.rawPosition ?? 0))
+      .map((ch) => ({ name: ch.name, id: ch.id })),
     previousEntries.categories,
-    (x) => x.name
+    (x) => x.name,
   );
   const categoriesLines = categories.map((x) => toNameIdLine(x.name, x.id));
 
   const channels = keepPreviousOrder(
     guild.channels.cache
-    .filter((ch) => NON_CATEGORY_TYPES.has(ch.type))
-    .sort(sortChannels)
-    .map((ch) => ({ name: ch.name, id: ch.id })),
+      .filter((ch) => NON_CATEGORY_TYPES.has(ch.type))
+      .sort(sortChannels)
+      .map((ch) => ({ name: ch.name, id: ch.id })),
     previousEntries.channels,
-    (x) => x.name
+    (x) => x.name,
   );
   const channelsLines = channels.map((x) => toNameIdLine(x.name, x.id));
 
   const roles = keepPreviousOrder(
     guild.roles.cache
-    .filter((role) => role.id !== guild.id)
-    .sort(sortRoles)
-    .map((role) => ({ name: role.name, id: role.id })),
+      .filter((role) => role.id !== guild.id)
+      .sort(sortRoles)
+      .map((role) => ({ name: role.name, id: role.id })),
     previousEntries.roles,
-    (x) => x.name
+    (x) => x.name,
   );
   const rolesLines = roles.map((x) => toNameIdLine(x.name, x.id));
 
   const bots = keepPreviousOrder(
     guild.members.cache
-    .filter((m) => m.user?.bot)
-    .sort((a, b) => {
-      const nameA = a.user?.globalName || a.user?.username || '';
-      const nameB = b.user?.globalName || b.user?.username || '';
-      return nameA.localeCompare(nameB, 'it');
-    })
-    .map((m) => ({ name: m.user?.globalName || m.user?.username || m.user?.tag || m.id, id: m.id })),
+      .filter((m) => m.user?.bot)
+      .sort((a, b) => {
+        const nameA = a.user?.globalName || a.user?.username || "";
+        const nameB = b.user?.globalName || b.user?.username || "";
+        return nameA.localeCompare(nameB, "it");
+      })
+      .map((m) => ({
+        name: m.user?.globalName || m.user?.username || m.user?.tag || m.id,
+        id: m.id,
+      })),
     previousEntries.bots,
-    (x) => x.name
+    (x) => x.name,
   );
   const botsLines = bots.map((x) => toNameIdLine(x.name, x.id));
 
   const emojis = keepPreviousOrder(
     guild.emojis.cache
-    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'it'))
-    .map((emoji) => ({ name: emoji.name, id: emoji.id })),
+      .sort((a, b) =>
+        String(a.name || "").localeCompare(String(b.name || ""), "it"),
+      )
+      .map((emoji) => ({ name: emoji.name, id: emoji.id })),
     previousEntries.emojis,
-    (x) => x.name
+    (x) => x.name,
   );
   const emojisLines = emojis.map((x) => toNameIdLine(x.name, x.id));
 
@@ -241,7 +264,7 @@ async function collectGuildCatalog(guild, ids) {
     voteLink: ids?.links?.vote || null,
     inviteLink: ids?.links?.invite || null,
     loadingAnimatedId: ids?.emojis?.loadingAnimatedId || null,
-    loadingFallbackId: ids?.emojis?.loadingFallbackId || null
+    loadingFallbackId: ids?.emojis?.loadingFallbackId || null,
   });
 
   return {
@@ -250,38 +273,43 @@ async function collectGuildCatalog(guild, ids) {
     rolesLines,
     botsLines,
     emojisLines,
-    catalogSource
+    catalogSource,
   };
 }
 
 function writeCatalogFiles(baseDir, payload) {
-  const catalogPath = path.join(baseDir, 'Utils', 'Config', 'idsCatalog.js');
-  fs.writeFileSync(catalogPath, payload.catalogSource, 'utf8');
+  const catalogPath = path.join(baseDir, "Utils", "Config", "idsCatalog.js");
+  fs.writeFileSync(catalogPath, payload.catalogSource, "utf8");
 
-  const reportPath = path.join(baseDir, 'Utils', 'Config', 'idsCatalog.snapshot.txt');
+  const reportPath = path.join(
+    baseDir,
+    "Utils",
+    "Config",
+    "idsCatalog.snapshot.txt",
+  );
   const report = [
-    '[CATEGORIES]',
+    "[CATEGORIES]",
     ...payload.categoriesLines,
-    '',
-    '[CHANNELS]',
+    "",
+    "[CHANNELS]",
     ...payload.channelsLines,
-    '',
-    '[ROLES]',
+    "",
+    "[ROLES]",
     ...payload.rolesLines,
-    '',
-    '[EMOJIS]',
+    "",
+    "[EMOJIS]",
     ...payload.emojisLines,
-    '',
-    '[BOTS]',
+    "",
+    "[BOTS]",
     ...payload.botsLines,
-    ''
-  ].join('\n');
-  fs.writeFileSync(reportPath, report, 'utf8');
+    "",
+  ].join("\n");
+  fs.writeFileSync(reportPath, report, "utf8");
 
   return { catalogPath, reportPath };
 }
 
 module.exports = {
   collectGuildCatalog,
-  writeCatalogFiles
+  writeCatalogFiles,
 };

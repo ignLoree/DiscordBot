@@ -3,20 +3,20 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ComponentType
-} = require('discord.js');
-const { safeMessageReply } = require('../../Utils/Moderation/reply');
-const { getNoDmSet, addNoDm, removeNoDm } = require('../../Utils/noDmList');
+  ComponentType,
+} = require("discord.js");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { getNoDmSet, addNoDm, removeNoDm } = require("../../Utils/noDmList");
 
 module.exports = {
-  name: 'no-dm',
-  aliases: ['nodm'],
+  name: "no-dm",
+  aliases: ["nodm"],
 
   async execute(message) {
     if (!message.guild) {
       await safeMessageReply(message, {
-        content: '<:vegax:1443934876440068179> Usa il comando in un server.',
-        allowedMentions: { repliedUser: false }
+        content: "<:vegax:1443934876440068179> Usa il comando in un server.",
+        allowedMentions: { repliedUser: false },
       });
       return;
     }
@@ -30,10 +30,12 @@ module.exports = {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
-            .setColor('#6f4e37')
-            .setDescription('Ok! Ora **riceverai** nuovamente i DM automatici del bot.')
+            .setColor("#6f4e37")
+            .setDescription(
+              "Ok! Ora **riceverai** nuovamente i DM automatici del bot.",
+            ),
         ],
-        allowedMentions: { repliedUser: false }
+        allowedMentions: { repliedUser: false },
       });
       return;
     }
@@ -45,85 +47,96 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(confirmId)
-        .setLabel('Conferma')
+        .setLabel("Conferma")
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId(cancelId)
-        .setLabel('Rifiuta')
-        .setStyle(ButtonStyle.Secondary)
+        .setLabel("Rifiuta")
+        .setStyle(ButtonStyle.Secondary),
     );
 
     const warningEmbed = new EmbedBuilder()
-      .setColor('#6f4e37')
-      .setTitle('Conferma blocco DM')
+      .setColor("#6f4e37")
+      .setTitle("Conferma blocco DM")
       .setDescription(
         [
-          'Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.',
-          'Questo include anche eventuali avvisi più importanti.',
-          '',
-          'Vuoi continuare?'
-        ].join('\n')
+          "Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.",
+          "Questo include anche eventuali avvisi più importanti.",
+          "",
+          "Vuoi continuare?",
+        ].join("\n"),
       )
-      .setFooter({ text: 'Potrai riattivarli in seguito rifacendo +no-dm.' });
+      .setFooter({ text: "Potrai riattivarli in seguito rifacendo +no-dm." });
 
     const promptMessage = await safeMessageReply(message, {
       embeds: [warningEmbed],
       components: [row],
-      allowedMentions: { repliedUser: false }
+      allowedMentions: { repliedUser: false },
     });
     if (!promptMessage) return;
 
     let decided = false;
     const collector = promptMessage.createMessageComponentCollector({
       componentType: ComponentType.Button,
-      time: 60_000
+      time: 60_000,
     });
 
-    collector.on('collect', async (interaction) => {
+    collector.on("collect", async (interaction) => {
       if (interaction.user.id !== userId) {
-        await interaction.reply({
-          content: '<:vegax:1443934876440068179> Non puoi usare questi pulsanti.',
-          flags: 1 << 6
-        }).catch(() => {});
+        await interaction
+          .reply({
+            content:
+              "<:vegax:1443934876440068179> Non puoi usare questi pulsanti.",
+            flags: 1 << 6,
+          })
+          .catch(() => {});
         return;
       }
 
       if (interaction.customId === confirmId) {
         decided = true;
         await addNoDm(guildId, userId);
-        await interaction.update({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('#6f4e37')
-              .setDescription('Ok! **Non riceverai più** DM automatici dal bot.')
-          ],
-          components: []
-        }).catch(() => {});
-        collector.stop('confirmed');
+        await interaction
+          .update({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setDescription(
+                  "Ok! **Non riceverai più** DM automatici dal bot.",
+                ),
+            ],
+            components: [],
+          })
+          .catch(() => {});
+        collector.stop("confirmed");
         return;
       }
 
       if (interaction.customId === cancelId) {
         decided = true;
-        await interaction.update({
-          embeds: [
-            new EmbedBuilder()
-              .setColor('#6f4e37')
-              .setDescription('Operazione annullata. Continuerai a ricevere DM automatici dal bot.')
-          ],
-          components: []
-        }).catch(() => {});
-        collector.stop('cancelled');
+        await interaction
+          .update({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setDescription(
+                  "Operazione annullata. Continuerai a ricevere DM automatici dal bot.",
+                ),
+            ],
+            components: [],
+          })
+          .catch(() => {});
+        collector.stop("cancelled");
       }
     });
 
-    collector.on('end', async () => {
+    collector.on("end", async () => {
       if (decided) return;
       const disabled = new ActionRowBuilder().addComponents(
         ButtonBuilder.from(row.components[0]).setDisabled(true),
-        ButtonBuilder.from(row.components[1]).setDisabled(true)
+        ButtonBuilder.from(row.components[1]).setDisabled(true),
       );
       await promptMessage.edit({ components: [disabled] }).catch(() => {});
     });
-  }
+  },
 };

@@ -31,7 +31,8 @@ async function fetchMemberSafe(guild, userId) {
 }
 
 async function fetchMembersSafe(guild, userIds) {
-  if (!guild || !Array.isArray(userIds) || userIds.length === 0) return new Map();
+  if (!guild || !Array.isArray(userIds) || userIds.length === 0)
+    return new Map();
   const result = new Map();
   const missing = [];
   for (const id of userIds) {
@@ -43,7 +44,9 @@ async function fetchMembersSafe(guild, userIds) {
     }
   }
   if (missing.length > 0) {
-    const fetched = await guild.members.fetch({ user: missing }).catch(() => null);
+    const fetched = await guild.members
+      .fetch({ user: missing })
+      .catch(() => null);
     if (fetched) {
       for (const [id, member] of fetched.entries()) {
         result.set(id, member);
@@ -74,8 +77,10 @@ async function resolveTarget(message, args, index = 0) {
 }
 
 function getReason(args, startIndex) {
-  const reason = Array.isArray(args) ? args.slice(startIndex).join(' ').trim() : '';
-  return reason || 'Nessun motivo fornito';
+  const reason = Array.isArray(args)
+    ? args.slice(startIndex).join(" ").trim()
+    : "";
+  return reason || "Nessun motivo fornito";
 }
 
 module.exports = {
@@ -83,5 +88,5 @@ module.exports = {
   fetchMembersSafe,
   extractUserId,
   resolveTarget,
-  getReason
+  getReason,
 };

@@ -1,4 +1,4 @@
-const catalog = require('./idsCatalog');
+const catalog = require("./idsCatalog");
 
 const maps = catalog.maps || {};
 const multi = catalog.multi || {};
@@ -6,34 +6,57 @@ const meta = catalog.meta || {};
 
 function toNameIdLines(entries) {
   return (Array.isArray(entries) ? entries : [])
-    .map((entry) => `${String(entry?.name || '').trim()} -> ${String(entry?.id || '').trim()}`)
-    .filter((line) => !line.startsWith(' -> '));
+    .map(
+      (entry) =>
+        `${String(entry?.name || "").trim()} -> ${String(entry?.id || "").trim()}`,
+    )
+    .filter((line) => !line.startsWith(" -> "));
 }
 
 const catalogList = {
   categories: toNameIdLines(catalog?.entries?.categories),
   channels: toNameIdLines(catalog?.entries?.channels),
   roles: toNameIdLines(catalog?.entries?.roles),
-  bots: toNameIdLines(catalog?.entries?.bots)
+  bots: toNameIdLines(catalog?.entries?.bots),
 };
 
 const fullCatalog = {
-  categories: Array.isArray(catalog?.entries?.categories) ? catalog.entries.categories.map((x) => ({ name: String(x?.name || ''), id: String(x?.id || '') })) : [],
-  channels: Array.isArray(catalog?.entries?.channels) ? catalog.entries.channels.map((x) => ({ name: String(x?.name || ''), id: String(x?.id || '') })) : [],
-  roles: Array.isArray(catalog?.entries?.roles) ? catalog.entries.roles.map((x) => ({ name: String(x?.name || ''), id: String(x?.id || '') })) : [],
-  bots: Array.isArray(catalog?.entries?.bots) ? catalog.entries.bots.map((x) => ({ name: String(x?.name || ''), id: String(x?.id || '') })) : []
+  categories: Array.isArray(catalog?.entries?.categories)
+    ? catalog.entries.categories.map((x) => ({
+        name: String(x?.name || ""),
+        id: String(x?.id || ""),
+      }))
+    : [],
+  channels: Array.isArray(catalog?.entries?.channels)
+    ? catalog.entries.channels.map((x) => ({
+        name: String(x?.name || ""),
+        id: String(x?.id || ""),
+      }))
+    : [],
+  roles: Array.isArray(catalog?.entries?.roles)
+    ? catalog.entries.roles.map((x) => ({
+        name: String(x?.name || ""),
+        id: String(x?.id || ""),
+      }))
+    : [],
+  bots: Array.isArray(catalog?.entries?.bots)
+    ? catalog.entries.bots.map((x) => ({
+        name: String(x?.name || ""),
+        id: String(x?.id || ""),
+      }))
+    : [],
 };
 
 const ids = {
   guilds: {
     main: meta.guildMain || null,
-    test: '1462458562507964584',
-    luna: '1471511676019933354',
-    cash: '1471511928739201047',
-    porn: '1471512183547498579',
-    69: '1471512555762483330',
-    weed: '1471512797140484230',
-    figa: '1471512808448458958'
+    test: "1462458562507964584",
+    luna: "1471511676019933354",
+    cash: "1471511928739201047",
+    porn: "1471512183547498579",
+    69: "1471512555762483330",
+    weed: "1471512797140484230",
+    figa: "1471512808448458958",
   },
 
   categories: {
@@ -52,7 +75,7 @@ const ids = {
     categorChat: "1442569090219773993",
     categorySystem: "1442569088705630410",
     categoryMidHigh: "1442569091301773312",
-    categoryLogs: "1442569092761391178"
+    categoryLogs: "1442569092761391178",
   },
 
   channels: {
@@ -149,8 +172,8 @@ const ids = {
     propositiForum: "1456349072473587936",
     wrapForum: "1445792081271587000",
 
-    commandLogChannel: "1466489404867481802", 
-    errorLogChannel: "1472733599496409292", 
+    commandLogChannel: "1466489404867481802",
+    errorLogChannel: "1472733599496409292",
   },
 
   roles: {
@@ -291,7 +314,7 @@ const ids = {
     Sud: "1442569024486506498",
     Estero: "1442569025790939167",
     Fidanzato: "1442569028173299732",
-    Single: "1442569029263818906"
+    Single: "1442569029263818906",
   },
 
   bots: {
@@ -308,17 +331,17 @@ const ids = {
     JockieMusic: "411916947773587456",
     Wick: "548410451818708993",
     DISBOARD: "302050872383242240",
-    ActivityRank: "534589798267224065"
+    ActivityRank: "534589798267224065",
   },
 
   emojis: {
     loadingAnimatedId: meta?.emojis?.loadingAnimatedId || null,
-    loadingFallbackId: meta?.emojis?.loadingFallbackId || null
+    loadingFallbackId: meta?.emojis?.loadingFallbackId || null,
   },
 
   links: {
     vote: meta?.links?.vote || null,
-    invite: meta?.links?.invite || null
+    invite: meta?.links?.invite || null,
   },
 
   named: maps,
@@ -335,25 +358,32 @@ const ids = {
     roles: { ...(maps?.roles || {}) },
     bots: { ...(maps?.bots || {}) },
     emojis: { ...(meta?.emojis || {}) },
-    links: { ...(meta?.links || {}) }
+    links: { ...(meta?.links || {}) },
   },
 
-  
-  allowedPrefixCommandsChannelId: '1442569138114662490'
+  allowedPrefixCommandsChannelId: "1442569138114662490",
 };
 
 ids.aliases = {
   categories: { ...ids.categories },
   channels: { ...ids.channels },
   roles: { ...ids.roles },
-  bots: { ...ids.bots }
+  bots: { ...ids.bots },
 };
 
 ids.aliasEntries = {
-  categories: Object.fromEntries(Object.entries(ids.categories).map(([k, id]) => [k, { name: "", id }])),
-  channels: Object.fromEntries(Object.entries(ids.channels).map(([k, id]) => [k, { name: "", id }])),
-  roles: Object.fromEntries(Object.entries(ids.roles).map(([k, id]) => [k, { name: "", id }])),
-  bots: Object.fromEntries(Object.entries(ids.bots).map(([k, id]) => [k, { name: "", id }]))
+  categories: Object.fromEntries(
+    Object.entries(ids.categories).map(([k, id]) => [k, { name: "", id }]),
+  ),
+  channels: Object.fromEntries(
+    Object.entries(ids.channels).map(([k, id]) => [k, { name: "", id }]),
+  ),
+  roles: Object.fromEntries(
+    Object.entries(ids.roles).map(([k, id]) => [k, { name: "", id }]),
+  ),
+  bots: Object.fromEntries(
+    Object.entries(ids.bots).map(([k, id]) => [k, { name: "", id }]),
+  ),
 };
 
 module.exports = ids;

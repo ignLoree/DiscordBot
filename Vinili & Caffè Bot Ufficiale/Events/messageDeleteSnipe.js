@@ -1,25 +1,35 @@
+async function resolveMessage(message) {
+  if (!message?.partial) return message;
+  try {
+    return await message.fetch();
+  } catch {
+    return message;
+  }
+}
+
+function buildSnipePayload(message, channelId) {
+  const firstAttachment = message.attachments?.first?.() || null;
+  return {
+    content: message.content || "Nessun contenuto.",
+    authorId: message.author?.id || null,
+    authorTag: message.author?.tag || "Sconosciuto",
+    channel: message.channel?.toString?.() || `<#${channelId}>`,
+    attachment: firstAttachment?.proxyURL || null,
+  };
+}
+
 module.exports = {
-  name: 'messageDelete',
+  name: "messageDelete",
   async execute(message, client) {
     if (!message) return;
-    let msg = message;
-    try {
-      if (message.partial) {
-        msg = await message.fetch();
-      }
-    } catch {
-      msg = message;
-    }
-    if (!msg.guild) return;
-    if (msg.author?.bot) return;
-    const channelId = msg.channel?.id || msg.channelId;
+
+    const resolved = await resolveMessage(message);
+    if (!resolved?.guild) return;
+    if (resolved.author?.bot) return;
+
+    const channelId = resolved.channel?.id || resolved.channelId;
     if (!channelId) return;
-    client.snipes.set(channelId, {
-      content: msg.content || 'Nessun contenuto.',
-      authorId: msg.author?.id || null,
-      authorTag: msg.author?.tag || 'Sconosciuto',
-      channel: msg.channel?.toString?.() || `<#${channelId}>`,
-      attachment: msg.attachments?.first?.() ? msg.attachments.first().proxyURL : null
-    });
-  }
+
+    client.snipes.set(channelId, buildSnipePayload(resolved, channelId));
+  },
 };

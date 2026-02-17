@@ -1,36 +1,36 @@
-﻿const logs = require('../Utils/Moderation/logs');
+﻿const logs = require("../Utils/Moderation/logs");
 
 function error(message) {
-    logs.error(`[ERROR] ${message}`);
+  logs.error(`[ERROR] ${message}`);
 }
 
 function warn(message) {
-    logs.warn(`[WARN] ${message}`);
+  logs.warn(`[WARN] ${message}`);
 }
 
 module.exports = () => {
-    if (process.__viniliProcessHandlersInstalled) return;
-    process.__viniliProcessHandlersInstalled = true;
+  if (process.__viniliProcessHandlersInstalled) return;
+  process.__viniliProcessHandlersInstalled = true;
 
-    process.on('SIGINT', () => {
-        error('SIGINT: Exiting...');
-        process.exit();
-    });
+  process.on("SIGINT", () => {
+    error("SIGINT: Exiting...");
+    process.exit();
+  });
 
-    process.on('uncaughtException', (err) => {
-        error(`UNCAUGHT EXCEPTION: ${err?.stack || err}`);
-    });
+  process.on("uncaughtException", (err) => {
+    error(`UNCAUGHT EXCEPTION: ${err?.stack || err}`);
+  });
 
-    process.on('SIGTERM', () => {
-        error('SIGTERM: Closing database and exiting...');
-        process.exit();
-    });
+  process.on("SIGTERM", () => {
+    error("SIGTERM: Closing database and exiting...");
+    process.exit();
+  });
 
-    process.on('unhandledRejection', (err) => {
-        error(`UNHANDLED REJECTION: ${err?.stack || err}`);
-    });
+  process.on("unhandledRejection", (err) => {
+    error(`UNHANDLED REJECTION: ${err?.stack || err}`);
+  });
 
-    process.on('warning', () => {});
+  process.on("warning", () => {});
 
-    logs.success('[PROCESS] Process handlers loaded.');
+  logs.success("[PROCESS] Process handlers loaded.");
 };
