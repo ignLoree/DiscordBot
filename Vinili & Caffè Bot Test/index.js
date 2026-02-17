@@ -151,19 +151,10 @@ for (const file of handlerFiles) {
   require(path.join(APP_ROOT, "Handlers", file))(client);
 }
 
-const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 const prefixFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
 const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
 
 (async () => {
-  if (typeof client.handleCommands === "function") {
-    await client
-      .handleCommands(commandFolders, path.join(APP_ROOT, "Commands"))
-      .catch((err) => {
-        global.logger.error("[Bot Test] handleCommands:", err);
-      });
-  }
-
   if (typeof client.prefixCommands === "function") {
     await client
       .prefixCommands(prefixFolders, path.join(APP_ROOT, "Prefix"))

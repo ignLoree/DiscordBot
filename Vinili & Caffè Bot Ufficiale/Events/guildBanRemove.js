@@ -1,7 +1,4 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
-const {
-  scheduleMemberCounterRefresh,
-} = require("../Utils/Community/memberCounterUtils");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const {
   resolveModLogChannel,
@@ -12,13 +9,11 @@ const {
 
 
 module.exports = {
-  name: "guildBanAdd",
+  name: "guildBanRemove",
   async execute(ban) {
     try {
       const guild = ban?.guild;
       if (!guild) return;
-
-      scheduleMemberCounterRefresh(guild, { delayMs: 450, secondPassMs: 2600 });
 
       const logChannel = await resolveModLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
@@ -27,7 +22,7 @@ module.exports = {
       let reason = ban?.reason || null;
       const auditEntry = await fetchRecentAuditEntry(
         guild,
-        AuditLogEvent.MemberBanAdd,
+        AuditLogEvent.MemberBanRemove,
         (item) => String(item?.target?.id || "") === String(ban.user?.id || ""),
       );
       if (auditEntry?.executor) executor = auditEntry.executor;
@@ -36,8 +31,8 @@ module.exports = {
       const responsible = formatResponsible(executor);
 
       const embed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Member Ban Add")
+        .setColor("#ED4245")
+        .setTitle("Member Ban Remove")
         .setDescription(
           [
             `${ARROW} **Responsible:** ${responsible}`,

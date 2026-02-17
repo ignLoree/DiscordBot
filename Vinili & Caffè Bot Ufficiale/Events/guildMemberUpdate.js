@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   PermissionsBitField,
   AuditLogEvent,
@@ -7,6 +7,11 @@ const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
 } = require("../Utils/Community/staffListUtils");
+const {
+  ARROW,
+  resolveChannelRolesLogChannel,
+  resolveResponsible,
+} = require("../Utils/Logging/channelRolesLogUtils");
 
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const BOOST_FOLLOWUP_DELAY_MS = 5000;
@@ -33,17 +38,10 @@ const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
 
-function formatRomeDate(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
+function toDiscordTimestamp(value = new Date(), style = "F") {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return "<t:0:F>";
+  return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
 function toRelativeDiscordTime(value) {
@@ -75,7 +73,7 @@ function didTimeoutChange(oldMember, newMember) {
 function buildNickChangeLine(oldMember, newMember) {
   const oldNick = String(oldMember?.nickname || "").trim() || "❌";
   const newNick = String(newMember?.nickname || "").trim() || "❌";
-  return `${oldNick} 〉 ${newNick}`;
+  return `${oldNick} <:VC_right_arrow:1473441155055096081> ${newNick}`;
 }
 
 function buildTimeoutChangeLine(oldMember, newMember) {
@@ -83,7 +81,7 @@ function buildTimeoutChangeLine(oldMember, newMember) {
   const newTs = newMember?.communicationDisabledUntilTimestamp || 0;
   const oldLabel = oldTs ? toRelativeDiscordTime(oldTs) : "❌";
   const newLabel = newTs ? toRelativeDiscordTime(newTs) : "❌ (Reset)";
-  return `${oldLabel} 〉 ${newLabel}`;
+  return `${oldLabel} <:VC_right_arrow:1473441155055096081> ${newLabel}`;
 }
 
 async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
@@ -133,30 +131,94 @@ async function sendMemberUpdateLog(oldMember, newMember) {
     : "sconosciuto";
 
   const lines = [
-    `▸ **Responsible:** ${responsibleText}`,
-    `▸ **Target:** ${newMember.user} \`${newMember.user.id}\``,
-    `▸ ${formatRomeDate(new Date())}`,
+    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081> **Target:** ${newMember.user} \`${newMember.user.id}\``,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
 
   if (audit.reason) {
-    lines.push(`▸ **Reason:** ${audit.reason}`);
+    lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
   }
 
   lines.push("", "**Changes**");
 
   if (timeoutChanged) {
-    lines.push("▸ **Communication Disabled Until**");
+    lines.push("<:VC_right_arrow:1473441155055096081> **Communication Disabled Until**");
     lines.push(`  ${buildTimeoutChangeLine(oldMember, newMember)}`);
   }
 
   if (nickChanged) {
-    lines.push("▸ **Nick**");
+    lines.push("<:VC_right_arrow:1473441155055096081> **Nick**");
     lines.push(`  ${buildNickChangeLine(oldMember, newMember)}`);
   }
 
   const embed = new EmbedBuilder()
     .setColor("#F59E0B")
     .setTitle("Member Update")
+    .setDescription(lines.join("\n"));
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
+
+async function sendMemberRoleUpdateLog(oldMember, newMember) {
+  const guild = newMember?.guild || oldMember?.guild;
+  if (!guild) return;
+  if (!rolesChanged(oldMember, newMember)) return;
+
+  const oldRoles = oldMember?.roles?.cache || new Map();
+  const newRoles = newMember?.roles?.cache || new Map();
+
+  const additions = [];
+  const removals = [];
+
+  for (const role of newRoles.values()) {
+    if (role?.id === guild.id) continue;
+    if (!oldRoles.has(role.id)) additions.push(role);
+  }
+  for (const role of oldRoles.values()) {
+    if (role?.id === guild.id) continue;
+    if (!newRoles.has(role.id)) removals.push(role);
+  }
+  if (!additions.length && !removals.length) return;
+
+  const logChannel = await resolveChannelRolesLogChannel(guild);
+  if (!logChannel?.isTextBased?.()) return;
+
+  const actionType = AuditLogEvent?.MemberRoleUpdate ?? AuditLogEvent?.MemberUpdate;
+  const audit = await resolveResponsible(
+    guild,
+    actionType,
+    (entry) => String(entry?.target?.id || "") === String(newMember?.id || ""),
+  );
+  const responsible = audit.executor
+    ? `${audit.executor} \`${audit.executor.id}\``
+    : "sconosciuto";
+
+  const lines = [
+    `${ARROW} **Responsible:** ${responsible}`,
+    `${ARROW} **Target:** ${newMember.user} \`${newMember.user.id}\``,
+    `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+    "",
+    "**Changes**",
+  ];
+
+  if (additions.length) {
+    lines.push("✅ **Additions:**");
+    for (const role of additions.slice(0, 15)) {
+      lines.push(`  ${ARROW} ${role}`);
+    }
+  }
+
+  if (removals.length) {
+    lines.push("❌ **Removals:**");
+    for (const role of removals.slice(0, 15)) {
+      lines.push(`  ${ARROW} ${role}`);
+    }
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Role Update")
     .setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
@@ -224,7 +286,7 @@ async function sendBoostEmbeds(channel, member, times, boostCount) {
   const safeTimes = Math.max(0, Number(times || 0));
   for (let i = 0; i < safeTimes; i += 1) {
     await channel.send({
-      content: `<a:VC_Boost:1448670271115497617> \`┊\`  ${member.user} \`┊\` <@&1442568910070349985>`,
+      content: `<a:VC_Boost:1448670271115497617> \`â”Š\`  ${member.user} \`â”Š\` <@&1442568910070349985>`,
       embeds: [buildBoostEmbed(member, boostCount)],
     });
   }
@@ -350,6 +412,7 @@ module.exports = {
   async execute(oldMember, newMember, client) {
     try {
       await sendMemberUpdateLog(oldMember, newMember);
+      await sendMemberRoleUpdateLog(oldMember, newMember);
 
       if (
         newMember?.guild?.id === IDs.guilds.main &&
@@ -365,3 +428,6 @@ module.exports = {
     }
   },
 };
+
+
+

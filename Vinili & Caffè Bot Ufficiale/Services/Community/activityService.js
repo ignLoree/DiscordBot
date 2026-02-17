@@ -343,17 +343,16 @@ async function recordVoiceSessionEnd(doc, now, guild, skipExp = false) {
     0,
     Number(doc.voice.expAwardedSeconds || 0),
   );
-  const totalMinutes = Math.floor(elapsedSeconds / 60);
-  const alreadyAwardedMinutes = Math.floor(alreadyAwardedSeconds / 60);
-  const remainingMinutes = Math.max(0, totalMinutes - alreadyAwardedMinutes);
+  const totalAwardableExp = Math.floor(
+    (elapsedSeconds * VOICE_EXP_PER_MINUTE) / 60,
+  );
+  const alreadyAwardedExp = Math.floor(
+    (alreadyAwardedSeconds * VOICE_EXP_PER_MINUTE) / 60,
+  );
+  const remainingExp = Math.max(0, totalAwardableExp - alreadyAwardedExp);
   doc.voice.expAwardedSeconds = 0;
-  if (!skipExp && remainingMinutes > 0) {
-    await addExpWithLevel(
-      guild,
-      doc.userId,
-      remainingMinutes * VOICE_EXP_PER_MINUTE,
-      true,
-    );
+  if (!skipExp && remainingExp > 0) {
+    await addExpWithLevel(guild, doc.userId, remainingExp, true);
   }
   return elapsedSeconds;
 }
@@ -1409,12 +1408,14 @@ async function runLiveVoiceExpTick(client) {
       0,
       Number(row?.voice?.expAwardedSeconds || 0),
     );
-    const grantableMinutes = Math.floor(
-      Math.max(0, elapsedSeconds - alreadyAwardedSeconds) / 60,
+    const totalAwardableExp = Math.floor(
+      (elapsedSeconds * VOICE_EXP_PER_MINUTE) / 60,
     );
-    if (grantableMinutes <= 0) continue;
-
-    const grantableSeconds = grantableMinutes * 60;
+    const alreadyAwardedExp = Math.floor(
+      (alreadyAwardedSeconds * VOICE_EXP_PER_MINUTE) / 60,
+    );
+    const grantableExp = Math.max(0, totalAwardableExp - alreadyAwardedExp);
+    if (grantableExp <= 0) continue;
     const ignored = await shouldIgnoreExpForMember({
       guildId,
       member,
@@ -1422,12 +1423,7 @@ async function runLiveVoiceExpTick(client) {
     });
 
     if (!ignored) {
-      await addExpWithLevel(
-        guild,
-        userId,
-        grantableMinutes * VOICE_EXP_PER_MINUTE,
-        true,
-      ).catch(() => {});
+      await addExpWithLevel(guild, userId, grantableExp, true).catch(() => {});
     }
 
     await ActivityUser.updateOne(
@@ -1436,14 +1432,12 @@ async function runLiveVoiceExpTick(client) {
         userId,
         "voice.sessionStartedAt": row?.voice?.sessionStartedAt || null,
       },
-      {
-        $inc: { "voice.expAwardedSeconds": grantableSeconds },
-      },
+      { $set: { "voice.expAwardedSeconds": elapsedSeconds } },
     ).catch(() => {});
   }
 }
 
-function startLiveVoiceExpLoop(client, intervalMs = 15000) {
+function startLiveVoiceExpLoop(client, intervalMs = 5000) {
   const safeInterval = Math.max(5000, Number(intervalMs || 15000));
   if (client?._liveVoiceExpInterval) return client._liveVoiceExpInterval;
   const runner = () =>

@@ -1,5 +1,4 @@
 const cron = require("node-cron");
-const axios = require("axios");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
 
@@ -118,35 +117,6 @@ function findLatestPreviousInviteOccurrence(
   return best;
 }
 
-async function fetchInviteInfo(inviteCode, botToken = null) {
-  if (!inviteCode) return null;
-  const headers = { Accept: "application/json" };
-  if (botToken) {
-    headers.Authorization = `Bot ${botToken}`;
-  }
-  try {
-    const res = await axios.get(
-      `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`,
-      {
-        timeout: 15000,
-        headers,
-      },
-    );
-    return {
-      ok: true,
-      data: res?.data || null,
-      expired: false,
-      transient: false,
-    };
-  } catch (err) {
-    const status = Number(err?.response?.status || 0);
-    if (status === 404 || status === 400) {
-      return { ok: false, data: null, expired: true, transient: false };
-    }
-    return { ok: false, data: null, expired: false, transient: true };
-  }
-}
-
 async function fetchPartnerActionText(guild, action) {
   const channelId = action?.partnershipChannelId || IDs.channels.partnerships;
   if (!channelId) {
@@ -244,13 +214,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
     (await client.guilds.fetch(guildId).catch(() => null));
   if (!guild) return;
 
-  const botToken =
-    client.token ||
-    client.config?.token ||
-    process.env.DISCORD_TOKEN ||
-    process.env.DISCORD_TOKEN_OFFICIAL ||
-    null;
-
   const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
   const docs = await Staff.find({
     guildId: guild.id,
@@ -295,7 +258,8 @@ async function runDailyPartnerAudit(client, opts = {}) {
       .sort((a, b) => a.dateMs - b.dateMs);
 
     const actionTextCache = new Map();
-    const inviteInfoCache = new Map();
+    // Invite API validation removed on purpose:
+    // it generated false positives at midnight and caused unjust penalties.
     const getActionTextCached = async (row) => {
       if (!row?.action) return "";
       if (actionTextCache.has(row.index)) return actionTextCache.get(row.index);
@@ -397,26 +361,8 @@ async function runDailyPartnerAudit(client, opts = {}) {
           }
         }
 
-        let hasValidInvite = false;
-        let inviteExpired = false;
-        let inviteNsfw = false;
-        for (const inviteCode of inviteCodes) {
-          let inviteData = inviteInfoCache.get(inviteCode);
-          if (!inviteData) {
-            inviteData = await fetchInviteInfo(inviteCode, botToken);
-            inviteInfoCache.set(inviteCode, inviteData);
-          }
-          if (inviteData?.expired) {
-            inviteExpired = true;
-          } else if (inviteData?.ok && inviteData?.data) {
-            hasValidInvite = true;
-            const nsfwLevel = Number(inviteData.data?.guild?.nsfw_level || 0);
-            if (nsfwLevel > 0) inviteNsfw = true;
-          }
-        }
-        if (inviteExpired && !hasValidInvite)
-          reasons.push("Link invito Discord scaduto/non valido");
-        if (inviteNsfw) reasons.push("Server NSFW non consentito");
+        // Deliberately skip remote invite validity checks.
+        // We keep deterministic checks only (presence, duplicate/day, duplicate/12h, external links, manager rules).
       }
 
       if (reasons.length) {

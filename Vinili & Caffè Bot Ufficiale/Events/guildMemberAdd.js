@@ -1,10 +1,11 @@
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, AuditLogEvent } = require("discord.js");
 const { InviteTrack } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
+const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -13,6 +14,7 @@ const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || "1468938195348754515";
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const MIN_ACCOUNT_AGE_DAYS = 3;
+const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
@@ -279,8 +281,61 @@ function buildDmWelcomeEmbed(member) {
     .setTimestamp();
 }
 
+async function sendBotAddLog(member) {
+  const guild = member?.guild;
+  if (!guild || !member?.user?.bot) return;
+
+  const logChannel =
+    guild.channels.cache.get(IDs.channels.modLogs) ||
+    (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  if (!logChannel?.isTextBased?.()) return;
+
+  let executor = guild.client.user || null;
+  let auditEntry = null;
+  if (
+    guild.members.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
+  ) {
+    const logs = await guild
+      .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: 8 })
+      .catch(() => null);
+    const now = Date.now();
+    const entry = logs?.entries?.find((item) => {
+      const created = Number(item?.createdTimestamp || 0);
+      return (
+        created > 0 &&
+        now - created <= 30 * 1000 &&
+        String(item?.target?.id || "") === String(member.user.id || "")
+      );
+    });
+    if (entry?.executor) executor = entry.executor;
+    if (entry) auditEntry = entry;
+  }
+
+  const responsible = executor ? `${executor} \`${executor.id}\`` : "sconosciuto";
+  const createdTs = Math.floor(new Date(member.user.createdAt).getTime() / 1000);
+  const nowTs = Math.floor(Date.now() / 1000);
+
+  const embed = new EmbedBuilder()
+    .setColor("#57F287")
+    .setTitle("Bot Add")
+    .setDescription(
+      [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Target:** ${member.user} \`${member.user.id}\``,
+        `${ARROW} <t:${nowTs}:F>`,
+        "",
+        "**Additional Information**",
+        `${ARROW} **Id:** \`${member.user.id}\``,
+        `${ARROW} **Username:** ${member.user.username}`,
+        `${ARROW} **Creation:** <t:${createdTs}:R>`,
+      ].join("\n"),
+    );
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
 async function handleBotJoin(member) {
   queueIdsCatalogSync(member.client, member.guild.id, "botJoin");
+  await sendBotAddLog(member).catch(() => {});
   try {
     await addBotRoles(member);
   } catch (error) {
@@ -331,6 +386,33 @@ function isTooYoungAccount(member) {
   return accountAgeMs < minAgeMs;
 }
 
+function hasNoAvatar(member) {
+  if (!member?.user) return false;
+  return !member.user.avatar;
+}
+
+async function sendJoinGateNoAvatarLog(member) {
+  if (!member?.guild || !member?.user || member.user.bot) return;
+  if (!hasNoAvatar(member)) return;
+
+  const logChannel =
+    member.guild.channels.cache.get(IDs.channels.modLogs) ||
+    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  if (!logChannel?.isTextBased?.()) return;
+
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle(`${member.user.username} has triggered the joingate!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** Account has no avatar.`,
+      ].join("\n"),
+    )
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
 async function handleTooYoungAccount(member) {
   const logChannel = member.guild.channels.cache.get(IDs.channels.modLogs);
   const createdTs = toUnix(member.user.createdAt);
@@ -408,6 +490,7 @@ async function sendJoinLog(member) {
 
   const accountAge = formatAccountAge(member.user.createdAt);
   const now = new Date();
+  const nowTs = toUnix(now);
   const joinLogEmbed = new EmbedBuilder()
     .setColor("#57F287")
     .setTitle("Member Joined")
@@ -418,7 +501,7 @@ async function sendJoinLog(member) {
         "**Account Age**",
         accountAge,
         "",
-        `ID: ${member.user.id} â€¢ Oggi alle ${formatTodayAt(now)}`,
+        `ID: ${member.user.id} • <t:${nowTs}:F>`,
       ].join("\n"),
     )
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
@@ -486,6 +569,8 @@ module.exports = {
         return;
       }
 
+      await sendJoinGateNoAvatarLog(member).catch(() => {});
+
       if (isTooYoungAccount(member)) {
         await handleTooYoungAccount(member);
         return;
@@ -526,3 +611,4 @@ module.exports = {
     }
   },
 };
+

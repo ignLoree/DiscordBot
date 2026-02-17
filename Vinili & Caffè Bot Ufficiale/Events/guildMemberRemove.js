@@ -3,6 +3,8 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  AuditLogEvent,
+  PermissionsBitField,
 } = require("discord.js");
 const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
@@ -26,6 +28,7 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
+const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
   IDs.roles.PartnerManager,
@@ -41,6 +44,7 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 ]);
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
+const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
@@ -71,6 +75,7 @@ async function sendLeaveLog(member) {
   if (!channel) return;
 
   const now = new Date();
+  const nowTs = toUnix(now);
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Left")
@@ -78,7 +83,7 @@ async function sendLeaveLog(member) {
       [
         `${member.user} ${member.user.tag}.`,
         "",
-        `ID: ${member.user.id} â€¢ Oggi alle ${formatTodayAt(now)}`,
+        `ID: ${member.user.id} • <t:${nowTs}:F>`,
       ].join("\n"),
     )
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
@@ -373,6 +378,61 @@ async function handlePartnershipOnLeave(member, client) {
   }
 }
 
+async function sendMemberKickLog(member) {
+  const guild = member?.guild;
+  if (!guild) return;
+
+  if (
+    !guild.members.me?.permissions?.has?.(
+      PermissionsBitField.Flags.ViewAuditLog,
+    )
+  ) {
+    return;
+  }
+
+  const logs = await guild
+    .fetchAuditLogs({ type: AuditLogEvent.MemberKick, limit: 8 })
+    .catch(() => null);
+  if (!logs?.entries?.size) return;
+
+  const now = Date.now();
+  const entry = logs.entries.find((item) => {
+    const created = Number(item?.createdTimestamp || 0);
+    return (
+      created > 0 &&
+      now - created <= 30 * 1000 &&
+      String(item?.target?.id || "") === String(member.user?.id || "")
+    );
+  });
+  if (!entry) return;
+
+  const logChannel =
+    guild.channels.cache.get(IDs.channels.modLogs) ||
+    (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  if (!logChannel?.isTextBased?.()) return;
+
+  const responsible = entry.executor
+    ? `${entry.executor} \`${entry.executor.id}\``
+    : "sconosciuto";
+  const nowTs = Math.floor(Date.now() / 1000);
+
+  const embed = new EmbedBuilder()
+    .setColor("#ED4245")
+    .setTitle("Member Kick")
+    .setDescription(
+      [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Target:** ${member.user} \`${member.user.id}\``,
+        `${ARROW} <t:${nowTs}:F>`,
+        entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
+        ...buildAuditExtraLines(entry, ["reason"]),
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
 async function cleanupUserData(guildId, userId) {
   await Promise.allSettled([
     ExpUser.deleteOne({ guildId, userId }),
@@ -394,6 +454,7 @@ module.exports = {
       }
 
       await sendLeaveLog(member);
+      await sendMemberKickLog(member).catch(() => {});
       await markInviteInactive(member);
 
       const guild = member.guild;
@@ -408,3 +469,4 @@ module.exports = {
     }
   },
 };
+

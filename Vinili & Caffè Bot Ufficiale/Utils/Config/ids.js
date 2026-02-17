@@ -98,6 +98,7 @@ const ids = {
     staffChat: "1442569260059725844",
     chat: "1442569130573303898",
     logCanaliRuoli: "1442569302422192209",
+    channelRolesLogs: "1442569302422192209",
     vocprivata1: "1442569150575935781",
     vocaleLounge2: "1442569106514645042",
     partnersChat: "1442569209849843823",

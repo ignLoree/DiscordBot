@@ -10,17 +10,10 @@ const {
 const VoiceDisconnectCounter = require("../Schemas/Voice/voiceDisconnectCounterSchema");
 const IDs = require("../Utils/Config/ids");
 
-function formatRomeDate(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
+function toDiscordTimestamp(value = new Date(), style = "F") {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return "<t:0:F>";
+  return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
 async function incrementDisconnectCounter(guildId, userId) {
@@ -72,6 +65,36 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
   };
 }
 
+async function resolveMemberMoveAuditInfo(guild, targetUserId) {
+  if (
+    !guild?.members?.me?.permissions?.has?.(
+      PermissionsBitField.Flags.ViewAuditLog,
+    )
+  ) {
+    return { executor: guild?.client?.user || null, count: 1 };
+  }
+
+  const logs = await guild
+    .fetchAuditLogs({ type: AuditLogEvent.MemberMove, limit: 8 })
+    .catch(() => null);
+  if (!logs?.entries?.size) {
+    return { executor: guild?.client?.user || null, count: 1 };
+  }
+
+  const nowMs = Date.now();
+  const entry = logs.entries.find((item) => {
+    const createdMs = Number(item?.createdTimestamp || 0);
+    const targetId = String(item?.target?.id || "");
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    return withinWindow && targetId === String(targetUserId || "");
+  });
+
+  return {
+    executor: entry?.executor || guild?.client?.user || null,
+    count: Math.max(1, Number(entry?.extra?.count || 1)),
+  };
+}
+
 async function sendMemberDisconnectLog(oldState, newState, client) {
   const member = newState?.member || oldState?.member;
   const user = member?.user;
@@ -85,18 +108,52 @@ async function sendMemberDisconnectLog(oldState, newState, client) {
   if (!logChannel?.isTextBased?.()) return;
 
   const count = await incrementDisconnectCounter(guild.id, user.id);
-  const nowText = formatRomeDate(new Date());
-
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Disconnect")
     .setDescription(
       [
-        `▸ **Responsible:** ${user} \`${user.id}\``,
-        `▸ ${nowText}`,
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${user} \`${user.id}\``,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `〉 **Count:** ${count}`,
+        `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
+      ].join("\n"),
+    );
+
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
+
+async function sendMemberMoveLog(oldState, newState) {
+  const member = newState?.member || oldState?.member;
+  const user = member?.user;
+  const guild = newState?.guild || oldState?.guild;
+  if (!member || !user || !guild) return;
+
+  const oldChannelId = String(oldState?.channelId || "");
+  const newChannelId = String(newState?.channelId || "");
+  if (!oldChannelId || !newChannelId || oldChannelId === newChannelId) return;
+
+  const logChannel = await resolveActivityLogChannel(guild);
+  if (!logChannel?.isTextBased?.()) return;
+
+  const audit = await resolveMemberMoveAuditInfo(guild, user.id);
+  const responsibleText = audit.executor
+    ? `${audit.executor} \`${audit.executor.id}\``
+    : "sconosciuto";
+  const destination = newState?.channel || `<#${newChannelId}>`;
+
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle("Member Move")
+    .setDescription(
+      [
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        "",
+        "**Additional Information**",
+        `<:VC_right_arrow:1473441155055096081> **Channel:** ${destination} \`${newChannelId}\``,
+        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
       ].join("\n"),
     );
 
@@ -126,22 +183,22 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     : "sconosciuto";
 
   const lines = [
-    `▸ **Responsible:** ${responsibleText}`,
-    `▸ **Target:** ${user} \`${user.id}\``,
-    `▸ ${formatRomeDate(new Date())}`,
+    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081> **Target:** ${user} \`${user.id}\``,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
   ];
   if (audit.reason) {
-    lines.push(`▸ **Reason:** ${audit.reason}`);
+    lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
   }
   lines.push("", "**Changes**");
 
   if (muteChanged) {
-    lines.push("▸ **Mute**");
-    lines.push(`  ${yesNo(Boolean(oldState?.serverMute))} 〉 ${yesNo(Boolean(newState?.serverMute))}`);
+    lines.push("<:VC_right_arrow:1473441155055096081> **Mute**");
+    lines.push(`  ${yesNo(Boolean(oldState?.serverMute))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverMute))}`);
   }
   if (deafChanged) {
-    lines.push("▸ **Deaf**");
-    lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} 〉 ${yesNo(Boolean(newState?.serverDeaf))}`);
+    lines.push("<:VC_right_arrow:1473441155055096081> **Deaf**");
+    lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverDeaf))}`);
   }
 
   const embed = new EmbedBuilder()
@@ -155,6 +212,7 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
 module.exports = {
   name: "voiceStateUpdate",
   async execute(oldState, newState, client) {
+    await sendMemberMoveLog(oldState, newState).catch(() => {});
     await sendMemberVoiceFlagsUpdateLog(oldState, newState).catch(() => {});
     await sendMemberDisconnectLog(oldState, newState, client).catch(() => {});
 
@@ -192,3 +250,5 @@ module.exports = {
     }
   },
 };
+
+

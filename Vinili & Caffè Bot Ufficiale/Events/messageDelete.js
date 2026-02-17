@@ -1,7 +1,13 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const MAX_DIFF_LENGTH = 1800;
+
+function toDiscordTimestamp(value = new Date(), style = "F") {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return "<t:0:F>";
+  return `<t:${Math.floor(ms / 1000)}:${style}>`;
+}
 
 async function resolveMessage(message) {
   if (!message?.partial) return message;
@@ -21,19 +27,6 @@ function buildSnipePayload(message, channelId) {
     channel: message.channel?.toString?.() || `<#${channelId}>`,
     attachment: firstAttachment?.proxyURL || null,
   };
-}
-
-function formatDeleteDate(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
 }
 
 function normalizeText(value) {
@@ -93,15 +86,15 @@ async function sendDeleteLog(message) {
   if (!hasContent && !hasAttachments) return;
 
   const lines = [
-    `▸ ${formatDeleteDate(new Date())}`,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
     "",
     "**Previous Settings**",
-    `▸ **Channel:** ${message.channel || "#sconosciuto"}`,
-    `▸ **Id:** ${message.id || "sconosciuto"}`,
+    `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel || "#sconosciuto"}`,
+    `<:VC_right_arrow:1473441155055096081> **Id:** \`${message.id || "sconosciuto"}\``,
   ];
 
   if (hasContent) {
-    lines.push("▸ **Content:**");
+    lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
     lines.push("```diff");
     lines.push(buildDeletedDiff(content));
     lines.push("```");
@@ -109,12 +102,14 @@ async function sendDeleteLog(message) {
 
   if (hasAttachments) {
     lines.push(
-      `▸ **Attachments:** [ ${attachmentNames.join(", ")} ]`,
+      `<:VC_right_arrow:1473441155055096081> **Attachments:** [ ${attachmentNames.join(", ")} ]`,
     );
   }
 
   if (message?.author) {
-    lines.push(`▸ **Author:** ${message.author} \`${message.author.id}\``);
+    lines.push(
+      `<:VC_right_arrow:1473441155055096081> **Author:** ${message.author} \`${message.author.id}\``,
+    );
   }
 
   const embed = new EmbedBuilder()
@@ -147,3 +142,6 @@ module.exports = {
     client.snipes.set(channelId, buildSnipePayload(resolved, channelId));
   },
 };
+
+
+

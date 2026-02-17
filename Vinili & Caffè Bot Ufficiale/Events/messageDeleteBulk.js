@@ -6,17 +6,10 @@
 } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-function formatRomeDate(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
+function toDiscordTimestamp(value = new Date(), style = "F") {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return "<t:0:F>";
+  return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
 function sanitizeText(value) {
@@ -117,18 +110,17 @@ module.exports = {
       client?.user || null,
     );
 
-    const nowText = formatRomeDate(new Date());
     const embed = new EmbedBuilder()
       .setColor("#ED4245")
       .setTitle("Messages Purged")
       .setDescription(
         [
-          `▸ **Responsible:** ${responsible ? `${responsible} \`${responsible.id}\`` : "sconosciuto"}`,
-          `▸ **Target:** ${channel} \`${channel.id}\``,
-          `▸ ${nowText}`,
+          `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible ? `${responsible} \`${responsible.id}\`` : "sconosciuto"}`,
+          `<:VC_right_arrow:1473441155055096081> **Target:** ${channel} \`${channel.id}\``,
+          `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
           "",
           "**Additional Information**",
-          `〉 **Count:** ${count}`,
+          `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
         ].join("\n"),
       );
 
@@ -141,3 +133,5 @@ module.exports = {
     await logChannel.send({ embeds: [embed], files: [file] }).catch(() => {});
   },
 };
+
+

@@ -2,11 +2,9 @@
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const {
-  checkSlashPermission,
   checkButtonPermission,
   checkStringSelectPermission,
   checkModalPermission,
-  getSlashRequiredRoles,
   buildGlobalPermissionDeniedEmbed,
   buildGlobalNotYourControlEmbed,
 } = require("../Utils/Moderation/commandPermissions");
@@ -17,8 +15,6 @@ const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
   "Questo bot è utilizzabile solo sul server test e sui server sponsor configurati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
-
-const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
 function markInteractionSeen(client, interactionId) {
   if (!interactionId) return false;
@@ -152,36 +148,6 @@ async function runPermissionGate(interaction) {
   return true;
 }
 
-async function handleAutocomplete(interaction, client) {
-  const command = client.commands.get(
-    getCommandKey(interaction.commandName, interaction.commandType),
-  );
-  if (!command?.autocomplete) return;
-  await command.autocomplete(interaction, client);
-}
-
-async function handleSlashCommand(interaction, client) {
-  const command = client.commands.get(
-    getCommandKey(interaction.commandName, interaction.commandType),
-  );
-  if (!command) return false;
-
-  const allowed = await checkSlashPermission(interaction);
-  if (!allowed) {
-    const requiredRoles = getSlashRequiredRoles(interaction);
-    await interaction
-      .reply({
-        embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
-        flags: PRIVATE_FLAG,
-      })
-      .catch(() => {});
-    return true;
-  }
-
-  await Promise.resolve(command.execute(interaction, client));
-  return true;
-}
-
 async function logInteractionError(interaction, client, err) {
   try {
     const errorChannelId =
@@ -246,16 +212,36 @@ module.exports = {
       if (await handleVerifyInteraction(interaction)) return;
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-        await handleAutocomplete(interaction, client);
+        await interaction.respond([]).catch(() => {});
         return;
       }
 
       if (interaction.isMessageContextMenuCommand?.()) {
-        if (await handleSlashCommand(interaction, client)) return;
+        await interaction
+          .reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Orange")
+                .setDescription("I comandi slash sono disattivati su questo bot test."),
+            ],
+            flags: PRIVATE_FLAG,
+          })
+          .catch(() => {});
+        return;
       }
 
       if (interaction.isChatInputCommand?.()) {
-        if (await handleSlashCommand(interaction, client)) return;
+        await interaction
+          .reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Orange")
+                .setDescription("I comandi slash sono disattivati su questo bot test."),
+            ],
+            flags: PRIVATE_FLAG,
+          })
+          .catch(() => {});
+        return;
       }
 
       const allowedByGate = await runPermissionGate(interaction);

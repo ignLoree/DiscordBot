@@ -9,17 +9,10 @@ const IDs = require("../Utils/Config/ids");
 
 const MAX_EMBED_DIFF_LENGTH = 900;
 
-function formatEditDate(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
+function toDiscordTimestamp(value = new Date(), style = "F") {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return "<t:0:F>";
+  return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
 function normalizeText(value) {
@@ -81,7 +74,7 @@ function buildEditLogText(previous, updated, beforeNames, afterNames) {
     `Channel: #${updated?.channel?.name || "sconosciuto"} (${updated?.channelId || "-"})`,
     `Message ID: ${updated?.id || "-"}`,
     `Author: ${updated?.author?.tag || "sconosciuto"} (${updated?.author?.id || "-"})`,
-    `Edited At: ${formatEditDate(new Date())}`,
+    `Edited At: ${toDiscordTimestamp(new Date(), "F")}`,
     "",
     "[OLD CONTENT]",
     oldContent || "(vuoto)",
@@ -132,9 +125,9 @@ async function sendMessageEditLog(previous, updated) {
   if (!contentChanged && !filesChanged) return;
 
   const lines = [
-    `> **Responsabile:** ${updated.author} \`${updated.author.id}\``,
-    `> **Target:** ${updated.channel || "#sconosciuto"} • \`${updated.id}\``,
-    `> ${formatEditDate(new Date())}`,
+    `<:VC_right_arrow:1473441155055096081> **Responsabile:** ${updated.author} \`${updated.author.id}\``,
+    `<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel || "#sconosciuto"} • \`${updated.id}\``,
+    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
     "",
     "**Changes**",
   ];
@@ -143,12 +136,12 @@ async function sendMessageEditLog(previous, updated) {
   if (contentChanged) {
     const fullDiff = buildSimpleDiff(beforeContent, afterContent);
     if (fullDiff.length <= MAX_EMBED_DIFF_LENGTH) {
-      lines.push("> **Content:**");
+      lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
       lines.push("```diff");
       lines.push(fullDiff);
       lines.push("```");
     } else {
-      lines.push("> **Content:** diff troppo lungo, vedi allegato `.txt`.");
+      lines.push("<:VC_right_arrow:1473441155055096081> **Content:** diff troppo lungo, vedi allegato `.txt`.");
       const text = buildEditLogText(previous, updated, beforeNames, afterNames);
       const name = `${updated.channelId || "channel"}_${updated.id || Date.now()}.txt`;
       files.push(new AttachmentBuilder(Buffer.from(text, "utf8"), { name }));
@@ -156,7 +149,7 @@ async function sendMessageEditLog(previous, updated) {
   }
 
   if (filesChanged) {
-    lines.push("> **Attachments:**");
+    lines.push("<:VC_right_arrow:1473441155055096081> **Attachments:**");
     lines.push(formatAttachmentsChange(beforeNames, afterNames));
   }
 
@@ -211,3 +204,5 @@ module.exports = {
     client.emit("messageCreate", updated);
   },
 };
+
+

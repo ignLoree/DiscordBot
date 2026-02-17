@@ -1,3 +1,4 @@
+const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const {
   queueCategoryRenumber,
 } = require("../Services/Community/communityOpsService");
@@ -5,6 +6,16 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   markDeletedChannelSnapshot,
 } = require("../Utils/Community/channelSnapshotUtils");
+const {
+  ARROW,
+  toDiscordTimestamp,
+  channelTypeLabel,
+  buildAuditExtraLines,
+  resolveChannelRolesLogChannel,
+  resolveResponsible,
+} = require("../Utils/Logging/channelRolesLogUtils");
+
+const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;
 
 function isTicketsCategory(name) {
   return String(name || "")
@@ -16,6 +27,47 @@ module.exports = {
   name: "channelDelete",
   async execute(channel, client) {
     if (!channel?.guildId) return;
+    try {
+      const guild =
+        channel.guild ||
+        client.guilds.cache.get(channel.guildId) ||
+        (await client.guilds.fetch(channel.guildId).catch(() => null));
+
+      const logChannel = await resolveChannelRolesLogChannel(guild);
+      if (logChannel?.isTextBased?.()) {
+        const audit = await resolveResponsible(
+          guild,
+          CHANNEL_DELETE_ACTION,
+          (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
+        );
+        const responsible = audit.executor
+          ? `${audit.executor} \`${audit.executor.id}\``
+          : "sconosciuto";
+
+        const lines = [
+          `${ARROW} **Responsible:** ${responsible}`,
+          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+        ];
+
+        if (audit.reason) lines.push(`${ARROW} **Reason:** ${audit.reason}`);
+
+        lines.push(
+          "",
+          "**Previous Settings**",
+          `${ARROW} **Name:** ${channel.name || "sconosciuto"} \`[${channel.id}]\``,
+          `${ARROW} **Type:** ${channelTypeLabel(channel)}`,
+        );
+        lines.push(...buildAuditExtraLines(audit.entry, ["name", "type"]));
+
+        const embed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setTitle("Channel Delete")
+          .setDescription(lines.join("\n"));
+
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
+    } catch {}
+
     await markDeletedChannelSnapshot(channel).catch(() => {});
 
     try {
