@@ -13,7 +13,7 @@ const {
 
 const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED =
-  "Questo bot e utilizzabile solo sul server test e sui server sponsor configurati.";
+  "Questo bot è utilizzabile solo sul server test e sui server sponsor configurati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
