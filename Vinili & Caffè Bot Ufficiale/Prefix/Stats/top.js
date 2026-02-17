@@ -4,6 +4,7 @@
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const {
@@ -391,6 +392,33 @@ async function resolveTopChannelEntries(guild, entries = []) {
   return out;
 }
 
+function isTextChannelUnderVoiceCategory(guild, channel) {
+  if (!guild || !channel) return false;
+  const parentId = channel.parentId || channel.parent?.id;
+  if (!parentId) return false;
+  return guild.channels?.cache?.some(
+    (ch) =>
+      ch.parentId === parentId &&
+      (ch.type === ChannelType.GuildVoice ||
+        ch.type === ChannelType.GuildStageVoice),
+  );
+}
+
+async function resolveTopTextChannelEntries(guild, entries = []) {
+  const rows = await resolveTopChannelEntries(guild, entries);
+  const out = [];
+  for (const row of rows) {
+    const channelId = String(row?.id || "");
+    const channel =
+      guild.channels?.cache?.get(channelId) ||
+      (await guild.channels?.fetch(channelId).catch(() => null));
+    if (!channel) continue;
+    if (isTextChannelUnderVoiceCategory(guild, channel)) continue;
+    out.push(row);
+  }
+  return out;
+}
+
 async function buildTopChannelPayload(message, lookbackDays = 14, controlsView = "main") {
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const stats = await getServerOverviewStats(message.guild.id, safeLookback);
@@ -399,7 +427,7 @@ async function buildTopChannelPayload(message, lookbackDays = 14, controlsView =
     message.guild,
     stats.topUsersText || [],
   );
-  const topChannelsText = await resolveTopChannelEntries(
+  const topChannelsText = await resolveTopTextChannelEntries(
     message.guild,
     stats.topChannelsText || [],
   );

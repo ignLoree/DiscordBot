@@ -4,6 +4,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
@@ -83,6 +84,18 @@ async function isChannelVisibleToMemberRole(guild, channelId, memberRole) {
   return Boolean(perms?.has("ViewChannel"));
 }
 
+function isTextChannelUnderVoiceCategory(guild, channel) {
+  if (!guild || !channel) return false;
+  const parentId = channel.parentId || channel.parent?.id;
+  if (!parentId) return false;
+  return guild.channels?.cache?.some(
+    (ch) =>
+      ch.parentId === parentId &&
+      (ch.type === ChannelType.GuildVoice ||
+        ch.type === ChannelType.GuildStageVoice),
+  );
+}
+
 async function resolveUserLabel(guild, userId) {
   const id = String(userId || "");
   if (!id) return id;
@@ -112,6 +125,11 @@ async function enrichTops(guild, stats) {
     });
   const topChannelsText = [];
   for (const item of stats.topChannelsText || []) {
+    const channel =
+      guild.channels?.cache?.get(String(item?.id || "")) ||
+      (await guild.channels?.fetch(String(item?.id || "")).catch(() => null));
+    if (!channel) continue;
+    if (isTextChannelUnderVoiceCategory(guild, channel)) continue;
     const visible = await isChannelVisibleToMemberRole(
       guild,
       item?.id,

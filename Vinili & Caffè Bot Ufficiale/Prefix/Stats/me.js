@@ -4,6 +4,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
@@ -145,10 +146,33 @@ async function isChannelVisibleToMemberRole(guild, channelId, memberRole) {
   return Boolean(perms?.has("ViewChannel"));
 }
 
-async function enrichChannels(guild, items = []) {
+function isTextChannelUnderVoiceCategory(guild, channel) {
+  if (!guild || !channel) return false;
+  const parentId = channel.parentId || channel.parent?.id;
+  if (!parentId) return false;
+  return guild.channels?.cache?.some(
+    (ch) =>
+      ch.parentId === parentId &&
+      (ch.type === ChannelType.GuildVoice ||
+        ch.type === ChannelType.GuildStageVoice),
+  );
+}
+
+async function enrichChannels(
+  guild,
+  items = [],
+  { excludeVoiceCategoryText = false } = {},
+) {
   const memberRole = await resolveMemberVisibilityRole(guild);
   const out = [];
   for (const item of items) {
+    const channel =
+      guild.channels?.cache?.get(String(item?.id || "")) ||
+      (await guild.channels?.fetch(String(item?.id || "")).catch(() => null));
+    if (!channel) continue;
+    if (excludeVoiceCategoryText && isTextChannelUnderVoiceCategory(guild, channel)) {
+      continue;
+    }
     const visible = await isChannelVisibleToMemberRole(
       guild,
       item?.id,
@@ -175,7 +199,9 @@ async function buildMeOverviewPayload(
     text: 0,
     voiceSeconds: 0,
   };
-  const topChannelsText = await enrichChannels(guild, stats.topChannelsText);
+  const topChannelsText = await enrichChannels(guild, stats.topChannelsText, {
+    excludeVoiceCategoryText: true,
+  });
   const topChannelsVoice = await enrichChannels(guild, stats.topChannelsVoice);
 
   const imageName = `me-overview-${user.id}-${safeLookback}d.png`;
