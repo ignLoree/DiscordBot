@@ -19,7 +19,9 @@ module.exports = (client) => {
                 const key = `${folder}/${file}`;
                 try {
                     const command = require(filePath);
-                    if (!command?.data?.name) {
+                    const commandJson = typeof command?.data?.toJSON === 'function' ? command.data.toJSON() : null;
+                    const commandName = command?.data?.name || commandJson?.name || command?.name;
+                    if (!commandName) {
                         global.logger.error(`[COMMANDS] Invalid command file ${file}`);
                         statusMap.set(key, 'Invalid');
                         continue;
@@ -29,15 +31,15 @@ module.exports = (client) => {
                         command.category = folder;
                     }
 
-                    const commandType = command.data?.type ?? 1;
-                    client.commands.set(`${command.data.name}:${commandType}`, command);
+                    const commandType = command?.data?.type ?? commandJson?.type ?? 1;
+                    client.commands.set(`${commandName}:${commandType}`, command);
 
                     if (command.skipDeploy) {
                         statusMap.set(key, 'Skipped');
                         continue;
                     }
 
-                    client.commandArray.push(command.data.toJSON());
+                    client.commandArray.push(commandJson || command.data.toJSON());
                     statusMap.set(key, 'Loaded');
                 } catch (err) {
                     global.logger.error(`[COMMANDS] Failed to load ${file}:`, err);

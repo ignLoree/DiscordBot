@@ -16,6 +16,9 @@ const POLL_INTERVAL_MS = 5000;
 const processRefs = {};
 const restarting = {};
 let npmInstallInProgress = null;
+const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
+    ? { ...process.env }
+    : { ...process.env, NODE_NO_WARNINGS: '1' };
 
 function runNpmInstall(installDir, extraArgs = []) {
     return new Promise((resolveInstall) => {
@@ -31,7 +34,7 @@ function runNpmInstall(installDir, extraArgs = []) {
             '--update-notifier', 'false',
             ...extraArgs
         ];
-        const npm = child_process.spawn('npm', args, { cwd: installDir, stdio: 'inherit' });
+        const npm = child_process.spawn('npm', args, { cwd: installDir, stdio: 'inherit', env: silencedEnv });
         npm.on('exit', (code) => resolveInstall(code || 0));
     });
 }
@@ -134,7 +137,8 @@ function runfile(bot, options = {}) {
                 console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
                 const proc = child_process.spawn(process.execPath, [file], {
                     cwd: workingDir,
-                    stdio: 'inherit'
+                    stdio: 'inherit',
+                    env: silencedEnv
                 });
                 processRefs[botKey] = proc;
                 writePid(botKey, proc.pid);
