@@ -467,6 +467,14 @@ module.exports = {
       FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || "")) &&
       !message?.system
     ) {
+      if (!isEditedPrefixExecution) {
+        try {
+          const automodResult = await runAutoModMessage(message);
+          if (automodResult?.blocked) return;
+        } catch (error) {
+          logEventError(client, "AUTOMOD ERROR", error);
+        }
+      }
       await message.delete().catch(() => { });
       return;
     }

@@ -19,7 +19,7 @@ const DELETE_THRESHOLD = Number.POSITIVE_INFINITY;
 const TIMEOUT_THRESHOLD = 95;
 const ACTION_COOLDOWN_MS = 12_000;
 const ACTION_CHANNEL_LOG_COOLDOWN_MS = 6_000;
-const ACTION_CHANNEL_NOTICE_DELETE_MS = 2_500;
+const ACTION_CHANNEL_NOTICE_DELETE_MS = 10_000;
 const REGULAR_TIMEOUT_MS = 15 * 60_000;
 const HEAT_RESET_ON_PUNISHMENT = true;
 const MENTION_LOCKDOWN_TRIGGER = 50;
@@ -1343,6 +1343,17 @@ async function runAutoModMessage(message) {
   if (!message?.guild || !message?.member) return { blocked: false };
   if (message.webhookId) {
     const webhookId = String(message.webhookId);
+    const authorId = String(message.author?.id || "");
+    const applicationId = String(message.applicationId || "");
+    const clientAppId = String(message.client?.user?.id || "");
+
+    if (CORE_EXEMPT_USER_IDS.has(authorId)) return { blocked: false };
+    if (
+      applicationId &&
+      (applicationId === clientAppId || CORE_EXEMPT_USER_IDS.has(applicationId))
+    ) {
+      return { blocked: false };
+    }
     if (WHITELISTED_WEBHOOK_IDS.has(webhookId)) return { blocked: false };
     await message.delete().catch(() => {});
     await markBadUserAction(message, "delete_webhook", [
