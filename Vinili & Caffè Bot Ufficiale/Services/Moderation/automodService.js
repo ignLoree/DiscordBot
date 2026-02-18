@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
@@ -272,7 +272,7 @@ const EXEMPT_CHANNEL_IDS = new Set(
 );
 
 const EXEMPT_CATEGORY_IDS = new Set(["1442569074310643845"]);
-const EXEMPT_INVITE_CHANNEL_IDS = new Set();
+const EXEMPT_INVITE_CHANNEL_IDS = new Set(["1442569193470824448"]);
 const EXEMPT_MENTION_CHANNEL_IDS = new Set(["1442569193470824448"]);
 
 function isTicketLikeCategory(category) {
@@ -939,7 +939,11 @@ function detectViolations(message, state) {
   }
 
   const inviteCode = detectInvite(content);
-  if (inviteCode && !EXEMPT_INVITE_CHANNEL_IDS.has(channelId)) {
+  if (
+    inviteCode &&
+    !EXEMPT_INVITE_CHANNEL_IDS.has(channelId) &&
+    !EXEMPT_INVITE_CHANNEL_IDS.has(parentChannelId)
+  ) {
     const allowedCodes = getAllowedInviteCodes(message);
     if (TEXT_RULES.inviteLinks.enabled && !allowedCodes.has(inviteCode)) {
       violations.push({
@@ -1109,7 +1113,7 @@ async function resolveLogChannel(guild) {
 function truncateText(input, max = 700) {
   const text = String(input || "").trim();
   if (!text) return "";
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+  return text.length > max ? `${text.slice(0, max - 1)}...` : text;
 }
 
 function firstViolationLabel(violations = []) {
@@ -1298,22 +1302,19 @@ async function warnUser(message, state, violations) {
 }
 
 async function deleteMessage(message, state, violations) {
-  if (!canActNow(message)) return false;
   await message.delete().catch(() => {});
-  await markBadUserAction(message, "delete", violations);
-  await sendAutomodActionInChannel(message, "delete", violations);
-  await sendAutomodLog(message, "delete", violations, state.heat);
+  if (canActNow(message)) {
+    await markBadUserAction(message, "delete", violations);
+    await sendAutomodActionInChannel(message, "delete", violations);
+    await sendAutomodLog(message, "delete", violations, state.heat);
+  }
   return true;
 }
 
 async function timeoutMember(message, state, violations) {
-  if (!canActNow(message)) return false;
+  const canPunishNow = canActNow(message);
   const member = message.member;
-  if (!member?.moderatable) return false;
-  const me = message.guild.members.me;
-  if (!me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) {
-    return false;
-  }
+  if (!member) return false;
   const timeoutDurations = [REGULAR_TIMEOUT_MS];
   if (violations.some((v) => v.key === "invite")) {
     timeoutDurations.push(TEXT_RULES.inviteLinks.timeoutMs);
@@ -1358,9 +1359,17 @@ async function timeoutMember(message, state, violations) {
   }
   const durationMs = Math.max(...timeoutDurations);
   await message.delete().catch(() => {});
-  await member
+  if (!canPunishNow) return true;
+  if (!member?.moderatable) return false;
+  const me = message.guild.members.me;
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) {
+    return false;
+  }
+  const timedOut = await member
     .timeout(durationMs, `AutoMod heat ${state.heat.toFixed(1)}`)
-    .catch(() => {});
+    .then(() => true)
+    .catch(() => false);
+  if (!timedOut) return false;
   await markBadUserAction(message, "timeout", violations);
   state.heat = HEAT_RESET_ON_PUNISHMENT ? 0 : Math.max(35, state.heat * 0.45);
   await sendAutomodActionInChannel(message, "timeout", violations, {
@@ -1446,8 +1455,6 @@ async function runAutoModMessage(message) {
     at,
   );
 
-  await markBadUserTrigger(message, violations, state.heat);
-
   if (panic.activated) {
     const activeUntil = getPanicState(message.guildId).activeUntil;
     await sendPanicModeLog(
@@ -1461,6 +1468,7 @@ async function runAutoModMessage(message) {
   const panicActive = isPanicModeActive(message.guildId);
   if (panicActive) {
     state.heat = MAX_HEAT;
+    await markBadUserTrigger(message, violations, state.heat);
     const done = await timeoutMember(message, state, [
       ...violations,
       { key: "panic_mode", heat: 0, info: "elevated mode active" },
@@ -1482,6 +1490,7 @@ async function runAutoModMessage(message) {
   );
   if (hasInstantLinkViolation) {
     state.heat = MAX_HEAT;
+    await markBadUserTrigger(message, violations, state.heat);
     const done = await timeoutMember(message, state, violations);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
@@ -1496,6 +1505,7 @@ async function runAutoModMessage(message) {
   }
 
   for (const v of violations) addHeat(state, v.heat);
+  await markBadUserTrigger(message, violations, state.heat);
 
   if (state.heat >= TIMEOUT_THRESHOLD) {
     const done = await timeoutMember(message, state, violations);
@@ -1537,3 +1547,4 @@ module.exports = {
   getAutoModMemberSnapshot,
   isAutoModRoleExemptMember,
 };
+

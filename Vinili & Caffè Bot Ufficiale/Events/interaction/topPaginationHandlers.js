@@ -7,6 +7,7 @@
   normalizeControlsView,
   normalizePage,
 } = require("../../Prefix/Stats/top");
+const SNOWFLAKE_RE = /^\d{16,20}$/;
 
 function parseTopPageModalCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
@@ -18,13 +19,20 @@ function parseTopPageModalCustomId(rawCustomId) {
   }
 
   const parts = raw.split(":");
-  const lookbackDays = normalizeLookbackDays(parts[1] || "14");
-  const selectedView = normalizeTopView(parts[2] || "overview");
-  const currentPage = normalizePage(parts[3] || "1", 1);
-  const totalPages = Math.max(1, normalizePage(parts[4] || "1", 1));
-  const controlsView = normalizeControlsView(parts[5] || "main");
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const offset = hasOwner ? 1 : 0;
+  const lookbackDays = normalizeLookbackDays(parts[1 + offset] || "14");
+  const selectedView = normalizeTopView(parts[2 + offset] || "overview");
+  const currentPage = normalizePage(parts[3 + offset] || "1", 1);
+  const totalPages = Math.max(
+    1,
+    normalizePage(parts[4 + offset] || "1", 1),
+  );
+  const controlsView = normalizeControlsView(parts[5 + offset] || "main");
 
   return {
+    ownerId,
     lookbackDays,
     selectedView,
     currentPage,
@@ -63,6 +71,7 @@ module.exports = {
         parsed.controlsView,
         parsed.selectedView,
         requestedPage,
+        parsed.ownerId || interaction.user?.id,
       );
 
       await interaction.message.edit({

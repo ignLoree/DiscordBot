@@ -52,65 +52,72 @@ function normalizeLookbackDays(value) {
   return VALID_LOOKBACKS.includes(n) ? n : 14;
 }
 
-function buildMainControlsRow(lookbackDays, wantsEmbed) {
+function buildMainControlsRow(ownerId, lookbackDays, wantsEmbed) {
   const mode = wantsEmbed ? "embed" : "image";
+  const safeOwner = String(ownerId || "0");
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${ME_REFRESH_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+        `${ME_REFRESH_CUSTOM_ID_PREFIX}:${safeOwner}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(
-        `${ME_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+        `${ME_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeOwner}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
       .setStyle(ButtonStyle.Secondary),
   );
 }
 
-function buildPeriodControlsRows(lookbackDays, wantsEmbed) {
+function buildPeriodControlsRows(ownerId, lookbackDays, wantsEmbed) {
   const mode = wantsEmbed ? "embed" : "image";
   const current = normalizeLookbackDays(lookbackDays);
+  const safeOwner = String(ownerId || "0");
   const topRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+        `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:1:${mode}`)
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:1:${mode}`)
       .setLabel("1d")
       .setStyle(current === 1 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:7:${mode}`)
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:7:${mode}`)
       .setLabel("7d")
       .setStyle(current === 7 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:14:${mode}`)
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:14:${mode}`)
       .setLabel("14d")
       .setStyle(current === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
   const bottomRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:21:${mode}`)
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${mode}`)
       .setLabel("21d")
       .setStyle(current === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:30:${mode}`)
+      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:30:${mode}`)
       .setLabel("30d")
       .setStyle(current === 30 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
   return [topRow, bottomRow];
 }
 
-function buildMeComponents(lookbackDays, wantsEmbed, controlsView = "main") {
+function buildMeComponents(
+  ownerId,
+  lookbackDays,
+  wantsEmbed,
+  controlsView = "main",
+) {
   if (controlsView === "period") {
-    return buildPeriodControlsRows(lookbackDays, wantsEmbed);
+    return buildPeriodControlsRows(ownerId, lookbackDays, wantsEmbed);
   }
-  return [buildMainControlsRow(lookbackDays, wantsEmbed)];
+  return [buildMainControlsRow(ownerId, lookbackDays, wantsEmbed)];
 }
 
 async function resolveChannelLabel(guild, channelId) {
@@ -243,7 +250,12 @@ async function buildMeOverviewPayload(
     global.logger?.warn?.("[ME] Canvas render failed:", error?.message || error);
   }
 
-  const components = buildMeComponents(safeLookback, wantsEmbed, controlsView);
+  const components = buildMeComponents(
+    user?.id,
+    safeLookback,
+    wantsEmbed,
+    controlsView,
+  );
 
   if (!wantsEmbed) {
     return {

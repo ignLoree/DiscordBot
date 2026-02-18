@@ -81,6 +81,11 @@ function normalizeControlsView(raw) {
   return String(raw || "main").toLowerCase() === "period" ? "period" : "main";
 }
 
+function normalizeOwnerId(raw) {
+  const id = String(raw || "").trim();
+  return /^\d{16,20}$/.test(id) ? id : "0";
+}
+
 function normalizePage(value, fallback = 1) {
   const n = Number.parseInt(String(value || fallback), 10);
   return Number.isFinite(n) && n > 0 ? n : fallback;
@@ -370,14 +375,19 @@ function resolveViewConfig(selectedView, source) {
   };
 }
 
-function buildTopChannelSelectRow(lookbackDays, selectedView = "overview") {
+function buildTopChannelSelectRow(
+  ownerId,
+  lookbackDays,
+  selectedView = "overview",
+) {
+  const safeOwner = normalizeOwnerId(ownerId);
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
 
   return new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}`,
+        `${TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}`,
       )
       .setPlaceholder("Overview")
       .addOptions(
@@ -416,10 +426,12 @@ function buildTopChannelSelectRow(lookbackDays, selectedView = "overview") {
 }
 
 function buildTopChannelMainControlsRow(
+  ownerId,
   lookbackDays,
   selectedView = "overview",
   page = 1,
 ) {
+  const safeOwner = normalizeOwnerId(ownerId);
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safePage = normalizePage(page, 1);
@@ -427,13 +439,13 @@ function buildTopChannelMainControlsRow(
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}`,
+        `${TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`,
       )
       .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}`,
+        `${TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`,
       )
       .setEmoji({ id: "1473359204189474886", name: "VC_Clock" })
       .setStyle(ButtonStyle.Secondary),
@@ -441,10 +453,12 @@ function buildTopChannelMainControlsRow(
 }
 
 function buildTopChannelPeriodControlsRows(
+  ownerId,
   lookbackDays,
   selectedView = "overview",
   page = 1,
 ) {
+  const safeOwner = normalizeOwnerId(ownerId);
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safePage = normalizePage(page, 1);
@@ -452,31 +466,31 @@ function buildTopChannelPeriodControlsRows(
   const topRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}`,
+        `${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`,
       )
       .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:1:${safeView}:${safePage}`)
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:1:${safeView}:${safePage}`)
       .setLabel("1d")
       .setStyle(safeLookback === 1 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:7:${safeView}:${safePage}`)
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:7:${safeView}:${safePage}`)
       .setLabel("7d")
       .setStyle(safeLookback === 7 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:14:${safeView}:${safePage}`)
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:14:${safeView}:${safePage}`)
       .setLabel("14d")
       .setStyle(safeLookback === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
 
   const bottomRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:21:${safeView}:${safePage}`)
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${safeView}:${safePage}`)
       .setLabel("21d")
       .setStyle(safeLookback === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:30:${safeView}:${safePage}`)
+      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:30:${safeView}:${safePage}`)
       .setLabel("30d")
       .setStyle(safeLookback === 30 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
@@ -485,12 +499,14 @@ function buildTopChannelPeriodControlsRows(
 }
 
 function buildTopChannelPaginationRow(
+  ownerId,
   lookbackDays,
   selectedView,
   page,
   totalPages,
   controlsView = "main",
 ) {
+  const safeOwner = normalizeOwnerId(ownerId);
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safePage = Math.min(Math.max(1, normalizePage(page, 1)), Math.max(1, normalizePage(totalPages, 1)));
@@ -500,34 +516,34 @@ function buildTopChannelPaginationRow(
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
+        `${TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
       )
       .setLabel("First")
       .setStyle(ButtonStyle.Success)
       .setDisabled(safePage <= 1),
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
+        `${TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
       )
       .setLabel("Previous")
       .setStyle(ButtonStyle.Success)
       .setDisabled(safePage <= 1),
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
+        `${TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
       )
       .setLabel(`${safePage}/${safeTotal}`)
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
+        `${TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
       )
       .setLabel("Next")
       .setStyle(ButtonStyle.Success)
       .setDisabled(safePage >= safeTotal),
     new ButtonBuilder()
       .setCustomId(
-        `${TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
+        `${TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}:${safeTotal}:${controls}`,
       )
       .setLabel("Last")
       .setStyle(ButtonStyle.Success)
@@ -536,6 +552,7 @@ function buildTopChannelPaginationRow(
 }
 
 function buildTopChannelComponents(
+  ownerId,
   lookbackDays,
   controlsView = "main",
   selectedView = "overview",
@@ -545,10 +562,11 @@ function buildTopChannelComponents(
   const safeView = normalizeTopView(selectedView);
   const safeControls = normalizeControlsView(controlsView);
 
-  const rows = [buildTopChannelSelectRow(lookbackDays, safeView)];
+  const rows = [buildTopChannelSelectRow(ownerId, lookbackDays, safeView)];
   if (safeView !== "overview") {
     rows.push(
       buildTopChannelPaginationRow(
+        ownerId,
         lookbackDays,
         safeView,
         page,
@@ -558,21 +576,23 @@ function buildTopChannelComponents(
     );
   }
 
-  rows.push(buildTopChannelMainControlsRow(lookbackDays, safeView, page));
+  rows.push(buildTopChannelMainControlsRow(ownerId, lookbackDays, safeView, page));
   if (safeControls === "period") {
-    rows.push(...buildTopChannelPeriodControlsRows(lookbackDays, safeView, page));
+    rows.push(...buildTopChannelPeriodControlsRows(ownerId, lookbackDays, safeView, page));
   }
 
   return rows;
 }
 
 function buildTopPageJumpModal(
+  ownerId,
   lookbackDays,
   selectedView,
   currentPage,
   totalPages,
   controlsView = "main",
 ) {
+  const safeOwner = normalizeOwnerId(ownerId);
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
   const safeCurrent = normalizePage(currentPage, 1);
@@ -591,7 +611,7 @@ function buildTopPageJumpModal(
 
   return new ModalBuilder()
     .setCustomId(
-      `${TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX}:${safeLookback}:${safeView}:${safeCurrent}:${safeTotal}:${controls}`,
+      `${TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safeCurrent}:${safeTotal}:${controls}`,
     )
     .setTitle("Vai a una pagina")
     .addComponents(row);
@@ -614,6 +634,7 @@ async function buildTopChannelPayload(
   controlsView = "main",
   selectedView = "overview",
   page = 1,
+  ownerId = null,
 ) {
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const safeView = normalizeTopView(selectedView);
@@ -660,6 +681,7 @@ async function buildTopChannelPayload(
       embeds: [],
       content: null,
       components: buildTopChannelComponents(
+        ownerId,
         safeLookback,
         safeControls,
         safeView,
@@ -681,6 +703,7 @@ async function buildTopChannelPayload(
       content:
         "<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine top.",
       components: buildTopChannelComponents(
+        ownerId,
         safeLookback,
         safeControls,
         safeView,
@@ -772,6 +795,7 @@ module.exports = {
       "main",
       "overview",
       1,
+      message.author?.id,
     );
     await sendTopPayload(message, payload);
   },

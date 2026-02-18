@@ -6,6 +6,7 @@
   ButtonStyle,
 } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { runAutoModMessage } = require("../Services/Moderation/automodService");
 
 const MAX_EMBED_DIFF_LENGTH = 900;
 
@@ -194,13 +195,27 @@ module.exports = {
     }
     if (!updated?.guild || !updated?.author) return;
 
+    const before = String(previous?.content || "");
+    const after = String(updated?.content || "");
+    const contentChanged = before !== after;
+
+    if (
+      contentChanged &&
+      after &&
+      !updated.author.bot &&
+      !updated.system &&
+      !updated.webhookId
+    ) {
+      try {
+        const automodResult = await runAutoModMessage(updated);
+        if (automodResult?.blocked) return;
+      } catch {}
+    }
+
     await sendMessageEditLog(previous, updated);
 
     if (updated.author.bot || updated.system || updated.webhookId) return;
-
-    const before = String(previous?.content || "");
-    const after = String(updated?.content || "");
-    if (!after || before === after) return;
+    if (!after || !contentChanged) return;
 
     const looksLikePrefix = after.startsWith("+") || after.startsWith("?");
     if (!looksLikePrefix) return;

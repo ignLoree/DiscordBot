@@ -805,49 +805,49 @@
       "roles.Staff"
     ],
     "stats_me_period_back*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_me_period_open*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_me_period_set*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_me_refresh*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_server_refresh*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_page_first*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_page_last*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_page_modal_open*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_page_next*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_page_prev*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_period_back*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_period_open*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_period_set*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_refresh*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "stats_top_channel_view_select*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "suggestion_staff_accept": [
       "roles.HighStaff"
@@ -938,7 +938,7 @@
       "roles.Member"
     ],
     "stats_top_channel_view_select*": {
-      "ownerFromMessageMention": true
+      "ownerSegment": 1
     },
     "ticket_open_menu": null
   },

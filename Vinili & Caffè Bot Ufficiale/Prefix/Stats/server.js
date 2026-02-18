@@ -171,18 +171,24 @@ async function enrichTops(guild, stats) {
   return { topUsersText, topUsersVoice, topChannelsText, topChannelsVoice };
 }
 
-function buildRefreshRow(lookbackDays, wantsEmbed) {
+function buildRefreshRow(ownerId, lookbackDays, wantsEmbed) {
+  const safeOwner = String(ownerId || "0");
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(
-        `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${Number(lookbackDays || 14)}:${wantsEmbed ? "embed" : "image"}`,
+        `${SERVER_REFRESH_CUSTOM_ID_PREFIX}:${safeOwner}:${Number(lookbackDays || 14)}:${wantsEmbed ? "embed" : "image"}`,
       )
       .setEmoji({ id: "1473359252276904203", name: "VC_Refresh" })
       .setStyle(ButtonStyle.Secondary),
   );
 }
 
-async function buildServerOverviewPayload(guild, lookbackDays = 14, wantsEmbed = false) {
+async function buildServerOverviewPayload(
+  guild,
+  lookbackDays = 14,
+  wantsEmbed = false,
+  ownerId = null,
+) {
   const stats = await getServerOverviewStats(guild.id, lookbackDays);
   const lookbackKey = `d${lookbackDays}`;
   const d1 = safeWindow(stats?.windows, "d1");
@@ -226,7 +232,7 @@ async function buildServerOverviewPayload(guild, lookbackDays = 14, wantsEmbed =
       content: file
         ? null
         : "<:vegax:1443934876440068179> Non sono riuscito a generare il canvas.",
-      components: [buildRefreshRow(lookbackDays, wantsEmbed)],
+      components: [buildRefreshRow(ownerId, lookbackDays, wantsEmbed)],
     };
   }
 
@@ -251,7 +257,7 @@ async function buildServerOverviewPayload(guild, lookbackDays = 14, wantsEmbed =
   return {
     embeds: [embed],
     files: file ? [file] : [],
-    components: [buildRefreshRow(lookbackDays, wantsEmbed)],
+    components: [buildRefreshRow(ownerId, lookbackDays, wantsEmbed)],
   };
 }
 
@@ -267,6 +273,7 @@ module.exports = {
       message.guild,
       lookbackDays,
       wantsEmbed,
+      message.author?.id,
     );
     await safeMessageReply(message, {
       ...payload,

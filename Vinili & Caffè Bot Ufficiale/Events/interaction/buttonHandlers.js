@@ -31,6 +31,7 @@ const {
 } = require("../../Prefix/Stats/top");
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
+const SNOWFLAKE_RE = /^\d{16,20}$/;
 
 function parseServerRefreshCustomId(customId) {
   const raw = String(customId || "");
@@ -41,12 +42,14 @@ function parseServerRefreshCustomId(customId) {
     return null;
   }
   const parts = raw.split(":");
-  const lookbackRaw = parts[1] || "14";
-  const modeRaw = parts[2] || "image";
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const lookbackRaw = hasOwner ? parts[2] : parts[1];
+  const modeRaw = hasOwner ? parts[3] : parts[2];
   const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
   const safeLookback = [7, 14, 21, 30].includes(lookback) ? lookback : 14;
   const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
-  return { lookbackDays: safeLookback, wantsEmbed };
+  return { ownerId, lookbackDays: safeLookback, wantsEmbed };
 }
 
 function parseMeCustomId(rawCustomId) {
@@ -63,11 +66,13 @@ function parseMeCustomId(rawCustomId) {
   if (!prefix) return null;
 
   const parts = raw.split(":");
-  const lookbackRaw = parts[1] || "14";
-  const modeRaw = parts[2] || "image";
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const lookbackRaw = hasOwner ? parts[2] : parts[1];
+  const modeRaw = hasOwner ? parts[3] : parts[2];
   const lookbackDays = normalizeLookbackDays(lookbackRaw || "14");
   const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
-  return { prefix, lookbackDays, wantsEmbed };
+  return { prefix, ownerId, lookbackDays, wantsEmbed };
 }
 
 function parseTopChannelCustomId(rawCustomId) {
@@ -83,12 +88,14 @@ function parseTopChannelCustomId(rawCustomId) {
   );
   if (!prefix) return null;
   const parts = raw.split(":");
-  const lookbackRaw = parts[1] || "14";
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const lookbackRaw = hasOwner ? parts[2] : parts[1];
   const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
   const lookbackDays = [1, 7, 14, 21, 30].includes(lookback) ? lookback : 14;
-  const selectedView = normalizeTopView(parts[2] || "overview");
-  const page = normalizePage(parts[3] || "1", 1);
-  return { prefix, lookbackDays, selectedView, page };
+  const selectedView = normalizeTopView(hasOwner ? parts[3] : parts[2] || "overview");
+  const page = normalizePage(hasOwner ? parts[4] : parts[3] || "1", 1);
+  return { prefix, ownerId, lookbackDays, selectedView, page };
 }
 
 function parseTopChannelPageCustomId(rawCustomId) {
@@ -106,13 +113,17 @@ function parseTopChannelPageCustomId(rawCustomId) {
   if (!item) return null;
 
   const parts = raw.split(":");
-  const lookbackDays = normalizeLookbackDays(parts[1] || "14");
-  const selectedView = normalizeTopView(parts[2] || "overview");
-  const page = normalizePage(parts[3] || "1", 1);
-  const totalPages = Math.max(1, normalizePage(parts[4] || "1", 1));
-  const controlsView = normalizeControlsView(parts[5] || "main");
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const offset = hasOwner ? 1 : 0;
+  const lookbackDays = normalizeLookbackDays(parts[1 + offset] || "14");
+  const selectedView = normalizeTopView(parts[2 + offset] || "overview");
+  const page = normalizePage(parts[3 + offset] || "1", 1);
+  const totalPages = Math.max(1, normalizePage(parts[4 + offset] || "1", 1));
+  const controlsView = normalizeControlsView(parts[5 + offset] || "main");
   return {
     action: item.action,
+    ownerId,
     lookbackDays,
     selectedView,
     page,
@@ -130,11 +141,13 @@ function parseTopChannelViewSelectCustomId(rawCustomId) {
     return null;
   }
   const parts = raw.split(":");
-  const lookbackRaw = parts[1] || "14";
+  const hasOwner = SNOWFLAKE_RE.test(String(parts[1] || ""));
+  const ownerId = hasOwner ? String(parts[1]) : null;
+  const lookbackRaw = hasOwner ? parts[2] : parts[1];
   const lookback = Number.parseInt(String(lookbackRaw || "14"), 10);
   const lookbackDays = [1, 7, 14, 21, 30].includes(lookback) ? lookback : 14;
-  const selectedView = normalizeTopView(parts[2] || "overview");
-  return { lookbackDays, selectedView };
+  const selectedView = normalizeTopView(hasOwner ? parts[3] : parts[2] || "overview");
+  return { ownerId, lookbackDays, selectedView };
 }
 
 function chunk(items = [], size = MAX_COMPONENTS_PER_ROW) {
@@ -218,6 +231,7 @@ module.exports = {
           "main",
           selectedValue,
           1,
+          parsedSelect.ownerId || interaction.user?.id,
         );
         await interaction.message.edit({
           ...payload,
@@ -240,6 +254,7 @@ module.exports = {
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
               buildMeComponents(
+                parsedMe.ownerId || interaction.user?.id,
                 parsedMe.lookbackDays,
                 parsedMe.wantsEmbed,
                 "period",
@@ -253,6 +268,7 @@ module.exports = {
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
               buildMeComponents(
+                parsedMe.ownerId || interaction.user?.id,
                 parsedMe.lookbackDays,
                 parsedMe.wantsEmbed,
                 "main",
@@ -268,6 +284,12 @@ module.exports = {
           interaction.guild,
           interaction.user,
           interaction.member,
+          parsedMe.lookbackDays,
+          parsedMe.wantsEmbed,
+          controlsView,
+        );
+        payload.components = buildMeComponents(
+          parsedMe.ownerId || interaction.user?.id,
           parsedMe.lookbackDays,
           parsedMe.wantsEmbed,
           controlsView,
@@ -296,6 +318,7 @@ module.exports = {
           "period",
           parsedTopChannel.selectedView,
           parsedTopChannel.page,
+          parsedTopChannel.ownerId || interaction.user?.id,
         );
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
@@ -312,6 +335,7 @@ module.exports = {
           "main",
           parsedTopChannel.selectedView,
           parsedTopChannel.page,
+          parsedTopChannel.ownerId || interaction.user?.id,
         );
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
@@ -333,6 +357,7 @@ module.exports = {
           controlsView,
           parsedTopChannel.selectedView,
           parsedTopChannel.page,
+          parsedTopChannel.ownerId || interaction.user?.id,
         );
         await interaction.message.edit({
           ...payload,
@@ -351,6 +376,7 @@ module.exports = {
       try {
         if (parsedTopChannelPage.action === "open_modal") {
           const modal = buildTopPageJumpModal(
+            parsedTopChannelPage.ownerId || interaction.user?.id,
             parsedTopChannelPage.lookbackDays,
             parsedTopChannelPage.selectedView,
             parsedTopChannelPage.page,
@@ -373,6 +399,7 @@ module.exports = {
           parsedTopChannelPage.controlsView,
           parsedTopChannelPage.selectedView,
           requestedPage,
+          parsedTopChannelPage.ownerId || interaction.user?.id,
         );
         await interaction.message.edit({
           ...payload,
@@ -394,6 +421,7 @@ module.exports = {
         interaction.guild,
         parsed.lookbackDays,
         parsed.wantsEmbed,
+        parsed.ownerId || interaction.user?.id,
       );
       await interaction.message.edit({
         ...payload,
