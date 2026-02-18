@@ -89,7 +89,7 @@ function resolvePrefixLogChannelId(client) {
 module.exports = {
   name: Events.MessageCreate,
   async execute(message, client) {
-    if (!message || message.author?.bot) return;
+    if (!message) return;
     if (message.__fromMessageUpdatePrefix) return;
 
     const resolved = resolveCommandFromContent(message, client);

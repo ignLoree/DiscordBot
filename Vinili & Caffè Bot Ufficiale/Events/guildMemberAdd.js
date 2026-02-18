@@ -336,6 +336,7 @@ async function sendBotAddLog(member) {
 async function handleBotJoin(member) {
   queueIdsCatalogSync(member.client, member.guild.id, "botJoin");
   await sendBotAddLog(member).catch(() => {});
+  await sendJoinGateNoAvatarLog(member).catch(() => {});
   try {
     await addBotRoles(member);
   } catch (error) {
@@ -392,7 +393,7 @@ function hasNoAvatar(member) {
 }
 
 async function sendJoinGateNoAvatarLog(member) {
-  if (!member?.guild || !member?.user || member.user.bot) return;
+  if (!member?.guild || !member?.user) return;
   if (!hasNoAvatar(member)) return;
 
   const logChannel =
@@ -423,10 +424,10 @@ async function handleTooYoungAccount(member) {
     .setColor("#6f4e37")
     .setDescription(
       [
-        `<:profile:1461732907508039834> **Member:** ${member?.displayName || member?.user?.username} [${member.user.id}]`,
-        "<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.",
-        `<:space:1461733157840621608><:rightSort:1461726104422453298> **Accounts Age:** <t:${createdTs}:R>.`,
-        `<:space:1461733157840621608><:rightSort:1461726104422453298> **Minimum Age:** \`${MIN_ACCOUNT_AGE_DAYS}\` days.`,
+        `${ARROW} **Member:** ${member?.displayName || member?.user?.username} **[\`${member.user.id}\`]**`,
+        `${ARROW} **Reason:** Account is too young to be allowed.`,
+        `<:VC_Space:1461481021320069195>${ARROW} **Accounts Age:** \`<t:${createdTs}:R>\`.`,
+        `<:VC_Space:1461481021320069195>${ARROW} **Minimum Age:** \`${MIN_ACCOUNT_AGE_DAYS} days\`.`,
       ].join("\n"),
     );
 
@@ -501,7 +502,7 @@ async function sendJoinLog(member) {
         "**Account Age**",
         accountAge,
         "",
-        `ID: ${member.user.id} • <t:${nowTs}:F>`,
+        `ID: ${member.user.id} ï¿½ <t:${nowTs}:F>`,
       ].join("\n"),
     )
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));

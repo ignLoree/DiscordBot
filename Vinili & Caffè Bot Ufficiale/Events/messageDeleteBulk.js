@@ -70,21 +70,48 @@ async function resolvePurgeResponsible(guild, channelId, deletedCount, fallbackU
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 6 })
+    .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 12 })
     .catch(() => null);
   if (!logs?.entries?.size) return fallbackUser;
 
   const nowMs = Date.now();
-  const entry = logs.entries.find((item) => {
+  const candidates = [];
+  logs.entries.forEach((item) => {
     const createdMs = Number(item?.createdTimestamp || 0);
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
-    const sameChannel = String(item?.extra?.channel?.id || "") === String(channelId || "");
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= 120 * 1000;
+    if (!withinWindow) return;
+
+    const sameChannelByExtra =
+      String(item?.extra?.channel?.id || "") === String(channelId || "");
+    const sameChannelByTarget =
+      String(item?.target?.id || "") === String(channelId || "");
+    const sameChannel = sameChannelByExtra || sameChannelByTarget;
+
     const count = Number(item?.extra?.count || 0);
-    const countCompatible = !count || count === Number(deletedCount || 0);
-    return withinWindow && sameChannel && countCompatible;
+    const wantedCount = Number(deletedCount || 0);
+    const exactCount = count > 0 && count === wantedCount;
+    const nearCount = count > 0 && wantedCount > 0 && Math.abs(count - wantedCount) <= 2;
+
+    let score = 0;
+    if (sameChannel) score += 5;
+    if (exactCount) score += 4;
+    else if (nearCount) score += 2;
+    else if (!count) score += 1;
+
+    // Prefer newer audit entries when score is tied.
+    candidates.push({ item, score, createdMs });
   });
 
-  return entry?.executor || fallbackUser;
+  if (!candidates.length) return fallbackUser;
+
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.createdMs - a.createdMs;
+  });
+
+  const best = candidates[0];
+  if (!best || best.score < 3) return fallbackUser;
+  return best.item?.executor || fallbackUser;
 }
 
 module.exports = {

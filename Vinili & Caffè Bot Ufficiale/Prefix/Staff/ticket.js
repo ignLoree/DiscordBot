@@ -3,6 +3,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  PermissionFlagsBits,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
@@ -11,6 +12,8 @@ const {
   createTranscriptHtml,
   saveTranscriptHtml,
 } = require("../../Utils/Ticket/transcriptUtils");
+const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
+const { TICKETS_CATEGORY_NAME } = require("../../Utils/Ticket/ticketCategoryUtils");
 const IDs = require("../../Utils/Config/ids");
 const LOG_CHANNEL_ID = IDs.channels.ticketLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
@@ -61,10 +64,31 @@ function canCloseTicket(member, ticketType) {
   return canCloseSupport || canClosePartnership || canCloseHigh;
 }
 
-async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
+async function sendTranscriptWithBrowserLink(
+  target,
+  payload,
+  hasHtml,
+  extraRows = [],
+) {
   if (!target?.send) return null;
   const sent = await target.send(payload).catch(() => null);
-  if (!sent || !hasHtml) return sent;
+  if (!sent) return sent;
+  const safeExtraRows = Array.isArray(extraRows)
+    ? extraRows.filter(Boolean)
+    : [];
+  if (!hasHtml) {
+    if (safeExtraRows.length > 0) {
+      const baseContent =
+        typeof payload?.content === "string" ? payload.content.trim() : "";
+      await sent
+        .edit({
+          content: baseContent || undefined,
+          components: safeExtraRows.slice(0, 5),
+        })
+        .catch(() => {});
+    }
+    return sent;
+  }
   const attachment = sent.attachments?.find((att) => {
     const name = String(att?.name || "").toLowerCase();
     const url = String(att?.url || "").toLowerCase();
@@ -82,11 +106,108 @@ async function sendTranscriptWithBrowserLink(target, payload, hasHtml) {
     await sent
       .edit({
         content: baseContent || undefined,
-        components: [row],
+        components: [row, ...safeExtraRows].slice(0, 5),
+      })
+      .catch(() => {});
+  } else if (safeExtraRows.length > 0) {
+    const baseContent =
+      typeof payload?.content === "string" ? payload.content.trim() : "";
+    await sent
+      .edit({
+        content: baseContent || undefined,
+        components: safeExtraRows.slice(0, 5),
       })
       .catch(() => {});
   }
   return sent;
+}
+
+function buildTicketRatingRows(ticketId) {
+  const stylesByScore = {
+    1: ButtonStyle.Danger,
+    2: ButtonStyle.Danger,
+    3: ButtonStyle.Primary,
+    4: ButtonStyle.Success,
+    5: ButtonStyle.Success,
+  };
+  const row = new ActionRowBuilder().addComponents(
+    ...[1, 2, 3, 4, 5].map((score) =>
+      new ButtonBuilder()
+        .setCustomId(`ticket_rate:${ticketId}:${score}`)
+        .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
+        .setLabel(String(score))
+        .setEmoji("⭐"),
+    ),
+  );
+  return [row];
+}
+
+function buildTicketTranscriptRows(ticketId) {
+  return [
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`ticket_transcript:${ticketId}`)
+        .setStyle(ButtonStyle.Secondary)
+        .setLabel("View Transcript")
+        .setEmoji("📁"),
+    ),
+  ];
+}
+
+function buildTicketClosedEmbed(data) {
+  const openedAt = data?.createdAt
+    ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>`
+    : "Sconosciuto";
+  const closedAt = data?.closedAt
+    ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>`
+    : `<t:${Math.floor(Date.now() / 1000)}:F>`;
+  const reasonText =
+    data?.closeReason && String(data.closeReason).trim()
+      ? String(data.closeReason).trim()
+      : "No reason specified";
+
+  const embed = new EmbedBuilder()
+    .setAuthor({
+      name: data?.guildName || "Ticket System",
+      iconURL: data?.guildIconURL || undefined,
+    })
+    .setTitle("Ticket Closed")
+    .setColor("#6f4e37")
+    .addFields(
+      {
+        name: "🆔 Ticket ID",
+        value: String(data?.ticketNumber || "N/A"),
+        inline: true,
+      },
+      {
+        name: "✅ Opened By",
+        value: data?.userId ? `<@${data.userId}>` : "Unknown",
+        inline: true,
+      },
+      {
+        name: "🛑 Closed By",
+        value: data?.closedBy ? `<@${data.closedBy}>` : "Unknown",
+        inline: true,
+      },
+      { name: "🕒 Open Time", value: openedAt, inline: true },
+      {
+        name: "🙋 Claimed By",
+        value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
+        inline: true,
+      },
+      { name: "ℹ️ Reason", value: reasonText, inline: false },
+    )
+    .setFooter({ text: closedAt });
+
+  if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
+    embed.addFields({
+      name: "⭐ Rating",
+      value: `${data.ratingScore}/5${data?.ratingBy ? ` • da <@${data.ratingBy}>` : ""}`,
+      inline: false,
+    });
+  }
+
+  return embed;
 }
 
 function makeErrorEmbed(title, description) {
@@ -94,6 +215,17 @@ function makeErrorEmbed(title, description) {
     .setTitle(title)
     .setDescription(description)
     .setColor("#6f4e37");
+}
+
+async function pinFirstTicketMessage(channel, message) {
+  if (!channel || !message?.pin) return;
+  await message.pin().catch(() => {});
+  const recent = await channel.messages.fetch({ limit: 6 }).catch(() => null);
+  if (!recent) return;
+  const pinSystem = recent.find((m) => Number(m.type) === 6);
+  if (pinSystem) {
+    await pinSystem.delete().catch(() => {});
+  }
 }
 
 async function resolveUserFromArg(message, rawArg) {
@@ -181,6 +313,137 @@ function getTicketPanelConfig(raw) {
   return configs[resolved] || null;
 }
 
+function getTicketChannelPermissionOverwrites(guild, userId, ticketType) {
+  const base = [
+    {
+      id: guild.roles.everyone.id,
+      deny: [PermissionFlagsBits.ViewChannel],
+    },
+    {
+      id: userId,
+      allow: [
+        PermissionFlagsBits.ViewChannel,
+        PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.EmbedLinks,
+        PermissionFlagsBits.AttachFiles,
+        PermissionFlagsBits.ReadMessageHistory,
+        PermissionFlagsBits.AddReactions,
+      ],
+    },
+  ];
+
+  if (ticketType === "supporto") {
+    base.push(
+      {
+        id: STAFF_ROLE_ID,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.EmbedLinks,
+          PermissionFlagsBits.AttachFiles,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
+      {
+        id: HIGHSTAFF_ROLE_ID,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.EmbedLinks,
+          PermissionFlagsBits.AttachFiles,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
+      {
+        id: PARTNERMANAGER_ROLE_ID,
+        deny: [PermissionFlagsBits.ViewChannel],
+      },
+    );
+  } else if (ticketType === "partnership") {
+    base.push(
+      {
+        id: PARTNERMANAGER_ROLE_ID,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.EmbedLinks,
+          PermissionFlagsBits.AttachFiles,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
+      {
+        id: HIGHSTAFF_ROLE_ID,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+        ],
+      },
+      {
+        id: STAFF_ROLE_ID,
+        deny: [PermissionFlagsBits.ViewChannel],
+      },
+    );
+  } else if (ticketType === "high") {
+    base.push(
+      {
+        id: HIGHSTAFF_ROLE_ID,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.EmbedLinks,
+          PermissionFlagsBits.AttachFiles,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
+      {
+        id: STAFF_ROLE_ID,
+        deny: [PermissionFlagsBits.ViewChannel],
+      },
+      {
+        id: PARTNERMANAGER_ROLE_ID,
+        deny: [PermissionFlagsBits.ViewChannel],
+      },
+    );
+  }
+
+  return base.filter((entry) => Boolean(entry?.id));
+}
+
+async function ensureTicketsCategory(guild) {
+  await guild.channels.fetch().catch(() => null);
+  const categories = guild.channels.cache
+    .filter((ch) => ch.type === 4 && String(ch.name || "").toLowerCase().includes("tickets"))
+    .sort((a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id));
+
+  if (categories.size > 0) {
+    const exact = categories.find((c) => c.name === TICKETS_CATEGORY_NAME);
+    return exact || categories.first();
+  }
+
+  const created = await guild.channels
+    .create({
+      name: TICKETS_CATEGORY_NAME,
+      type: 4,
+      permissionOverwrites: [
+        {
+          id: guild.roles.everyone.id,
+          deny: [PermissionFlagsBits.SendMessages],
+        },
+      ],
+    })
+    .catch(() => null);
+
+  if (created) {
+    await created.setPosition(0).catch(() => {});
+  }
+  return created;
+}
+
 module.exports = {
   name: "ticket",
   aliases: [
@@ -192,11 +455,13 @@ module.exports = {
     "unclaim",
     "switchpanel",
     "rename",
+    "reopen",
     "ticketclose",
     "ticketclaim",
     "ticketunclaim",
     "ticketswitchpanel",
     "ticketrename",
+    "ticketreopen",
     "trename",
     "tadd",
     "tremove",
@@ -213,6 +478,7 @@ module.exports = {
     "unclaim",
     "switchpanel",
     "rename",
+    "reopen",
   ],
   subcommandAliases: {
     add: "add",
@@ -223,8 +489,10 @@ module.exports = {
     unclaim: "unclaim",
     switchpanel: "switchpanel",
     rename: "rename",
+    reopen: "reopen",
     ticketswitchpanel: "switchpanel",
     ticketrename: "rename",
+    ticketreopen: "reopen",
     trename: "rename",
     ticketclose: "close",
     ticketclaim: "claim",
@@ -291,14 +559,14 @@ module.exports = {
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename>`",
+              "<:vegax:1443934876440068179> Uso corretto: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename|reopen>`",
             ),
         ],
         allowedMentions: { repliedUser: false },
       });
       return;
     }
-    if (!inTicketCategory || !activeTicketInChannel) {
+    if (subcommand !== "reopen" && (!inTicketCategory || !activeTicketInChannel)) {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
@@ -313,6 +581,244 @@ module.exports = {
     }
 
     const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+    const isTicketHighStaff = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+
+    if (subcommand === "reopen") {
+      if (!isTicketHighStaff) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              "<:vegax:1443934876440068179> Solo l'**High Staff** può riaprire ticket.",
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const ticketNumber = Number(normalizedRest[0]);
+      if (!Number.isInteger(ticketNumber) || ticketNumber <= 0) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              "<:vegax:1443934876440068179> Uso corretto: `+ticket reopen <id_ticket>` oppure `+reopen <id_ticket>`.",
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const ticketDoc = await Ticket.findOne({
+        guildId: message.guild.id,
+        ticketNumber,
+      }).catch(() => null);
+
+      if (!ticketDoc) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              `<:vegax:1443934876440068179> Ticket #${ticketNumber} non trovato.`,
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      if (ticketDoc.open && ticketDoc.channelId) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Info",
+              `<:attentionfromvega:1443651874032062505> Ticket #${ticketNumber} è già aperto: <#${ticketDoc.channelId}>`,
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const existingOpen = await Ticket.findOne({
+        guildId: message.guild.id,
+        userId: ticketDoc.userId,
+        open: true,
+      }).catch(() => null);
+
+      if (existingOpen) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              `<:vegax:1443934876440068179> L'utente ha già un ticket aperto: <#${existingOpen.channelId}>`,
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const ticketMember = await message.guild.members
+        .fetch(ticketDoc.userId)
+        .catch(() => null);
+      if (!ticketMember) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              "<:vegax:1443934876440068179> Utente del ticket non presente nel server, impossibile riaprire.",
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const config =
+        getTicketPanelConfig(ticketDoc.ticketType) ||
+        getTicketPanelConfig("supporto");
+      if (!config) {
+        await safeMessageReply(message, {
+          embeds: [makeErrorEmbed("Errore", "Configurazione ticket non valida.")],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const category = await ensureTicketsCategory(message.guild);
+      if (!category) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              "<:vegax:1443934876440068179> Impossibile trovare o creare la categoria ticket.",
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const usernamePart = String(ticketMember.user.username || "utente")
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "")
+        .slice(0, 32);
+      const channelName = `ticket-${config.name}-${usernamePart || ticketMember.id}`;
+
+      const channel = await message.guild.channels
+        .create({
+          name: channelName,
+          type: 0,
+          parent: category.id,
+          permissionOverwrites: getTicketChannelPermissionOverwrites(
+            message.guild,
+            ticketDoc.userId,
+            config.type,
+          ),
+        })
+        .catch(() => null);
+
+      if (!channel) {
+        await safeMessageReply(message, {
+          embeds: [
+            makeErrorEmbed(
+              "Errore",
+              "<:vegax:1443934876440068179> Impossibile creare il canale ticket.",
+            ),
+          ],
+          allowedMentions: NO_REPLY_MENTIONS,
+        });
+        return;
+      }
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId("close_ticket")
+          .setLabel("🔒 Chiudi")
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId("close_ticket_motivo")
+          .setLabel("📝 Chiudi Con Motivo")
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId("claim_ticket")
+          .setLabel("✅ Claim")
+          .setStyle(ButtonStyle.Success),
+      );
+
+      const mainMsg = await channel
+        .send({ embeds: [config.embed], components: [row] })
+        .catch(() => null);
+      if (mainMsg) {
+        await pinFirstTicketMessage(channel, mainMsg);
+      }
+
+      let descriptionPrompt = null;
+      if (config.type === "partnership" && !ticketDoc.descriptionSubmitted) {
+        const descriptionRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId("ticket_open_desc_modal")
+            .setLabel("📝 Invia Descrizione")
+            .setStyle(ButtonStyle.Primary),
+        );
+        descriptionPrompt = await channel
+          .send({
+            content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione.`,
+            components: [descriptionRow],
+          })
+          .catch(() => null);
+      }
+
+      await Ticket.updateOne(
+        { _id: ticketDoc._id },
+        {
+          $set: {
+            open: true,
+            channelId: channel.id,
+            messageId: mainMsg?.id || null,
+            descriptionPromptMessageId: descriptionPrompt?.id || null,
+            transcript: "",
+            transcriptHtmlPath: null,
+            closeReason: null,
+            closeRequestedBy: null,
+            closeRequestedAt: null,
+            closedBy: null,
+            closedAt: null,
+            claimedBy: null,
+            closeLogChannelId: null,
+            closeLogMessageId: null,
+            ratingScore: null,
+            ratingBy: null,
+            ratingAt: null,
+          },
+        },
+      ).catch(() => {});
+
+      const tagRole =
+        config.type === "partnership" ? PARTNERMANAGER_ROLE_ID : STAFF_ROLE_ID;
+      const mentionMsg = await channel
+        .send(`<@${ticketDoc.userId}> ${tagRole ? `<@&${tagRole}>` : ""}`)
+        .catch(() => null);
+      if (mentionMsg) {
+        setTimeout(() => mentionMsg.delete().catch(() => {}), 150);
+      }
+
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("#6f4e37")
+            .setTitle("Ticket Riaperto")
+            .setDescription(
+              `<:vegacheckmark:1443666279058772028> Ticket #${ticketNumber} riaperto in ${channel}.`,
+            ),
+        ],
+        allowedMentions: NO_REPLY_MENTIONS,
+      });
+      return;
+    }
 
     if (subcommand === "add") {
       const user = await resolveUserFromArg(message, normalizedRest[0]);
@@ -415,7 +921,13 @@ module.exports = {
 
       await Ticket.updateOne(
         { channelId: message.channel.id },
-        { $set: { closeReason: reason || null } },
+        {
+          $set: {
+            closeReason: reason || null,
+            closeRequestedBy: message.author.id,
+            closeRequestedAt: new Date(),
+          },
+        },
       ).catch(() => {});
       const closeButton = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -446,7 +958,6 @@ module.exports = {
     }
 
     if (subcommand === "close") {
-      const motivoFromArgs = normalizedRest.join(" ").trim() || null;
       const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
       if (!ticketDoc) {
         await safeMessageReply(message, {
@@ -489,7 +1000,13 @@ module.exports = {
 
       const claimed = await Ticket.findOneAndUpdate(
         { channelId: message.channel.id, open: true },
-        { $set: { open: false, closedAt: new Date() } },
+        {
+          $set: {
+            open: false,
+            closedAt: new Date(),
+            closedBy: message.author.id,
+          },
+        },
         { new: true },
       );
       if (!claimed) {
@@ -506,8 +1023,9 @@ module.exports = {
         return;
       }
 
-      const closeReason = motivoFromArgs || claimed.closeReason || null;
-      const motivoDisplay = closeReason || "Nessun motivo inserito";
+      const closeReason = null;
+      let ticketNumber = Number(claimed.ticketNumber || 0);
+      if (!ticketNumber) ticketNumber = await getNextTicketId();
       const transcriptTXT = await createTranscript(message.channel).catch(
         () => "",
       );
@@ -523,16 +1041,17 @@ module.exports = {
         { channelId: message.channel.id },
         {
           $set: {
+            ticketNumber,
             transcript: transcriptTXT,
+            transcriptHtmlPath: transcriptHtmlPath || null,
             closeReason,
             claimedBy: claimed.claimedBy || null,
+            closeRequestedBy: null,
+            closeRequestedAt: null,
+            closedBy: message.author.id,
           },
         },
       ).catch(() => {});
-
-      const createdAtFormatted = claimed.createdAt
-        ? `<t:${Math.floor(claimed.createdAt.getTime() / 1000)}:F>`
-        : "Data non disponibile";
 
       const mainGuildId = IDs?.guilds?.main || null;
       const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL_ID;
@@ -550,33 +1069,28 @@ module.exports = {
         message.guild.channels.cache.get(LOG_CHANNEL_ID) ||
         (await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null));
 
+      const closeEmbed = buildTicketClosedEmbed({
+        ...claimed.toObject(),
+        ticketNumber,
+        closeReason,
+        closedBy: message.author.id,
+        closedAt: new Date(),
+        guildName: message.guild?.name || "Ticket System",
+        guildIconURL: message.guild?.iconURL?.({ size: 128 }) || null,
+      });
+      const transcriptRows = buildTicketTranscriptRows(String(claimed._id));
+      const ratingRows = buildTicketRatingRows(String(claimed._id));
+      const closeActionRows = [...transcriptRows, ...ratingRows];
+
+      let logSentMessage = null;
       if (logChannel?.isTextBased?.()) {
-        await sendTranscriptWithBrowserLink(
+        logSentMessage = await sendTranscriptWithBrowserLink(
           logChannel,
           {
-            files: transcriptHtmlPath
-              ? [
-                  {
-                    attachment: transcriptHtmlPath,
-                    name: `transcript_${message.channel.id}.html`,
-                  },
-                ]
-              : [
-                  {
-                    attachment: Buffer.from(transcriptTXT, "utf-8"),
-                    name: `transcript_${message.channel.id}.txt`,
-                  },
-                ],
-            embeds: [
-              new EmbedBuilder()
-                .setTitle("Ticket Chiuso")
-                .setDescription(
-                  `<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : "Non claimato"}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`,
-                )
-                .setColor("#6f4e37"),
-            ],
+            embeds: [closeEmbed],
           },
-          Boolean(transcriptHtmlPath),
+          false,
+          closeActionRows,
         );
       }
 
@@ -588,33 +1102,26 @@ module.exports = {
           await sendTranscriptWithBrowserLink(
             member,
             {
-              files: transcriptHtmlPath
-                ? [
-                    {
-                      attachment: transcriptHtmlPath,
-                      name: `transcript_${message.channel.id}.html`,
-                    },
-                  ]
-                : [
-                    {
-                      attachment: Buffer.from(transcriptTXT, "utf-8"),
-                      name: `transcript_${message.channel.id}.txt`,
-                    },
-                  ],
-              embeds: [
-                new EmbedBuilder()
-                  .setTitle("Ticket Chiuso")
-                  .setDescription(
-                    `<:member_role_icon:1330530086792728618> **Aperto da:** <@${claimed.userId}>\n<:discordstaff:1443651872258003005> **Chiuso da:** ${message.author}\n<:Clock:1330530065133338685> **Aperto il:** ${createdAtFormatted}\n<a:VC_Verified:1448687631109197978> **Claimato da:** ${claimed.claimedBy ? `<@${claimed.claimedBy}>` : "Non claimato"}\n<:reportmessage:1443670575376765130> **Motivo:** ${motivoDisplay}`,
-                  )
-                  .setColor("#6f4e37"),
-              ],
+              embeds: [closeEmbed],
             },
-            Boolean(transcriptHtmlPath),
+            false,
+            closeActionRows,
           );
         } catch (err) {
           if (err?.code !== 50007) global.logger.error("[DM ERROR]", err);
         }
+      }
+
+      if (logSentMessage?.id && logChannel?.id) {
+        await Ticket.updateOne(
+          { _id: claimed._id },
+          {
+            $set: {
+              closeLogChannelId: logChannel.id,
+              closeLogMessageId: logSentMessage.id,
+            },
+          },
+        ).catch(() => {});
       }
 
       await safeMessageReply(message, {
@@ -1283,7 +1790,7 @@ module.exports = {
         new EmbedBuilder()
           .setColor("Red")
           .setDescription(
-            "<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`.",
+            "<:vegax:1443934876440068179> Subcomando non valido. Usa: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`.",
           ),
       ],
       allowedMentions: { repliedUser: false },

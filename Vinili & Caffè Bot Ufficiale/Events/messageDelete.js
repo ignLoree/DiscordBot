@@ -134,7 +134,6 @@ module.exports = {
     if (!resolved?.guild) return;
 
     await sendDeleteLog(resolved);
-    if (resolved.author?.bot) return;
 
     const channelId = resolved.channel?.id || resolved.channelId;
     if (!channelId) return;
