@@ -9,6 +9,7 @@
 const IDs = require("../Utils/Config/ids");
 
 const DEDUPE_TTL_MS = 15 * 1000;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -58,27 +59,37 @@ async function fetchRecentPinEntry(guild, channelId) {
     return null;
   }
 
-  const logs = await guild.fetchAuditLogs({ limit: 8 }).catch(() => null);
-  if (!logs?.entries?.size) return null;
+  const [pinLogs, unpinLogs] = await Promise.all([
+    guild
+      .fetchAuditLogs({ type: AuditLogEvent.MessagePin, limit: 10 })
+      .catch(() => null),
+    guild
+      .fetchAuditLogs({ type: AuditLogEvent.MessageUnpin, limit: 10 })
+      .catch(() => null),
+  ]);
 
   const now = Date.now();
-  const candidates = logs.entries.filter((entry) => {
+  const combined = [
+    ...(pinLogs?.entries ? [...pinLogs.entries.values()] : []),
+    ...(unpinLogs?.entries ? [...unpinLogs.entries.values()] : []),
+  ];
+  const candidates = combined.filter((entry) => {
     const type = entry?.action;
-    if (
-      type !== AuditLogEvent.MessagePin &&
-      type !== AuditLogEvent.MessageUnpin
-    ) {
+    if (type !== AuditLogEvent.MessagePin && type !== AuditLogEvent.MessageUnpin) {
       return false;
     }
     const createdMs = Number(entry?.createdTimestamp || 0);
-    if (!createdMs || now - createdMs > 30 * 1000) return false;
+    if (!createdMs || now - createdMs > AUDIT_LOOKBACK_MS) return false;
 
     const targetChannelId = String(entry?.extra?.channel?.id || "");
     return targetChannelId === String(channelId || "");
   });
 
-  if (!candidates.size) return null;
-  return candidates.first();
+  if (!candidates.length) return null;
+  candidates.sort(
+    (a, b) => Number(b?.createdTimestamp || 0) - Number(a?.createdTimestamp || 0),
+  );
+  return candidates[0] || null;
 }
 
 module.exports = {
@@ -97,6 +108,7 @@ module.exports = {
       if (!isPin && !isUnpin) return;
 
       const messageId = String(entry?.extra?.messageId || "").trim();
+      if (!messageId) return;
       const dedupeKey = `${guild.id}:${channel.id}:${messageId}:${String(action)}`;
       const dedupe = getDedupeStore(client);
       if (dedupe.has(dedupeKey)) return;

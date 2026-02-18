@@ -54,6 +54,31 @@ function permissionList(bitfield) {
   return names.join(", ");
 }
 
+function permissionDiff(oldBitfield, newBitfield) {
+  const oldBits = new PermissionsBitField(oldBitfield ?? 0n);
+  const newBits = new PermissionsBitField(newBitfield ?? 0n);
+  const oldSet = new Set(oldBits.toArray());
+  const newSet = new Set(newBits.toArray());
+
+  const additions = [];
+  const removals = [];
+
+  for (const name of newSet) {
+    if (!oldSet.has(name)) additions.push(name);
+  }
+  for (const name of oldSet) {
+    if (!newSet.has(name)) removals.push(name);
+  }
+
+  additions.sort((a, b) => a.localeCompare(b));
+  removals.sort((a, b) => a.localeCompare(b));
+
+  return {
+    additions: additions.length ? additions.join(", ") : "None",
+    removals: removals.length ? removals.join(", ") : "None",
+  };
+}
+
 function toLabel(key) {
   return String(key || "")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -136,28 +161,49 @@ async function resolveResponsible(guild, actionType, matcher) {
   if (
     !guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
   ) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null, entry: null };
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: actionType, limit: 8 })
+    .fetchAuditLogs({ type: actionType, limit: 20 })
     .catch(() => null);
   if (!logs?.entries?.size) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null, entry: null };
   }
 
   const now = Date.now();
-  const entry = logs.entries.find((item) => {
+  const candidates = [];
+  logs.entries.forEach((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    if (!created || now - created > 30 * 1000) return false;
-    if (typeof matcher !== "function") return true;
-    return matcher(item);
+    if (!created || now - created > 120 * 1000) return;
+
+    let score = 1;
+    if (typeof matcher === "function") {
+      const result = matcher(item);
+      if (!result) return;
+      if (typeof result === "number" && Number.isFinite(result)) {
+        score += result;
+      } else {
+        score += 3;
+      }
+    }
+
+    // Prefer newest entry when score ties.
+    score += Math.max(0, 120000 - (now - created)) / 120000;
+    candidates.push({ item, score, created });
   });
 
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.created - a.created;
+  });
+
+  const entry = candidates[0]?.item || null;
+
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     reason: entry?.reason || null,
-    entry: entry || null,
+    entry,
   };
 }
 
@@ -169,6 +215,7 @@ module.exports = {
   channelTypeLabel,
   formatAuditActor,
   permissionList,
+  permissionDiff,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,

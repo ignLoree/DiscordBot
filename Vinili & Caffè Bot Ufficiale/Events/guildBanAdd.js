@@ -24,7 +24,7 @@ module.exports = {
       const logChannel = await resolveModLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      let executor = guild.client.user || null;
+      let executor = null;
       let reason = ban?.reason || null;
       const auditEntry = await fetchRecentAuditEntry(
         guild,
@@ -33,7 +33,7 @@ module.exports = {
       );
       if (auditEntry?.executor) executor = auditEntry.executor;
       if (auditEntry?.reason) reason = auditEntry.reason;
-      const executorId = String(auditEntry?.executor?.id || executor?.id || "");
+      const executorId = String(auditEntry?.executor?.id || "");
 
       const responsible = formatResponsible(executor);
 

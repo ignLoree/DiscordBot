@@ -32,8 +32,9 @@ function isMeaningfulDeletedMessage(msg) {
   const hasContent = sanitizeText(msg.content || "").length > 0;
   const hasAttachments = Boolean(msg.attachments?.size);
   const hasEmbeds = Array.isArray(msg.embeds) && msg.embeds.length > 0;
-  const hasAuthor = Boolean(msg.author?.id);
-  return hasContent || hasAttachments || hasEmbeds || hasAuthor;
+  // Skip embed-only ghost messages: no visible content for moderation context.
+  if (hasEmbeds && !hasContent && !hasAttachments) return false;
+  return hasContent || hasAttachments || hasEmbeds;
 }
 
 function buildPurgeLogText(messages, channelId) {
@@ -70,6 +71,41 @@ function buildPurgeLogText(messages, channelId) {
   rows.push("--------------------");
   rows.push("");
   return rows.join("\n");
+}
+
+function splitTextToChunks(text, maxBytes = 1_800_000) {
+  const input = String(text || "");
+  if (!input) return ["(vuoto)"];
+  const lines = input.split("\n");
+  const chunks = [];
+  let current = "";
+  for (const line of lines) {
+    const candidate = current ? `${current}\n${line}` : line;
+    if (Buffer.byteLength(candidate, "utf8") <= maxBytes) {
+      current = candidate;
+      continue;
+    }
+    if (current) chunks.push(current);
+    if (Buffer.byteLength(line, "utf8") <= maxBytes) {
+      current = line;
+      continue;
+    }
+    // Single line too large: hard-split by characters.
+    let remaining = line;
+    while (Buffer.byteLength(remaining, "utf8") > maxBytes) {
+      let take = Math.floor((maxBytes * 0.9));
+      if (take < 128) take = 128;
+      let piece = remaining.slice(0, take);
+      while (Buffer.byteLength(piece, "utf8") > maxBytes && piece.length > 1) {
+        piece = piece.slice(0, -1);
+      }
+      chunks.push(piece);
+      remaining = remaining.slice(piece.length);
+    }
+    current = remaining;
+  }
+  if (current) chunks.push(current);
+  return chunks.length ? chunks : ["(vuoto)"];
 }
 
 async function resolveActivityLogChannel(guild) {
@@ -175,12 +211,23 @@ module.exports = {
       );
 
     const txt = buildPurgeLogText(meaningful, channel.id);
-    const fileName = `${channel.id}_${sample?.id || Date.now()}.txt`;
-    const file = new AttachmentBuilder(Buffer.from(txt, "utf8"), {
-      name: fileName,
+    const chunks = splitTextToChunks(txt);
+    const cappedChunks = chunks.slice(0, 10);
+    const files = cappedChunks.map((chunk, index) => {
+      const suffix = chunks.length > 1 ? `_p${index + 1}` : "";
+      const fileName = `${channel.id}_${sample?.id || Date.now()}${suffix}.txt`;
+      return new AttachmentBuilder(Buffer.from(chunk, "utf8"), {
+        name: fileName,
+      });
     });
+    if (chunks.length > 10) {
+      embed.addFields({
+        name: "Note",
+        value: `Dump diviso in più parti: inviate le prime 10/${chunks.length}.`,
+      });
+    }
 
-    await logChannel.send({ embeds: [embed], files: [file] }).catch(() => {});
+    await logChannel.send({ embeds: [embed], files }).catch(() => {});
   },
 };
 

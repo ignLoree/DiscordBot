@@ -7,6 +7,8 @@
   PermissionsBitField,
 } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 const CHANGE_LABELS = new Map([
   ["name", "Name"],
@@ -84,25 +86,28 @@ async function resolveAudit(guild, eventId) {
       PermissionsBitField.Flags.ViewAuditLog,
     )
   ) {
-    return { executor: guild?.client?.user || null, changes: [] };
+    return { executor: null, changes: [] };
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.GuildScheduledEventUpdate, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.GuildScheduledEventUpdate,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
   if (!logs?.entries?.size) {
-    return { executor: guild?.client?.user || null, changes: [] };
+    return { executor: null, changes: [] };
   }
 
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
     return within && String(item?.target?.id || "") === String(eventId || "");
   });
 
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     changes: Array.isArray(entry?.changes) ? entry.changes : [],
   };
 }

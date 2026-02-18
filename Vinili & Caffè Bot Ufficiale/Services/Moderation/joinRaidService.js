@@ -12,6 +12,11 @@ const CORE_EXEMPT_USER_IDS = new Set([
   "1466495522474037463",
   "1329118940110127204",
 ]);
+const VERIFIED_BOT_IDS = new Set(
+  Object.values(IDs?.bots || {})
+    .filter(Boolean)
+    .map(String),
+);
 
 const JOIN_RAID_CONFIG = {
   enabled: true,
@@ -386,6 +391,9 @@ async function applyPunishment(member, reasons) {
 async function processJoinRaidForMember(member) {
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
+  if (VERIFIED_BOT_IDS.has(String(member.id || ""))) {
+    return { blocked: false };
+  }
   if (
     CORE_EXEMPT_USER_IDS.has(String(member.id || "")) ||
     String(member.guild.ownerId || "") === String(member.id || "")

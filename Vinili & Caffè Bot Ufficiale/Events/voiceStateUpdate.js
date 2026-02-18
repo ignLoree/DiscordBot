@@ -7,8 +7,9 @@ const { leaveTtsGuild } = require("../Services/TTS/ttsService");
 const {
   handleVoiceActivity,
 } = require("../Services/Community/activityService");
-const VoiceDisconnectCounter = require("../Schemas/Voice/voiceDisconnectCounterSchema");
 const IDs = require("../Utils/Config/ids");
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
@@ -19,16 +20,6 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return "<t:0:F>";
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
-}
-
-async function incrementDisconnectCounter(guildId, userId) {
-  if (!guildId || !userId) return 1;
-  const row = await VoiceDisconnectCounter.findOneAndUpdate(
-    { guildId: String(guildId), userId: String(userId) },
-    { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  ).catch(() => null);
-  return Math.max(1, Number(row?.count || 1));
 }
 
 async function resolveActivityLogChannel(guild) {
@@ -46,26 +37,29 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
       PermissionsBitField.Flags.ViewAuditLog,
     )
   ) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null };
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MemberUpdate, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.MemberUpdate,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
   if (!logs?.entries?.size) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null };
   }
 
   const nowMs = Date.now();
   const entry = logs.entries.find((item) => {
     const createdMs = Number(item?.createdTimestamp || 0);
     const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
     return withinWindow && targetId === String(targetUserId || "");
   });
 
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     reason: entry?.reason || null,
   };
 }
@@ -76,26 +70,29 @@ async function resolveMemberMoveAuditInfo(guild, targetUserId) {
       PermissionsBitField.Flags.ViewAuditLog,
     )
   ) {
-    return { executor: guild?.client?.user || null, count: 1 };
+    return { executor: null, count: 1 };
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MemberMove, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.MemberMove,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
   if (!logs?.entries?.size) {
-    return { executor: guild?.client?.user || null, count: 1 };
+    return { executor: null, count: 1 };
   }
 
   const nowMs = Date.now();
   const entry = logs.entries.find((item) => {
     const createdMs = Number(item?.createdTimestamp || 0);
     const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
     return withinWindow && targetId === String(targetUserId || "");
   });
 
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     count: Math.max(1, Number(entry?.extra?.count || 1)),
   };
 }
@@ -112,7 +109,6 @@ async function sendMemberDisconnectLog(oldState, newState, client) {
   const logChannel = await resolveActivityLogChannel(guild);
   if (!logChannel?.isTextBased?.()) return;
 
-  const count = await incrementDisconnectCounter(guild.id, user.id);
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Disconnect")
@@ -122,7 +118,7 @@ async function sendMemberDisconnectLog(oldState, newState, client) {
         `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
+        `<:VC_right_arrow:1473441155055096081> **Count:** 1`,
       ].join("\n"),
     );
 

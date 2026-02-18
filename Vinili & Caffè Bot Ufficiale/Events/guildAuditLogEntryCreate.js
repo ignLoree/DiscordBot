@@ -17,7 +17,7 @@ module.exports = {
       const logChannel = await resolveModLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const executor = entry.executor || guild.client.user || null;
+      const executor = entry.executor || null;
       const responsible = formatResponsible(executor);
 
       const membersRemoved = Number(entry.extra?.removed ?? entry.extra?.membersRemoved ?? 0);

@@ -223,10 +223,27 @@ const WHITELISTED_WEBHOOK_IDS = new Set(
     .filter(Boolean)
     .map(String),
 );
+const VERIFIED_BOT_IDS = new Set(
+  Object.values(IDs?.bots || {})
+    .filter(Boolean)
+    .map(String),
+);
 const CORE_EXEMPT_USER_IDS = new Set([
   "1466495522474037463",
   "1329118940110127204",
 ]);
+const TRUSTED_WEBHOOK_AUTHOR_IDS = new Set(
+  [
+    IDs.bots?.DISBOARD,
+    IDs.bots?.Discadia,
+    IDs.bots?.VoteManager,
+    IDs.bots?.Dyno,
+    IDs.bots?.Wick,
+    ...CORE_EXEMPT_USER_IDS,
+  ]
+    .filter(Boolean)
+    .map(String),
+);
 
 const STAFF_ROLE_IDS = new Set(
   [
@@ -747,6 +764,15 @@ function isExempt(message) {
     return true;
   }
   return [...STAFF_ROLE_IDS].some((id) => message.member.roles.cache.has(id));
+}
+
+function isVerifiedBotMessage(message) {
+  if (!message) return false;
+  const authorId = String(message.author?.id || "");
+  const applicationId = String(message.applicationId || "");
+  if (authorId && VERIFIED_BOT_IDS.has(authorId)) return true;
+  if (applicationId && VERIFIED_BOT_IDS.has(applicationId)) return true;
+  return false;
 }
 
 function isAutoModRoleExemptMember(guild, member) {
@@ -1348,6 +1374,7 @@ async function timeoutMember(message, state, violations) {
 
 async function runAutoModMessage(message) {
   if (!message?.guild || !message?.member) return { blocked: false };
+  if (isVerifiedBotMessage(message)) return { blocked: false };
   if (message.webhookId) {
     const webhookId = String(message.webhookId);
     const authorId = String(message.author?.id || "");
@@ -1355,6 +1382,10 @@ async function runAutoModMessage(message) {
     const clientAppId = String(message.client?.user?.id || "");
 
     if (CORE_EXEMPT_USER_IDS.has(authorId)) return { blocked: false };
+    if (TRUSTED_WEBHOOK_AUTHOR_IDS.has(authorId)) return { blocked: false };
+    if (applicationId && TRUSTED_WEBHOOK_AUTHOR_IDS.has(applicationId)) {
+      return { blocked: false };
+    }
     if (
       applicationId &&
       (applicationId === clientAppId || CORE_EXEMPT_USER_IDS.has(applicationId))

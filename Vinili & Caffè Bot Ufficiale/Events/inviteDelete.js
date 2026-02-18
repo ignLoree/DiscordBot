@@ -45,22 +45,22 @@ async function resolveResponsible(guild, code) {
   if (
     !guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
   ) {
-    return guild?.client?.user || null;
+    return null;
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: INVITE_DELETE_ACTION, limit: 8 })
+    .fetchAuditLogs({ type: INVITE_DELETE_ACTION, limit: 20 })
     .catch(() => null);
-  if (!logs?.entries?.size) return guild?.client?.user || null;
+  if (!logs?.entries?.size) return null;
 
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= 120 * 1000;
     return within && String(item?.target?.code || "") === String(code || "");
   });
 
-  return entry?.executor || guild?.client?.user || null;
+  return entry?.executor || null;
 }
 
 module.exports = {
@@ -77,7 +77,10 @@ module.exports = {
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const responsible = await resolveResponsible(guild, invite.code);
+      const responsible =
+        (await resolveResponsible(guild, invite.code)) ||
+        invite?.inviter ||
+        null;
       const responsibleText = formatAuditActor(responsible);
       const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
 

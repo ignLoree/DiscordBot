@@ -314,7 +314,7 @@ module.exports = {
       const confirmEmbed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setDescription(
-          `Il messaggio e stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`,
+          `Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`,
         );
 
       const row = new ActionRowBuilder().addComponents(

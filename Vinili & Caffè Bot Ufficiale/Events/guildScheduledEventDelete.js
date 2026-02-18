@@ -1,5 +1,7 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -51,21 +53,24 @@ async function resolveResponsible(guild, eventId) {
       PermissionsBitField.Flags.ViewAuditLog,
     )
   ) {
-    return guild?.client?.user || null;
+    return null;
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.GuildScheduledEventDelete, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.GuildScheduledEventDelete,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
-  if (!logs?.entries?.size) return guild?.client?.user || null;
+  if (!logs?.entries?.size) return null;
 
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
     return within && String(item?.target?.id || "") === String(eventId || "");
   });
-  return entry?.executor || guild?.client?.user || null;
+  return entry?.executor || null;
 }
 
 module.exports = {

@@ -2,6 +2,8 @@
 const IDs = require("../Utils/Config/ids");
 
 const EMOJI_DELETE_ACTION = AuditLogEvent?.EmojiDelete ?? 62;
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -25,17 +27,17 @@ async function resolveLogChannel(guild) {
 
 async function resolveResponsible(guild, emojiId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) {
-    return guild?.client?.user || null;
+    return null;
   }
-  const logs = await guild.fetchAuditLogs({ type: EMOJI_DELETE_ACTION, limit: 8 }).catch(() => null);
-  if (!logs?.entries?.size) return guild?.client?.user || null;
+  const logs = await guild.fetchAuditLogs({ type: EMOJI_DELETE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+  if (!logs?.entries?.size) return null;
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
     return within && String(item?.target?.id || "") === String(emojiId || "");
   });
-  return entry?.executor || guild?.client?.user || null;
+  return entry?.executor || null;
 }
 
 module.exports = {

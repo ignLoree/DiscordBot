@@ -9,6 +9,8 @@ const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
 const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;
 const WEBHOOK_DELETE_ACTION = AuditLogEvent?.WebhookDelete ?? 52;
 const DEDUPE_TTL_MS = 15000;
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -49,7 +51,7 @@ function getStore(client) {
 
 async function getLatestWebhookEntry(guild, channelId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) return null;
-  const logs = await guild.fetchAuditLogs({ limit: 10 }).catch(() => null);
+  const logs = await guild.fetchAuditLogs({ limit: AUDIT_FETCH_LIMIT }).catch(() => null);
   if (!logs?.entries?.size) return null;
 
   const now = Date.now();
@@ -59,7 +61,7 @@ async function getLatestWebhookEntry(guild, channelId) {
   logs.entries.forEach((item) => {
     if (!actions.has(item?.action)) return;
     const created = Number(item?.createdTimestamp || 0);
-    if (!created || now - created > 30 * 1000) return;
+    if (!created || now - created > AUDIT_LOOKBACK_MS) return;
 
     const targetChannelId = String(channelId || "");
     const extraChannelId = String(item?.extra?.channel?.id || "");

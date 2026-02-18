@@ -58,7 +58,7 @@ module.exports = {
       const logChannel = await resolveModLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      let executor = guild.client.user || null;
+      let executor = null;
       const auditEntry = await fetchRecentAuditEntry(guild, AuditLogEvent.GuildUpdate);
       if (auditEntry?.executor) executor = auditEntry.executor;
       const executorId = String(auditEntry?.executor?.id || "");

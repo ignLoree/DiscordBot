@@ -16,7 +16,13 @@ function canViewAuditLog(guild) {
   );
 }
 
-async function fetchRecentAuditEntry(guild, actionType, matcher, limit = 8, windowMs = 30000) {
+async function fetchRecentAuditEntry(
+  guild,
+  actionType,
+  matcher,
+  limit = 20,
+  windowMs = 120000,
+) {
   if (!canViewAuditLog(guild)) return null;
   const logs = await guild
     .fetchAuditLogs({ type: actionType, limit })
@@ -24,14 +30,28 @@ async function fetchRecentAuditEntry(guild, actionType, matcher, limit = 8, wind
   if (!logs?.entries?.size) return null;
 
   const now = Date.now();
-  return (
-    logs.entries.find((item) => {
-      const created = Number(item?.createdTimestamp || 0);
-      if (!created || now - created > windowMs) return false;
-      if (typeof matcher === "function") return matcher(item);
-      return true;
-    }) || null
-  );
+  const candidates = [];
+  logs.entries.forEach((item) => {
+    const created = Number(item?.createdTimestamp || 0);
+    if (!created || now - created > windowMs) return;
+
+    let score = 1;
+    if (typeof matcher === "function") {
+      const result = matcher(item);
+      if (!result) return;
+      if (typeof result === "number" && Number.isFinite(result)) score += result;
+      else score += 3;
+    }
+
+    score += Math.max(0, windowMs - (now - created)) / windowMs;
+    candidates.push({ item, score, created });
+  });
+
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.created - a.created;
+  });
+  return candidates[0]?.item || null;
 }
 
 function formatResponsible(executor) {

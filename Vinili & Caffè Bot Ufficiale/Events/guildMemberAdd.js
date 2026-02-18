@@ -35,6 +35,8 @@ const CORE_EXEMPT_USER_IDS = new Set([
   "1466495522474037463",
   "1329118940110127204",
 ]);
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 const JOIN_GATE = {
   botAdditions: {
@@ -354,20 +356,20 @@ async function sendBotAddLog(member) {
     (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
   if (!logChannel?.isTextBased?.()) return;
 
-  let executor = guild.client.user || null;
+  let executor = null;
   let auditEntry = null;
   if (
     guild.members.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
   ) {
     const logs = await guild
-      .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: 8 })
+      .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT })
       .catch(() => null);
     const now = Date.now();
     const entry = logs?.entries?.find((item) => {
       const created = Number(item?.createdTimestamp || 0);
       return (
         created > 0 &&
-        now - created <= 30 * 1000 &&
+        now - created <= AUDIT_LOOKBACK_MS &&
         String(item?.target?.id || "") === String(member.user.id || "")
       );
     });
@@ -577,7 +579,7 @@ async function fetchRecentBotAddEntry(guild, botId) {
     return null;
   }
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: 8 })
+    .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT })
     .catch(() => null);
   if (!logs?.entries?.size) return null;
   const now = Date.now();
@@ -586,7 +588,7 @@ async function fetchRecentBotAddEntry(guild, botId) {
       const createdTs = Number(entry?.createdTimestamp || 0);
       return (
         createdTs > 0 &&
-        now - createdTs <= 30_000 &&
+        now - createdTs <= AUDIT_LOOKBACK_MS &&
         String(entry?.target?.id || "") === String(botId || "")
       );
     }) || null

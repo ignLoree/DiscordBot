@@ -4,7 +4,7 @@ const {
   ARROW,
   toDiscordTimestamp,
   formatAuditActor,
-  permissionList,
+  permissionDiff,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
@@ -65,12 +65,16 @@ module.exports = {
             );
           }
           if (permsChanged) {
+            const perms = permissionDiff(
+              oldRole.permissions.bitfield,
+              newRole.permissions.bitfield,
+            );
             lines.push(`${ARROW} **Permissions:**`);
             lines.push(
-              `  ${ARROW} **Removals:** ${permissionList(oldRole.permissions.bitfield)}`,
+              `  ${ARROW} **Removals:** ${perms.removals}`,
             );
             lines.push(
-              `  ${ARROW} **Additions:** ${permissionList(newRole.permissions.bitfield)}`,
+              `  ${ARROW} **Additions:** ${perms.additions}`,
             );
           }
           lines.push(...buildAuditExtraLines(audit.entry, ["name", "color", "hoist", "permissions"]));

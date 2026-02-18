@@ -2,6 +2,8 @@
 const IDs = require("../Utils/Config/ids");
 
 const EMOJI_UPDATE_ACTION = AuditLogEvent?.EmojiUpdate ?? 61;
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -25,16 +27,16 @@ async function resolveLogChannel(guild) {
 
 async function resolveAuditChange(guild, emojiId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) {
-    return { executor: guild?.client?.user || null, oldName: null, newName: null };
+    return { executor: null, oldName: null, newName: null };
   }
 
-  const logs = await guild.fetchAuditLogs({ type: EMOJI_UPDATE_ACTION, limit: 8 }).catch(() => null);
-  if (!logs?.entries?.size) return { executor: guild?.client?.user || null, oldName: null, newName: null };
+  const logs = await guild.fetchAuditLogs({ type: EMOJI_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+  if (!logs?.entries?.size) return { executor: null, oldName: null, newName: null };
 
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
     return within && String(item?.target?.id || "") === String(emojiId || "");
   });
 
@@ -43,7 +45,7 @@ async function resolveAuditChange(guild, emojiId) {
     : null;
 
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     oldName: nameChange?.old ?? null,
     newName: nameChange?.new ?? null,
   };

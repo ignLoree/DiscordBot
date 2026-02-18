@@ -13,6 +13,7 @@ const {
   channelTypeLabel,
   formatAuditActor,
   permissionList,
+  permissionDiff,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
@@ -185,14 +186,22 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       );
       lines.push(...buildAuditExtraLines(audit.entry, ["type", "id"]));
     } else {
+      const deniedDiff = permissionDiff(
+        diff.before.deny.bitfield,
+        diff.after.deny.bitfield,
+      );
+      const grantedDiff = permissionDiff(
+        diff.before.allow.bitfield,
+        diff.after.allow.bitfield,
+      );
       lines.push(
         "**Changes**",
         `${ARROW} **Denied:**`,
-        `  ${ARROW} **Removals:** ${permissionList(diff.before.deny.bitfield)}`,
-        `  ${ARROW} **Additions:** ${permissionList(diff.after.deny.bitfield)}`,
+        `  ${ARROW} **Removals:** ${deniedDiff.removals}`,
+        `  ${ARROW} **Additions:** ${deniedDiff.additions}`,
         `${ARROW} **Granted:**`,
-        `  ${ARROW} **Removals:** ${permissionList(diff.before.allow.bitfield)}`,
-        `  ${ARROW} **Additions:** ${permissionList(diff.after.allow.bitfield)}`,
+        `  ${ARROW} **Removals:** ${grantedDiff.removals}`,
+        `  ${ARROW} **Additions:** ${grantedDiff.additions}`,
         "",
         "**Additional Information**",
         `${ARROW} **Id:** \`${source.id}\``,

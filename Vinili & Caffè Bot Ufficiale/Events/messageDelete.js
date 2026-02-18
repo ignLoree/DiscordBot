@@ -79,10 +79,17 @@ function hasMeaningfulDeleteData(message) {
   const hasContent = content.length > 0;
   const hasAttachments = Boolean(message.attachments?.size);
   const hasEmbeds = Array.isArray(message.embeds) && message.embeds.length > 0;
-  const hasAuthor = Boolean(message.author?.id);
   const hasMessageId = Boolean(message.id);
   // Skip ghost/partial deletes with no readable payload.
-  return (hasContent || hasAttachments || hasEmbeds || hasAuthor) && hasMessageId;
+  return (hasContent || hasAttachments || hasEmbeds) && hasMessageId;
+}
+
+function hasEmbedsOnly(message) {
+  const content = normalizeText(message?.content || "");
+  const hasContent = content.length > 0;
+  const hasAttachments = Boolean(message?.attachments?.size);
+  const hasEmbeds = Array.isArray(message?.embeds) && message.embeds.length > 0;
+  return !hasContent && !hasAttachments && hasEmbeds;
 }
 
 async function resolveLogChannel(guild) {
@@ -157,6 +164,7 @@ module.exports = {
 
     const resolved = await resolveMessage(message);
     if (!resolved?.guild) return;
+    if (hasEmbedsOnly(resolved)) return;
     if (!hasMeaningfulDeleteData(resolved)) return;
 
     await sendDeleteLog(resolved);

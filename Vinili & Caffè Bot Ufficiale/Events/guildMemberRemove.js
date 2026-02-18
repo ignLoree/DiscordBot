@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -10,8 +10,6 @@ const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const {
   createTranscript,
-  createTranscriptHtml,
-  saveTranscriptHtml,
 } = require("../Utils/Ticket/transcriptUtils");
 const {
   InviteTrack,
@@ -30,6 +28,8 @@ const {
 } = require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
   IDs.roles.PartnerManager,
@@ -91,7 +91,7 @@ async function sendLeaveLog(member) {
         "",
       ].join("\n"),
     )
-    .setFooter({ text:`ID: ${member.user.id} •`})
+    .setFooter({ text: `ID: ${member.user.id} •` })
     .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
@@ -139,11 +139,6 @@ async function closeOpenTicketsForMember(member) {
     }
 
     const transcriptTXT = await createTranscript(channel).catch(() => "");
-    const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
-    const transcriptHtmlPath = transcriptHTML
-      ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
-      : null;
-
     ticket.open = false;
     ticket.transcript = transcriptTXT;
     ticket.closeReason = "Utente uscito dal server";
@@ -157,19 +152,6 @@ async function closeOpenTicketsForMember(member) {
     if (logChannel) {
       await logChannel
         .send({
-          files: transcriptHtmlPath
-            ? [
-              {
-                attachment: transcriptHtmlPath,
-                name: `transcript_${channel.id}.html`,
-              },
-            ]
-            : [
-              {
-                attachment: Buffer.from(transcriptTXT, "utf-8"),
-                name: `transcript_${channel.id}.txt`,
-              },
-            ],
           embeds: [
             new EmbedBuilder()
               .setTitle("Ticket Chiuso")
@@ -398,7 +380,10 @@ async function sendMemberKickLog(member) {
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MemberKick, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.MemberKick,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
   if (!logs?.entries?.size) return;
 
@@ -407,7 +392,7 @@ async function sendMemberKickLog(member) {
     const created = Number(item?.createdTimestamp || 0);
     return (
       created > 0 &&
-      now - created <= 30 * 1000 &&
+      now - created <= AUDIT_LOOKBACK_MS &&
       String(item?.target?.id || "") === String(member.user?.id || "")
     );
   });
@@ -481,3 +466,5 @@ module.exports = {
     }
   },
 };
+
+

@@ -2,6 +2,8 @@
 const IDs = require("../Utils/Config/ids");
 
 const STICKER_UPDATE_ACTION = AuditLogEvent?.StickerUpdate ?? 91;
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -25,18 +27,18 @@ async function resolveLogChannel(guild) {
 
 async function resolveAudit(guild, stickerId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) {
-    return { executor: guild?.client?.user || null, changes: [] };
+    return { executor: null, changes: [] };
   }
-  const logs = await guild.fetchAuditLogs({ type: STICKER_UPDATE_ACTION, limit: 8 }).catch(() => null);
-  if (!logs?.entries?.size) return { executor: guild?.client?.user || null, changes: [] };
+  const logs = await guild.fetchAuditLogs({ type: STICKER_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+  if (!logs?.entries?.size) return { executor: null, changes: [] };
   const now = Date.now();
   const entry = logs.entries.find((item) => {
     const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 30 * 1000;
+    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
     return within && String(item?.target?.id || "") === String(stickerId || "");
   });
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     changes: Array.isArray(entry?.changes) ? entry.changes : [],
   };
 }

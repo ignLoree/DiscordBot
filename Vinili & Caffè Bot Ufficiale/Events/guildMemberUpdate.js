@@ -14,6 +14,8 @@ const {
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleMemberRoleAddition: antiNukeHandleMemberRoleAddition } = require("../Services/Moderation/antiNukeService");
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const BOOST_FOLLOWUP_DELAY_MS = 5000;
@@ -92,26 +94,29 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
       PermissionsBitField.Flags.ViewAuditLog,
     )
   ) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null };
   }
 
   const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MemberUpdate, limit: 8 })
+    .fetchAuditLogs({
+      type: AuditLogEvent.MemberUpdate,
+      limit: AUDIT_FETCH_LIMIT,
+    })
     .catch(() => null);
   if (!logs?.entries?.size) {
-    return { executor: guild?.client?.user || null, reason: null };
+    return { executor: null, reason: null };
   }
 
   const nowMs = Date.now();
   const entry = logs.entries.find((item) => {
     const createdMs = Number(item?.createdTimestamp || 0);
     const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= 30 * 1000;
+    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
     return withinWindow && targetId === String(targetUserId || "");
   });
 
   return {
-    executor: entry?.executor || guild?.client?.user || null,
+    executor: entry?.executor || null,
     reason: entry?.reason || null,
   };
 }
@@ -436,6 +441,4 @@ module.exports = {
     }
   },
 };
-
-
 

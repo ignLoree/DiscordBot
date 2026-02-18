@@ -7,6 +7,11 @@ const CORE_EXEMPT_USER_IDS = new Set([
   "1466495522474037463",
   "1329118940110127204",
 ]);
+const VERIFIED_BOT_IDS = new Set(
+  Object.values(IDs?.bots || {})
+    .filter(Boolean)
+    .map(String),
+);
 
 const DANGEROUS_PERMS = [
   PermissionsBitField.Flags.Administrator,
@@ -165,6 +170,7 @@ function isWhitelistedExecutor(guild, executorId) {
   if (!userId) return true;
   if (String(guild?.ownerId || "") === userId) return true;
   if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
+  if (VERIFIED_BOT_IDS.has(userId)) return true;
   if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
   const member = guild?.members?.cache?.get(userId);
   if (!member) return false;
@@ -182,6 +188,7 @@ async function isWhitelistedExecutorAsync(guild, executorId) {
   if (!userId) return true;
   if (String(guild?.ownerId || "") === userId) return true;
   if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
+  if (VERIFIED_BOT_IDS.has(userId)) return true;
   if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
   let member = guild?.members?.cache?.get(userId) || null;
   if (!member) member = await guild?.members?.fetch(userId).catch(() => null);
