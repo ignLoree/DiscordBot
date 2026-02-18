@@ -5,8 +5,11 @@ const {
   ButtonStyle,
 } = require("discord.js");
 const cron = require("node-cron");
-const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
-const { ExpUser } = require("../../Schemas/Community/communitySchemas");
+const {
+  ActivityUser,
+  ActivityDaily,
+  ExpUser,
+} = require("../../Schemas/Community/communitySchemas");
 const { VOICE_EXP_PER_MINUTE } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 
@@ -20,7 +23,18 @@ const TROPHY_LABELS = [
 ];
 const MESSAGE_WINNER_ROLE_ID = IDs.roles.TopWeeklyText;
 const VOICE_WINNER_ROLE_ID = IDs.roles.TopWeeklyVoc;
-const EXCLUDED_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.PartnerManager]);
+const REQUIRED_MEMBER_ROLE_ID = String(IDs.roles.Member || "");
+const EXCLUDED_ROLE_IDS = new Set(
+  [
+    IDs.roles.Staff,
+    IDs.roles.PartnerManager,
+    IDs.roles.Mod,
+    IDs.roles.Admin,
+    IDs.roles.HighStaff,
+  ]
+    .filter(Boolean)
+    .map((id) => String(id)),
+);
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -69,13 +83,124 @@ function getWeekdayRome(date) {
   return formatter.format(date);
 }
 
+function getDateKeysForWeekKey(weekKey) {
+  const match = String(weekKey || "").match(/^(\d{4})-W(\d{2})$/);
+  if (!match) return [];
+
+  const year = Number(match[1]);
+  const isoWeek = Number(match[2]);
+  if (!Number.isFinite(year) || !Number.isFinite(isoWeek) || isoWeek < 1)
+    return [];
+
+  const jan4Utc = Date.UTC(year, 0, 4, 12, 0, 0);
+  const jan4 = new Date(jan4Utc);
+  const jan4Day = (jan4.getUTCDay() + 6) % 7;
+  const mondayWeek1Utc = jan4Utc - jan4Day * 24 * 60 * 60 * 1000;
+  const mondayTargetUtc =
+    mondayWeek1Utc + (isoWeek - 1) * 7 * 24 * 60 * 60 * 1000;
+
+  const out = [];
+  for (let i = 0; i < 7; i += 1) {
+    const date = new Date(mondayTargetUtc + i * 24 * 60 * 60 * 1000);
+    const parts = getTimeParts(date);
+    out.push(`${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`);
+  }
+  return out;
+}
+
 function buildEmptyLine(kind) {
-  return ` •  Nessun dato disponibile per ${kind}.`;
+  return ` - Nessun dato disponibile per ${kind}.`;
 }
 
 function formatRankLine(index, userMention, value, unit) {
   const medal = TROPHY_LABELS[index] || "[#]";
   return `${medal} ${userMention} <a:VC_Arrow:1448672967721615452> **${value}** *${unit}*`;
+}
+
+function extractMapEntries(raw) {
+  if (!raw) return [];
+  if (raw instanceof Map) return Array.from(raw.entries());
+  if (typeof raw === "object") return Object.entries(raw);
+  return [];
+}
+
+async function resolveMemberRole(guild) {
+  if (!guild) return null;
+  if (REQUIRED_MEMBER_ROLE_ID) {
+    const role =
+      guild.roles.cache.get(REQUIRED_MEMBER_ROLE_ID) ||
+      (await guild.roles.fetch(REQUIRED_MEMBER_ROLE_ID).catch(() => null));
+    if (role) return role;
+  }
+  return guild.roles.everyone || null;
+}
+
+async function getEligibleChannelSets(guild) {
+  const role = await resolveMemberRole(guild);
+  if (!role) return { text: new Set(), voice: new Set() };
+
+  const text = new Set();
+  const voice = new Set();
+  for (const channel of guild.channels.cache.values()) {
+    const perms = channel?.permissionsFor?.(role);
+    if (!perms?.has("ViewChannel")) continue;
+    if (perms.has("SendMessages")) text.add(String(channel.id));
+    if (perms.has("Connect") && perms.has("Speak")) voice.add(String(channel.id));
+  }
+  return { text, voice };
+}
+
+async function loadWeeklyRowsFromDaily(guild, weekKey) {
+  const dateKeys = getDateKeysForWeekKey(weekKey);
+  if (!dateKeys.length) return [];
+
+  const eligible = await getEligibleChannelSets(guild);
+  if (!eligible.text.size && !eligible.voice.size) return [];
+
+  const perUser = new Map();
+  const cursor = ActivityDaily.find({
+    guildId: guild.id,
+    dateKey: { $in: dateKeys },
+  })
+    .select("userId textChannels voiceChannels")
+    .lean()
+    .cursor();
+
+  for await (const row of cursor) {
+    const userId = String(row?.userId || "");
+    if (!userId) continue;
+
+    let messageCount = 0;
+    let voiceSeconds = 0;
+
+    for (const [channelId, value] of extractMapEntries(row?.textChannels)) {
+      if (!eligible.text.has(String(channelId))) continue;
+      messageCount += Math.max(0, Number(value || 0));
+    }
+    for (const [channelId, value] of extractMapEntries(row?.voiceChannels)) {
+      if (!eligible.voice.has(String(channelId))) continue;
+      voiceSeconds += Math.max(0, Number(value || 0));
+    }
+
+    if (messageCount <= 0 && voiceSeconds <= 0) continue;
+    const current = perUser.get(userId) || {
+      userId,
+      messageCount: 0,
+      voiceSeconds: 0,
+    };
+    current.messageCount += messageCount;
+    current.voiceSeconds += voiceSeconds;
+    perUser.set(userId, current);
+  }
+
+  return Array.from(perUser.values()).map((row) => ({
+    userId: row.userId,
+    messageCount: Math.max(0, Math.floor(row.messageCount)),
+    voiceExp: Math.max(
+      0,
+      Math.floor((Math.max(0, row.voiceSeconds) / 60) * VOICE_EXP_PER_MINUTE),
+    ),
+  }));
 }
 
 async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
@@ -86,38 +211,26 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
     if (!userId) continue;
 
     let user = client.users.cache.get(userId) || null;
-    if (!user) {
-      user = await client.users.fetch(userId).catch(() => null);
-    }
+    if (!user) user = await client.users.fetch(userId).catch(() => null);
     if (!user || user.bot) continue;
 
     const member =
       guild.members.cache.get(userId) ||
       (await guild.members.fetch(userId).catch(() => null));
     if (!member) continue;
+    if (REQUIRED_MEMBER_ROLE_ID && !member.roles.cache.has(REQUIRED_MEMBER_ROLE_ID))
+      continue;
 
     const hasExcludedRole = Array.from(EXCLUDED_ROLE_IDS).some((roleId) =>
       member.roles.cache.has(roleId),
     );
     if (hasExcludedRole) continue;
 
-    out.push({
-      userId,
-      value: valueGetter(doc),
-    });
+    const value = Math.max(0, Math.floor(Number(valueGetter(doc) || 0)));
+    if (value <= 0) continue;
+    out.push({ userId, value });
   }
   return out;
-}
-
-function getLiveWeeklyVoiceSeconds(doc, now) {
-  const base = Number(doc?.voice?.weeklySeconds || 0);
-  const startedAt = doc?.voice?.sessionStartedAt
-    ? new Date(doc.voice.sessionStartedAt).getTime()
-    : null;
-  if (!startedAt) return base;
-
-  const elapsed = Math.max(0, Math.floor((now.getTime() - startedAt) / 1000));
-  return base + elapsed;
 }
 
 async function removeRoleFromAllMembers(guild, roleId) {
@@ -182,43 +295,29 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   const currentWeekKey =
     options.weekKey != null ? options.weekKey : getWeekKey(now);
 
-  const [messageDocs, voiceDocs] = await Promise.all([
-    ActivityUser.find({
-      guildId: guild.id,
-      "messages.weeklyKey": currentWeekKey,
-      "messages.weekly": { $gt: 0 },
-    })
-      .sort({ "messages.weekly": -1 })
-      .limit(60)
-      .lean(),
-    ActivityUser.find({
-      guildId: guild.id,
-      "voice.weeklyKey": currentWeekKey,
-      $or: [
-        { "voice.weeklySeconds": { $gt: 0 } },
-        { "voice.sessionStartedAt": { $ne: null } },
-      ],
-    })
-      .sort({ "voice.weeklySeconds": -1 })
-      .limit(60)
-      .lean(),
-  ]);
+  const weeklyRows = await loadWeeklyRowsFromDaily(guild, currentWeekKey);
+
+  const messageDocs = weeklyRows
+    .filter((row) => Number(row?.messageCount || 0) > 0)
+    .sort((a, b) => Number(b.messageCount || 0) - Number(a.messageCount || 0))
+    .slice(0, 200);
+  const voiceDocs = weeklyRows
+    .filter((row) => Number(row?.voiceExp || 0) > 0)
+    .sort((a, b) => Number(b.voiceExp || 0) - Number(a.voiceExp || 0))
+    .slice(0, 200);
 
   const topMessages = await resolveTopThreeUsers(
     client,
     guild,
     messageDocs,
-    (doc) => Number(doc?.messages?.weekly || 0),
+    (doc) => Number(doc?.messageCount || 0),
   );
 
   const topVoice = await resolveTopThreeUsers(
     client,
     guild,
     voiceDocs,
-    (doc) => {
-      const weeklySeconds = getLiveWeeklyVoiceSeconds(doc, now);
-      return Math.floor((weeklySeconds / 60) * VOICE_EXP_PER_MINUTE);
-    },
+    (doc) => Number(doc?.voiceExp || 0),
   );
 
   const messageRows = topMessages.length
@@ -229,9 +328,9 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const voiceRows = topVoice.length
     ? topVoice.map((item, index) =>
-        formatRankLine(index, `<@${item.userId}>`, item.value, "exp"),
+        formatRankLine(index, `<@${item.userId}>`, item.value, "exp base"),
       )
-    : [buildEmptyLine("exp")];
+    : [buildEmptyLine("exp vocale")];
 
   const awarded = await updateWeeklyWinnerRoles(guild, topMessages, topVoice);
 
@@ -244,8 +343,10 @@ async function publishWeeklyActivityWinners(client, options = {}) {
         `<a:VC_HeartsBlue:1468686100045369404> • **Classifica testuale:**`,
         ...messageRows,
         "",
-        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale:**`,
+        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale (exp base):**`,
         ...voiceRows,
+        "",
+        "<:VC_Reply:1468262952934314131> Solo utenti con ruolo Member, staff escluso.",
       ].join("\n"),
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null);
@@ -261,28 +362,24 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const button = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setLabel(`Chat`)
+      .setLabel("Chat")
       .setStyle(ButtonStyle.Link)
       .setEmoji("<:VC_FrogCute:1331620415185096746>")
-      .setLink(
-        `https://discord.com/channels/1329080093599076474/1442569130573303898`,
-      ),
+      .setURL("https://discord.com/channels/1329080093599076474/1442569130573303898"),
     new ButtonBuilder()
-      .setLabel(`Vocal`)
+      .setLabel("Vocal")
       .setStyle(ButtonStyle.Link)
       .setEmoji("<:VC_FrogJuice:1331620486517358613>")
-      .setLink(
-        `https://discord.com/channels/1329080093599076474/1442569101225496819`,
-      ),
+      .setURL("https://discord.com/channels/1329080093599076474/1442569101225496819"),
   );
 
   await channel
     .send({
-      content: `<@&1442568949605597264>
-<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attività <a:VC_StarPink:1330194976440848500>
+      content: `<@&${IDs.roles.Member}>
+<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attivita.
 
-<a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **__chat testuale__**!
-<a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp**, ${voiceWinnerMention} ottieni il primo posto per **__chat vocale__**!
+<a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **chat testuale**.
+<a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp base**, ${voiceWinnerMention} ottieni il primo posto per **chat vocale**.
 _ _`,
       embeds: [embed],
       components: [button],

@@ -6,11 +6,11 @@ const {
   ComponentType,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { getNoDmSet, addNoDm, removeNoDm } = require("../../Utils/noDmList");
+const { getNoDmSet, addNoDm } = require("../../Utils/noDmList");
 
 module.exports = {
-  name: "no-dm",
-  aliases: ["nodm"],
+  name: "dm-disable",
+  aliases: ["dmdisable", "no-dm", "nodm"],
 
   async execute(message) {
     if (!message.guild) {
@@ -26,13 +26,12 @@ module.exports = {
     const set = await getNoDmSet(guildId);
 
     if (set.has(userId)) {
-      await removeNoDm(guildId, userId);
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor("#6f4e37")
             .setDescription(
-              "Ok! Ora **riceverai** nuovamente i DM automatici del bot.",
+              "Hai gia disattivato i DM automatici. Usa `+dm-enable` per riattivarli.",
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -61,12 +60,12 @@ module.exports = {
       .setDescription(
         [
           "Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.",
-          "Questo include anche eventuali avvisi più importanti.",
+          "Questo include anche eventuali avvisi piu importanti.",
           "",
           "Vuoi continuare?",
         ].join("\n"),
       )
-      .setFooter({ text: "Potrai riattivarli in seguito rifacendo +no-dm." });
+      .setFooter({ text: "Potrai riattivarli con +dm-enable." });
 
     const promptMessage = await safeMessageReply(message, {
       embeds: [warningEmbed],
@@ -102,7 +101,7 @@ module.exports = {
               new EmbedBuilder()
                 .setColor("#6f4e37")
                 .setDescription(
-                  "Ok! **Non riceverai più** DM automatici dal bot.",
+                  "Ok! **Non riceverai piu** DM automatici dal bot.",
                 ),
             ],
             components: [],

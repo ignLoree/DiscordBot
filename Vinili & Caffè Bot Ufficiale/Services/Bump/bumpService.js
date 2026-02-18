@@ -8,6 +8,22 @@ const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const discadiaVoteTimers = new Map();
 
+const STAFF_BYPASS_ROLE_IDS = new Set(
+  [
+    IDs.roles.Staff,
+    IDs.roles.Helper,
+    IDs.roles.Mod,
+    IDs.roles.PartnerManager,
+    IDs.roles.Coordinator,
+    IDs.roles.Supervisor,
+    IDs.roles.HighStaff,
+    IDs.roles.Admin,
+    IDs.roles.Manager,
+    IDs.roles.CoFounder,
+    IDs.roles.Founder,
+  ].filter(Boolean),
+);
+
 const BUMP_REMINDER_CHANNEL_BY_KEY = {
   disboard: IDs.channels.commands,
   discadia: IDs.channels.commands,
@@ -198,12 +214,41 @@ function buildVoteReminderEmbed(client) {
     .setTitle("Reminder voto Discadia")
     .setDescription(text)
     .setFooter({
-      text: "Per non ricevere più DM automatici usa +no-dm (blocca anche avvisi importanti).",
+      text: "Per non ricevere più DM automatici usa +dm-disable (blocca anche avvisi importanti).",
     });
 }
 
 const lastVoteFallbackSentAt = new Map();
 const VOTE_FALLBACK_COOLDOWN_MS = 60 * 60 * 1000;
+
+async function isStaffNoDmBypassUser(client, guildId, userId) {
+  if (!client || !userId || !STAFF_BYPASS_ROLE_IDS.size) return false;
+
+  const resolvedGuildId = guildId || IDs.guilds.main;
+  const guild =
+    client.guilds.cache.get(resolvedGuildId) ||
+    (await client.guilds.fetch(resolvedGuildId).catch(() => null));
+  if (!guild) return false;
+
+  const member =
+    guild.members.cache.get(userId) ||
+    (await guild.members.fetch(userId).catch(() => null));
+  if (!member?.roles?.cache) return false;
+
+  for (const roleId of STAFF_BYPASS_ROLE_IDS) {
+    if (member.roles.cache.has(roleId)) return true;
+  }
+
+  return false;
+}
+
+async function shouldSkipVoteDmByNoDm(client, guildId, userId) {
+  const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
+  if (!noDmSet.has(userId)) return false;
+
+  const isStaffBypass = await isStaffNoDmBypassUser(client, guildId, userId);
+  return !isStaffBypass;
+}
 
 async function sendVoteFallbackChannelReminder(client, guildId, userId) {
   const fallbackId = client?.config?.discadiaVoteReminder?.fallbackChannelId;
@@ -269,8 +314,7 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
           new Date(doc.lastVoteAt).getTime()
       )
         return;
-      const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
-      if (noDmSet.has(userId)) return;
+      if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return;
       const user =
         client.users.cache.get(userId) ||
         (await client.users.fetch(userId).catch(() => null));
@@ -326,8 +370,7 @@ function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
       )
         return;
 
-      const noDmSet = await getNoDmSet(guildId).catch(() => new Set());
-      if (noDmSet.has(userId)) return;
+      if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return;
 
       const user =
         client.users.cache.get(userId) ||

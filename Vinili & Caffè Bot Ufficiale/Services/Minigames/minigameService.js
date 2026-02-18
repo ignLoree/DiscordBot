@@ -14,7 +14,7 @@ const {
   MinigameState,
   MinigameRotation,
 } = require("../../Schemas/Minigames/minigameSchema");
-const { addExpWithLevel } = require("../Community/expService");
+const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const IDs = require("../../Utils/Config/ids");
 
 const activeGames = new Map();
@@ -67,6 +67,8 @@ const TEAM_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 let cachedSingers = null;
 let cachedSingersAt = 0;
 const SINGER_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
+const singerImageFallbackCache = new Map();
+const SINGER_IMAGE_FALLBACK_TTL_MS = 24 * 60 * 60 * 1000;
 let cachedAlbums = null;
 let cachedAlbumsAt = 0;
 const ALBUM_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
@@ -989,13 +991,8 @@ async function loadSingersFromApi(cfg) {
     const list = Array.isArray(res?.data?.data) ? res.data.data : [];
     for (const artist of list) {
       const name = artist?.name;
-      const image =
-        artist?.picture_xl ||
-        artist?.picture_big ||
-        artist?.picture_medium ||
-        artist?.picture ||
-        null;
-      if (!name || !image) continue;
+      const image = pickBestSingerImage(artist);
+      if (!name) continue;
       out.push({ name, answers: buildAliases([name]), image });
     }
   } catch {}
@@ -1003,6 +1000,70 @@ async function loadSingersFromApi(cfg) {
   cachedSingers = out;
   cachedSingersAt = now;
   return cachedSingers;
+}
+
+function isDeezerArtistPlaceholderImage(url) {
+  const value = String(url || "").trim();
+  if (!value) return true;
+  if (!/^https?:\/\//i.test(value)) return true;
+  if (/api\.deezer\.com\/artist\/\d+\/image/i.test(value)) return true;
+  if (/\/images\/artist\/\/+/i.test(value)) return true;
+  if (/\/images\/artist\/[^/]+\/\d+x\d+-000000-80-0-0\.(jpg|png|webp)$/i.test(value))
+    return true;
+  return false;
+}
+
+function pickBestSingerImage(artist) {
+  const candidates = [
+    artist?.picture_xl,
+    artist?.picture_big,
+    artist?.picture_medium,
+    artist?.picture_small,
+    artist?.picture,
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (!isDeezerArtistPlaceholderImage(candidate)) return candidate;
+  }
+  return null;
+}
+
+async function fetchSingerImageFallback(name, cfg) {
+  const artistName = String(name || "").trim();
+  if (!artistName) return null;
+
+  const cacheKey = normalizeCountryName(artistName);
+  const cached = singerImageFallbackCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < SINGER_IMAGE_FALLBACK_TTL_MS) {
+    return cached.url || null;
+  }
+
+  const fallbackApi =
+    cfg?.guessSinger?.fallbackApiUrl ||
+    "https://www.theaudiodb.com/api/v1/json/2/search.php";
+  try {
+    const res = await axios.get(fallbackApi, {
+      params: { s: artistName },
+      timeout: 15000,
+    });
+    const artists = Array.isArray(res?.data?.artists) ? res.data.artists : [];
+    const best = artists.find(
+      (a) =>
+        normalizeCountryName(a?.strArtist) === normalizeCountryName(artistName),
+    );
+    const picked = best || artists[0];
+    const fallbackUrl =
+      picked?.strArtistThumb ||
+      picked?.strArtistFanart ||
+      picked?.strArtistFanart2 ||
+      picked?.strArtistFanart3 ||
+      null;
+    const url = isDeezerArtistPlaceholderImage(fallbackUrl) ? null : fallbackUrl;
+    singerImageFallbackCache.set(cacheKey, { url, at: Date.now() });
+    return url;
+  } catch {
+    singerImageFallbackCache.set(cacheKey, { url: null, at: Date.now() });
+    return null;
+  }
 }
 
 async function loadAlbumsFromApi(cfg) {
@@ -1158,6 +1219,33 @@ function isSongGuessCorrect(rawGuess, rawAnswers) {
     minTokenLength: 3,
     singleTokenMinLength: 6,
   });
+}
+
+function isSingerGuessCorrect(rawGuess, rawAnswers) {
+  const guess = normalizeCountryName(rawGuess);
+  if (!guess) return false;
+
+  const answers = Array.isArray(rawAnswers)
+    ? rawAnswers.map((a) => normalizeCountryName(a)).filter(Boolean)
+    : [normalizeCountryName(rawAnswers)].filter(Boolean);
+  if (!answers.length) return false;
+
+  if (isStrictAliasGuessCorrect(guess, answers, (v) => String(v || "")))
+    return true;
+
+  const guessTokens = toMeaningfulTokens(guess, 3);
+  if (guessTokens.length !== 1) return false;
+  const token = guessTokens[0];
+  if (token.length < 5) return false;
+
+  for (const answer of answers) {
+    const answerTokens = toMeaningfulTokens(answer, 3);
+    if (answerTokens.length < 2) continue;
+    const surname = answerTokens[answerTokens.length - 1];
+    if (token === surname) return true;
+  }
+
+  return false;
 }
 
 function normalizeTruthValue(raw) {
@@ -1944,7 +2032,7 @@ function buildGuessCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la capitale .")
+    .setTitle("Indovina la capitale .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual e la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
@@ -1964,7 +2052,7 @@ function buildGuessRegionCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il capoluogo .")
+    .setTitle("Indovina il capoluogo .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual e il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
@@ -1979,7 +2067,7 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi prima la frase .")
+    .setTitle("Scrivi per primo la frase .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
@@ -1993,7 +2081,7 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la squadra .")
+    .setTitle("Indovina la squadra di calcio .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
@@ -2008,7 +2096,7 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il cantante .")
+    .setTitle("Indovina il cantante .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
@@ -2023,10 +2111,10 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l album .")
+    .setTitle("Indovina l'album .ᐟ ✧")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina l album dalla copertina e vinci **${rewardExp} exp**.`,
+        `<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp} exp**.`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
@@ -2044,7 +2132,7 @@ function buildHangmanEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato .")
+    .setTitle("Impiccato .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
@@ -2060,7 +2148,7 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale italiana .")
+    .setTitle("Cultura generale .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
@@ -2074,7 +2162,7 @@ function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente .")
+    .setTitle("Quiz patente .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
@@ -2094,7 +2182,7 @@ function buildMathExpressionEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Espressione matematica .")
+    .setTitle("Espressione matematica .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
@@ -2186,7 +2274,7 @@ function buildHintEmbed(isHigher) {
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto !")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
@@ -3270,6 +3358,8 @@ async function startGuessSingerGame(client, cfg) {
   const singers = await loadSingersFromApi(cfg);
   const pick = pickRandomItem(singers);
   if (!pick?.name || !pick?.answers?.length) return false;
+  const resolvedImage =
+    pick.image || (await fetchSingerImageFallback(pick.name, cfg));
 
   const rewardExp = Number(cfg?.guessSinger?.rewardExp || 130);
   const durationMs = Math.max(
@@ -3285,7 +3375,7 @@ async function startGuessSingerGame(client, cfg) {
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
   const gameMessage = await channel
     .send({
-      embeds: [buildGuessSingerEmbed(rewardExp, durationMs, pick.image)],
+      embeds: [buildGuessSingerEmbed(rewardExp, durationMs, resolvedImage)],
     })
     .catch(() => null);
 
@@ -3323,7 +3413,7 @@ async function startGuessSingerGame(client, cfg) {
     target: JSON.stringify({
       name: pick.name,
       answers: pick.answers,
-      image: pick.image || null,
+      image: resolvedImage || null,
     }),
     rewardExp,
     startedAt: new Date(),
@@ -4021,6 +4111,14 @@ async function forceStartMinigame(client) {
 
 async function awardWinAndReply(message, rewardExp) {
   let nextTotal = Number(rewardExp || 0);
+  const member =
+    message.member ||
+    (await message.guild.members.fetch(message.author.id).catch(() => null));
+  const ignoreExp = await shouldIgnoreExpForMember({
+    guildId: message.guild.id,
+    member,
+    channelId: message.channel?.id || message.channelId || null,
+  });
   try {
     const doc = await MinigameUser.findOneAndUpdate(
       { guildId: message.guild.id, userId: message.author.id },
@@ -4029,22 +4127,21 @@ async function awardWinAndReply(message, rewardExp) {
     );
     nextTotal = Number(doc?.totalExp || nextTotal);
   } catch {}
-  try {
-    await addExpWithLevel(
-      message.guild,
-      message.author.id,
-      Number(rewardExp || 0),
-      false,
-      false,
-    );
-  } catch {}
+  if (!ignoreExp) {
+    try {
+      await addExpWithLevel(
+        message.guild,
+        message.author.id,
+        Number(rewardExp || 0),
+        false,
+        false,
+      );
+    } catch {}
+  }
   await message.react(MINIGAME_WIN_EMOJI).catch(() => {});
   await message
     .reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] })
     .catch(() => {});
-  const member =
-    message.member ||
-    (await message.guild.members.fetch(message.author.id).catch(() => null));
   if (member) {
     await handleExpReward(message.client, member, nextTotal);
   }
@@ -4282,13 +4379,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === "guessSinger") {
-    if (
-      isLooseAliasGuessCorrect(content, game.answers, normalizeCountryName, {
-        minGuessLength: 3,
-        minTokenLength: 3,
-        singleTokenMinLength: 3,
-      })
-    ) {
+    if (isSingerGuessCorrect(content, game.answers)) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);

@@ -37,7 +37,7 @@ module.exports = {
     const ids = Array.from(set);
     if (!ids.length) {
       await safeMessageReply(message, {
-        content: "Nessun utente in lista `+no-dm`.",
+        content: "Nessun utente in lista `+dm-disable`.",
         allowedMentions: { repliedUser: false },
       });
       return;
@@ -46,7 +46,7 @@ module.exports = {
     const lines = ids.map((id) => `<@${id}>`);
     const chunks = chunkLines(lines);
     await safeMessageReply(message, {
-      content: `Utenti in \`+no-dm\`:\n${chunks[0]}`,
+      content: `Utenti in \`+dm-disable\`:\n${chunks[0]}`,
       allowedMentions: { repliedUser: false },
     });
     for (let i = 1; i < chunks.length; i += 1) {

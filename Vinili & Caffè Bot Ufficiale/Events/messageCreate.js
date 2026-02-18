@@ -8,7 +8,10 @@ const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../Servi
 const { handleMinigameMessage } = require("../Services/Minigames/minigameService");
 const { recordReminderActivity } = require("../Services/Community/chatReminderService");
 const { recordMessageActivity } = require("../Services/Community/activityService");
-const { addExpWithLevel } = require("../Services/Community/expService");
+const {
+  addExpWithLevel,
+  shouldIgnoreExpForMember,
+} = require("../Services/Community/expService");
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
@@ -372,13 +375,23 @@ async function handleVoteManagerMessage(message, client) {
       }
     } catch { }
     try {
-      await addExpWithLevel(
-        message.guild,
-        user.id,
-        Number(expValue || 0),
-        false,
-        false,
-      );
+      const targetMember =
+        message.guild.members.cache.get(user.id) ||
+        (await message.guild.members.fetch(user.id).catch(() => null));
+      const ignored = await shouldIgnoreExpForMember({
+        guildId: message.guild.id,
+        member: targetMember,
+        channelId: message.channel?.id || message.channelId || null,
+      });
+      if (!ignored) {
+        await addExpWithLevel(
+          message.guild,
+          user.id,
+          Number(expValue || 0),
+          false,
+          false,
+        );
+      }
     } catch { }
     try {
       const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);

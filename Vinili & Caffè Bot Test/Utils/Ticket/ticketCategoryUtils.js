@@ -2,7 +2,6 @@ const { ChannelType } = require("discord.js");
 
 const TICKETS_CATEGORY_NAME =
   "⁰⁰・ 　　　　    　    TICKETS 　　　    　    ・";
-
 const TICKETS_OVERFLOW_SEPARATOR = " ・ ";
 
 function buildOverflowTicketCategoryName(index) {

@@ -449,12 +449,7 @@ async function addExpWithLevel(
   if (!includeWeekly) {
     weeklyAmount = 0;
   } else if (applyMultiplier) {
-    const globalMulti = await getGlobalMultiplier(guild.id);
-    const clampedGlobal = Math.min(
-      MAX_COMBINED_MULTIPLIER,
-      Math.max(1, Number(globalMulti || 1)),
-    );
-    weeklyAmount = Number(amount || 0) * clampedGlobal;
+    weeklyAmount = Number(amount || 0);
   }
   const result = await addExp(
     guild.id,
@@ -578,6 +573,37 @@ async function setRoleIgnored(guildId, roleId, ignored = true) {
   return next;
 }
 
+async function resolveMemberVisibilityRoleForExp(guild) {
+  if (!guild) return null;
+  const configuredId = String(IDs.roles?.Member || "").trim();
+  if (configuredId) {
+    const role =
+      guild.roles?.cache?.get(configuredId) ||
+      (await guild.roles?.fetch(configuredId).catch(() => null));
+    if (role) return role;
+  }
+  return guild.roles?.everyone || null;
+}
+
+async function isChannelEligibleForMemberExp(guild, channelId) {
+  const id = String(channelId || "").trim();
+  if (!guild || !id) return true;
+  const role = await resolveMemberVisibilityRoleForExp(guild);
+  if (!role) return true;
+
+  const channel =
+    guild.channels?.cache?.get(id) ||
+    (await guild.channels?.fetch(id).catch(() => null));
+  if (!channel) return false;
+
+  const perms = channel.permissionsFor(role);
+  if (!perms?.has("ViewChannel")) return false;
+
+  if (perms.has("SendMessages")) return true;
+  if (perms.has("Connect")) return true;
+  return false;
+}
+
 async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
   const settings = await getGuildExpSettings(guildId);
   if (channelId && settings.lockedChannelIds.includes(channelId)) return true;
@@ -588,6 +614,11 @@ async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
       (await guild?.channels?.fetch?.(channelId).catch(() => null));
     const parentId = String(channel?.parentId || "");
     if (parentId && EXP_EXCLUDED_CATEGORY_IDS.has(parentId)) return true;
+  }
+  if (channelId) {
+    const guild = member?.guild || null;
+    const allowed = await isChannelEligibleForMemberExp(guild, channelId);
+    if (!allowed) return true;
   }
   if (member?.roles?.cache && settings.ignoredRoleIds.length > 0) {
     for (const roleId of settings.ignoredRoleIds) {

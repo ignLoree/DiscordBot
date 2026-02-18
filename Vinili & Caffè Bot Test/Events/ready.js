@@ -2,6 +2,10 @@ const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
 const sponsorPanels = require("../Triggers/embeds");
+const {
+  startTicketAutoClosePromptLoop,
+  startTranscriptCleanupLoop,
+} = require("../Services/Ticket/ticketMaintenanceService");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
@@ -53,6 +57,15 @@ async function connectMongo(client) {
       serverSelectionTimeoutMS: 15000,
       connectTimeoutMS: 15000,
     });
+    try {
+      startTicketAutoClosePromptLoop(client);
+      startTranscriptCleanupLoop();
+    } catch (err) {
+      global.logger.error(
+        "[Bot Test] Ticket maintenance loops:",
+        err?.message || err,
+      );
+    }
   } catch (err) {
     global.logger.error("[Bot Test] MongoDB:", err.message);
   }
