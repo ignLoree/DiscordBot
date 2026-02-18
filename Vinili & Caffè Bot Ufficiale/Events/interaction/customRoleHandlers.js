@@ -1277,4 +1277,13 @@ async function handleCustomRoleInteraction(interaction) {
   return false;
 }
 
-module.exports = { handleCustomRoleInteraction, createCustomRoleGrantRequest };
+function getPendingRoleGrantByToken(token) {
+  if (!token) return null;
+  return pendingRoleGrants.get(String(token)) || null;
+}
+
+module.exports = {
+  handleCustomRoleInteraction,
+  createCustomRoleGrantRequest,
+  getPendingRoleGrantByToken,
+};

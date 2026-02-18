@@ -297,11 +297,42 @@ function normalizeButtonPolicy(policy) {
         ? policy.ownerSeparator
         : ":";
     const ownerFromMessageMention = Boolean(policy.ownerFromMessageMention);
+    const ownerOrRole = Boolean(policy.ownerOrRole);
+    const grantRecipientOnly = Boolean(policy.grantRecipientOnly);
+    const verifyStartRequired = Boolean(policy.verifyStartRequired);
 
-    return { roles, ownerSegment, ownerSeparator, ownerFromMessageMention };
+    return {
+      roles,
+      ownerSegment,
+      ownerSeparator,
+      ownerFromMessageMention,
+      ownerOrRole,
+      grantRecipientOnly,
+      verifyStartRequired,
+    };
   }
 
   return null;
+}
+
+function getPendingCustomRoleGrant(token) {
+  try {
+    const mod = require("../../Events/interaction/customRoleHandlers");
+    if (typeof mod?.getPendingRoleGrantByToken !== "function") return null;
+    return mod.getPendingRoleGrantByToken(token);
+  } catch {
+    return null;
+  }
+}
+
+function hasActiveVerifySession(userId) {
+  try {
+    const mod = require("../../Events/interaction/verifyHandlers");
+    if (typeof mod?.hasActiveVerifySession !== "function") return false;
+    return Boolean(mod.hasActiveVerifySession(userId));
+  } catch {
+    return false;
+  }
 }
 
 function extractOwnerIdFromMessageMention(message) {
@@ -532,51 +563,103 @@ async function checkButtonPermission(interaction) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
-  if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId =
-      customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
-    if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
+  if (policy.verifyStartRequired) {
+    const hasSession = hasActiveVerifySession(interaction?.user?.id || null);
+    if (!hasSession) {
       return {
         allowed: false,
         reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId,
+        ownerId: interaction?.user?.id || null,
       };
     }
   }
 
-  if (policy.ownerFromMessageMention) {
-    const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
+  if (policy.grantRecipientOnly) {
+    const [, token] = String(customId).split(":");
+    const request = getPendingCustomRoleGrant(token);
     if (
-      !ownerId ||
-      (interaction?.user?.id && interaction.user.id !== ownerId)
+      request &&
+      interaction?.user?.id &&
+      String(interaction.user.id) !== String(request.targetId)
     ) {
       return {
         allowed: false,
         reason: "not_owner",
         requiredRoles: policy.roles || null,
-        ownerId: ownerId || null,
+        ownerId: String(request.targetId),
       };
     }
   }
 
-  if (Array.isArray(policy.roles)) {
+  const hasOwnerConstraint =
+    (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) ||
+    policy.ownerFromMessageMention;
+  let ownerId = null;
+  let ownerPass = true;
+
+  if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
+    ownerId =
+      customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
+    if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
+      ownerPass = false;
+    }
+  }
+
+  if (policy.ownerFromMessageMention) {
+    const mentionedOwnerId = extractOwnerIdFromMessageMention(interaction?.message);
+    ownerId = ownerId || mentionedOwnerId || null;
+    if (
+      !mentionedOwnerId ||
+      (interaction?.user?.id && interaction.user.id !== mentionedOwnerId)
+    ) {
+      ownerPass = false;
+    }
+  }
+
+  const hasRoleConstraint = Array.isArray(policy.roles);
+  let rolePass = true;
+  if (hasRoleConstraint) {
     if (!interaction?.inGuild?.()) {
+      rolePass = false;
+    } else {
+      rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
+    }
+  }
+
+  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
+    if (!(ownerPass || rolePass)) {
       return {
         allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
+        reason: ownerPass ? "missing_role" : "not_owner",
+        requiredRoles: policy.roles || null,
+        ownerId: ownerId || null,
       };
     }
-    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
-      };
-    }
+    return {
+      allowed: true,
+      reason: null,
+      requiredRoles: policy.roles || null,
+      ownerId: null,
+    };
+  }
+
+  if (hasOwnerConstraint && !ownerPass) {
+    return {
+      allowed: false,
+      reason: "not_owner",
+      requiredRoles: policy.roles || null,
+      ownerId: ownerId || null,
+    };
+  }
+
+  if (hasRoleConstraint && !rolePass) {
+    return {
+      allowed: false,
+      reason: "missing_role",
+      requiredRoles: policy.roles,
+      ownerId: null,
+    };
   }
 
   return {
@@ -618,51 +701,74 @@ async function checkStringSelectPermission(interaction) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
+  const hasOwnerConstraint =
+    (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) ||
+    policy.ownerFromMessageMention;
+  let ownerId = null;
+  let ownerPass = true;
+
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId =
+    ownerId =
       customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
-      return {
-        allowed: false,
-        reason: "not_owner",
-        requiredRoles: policy.roles || null,
-        ownerId,
-      };
+      ownerPass = false;
     }
   }
 
   if (policy.ownerFromMessageMention) {
-    const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
+    const mentionedOwnerId = extractOwnerIdFromMessageMention(interaction?.message);
+    ownerId = ownerId || mentionedOwnerId || null;
     if (
-      !ownerId ||
-      (interaction?.user?.id && interaction.user.id !== ownerId)
+      !mentionedOwnerId ||
+      (interaction?.user?.id && interaction.user.id !== mentionedOwnerId)
     ) {
+      ownerPass = false;
+    }
+  }
+
+  const hasRoleConstraint = Array.isArray(policy.roles);
+  let rolePass = true;
+  if (hasRoleConstraint) {
+    if (!interaction?.inGuild?.()) {
+      rolePass = false;
+    } else {
+      rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
+    }
+  }
+
+  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
+    if (!(ownerPass || rolePass)) {
       return {
         allowed: false,
-        reason: "not_owner",
+        reason: ownerPass ? "missing_role" : "not_owner",
         requiredRoles: policy.roles || null,
         ownerId: ownerId || null,
       };
     }
+    return {
+      allowed: true,
+      reason: null,
+      requiredRoles: policy.roles || null,
+      ownerId: null,
+    };
   }
 
-  if (Array.isArray(policy.roles)) {
-    if (!interaction?.inGuild?.()) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
-      };
-    }
-    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
-      };
-    }
+  if (hasOwnerConstraint && !ownerPass) {
+    return {
+      allowed: false,
+      reason: "not_owner",
+      requiredRoles: policy.roles || null,
+      ownerId: ownerId || null,
+    };
+  }
+
+  if (hasRoleConstraint && !rolePass) {
+    return {
+      allowed: false,
+      reason: "missing_role",
+      requiredRoles: policy.roles,
+      ownerId: null,
+    };
   }
 
   return {
@@ -705,51 +811,74 @@ async function checkModalPermission(interaction) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };
   }
 
+  const hasOwnerConstraint =
+    (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) ||
+    policy.ownerFromMessageMention;
+  let ownerId = null;
+  let ownerPass = true;
+
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId =
+    ownerId =
       customId.split(policy.ownerSeparator || ":")[policy.ownerSegment] || null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
-      return {
-        allowed: false,
-        reason: "not_owner",
-        requiredRoles: policy.roles || null,
-        ownerId,
-      };
+      ownerPass = false;
     }
   }
 
   if (policy.ownerFromMessageMention) {
-    const ownerId = extractOwnerIdFromMessageMention(interaction?.message);
+    const mentionedOwnerId = extractOwnerIdFromMessageMention(interaction?.message);
+    ownerId = ownerId || mentionedOwnerId || null;
     if (
-      !ownerId ||
-      (interaction?.user?.id && interaction.user.id !== ownerId)
+      !mentionedOwnerId ||
+      (interaction?.user?.id && interaction.user.id !== mentionedOwnerId)
     ) {
+      ownerPass = false;
+    }
+  }
+
+  const hasRoleConstraint = Array.isArray(policy.roles);
+  let rolePass = true;
+  if (hasRoleConstraint) {
+    if (!interaction?.inGuild?.()) {
+      rolePass = false;
+    } else {
+      rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
+    }
+  }
+
+  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
+    if (!(ownerPass || rolePass)) {
       return {
         allowed: false,
-        reason: "not_owner",
+        reason: ownerPass ? "missing_role" : "not_owner",
         requiredRoles: policy.roles || null,
         ownerId: ownerId || null,
       };
     }
+    return {
+      allowed: true,
+      reason: null,
+      requiredRoles: policy.roles || null,
+      ownerId: null,
+    };
   }
 
-  if (Array.isArray(policy.roles)) {
-    if (!interaction?.inGuild?.()) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
-      };
-    }
-    if (!(await hasAnyRoleWithLiveFallback(interaction, policy.roles))) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: policy.roles,
-        ownerId: null,
-      };
-    }
+  if (hasOwnerConstraint && !ownerPass) {
+    return {
+      allowed: false,
+      reason: "not_owner",
+      requiredRoles: policy.roles || null,
+      ownerId: ownerId || null,
+    };
+  }
+
+  if (hasRoleConstraint && !rolePass) {
+    return {
+      allowed: false,
+      reason: "missing_role",
+      requiredRoles: policy.roles,
+      ownerId: null,
+    };
   }
 
   return {

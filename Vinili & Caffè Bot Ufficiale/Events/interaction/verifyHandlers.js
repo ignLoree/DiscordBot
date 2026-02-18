@@ -623,3 +623,11 @@ async function handleVerifyInteraction(interaction) {
 }
 
 module.exports = { handleVerifyInteraction };
+
+module.exports.hasActiveVerifySession = function hasActiveVerifySession(userId) {
+  if (!userId) return false;
+  const state = verifyState.get(String(userId));
+  if (!state) return false;
+  if (Date.now() > Number(state.expiresAt || 0)) return false;
+  return true;
+};
