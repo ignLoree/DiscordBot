@@ -359,7 +359,7 @@ async function handleVoteManagerMessage(message, client) {
     } catch { }
   }
   const voteLabel =
-    typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}Â°` : "";
+    typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>")
@@ -368,14 +368,14 @@ async function handleVoteManagerMessage(message, client) {
         `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
         "",
         "\`Hai guadagnato:\`",
-        `<a:VC_Events:1448688007438667796> ï¿½?ï¿½ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
-        `<a:VC_Money:1448671284748746905> ï¿½?ï¿½ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+        `<a:VC_Events:1448688007438667796> ➥ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
+        `<a:VC_Money:1448671284748746905> ➥ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
         "",
         "<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
       ].join("\n"),
     )
     .setFooter({
-      text: "Ogni volta che voterai il valore dell'exp guadagnata varierÃ : a volte sarÃ  piÃ¹ alto, altre volte piÃ¹ basso, mentre altre ancora uguale al precedente",
+      text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",
     });
 
   const row = new ActionRowBuilder().addComponents(
@@ -452,7 +452,7 @@ module.exports = {
               [
                 `<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                 "",
-                "<a:VC_StarPink:1330194976440848500> ï¿½?ï¿½ **__Sblocca il permesso:__**",
+                "<a:VC_StarPink:1330194976440848500> ➥ **__Sblocca il permesso:__**",
                 `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
               ].join("\n"),
             );
@@ -628,7 +628,7 @@ module.exports = {
       const embed = buildGlobalPermissionDeniedEmbed(
         [],
         "comando",
-        "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.",
+        "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
       );
       const msg = await message.channel.send({ embeds: [embed] });
       setTimeout(() => msg.delete().catch(() => { }), 5000);
@@ -1027,7 +1027,7 @@ async function handleAfk(message) {
     else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
     await safeMessageReply(
       message,
-      `\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`,
+      `\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`,
     );
   }
 }

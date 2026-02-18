@@ -106,7 +106,7 @@ async function handleSlashCommand(interaction, client) {
     const embed = buildGlobalPermissionDeniedEmbed(
       [],
       "comando",
-      "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.",
+      "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
     );
     return interaction.reply({ embeds: [embed], flags: 1 << 6 });
   }

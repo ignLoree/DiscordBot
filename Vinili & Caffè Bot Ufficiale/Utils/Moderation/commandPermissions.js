@@ -440,14 +440,6 @@ async function checkPrefixPermission(
 
   if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
 
-  if (commandName === "restart") {
-    const client = message?.client;
-    if (!client) return false;
-    const devIds = getDevIds(client);
-    if (devIds.length === 0) return false;
-    return devIds.includes(userId);
-  }
-
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
     const hasOverride = await hasTemporaryCommandPermission({
@@ -797,7 +789,7 @@ function buildGlobalPermissionDeniedEmbed(
   const description =
     customDescription != null
       ? customDescription
-      : `Questo ${entityLabel} � riservato ad una categoria di utenti specifici.`;
+      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("Red")
@@ -816,7 +808,7 @@ function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non � associato al tuo comando.");
+    .setDescription("Questo controllo non è associato al tuo comando.");
 }
 
 module.exports = {

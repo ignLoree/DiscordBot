@@ -341,6 +341,9 @@
     "verify": [
       "roles.HighStaff"
     ],
+    "restart": [
+      "roles.Founder"
+    ],
     "perm": {
       "roles": [
         "roles.HighStaff"

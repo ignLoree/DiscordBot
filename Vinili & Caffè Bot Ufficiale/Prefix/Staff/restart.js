@@ -80,20 +80,6 @@ module.exports = {
   ],
 
   async execute(message, args = [], client) {
-    const devId = "295500038401163264";
-    if (devId && message?.author?.id !== devId) {
-      return safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor("Red")
-            .setDescription(
-              "<:vegax:1443934876440068179> Solo il developer può usare questo comando.",
-            ),
-        ],
-        allowedMentions: { repliedUser: false },
-      });
-    }
-
     const mainGuildId = IDs.guilds?.main || null;
     if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
       return safeMessageReply(message, {
