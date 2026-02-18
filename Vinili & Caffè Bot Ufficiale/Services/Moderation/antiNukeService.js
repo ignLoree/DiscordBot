@@ -177,6 +177,24 @@ function isWhitelistedExecutor(guild, executorId) {
   return false;
 }
 
+async function isWhitelistedExecutorAsync(guild, executorId) {
+  const userId = String(executorId || "");
+  if (!userId) return true;
+  if (String(guild?.ownerId || "") === userId) return true;
+  if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
+  if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
+  let member = guild?.members?.cache?.get(userId) || null;
+  if (!member) member = await guild?.members?.fetch(userId).catch(() => null);
+  if (!member) return false;
+  if (
+    member.roles.cache.has(String(IDs.roles.Founder || "")) ||
+    member.roles.cache.has(String(IDs.roles.CoFounder || ""))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function isCategoryWhitelisted(channel) {
   const set = ANTINUKE_CONFIG.panicMode.whitelistCategoryIds;
   if (!set || !set.size || !channel) return false;
@@ -294,6 +312,9 @@ function getPanicState(guildId) {
     lastAt: Date.now(),
     activeUntil: 0,
     lockedRoles: new Map(),
+    createdRoleIds: new Set(),
+    createdChannelIds: new Set(),
+    createdWebhookIds: new Set(),
     unlockTimer: null,
   };
   ANTINUKE_PANIC_STATE.set(key, initial);
@@ -357,6 +378,50 @@ async function unlockDangerousRolesAfterPanic(guild, state) {
   state.lockedRoles.clear();
 }
 
+async function runAutoBackupSyncAfterPanic(guild, state) {
+  const cfg = ANTINUKE_CONFIG.panicMode.autoBackupSync;
+  if (!cfg?.enabled || !guild) return;
+  const me = guild.members?.me;
+
+  if (cfg.deleteNewChannels && me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
+    for (const channelId of state.createdChannelIds) {
+      const channel =
+        guild.channels.cache.get(String(channelId)) ||
+        (await guild.channels.fetch(String(channelId)).catch(() => null));
+      if (!channel) continue;
+      await channel.delete("AntiNuke panic cleanup: delete new channel").catch(() => {});
+    }
+  }
+
+  if (cfg.deleteNewRoles && me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) {
+    for (const roleId of state.createdRoleIds) {
+      const role =
+        guild.roles.cache.get(String(roleId)) ||
+        (await guild.roles.fetch(String(roleId)).catch(() => null));
+      if (!role) continue;
+      if (role.managed) continue;
+      if (role.position >= me.roles.highest.position) continue;
+      await role.delete("AntiNuke panic cleanup: delete new role").catch(() => {});
+    }
+  }
+
+  if (cfg.deleteNewWebhooks && me?.permissions?.has(PermissionsBitField.Flags.ManageWebhooks)) {
+    for (const channel of guild.channels.cache.values()) {
+      if (!channel?.isTextBased?.()) continue;
+      const webhooks = await channel.fetchWebhooks().catch(() => null);
+      if (!webhooks?.size) continue;
+      for (const webhook of webhooks.values()) {
+        if (!state.createdWebhookIds.has(String(webhook.id))) continue;
+        await webhook.delete("AntiNuke panic cleanup: delete new webhook").catch(() => {});
+      }
+    }
+  }
+
+  state.createdRoleIds.clear();
+  state.createdChannelIds.clear();
+  state.createdWebhookIds.clear();
+}
+
 async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.panicMode.enabled || !guild) {
     return { activated: false, active: false };
@@ -386,6 +451,7 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     const current = getPanicState(guild.id);
     if (Number(current.activeUntil || 0) > Date.now()) return;
     await unlockDangerousRolesAfterPanic(guild, current);
+    await runAutoBackupSyncAfterPanic(guild, current);
     await sendAntiNukeLog(
       guild,
       "AntiNuke Panic Mode Ended",
@@ -441,7 +507,7 @@ async function quarantineExecutor(guild, executorId, reason) {
   if (!ANTINUKE_CONFIG.autoQuarantine.enabled) return;
   const userId = String(executorId || "");
   if (!userId) return;
-  if (isWhitelistedExecutor(guild, userId)) return;
+  if (await isWhitelistedExecutorAsync(guild, userId)) return;
   const member = guild?.members?.cache?.get(userId) || (await guild?.members?.fetch(userId).catch(() => null));
   if (!member) return;
 
@@ -504,7 +570,7 @@ async function handleKickBanAction({ guild, executorId, action = "unknown", targ
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(
     guild,
     `Kick/Ban filter: ${action}`,
@@ -568,12 +634,15 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(
     guild,
     "Role creation filter",
     ANTINUKE_CONFIG.roleCreationFilter.heatPerAction,
   );
+  if (isAntiNukePanicActive(guild.id) && roleId) {
+    getPanicState(guild.id).createdRoleIds.add(String(roleId));
+  }
 
   const now = Date.now();
   const { state } = getRoleCreationState(guild.id, actorId);
@@ -637,7 +706,7 @@ async function handleRoleDeletionAction({ guild, executorId, roleName = "", role
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(
     guild,
     "Role deletion filter",
@@ -706,13 +775,16 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   if (isCategoryWhitelisted(channel)) return;
   await enableAntiNukePanic(
     guild,
     "Channel creation filter",
     ANTINUKE_CONFIG.channelCreationFilter.heatPerAction,
   );
+  if (isAntiNukePanicActive(guild.id) && channelId) {
+    getPanicState(guild.id).createdChannelIds.add(String(channelId));
+  }
 
   const now = Date.now();
   const { state } = getChannelCreationState(guild.id, actorId);
@@ -776,7 +848,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   if (isCategoryWhitelisted(channel)) return;
   await enableAntiNukePanic(
     guild,
@@ -846,12 +918,15 @@ async function handleWebhookCreationAction({ guild, executorId, webhookId = "" }
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(
     guild,
     "Webhook creation filter",
     ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction,
   );
+  if (isAntiNukePanicActive(guild.id) && webhookId) {
+    getPanicState(guild.id).createdWebhookIds.add(String(webhookId));
+  }
 
   const now = Date.now();
   const { state } = getWebhookCreationState(guild.id, actorId);
@@ -915,7 +990,7 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
   if (!guild) return;
   const actorId = String(executorId || "");
   if (!actorId) return;
-  if (isWhitelistedExecutor(guild, actorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(
     guild,
     "Webhook deletion filter",
@@ -964,7 +1039,7 @@ async function handleRoleUpdate({ oldRole, newRole, executorId }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.strictMode) return;
   const guild = newRole?.guild || oldRole?.guild;
   if (!guild) return;
-  if (isWhitelistedExecutor(guild, executorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, executorId)) return;
   await enableAntiNukePanic(guild, "Dangerous role permission update", 100);
 
   const addedDanger = dangerousAddedBits(
@@ -994,7 +1069,7 @@ async function handleRoleUpdate({ oldRole, newRole, executorId }) {
 async function handleMemberRoleAddition({ guild, targetMember, addedRoles, executorId }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.strictMemberRoleAddition) return;
   if (!guild || !targetMember || !Array.isArray(addedRoles) || !addedRoles.length) return;
-  if (isWhitelistedExecutor(guild, executorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, executorId)) return;
   await enableAntiNukePanic(guild, "Dangerous role added to member", 100);
 
   const dangerousRoles = addedRoles.filter((role) =>
@@ -1030,7 +1105,7 @@ async function handleChannelOverwrite({
 }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.monitorChannelPermissions) return;
   if (!guild || !channel || !overwrite) return;
-  if (isWhitelistedExecutor(guild, executorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, executorId)) return;
   await enableAntiNukePanic(guild, "Dangerous channel overwrite", 100);
   if (Number(overwrite.type) !== OverwriteType.Role) return;
 
@@ -1066,7 +1141,7 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.vanityGuard) return;
   const guild = newGuild || oldGuild;
   if (!guild) return;
-  if (isWhitelistedExecutor(guild, executorId)) return;
+  if (await isWhitelistedExecutorAsync(guild, executorId)) return;
   await enableAntiNukePanic(guild, "Vanity URL unauthorized update", 100);
   const oldVanity = String(oldGuild?.vanityURLCode || "");
   const newVanity = String(newGuild?.vanityURLCode || "");
@@ -1085,6 +1160,65 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   );
 }
 
+async function handlePruneAction({ guild, executorId, removedCount = 0 }) {
+  if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.detectPrune) return;
+  if (!guild) return;
+  const actorId = String(executorId || "");
+  if (!actorId) return;
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
+  await enableAntiNukePanic(guild, "Member prune detected", 100);
+  await quarantineExecutor(guild, actorId, "AntiNuke: member prune detected");
+  await sendAntiNukeLog(
+    guild,
+    "AntiNuke: Member Prune",
+    [
+      `<:VC_right_arrow:1473441155055096081> **Executor:** <@${actorId}> \`${actorId}\``,
+      `<:VC_right_arrow:1473441155055096081> **Action:** Member prune`,
+      `<:VC_right_arrow:1473441155055096081> **Removed:** ${Number(removedCount || 0)}`,
+      `<:VC_right_arrow:1473441155055096081> **Result:** Executor quarantined`,
+    ],
+  );
+}
+
+async function handleThreadCreationAction({
+  guild,
+  executorId,
+  threadId = "",
+  thread = null,
+}) {
+  return handleChannelCreationAction({
+    guild,
+    executorId,
+    channelId: threadId,
+    channel: thread,
+  });
+}
+
+async function handleThreadDeletionAction({
+  guild,
+  executorId,
+  threadName = "",
+  threadId = "",
+  thread = null,
+}) {
+  return handleChannelDeletionAction({
+    guild,
+    executorId,
+    channelName: threadName,
+    channelId: threadId,
+    channel: thread,
+  });
+}
+
+function shouldBlockModerationCommands(guild, userId) {
+  if (!ANTINUKE_CONFIG.enabled) return false;
+  if (!ANTINUKE_CONFIG.panicMode.enabled) return false;
+  if (!ANTINUKE_CONFIG.panicMode.lockdown.lockModerationCommands) return false;
+  if (!guild?.id || !userId) return false;
+  if (!isAntiNukePanicActive(guild.id)) return false;
+  return !isWhitelistedExecutor(guild, userId);
+}
+
 module.exports = {
   ANTINUKE_CONFIG,
   handleRoleUpdate,
@@ -1098,6 +1232,13 @@ module.exports = {
   handleChannelDeletionAction,
   handleWebhookCreationAction,
   handleWebhookDeletionAction,
+  handleThreadCreationAction,
+  handleThreadDeletionAction,
+  handlePruneAction,
   isAntiNukePanicActive,
+  shouldBlockModerationCommands,
   isWhitelistedExecutor,
 };
+
+
+

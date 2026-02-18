@@ -62,6 +62,7 @@ module.exports = {
     if (!channel?.guildId) return;
     await forceQuarantineOverwrite(channel);
     try {
+      let executorId = "";
       const logChannel = await resolveChannelRolesLogChannel(channel.guild);
       if (logChannel?.isTextBased?.()) {
         const audit = await resolveResponsible(
@@ -69,7 +70,7 @@ module.exports = {
           CHANNEL_CREATE_ACTION,
           (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
         );
-        const executorId = String(audit?.executor?.id || "");
+        executorId = String(audit?.executor?.id || "");
 
         const responsible = formatAuditActor(audit.executor);
         const lines = [
@@ -91,13 +92,13 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
-        await antiNukeHandleChannelCreationAction({
-          guild: channel.guild,
-          executorId,
-          channelId: String(channel.id || ""),
-          channel,
-        }).catch(() => {});
       }
+      await antiNukeHandleChannelCreationAction({
+        guild: channel.guild,
+        executorId,
+        channelId: String(channel.id || ""),
+        channel,
+      }).catch(() => {});
     } catch {}
 
     await upsertChannelSnapshot(channel).catch(() => {});

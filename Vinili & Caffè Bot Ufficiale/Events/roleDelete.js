@@ -21,6 +21,7 @@ module.exports = {
 
     try {
       const guild = role.guild || client.guilds.cache.get(guildId);
+      let executorId = "";
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
         const audit = await resolveResponsible(
@@ -29,7 +30,7 @@ module.exports = {
           (entry) => String(entry?.target?.id || "") === String(role.id || ""),
         );
         const responsible = formatAuditActor(audit.executor);
-        const executorId = String(audit?.executor?.id || "");
+        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
@@ -52,13 +53,13 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
-        await antiNukeHandleRoleDeletionAction({
-          guild,
-          executorId,
-          roleName: String(role.name || ""),
-          roleId: String(role.id || ""),
-        }).catch(() => {});
       }
+      await antiNukeHandleRoleDeletionAction({
+        guild,
+        executorId,
+        roleName: String(role.name || ""),
+        roleId: String(role.id || ""),
+      }).catch(() => {});
     } catch {}
 
     queueIdsCatalogSync(client, guildId, "roleDelete");

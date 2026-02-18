@@ -822,6 +822,7 @@ function detectViolations(message, state) {
   const normalized = normalizeContent(content);
   const violations = [];
   const channelId = String(message.channelId || "");
+  const parentChannelId = String(message.channel?.parentId || "");
 
   if (TEXT_RULES.regularMessage.enabled) {
     state.msgTimes.push(at);
@@ -856,7 +857,11 @@ function detectViolations(message, state) {
   const roleMentionCount = message.mentions?.roles?.size || 0;
   const everyoneMentionCount = message.mentions?.everyone ? 1 : 0;
   const mentionCount = userMentionCount + roleMentionCount + everyoneMentionCount;
-  if (!EXEMPT_MENTION_CHANNEL_IDS.has(channelId) && MENTION_RULES.enabled) {
+  if (
+    !EXEMPT_MENTION_CHANNEL_IDS.has(channelId) &&
+    !EXEMPT_MENTION_CHANNEL_IDS.has(parentChannelId) &&
+    MENTION_RULES.enabled
+  ) {
     if (mentionCount > 0) {
       for (let i = 0; i < mentionCount; i += 1) {
         state.mentionTimes.push(at);
@@ -1258,19 +1263,21 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
 }
 
 async function warnUser(message, state, violations) {
-  if (!canActNow(message)) return;
+  if (!canActNow(message)) return false;
   await message.delete().catch(() => {});
   await markBadUserAction(message, "warn", violations);
   await sendAutomodActionInChannel(message, "warn", violations);
   await sendAutomodLog(message, "warn", violations, state.heat);
+  return true;
 }
 
 async function deleteMessage(message, state, violations) {
-  if (!canActNow(message)) return;
+  if (!canActNow(message)) return false;
   await message.delete().catch(() => {});
   await markBadUserAction(message, "delete", violations);
   await sendAutomodActionInChannel(message, "delete", violations);
   await sendAutomodLog(message, "delete", violations, state.heat);
+  return true;
 }
 
 async function timeoutMember(message, state, violations) {
@@ -1428,11 +1435,15 @@ async function runAutoModMessage(message) {
       { key: "panic_mode", heat: 0, info: "elevated mode active" },
     ]);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    await deleteMessage(message, state, [
+    const deleted = await deleteMessage(message, state, [
       ...violations,
       { key: "panic_mode", heat: 0, info: "timeout fallback -> delete" },
     ]);
-    return { blocked: true, action: "delete", heat: state.heat };
+    return {
+      blocked: Boolean(deleted),
+      action: deleted ? "delete" : "cooldown_skip",
+      heat: state.heat,
+    };
   }
 
   const hasInstantLinkViolation = violations.some((v) =>
@@ -1442,11 +1453,15 @@ async function runAutoModMessage(message) {
     state.heat = MAX_HEAT;
     const done = await timeoutMember(message, state, violations);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    await deleteMessage(message, state, [
+    const deleted = await deleteMessage(message, state, [
       ...violations,
       { key: "link_blacklist", heat: 0, info: "timeout fallback -> delete" },
     ]);
-    return { blocked: true, action: "delete", heat: state.heat };
+    return {
+      blocked: Boolean(deleted),
+      action: deleted ? "delete" : "cooldown_skip",
+      heat: state.heat,
+    };
   }
 
   for (const v of violations) addHeat(state, v.heat);
@@ -1454,21 +1469,33 @@ async function runAutoModMessage(message) {
   if (state.heat >= TIMEOUT_THRESHOLD) {
     const done = await timeoutMember(message, state, violations);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    await deleteMessage(message, state, [
+    const deleted = await deleteMessage(message, state, [
       ...violations,
       { key: "regular_message", heat: 0, info: "timeout fallback -> delete" },
     ]);
-    return { blocked: true, action: "delete", heat: state.heat };
+    return {
+      blocked: Boolean(deleted),
+      action: deleted ? "delete" : "cooldown_skip",
+      heat: state.heat,
+    };
   }
 
   if (state.heat >= DELETE_THRESHOLD) {
-    await deleteMessage(message, state, violations);
-    return { blocked: true, action: "delete", heat: state.heat };
+    const deleted = await deleteMessage(message, state, violations);
+    return {
+      blocked: Boolean(deleted),
+      action: deleted ? "delete" : "cooldown_skip",
+      heat: state.heat,
+    };
   }
 
   if (state.heat >= WARN_THRESHOLD) {
-    await warnUser(message, state, violations);
-    return { blocked: false, action: "warn", heat: state.heat };
+    const warned = await warnUser(message, state, violations);
+    return {
+      blocked: Boolean(warned),
+      action: warned ? "warn" : "cooldown_skip",
+      heat: state.heat,
+    };
   }
 
   return { blocked: false, action: "heat", heat: state.heat };

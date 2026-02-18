@@ -27,6 +27,15 @@ function sanitizeText(value) {
     .trim();
 }
 
+function isMeaningfulDeletedMessage(msg) {
+  if (!msg) return false;
+  const hasContent = sanitizeText(msg.content || "").length > 0;
+  const hasAttachments = Boolean(msg.attachments?.size);
+  const hasEmbeds = Array.isArray(msg.embeds) && msg.embeds.length > 0;
+  const hasAuthor = Boolean(msg.author?.id);
+  return hasContent || hasAttachments || hasEmbeds || hasAuthor;
+}
+
 function buildPurgeLogText(messages, channelId) {
   const rows = [];
   const ordered = Array.from(messages?.values?.() || []).sort((a, b) => {
@@ -130,8 +139,10 @@ module.exports = {
   name: "messageDeleteBulk",
   async execute(messages, client) {
     if (!messages?.size) return;
+    const meaningful = messages.filter((msg) => isMeaningfulDeletedMessage(msg));
+    if (!meaningful.size) return;
 
-    const sample = messages.first();
+    const sample = meaningful.first();
     const guild = sample?.guild;
     const channel = sample?.channel;
     if (!guild || !channel) return;
@@ -139,14 +150,14 @@ module.exports = {
     const logChannel = await resolveActivityLogChannel(guild);
     if (!logChannel?.isTextBased?.()) return;
 
-    const count = Number(messages.size || 0);
+    const count = Number(meaningful.size || 0);
     if (count <= 0) return;
 
     const responsible = await resolvePurgeResponsible(
       guild,
       channel.id,
       count,
-      client?.user || null,
+      null,
     );
 
     const embed = new EmbedBuilder()
@@ -163,7 +174,7 @@ module.exports = {
         ].join("\n"),
       );
 
-    const txt = buildPurgeLogText(messages, channel.id);
+    const txt = buildPurgeLogText(meaningful, channel.id);
     const fileName = `${channel.id}_${sample?.id || Date.now()}.txt`;
     const file = new AttachmentBuilder(Buffer.from(txt, "utf8"), {
       name: fileName,

@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 
@@ -62,17 +62,18 @@ const PREFIX_HELP_DESCRIPTIONS = {
   invites: "Mostra le statistiche inviti del server o di un utente.",
   languages: "Mostra le lingue TTS disponibili per il comando set voice.",
   membercount: "Mostra il numero totale di membri del server.",
-  "no-dm": "Attiva/disattiva il blocco DM per gli annunci dello staff.",
+  "no-dm": "Disattiva i DM automatici (`+dm-disable`).",
+  "dm-enable": "Riattiva i DM automatici (`+dm-enable`).",
   ping: "Mostra latenza bot, database e informazioni di uptime.",
   set: "Impostazioni bot TTS: voice.",
-  ship: "Calcola la compatibilità tra due utenti.",
+  ship: "Calcola la compatibilitÃ  tra due utenti.",
   snipe: "Recupera l'ultimo messaggio eliminato nel canale.",
   join: "Fa entrare il bot nel tuo canale vocale.",
   leave: "Fa uscire il bot dal canale vocale.",
   unblock: "Sblocca privacy contenuti: avatar, banner, quotes.",
   classifica: "Mostra la classifica livelli (totale/settimanale).",
   mstats: "Mostra statistiche minigiochi di un utente.",
-  me: "Mostra le tue statistiche attività (1d/7d/14d/21d/30d) con refresh live.",
+  me: "Mostra le tue statistiche attivitÃ  (1d/7d/14d/21d/30d) con refresh live.",
   server:
     "Mostra statistiche server (1d/7d/14d/21d/30d), top e grafici con aggiornamento live.",
   top: "Mostra la top completa utenti/canali (testo+vocale) con canvas, refresh e periodo.",
@@ -91,10 +92,10 @@ const PREFIX_HELP_DESCRIPTIONS = {
   verify: "Gestisce il flusso di verifica utenti.",
   restart:
     "Riavvia il bot o ricarica moduli specifici (handlers, commands, prefix, events, triggers, services, utils, schemas).",
-  perm: "Gestisce permessi temporanei per utente e comandi.",
+  perm: "Gestisce permessi temporanei e whitelist canali per comando.",
   temprole: "Gestisce assegnazioni di ruoli temporanei ad utenti.",
   smartembed: "Crea un embed intelligente spostando i ping fuori dall'embed.",
-  customregister: "Registra retroattivamente custom role/vocale già esistenti.",
+  customregister: "Registra retroattivamente custom role/vocale giÃ  esistenti.",
   level:
     "Gestisce il sistema livelli: set, add, remove, reset, lock, unlock, multiplier, ignore, unignore.",
   customrole: "Gestisce il custom role: create, modify, add, remove.",
@@ -112,8 +113,8 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "level.multiplier": "Imposta un moltiplicatore EXP temporaneo.",
   "level.ignore": "Esclude un ruolo dal guadagno EXP.",
   "level.unignore": "Riabilita un ruolo al guadagno EXP.",
-  "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
-  "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
+  "ticket.add": "Aggiunge uno o piÃ¹ utenti al ticket corrente.",
+  "ticket.remove": "Rimuove uno o piÃ¹ utenti dal ticket corrente.",
   "ticket.closerequest": "Invia richiesta di chiusura ticket.",
   "ticket.close": "Chiude il ticket corrente.",
   "ticket.claim": "Assegna il ticket a te.",
@@ -138,10 +139,15 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
   "perm.grant":
-    "Assegna permessi temporanei ad un utente su uno o più comandi.",
+    "Assegna permessi temporanei ad un utente su uno o piÃ¹ comandi.",
   "perm.revoke": "Revoca permessi temporanei specifici ad un utente.",
   "perm.list": "Mostra i permessi temporanei attivi di un utente.",
   "perm.clear": "Rimuove tutti i permessi temporanei di un utente.",
+  "perm.channel-set": "Imposta i canali consentiti per un comando.",
+  "perm.channel-add": "Aggiunge canali consentiti ad un comando.",
+  "perm.channel-remove": "Rimuove canali dalla whitelist di un comando.",
+  "perm.channel-clear": "Rimuove la restrizione canali di un comando.",
+  "perm.channel-list": "Mostra le whitelist canali configurate.",
   "temprole.grant": "Assegna un ruolo ad un utente per una durata temporanea.",
   "temprole.revoke": "Revoca una singola assegnazione di ruolo temporaneo.",
   "temprole.list": "Mostra i ruoli temporanei attivi di un utente.",
@@ -654,14 +660,14 @@ function renderPageText(page) {
         entry.aliases.length
           ? ` (alias: ${entry.aliases.map((alias) => `${entry.prefixBase || "+"}${alias}`).join(", ")})`
           : "";
-      return `┃ \`${entry.invoke}\` - ${entry.description}${aliasText}`;
+      return `- \`${entry.invoke}\` - ${entry.description}${aliasText}`;
     });
-    sections.push(`✨ **${categoryLabel}**\n${rows.join("\n")}`);
+    sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
 
   return page.items.length
     ? [
-        "## 📜 Comandi Disponibili",
+        "## Comandi Disponibili",
         "",
         `### ${PAGE_TITLES[page.roleId] || "Comandi"}`,
         "",
@@ -870,19 +876,19 @@ function collectPrefixExampleLines(
         lower.includes(`${prefixBase}${commandName} ${requestedSub}`) ||
         lower.includes(` ${requestedSub} `)
       ) {
-        push(`• \`${row}\``);
+        push(`- \`${row}\``);
       }
     }
   } else {
-    for (const row of snippets) push(`• \`${row}\``);
+    for (const row of snippets) push(`- \`${row}\``);
   }
 
   if (subEntries.length) {
     for (const entry of subEntries) {
-      push(`• \`${entry.invoke}\``);
+      push(`- \`${entry.invoke}\``);
     }
   } else {
-    push(`• \`${prefixBase}${commandName}\``);
+    push(`- \`${prefixBase}${commandName}\``);
   }
 
   return out.slice(0, 16);
@@ -1000,7 +1006,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
       : permConfig.roles;
     const aliasesForSub = extractDirectAliasesForSubcommand(command, subName);
     subLines.push(
-      `• \`${prefixBase}${commandName} ${subName}\` - ${entry.description}`,
+      `- \`${prefixBase}${commandName} ${subName}\` - ${entry.description}`,
     );
     if (aliasesForSub.length) {
       subLines.push(
@@ -1023,7 +1029,7 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
         ? permConfig.subcommands[sub]
         : permConfig.roles;
       subLines.push(
-        `• \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
+        `- \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
       );
       subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
     }
@@ -1104,7 +1110,7 @@ function buildSlashExampleLine(
     if (!opt?.name || opt.type < 3 || opt.type > 11) continue;
     parts.push(getSlashSampleValueByType(opt.type));
   }
-  return `• \`${parts.join(" ")}\``;
+  return `- \`${parts.join(" ")}\``;
 }
 
 function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
@@ -1172,7 +1178,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
           ? ` | scelte: ${opt.choices.map((c) => `\`${c.name}\``).join(", ")}`
           : "";
       optionLines.push(
-        `• \`${opt.name}\` (${getOptionTypeLabel(opt.type)}, ${required}) - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${choices}`,
+        `- \`${opt.name}\` (${getOptionTypeLabel(opt.type)}, ${required}) - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${choices}`,
       );
     }
   } else {
@@ -1198,7 +1204,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
           ),
         );
         optionLines.push(
-          `• \`${subName}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}`,
+          `- \`${subName}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}`,
         );
         for (const child of Array.isArray(opt.options) ? opt.options : []) {
           if (!child?.name || child?.type < 3 || child?.type > 11) continue;
@@ -1245,7 +1251,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
             ),
           );
           optionLines.push(
-            `• \`${groupName} ${subName}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}`,
+            `- \`${groupName} ${subName}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}`,
           );
           for (const child of Array.isArray(sub.options) ? sub.options : []) {
             if (!child?.name || child?.type < 3 || child?.type > 11) continue;
@@ -1297,7 +1303,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
         const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
         const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
         fallbackSubLines.push(
-          `• \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
+          `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
         );
       }
       if (opt?.type === 2 && Array.isArray(opt.options)) {
@@ -1307,7 +1313,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
           const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
           const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
           fallbackSubLines.push(
-            `• \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
+            `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
           );
         }
       }
@@ -1319,7 +1325,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   pushChunkedField(
     fields,
     "Esempi di uso",
-    exampleLines.length ? exampleLines : [`• \`/${commandName}\``],
+    exampleLines.length ? exampleLines : [`- \`/${commandName}\``],
   );
   if (fields.length) embed.addFields(fields);
   return embed;
@@ -1420,7 +1426,7 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
         const invoke = `${prefixBase}${commandName} ${sub}`;
         const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
         const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-        return `• \`${invoke}\` - ${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
+        return `- \`${invoke}\` - ${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
       });
       return new EmbedBuilder()
         .setColor(HELP_EMBED_COLOR)
@@ -1461,7 +1467,7 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
         const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
         const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
         subLines.push(
-          `• \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
+          `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
         );
       }
       if (opt?.type === 2 && Array.isArray(opt.options)) {
@@ -1471,7 +1477,7 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
           const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
           const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
           subLines.push(
-            `• \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
+            `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
           );
         }
       }
@@ -1517,7 +1523,7 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   const lines = limited.map((entry) => {
     const categoryKey = String(entry.category || "").toLowerCase();
     const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || "Misc";
-    return `• \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}`;
+    return `- \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}`;
   });
   const extra =
     matches.length > limited.length
@@ -1653,3 +1659,4 @@ module.exports = {
     });
   },
 };
+

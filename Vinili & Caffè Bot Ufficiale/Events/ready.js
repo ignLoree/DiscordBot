@@ -28,6 +28,7 @@ const {
 const {
   startWeeklyActivityWinnersLoop,
 } = require("../Services/Community/weeklyActivityWinnersService");
+const { restoreTempBans } = require("../Services/Moderation/joinRaidService");
 const {
   syncLiveVoiceSessionsFromGateway,
   startLiveVoiceExpLoop,
@@ -142,11 +143,14 @@ async function restoreBumpReminders(client) {
 }
 
 async function restoreCoreStartupState(client) {
-  const [bootstrap, inviteCache, tts, liveVoiceSync] = await Promise.allSettled([
+  const [bootstrap, inviteCache, tts, liveVoiceSync, joinRaidRestore] = await Promise.allSettled([
     bootstrapSupporter(client),
     primeInviteCache(client),
     restoreTtsConnections(client),
     syncLiveVoiceSessionsFromGateway(client),
+    Promise.allSettled(
+      [...client.guilds.cache.values()].map((guild) => restoreTempBans(guild)),
+    ),
   ]);
 
   if (bootstrap.status === "rejected")
@@ -157,6 +161,8 @@ async function restoreCoreStartupState(client) {
     global.logger.error("[TTS RESTORE ERROR]", tts.reason);
   if (liveVoiceSync.status === "rejected")
     global.logger.error("[VOICE LIVE SYNC ERROR]", liveVoiceSync.reason);
+  if (joinRaidRestore.status === "rejected")
+    global.logger.error("[JOIN RAID RESTORE ERROR]", joinRaidRestore.reason);
 }
 
 async function runStartupPanels(client, label = "immediate") {

@@ -73,6 +73,18 @@ function buildAuthorLabel(message) {
   return `${author}${suffix} \`${author.id}\``;
 }
 
+function hasMeaningfulDeleteData(message) {
+  if (!message) return false;
+  const content = normalizeText(message.content || "");
+  const hasContent = content.length > 0;
+  const hasAttachments = Boolean(message.attachments?.size);
+  const hasEmbeds = Array.isArray(message.embeds) && message.embeds.length > 0;
+  const hasAuthor = Boolean(message.author?.id);
+  const hasMessageId = Boolean(message.id);
+  // Skip ghost/partial deletes with no readable payload.
+  return (hasContent || hasAttachments || hasEmbeds || hasAuthor) && hasMessageId;
+}
+
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -145,6 +157,7 @@ module.exports = {
 
     const resolved = await resolveMessage(message);
     if (!resolved?.guild) return;
+    if (!hasMeaningfulDeleteData(resolved)) return;
 
     await sendDeleteLog(resolved);
 

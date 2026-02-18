@@ -60,6 +60,7 @@ function getGuildState(guildId) {
   const initial = {
     samples: [],
     flagged: [],
+    tempBans: [],
     raidUntil: 0,
   };
   GUILD_STATE.set(key, initial);
@@ -77,16 +78,18 @@ function isDbReady() {
 async function loadGuildState(guildId) {
   const key = String(guildId || "");
   if (!key || LOADED_GUILDS.has(key)) return;
-  LOADED_GUILDS.add(key);
   if (!isDbReady()) return;
   try {
     const row = await JoinRaidState.findOne({ guildId: key }).lean();
-    if (!row) return;
-    GUILD_STATE.set(key, {
-      samples: Array.isArray(row.samples) ? row.samples : [],
-      flagged: Array.isArray(row.flagged) ? row.flagged : [],
-      raidUntil: Number(row.raidUntil || 0),
-    });
+    if (row) {
+      GUILD_STATE.set(key, {
+        samples: Array.isArray(row.samples) ? row.samples : [],
+        flagged: Array.isArray(row.flagged) ? row.flagged : [],
+        tempBans: Array.isArray(row.tempBans) ? row.tempBans : [],
+        raidUntil: Number(row.raidUntil || 0),
+      });
+    }
+    LOADED_GUILDS.add(key);
   } catch {
     // Do not block runtime if persistence fails.
   }
@@ -109,6 +112,9 @@ function scheduleStateSave(guildId) {
             raidUntil: Number(state.raidUntil || 0),
             samples: state.samples.slice(-300),
             flagged: state.flagged.slice(-300),
+            tempBans: Array.isArray(state.tempBans)
+              ? state.tempBans.slice(-300)
+              : [],
           },
         },
         { upsert: true },
@@ -125,6 +131,12 @@ function pruneState(state, at = nowMs()) {
   const minFlagTs = at - JOIN_RAID_CONFIG.triggerWindowMs;
   state.samples = state.samples.filter((x) => Number(x?.ts || 0) >= minSampleTs);
   state.flagged = state.flagged.filter((x) => Number(x?.ts || 0) >= minFlagTs);
+  if (!Array.isArray(state.tempBans)) state.tempBans = [];
+  state.tempBans = state.tempBans.filter(
+    (x) =>
+      String(x?.userId || "").length > 0 &&
+      Number(x?.unbanAt || 0) > at,
+  );
   if (Number(state.raidUntil || 0) <= at) state.raidUntil = 0;
 }
 
@@ -267,11 +279,52 @@ async function scheduleTempUnban(guild, userId, reason) {
   const key = `${guild.id}:${userId}`;
   const old = TEMP_BAN_TIMERS.get(key);
   if (old) clearTimeout(old);
+  const state = getGuildState(guild.id);
+  const unbanAt = nowMs() + JOIN_RAID_CONFIG.raidDurationMs;
+  state.tempBans = (state.tempBans || []).filter(
+    (x) => String(x?.userId || "") !== String(userId),
+  );
+  state.tempBans.push({ userId: String(userId), unbanAt });
+  scheduleStateSave(guild.id);
   const timer = setTimeout(async () => {
     TEMP_BAN_TIMERS.delete(key);
     await guild.members.unban(userId, reason).catch(() => {});
+    const current = getGuildState(guild.id);
+    current.tempBans = (current.tempBans || []).filter(
+      (x) => String(x?.userId || "") !== String(userId),
+    );
+    scheduleStateSave(guild.id);
   }, JOIN_RAID_CONFIG.raidDurationMs);
   TEMP_BAN_TIMERS.set(key, timer);
+}
+
+async function restoreTempBans(guild) {
+  if (!guild?.id) return;
+  await loadGuildState(guild.id);
+  const at = nowMs();
+  const state = getGuildState(guild.id);
+  pruneState(state, at);
+  if (!state.tempBans.length) return;
+
+  for (const row of state.tempBans) {
+    const userId = String(row?.userId || "");
+    const unbanAt = Number(row?.unbanAt || 0);
+    if (!userId || unbanAt <= at) continue;
+    const key = `${guild.id}:${userId}`;
+    if (TEMP_BAN_TIMERS.has(key)) continue;
+    const timer = setTimeout(async () => {
+      TEMP_BAN_TIMERS.delete(key);
+      await guild.members
+        .unban(userId, "Join Raid temporary ban elapsed (restored)")
+        .catch(() => {});
+      const current = getGuildState(guild.id);
+      current.tempBans = (current.tempBans || []).filter(
+        (x) => String(x?.userId || "") !== String(userId),
+      );
+      scheduleStateSave(guild.id);
+    }, Math.max(1_000, unbanAt - at));
+    TEMP_BAN_TIMERS.set(key, timer);
+  }
 }
 
 async function applyPunishment(member, reasons) {
@@ -341,6 +394,7 @@ async function processJoinRaidForMember(member) {
   }
 
   await loadGuildState(member.guild.id);
+  await restoreTempBans(member.guild);
   const at = nowMs();
   const state = getGuildState(member.guild.id);
   pruneState(state, at);
@@ -407,4 +461,5 @@ async function processJoinRaidForMember(member) {
 module.exports = {
   JOIN_RAID_CONFIG,
   processJoinRaidForMember,
+  restoreTempBans,
 };

@@ -83,7 +83,7 @@ async function getLatestWebhookEntry(guild, channelId) {
     return b.created - a.created;
   });
 
-  return candidates[0]?.item || null;
+  return candidates[0] || null;
 }
 
 module.exports = {
@@ -93,8 +93,9 @@ module.exports = {
       const guild = channel?.guild;
       if (!guild) return;
 
-      const entry = await getLatestWebhookEntry(guild, channel?.id || null);
-      if (!entry) return;
+      const match = await getLatestWebhookEntry(guild, channel?.id || null);
+      if (!match?.item) return;
+      const entry = match.item;
 
       const dedupeKey = `${guild.id}:${entry.action}:${entry.id}`;
       const store = getStore(guild.client);
@@ -158,13 +159,16 @@ module.exports = {
       const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
       await logChannel.send({ embeds: [embed] }).catch(() => {});
 
-      if (action === WEBHOOK_CREATE_ACTION) {
+      const reliableForNuke =
+        Number(match.score || 0) >= 4 &&
+        String(entry?.executor?.id || "").length > 0;
+      if (action === WEBHOOK_CREATE_ACTION && reliableForNuke) {
         await antiNukeHandleWebhookCreationAction({
           guild,
           executorId,
           webhookId: targetId,
         }).catch(() => {});
-      } else if (action === WEBHOOK_DELETE_ACTION) {
+      } else if (action === WEBHOOK_DELETE_ACTION && reliableForNuke) {
         await antiNukeHandleWebhookDeletionAction({
           guild,
           executorId,

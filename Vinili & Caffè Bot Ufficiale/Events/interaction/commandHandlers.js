@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   ButtonBuilder,
   ActionRowBuilder,
@@ -26,78 +26,7 @@ const {
 } = require("../../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const IDs = require("../../Utils/Config/ids");
-const {
-  isChannelInTicketCategory,
-} = require("../../Utils/Ticket/ticketCategoryUtils");
-const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
-const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
-
-const PARTNER_LEADERBOARD_CHANNEL_IDS = new Set(
-  [IDs.channels?.partnersChat, IDs.channels?.staffCmds, IDs.channels?.highCmds]
-    .filter(Boolean)
-    .map(String),
-);
-const PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS = new Set(
-  [IDs.channels?.partnerships, IDs.channels?.partnersChat]
-    .filter(Boolean)
-    .map(String),
-);
-const STAFF_ALLOWED_CHANNEL_IDS = new Set(
-  [
-    String(IDs.channels?.staffCmds || ""),
-    String(IDs.channels?.highCmds || ""),
-  ].filter(Boolean),
-);
-
-const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
-
-function getSlashChannelRestrictionError(commandName, command, channel) {
-  if (!command || !channel) return null;
-  if (
-    GUILD_ALLOWED_COMMANDS_ANY_CHANNEL &&
-    channel.guild?.id === GUILD_ALLOWED_COMMANDS_ANY_CHANNEL
-  )
-    return null;
-  const category = String(command.category || "").toLowerCase();
-  const name = String(commandName || "").toLowerCase();
-  const channelId = channel.id;
-
-  if (category === "admin") return null;
-
-  if (category === "partner") {
-    if (name === "leaderboard") {
-      if (
-        PARTNER_LEADERBOARD_CHANNEL_IDS.size > 0 &&
-        !PARTNER_LEADERBOARD_CHANNEL_IDS.has(String(channelId))
-      ) {
-        const list = [...PARTNER_LEADERBOARD_CHANNEL_IDS]
-          .map((id) => `<#${id}>`)
-          .join(", ");
-        return `Il comando leaderboard è utilizzabile solo in ${list}.`;
-      }
-      return null;
-    }
-    if (PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS.has(String(channelId)))
-      return null;
-    if (isChannelInTicketCategory(channel)) return null;
-    const allowedList = [...PARTNER_COMMANDS_ALLOWED_CHANNEL_IDS]
-      .map((id) => `<#${id}>`)
-      .join(", ");
-    return `Il comando partnership è utilizzabile nei ticket partnership oppure in ${allowedList}.`;
-  }
-
-  if (category === "staff") {
-    if (!STAFF_ALLOWED_CHANNEL_IDS.has(String(channelId))) {
-      const channels = [...STAFF_ALLOWED_CHANNEL_IDS]
-        .map((id) => `<#${id}>`)
-        .join(" e ");
-      return `I comandi Staff sono usabili solo in ${channels}.`;
-    }
-    return null;
-  }
-
-  return null;
-}
+const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -143,6 +72,22 @@ async function handleSlashCommand(interaction, client) {
     getCommandKey(interaction.commandName, interaction.commandType),
   );
   if (!command) return;
+  const isModerationSlashCommand = ["staff", "admin"].includes(
+    String(command?.category || "").toLowerCase(),
+  );
+  if (
+    isModerationSlashCommand &&
+    shouldBlockModerationCommands(
+      interaction.guild,
+      String(interaction.user?.id || ""),
+    )
+  ) {
+    return interaction.reply({
+      content:
+        "Comandi di moderazione temporaneamente bloccati (AntiNuke panic mode attiva).",
+      flags: 1 << 6,
+    });
+  }
   const expectsModal = command?.expectsModal === true;
   const isAdminCommand =
     String(command?.category || "").toLowerCase() === "admin";
@@ -160,31 +105,25 @@ async function handleSlashCommand(interaction, client) {
     const embed = buildGlobalPermissionDeniedEmbed(
       [],
       "comando",
-      "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
+      "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.",
     );
     return interaction.reply({ embeds: [embed], flags: 1 << 6 });
   }
 
-  if (interaction.guildId && interaction.channel) {
-    const channelError = getSlashChannelRestrictionError(
-      interaction.commandName,
-      command,
-      interaction.channel,
-    );
-    if (channelError) {
-      return interaction.reply({ content: channelError, flags: 1 << 6 });
+  const slashPermission = await checkSlashPermission(interaction, {
+    returnDetails: true,
+  });
+  if (!slashPermission?.allowed) {
+    if (
+      slashPermission?.reason === "channel" &&
+      Array.isArray(slashPermission.channels)
+    ) {
+      const list = slashPermission.channels.map((id) => `<#${id}>`).join(", ");
+      return interaction.reply({
+        content: `Questo comando e utilizzabile solo in ${list}.`,
+        flags: 1 << 6,
+      });
     }
-  }
-
-  const slashCategory = String(command?.category || "").toLowerCase();
-  const requiresSpecificChannelOrMonoGuildSlash =
-    slashCategory === "partner" || slashCategory === "staff";
-  const isAllowedOnAnyServerSlash = !requiresSpecificChannelOrMonoGuildSlash;
-  if (
-    !(await checkSlashPermission(interaction, {
-      allowedOnAnyServer: isAllowedOnAnyServerSlash,
-    }))
-  ) {
     const requiredRoles = getSlashRequiredRoles(interaction);
     const embed =
       interaction.commandName === "dmbroadcast"
@@ -338,7 +277,7 @@ async function handleSlashCommand(interaction, client) {
     const staffEmbed = buildErrorLogEmbed({
       contextLabel: "Comando",
       contextValue: interaction.commandName || "unknown",
-      userTag: interaction.user?.tag || interaction.user?.id || "—",
+      userTag: interaction.user?.tag || interaction.user?.id || "-",
       error,
     });
     const errorText =

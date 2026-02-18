@@ -11,6 +11,7 @@ const PERMISSIONS_PATH = path.join(process.cwd(), "permissions.json");
 const EMPTY_PERMISSIONS = {
   slash: {},
   prefix: {},
+  channels: {},
   buttons: {},
   selectMenus: {},
   modals: {},
@@ -79,8 +80,16 @@ function loadPermissions() {
     const stat = fs.statSync(PERMISSIONS_PATH);
     if (cache.data && cache.mtimeMs === stat.mtimeMs) return cache.data;
     const raw = fs.readFileSync(PERMISSIONS_PATH, "utf-8");
-    const parsed = JSON.parse(raw);
-    cache = { mtimeMs: stat.mtimeMs, data: parsed || EMPTY_PERMISSIONS };
+    const parsed = JSON.parse(raw) || {};
+    const normalized = {
+      slash: parsed.slash || {},
+      prefix: parsed.prefix || {},
+      channels: parsed.channels || {},
+      buttons: parsed.buttons || {},
+      selectMenus: parsed.selectMenus || {},
+      modals: parsed.modals || {},
+    };
+    cache = { mtimeMs: stat.mtimeMs, data: normalized };
     return cache.data;
   } catch {
     return EMPTY_PERMISSIONS;
@@ -106,6 +115,40 @@ function resolveRoleReference(value) {
 function normalizeRoleList(roleIds) {
   if (!Array.isArray(roleIds)) return roleIds;
   return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
+}
+
+function resolveChannelReference(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{16,20}$/.test(raw)) return raw;
+
+  let key = raw;
+  if (key.startsWith("ids.channels.")) key = key.slice("ids.channels.".length);
+  else if (key.startsWith("channels.")) key = key.slice("channels.".length);
+
+  const idsCfg = typeof IDs !== "undefined" && IDs ? IDs : getIdsConfig();
+  const resolved = idsCfg?.channels?.[key];
+  if (!resolved) return null;
+  return String(resolved);
+}
+
+function normalizeChannelList(channelIds) {
+  if (!Array.isArray(channelIds)) return channelIds;
+  return channelIds
+    .map((value) => resolveChannelReference(value))
+    .filter(Boolean);
+}
+
+function resolveCommandChannelPolicy(data, keys) {
+  const map = data?.channels;
+  if (!map || typeof map !== "object") return null;
+  for (const key of keys || []) {
+    if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+    const normalized = normalizeChannelList(map[key]);
+    if (Array.isArray(normalized)) return normalized;
+  }
+  return null;
 }
 
 function collectMemberRoleIds(member) {
@@ -330,16 +373,60 @@ async function checkSlashPermission(interaction, options = {}) {
       userId,
       keys,
     });
-    if (hasOverride) return true;
+    if (hasOverride) {
+      if (options.returnDetails) {
+        return { allowed: true, reason: null, requiredRoles: null, channels: null };
+      }
+      return true;
+    }
   }
 
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
+  const channelPolicy = resolveCommandChannelPolicy(
+    data,
+    buildSlashLookupKeys(interaction.commandName, group, sub),
+  );
+  if (Array.isArray(channelPolicy)) {
+    const channelId = interaction?.channelId || interaction?.channel?.id || null;
+    const allowed =
+      Boolean(channelId) && channelPolicy.includes(String(channelId));
+    if (!allowed) {
+      if (options.returnDetails) {
+        return {
+          allowed: false,
+          reason: "channel",
+          requiredRoles: null,
+          channels: channelPolicy,
+        };
+      }
+      return false;
+    }
+  }
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
-  if (!Array.isArray(roles)) return true;
-  if (!interaction.inGuild()) return false;
-  return hasAnyRoleWithLiveFallback(interaction, roles);
+  if (!Array.isArray(roles)) {
+    if (options.returnDetails) {
+      return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
+    }
+    return true;
+  }
+  if (!interaction.inGuild()) {
+    if (options.returnDetails) {
+      return { allowed: false, reason: "missing_role", requiredRoles: roles, channels: channelPolicy || null };
+    }
+    return false;
+  }
+  const hasRole = await hasAnyRoleWithLiveFallback(interaction, roles);
+  if (options.returnDetails) {
+    return {
+      allowed: hasRole,
+      reason: hasRole ? null : "missing_role",
+      requiredRoles: hasRole ? null : roles,
+      channels: channelPolicy || null,
+    };
+  }
+  return hasRole;
 }
 
 async function checkPrefixPermission(
@@ -368,14 +455,58 @@ async function checkPrefixPermission(
       userId,
       keys,
     });
-    if (hasOverride) return true;
+    if (hasOverride) {
+      if (options.returnDetails) {
+        return { allowed: true, reason: null, requiredRoles: null, channels: null };
+      }
+      return true;
+    }
   }
 
   const data = loadPermissions();
+  const channelPolicy = resolveCommandChannelPolicy(
+    data,
+    buildPrefixLookupKeys(commandName, subcommandName),
+  );
+  if (Array.isArray(channelPolicy)) {
+    const channelId = message?.channelId || message?.channel?.id || null;
+    const allowed =
+      Boolean(channelId) && channelPolicy.includes(String(channelId));
+    if (!allowed) {
+      if (options.returnDetails) {
+        return {
+          allowed: false,
+          reason: "channel",
+          requiredRoles: null,
+          channels: channelPolicy,
+        };
+      }
+      return false;
+    }
+  }
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
-  if (!Array.isArray(roles)) return true;
-  if (!message.guild) return false;
-  return hasAnyRoleWithLiveFallback(message, roles);
+  if (!Array.isArray(roles)) {
+    if (options.returnDetails) {
+      return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
+    }
+    return true;
+  }
+  if (!message.guild) {
+    if (options.returnDetails) {
+      return { allowed: false, reason: "missing_role", requiredRoles: roles, channels: channelPolicy || null };
+    }
+    return false;
+  }
+  const hasRole = await hasAnyRoleWithLiveFallback(message, roles);
+  if (options.returnDetails) {
+    return {
+      allowed: hasRole,
+      reason: hasRole ? null : "missing_role",
+      requiredRoles: hasRole ? null : roles,
+      channels: channelPolicy || null,
+    };
+  }
+  return hasRole;
 }
 
 async function checkButtonPermission(interaction) {
@@ -666,7 +797,7 @@ function buildGlobalPermissionDeniedEmbed(
   const description =
     customDescription != null
       ? customDescription
-      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
+      : `Questo ${entityLabel} � riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("Red")
@@ -685,7 +816,7 @@ function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non è associato al tuo comando.");
+    .setDescription("Questo controllo non � associato al tuo comando.");
 }
 
 module.exports = {

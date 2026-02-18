@@ -34,6 +34,7 @@ module.exports = {
         channel.guild ||
         client.guilds.cache.get(channel.guildId) ||
         (await client.guilds.fetch(channel.guildId).catch(() => null));
+      let executorId = "";
 
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
@@ -43,7 +44,7 @@ module.exports = {
           (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
         );
         const responsible = formatAuditActor(audit.executor);
-        const executorId = String(audit?.executor?.id || "");
+        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
@@ -66,14 +67,14 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
-        await antiNukeHandleChannelDeletionAction({
-          guild,
-          executorId,
-          channelName: String(channel.name || ""),
-          channelId: String(channel.id || ""),
-          channel,
-        }).catch(() => {});
       }
+      await antiNukeHandleChannelDeletionAction({
+        guild,
+        executorId,
+        channelName: String(channel.name || ""),
+        channelId: String(channel.id || ""),
+        channel,
+      }).catch(() => {});
     } catch {}
 
     await markDeletedChannelSnapshot(channel).catch(() => {});

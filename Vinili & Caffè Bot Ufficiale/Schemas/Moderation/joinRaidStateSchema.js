@@ -26,6 +26,18 @@ const joinRaidStateSchema = new Schema(
     raidUntil: { type: Number, default: 0 },
     samples: { type: [joinRaidSampleSchema], default: [] },
     flagged: { type: [joinRaidFlaggedSchema], default: [] },
+    tempBans: {
+      type: [
+        new Schema(
+          {
+            userId: { type: String, required: true },
+            unbanAt: { type: Number, required: true },
+          },
+          { _id: false },
+        ),
+      ],
+      default: [],
+    },
   },
   { timestamps: true },
 );

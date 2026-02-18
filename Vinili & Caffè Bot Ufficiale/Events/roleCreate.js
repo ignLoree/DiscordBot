@@ -20,6 +20,7 @@ module.exports = {
     if (!guildId) return;
 
     try {
+      let executorId = "";
       const logChannel = await resolveChannelRolesLogChannel(role.guild);
       if (logChannel?.isTextBased?.()) {
         const audit = await resolveResponsible(
@@ -28,7 +29,7 @@ module.exports = {
           (entry) => String(entry?.target?.id || "") === String(role.id || ""),
         );
         const responsible = formatAuditActor(audit.executor);
-        const executorId = String(audit?.executor?.id || "");
+        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
@@ -49,12 +50,12 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
-        await antiNukeHandleRoleCreationAction({
-          guild: role.guild,
-          executorId,
-          roleId: String(role.id || ""),
-        }).catch(() => {});
       }
+      await antiNukeHandleRoleCreationAction({
+        guild: role.guild,
+        executorId,
+        roleId: String(role.id || ""),
+      }).catch(() => {});
     } catch {}
 
     queueIdsCatalogSync(client, guildId, "roleCreate");

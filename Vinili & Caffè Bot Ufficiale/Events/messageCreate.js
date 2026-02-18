@@ -1,4 +1,4 @@
-const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits, ChannelType, } = require("discord.js");
+﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require("discord.js");
 const math = require("mathjs");
 const { MentionReaction, AutoResponder } = require("../Schemas/Community/autoInteractionSchemas");
 const countschema = require("../Schemas/Counting/countingSchema");
@@ -21,6 +21,7 @@ const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../U
 const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
+const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
 const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
 
@@ -39,62 +40,7 @@ const MEDIA_BLOCK_ROLE_IDS = [IDs.roles.PicPerms];
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([IDs.channels.media]);
 
-const ALLOWED_PREFIX_COMMANDS_CHANNEL_ID =
-  IDs.allowedPrefixCommandsChannelId || null;
-const ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS = new Set(
-  [
-    ALLOWED_PREFIX_COMMANDS_CHANNEL_ID,
-    IDs.channels?.staffCmds,
-    IDs.channels?.highCmds,
-  ]
-    .filter(Boolean)
-    .map(String),
-);
-const TTS_ALLOWED_CHANNEL_ID = IDs.channels.noMic || null;
-const SHIP_ALLOWED_CHANNEL_ID = IDs.channels.ship || null;
 const processedBumpMessages = new Map();
-
-const GUILD_ALLOWED_COMMANDS_ANY_CHANNEL = IDs.guilds?.test || null;
-const ALLOWED_EXCEPTION_NAMES = new Set([
-  "ticket",
-  "description",
-  "afk",
-  "avatar",
-  "banner",
-  "snipe",
-  "quote",
-]);
-const ALLOWED_EXCEPTION_FOLDERS = new Set(["Level", "Staff"]);
-
-function isChannelInVoiceCategory(channel) {
-  if (!channel?.guild?.channels?.cache) return false;
-  const parentId = channel.parentId || channel.parent?.id;
-  if (!parentId) return false;
-  const hasVoice = channel.guild.channels.cache.some(
-    (ch) =>
-      ch.parentId === parentId &&
-      (ch.type === ChannelType.GuildVoice ||
-        ch.type === ChannelType.GuildStageVoice),
-  );
-  return hasVoice;
-}
-
-function isPrefixCommandAllowedOutsideChannel(command) {
-  if (!command) return false;
-  const name = String(command.name || "").toLowerCase();
-  const folder = String(command.folder || "").trim();
-  if (ALLOWED_EXCEPTION_NAMES.has(name)) return true;
-  if (ALLOWED_EXCEPTION_FOLDERS.has(folder)) return true;
-  return false;
-}
-
-function isTtsCommandAllowedInChannel(command, channel) {
-  if (!command || String(command.folder || "").trim() !== "TTS") return true;
-  if (!TTS_ALLOWED_CHANNEL_ID) return true;
-  if (channel?.id === TTS_ALLOWED_CHANNEL_ID) return true;
-  if (isChannelInVoiceCategory(channel)) return true;
-  return false;
-}
 
 function hasMediaPermission(member) {
   return MEDIA_BLOCK_ROLE_IDS.some((roleId) =>
@@ -413,7 +359,7 @@ async function handleVoteManagerMessage(message, client) {
     } catch { }
   }
   const voteLabel =
-    typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
+    typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}Â°` : "";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>")
@@ -422,14 +368,14 @@ async function handleVoteManagerMessage(message, client) {
         `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
         "",
         "\`Hai guadagnato:\`",
-        `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
-        `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+        `<a:VC_Events:1448688007438667796> ï¿½?ï¿½ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
+        `<a:VC_Money:1448671284748746905> ï¿½?ï¿½ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
         "",
         "<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
       ].join("\n"),
     )
     .setFooter({
-      text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",
+      text: "Ogni volta che voterai il valore dell'exp guadagnata varierÃ : a volte sarÃ  piÃ¹ alto, altre volte piÃ¹ basso, mentre altre ancora uguale al precedente",
     });
 
   const row = new ActionRowBuilder().addComponents(
@@ -506,7 +452,7 @@ module.exports = {
               [
                 `<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
                 "",
-                "<a:VC_StarPink:1330194976440848500> • **__Sblocca il permesso:__**",
+                "<a:VC_StarPink:1330194976440848500> ï¿½?ï¿½ **__Sblocca il permesso:__**",
                 `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
               ].join("\n"),
             );
@@ -642,6 +588,26 @@ module.exports = {
       client.pcommands.get(client.aliases.get(cmd));
 
     if (!command) return;
+    const isModerationPrefixCommand = ["staff", "admin"].includes(
+      String(command.folder || "").toLowerCase(),
+    );
+    if (
+      isModerationPrefixCommand &&
+      shouldBlockModerationCommands(
+        message.guild,
+        String(message.author?.id || ""),
+      )
+    ) {
+      await deleteCommandMessage();
+      const msg = await message.channel
+        .send({
+          content:
+            "<:VC_right_arrow:1473441155055096081> Comandi di moderazione temporaneamente bloccati (AntiNuke panic mode attiva).",
+        })
+        .catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);
+      return;
+    }
     const prefixSubcommandFromArgs = args[0]
       ? String(args[0]).toLowerCase()
       : null;
@@ -654,47 +620,6 @@ module.exports = {
     if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
       args.unshift(prefixSubcommandFromAlias);
     }
-    const isGuildAllowedAnyChannel =
-      GUILD_ALLOWED_COMMANDS_ANY_CHANNEL &&
-      message.guild?.id === GUILD_ALLOWED_COMMANDS_ANY_CHANNEL;
-    if (!isGuildAllowedAnyChannel) {
-      if (String(command.folder || "").trim() === "TTS") {
-        if (!isTtsCommandAllowedInChannel(command, message.channel)) {
-          await deleteCommandMessage();
-          const msg = await message.channel.send({
-            content: `Il comando TTS è utilizzabile solo in <#${TTS_ALLOWED_CHANNEL_ID}> o nelle chat delle vocali.`,
-          });
-          setTimeout(() => msg.delete().catch(() => { }), 5000);
-          return;
-        }
-      } else if (String(command.name || "").toLowerCase() === "ship") {
-        if (
-          SHIP_ALLOWED_CHANNEL_ID &&
-          message.channelId !== SHIP_ALLOWED_CHANNEL_ID
-        ) {
-          await deleteCommandMessage();
-          const msg = await message.channel.send({
-            content: `Il comando ship è utilizzabile solo in <#${SHIP_ALLOWED_CHANNEL_ID}>.`,
-          });
-          setTimeout(() => msg.delete().catch(() => { }), 5000);
-          return;
-        }
-      } else if (
-        ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.size > 0 &&
-        !ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS.has(String(message.channelId)) &&
-        !isPrefixCommandAllowedOutsideChannel(command)
-      ) {
-        await deleteCommandMessage();
-        const channelsList = [...ALLOWED_PREFIX_COMMANDS_CHANNEL_IDS]
-          .map((id) => `<#${id}>`)
-          .join(", ");
-        const msg = await message.channel.send({
-          content: `Questo comando è utilizzabile solo in ${channelsList}.`,
-        });
-        setTimeout(() => msg.delete().catch(() => { }), 5000);
-        return;
-      }
-    }
     const ALLOWED_GUILD_IDS = new Set(
       [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map(String),
     );
@@ -703,21 +628,26 @@ module.exports = {
       const embed = buildGlobalPermissionDeniedEmbed(
         [],
         "comando",
-        "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
+        "Questo bot Ã¨ utilizzabile solo sul server principale e sul server test di Vinili & CaffÃ¨.",
       );
       const msg = await message.channel.send({ embeds: [embed] });
       setTimeout(() => msg.delete().catch(() => { }), 5000);
       return;
     }
-    const requiresSpecificChannelOrMonoGuild =
-      String(command.folder || "").trim() === "TTS" ||
-      String(command.name || "").toLowerCase() === "ship";
-    const isAllowedOnAnyServerPrefix = !requiresSpecificChannelOrMonoGuild;
-    if (
-      !(await checkPrefixPermission(message, command.name, prefixSubcommand, {
-        allowedOnAnyServer: isAllowedOnAnyServerPrefix,
-      }))
-    ) {
+    const permissionResult = await checkPrefixPermission(
+      message,
+      command.name,
+      prefixSubcommand,
+      { returnDetails: true },
+    );
+    if (!permissionResult?.allowed) {
+      if (permissionResult?.reason === "channel" && Array.isArray(permissionResult.channels)) {
+        await deleteCommandMessage();
+        const channelsList = permissionResult.channels.map((id) => `<#${id}>`).join(", ");
+        const msg = await message.channel.send({ content: `Questo comando e utilizzabile solo in ${channelsList}.` }).catch(() => null);
+        if (msg) setTimeout(() => msg.delete().catch(() => { }), 5000);
+        return;
+      }
       const requiredRoles = getPrefixRequiredRoles(
         command.name,
         prefixSubcommand,
@@ -784,7 +714,7 @@ module.exports = {
       } else if (fallbackEmojiId) {
         await message.react(fallbackEmojiId).catch(() => { });
       } else {
-        await message.react("⏳").catch(() => { });
+        await message.react("â³").catch(() => { });
       }
       if (!client.prefixCommandQueue.has(queueLockId)) {
         client.prefixCommandQueue.set(queueLockId, []);
@@ -1097,7 +1027,7 @@ async function handleAfk(message) {
     else timeAgo = `${Math.floor(diff / 86400)} giorni fa`;
     await safeMessageReply(
       message,
-      `\`${user.username}\` è AFK: **${data.message}** - ${timeAgo}`,
+      `\`${user.username}\` Ã¨ AFK: **${data.message}** - ${timeAgo}`,
     );
   }
 }
@@ -1549,3 +1479,5 @@ async function handleSuggestionChannelMessage(message) {
   await message.delete().catch(() => { });
   return true;
 }
+
+

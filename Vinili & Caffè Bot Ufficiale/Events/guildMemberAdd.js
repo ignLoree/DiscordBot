@@ -864,6 +864,12 @@ module.exports = {
         String(member?.guild?.ownerId || "") === String(member?.id || "");
 
       if (member.user?.bot) {
+        const joinRaidResult = isCoreExempt
+          ? { blocked: false }
+          : await processJoinRaidForMember(member).catch(
+              () => ({ blocked: false }),
+            );
+        if (joinRaidResult?.blocked) return;
         if (isCoreExempt) {
           await sendJoinLog(member);
           return;

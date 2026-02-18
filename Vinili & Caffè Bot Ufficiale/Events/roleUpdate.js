@@ -32,6 +32,7 @@ module.exports = {
         String(newRole?.permissions?.bitfield || 0n);
 
       if (nameChanged || colorChanged || hoistChanged || permsChanged) {
+        let executorId = "";
         const logChannel = await resolveChannelRolesLogChannel(newRole.guild);
         if (logChannel?.isTextBased?.()) {
           const audit = await resolveResponsible(
@@ -40,7 +41,7 @@ module.exports = {
             (entry) => String(entry?.target?.id || "") === String(newRole.id || ""),
           );
           const responsible = formatAuditActor(audit.executor);
-          const executorId = String(audit?.executor?.id || "");
+          executorId = String(audit?.executor?.id || "");
 
           const lines = [
             `${ARROW} **Responsible:** ${responsible}`,
@@ -80,12 +81,12 @@ module.exports = {
             .setDescription(lines.join("\n"));
 
           await logChannel.send({ embeds: [embed] }).catch(() => {});
-          await antiNukeHandleRoleUpdate({
-            oldRole,
-            newRole,
-            executorId,
-          }).catch(() => {});
         }
+        await antiNukeHandleRoleUpdate({
+          oldRole,
+          newRole,
+          executorId,
+        }).catch(() => {});
       }
     } catch {}
 

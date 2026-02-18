@@ -1,5 +1,6 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
+const { handlePruneAction: antiNukeHandlePruneAction } = require("../Services/Moderation/antiNukeService");
 const {
   resolveModLogChannel,
   formatResponsible,
@@ -41,6 +42,11 @@ module.exports = {
         );
 
       await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await antiNukeHandlePruneAction({
+        guild,
+        executorId: String(entry?.executor?.id || ""),
+        removedCount: membersRemoved,
+      }).catch(() => {});
     } catch (error) {
       global.logger.error(error);
     }
