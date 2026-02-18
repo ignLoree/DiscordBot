@@ -29,6 +29,7 @@ const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 
 const STAFF_TRACKED_ROLE_IDS = new Set([
   IDs.roles.PartnerManager,
@@ -45,6 +46,11 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
+
+function formatActor(actor) {
+  if (!actor) return "sconosciuto";
+  return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
+}
 
 function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
@@ -83,9 +89,9 @@ async function sendLeaveLog(member) {
       [
         `${member.user} ${member.user.tag}.`,
         "",
-        `ID: ${member.user.id} • <t:${nowTs}:F>`,
       ].join("\n"),
     )
+    .setFooter({ text:`ID: ${member.user.id} â€¢ <t:${nowTs}:F>`})
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await channel.send({ embeds: [embed] }).catch((err) => {
@@ -97,7 +103,7 @@ async function markInviteInactive(member) {
   await InviteTrack.findOneAndUpdate(
     { guildId: member.guild.id, userId: member.id, active: true },
     { $set: { active: false, leftAt: new Date() } },
-  ).catch(() => {});
+  ).catch(() => { });
 }
 
 async function closeOpenTicketsForMember(member) {
@@ -127,7 +133,7 @@ async function closeOpenTicketsForMember(member) {
             closedAt: new Date(),
           },
         },
-      ).catch(() => {});
+      ).catch(() => { });
       continue;
     }
 
@@ -141,7 +147,7 @@ async function closeOpenTicketsForMember(member) {
     ticket.transcript = transcriptTXT;
     ticket.closeReason = "Utente uscito dal server";
     ticket.closedAt = new Date();
-    await ticket.save().catch(() => {});
+    await ticket.save().catch(() => { });
 
     const createdAtFormatted = ticket.createdAt
       ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
@@ -152,17 +158,17 @@ async function closeOpenTicketsForMember(member) {
         .send({
           files: transcriptHtmlPath
             ? [
-                {
-                  attachment: transcriptHtmlPath,
-                  name: `transcript_${channel.id}.html`,
-                },
-              ]
+              {
+                attachment: transcriptHtmlPath,
+                name: `transcript_${channel.id}.html`,
+              },
+            ]
             : [
-                {
-                  attachment: Buffer.from(transcriptTXT, "utf-8"),
-                  name: `transcript_${channel.id}.txt`,
-                },
-              ],
+              {
+                attachment: Buffer.from(transcriptTXT, "utf-8"),
+                name: `transcript_${channel.id}.txt`,
+              },
+            ],
           embeds: [
             new EmbedBuilder()
               .setTitle("Ticket Chiuso")
@@ -178,10 +184,10 @@ async function closeOpenTicketsForMember(member) {
               .setColor("#6f4e37"),
           ],
         })
-        .catch(() => {});
+        .catch(() => { });
     }
 
-    setTimeout(() => channel.delete().catch(() => {}), 1000);
+    setTimeout(() => channel.delete().catch(() => { }), 1000);
   }
 }
 
@@ -195,8 +201,8 @@ function getHighestTrackedRole(member) {
 async function handleTrackedStaffLeave(member) {
   const hadTrackedStaffRole = member.roles?.cache
     ? [...STAFF_TRACKED_ROLE_IDS].some((roleId) =>
-        member.roles.cache.has(roleId),
-      )
+      member.roles.cache.has(roleId),
+    )
     : false;
   if (!hadTrackedStaffRole) return;
 
@@ -210,13 +216,13 @@ async function handleTrackedStaffLeave(member) {
     const content = `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
 <:member_role_icon:1330530086792728618> \`${roleLabel}\` <a:vegarightarrow:1443673039156936837> \`${userRoleLabel}\`
 <:discordstaff:1443651872258003005> __Dimissioni (Esce dal server)__`;
-    await resignChannel.send({ content }).catch(() => {});
+    await resignChannel.send({ content }).catch(() => { });
   }
 
   await Staff.deleteOne({
     guildId: guild.id,
     userId: member.id,
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 function collectManagerActions(partnerships, managerId) {
@@ -271,11 +277,11 @@ async function logManagerLeave(mainGuild, member, partnerships) {
         .setColor("#6f4e37")
         .setDescription(
           `**<:vegax:1443934876440068179> Manager uscito dal server**\n` +
-            `**Utente:** ${member.user}\n` +
-            `**PM:** <@${ownerDoc.userId}>\n` +
-            `**Partner:** ${partnerName}\n` +
-            `**Invito:** ${inviteLink}\n` +
-            `**Ultima partner:** ${lastPartnerWhenText}${extraLine}`,
+          `**Utente:** ${member.user}\n` +
+          `**PM:** <@${ownerDoc.userId}>\n` +
+          `**Partner:** ${partnerName}\n` +
+          `**Invito:** ${inviteLink}\n` +
+          `**Ultima partner:** ${lastPartnerWhenText}${extraLine}`,
         ),
     ],
   });
@@ -338,7 +344,7 @@ function schedulePartnershipRollback(member, partnerships) {
             const msg = await channel.messages
               .fetch(messageId)
               .catch(() => null);
-            if (msg) await msg.delete().catch(() => {});
+            if (msg) await msg.delete().catch(() => { });
           }
         }
 
@@ -348,7 +354,7 @@ function schedulePartnershipRollback(member, partnerships) {
           );
         }
         doc.managerId = null;
-        await doc.save().catch(() => {});
+        await doc.save().catch(() => { });
       }
     },
     5 * 60 * 1000,
@@ -411,10 +417,9 @@ async function sendMemberKickLog(member) {
     (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
   if (!logChannel?.isTextBased?.()) return;
 
-  const responsible = entry.executor
-    ? `${entry.executor} \`${entry.executor.id}\``
-    : "sconosciuto";
+  const responsible = formatActor(entry.executor);
   const nowTs = Math.floor(Date.now() / 1000);
+  const executorId = String(entry?.executor?.id || "");
 
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
@@ -431,7 +436,13 @@ async function sendMemberKickLog(member) {
         .join("\n"),
     );
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] }).catch(() => { });
+  await antiNukeHandleKickBanAction({
+    guild,
+    executorId,
+    action: "kick",
+    targetId: String(member.user?.id || ""),
+  }).catch(() => {});
 }
 async function cleanupUserData(guildId, userId) {
   await Promise.allSettled([
@@ -454,7 +465,7 @@ module.exports = {
       }
 
       await sendLeaveLog(member);
-      await sendMemberKickLog(member).catch(() => {});
+      await sendMemberKickLog(member).catch(() => { });
       await markInviteInactive(member);
 
       const guild = member.guild;
@@ -469,4 +480,3 @@ module.exports = {
     }
   },
 };
-

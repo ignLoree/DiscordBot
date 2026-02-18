@@ -20,6 +20,7 @@ const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
 const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
+const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
 
@@ -504,6 +505,14 @@ module.exports = {
       }
     } catch (error) {
       logEventError(client, "DISBOARD REMINDER ERROR", error);
+    }
+    if (!isEditedPrefixExecution) {
+      try {
+        const automodResult = await runAutoModMessage(message);
+        if (automodResult?.blocked) return;
+      } catch (error) {
+        logEventError(client, "AUTOMOD ERROR", error);
+      }
     }
     if (
       message.author.bot ||

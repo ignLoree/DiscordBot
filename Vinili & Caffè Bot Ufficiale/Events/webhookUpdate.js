@@ -1,5 +1,9 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const {
+  handleWebhookCreationAction: antiNukeHandleWebhookCreationAction,
+  handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction,
+} = require("../Services/Moderation/antiNukeService");
 
 const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
 const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;
@@ -10,6 +14,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return "<t:0:F>";
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
+}
+
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
 }
 
 function webhookTypeLabel(value) {
@@ -42,14 +54,36 @@ async function getLatestWebhookEntry(guild, channelId) {
 
   const now = Date.now();
   const actions = new Set([WEBHOOK_CREATE_ACTION, WEBHOOK_UPDATE_ACTION, WEBHOOK_DELETE_ACTION]);
-  const entry = logs.entries.find((item) => {
-    if (!actions.has(item?.action)) return false;
+  const candidates = [];
+
+  logs.entries.forEach((item) => {
+    if (!actions.has(item?.action)) return;
     const created = Number(item?.createdTimestamp || 0);
-    if (!created || now - created > 30 * 1000) return false;
-    const chId = String(item?.extra?.channel?.id || "");
-    return !channelId || chId === String(channelId);
+    if (!created || now - created > 30 * 1000) return;
+
+    const targetChannelId = String(channelId || "");
+    const extraChannelId = String(item?.extra?.channel?.id || "");
+    const targetWebhookChannelId = String(item?.target?.channelId || "");
+
+    let score = 0;
+    if (targetChannelId) {
+      if (extraChannelId && extraChannelId === targetChannelId) score += 4;
+      if (targetWebhookChannelId && targetWebhookChannelId === targetChannelId) score += 3;
+      if (!extraChannelId && !targetWebhookChannelId) score += 1;
+    } else {
+      score += 1;
+    }
+
+    candidates.push({ item, score, created });
   });
-  return entry || null;
+
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.created - a.created;
+  });
+
+  return candidates[0]?.item || null;
 }
 
 module.exports = {
@@ -70,9 +104,8 @@ module.exports = {
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const responsible = entry.executor
-        ? `${entry.executor} \`${entry.executor.id}\``
-        : "sconosciuto";
+      const responsible = formatAuditActor(entry.executor);
+      const executorId = String(entry?.executor?.id || "");
       const targetName = String(entry?.target?.name || "sconosciuto");
       const targetId = String(entry?.target?.id || "sconosciuto");
       const action = Number(entry.action || 0);
@@ -124,6 +157,20 @@ module.exports = {
 
       const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
       await logChannel.send({ embeds: [embed] }).catch(() => {});
+
+      if (action === WEBHOOK_CREATE_ACTION) {
+        await antiNukeHandleWebhookCreationAction({
+          guild,
+          executorId,
+          webhookId: targetId,
+        }).catch(() => {});
+      } else if (action === WEBHOOK_DELETE_ACTION) {
+        await antiNukeHandleWebhookDeletionAction({
+          guild,
+          executorId,
+          webhookId: targetId,
+        }).catch(() => {});
+      }
     } catch (error) {
       global.logger?.error?.("[webhookUpdate] log failed:", error);
     }

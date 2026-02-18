@@ -7,6 +7,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
+}
+
 function privacyLabel(value) {
   return Number(value) === 2 ? "Local Server Event" : `Unknown (${value})`;
 }
@@ -71,9 +79,7 @@ module.exports = {
       if (!logChannel?.isTextBased?.()) return;
 
       const responsible = await resolveResponsible(guild, scheduledEvent.id);
-      const responsibleText = responsible
-        ? `${responsible} \`${responsible.id}\``
-        : "sconosciuto";
+      const responsibleText = formatAuditActor(responsible);
 
       const lines = [
         `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,

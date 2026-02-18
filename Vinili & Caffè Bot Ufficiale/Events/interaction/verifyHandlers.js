@@ -17,6 +17,19 @@ const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const VERIFY_LOG_CHANNEL_ID = IDs.channels.modLogs;
 const VERIFY_PING_CHANNEL_ID = IDs.channels.news;
+const VERIFY_CAPTCHA = {
+  width: 300,
+  height: 100,
+  fontSize: 40,
+  fontColor: "#33d17a",
+  codeLength: 6,
+  charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  decoys: {
+    trace: true,
+    mixedUnderEach: true,
+    spreadAround: true,
+  },
+};
 
 const MAIN_GUILD_ID = "1329080093599076474";
 
@@ -179,32 +192,20 @@ async function safeEditReply(interaction, payload) {
 }
 
 function randomChar(set) {
-  const chars = set || "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz";
+  const chars = set || VERIFY_CAPTCHA.charset;
   return chars[Math.floor(Math.random() * chars.length)];
 }
 
-function makeCode(len = 6) {
-  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const lower = "abcdefghjkmnpqrstuvwxyz";
-  const combined = upper + lower;
-  const minLen = Math.max(len, 2);
-
+function makeCode(len = VERIFY_CAPTCHA.codeLength) {
+  const targetLen = Math.max(1, Number(len || VERIFY_CAPTCHA.codeLength));
   const code = [];
-  code.push(randomChar(upper));
-  code.push(randomChar(lower));
-
-  while (code.length < minLen) code.push(randomChar(combined));
-
-  for (let i = code.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [code[i], code[j]] = [code[j], code[i]];
-  }
-  return code.slice(0, len).join("");
+  while (code.length < targetLen) code.push(randomChar(VERIFY_CAPTCHA.charset));
+  return code.join("");
 }
 
 async function makeCaptchaPng(code) {
-  const width = 560;
-  const height = 180;
+  const width = VERIFY_CAPTCHA.width;
+  const height = VERIFY_CAPTCHA.height;
   const img = PImage.make(width, height);
   const ctx = img.getContext("2d");
 
@@ -212,55 +213,72 @@ async function makeCaptchaPng(code) {
   ctx.fillRect(0, 0, width, height);
 
   ctx.fillStyle = "rgba(45,47,58,0.6)";
-  for (let i = 0; i < 24; i += 1) {
+  for (let i = 0; i < 12; i += 1) {
     const x = Math.floor(Math.random() * width);
     const y = Math.floor(Math.random() * height);
-    const w = Math.floor(20 + Math.random() * 60);
-    const h = Math.floor(4 + Math.random() * 10);
+    const w = Math.floor(12 + Math.random() * 40);
+    const h = Math.floor(3 + Math.random() * 8);
     ctx.fillRect(x, y, w, h);
   }
 
-  ctx.fillStyle = "rgba(140,145,156,0.5)";
-  ctx.font = `26pt ${captchaFontFamily}`;
-  for (let i = 0; i < 10; i += 1) {
-    const x = Math.floor(20 + Math.random() * (width - 40));
-    const y = Math.floor(45 + Math.random() * 90);
-    const rot = (Math.random() * 40 - 20) * (Math.PI / 180);
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rot);
-    ctx.fillText(randomChar(), 0, 0);
-    ctx.restore();
+  if (VERIFY_CAPTCHA.decoys.spreadAround) {
+    ctx.fillStyle = "rgba(140,145,156,0.5)";
+    ctx.font = `14pt ${captchaFontFamily}`;
+    for (let i = 0; i < 16; i += 1) {
+      const x = Math.floor(10 + Math.random() * (width - 20));
+      const y = Math.floor(18 + Math.random() * (height - 20));
+      const rot = (Math.random() * 50 - 25) * (Math.PI / 180);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.fillText(randomChar("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"), 0, 0);
+      ctx.restore();
+    }
   }
 
-  ctx.fillStyle = "#33d17a";
-  ctx.font = `56pt ${captchaFontFamily}`;
+  ctx.fillStyle = VERIFY_CAPTCHA.fontColor;
+  ctx.font = `${VERIFY_CAPTCHA.fontSize}pt ${captchaFontFamily}`;
 
   const chars = code.split("");
   const points = [];
+  const step = Math.floor((width - 40) / Math.max(chars.length, 1));
   chars.forEach((ch, i) => {
-    const x = 70 + i * 72 + Math.floor(Math.random() * 10);
-    const y = 120 + Math.floor(Math.random() * 12);
-    const rot = (Math.random() * 10 - 5) * (Math.PI / 180);
-    points.push({ x: x + 8, y: y - 18 });
+    const x = 20 + i * step + Math.floor(Math.random() * 4);
+    const y = 68 + Math.floor(Math.random() * 6);
+    const rot = (Math.random() * 12 - 6) * (Math.PI / 180);
+    points.push({ x: x + 5, y: y - 14 });
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rot);
     ctx.fillText(ch, 0, 0);
     ctx.restore();
+
+    if (VERIFY_CAPTCHA.decoys.mixedUnderEach) {
+      ctx.fillStyle = "rgba(180,190,210,0.6)";
+      ctx.font = `14pt ${captchaFontFamily}`;
+      ctx.fillText(
+        randomChar("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"),
+        x + 2,
+        y + 18,
+      );
+      ctx.fillStyle = VERIFY_CAPTCHA.fontColor;
+      ctx.font = `${VERIFY_CAPTCHA.fontSize}pt ${captchaFontFamily}`;
+    }
   });
 
-  ctx.strokeStyle = "rgba(46,204,113,0.6)";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  points.forEach((p, idx) => {
-    if (idx === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y);
-  });
-  ctx.stroke();
+  if (VERIFY_CAPTCHA.decoys.trace) {
+    ctx.strokeStyle = "rgba(46,204,113,0.55)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    points.forEach((p, idx) => {
+      if (idx === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+  }
 
   ctx.fillStyle = "rgba(255,255,255,0.08)";
-  for (let i = 0; i < 120; i += 1) {
+  for (let i = 0; i < 80; i += 1) {
     const x = Math.floor(Math.random() * width);
     const y = Math.floor(Math.random() * height);
     ctx.fillRect(x, y, 2, 2);
@@ -410,7 +428,7 @@ async function handleVerifyInteraction(interaction) {
       const deferred = await safeDeferReply(interaction, { flags: 1 << 6 });
       if (!deferred) return true;
 
-      const code = makeCode();
+      const code = makeCode(VERIFY_CAPTCHA.codeLength);
       const captchaPng = await makeCaptchaPng(code);
       const captchaFile = new AttachmentBuilder(captchaPng, {
         name: "captcha.png",
@@ -500,7 +518,7 @@ async function handleVerifyInteraction(interaction) {
         .setStyle(TextInputStyle.Short)
         .setRequired(true)
         .setPlaceholder("Type the captcha text here")
-        .setMaxLength(6);
+        .setMaxLength(VERIFY_CAPTCHA.codeLength);
 
       const row = new ActionRowBuilder().addComponents(input);
       modal.addComponents(row);

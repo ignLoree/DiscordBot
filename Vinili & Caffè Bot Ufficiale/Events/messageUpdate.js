@@ -111,7 +111,7 @@ async function resolveLogChannel(guild) {
 }
 
 async function sendMessageEditLog(previous, updated) {
-  if (!updated?.guild || !updated?.author || updated?.system) return;
+  if (!updated?.guild || !updated?.author) return;
   const logChannel = await resolveLogChannel(updated.guild);
   if (!logChannel?.isTextBased?.()) return;
 
@@ -124,8 +124,13 @@ async function sendMessageEditLog(previous, updated) {
   const filesChanged = attachmentsChanged(beforeNames, afterNames);
   if (!contentChanged && !filesChanged) return;
 
+  const actorFlags = [];
+  if (updated?.author?.bot) actorFlags.push("BOT");
+  if (updated?.webhookId) actorFlags.push("WEBHOOK");
+  const actorSuffix = actorFlags.length ? ` [${actorFlags.join("/")}]` : "";
+
   const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Responsabile:** ${updated.author} \`${updated.author.id}\``,
+    `<:VC_right_arrow:1473441155055096081> **Responsabile:** ${updated.author}${actorSuffix} \`${updated.author.id}\``,
     `<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel || "#sconosciuto"} • \`${updated.id}\``,
     `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
     "",

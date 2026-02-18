@@ -26,6 +26,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
+}
+
 function toEventUrl(guildId, eventId) {
   if (!guildId || !eventId) return null;
   return `https://discord.com/events/${guildId}/${eventId}`;
@@ -110,9 +118,7 @@ module.exports = {
       if (!logChannel?.isTextBased?.()) return;
 
       const { executor, changes } = await resolveAudit(guild, newEvent.id);
-      const responsibleText = executor
-        ? `${executor} \`${executor.id}\``
-        : "sconosciuto";
+      const responsibleText = formatAuditActor(executor);
       const eventUrl = toEventUrl(guild.id, newEvent.id);
 
       const tracked = changes.filter((change) =>

@@ -208,14 +208,12 @@ module.exports = {
     const summary = new EmbedBuilder()
       .setColor(client.config?.embedModLight || "#6f4e37")
       .setDescription(
-        `<a:VC_Channel:1448670215444631706> Canale: <#${message.channel.id}>\n` +
-          `<a:VC_Staff:1448670376736456787> Staffer: <@${message.author.id}>\n` +
-          `<:VC_Chat:1448694742237053061> Messaggi scansionati: ${scanned}\n` +
-          `<:VC_Stats:1448695844923510884> Richiesta: ${Number.isFinite(targetCount) ? targetCount : "ALL"}\n` +
-          `<:VC_Search:1460657088899584265> Messaggi identificati: ${candidates.length}\n` +
-          `<:VC_Trash:1460645075242451025> Messaggi cancellati: ${deletedCount}\n` +
-          `<:dot:1443660294596329582> Bulk (<14 giorni): ${recent.length}\n` +
-          `<:dot:1443660294596329582> Singoli (>=14 giorni): ${old.length}`,
+        `#️⃣ **Channel:** <#${message.channel.id}>\n` +
+          `👤 **Moderator:** <@${message.author.id}>\n` +
+          `🗂️ **Messages Fetched:** ${scanned}\n` +
+          `💬 **Purge Request:** ${Number.isFinite(targetCount) ? targetCount : "ALL"}\n` +
+          `🧭 **Messages Identified:** ${candidates.length}\n` +
+          `🗑️ **Messages Purged:** ${deletedCount}`,
       );
 
     await replyTemp({ embeds: [summary] });

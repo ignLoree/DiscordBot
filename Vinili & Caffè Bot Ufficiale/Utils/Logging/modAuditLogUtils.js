@@ -35,7 +35,11 @@ async function fetchRecentAuditEntry(guild, actionType, matcher, limit = 8, wind
 }
 
 function formatResponsible(executor) {
-  return executor ? `${executor} \`${executor.id}\`` : "sconosciuto";
+  if (!executor) return "sconosciuto";
+  const flags = [];
+  if (executor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${executor}${suffix} \`${executor.id}\``;
 }
 
 function nowDiscordTs() {

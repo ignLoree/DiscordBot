@@ -12,6 +12,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
+}
+
 function sanitizeText(value) {
   return String(value || "")
     .replace(/\r\n/g, "\n")
@@ -32,8 +40,12 @@ function buildPurgeLogText(messages, channelId) {
 
   for (const msg of ordered) {
     const authorId = String(msg?.author?.id || "sconosciuto");
+    const flags = [];
+    if (msg?.author?.bot) flags.push("BOT");
+    if (msg?.webhookId) flags.push("WEBHOOK");
+    const suffix = flags.length ? ` [${flags.join("/")}]` : "";
     const content = sanitizeText(msg?.content || "(vuoto)");
-    rows.push(`[${authorId}] ${content}`);
+    rows.push(`[${authorId}]${suffix} ${content}`);
 
     const attachments = msg?.attachments ? Array.from(msg.attachments.values()) : [];
     if (attachments.length) {
@@ -142,7 +154,7 @@ module.exports = {
       .setTitle("Messages Purged")
       .setDescription(
         [
-          `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible ? `${responsible} \`${responsible.id}\`` : "sconosciuto"}`,
+          `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
           `<:VC_right_arrow:1473441155055096081> **Target:** ${channel} \`${channel.id}\``,
           `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
           "",

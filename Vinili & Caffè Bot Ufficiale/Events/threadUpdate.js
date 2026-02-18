@@ -9,6 +9,7 @@ const {
   ARROW,
   toDiscordTimestamp,
   yesNo,
+  formatAuditActor,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
@@ -39,9 +40,7 @@ module.exports = {
         THREAD_UPDATE_ACTION,
         (entry) => String(entry?.target?.id || "") === String(newThread?.id || ""),
       );
-      const responsible = audit.executor
-        ? `${audit.executor} \`${audit.executor.id}\``
-        : "sconosciuto";
+      const responsible = formatAuditActor(audit.executor);
 
       const lines = [
         `${ARROW} **Responsible:** ${responsible}`,

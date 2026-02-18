@@ -14,6 +14,7 @@ const IDs = require("../../Utils/Config/ids");
 const {
   getServerOverviewStats,
 } = require("../../Services/Community/activityService");
+const { InviteTrack } = require("../../Schemas/Community/communitySchemas");
 const {
   renderTopStatisticsCanvas,
   renderTopLeaderboardPageCanvas,
@@ -52,6 +53,7 @@ const TOP_VIEWS = [
   "voice_users",
   "message_channels",
   "voice_channels",
+  "invites_users",
 ];
 const TOP_PAGE_DATA_LIMIT = 100;
 const TOP_SOURCE_CACHE_TTL_MS = 15 * 1000;
@@ -145,6 +147,66 @@ async function resolveTopUserEntries(guild, entries = []) {
       value: Number(item?.value || 0),
     });
   }
+  return out;
+}
+
+async function isBotUser(guild, userId) {
+  const memberCached = guild.members.cache.get(userId);
+  if (memberCached) return Boolean(memberCached.user?.bot);
+
+  const memberFetched = await guild.members.fetch(userId).catch(() => null);
+  if (memberFetched) return Boolean(memberFetched.user?.bot);
+
+  const userCached = guild.client.users.cache.get(userId);
+  if (userCached) return Boolean(userCached.bot);
+
+  const userFetched = await guild.client.users.fetch(userId).catch(() => null);
+  return Boolean(userFetched?.bot);
+}
+
+async function resolveTopInviteEntries(
+  guild,
+  guildId,
+  limit = TOP_PAGE_DATA_LIMIT,
+) {
+  const safeGuildId = String(guildId || "").trim();
+  if (!safeGuildId) return [];
+
+  let aggregated = [];
+  try {
+    aggregated = await InviteTrack.aggregate([
+      {
+        $match: {
+          guildId: safeGuildId,
+          active: true,
+          inviterId: { $exists: true, $nin: [null, ""] },
+        },
+      },
+      { $group: { _id: "$inviterId", value: { $sum: 1 } } },
+      { $sort: { value: -1 } },
+      { $limit: Math.max(20, Number(limit || TOP_PAGE_DATA_LIMIT) * 2) },
+    ]);
+  } catch {
+    return [];
+  }
+
+  const out = [];
+  for (const item of aggregated) {
+    const userId = String(item?._id || "").trim();
+    if (!userId) continue;
+    const bot = await isBotUser(guild, userId);
+    if (bot) continue;
+
+    const rawDisplayName = await resolveDisplayName(guild, userId);
+    out.push({
+      id: userId,
+      label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
+      value: Number(item?.value || 0),
+    });
+
+    if (out.length >= Math.max(1, Number(limit || TOP_PAGE_DATA_LIMIT))) break;
+  }
+
   return out;
 }
 
@@ -244,6 +306,11 @@ async function getTopSource(guild, lookbackDays) {
     snapshotMap,
   );
   const topUsersVoice = await resolveTopUserEntries(guild, stats.topUsersVoice || []);
+  const topUsersInvites = await resolveTopInviteEntries(
+    guild,
+    guild.id,
+    TOP_PAGE_DATA_LIMIT,
+  );
   const topChannelsVoice = await resolveTopChannelEntries(
     guild,
     stats.topChannelsVoice || [],
@@ -254,6 +321,7 @@ async function getTopSource(guild, lookbackDays) {
     topUsersText,
     topChannelsText,
     topUsersVoice,
+    topUsersInvites,
     topChannelsVoice,
   };
   topSourceCache.set(cacheKey, { expiresAt: now + TOP_SOURCE_CACHE_TTL_MS, value });
@@ -283,6 +351,14 @@ function resolveViewConfig(selectedView, source) {
       title: "Top Message Channels",
       rows: source.topChannelsText,
       unit: "msg",
+      mode: "messages",
+    };
+  }
+  if (safeView === "invites_users") {
+    return {
+      title: "Invites User",
+      rows: source.topUsersInvites,
+      unit: "invites",
       mode: "messages",
     };
   }
@@ -329,6 +405,11 @@ function buildTopChannelSelectRow(lookbackDays, selectedView = "overview") {
           label: "Top Voice Channels",
           value: "voice_channels",
           default: safeView === "voice_channels",
+        },
+        {
+          label: "Invites User",
+          value: "invites_users",
+          default: safeView === "invites_users",
         },
       ),
   );

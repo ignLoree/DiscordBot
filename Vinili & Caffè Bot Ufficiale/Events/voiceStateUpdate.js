@@ -10,6 +10,11 @@ const {
 const VoiceDisconnectCounter = require("../Schemas/Voice/voiceDisconnectCounterSchema");
 const IDs = require("../Utils/Config/ids");
 
+function formatActor(actor) {
+  if (!actor) return "sconosciuto";
+  return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
+}
+
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return "<t:0:F>";
@@ -113,7 +118,7 @@ async function sendMemberDisconnectLog(oldState, newState, client) {
     .setTitle("Member Disconnect")
     .setDescription(
       [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${user} \`${user.id}\``,
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(user)}`,
         `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
@@ -138,9 +143,7 @@ async function sendMemberMoveLog(oldState, newState) {
   if (!logChannel?.isTextBased?.()) return;
 
   const audit = await resolveMemberMoveAuditInfo(guild, user.id);
-  const responsibleText = audit.executor
-    ? `${audit.executor} \`${audit.executor.id}\``
-    : "sconosciuto";
+  const responsibleText = formatActor(audit.executor);
   const destination = newState?.channel || `<#${newChannelId}>`;
 
   const embed = new EmbedBuilder()
@@ -178,9 +181,7 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
   if (!logChannel?.isTextBased?.()) return;
 
   const audit = await resolveMemberUpdateAuditInfo(guild, user.id);
-  const responsibleText = audit.executor
-    ? `${audit.executor} \`${audit.executor.id}\``
-    : "sconosciuto";
+  const responsibleText = formatActor(audit.executor);
 
   const lines = [
     `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,

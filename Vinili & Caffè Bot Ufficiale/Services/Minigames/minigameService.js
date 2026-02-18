@@ -2035,7 +2035,7 @@ function buildGuessCapitalEmbed(
     .setTitle("Indovina la capitale .ᐟ ✧")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Qual e la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
+        `<a:VC_Beer:1448687940560490547> Qual è la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
@@ -2055,7 +2055,7 @@ function buildGuessRegionCapitalEmbed(
     .setTitle("Indovina il capoluogo .ᐟ ✧")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Qual e il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
+        `<a:VC_Beer:1448687940560490547> Qual è il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );

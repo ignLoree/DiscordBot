@@ -9,6 +9,7 @@ const {
   formatResponsible,
   nowDiscordTs,
 } = require("../Utils/Logging/modAuditLogUtils");
+const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 
 
 module.exports = {
@@ -32,6 +33,7 @@ module.exports = {
       );
       if (auditEntry?.executor) executor = auditEntry.executor;
       if (auditEntry?.reason) reason = auditEntry.reason;
+      const executorId = String(auditEntry?.executor?.id || executor?.id || "");
 
       const responsible = formatResponsible(executor);
 
@@ -51,6 +53,12 @@ module.exports = {
         );
 
       await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await antiNukeHandleKickBanAction({
+        guild,
+        executorId,
+        action: "ban",
+        targetId: String(ban.user?.id || ""),
+      }).catch(() => {});
     } catch (error) {
       global.logger.error(error);
     }

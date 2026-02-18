@@ -4,10 +4,12 @@ const {
   ARROW,
   toDiscordTimestamp,
   yesNo,
+  formatAuditActor,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleRoleCreationAction: antiNukeHandleRoleCreationAction } = require("../Services/Moderation/antiNukeService");
 
 const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ?? 30;
 
@@ -25,9 +27,8 @@ module.exports = {
           ROLE_CREATE_ACTION,
           (entry) => String(entry?.target?.id || "") === String(role.id || ""),
         );
-        const responsible = audit.executor
-          ? `${audit.executor} \`${audit.executor.id}\``
-          : "sconosciuto";
+        const responsible = formatAuditActor(audit.executor);
+        const executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
@@ -48,6 +49,11 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await antiNukeHandleRoleCreationAction({
+          guild: role.guild,
+          executorId,
+          roleId: String(role.id || ""),
+        }).catch(() => {});
       }
     } catch {}
 

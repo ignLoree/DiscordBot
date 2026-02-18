@@ -1,5 +1,6 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleVanityGuard: antiNukeHandleVanityGuard } = require("../Services/Moderation/antiNukeService");
 const {
   resolveModLogChannel,
   fetchRecentAuditEntry,
@@ -60,6 +61,7 @@ module.exports = {
       let executor = guild.client.user || null;
       const auditEntry = await fetchRecentAuditEntry(guild, AuditLogEvent.GuildUpdate);
       if (auditEntry?.executor) executor = auditEntry.executor;
+      const executorId = String(auditEntry?.executor?.id || "");
 
       const responsible = formatResponsible(executor);
       const lines = [
@@ -89,6 +91,11 @@ module.exports = {
         .setDescription(lines.join("\n"));
 
       await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await antiNukeHandleVanityGuard({
+        oldGuild,
+        newGuild,
+        executorId,
+      }).catch(() => {});
     } catch (error) {
       global.logger.error(error);
     }

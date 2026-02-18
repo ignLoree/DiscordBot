@@ -63,6 +63,16 @@ function firstImageAttachment(message) {
   return null;
 }
 
+function buildAuthorLabel(message) {
+  const author = message?.author;
+  if (!author) return "sconosciuto";
+  const flags = [];
+  if (author?.bot) flags.push("BOT");
+  if (message?.webhookId) flags.push("WEBHOOK");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${author}${suffix} \`${author.id}\``;
+}
+
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -83,7 +93,6 @@ async function sendDeleteLog(message) {
   const attachmentNames = collectAttachmentNames(message);
   const hasContent = normalizeText(content).length > 0;
   const hasAttachments = attachmentNames.length > 0;
-  if (!hasContent && !hasAttachments) return;
 
   const lines = [
     `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
@@ -98,17 +107,21 @@ async function sendDeleteLog(message) {
     lines.push("```diff");
     lines.push(buildDeletedDiff(content));
     lines.push("```");
+  } else {
+    lines.push("<:VC_right_arrow:1473441155055096081> **Content:** `(vuoto)`");
   }
 
   if (hasAttachments) {
     lines.push(
       `<:VC_right_arrow:1473441155055096081> **Attachments:** [ ${attachmentNames.join(", ")} ]`,
     );
+  } else {
+    lines.push("<:VC_right_arrow:1473441155055096081> **Attachments:** `[ nessuno ]`");
   }
 
   if (message?.author) {
     lines.push(
-      `<:VC_right_arrow:1473441155055096081> **Author:** ${message.author} \`${message.author.id}\``,
+      `<:VC_right_arrow:1473441155055096081> **Author:** ${buildAuthorLabel(message)}`,
     );
   }
 

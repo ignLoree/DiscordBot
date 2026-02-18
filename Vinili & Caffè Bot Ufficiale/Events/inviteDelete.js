@@ -9,6 +9,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
+}
+
 function formatMaxAge(seconds) {
   const safe = Math.max(0, Number(seconds || 0));
   if (!safe) return "Never";
@@ -70,9 +78,7 @@ module.exports = {
       if (!logChannel?.isTextBased?.()) return;
 
       const responsible = await resolveResponsible(guild, invite.code);
-      const responsibleText = responsible
-        ? `${responsible} \`${responsible.id}\``
-        : "sconosciuto";
+      const responsibleText = formatAuditActor(responsible);
       const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
 
       const embed = new EmbedBuilder()

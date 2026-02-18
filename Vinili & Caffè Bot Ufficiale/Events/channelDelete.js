@@ -10,10 +10,12 @@ const {
   ARROW,
   toDiscordTimestamp,
   channelTypeLabel,
+  formatAuditActor,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleChannelDeletionAction: antiNukeHandleChannelDeletionAction } = require("../Services/Moderation/antiNukeService");
 
 const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;
 
@@ -40,9 +42,8 @@ module.exports = {
           CHANNEL_DELETE_ACTION,
           (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
         );
-        const responsible = audit.executor
-          ? `${audit.executor} \`${audit.executor.id}\``
-          : "sconosciuto";
+        const responsible = formatAuditActor(audit.executor);
+        const executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
@@ -65,6 +66,13 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await antiNukeHandleChannelDeletionAction({
+          guild,
+          executorId,
+          channelName: String(channel.name || ""),
+          channelId: String(channel.id || ""),
+          channel,
+        }).catch(() => {});
       }
     } catch {}
 

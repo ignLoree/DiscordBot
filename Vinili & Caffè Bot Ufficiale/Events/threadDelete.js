@@ -3,6 +3,7 @@ const {
   ARROW,
   toDiscordTimestamp,
   yesNo,
+  formatAuditActor,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
@@ -25,9 +26,7 @@ module.exports = {
         THREAD_DELETE_ACTION,
         (entry) => String(entry?.target?.id || "") === String(thread?.id || ""),
       );
-      const responsible = audit.executor
-        ? `${audit.executor} \`${audit.executor.id}\``
-        : "sconosciuto";
+      const responsible = formatAuditActor(audit.executor);
 
       const lines = [
         `${ARROW} **Responsible:** ${responsible}`,

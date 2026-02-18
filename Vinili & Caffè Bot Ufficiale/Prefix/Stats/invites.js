@@ -50,16 +50,17 @@ module.exports = {
 
     const trackedTotal = rows.length;
     const trackedActive = rows.filter((r) => r.active).length;
+    const trackedLeft = Math.max(0, trackedTotal - trackedActive);
     const currentInviteUses = await getCurrentInviteUsesForUser(
       message.guild,
       target.id,
     );
     const totalInvited = Math.max(trackedTotal, currentInviteUses);
-    const activeMembers = Math.min(
-      totalInvited,
-      Math.max(trackedActive, currentInviteUses),
+    const activeMembers = Math.max(0, Math.min(trackedActive, totalInvited));
+    const leftMembers = Math.max(
+      trackedLeft,
+      Math.max(0, totalInvited - activeMembers),
     );
-    const leftMembers = Math.max(0, totalInvited - activeMembers);
     const retention =
       totalInvited > 0 ? Math.round((activeMembers / totalInvited) * 100) : 0;
 

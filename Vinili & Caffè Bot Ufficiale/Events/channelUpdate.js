@@ -11,11 +11,13 @@ const {
   toDiscordTimestamp,
   channelDisplay,
   channelTypeLabel,
+  formatAuditActor,
   permissionList,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleChannelOverwrite: antiNukeHandleChannelOverwrite } = require("../Services/Moderation/antiNukeService");
 
 const CHANNEL_UPDATE_ACTION = AuditLogEvent?.ChannelUpdate ?? 11;
 const OVERWRITE_CREATE_ACTION = AuditLogEvent?.ChannelOverwriteCreate ?? 13;
@@ -89,9 +91,7 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
     CHANNEL_UPDATE_ACTION,
     (entry) => String(entry?.target?.id || "") === String(newChannel?.id || ""),
   );
-  const responsible = audit.executor
-    ? `${audit.executor} \`${audit.executor.id}\``
-    : "sconosciuto";
+  const responsible = formatAuditActor(audit.executor);
 
   const lines = [
     `${ARROW} **Responsible:** ${responsible}`,
@@ -157,9 +157,8 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       const sameTarget = String(entry?.target?.id || "") === String(source?.id || "");
       return sameChannel || sameTarget;
     });
-    const responsible = audit.executor
-      ? `${audit.executor} \`${audit.executor.id}\``
-      : "sconosciuto";
+    const responsible = formatAuditActor(audit.executor);
+    const executorId = String(audit?.executor?.id || "");
 
     const lines = [
       `${ARROW} **Responsible:** ${responsible}`,
@@ -214,6 +213,27 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       .setDescription(lines.join("\n"));
 
     await logChannel.send({ embeds: [embed] }).catch(() => {});
+
+    const beforeAllow =
+      kind === "create"
+        ? 0n
+        : kind === "delete"
+          ? BigInt(diff.before?.allow?.bitfield || 0n)
+          : BigInt(diff.before?.allow?.bitfield || 0n);
+    const afterAllow =
+      kind === "create"
+        ? BigInt(diff.after?.allow?.bitfield || 0n)
+        : kind === "delete"
+          ? 0n
+          : BigInt(diff.after?.allow?.bitfield || 0n);
+    await antiNukeHandleChannelOverwrite({
+      guild,
+      channel: newChannel,
+      overwrite: source,
+      beforeAllow,
+      afterAllow,
+      executorId,
+    }).catch(() => {});
   }
 }
 

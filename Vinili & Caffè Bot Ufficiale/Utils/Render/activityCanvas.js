@@ -1213,9 +1213,15 @@ async function renderTopLeaderboardPageCanvas({
   }));
 
   const totalRows = mappedRows.length;
+  const forceSingleWideColumn =
+    safePage === safeTotalPages && totalRows > 0 && totalRows < 5;
   const splitAt = totalRows > 5 ? 5 : Math.ceil(totalRows / 2);
-  const leftRows = mappedRows.slice(0, splitAt);
-  const rightRows = mappedRows.slice(splitAt, 10);
+  const leftRows = forceSingleWideColumn
+    ? mappedRows
+    : mappedRows.slice(0, splitAt);
+  const rightRows = forceSingleWideColumn
+    ? []
+    : mappedRows.slice(splitAt, 10);
   const panelHeight = 560;
   const panelY = 216;
   const footerY = 824;
@@ -1266,27 +1272,40 @@ async function renderTopLeaderboardPageCanvas({
     return { rowHeight, rowGap };
   };
 
-  const leftLayout = computeColumnLayout(leftRows.length);
-  const rightLayout = computeColumnLayout(rightRows.length);
+  if (forceSingleWideColumn) {
+    const singleLayout = computeColumnLayout(leftRows.length);
+    await drawTopRowsColumn(ctx, leftRows, {
+      x: 34,
+      y: panelInnerTop,
+      w: 1212,
+      rankStart: (safePage - 1) * 10 + 1,
+      unit,
+      rowHeight: singleLayout.rowHeight,
+      rowGap: singleLayout.rowGap,
+    });
+  } else {
+    const leftLayout = computeColumnLayout(leftRows.length);
+    const rightLayout = computeColumnLayout(rightRows.length);
 
-  await drawTopRowsColumn(ctx, leftRows, {
-    x: 34,
-    y: panelInnerTop,
-    w: 600,
-    rankStart: (safePage - 1) * 10 + 1,
-    unit,
-    rowHeight: leftLayout.rowHeight,
-    rowGap: leftLayout.rowGap,
-  });
-  await drawTopRowsColumn(ctx, rightRows, {
-    x: 646,
-    y: panelInnerTop,
-    w: 600,
-    rankStart: (safePage - 1) * 10 + leftRows.length + 1,
-    unit,
-    rowHeight: rightLayout.rowHeight,
-    rowGap: rightLayout.rowGap,
-  });
+    await drawTopRowsColumn(ctx, leftRows, {
+      x: 34,
+      y: panelInnerTop,
+      w: 600,
+      rankStart: (safePage - 1) * 10 + 1,
+      unit,
+      rowHeight: leftLayout.rowHeight,
+      rowGap: leftLayout.rowGap,
+    });
+    await drawTopRowsColumn(ctx, rightRows, {
+      x: 646,
+      y: panelInnerTop,
+      w: 600,
+      rankStart: (safePage - 1) * 10 + leftRows.length + 1,
+      unit,
+      rowHeight: rightLayout.rowHeight,
+      rowGap: rightLayout.rowGap,
+    });
+  }
 
   if (!leftRows.length && !rightRows.length) {
     drawLabel(ctx, "Nessun dato disponibile", width / 2, panelY + panelHeight / 2, {

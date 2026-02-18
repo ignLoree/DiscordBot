@@ -3,11 +3,13 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   ARROW,
   toDiscordTimestamp,
+  formatAuditActor,
   permissionList,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleRoleUpdate: antiNukeHandleRoleUpdate } = require("../Services/Moderation/antiNukeService");
 
 const ROLE_UPDATE_ACTION = AuditLogEvent?.RoleUpdate ?? 31;
 
@@ -37,9 +39,8 @@ module.exports = {
             ROLE_UPDATE_ACTION,
             (entry) => String(entry?.target?.id || "") === String(newRole.id || ""),
           );
-          const responsible = audit.executor
-            ? `${audit.executor} \`${audit.executor.id}\``
-            : "sconosciuto";
+          const responsible = formatAuditActor(audit.executor);
+          const executorId = String(audit?.executor?.id || "");
 
           const lines = [
             `${ARROW} **Responsible:** ${responsible}`,
@@ -79,6 +80,11 @@ module.exports = {
             .setDescription(lines.join("\n"));
 
           await logChannel.send({ embeds: [embed] }).catch(() => {});
+          await antiNukeHandleRoleUpdate({
+            oldRole,
+            newRole,
+            executorId,
+          }).catch(() => {});
         }
       }
     } catch {}

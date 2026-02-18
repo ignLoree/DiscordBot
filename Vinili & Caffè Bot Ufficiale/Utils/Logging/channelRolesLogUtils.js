@@ -37,6 +37,16 @@ function channelTypeLabel(channelOrType) {
   return `Unknown (${value})`;
 }
 
+function formatAuditActor(actor, fallback = "sconosciuto") {
+  if (!actor) return fallback;
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  const id = String(actor?.id || "").trim();
+  if (!id) return `${actor}${suffix}`;
+  return `${actor}${suffix} \`${id}\``;
+}
+
 function permissionList(bitfield) {
   const bits = new PermissionsBitField(bitfield ?? 0n);
   const names = bits.toArray();
@@ -54,10 +64,10 @@ function toLabel(key) {
 }
 
 function serializeAuditValue(value) {
-  if (value === null || value === undefined) return "❌";
+  if (value === null || value === undefined) return "<:cancel:1461730653677551691>";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "number" || typeof value === "bigint") return String(value);
-  if (typeof value === "string") return value || "❌";
+  if (typeof value === "string") return value || "<:cancel:1461730653677551691>";
   if (Array.isArray(value)) {
     if (!value.length) return "[]";
     return value.map((v) => serializeAuditValue(v)).join(", ");
@@ -157,6 +167,7 @@ module.exports = {
   yesNo,
   channelDisplay,
   channelTypeLabel,
+  formatAuditActor,
   permissionList,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,

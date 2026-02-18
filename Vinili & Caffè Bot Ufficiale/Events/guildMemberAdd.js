@@ -1,4 +1,9 @@
-const { EmbedBuilder, PermissionsBitField, AuditLogEvent } = require("discord.js");
+const {
+  EmbedBuilder,
+  PermissionsBitField,
+  AuditLogEvent,
+  UserFlagsBitField,
+} = require("discord.js");
 const { InviteTrack } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
@@ -6,6 +11,9 @@ const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
+const {
+  processJoinRaidForMember,
+} = require("../Services/Moderation/joinRaidService");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -15,6 +23,62 @@ const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const MIN_ACCOUNT_AGE_DAYS = 3;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const JOIN_GATE_WHITELIST_ROLE_IDS = new Set(
+  [
+    IDs.roles.Founder,
+    IDs.roles.CoFounder,
+  ]
+    .filter(Boolean)
+    .map(String),
+);
+const CORE_EXEMPT_USER_IDS = new Set([
+  "1466495522474037463",
+  "1329118940110127204",
+]);
+
+const JOIN_GATE = {
+  botAdditions: {
+    enabled: true,
+    action: "kick",
+  },
+  unverifiedBotAdditions: {
+    enabled: true,
+    action: "kick",
+  },
+  suspiciousAccount: {
+    enabled: true,
+    action: "log",
+  },
+  advertisingName: {
+    enabled: true,
+    action: "kick",
+  },
+  usernameFilter: {
+    enabled: true,
+    postJoinEnabled: true,
+    action: "kick",
+    strictWords: [
+      "discord staff",
+      "discord support",
+      "nitro free",
+      "steam gift",
+      "free nitro",
+      "airdrop",
+    ],
+    wildcardWords: [
+      "*discord*support*",
+      "*discord*staff*",
+      "*nitro*free*",
+      "*steam*gift*",
+      "*crypto*airdrop*",
+    ],
+  },
+};
+
+function formatActor(actor) {
+  if (!actor) return "sconosciuto";
+  return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
+}
 
 function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
@@ -311,7 +375,7 @@ async function sendBotAddLog(member) {
     if (entry) auditEntry = entry;
   }
 
-  const responsible = executor ? `${executor} \`${executor.id}\`` : "sconosciuto";
+  const responsible = formatActor(executor);
   const createdTs = Math.floor(new Date(member.user.createdAt).getTime() / 1000);
   const nowTs = Math.floor(Date.now() / 1000);
 
@@ -337,6 +401,37 @@ async function handleBotJoin(member) {
   queueIdsCatalogSync(member.client, member.guild.id, "botJoin");
   await sendBotAddLog(member).catch(() => {});
   await sendJoinGateNoAvatarLog(member).catch(() => {});
+
+  const botAddEntry = await fetchRecentBotAddEntry(member.guild, member.user.id);
+  const executorId = botAddEntry?.executorId || botAddEntry?.executor?.id || null;
+  const executorText = botAddEntry?.executor
+    ? formatActor(botAddEntry.executor)
+    : "sconosciuto";
+  const verifiedBot = await isVerifiedBot(member.user);
+
+  if (JOIN_GATE.unverifiedBotAdditions.enabled && !verifiedBot) {
+    const punished = await kickForJoinGate(member, "Unverified bot addition.", [
+      `${ARROW} **Rule:** Unverified Bot Additions`,
+      `${ARROW} **Responsible:** ${executorText}`,
+    ]);
+    if (punished) return;
+  }
+
+  if (JOIN_GATE.botAdditions.enabled && executorId) {
+    const authorized = await isAuthorizedBotAdder(member.guild, executorId);
+    if (!authorized) {
+      const punished = await kickForJoinGate(
+        member,
+        "Bot added by unauthorized member.",
+        [
+          `${ARROW} **Rule:** Bot Additions`,
+          `${ARROW} **Responsible:** ${executorText}`,
+        ],
+      );
+      if (punished) return;
+    }
+  }
+
   try {
     await addBotRoles(member);
   } catch (error) {
@@ -392,6 +487,186 @@ function hasNoAvatar(member) {
   return !member.user.avatar;
 }
 
+function getJoinGateNameCandidate(member) {
+  return String(
+    member?.user?.globalName ||
+      member?.displayName ||
+      member?.user?.username ||
+      "",
+  );
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function inviteLikeInName(text) {
+  const normalized = normalizeText(text);
+  return /(?:discord\.gg\/|discord(?:app)?\.com\/invite\/|invite\.gg\/|dsc\.gg\/)/i.test(
+    normalized,
+  );
+}
+
+function wildcardToRegex(pattern) {
+  const escaped = String(pattern || "")
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*");
+  return new RegExp(`^${escaped}$`, "i");
+}
+
+function matchUsernameFilters(candidate, rules = JOIN_GATE.usernameFilter) {
+  if (!rules?.enabled) return null;
+  const normalized = normalizeText(candidate);
+  if (!normalized) return null;
+
+  const strictWords = Array.isArray(rules.strictWords) ? rules.strictWords : [];
+  for (const word of strictWords) {
+    const normalizedWord = normalizeText(word);
+    if (normalizedWord && normalized.includes(normalizedWord)) {
+      return { type: "strict", value: word };
+    }
+  }
+
+  const wildcardWords = Array.isArray(rules.wildcardWords)
+    ? rules.wildcardWords
+    : [];
+  for (const wildcard of wildcardWords) {
+    const regex = wildcardToRegex(normalizeText(wildcard));
+    if (regex.test(normalized)) {
+      return { type: "wildcard", value: wildcard };
+    }
+  }
+  return null;
+}
+
+function detectSuspiciousAccount(member) {
+  const username = normalizeText(member?.user?.username);
+  const globalName = normalizeText(member?.user?.globalName);
+  const combined = `${username} ${globalName}`.trim();
+  const accountAgeMs = Date.now() - new Date(member.user.createdAt).getTime();
+  const ageHours = accountAgeMs / (60 * 60 * 1000);
+
+  const suspiciousKeywords = [
+    "support",
+    "moderator",
+    "admin",
+    "nitro",
+    "airdrop",
+    "crypto",
+    "steam",
+    "gift",
+    "discord",
+  ];
+  const hasKeyword = suspiciousKeywords.some((kw) => combined.includes(kw));
+  const heavyDigits = (combined.match(/\d/g) || []).length >= 6;
+  const manySeparators = (combined.match(/[._-]/g) || []).length >= 4;
+  const veryYoung = ageHours <= 24;
+  if (veryYoung && (hasKeyword || heavyDigits || manySeparators)) {
+    return `Pattern sospetto nel nome (${hasKeyword ? "keyword scam" : "pattern"}), account molto recente.`;
+  }
+  return null;
+}
+
+async function fetchRecentBotAddEntry(guild, botId) {
+  if (
+    !guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
+  ) {
+    return null;
+  }
+  const logs = await guild
+    .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: 8 })
+    .catch(() => null);
+  if (!logs?.entries?.size) return null;
+  const now = Date.now();
+  return (
+    logs.entries.find((entry) => {
+      const createdTs = Number(entry?.createdTimestamp || 0);
+      return (
+        createdTs > 0 &&
+        now - createdTs <= 30_000 &&
+        String(entry?.target?.id || "") === String(botId || "")
+      );
+    }) || null
+  );
+}
+
+async function isVerifiedBot(user) {
+  if (!user?.bot) return false;
+  let flags = user.flags || null;
+  if (!flags && typeof user.fetchFlags === "function") {
+    flags = await user.fetchFlags().catch(() => null);
+  }
+  return Boolean(flags?.has?.(UserFlagsBitField.Flags.VerifiedBot));
+}
+
+async function isAuthorizedBotAdder(guild, executorId) {
+  if (!guild || !executorId) return false;
+  if (CORE_EXEMPT_USER_IDS.has(String(executorId))) return true;
+  if (String(guild.ownerId || "") === String(executorId)) return true;
+  const executor =
+    guild.members.cache.get(executorId) ||
+    (await guild.members.fetch(executorId).catch(() => null));
+  if (!executor) return false;
+  if (
+    executor.permissions.has(PermissionsBitField.Flags.Administrator) ||
+    executor.permissions.has(PermissionsBitField.Flags.ManageGuild)
+  ) {
+    return true;
+  }
+  return [...JOIN_GATE_WHITELIST_ROLE_IDS].some((roleId) =>
+    executor.roles.cache.has(roleId),
+  );
+}
+
+async function sendJoinGatePunishDm(member, reason, extraLines = []) {
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`You have been kicked! in ${member.guild.name}!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+        ...extraLines.filter(Boolean),
+      ].join("\n"),
+    );
+  try {
+    await member.send({ embeds: [embed] });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function kickForJoinGate(member, reason, extraLines = []) {
+  const dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
+  const punished = await member.kick(reason).then(() => true).catch(() => false);
+  const logChannel =
+    member.guild.channels.cache.get(IDs.channels.modLogs) ||
+    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  if (logChannel?.isTextBased?.()) {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const embed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setTitle("JoinGate Action")
+      .setDescription(
+        [
+          `${ARROW} **Target:** ${member.user} [\`${member.user.id}\`]`,
+          `${ARROW} **Action:** Kick`,
+          `${ARROW} **Reason:** ${reason}`,
+          ...extraLines.filter(Boolean),
+          `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
+          `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
+          `${ARROW} <t:${nowTs}:F>`,
+        ].join("\n"),
+      );
+    await logChannel.send({ embeds: [embed] }).catch(() => {});
+  }
+  return punished;
+}
+
 async function sendJoinGateNoAvatarLog(member) {
   if (!member?.guild || !member?.user) return;
   if (!hasNoAvatar(member)) return;
@@ -412,6 +687,27 @@ async function sendJoinGateNoAvatarLog(member) {
     )
     .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
 
+  await logChannel.send({ embeds: [embed] }).catch(() => {});
+}
+
+async function sendSuspiciousAccountLog(member, reason) {
+  if (!member?.guild || !reason) return;
+  const logChannel =
+    member.guild.channels.cache.get(IDs.channels.modLogs) ||
+    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  if (!logChannel?.isTextBased?.()) return;
+  const nowTs = Math.floor(Date.now() / 1000);
+  const embed = new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle(`${member.user.username} has triggered the joingate!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+        `${ARROW} **Rule:** Suspicious Account`,
+        `${ARROW} <t:${nowTs}:F>`,
+      ].join("\n"),
+    );
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 async function handleTooYoungAccount(member) {
@@ -472,7 +768,7 @@ async function handleTooYoungAccount(member) {
     .setTitle("Member Kick")
     .setDescription(
       [
-        `<:rightSort:1461726104422453298> **Responsible:** <@${member.client.user.id}> / ${member.client.user.id}`,
+        `<:rightSort:1461726104422453298> **Responsible:** ${formatActor(member.client.user)}`,
         `<:rightSort:1461726104422453298> **Target:** ${member.user} / ${member.user.id}`,
         `<:rightSort:1461726104422453298> **Date:** <t:${nowTs}:F>`,
         "<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.",
@@ -500,11 +796,10 @@ async function sendJoinLog(member) {
         `${member.user} ${member.user.tag}.`,
         "",
         "**Account Age**",
-        accountAge,
-        "",
-        `ID: ${member.user.id} � <t:${nowTs}:F>`,
+        accountAge
       ].join("\n"),
     )
+    .setFooter({ text:`ID: ${member.user.id} • <t:${nowTs}:F>`})
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await joinLeaveLogChannel.send({ embeds: [joinLogEmbed] }).catch((err) => {
@@ -564,17 +859,74 @@ module.exports = {
   name: "guildMemberAdd",
   async execute(member) {
     try {
+      const isCoreExempt =
+        CORE_EXEMPT_USER_IDS.has(String(member?.id || "")) ||
+        String(member?.guild?.ownerId || "") === String(member?.id || "");
+
       if (member.user?.bot) {
+        if (isCoreExempt) {
+          await sendJoinLog(member);
+          return;
+        }
         await sendJoinLog(member);
         await handleBotJoin(member);
         return;
       }
 
-      await sendJoinGateNoAvatarLog(member).catch(() => {});
+      if (!isCoreExempt) {
+        await sendJoinGateNoAvatarLog(member).catch(() => {});
+      }
+
+      const joinRaidResult = isCoreExempt
+        ? { blocked: false }
+        : await processJoinRaidForMember(member).catch(
+        () => ({ blocked: false }),
+      );
+      if (joinRaidResult?.blocked) return;
+
+      if (isCoreExempt) {
+        scheduleMemberCounterRefresh(member.guild, {
+          delayMs: 250,
+          secondPassMs: 1800,
+        });
+        await sendJoinLog(member);
+        return;
+      }
 
       if (isTooYoungAccount(member)) {
         await handleTooYoungAccount(member);
         return;
+      }
+
+      const nameCandidate = getJoinGateNameCandidate(member);
+
+      if (
+        JOIN_GATE.advertisingName.enabled &&
+        inviteLikeInName(nameCandidate)
+      ) {
+        await kickForJoinGate(member, "Advertising invite link in username.", [
+          `${ARROW} **Rule:** Advertising Name`,
+          `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
+        ]);
+        return;
+      }
+
+      const usernameMatch = matchUsernameFilters(nameCandidate);
+      if (usernameMatch) {
+        await kickForJoinGate(member, "Username matches blocked pattern.", [
+          `${ARROW} **Rule:** Username Filter`,
+          `${ARROW} **Match Type:** ${usernameMatch.type}`,
+          `${ARROW} **Match:** ${usernameMatch.value}`,
+          `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
+        ]);
+        return;
+      }
+
+      if (JOIN_GATE.suspiciousAccount.enabled) {
+        const suspiciousReason = detectSuspiciousAccount(member);
+        if (suspiciousReason) {
+          await sendSuspiciousAccountLog(member, suspiciousReason);
+        }
       }
 
       const welcomeChannel = await resolveGuildChannel(
@@ -612,4 +964,3 @@ module.exports = {
     }
   },
 };
-

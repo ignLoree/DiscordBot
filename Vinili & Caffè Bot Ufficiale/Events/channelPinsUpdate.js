@@ -16,6 +16,14 @@ function toDiscordTimestamp(value = new Date(), style = "F") {
   return `<t:${Math.floor(ms / 1000)}:${style}>`;
 }
 
+function formatAuditActor(actor) {
+  if (!actor) return "sconosciuto";
+  const flags = [];
+  if (actor?.bot) flags.push("BOT");
+  const suffix = flags.length ? ` [${flags.join("/")}]` : "";
+  return `${actor}${suffix} \`${actor.id}\``;
+}
+
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -97,9 +105,7 @@ module.exports = {
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const responsible = entry.executor
-        ? `${entry.executor} \`${entry.executor.id}\``
-        : "sconosciuto";
+      const responsible = formatAuditActor(entry.executor);
       const messageUrl = buildMessageUrl(guild.id, channel.id, messageId);
 
       const lines = [

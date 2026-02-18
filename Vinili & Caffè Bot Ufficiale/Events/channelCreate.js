@@ -1,4 +1,8 @@
-const { AuditLogEvent, EmbedBuilder } = require("discord.js");
+const {
+  AuditLogEvent,
+  EmbedBuilder,
+  PermissionsBitField,
+} = require("discord.js");
 const {
   queueCategoryRenumber,
 } = require("../Services/Community/communityOpsService");
@@ -12,17 +16,51 @@ const {
   channelDisplay,
   channelTypeLabel,
   yesNo,
+  formatAuditActor,
   buildAuditExtraLines,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleChannelCreationAction: antiNukeHandleChannelCreationAction } = require("../Services/Moderation/antiNukeService");
+const IDs = require("../Utils/Config/ids");
 
 const CHANNEL_CREATE_ACTION = AuditLogEvent?.ChannelCreate ?? 10;
+const QUARANTINE_ROLE_ID = String(
+  IDs.roles?.Muted || "1442568884833095832",
+);
+
+async function forceQuarantineOverwrite(channel) {
+  if (!channel?.guild || !QUARANTINE_ROLE_ID) return;
+  const me = channel.guild.members?.me;
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) return;
+  if (!channel.permissionsFor?.(me)?.has(PermissionsBitField.Flags.ManageChannels)) return;
+
+  const role =
+    channel.guild.roles.cache.get(QUARANTINE_ROLE_ID) ||
+    (await channel.guild.roles.fetch(QUARANTINE_ROLE_ID).catch(() => null));
+  if (!role) return;
+
+  await channel.permissionOverwrites
+    .edit(
+      role.id,
+      {
+        ViewChannel: false,
+        CreateInstantInvite: false,
+        SendMessages: false,
+        SendMessagesInThreads: false,
+        CreatePublicThreads: false,
+        CreatePrivateThreads: false,
+      },
+      { reason: "Force quarantine deny permissions on new channel" },
+    )
+    .catch(() => {});
+}
 
 module.exports = {
   name: "channelCreate",
   async execute(channel, client) {
     if (!channel?.guildId) return;
+    await forceQuarantineOverwrite(channel);
     try {
       const logChannel = await resolveChannelRolesLogChannel(channel.guild);
       if (logChannel?.isTextBased?.()) {
@@ -31,10 +69,9 @@ module.exports = {
           CHANNEL_CREATE_ACTION,
           (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
         );
+        const executorId = String(audit?.executor?.id || "");
 
-        const responsible = audit.executor
-          ? `${audit.executor} \`${audit.executor.id}\``
-          : "sconosciuto";
+        const responsible = formatAuditActor(audit.executor);
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
           `${ARROW} **Target:** ${channelDisplay(channel)} \`${channel.id}\``,
@@ -54,6 +91,12 @@ module.exports = {
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await antiNukeHandleChannelCreationAction({
+          guild: channel.guild,
+          executorId,
+          channelId: String(channel.id || ""),
+          channel,
+        }).catch(() => {});
       }
     } catch {}
 

@@ -7,7 +7,8 @@
   "nodeVersion": "24.7.0",
   "scripts": {
     "start": "node index.js",
-    "check:mojibake": "node scripts/check-mojibake.js"
+    "check:mojibake": "node scripts/check-mojibake.js",
+    "automod:sync-words": "node scripts/sync-automod-wordlists.js"
   },
   "dependencies": {
     "@snazzah/davey": "^0.1.9",

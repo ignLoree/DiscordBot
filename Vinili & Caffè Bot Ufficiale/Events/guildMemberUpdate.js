@@ -9,9 +9,11 @@ const {
 } = require("../Utils/Community/staffListUtils");
 const {
   ARROW,
+  formatAuditActor,
   resolveChannelRolesLogChannel,
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
+const { handleMemberRoleAddition: antiNukeHandleMemberRoleAddition } = require("../Services/Moderation/antiNukeService");
 
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const BOOST_FOLLOWUP_DELAY_MS = 5000;
@@ -71,16 +73,16 @@ function didTimeoutChange(oldMember, newMember) {
 }
 
 function buildNickChangeLine(oldMember, newMember) {
-  const oldNick = String(oldMember?.nickname || "").trim() || "❌";
-  const newNick = String(newMember?.nickname || "").trim() || "❌";
+  const oldNick = String(oldMember?.nickname || "").trim() || "<:cancel:1461730653677551691>";
+  const newNick = String(newMember?.nickname || "").trim() || "<:cancel:1461730653677551691>";
   return `${oldNick} <:VC_right_arrow:1473441155055096081> ${newNick}`;
 }
 
 function buildTimeoutChangeLine(oldMember, newMember) {
   const oldTs = oldMember?.communicationDisabledUntilTimestamp || 0;
   const newTs = newMember?.communicationDisabledUntilTimestamp || 0;
-  const oldLabel = oldTs ? toRelativeDiscordTime(oldTs) : "❌";
-  const newLabel = newTs ? toRelativeDiscordTime(newTs) : "❌ (Reset)";
+  const oldLabel = oldTs ? toRelativeDiscordTime(oldTs) : "<:cancel:1461730653677551691>";
+  const newLabel = newTs ? toRelativeDiscordTime(newTs) : "<:cancel:1461730653677551691> (Reset)";
   return `${oldLabel} <:VC_right_arrow:1473441155055096081> ${newLabel}`;
 }
 
@@ -126,9 +128,7 @@ async function sendMemberUpdateLog(oldMember, newMember) {
   if (!logChannel?.isTextBased?.()) return;
 
   const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
-  const responsibleText = audit.executor
-    ? `${audit.executor} \`${audit.executor.id}\``
-    : "sconosciuto";
+  const responsibleText = formatAuditActor(audit.executor);
 
   const lines = [
     `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
@@ -190,9 +190,8 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
     actionType,
     (entry) => String(entry?.target?.id || "") === String(newMember?.id || ""),
   );
-  const responsible = audit.executor
-    ? `${audit.executor} \`${audit.executor.id}\``
-    : "sconosciuto";
+  const responsible = formatAuditActor(audit.executor);
+  const executorId = String(audit?.executor?.id || "");
 
   const lines = [
     `${ARROW} **Responsible:** ${responsible}`,
@@ -203,14 +202,14 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   ];
 
   if (additions.length) {
-    lines.push("✅ **Additions:**");
+    lines.push("<:success:1461731530333229226> **Additions:**");
     for (const role of additions.slice(0, 15)) {
       lines.push(`  ${ARROW} ${role}`);
     }
   }
 
   if (removals.length) {
-    lines.push("❌ **Removals:**");
+    lines.push("<:cancel:1461730653677551691> **Removals:**");
     for (const role of removals.slice(0, 15)) {
       lines.push(`  ${ARROW} ${role}`);
     }
@@ -222,6 +221,15 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
     .setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
+
+  if (additions.length) {
+    await antiNukeHandleMemberRoleAddition({
+      guild,
+      targetMember: newMember,
+      addedRoles: additions,
+      executorId,
+    }).catch(() => {});
+  }
 }
 
 function hasManageRolesPermission(member) {
