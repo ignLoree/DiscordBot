@@ -125,6 +125,13 @@ function isMediaMessage(message) {
   return false;
 }
 
+function isDiscordInviteLinkMessage(message) {
+  const content = String(message?.content || "");
+  return /(?:https?:\/\/)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/[a-z0-9-]{2,}/i.test(
+    content,
+  );
+}
+
 function getRandomExp() {
   const min = 100;
   const max = 250;
@@ -478,6 +485,7 @@ module.exports = {
           message.member &&
           !message.author?.bot &&
           isMediaMessage(message) &&
+          !isDiscordInviteLinkMessage(message) &&
           !hasMediaPermission(message.member) &&
           !channelAllowsMedia(message) &&
           message.channel?.parentId !== MEDIA_BLOCK_EXEMPT_CATEGORY_ID &&

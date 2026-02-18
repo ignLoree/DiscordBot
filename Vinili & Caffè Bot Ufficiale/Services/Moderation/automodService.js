@@ -255,7 +255,7 @@ const EXEMPT_CHANNEL_IDS = new Set(
 );
 
 const EXEMPT_CATEGORY_IDS = new Set(["1442569074310643845"]);
-const EXEMPT_INVITE_CHANNEL_IDS = new Set(["1442569193470824448"]);
+const EXEMPT_INVITE_CHANNEL_IDS = new Set();
 const EXEMPT_MENTION_CHANNEL_IDS = new Set(["1442569193470824448"]);
 
 function isTicketLikeCategory(category) {
@@ -1417,6 +1417,11 @@ async function runAutoModMessage(message) {
       { key: "panic_mode", heat: 0, info: "elevated mode active" },
     ]);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
+    await deleteMessage(message, state, [
+      ...violations,
+      { key: "panic_mode", heat: 0, info: "timeout fallback -> delete" },
+    ]);
+    return { blocked: true, action: "delete", heat: state.heat };
   }
 
   const hasInstantLinkViolation = violations.some((v) =>
@@ -1426,6 +1431,11 @@ async function runAutoModMessage(message) {
     state.heat = MAX_HEAT;
     const done = await timeoutMember(message, state, violations);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
+    await deleteMessage(message, state, [
+      ...violations,
+      { key: "link_blacklist", heat: 0, info: "timeout fallback -> delete" },
+    ]);
+    return { blocked: true, action: "delete", heat: state.heat };
   }
 
   for (const v of violations) addHeat(state, v.heat);
@@ -1433,6 +1443,11 @@ async function runAutoModMessage(message) {
   if (state.heat >= TIMEOUT_THRESHOLD) {
     const done = await timeoutMember(message, state, violations);
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
+    await deleteMessage(message, state, [
+      ...violations,
+      { key: "regular_message", heat: 0, info: "timeout fallback -> delete" },
+    ]);
+    return { blocked: true, action: "delete", heat: state.heat };
   }
 
   if (state.heat >= DELETE_THRESHOLD) {
