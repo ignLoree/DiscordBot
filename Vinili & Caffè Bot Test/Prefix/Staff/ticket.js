@@ -100,7 +100,7 @@ async function sendTranscriptWithBrowserLink(
     const transcriptButton = new ButtonBuilder()
       .setStyle(ButtonStyle.Link)
       .setURL(attachment.url)
-      .setLabel("View Online Transcript")
+      .setLabel("View Transcript")
       .setEmoji("📁");
     const row = new ActionRowBuilder().addComponents(transcriptButton);
     await sent
@@ -195,14 +195,25 @@ function buildTicketClosedEmbed(data) {
         value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
         inline: true,
       },
+      { name: "⏹️ Close Time", value: closedAt, inline: true },
       { name: "ℹ️ Reason", value: reasonText, inline: false },
-    )
-    .setFooter({ text: closedAt });
+    );
+
+  const reordered = [
+    embed.data.fields?.[0],
+    embed.data.fields?.[1],
+    embed.data.fields?.[2],
+    embed.data.fields?.[3],
+    embed.data.fields?.[5],
+    embed.data.fields?.[4],
+    embed.data.fields?.[6],
+  ].filter(Boolean);
+  embed.setFields(reordered);
 
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     embed.addFields({
       name: "⭐ Rating",
-      value: `${data.ratingScore}/5${data?.ratingBy ? ` • da <@${data.ratingBy}>` : ""}`,
+      value: `${data.ratingScore}/5${data?.ratingBy ? ` - da <@${data.ratingBy}>` : ""}`,
       inline: false,
     });
   }
@@ -1040,9 +1051,16 @@ module.exports = {
         guildName: message.guild?.name || "Ticket System",
         guildIconURL: message.guild?.iconURL?.({ size: 128 }) || null,
       });
-      const transcriptRows = buildTicketTranscriptRows(String(claimed._id));
       const ratingRows = buildTicketRatingRows(String(claimed._id));
-      const closeActionRows = [...transcriptRows, ...ratingRows];
+      const dmActionRows = [...ratingRows];
+      const htmlAttachment = transcriptHtmlPath
+        ? [
+            {
+              attachment: transcriptHtmlPath,
+              name: `transcript_ticket_${ticketNumber || claimed._id}.html`,
+            },
+          ]
+        : [];
 
       let logSentMessage = null;
       if (logChannel?.isTextBased?.()) {
@@ -1050,9 +1068,10 @@ module.exports = {
           logChannel,
           {
             embeds: [closeEmbed],
+            files: htmlAttachment,
           },
-          false,
-          closeActionRows,
+          Boolean(transcriptHtmlPath),
+          [],
         );
       }
 
@@ -1065,9 +1084,10 @@ module.exports = {
             member,
             {
               embeds: [closeEmbed],
+              files: htmlAttachment,
             },
-            false,
-            closeActionRows,
+            Boolean(transcriptHtmlPath),
+            dmActionRows,
           );
         } catch (err) {
           if (err?.code !== 50007) global.logger.error("[DM ERROR]", err);

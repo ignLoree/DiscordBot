@@ -232,23 +232,38 @@ module.exports = {
       ? auto.strikeReasons.map((x) => String(x || "").trim()).filter(Boolean)
       : [];
     const strikePages = chunk(strikeItems, 5);
+    const totalPages = 1 + strikePages.length;
+
+    const buildPageEmbed = (pageIndex) => {
+      if (pageIndex <= 0) return embed;
+      const strikePageIndex = pageIndex - 1;
+      const strikeRows = (strikePages[strikePageIndex] || []).map(
+        (item, i) => `\`${strikePageIndex * 5 + i + 1}\` ${item}`,
+      );
+      const strikeEmbed = new EmbedBuilder(embed.data)
+        .setDescription(
+          [
+            "**Active Strikes:**",
+            ...(strikeRows.length ? strikeRows : ["Nessuno strike disponibile."]),
+            "",
+            `Page: ${pageIndex + 1}/${totalPages}`,
+          ].join("\n"),
+        );
+      return strikeEmbed;
+    };
 
     const payload = {
-      embeds: [embed],
+      embeds: [buildPageEmbed(0)],
       allowedMentions: { repliedUser: false },
     };
 
-    if (strikePages.length > 0) {
-      const page = 0;
+    if (totalPages > 1) {
       const scope = `${message.id}:${member.id}:${Date.now()}`;
-      payload.embeds.push(
-        buildStrikesEmbed(member, strikePages, page, strikePages.length),
-      );
-      payload.components = [buildStrikeButtons(scope, page, strikePages.length)];
+      payload.components = [buildStrikeButtons(scope, 0, totalPages)];
       const sent = await safeMessageReply(message, payload);
       if (!sent) return;
 
-      let currentPage = page;
+      let currentPage = 0;
       const collector = sent.createMessageComponentCollector({
         componentType: ComponentType.Button,
         time: 10 * 60_000,
@@ -258,7 +273,10 @@ module.exports = {
         if (!interaction.customId.endsWith(scope)) return;
         if (interaction.user.id !== message.author.id) {
           await interaction
-            .reply({ content: "Solo chi ha usato il comando puo usare questi pulsanti.", ephemeral: true })
+            .reply({
+              content: "Solo chi ha usato il comando puo usare questi pulsanti.",
+              ephemeral: true,
+            })
             .catch(() => {});
           return;
         }
@@ -270,13 +288,13 @@ module.exports = {
         }
         if (interaction.customId.startsWith("info_strike_first:")) currentPage = 0;
         if (interaction.customId.startsWith("info_strike_prev:")) currentPage = Math.max(0, currentPage - 1);
-        if (interaction.customId.startsWith("info_strike_next:")) currentPage = Math.min(strikePages.length - 1, currentPage + 1);
-        if (interaction.customId.startsWith("info_strike_last:")) currentPage = strikePages.length - 1;
+        if (interaction.customId.startsWith("info_strike_next:")) currentPage = Math.min(totalPages - 1, currentPage + 1);
+        if (interaction.customId.startsWith("info_strike_last:")) currentPage = totalPages - 1;
 
         await interaction
           .update({
-            embeds: [embed, buildStrikesEmbed(member, strikePages, currentPage, strikePages.length)],
-            components: [buildStrikeButtons(scope, currentPage, strikePages.length)],
+            embeds: [buildPageEmbed(currentPage)],
+            components: [buildStrikeButtons(scope, currentPage, totalPages)],
           })
           .catch(() => {});
       });
