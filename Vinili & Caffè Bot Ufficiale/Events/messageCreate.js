@@ -463,6 +463,14 @@ module.exports = {
       await message.delete().catch(() => { });
       return;
     }
+    if (!isEditedPrefixExecution) {
+      try {
+        const automodResult = await runAutoModMessage(message);
+        if (automodResult?.blocked) return;
+      } catch (error) {
+        logEventError(client, "AUTOMOD ERROR", error);
+      }
+    }
     try {
       if (!isEditedPrefixExecution) {
         if (
@@ -505,14 +513,6 @@ module.exports = {
       }
     } catch (error) {
       logEventError(client, "DISBOARD REMINDER ERROR", error);
-    }
-    if (!isEditedPrefixExecution) {
-      try {
-        const automodResult = await runAutoModMessage(message);
-        if (automodResult?.blocked) return;
-      } catch (error) {
-        logEventError(client, "AUTOMOD ERROR", error);
-      }
     }
     if (
       message.author.bot ||
