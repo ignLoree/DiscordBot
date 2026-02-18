@@ -177,13 +177,12 @@ async function resolveTopInviteEntries(
   const safeGuildId = String(guildId || "").trim();
   if (!safeGuildId) return [];
 
-  let aggregated = [];
+  let trackedTotals = [];
   try {
-    aggregated = await InviteTrack.aggregate([
+    trackedTotals = await InviteTrack.aggregate([
       {
         $match: {
           guildId: safeGuildId,
-          active: true,
           inviterId: { $exists: true, $nin: [null, ""] },
         },
       },
@@ -192,27 +191,56 @@ async function resolveTopInviteEntries(
       { $limit: Math.max(20, Number(limit || TOP_PAGE_DATA_LIMIT) * 2) },
     ]);
   } catch {
-    return [];
+    trackedTotals = [];
   }
 
+  const trackedByInviter = new Map();
+  for (const item of trackedTotals) {
+    const inviterId = String(item?._id || "").trim();
+    if (!inviterId) continue;
+    trackedByInviter.set(inviterId, Number(item?.value || 0));
+  }
+
+  const liveUsesByInviter = new Map();
+  const liveInvites = await guild.invites.fetch().catch(() => null);
+  if (liveInvites?.size) {
+    for (const invite of liveInvites.values()) {
+      const inviterId = String(invite?.inviter?.id || "").trim();
+      if (!inviterId) continue;
+      const uses = Number(invite?.uses || 0);
+      liveUsesByInviter.set(
+        inviterId,
+        Number(liveUsesByInviter.get(inviterId) || 0) + uses,
+      );
+    }
+  }
+
+  const inviterIds = new Set([
+    ...trackedByInviter.keys(),
+    ...liveUsesByInviter.keys(),
+  ]);
+
   const out = [];
-  for (const item of aggregated) {
-    const userId = String(item?._id || "").trim();
+  for (const userId of inviterIds) {
     if (!userId) continue;
     const bot = await isBotUser(guild, userId);
     if (bot) continue;
+
+    const trackedTotal = Number(trackedByInviter.get(userId) || 0);
+    const liveUses = Number(liveUsesByInviter.get(userId) || 0);
+    const effectiveValue = Math.max(trackedTotal, liveUses);
+    if (effectiveValue <= 0) continue;
 
     const rawDisplayName = await resolveDisplayName(guild, userId);
     out.push({
       id: userId,
       label: normalizeCanvasLabel(rawDisplayName, `utente_${userId.slice(-6)}`),
-      value: Number(item?.value || 0),
+      value: effectiveValue,
     });
-
-    if (out.length >= Math.max(1, Number(limit || TOP_PAGE_DATA_LIMIT))) break;
   }
 
-  return out;
+  out.sort((a, b) => Number(b.value || 0) - Number(a.value || 0));
+  return out.slice(0, Math.max(1, Number(limit || TOP_PAGE_DATA_LIMIT)));
 }
 
 async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new Map()) {
