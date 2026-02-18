@@ -34,6 +34,12 @@ const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
   "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
+const TICKET_OPEN_CONTROLS = new Set([
+  "ticket_partnership",
+  "ticket_highstaff",
+  "ticket_supporto",
+  "ticket_open_menu",
+]);
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;
@@ -82,6 +88,13 @@ function acquireButtonSpamGuard(interaction, client) {
   const userId = String(interaction.user?.id || "unknown");
   const messageId = String(interaction.message?.id || "no-message");
   const customId = String(interaction.customId || "no-custom-id");
+
+  if (TICKET_OPEN_CONTROLS.has(customId)) {
+    return {
+      blocked: false,
+      release: () => {},
+    };
+  }
 
   const userKey = `${guildId}:${userId}`;
   const actionKey = `${guildId}:${userId}:${messageId}:${customId}`;
@@ -151,6 +164,22 @@ async function runPermissionGate(interaction) {
   if (interaction.isButton?.()) {
     const gate = await checkButtonPermission(interaction);
     if (!gate.allowed) {
+      if (
+        gate.reason === "missing_role" &&
+        TICKET_OPEN_CONTROLS.has(String(interaction.customId || ""))
+      ) {
+        await sendPrivateInteractionResponse(interaction, {
+          embeds: [
+            buildGlobalPermissionDeniedEmbed(
+              [],
+              "bottone",
+              "<:vegax:1443934876440068179> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
+            ),
+          ],
+          flags: PRIVATE_FLAG,
+        });
+        return false;
+      }
       await sendPrivateInteractionResponse(interaction, {
         embeds: [buildDeniedEmbed(gate, "bottone")],
         flags: PRIVATE_FLAG,
@@ -162,6 +191,22 @@ async function runPermissionGate(interaction) {
   if (interaction.isStringSelectMenu?.()) {
     const gate = await checkStringSelectPermission(interaction);
     if (!gate.allowed) {
+      if (
+        gate.reason === "missing_role" &&
+        TICKET_OPEN_CONTROLS.has(String(interaction.customId || ""))
+      ) {
+        await sendPrivateInteractionResponse(interaction, {
+          embeds: [
+            buildGlobalPermissionDeniedEmbed(
+              [],
+              "menu",
+              "<:vegax:1443934876440068179> Devi completare la verifica per aprire un ticket. Verificati e riprova.",
+            ),
+          ],
+          flags: PRIVATE_FLAG,
+        });
+        return false;
+      }
       await sendPrivateInteractionResponse(interaction, {
         embeds: [buildDeniedEmbed(gate, "menu")],
         flags: PRIVATE_FLAG,

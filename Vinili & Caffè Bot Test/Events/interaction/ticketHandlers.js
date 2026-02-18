@@ -241,9 +241,21 @@ async function pinFirstTicketMessage(channel, message) {
           value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
           inline: true,
         },
+        { name: "⏹️ Close Time", value: closedAt, inline: true },
         { name: "ℹ️ Reason", value: reasonText, inline: false },
-      )
-      .setFooter({ text: closedAt });
+      );
+
+    // Keep temporal fields grouped in the same row after actor fields.
+    const reordered = [
+      embed.data.fields?.[0], // Ticket ID
+      embed.data.fields?.[1], // Opened By
+      embed.data.fields?.[2], // Closed By
+      embed.data.fields?.[3], // Open Time
+      embed.data.fields?.[5], // Close Time
+      embed.data.fields?.[4], // Claimed By
+      embed.data.fields?.[6], // Reason
+    ].filter(Boolean);
+    embed.setFields(reordered);
 
     if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
       embed.addFields({
@@ -291,7 +303,7 @@ async function pinFirstTicketMessage(channel, message) {
       const transcriptButton = new ButtonBuilder()
         .setStyle(ButtonStyle.Link)
         .setURL(attachment.url)
-        .setLabel("View Online Transcript")
+        .setLabel("View Transcript")
         .setEmoji("📁");
       const row = new ActionRowBuilder().addComponents(transcriptButton);
       await sent
@@ -598,7 +610,9 @@ async function pinFirstTicketMessage(channel, message) {
           "rifiuta",
           "unclaim",
           "ticket_open_desc_modal",
-        ].includes(interaction.customId)
+        ].includes(interaction.customId) &&
+        !isTicketTranscriptButton(interaction.customId) &&
+        !isTicketRatingButton(interaction.customId)
       ) {
         await safeReply(interaction, {
           embeds: [
@@ -2247,9 +2261,15 @@ async function pinFirstTicketMessage(channel, message) {
         guildIconURL: targetInteraction.guild?.iconURL?.({ size: 128 }) || null,
       };
       const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
-      const transcriptRows = buildTicketTranscriptRows(String(ticket._id));
       const ratingRows = buildTicketRatingRows(String(ticket._id));
-      const closeActionRows = [...transcriptRows, ...ratingRows];
+      const htmlAttachment = transcriptHtmlPath
+        ? [
+            {
+              attachment: transcriptHtmlPath,
+              name: `transcript_ticket_${ticketNumber || ticket._id}.html`,
+            },
+          ]
+        : [];
 
       let logSentMessage = null;
       if (logChannel?.isTextBased?.()) {
@@ -2257,11 +2277,13 @@ async function pinFirstTicketMessage(channel, message) {
           logChannel,
           {
             embeds: [closeEmbed],
+            files: htmlAttachment,
           },
-          false,
-          closeActionRows,
+          Boolean(transcriptHtmlPath),
+          [],
         );
       }
+      const dmActionRows = [...ratingRows];
       const member = await targetInteraction.guild.members
         .fetch(ticket.userId)
         .catch(() => null);
@@ -2271,9 +2293,10 @@ async function pinFirstTicketMessage(channel, message) {
             member,
             {
               embeds: [closeEmbed],
+              files: htmlAttachment,
             },
-            false,
-            closeActionRows,
+            Boolean(transcriptHtmlPath),
+            dmActionRows,
           );
         } catch (err) {
           if (err.code !== 50007) {
