@@ -91,7 +91,8 @@ async function sendLeaveLog(member) {
         "",
       ].join("\n"),
     )
-    .setFooter({ text:`ID: ${member.user.id} • <t:${nowTs}:F>`})
+    .setFooter({ text:`ID: ${member.user.id} •`})
+    .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await channel.send({ embeds: [embed] }).catch((err) => {

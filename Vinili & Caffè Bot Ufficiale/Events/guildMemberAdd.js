@@ -799,7 +799,8 @@ async function sendJoinLog(member) {
         accountAge
       ].join("\n"),
     )
-    .setFooter({ text:`ID: ${member.user.id} • <t:${nowTs}:F>`})
+    .setFooter({ text:`ID: ${member.user.id} •`})
+    .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
   await joinLeaveLogChannel.send({ embeds: [joinLogEmbed] }).catch((err) => {

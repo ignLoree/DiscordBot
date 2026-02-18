@@ -28,6 +28,7 @@ const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
+const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
