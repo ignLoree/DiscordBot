@@ -714,7 +714,7 @@ module.exports = {
       } else if (fallbackEmojiId) {
         await message.react(fallbackEmojiId).catch(() => { });
       } else {
-        await message.react("â³").catch(() => { });
+        await message.react("\u23F3").catch(() => { });
       }
       if (!client.prefixCommandQueue.has(queueLockId)) {
         client.prefixCommandQueue.set(queueLockId, []);
