@@ -168,7 +168,7 @@ async function pinFirstTicketMessage(channel, message) {
           .setCustomId(`ticket_rate:${ticketId}:${score}`)
           .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
           .setLabel(String(score))
-          .setEmoji("â­"),
+          .setEmoji("⭐"),
       ),
     );
     return [row];
@@ -207,33 +207,33 @@ async function pinFirstTicketMessage(channel, message) {
       .setColor("#6f4e37")
       .addFields(
         {
-          name: "ðŸ†” Ticket ID",
+          name: "🆔 Ticket ID",
           value: String(data?.ticketNumber || "N/A"),
           inline: true,
         },
         {
-          name: "âœ… Opened By",
+          name: "✅ Opened By",
           value: data?.userId ? `<@${data.userId}>` : "Unknown",
           inline: true,
         },
         {
-          name: "ðŸ›‘ Closed By",
+          name: "🛑 Closed By",
           value: data?.closedBy ? `<@${data.closedBy}>` : "Unknown",
           inline: true,
         },
-        { name: "ðŸ•’ Open Time", value: openedAt, inline: true },
+        { name: "🕒 Open Time", value: openedAt, inline: true },
         {
-          name: "ðŸ™‹ Claimed By",
+          name: "🙋 Claimed By",
           value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
           inline: true,
         },
-        { name: "â„¹ï¸ Reason", value: reasonText, inline: false },
+        { name: "ℹ️ Reason", value: reasonText, inline: false },
       )
       .setFooter({ text: closedAt });
 
     if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
       embed.addFields({
-        name: "â­ Rating",
+        name: "⭐ Rating",
         value: `${data.ratingScore}/5${data?.ratingBy ? ` - da <@${data.ratingBy}>` : ""}`,
         inline: false,
       });
@@ -303,7 +303,7 @@ async function pinFirstTicketMessage(channel, message) {
     return String(name || "")
       .toLowerCase()
       .replace(/\s+/g, "")
-      .replace(/[ãƒ»`'".,;:!?\-_=+()[\]{}|/\\]/g, "");
+      .replace(/[・`'".,;:!?\-_=+()[\]{}|/\\]/g, "");
   }
 
   function isTicketCategoryName(name) {
@@ -467,7 +467,7 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichÃ¨ sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
+                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
@@ -488,7 +488,7 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichÃ¨ sei blacklistato dai ticket.`,
+                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dai ticket.`,
               ),
           ],
           flags: 1 << 6,
@@ -529,46 +529,46 @@ async function pinFirstTicketMessage(channel, message) {
       const ticketConfig = {
         ticket_supporto: {
           type: "supporto",
-          emoji: "â­",
+          emoji: "⭐",
           name: "supporto",
           role: ROLE_STAFF,
           requiredRoles: ROLE_USER ? [ROLE_USER] : [],
           embed: new EmbedBuilder()
             .setTitle(
-              "<:vsl_ticket:1329520261053022208> â€¢ **__TICKET SUPPORTO__**",
+              "<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",
             )
             .setDescription(
-              `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
             )
             .setColor("#6f4e37"),
         },
         ticket_partnership: {
           type: "partnership",
-          emoji: "ðŸ¤",
+          emoji: "🤝",
           name: "partnership",
           role: ROLE_PARTNERMANAGER,
           requiredRoles: [ROLE_USER],
           embed: new EmbedBuilder()
             .setTitle(
-              "<:vsl_ticket:1329520261053022208> â€¢ **__TICKET PARTNERSHIP__**",
+              "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
             )
             .setDescription(
-              `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`,
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`,
             )
             .setColor("#6f4e37"),
         },
         ticket_highstaff: {
           type: "high",
-          emoji: "âœ¨",
+          emoji: "✨",
           name: "highstaff",
           role: ROLE_HIGHSTAFF,
           requiredRoles: [ROLE_USER],
           embed: new EmbedBuilder()
             .setTitle(
-              "<:vsl_ticket:1329520261053022208> â€¢ **__TICKET HIGH STAFF__**",
+              "<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",
             )
             .setDescription(
-              `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
             )
             .setColor("#6f4e37"),
         },
@@ -612,7 +612,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Attendi",
-                "<:attentionfromvega:1443651874032062505> Sto giÃ  aprendo un ticket per te, aspetta un attimo.",
+                "<:attentionfromvega:1443651874032062505> Sto già aprendo un ticket per te, aspetta un attimo.",
               ),
             ],
             flags: 1 << 6,
@@ -672,7 +672,7 @@ async function pinFirstTicketMessage(channel, message) {
                 new EmbedBuilder()
                   .setTitle("Ticket Aperto")
                   .setDescription(
-                    `<:vegax:1443934876440068179> Hai giÃ  un ticket aperto: <#${existing.channelId}>`,
+                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`,
                   )
                   .setColor("#6f4e37"),
               ],
@@ -706,7 +706,7 @@ async function pinFirstTicketMessage(channel, message) {
                 new EmbedBuilder()
                   .setTitle("Ticket Aperto")
                   .setDescription(
-                    `<:vegax:1443934876440068179> Hai giÃ  un ticket aperto: <#${existingBeforeCreate.channelId}>`,
+                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingBeforeCreate.channelId}>`,
                   )
                   .setColor("#6f4e37"),
               ],
@@ -716,7 +716,7 @@ async function pinFirstTicketMessage(channel, message) {
           }
           const channel = await interaction.guild.channels
             .create({
-              name: `à¼„${config.emoji}ï¸²${config.name}á²¼${interaction.user.username}`,
+              name: `༄${config.emoji}︲${config.name}᲼${interaction.user.username}`,
               type: 0,
               parent: ticketsCategory.id,
               permissionOverwrites: [
@@ -802,15 +802,15 @@ async function pinFirstTicketMessage(channel, message) {
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId("close_ticket")
-              .setLabel("ðŸ”’ Chiudi")
+              .setLabel("🔒 Chiudi")
               .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
               .setCustomId("close_ticket_motivo")
-              .setLabel("ðŸ“ Chiudi Con Motivo")
+              .setLabel("📝 Chiudi Con Motivo")
               .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
               .setCustomId("claim_ticket")
-              .setLabel("âœ… Claim")
+              .setLabel("✅ Claim")
               .setStyle(ButtonStyle.Success),
           );
           const mainMsg = await channel
@@ -834,7 +834,7 @@ async function pinFirstTicketMessage(channel, message) {
                 new EmbedBuilder()
                   .setTitle("Ticket Aperto")
                   .setDescription(
-                    `<:vegax:1443934876440068179> Hai giÃ  un ticket aperto: <#${existingAgain.channelId}>`,
+                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingAgain.channelId}>`,
                   )
                   .setColor("#6f4e37"),
               ],
@@ -847,7 +847,7 @@ async function pinFirstTicketMessage(channel, message) {
             const descriptionRow = new ActionRowBuilder().addComponents(
               new ButtonBuilder()
                 .setCustomId("ticket_open_desc_modal")
-                .setLabel("ðŸ“ Invia Descrizione")
+                .setLabel("📝 Invia Descrizione")
                 .setStyle(ButtonStyle.Primary),
             );
             descriptionPrompt = await channel
@@ -888,7 +888,7 @@ async function pinFirstTicketMessage(channel, message) {
                   new EmbedBuilder()
                     .setTitle("Ticket Aperto")
                     .setDescription(
-                      `<:vegax:1443934876440068179> Hai giÃ  un ticket aperto${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
+                      `<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
                     )
                     .setColor("#6f4e37"),
                 ],
@@ -962,7 +962,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha aperto il ticket puÃ² votare.",
+                "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può votare.",
               ),
             ],
             flags: 1 << 6,
@@ -987,7 +987,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Info",
-                "<:attentionfromvega:1443651874032062505> Hai giÃ  inviato una valutazione per questo ticket.",
+                "<:attentionfromvega:1443651874032062505> Hai già inviato una valutazione per questo ticket.",
               ),
             ],
             flags: 1 << 6,
@@ -1129,7 +1129,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo lo staff puÃ² claimare i ticket",
+                "<:vegax:1443934876440068179> Solo lo staff può claimare i ticket",
               ),
             ],
             flags: 1 << 6,
@@ -1155,7 +1155,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Ticket giÃ  claimato",
+                "<:vegax:1443934876440068179> Ticket già claimato",
               ),
             ],
             flags: 1 << 6,
@@ -1183,7 +1183,7 @@ async function pinFirstTicketMessage(channel, message) {
               embeds: [
                 makeErrorEmbed(
                   "Errore",
-                  "<:vegax:1443934876440068179> Ticket giÃ  claimato",
+                  "<:vegax:1443934876440068179> Ticket già claimato",
                 ),
               ],
               flags: 1 << 6,
@@ -1199,7 +1199,7 @@ async function pinFirstTicketMessage(channel, message) {
               embeds: [
                 makeErrorEmbed(
                   "Errore",
-                  "<:vegax:1443934876440068179> Ticket giÃ  claimato da un altro staff.",
+                  "<:vegax:1443934876440068179> Ticket già claimato da un altro staff.",
                 ),
               ],
               flags: 1 << 6,
@@ -1222,7 +1222,7 @@ async function pinFirstTicketMessage(channel, message) {
               embeds: [
                 makeErrorEmbed(
                   "Errore",
-                  "<:vegax:1443934876440068179> Ticket giÃ  claimato.",
+                  "<:vegax:1443934876440068179> Ticket già claimato.",
                 ),
               ],
               flags: 1 << 6,
@@ -1317,15 +1317,15 @@ async function pinFirstTicketMessage(channel, message) {
         const claimedButtons = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId("close_ticket")
-            .setLabel("ðŸ”’ Chiudi")
+            .setLabel("🔒 Chiudi")
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId("close_ticket_motivo")
-            .setLabel("ðŸ“ Chiudi con motivo")
+            .setLabel("📝 Chiudi con motivo")
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId("unclaim")
-            .setLabel("ðŸ”“ Unclaim")
+            .setLabel("🔓 Unclaim")
             .setStyle(ButtonStyle.Secondary),
         );
         try {
@@ -1404,7 +1404,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha aperto il ticket puÃ² inviare la descrizione.",
+                "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.",
               ),
             ],
             flags: 1 << 6,
@@ -1416,7 +1416,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Hai giÃ  inviato la descrizione iniziale.",
+                "<:vegax:1443934876440068179> Hai già inviato la descrizione iniziale.",
               ),
             ],
             flags: 1 << 6,
@@ -1470,15 +1470,15 @@ async function pinFirstTicketMessage(channel, message) {
         const ticketButtonsOriginal = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId("close_ticket")
-            .setLabel("ðŸ”’ Chiudi")
+            .setLabel("🔒 Chiudi")
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId("close_ticket_motivo")
-            .setLabel("ðŸ“ Chiudi Con Motivo")
+            .setLabel("📝 Chiudi Con Motivo")
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId("claim_ticket")
-            .setLabel("âœ… Claim")
+            .setLabel("✅ Claim")
             .setStyle(ButtonStyle.Success),
         );
         const ticketDoc = await Ticket.findOne({
@@ -1489,7 +1489,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Questo non Ã¨ un ticket valido.",
+                "<:vegax:1443934876440068179> Questo non è un ticket valido.",
               ),
             ],
             flags: 1 << 6,
@@ -1501,7 +1501,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.",
+                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
               ),
             ],
             flags: 1 << 6,
@@ -1513,7 +1513,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Chi ha aperto il ticket non puÃ² usare questo pulsante.",
+                "<:vegax:1443934876440068179> Chi ha aperto il ticket non può usare questo pulsante.",
               ),
             ],
             flags: 1 << 6,
@@ -1525,7 +1525,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato puÃ² unclaimare il ticket.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.",
               ),
             ],
             flags: 1 << 6,
@@ -1542,7 +1542,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato puÃ² unclaimare il ticket.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.",
               ),
             ],
             flags: 1 << 6,
@@ -1589,7 +1589,7 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setTitle("Ticket Unclaimato")
               .setDescription(
-                `Il ticket non Ã¨ piÃ¹ gestito da <@${interaction.user.id}>`,
+                `Il ticket non è più gestito da <@${interaction.user.id}>`,
               )
               .setColor("#6f4e37"),
           ],
@@ -1641,7 +1641,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.",
+                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
               ),
             ],
             flags: 1 << 6,
@@ -1653,7 +1653,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket puÃ² chiuderlo.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
               ),
             ],
             flags: 1 << 6,
@@ -1734,7 +1734,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.",
+                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
               ),
             ],
             flags: 1 << 6,
@@ -1746,7 +1746,7 @@ async function pinFirstTicketMessage(channel, message) {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket puÃ² chiuderlo.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
               ),
             ],
             flags: 1 << 6,
@@ -1940,7 +1940,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Solo chi ha aperto il ticket puÃ² inviare la descrizione.",
+              "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.",
             ),
           ],
           flags: 1 << 6,
@@ -1952,7 +1952,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Dopo il filtro non c'Ã¨ testo valido da inviare.",
+              "<:vegax:1443934876440068179> Dopo il filtro non c'è testo valido da inviare.",
             ),
           ],
           flags: 1 << 6,
@@ -1978,7 +1978,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> La descrizione Ã¨ giÃ  stata inviata.",
+              "<:vegax:1443934876440068179> La descrizione è già stata inviata.",
             ),
           ],
           flags: 1 << 6,
@@ -2058,7 +2058,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.",
+              "<:vegax:1443934876440068179> Questo ticket non è claimato.",
             ),
           ],
           flags: 1 << 6,
@@ -2070,7 +2070,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Solo chi ha claimato il ticket puÃ² chiuderlo.",
+              "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
             ),
           ],
           flags: 1 << 6,
@@ -2100,7 +2100,7 @@ async function pinFirstTicketMessage(channel, message) {
         embeds: [
           makeErrorEmbed(
             "Errore Interno",
-            "<:vegax:1443934876440068179> Si Ã¨ verificato un errore durante l'elaborazione.",
+            "<:vegax:1443934876440068179> Si è verificato un errore durante l'elaborazione.",
           ),
         ],
         flags: 1 << 6,
@@ -2126,7 +2126,7 @@ async function pinFirstTicketMessage(channel, message) {
         embeds: [
           makeErrorEmbed(
             "Attendi",
-            "<:attentionfromvega:1443651874032062505> Chiusura ticket giÃ  in corso, attendi un attimo.",
+            "<:attentionfromvega:1443651874032062505> Chiusura ticket già in corso, attendi un attimo.",
           ),
         ],
         flags: 1 << 6,
@@ -2164,7 +2164,7 @@ async function pinFirstTicketMessage(channel, message) {
           embeds: [
             makeErrorEmbed(
               "Info",
-              "<:attentionfromvega:1443651874032062505> Ticket giÃ  chiuso o chiusura giÃ  in corso.",
+              "<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.",
             ),
           ],
           flags: 1 << 6,
@@ -2281,7 +2281,7 @@ async function pinFirstTicketMessage(channel, message) {
       await safeEditReply(targetInteraction, {
         embeds: [
           new EmbedBuilder()
-            .setDescription("ðŸ”’ Il ticket verrÃ  chiuso...")
+            .setDescription("🔒 Il ticket verrà chiuso...")
             .setColor("#6f4e37"),
         ],
       });
