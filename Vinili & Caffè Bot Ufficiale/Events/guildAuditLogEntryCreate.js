@@ -15,7 +15,6 @@ module.exports = {
       if (entry.action !== AuditLogEvent.MemberPrune) return;
 
       const logChannel = await resolveModLogChannel(guild);
-      if (!logChannel?.isTextBased?.()) return;
 
       const executor = entry.executor || null;
       const responsible = formatResponsible(executor);
@@ -23,25 +22,27 @@ module.exports = {
       const membersRemoved = Number(entry.extra?.removed ?? entry.extra?.membersRemoved ?? 0);
       const deleteDays = Number(entry.extra?.deleteMemberDays ?? entry.extra?.days ?? 0);
 
-      const embed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setTitle("Member Prune")
-        .setDescription(
-          [
-            `${ARROW} **Responsible:** ${responsible}`,
-            `${ARROW} ${nowDiscordTs()}`,
-            entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
-            "",
-            "**Additional Information**",
-            `${ARROW} **Count:** ${Number.isFinite(membersRemoved) ? membersRemoved : 0}`,
-            `${ARROW} **Days:** ${Number.isFinite(deleteDays) ? deleteDays : 0}`,
-            ...buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]),
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        );
+      if (logChannel?.isTextBased?.()) {
+        const embed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setTitle("Member Prune")
+          .setDescription(
+            [
+              `${ARROW} **Responsible:** ${responsible}`,
+              `${ARROW} ${nowDiscordTs()}`,
+              entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
+              "",
+              "**Additional Information**",
+              `${ARROW} **Count:** ${Number.isFinite(membersRemoved) ? membersRemoved : 0}`,
+              `${ARROW} **Days:** ${Number.isFinite(deleteDays) ? deleteDays : 0}`,
+              ...buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]),
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          );
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
       await antiNukeHandlePruneAction({
         guild,
         executorId: String(entry?.executor?.id || ""),

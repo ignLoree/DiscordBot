@@ -63,15 +63,14 @@ module.exports = {
     await forceQuarantineOverwrite(channel);
     try {
       let executorId = "";
+      const audit = await resolveResponsible(
+        channel.guild,
+        CHANNEL_CREATE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
+      );
+      executorId = String(audit?.executor?.id || "");
       const logChannel = await resolveChannelRolesLogChannel(channel.guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          channel.guild,
-          CHANNEL_CREATE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
-        );
-        executorId = String(audit?.executor?.id || "");
-
         const responsible = formatAuditActor(audit.executor);
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,

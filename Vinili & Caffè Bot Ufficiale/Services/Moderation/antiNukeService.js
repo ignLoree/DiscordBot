@@ -1,4 +1,9 @@
-const { EmbedBuilder, PermissionsBitField, OverwriteType } = require("discord.js");
+const {
+  EmbedBuilder,
+  PermissionsBitField,
+  OverwriteType,
+  UserFlagsBitField,
+} = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const HIGH_STAFF_MENTION = IDs.roles?.HighStaff
   ? `<@&${IDs.roles.HighStaff}>`
@@ -39,6 +44,7 @@ const WEBHOOK_CREATION_TRACKER = new Map();
 const WEBHOOK_DELETION_TRACKER = new Map();
 const ANTINUKE_PANIC_STATE = new Map();
 const QUARANTINE_ROLE_TIMERS = new Map();
+const VERIFIED_BOT_CACHE = new Map();
 
 const ANTINUKE_CONFIG = {
   enabled: true,
@@ -183,12 +189,40 @@ function isWhitelistedExecutor(guild, executorId) {
   return false;
 }
 
+async function isVerifiedBotExecutor(guild, executorId) {
+  const userId = String(executorId || "");
+  if (!userId) return false;
+  if (VERIFIED_BOT_IDS.has(userId)) return true;
+  if (VERIFIED_BOT_CACHE.has(userId)) return VERIFIED_BOT_CACHE.get(userId);
+
+  let verified = false;
+  try {
+    const member =
+      guild?.members?.cache?.get(userId) ||
+      (await guild?.members?.fetch(userId).catch(() => null));
+    const user = member?.user;
+    if (user?.bot) {
+      const flags =
+        user.flags ||
+        (typeof user.fetchFlags === "function"
+          ? await user.fetchFlags().catch(() => null)
+          : null);
+      verified = Boolean(flags?.has?.(UserFlagsBitField.Flags.VerifiedBot));
+    }
+  } catch {
+    verified = false;
+  }
+  VERIFIED_BOT_CACHE.set(userId, verified);
+  return verified;
+}
+
 async function isWhitelistedExecutorAsync(guild, executorId) {
   const userId = String(executorId || "");
   if (!userId) return true;
   if (String(guild?.ownerId || "") === userId) return true;
   if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
   if (VERIFIED_BOT_IDS.has(userId)) return true;
+  if (await isVerifiedBotExecutor(guild, userId)) return true;
   if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
   let member = guild?.members?.cache?.get(userId) || null;
   if (!member) member = await guild?.members?.fetch(userId).catch(() => null);
@@ -517,6 +551,7 @@ async function quarantineExecutor(guild, executorId, reason) {
   if (await isWhitelistedExecutorAsync(guild, userId)) return;
   const member = guild?.members?.cache?.get(userId) || (await guild?.members?.fetch(userId).catch(() => null));
   if (!member) return;
+  if (!member.manageable) return;
 
   const me = guild?.members?.me || null;
   const quarantineRoleId = String(
@@ -555,7 +590,23 @@ async function quarantineExecutor(guild, executorId, reason) {
     .catch(() => {});
 }
 
+function cleanupTrackerMap(map, now = Date.now()) {
+  for (const [key, state] of map.entries()) {
+    if (!state) {
+      map.delete(key);
+      continue;
+    }
+    const hits = Array.isArray(state.hourHits) ? state.hourHits : [];
+    const hasRecentHits = hits.some((ts) => now - Number(ts || 0) <= 60 * 60_000);
+    const hasRecentPunish = now - Number(state.lastPunishAt || 0) <= 60 * 60_000;
+    if (!hasRecentHits && !hasRecentPunish) {
+      map.delete(key);
+    }
+  }
+}
+
 function getKickBanState(guildId, executorId) {
+  cleanupTrackerMap(KICK_BAN_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = KICK_BAN_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -620,6 +671,7 @@ async function handleKickBanAction({ guild, executorId, action = "unknown", targ
 }
 
 function getRoleCreationState(guildId, executorId) {
+  cleanupTrackerMap(ROLE_CREATION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = ROLE_CREATION_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -690,6 +742,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
 }
 
 function getRoleDeletionState(guildId, executorId) {
+  cleanupTrackerMap(ROLE_DELETION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = ROLE_DELETION_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -759,6 +812,7 @@ async function handleRoleDeletionAction({ guild, executorId, roleName = "", role
 }
 
 function getChannelCreationState(guildId, executorId) {
+  cleanupTrackerMap(CHANNEL_CREATION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = CHANNEL_CREATION_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -832,6 +886,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
 }
 
 function getChannelDeletionState(guildId, executorId) {
+  cleanupTrackerMap(CHANNEL_DELETION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = CHANNEL_DELETION_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -902,6 +957,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
 }
 
 function getWebhookCreationState(guildId, executorId) {
+  cleanupTrackerMap(WEBHOOK_CREATION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = WEBHOOK_CREATION_TRACKER.get(key);
   if (existing) return { key, state: existing };
@@ -974,6 +1030,7 @@ async function handleWebhookCreationAction({ guild, executorId, webhookId = "" }
 }
 
 function getWebhookDeletionState(guildId, executorId) {
+  cleanupTrackerMap(WEBHOOK_DELETION_TRACKER);
   const key = `${String(guildId || "")}:${String(executorId || "")}`;
   const existing = WEBHOOK_DELETION_TRACKER.get(key);
   if (existing) return { key, state: existing };

@@ -12,6 +12,12 @@ const renderSkullboardCanvas = require("../Utils/Render/skullboardCanvas");
 const { cacheRoleIcon } = require("../Utils/Cache/roleIconCache");
 const SKULL_EMOJI = "\u{1F480}";
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
+const SKULL_SOURCE_WHITELIST_CHANNEL_IDS = new Set([
+  "1442569130573303898",
+  "1442569136067575809",
+  "1442569138114662490",
+  "1442569141717438495",
+]);
 const MAX_REPLY_CONTENT_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 80;
 
@@ -239,6 +245,9 @@ module.exports = {
 
       const message = await resolveReactionMessage(reaction);
       if (!message || !message.guild) return;
+      if (!SKULL_SOURCE_WHITELIST_CHANNEL_IDS.has(String(message.channel?.id || ""))) {
+        return;
+      }
       if (message.channel?.id === SKULLBOARD_CHANNEL_ID) return;
 
       const existing = await SkullboardPost.findOne({

@@ -143,6 +143,12 @@ async function handleTicketInteraction(interaction) {
       .setColor("#6f4e37");
   }
 
+  function isHighStaffActor() {
+    return Boolean(
+      ROLE_HIGHSTAFF && interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF),
+    );
+  }
+
 async function pinFirstTicketMessage(channel, message) {
   if (!channel || !message?.pin) return;
   await message.pin().catch(() => {});
@@ -1152,7 +1158,7 @@ async function pinFirstTicketMessage(channel, message) {
         }
         const claimedByVal =
           ticket.claimedBy != null ? String(ticket.claimedBy).trim() : "";
-        if (claimedByVal !== "") {
+        if (claimedByVal !== "" && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1165,14 +1171,16 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
         let claimedTicket = await Ticket.findOneAndUpdate(
-          {
-            channelId: interaction.channel.id,
-            $or: [
-              { claimedBy: null },
-              { claimedBy: { $exists: false } },
-              { claimedBy: "" },
-            ],
-          },
+          isHighStaffActor()
+            ? { channelId: interaction.channel.id }
+            : {
+                channelId: interaction.channel.id,
+                $or: [
+                  { claimedBy: null },
+                  { claimedBy: { $exists: false } },
+                  { claimedBy: "" },
+                ],
+              },
           { $set: { claimedBy: interaction.user.id } },
           { new: true },
         ).catch(() => null);
@@ -1196,7 +1204,7 @@ async function pinFirstTicketMessage(channel, message) {
             claimedTicket.claimedBy != null
               ? String(claimedTicket.claimedBy).trim()
               : "";
-          if (nowClaimed !== "") {
+          if (nowClaimed !== "" && !isHighStaffActor()) {
             await safeReply(interaction, {
               embeds: [
                 makeErrorEmbed(
@@ -1209,14 +1217,16 @@ async function pinFirstTicketMessage(channel, message) {
             return true;
           }
           const updated = await Ticket.updateOne(
-            {
-              channelId: interaction.channel.id,
-              $or: [
-                { claimedBy: null },
-                { claimedBy: "" },
-                { claimedBy: { $exists: false } },
-              ],
-            },
+            isHighStaffActor()
+              ? { channelId: interaction.channel.id }
+              : {
+                  channelId: interaction.channel.id,
+                  $or: [
+                    { claimedBy: null },
+                    { claimedBy: "" },
+                    { claimedBy: { $exists: false } },
+                  ],
+                },
             { $set: { claimedBy: interaction.user.id } },
           ).catch(() => null);
           if (!updated?.modifiedCount) {
@@ -1401,7 +1411,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (interaction.user.id !== ticketDoc.userId) {
+        if (interaction.user.id !== ticketDoc.userId && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1522,7 +1532,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (interaction.user.id !== ticketDoc.claimedBy) {
+        if (interaction.user.id !== ticketDoc.claimedBy && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1534,8 +1544,11 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
+        const unclaimQuery = isHighStaffActor()
+          ? { channelId: interaction.channel.id }
+          : { channelId: interaction.channel.id, claimedBy: interaction.user.id };
         const unclaimedTicket = await Ticket.findOneAndUpdate(
-          { channelId: interaction.channel.id, claimedBy: interaction.user.id },
+          unclaimQuery,
           { $set: { claimedBy: null } },
           { new: true },
         ).catch(() => null);
@@ -1626,7 +1639,11 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (ticketDoc && ticketDoc.userId === interaction.user.id) {
+        if (
+          ticketDoc &&
+          ticketDoc.userId === interaction.user.id &&
+          !isHighStaffActor()
+        ) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1650,7 +1667,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (ticketDoc.claimedBy !== interaction.user.id) {
+        if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1719,7 +1736,11 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (ticketDoc && ticketDoc.userId === interaction.user.id) {
+        if (
+          ticketDoc &&
+          ticketDoc.userId === interaction.user.id &&
+          !isHighStaffActor()
+        ) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1743,7 +1764,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        if (ticketDoc.claimedBy !== interaction.user.id) {
+        if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
               makeErrorEmbed(
@@ -1799,7 +1820,8 @@ async function pinFirstTicketMessage(channel, message) {
         }
         const canHandleCloseRequest =
           interaction.user.id === ticketDoc.userId ||
-          interaction.user.id === ticketDoc.claimedBy;
+          interaction.user.id === ticketDoc.claimedBy ||
+          isHighStaffActor();
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -1858,7 +1880,8 @@ async function pinFirstTicketMessage(channel, message) {
         }
         const canHandleCloseRequest =
           interaction.user.id === ticketDoc.userId ||
-          interaction.user.id === ticketDoc.claimedBy;
+          interaction.user.id === ticketDoc.claimedBy ||
+          isHighStaffActor();
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -1937,7 +1960,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      if (interaction.user.id !== ticketDoc.userId) {
+      if (interaction.user.id !== ticketDoc.userId && !isHighStaffActor()) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(
@@ -2043,7 +2066,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      if (ticketDoc.userId === interaction.user.id) {
+      if (ticketDoc.userId === interaction.user.id && !isHighStaffActor()) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(
@@ -2067,7 +2090,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      if (ticketDoc.claimedBy !== interaction.user.id) {
+      if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(

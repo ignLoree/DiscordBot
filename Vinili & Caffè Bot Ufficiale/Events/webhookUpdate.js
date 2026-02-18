@@ -98,6 +98,7 @@ module.exports = {
       const match = await getLatestWebhookEntry(guild, channel?.id || null);
       if (!match?.item) return;
       const entry = match.item;
+      const executorId = String(entry?.executor?.id || "");
 
       const dedupeKey = `${guild.id}:${entry.action}:${entry.id}`;
       const store = getStore(guild.client);
@@ -105,10 +106,7 @@ module.exports = {
       store.set(dedupeKey, Date.now());
 
       const logChannel = await resolveLogChannel(guild);
-      if (!logChannel?.isTextBased?.()) return;
-
       const responsible = formatAuditActor(entry.executor);
-      const executorId = String(entry?.executor?.id || "");
       const targetName = String(entry?.target?.name || "sconosciuto");
       const targetId = String(entry?.target?.id || "sconosciuto");
       const action = Number(entry.action || 0);
@@ -158,8 +156,10 @@ module.exports = {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Type:** ${typeText}`);
       }
 
-      const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      if (logChannel?.isTextBased?.()) {
+        const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
 
       const reliableForNuke =
         Number(match.score || 0) >= 4 &&

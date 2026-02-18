@@ -713,7 +713,7 @@ async function sendSuspiciousAccountLog(member, reason) {
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 async function handleTooYoungAccount(member) {
-  const logChannel = member.guild.channels.cache.get(IDs.channels.modLogs);
+  const logChannel = await resolveGuildChannel(member.guild, IDs.channels.modLogs);
   const createdTs = toUnix(member.user.createdAt);
   const nowTs = Math.floor(Date.now() / 1000);
 
@@ -745,7 +745,7 @@ async function handleTooYoungAccount(member) {
     punished = false;
   }
 
-  if (!logChannel) return;
+  if (!logChannel?.isTextBased?.()) return;
 
   const logEmbed = new EmbedBuilder()
     .setColor("#6f4e37")

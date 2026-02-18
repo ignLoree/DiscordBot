@@ -21,15 +21,15 @@ module.exports = {
 
     try {
       let executorId = "";
+      const audit = await resolveResponsible(
+        role.guild,
+        ROLE_CREATE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(role.id || ""),
+      );
+      executorId = String(audit?.executor?.id || "");
       const logChannel = await resolveChannelRolesLogChannel(role.guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          role.guild,
-          ROLE_CREATE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(role.id || ""),
-        );
         const responsible = formatAuditActor(audit.executor);
-        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,

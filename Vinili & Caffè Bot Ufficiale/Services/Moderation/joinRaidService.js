@@ -1,4 +1,8 @@
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const {
+  EmbedBuilder,
+  PermissionsBitField,
+  UserFlagsBitField,
+} = require("discord.js");
 const mongoose = require("mongoose");
 const IDs = require("../../Utils/Config/ids");
 const JoinRaidState = require("../../Schemas/Moderation/joinRaidStateSchema");
@@ -57,6 +61,7 @@ const GUILD_STATE = new Map();
 const TEMP_BAN_TIMERS = new Map();
 const SAVE_TIMERS = new Map();
 const LOADED_GUILDS = new Set();
+const VERIFIED_BOT_CACHE = new Map();
 
 function getGuildState(guildId) {
   const key = String(guildId || "");
@@ -185,6 +190,25 @@ function isNoPfp(member) {
 function isTooYoung(member) {
   const ageMs = nowMs() - new Date(member.user.createdAt).getTime();
   return ageMs < JOIN_RAID_CONFIG.ageFlag.minimumAgeMs;
+}
+
+async function isVerifiedBotUser(user) {
+  if (!user?.bot) return false;
+  const key = String(user.id || "");
+  if (!key) return false;
+  if (VERIFIED_BOT_IDS.has(key)) return true;
+  if (VERIFIED_BOT_CACHE.has(key)) return VERIFIED_BOT_CACHE.get(key);
+
+  let verified = false;
+  try {
+    const flags =
+      user.flags || (typeof user.fetchFlags === "function" ? await user.fetchFlags() : null);
+    verified = Boolean(flags?.has?.(UserFlagsBitField.Flags.VerifiedBot));
+  } catch {
+    verified = false;
+  }
+  VERIFIED_BOT_CACHE.set(key, verified);
+  return verified;
 }
 
 function getFlagReasons(state, member, at = nowMs()) {
@@ -333,7 +357,10 @@ async function restoreTempBans(guild) {
 }
 
 async function applyPunishment(member, reasons) {
-  const action = JOIN_RAID_CONFIG.triggerAction;
+  const configuredAction = String(JOIN_RAID_CONFIG.triggerAction || "log").toLowerCase();
+  const action = ["ban", "kick", "log"].includes(configuredAction)
+    ? configuredAction
+    : "log";
   const guild = member.guild;
   const me = guild.members.me;
   const dmSent = await sendPunishDm(member, action, reasons);
@@ -385,13 +412,13 @@ async function applyPunishment(member, reasons) {
     ],
     punished ? "#ED4245" : "#F59E0B",
   );
-  return punished;
+  return { punished, appliedAction };
 }
 
 async function processJoinRaidForMember(member) {
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
-  if (VERIFIED_BOT_IDS.has(String(member.id || ""))) {
+  if (await isVerifiedBotUser(member.user)) {
     return { blocked: false };
   }
   if (
@@ -460,8 +487,13 @@ async function processJoinRaidForMember(member) {
 
   const active = Number(state.raidUntil || 0) > at;
   if (active && reasons.length) {
-    await applyPunishment(member, reasons);
-    return { blocked: true, action: JOIN_RAID_CONFIG.triggerAction, reasons };
+    const outcome = await applyPunishment(member, reasons);
+    return {
+      blocked: Boolean(outcome?.punished && outcome?.appliedAction !== "log"),
+      punished: Boolean(outcome?.punished),
+      action: outcome?.appliedAction || JOIN_RAID_CONFIG.triggerAction,
+      reasons,
+    };
   }
   return { blocked: false, flagged: reasons.length > 0, reasons };
 }

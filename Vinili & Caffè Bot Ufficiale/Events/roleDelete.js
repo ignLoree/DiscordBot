@@ -22,15 +22,15 @@ module.exports = {
     try {
       const guild = role.guild || client.guilds.cache.get(guildId);
       let executorId = "";
+      const audit = await resolveResponsible(
+        guild,
+        ROLE_DELETE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(role.id || ""),
+      );
+      executorId = String(audit?.executor?.id || "");
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          guild,
-          ROLE_DELETE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(role.id || ""),
-        );
         const responsible = formatAuditActor(audit.executor);
-        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,

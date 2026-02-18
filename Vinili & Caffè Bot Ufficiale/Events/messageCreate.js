@@ -409,6 +409,22 @@ module.exports = {
   async execute(message, client) {
     const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
     const defaultPrefix = "+";
+    if (!isEditedPrefixExecution && message?.guild) {
+      try {
+        if (message.author?.id !== client?.user?.id) {
+          const handledVote = await handleVoteManagerMessage(message, client);
+          if (handledVote) return;
+        }
+        if (message.author?.bot || message.webhookId || message.applicationId) {
+          const handledDisboard = await handleDisboardBump(message, client);
+          if (handledDisboard) return;
+          const handledDiscadia = await handleDiscadiaBump(message, client);
+          if (handledDiscadia) return;
+        }
+      } catch (error) {
+        logEventError(client, "EARLY BUMP/VOTE HANDLER ERROR", error);
+      }
+    }
     if (
       FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || "")) &&
       !message?.system
@@ -1270,9 +1286,17 @@ async function handleDisboardBump(message, client) {
   const disboard = client?.config?.disboard;
   if (!disboard) return false;
   if (!message.guild) return false;
-  if (!message.author || message.author.id !== IDs.bots.DISBOARD) return false;
+  const authorName = String(
+    message.author?.globalName || message.author?.username || "",
+  );
+  const sourceName = `${authorName} ${String(message.applicationId || "")}`.toLowerCase();
+  const isDisboardSource =
+    message.author?.id === IDs.bots.DISBOARD ||
+    (Boolean(message.author?.bot) && /disboard/i.test(authorName)) ||
+    /disboard/i.test(sourceName);
+  if (!message.author || !isDisboardSource) return false;
   const patterns = Array.isArray(disboard.bumpSuccessPatterns)
-    ? disboard.bumpSuccessPatterns
+    ? disboard.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
     : [];
   const haystacks = [];
   if (message.content) haystacks.push(message.content);
@@ -1282,8 +1306,9 @@ async function handleDisboardBump(message, client) {
       if (embed?.title) haystacks.push(embed.title);
     }
   }
+  const lowered = haystacks.map((text) => String(text || "").toLowerCase());
   const isBump = patterns.some((pattern) =>
-    haystacks.some((text) => text.includes(pattern)),
+    lowered.some((text) => text.includes(pattern)),
   );
   if (!isBump) return false;
   const dedupeKey = `disboard:${message.guild.id}:${message.id}`;
@@ -1308,9 +1333,12 @@ async function handleDiscadiaBump(message, client) {
     message.author?.globalName || message.author?.username || "",
   );
   const isDiscadiaNamedBot =
-    Boolean(message.author?.bot) && /discadia/i.test(authorName);
+    Boolean(message.author?.bot) && /(discadia|disboard)/i.test(authorName);
   const isDiscadiaAuthor = message.author?.id === IDs.bots.Discadia;
   const isDiscadiaApp = message.applicationId === IDs.bots.Discadia;
+  const isFallbackSource =
+    message.author?.id === IDs.bots.DISBOARD ||
+    message.applicationId === IDs.bots.DISBOARD;
   const patterns = Array.isArray(discadia.bumpSuccessPatterns)
     ? discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
     : [
@@ -1348,7 +1376,7 @@ async function handleDiscadiaBump(message, client) {
     );
 
   const fromDiscadiaBot =
-    isDiscadiaAuthor || isDiscadiaApp || isDiscadiaNamedBot;
+    isDiscadiaAuthor || isDiscadiaApp || isDiscadiaNamedBot || isFallbackSource;
   const isBump = fromDiscadiaBot && !hasFailureWord && hasPattern;
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;

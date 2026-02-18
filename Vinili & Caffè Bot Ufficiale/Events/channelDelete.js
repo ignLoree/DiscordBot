@@ -35,16 +35,16 @@ module.exports = {
         client.guilds.cache.get(channel.guildId) ||
         (await client.guilds.fetch(channel.guildId).catch(() => null));
       let executorId = "";
+      const audit = await resolveResponsible(
+        guild,
+        CHANNEL_DELETE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
+      );
+      executorId = String(audit?.executor?.id || "");
 
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          guild,
-          CHANNEL_DELETE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(channel.id || ""),
-        );
         const responsible = formatAuditActor(audit.executor);
-        executorId = String(audit?.executor?.id || "");
 
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
