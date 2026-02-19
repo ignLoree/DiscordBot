@@ -210,8 +210,8 @@ function resolvePermissionReference(value) {
   const exact = key.toLowerCase();
   const compact = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
   return (
-    PERMISSION_NAME_LOOKUP.get(exact) ?
-    PERMISSION_NAME_LOOKUP.get(compact) ?
+    PERMISSION_NAME_LOOKUP.get(exact) ??
+    PERMISSION_NAME_LOOKUP.get(compact) ??
     null
   );
 }
@@ -560,14 +560,14 @@ function extractOwnerIdFromMessageMention(message) {
 }
 
 function getDevIds(client) {
-  const rawIds = IDs?.developers ? IDs?.guilds?.developers ? "";
+  const rawIds = IDs?.developers ?? IDs?.guilds?.developers ?? "";
   const fromIds = Array.isArray(rawIds)
     ? rawIds.map((id) => String(id).trim()).filter(Boolean)
     : String(rawIds)
         .split(",")
         .map((id) => id.trim())
         .filter(Boolean);
-  const raw = client?.config?.developers ? "";
+  const raw = client?.config?.developers ?? "";
   const fromConfig = Array.isArray(raw)
     ? raw.map((id) => String(id).trim()).filter(Boolean)
     : String(raw)
@@ -1020,7 +1020,7 @@ async function checkStringSelectPermission(interaction) {
   }
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.selectMenus, customId) ?
+    resolveComponentPolicy(data?.selectMenus, customId) ||
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {
@@ -1159,7 +1159,7 @@ async function checkModalPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.modals, customId) ?
+    resolveComponentPolicy(data?.modals, customId) ||
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeButtonPolicy(rawPolicy);
   if (!policy) {

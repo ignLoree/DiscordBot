@@ -18,7 +18,7 @@ function normalizeDiscordAttachmentUrl(value) {
 }
 
 function normalizeText(value) {
-  return String(value ? "")
+  return String(value ?? "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -35,7 +35,7 @@ function resolvePayloadFileName(file) {
   const explicitName = file?.name || file?.data?.name || json?.name || null;
   if (explicitName) return String(explicitName);
 
-  const src = file?.attachment ? file;
+  const src = file?.attachment ?? file;
   if (typeof src === "string") {
     const normalized = src.replace(/\\/g, "/");
     return normalized.split("/").pop() || null;
@@ -44,7 +44,7 @@ function resolvePayloadFileName(file) {
 }
 
 function readPayloadFileBuffer(file) {
-  const src = file?.attachment ? file;
+  const src = file?.attachment ?? file;
   if (Buffer.isBuffer(src)) return src;
   if (src instanceof Uint8Array) return Buffer.from(src);
   if (typeof src === "string" && fs.existsSync(src)) {
@@ -126,8 +126,8 @@ function simplifyComponents(components = []) {
     const r = typeof row?.toJSON === "function" ? row.toJSON() : row;
     const children = Array.isArray(r?.components) ? r.components : [];
     return children.map((c) => ({
-      type: c?.type ? null,
-      style: c?.style ? null,
+      type: c?.type ?? null,
+      style: c?.style ?? null,
       custom_id: c?.custom_id || c?.customId || null,
       label: normalizeText(c?.label),
       url: c?.url ? String(c.url) : null,

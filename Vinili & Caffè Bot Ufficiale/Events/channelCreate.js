@@ -26,7 +26,7 @@ const {
 } = require("../Services/Moderation/antiNukeService");
 const IDs = require("../Utils/Config/ids");
 
-const CHANNEL_CREATE_ACTION = AuditLogEvent?.ChannelCreate ? 10;
+const CHANNEL_CREATE_ACTION = AuditLogEvent?.ChannelCreate ?? 10;
 const AUDIT_RETRY_ATTEMPTS = 4;
 const AUDIT_RETRY_DELAY_MS = 900;
 const QUARANTINE_ROLE_ID = String(

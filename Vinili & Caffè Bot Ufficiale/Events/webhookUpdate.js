@@ -5,9 +5,9 @@ const {
   handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction,
 } = require("../Services/Moderation/antiNukeService");
 
-const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ? 50;
-const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ? 51;
-const WEBHOOK_DELETE_ACTION = AuditLogEvent?.WebhookDelete ? 52;
+const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
+const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;
+const WEBHOOK_DELETE_ACTION = AuditLogEvent?.WebhookDelete ?? 52;
 const DEDUPE_TTL_MS = 15000;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
@@ -173,7 +173,7 @@ module.exports = {
         const avatarChange = changes.find((c) => String(c?.key || "") === "avatar_hash");
         if (nameChange) {
           lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
-          lines.push(`  ${String(nameChange?.old ? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ? targetName)}`);
+          lines.push(`  ${String(nameChange?.old ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? targetName)}`);
         } else {
           lines.push(`<:VC_right_arrow:1473441155055096081> **Name:** ${targetName}`);
         }

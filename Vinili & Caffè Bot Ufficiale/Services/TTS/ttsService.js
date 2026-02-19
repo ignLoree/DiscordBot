@@ -39,7 +39,7 @@ try {
 function shouldHandleMessage(message, config, prefix) {
   if (!config?.tts?.enabled) return false;
   if (!message?.channel) return false;
-  const rawContent = String(message.content ? "");
+  const rawContent = String(message.content ?? "");
   if (prefix && rawContent.startsWith(prefix)) return false;
   if (rawContent.startsWith("-")) return false;
   const isVoiceChannel =
@@ -49,7 +49,7 @@ function shouldHandleMessage(message, config, prefix) {
   const extraTextIds = [IDs.channels.noMic]
     .filter(Boolean)
     .map((id) => String(id));
-  const channelIdStr = String(message.channel?.id ? "");
+  const channelIdStr = String(message.channel?.id ?? "");
   const parentIdStr = message.channel?.parentId
     ? String(message.channel.parentId)
     : "";
@@ -411,7 +411,7 @@ async function handleTtsMessage(message, client, prefix) {
   const maxChars = config?.tts?.maxChars || 200;
   const includeUsername = config?.tts?.includeUsername !== false;
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
-  const rawMessageText = message.cleanContent ? message.content ? "";
+  const rawMessageText = message.cleanContent ?? message.content ?? "";
   const baseText = sanitizeText(
     typeof rawMessageText === "string"
       ? rawMessageText
@@ -458,7 +458,7 @@ async function leaveTtsGuild(guildId, client) {
       (await client.guilds?.fetch(guildId).catch(() => null));
     if (guild) {
       const me =
-        guild.members?.me ?
+        guild.members?.me ??
         (await guild.members?.fetch(client.user?.id).catch(() => null));
       const channelId = me?.voice?.channelId;
       if (channelId) {

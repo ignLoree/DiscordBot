@@ -20,10 +20,10 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleChannelOverwrite: antiNukeHandleChannelOverwrite } = require("../Services/Moderation/antiNukeService");
 
-const CHANNEL_UPDATE_ACTION = AuditLogEvent?.ChannelUpdate ? 11;
-const OVERWRITE_CREATE_ACTION = AuditLogEvent?.ChannelOverwriteCreate ? 13;
-const OVERWRITE_UPDATE_ACTION = AuditLogEvent?.ChannelOverwriteUpdate ? 14;
-const OVERWRITE_DELETE_ACTION = AuditLogEvent?.ChannelOverwriteDelete ? 15;
+const CHANNEL_UPDATE_ACTION = AuditLogEvent?.ChannelUpdate ?? 11;
+const OVERWRITE_CREATE_ACTION = AuditLogEvent?.ChannelOverwriteCreate ?? 13;
+const OVERWRITE_UPDATE_ACTION = AuditLogEvent?.ChannelOverwriteUpdate ?? 14;
+const OVERWRITE_DELETE_ACTION = AuditLogEvent?.ChannelOverwriteDelete ?? 15;
 const AUDIT_RETRY_ATTEMPTS = 4;
 const AUDIT_RETRY_DELAY_MS = 900;
 
@@ -55,7 +55,7 @@ function collectOverwriteDiffs(oldChannel, newChannel) {
 }
 
 function overwriteTypeLabel(overwrite) {
-  const t = Number(overwrite?.type ? -1);
+  const t = Number(overwrite?.type ?? -1);
   if (t === OverwriteType.Member) return "Member";
   if (t === OverwriteType.Role) return "Role";
   return `Unknown (${t})`;

@@ -8,7 +8,7 @@ const {
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 
 function normalizeColor(input) {
-  const raw = String(input ? "").trim();
+  const raw = String(input ?? "").trim();
   if (!raw) return null;
   const hex = raw.startsWith("#") ? raw : `#${raw}`;
   if (/^#[0-9a-f]{6}$/i.test(hex)) return hex.toUpperCase();
@@ -16,7 +16,7 @@ function normalizeColor(input) {
 }
 
 function clampText(input, maxLen) {
-  const text = String(input ? "").trim();
+  const text = String(input ?? "").trim();
   if (!text) return null;
   return text.length > maxLen ? text.slice(0, maxLen) : text;
 }

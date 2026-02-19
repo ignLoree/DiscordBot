@@ -52,8 +52,8 @@ function normalizePermissionOverwrites(channel) {
     return [...overwrites.values()].map((ow) => ({
       id: String(ow.id),
       type: Number(ow.type),
-      allow: String(ow.allow?.bitfield ? 0n),
-      deny: String(ow.deny?.bitfield ? 0n),
+      allow: String(ow.allow?.bitfield ?? 0n),
+      deny: String(ow.deny?.bitfield ?? 0n),
     }));
   } catch {
     return [];
@@ -86,10 +86,10 @@ function serializeMessage(message) {
       : null,
     content: String(message.content || ""),
     cleanContent: String(message.cleanContent || ""),
-    type: Number(message.type ? 0),
+    type: Number(message.type ?? 0),
     tts: Boolean(message.tts),
     pinned: Boolean(message.pinned),
-    flags: String(message.flags?.bitfield ? 0),
+    flags: String(message.flags?.bitfield ?? 0),
     webhookId: message.webhookId ? String(message.webhookId) : null,
     applicationId: message.applicationId ? String(message.applicationId) : null,
     createdAt: toIso(message.createdTimestamp || message.createdAt),
@@ -116,8 +116,8 @@ function serializeMessage(message) {
       size: Number(a.size || 0),
       url: a.url || null,
       proxyURL: a.proxyURL || null,
-      width: a.width ? null,
-      height: a.height ? null,
+      width: a.width ?? null,
+      height: a.height ?? null,
       ephemeral: Boolean(a.ephemeral),
     })),
     embeds: Array.isArray(message.embeds)
@@ -126,7 +126,7 @@ function serializeMessage(message) {
     stickers: [...(message.stickers?.values?.() || [])].map((s) => ({
       id: String(s.id),
       name: String(s.name || ""),
-      format: Number(s.format ? 0),
+      format: Number(s.format ?? 0),
       url: s.url || null,
     })),
     reactions: [...(message.reactions?.cache?.values?.() || [])].map((r) => ({
@@ -204,20 +204,20 @@ function serializeChannel(channel) {
   return {
     id: String(channel.id),
     name: String(channel.name || ""),
-    type: Number(channel.type ? -1),
+    type: Number(channel.type ?? -1),
     parentId: channel.parentId ? String(channel.parentId) : null,
-    position: Number(channel.position ? 0),
+    position: Number(channel.position ?? 0),
     topic: channel.topic || null,
     nsfw: Boolean(channel.nsfw),
-    rateLimitPerUser: Number(channel.rateLimitPerUser ? 0),
-    bitrate: Number(channel.bitrate ? 0),
-    userLimit: Number(channel.userLimit ? 0),
+    rateLimitPerUser: Number(channel.rateLimitPerUser ?? 0),
+    bitrate: Number(channel.bitrate ?? 0),
+    userLimit: Number(channel.userLimit ?? 0),
     rtcRegion: channel.rtcRegion || null,
-    videoQualityMode: channel.videoQualityMode ? null,
-    defaultAutoArchiveDuration: channel.defaultAutoArchiveDuration ? null,
-    defaultThreadRateLimitPerUser: channel.defaultThreadRateLimitPerUser ? null,
-    defaultForumLayout: channel.defaultForumLayout ? null,
-    defaultSortOrder: channel.defaultSortOrder ? null,
+    videoQualityMode: channel.videoQualityMode ?? null,
+    defaultAutoArchiveDuration: channel.defaultAutoArchiveDuration ?? null,
+    defaultThreadRateLimitPerUser: channel.defaultThreadRateLimitPerUser ?? null,
+    defaultForumLayout: channel.defaultForumLayout ?? null,
+    defaultSortOrder: channel.defaultSortOrder ?? null,
     availableTags: Array.isArray(channel.availableTags)
       ? channel.availableTags.map((t) =>
           typeof t?.toJSON === "function" ? t.toJSON() : t,
@@ -237,18 +237,18 @@ function serializeThread(thread) {
     id: String(thread.id),
     parentId: thread.parentId ? String(thread.parentId) : null,
     name: String(thread.name || ""),
-    type: Number(thread.type ? -1),
+    type: Number(thread.type ?? -1),
     ownerId: thread.ownerId ? String(thread.ownerId) : null,
     archived: Boolean(thread.archived),
     locked: Boolean(thread.locked),
     invitable: Boolean(thread.invitable),
-    autoArchiveDuration: Number(thread.autoArchiveDuration ? 0),
-    rateLimitPerUser: Number(thread.rateLimitPerUser ? 0),
+    autoArchiveDuration: Number(thread.autoArchiveDuration ?? 0),
+    rateLimitPerUser: Number(thread.rateLimitPerUser ?? 0),
     createdAt: toIso(thread.createdAt),
     archiveTimestamp: toIso(thread.archiveTimestamp),
     lastMessageId: thread.lastMessageId ? String(thread.lastMessageId) : null,
-    memberCount: Number(thread.memberCount ? 0),
-    messageCount: Number(thread.messageCount ? 0),
+    memberCount: Number(thread.memberCount ?? 0),
+    messageCount: Number(thread.messageCount ?? 0),
     permissionOverwrites: normalizePermissionOverwrites(thread),
   };
 }
@@ -410,7 +410,7 @@ async function createGuildBackup(guild, options = {}) {
       iconURL: role.iconURL({ extension: "png", size: 512 }),
       unicodeEmoji: role.unicodeEmoji || null,
       position: Number(role.position || 0),
-      permissions: String(role.permissions?.bitfield ? 0n),
+      permissions: String(role.permissions?.bitfield ?? 0n),
       managed: Boolean(role.managed),
       mentionable: Boolean(role.mentionable),
       tags: role.tags ? { ...role.tags } : null,
@@ -430,7 +430,7 @@ async function createGuildBackup(guild, options = {}) {
           system: Boolean(member.user?.system),
           avatar: member.user?.avatar || null,
           banner: member.user?.banner || null,
-          accentColor: member.user?.accentColor ? null,
+          accentColor: member.user?.accentColor ?? null,
           createdAt: toIso(member.user?.createdAt),
         },
         nickname: member.nickname || null,
@@ -463,8 +463,8 @@ async function createGuildBackup(guild, options = {}) {
     id: String(sticker.id),
     name: String(sticker.name || ""),
     description: sticker.description || null,
-    format: Number(sticker.format ? 0),
-    type: Number(sticker.type ? 0),
+    format: Number(sticker.format ?? 0),
+    type: Number(sticker.type ?? 0),
     tags: sticker.tags || null,
     url: sticker.url || null,
     available: Boolean(sticker.available),
@@ -476,13 +476,13 @@ async function createGuildBackup(guild, options = {}) {
     id: String(ev.id),
     name: String(ev.name || ""),
     description: ev.description || null,
-    entityType: Number(ev.entityType ? 0),
-    status: Number(ev.status ? 0),
-    privacyLevel: Number(ev.privacyLevel ? 0),
+    entityType: Number(ev.entityType ?? 0),
+    status: Number(ev.status ?? 0),
+    privacyLevel: Number(ev.privacyLevel ?? 0),
     entityMetadata: ev.entityMetadata || null,
     channelId: ev.channelId ? String(ev.channelId) : null,
     creatorId: ev.creatorId ? String(ev.creatorId) : null,
-    userCount: Number(ev.userCount ? 0),
+    userCount: Number(ev.userCount ?? 0),
     scheduledStartAt: toIso(ev.scheduledStartTimestamp || ev.scheduledStartAt),
     scheduledEndAt: toIso(ev.scheduledEndTimestamp || ev.scheduledEndAt),
     createdAt: toIso(ev.createdAt),
@@ -502,7 +502,7 @@ async function createGuildBackup(guild, options = {}) {
     for (const entry of entries) {
       auditLogs.push({
         id: String(entry.id),
-        action: Number(entry.action ? 0),
+        action: Number(entry.action ?? 0),
         actionType: String(entry.actionType || ""),
         targetId: entry.targetId ? String(entry.targetId) : null,
         executorId: entry.executorId ? String(entry.executorId) : null,
@@ -512,8 +512,8 @@ async function createGuildBackup(guild, options = {}) {
         changes: Array.isArray(entry.changes)
           ? entry.changes.map((change) => ({
               key: change?.key || null,
-              old: change?.old ? null,
-              new: change?.new ? null,
+              old: change?.old ?? null,
+              new: change?.new ?? null,
             }))
           : [],
       });
@@ -552,14 +552,14 @@ async function createGuildBackup(guild, options = {}) {
       vanityURLCode: guild.vanityURLCode || null,
       preferredLocale: guild.preferredLocale || null,
       features: Array.isArray(guild.features) ? guild.features : [],
-      verificationLevel: Number(guild.verificationLevel ? 0),
-      explicitContentFilter: Number(guild.explicitContentFilter ? 0),
-      defaultMessageNotifications: Number(guild.defaultMessageNotifications ? 0),
-      mfaLevel: Number(guild.mfaLevel ? 0),
-      nsfwLevel: Number(guild.nsfwLevel ? 0),
-      premiumTier: Number(guild.premiumTier ? 0),
+      verificationLevel: Number(guild.verificationLevel ?? 0),
+      explicitContentFilter: Number(guild.explicitContentFilter ?? 0),
+      defaultMessageNotifications: Number(guild.defaultMessageNotifications ?? 0),
+      mfaLevel: Number(guild.mfaLevel ?? 0),
+      nsfwLevel: Number(guild.nsfwLevel ?? 0),
+      premiumTier: Number(guild.premiumTier ?? 0),
       premiumProgressBarEnabled: Boolean(guild.premiumProgressBarEnabled),
-      afkTimeout: Number(guild.afkTimeout ? 0),
+      afkTimeout: Number(guild.afkTimeout ?? 0),
       afkChannelId: guild.afkChannelId ? String(guild.afkChannelId) : null,
       systemChannelId: guild.systemChannelId ? String(guild.systemChannelId) : null,
       rulesChannelId: guild.rulesChannelId ? String(guild.rulesChannelId) : null,
@@ -572,10 +572,10 @@ async function createGuildBackup(guild, options = {}) {
       widgetEnabled: Boolean(guild.widgetEnabled),
       widgetChannelId: guild.widgetChannelId ? String(guild.widgetChannelId) : null,
       ownerId: guild.ownerId ? String(guild.ownerId) : null,
-      maxMembers: Number(guild.maximumMembers ? 0),
-      maxPresences: Number(guild.maximumPresences ? 0),
-      maxVideoChannelUsers: Number(guild.maxVideoChannelUsers ? 0),
-      memberCount: Number(guild.memberCount ? 0),
+      maxMembers: Number(guild.maximumMembers ?? 0),
+      maxPresences: Number(guild.maximumPresences ?? 0),
+      maxVideoChannelUsers: Number(guild.maxVideoChannelUsers ?? 0),
+      memberCount: Number(guild.memberCount ?? 0),
       rolesCount: Number(guild.roles.cache.size || 0),
       channelsCount: Number(channels.length),
       threadsCount: Number(serializedThreads.length),
@@ -606,20 +606,20 @@ async function createGuildBackup(guild, options = {}) {
           url: invite.url || null,
           channelId: invite.channelId ? String(invite.channelId) : null,
           inviterId: invite.inviterId ? String(invite.inviterId) : null,
-          targetType: invite.targetType ? null,
+          targetType: invite.targetType ?? null,
           targetUserId: invite.targetUserId ? String(invite.targetUserId) : null,
           expiresAt: toIso(invite.expiresAt),
           createdAt: toIso(invite.createdAt),
           temporary: Boolean(invite.temporary),
-          maxAge: Number(invite.maxAge ? 0),
-          maxUses: Number(invite.maxUses ? 0),
-          uses: Number(invite.uses ? 0),
+          maxAge: Number(invite.maxAge ?? 0),
+          maxUses: Number(invite.maxUses ?? 0),
+          uses: Number(invite.uses ?? 0),
         }))
       : [],
     webhooks: webhooksCollection
       ? [...webhooksCollection.values()].map((hook) => ({
           id: String(hook.id),
-          type: Number(hook.type ? 0),
+          type: Number(hook.type ?? 0),
           guildId: hook.guildId ? String(hook.guildId) : null,
           channelId: hook.channelId ? String(hook.channelId) : null,
           name: hook.name || null,
@@ -640,8 +640,8 @@ async function createGuildBackup(guild, options = {}) {
           enabled: Boolean(integration.enabled),
           syncing: Boolean(integration.syncing),
           roleId: integration.roleId ? String(integration.roleId) : null,
-          expireBehavior: integration.expireBehavior ? null,
-          expireGracePeriod: integration.expireGracePeriod ? null,
+          expireBehavior: integration.expireBehavior ?? null,
+          expireGracePeriod: integration.expireGracePeriod ?? null,
           userId: integration.user?.id ? String(integration.user.id) : null,
           account: integration.account
             ? {
@@ -650,7 +650,7 @@ async function createGuildBackup(guild, options = {}) {
               }
             : null,
           syncedAt: toIso(integration.syncedAt),
-          subscriberCount: Number(integration.subscriberCount ? 0),
+          subscriberCount: Number(integration.subscriberCount ?? 0),
           revoked: Boolean(integration.revoked),
           application: integration.application
             ? {
@@ -666,8 +666,8 @@ async function createGuildBackup(guild, options = {}) {
           id: String(rule.id),
           name: String(rule.name || ""),
           creatorId: rule.creatorId ? String(rule.creatorId) : null,
-          eventType: Number(rule.eventType ? 0),
-          triggerType: Number(rule.triggerType ? 0),
+          eventType: Number(rule.eventType ?? 0),
+          triggerType: Number(rule.triggerType ?? 0),
           triggerMetadata:
             typeof rule.triggerMetadata?.toJSON === "function"
               ? rule.triggerMetadata.toJSON()
@@ -1206,11 +1206,6 @@ module.exports = {
   pruneGuildBackups,
   validateAndHealGuildBackups,
 };
-
-
-
-
-
 
 
 

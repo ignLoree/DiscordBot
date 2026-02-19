@@ -197,7 +197,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   }
   if (!additions.length && !removals.length) return;
 
-  const actionType = AuditLogEvent?.MemberRoleUpdate ? AuditLogEvent?.MemberUpdate;
+  const actionType = AuditLogEvent?.MemberRoleUpdate ?? AuditLogEvent?.MemberUpdate;
   const audit = await resolveResponsible(
     guild,
     actionType,

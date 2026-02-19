@@ -459,24 +459,24 @@ async function addExpWithLevel(
     weeklyAmount,
   );
   if (!result || !result.levelInfo) return result;
-  if (result.levelInfo.level > (result.prevLevel ? 0)) {
+  if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     await recordLevelHistory({
       guildId: guild.id,
       userId,
       action: "level_up_auto",
       beforeExp: result.beforeExp,
       afterExp: result.afterExp,
-      note: `Level up ${result.prevLevel ? 0} -> ${result.levelInfo.level}`,
+      note: `Level up ${result.prevLevel ?? 0} -> ${result.levelInfo.level}`,
     });
   }
-  if (result.levelInfo.level > (result.prevLevel ? 0)) {
+  if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     const member = await fetchGuildMember(guild, userId);
     if (member) {
       const level = result.levelInfo.level;
       const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
         .filter(
           (perkLevel) =>
-            perkLevel > (result.prevLevel ? 0) && perkLevel <= level,
+            perkLevel > (result.prevLevel ?? 0) && perkLevel <= level,
         )
         .sort((a, b) => a - b);
       for (const perkLevel of reachedPerkLevels) {

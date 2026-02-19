@@ -15,7 +15,7 @@ const {
   resolveResponsible,
 } = require("../Utils/Logging/channelRolesLogUtils");
 
-const THREAD_UPDATE_ACTION = AuditLogEvent?.ThreadUpdate ? 111;
+const THREAD_UPDATE_ACTION = AuditLogEvent?.ThreadUpdate ?? 111;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -63,8 +63,8 @@ function clearTimers(guildId) {
 function scheduleMemberCounterRefresh(guild, options = {}) {
   if (!guild?.id) return false;
   const guildId = guild.id;
-  const delayMs = Math.max(0, Number(options.delayMs ? 250));
-  const secondPassMs = Math.max(0, Number(options.secondPassMs ? 1800));
+  const delayMs = Math.max(0, Number(options.delayMs ?? 250));
+  const secondPassMs = Math.max(0, Number(options.secondPassMs ?? 1800));
 
   clearTimers(guildId);
 

@@ -1,7 +1,7 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-const EMOJI_DELETE_ACTION = AuditLogEvent?.EmojiDelete ? 62;
+const EMOJI_DELETE_ACTION = AuditLogEvent?.EmojiDelete ?? 62;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 const AUDIT_RETRY_ATTEMPTS = 4;

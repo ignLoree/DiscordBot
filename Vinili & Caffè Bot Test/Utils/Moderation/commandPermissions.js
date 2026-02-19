@@ -487,7 +487,7 @@ async function checkStringSelectPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.selectMenus, customId) ?
+    resolveComponentPolicy(data?.selectMenus, customId) ||
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
@@ -554,7 +554,7 @@ async function checkModalPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.modals, customId) ?
+    resolveComponentPolicy(data?.modals, customId) ||
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
@@ -650,4 +650,3 @@ module.exports = {
   isSponsorGuild,
   hasSponsorStaffRole,
 };
-

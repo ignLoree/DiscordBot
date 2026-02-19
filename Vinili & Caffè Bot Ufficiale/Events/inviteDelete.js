@@ -1,7 +1,7 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-const INVITE_DELETE_ACTION = AuditLogEvent?.InviteDelete ? 42;
+const INVITE_DELETE_ACTION = AuditLogEvent?.InviteDelete ?? 42;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 

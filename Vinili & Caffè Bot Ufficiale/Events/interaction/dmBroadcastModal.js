@@ -8,7 +8,7 @@ const getDevIds = (client) => {
     .map((id) => id.trim())
     .filter(Boolean);
 
-  const raw = client.config?.developers ? "";
+  const raw = client.config?.developers ?? "";
   const fromConfig = Array.isArray(raw)
     ? raw.map((id) => String(id).trim()).filter(Boolean)
     : String(raw)

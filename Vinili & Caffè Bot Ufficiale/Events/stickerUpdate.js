@@ -1,7 +1,7 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-const STICKER_UPDATE_ACTION = AuditLogEvent?.StickerUpdate ? 91;
+const STICKER_UPDATE_ACTION = AuditLogEvent?.StickerUpdate ?? 91;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
@@ -88,11 +88,11 @@ module.exports = {
 
       if (nameChange || fallbackNameChanged) {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
-        lines.push(`  ${String(nameChange?.old ? oldSticker?.name ? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ? newSticker?.name ? "sconosciuto")}`);
+        lines.push(`  ${String(nameChange?.old ?? oldSticker?.name ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? newSticker?.name ?? "sconosciuto")}`);
       }
       if (tagsChange || fallbackTagsChanged) {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Tags**`);
-        lines.push(`  ${String(tagsChange?.old ? oldSticker?.tags ? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ? newSticker?.tags ? "-")}`);
+        lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
       }
 
       const embed = new EmbedBuilder()

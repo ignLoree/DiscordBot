@@ -15,7 +15,7 @@ function normalizeDiscordAttachmentUrl(value) {
 }
 
 function normalizeText(value) {
-  return String(value ? "")
+  return String(value ?? "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -72,8 +72,8 @@ function simplifyComponents(components = []) {
     const r = typeof row?.toJSON === "function" ? row.toJSON() : row;
     const children = Array.isArray(r?.components) ? r.components : [];
     return children.map((c) => ({
-      type: c?.type ? null,
-      style: c?.style ? null,
+      type: c?.type ?? null,
+      style: c?.style ?? null,
       custom_id: c?.custom_id || c?.customId || null,
       label: normalizeText(c?.label),
       url: c?.url ? String(c.url) : null,

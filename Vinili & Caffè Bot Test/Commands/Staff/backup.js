@@ -115,12 +115,12 @@ function buildErrorEmbed(error, title = "Backup non riuscito") {
 
 function sortChannels(channels = []) {
   return [...channels].sort((a, b) => {
-    const typeA = Number(a?.type ? 0);
-    const typeB = Number(b?.type ? 0);
+    const typeA = Number(a?.type ?? 0);
+    const typeB = Number(b?.type ?? 0);
     if (typeA === 4 && typeB !== 4) return -1;
     if (typeA !== 4 && typeB === 4) return 1;
-    const posA = Number(a?.position ? 0);
-    const posB = Number(b?.position ? 0);
+    const posA = Number(a?.position ?? 0);
+    const posB = Number(b?.position ?? 0);
     if (posA !== posB) return posA - posB;
     return String(a?.name || "").localeCompare(String(b?.name || ""), "it");
   });
@@ -165,7 +165,7 @@ function formatChannelList(channels = []) {
 
 function formatRoleList(roles = []) {
   const sorted = [...roles].sort(
-    (a, b) => Number(b?.position ? 0) - Number(a?.position ? 0),
+    (a, b) => Number(b?.position ?? 0) - Number(a?.position ?? 0),
   );
   return sorted.map((role, idx) => `${idx + 1}. ${role.name}`);
 }

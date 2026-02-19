@@ -1255,7 +1255,7 @@ async function handleChannelOverwrite({
 
   await channel.permissionOverwrites.edit(
     overwrite.id,
-    { allow: beforeAllow, deny: overwrite.deny?.bitfield ? 0n },
+    { allow: beforeAllow, deny: overwrite.deny?.bitfield ?? 0n },
     { reason: "AntiNuke: revert dangerous channel overwrite permissions" },
   ).catch(() => {});
 
