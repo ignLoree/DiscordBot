@@ -1,7 +1,7 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-const EMOJI_UPDATE_ACTION = AuditLogEvent?.EmojiUpdate ?? 61;
+const EMOJI_UPDATE_ACTION = AuditLogEvent?.EmojiUpdate ? 61;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
@@ -66,8 +66,8 @@ async function resolveAuditChange(guild, emojiId) {
 
   return {
     executor: entry?.executor || null,
-    oldName: nameChange?.old ?? null,
-    newName: nameChange?.new ?? null,
+    oldName: nameChange?.old ? null,
+    newName: nameChange?.new ? null,
   };
 }
 
@@ -86,8 +86,8 @@ module.exports = {
 
       const { executor, oldName, newName } = await resolveAuditChange(guild, emojiId);
       const responsibleText = formatAuditActor(executor);
-      const fromName = String(oldName ?? oldEmoji?.name ?? "sconosciuto");
-      const toName = String(newName ?? newEmoji?.name ?? "sconosciuto");
+      const fromName = String(oldName ? oldEmoji?.name ? "sconosciuto");
+      const toName = String(newName ? newEmoji?.name ? "sconosciuto");
 
       const oldRoles = normalizeRoleList(oldEmoji);
       const newRoles = normalizeRoleList(newEmoji);

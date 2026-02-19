@@ -493,7 +493,7 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
+                `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dalle partner. Se pensi sia un errore apri un <#1442569095068254219> \`Terza Categoria\``,
               ),
           ],
           flags: 1 << 6,
@@ -514,7 +514,7 @@ async function pinFirstTicketMessage(channel, message) {
             new EmbedBuilder()
               .setColor("#6f4e37")
               .setDescription(
-                `<:vegax:1443934876440068179> Non puoi usare questo bottone poichè sei blacklistato dai ticket.`,
+                `<:vegax:1443934876440068179> Non puoi usare questo bottone poiché sei blacklistato dai ticket.`,
               ),
           ],
           flags: 1 << 6,
@@ -2344,4 +2344,5 @@ async function pinFirstTicketMessage(channel, message) {
 }
 
 module.exports = { handleTicketInteraction };
+
 

@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const {
   parseDuration,
@@ -55,7 +55,7 @@ function formatRemaining(expiresAt) {
 
 function mapGrantError(reason) {
   if (reason === "member_not_found")
-    return "L'utente non e presente nel server.";
+    return "L'utente non è presente nel server.";
   if (reason === "role_not_found") return "Ruolo non trovato.";
   if (reason === "missing_manage_roles") return "Non ho `ManageRoles`.";
   if (reason === "role_above_bot")
@@ -181,8 +181,8 @@ module.exports = {
                 `Durata: **${formatDuration(durationMs)}**`,
                 `Scadenza: ${expiresText}`,
                 result.hadRoleBefore
-                  ? "Nota: il ruolo era già presente, quindi alla scadenza non verra rimosso."
-                  : "Alla scadenza il ruolo verra rimosso automaticamente.",
+                  ? "Nota: il ruolo era già presente, quindi alla scadenza non verrà rimosso."
+                  : "Alla scadenza il ruolo verrà rimosso automaticamente.",
               ].join("\n"),
             ),
         ],
@@ -284,3 +284,4 @@ module.exports = {
     });
   },
 };
+

@@ -48,15 +48,15 @@ function formatAuditActor(actor, fallback = "sconosciuto") {
 }
 
 function permissionList(bitfield) {
-  const bits = new PermissionsBitField(bitfield ?? 0n);
+  const bits = new PermissionsBitField(bitfield ? 0n);
   const names = bits.toArray();
   if (!names.length) return "None";
   return names.join(", ");
 }
 
 function permissionDiff(oldBitfield, newBitfield) {
-  const oldBits = new PermissionsBitField(oldBitfield ?? 0n);
-  const newBits = new PermissionsBitField(newBitfield ?? 0n);
+  const oldBits = new PermissionsBitField(oldBitfield ? 0n);
+  const newBits = new PermissionsBitField(newBitfield ? 0n);
   const oldSet = new Set(oldBits.toArray());
   const newSet = new Set(newBits.toArray());
 

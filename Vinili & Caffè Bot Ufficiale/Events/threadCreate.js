@@ -18,7 +18,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleThreadCreationAction: antiNukeHandleThreadCreationAction } = require("../Services/Moderation/antiNukeService");
 
-const THREAD_CREATE_ACTION = AuditLogEvent?.ThreadCreate ?? 110;
+const THREAD_CREATE_ACTION = AuditLogEvent?.ThreadCreate ? 110;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

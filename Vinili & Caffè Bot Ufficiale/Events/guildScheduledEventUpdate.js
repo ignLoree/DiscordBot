@@ -101,15 +101,15 @@ function eventValueByAuditKey(event, key) {
   if (key === "name") return event.name;
   if (key === "description") return event.description;
   if (key === "scheduled_start_time")
-    return event.scheduledStartTimestamp ?? event.scheduledStartAt ?? null;
+    return event.scheduledStartTimestamp ? event.scheduledStartAt ? null;
   if (key === "scheduled_end_time")
-    return event.scheduledEndTimestamp ?? event.scheduledEndAt ?? null;
+    return event.scheduledEndTimestamp ? event.scheduledEndAt ? null;
   if (key === "privacy_level") return event.privacyLevel;
   if (key === "status") return event.status;
   if (key === "entity_type") return event.entityType;
   if (key === "channel_id") return event.channelId;
   if (key === "location" || key === "entity_metadata.location") {
-    return event.entityMetadata?.location ?? null;
+    return event.entityMetadata?.location ? null;
   }
   return null;
 }

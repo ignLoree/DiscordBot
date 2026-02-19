@@ -344,7 +344,7 @@ async function logManagerLeave(mainGuild, member, partnerships) {
   const totalCount = allWithThisManager.length;
   const extraLine =
     totalCount > 1
-      ? `\n**Partnership totali con questo manager:** ${totalCount} (mostrata la piu recente)`
+      ? `\n**Partnership totali con questo manager:** ${totalCount} (mostrata la più recente)`
       : "";
 
   await partnerLogChannel.send({
@@ -576,5 +576,6 @@ module.exports = {
     }
   },
 };
+
 
 

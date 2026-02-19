@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
@@ -487,7 +487,7 @@ async function checkStringSelectPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.selectMenus, customId) ??
+    resolveComponentPolicy(data?.selectMenus, customId) ?
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
@@ -554,7 +554,7 @@ async function checkModalPermission(interaction) {
 
   const data = loadPermissions();
   const rawPolicy =
-    resolveComponentPolicy(data?.modals, customId) ??
+    resolveComponentPolicy(data?.modals, customId) ?
     resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
@@ -613,7 +613,7 @@ function buildGlobalPermissionDeniedEmbed(
   const description =
     customDescription != null
       ? customDescription
-      : `Questo ${entityLabel} e riservato ad una categoria di utenti specifici.`;
+      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("Red")
@@ -633,7 +633,7 @@ function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non e associato al tuo comando.");
+    .setDescription("Questo controllo non è associato al tuo comando.");
 }
 
 module.exports = {
@@ -650,3 +650,4 @@ module.exports = {
   isSponsorGuild,
   hasSponsorStaffRole,
 };
+

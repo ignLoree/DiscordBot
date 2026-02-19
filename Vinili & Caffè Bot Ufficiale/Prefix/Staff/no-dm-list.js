@@ -2,7 +2,7 @@ const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getNoDmSet } = require("../../Utils/noDmList");
 
 const getDevIds = (client) => {
-  const raw = client.config?.developers ?? "";
+  const raw = client.config?.developers ? "";
   if (Array.isArray(raw)) {
     return raw.map((id) => String(id).trim()).filter(Boolean);
   }

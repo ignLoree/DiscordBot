@@ -11,7 +11,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleRoleCreationAction: antiNukeHandleRoleCreationAction } = require("../Services/Moderation/antiNukeService");
 
-const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ?? 30;
+const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ? 30;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -10,7 +10,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleThreadDeletionAction: antiNukeHandleThreadDeletionAction } = require("../Services/Moderation/antiNukeService");
 
-const THREAD_DELETE_ACTION = AuditLogEvent?.ThreadDelete ?? 112;
+const THREAD_DELETE_ACTION = AuditLogEvent?.ThreadDelete ? 112;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

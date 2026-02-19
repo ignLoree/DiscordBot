@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -40,7 +40,7 @@ async function sendStartNotice(message) {
         new EmbedBuilder()
           .setColor("#6f4e37")
           .setDescription(
-            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando e completato.",
+            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando è completato.",
           ),
       ],
       allowedMentions: { repliedUser: false },
@@ -118,3 +118,4 @@ module.exports = {
     return true;
   },
 };
+

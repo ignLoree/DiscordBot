@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   PermissionsBitField,
   ActivityType,
@@ -290,7 +290,7 @@ function buildPendingEmbed(member) {
     .setDescription(
       [
         `<@${member.id}>, \`hai sbloccato:\``,
-        `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verra dato entro **3 minuti** dal bot!`,
+        `<:VC_Reply:1468262952934314131> Il ruolo <@&${ROLE_ID}> ti verrà dato entro **3 minuti** dal bot!`,
         "<a:VC_Coffe:1448695567244066827> - `x2` di multi in **vocale** e **testuale**",
         "<a:VC_Infinity:1448687797266288832> - Inviare **media** in __ogni chat__",
         "<a:VC_HeartWhite:1448673535253024860> - Mandare **adesivi** __esterni__ in **qualsiasi chat**",
@@ -596,3 +596,4 @@ module.exports = {
   },
   bootstrapSupporter,
 };
+

@@ -11,7 +11,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleRoleDeletionAction: antiNukeHandleRoleDeletionAction } = require("../Services/Moderation/antiNukeService");
 
-const ROLE_DELETE_ACTION = AuditLogEvent?.RoleDelete ?? 32;
+const ROLE_DELETE_ACTION = AuditLogEvent?.RoleDelete ? 32;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

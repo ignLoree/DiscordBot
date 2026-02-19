@@ -1,4 +1,4 @@
-const {
+﻿const {
   ChannelType,
   EmbedBuilder,
   PermissionsBitField,
@@ -190,7 +190,7 @@ module.exports = {
             .setColor("Red")
             .setDescription(
               [
-                "<:vegax:1443934876440068179> Il tuo custom role temporaneo e scaduto.",
+                "<:vegax:1443934876440068179> Il tuo custom role temporaneo è scaduto.",
                 `Scadenza: ${buildExpiryText(state.doc)}`,
                 "Usa `+customrole create` per crearne uno nuovo.",
               ].join("\n"),
@@ -356,3 +356,4 @@ module.exports = {
     });
   },
 };
+

@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -205,7 +205,7 @@ function buildSkullEmbed(user, message, postImageName) {
       iconURL: user.displayAvatarURL({ extension: "png", size: 64 }),
     })
     .setDescription(
-      `Aggiungi la reazione ${SKULL_EMOJI} ad un messaggio per pubblicarlo nella SkullBoard`,
+      `Aggiungi la reazione ${SKULL_EMOJI} a un messaggio per pubblicarlo nella SkullBoard`,
     )
     .addFields(
       { name: "Autore", value: message.author.toString(), inline: true },
@@ -364,3 +364,4 @@ module.exports = {
     }
   },
 };
+

@@ -16,7 +16,7 @@ module.exports = (client) => {
           : null;
       const name =
         command?.data?.name || commandJson?.name || command?.name || null;
-      const type = command?.data?.type ?? commandJson?.type ?? 1;
+      const type = command?.data?.type ? commandJson?.type ? 1;
       return { name, type, json: commandJson };
     };
 

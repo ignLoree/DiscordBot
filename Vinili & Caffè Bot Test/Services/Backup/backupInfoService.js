@@ -85,7 +85,7 @@ async function handleBackupInfoInteraction(interaction) {
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
-        .reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 })
+        .reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
@@ -128,7 +128,7 @@ async function handleBackupInfoInteraction(interaction) {
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
-        .reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 })
+        .reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
@@ -152,7 +152,7 @@ async function handleBackupInfoInteraction(interaction) {
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
-        .reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 })
+        .reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
@@ -171,7 +171,7 @@ async function handleBackupInfoInteraction(interaction) {
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
-        .reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 })
+        .reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
@@ -192,7 +192,7 @@ async function handleBackupInfoInteraction(interaction) {
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
-        .reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 })
+        .reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
@@ -233,3 +233,4 @@ async function handleBackupInfoInteraction(interaction) {
 module.exports = {
   handleBackupInfoInteraction,
 };
+

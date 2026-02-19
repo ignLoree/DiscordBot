@@ -1,4 +1,4 @@
-const ascii = require("ascii-table");
+﻿const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
 
@@ -13,7 +13,7 @@ function buildAutoPrefixDescription(command, folder) {
   const readable = humanizeCommandName(name);
   const exact = {
     help: "Mostra la lista dei comandi disponibili.",
-    ping: "Mostra latenza del bot e stato dei servizi.",
+    ping: "Mostra latenza del bot è stato dei servizi.",
     ticket: "Gestisce i ticket.",
     customvoc: "Crea e gestisce una vocale privata personalizzata.",
     customrole: "Gestisce il tuo ruolo personalizzato con subcomandi.",
@@ -194,3 +194,4 @@ module.exports = (client) => {
     client.logs.success("[FUNCTION] Successfully reloaded prefix commands.");
   };
 };
+

@@ -373,10 +373,10 @@ async function handleVoteManagerMessage(message, client) {
 
   const fullText = `${content} ${embedText} ${embedTitle} ${fieldsText}`;
   const voteCount =
-    extractVoteCountFromText(content) ??
-    extractVoteCountFromText(embedText) ??
-    extractVoteCountFromText(embedTitle) ??
-    extractVoteCountFromText(fieldsText) ??
+    extractVoteCountFromText(content) ?
+    extractVoteCountFromText(embedText) ?
+    extractVoteCountFromText(embedTitle) ?
+    extractVoteCountFromText(fieldsText) ?
     extractVoteCountFromText(fullText);
   if (voteCount === null) {
     global.logger.warn("[VOTE EMBED] Vote count not found. Text:", fullText);
@@ -896,10 +896,10 @@ module.exports = {
               (withFooter.messageReference
                 ? undefined
                 : { messageReference: execMessage.id, failIfNotExists: false }),
-            failIfNotExists: withFooter.failIfNotExists ?? false,
+            failIfNotExists: withFooter.failIfNotExists ? false,
             allowedMentions: {
               ...(withFooter.allowedMentions || {}),
-              repliedUser: withFooter.allowedMentions?.repliedUser ?? false,
+              repliedUser: withFooter.allowedMentions?.repliedUser ? false,
             },
           };
           const fallback = { ...normalized };

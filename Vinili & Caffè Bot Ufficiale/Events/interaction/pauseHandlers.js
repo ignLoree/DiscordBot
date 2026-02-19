@@ -471,7 +471,7 @@ async function handlePauseButton(interaction) {
       await interaction
         .followUp({
           content:
-            "<:attentionfromvega:1443651874032062505> La pausa è scaduta: il pulsante annulla non e più disponibile.",
+            "<:attentionfromvega:1443651874032062505> La pausa è scaduta: il pulsante annulla non è più disponibile.",
           flags: 1 << 6,
         })
         .catch(() => {});
@@ -642,3 +642,4 @@ async function handlePauseButton(interaction) {
 }
 
 module.exports = { handlePauseButton };
+

@@ -151,7 +151,7 @@ function sanitizeActions(values) {
 }
 
 function normalizeMessagesLimit(value, fallback = DEFAULT_MESSAGES_LIMIT) {
-  const raw = String(value ?? "").trim().toUpperCase();
+  const raw = String(value ? "").trim().toUpperCase();
   if (raw === "ALL" || raw === "0" || raw === "NONE" || raw === "UNLIMITED") {
     return null;
   }
@@ -639,9 +639,9 @@ function buildPermissionOverwrites(overwrites, roleMap, guild) {
       if (!id) return null;
       return {
         id,
-        type: Number(ow?.type ?? 0),
-        allow: BigInt(String(ow?.allow ?? "0")),
-        deny: BigInt(String(ow?.deny ?? "0")),
+        type: Number(ow?.type ? 0),
+        allow: BigInt(String(ow?.allow ? "0")),
+        deny: BigInt(String(ow?.deny ? "0")),
       };
     })
     .filter(Boolean);
@@ -657,7 +657,7 @@ async function syncLoadedRoles({
 }) {
   const roles = (Array.isArray(backupRoles) ? backupRoles : [])
     .filter((r) => String(r?.name || "").trim() !== "@everyone")
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
 
   for (const backupRole of roles) {
     throwIfCancelledFn();
@@ -690,7 +690,7 @@ async function syncLoadedRoles({
     const role = guild.roles.cache.get(mappedRoleId);
     if (!role || !role.editable) continue;
     await role
-      .setPosition(Number(backupRole.position ?? role.position), {
+      .setPosition(Number(backupRole.position ? role.position), {
         reason: `Backup load ${backupId}`,
       })
       .catch(() => null);
@@ -711,10 +711,10 @@ async function syncLoadedChannels({
   const channels = Array.isArray(backupChannels) ? backupChannels : [];
   const categories = channels
     .filter((c) => Number(c?.type) === 4)
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
   const others = channels
     .filter((c) => Number(c?.type) !== 4)
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
 
   for (const backupChannel of [...categories, ...others]) {
     throwIfCancelledFn();
@@ -728,7 +728,7 @@ async function syncLoadedChannels({
       : null;
     const patch = {
       name: String(backupChannel.name || channel.name),
-      position: Number(backupChannel.position ?? channel.position),
+      position: Number(backupChannel.position ? channel.position),
       permissionOverwrites: buildPermissionOverwrites(
         backupChannel.permissionOverwrites,
         roleMap,
@@ -747,31 +747,31 @@ async function syncLoadedChannels({
       patch.nsfw = Boolean(backupChannel.nsfw);
     }
     if ("rateLimitPerUser" in backupChannel && "rateLimitPerUser" in channel) {
-      patch.rateLimitPerUser = Number(backupChannel.rateLimitPerUser ?? 0);
+      patch.rateLimitPerUser = Number(backupChannel.rateLimitPerUser ? 0);
     }
     if ("bitrate" in backupChannel && "bitrate" in channel) {
-      patch.bitrate = Number(backupChannel.bitrate ?? channel.bitrate ?? 0) || undefined;
+      patch.bitrate = Number(backupChannel.bitrate ? channel.bitrate ? 0) || undefined;
     }
     if ("userLimit" in backupChannel && "userLimit" in channel) {
-      patch.userLimit = Number(backupChannel.userLimit ?? 0) || undefined;
+      patch.userLimit = Number(backupChannel.userLimit ? 0) || undefined;
     }
     if ("rtcRegion" in backupChannel && "rtcRegion" in channel) {
       patch.rtcRegion = backupChannel.rtcRegion || null;
     }
     if ("videoQualityMode" in backupChannel && "videoQualityMode" in channel) {
-      patch.videoQualityMode = backupChannel.videoQualityMode ?? undefined;
+      patch.videoQualityMode = backupChannel.videoQualityMode ? undefined;
     }
     if ("defaultAutoArchiveDuration" in backupChannel && "defaultAutoArchiveDuration" in channel) {
-      patch.defaultAutoArchiveDuration = backupChannel.defaultAutoArchiveDuration ?? undefined;
+      patch.defaultAutoArchiveDuration = backupChannel.defaultAutoArchiveDuration ? undefined;
     }
     if ("defaultThreadRateLimitPerUser" in backupChannel && "defaultThreadRateLimitPerUser" in channel) {
-      patch.defaultThreadRateLimitPerUser = backupChannel.defaultThreadRateLimitPerUser ?? undefined;
+      patch.defaultThreadRateLimitPerUser = backupChannel.defaultThreadRateLimitPerUser ? undefined;
     }
     if ("defaultForumLayout" in backupChannel && "defaultForumLayout" in channel) {
-      patch.defaultForumLayout = backupChannel.defaultForumLayout ?? undefined;
+      patch.defaultForumLayout = backupChannel.defaultForumLayout ? undefined;
     }
     if ("defaultSortOrder" in backupChannel && "defaultSortOrder" in channel) {
-      patch.defaultSortOrder = backupChannel.defaultSortOrder ?? undefined;
+      patch.defaultSortOrder = backupChannel.defaultSortOrder ? undefined;
     }
     if ("availableTags" in backupChannel && "availableTags" in channel) {
       patch.availableTags = Array.isArray(backupChannel.availableTags)
@@ -908,7 +908,7 @@ async function applyBackupToGuild(
     markPhase("load_roles");
     const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : [])
       .filter((r) => String(r?.name || "").trim() !== "@everyone")
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+      .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
 
     for (const role of backupRoles) {
       throwIfCancelled(guildKey);
@@ -976,7 +976,7 @@ async function applyBackupToGuild(
     const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
     const categories = backupChannels
       .filter((c) => Number(c?.type) === 4)
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+      .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
 
     for (const cat of categories) {
       throwIfCancelled(guildKey);
@@ -984,7 +984,7 @@ async function applyBackupToGuild(
         .create({
           name: String(cat.name || "categoria"),
           type: 4,
-          position: Number(cat.position ?? 0),
+          position: Number(cat.position ? 0),
           permissionOverwrites: buildPermissionOverwrites(cat.permissionOverwrites, roleMap, guild),
           reason: `Backup load ${backupId}`,
         })
@@ -998,11 +998,11 @@ async function applyBackupToGuild(
 
     const others = backupChannels
       .filter((c) => Number(c?.type) !== 4)
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+      .sort((a, b) => Number(a?.position ? 0) - Number(b?.position ? 0));
 
     for (const ch of others) {
       throwIfCancelled(guildKey);
-      const type = Number(ch?.type ?? 0);
+      const type = Number(ch?.type ? 0);
       if (![0, 2, 5, 13, 15, 16].includes(type)) continue;
 
       const parentId = ch.parentId ? channelMap.get(String(ch.parentId)) || null : null;
@@ -1012,19 +1012,19 @@ async function applyBackupToGuild(
           type,
           topic: ch.topic || undefined,
           nsfw: Boolean(ch.nsfw),
-          rateLimitPerUser: Number(ch.rateLimitPerUser ?? 0),
-          bitrate: Number(ch.bitrate ?? 0) || undefined,
-          userLimit: Number(ch.userLimit ?? 0) || undefined,
+          rateLimitPerUser: Number(ch.rateLimitPerUser ? 0),
+          bitrate: Number(ch.bitrate ? 0) || undefined,
+          userLimit: Number(ch.userLimit ? 0) || undefined,
           rtcRegion: ch.rtcRegion || null,
-          videoQualityMode: ch.videoQualityMode ?? undefined,
-          defaultAutoArchiveDuration: ch.defaultAutoArchiveDuration ?? undefined,
-          defaultThreadRateLimitPerUser: ch.defaultThreadRateLimitPerUser ?? undefined,
-          defaultForumLayout: ch.defaultForumLayout ?? undefined,
-          defaultSortOrder: ch.defaultSortOrder ?? undefined,
+          videoQualityMode: ch.videoQualityMode ? undefined,
+          defaultAutoArchiveDuration: ch.defaultAutoArchiveDuration ? undefined,
+          defaultThreadRateLimitPerUser: ch.defaultThreadRateLimitPerUser ? undefined,
+          defaultForumLayout: ch.defaultForumLayout ? undefined,
+          defaultSortOrder: ch.defaultSortOrder ? undefined,
           availableTags: Array.isArray(ch.availableTags) ? ch.availableTags : undefined,
           defaultReactionEmoji: ch.defaultReactionEmoji || undefined,
           parent: parentId || undefined,
-          position: Number(ch.position ?? 0),
+          position: Number(ch.position ? 0),
           permissionOverwrites: buildPermissionOverwrites(ch.permissionOverwrites, roleMap, guild),
           reason: `Backup load ${backupId}`,
         })
@@ -1074,13 +1074,13 @@ async function applyBackupToGuild(
       .edit({
         name: g.name || guild.name,
         description: g.description || null,
-        verificationLevel: Number(g.verificationLevel ?? guild.verificationLevel),
+        verificationLevel: Number(g.verificationLevel ? guild.verificationLevel),
         defaultMessageNotifications: Number(
-          g.defaultMessageNotifications ?? guild.defaultMessageNotifications,
+          g.defaultMessageNotifications ? guild.defaultMessageNotifications,
         ),
-        explicitContentFilter: Number(g.explicitContentFilter ?? guild.explicitContentFilter),
+        explicitContentFilter: Number(g.explicitContentFilter ? guild.explicitContentFilter),
         preferredLocale: g.preferredLocale || guild.preferredLocale,
-        afkTimeout: Number(g.afkTimeout ?? guild.afkTimeout),
+        afkTimeout: Number(g.afkTimeout ? guild.afkTimeout),
         systemChannel: g.systemChannelId
           ? channelMap.get(String(g.systemChannelId)) || guild.systemChannelId || null
           : null,
@@ -1420,8 +1420,8 @@ async function applyBackupToGuild(
 }
 
 function compareBigIntString(left, right) {
-  const a = String(left ?? "0");
-  const b = String(right ?? "0");
+  const a = String(left ? "0");
+  const b = String(right ? "0");
   return BigInt(a) === BigInt(b);
 }
 
@@ -1442,7 +1442,7 @@ function computePermissionDiffs(guild, payload) {
       diffs.roleMissing += 1;
       continue;
     }
-    if (!compareBigIntString(live.permissions?.bitfield ?? 0n, role?.permissions ?? "0")) {
+    if (!compareBigIntString(live.permissions?.bitfield ? 0n, role?.permissions ? "0")) {
       diffs.rolePermissionMismatches += 1;
     }
   }
@@ -1450,7 +1450,7 @@ function computePermissionDiffs(guild, payload) {
   const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
   for (const ch of backupChannels) {
     const live = guild.channels.cache.find(
-      (c) => Number(c?.type ?? -1) === Number(ch?.type ?? -2) && String(c?.name || "") === String(ch?.name || ""),
+      (c) => Number(c?.type ? -1) === Number(ch?.type ? -2) && String(c?.name || "") === String(ch?.name || ""),
     );
     if (!live) {
       diffs.channelMissing += 1;
@@ -1471,8 +1471,8 @@ function computePermissionDiffs(guild, payload) {
         mismatch = true;
         break;
       }
-      const allowOk = compareBigIntString(current.allow?.bitfield ?? 0n, ow?.allow ?? "0");
-      const denyOk = compareBigIntString(current.deny?.bitfield ?? 0n, ow?.deny ?? "0");
+      const allowOk = compareBigIntString(current.allow?.bitfield ? 0n, ow?.allow ? "0");
+      const denyOk = compareBigIntString(current.deny?.bitfield ? 0n, ow?.deny ? "0");
       if (!allowOk || !denyOk) {
         mismatch = true;
         break;
@@ -1587,7 +1587,7 @@ async function handleBackupLoadInteraction(interaction) {
   if (String(session.userId) !== String(interaction.user?.id || "")) {
     await interaction
       .reply({
-        content: "Questo pannello non e tuo.",
+        content: "Questo pannello non è tuo.",
         flags: 1 << 6,
       })
       .catch(() => {});
@@ -1597,7 +1597,7 @@ async function handleBackupLoadInteraction(interaction) {
   if (String(session.guildId) !== String(interaction.guildId || "")) {
     await interaction
       .reply({
-        content: "Questo pannello appartiene ad un altro server.",
+        content: "Questo pannello appartiene a un altro server.",
         flags: 1 << 6,
       })
       .catch(() => {});
@@ -1686,7 +1686,7 @@ async function handleBackupLoadInteraction(interaction) {
     if (getActiveLoadState(interaction.guildId)) {
       await interaction
         .reply({
-          content: "C'e gia un backup load in corso in questo server.",
+          content: "C'è già un backup load in corso in questo server.",
           flags: 1 << 6,
         })
         .catch(() => {});
@@ -1836,6 +1836,7 @@ module.exports = {
   runBackupDryRun,
   buildDryRunEmbed,
 };
+
 
 
 

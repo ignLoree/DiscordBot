@@ -54,7 +54,7 @@ function collectEditAnswers(interaction, pollMessage) {
   for (let i = 1; i <= 10; i += 1) {
     const provided = interaction.options.getString(`r${i}`);
     const existing = existingAnswers[i - 1] || null;
-    answers.push(provided ?? existing);
+    answers.push(provided ? existing);
   }
 
   return answers;

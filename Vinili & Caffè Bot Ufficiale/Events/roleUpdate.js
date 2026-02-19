@@ -11,7 +11,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleRoleUpdate: antiNukeHandleRoleUpdate } = require("../Services/Moderation/antiNukeService");
 
-const ROLE_UPDATE_ACTION = AuditLogEvent?.RoleUpdate ?? 31;
+const ROLE_UPDATE_ACTION = AuditLogEvent?.RoleUpdate ? 31;
 
 module.exports = {
   name: "roleUpdate",

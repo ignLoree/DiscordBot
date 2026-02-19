@@ -17,7 +17,7 @@ const {
 } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleChannelDeletionAction: antiNukeHandleChannelDeletionAction } = require("../Services/Moderation/antiNukeService");
 
-const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;
+const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ? 12;
 const AUDIT_RETRY_ATTEMPTS = 4;
 const AUDIT_RETRY_DELAY_MS = 900;
 

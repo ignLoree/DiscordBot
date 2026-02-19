@@ -19,8 +19,8 @@ module.exports = {
       const executor = entry.executor || null;
       const responsible = formatResponsible(executor);
 
-      const rawMembersRemoved = Number(entry.extra?.removed ?? entry.extra?.membersRemoved ?? 0);
-      const rawDeleteDays = Number(entry.extra?.deleteMemberDays ?? entry.extra?.days ?? 0);
+      const rawMembersRemoved = Number(entry.extra?.removed ? entry.extra?.membersRemoved ? 0);
+      const rawDeleteDays = Number(entry.extra?.deleteMemberDays ? entry.extra?.days ? 0);
       const membersRemoved = Number.isFinite(rawMembersRemoved) ? Math.max(0, rawMembersRemoved) : 0;
       const deleteDays = Number.isFinite(rawDeleteDays) ? Math.max(0, rawDeleteDays) : 0;
       const extraLines = buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]);

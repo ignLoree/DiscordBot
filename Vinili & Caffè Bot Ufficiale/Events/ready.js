@@ -85,7 +85,7 @@ function logLaunch(client, ...args) {
 }
 
 function resolveMaxListeners(client) {
-  const raw = Number(client?.config?.eventListeners ?? config?.eventListeners ?? 50);
+  const raw = Number(client?.config?.eventListeners ? config?.eventListeners ? 50);
   if (!Number.isFinite(raw) || raw <= 0) return 50;
   return Math.max(10, Math.floor(raw));
 }

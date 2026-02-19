@@ -131,7 +131,7 @@ async function ensureOwnerCustomRoleActive(
   if (state.status === "expired") {
     await replyEphemeral(interaction, {
       content: [
-        "<:vegax:1443934876440068179> Il tuo custom role temporaneo e scaduto.",
+        "<:vegax:1443934876440068179> Il tuo custom role temporaneo è scaduto.",
         `Scadenza: ${buildExpiryText(state.doc)}`,
         "Usa `+customrole create` per crearne uno nuovo.",
       ].join("\n"),
@@ -155,7 +155,7 @@ async function ensureOwnerCustomRoleActive(
   ) {
     await replyEphemeral(interaction, {
       content:
-        "<:vegax:1443934876440068179> Questo pannello non e più allineato al tuo ruolo attuale. Riapri con `+customrole modify`.",
+        "<:vegax:1443934876440068179> Questo pannello non è più allineato al tuo ruolo attuale. Riapri con `+customrole modify`.",
       flags: PRIVATE_FLAG,
     });
     return { ok: false, state };
@@ -500,7 +500,7 @@ async function handleRoleActionButton(interaction) {
     modalId = `customrole_modal_emoji:${ownerId}:${roleId}:${panelMessageId}`;
     title = "Imposta emoji o icona ruolo";
     label = "Emoji unicode o URL immagine";
-    placeholder = "Es: ?? oppure https://.../icon.png";
+    placeholder = "Es: ? oppure https://.../icon.png";
   }
   if (!modalId) return true;
 
@@ -939,7 +939,7 @@ async function handleCustomVocButton(interaction) {
     .setLabel(head === "customvoc_emoji" ? "Emoji" : "Nuovo nome")
     .setStyle(TextInputStyle.Short)
     .setRequired(true)
-    .setPlaceholder(head === "customvoc_emoji" ? "Es: ??" : "Es: privata-lore")
+    .setPlaceholder(head === "customvoc_emoji" ? "Es: ?" : "Es: privata-lore")
     .setMaxLength(head === "customvoc_emoji" ? 32 : 90);
   modal.addComponents(new ActionRowBuilder().addComponents(input));
   const shown = await interaction
@@ -1047,7 +1047,7 @@ async function handleCustomVocModal(interaction) {
       parsedCurrent.emoji ||
       ownerCustomRoleDoc?.customVocEmoji ||
       ownerRole?.unicodeEmoji ||
-      "??";
+      "?";
     const nextName = buildCustomVocName(preservedEmoji, raw);
     await channel
       .edit({ name: nextName }, `Custom voc rename by ${interaction.user.tag}`)
@@ -1287,3 +1287,4 @@ module.exports = {
   createCustomRoleGrantRequest,
   getPendingRoleGrantByToken,
 };
+

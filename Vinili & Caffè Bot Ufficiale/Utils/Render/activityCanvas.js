@@ -600,7 +600,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
       { size: 24, weight: "700", color: "#e0e5ed", align: "left" },
     );
 
-    const valueText = unit ? `${row.value} ${unit}` : String(row.value ?? 0);
+    const valueText = unit ? `${row.value} ${unit}` : String(row.value ? 0);
     const valueWidth = Math.min(
       w - 260,
       Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),

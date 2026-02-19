@@ -1,4 +1,4 @@
-const axios = require("axios");
+﻿const axios = require("axios");
 const { createCanvas } = require("canvas");
 const {
   EmbedBuilder,
@@ -93,7 +93,7 @@ const CAPITAL_QUIZ_BANK = [
   { country: "Stati Uniti", answers: ["Washington", "Washington DC"] },
   { country: "Canada", answers: ["Ottawa"] },
   { country: "Giappone", answers: ["Tokyo"] },
-  { country: "Brasile", answers: ["Brasilia", "Brasília"] },
+  { country: "Brasile", answers: ["Brasilia", "Brasìlia"] },
 ];
 
 const ITALIAN_REGION_CAPITAL_BANK = [
@@ -170,7 +170,7 @@ const FOOTBALL_TEAM_BANK = [
     team: "Bayern Monaco",
     answers: ["Bayern Monaco", "Bayern Munich", "Bayern"],
     image:
-      "https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_München_logo_%282024%29.svg",
+      "https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_MÃ¼nchen_logo_%282024%29.svg",
   },
   {
     team: "Paris Saint Germain",
@@ -335,7 +335,7 @@ const ITALIAN_GK_BANK = [
 const DRIVING_TRUE_FALSE_BANK = [
   {
     statement:
-      "In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.",
+      "In autostrada, salvo diversa segnalazione, il limite per le auto Ã¨ 130 km/h.",
     answer: true,
   },
   {
@@ -343,12 +343,12 @@ const DRIVING_TRUE_FALSE_BANK = [
     answer: false,
   },
   {
-    statement: "È obbligatorio usare le cinture anche nei sedili posteriori.",
+    statement: "Ãˆ obbligatorio usare le cinture anche nei sedili posteriori.",
     answer: true,
   },
   {
     statement:
-      "Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.",
+      "Si puÃ² usare il telefono alla guida senza vivavoce se la chiamata Ã¨ breve.",
     answer: false,
   },
   {
@@ -362,11 +362,11 @@ const DRIVING_TRUE_FALSE_BANK = [
   },
   {
     statement:
-      "È consentito sorpassare in prossimità delle curve sempre e comunque.",
+      "Ãˆ consentito sorpassare in prossimitÃ  delle curve sempre e comunque.",
     answer: false,
   },
   {
-    statement: "Con pioggia intensa bisogna ridurre la velocità.",
+    statement: "Con pioggia intensa bisogna ridurre la velocitÃ .",
     answer: true,
   },
 ];
@@ -539,27 +539,27 @@ function normalizeWord(raw) {
 
 function normalizeCountryName(raw) {
   const specials = {
-    ß: "ss",
-    ẞ: "ss",
-    æ: "ae",
-    Æ: "ae",
-    œ: "oe",
-    Œ: "oe",
-    ø: "o",
-    Ø: "o",
-    å: "a",
-    Å: "a",
-    ł: "l",
-    Ł: "l",
-    đ: "d",
-    Đ: "d",
-    ð: "d",
-    Ð: "d",
-    þ: "th",
-    Þ: "th",
+    "\u00df": "ss",
+    "\u1e9e": "ss",
+    "\u00e6": "ae",
+    "\u00c6": "ae",
+    "\u0153": "oe",
+    "\u0152": "oe",
+    "\u00f8": "o",
+    "\u00d8": "o",
+    "\u00e5": "a",
+    "\u00c5": "a",
+    "\u0142": "l",
+    "\u0141": "l",
+    "\u0111": "d",
+    "\u0110": "d",
+    "\u00f0": "d",
+    "\u00d0": "d",
+    "\u00fe": "th",
+    "\u00de": "th",
   };
   const replaced = String(raw || "").replace(
-    /[ßẞæÆœŒøØåÅłŁđĐðÐþÞ]/g,
+    /[\u00df\u1e9e\u00e6\u00c6\u0153\u0152\u00f8\u00d8\u00e5\u00c5\u0142\u0141\u0111\u0110\u00f0\u00d0\u00fe\u00de]/g,
     (ch) => specials[ch] || ch,
   );
   return replaced
@@ -574,7 +574,7 @@ function normalizeCountryName(raw) {
 function isValidWord(word) {
   if (!word) return false;
   if (word.length < 5 || word.length > 6) return false;
-  return /^[A-Za-zÀ-ÖØ-öø-ÿ]+$/.test(word);
+  return /^\p{L}+$/u.test(word);
 }
 
 async function loadWordList(cfg) {
@@ -1188,7 +1188,7 @@ function buildSongAnswerAliases(rawTitle) {
   );
 
   const dashParts = raw
-    .split(/\s[-–—]\s/)
+    .split(/\s[-â€“â€”]\s/)
     .map((p) => p.trim())
     .filter(Boolean);
   if (dashParts.length >= 2) {
@@ -1300,7 +1300,7 @@ function createMathQuestion() {
       const b = randomBetween(2, 12);
       const c = randomBetween(2, 6);
       return {
-        expression: `${a} × ${b} × ${c}`,
+        expression: `${a} Ã— ${b} Ã— ${c}`,
         answer: formatAnswer(a * b * c),
       };
     },
@@ -1309,7 +1309,7 @@ function createMathQuestion() {
       const result = randomBetween(2, 20);
       const dividend = divisor * result;
       return {
-        expression: `${dividend} ÷ ${divisor}`,
+        expression: `${dividend} Ã· ${divisor}`,
         answer: formatAnswer(result),
       };
     },
@@ -1317,7 +1317,7 @@ function createMathQuestion() {
       const root = randomBetween(2, 20);
       const n = root * root;
       return {
-        expression: `√${n}`,
+        expression: `âˆš${n}`,
         answer: formatAnswer(root),
       };
     },
@@ -1328,7 +1328,7 @@ function createMathQuestion() {
       const d = randomBetween(2, 14);
       const left = a * b;
       return {
-        expression: `(${a} × ${b}) + ${c} - ${d}`,
+        expression: `(${a} Ã— ${b}) + ${c} - ${d}`,
         answer: formatAnswer(left + c - d),
       };
     },
@@ -1338,7 +1338,7 @@ function createMathQuestion() {
       const a = randomBetween(2, 30);
       const b = randomBetween(2, 20);
       return {
-        expression: `√${n} + ${a} - ${b}`,
+        expression: `âˆš${n} + ${a} - ${b}`,
         answer: formatAnswer(root + a - b),
       };
     },
@@ -1500,7 +1500,7 @@ function isLooseAliasGuessCorrect(
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || "").toLowerCase();
   const tokens = lower
-    .split(/[^a-zà-öø-ÿ]+/i)
+    .split(/[^a-zÃ -Ã¶Ã¸-Ã¿]+/i)
     .map((t) => t.trim())
     .filter(Boolean)
     .filter((t) => t.length >= 5 && t.length <= 6);
@@ -1563,7 +1563,7 @@ async function fetchPlayerInfo(cfg, name) {
     return {
       name: player.strPlayer,
       team: player.strTeam || "Squadra sconosciuta",
-      nationality: player.strNationality || "Nazionalità sconosciuta",
+      nationality: player.strNationality || "NazionalitÃ  sconosciuta",
       image: player.strThumb || player.strCutout || null,
       aliases: buildPlayerAliases(player),
     };
@@ -1591,7 +1591,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
       return {
         name: player.strPlayer,
         team: player.strTeam || "Squadra sconosciuta",
-        nationality: player.strNationality || "Nazionalità sconosciuta",
+        nationality: player.strNationality || "NazionalitÃ  sconosciuta",
         image: player.strThumb || player.strCutout || null,
         aliases: buildPlayerAliases(player),
       };
@@ -1689,7 +1689,7 @@ async function fetchRandomSong(cfg) {
         album: song.collectionName || "Album sconosciuto",
         artwork,
         genre,
-        artistCountry: artistCountry || "Nazionalità sconosciuta",
+        artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
         previewUrl: song.previewUrl || null,
       };
     } catch {}
@@ -1800,7 +1800,7 @@ async function fetchPopularSong(cfg) {
       album: pick.album || "Album sconosciuto",
       artwork: pick.artwork || null,
       genre: pick.genre || "Genere sconosciuto",
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
       previewUrl: pick.previewUrl || null,
     };
   }
@@ -1820,7 +1820,7 @@ async function fetchPopularSong(cfg) {
         ? item.artworkUrl100.replace("100x100bb", "600x600bb")
         : pick.artwork,
       genre,
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
       previewUrl: item?.previewUrl || null,
     };
   } catch {
@@ -1950,10 +1950,10 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il numero .ᐟ ✧")
+    .setTitle("Indovina il numero .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚﹒`,
+        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** Ëšï¹’`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -1964,10 +1964,10 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la parola .ᐟ ✧")
+    .setTitle("Indovina la parola .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚﹒`,
+        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** Ëšï¹’`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -1978,10 +1978,10 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la bandiera .ᐟ ✧")
+    .setTitle("Indovina la bandiera .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚﹒`,
+        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** Ëšï¹’`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -1993,10 +1993,10 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il calciatore .ᐟ ✧")
+    .setTitle("Indovina il calciatore .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚﹒`,
+        `<a:VC_Beer:1448687940560490547> Indovina il calciatore piÃ¹ famoso per ottenere **${rewardExp} exp** Ëšï¹’`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2011,10 +2011,10 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la canzone .ᐟ ✧")
+    .setTitle("Indovina la canzone .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**˚﹒`,
+        `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**Ëšï¹’`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2032,7 +2032,7 @@ function buildGuessCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la capitale .ᐟ ✧")
+    .setTitle("Indovina la capitale .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual è la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
@@ -2052,7 +2052,7 @@ function buildGuessRegionCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il capoluogo .ᐟ ✧")
+    .setTitle("Indovina il capoluogo .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual è il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
@@ -2067,7 +2067,7 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi per primo la frase .ᐟ ✧")
+    .setTitle("Scrivi per primo la frase .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
@@ -2081,7 +2081,7 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la squadra di calcio .ᐟ ✧")
+    .setTitle("Indovina la squadra di calcio .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
@@ -2096,7 +2096,7 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il cantante .ᐟ ✧")
+    .setTitle("Indovina il cantante .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
@@ -2111,7 +2111,7 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l'album .ᐟ ✧")
+    .setTitle("Indovina l'album .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp} exp**.`,
@@ -2132,7 +2132,7 @@ function buildHangmanEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato .ᐟ ✧")
+    .setTitle("Impiccato .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
@@ -2148,7 +2148,7 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale .ᐟ ✧")
+    .setTitle("Cultura generale .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
@@ -2162,7 +2162,7 @@ function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente .ᐟ ✧")
+    .setTitle("Quiz patente .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
@@ -2182,7 +2182,7 @@ function buildMathExpressionEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Espressione matematica .ᐟ ✧")
+    .setTitle("Espressione matematica .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
@@ -2198,7 +2198,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Trova il bot .ᐟ ✧")
+    .setTitle("Trova il bot .áŸ âœ§")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!",
@@ -2212,7 +2212,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Sei vicino al bot .ᐟ ✧")
+    .setTitle("Sei vicino al bot .áŸ âœ§")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!",
@@ -2225,22 +2225,22 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âŸ¢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âŸ¢ <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildGenericHintEmbed(text) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`⟢ <a:VC_Arrow:1448672967721615452> ${text}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âŸ¢ <a:VC_Arrow:1448672967721615452> ${text}`);
 }
 
 function buildMaskedTextHint(value) {
@@ -2258,7 +2258,7 @@ function buildNumberNearHint(target, min, max) {
   const band = Math.max(2, Math.round(range * 0.18));
   const from = Math.max(low, Number(target) - band);
   const to = Math.min(high, Number(target) + band);
-  return `Il numero è tra **${from}** e **${to}**.`;
+  return `Il numero Ã¨ tra **${from}** e **${to}**.`;
 }
 
 function buildHintEmbed(isHigher) {
@@ -2266,25 +2266,25 @@ function buildHintEmbed(isHigher) {
     .setColor("#6f4e37")
     .setDescription(
       isHigher
-        ? "📈 <a:VC_Arrow:1448672967721615452> Più alto!"
-        : "📉 <a:VC_Arrow:1448672967721615452> Più basso!",
+        ? "�x� <a:VC_Arrow:1448672967721615452> Più alto!"
+        : "ðŸ“‰ <a:VC_Arrow:1448672967721615452> PiÃ¹ basso!",
     );
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .ᐟ ✧")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
+        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.áŸ âœ§`,
         "",
-        "📊 **Le tue statistiche:**",
+        "ðŸ“Š **Le tue statistiche:**",
         `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
       ].join("\n"),
     )
     .setFooter({
-      text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi',
+      text: 'â‡¢ digita il comando "+mstats" per vedere i tuoi progressi',
     });
 }
 
@@ -2387,7 +2387,7 @@ function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`,
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** â€” ${artist}.`,
     );
 }
 
@@ -2907,7 +2907,7 @@ async function startGuessPlayerGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.team} • ${info.nationality} • ${buildMaskedTextHint(info.name)}`,
+    `${info.team} â€¢ ${info.nationality} â€¢ ${buildMaskedTextHint(info.name)}`,
   );
 
   activeGames.set(channelId, {
@@ -3001,7 +3001,7 @@ async function startGuessSongGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.artistCountry} • ${info.genre} • ${buildMaskedTextHint(info.title)}`,
+    `${info.artistCountry} â€¢ ${info.genre} â€¢ ${buildMaskedTextHint(info.title)}`,
   );
 
   activeGames.set(channelId, {
@@ -3462,7 +3462,7 @@ async function startGuessAlbumGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `Artista: **${pick.artist}** • Album: ${buildMaskedTextHint(pick.album)}`,
+    `Artista: **${pick.artist}** â€¢ Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
   activeGames.set(channelId, {
@@ -3728,7 +3728,7 @@ async function startDrivingQuizGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    "Nel dubbio nel quiz patente prevale sempre la scelta più prudente.",
+    "Nel dubbio nel quiz patente prevale sempre la scelta piÃ¹ prudente.",
   );
 
   activeGames.set(channelId, {
@@ -3806,7 +3806,7 @@ async function startMathExpressionGame(client, cfg) {
   const answerNum = Number(row.answer);
   const hintRangeText = Number.isFinite(answerNum)
     ? `Il risultato è compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
-    : "Il risultato è un numero intero.";
+    : "Il risultato Ã¨ un numero intero.";
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
@@ -4946,7 +4946,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${team} • ${nationality} • ${buildMaskedTextHint(name)}`,
+      `${team} â€¢ ${nationality} â€¢ ${buildMaskedTextHint(name)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessPlayer",
@@ -4982,7 +4982,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${artistCountry} • ${genre} • ${buildMaskedTextHint(title)}`,
+      `${artistCountry} â€¢ ${genre} â€¢ ${buildMaskedTextHint(title)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessSong",

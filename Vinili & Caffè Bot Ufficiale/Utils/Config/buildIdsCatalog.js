@@ -59,19 +59,19 @@ function keepPreviousOrder(items, previousEntries, getName) {
 }
 
 function sortChannels(a, b) {
-  const catA = a.parent?.rawPosition ?? -1;
-  const catB = b.parent?.rawPosition ?? -1;
+  const catA = a.parent?.rawPosition ? -1;
+  const catB = b.parent?.rawPosition ? -1;
   if (catA !== catB) return catA - catB;
   if ((a.parentId || "") !== (b.parentId || ""))
     return String(a.parentId || "").localeCompare(String(b.parentId || ""));
-  if ((a.rawPosition ?? 0) !== (b.rawPosition ?? 0))
-    return (a.rawPosition ?? 0) - (b.rawPosition ?? 0);
+  if ((a.rawPosition ? 0) !== (b.rawPosition ? 0))
+    return (a.rawPosition ? 0) - (b.rawPosition ? 0);
   return String(a.id).localeCompare(String(b.id));
 }
 
 function sortRoles(a, b) {
-  if ((a.position ?? 0) !== (b.position ?? 0))
-    return (b.position ?? 0) - (a.position ?? 0);
+  if ((a.position ? 0) !== (b.position ? 0))
+    return (b.position ? 0) - (a.position ? 0);
   return String(a.id).localeCompare(String(b.id));
 }
 
@@ -199,7 +199,7 @@ async function collectGuildCatalog(guild, ids) {
   const categories = keepPreviousOrder(
     guild.channels.cache
       .filter((ch) => CATEGORY_TYPES.has(ch.type))
-      .sort((a, b) => (a.rawPosition ?? 0) - (b.rawPosition ?? 0))
+      .sort((a, b) => (a.rawPosition ? 0) - (b.rawPosition ? 0))
       .map((ch) => ({ name: ch.name, id: ch.id })),
     previousEntries.categories,
     (x) => x.name,

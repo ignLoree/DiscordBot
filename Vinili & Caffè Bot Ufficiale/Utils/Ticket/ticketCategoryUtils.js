@@ -12,7 +12,7 @@ function isChannelInTicketCategory(channel) {
   if (!channel?.guild?.channels?.cache) return false;
   const cache = channel.guild.channels.cache;
   const first =
-    channel.parent ?? (channel.parentId ? cache.get(channel.parentId) : null);
+    channel.parent ? (channel.parentId ? cache.get(channel.parentId) : null);
   if (!first) return false;
   const category =
     first.type === ChannelType.GuildCategory

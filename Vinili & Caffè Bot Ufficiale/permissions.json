@@ -2,7 +2,7 @@
   "slash": {
     "backup": {
       "roles": [
-        "roles.HighStaff"
+        "roles.Founder"
       ],
       "channels":[
         "1442569288161558528"

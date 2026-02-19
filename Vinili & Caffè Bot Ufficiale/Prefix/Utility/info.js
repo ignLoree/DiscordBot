@@ -1,4 +1,4 @@
-const {
+﻿const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
@@ -197,7 +197,7 @@ module.exports = {
           `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> ID: \`${member.id}\``,
           `<:creation:1461732905016492220> **Creation:** <t:${createdTs}:R>`,
           `📅 **Join:** <t:${joinedTs}:R>`,
-          `🛟 **Color:** \`${member.displayHexColor}\``,
+          `🎨 **Color:** \`${member.displayHexColor}\``,
           `🎮 **Discord Badges:** ${badges.length ? badges.join(", ") : "none"}`,
           "",
           "**Bot Informations:**",
@@ -217,7 +217,7 @@ module.exports = {
           dgPerms.length ? `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> ${dgPerms.join("  <:VC_right_arrow:1473441155055096081>  ")}` : "<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> none",
           "",
           "**Bot Permissions:**",
-          `🧿 This user has Bot permissions ${boolIcon(wkPerms.length > 0)}`,
+          `🤖 This user has Bot permissions ${boolIcon(wkPerms.length > 0)}`,
           wkPerms.length ? `<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> ${wkPerms.join("  <:VC_right_arrow:1473441155055096081>  ")}` : "<:space:1461733157840621608><:rightDoubleArrow:1465450678062288937> none",
           "",
           "**Account Accessories:**",
@@ -274,7 +274,7 @@ module.exports = {
         if (interaction.user.id !== message.author.id) {
           await interaction
             .reply({
-              content: "Solo chi ha usato il comando puo usare questi pulsanti.",
+              content: "Solo chi ha usato il comando può usare questi pulsanti.",
               ephemeral: true,
             })
             .catch(() => {});
@@ -309,3 +309,4 @@ module.exports = {
     await safeMessageReply(message, payload);
   },
 };
+

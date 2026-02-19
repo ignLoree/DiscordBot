@@ -205,7 +205,7 @@ async function handleBackupListInteraction(interaction) {
 
   const [, ownerId, pageRaw] = splitCustomId(customId);
   if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
-    await interaction.reply({ content: "Questo pannello non e tuo.", flags: 1 << 6 }).catch(() => {});
+    await interaction.reply({ content: "Questo pannello non è tuo.", flags: 1 << 6 }).catch(() => {});
     return true;
   }
 
@@ -263,4 +263,5 @@ module.exports = {
   renderList,
   handleBackupListInteraction,
 };
+
 

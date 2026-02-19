@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getNoDmSet, removeNoDm } = require("../../Utils/noDmList");
 
@@ -25,7 +25,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor("#6f4e37")
             .setDescription(
-              "I DM automatici sono gia attivi. Usa `+dm-disable` se vuoi bloccarli.",
+              "I DM automatici sono già attivi. Usa `+dm-disable` se vuoi bloccarli.",
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -44,3 +44,4 @@ module.exports = {
     });
   },
 };
+

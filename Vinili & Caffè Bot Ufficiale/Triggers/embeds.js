@@ -1,4 +1,4 @@
-async function runEmbedCandidaturePanelAuto(client) {
+﻿async function runEmbedCandidaturePanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const {
     EmbedBuilder,
@@ -46,12 +46,12 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
   });
   const rowCandidature = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setLabel("︲HELPER")
+      .setLabel("ï¸²HELPER")
       .setEmoji("<:helper:1443651909448630312>")
       .setStyle(ButtonStyle.Link)
       .setURL("https://dyno.gg/form/b40bd751"),
     new ButtonBuilder()
-      .setLabel("︲PARTNER MANAGER")
+      .setLabel("ï¸²PARTNER MANAGER")
       .setEmoji("<:partnermanager:1443651916838998099>")
       .setStyle(ButtonStyle.Link)
       .setURL("https://dyno.gg/form/f9013078"),
@@ -102,9 +102,9 @@ async function runInfoPanelAuto(client) {
         "<a:VC_HeartsBlue:1468686100045369404> Benvenuto/a su **Vinili & Caffè**, l'unico server in Italia non tossico e __incentrato sulla socializzazione__.",
         "",
         "<a:VC_HeartBlue:1448673354751021190> **Personalizza il tuo profilo:**",
-        "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come età, menzioni, passioni e molto altro!",
+        "<:VC_Reply:1468262952934314131> Nel canale <#1469429150669602961> potrai selezionare i colori e i ruoli da aggiungere al tuo profilo per completarlo: come et?, menzioni, passioni e molto altro!",
         "",
-        `Dubbi o problemi? <#${IDs.channels.ticket}> sarà la vostra bussola, lo staff vi risponderà il prima possibile!`,
+        `Dubbi o problemi? <#${IDs.channels.ticket}> sar? la vostra bussola, lo staff vi risponder? il prima possibile!`,
       ].join("\n"),
     )
     .addFields(
@@ -238,9 +238,9 @@ async function runStaffEmbedAuto(client) {
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<a:questionexclaimanimated:1443660299994533960>  **__COME FUNZIONA?__**
 
-> Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li riceverà sia un __**High Staff**__ che un __**Low Staff**__. 
+> Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li ricever? sia un __**High Staff**__ che un __**Low Staff**__. 
 
-<a:vegarightarrow:1443673039156936837> Il premio viene deciso in base all'**attività** e al **contributo** che lo staffer ha dato al server.
+<a:vegarightarrow:1443673039156936837> Il premio viene deciso in base all'**attivit?** e al **contributo** che lo staffer ha dato al server.
 
 <a:questionexclaimanimated:1443660299994533960>  **__QUALI SONO I VANTAGGI?__**
 > Lo __Staffer del Mese__ ha anche dei **vantaggi** che sono _uguali_ per entrambi gli staffer:
@@ -268,63 +268,63 @@ async function runStaffEmbedAuto(client) {
         <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.
-                > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
+                > Per riscattare eventuali premi bisogner? aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
                 
                 <:dot:1443660294596329582> **__\`150\`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>
                 <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>
                 <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:hellokittyboost:1329446485166788628>
                 
-                <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.`),
+                <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovr? andare a **__Vinili & Caffè__**.`),
   ];
 
   const rowGuideMain = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("regolamento")
-      .setLabel("︲REGOLE")
+      .setLabel("ï¸²REGOLE")
       .setEmoji("<:rules:1443307208543703131>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("limiti")
-      .setLabel("︲LIMITI SETTIMANALI")
+      .setLabel("ï¸²LIMITI SETTIMANALI")
       .setEmoji("<:reportmessage:1443670575376765130>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("pause")
-      .setLabel("︲PAUSE")
+      .setLabel("ï¸²PAUSE")
       .setEmoji("<:Clock:1330530065133338685>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("valutazioni")
-      .setLabel("︲VALUTAZIONI")
+      .setLabel("ï¸²VALUTAZIONI")
       .setEmoji("<a:loading:1443934440614264924>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("sanzioni")
-      .setLabel("︲SANZIONI")
+      .setLabel("ï¸²SANZIONI")
       .setEmoji("<:discordstaff:1443651872258003005>")
       .setStyle(ButtonStyle.Secondary),
   );
   const rowGuideWarn = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("warnstaff")
-      .setLabel("︲WARN STAFF")
+      .setLabel("ï¸²WARN STAFF")
       .setEmoji("<:banhammer:1443651875441217639>")
       .setStyle(ButtonStyle.Secondary),
   );
   const rowModeration = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("generalimoderazione")
-      .setLabel("︲GENERALI")
+      .setLabel("ï¸²GENERALI")
       .setEmoji("<:appdirectoryallwhite:1443308556995788840>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("testualimoderazione")
-      .setLabel("︲TESTUALI")
+      .setLabel("ï¸²TESTUALI")
       .setEmoji("<:discordchannelwhite:1443308552536985810>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("vocalimoderazione")
-      .setLabel("︲VOCALI")
+      .setLabel("ï¸²VOCALI")
       .setEmoji("<:microphone:1443307206824169573>")
       .setStyle(ButtonStyle.Secondary),
   );
@@ -477,7 +477,7 @@ async function runRuoliPanelAuto(client) {
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
 
   const CHANNEL_ID = IDs.channels.ruoliColori;
-  const IMAGE_NAME = "personalità.gif";
+  const IMAGE_NAME = "personalit?.gif";
   const IMAGE_PATH = path.join(__dirname, "..", "Photos", IMAGE_NAME);
   const MENTIONS_IMAGE_NAME = "menzioni.gif";
   const MENTIONS_IMAGE_PATH = path.join(
@@ -511,7 +511,7 @@ async function runRuoliPanelAuto(client) {
   const attachment = new AttachmentBuilder(IMAGE_PATH, { name: IMAGE_NAME });
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:sparkledred:1470064814502973591> Personalità")
+    .setTitle("<:sparkledred:1470064814502973591> Personalit?")
     .setDescription(
       [
         "Scegli in cosa ti identifichi, quanti anni hai e di dove sei. Utilizza i menù a tendina sottostanti.",
@@ -526,7 +526,7 @@ async function runRuoliPanelAuto(client) {
   });
   const mentionsEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:sparkledred:1470064814502973591> Menzioni")
+    .setTitle("<:sparkledred:1470064814502973591> Personalit?")
     .setDescription(
       [
         "Scegli quali notifiche ricevere dal server in base a cosa ti interessa maggiormente.",
@@ -541,12 +541,12 @@ async function runRuoliPanelAuto(client) {
   });
   const colorsEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:sparkledred:1470064814502973591> Colori")
+    .setTitle("<:sparkledred:1470064814502973591> Personalit?")
     .setDescription(
       [
         "Scegli il colore per personalizzare il nome del tuo profilo quando scrivi in chat.",
         "",
-        "<a:VC_Exclamation:1448687427836444854> Verrà mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo.",
+        "<a:VC_Exclamation:1448687427836444854> Verr? mostrato il **colore più in alto** nella lista dei ruoli nel tuo profilo.",
       ].join("\n"),
     )
     .setImage(DIVIDER_URL);
@@ -556,12 +556,12 @@ async function runRuoliPanelAuto(client) {
   });
   const plusColorsEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<:sparkledred:1470064814502973591> Colori PLUS")
+    .setTitle("<:sparkledred:1470064814502973591> Personalit?")
     .setDescription(
       [
         'Scegli il colore che più ti piace per il tuo profilo! Utilizza il menù a tendina sottostante. __Rimuovi i colori__ con la "<:vegax:1443934876440068179>" in alto.',
         "",
-        `➳ Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`,
+        `? Questi ruoli sono riservati a coloro con questi ruoli: <@&${IDs.roles.ServerBooster}> e/o <@&${IDs.roles.Level50}>`,
         "",
         "<:sparkle:1470064801811140866> **LISTA COLORI:**",
         `<:VC_1:1444099819680563200> <@&${IDs.roles.redPlus}>`,
@@ -622,12 +622,12 @@ async function runRuoliPanelAuto(client) {
   const age = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_age")
-      .setPlaceholder("🔞 Seleziona la tua età")
+      .setPlaceholder("? Seleziona la tua et?")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
         {
-          label: "Rimuovi i ruoli di età",
+          label: "Rimuovi i ruoli di et?",
           value: "remove",
           description: "Rimuovi ruoli dal tuo profilo",
           emoji: "<:vegax:1443934876440068179>",
@@ -662,7 +662,7 @@ async function runRuoliPanelAuto(client) {
   const region = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_region")
-      .setPlaceholder("🗺️ Seleziona la tua località")
+      .setPlaceholder("?? Seleziona la tua localit?")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -702,7 +702,7 @@ async function runRuoliPanelAuto(client) {
   const dmStatus = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_dm")
-      .setPlaceholder("📩 Seleziona il tuo stato DM")
+      .setPlaceholder("? Seleziona il tuo stato DM")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -736,7 +736,7 @@ async function runRuoliPanelAuto(client) {
   const relationship = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_relationship")
-      .setPlaceholder("💞 Seleziona il tuo stato sentimentale")
+      .setPlaceholder("? Seleziona il tuo stato sentimentale")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -764,7 +764,7 @@ async function runRuoliPanelAuto(client) {
   const mentionsMenu = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_mentions")
-      .setPlaceholder("🔔 Seleziona le notifiche da ricevere")
+      .setPlaceholder("? Seleziona le notifiche da ricevere")
       .setMinValues(1)
       .setMaxValues(7)
       .addOptions(
@@ -822,7 +822,7 @@ async function runRuoliPanelAuto(client) {
   const colorsMenu1 = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_colors_1")
-      .setPlaceholder("🎨 Scegli un colore per il tuo profilo")
+      .setPlaceholder("? Scegli un colore per il tuo profilo")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -922,7 +922,7 @@ async function runRuoliPanelAuto(client) {
   const colorsMenu2 = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_colors_2")
-      .setPlaceholder("🎨 Scegli un colore per il tuo profilo")
+      .setPlaceholder("? Scegli un colore per il tuo profilo")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -1016,7 +1016,7 @@ async function runRuoliPanelAuto(client) {
   const plusColorsMenu = new ActionRowBuilder().addComponents(
     new StringSelectMenuBuilder()
       .setCustomId("personality_colors_plus")
-      .setPlaceholder("🎨 Seleziona un colore il tuo profiloᵖˡᵘˢ")
+      .setPlaceholder("? Seleziona un colore per il tuo profilo")
       .setMinValues(1)
       .setMaxValues(1)
       .addOptions(
@@ -1231,7 +1231,7 @@ async function runTicketPanelAuto(client) {
       iconURL: channel.guild?.iconURL() || undefined,
     })
     .setDescription(
-      `I ticket equivalgono ad un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
+      `I ticket equivalgono a un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
 
 <:VC_1:1444099819680563200> **Prima categoria** 
 <a:VC_Arrow:1448672967721615452> Usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
@@ -1248,11 +1248,11 @@ async function runTicketPanelAuto(client) {
 
   const ticketMenu = new StringSelectMenuBuilder()
     .setCustomId("ticket_open_menu")
-    .setPlaceholder("🎫 Seleziona una categoria...")
+    .setPlaceholder("? Seleziona una categoria...")
     .addOptions(
       {
         label: "Prima categoria",
-        description: "Supporto generale ▸ Segnalazioni ▸ Problemi",
+        description: "Supporto generale ? Segnalazioni ? Problemi",
         value: "ticket_supporto",
         emoji: { id: "1443651872258003005", name: "discordstaff" },
       },
@@ -1264,7 +1264,7 @@ async function runTicketPanelAuto(client) {
       },
       {
         label: "Terza categoria",
-        description: "Verifica Selfie ▸ Donazioni ▸ Sponsor ▸ HighStaff",
+        description: "Verifica Selfie ? Donazioni ? Sponsor ? HighStaff",
         value: "ticket_highstaff",
         emoji: { id: "1443670575376765130", name: "reportmessage" },
       },
@@ -1347,8 +1347,8 @@ async function runSponsorPanelAuto(client) {
   const sponsorEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      "<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" +
-        "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" +
+      "<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisogner? aprire un <#1442569095068254219> `Terza Categoria`.\n\n" +
+        "> Ogni server che vorr? effettuare una **sponsor** dovr? rispettare questi 3 requisiti:\n" +
         "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" +
         "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" +
         "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)",
@@ -1361,12 +1361,12 @@ async function runSponsorPanelAuto(client) {
   const rowSponsor = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("metodi")
-      .setLabel("︲METODI")
+      .setLabel("ï¸²METODI")
       .setEmoji("<:Money:1330544713463500970>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("ping")
-      .setLabel("︲PING")
+      .setLabel("ï¸²PING")
       .setEmoji("<:Discord_Mention:1329524304790028328>")
       .setStyle(ButtonStyle.Secondary),
   );
@@ -1477,3 +1477,4 @@ module.exports = {
     await runAllClientReadyPanels(client);
   },
 };
+

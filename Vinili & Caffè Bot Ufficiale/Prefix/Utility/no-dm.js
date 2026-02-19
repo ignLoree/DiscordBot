@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -31,7 +31,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor("#6f4e37")
             .setDescription(
-              "Hai gia disattivato i DM automatici. Usa `+dm-enable` per riattivarli.",
+              "Hai già disattivato i DM automatici. Usa `+dm-enable` per riattivarli.",
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -60,7 +60,7 @@ module.exports = {
       .setDescription(
         [
           "Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.",
-          "Questo include anche eventuali avvisi piu importanti.",
+          "Questo include anche eventuali avvisi più importanti.",
           "",
           "Vuoi continuare?",
         ].join("\n"),
@@ -139,3 +139,4 @@ module.exports = {
     });
   },
 };
+

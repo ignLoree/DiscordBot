@@ -782,7 +782,7 @@ async function sendTopPayload(message, payload) {
 
   await safeMessageReply(message, {
     content:
-      `Per evitare di intasare la chat, la classifica e stata generata in <#${IDs.channels.commands}>.\n` +
+      `Per evitare di intasare la chat, la classifica è stata generata in <#${IDs.channels.commands}>.\n` +
       `[Clicca qui per vederla](${sent.url}).`,
     allowedMentions: { repliedUser: false },
   });
@@ -828,3 +828,4 @@ module.exports = {
     await sendTopPayload(message, payload);
   },
 };
+

@@ -129,7 +129,7 @@ module.exports = {
       false,
     );
     const finalLevel = Number(
-      levelResult?.levelInfo?.level ?? getLevelInfo(finalExp).level,
+      levelResult?.levelInfo?.level ? getLevelInfo(finalExp).level,
     );
     await ReviewReward.create({
       guildId,

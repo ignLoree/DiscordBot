@@ -1,4 +1,4 @@
-const path = require("path");
+﻿const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
 const { REST } = require("@discordjs/rest");
@@ -153,7 +153,7 @@ function logPanelZeroWarnings(client, sponsorIds) {
   global.logger.warn(
     "[Bot Test] Questo bot (Application ID: " +
       (client.application?.id || client.user?.id) +
-      ') non e in nessuno dei server sponsor. L\'API Discord restituisce "Unknown Guild": invita QUESTO bot (stesso token/DISCORD_TOKEN_TEST) nei server sponsor, non un altro bot.',
+      ') non è in nessuno dei server sponsor. L\'API Discord restituisce "Unknown Guild": invita QUESTO bot (stesso token/DISCORD_TOKEN_TEST) nei server sponsor, non un altro bot.',
   );
 }
 
@@ -254,3 +254,4 @@ module.exports = {
     await handleRestartNotification(activeClient);
   },
 };
+

@@ -139,16 +139,16 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
   "perm.grant":
-    "Assegna permessi temporanei ad un utente su uno o più comandi.",
-  "perm.revoke": "Revoca permessi temporanei specifici ad un utente.",
+    "Assegna permessi temporanei a un utente su uno o più comandi.",
+  "perm.revoke": "Revoca permessi temporanei specifici a un utente.",
   "perm.list": "Mostra i permessi temporanei attivi di un utente.",
   "perm.clear": "Rimuove tutti i permessi temporanei di un utente.",
   "perm.channel-set": "Imposta i canali consentiti per un comando.",
-  "perm.channel-add": "Aggiunge canali consentiti ad un comando.",
+  "perm.channel-add": "Aggiunge canali consentiti a un comando.",
   "perm.channel-remove": "Rimuove canali dalla whitelist di un comando.",
   "perm.channel-clear": "Rimuove la restrizione canali di un comando.",
   "perm.channel-list": "Mostra le whitelist canali configurate.",
-  "temprole.grant": "Assegna un ruolo ad un utente per una durata temporanea.",
+  "temprole.grant": "Assegna un ruolo a un utente per una durata temporanea.",
   "temprole.revoke": "Revoca una singola assegnazione di ruolo temporaneo.",
   "temprole.list": "Mostra i ruoli temporanei attivi di un utente.",
   "temprole.clear":
@@ -1716,4 +1716,5 @@ module.exports = {
     });
   },
 };
+
 
