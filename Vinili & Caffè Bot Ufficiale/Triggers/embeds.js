@@ -46,12 +46,12 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
   });
   const rowCandidature = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setLabel("ï¸²HELPER")
+      .setLabel("︲HELPER")
       .setEmoji("<:helper:1443651909448630312>")
       .setStyle(ButtonStyle.Link)
       .setURL("https://dyno.gg/form/b40bd751"),
     new ButtonBuilder()
-      .setLabel("ï¸²PARTNER MANAGER")
+      .setLabel("︲PARTNER MANAGER")
       .setEmoji("<:partnermanager:1443651916838998099>")
       .setStyle(ButtonStyle.Link)
       .setURL("https://dyno.gg/form/f9013078"),
@@ -272,7 +272,7 @@ async function runStaffEmbedAuto(client) {
                 
                 <:dot:1443660294596329582> **__\`150\`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>
                 <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>
-                <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:hellokittyboost:1329446485166788628>
+                <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>
                 
                 <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovr? andare a **__Vinili & Caffè__**.`),
   ];
@@ -280,51 +280,51 @@ async function runStaffEmbedAuto(client) {
   const rowGuideMain = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("regolamento")
-      .setLabel("ï¸²REGOLE")
+      .setLabel("︲REGOLE")
       .setEmoji("<:rules:1443307208543703131>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("limiti")
-      .setLabel("ï¸²LIMITI SETTIMANALI")
+      .setLabel("︲LIMITI SETTIMANALI")
       .setEmoji("<:reportmessage:1443670575376765130>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("pause")
-      .setLabel("ï¸²PAUSE")
+      .setLabel("︲PAUSE")
       .setEmoji("<:Clock:1330530065133338685>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("valutazioni")
-      .setLabel("ï¸²VALUTAZIONI")
+      .setLabel("︲VALUTAZIONI")
       .setEmoji("<a:loading:1443934440614264924>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("sanzioni")
-      .setLabel("ï¸²SANZIONI")
+      .setLabel("︲SANZIONI")
       .setEmoji("<:discordstaff:1443651872258003005>")
       .setStyle(ButtonStyle.Secondary),
   );
   const rowGuideWarn = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("warnstaff")
-      .setLabel("ï¸²WARN STAFF")
+      .setLabel("︲WARN STAFF")
       .setEmoji("<:banhammer:1443651875441217639>")
       .setStyle(ButtonStyle.Secondary),
   );
   const rowModeration = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("generalimoderazione")
-      .setLabel("ï¸²GENERALI")
+      .setLabel("︲GENERALI")
       .setEmoji("<:appdirectoryallwhite:1443308556995788840>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("testualimoderazione")
-      .setLabel("ï¸²TESTUALI")
+      .setLabel("︲TESTUALI")
       .setEmoji("<:discordchannelwhite:1443308552536985810>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("vocalimoderazione")
-      .setLabel("ï¸²VOCALI")
+      .setLabel("︲VOCALI")
       .setEmoji("<:microphone:1443307206824169573>")
       .setStyle(ButtonStyle.Secondary),
   );
@@ -1361,12 +1361,12 @@ async function runSponsorPanelAuto(client) {
   const rowSponsor = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId("metodi")
-      .setLabel("ï¸²METODI")
+      .setLabel("︲METODI")
       .setEmoji("<:Money:1330544713463500970>")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId("ping")
-      .setLabel("ï¸²PING")
+      .setLabel("︲PING")
       .setEmoji("<:Discord_Mention:1329524304790028328>")
       .setStyle(ButtonStyle.Secondary),
   );
@@ -1477,4 +1477,3 @@ module.exports = {
     await runAllClientReadyPanels(client);
   },
 };
-

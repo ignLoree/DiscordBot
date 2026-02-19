@@ -1,4 +1,4 @@
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -17,18 +17,16 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 
 const MOJIBAKE_PATTERNS = [
-  '�',
-  '�',
-  '�',
-  '�"',
-  '�S',
-  '�\x9d',
-  '�',
-  '�',
-  'ï»¿',
-  'ï¿½',
-  '�x',
-  '\uFFFD'
+  "\uFFFD",
+  "\u00EF\u00BF\u00BD",
+  "\u00C3\u00AF\u00C2\u00BB\u00C2\u00BF",
+  "\u00C3\u00AF\u00C2\u00BF\u00C2\u00BD",
+  "\u00E2\u20AC",
+  "\u00C3\u00A2",
+  "\u00C3\u0192",
+  "\u00F0\u0178",
+  "\u00EF\u00B8",
+  "\u00EF\u00BB\u00BF"
 ];
 
 function shouldScanFile(filePath) {
@@ -97,3 +95,4 @@ for (const item of badFiles) {
 }
 console.log(`Totale file: ${badFiles.length}`);
 process.exit(1);
+

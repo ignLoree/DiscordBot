@@ -1,37 +1,4 @@
-'use strict';
-
-function parseNameIdText(text) {
-  return String(text || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const idx = line.lastIndexOf('->');
-      if (idx === -1) return null;
-      const name = line.slice(0, idx).trim();
-      const id = line.slice(idx + 2).trim();
-      if (!name || !/^\d{16,20}$/.test(id)) return null;
-      return { name, id };
-    })
-    .filter(Boolean);
-}
-
-function toLastValueMap(entries) {
-  const map = {};
-  for (const entry of entries) map[entry.name] = entry.id;
-  return map;
-}
-
-function toMultiValueMap(entries) {
-  const map = {};
-  for (const entry of entries) {
-    if (!map[entry.name]) map[entry.name] = [];
-    if (!map[entry.name].includes(entry.id)) map[entry.name].push(entry.id);
-  }
-  return map;
-}
-
-const categoriesRaw = `
+[CATEGORIES]
 ⁰¹・ START ・ -> 1442847153474109500
 ⁰²・ INFO ・ -> 1442569064793903356
 ⁰³・ COMMUNITY ・ -> 1442569067473928243
@@ -48,8 +15,8 @@ const categoriesRaw = `
 ¹³・ SYSTEM ・ -> 1442569088705630410
 ¹⁵・ MID/HIGH ・ -> 1442569091301773312
 ¹⁶・ LOGS ・ -> 1442569092761391178
-`;
-const channelsRaw = `
+
+[CHANNELS]
 〝 -> 1442569132406083748
 〝 -> 1442569197019463780
 〝 -> 1442569107923795998
@@ -136,8 +103,8 @@ const channelsRaw = `
 ༄🚩︲activity᲼logs -> 1442569299725385851
 ༄🛃︲join᲼leave᲼logs -> 1442569306608111776
 ༄🆙︲pex᲼depex -> 1442569234004709391
-`;
-const rolesRaw = `
+
+[ROLES]
 ༄ Wick Premium -> 1443565454260965471
 ༄ Dyno -> 1329483828326174723
 ༄ Xenon -> 1329507234002108500
@@ -276,22 +243,8 @@ const rolesRaw = `
 ༄ Vinili & Caffè Bot Test -> 1472986943380783163
 ༄ Bot Ufficiale -> 1472903558792740956
 ༄ Guilded -> 1471955147692179497
-`;
-const botsRaw = `
-Xenon -> 416358583220043796
-.fmbot -> 356268235697553409
-Pokétwo -> 716390085896962058
-Vinili&CaffèBot -> 1329118940110127204
-Discadia -> 1222548162741538938
-Mudae -> 432610292342587392
-Dyno -> 155149108183695360
-Poké-Name -> 874910942490677270
-Jockie Music -> 411916947773587456
-Wick -> 548410451818708993
-DISBOARD -> 302050872383242240
-Vinili & Caffè Test Bot -> 1466495522474037463
-`;
-const emojisRaw = `
+
+[EMOJIS]
 VC_1 -> 1444099819680563200
 VC_10 -> 1469357839066730627
 VC_2 -> 1444099781864722535
@@ -583,52 +536,17 @@ VC_Winner -> 1448687700235256009
 VC_WTF -> 1331620919331913758
 VC_Yoda -> 1331623446089568367
 VC_right_arrow -> 1473441155055096081
-`;
 
-const categories = parseNameIdText(categoriesRaw);
-const channels = parseNameIdText(channelsRaw);
-const roles = parseNameIdText(rolesRaw);
-const bots = parseNameIdText(botsRaw);
-const emojis = parseNameIdText(emojisRaw);
-
-module.exports = {
-  raw: {
-    categories: categoriesRaw,
-    channels: channelsRaw,
-    roles: rolesRaw,
-    bots: botsRaw,
-    emojis: emojisRaw
-  },
-  entries: {
-    categories,
-    channels,
-    roles,
-    bots,
-    emojis
-  },
-  maps: {
-    categories: toLastValueMap(categories),
-    channels: toLastValueMap(channels),
-    roles: toLastValueMap(roles),
-    bots: toLastValueMap(bots),
-    emojis: toLastValueMap(emojis)
-  },
-  multi: {
-    categories: toMultiValueMap(categories),
-    channels: toMultiValueMap(channels),
-    roles: toMultiValueMap(roles),
-    bots: toMultiValueMap(bots),
-    emojis: toMultiValueMap(emojis)
-  },
-  meta: {
-    guildMain: "1329080093599076474",
-    emojis: {
-      loadingAnimatedId: "1448687876018540695",
-      loadingFallbackId: "1462504528774430962"
-    },
-    links: {
-      vote: "https://discadia.com/server/viniliecaffe/",
-      invite: "https://discord.gg/viniliecaffe"
-    }
-  }
-};
+[BOTS]
+Xenon -> 416358583220043796
+.fmbot -> 356268235697553409
+Pokétwo -> 716390085896962058
+Vinili&CaffèBot -> 1329118940110127204
+Discadia -> 1222548162741538938
+Mudae -> 432610292342587392
+Dyno -> 155149108183695360
+Poké-Name -> 874910942490677270
+Jockie Music -> 411916947773587456
+Wick -> 548410451818708993
+DISBOARD -> 302050872383242240
+Vinili & Caffè Test Bot -> 1466495522474037463
