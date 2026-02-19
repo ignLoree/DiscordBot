@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const Poll = require("../../Schemas/Poll/pollSchema");
 const IDs = require("../../Utils/Config/ids");
@@ -45,19 +45,26 @@ function collectCreateAnswers(interaction) {
 }
 
 function collectEditAnswers(interaction, pollMessage) {
-  const existingAnswers =
+  const rawMatches =
     pollMessage.content
       .match(/__([^_]+)__/g)
-      ?.map((entry) => entry.replace(/__/g, "")) || [];
+      ?.map((entry) => entry.replace(/__/g, "").trim()) || [];
+  const existingAnswers = rawMatches.filter(
+    (text, idx) => idx !== 0 || !/^Poll #\d+$/.test(text)
+  );
   const answers = [];
 
   for (let i = 1; i <= 10; i += 1) {
     const provided = interaction.options.getString(`r${i}`);
-    const existing = existingAnswers[i - 1] || null;
-    answers.push(provided ? existing);
+    const existing = existingAnswers[i - 1] ?? null;
+    const value =
+      provided !== null && provided !== undefined && provided !== ""
+        ? provided
+        : existing;
+    answers.push(value);
   }
 
-  return answers;
+  return answers.filter((a) => a != null && a !== "");
 }
 
 function hasAnswerGap(answers) {
@@ -90,7 +97,7 @@ function buildPollMessageContent(pollNumber, question, answersText) {
 
 ${answersText}
 
-<:Discord_Mention:1329524304790028328>?<@&1442569014474965033>`;
+<:Discord_Mention:1329524304790028328>︲<@&1442569014474965033>`;
 }
 
 async function applyPollReactions(pollMessage, reactionEmojis) {
@@ -298,7 +305,7 @@ async function handleEdit(interaction) {
   const { text: answersText, validEmojis } = buildAnswersSection(answers);
   const question =
     newQuestion ||
-    pollMessage.content.match(/\*\*(.*?)\*\*/)?.[1] ||
+    pollMessage.content.match(/\*\*(.*?)\*\*/)?.[1]?.trim() ||
     "<:vegax:1443934876440068179> Domanda non trovata";
 
   await pollMessage.edit({
@@ -307,6 +314,27 @@ async function handleEdit(interaction) {
 
   await pollMessage.reactions.removeAll().catch(() => {});
   await applyPollReactions(pollMessage, validEmojis);
+
+  const risposte = [...answers];
+  while (risposte.length < 10) risposte.push(null);
+  await Poll.updateOne(
+    { guildId, pollcount: pollId },
+    {
+      $set: {
+        domanda: question,
+        risposta1: risposte[0] ?? null,
+        risposta2: risposte[1] ?? null,
+        risposta3: risposte[2] ?? null,
+        risposta4: risposte[3] ?? null,
+        risposta5: risposte[4] ?? null,
+        risposta6: risposte[5] ?? null,
+        risposta7: risposte[6] ?? null,
+        risposta8: risposte[7] ?? null,
+        risposta9: risposte[8] ?? null,
+        risposta10: risposte[9] ?? null,
+      },
+    }
+  ).catch(() => {});
 
   return safeEditReply(interaction, {
     embeds: [

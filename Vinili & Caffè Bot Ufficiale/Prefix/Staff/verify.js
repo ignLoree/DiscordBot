@@ -163,9 +163,7 @@ async function resolveTargetsFlexible(message, args) {
 }
 
 module.exports = {
-  name: "verify",
-
-  async execute(message, args) {
+  name: "verify",  async execute(message, args) {
     const { safeMessageReply } = require("../../Utils/Moderation/reply");
     const mainGuildId = IDs.guilds?.main || null;
     if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {

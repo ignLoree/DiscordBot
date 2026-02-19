@@ -912,7 +912,16 @@ function detectViolations(message, state) {
     }
   }
 
-  const userMentionCount = message.mentions?.users?.size || 0;
+  const rawUserMentionCount = message.mentions?.users?.size || 0;
+  const repliedUserId = message.mentions?.repliedUser?.id
+    ? String(message.mentions.repliedUser.id)
+    : null;
+  const replyMentionAdjustment =
+    repliedUserId && message.mentions?.users?.has?.(repliedUserId) ? 1 : 0;
+  const userMentionCount = Math.max(
+    0,
+    rawUserMentionCount - replyMentionAdjustment,
+  );
   const roleMentionCount = message.mentions?.roles?.size || 0;
   const everyoneMentionCount = message.mentions?.everyone ? 1 : 0;
   const mentionCount = userMentionCount + roleMentionCount + everyoneMentionCount;
@@ -1472,39 +1481,42 @@ async function runAutoModMessage(message) {
   if (!violations.length) return { blocked: false };
 
   const at = nowMs();
-  state.automodHits.push(at);
-  trimWindow(state.automodHits, PANIC_MODE.triggerWindowMs, at);
+  const shouldCountForPanic = violations.some((v) => INSTANT_LINK_KEYS.has(v.key));
+  if (shouldCountForPanic) {
+    state.automodHits.push(at);
+    trimWindow(state.automodHits, PANIC_MODE.triggerWindowMs, at);
 
-  let activityBoost = 0;
-  if (PANIC_MODE.considerActivityHistory) {
-    const priorRecentHits = Math.max(0, state.automodHits.length - 1);
-    if (priorRecentHits >= 2) activityBoost = 1;
-  }
+    let activityBoost = 0;
+    if (PANIC_MODE.considerActivityHistory) {
+      const priorRecentHits = Math.max(0, state.automodHits.length - 1);
+      if (priorRecentHits >= 2) activityBoost = 1;
+    }
 
-  let dbBoost = 0;
-  if (PANIC_MODE.useGlobalBadUsersDb) {
-    const profile = await getBadUserProfile(message.author.id);
-    const total = Number(profile?.totalTriggers || 0);
-    const lastTs = profile?.lastTriggerAt ? new Date(profile.lastTriggerAt).getTime() : 0;
-    const recentEnough = lastTs > 0 && at - lastTs <= 30 * 24 * 60 * 60_000;
-    if (total >= 5 && recentEnough) dbBoost = 1;
-  }
+    let dbBoost = 0;
+    if (PANIC_MODE.useGlobalBadUsersDb) {
+      const profile = await getBadUserProfile(message.author.id);
+      const total = Number(profile?.totalTriggers || 0);
+      const lastTs = profile?.lastTriggerAt ? new Date(profile.lastTriggerAt).getTime() : 0;
+      const recentEnough = lastTs > 0 && at - lastTs <= 30 * 24 * 60 * 60_000;
+      if (total >= 5 && recentEnough) dbBoost = 1;
+    }
 
-  const panic = registerPanicTrigger(
-    message.guildId,
-    message.author.id,
-    { activityBoost, dbBoost },
-    at,
-  );
-
-  if (panic.activated) {
-    const activeUntil = getPanicState(message.guildId).activeUntil;
-    await sendPanicModeLog(
-      message,
-      "panic_enabled",
-      panic.count,
-      activeUntil,
+    const panic = registerPanicTrigger(
+      message.guildId,
+      message.author.id,
+      { activityBoost, dbBoost },
+      at,
     );
+
+    if (panic.activated) {
+      const activeUntil = getPanicState(message.guildId).activeUntil;
+      await sendPanicModeLog(
+        message,
+        "panic_enabled",
+        panic.count,
+        activeUntil,
+      );
+    }
   }
 
   const panicActive = isPanicModeActive(message.guildId);

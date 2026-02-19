@@ -1,4 +1,4 @@
-﻿const axios = require("axios");
+const axios = require("axios");
 const { createCanvas } = require("canvas");
 const {
   EmbedBuilder,
@@ -1950,7 +1950,7 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il numero .áŸ âœ§")
+    .setTitle("Indovina il numero  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** Ëšï¹’`,
@@ -1964,7 +1964,7 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la parola .áŸ âœ§")
+    .setTitle("Indovina la parola  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** Ëšï¹’`,
@@ -1978,7 +1978,7 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la bandiera .áŸ âœ§")
+    .setTitle("Indovina la bandiera  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** Ëšï¹’`,
@@ -1993,7 +1993,7 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il calciatore .áŸ âœ§")
+    .setTitle("Indovina il calciatore  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina il calciatore piÃ¹ famoso per ottenere **${rewardExp} exp** Ëšï¹’`,
@@ -2011,7 +2011,7 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la canzone .áŸ âœ§")
+    .setTitle("Indovina la canzone  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**Ëšï¹’`,
@@ -2032,7 +2032,7 @@ function buildGuessCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la capitale .áŸ âœ§")
+    .setTitle("Indovina la capitale  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual è la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
@@ -2052,7 +2052,7 @@ function buildGuessRegionCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il capoluogo .áŸ âœ§")
+    .setTitle("Indovina il capoluogo  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Qual è il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
@@ -2067,7 +2067,7 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi per primo la frase .áŸ âœ§")
+    .setTitle("Scrivi per primo la frase  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
@@ -2081,7 +2081,7 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la squadra di calcio .áŸ âœ§")
+    .setTitle("Indovina la squadra di calcio  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
@@ -2096,7 +2096,7 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il cantante .áŸ âœ§")
+    .setTitle("Indovina il cantante  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
@@ -2111,7 +2111,7 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l'album .áŸ âœ§")
+    .setTitle("Indovina l'album  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp} exp**.`,
@@ -2132,7 +2132,7 @@ function buildHangmanEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato .áŸ âœ§")
+    .setTitle("Impiccato  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
@@ -2148,7 +2148,7 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale .áŸ âœ§")
+    .setTitle("Cultura generale  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
@@ -2162,7 +2162,7 @@ function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente .áŸ âœ§")
+    .setTitle("Quiz patente  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
@@ -2182,7 +2182,7 @@ function buildMathExpressionEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Espressione matematica .áŸ âœ§")
+    .setTitle("Espressione matematica  ✨")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
@@ -2198,7 +2198,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Trova il bot .áŸ âœ§")
+    .setTitle("Trova il bot  ✨")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!",
@@ -2212,7 +2212,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Sei vicino al bot .áŸ âœ§")
+    .setTitle("Sei vicino al bot  ✨")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!",
@@ -2225,15 +2225,15 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
-    .setDescription(`âŸ¢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle("<a:VC_Heart:1448672728822448141> › Indizio")
+    .setDescription(`📍 <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
-    .setDescription(`âŸ¢ <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle("<a:VC_Heart:1448672728822448141> › Indizio")
+    .setDescription(`📍 <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildGenericHintEmbed(text) {
@@ -2267,24 +2267,24 @@ function buildHintEmbed(isHigher) {
     .setDescription(
       isHigher
         ? "�x� <a:VC_Arrow:1448672967721615452> Più alto!"
-        : "ðŸ“‰ <a:VC_Arrow:1448672967721615452> PiÃ¹ basso!",
+        : "ðŸ“‰ <a:VC_Arrow:1448672967721615452> Più basso!",
     );
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .áŸ âœ§")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto ✨")
     .setDescription(
       [
-        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.áŸ âœ§`,
+        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp** ✨`,
         "",
         "ðŸ“Š **Le tue statistiche:**",
         `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
       ].join("\n"),
     )
     .setFooter({
-      text: 'â‡¢ digita il comando "+mstats" per vedere i tuoi progressi',
+      text: '➜ digita il comando "+mstats" per vedere i tuoi progressi',
     });
 }
 
@@ -3728,7 +3728,7 @@ async function startDrivingQuizGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    "Nel dubbio nel quiz patente prevale sempre la scelta piÃ¹ prudente.",
+    "Nel dubbio nel quiz patente prevale sempre la scelta più prudente.",
   );
 
   activeGames.set(channelId, {
