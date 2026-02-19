@@ -638,7 +638,9 @@ async function checkSlashPermission(interaction, options = {}) {
     data,
     buildSlashLookupKeys(interaction.commandName, group, sub),
   );
-  if (Array.isArray(channelPolicy)) {
+  const bypassChannelPolicyForAntiNuke =
+    String(interaction?.commandName || "").toLowerCase() === "antinuke";
+  if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = interaction?.channelId || interaction?.channel?.id || null;
     const allowed =
       Boolean(channelId) && channelPolicy.includes(String(channelId));
@@ -768,7 +770,8 @@ async function checkPrefixPermission(
     data,
     buildPrefixLookupKeys(commandName, subcommandName),
   );
-  if (Array.isArray(channelPolicy)) {
+  const bypassChannelPolicyForAntiNuke = safeCommand === "antinuke";
+  if (Array.isArray(channelPolicy) && !bypassChannelPolicyForAntiNuke) {
     const channelId = message?.channelId || message?.channel?.id || null;
     const allowed =
       Boolean(channelId) && channelPolicy.includes(String(channelId));

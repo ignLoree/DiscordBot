@@ -59,6 +59,7 @@ const {
 
 const STARTUP_PANELS_RETRY_MS = 15000;
 const ENGAGEMENT_INTERVAL_MS = 60 * 1000;
+const JOIN_RAID_RESTORE_INTERVAL_MS = 5 * 60 * 1000;
 
 function logError(client, ...args) {
   if (client?.logs?.error) {
@@ -314,6 +315,21 @@ function startPrimaryLoops(client, engagementTick) {
       "[AUTO BACKUP] Failed to start loop",
       () => startAutoBackupLoop(client),
     ],
+    [
+      "[JOIN RAID RESTORE] Failed to start loop",
+      () => {
+        const tick = async () => {
+          const guilds = [...client.guilds.cache.values()];
+          for (const guild of guilds) {
+            await restoreTempBans(guild).catch(() => {});
+          }
+        };
+        tick().catch(() => {});
+        const timer = setInterval(tick, JOIN_RAID_RESTORE_INTERVAL_MS);
+        if (typeof timer.unref === "function") timer.unref();
+        client._joinRaidRestoreInterval = timer;
+      },
+    ],
   ];
 
   for (const [label, starter] of loopStarters) {
@@ -375,7 +391,7 @@ function setClientPresence(client) {
         {
           type: 4,
           name: "irrelevant",
-          state: "discord.gg/viniliecaffe",
+          state: "☕📀 discord.gg/viniliecaffe",
         },
       ],
     });
@@ -444,4 +460,3 @@ module.exports = {
     logLaunch(client, `[BOT] ${client.user?.username || "Bot"} has been launched!`);
   },
 };
-

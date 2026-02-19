@@ -97,7 +97,7 @@ module.exports = {
           ];
         }
 
-        await logChannel.send(payload);
+        await logChannel.send(payload).catch(() => {});
       }
       await antiNukeHandleThreadCreationAction({
         guild: thread.guild,

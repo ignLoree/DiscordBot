@@ -19,12 +19,11 @@ module.exports = {
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const descriptionText = [
-      "```",
-      "`☕`        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢",
-      "     𓎢      **social**       ⊹       **italia** **chill**       ୧",
-      "                                       **gaming**",
-      "-# @everyone & @here",
-      "```",
+      "_ _",
+      "_ _`` ☕ ``        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢          `` 📀 ``",
+      "_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧ ",
+      "_ _                            **gaming**",
+      "_ _"
     ].join("\n");
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 

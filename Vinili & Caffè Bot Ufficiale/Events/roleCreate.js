@@ -68,7 +68,7 @@ module.exports = {
           .setTitle("Role Create")
           .setDescription(lines.join("\n"));
 
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
       }
 
       await antiNukeHandleRoleCreationAction({

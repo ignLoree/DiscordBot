@@ -675,8 +675,11 @@ module.exports = {
     const isModerationPrefixCommand = ["staff", "admin"].includes(
       String(command.folder || "").toLowerCase(),
     );
+    const isAntiNukeRecoveryCommand =
+      String(command?.name || "").toLowerCase() === "antinuke";
     if (
       isModerationPrefixCommand &&
+      !isAntiNukeRecoveryCommand &&
       (await shouldBlockModerationCommands(
         message.guild,
         String(message.author?.id || ""),

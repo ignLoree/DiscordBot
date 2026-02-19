@@ -92,8 +92,11 @@ async function handleSlashCommand(interaction, client) {
   const isModerationSlashCommand = ["staff", "admin"].includes(
     String(command?.category || "").toLowerCase(),
   );
+  const isAntiNukeRecoveryCommand =
+    String(command?.name || "").toLowerCase() === "antinuke";
   if (
     isModerationSlashCommand &&
+    !isAntiNukeRecoveryCommand &&
     (await shouldBlockModerationCommands(
       interaction.guild,
       String(interaction.user?.id || ""),

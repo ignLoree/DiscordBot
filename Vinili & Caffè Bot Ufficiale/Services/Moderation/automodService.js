@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionsBitField, UserFlagsBitField } = require("discor
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
+const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -22,6 +23,7 @@ let TIMEOUT_THRESHOLD = 95;
 const ACTION_COOLDOWN_MS = 12_000;
 const ACTION_CHANNEL_LOG_COOLDOWN_MS = 6_000;
 const ACTION_CHANNEL_NOTICE_DELETE_MS = 10_000;
+const RUNTIME_CLEANUP_INTERVAL_MS = 30_000;
 const REGULAR_TIMEOUT_MS = 15 * 60_000;
 const HEAT_RESET_ON_PUNISHMENT = true;
 const MENTION_LOCKDOWN_TRIGGER = 50;
@@ -242,12 +244,86 @@ function writeJsonSafe(filePath, value) {
   }
 }
 
-let automodRuntimeConfig = deepMerge(
-  DEFAULT_AUTOMOD_RUNTIME,
+function clampNumber(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function sanitizeAutoModRuntimeConfig(rawCfg) {
+  const merged = deepMerge(DEFAULT_AUTOMOD_RUNTIME, rawCfg || {});
+  merged.thresholds = merged.thresholds || {};
+  merged.thresholds.warn = clampNumber(
+    merged.thresholds.warn,
+    0,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.thresholds.warn,
+  );
+  merged.thresholds.delete = clampNumber(
+    merged.thresholds.delete,
+    0,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.thresholds.delete,
+  );
+  merged.thresholds.timeout = clampNumber(
+    merged.thresholds.timeout,
+    0,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.thresholds.timeout,
+  );
+  if (merged.thresholds.delete < merged.thresholds.warn) {
+    merged.thresholds.delete = merged.thresholds.warn;
+  }
+  if (merged.thresholds.timeout < merged.thresholds.delete) {
+    merged.thresholds.timeout = merged.thresholds.delete;
+  }
+
+  merged.panic = merged.panic || {};
+  merged.panic.triggerCount = clampNumber(
+    merged.panic.triggerCount,
+    1,
+    30,
+    DEFAULT_AUTOMOD_RUNTIME.panic.triggerCount,
+  );
+  merged.panic.triggerWindowMs = clampNumber(
+    merged.panic.triggerWindowMs,
+    10_000,
+    24 * 60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.panic.triggerWindowMs,
+  );
+  merged.panic.durationMs = clampNumber(
+    merged.panic.durationMs,
+    30_000,
+    24 * 60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.panic.durationMs,
+  );
+  merged.panic.raidWindowMs = clampNumber(
+    merged.panic.raidWindowMs,
+    10_000,
+    60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.panic.raidWindowMs,
+  );
+  merged.panic.raidUserThreshold = clampNumber(
+    merged.panic.raidUserThreshold,
+    1,
+    100,
+    DEFAULT_AUTOMOD_RUNTIME.panic.raidUserThreshold,
+  );
+  merged.panic.raidYoungThreshold = clampNumber(
+    merged.panic.raidYoungThreshold,
+    1,
+    100,
+    DEFAULT_AUTOMOD_RUNTIME.panic.raidYoungThreshold,
+  );
+  return merged;
+}
+
+let automodRuntimeConfig = sanitizeAutoModRuntimeConfig(
   readJsonSafe(AUTOMOD_CONFIG_PATH, {}),
 );
 const automodMetrics = readJsonSafe(AUTOMOD_METRICS_PATH, { guilds: {} });
 let metricsSaveTimer = null;
+let lastRuntimeCleanupAt = 0;
 
 function scheduleMetricsSave() {
   if (metricsSaveTimer) clearTimeout(metricsSaveTimer);
@@ -811,6 +887,62 @@ function getState(message) {
   return initial;
 }
 
+function cleanupRuntimeMaps(at = nowMs()) {
+  const staleActionCutoff = at - ACTION_COOLDOWN_MS * 4;
+  for (const [key, ts] of ACTION_COOLDOWN.entries()) {
+    if (Number(ts || 0) < staleActionCutoff) ACTION_COOLDOWN.delete(key);
+  }
+
+  const staleNoticeCutoff = at - ACTION_CHANNEL_LOG_COOLDOWN_MS * 4;
+  for (const [key, ts] of ACTION_CHANNEL_LOG_COOLDOWN.entries()) {
+    if (Number(ts || 0) < staleNoticeCutoff) {
+      ACTION_CHANNEL_LOG_COOLDOWN.delete(key);
+    }
+  }
+
+  for (const [key, state] of USER_STATE.entries()) {
+    if (!state || typeof state !== "object") {
+      USER_STATE.delete(key);
+      continue;
+    }
+    const idleFor = at - Number(state.lastAt || 0);
+    const stale =
+      idleFor > 2 * 60 * 60_000 &&
+      Number(state.heat || 0) <= 0 &&
+      (!Array.isArray(state.msgTimes) || state.msgTimes.length === 0) &&
+      (!Array.isArray(state.normHistory) || state.normHistory.length === 0) &&
+      (!Array.isArray(state.mentionTimes) || state.mentionTimes.length === 0) &&
+      (!Array.isArray(state.mentionHourTimes) || state.mentionHourTimes.length === 0) &&
+      (!Array.isArray(state.automodHits) || state.automodHits.length === 0);
+    if (stale) USER_STATE.delete(key);
+  }
+
+  for (const [guildId, events] of GUILD_INSTANT_EVENTS.entries()) {
+    const minTs = at - Number(PANIC_MODE.raidWindowMs || 120_000);
+    const next = (Array.isArray(events) ? events : []).filter(
+      (item) => Number(item?.ts || 0) >= minTs,
+    );
+    if (!next.length) GUILD_INSTANT_EVENTS.delete(guildId);
+    else GUILD_INSTANT_EVENTS.set(guildId, next);
+  }
+
+  for (const [guildId, state] of GUILD_PANIC_STATE.entries()) {
+    if (!state || typeof state !== "object") {
+      GUILD_PANIC_STATE.delete(guildId);
+      continue;
+    }
+    prunePanicAccounts(state, at);
+    const active = Number(state.activeUntil || 0) > at;
+    if (!active && (!state.triggerAccounts || state.triggerAccounts.size === 0)) {
+      GUILD_PANIC_STATE.delete(guildId);
+    }
+  }
+
+  for (const [url, payload] of URL_EXPANSION_CACHE.entries()) {
+    if (Number(payload?.expiresAt || 0) <= at) URL_EXPANSION_CACHE.delete(url);
+  }
+}
+
 function decayHeat(state, at = nowMs()) {
   const elapsedSec = Math.max(0, (at - state.lastAt) / 1000);
   state.heat = Math.max(0, state.heat - elapsedSec * DECAY_PER_SEC);
@@ -1110,7 +1242,8 @@ function countCaseCharacters(content) {
 }
 
 function isExempt(message) {
-  if (!message.guild || !message.member) return true;
+  if (!message.guild) return true;
+  if (!message.member) return false;
   if (
     CORE_EXEMPT_USER_IDS.has(String(message.author?.id || "")) ||
     String(message.guild.ownerId || "") === String(message.author?.id || "")
@@ -1717,28 +1850,28 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
 }
 
 async function warnUser(message, state, violations) {
-  if (!canActNow(message)) return false;
-  await message.delete().catch(() => {});
+  const deleted = await message.delete().then(() => true).catch(() => false);
+  if (!canActNow(message)) return deleted;
   await markBadUserAction(message, "warn", violations);
   await sendAutomodActionInChannel(message, "warn", violations);
   await sendAutomodLog(message, "warn", violations, state.heat);
   recordAutomodMetric(message, "warn", violations);
-  return true;
+  return deleted;
 }
 
 async function deleteMessage(message, state, violations) {
-  await message.delete().catch(() => {});
-  if (canActNow(message)) {
+  const deleted = await message.delete().then(() => true).catch(() => false);
+  if (deleted && canActNow(message)) {
     await markBadUserAction(message, "delete", violations);
     await sendAutomodActionInChannel(message, "delete", violations);
     await sendAutomodLog(message, "delete", violations, state.heat);
     recordAutomodMetric(message, "delete", violations);
   }
-  return true;
+  return deleted;
 }
 
-async function timeoutMember(message, state, violations) {
-  const canPunishNow = canActNow(message);
+async function timeoutMember(message, state, violations, options = {}) {
+  const canPunishNow = options?.ignoreCooldown ? true : canActNow(message);
   const member = message.member;
   if (!member) return false;
   const timeoutDurations = [REGULAR_TIMEOUT_MS];
@@ -1784,8 +1917,8 @@ async function timeoutMember(message, state, violations) {
     timeoutDurations.push(ATTACHMENT_RULES.timeoutMs);
   }
   const durationMs = Math.max(...timeoutDurations);
-  await message.delete().catch(() => {});
-  if (!canPunishNow) return true;
+  const deleted = await message.delete().then(() => true).catch(() => false);
+  if (!canPunishNow) return deleted;
   if (!member?.moderatable) return false;
   const me = message.guild.members.me;
   if (!me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) {
@@ -1809,6 +1942,11 @@ async function timeoutMember(message, state, violations) {
 }
 
 async function runAutoModMessage(message) {
+  const now = nowMs();
+  if (now - Number(lastRuntimeCleanupAt || 0) >= RUNTIME_CLEANUP_INTERVAL_MS) {
+    cleanupRuntimeMaps(now);
+    lastRuntimeCleanupAt = now;
+  }
   if (!message?.guild) return { blocked: false };
   if (await isVerifiedBotMessage(message)) return { blocked: false };
   if (message.webhookId) {
@@ -1848,6 +1986,16 @@ async function runAutoModMessage(message) {
       { key: "unwhitelisted_webhook" },
     ]);
     return { blocked: true, action: "delete_webhook", heat: 0 };
+  }
+  if (!message?.member && message?.guild?.members?.fetch) {
+    const fetchedMember = await message.guild.members
+      .fetch(message.author.id)
+      .catch(() => null);
+    if (fetchedMember) {
+      try {
+        message.member = fetchedMember;
+      } catch {}
+    }
   }
   if (!message?.member) return { blocked: false };
   if (message.author?.bot || message.system) {
@@ -1916,7 +2064,7 @@ async function runAutoModMessage(message) {
     const done = await timeoutMember(message, state, [
       ...violations,
       { key: "panic_mode", heat: 0, info: "elevated mode active" },
-    ]);
+    ], { ignoreCooldown: true });
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
       ...violations,
@@ -1935,7 +2083,9 @@ async function runAutoModMessage(message) {
   if (hasInstantLinkViolation) {
     state.heat = MAX_HEAT;
     await markBadUserTrigger(message, violations, state.heat);
-    const done = await timeoutMember(message, state, violations);
+    const done = await timeoutMember(message, state, violations, {
+      ignoreCooldown: true,
+    });
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
       ...violations,
@@ -2046,14 +2196,58 @@ function setByPath(target, pathExpr, value) {
     .map((x) => x.trim())
     .filter(Boolean);
   if (!path.length) return false;
+  if (path.some((key) => ["__proto__", "prototype", "constructor"].includes(key))) {
+    return false;
+  }
   let ref = target;
   for (let i = 0; i < path.length - 1; i += 1) {
     const key = path[i];
+    if (["__proto__", "prototype", "constructor"].includes(key)) return false;
     if (!ref[key] || typeof ref[key] !== "object") ref[key] = {};
     ref = ref[key];
   }
+  if (["__proto__", "prototype", "constructor"].includes(path[path.length - 1])) {
+    return false;
+  }
   ref[path[path.length - 1]] = value;
   return true;
+}
+
+function isFiniteNumber(value) {
+  return Number.isFinite(Number(value));
+}
+
+function validateAutoModRuntimeConfig(cfg) {
+  const t = cfg?.thresholds || {};
+  const p = cfg?.panic || {};
+  if (!isFiniteNumber(t.warn) || Number(t.warn) < 0 || Number(t.warn) > 200) {
+    return { ok: false, reason: "invalid_threshold_warn" };
+  }
+  if (!isFiniteNumber(t.delete) || Number(t.delete) < 0 || Number(t.delete) > 200) {
+    return { ok: false, reason: "invalid_threshold_delete" };
+  }
+  if (!isFiniteNumber(t.timeout) || Number(t.timeout) < 0 || Number(t.timeout) > 200) {
+    return { ok: false, reason: "invalid_threshold_timeout" };
+  }
+  if (!(Number(t.warn) <= Number(t.delete) && Number(t.delete) <= Number(t.timeout))) {
+    return { ok: false, reason: "invalid_threshold_order" };
+  }
+
+  const panicChecks = [
+    ["triggerCount", 1, 30],
+    ["triggerWindowMs", 10_000, 24 * 60 * 60_000],
+    ["durationMs", 30_000, 24 * 60 * 60_000],
+    ["raidWindowMs", 10_000, 60 * 60_000],
+    ["raidUserThreshold", 1, 100],
+    ["raidYoungThreshold", 1, 100],
+  ];
+  for (const [key, min, max] of panicChecks) {
+    const value = Number(p[key]);
+    if (!Number.isFinite(value) || value < min || value > max) {
+      return { ok: false, reason: `invalid_panic_${key}` };
+    }
+  }
+  return { ok: true };
 }
 
 function updateAutoModConfig(pathExpr, value) {
@@ -2061,10 +2255,16 @@ function updateAutoModConfig(pathExpr, value) {
   if (!setByPath(next, pathExpr, value)) {
     return { ok: false, reason: "invalid_path" };
   }
-  automodRuntimeConfig = deepMerge(DEFAULT_AUTOMOD_RUNTIME, next);
+  const merged = sanitizeAutoModRuntimeConfig(next);
+  const validation = validateAutoModRuntimeConfig(merged);
+  if (!validation.ok) {
+    return { ok: false, reason: validation.reason };
+  }
+  const saved = writeJsonSafe(AUTOMOD_CONFIG_PATH, merged);
+  if (!saved) return { ok: false, reason: "save_failed" };
+  automodRuntimeConfig = merged;
   applyAutomodRuntime();
-  const saved = writeJsonSafe(AUTOMOD_CONFIG_PATH, automodRuntimeConfig);
-  return { ok: saved, config: getAutoModConfigSnapshot() };
+  return { ok: true, config: getAutoModConfigSnapshot() };
 }
 
 module.exports = {

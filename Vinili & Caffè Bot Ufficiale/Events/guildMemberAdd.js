@@ -1,4 +1,4 @@
-const {
+﻿const {
   EmbedBuilder,
   PermissionsBitField,
   AuditLogEvent,
@@ -57,7 +57,6 @@ const JOIN_GATE = {
   },
   usernameFilter: {
     enabled: true,
-    postJoinEnabled: true,
     action: "kick",
     strictWords: [
       "discord staff",
@@ -325,13 +324,13 @@ function buildDmWelcomeEmbed(member) {
         "Joining the server you automatically accept the rules.",
         "Entrando nel server accetti automaticamente le nostre regole.",
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102236527853661>",
-        "────────୨ৎ────────",
+        "------------------------------",
         "<:VC_Dot:1443932948599668746> Check out our GUILD TAGS",
         "<:moon:1470064812615667827>[Luna](<https://discord.gg/E6vrm5zE6B>) & <a:VC_Money:1448671284748746905>[Cash](<https://discord.gg/QnTN5P578g>)",
         "<:VC_Firework:1470796227913322658>[Porn](<https://discord.gg/WMuZ4EMAkc>) & <a:VC_PepeEggPlant:1331622686014570588>[69](<https://discord.gg/uqUNS9f5m5>)",
         "<a:VC_PepeSmoke:1331590685673132103>[Weed](<https://discord.gg/SzBwnxHXNv>) & <a:VC_PepeExcited:1331621719093284956>[Figa](<https://discord.gg/z3EXtJwvQH>)",
         "<a:VC_Arrow:1448672967721615452> <https://discord.com/channels/1329080093599076474/1442569111119990887/1470102239094767699>",
-        "────────୨ৎ────────",
+        "------------------------------",
         "<a:VC_Exclamation:1448687427836444854> Verify Yourself: <https://discord.com/channels/1329080093599076474/1442569059983163403>",
       ].join("\n"),
     )
@@ -395,13 +394,13 @@ async function handleBotJoin(member) {
       `${ARROW} **Rule:** Unverified Bot Additions`,
       `${ARROW} **Responsible:** ${executorText}`,
     ]);
-    if (result?.attempted) return;
+    if (result?.blocked) return;
   }
 
   if (JOIN_GATE.botAdditions.enabled) {
     const authorized = executorId
       ? await isAuthorizedBotAdder(member.guild, executorId)
-      : false;
+      : true;
     if (!authorized) {
       const result = await kickForJoinGate(
         member,
@@ -411,7 +410,7 @@ async function handleBotJoin(member) {
           `${ARROW} **Responsible:** ${executorText}${executorId ? "" : " (audit unavailable)"}`,
         ],
       );
-      if (result?.attempted) return;
+      if (result?.blocked) return;
     }
   }
 
@@ -639,6 +638,7 @@ async function kickForJoinGate(member, reason, extraLines = []) {
   const punished = canKick
     ? await member.kick(reason).then(() => true).catch(() => false)
     : false;
+  const blocked = true;
   if (punished) {
     markJoinGateKick(member.guild.id, member.id, reason);
   }
@@ -664,7 +664,7 @@ async function kickForJoinGate(member, reason, extraLines = []) {
       );
     await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
-  return { attempted: true, punished, dmSent, canKick };
+  return { blocked, attempted: canKick, punished, dmSent, canKick };
 }
 
 async function sendJoinGateNoAvatarLog(member) {
@@ -825,11 +825,15 @@ module.exports = {
         await sendJoinGateNoAvatarLog(member).catch(() => {});
       }
 
-      const joinRaidResult = isCoreExempt
-        ? { blocked: false }
-        : await processJoinRaidForMember(member).catch(
-        () => ({ blocked: false }),
-      );
+      let joinRaidResult = { blocked: false };
+      if (!isCoreExempt) {
+        try {
+          joinRaidResult = await processJoinRaidForMember(member);
+        } catch (joinRaidError) {
+          global.logger?.error?.("[guildMemberAdd] joinRaid failed:", joinRaidError);
+          joinRaidResult = { blocked: false };
+        }
+      }
       if (joinRaidResult?.blocked) return;
 
       if (isCoreExempt) {
@@ -912,3 +916,5 @@ module.exports = {
     }
   },
 };
+
+

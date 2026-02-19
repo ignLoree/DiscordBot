@@ -18,8 +18,8 @@ const {
 const { handleChannelDeletionAction: antiNukeHandleChannelDeletionAction } = require("../Services/Moderation/antiNukeService");
 
 const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;
-const AUDIT_RETRY_ATTEMPTS = 4;
-const AUDIT_RETRY_DELAY_MS = 900;
+const AUDIT_RETRY_ATTEMPTS = 3;
+const AUDIT_RETRY_DELAY_MS = 700;
 
 function isTicketsCategory(name) {
   return String(name || "")

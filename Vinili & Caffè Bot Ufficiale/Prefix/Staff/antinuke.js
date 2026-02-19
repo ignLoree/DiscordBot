@@ -164,7 +164,7 @@ module.exports = {
       const result = applyAntiNukePreset(mode);
       await safeMessageReply(message, {
         content: result.ok
-          ? `✅ Preset AntiNuke \`${mode}\` applicato.`
+          ? `[OK] Preset AntiNuke \`${mode}\` applicato.`
           : "<:vegax:1443934876440068179> Impossibile applicare preset.",
         allowedMentions: { repliedUser: false },
       });
@@ -209,7 +209,7 @@ module.exports = {
         );
         await safeMessageReply(message, {
           content: stopped.ok
-            ? `✅ Panic mode fermata. Motivo: \`${reason}\``
+            ? `[OK] Panic mode fermata. Motivo: \`${reason}\``
             : "<:vegax:1443934876440068179> Stop panic fallito.",
           allowedMentions: { repliedUser: false },
         });
@@ -266,7 +266,7 @@ module.exports = {
         );
         await safeMessageReply(message, {
           content: added.ok
-            ? `✅ Aggiunto <@${userId}> in maintenance per **${minutes}** min (fino a ${toTs(added.expiresAt, "F")}).`
+            ? `[OK] Aggiunto <@${userId}> in maintenance per **${minutes}** min (fino a ${toTs(added.expiresAt, "F")}).`
             : "<:vegax:1443934876440068179> Impossibile aggiungere utente.",
           allowedMentions: { repliedUser: false },
         });
@@ -285,7 +285,7 @@ module.exports = {
         const removed = removeMaintenanceAllowlistUser(message.guild.id, userId);
         await safeMessageReply(message, {
           content: removed.ok
-            ? `✅ Rimosso <@${userId}> dalla maintenance allowlist.`
+            ? `[OK] Rimosso <@${userId}> dalla maintenance allowlist.`
             : "<:vegax:1443934876440068179> Impossibile rimuovere utente.",
           allowedMentions: { repliedUser: false },
         });
@@ -311,7 +311,8 @@ module.exports = {
             [
               `State: **${raid.raidActive ? "ACTIVE" : "IDLE"}**`,
               `Action: **${raid.config.triggerAction}**`,
-              `Trigger: **${raid.flaggedRecent}/${raid.config.triggerCount}**`,
+              `Trigger: **${raid.uniqueFlaggedRecent}/${raid.config.triggerCount}**`,
+              `Flagged events: **${raid.flaggedRecent}**`,
               `Window: **${Math.round(raid.config.triggerWindowMs / 60_000)} min**`,
               `Duration: **${Math.round(raid.config.raidDurationMs / 60_000)} min**`,
               raid.raidActive ? `Until: ${toTs(raid.raidUntil, "F")}` : null,
@@ -345,7 +346,7 @@ module.exports = {
         const applied = applyJoinRaidPreset(mode);
         await safeMessageReply(message, {
           content: applied.ok
-            ? `✅ Preset JoinRaid \`${mode}\` applicato.`
+            ? `[OK] Preset JoinRaid \`${mode}\` applicato.`
             : "<:vegax:1443934876440068179> Impossibile applicare preset raid.",
           allowedMentions: { repliedUser: false },
         });

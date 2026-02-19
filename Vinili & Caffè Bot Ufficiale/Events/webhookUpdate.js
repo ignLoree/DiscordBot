@@ -11,8 +11,8 @@ const WEBHOOK_DELETE_ACTION = AuditLogEvent?.WebhookDelete ?? 52;
 const DEDUPE_TTL_MS = 15000;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
-const AUDIT_RETRY_ATTEMPTS = 5;
-const AUDIT_RETRY_DELAY_MS = 1200;
+const AUDIT_RETRY_ATTEMPTS = 3;
+const AUDIT_RETRY_DELAY_MS = 700;
 const localWebhookDedupeStore = new Map();
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
@@ -195,23 +195,22 @@ module.exports = {
 
       if (logChannel?.isTextBased?.()) {
         const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
       }
 
-      const reliableForNuke =
-        Number(match.score || 0) >= 4 &&
-        String(entry?.executor?.id || "").length > 0;
-      if (action === WEBHOOK_CREATE_ACTION && reliableForNuke) {
+      const targetWebhookId = /^\d{16,20}$/.test(targetId) ? targetId : "";
+      if (action === WEBHOOK_CREATE_ACTION) {
         await antiNukeHandleWebhookCreationAction({
           guild,
           executorId,
-          webhookId: targetId,
+          webhookId: targetWebhookId,
+          channelId: String(channel?.id || entry?.extra?.channel?.id || ""),
         });
-      } else if (action === WEBHOOK_DELETE_ACTION && reliableForNuke) {
+      } else if (action === WEBHOOK_DELETE_ACTION) {
         await antiNukeHandleWebhookDeletionAction({
           guild,
           executorId,
-          webhookId: targetId,
+          webhookId: targetWebhookId,
         });
       }
     } catch (error) {
@@ -219,5 +218,3 @@ module.exports = {
     }
   },
 };
-
-

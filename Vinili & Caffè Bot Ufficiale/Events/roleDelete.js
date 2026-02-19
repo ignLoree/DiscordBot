@@ -69,7 +69,7 @@ module.exports = {
           .setTitle("Role Delete")
           .setDescription(lines.join("\n"));
 
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
       }
       await antiNukeHandleRoleDeletionAction({
         guild,
