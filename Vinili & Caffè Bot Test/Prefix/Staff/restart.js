@@ -1,10 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const IDs = require("../../Utils/Config/ids");
 
-const DEV_ID = "295500038401163264";
-const TEST_GUILD_ID = IDs.guilds?.test || "1462458562507964584";
 const RESTART_FLAG = "restart.json";
 const RESTART_NOTIFY_FILE = "restart_notify.json";
 const PROCESS_EXIT_DELAY_MS = 1200;
@@ -26,17 +23,14 @@ async function sendPermissionError(message) {
     .catch(() => {});
 }
 
-async function sendGuildError(message) {
-  await message
-    .reply({
-      embeds: [
-        errorEmbed(
-          "<:vegax:1472992044140990526> Il comando `-rs` è utilizzabile solo nel **server test**.",
-        ),
-      ],
-      allowedMentions: { repliedUser: false },
-    })
-    .catch(() => {});
+function canUseRestart(message) {
+  if (!message?.guild || !message?.member) return false;
+  const isOwner =
+    String(message.guild.ownerId || "") === String(message.author?.id || "");
+  const isAdmin = Boolean(
+    message.member.permissions?.has?.("Administrator"),
+  );
+  return isOwner || isAdmin;
 }
 
 async function sendStartNotice(message) {
@@ -46,7 +40,7 @@ async function sendStartNotice(message) {
         new EmbedBuilder()
           .setColor("#6f4e37")
           .setDescription(
-            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando è completato.",
+            "<:attentionfromvega:1443651874032062505> Riavvio **Bot Test** richiesto. Ti avviso qui quando e completato.",
           ),
       ],
       allowedMentions: { repliedUser: false },
@@ -96,13 +90,8 @@ module.exports = {
   name: "restart",
   aliases: ["rs"],
   async execute(message) {
-    if (message.author?.id !== DEV_ID) {
+    if (!canUseRestart(message)) {
       await sendPermissionError(message);
-      return true;
-    }
-
-    if (message.guild?.id !== TEST_GUILD_ID) {
-      await sendGuildError(message);
       return true;
     }
 

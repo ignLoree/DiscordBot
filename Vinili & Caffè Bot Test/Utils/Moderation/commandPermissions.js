@@ -1,9 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
 
-const PERMISSIONS_PATH = path.join(process.cwd(), "permissions.json");
+const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");
 const EMPTY_PERMISSIONS = {
   slash: {},
   prefix: {},
@@ -13,18 +13,27 @@ const EMPTY_PERMISSIONS = {
 };
 
 let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
+const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
+const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
 
-function getAllowedGuildIds() {
-  const sponsorGuildIds = Array.isArray(IDs?.guilds?.sponsorGuildIds)
-    ? IDs.guilds.sponsorGuildIds
+function getSponsorGuildIds() {
+  return Array.isArray(IDs?.guilds?.sponsorGuildIds)
+    ? IDs.guilds.sponsorGuildIds.map(String)
     : [];
-  return new Set([IDs?.guilds?.test, ...sponsorGuildIds].filter(Boolean).map(String));
 }
 
-function isAllowedGuildTest(guildId) {
-  if (!guildId) return false;
-  const allowed = getAllowedGuildIds();
-  return allowed.has(String(guildId));
+function isOfficialMainGuild(guildId) {
+  return (
+    Boolean(OFFICIAL_MAIN_GUILD_ID) &&
+    String(guildId || "") === String(OFFICIAL_MAIN_GUILD_ID)
+  );
+}
+
+function isTestMainScopeGuild(guildId) {
+  const safeGuildId = String(guildId || "");
+  if (!safeGuildId) return false;
+  if (TEST_MAIN_GUILD_ID && safeGuildId === String(TEST_MAIN_GUILD_ID)) return true;
+  return getSponsorGuildIds().includes(safeGuildId);
 }
 
 const TICKET_BUTTON_IDS = new Set([
@@ -36,10 +45,7 @@ const TICKET_BUTTON_IDS = new Set([
 ]);
 
 function isSponsorGuild(guildId) {
-  const sponsorGuildIds = Array.isArray(IDs?.guilds?.sponsorGuildIds)
-    ? IDs.guilds.sponsorGuildIds
-    : [];
-  return sponsorGuildIds.map(String).includes(String(guildId || ""));
+  return getSponsorGuildIds().includes(String(guildId || ""));
 }
 
 function hasSponsorStaffRole(member, guildId) {
@@ -269,7 +275,21 @@ function getDevIds(client) {
 async function checkSlashPermission(interaction) {
   const guildId = interaction?.guildId || interaction?.guild?.id || null;
   const userId = interaction?.user?.id || null;
-  if (!guildId || !isAllowedGuildTest(guildId)) return false;
+  if (!guildId) return false;
+
+  if (isOfficialMainGuild(guildId)) return false;
+
+  if (!isTestMainScopeGuild(guildId)) {
+    const member = interaction?.member;
+    const memberAdmin = Boolean(
+      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+    if (memberAdmin) return true;
+    const liveMember = await fetchLiveMember(interaction);
+    return Boolean(
+      liveMember?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+  }
 
   if (interaction.commandName === "dmbroadcast") {
     const devIds = getDevIds(interaction?.client);
@@ -288,7 +308,16 @@ async function checkSlashPermission(interaction) {
 async function checkPrefixPermission(message, commandName, subcommandName = null) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
-  if (!guildId || !isAllowedGuildTest(guildId)) return false;
+  if (!guildId) return false;
+
+  if (isOfficialMainGuild(guildId)) return false;
+
+  if (!isTestMainScopeGuild(guildId)) {
+    const member = message?.member || (await fetchLiveMember(message));
+    return Boolean(
+      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+  }
 
   if (commandName === "restart") {
     const devIds = getDevIds(message?.client);
@@ -340,10 +369,30 @@ function evaluateComponentPolicy(interaction, policy) {
 async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id || null;
-  if (guildId && !isAllowedGuildTest(guildId)) {
+  if (guildId && isOfficialMainGuild(guildId)) {
     return {
       allowed: false,
       reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
+  }
+  if (guildId && !isTestMainScopeGuild(guildId)) {
+    const member = interaction?.member || (await fetchLiveMember(interaction));
+    const allowed = Boolean(
+      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+    if (allowed) {
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
+    }
+    return {
+      allowed: false,
+      reason: "missing_permission",
       requiredRoles: null,
       ownerId: null,
     };
@@ -396,10 +445,30 @@ async function checkButtonPermission(interaction) {
 async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id || null;
-  if (guildId && !isAllowedGuildTest(guildId)) {
+  if (guildId && isOfficialMainGuild(guildId)) {
     return {
       allowed: false,
       reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
+  }
+  if (guildId && !isTestMainScopeGuild(guildId)) {
+    const member = interaction?.member || (await fetchLiveMember(interaction));
+    const allowed = Boolean(
+      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+    if (allowed) {
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
+    }
+    return {
+      allowed: false,
+      reason: "missing_permission",
       requiredRoles: null,
       ownerId: null,
     };
@@ -454,10 +523,30 @@ async function checkStringSelectPermission(interaction) {
 async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id || null;
-  if (guildId && !isAllowedGuildTest(guildId)) {
+  if (guildId && isOfficialMainGuild(guildId)) {
     return {
       allowed: false,
       reason: "mono_guild",
+      requiredRoles: null,
+      ownerId: null,
+    };
+  }
+  if (guildId && !isTestMainScopeGuild(guildId)) {
+    const member = interaction?.member || (await fetchLiveMember(interaction));
+    const allowed = Boolean(
+      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
+    );
+    if (allowed) {
+      return {
+        allowed: true,
+        reason: null,
+        requiredRoles: null,
+        ownerId: null,
+      };
+    }
+    return {
+      allowed: false,
+      reason: "missing_permission",
       requiredRoles: null,
       ownerId: null,
     };

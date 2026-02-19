@@ -8,22 +8,16 @@ const {
 
 const PREFIXES = ["-"];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
-const MAIN_GUILD_ID = IDs.guilds?.main || null;
-const TEST_GUILD_ID = IDs.guilds?.test || "1462458562507964584";
-
-function isSponsorGuild(guildId) {
-  const list = IDs.guilds?.sponsorGuildIds || [];
-  return Array.isArray(list) && list.includes(guildId);
-}
-
-function isAllowedGuildTest(guildId) {
-  if (!guildId) return false;
-  if (guildId === MAIN_GUILD_ID) return false;
-  return guildId === TEST_GUILD_ID || isSponsorGuild(guildId);
-}
+const OFFICIAL_MAIN_GUILD_ID = IDs.guilds?.main || null;
 
 async function dispatchPrefixMessage(message, client) {
   if (!message?.guild || message.author?.bot) return false;
+  if (
+    OFFICIAL_MAIN_GUILD_ID &&
+    String(message.guild.id || "") === String(OFFICIAL_MAIN_GUILD_ID)
+  ) {
+    return false;
+  }
 
   const content = (message.content || "").trim();
   if (!content) return false;
@@ -34,8 +28,6 @@ async function dispatchPrefixMessage(message, client) {
     BOT_MENTION_REGEX.test(content) &&
     content.replace(BOT_MENTION_REGEX, "").trim().length > 0;
   if (!startsWithPrefix && !isMention) return false;
-
-  if (!isAllowedGuildTest(message.guild.id)) return false;
 
   const usedPrefix = PREFIXES.find((p) => content.startsWith(p));
   const tokens = usedPrefix

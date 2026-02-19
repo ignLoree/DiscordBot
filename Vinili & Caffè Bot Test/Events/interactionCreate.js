@@ -2,12 +2,24 @@
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const {
+  checkSlashPermission,
   checkButtonPermission,
   checkStringSelectPermission,
   checkModalPermission,
+  getSlashRequiredRoles,
   buildGlobalPermissionDeniedEmbed,
   buildGlobalNotYourControlEmbed,
 } = require("../Utils/Moderation/commandPermissions");
+const backupCommand = require("../Commands/Staff/backup");
+const {
+  handleBackupLoadInteraction,
+} = require("../Services/Backup/backupLoadService");
+const {
+  handleBackupInfoInteraction,
+} = require("../Services/Backup/backupInfoService");
+const {
+  handleBackupListInteraction,
+} = require("../Services/Backup/backupListService");
 
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
@@ -212,6 +224,10 @@ module.exports = {
       if (await handleVerifyInteraction(interaction)) return;
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
+        if (String(interaction.commandName || "").toLowerCase() === "backup") {
+          await backupCommand.autocomplete(interaction, client).catch(() => {});
+          return;
+        }
         await interaction.respond([]).catch(() => {});
         return;
       }
@@ -231,6 +247,23 @@ module.exports = {
       }
 
       if (interaction.isChatInputCommand?.()) {
+        if (String(interaction.commandName || "").toLowerCase() === "backup") {
+          const allowed = await checkSlashPermission(interaction);
+          if (!allowed) {
+            const requiredRoles = getSlashRequiredRoles(interaction) || [];
+            await interaction
+              .reply({
+                embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles, "comando")],
+                flags: PRIVATE_FLAG,
+              })
+              .catch(() => {});
+            return;
+          }
+          await backupCommand.execute(interaction, client).catch((error) => {
+            throw error;
+          });
+          return;
+        }
         await interaction
           .reply({
             embeds: [
@@ -247,6 +280,9 @@ module.exports = {
       const allowedByGate = await runPermissionGate(interaction);
       if (!allowedByGate) return;
 
+      if (await handleBackupLoadInteraction(interaction)) return;
+      if (await handleBackupInfoInteraction(interaction)) return;
+      if (await handleBackupListInteraction(interaction)) return;
       if (await handleTicketInteraction(interaction)) return;
     } catch (err) {
       global.logger.error("[Bot Test] interactionCreate", err);

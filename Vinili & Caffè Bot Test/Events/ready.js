@@ -1,7 +1,10 @@
 const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
+const { REST } = require("@discordjs/rest");
+const { Routes } = require("discord-api-types/v10");
 const sponsorPanels = require("../Triggers/embeds");
+const backupCommand = require("../Commands/Staff/backup");
 const {
   startTicketAutoClosePromptLoop,
   startTranscriptCleanupLoop,
@@ -42,6 +45,26 @@ async function setPresence(client) {
       "[STATUS] Errore impostazione presence:",
       err?.message || err,
     );
+  }
+}
+
+async function registerBackupSlash(client) {
+  try {
+    const token = client?.config?.token || process.env.DISCORD_TOKEN_TEST;
+    const clientId =
+      process.env.DISCORD_CLIENT_ID_TEST ||
+      process.env.DISCORD_CLIENT_ID ||
+      client.user?.id;
+    if (!token || !clientId) return;
+
+    const rest = new REST({ version: "10" }).setToken(token);
+    const payload = backupCommand?.data?.toJSON?.();
+    if (!payload) return;
+    await rest.put(Routes.applicationCommands(clientId), {
+      body: [payload],
+    });
+  } catch (err) {
+    global.logger.error("[Bot Test] register backup slash:", err?.message || err);
   }
 }
 
@@ -221,6 +244,7 @@ module.exports = {
     global.logger.info(`[BOT] ${client.user.username} has been launched!`);
 
     await setPresence(activeClient);
+    await registerBackupSlash(activeClient);
     await connectMongo(activeClient);
 
     const sponsorIds = getSponsorIds(activeClient);
