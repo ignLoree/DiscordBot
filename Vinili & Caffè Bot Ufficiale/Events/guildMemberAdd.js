@@ -727,8 +727,6 @@ async function sendJoinLog(member) {
   if (!joinLeaveLogChannel) return;
 
   const accountAge = formatAccountAge(member.user.createdAt);
-  const now = new Date();
-  const nowTs = toUnix(now);
   const joinLogEmbed = new EmbedBuilder()
     .setColor("#57F287")
     .setTitle("Member Joined")

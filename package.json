@@ -5,18 +5,18 @@
   "description": "Workspace per bot Ufficiale e Test",
   "main": "loader.js",
   "workspaces": [
-    "Vinili & Caff\u00e8 Bot Ufficiale",
-    "Vinili & Caff\u00e8 Bot Test"
+    "Vinili & Caffè Bot Ufficiale",
+    "Vinili & Caffè Bot Test"
   ],
   "scripts": {
     "start": "node loader.js",
-    "start:official": "npm run start --workspace=\"Vinili & Caff\u00e8 Bot Ufficiale\"",
-    "start:test": "npm run start --workspace=\"Vinili & Caff\u00e8 Bot Test\""
-  },
-  "dependencies": {
-    "discord.js": "14.25.1"
+    "start:official": "npm run start --workspace=\"Vinili & Caffè Bot Ufficiale\"",
+    "start:test": "npm run start --workspace=\"Vinili & Caffè Bot Test\""
   },
   "overrides": {
     "opusscript": "0.0.8"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1"
   }
 }

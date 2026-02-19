@@ -7,7 +7,7 @@ module.exports = function installProcessHandlers() {
   const error = (msg) => {
     try {
       logs.error(`[ERROR] ${msg}`);
-    } catch (_) {}
+    } catch {}
   };
 
   process.on("SIGINT", () => {
@@ -32,3 +32,4 @@ module.exports = function installProcessHandlers() {
 
   logs.success("[PROCESS] Process handlers loaded.");
 };
+

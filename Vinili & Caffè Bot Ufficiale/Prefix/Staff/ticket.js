@@ -142,18 +142,6 @@ function buildTicketRatingRows(ticketId) {
   return [row];
 }
 
-function buildTicketTranscriptRows(ticketId) {
-  return [
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`ticket_transcript:${ticketId}`)
-        .setStyle(ButtonStyle.Secondary)
-        .setLabel("View Transcript")
-        .setEmoji("📁"),
-    ),
-  ];
-}
-
 function buildTicketClosedEmbed(data) {
   const openedAt = data?.createdAt
     ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>`
@@ -1817,3 +1805,4 @@ module.exports = {
     });
   },
 };
+

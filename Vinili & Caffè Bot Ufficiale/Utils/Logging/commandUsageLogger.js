@@ -10,7 +10,7 @@ async function getChannelSafe(client, channelId) {
 
 async function logCommandUsage(
   client,
-  { channelId, serverName, user, userId, content, userAvatarUrl },
+  { channelId, serverName, user, userId, content },
 ) {
   if (!channelId) return;
   const channel = await getChannelSafe(client, channelId);

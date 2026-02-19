@@ -64,10 +64,6 @@ function formatActor(actor) {
   return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
 }
 
-function toUnix(date) {
-  return Math.floor(date.getTime() / 1000);
-}
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -576,6 +572,5 @@ module.exports = {
     }
   },
 };
-
 
 

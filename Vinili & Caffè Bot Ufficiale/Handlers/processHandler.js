@@ -4,10 +4,6 @@ function error(message) {
   logs.error(`[ERROR] ${message}`);
 }
 
-function warn(message) {
-  logs.warn(`[WARN] ${message}`);
-}
-
 module.exports = () => {
   if (process.__viniliProcessHandlersInstalled) return;
   process.__viniliProcessHandlersInstalled = true;
