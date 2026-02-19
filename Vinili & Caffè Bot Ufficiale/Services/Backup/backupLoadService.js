@@ -109,6 +109,16 @@ const LOAD_ACTIONS = [
 
 const ACTION_KEYS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_ACTIONS = new Set(LOAD_ACTIONS.map((a) => a.key));
+const DEFAULT_MESSAGES_LIMIT = 1000;
+const MAX_MESSAGES_LIMIT = 50000;
+const MESSAGE_LIMIT_PRESETS = [
+  { label: "100 messages", value: "100", description: "Ripristina max 100 messaggi" },
+  { label: "500 messages", value: "500", description: "Ripristina max 500 messaggi" },
+  { label: "1,000 messages", value: "1000", description: "Ripristina max 1000 messaggi" },
+  { label: "5,000 messages", value: "5000", description: "Ripristina max 5000 messaggi" },
+  { label: "10,000 messages", value: "10000", description: "Ripristina max 10000 messaggi" },
+  { label: "All available", value: "ALL", description: "Ripristina tutti i messaggi nel backup" },
+];
 const SESSION_TTL_MS = 1000 * 60 * 20;
 const ACTIVE_LOAD_STALE_MS = 1000 * 60 * 60 * 6;
 const sessions = new Map();
@@ -140,12 +150,31 @@ function sanitizeActions(values) {
   return out;
 }
 
+function normalizeMessagesLimit(value, fallback = DEFAULT_MESSAGES_LIMIT) {
+  const raw = String(value ?? "").trim().toUpperCase();
+  if (raw === "ALL" || raw === "0" || raw === "NONE" || raw === "UNLIMITED") {
+    return null;
+  }
+  const num = Number(raw || fallback);
+  if (!Number.isFinite(num)) {
+    return Number(fallback || DEFAULT_MESSAGES_LIMIT);
+  }
+  const safe = Math.max(1, Math.min(MAX_MESSAGES_LIMIT, Math.floor(num)));
+  return safe;
+}
+
+function formatMessagesLimit(limit) {
+  if (limit == null) return "ALL";
+  return String(Number(limit || 0));
+}
+
 function createLoadSession({
   guildId,
   userId,
   backupId,
   sourceGuildId = null,
   selectedActions = null,
+  messagesLimit = DEFAULT_MESSAGES_LIMIT,
 }) {
   pruneSessions();
   const id = makeSessionId();
@@ -157,6 +186,7 @@ function createLoadSession({
     backupId: String(backupId || "").trim().toUpperCase(),
     sourceGuildId: sourceGuildId ? String(sourceGuildId) : null,
     actions,
+    messagesLimit: normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT),
     createdAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL_MS,
   });
@@ -176,6 +206,13 @@ function updateLoadSessionActions(sessionId, values) {
   const session = getLoadSession(sessionId);
   if (!session) return null;
   session.actions = sanitizeActions(values);
+  return session;
+}
+
+function updateLoadSessionMessagesLimit(sessionId, value) {
+  const session = getLoadSession(sessionId);
+  if (!session) return null;
+  session.messagesLimit = normalizeMessagesLimit(value, session.messagesLimit);
   return session;
 }
 
@@ -215,7 +252,7 @@ function getActiveLoadState(guildId) {
   return state;
 }
 
-function startActiveLoad({ guildId, userId, backupId, actions }) {
+function startActiveLoad({ guildId, userId, backupId, actions, messagesLimit }) {
   const key = String(guildId || "");
   if (!key) return null;
   const state = {
@@ -223,6 +260,7 @@ function startActiveLoad({ guildId, userId, backupId, actions }) {
     userId: String(userId || ""),
     backupId: String(backupId || "").toUpperCase(),
     actions: Array.from(sanitizeActions(actions)),
+    messagesLimit: normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT),
     startedAtMs: Date.now(),
     updatedAtMs: Date.now(),
     cancelRequested: false,
@@ -283,7 +321,7 @@ function clearStaleActiveLoad(guildId) {
   return false;
 }
 
-function buildLoadWarningEmbed(backupId) {
+function buildLoadWarningEmbed(backupId, messagesLimit = DEFAULT_MESSAGES_LIMIT) {
   return new EmbedBuilder()
     .setColor("#f1c40f")
     .setTitle("Warning")
@@ -293,6 +331,8 @@ function buildLoadWarningEmbed(backupId) {
         "",
         "Select below what actions should be performed.",
         "In the next step the restore starts immediately.",
+        "",
+        `Messages limit: \`${formatMessagesLimit(messagesLimit)}\``,
         "",
         `Backup ID: \`${String(backupId || "").toUpperCase()}\``,
       ].filter(Boolean).join("\n"),
@@ -354,7 +394,13 @@ function countBackupPinnedMessages(payload) {
   return total;
 }
 
-function buildPreflightWarningEmbed({ guild, payload, actions, backupId }) {
+function buildPreflightWarningEmbed({
+  guild,
+  payload,
+  actions,
+  backupId,
+  messagesLimit = DEFAULT_MESSAGES_LIMIT,
+}) {
   const safeActions = sanitizeActions(actions);
   const lines = [];
   const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : []).filter(
@@ -375,6 +421,9 @@ function buildPreflightWarningEmbed({ guild, payload, actions, backupId }) {
     ? payload.autoModerationRules
     : [];
   const totalMessages = countBackupMessages(payload);
+  const effectiveLimit = normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT);
+  const loadableMessages =
+    effectiveLimit == null ? totalMessages : Math.min(totalMessages, effectiveLimit);
   const pinnedMessages = countBackupPinnedMessages(payload);
 
   if (safeActions.has("load_roles")) {
@@ -405,7 +454,7 @@ function buildPreflightWarningEmbed({ guild, payload, actions, backupId }) {
     lines.push(`• **${backupBans.length}** bans will be loaded`);
   }
   if (safeActions.has("load_messages")) {
-    lines.push(`• **${totalMessages}** messages will be loaded`);
+    lines.push(`• **${loadableMessages}** messages will be loaded (limit: \`${formatMessagesLimit(effectiveLimit)}\`)`);
   }
   if (safeActions.has("load_pinned_messages")) {
     lines.push(`• **${pinnedMessages}** pinned messages will be loaded`);
@@ -506,8 +555,13 @@ function buildLoadCancelledEmbed(backupId) {
     );
 }
 
-function buildLoadComponents(sessionId, selectedActions) {
+function buildLoadComponents(
+  sessionId,
+  selectedActions,
+  messagesLimit = DEFAULT_MESSAGES_LIMIT,
+) {
   const selected = sanitizeActions(selectedActions);
+  const limitValue = formatMessagesLimit(normalizeMessagesLimit(messagesLimit));
   const options = LOAD_ACTIONS.map((action) => ({
     label: action.label,
     description: action.description,
@@ -536,7 +590,23 @@ function buildLoadComponents(sessionId, selectedActions) {
       .setStyle(ButtonStyle.Danger),
   );
 
-  return [selectRow, buttonRow];
+  const limitRow = new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(`backup_load_messages_limit:${sessionId}`)
+      .setPlaceholder("Select messages limit")
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addOptions(
+        MESSAGE_LIMIT_PRESETS.map((item) => ({
+          label: item.label,
+          value: item.value,
+          description: item.description,
+          default: String(item.value).toUpperCase() === String(limitValue).toUpperCase(),
+        })),
+      ),
+  );
+
+  return [selectRow, limitRow, buttonRow];
 }
 
 function buildDisabledComponents(components) {
@@ -765,11 +835,21 @@ async function resolveAssetInput(value) {
   }
 }
 
-async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildId = null) {
+async function applyBackupToGuild(
+  guild,
+  backupId,
+  selectedActions,
+  sourceGuildId = null,
+  messagesLimit = DEFAULT_MESSAGES_LIMIT,
+) {
   const guildKey = String(guild?.id || "");
   const actions = sanitizeActions(selectedActions);
   const ref = sourceGuildId ? `${sourceGuildId}:${backupId}` : backupId;
   const { payload } = await readBackupByIdGlobal(ref);
+  const effectiveMessagesLimit = normalizeMessagesLimit(
+    messagesLimit,
+    DEFAULT_MESSAGES_LIMIT,
+  );
   const markPhase = (phase) => updateActiveLoad(guildKey, { phase });
   const bumpProcessed = (delta = 1) => {
     const state = getActiveLoadState(guildKey);
@@ -1108,8 +1188,10 @@ async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildI
     markPhase("load_messages");
     const msgByChannel = payload?.messages?.channels || {};
     const entries = Object.entries(msgByChannel);
+    let restoredMessages = 0;
 
     for (const [oldChannelId, messages] of entries) {
+      if (effectiveMessagesLimit != null && restoredMessages >= effectiveMessagesLimit) break;
       throwIfCancelled(guildKey);
       const mapped = channelMap.get(String(oldChannelId));
       if (!mapped) continue;
@@ -1118,11 +1200,13 @@ async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildI
 
       const list = Array.isArray(messages) ? messages : [];
       for (const message of list) {
+        if (effectiveMessagesLimit != null && restoredMessages >= effectiveMessagesLimit) break;
         throwIfCancelled(guildKey);
         const payloadToSend = normalizeMessagePayload(message, backupId);
         const sent = await channel.send(payloadToSend).catch(() => null);
         if (!sent) continue;
         stats.loadedMessages += 1;
+        restoredMessages += 1;
         bumpProcessed();
 
         if (actions.has("load_pinned_messages") && message?.pinned) {
@@ -1138,6 +1222,7 @@ async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildI
     const msgByThread = payload?.messages?.threads || {};
     const threadEntries = Object.entries(msgByThread);
     for (const [oldThreadId, messages] of threadEntries) {
+      if (effectiveMessagesLimit != null && restoredMessages >= effectiveMessagesLimit) break;
       throwIfCancelled(guildKey);
       const mappedThreadId = threadMap.get(String(oldThreadId));
       if (!mappedThreadId) continue;
@@ -1146,11 +1231,13 @@ async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildI
 
       const list = Array.isArray(messages) ? messages : [];
       for (const message of list) {
+        if (effectiveMessagesLimit != null && restoredMessages >= effectiveMessagesLimit) break;
         throwIfCancelled(guildKey);
         const payloadToSend = normalizeMessagePayload(message, backupId);
         const sent = await thread.send(payloadToSend).catch(() => null);
         if (!sent) continue;
         stats.loadedMessages += 1;
+        restoredMessages += 1;
         bumpProcessed();
 
         if (actions.has("load_pinned_messages") && message?.pinned) {
@@ -1398,10 +1485,17 @@ function computePermissionDiffs(guild, payload) {
   return diffs;
 }
 
-async function runBackupDryRun(guild, backupRef, selectedActions = null) {
+async function runBackupDryRun(
+  guild,
+  backupRef,
+  selectedActions = null,
+  messagesLimit = DEFAULT_MESSAGES_LIMIT,
+) {
   const actions = sanitizeActions(selectedActions || [...DEFAULT_ACTIONS]);
   const { payload, guildId: sourceGuildId, backupId } = await readBackupByIdGlobal(backupRef);
   const diff = computePermissionDiffs(guild, payload);
+  const totalMessages = countBackupMessages(payload);
+  const effectiveLimit = normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT);
 
   const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : []).filter(
     (r) => String(r?.name || "").trim() !== "@everyone",
@@ -1421,8 +1515,9 @@ async function runBackupDryRun(guild, backupRef, selectedActions = null) {
       createChannels: backupChannels.length,
       createThreads: backupThreads.length,
       updateMembers: backupMembers.length,
-      loadMessages: countBackupMessages(payload),
+      loadMessages: effectiveLimit == null ? totalMessages : Math.min(totalMessages, effectiveLimit),
       loadPinnedMessages: countBackupPinnedMessages(payload),
+      messagesLimit: effectiveLimit,
     },
     permissions: diff,
   };
@@ -1448,6 +1543,7 @@ function buildDryRunEmbed(result) {
         `• Threads to create: **${Number(result?.expected?.createThreads || 0)}**`,
         `• Members to update: **${Number(result?.expected?.updateMembers || 0)}**`,
         `• Messages to load: **${Number(result?.expected?.loadMessages || 0)}**`,
+        `• Messages limit: \`${formatMessagesLimit(result?.expected?.messagesLimit)}\``,
         `• Pinned to load: **${Number(result?.expected?.loadPinnedMessages || 0)}**`,
         "",
         "**Permission Diff**",
@@ -1469,6 +1565,7 @@ async function handleBackupLoadInteraction(interaction) {
 
   const isTarget =
     customId.startsWith("backup_load_actions:") ||
+    customId.startsWith("backup_load_messages_limit:") ||
     customId.startsWith("backup_load_confirm:") ||
     customId.startsWith("backup_load_continue:") ||
     customId.startsWith("backup_load_cancel:") ||
@@ -1521,8 +1618,20 @@ async function handleBackupLoadInteraction(interaction) {
     const next = updateLoadSessionActions(sessionId, interaction.values || []);
     await interaction
       .update({
-        embeds: [buildLoadWarningEmbed(next.backupId)],
-        components: buildLoadComponents(next.id, next.actions),
+        embeds: [buildLoadWarningEmbed(next.backupId, next.messagesLimit)],
+        components: buildLoadComponents(next.id, next.actions, next.messagesLimit),
+      })
+      .catch(() => {});
+    return true;
+  }
+
+  if (isSelect && customId.startsWith("backup_load_messages_limit:")) {
+    const selected = String(interaction.values?.[0] || "").trim();
+    const next = updateLoadSessionMessagesLimit(sessionId, selected);
+    await interaction
+      .update({
+        embeds: [buildLoadWarningEmbed(next.backupId, next.messagesLimit)],
+        components: buildLoadComponents(next.id, next.actions, next.messagesLimit),
       })
       .catch(() => {});
     return true;
@@ -1553,6 +1662,7 @@ async function handleBackupLoadInteraction(interaction) {
               payload,
               actions: [...session.actions],
               backupId: session.backupId,
+              messagesLimit: session.messagesLimit,
             }),
           ],
           components: [buildPreflightButtons(session.id)],
@@ -1589,6 +1699,7 @@ async function handleBackupLoadInteraction(interaction) {
       userId: session.userId,
       backupId: session.backupId,
       actions: [...session.actions],
+      messagesLimit: session.messagesLimit,
     });
     await interaction.message
       .edit({
@@ -1623,6 +1734,7 @@ async function handleBackupLoadInteraction(interaction) {
           session.backupId,
           [...session.actions],
           session.sourceGuildId,
+          session.messagesLimit,
         );
         await interaction.message
           .edit({
@@ -1677,6 +1789,7 @@ async function handleBackupLoadInteraction(interaction) {
                 `Phase: \`${status.phase}\``,
                 `Processed items: **${status.processed}**`, 
                 `Cancel requested: **${status.cancelRequested ? "yes" : "no"}**`, 
+                `Messages limit: \`${formatMessagesLimit(status.messagesLimit)}\``,
                 status.checkpointId ? `Checkpoint: \`${status.checkpointId}\`` : null,
               ].filter(Boolean).join("\n"),
             ),
@@ -1702,6 +1815,7 @@ function getGuildBackupLoadStatus(guildId) {
     cancelRequested: Boolean(state.cancelRequested),
     phase: String(state.phase || "starting"),
     processed: Number(state.processed || 0),
+    messagesLimit: normalizeMessagesLimit(state.messagesLimit, DEFAULT_MESSAGES_LIMIT),
     checkpointId: state.checkpointId ? String(state.checkpointId).toUpperCase() : null,
   };
 }

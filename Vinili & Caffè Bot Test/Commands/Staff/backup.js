@@ -352,6 +352,7 @@ function buildLoadStatusEmbed(status) {
         `Phase: \`${String(status.phase || "starting")}\``,
         `Processed items: **${Number(status.processed || 0)}**`,
         `Cancel requested: **${status.cancelRequested ? "yes" : "no"}**`,
+        `Messages limit: \`${status.messagesLimit == null ? "ALL" : Number(status.messagesLimit || 0)}\``,
         `Actions: ${actions.length ? `\`${actions.join("`, `")}\`` : "none"}`,
       ].join("\n"),
     );
@@ -399,6 +400,14 @@ module.exports = {
             .setDescription("ID del backup da caricare")
             .setAutocomplete(true)
             .setRequired(true),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName("messages_limit")
+            .setDescription("Quanti messaggi ripristinare (0 = tutti, max 50000)")
+            .setMinValue(0)
+            .setMaxValue(50000)
+            .setRequired(false),
         ),
     )
     .addSubcommand((subcommand) =>
@@ -545,6 +554,7 @@ module.exports = {
 
     if (sub === "load") {
       const backupRef = String(interaction.options.getString("backup_id") || "").trim();
+      const messagesLimit = interaction.options.getInteger("messages_limit");
       if (!backupRef) {
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed("backup_id non valido.", "Backup load")],
@@ -561,10 +571,11 @@ module.exports = {
           userId: interaction.user.id,
           backupId,
           sourceGuildId: globalRef.guildId,
+          messagesLimit,
         });
         await safeEditReply(interaction, {
-          embeds: [buildLoadWarningEmbed(backupId)],
-          components: buildLoadComponents(sessionId),
+          embeds: [buildLoadWarningEmbed(backupId, messagesLimit)],
+          components: buildLoadComponents(sessionId, null, messagesLimit),
           flags: EPHEMERAL_FLAG,
         });
       } catch (error) {
