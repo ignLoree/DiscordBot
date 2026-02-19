@@ -4,6 +4,9 @@
       "roles": [
         "roles.HighStaff"
       ],
+      "channels":[
+        "1442569288161558528"
+      ],
       "subcommands": {
         "info": [
           "roles.HighStaff"

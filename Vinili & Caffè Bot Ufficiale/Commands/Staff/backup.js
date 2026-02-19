@@ -8,8 +8,8 @@
 const { safeEditReply } = require("../../Utils/Moderation/reply");
 const {
   createGuildBackup,
-  readGuildBackup,
-  listGuildBackupMetas,
+  readBackupByIdGlobal,
+  listAllBackupMetas,
 } = require("../../Services/Backup/serverBackupService");
 const {
   createLoadSession,
@@ -278,15 +278,22 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize) {
   return embed;
 }
 
-function buildInfoButtons(backupId, ownerId) {
+function encodeBackupToken(backupId, sourceGuildId = null) {
+  const id = String(backupId || "").trim().toUpperCase();
+  const gid = String(sourceGuildId || "").trim();
+  return gid ? `${id}|${gid}` : id;
+}
+
+function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
+  const token = encodeBackupToken(backupId, sourceGuildId);
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId(`backup_info_load:${backupId}:${ownerId}`)
+      .setCustomId(`backup_info_load:${token}:${ownerId}`)
       .setLabel("Load this backup")
       .setStyle(ButtonStyle.Primary)
       .setDisabled(false),
     new ButtonBuilder()
-      .setCustomId(`backup_info_delete:${backupId}:${ownerId}`)
+      .setCustomId(`backup_info_delete:${token}:${ownerId}`)
       .setLabel("Delete this backup")
       .setStyle(ButtonStyle.Danger)
       .setDisabled(false),
@@ -302,14 +309,15 @@ function buildDeleteWarningEmbed() {
     );
 }
 
-function buildDeleteConfirmButtons(backupId, ownerId) {
+function buildDeleteConfirmButtons(backupId, ownerId, sourceGuildId = null) {
+  const token = encodeBackupToken(backupId, sourceGuildId);
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId(`backup_delete_confirm:${backupId}:${ownerId}`)
+      .setCustomId(`backup_delete_confirm:${token}:${ownerId}`)
       .setLabel("Confirm")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
-      .setCustomId(`backup_delete_cancel:${backupId}:${ownerId}`)
+      .setCustomId(`backup_delete_cancel:${token}:${ownerId}`)
       .setLabel("Cancel")
       .setStyle(ButtonStyle.Danger),
   );
@@ -424,14 +432,16 @@ module.exports = {
       }
 
       const query = String(focused.value || "").trim();
-      const metas = await listGuildBackupMetas(interaction.guildId, {
+      const metas = await listAllBackupMetas({
         search: query,
         limit: 25,
       });
 
       const choices = metas.slice(0, 25).map((meta) => {
         const name = String(meta.label || meta.backupId).slice(0, 100);
-        const value = String(meta.backupId || "").slice(0, 100);
+        const value = String(
+          meta.guildId ? `${meta.guildId}:${meta.backupId}` : meta.backupId || "",
+        ).slice(0, 100);
         return { name, value };
       });
 
@@ -472,10 +482,8 @@ module.exports = {
     }
 
     if (sub === "info") {
-      const backupId = String(interaction.options.getString("backup_id") || "")
-        .trim()
-        .toUpperCase();
-      if (!backupId) {
+      const backupRef = String(interaction.options.getString("backup_id") || "").trim();
+      if (!backupRef) {
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed("backup_id non valido.", "Backup info")],
           flags: EPHEMERAL_FLAG,
@@ -484,7 +492,8 @@ module.exports = {
       }
 
       try {
-        const result = await readGuildBackup(interaction.guild.id, backupId);
+        const result = await readBackupByIdGlobal(backupRef);
+        const backupId = String(result?.payload?.backupId || "").toUpperCase();
         await safeEditReply(interaction, {
           embeds: [
             buildInfoEmbed(
@@ -494,14 +503,14 @@ module.exports = {
               result.sizeBytes,
             ),
           ],
-          components: [buildInfoButtons(backupId, interaction.user.id)],
+          components: [buildInfoButtons(backupId, interaction.user.id, result.guildId)],
           flags: EPHEMERAL_FLAG,
         });
       } catch (error) {
         global.logger?.error?.("[backup.info] failed:", error);
         const notFound =
           error?.code === "ENOENT"
-            ? `Backup \`${backupId}\` non trovato in questo server.`
+            ? `Backup \`${backupRef}\` non trovato.`
             : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup info non riuscito")],
@@ -512,10 +521,8 @@ module.exports = {
     }
 
     if (sub === "load") {
-      const backupId = String(interaction.options.getString("backup_id") || "")
-        .trim()
-        .toUpperCase();
-      if (!backupId) {
+      const backupRef = String(interaction.options.getString("backup_id") || "").trim();
+      if (!backupRef) {
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed("backup_id non valido.", "Backup load")],
           flags: EPHEMERAL_FLAG,
@@ -524,11 +531,13 @@ module.exports = {
       }
 
       try {
-        await readGuildBackup(interaction.guild.id, backupId);
+        const globalRef = await readBackupByIdGlobal(backupRef);
+        const backupId = String(globalRef?.payload?.backupId || "").toUpperCase();
         const sessionId = createLoadSession({
           guildId: interaction.guild.id,
           userId: interaction.user.id,
           backupId,
+          sourceGuildId: globalRef.guildId,
         });
         await safeEditReply(interaction, {
           embeds: [buildLoadWarningEmbed(backupId)],
@@ -539,7 +548,7 @@ module.exports = {
         global.logger?.error?.("[backup.load] failed:", error);
         const notFound =
           error?.code === "ENOENT"
-            ? `Backup \`${backupId}\` non trovato in questo server.`
+            ? `Backup \`${backupRef}\` non trovato.`
             : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup load non riuscito")],
@@ -567,10 +576,8 @@ module.exports = {
     }
 
     if (sub === "delete") {
-      const backupId = String(interaction.options.getString("backup_id") || "")
-        .trim()
-        .toUpperCase();
-      if (!backupId) {
+      const backupRef = String(interaction.options.getString("backup_id") || "").trim();
+      if (!backupRef) {
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed("backup_id non valido.", "Backup delete")],
           flags: EPHEMERAL_FLAG,
@@ -579,17 +586,24 @@ module.exports = {
       }
 
       try {
-        await readGuildBackup(interaction.guild.id, backupId);
+        const globalRef = await readBackupByIdGlobal(backupRef);
+        const backupId = String(globalRef?.payload?.backupId || "").toUpperCase();
         await safeEditReply(interaction, {
           embeds: [buildDeleteWarningEmbed()],
-          components: [buildDeleteConfirmButtons(backupId, interaction.user.id)],
+          components: [
+            buildDeleteConfirmButtons(
+              backupId,
+              interaction.user.id,
+              globalRef.guildId,
+            ),
+          ],
           flags: EPHEMERAL_FLAG,
         });
       } catch (error) {
         global.logger?.error?.("[backup.delete] failed:", error);
         const notFound =
           error?.code === "ENOENT"
-            ? `Backup \`${backupId}\` non trovato in questo server.`
+            ? `Backup \`${backupRef}\` non trovato.`
             : error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup delete non riuscito")],

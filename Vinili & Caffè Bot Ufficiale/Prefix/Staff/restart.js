@@ -3,7 +3,6 @@ const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const fs = require("fs");
 const path = require("path");
 const child_process = require("child_process");
-const IDs = require("../../Utils/Config/ids");
 
 const RESTART_FLAG = "restart.json";
 const RESTART_CLEANUP_DELAY_MS = 2000;
@@ -62,6 +61,16 @@ function buildUsageEmbed() {
     );
 }
 
+function canUseRestart(message) {
+  if (!message?.guild || !message?.member) return false;
+  const isOwner =
+    String(message.guild.ownerId || "") === String(message.author?.id || "");
+  const isAdmin = Boolean(
+    message.member.permissions?.has?.("Administrator"),
+  );
+  return isOwner || isAdmin;
+}
+
 module.exports = {
   name: "restart",
   folder: "Dev",
@@ -80,14 +89,13 @@ module.exports = {
   ],
 
   async execute(message, args = [], client) {
-    const mainGuildId = IDs.guilds?.main || null;
-    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
+    if (!canUseRestart(message)) {
       return safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Il comando `+restart` è utilizzabile solo nel **server principale**.",
+              "<:vegax:1443934876440068179> Il comando `+restart` richiede permesso **Owner del server** o **Administrator**.",
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -240,3 +248,4 @@ module.exports = {
     }
   },
 };
+

@@ -27,6 +27,16 @@ const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
 
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
+const STAFF_BYPASS_PERMISSIONS = [
+  PermissionFlagsBits.Administrator,
+  PermissionFlagsBits.ManageGuild,
+  PermissionFlagsBits.ManageChannels,
+  PermissionFlagsBits.ManageRoles,
+  PermissionFlagsBits.ManageMessages,
+  PermissionFlagsBits.KickMembers,
+  PermissionFlagsBits.BanMembers,
+  PermissionFlagsBits.ModerateMembers,
+];
 const VOTE_CHANNEL_ID = IDs.channels.supporters;
 const VOTE_ROLE_ID = IDs.roles.Voter;
 const VOTE_URL = IDs.links.vote;
@@ -206,6 +216,11 @@ function getCommandTokenAfterPrefix(content, prefix) {
   if (!prefix || !content.startsWith(prefix)) return null;
   const raw = content.slice(prefix.length).trim();
   return raw.split(/\s+/)[0]?.toLowerCase() || null;
+}
+
+function hasAnyStaffBypassPermission(permissions) {
+  if (!permissions || typeof permissions.has !== "function") return false;
+  return STAFF_BYPASS_PERMISSIONS.some((perm) => permissions.has(perm));
 }
 
 function getPrefixOverrideMap(client) {
@@ -689,20 +704,6 @@ module.exports = {
     if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
       args.unshift(prefixSubcommandFromAlias);
     }
-    const ALLOWED_GUILD_IDS = new Set(
-      [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map(String),
-    );
-    if (message.guild?.id && !ALLOWED_GUILD_IDS.has(String(message.guild.id))) {
-      await deleteCommandMessage();
-      const embed = buildGlobalPermissionDeniedEmbed(
-        [],
-        "comando",
-        "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
-      );
-      const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
-      if (msg) setTimeout(() => msg.delete().catch(() => { }), 5000);
-      return;
-    }
     const permissionResult = await checkPrefixPermission(
       message,
       command.name,
@@ -735,14 +736,18 @@ module.exports = {
       return;
     }
     let hasPrefixCooldownBypass = Boolean(
-      message.member?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID),
+      message.member?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID) ||
+        hasAnyStaffBypassPermission(message.member?.permissions) ||
+        String(message.guild?.ownerId || "") === String(message.author?.id || ""),
     );
     if (!hasPrefixCooldownBypass) {
       const fetchedMember = await message.guild.members
         .fetch(message.author.id)
         .catch(() => null);
       hasPrefixCooldownBypass = Boolean(
-        fetchedMember?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID),
+        fetchedMember?.roles?.cache?.has(PREFIX_COOLDOWN_BYPASS_ROLE_ID) ||
+          hasAnyStaffBypassPermission(fetchedMember?.permissions) ||
+          String(message.guild?.ownerId || "") === String(message.author?.id || ""),
       );
     }
 

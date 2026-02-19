@@ -5,7 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require("discord.js");
-const { listGuildBackupMetasPaginated, readGuildBackup } = require("./serverBackupService");
+const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
 const {
   createLoadSession,
   buildLoadWarningEmbed,
@@ -73,11 +73,14 @@ function buildListComponents({ ownerId, pageData }) {
     .addOptions(
       items.map((item) => {
         const backupId = String(item?.backupId || "").toUpperCase();
+        const backupRef = String(
+          item?.guildId ? `${item.guildId}:${backupId}` : backupId,
+        ).slice(0, 100);
         const guildName = truncate(item?.guildName || "Unknown Guild", 70);
         const ts = toUnix(item?.createdAt);
         return {
           label: backupId.slice(0, 100),
-          value: backupId.slice(0, 100),
+          value: backupRef,
           description: truncate(`${guildName} | ${new Date(ts * 1000).toLocaleString("it-IT")}`, 100),
         };
       }),
@@ -101,7 +104,7 @@ function buildListComponents({ ownerId, pageData }) {
 }
 
 async function renderList(interaction, ownerId, page) {
-  const pageData = await listGuildBackupMetasPaginated(interaction.guildId, {
+  const pageData = await listAllBackupMetasPaginated({
     page,
     pageSize: PAGE_SIZE,
   });
@@ -156,18 +159,20 @@ async function handleBackupListInteraction(interaction) {
   }
 
   if (isSelect && customId.startsWith("backup_list_select:")) {
-    const backupId = String(interaction.values?.[0] || "").trim().toUpperCase();
-    if (!backupId) {
+    const backupRef = String(interaction.values?.[0] || "").trim();
+    if (!backupRef) {
       await interaction.reply({ content: "Backup non valido.", flags: 1 << 6 }).catch(() => {});
       return true;
     }
 
     try {
-      await readGuildBackup(interaction.guildId, backupId);
+      const info = await readBackupByIdGlobal(backupRef);
+      const backupId = String(info?.payload?.backupId || "").toUpperCase();
       const sessionId = createLoadSession({
         guildId: interaction.guildId,
         userId: interaction.user.id,
         backupId,
+        sourceGuildId: info.guildId,
       });
       await interaction
         .update({

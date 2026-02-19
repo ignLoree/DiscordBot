@@ -29,6 +29,16 @@ const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
+const STAFF_BYPASS_PERMISSIONS = [
+  PermissionFlagsBits.Administrator,
+  PermissionFlagsBits.ManageGuild,
+  PermissionFlagsBits.ManageChannels,
+  PermissionFlagsBits.ManageRoles,
+  PermissionFlagsBits.ManageMessages,
+  PermissionFlagsBits.KickMembers,
+  PermissionFlagsBits.BanMembers,
+  PermissionFlagsBits.ModerateMembers,
+];
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -55,6 +65,11 @@ function sanitizeEditPayload(payload) {
   const next = { ...payload };
   delete next.flags;
   return next;
+}
+
+function hasAnyStaffBypassPermission(permissions) {
+  if (!permissions || typeof permissions.has !== "function") return false;
+  return STAFF_BYPASS_PERMISSIONS.some((perm) => permissions.has(perm));
 }
 
 async function handleAutocomplete(interaction, client) {
@@ -97,22 +112,6 @@ async function handleSlashCommand(interaction, client) {
     client.interactionCommandLocks = new Set();
   const interactionLockId = `${interaction.guildId || "dm"}:${interaction.user.id}`;
 
-  const ALLOWED_GUILD_IDS = new Set(
-    [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map(String),
-  );
-  if (
-    interaction.guildId &&
-    !ALLOWED_GUILD_IDS.has(String(interaction.guildId)) &&
-    String(interaction.commandName || "").toLowerCase() !== "backup"
-  ) {
-    const embed = buildGlobalPermissionDeniedEmbed(
-      [],
-      "comando",
-      "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
-    );
-    return interaction.reply({ embeds: [embed], flags: 1 << 6 });
-  }
-
   const slashPermission = await checkSlashPermission(interaction, {
     returnDetails: true,
   });
@@ -143,12 +142,20 @@ async function handleSlashCommand(interaction, client) {
   }
   const memberRoleCache = interaction.member?.roles?.cache;
   const memberRoleArray = interaction.member?.roles;
-  const hasSlashCooldownBypass = Boolean(
+  const isGuildOwner =
+    String(interaction.guild?.ownerId || "") === String(interaction.user?.id || "");
+  const hasStaffPermissionBypass = hasAnyStaffBypassPermission(
+    interaction.memberPermissions,
+  );
+  const hasStaffRoleBypass = Boolean(
     (memberRoleCache &&
       typeof memberRoleCache.has === "function" &&
       memberRoleCache.has(SLASH_COOLDOWN_BYPASS_ROLE_ID)) ||
-    (Array.isArray(memberRoleArray) &&
-      memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID)),
+      (Array.isArray(memberRoleArray) &&
+        memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID)),
+  );
+  const hasSlashCooldownBypass = Boolean(
+    hasStaffRoleBypass || hasStaffPermissionBypass || isGuildOwner,
   );
 
   if (!hasSlashCooldownBypass && !expectsModal) {

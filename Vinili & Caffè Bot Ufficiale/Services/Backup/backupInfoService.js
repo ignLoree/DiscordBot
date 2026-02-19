@@ -1,5 +1,5 @@
 ﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
-const { deleteGuildBackup, readGuildBackup } = require("./serverBackupService");
+const { deleteBackupByIdGlobal, readBackupByIdGlobal } = require("./serverBackupService");
 const {
   createLoadSession,
   buildLoadWarningEmbed,
@@ -8,6 +8,16 @@ const {
 
 function splitCustomId(customId) {
   return String(customId || "").split(":");
+}
+
+function parseBackupToken(token) {
+  const raw = String(token || "").trim();
+  if (!raw) return { backupId: "", sourceGuildId: null };
+  const [backupIdRaw, sourceGuildIdRaw] = raw.split("|");
+  return {
+    backupId: String(backupIdRaw || "").trim().toUpperCase(),
+    sourceGuildId: sourceGuildIdRaw ? String(sourceGuildIdRaw).trim() : null,
+  };
 }
 
 function buildDeleteWarningEmbed() {
@@ -69,7 +79,9 @@ async function handleBackupInfoInteraction(interaction) {
     customId.startsWith("backup_delete_cancel:");
 
   if (customId.startsWith("backup_info_load:")) {
-    const [, backupId, ownerId] = splitCustomId(customId);
+    const [, backupToken, ownerId] = splitCustomId(customId);
+    const parsed = parseBackupToken(backupToken);
+    const backupId = parsed.backupId;
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
@@ -79,11 +91,14 @@ async function handleBackupInfoInteraction(interaction) {
     }
 
     try {
-      await readGuildBackup(interaction.guildId, backupId);
+      const source = await readBackupByIdGlobal(
+        parsed.sourceGuildId ? `${parsed.sourceGuildId}:${backupId}` : backupId,
+      );
       const sessionId = createLoadSession({
         guildId: interaction.guildId,
         userId: interaction.user.id,
-        backupId: String(backupId || "").toUpperCase(),
+        backupId: String(source?.payload?.backupId || backupId).toUpperCase(),
+        sourceGuildId: source.guildId,
       });
       await interaction
         .update({
@@ -107,7 +122,9 @@ async function handleBackupInfoInteraction(interaction) {
   }
 
   if (customId.startsWith("backup_info_delete:")) {
-    const [, backupId, ownerId] = splitCustomId(customId);
+    const [, backupToken, ownerId] = splitCustomId(customId);
+    const parsed = parseBackupToken(backupToken);
+    const backupId = parsed.backupId;
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
@@ -119,14 +136,19 @@ async function handleBackupInfoInteraction(interaction) {
     await interaction
       .update({
         embeds: [buildDeleteWarningEmbed()],
-        components: [buildDeleteConfirmButtons(String(backupId || "").toUpperCase(), ownerId || interaction.user.id)],
+        components: [
+          buildDeleteConfirmButtons(
+            String(backupToken || "").trim(),
+            ownerId || interaction.user.id,
+          ),
+        ],
       })
       .catch(() => {});
     return true;
   }
 
   if (customId.startsWith("backup_info_delete_cancel:")) {
-    const [, backupId, ownerId] = splitCustomId(customId);
+    const [, backupToken, ownerId] = splitCustomId(customId);
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
@@ -145,7 +167,7 @@ async function handleBackupInfoInteraction(interaction) {
   }
 
   if (customId.startsWith("backup_delete_cancel:")) {
-    const [, backupId, ownerId] = splitCustomId(customId);
+    const [, backupToken, ownerId] = splitCustomId(customId);
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
@@ -164,7 +186,9 @@ async function handleBackupInfoInteraction(interaction) {
   }
 
   if (customId.startsWith("backup_info_delete_confirm:") || customId.startsWith("backup_delete_confirm:")) {
-    const [, backupId, ownerId] = splitCustomId(customId);
+    const [, backupToken, ownerId] = splitCustomId(customId);
+    const parsed = parseBackupToken(backupToken);
+    const backupId = parsed.backupId;
 
     if (ownerId && String(ownerId) !== String(interaction.user?.id || "")) {
       await interaction
@@ -174,7 +198,9 @@ async function handleBackupInfoInteraction(interaction) {
     }
 
     try {
-      await deleteGuildBackup(interaction.guildId, backupId);
+      await deleteBackupByIdGlobal(
+        parsed.sourceGuildId ? `${parsed.sourceGuildId}:${backupId}` : backupId,
+      );
       await interaction
         .update({
           embeds: [buildDeleteDoneEmbed(backupId)],

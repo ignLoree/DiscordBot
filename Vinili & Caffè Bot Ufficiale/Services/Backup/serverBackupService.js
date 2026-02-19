@@ -240,6 +240,10 @@ function getBackupFolder(guildId) {
   return path.join(__dirname, "..", "..", "Data", "Backups", String(guildId));
 }
 
+function getBackupsRootFolder() {
+  return path.join(__dirname, "..", "..", "Data", "Backups");
+}
+
 function getBackupFilePath(guildId, backupId) {
   const normalizedId = String(backupId || "")
     .trim()
@@ -683,6 +687,19 @@ async function readBackupMeta(guildId, backupId) {
   };
 }
 
+function parseBackupRef(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return { guildId: null, backupId: "" };
+  const parts = raw.split(":");
+  if (parts.length === 2 && /^\d{16,20}$/.test(parts[0])) {
+    return {
+      guildId: String(parts[0]),
+      backupId: String(parts[1] || "").trim().toUpperCase(),
+    };
+  }
+  return { guildId: null, backupId: raw.toUpperCase() };
+}
+
 async function listGuildBackupMetas(
   guildId,
   { search = "", limit = 25, offset = 0 } = {},
@@ -748,6 +765,126 @@ async function listGuildBackupMetas(
   return out;
 }
 
+async function listAllBackupMetas({ search = "", limit = 25, offset = 0 } = {}) {
+  const root = getBackupsRootFolder();
+  const safeLimit = Math.max(1, Math.min(500, Number(limit || 25)));
+  const safeOffset = Math.max(0, Number(offset || 0));
+  const normalizedSearch = String(search || "")
+    .trim()
+    .toLowerCase();
+
+  const guildDirs = await fs.readdir(root, { withFileTypes: true }).catch(() => []);
+  const entries = [];
+
+  for (const dirent of guildDirs) {
+    if (!dirent?.isDirectory?.()) continue;
+    const guildId = String(dirent.name || "").trim();
+    if (!/^\d{16,20}$/.test(guildId)) continue;
+
+    const folder = path.join(root, guildId);
+    const files = await fs.readdir(folder).catch(() => []);
+    for (const fileName of files) {
+      const backupId = parseBackupIdFromFileName(fileName);
+      if (!backupId) continue;
+      if (normalizedSearch && !backupId.toLowerCase().includes(normalizedSearch)) {
+        if (!String(fileName).toLowerCase().includes(normalizedSearch)) continue;
+      }
+      const filePath = path.join(folder, fileName);
+      const stat = await fs.stat(filePath).catch(() => null);
+      if (!stat) continue;
+      entries.push({
+        guildId,
+        backupId,
+        mtimeMs: Number(stat.mtimeMs || 0),
+      });
+    }
+  }
+
+  entries.sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+  const out = [];
+  let seen = 0;
+  for (const entry of entries) {
+    const meta = await readBackupMeta(entry.guildId, entry.backupId).catch(() => null);
+    if (!meta) continue;
+
+    const guildName = meta.guildName || "Unknown Guild";
+    const dateLabel = toSafeDateLabel(meta.createdAt || entry.mtimeMs);
+    const label = `${guildName} | ${dateLabel} (${meta.backupId})`;
+    const haystack = `${label} ${meta.backupId} ${entry.guildId}`.toLowerCase();
+    if (normalizedSearch && !haystack.includes(normalizedSearch)) continue;
+
+    if (seen < safeOffset) {
+      seen += 1;
+      continue;
+    }
+
+    out.push({
+      guildId: entry.guildId,
+      backupId: meta.backupId,
+      guildName,
+      createdAt: meta.createdAt || null,
+      source: meta.source || "manual",
+      label,
+    });
+    if (out.length >= safeLimit) break;
+  }
+
+  return out;
+}
+
+async function listAllBackupMetasPaginated(
+  { search = "", page = 1, pageSize = 10 } = {},
+) {
+  const safePageSize = Math.max(1, Math.min(25, Number(pageSize || 10)));
+  const safePage = Math.max(1, Number(page || 1));
+  const all = await listAllBackupMetas({ search, limit: 2000, offset: 0 });
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+  const finalPage = Math.min(safePage, totalPages);
+  const start = (finalPage - 1) * safePageSize;
+  const items = all.slice(start, start + safePageSize);
+
+  return {
+    items,
+    total,
+    totalPages,
+    page: finalPage,
+    pageSize: safePageSize,
+  };
+}
+
+async function readBackupByIdGlobal(backupRef) {
+  const parsed = parseBackupRef(backupRef);
+  const backupId = String(parsed.backupId || "").trim().toUpperCase();
+  if (!backupId) {
+    const err = new Error("backup_id non valido.");
+    err.code = "EINVAL";
+    throw err;
+  }
+
+  if (parsed.guildId) {
+    const data = await readGuildBackup(parsed.guildId, backupId);
+    return { ...data, guildId: parsed.guildId, backupId };
+  }
+
+  const all = await listAllBackupMetas({ search: backupId, limit: 2000, offset: 0 });
+  const hit = all.find((meta) => String(meta.backupId || "").toUpperCase() === backupId);
+  if (!hit?.guildId) {
+    const err = new Error(`Backup \`${backupId}\` non trovato.`);
+    err.code = "ENOENT";
+    throw err;
+  }
+  const data = await readGuildBackup(hit.guildId, backupId);
+  return { ...data, guildId: hit.guildId, backupId };
+}
+
+async function deleteBackupByIdGlobal(backupRef) {
+  const { guildId, backupId } = await readBackupByIdGlobal(backupRef);
+  await deleteGuildBackup(guildId, backupId);
+  return { guildId, backupId };
+}
+
 async function listGuildBackupMetasPaginated(
   guildId,
   { search = "", page = 1, pageSize = 10 } = {},
@@ -782,4 +919,8 @@ module.exports = {
   deleteGuildBackup,
   listGuildBackupMetas,
   listGuildBackupMetasPaginated,
+  listAllBackupMetas,
+  listAllBackupMetasPaginated,
+  readBackupByIdGlobal,
+  deleteBackupByIdGlobal,
 };

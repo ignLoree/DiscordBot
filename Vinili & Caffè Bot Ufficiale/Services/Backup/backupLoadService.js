@@ -6,7 +6,7 @@
   EmbedBuilder,
   PermissionFlagsBits,
 } = require("discord.js");
-const { readGuildBackup } = require("./serverBackupService");
+const { readBackupByIdGlobal } = require("./serverBackupService");
 
 const LOAD_ACTIONS = [
   {
@@ -103,7 +103,13 @@ function sanitizeActions(values) {
   return out;
 }
 
-function createLoadSession({ guildId, userId, backupId, selectedActions = null }) {
+function createLoadSession({
+  guildId,
+  userId,
+  backupId,
+  sourceGuildId = null,
+  selectedActions = null,
+}) {
   pruneSessions();
   const id = makeSessionId();
   const actions = sanitizeActions(selectedActions || [...DEFAULT_ACTIONS]);
@@ -112,6 +118,7 @@ function createLoadSession({ guildId, userId, backupId, selectedActions = null }
     guildId: String(guildId),
     userId: String(userId),
     backupId: String(backupId || "").trim().toUpperCase(),
+    sourceGuildId: sourceGuildId ? String(sourceGuildId) : null,
     actions,
     createdAt: Date.now(),
     expiresAt: Date.now() + SESSION_TTL_MS,
@@ -473,10 +480,11 @@ function ensureManageGuild(interaction) {
   return Boolean(interaction?.memberPermissions?.has?.(PermissionFlagsBits.ManageGuild));
 }
 
-async function applyBackupToGuild(guild, backupId, selectedActions) {
+async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildId = null) {
   const guildKey = String(guild?.id || "");
   const actions = sanitizeActions(selectedActions);
-  const { payload } = await readGuildBackup(guild.id, backupId);
+  const ref = sourceGuildId ? `${sourceGuildId}:${backupId}` : backupId;
+  const { payload } = await readBackupByIdGlobal(ref);
   const markPhase = (phase) => updateActiveLoad(guildKey, { phase });
   const bumpProcessed = (delta = 1) => {
     const state = getActiveLoadState(guildKey);
@@ -838,10 +846,10 @@ async function handleBackupLoadInteraction(interaction) {
 
   if (isButton && customId.startsWith("backup_load_continue:")) {
     try {
-      const { payload } = await readGuildBackup(
-        interaction.guildId,
-        session.backupId,
-      );
+      const ref = session.sourceGuildId
+        ? `${session.sourceGuildId}:${session.backupId}`
+        : session.backupId;
+      const { payload } = await readBackupByIdGlobal(ref);
       await interaction
         .update({
           embeds: [
@@ -898,6 +906,7 @@ async function handleBackupLoadInteraction(interaction) {
         interaction.guild,
         session.backupId,
         [...session.actions],
+        session.sourceGuildId,
       );
       await interaction.message
         .edit({

@@ -30,6 +30,9 @@ const ALLOWED_GUILD_IDS = new Set(
 function isAllowedGuildUfficiale(guildId) {
   return !guildId || ALLOWED_GUILD_IDS.has(String(guildId));
 }
+function isMainGuild(guildId) {
+  return Boolean(MAIN_GUILD_ID) && String(guildId || "") === String(MAIN_GUILD_ID);
+}
 
 const TICKET_BUTTON_IDS = new Set([
   "ticket_partnership",
@@ -576,6 +579,8 @@ function getDevIds(client) {
 
 async function checkSlashPermission(interaction, options = {}) {
   const userId = interaction?.user?.id || null;
+  const guildId = interaction?.guildId || interaction?.guild?.id || null;
+  const onMainGuild = isMainGuild(guildId);
 
   if (String(interaction?.commandName || "").toLowerCase() === "backup") {
     const allowed = await isGuildOwnerOrAdmin(interaction);
@@ -590,15 +595,27 @@ async function checkSlashPermission(interaction, options = {}) {
     return allowed;
   }
 
-  if (interaction.commandName === "dmbroadcast") {
+  if (interaction.commandName === "dmbroadcast" && onMainGuild) {
     const client = interaction.client;
     const devIds = getDevIds(client);
     if (devIds.length === 0) return false;
     return devIds.includes(userId);
   }
 
-  const guildId = interaction?.guildId || interaction?.guild?.id || null;
-  if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
+  if (guildId && !onMainGuild) {
+    const allowed = await hasAllPermissionsWithLiveFallback(interaction, [
+      PermissionFlagsBits.Administrator,
+    ]);
+    if (options.returnDetails) {
+      return {
+        allowed,
+        reason: allowed ? null : "missing_permission",
+        requiredRoles: null,
+        channels: null,
+      };
+    }
+    return allowed;
+  }
 
   if (guildId && userId) {
     const group = interaction.options?.getSubcommandGroup?.(false) || null;
@@ -695,8 +712,44 @@ async function checkPrefixPermission(
 ) {
   const guildId = message?.guild?.id || null;
   const userId = message?.author?.id || null;
+  const safeCommand = String(commandName || "").toLowerCase();
+  const onMainGuild = isMainGuild(guildId);
 
-  if (guildId && !isAllowedGuildUfficiale(guildId)) return false;
+  if (safeCommand === "restart") {
+    let allowed = false;
+    if (message?.guild && message?.member) {
+      const isOwner =
+        String(message.guild.ownerId || "") === String(userId || "");
+      const isAdmin = Boolean(
+        message.member.permissions?.has?.(PermissionFlagsBits.Administrator),
+      );
+      allowed = isOwner || isAdmin;
+    }
+    if (options.returnDetails) {
+      return {
+        allowed,
+        reason: allowed ? null : "missing_permission",
+        requiredRoles: null,
+        channels: null,
+      };
+    }
+    return allowed;
+  }
+
+  if (guildId && !onMainGuild) {
+    const allowed = await hasAllPermissionsWithLiveFallback(message, [
+      PermissionFlagsBits.Administrator,
+    ]);
+    if (options.returnDetails) {
+      return {
+        allowed,
+        reason: allowed ? null : "missing_permission",
+        requiredRoles: null,
+        channels: null,
+      };
+    }
+    return allowed;
+  }
 
   if (guildId && userId) {
     const keys = buildPrefixLookupKeys(commandName, subcommandName);
