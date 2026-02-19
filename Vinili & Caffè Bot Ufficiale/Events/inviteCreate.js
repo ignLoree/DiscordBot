@@ -1,5 +1,10 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const {
+  handleInviteCreationAction: antiNukeHandleInviteCreationAction,
+  isAntiNukePanicActive,
+  isWhitelistedExecutorAsync,
+} = require("../Services/Moderation/antiNukeService");
 
 const INVITE_CREATE_ACTION = AuditLogEvent?.InviteCreate ?? 40;
 const AUDIT_FETCH_LIMIT = 20;
@@ -104,6 +109,25 @@ module.exports = {
         (await resolveResponsible(guild, code)) ||
         invite?.inviter ||
         null;
+      const executorId = String(responsible?.id || invite?.inviter?.id || "");
+
+      await antiNukeHandleInviteCreationAction({
+        guild,
+        executorId,
+        inviteCode: code,
+        channelId: String(invite?.channel?.id || ""),
+      }).catch(() => {});
+
+      if (
+        isAntiNukePanicActive(guild.id) &&
+        executorId &&
+        !(await isWhitelistedExecutorAsync(guild, executorId))
+      ) {
+        await invite
+          .delete("AntiNuke panic mode: invite creation blocked")
+          .catch(() => {});
+      }
+
       const responsibleText = formatAuditActor(responsible);
       const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
       const inviteUrl = invite?.url || (code ? `https://discord.gg/${code}` : null);
@@ -134,5 +158,3 @@ module.exports = {
     }
   },
 };
-
-

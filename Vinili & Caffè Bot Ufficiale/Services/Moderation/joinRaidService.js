@@ -57,6 +57,45 @@ const JOIN_RAID_CONFIG = {
   },
 };
 
+const JOIN_RAID_PRESETS = {
+  safe: {
+    triggerAction: "kick",
+    triggerCount: 12,
+    triggerWindowMs: 3 * 60 * 60_000,
+    raidDurationMs: 20 * 60_000,
+    idFlag: {
+      minimumMatches: 5,
+      compareWindowMs: 3 * 60 * 60_000,
+      createdAtDeltaMs: 20 * 60_000,
+    },
+    ageFlag: { minimumAgeMs: 2 * 24 * 60 * 60_000 },
+  },
+  balanced: {
+    triggerAction: "ban",
+    triggerCount: 10,
+    triggerWindowMs: 3 * 60 * 60_000,
+    raidDurationMs: 30 * 60_000,
+    idFlag: {
+      minimumMatches: 4,
+      compareWindowMs: 3 * 60 * 60_000,
+      createdAtDeltaMs: 20 * 60_000,
+    },
+    ageFlag: { minimumAgeMs: 3 * 24 * 60 * 60_000 },
+  },
+  strict: {
+    triggerAction: "ban",
+    triggerCount: 8,
+    triggerWindowMs: 2 * 60 * 60_000,
+    raidDurationMs: 45 * 60_000,
+    idFlag: {
+      minimumMatches: 3,
+      compareWindowMs: 2 * 60 * 60_000,
+      createdAtDeltaMs: 25 * 60_000,
+    },
+    ageFlag: { minimumAgeMs: 5 * 24 * 60 * 60_000 },
+  },
+};
+
 const GUILD_STATE = new Map();
 const TEMP_BAN_TIMERS = new Map();
 const SAVE_TIMERS = new Map();
@@ -557,8 +596,75 @@ async function processJoinRaidForMember(member) {
   });
 }
 
+function applyJoinRaidPreset(name = "balanced") {
+  const presetKey = String(name || "").toLowerCase();
+  const preset = JOIN_RAID_PRESETS[presetKey];
+  if (!preset) return { ok: false, reason: "invalid_preset" };
+  JOIN_RAID_CONFIG.triggerAction = String(
+    preset.triggerAction || JOIN_RAID_CONFIG.triggerAction,
+  );
+  JOIN_RAID_CONFIG.triggerCount = Number(
+    preset.triggerCount || JOIN_RAID_CONFIG.triggerCount,
+  );
+  JOIN_RAID_CONFIG.triggerWindowMs = Number(
+    preset.triggerWindowMs || JOIN_RAID_CONFIG.triggerWindowMs,
+  );
+  JOIN_RAID_CONFIG.raidDurationMs = Number(
+    preset.raidDurationMs || JOIN_RAID_CONFIG.raidDurationMs,
+  );
+  JOIN_RAID_CONFIG.idFlag.minimumMatches = Number(
+    preset.idFlag?.minimumMatches || JOIN_RAID_CONFIG.idFlag.minimumMatches,
+  );
+  JOIN_RAID_CONFIG.idFlag.compareWindowMs = Number(
+    preset.idFlag?.compareWindowMs || JOIN_RAID_CONFIG.idFlag.compareWindowMs,
+  );
+  JOIN_RAID_CONFIG.idFlag.createdAtDeltaMs = Number(
+    preset.idFlag?.createdAtDeltaMs || JOIN_RAID_CONFIG.idFlag.createdAtDeltaMs,
+  );
+  JOIN_RAID_CONFIG.ageFlag.minimumAgeMs = Number(
+    preset.ageFlag?.minimumAgeMs || JOIN_RAID_CONFIG.ageFlag.minimumAgeMs,
+  );
+  return { ok: true, preset: presetKey };
+}
+
+async function getJoinRaidStatusSnapshot(guildId) {
+  const key = String(guildId || "");
+  if (!key) return null;
+  await loadGuildState(key);
+  const at = nowMs();
+  const state = getGuildState(key);
+  pruneState(state, at);
+  return {
+    enabled: Boolean(JOIN_RAID_CONFIG.enabled),
+    raidActive: Number(state.raidUntil || 0) > at,
+    raidUntil: Number(state.raidUntil || 0),
+    raidRemainingMs: Math.max(0, Number(state.raidUntil || 0) - at),
+    flaggedRecent: Array.isArray(state.flagged) ? state.flagged.length : 0,
+    samplesRecent: Array.isArray(state.samples) ? state.samples.length : 0,
+    tempBans: Array.isArray(state.tempBans) ? state.tempBans.length : 0,
+    config: {
+      triggerAction: JOIN_RAID_CONFIG.triggerAction,
+      triggerCount: Number(JOIN_RAID_CONFIG.triggerCount || 0),
+      triggerWindowMs: Number(JOIN_RAID_CONFIG.triggerWindowMs || 0),
+      raidDurationMs: Number(JOIN_RAID_CONFIG.raidDurationMs || 0),
+      idFlag: {
+        enabled: Boolean(JOIN_RAID_CONFIG.idFlag.enabled),
+        minimumMatches: Number(JOIN_RAID_CONFIG.idFlag.minimumMatches || 0),
+      },
+      noPfpFlag: { enabled: Boolean(JOIN_RAID_CONFIG.noPfpFlag.enabled) },
+      ageFlag: {
+        enabled: Boolean(JOIN_RAID_CONFIG.ageFlag.enabled),
+        minimumAgeMs: Number(JOIN_RAID_CONFIG.ageFlag.minimumAgeMs || 0),
+      },
+    },
+  };
+}
+
 module.exports = {
   JOIN_RAID_CONFIG,
+  JOIN_RAID_PRESETS,
   processJoinRaidForMember,
   restoreTempBans,
+  applyJoinRaidPreset,
+  getJoinRaidStatusSnapshot,
 };

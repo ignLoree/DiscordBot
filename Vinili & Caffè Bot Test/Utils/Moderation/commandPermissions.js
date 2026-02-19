@@ -1,4 +1,4 @@
-ï»¿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
@@ -37,7 +37,6 @@ function isTestMainScopeGuild(guildId) {
 }
 
 const TICKET_BUTTON_IDS = new Set([
-  "ticket_open_desc_modal",
   "claim_ticket",
   "unclaim",
   "close_ticket",
@@ -613,7 +612,7 @@ function buildGlobalPermissionDeniedEmbed(
   const description =
     customDescription != null
       ? customDescription
-      : `Questo ${entityLabel} Ã¨ riservato ad una categoria di utenti specifici.`;
+      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("Red")
@@ -633,7 +632,7 @@ function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non Ã¨ associato al tuo comando.");
+    .setDescription("Questo controllo non è associato al tuo comando.");
 }
 
 module.exports = {

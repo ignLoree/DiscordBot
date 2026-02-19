@@ -156,7 +156,7 @@ function buildTicketEmbed(config, guildedRoleMention) {
 function buildTicketMenuRow() {
   const menu = new StringSelectMenuBuilder()
     .setCustomId("ticket_open_menu")
-    .setPlaceholder("Seleziona una categoria...")
+    .setPlaceholder("🎫 Seleziona una categoria...")
     .addOptions({
       label: "Prima categoria",
       description: "Riscatto Ruolo",

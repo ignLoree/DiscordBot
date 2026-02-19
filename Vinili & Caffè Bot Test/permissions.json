@@ -913,9 +913,6 @@
     "testualimoderazione": [
       "roles.Staff"
     ],
-    "ticket_open_desc_modal": {
-      "ownerFromMessageMention": true
-    },
     "ticket_rate:*": {
       "roles": [
         "roles.HighStaff"
@@ -1032,9 +1029,6 @@
       "ownerSegment": 1
     },
     "suggestion_staff_modal:*": {
-      "ownerSegment": 1
-    },
-    "ticket_open_desc_modal_submit:*": {
       "ownerSegment": 1
     },
     "verify_code:*": {

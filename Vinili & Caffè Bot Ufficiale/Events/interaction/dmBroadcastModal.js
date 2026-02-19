@@ -9,6 +9,19 @@ const getStaffRoleIds = (client) => {
     .filter(Boolean);
 };
 
+function collectOpenDmRecipientIds(client) {
+  const ids = new Set();
+  if (!client?.channels?.cache) return ids;
+  for (const channel of client.channels.cache.values()) {
+    if (!channel?.isDMBased?.()) continue;
+    const recipientId = String(
+      channel?.recipientId || channel?.recipient?.id || "",
+    );
+    if (recipientId) ids.add(recipientId);
+  }
+  return ids;
+}
+
 function splitMessage(text, max = 1900) {
   const chunks = [];
   let current = "";
@@ -91,16 +104,52 @@ async function handleDmBroadcastModal(interaction, client) {
   await interaction.guild.members.fetch().catch(() => {});
 
   const skippedNoDm = [];
-  const targets = interaction.guild.members.cache.filter((member) => {
-    if (!member || member.user?.bot) return false;
-    if (targetId && member.id !== targetId) return false;
-    if (noDmSet.has(member.id)) {
-      skippedNoDm.push(member.id);
-      return false;
+  const targetIds = new Set();
+  const guildMembers = interaction.guild.members.cache;
+  if (targetId) {
+    targetIds.add(String(targetId));
+  } else {
+    for (const member of guildMembers.values()) {
+      if (!member || member.user?.bot) continue;
+      if (
+        staffRoleIds.length &&
+        staffRoleIds.some((roleId) => member.roles.cache.has(roleId))
+      ) {
+        continue;
+      }
+      targetIds.add(String(member.id));
     }
-    if (!staffRoleIds.length) return true;
-    return !staffRoleIds.some((roleId) => member.roles.cache.has(roleId));
-  });
+    for (const userId of collectOpenDmRecipientIds(client)) {
+      if (!userId) continue;
+      if (guildMembers.has(userId)) continue;
+      targetIds.add(String(userId));
+    }
+  }
+
+  const targets = [];
+  for (const id of targetIds) {
+    if (noDmSet.has(id)) {
+      skippedNoDm.push(id);
+      continue;
+    }
+
+    const member = guildMembers.get(id) || null;
+    let user = member?.user || null;
+    if (!user) {
+      user =
+        client?.users?.cache?.get(id) ||
+        (await client?.users?.fetch?.(id).catch(() => null));
+    }
+    if (!user || user.bot) continue;
+    if (
+      member &&
+      staffRoleIds.length &&
+      staffRoleIds.some((roleId) => member.roles.cache.has(roleId))
+    ) {
+      continue;
+    }
+    targets.push({ id, user, member });
+  }
 
   const content = message.replace(/@everyone|@here/g, "@​everyone");
   const parts = splitMessage(content);
@@ -111,7 +160,7 @@ async function handleDmBroadcastModal(interaction, client) {
   let failed = 0;
   const failedIds = [];
   let processed = 0;
-  const total = targets.size;
+  const total = targets.length;
 
   const progressEmbed = (text) =>
     new EmbedBuilder().setColor("#6f4e37").setDescription(text);
@@ -122,7 +171,7 @@ async function handleDmBroadcastModal(interaction, client) {
     ],
   });
 
-  for (const member of targets.values()) {
+  for (const target of targets) {
     processed += 1;
     try {
       for (const part of parts) {
@@ -132,12 +181,15 @@ async function handleDmBroadcastModal(interaction, client) {
           .setFooter({ text: footerText })
           .setTimestamp();
         if (title) embed.setTitle(title);
-        await member.send({ embeds: [embed], allowedMentions: { parse: [] } });
+        await target.user.send({
+          embeds: [embed],
+          allowedMentions: { parse: [] },
+        });
       }
       sent += 1;
     } catch {
       failed += 1;
-      failedIds.push(member.id);
+      failedIds.push(target.id);
     }
     if (processed % 25 === 0 || processed === total) {
       await interaction.editReply({

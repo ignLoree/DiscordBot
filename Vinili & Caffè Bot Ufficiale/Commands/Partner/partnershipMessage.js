@@ -20,33 +20,6 @@ function buildErrorEmbed(message) {
   return new EmbedBuilder().setDescription(message).setColor("Red");
 }
 
-function extractManagerId(message) {
-  if (!message) return null;
-
-  const mentionRegex = /<@!?(\d+)>/;
-
-  if (message.content) {
-    const match = message.content.match(mentionRegex);
-    if (match?.[1]) return match[1];
-  }
-
-  const firstEmbed = message.embeds?.[0];
-  if (firstEmbed?.description) {
-    const match = String(firstEmbed.description).match(mentionRegex);
-    if (match?.[1]) return match[1];
-  }
-
-  if (firstEmbed?.fields?.length) {
-    for (const field of firstEmbed.fields) {
-      const value = `${field?.name || ""}\n${field?.value || ""}`;
-      const match = value.match(mentionRegex);
-      if (match?.[1]) return match[1];
-    }
-  }
-
-  return message.author?.id || null;
-}
-
 function stripOuterCodeBlock(text) {
   if (!text) return "";
 
@@ -115,12 +88,12 @@ module.exports = {
       });
     }
 
-    const managerId = extractManagerId(interaction.targetMessage);
+    const managerId = String(interaction.targetMessage?.author?.id || "");
     if (!managerId) {
       return safeReply(interaction, {
         embeds: [
           buildErrorEmbed(
-            "<:vegax:1443934876440068179> Non riesco a trovare il manager nel messaggio selezionato.",
+            "<:vegax:1443934876440068179> Non riesco a leggere l'autore del messaggio selezionato.",
           ),
         ],
         flags: EPHEMERAL_FLAG,

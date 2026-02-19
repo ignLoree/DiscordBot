@@ -1,0 +1,53 @@
+{
+  "thresholds": {
+    "warn": 35,
+    "delete": 65,
+    "timeout": 95
+  },
+  "panic": {
+    "enabled": true,
+    "considerActivityHistory": true,
+    "useGlobalBadUsersDb": true,
+    "triggerCount": 3,
+    "triggerWindowMs": 600000,
+    "durationMs": 600000,
+    "raidWindowMs": 120000,
+    "raidUserThreshold": 3,
+    "raidYoungThreshold": 2
+  },
+  "shorteners": {
+    "crawl": true,
+    "timeoutMs": 2200,
+    "maxHops": 3
+  },
+  "profiles": {
+    "default": {
+      "exempt": false,
+      "heatMultiplier": 1,
+      "mentionsEnabled": true,
+      "attachmentsEnabled": true,
+      "inviteLinksEnabled": true
+    },
+    "media": {
+      "exempt": false,
+      "heatMultiplier": 0.85,
+      "mentionsEnabled": true,
+      "attachmentsEnabled": false,
+      "inviteLinksEnabled": true
+    },
+    "ticket": {
+      "exempt": false,
+      "heatMultiplier": 0.6,
+      "mentionsEnabled": false,
+      "attachmentsEnabled": false,
+      "inviteLinksEnabled": false
+    },
+    "staff": {
+      "exempt": true,
+      "heatMultiplier": 0.25,
+      "mentionsEnabled": false,
+      "attachmentsEnabled": false,
+      "inviteLinksEnabled": false
+    }
+  }
+}

@@ -38,7 +38,6 @@ const TICKET_BUTTON_IDS = new Set([
   "ticket_partnership",
   "ticket_highstaff",
   "ticket_supporto",
-  "ticket_open_desc_modal",
   "claim_ticket",
   "unclaim",
   "close_ticket",
@@ -51,7 +50,6 @@ const VERIFY_OR_TICKET_IDS = new Set([
   "ticket_partnership",
   "ticket_highstaff",
   "ticket_supporto",
-  "ticket_open_desc_modal",
   "claim_ticket",
   "unclaim",
   "close_ticket",
@@ -73,8 +71,7 @@ function isVerifyOrTicketInteraction(customId) {
   if (VERIFY_OR_TICKET_IDS.has(id)) return true;
   if (
     id.startsWith("verify_code:") ||
-    id.startsWith("modal_close_ticket") ||
-    id.startsWith("ticket_open_desc_modal_submit:")
+    id.startsWith("modal_close_ticket")
   )
     return true;
   return false;

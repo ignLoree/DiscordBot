@@ -27,7 +27,6 @@ const IDs = require("../../Utils/Config/ids");
 
 const HANDLED_TICKET_BUTTONS = new Set([
   "ticket_supporto",
-  "ticket_open_desc_modal",
   "claim_ticket",
   "close_ticket",
   "close_ticket_motivo",
@@ -53,9 +52,7 @@ const DISABLED_TICKET_OPEN_ACTIONS = new Set([
 function isHandledTicketModalId(id) {
   return (
     id === "modal_close_ticket" ||
-    id.startsWith("modal_close_ticket:") ||
-    id === "ticket_open_desc_modal_submit" ||
-    id.startsWith("ticket_open_desc_modal_submit:")
+    id.startsWith("modal_close_ticket:")
   );
 }
 
@@ -337,31 +334,6 @@ async function pinFirstTicketMessage(channel, message) {
     return normalized.includes("tickets");
   }
 
-  function sanitizeTicketDescriptionInput(value) {
-    let text = String(value || "");
-    text = text
-      .replace(/^```(?:[a-zA-Z0-9_-]+)?\n?/i, "")
-      .replace(/```$/i, "")
-      .replace(/<@!?\d+>/g, "")
-      .replace(/<@&\d+>/g, "")
-      .replace(/<#\d+>/g, "")
-      .replace(/@everyone|@here/gi, "")
-      .replace(
-        /https?:\/\/(?!discord(?:app)?\.com\/invite\/|discord\.gg\/)\S+/gi,
-        "",
-      );
-
-    const normalizedLines = text
-      .split(/\r?\n/)
-      .map((line) => line.replace(/\s+/g, " ").trim())
-      .filter(
-        (line, index, arr) =>
-          line.length > 0 || (index > 0 && arr[index - 1]?.length > 0),
-      );
-
-    return normalizedLines.join("\n").trim();
-  }
-
   async function createTicketsCategory(guild) {
     if (!guild) return null;
     if (!interaction.client.ticketCategoryCache) {
@@ -579,7 +551,7 @@ async function pinFirstTicketMessage(channel, message) {
               "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
             )
             .setDescription(
-              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la tua descrizione tramite il bottone nel messaggio qui sotto.`,
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Scrivi direttamente qui tutti i dettagli utili della partnership.`,
             )
             .setColor("#6f4e37"),
         },
@@ -609,7 +581,6 @@ async function pinFirstTicketMessage(channel, message) {
           "accetta",
           "rifiuta",
           "unclaim",
-          "ticket_open_desc_modal",
         ].includes(interaction.customId) &&
         !isTicketTranscriptButton(interaction.customId) &&
         !isTicketRatingButton(interaction.customId)
@@ -870,21 +841,6 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          let descriptionPrompt = null;
-          if (config.type === "partnership") {
-            const descriptionRow = new ActionRowBuilder().addComponents(
-              new ButtonBuilder()
-                .setCustomId("ticket_open_desc_modal")
-                .setLabel("📝 Invia Descrizione")
-                .setStyle(ButtonStyle.Primary),
-            );
-            descriptionPrompt = await channel
-              .send({
-                content: `<@${interaction.user.id}> usa il pulsante qui sotto per inviare la descrizione.`,
-                components: [descriptionRow],
-              })
-              .catch(() => null);
-          }
           let ticketCreated = false;
           try {
             const ticketNumber = await getNextTicketId();
@@ -896,7 +852,7 @@ async function pinFirstTicketMessage(channel, message) {
               ticketType: config.type,
               open: true,
               messageId: mainMsg?.id || null,
-              descriptionPromptMessageId: descriptionPrompt?.id || null,
+              descriptionPromptMessageId: null,
               descriptionSubmitted: false,
             });
             ticketCreated = true;
@@ -1399,89 +1355,6 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      if (interaction.customId === "ticket_open_desc_modal") {
-        if (!interaction.channel) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Interazione fuori canale",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        const ticketDoc = await Ticket.findOne({
-          channelId: interaction.channel.id,
-        });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Ticket non trovato",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (interaction.user.id !== ticketDoc.userId) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (ticketDoc.descriptionSubmitted) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Hai già inviato la descrizione iniziale.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        const modal = new ModalBuilder()
-          .setCustomId(`ticket_open_desc_modal_submit:${interaction.user.id}`)
-          .setTitle("Descrizione Ticket");
-        const input = new TextInputBuilder()
-          .setCustomId("ticket_description")
-          .setLabel("Inserisci la descrizione")
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true)
-          .setMinLength(8)
-          .setMaxLength(4000);
-        modal.addComponents(new ActionRowBuilder().addComponents(input));
-        const shown = await interaction
-          .showModal(modal)
-          .then(() => true)
-          .catch((err) => {
-            global.logger.error(err);
-            return false;
-          });
-        if (!shown) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Impossibile aprire il modulo, riprova.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-        }
-        return true;
-      }
       if (interaction.customId === "unclaim") {
         if (!interaction.channel) {
           await safeReply(interaction, {
@@ -1925,127 +1798,6 @@ async function pinFirstTicketMessage(channel, message) {
     }
     if (
       isTicketModal &&
-      String(interaction.customId || "").startsWith(
-        "ticket_open_desc_modal_submit",
-      )
-    ) {
-      if (!interaction.channel) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Interazione fuori canale",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      try {
-        await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
-      } catch {}
-      const rawDescription = interaction.fields
-        .getTextInputValue("ticket_description")
-        ?.trim();
-      const description = sanitizeTicketDescriptionInput(rawDescription);
-      const ticketDoc = await Ticket.findOne({
-        channelId: interaction.channel.id,
-      });
-      if (!ticketDoc) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Ticket non trovato",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      if (interaction.user.id !== ticketDoc.userId) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Solo chi ha aperto il ticket può inviare la descrizione.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      if (!description) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Dopo il filtro non c'è testo valido da inviare.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      const updatedTicket = await Ticket.findOneAndUpdate(
-        {
-          channelId: interaction.channel.id,
-          descriptionSubmitted: { $ne: true },
-        },
-        {
-          $set: {
-            descriptionSubmitted: true,
-            descriptionText: description,
-            descriptionSubmittedAt: new Date(),
-          },
-        },
-        { new: true },
-      ).catch(() => null);
-      if (!updatedTicket) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> La descrizione è già stata inviata.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-
-      const chunks = [];
-      const managerFooter = `\n\nManager: <@${interaction.user.id}>`;
-      const maxChunkLen = 1900;
-      for (let i = 0; i < description.length; i += maxChunkLen) {
-        chunks.push(description.slice(i, i + maxChunkLen));
-      }
-      if (chunks.length === 0) chunks.push(description);
-      if (chunks.length > 0) {
-        for (let i = 0; i < chunks.length; i += 1) {
-          const isLast = i === chunks.length - 1;
-          const content = isLast ? `${chunks[i]}${managerFooter}` : chunks[i];
-          await interaction.channel.send({ content }).catch(() => {});
-        }
-      }
-
-      const promptId =
-        updatedTicket.descriptionPromptMessageId ||
-        ticketDoc.descriptionPromptMessageId ||
-        null;
-      if (promptId) {
-        const promptMessage = await interaction.channel.messages
-          .fetch(promptId)
-          .catch(() => null);
-        if (promptMessage) {
-          await promptMessage.delete().catch(() => {});
-        }
-      }
-      await interaction.deleteReply().catch(() => {});
-      return true;
-    }
-    if (
-      isTicketModal &&
       String(interaction.customId || "").startsWith("modal_close_ticket")
     ) {
       try {
@@ -2262,6 +2014,17 @@ async function pinFirstTicketMessage(channel, message) {
       };
       const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
       const ratingRows = buildTicketRatingRows(String(ticket._id));
+      const transcriptRows = transcriptHtmlPath
+        ? [
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`ticket_transcript:${ticket._id}`)
+                .setLabel("View Transcript")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji("📁"),
+            ),
+          ]
+        : [];
       const htmlAttachment = transcriptHtmlPath
         ? [
             {
@@ -2277,10 +2040,9 @@ async function pinFirstTicketMessage(channel, message) {
           logChannel,
           {
             embeds: [closeEmbed],
-            files: htmlAttachment,
           },
-          Boolean(transcriptHtmlPath),
-          [],
+          false,
+          transcriptRows,
         );
       }
       const dmActionRows = [...ratingRows];

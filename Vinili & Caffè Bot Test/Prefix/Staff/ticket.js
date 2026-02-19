@@ -717,22 +717,6 @@ module.exports = {
         await pinFirstTicketMessage(channel, mainMsg);
       }
 
-      let descriptionPrompt = null;
-      if (config.type === "partnership" && !ticketDoc.descriptionSubmitted) {
-        const descriptionRow = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("ticket_open_desc_modal")
-            .setLabel("📝 Invia Descrizione")
-            .setStyle(ButtonStyle.Primary),
-        );
-        descriptionPrompt = await channel
-          .send({
-            content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione.`,
-            components: [descriptionRow],
-          })
-          .catch(() => null);
-      }
-
       await Ticket.updateOne(
         { _id: ticketDoc._id },
         {
@@ -740,7 +724,7 @@ module.exports = {
             open: true,
             channelId: channel.id,
             messageId: mainMsg?.id || null,
-            descriptionPromptMessageId: descriptionPrompt?.id || null,
+            descriptionPromptMessageId: null,
             transcript: "",
             transcriptHtmlPath: null,
             closeReason: null,
@@ -1040,6 +1024,17 @@ module.exports = {
         guildIconURL: message.guild?.iconURL?.({ size: 128 }) || null,
       });
       const ratingRows = buildTicketRatingRows(String(claimed._id));
+      const transcriptRows = transcriptHtmlPath
+        ? [
+            new ActionRowBuilder().addComponents(
+              new ButtonBuilder()
+                .setCustomId(`ticket_transcript:${claimed._id}`)
+                .setLabel("View Transcript")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji("📁"),
+            ),
+          ]
+        : [];
       const dmActionRows = [...ratingRows];
       const htmlAttachment = transcriptHtmlPath
         ? [
@@ -1056,10 +1051,9 @@ module.exports = {
           logChannel,
           {
             embeds: [closeEmbed],
-            files: htmlAttachment,
           },
-          Boolean(transcriptHtmlPath),
-          [],
+          false,
+          transcriptRows,
         );
       }
 
@@ -1572,34 +1566,6 @@ module.exports = {
         }
 
         await ticketDoc.save().catch(() => {});
-
-        if (
-          panelConfig.type === "partnership" &&
-          !ticketDoc.descriptionSubmitted
-        ) {
-          if (ticketDoc.descriptionPromptMessageId) {
-            const oldPrompt = await targetChannel.messages
-              .fetch(ticketDoc.descriptionPromptMessageId)
-              .catch(() => null);
-            if (oldPrompt) await oldPrompt.delete().catch(() => {});
-          }
-          const descriptionRow = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("ticket_open_desc_modal")
-              .setLabel("📝 Invia Descrizione")
-              .setStyle(ButtonStyle.Primary),
-          );
-          const descriptionPrompt = await targetChannel
-            .send({
-              content: `<@${ticketDoc.userId}> usa il pulsante qui sotto per inviare la descrizione.`,
-              components: [descriptionRow],
-            })
-            .catch(() => null);
-          if (descriptionPrompt?.id) {
-            ticketDoc.descriptionPromptMessageId = descriptionPrompt.id;
-            await ticketDoc.save().catch(() => {});
-          }
-        }
 
         const msg = await fetchTicketMessage(
           targetChannel,
