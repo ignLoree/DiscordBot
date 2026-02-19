@@ -212,6 +212,74 @@ function getPrefixOverrideMap(client) {
   void client;
   return new Map();
 }
+
+function resolvePrefixCommandByToken(client, token) {
+  const safe = String(token || "").trim().toLowerCase();
+  if (!safe) return null;
+  return (
+    client?.pcommands?.get?.(safe) ||
+    client?.pcommands?.get?.(client?.aliases?.get?.(safe)) ||
+    null
+  );
+}
+
+function parseWrongPrefixAttempt(content) {
+  const text = String(content || "").trim();
+  if (!text || text.startsWith("+")) return null;
+  const direct = text.match(/^([?!./-])\s*([a-z0-9][\w-]*)/i);
+  if (direct) {
+    return {
+      usedPrefix: String(direct[1] || ""),
+      token: String(direct[2] || "").toLowerCase(),
+    };
+  }
+  const nearMiss = text.match(/^(?:[a-z]{1,2})\s*([?!./-])\s*([a-z0-9][\w-]*)/i);
+  if (nearMiss) {
+    return {
+      usedPrefix: String(nearMiss[1] || ""),
+      token: String(nearMiss[2] || "").toLowerCase(),
+    };
+  }
+  return null;
+}
+
+function shouldSendWrongPrefixHint(message, usedPrefix, commandName) {
+  const client = message?.client;
+  if (!client) return true;
+  if (!client._wrongPrefixHintCooldown) {
+    client._wrongPrefixHintCooldown = new Map();
+  }
+  const key = [
+    String(message.guildId || "noguild"),
+    String(message.channelId || "nochannel"),
+    String(message.author?.id || "nouser"),
+    String(usedPrefix || ""),
+    String(commandName || ""),
+  ].join(":");
+  const now = Date.now();
+  const lastAt = Number(client._wrongPrefixHintCooldown.get(key) || 0);
+  if (now - lastAt < 10_000) return false;
+  client._wrongPrefixHintCooldown.set(key, now);
+  return true;
+}
+
+async function maybeSendWrongPrefixHint(message, resolvedClient) {
+  const attempt = parseWrongPrefixAttempt(message?.content || "");
+  if (!attempt?.token || !attempt?.usedPrefix) return false;
+  if (attempt.usedPrefix === "+") return false;
+  const command = resolvePrefixCommandByToken(resolvedClient, attempt.token);
+  if (!command) return false;
+  if (!shouldSendWrongPrefixHint(message, attempt.usedPrefix, command.name)) {
+    return true;
+  }
+  const hint = await message.channel
+    .send({
+      content: `\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`+${command.name}\`.`,
+    })
+    .catch(() => null);
+  if (hint) setTimeout(() => hint.delete().catch(() => {}), 6000);
+  return true;
+}
 async function resolveUserFromMessage(message) {
   const mentioned = message.mentions?.users?.first();
   if (mentioned) return mentioned;
@@ -567,7 +635,10 @@ module.exports = {
       if (!shouldDeleteCommandMessage) return;
       await message.delete().catch(() => { });
     };
-    if (!startsWithDefault) return;
+    if (!startsWithDefault) {
+      await maybeSendWrongPrefixHint(message, resolvedClient);
+      return;
+    }
 
     const usedPrefix = defaultPrefix;
 
