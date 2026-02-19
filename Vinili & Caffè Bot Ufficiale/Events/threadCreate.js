@@ -25,7 +25,13 @@ module.exports = {
   async execute(thread) {
     try {
       if (!thread?.guild) return;
-      let executorId = "";
+      const audit = await resolveResponsible(
+        thread.guild,
+        THREAD_CREATE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(thread.id || ""),
+      );
+      const executorId = String(audit?.executor?.id || "");
+      const responsible = formatAuditActor(audit.executor);
 
       if (thread.parent?.type === ChannelType.GuildForum) {
         await thread.send({ content: `<@&${IDs.roles.Forum}>` }).catch(() => {});
@@ -33,14 +39,6 @@ module.exports = {
 
       const logChannel = await resolveChannelRolesLogChannel(thread.guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          thread.guild,
-          THREAD_CREATE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(thread.id || ""),
-        );
-        executorId = String(audit?.executor?.id || "");
-        const responsible = formatAuditActor(audit.executor);
-
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
           `${ARROW} **Target:** ${thread} \`${thread.id}\``,

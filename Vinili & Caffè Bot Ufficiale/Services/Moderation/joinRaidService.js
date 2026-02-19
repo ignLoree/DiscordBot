@@ -418,9 +418,6 @@ async function applyPunishment(member, reasons) {
 async function processJoinRaidForMember(member) {
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
-  if (await isVerifiedBotUser(member.user)) {
-    return { blocked: false };
-  }
   if (
     CORE_EXEMPT_USER_IDS.has(String(member.id || "")) ||
     String(member.guild.ownerId || "") === String(member.id || "")

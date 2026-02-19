@@ -419,15 +419,17 @@ async function handleBotJoin(member) {
     if (punished) return;
   }
 
-  if (JOIN_GATE.botAdditions.enabled && executorId) {
-    const authorized = await isAuthorizedBotAdder(member.guild, executorId);
+  if (JOIN_GATE.botAdditions.enabled) {
+    const authorized = executorId
+      ? await isAuthorizedBotAdder(member.guild, executorId)
+      : false;
     if (!authorized) {
       const punished = await kickForJoinGate(
         member,
         "Bot added by unauthorized member.",
         [
           `${ARROW} **Rule:** Bot Additions`,
-          `${ARROW} **Responsible:** ${executorText}`,
+          `${ARROW} **Responsible:** ${executorText}${executorId ? "" : " (audit unavailable)"}`,
         ],
       );
       if (punished) return;

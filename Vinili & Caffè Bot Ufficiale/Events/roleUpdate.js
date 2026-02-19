@@ -32,17 +32,16 @@ module.exports = {
         String(newRole?.permissions?.bitfield || 0n);
 
       if (nameChanged || colorChanged || hoistChanged || permsChanged) {
-        let executorId = "";
+        const audit = await resolveResponsible(
+          newRole.guild,
+          ROLE_UPDATE_ACTION,
+          (entry) => String(entry?.target?.id || "") === String(newRole.id || ""),
+        );
+        const responsible = formatAuditActor(audit.executor);
+        const executorId = String(audit?.executor?.id || "");
+
         const logChannel = await resolveChannelRolesLogChannel(newRole.guild);
         if (logChannel?.isTextBased?.()) {
-          const audit = await resolveResponsible(
-            newRole.guild,
-            ROLE_UPDATE_ACTION,
-            (entry) => String(entry?.target?.id || "") === String(newRole.id || ""),
-          );
-          const responsible = formatAuditActor(audit.executor);
-          executorId = String(audit?.executor?.id || "");
-
           const lines = [
             `${ARROW} **Responsible:** ${responsible}`,
             `${ARROW} **Target:** ${newRole} \`${newRole.id}\``,

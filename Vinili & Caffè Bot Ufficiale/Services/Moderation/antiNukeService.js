@@ -1274,13 +1274,13 @@ async function handleThreadDeletionAction({
   });
 }
 
-function shouldBlockModerationCommands(guild, userId) {
+async function shouldBlockModerationCommands(guild, userId) {
   if (!ANTINUKE_CONFIG.enabled) return false;
   if (!ANTINUKE_CONFIG.panicMode.enabled) return false;
   if (!ANTINUKE_CONFIG.panicMode.lockdown.lockModerationCommands) return false;
   if (!guild?.id || !userId) return false;
   if (!isAntiNukePanicActive(guild.id)) return false;
-  return !isWhitelistedExecutor(guild, userId);
+  return !(await isWhitelistedExecutorAsync(guild, userId));
 }
 
 module.exports = {

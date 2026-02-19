@@ -186,9 +186,6 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   }
   if (!additions.length && !removals.length) return;
 
-  const logChannel = await resolveChannelRolesLogChannel(guild);
-  if (!logChannel?.isTextBased?.()) return;
-
   const actionType = AuditLogEvent?.MemberRoleUpdate ?? AuditLogEvent?.MemberUpdate;
   const audit = await resolveResponsible(
     guild,
@@ -198,34 +195,37 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   const responsible = formatAuditActor(audit.executor);
   const executorId = String(audit?.executor?.id || "");
 
-  const lines = [
-    `${ARROW} **Responsible:** ${responsible}`,
-    `${ARROW} **Target:** ${newMember.user} \`${newMember.user.id}\``,
-    `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
-    "",
-    "**Changes**",
-  ];
+  const logChannel = await resolveChannelRolesLogChannel(guild);
+  if (logChannel?.isTextBased?.()) {
+    const lines = [
+      `${ARROW} **Responsible:** ${responsible}`,
+      `${ARROW} **Target:** ${newMember.user} \`${newMember.user.id}\``,
+      `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+      "",
+      "**Changes**",
+    ];
 
-  if (additions.length) {
-    lines.push("<:success:1461731530333229226> **Additions:**");
-    for (const role of additions.slice(0, 15)) {
-      lines.push(`  ${ARROW} ${role}`);
+    if (additions.length) {
+      lines.push("<:success:1461731530333229226> **Additions:**");
+      for (const role of additions.slice(0, 15)) {
+        lines.push(`  ${ARROW} ${role}`);
+      }
     }
-  }
 
-  if (removals.length) {
-    lines.push("<:cancel:1461730653677551691> **Removals:**");
-    for (const role of removals.slice(0, 15)) {
-      lines.push(`  ${ARROW} ${role}`);
+    if (removals.length) {
+      lines.push("<:cancel:1461730653677551691> **Removals:**");
+      for (const role of removals.slice(0, 15)) {
+        lines.push(`  ${ARROW} ${role}`);
+      }
     }
+
+    const embed = new EmbedBuilder()
+      .setColor("#F59E0B")
+      .setTitle("Member Role Update")
+      .setDescription(lines.join("\n"));
+
+    await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
-
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle("Member Role Update")
-    .setDescription(lines.join("\n"));
-
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
 
   if (additions.length) {
     await antiNukeHandleMemberRoleAddition({
@@ -299,7 +299,7 @@ async function sendBoostEmbeds(channel, member, times, boostCount) {
   const safeTimes = Math.max(0, Number(times || 0));
   for (let i = 0; i < safeTimes; i += 1) {
     await channel.send({
-      content: `<a:VC_Boost:1448670271115497617> \`â”Š\`  ${member.user} \`â”Š\` <@&1442568910070349985>`,
+      content: `<a:VC_Boost:1448670271115497617> \`|\`  ${member.user} \`|\` <@&1442568910070349985>`,
       embeds: [buildBoostEmbed(member, boostCount)],
     });
   }
@@ -441,4 +441,3 @@ module.exports = {
     }
   },
 };
-

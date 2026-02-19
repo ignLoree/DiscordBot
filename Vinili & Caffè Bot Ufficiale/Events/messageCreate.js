@@ -609,10 +609,10 @@ module.exports = {
     );
     if (
       isModerationPrefixCommand &&
-      shouldBlockModerationCommands(
+      (await shouldBlockModerationCommands(
         message.guild,
         String(message.author?.id || ""),
-      )
+      ))
     ) {
       await deleteCommandMessage();
       const msg = await message.channel

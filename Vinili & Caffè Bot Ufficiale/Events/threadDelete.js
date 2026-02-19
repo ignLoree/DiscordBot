@@ -18,18 +18,16 @@ module.exports = {
     try {
       const guild = thread?.guild;
       if (!guild) return;
-      let executorId = "";
+      const audit = await resolveResponsible(
+        guild,
+        THREAD_DELETE_ACTION,
+        (entry) => String(entry?.target?.id || "") === String(thread?.id || ""),
+      );
+      const executorId = String(audit?.executor?.id || "");
+      const responsible = formatAuditActor(audit.executor);
 
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
-        const audit = await resolveResponsible(
-          guild,
-          THREAD_DELETE_ACTION,
-          (entry) => String(entry?.target?.id || "") === String(thread?.id || ""),
-        );
-        executorId = String(audit?.executor?.id || "");
-        const responsible = formatAuditActor(audit.executor);
-
         const lines = [
           `${ARROW} **Responsible:** ${responsible}`,
           `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,

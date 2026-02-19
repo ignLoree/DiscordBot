@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, UserFlagsBitField } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");
@@ -766,12 +766,22 @@ function isExempt(message) {
   return [...STAFF_ROLE_IDS].some((id) => message.member.roles.cache.has(id));
 }
 
-function isVerifiedBotMessage(message) {
+async function isVerifiedBotMessage(message) {
   if (!message) return false;
   const authorId = String(message.author?.id || "");
   const applicationId = String(message.applicationId || "");
   if (authorId && VERIFIED_BOT_IDS.has(authorId)) return true;
   if (applicationId && VERIFIED_BOT_IDS.has(applicationId)) return true;
+  if (message.author?.bot) {
+    try {
+      const flags =
+        message.author.flags ||
+        (typeof message.author.fetchFlags === "function"
+          ? await message.author.fetchFlags().catch(() => null)
+          : null);
+      if (flags?.has?.(UserFlagsBitField.Flags.VerifiedBot)) return true;
+    } catch {}
+  }
   return false;
 }
 
@@ -1175,10 +1185,10 @@ async function sendAutomodActionInChannel(
     : "";
   const title =
     action === "timeout"
-      ? `${message.author.username} has been timed out${durationLabel} 🔇`
+      ? `${message.author.username} has been timed out${durationLabel}`
       : action === "delete" || action === "delete_webhook"
-        ? `${message.author.username}'s message has been removed 🗑️`
-        : `${message.author.username} has been warned ⚠️`;
+        ? `${message.author.username}'s message has been removed`
+        : `${message.author.username} has been warned`;
 
   const embed = new EmbedBuilder()
     .setColor(
@@ -1382,8 +1392,8 @@ async function timeoutMember(message, state, violations) {
 }
 
 async function runAutoModMessage(message) {
-  if (!message?.guild || !message?.member) return { blocked: false };
-  if (isVerifiedBotMessage(message)) return { blocked: false };
+  if (!message?.guild) return { blocked: false };
+  if (await isVerifiedBotMessage(message)) return { blocked: false };
   if (message.webhookId) {
     const webhookId = String(message.webhookId);
     const authorId = String(message.author?.id || "");
@@ -1419,6 +1429,7 @@ async function runAutoModMessage(message) {
     );
     return { blocked: true, action: "delete_webhook", heat: 0 };
   }
+  if (!message?.member) return { blocked: false };
   if (message.author?.bot || message.system) {
     return { blocked: false };
   }
@@ -1547,4 +1558,5 @@ module.exports = {
   getAutoModMemberSnapshot,
   isAutoModRoleExemptMember,
 };
+
 

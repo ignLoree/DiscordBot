@@ -79,10 +79,10 @@ async function handleSlashCommand(interaction, client) {
   );
   if (
     isModerationSlashCommand &&
-    shouldBlockModerationCommands(
+    (await shouldBlockModerationCommands(
       interaction.guild,
       String(interaction.user?.id || ""),
-    )
+    ))
   ) {
     return interaction.reply({
       content:

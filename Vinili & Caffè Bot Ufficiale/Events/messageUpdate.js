@@ -131,7 +131,7 @@ async function sendMessageEditLog(previous, updated) {
   const actorSuffix = actorFlags.length ? ` [${actorFlags.join("/")}]` : "";
 
   const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Responsabile:** ${updated.author}${actorSuffix} \`${updated.author.id}\``,
+    `<:VC_right_arrow:1473441155055096081> **Autore:** ${updated.author}${actorSuffix} \`${updated.author.id}\``,
     `<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel || "#sconosciuto"} • \`${updated.id}\``,
     `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
     "",

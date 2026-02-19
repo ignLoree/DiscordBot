@@ -140,7 +140,7 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
   if (!diffs.length) return;
 
   const logChannel = await resolveChannelRolesLogChannel(guild);
-  if (!logChannel?.isTextBased?.()) return;
+  const canSendLogs = Boolean(logChannel?.isTextBased?.());
 
   for (const diff of diffs) {
     const kind = diff.kind;
@@ -210,18 +210,20 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
       lines.push(...buildAuditExtraLines(audit.entry, ["allow", "deny", "type", "id"]));
     }
 
-    const embed = new EmbedBuilder()
-      .setColor(kind === "create" ? "#57F287" : kind === "delete" ? "#ED4245" : "#F59E0B")
-      .setTitle(
-        kind === "create"
-          ? "Channel Overwrite Create"
-          : kind === "delete"
-            ? "Channel Overwrite Delete"
-            : "Channel Overwrite Update",
-      )
-      .setDescription(lines.join("\n"));
+    if (canSendLogs) {
+      const embed = new EmbedBuilder()
+        .setColor(kind === "create" ? "#57F287" : kind === "delete" ? "#ED4245" : "#F59E0B")
+        .setTitle(
+          kind === "create"
+            ? "Channel Overwrite Create"
+            : kind === "delete"
+              ? "Channel Overwrite Delete"
+              : "Channel Overwrite Update",
+        )
+        .setDescription(lines.join("\n"));
 
-    await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] }).catch(() => {});
+    }
 
     const beforeAllow =
       kind === "create"
