@@ -431,6 +431,26 @@ function getSlashTopLevelDescription(dataJson) {
   return normalizeDescription(dataJson?.description, "Comando slash.");
 }
 
+function getCommandPermissionNode(permissionRoot, commandName) {
+  if (!permissionRoot || typeof permissionRoot !== "object") return null;
+  const exact = permissionRoot[commandName];
+  if (typeof exact !== "undefined") return exact;
+  const wanted = String(commandName || "").trim().toLowerCase();
+  if (!wanted) return null;
+  for (const [key, value] of Object.entries(permissionRoot)) {
+    if (String(key || "").trim().toLowerCase() === wanted) return value;
+  }
+  return null;
+}
+
+function normalizePermissionRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object" && Array.isArray(value.roles)) {
+    return value.roles;
+  }
+  return null;
+}
+
 function getSubcommandEntries(
   commandName,
   dataJson,
@@ -443,9 +463,7 @@ function getSubcommandEntries(
   if (commandType !== ApplicationCommandType.ChatInput) return entries;
 
   const subPermissions = permissionConfig?.subcommands || {};
-  const commandRoles = Array.isArray(permissionConfig?.roles)
-    ? permissionConfig.roles
-    : null;
+  const commandRoles = normalizePermissionRoles(permissionConfig?.roles);
   const topDesc = getSlashTopLevelDescription(dataJson);
 
   const parseSubOption = (subOption, groupName = null) => {
@@ -458,7 +476,7 @@ function getSubcommandEntries(
     )
       ? subPermissions[key]
       : commandRoles;
-    const roleList = Array.isArray(allowedRoles) ? allowedRoles : null;
+    const roleList = normalizePermissionRoles(allowedRoles);
 
     entries.push({
       invoke: `/${groupName ? `${commandName} ${groupName} ${subName}` : `${commandName} ${subName}`}`,
@@ -546,7 +564,7 @@ function buildEntries(client, permissions) {
     if (seenSlash.has(uniqueKey)) continue;
     seenSlash.add(uniqueKey);
 
-    const perm = permissions.slash?.[dataJson.name];
+    const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
     const category = normalizeCategoryKey(command?.category || "misc");
     const hasSubcommands =
       Array.isArray(dataJson.options) &&
@@ -565,11 +583,7 @@ function buildEntries(client, permissions) {
       continue;
     }
 
-    const roles = Array.isArray(perm)
-      ? perm
-      : Array.isArray(perm?.roles)
-        ? perm.roles
-        : null;
+    const roles = normalizePermissionRoles(perm);
     entries.push({
       invoke: `/${dataJson.name}`,
       type: "slash",
@@ -589,12 +603,8 @@ function buildEntries(client, permissions) {
     )
       continue;
 
-    const perm = permissions.slash?.[dataJson.name];
-    const roles = Array.isArray(perm)
-      ? perm
-      : Array.isArray(perm?.roles)
-        ? perm.roles
-        : null;
+    const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
+    const roles = normalizePermissionRoles(perm);
 
     entries.push({
       invoke: `${dataJson.name}`,
