@@ -122,7 +122,7 @@ async function handleSlashCommand(interaction, client) {
     ) {
       const list = slashPermission.channels.map((id) => `<#${id}>`).join(", ");
       return interaction.reply({
-        content: `Questo comando e utilizzabile solo in ${list}.`,
+        content: `Questo comando è utilizzabile solo in ${list}.`,
         flags: 1 << 6,
       });
     }

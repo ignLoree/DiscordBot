@@ -714,7 +714,7 @@ module.exports = {
       if (permissionResult?.reason === "channel" && Array.isArray(permissionResult.channels)) {
         await deleteCommandMessage();
         const channelsList = permissionResult.channels.map((id) => `<#${id}>`).join(", ");
-        const msg = await message.channel.send({ content: `Questo comando e utilizzabile solo in ${channelsList}.` }).catch(() => null);
+        const msg = await message.channel.send({ content: `Questo comando è utilizzabile solo in ${channelsList}.` }).catch(() => null);
         if (msg) setTimeout(() => msg.delete().catch(() => { }), 5000);
         return;
       }

@@ -6,11 +6,6 @@
   ButtonStyle,
 } = require("discord.js");
 const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
-const {
-  createLoadSession,
-  buildLoadWarningEmbed,
-  buildLoadComponents,
-} = require("./backupLoadService");
 
 const PAGE_SIZE = 10;
 
@@ -30,6 +25,76 @@ function truncate(value, max) {
   const raw = String(value || "");
   if (raw.length <= max) return raw;
   return `${raw.slice(0, Math.max(0, max - 3))}...`;
+}
+
+function countMessages(payload) {
+  const chMap = payload?.messages?.channels || {};
+  const thMap = payload?.messages?.threads || {};
+  const channels = Object.values(chMap).reduce(
+    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
+    0,
+  );
+  const threads = Object.values(thMap).reduce(
+    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
+    0,
+  );
+  return channels + threads;
+}
+
+function encodeBackupToken(backupId, sourceGuildId = null) {
+  const id = String(backupId || "").trim().toUpperCase();
+  const gid = String(sourceGuildId || "").trim();
+  return gid ? `${id}|${gid}` : id;
+}
+
+function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
+  const token = encodeBackupToken(backupId, sourceGuildId);
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`backup_info_load:${token}:${ownerId}`)
+      .setLabel("Load this backup")
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(false),
+    new ButtonBuilder()
+      .setCustomId(`backup_info_delete:${token}:${ownerId}`)
+      .setLabel("Delete this backup")
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false),
+  );
+}
+
+function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
+  const guild = payload?.guild || {};
+  const createdAtTs = Math.floor(
+    new Date(payload?.createdAt || Date.now()).getTime() / 1000,
+  );
+  const roles = Array.isArray(payload?.roles) ? payload.roles.length : 0;
+  const channels = Array.isArray(payload?.channels) ? payload.channels.length : 0;
+  const threads = Array.isArray(payload?.threads) ? payload.threads.length : 0;
+  const members = Array.isArray(payload?.members) ? payload.members.length : 0;
+  const bans = Array.isArray(payload?.bans) ? payload.bans.length : 0;
+  const messages = countMessages(payload);
+  const sizeMb = (Number(sizeBytes || 0) / (1024 * 1024)).toFixed(2);
+
+  return new EmbedBuilder()
+    .setColor("#3498db")
+    .setTitle(`Backup Info - ${guild?.name || "Unknown Guild"}`)
+    .setDescription(`Backup ID: \`${String(backupId || "").toUpperCase()}\``)
+    .addFields(
+      { name: "Created At", value: `<t:${createdAtTs}:R>`, inline: true },
+      { name: "Stored Until", value: "forever", inline: true },
+      { name: "Messages", value: String(messages), inline: true },
+      { name: "Channels", value: String(channels), inline: true },
+      { name: "Roles", value: String(roles), inline: true },
+      { name: "Threads", value: String(threads), inline: true },
+      { name: "Members", value: String(members), inline: true },
+      { name: "Bans", value: String(bans), inline: true },
+      {
+        name: "File",
+        value: `\`${String(backupId || "").toUpperCase()}.json.gz\` (${sizeMb} MB)`,
+        inline: false,
+      },
+    );
 }
 
 function buildListEmbed({ pageData }) {
@@ -168,16 +233,16 @@ async function handleBackupListInteraction(interaction) {
     try {
       const info = await readBackupByIdGlobal(backupRef);
       const backupId = String(info?.payload?.backupId || "").toUpperCase();
-      const sessionId = createLoadSession({
-        guildId: interaction.guildId,
-        userId: interaction.user.id,
-        backupId,
-        sourceGuildId: info.guildId,
-      });
       await interaction
         .update({
-          embeds: [buildLoadWarningEmbed(backupId)],
-          components: buildLoadComponents(sessionId),
+          embeds: [
+            buildListSelectionInfoEmbed(
+              backupId,
+              info.payload,
+              info.sizeBytes,
+            ),
+          ],
+          components: [buildInfoButtons(backupId, interaction.user.id, info.guildId)],
         })
         .catch(() => {});
     } catch (error) {
