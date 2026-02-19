@@ -7,12 +7,27 @@ const {
   validateAndHealGuildBackups,
 } = require("./serverBackupService");
 
-const AUTO_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const TICK_EVERY_MS = 60 * 60 * 1000;
+const MIN_BACKUP_GAP_MS = 50 * 60 * 1000;
 const MAX_MANUAL_BACKUPS = 50;
 const MAX_AUTOMATIC_BACKUPS = 1;
 const MAX_MANUAL_BACKUP_AGE_DAYS = 45;
 const MIN_MANUAL_BACKUPS_TO_KEEP = 8;
+
+function getLocalHourKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  const h = String(date.getHours()).padStart(2, "0");
+  return `${y}-${m}-${d}T${h}`;
+}
+
+function getMsUntilNextHourBoundary(date = new Date()) {
+  const next = new Date(date);
+  next.setMinutes(0, 0, 0);
+  next.setHours(next.getHours() + 1);
+  return Math.max(1_000, next.getTime() - date.getTime());
+}
 
 function getMarkerPath(guildId) {
   return path.join(
@@ -45,9 +60,13 @@ async function writeMarker(guildId, payload) {
 }
 
 async function runGuildAutoBackup(guild) {
+  const now = new Date();
+  const currentHourKey = getLocalHourKey(now);
   const marker = await readMarker(guild.id);
   const lastCreatedAt = Number(marker?.createdAtMs || 0);
-  if (Date.now() - lastCreatedAt < AUTO_BACKUP_INTERVAL_MS) return null;
+  const lastHourKey = String(marker?.hourKey || "");
+  if (lastHourKey === currentHourKey) return null;
+  if (Date.now() - lastCreatedAt < MIN_BACKUP_GAP_MS) return null;
 
   const previousAutoId = String(marker?.backupId || "")
     .trim()
@@ -62,6 +81,7 @@ async function runGuildAutoBackup(guild) {
   await writeMarker(guild.id, {
     backupId: created.backupId,
     createdAtMs: Date.now(),
+    hourKey: currentHourKey,
   });
 
   await pruneGuildBackups(guild.id, {
@@ -96,8 +116,18 @@ function startAutoBackupLoop(client) {
     }
   };
 
-  runTick().catch(() => {});
-  client._autoBackupTick = setInterval(runTick, TICK_EVERY_MS);
+  const bootNow = new Date();
+  if (bootNow.getMinutes() === 0) {
+    runTick().catch(() => {});
+  }
+
+  const scheduleHourly = () => {
+    runTick().catch(() => {});
+    client._autoBackupTick = setInterval(runTick, TICK_EVERY_MS);
+  };
+
+  const waitMs = getMsUntilNextHourBoundary(bootNow);
+  client._autoBackupTickStarter = setTimeout(scheduleHourly, waitMs);
 }
 
 module.exports = {

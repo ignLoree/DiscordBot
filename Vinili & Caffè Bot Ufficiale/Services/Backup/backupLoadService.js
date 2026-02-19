@@ -1541,6 +1541,12 @@ async function runBackupDryRun(
 }
 
 function buildDryRunEmbed(result) {
+  const actionLines = Array.isArray(result?.actions)
+    ? result.actions
+      .map((a) => String(a || "").trim())
+      .filter(Boolean)
+      .map((a) => `• \`${a}\``)
+    : [];
   return new EmbedBuilder()
     .setColor("#3498db")
     .setTitle("Backup Dry Run")
@@ -1550,7 +1556,7 @@ function buildDryRunEmbed(result) {
         `Source Guild: \`${String(result?.sourceGuildId || "unknown")}\``,
         "",
         "**Planned Actions**",
-        String(result?.actions || []).map((a) => `• \`${a}\``).join("\n") || "• none",
+        actionLines.join("\n") || "• none",
         "",
         "**Estimated Changes**",
         `• Roles to create: **${Number(result?.expected?.createRoles || 0)}**`,
