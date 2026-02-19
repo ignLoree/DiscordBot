@@ -67,10 +67,8 @@ function isMeaningfulDeletedMessage(msg) {
   if (isTransientInteractionMessage(msg)) return false;
   const hasContent = sanitizeText(msg.content || "").length > 0;
   const hasAttachments = Boolean(msg.attachments?.size);
-  const hasEmbeds = Array.isArray(msg.embeds) && msg.embeds.length > 0;
-  // Skip embed-only ghost messages: no visible content for moderation context.
-  if (hasEmbeds && !hasContent && !hasAttachments) return false;
-  return hasContent || hasAttachments || hasEmbeds;
+  // Skip embeds entirely: embed payload is often not reliably visible after delete.
+  return hasContent || hasAttachments;
 }
 
 function buildPurgeLogText(messages, channelId) {

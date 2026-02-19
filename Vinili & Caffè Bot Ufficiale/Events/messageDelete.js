@@ -120,10 +120,9 @@ function hasMeaningfulDeleteData(message) {
   const content = normalizeText(message.content || "");
   const hasContent = content.length > 0;
   const hasAttachments = Boolean(message.attachments?.size);
-  const hasEmbeds = Array.isArray(message.embeds) && message.embeds.length > 0;
   const hasMessageId = Boolean(message.id);
-  // Skip ghost/partial deletes with no readable payload.
-  return (hasContent || hasAttachments || hasEmbeds) && hasMessageId;
+  // Embed-only deletes are skipped: embed payload is often not reliably visible.
+  return (hasContent || hasAttachments) && hasMessageId;
 }
 
 async function resolveLogChannel(guild) {

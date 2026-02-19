@@ -150,6 +150,63 @@ function toComparableComponents(components = []) {
   return JSON.stringify(simplifyComponents(components));
 }
 
+function scoreEmbedSimilarity(message, payload) {
+  const msgFirst =
+    simplifyEmbed(Array.isArray(message?.embeds) ? message.embeds[0] : null) || {};
+  const nextFirst =
+    simplifyEmbed(Array.isArray(payload?.embeds) ? payload.embeds[0] : null) || {};
+
+  let score = 0;
+
+  if (msgFirst.title && nextFirst.title && msgFirst.title === nextFirst.title) score += 6;
+  if (
+    msgFirst.author?.name &&
+    nextFirst.author?.name &&
+    msgFirst.author.name === nextFirst.author.name
+  ) {
+    score += 4;
+  }
+  if (
+    msgFirst.footer?.text &&
+    nextFirst.footer?.text &&
+    msgFirst.footer.text === nextFirst.footer.text
+  ) {
+    score += 3;
+  }
+  if (msgFirst.image && nextFirst.image && msgFirst.image === nextFirst.image) score += 2;
+  if (
+    msgFirst.thumbnail &&
+    nextFirst.thumbnail &&
+    msgFirst.thumbnail === nextFirst.thumbnail
+  ) {
+    score += 2;
+  }
+  if (
+    Number(Array.isArray(message?.embeds) ? message.embeds.length : 0) ===
+    Number(Array.isArray(payload?.embeds) ? payload.embeds.length : 0)
+  ) {
+    score += 1;
+  }
+  if (
+    Number(Array.isArray(message?.components) ? message.components.length : 0) ===
+    Number(Array.isArray(payload?.components) ? payload.components.length : 0)
+  ) {
+    score += 1;
+  }
+
+  const msgDesc = normalizeText(msgFirst.description || "").toLowerCase();
+  const nextDesc = normalizeText(nextFirst.description || "").toLowerCase();
+  if (msgDesc && nextDesc) {
+    const msgHead = msgDesc.slice(0, 80);
+    const nextHead = nextDesc.slice(0, 80);
+    if (msgHead && nextHead && (msgHead === nextHead || msgHead.includes(nextHead) || nextHead.includes(msgHead))) {
+      score += 2;
+    }
+  }
+
+  return score;
+}
+
 function extractCustomIdsFromComponents(components = []) {
   const ids = new Set();
   for (const row of components || []) {
@@ -303,6 +360,20 @@ async function upsertPanelMessage(channel, client, payload) {
 
     if (structuralCandidates.length === 1) {
       existing = structuralCandidates[0];
+    }
+  }
+
+  if (!existing && botMessages.length) {
+    const ranked = botMessages
+      .map((msg) => ({ msg, score: scoreEmbedSimilarity(msg, payload) }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        const at = Number(a.msg?.createdTimestamp || 0);
+        const bt = Number(b.msg?.createdTimestamp || 0);
+        return bt - at;
+      });
+    if (ranked[0]?.score >= 3) {
+      existing = ranked[0].msg;
     }
   }
 
