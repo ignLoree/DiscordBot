@@ -13,6 +13,23 @@ const { handleRoleDeletionAction: antiNukeHandleRoleDeletionAction } = require("
 
 const ROLE_DELETE_ACTION = AuditLogEvent?.RoleDelete ?? 32;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const audit = await resolveResponsible(
+      guild,
+      ROLE_DELETE_ACTION,
+      (entry) => String(entry?.target?.id || "") === String(roleId || ""),
+    );
+    if (audit?.executor || audit?.entry) return audit;
+    if (attempt < retries - 1) await sleep(delayMs);
+  }
+  return { executor: null, reason: null, entry: null };
+}
+
 module.exports = {
   name: "roleDelete",
   async execute(role, client) {
@@ -20,13 +37,13 @@ module.exports = {
     if (!guildId) return;
 
     try {
-      const guild = role.guild || client.guilds.cache.get(guildId);
+      const guild =
+        role?.guild ||
+        client?.guilds?.cache?.get?.(guildId) ||
+        (await client?.guilds?.fetch?.(guildId).catch(() => null));
+      if (!guild) return;
       let executorId = "";
-      const audit = await resolveResponsible(
-        guild,
-        ROLE_DELETE_ACTION,
-        (entry) => String(entry?.target?.id || "") === String(role.id || ""),
-      );
+      const audit = await resolveResponsibleWithRetry(guild, role?.id);
       executorId = String(audit?.executor?.id || "");
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
@@ -52,16 +69,20 @@ module.exports = {
           .setTitle("Role Delete")
           .setDescription(lines.join("\n"));
 
-        await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await logChannel.send({ embeds: [embed] });
       }
       await antiNukeHandleRoleDeletionAction({
         guild,
         executorId,
         roleName: String(role.name || ""),
         roleId: String(role.id || ""),
-      }).catch(() => {});
-    } catch {}
+      });
+    } catch (error) {
+      global.logger?.error?.("[roleDelete] failed:", error);
+    }
 
-    queueIdsCatalogSync(client, guildId, "roleDelete");
+    if (client) {
+      queueIdsCatalogSync(client, guildId, "roleDelete");
+    }
   },
 };

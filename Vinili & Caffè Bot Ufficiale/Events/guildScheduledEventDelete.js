@@ -17,6 +17,12 @@ function formatAuditActor(actor) {
   return `${actor}${suffix} \`${actor.id}\``;
 }
 
+function toEventTimeLabel(value) {
+  const ms = new Date(value).getTime();
+  if (!Number.isFinite(ms)) return null;
+  return `<t:${Math.floor(ms / 1000)}:F>`;
+}
+
 function privacyLabel(value) {
   return Number(value) === 2 ? "Local Server Event" : `Unknown (${value})`;
 }
@@ -47,6 +53,10 @@ async function resolveLogChannel(guild) {
   );
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function resolveResponsible(guild, eventId) {
   if (
     !guild?.members?.me?.permissions?.has?.(
@@ -56,21 +66,26 @@ async function resolveResponsible(guild, eventId) {
     return null;
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.GuildScheduledEventDelete,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) return null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.GuildScheduledEventDelete,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const entry = logs.entries.find((item) => {
+        const created = Number(item?.createdTimestamp || 0);
+        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
+        return within && String(item?.target?.id || "") === String(eventId || "");
+      });
+      if (entry?.executor) return entry.executor;
+    }
+    if (attempt < 2) await sleep(700);
+  }
 
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-    return within && String(item?.target?.id || "") === String(eventId || "");
-  });
-  return entry?.executor || null;
+  return null;
 }
 
 module.exports = {
@@ -78,13 +93,20 @@ module.exports = {
   async execute(scheduledEvent) {
     try {
       const guild = scheduledEvent?.guild;
-      if (!guild) return;
+      const eventId = String(scheduledEvent?.id || "");
+      if (!guild || !eventId) return;
 
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const responsible = await resolveResponsible(guild, scheduledEvent.id);
+      const responsible = await resolveResponsible(guild, eventId);
       const responsibleText = formatAuditActor(responsible);
+      const startTime = toEventTimeLabel(
+        scheduledEvent.scheduledStartAt || scheduledEvent.scheduledStartTimestamp,
+      );
+      const endTime = toEventTimeLabel(
+        scheduledEvent.scheduledEndAt || scheduledEvent.scheduledEndTimestamp,
+      );
 
       const lines = [
         `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
@@ -95,6 +117,8 @@ module.exports = {
         `<:VC_right_arrow:1473441155055096081> **Privacy Level:** ${privacyLabel(scheduledEvent.privacyLevel)}`,
         `<:VC_right_arrow:1473441155055096081> **Status:** ${statusLabel(scheduledEvent.status)}`,
         `<:VC_right_arrow:1473441155055096081> **Entity Type:** ${entityTypeLabel(scheduledEvent.entityType)}`,
+        startTime ? `<:VC_right_arrow:1473441155055096081> **Start Time:** ${startTime}` : null,
+        endTime ? `<:VC_right_arrow:1473441155055096081> **End Time:** ${endTime}` : null,
       ];
 
       if (scheduledEvent.channelId) {
@@ -110,9 +134,9 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor("#ED4245")
         .setTitle("Guild Scheduled Event Delete")
-        .setDescription(lines.join("\n"));
+        .setDescription(lines.filter(Boolean).join("\n"));
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] });
     } catch (error) {
       global.logger?.error?.("[guildScheduledEventDelete] log failed:", error);
     }

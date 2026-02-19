@@ -664,37 +664,60 @@ function hasBlacklistedDomain(content) {
   });
 }
 
-function hasBlacklistedWord(content) {
-  if (!TEXT_RULES.wordBlacklist.enabled) return false;
+function findBlacklistedWordMatch(content) {
+  if (!TEXT_RULES.wordBlacklist.enabled) return null;
   const text = String(content || "");
-  if (!text) return false;
+  if (!text) return null;
   const normalizedBase = text
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
   const normalized = toLeetNormalized(normalizedBase);
-  const compact = normalized.replace(/[^\p{L}\p{N}]+/gu, "");
+  const normalizedTokens = normalized
+    .split(/[^\p{L}\p{N}]+/gu)
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+  const tokenSet = new Set(normalizedTokens);
 
   if (TEXT_RULES.wordBlacklist.useRacistList) {
-    if (
-      RACIST_WORD_PATTERNS.some(
-        (re) => re.test(text) || re.test(normalized) || re.test(compact),
-      )
-    ) {
-      return true;
+    for (let i = 0; i < RACIST_WORD_PATTERNS.length; i += 1) {
+      const re = RACIST_WORD_PATTERNS[i];
+      if (re.test(text) || re.test(normalized)) {
+        return {
+          source: "regex",
+          term: `pattern#${i + 1}`,
+        };
+      }
     }
-    if (
-      CUSTOM_RACIST_WORDS.some((term) => {
-        if (normalized.includes(term)) return true;
-        const compactTerm = term.replace(/[^a-z0-9]+/g, "");
-        return compactTerm.length >= 3 && compact.includes(compactTerm);
-      })
-    ) {
-      return true;
+    for (const term of CUSTOM_RACIST_WORDS) {
+      const normalizedTerm = toLeetNormalized(
+        String(term || "")
+          .normalize("NFKD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .trim(),
+      );
+      if (!normalizedTerm) continue;
+
+      if (/\s/.test(normalizedTerm)) {
+        const padded = ` ${normalized} `;
+        const needle = ` ${normalizedTerm} `;
+        if (padded.includes(needle)) {
+          return {
+            source: "custom_phrase",
+            term,
+          };
+        }
+      } else if (tokenSet.has(normalizedTerm)) {
+        return {
+          source: "custom_token",
+          term,
+        };
+      }
     }
   }
 
-  return false;
+  return null;
 }
 
 function levenshteinDistance(a, b) {
@@ -980,11 +1003,15 @@ function detectViolations(message, state) {
     });
   }
 
-  if (hasBlacklistedWord(content)) {
+  const wordBlacklistMatch = findBlacklistedWordMatch(content);
+  if (wordBlacklistMatch) {
     violations.push({
       key: "word_blacklist",
       heat: TEXT_RULES.wordBlacklist.heat,
-      info: "racist list",
+      info:
+        wordBlacklistMatch.term && wordBlacklistMatch.source
+          ? `racist list (${wordBlacklistMatch.source}: ${wordBlacklistMatch.term})`
+          : "racist list",
     });
   }
 
@@ -1227,6 +1254,10 @@ async function sendAutomodLog(
   const primaryFilter = firstViolationLabel(violations);
   const preview = truncateText(message.content, 160);
   const fullMessage = truncateText(message.content, 800);
+  const shouldShowFullMessage =
+    Boolean(fullMessage) &&
+    String(fullMessage) !== String(preview) &&
+    String(message.content || "").trim().length > 160;
   const timeoutLabel = context.timeoutMs
     ? ` for ${formatDurationShort(context.timeoutMs)}`
     : "";
@@ -1254,7 +1285,7 @@ async function sendAutomodLog(
           ? `<:VC_right_arrow:1473441155055096081> **Message:** ${preview}`
           : null,
         "",
-        fullMessage ? `*${fullMessage}*` : null,
+        shouldShowFullMessage ? `*${fullMessage}*` : null,
         "",
         `<:VC_right_arrow:1473441155055096081> **Member:** ${message.author} [\`${message.author.id}\`]`,
         `<:VC_right_arrow:1473441155055096081> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,

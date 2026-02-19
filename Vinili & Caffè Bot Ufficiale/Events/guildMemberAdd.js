@@ -10,10 +10,10 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
-const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const {
   processJoinRaidForMember,
 } = require("../Services/Moderation/joinRaidService");
+const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -84,15 +84,6 @@ function formatActor(actor) {
 
 function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
-}
-
-function formatTodayAt(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
 }
 
 function formatAccountAge(createdAt) {
@@ -209,26 +200,30 @@ async function trackInviteJoin(member, inviterId) {
 }
 
 async function tryAwardInviteRole(member, inviteInfo) {
-  if (!inviteInfo || inviteInfo.isVanity || !inviteInfo.inviterId) return false;
-  if ((inviteInfo.totalInvites || 0) < 5) return false;
+  if (!inviteInfo || inviteInfo.isVanity || !inviteInfo.inviterId) {
+    return { awarded: false, roleIds: [] };
+  }
+  if ((inviteInfo.totalInvites || 0) < 5) return { awarded: false, roleIds: [] };
 
   const guild = member.guild;
   const inviterMember =
     guild.members.cache.get(inviteInfo.inviterId) ||
     (await guild.members.fetch(inviteInfo.inviterId).catch(() => null));
-  if (!inviterMember || inviterMember.user?.bot) return false;
+  if (!inviterMember || inviterMember.user?.bot) return { awarded: false, roleIds: [] };
 
-  const rewardRole =
-    guild.roles.cache.get(INVITE_REWARD_ROLE_ID) ||
-    (await guild.roles.fetch(INVITE_REWARD_ROLE_ID).catch(() => null));
-  const extraRole =
-    guild.roles.cache.get(INVITE_EXTRA_ROLE_ID) ||
-    (await guild.roles.fetch(INVITE_EXTRA_ROLE_ID).catch(() => null));
-  if (!rewardRole && !extraRole) return false;
+  const rewardRole = INVITE_REWARD_ROLE_ID
+    ? guild.roles.cache.get(INVITE_REWARD_ROLE_ID) ||
+      (await guild.roles.fetch(INVITE_REWARD_ROLE_ID).catch(() => null))
+    : null;
+  const extraRole = INVITE_EXTRA_ROLE_ID
+    ? guild.roles.cache.get(INVITE_EXTRA_ROLE_ID) ||
+      (await guild.roles.fetch(INVITE_EXTRA_ROLE_ID).catch(() => null))
+    : null;
+  if (!rewardRole && !extraRole) return { awarded: false, roleIds: [] };
 
   const me = guild.members.me;
   if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageRoles))
-    return false;
+    return { awarded: false, roleIds: [] };
 
   const rolesToAdd = [];
   if (
@@ -245,14 +240,15 @@ async function tryAwardInviteRole(member, inviteInfo) {
   ) {
     rolesToAdd.push(extraRole.id);
   }
-  if (!rolesToAdd.length) return false;
+  if (!rolesToAdd.length) return { awarded: false, roleIds: [] };
 
   await inviterMember.roles.add(rolesToAdd).catch(() => {});
-  return true;
+  return { awarded: true, roleIds: rolesToAdd };
 }
 
 async function addBotRoles(member) {
-  const roleIds = [IDs.roles.Bots];
+  const roleIds = [IDs.roles.Bots].filter(Boolean);
+  if (!roleIds.length) return;
   const me = member.guild.members.me;
 
   if (!me) {
@@ -357,25 +353,8 @@ async function sendBotAddLog(member) {
   if (!logChannel?.isTextBased?.()) return;
 
   let executor = null;
-  let auditEntry = null;
-  if (
-    guild.members.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)
-  ) {
-    const logs = await guild
-      .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT })
-      .catch(() => null);
-    const now = Date.now();
-    const entry = logs?.entries?.find((item) => {
-      const created = Number(item?.createdTimestamp || 0);
-      return (
-        created > 0 &&
-        now - created <= AUDIT_LOOKBACK_MS &&
-        String(item?.target?.id || "") === String(member.user.id || "")
-      );
-    });
-    if (entry?.executor) executor = entry.executor;
-    if (entry) auditEntry = entry;
-  }
+  const entry = await fetchRecentBotAddEntry(guild, member.user.id);
+  if (entry?.executor) executor = entry.executor;
 
   const responsible = formatActor(executor);
   const createdTs = Math.floor(new Date(member.user.createdAt).getTime() / 1000);
@@ -412,11 +391,11 @@ async function handleBotJoin(member) {
   const verifiedBot = await isVerifiedBot(member.user);
 
   if (JOIN_GATE.unverifiedBotAdditions.enabled && !verifiedBot) {
-    const punished = await kickForJoinGate(member, "Unverified bot addition.", [
+    const result = await kickForJoinGate(member, "Unverified bot addition.", [
       `${ARROW} **Rule:** Unverified Bot Additions`,
       `${ARROW} **Responsible:** ${executorText}`,
     ]);
-    if (punished) return;
+    if (result?.attempted) return;
   }
 
   if (JOIN_GATE.botAdditions.enabled) {
@@ -424,7 +403,7 @@ async function handleBotJoin(member) {
       ? await isAuthorizedBotAdder(member.guild, executorId)
       : false;
     if (!authorized) {
-      const punished = await kickForJoinGate(
+      const result = await kickForJoinGate(
         member,
         "Bot added by unauthorized member.",
         [
@@ -432,7 +411,7 @@ async function handleBotJoin(member) {
           `${ARROW} **Responsible:** ${executorText}${executorId ? "" : " (audit unavailable)"}`,
         ],
       );
-      if (punished) return;
+      if (result?.attempted) return;
     }
   }
 
@@ -580,21 +559,28 @@ async function fetchRecentBotAddEntry(guild, botId) {
   ) {
     return null;
   }
-  const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT })
-    .catch(() => null);
-  if (!logs?.entries?.size) return null;
-  const now = Date.now();
-  return (
-    logs.entries.find((entry) => {
-      const createdTs = Number(entry?.createdTimestamp || 0);
-      return (
-        createdTs > 0 &&
-        now - createdTs <= AUDIT_LOOKBACK_MS &&
-        String(entry?.target?.id || "") === String(botId || "")
-      );
-    }) || null
-  );
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({ type: AuditLogEvent.BotAdd, limit: AUDIT_FETCH_LIMIT })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const found =
+        logs.entries.find((entry) => {
+          const createdTs = Number(entry?.createdTimestamp || 0);
+          return (
+            createdTs > 0 &&
+            now - createdTs <= AUDIT_LOOKBACK_MS &&
+            String(entry?.target?.id || "") === String(botId || "")
+          );
+        }) || null;
+      if (found) return found;
+    }
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    }
+  }
+  return null;
 }
 
 async function isVerifiedBot(user) {
@@ -646,7 +632,16 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
 
 async function kickForJoinGate(member, reason, extraLines = []) {
   const dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
-  const punished = await member.kick(reason).then(() => true).catch(() => false);
+  const me = member.guild.members.me;
+  const canKick =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
+    Boolean(member?.kickable);
+  const punished = canKick
+    ? await member.kick(reason).then(() => true).catch(() => false)
+    : false;
+  if (punished) {
+    markJoinGateKick(member.guild.id, member.id, reason);
+  }
   const logChannel =
     member.guild.channels.cache.get(IDs.channels.modLogs) ||
     (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
@@ -661,6 +656,7 @@ async function kickForJoinGate(member, reason, extraLines = []) {
           `${ARROW} **Action:** Kick`,
           `${ARROW} **Reason:** ${reason}`,
           ...extraLines.filter(Boolean),
+          `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
           `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
           `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
           `${ARROW} <t:${nowTs}:F>`,
@@ -668,7 +664,7 @@ async function kickForJoinGate(member, reason, extraLines = []) {
       );
     await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
-  return punished;
+  return { attempted: true, punished, dmSent, canKick };
 }
 
 async function sendJoinGateNoAvatarLog(member) {
@@ -715,71 +711,12 @@ async function sendSuspiciousAccountLog(member, reason) {
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 async function handleTooYoungAccount(member) {
-  const logChannel = await resolveGuildChannel(member.guild, IDs.channels.modLogs);
   const createdTs = toUnix(member.user.createdAt);
-  const nowTs = Math.floor(Date.now() / 1000);
-
-  const dmEmbed = new EmbedBuilder()
-    .setTitle(`You have been kicked! in ${member.guild.name}!`)
-    .setColor("#6f4e37")
-    .setDescription(
-      [
-        `${ARROW} **Member:** ${member?.displayName || member?.user?.username} **[\`${member.user.id}\`]**`,
-        `${ARROW} **Reason:** Account is too young to be allowed.`,
-        `<:VC_Space:1461481021320069195>${ARROW} **Accounts Age:** \`<t:${createdTs}:R>\`.`,
-        `<:VC_Space:1461481021320069195>${ARROW} **Minimum Age:** \`${MIN_ACCOUNT_AGE_DAYS} days\`.`,
-      ].join("\n"),
-    );
-
-  let dmSent = false;
-  try {
-    await member.send({ embeds: [dmEmbed] });
-    dmSent = true;
-  } catch {
-    dmSent = false;
-  }
-
-  let punished = false;
-  try {
-    await member.kick("Account is too young to be allowed.");
-    punished = true;
-  } catch {
-    punished = false;
-  }
-
-  if (!logChannel?.isTextBased?.()) return;
-
-  const logEmbed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle(`**${member.user.username} has been kicked!!**`)
-    .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
-    .setDescription(
-      [
-        `<:profile:1461732907508039834> **Member:** ${member?.displayName || member?.user?.username} **[${member.user.id}]**`,
-        "<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.",
-        `<:space:1461733157840621608><:rightSort:1461726104422453298> **Accounts Age:** <t:${createdTs}:R>.`,
-        `<:space:1461733157840621608><:rightSort:1461726104422453298> **Minimum Age:** \`${MIN_ACCOUNT_AGE_DAYS} days\`.`,
-        "",
-        "**More Details:**",
-        `<:noDM:1463645183840354517> **Member Direct Messaged?** ${dmSent ? "<:success:1461731530333229226>" : "<:cancel:1461730653677551691>"}`,
-        "<:space:1461733157840621608><:rightSort:1461726104422453298>**`Dmng disabled.`**",
-        `<:kick:1463645181965242581> **Member Punished?** ${punished ? "<:success:1461731530333229226>" : "<:cancel:1461730653677551691>"}`,
-      ].join("\n"),
-    );
-
-  const actionEmbed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Member Kick")
-    .setDescription(
-      [
-        `<:rightSort:1461726104422453298> **Responsible:** ${formatActor(member.client.user)}`,
-        `<:rightSort:1461726104422453298> **Target:** ${member.user} / ${member.user.id}`,
-        `<:rightSort:1461726104422453298> **Date:** <t:${nowTs}:F>`,
-        "<:rightSort:1461726104422453298> **Reason:** Account is too young to be allowed.",
-      ].join("\n"),
-    );
-
-  await logChannel.send({ embeds: [logEmbed, actionEmbed] }).catch(() => {});
+  await kickForJoinGate(member, "Account is too young to be allowed.", [
+    `${ARROW} **Rule:** Minimum Account Age`,
+    `${ARROW} **Account Age:** <t:${createdTs}:R>`,
+    `${ARROW} **Minimum Age:** ${MIN_ACCOUNT_AGE_DAYS} days`,
+  ]);
 }
 
 async function sendJoinLog(member) {
@@ -803,7 +740,7 @@ async function sendJoinLog(member) {
         accountAge
       ].join("\n"),
     )
-    .setFooter({ text:`ID: ${member.user.id} •`})
+    .setFooter({ text:`ID: ${member.user.id}`})
     .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
@@ -847,14 +784,21 @@ async function maybeSendInviteReward(member, info) {
     member.guild,
     THANKS_CHANNEL_ID,
   );
-  const awarded = await tryAwardInviteRole(member, info).catch(() => false);
-  if (!inviteChannel || !awarded || !info?.inviterId) return;
+  const rewardResult = await tryAwardInviteRole(member, info).catch(() => ({
+    awarded: false,
+    roleIds: [],
+  }));
+  if (!inviteChannel || !rewardResult?.awarded || !info?.inviterId) return;
+
+  const rewardedRolesText = (rewardResult.roleIds || [])
+    .map((id) => `<@&${id}>`)
+    .join(", ");
 
   const rewardEmbed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("<a:ThankYou:1329504268369002507> Grazie per gli inviti!")
     .setDescription(
-      `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto il ruolo <@&${INVITE_REWARD_ROLE_ID}>` +
+      `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto ${rewardedRolesText || "nuovi ruoli"}` +
         `<a:Boost_Cycle:1329504283007385642> Controlla <#${INFO_PERKS_CHANNEL_ID}> per i nuovi vantaggi.`,
     );
   await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
@@ -864,17 +808,12 @@ module.exports = {
   name: "guildMemberAdd",
   async execute(member) {
     try {
+      if (!member?.guild || !member?.user) return;
       const isCoreExempt =
         CORE_EXEMPT_USER_IDS.has(String(member?.id || "")) ||
         String(member?.guild?.ownerId || "") === String(member?.id || "");
 
       if (member.user?.bot) {
-        const joinRaidResult = isCoreExempt
-          ? { blocked: false }
-          : await processJoinRaidForMember(member).catch(
-              () => ({ blocked: false }),
-            );
-        if (joinRaidResult?.blocked) return;
         if (isCoreExempt) {
           await sendJoinLog(member);
           return;
@@ -971,7 +910,7 @@ module.exports = {
       await maybeSendInviteReward(member, info);
       await announceInviteInfo(member, welcomeChannel, info);
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[guildMemberAdd] failed:", error);
     }
   },
 };

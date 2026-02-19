@@ -710,15 +710,15 @@
     "eb:title:*": {
       "ownerFromMessageMention": true
     },
-    "error_pending": [
-      "roles.Founder"
-    ],
-    "error_solved": [
-      "roles.Founder"
-    ],
-    "error_unsolved": [
-      "roles.Founder"
-    ],
+    "error_pending": {
+      "permissions": "Administrator"
+    },
+    "error_solved": {
+      "permissions": "Administrator"
+    },
+    "error_unsolved": {
+      "permissions": "Administrator"
+    },
     "generalimoderazione": [
       "roles.Staff"
     ],

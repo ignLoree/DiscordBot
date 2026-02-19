@@ -25,6 +25,7 @@ const ANNOUNCE_COOLDOWN_MS = 30 * 60 * 1000;
 
 let cleanupInterval = null;
 let bootstrapRan = false;
+const cleanupIntervalsByGuild = new Map();
 
 function isDbReady() {
   return mongoose.connection?.readyState === 1;
@@ -82,6 +83,7 @@ function canManageRoles(member) {
 }
 
 async function addRoleIfPossible(member) {
+  if (!ROLE_ID) return false;
   const me = member.guild.members.me;
   if (!me) {
     global.logger.warn(
@@ -115,6 +117,7 @@ async function addRoleIfPossible(member) {
 }
 
 async function addPerkRoleIfPossible(member) {
+  if (!PERK_ROLE_ID) return false;
   const me = member.guild.members.me;
   if (!me) return false;
   if (!canManageRoles(member)) return false;
@@ -129,6 +132,7 @@ async function addPerkRoleIfPossible(member) {
 }
 
 async function removeRoleIfPossible(member) {
+  if (!ROLE_ID) return false;
   const me = member.guild.members.me;
   if (!me) {
     global.logger.warn(
@@ -181,10 +185,26 @@ async function clearPending(userId, channel) {
   if (!pending) return;
 
   if (pending.timeout) clearTimeout(pending.timeout);
-  if (pending.messageId && channel) {
+  if (pending.messageId && channel?.isTextBased?.()) {
     await channel.messages.delete(pending.messageId).catch(() => {});
   }
   pendingChecks.delete(userId);
+}
+
+async function resolveSupportersChannel(guild) {
+  if (!guild || !CHANNEL_ID) return null;
+  return (
+    guild.channels.cache.get(CHANNEL_ID) ||
+    (await guild.channels.fetch(CHANNEL_ID).catch(() => null))
+  );
+}
+
+async function refreshMember(guild, userId) {
+  if (!guild || !userId) return null;
+  return (
+    guild.members.cache.get(userId) ||
+    (await guild.members.fetch(userId).catch(() => null))
+  );
 }
 
 function scheduleRemovalConfirm(member, channel) {
@@ -194,19 +214,25 @@ function scheduleRemovalConfirm(member, channel) {
   const timeout = setTimeout(async () => {
     removalChecks.delete(userId);
 
-    const stillHasInvite = hasInviteNow(member);
+    const freshMember = await refreshMember(member.guild, userId);
+    if (!freshMember) return;
+    const liveChannel = channel?.isTextBased?.()
+      ? channel
+      : await resolveSupportersChannel(member.guild);
+
+    const stillHasInvite = hasInviteNow(freshMember);
     if (stillHasInvite !== false) return;
 
-    await removeRoleIfPossible(member);
+    await removeRoleIfPossible(freshMember);
     try {
-      await member.send(
+      await freshMember.send(
         "Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",
       );
-    } catch {}
+    } catch { }
 
     const info = statusCache.get(userId);
-    if (info?.lastMessageId && channel) {
-      await channel.messages.delete(info.lastMessageId).catch(() => {});
+    if (info?.lastMessageId && liveChannel?.isTextBased?.()) {
+      await liveChannel.messages.delete(info.lastMessageId).catch(() => {});
     }
 
     statusCache.set(userId, {
@@ -215,7 +241,7 @@ function scheduleRemovalConfirm(member, channel) {
       lastMessageId: null,
       lastSeenOnlineAt: info?.lastSeenOnlineAt || 0,
     });
-    await clearPersistedStatus(member.guild.id, userId);
+    await clearPersistedStatus(freshMember.guild.id, userId);
   }, REMOVE_CONFIRM_MS);
 
   removalChecks.set(userId, { timeout });
@@ -230,7 +256,7 @@ async function persistStatus(guildId, userId, payload) {
       { upsert: true },
     );
   } catch (error) {
-    global.logger.error("[SUPPORTER STATUS] Persist failed:", error);
+    global.logger?.error?.("[SUPPORTER STATUS] Persist failed:", error);
   }
 }
 
@@ -239,7 +265,7 @@ async function clearPersistedStatus(guildId, userId) {
   try {
     await SupporterStatus.deleteOne({ guildId, userId });
   } catch (error) {
-    global.logger.error("[SUPPORTER STATUS] Delete failed:", error);
+    global.logger?.error?.("[SUPPORTER STATUS] Delete failed:", error);
   }
 }
 
@@ -279,7 +305,7 @@ async function startPendingFlow(member, channel) {
   if (pendingChecks.has(member.id)) return;
 
   const existing = statusCache.get(member.id);
-  if (existing?.lastMessageId && channel) {
+  if (existing?.lastMessageId && channel?.isTextBased?.()) {
     await channel.messages.delete(existing.lastMessageId).catch(() => {});
   }
 
@@ -290,26 +316,35 @@ async function startPendingFlow(member, channel) {
   });
   const sent = await channel
     .send({
-      content: `<@${member.id}>`,
+    content: `<@${member.id}>`,
       embeds: [buildPendingEmbed(member)],
     })
     .catch(() => null);
 
   if (sent) {
     const timeout = setTimeout(async () => {
-      const stillHasInvite = hasInviteNow(member);
+      const freshMember = await refreshMember(member.guild, member.id);
+      if (!freshMember) {
+        pendingChecks.delete(member.id);
+        return;
+      }
+      const liveChannel = await resolveSupportersChannel(member.guild);
+      const stillHasInvite = hasInviteNow(freshMember);
       if (stillHasInvite === false) {
-        await channel.messages.delete(sent.id).catch(() => {});
+        if (liveChannel?.isTextBased?.()) {
+          await liveChannel.messages.delete(sent.id).catch(() => {});
+        }
         pendingChecks.delete(member.id);
         statusCache.set(member.id, {
           hasLink: false,
           lastAnnounced: statusCache.get(member.id)?.lastAnnounced || 0,
           lastMessageId: null,
+          lastSeenOnlineAt: statusCache.get(member.id)?.lastSeenOnlineAt || 0,
         });
         return;
       }
 
-      await addRoleIfPossible(member);
+      await addRoleIfPossible(freshMember);
       pendingChecks.delete(member.id);
     }, PENDING_MS);
 
@@ -326,6 +361,7 @@ async function startPendingFlow(member, channel) {
     hasLink: true,
     lastAnnounced: Date.now(),
     lastMessageId: sent?.id || null,
+    lastSeenOnlineAt: statusCache.get(member.id)?.lastSeenOnlineAt || Date.now(),
   });
   await persistStatus(member.guild.id, member.id, {
     hasLink: true,
@@ -339,7 +375,7 @@ async function bootstrapSupporter(client) {
   bootstrapRan = true;
 
   for (const guild of client.guilds.cache.values()) {
-    const channel = guild.channels.cache.get(CHANNEL_ID);
+    const channel = await resolveSupportersChannel(guild);
     if (!channel) continue;
 
     let persisted = [];
@@ -380,12 +416,13 @@ async function bootstrapSupporter(client) {
 }
 
 function startCleanupClock(client, guildId) {
-  if (cleanupInterval) return;
+  if (!client || !guildId) return;
+  if (cleanupIntervalsByGuild.has(guildId)) return;
 
-  cleanupInterval = setInterval(async () => {
+  const interval = setInterval(async () => {
     const guild = client.guilds.cache.get(guildId);
     if (!guild) return;
-    const channel = guild.channels.cache.get(CHANNEL_ID);
+    const channel = await resolveSupportersChannel(guild);
 
     for (const [userId, info] of statusCache.entries()) {
       const shouldCheck = info?.hasLink || info?.lastMessageId;
@@ -406,6 +443,7 @@ function startCleanupClock(client, guildId) {
       }
     }
   }, CLEANUP_MS);
+  cleanupIntervalsByGuild.set(guildId, interval);
 }
 
 async function applyOnlineState(member, userId, prev, prevHas) {
@@ -469,7 +507,7 @@ async function applyOnlineState(member, userId, prev, prevHas) {
       lastSeenOnlineAt,
     });
 
-    const channel = member.guild.channels.cache.get(CHANNEL_ID);
+    const channel = await resolveSupportersChannel(member.guild);
     if (!channel) return;
     await startPendingFlow(member, channel);
     await addPerkRoleIfPossible(member);
@@ -477,7 +515,7 @@ async function applyOnlineState(member, userId, prev, prevHas) {
   }
 
   if (prevHas && !newHas) {
-    const channel = member.guild.channels.cache.get(CHANNEL_ID);
+    const channel = await resolveSupportersChannel(member.guild);
     await clearPending(userId, channel);
 
     statusCache.set(userId, {
@@ -553,7 +591,7 @@ module.exports = {
 
       await applyOnlineState(member, userId, prev, prevHas);
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[presenceUpdate] failed:", error);
     }
   },
   bootstrapSupporter,

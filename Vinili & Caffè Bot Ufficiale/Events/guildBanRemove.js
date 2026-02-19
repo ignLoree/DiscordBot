@@ -7,6 +7,29 @@ const {
   nowDiscordTs,
 } = require("../Utils/Logging/modAuditLogUtils");
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveUnbanAuditEntry(guild, targetUserId, retries = 3, delayMs = 700) {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const entry = await fetchRecentAuditEntry(
+      guild,
+      AuditLogEvent.MemberBanRemove,
+      (item) => String(item?.target?.id || "") === String(targetUserId || ""),
+    );
+    if (entry) return entry;
+    if (attempt < retries - 1) await sleep(delayMs);
+  }
+  return null;
+}
+
+function normalizeReason(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (text.length <= 900) return text;
+  return `${text.slice(0, 897)}...`;
+}
 
 module.exports = {
   name: "guildBanRemove",
@@ -14,29 +37,27 @@ module.exports = {
     try {
       const guild = ban?.guild;
       if (!guild) return;
+      const targetId = String(ban?.user?.id || "");
+      if (!targetId) return;
 
       const logChannel = await resolveModLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
       let executor = null;
-      let reason = ban?.reason || null;
-      const auditEntry = await fetchRecentAuditEntry(
-        guild,
-        AuditLogEvent.MemberBanRemove,
-        (item) => String(item?.target?.id || "") === String(ban.user?.id || ""),
-      );
+      let reason = normalizeReason(ban?.reason);
+      const auditEntry = await resolveUnbanAuditEntry(guild, targetId);
       if (auditEntry?.executor) executor = auditEntry.executor;
-      if (auditEntry?.reason) reason = auditEntry.reason;
+      if (auditEntry?.reason) reason = normalizeReason(auditEntry.reason);
 
       const responsible = formatResponsible(executor);
 
       const embed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setTitle("Member Ban Remove")
+        .setColor("#57F287")
+        .setTitle("Member Unbanned")
         .setDescription(
           [
             `${ARROW} **Responsible:** ${responsible}`,
-            `${ARROW} **Target:** ${ban.user} \`${ban.user?.id || "sconosciuto"}\``,
+            `${ARROW} **Target:** ${ban.user || "sconosciuto"} \`${targetId}\``,
             `${ARROW} ${nowDiscordTs()}`,
             reason ? `${ARROW} **Reason:** ${reason}` : null,
             ...buildAuditExtraLines(auditEntry, ["reason"]),
@@ -45,9 +66,9 @@ module.exports = {
             .join("\n"),
         );
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] });
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[guildBanRemove] failed:", error);
     }
   },
 };

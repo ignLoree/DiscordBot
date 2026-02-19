@@ -24,19 +24,28 @@ function getCommandContent(interaction) {
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction, client) {
+    if (!interaction) return;
     if (!isCommandInteraction(interaction)) return;
+
+    const resolvedClient = client || interaction.client || null;
+    if (!resolvedClient?.channels) return;
+
     try {
-      await logCommandUsage(client, {
+      const user = interaction.user;
+      if (!user) return;
+
+      await logCommandUsage(resolvedClient, {
         channelId: COMMAND_LOG_CHANNEL_ID,
         serverName: interaction.guild?.name || "DM",
-        user: interaction.user.username,
-        userId: interaction.user.id,
+        user: user.tag || user.username || "unknown",
+        userId: user.id || "unknown",
         content: getCommandContent(interaction),
-        userAvatarUrl: interaction.user.avatarURL({ dynamic: true }),
+        userAvatarUrl: user.displayAvatarURL?.({ size: 128 }),
       });
-    } catch {
-      client.logs.error(
-        "[COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.",
+    } catch (error) {
+      global.logger?.error?.(
+        "[interactionCreateCommandLogging] failed:",
+        error,
       );
     }
   },

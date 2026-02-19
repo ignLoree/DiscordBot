@@ -25,22 +25,33 @@ async function resolveLogChannel(guild) {
   return guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function resolveAudit(guild, stickerId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) {
     return { executor: null, changes: [] };
   }
-  const logs = await guild.fetchAuditLogs({ type: STICKER_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
-  if (!logs?.entries?.size) return { executor: null, changes: [] };
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-    return within && String(item?.target?.id || "") === String(stickerId || "");
-  });
-  return {
-    executor: entry?.executor || null,
-    changes: Array.isArray(entry?.changes) ? entry.changes : [],
-  };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild.fetchAuditLogs({ type: STICKER_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const entry = logs.entries.find((item) => {
+        const created = Number(item?.createdTimestamp || 0);
+        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
+        return within && String(item?.target?.id || "") === String(stickerId || "");
+      });
+      if (entry) {
+        return {
+          executor: entry.executor || null,
+          changes: Array.isArray(entry.changes) ? entry.changes : [],
+        };
+      }
+    }
+    if (attempt < 2) await sleep(700);
+  }
+  return { executor: null, changes: [] };
 }
 
 function getChange(changes, key) {
@@ -52,16 +63,21 @@ module.exports = {
   async execute(oldSticker, newSticker) {
     try {
       const guild = newSticker?.guild || oldSticker?.guild;
-      if (!guild) return;
+      const stickerId = String(newSticker?.id || oldSticker?.id || "");
+      if (!guild || !stickerId) return;
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const { executor, changes } = await resolveAudit(guild, newSticker?.id || oldSticker?.id);
+      const { executor, changes } = await resolveAudit(guild, stickerId);
       const responsibleText = formatAuditActor(executor);
 
       const nameChange = getChange(changes, "name");
       const tagsChange = getChange(changes, "tags");
-      if (!nameChange && !tagsChange) return;
+      const fallbackNameChanged =
+        String(oldSticker?.name || "") !== String(newSticker?.name || "");
+      const fallbackTagsChanged =
+        String(oldSticker?.tags || "") !== String(newSticker?.tags || "");
+      if (!nameChange && !tagsChange && !fallbackNameChanged && !fallbackTagsChanged) return;
 
       const lines = [
         `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
@@ -70,11 +86,11 @@ module.exports = {
         "**Changes**",
       ];
 
-      if (nameChange) {
+      if (nameChange || fallbackNameChanged) {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
         lines.push(`  ${String(nameChange?.old ?? oldSticker?.name ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? newSticker?.name ?? "sconosciuto")}`);
       }
-      if (tagsChange) {
+      if (tagsChange || fallbackTagsChanged) {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Tags**`);
         lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
       }
@@ -85,7 +101,7 @@ module.exports = {
         .setDescription(lines.join("\n"));
 
       if (newSticker?.url) embed.setThumbnail(newSticker.url);
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] });
     } catch (error) {
       global.logger?.error?.("[stickerUpdate] log failed:", error);
     }

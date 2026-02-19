@@ -36,9 +36,11 @@ const COUNTING_ALLOWED_REGEX = /^[0-9+\-*/x:() ]+$/;
 const FORCE_DELETE_CHANNEL_IDS = new Set(
   [IDs.channels.separator7].filter(Boolean).map((id) => String(id)),
 );
-const MEDIA_BLOCK_ROLE_IDS = [IDs.roles.PicPerms];
+const MEDIA_BLOCK_ROLE_IDS = [IDs.roles.PicPerms].filter(Boolean);
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
-const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set([IDs.channels.media]);
+const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set(
+  [IDs.channels.media].filter(Boolean).map((id) => String(id)),
+);
 
 const processedBumpMessages = new Map();
 
@@ -207,6 +209,7 @@ function getCommandTokenAfterPrefix(content, prefix) {
 }
 
 function getPrefixOverrideMap(client) {
+  if (!client?.pcommands?.values) return new Map();
   const size = client.pcommands?.size || 0;
   const cached = client._prefixOverrideCache;
   if (cached && cached.size === size && cached.map) return cached.map;
@@ -360,6 +363,9 @@ async function handleVoteManagerMessage(message, client) {
   }
   const voteLabel =
     typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
+  const voteRoleText = VOTE_ROLE_ID
+    ? `<a:VC_Money:1448671284748746905> ➥ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`
+    : "<a:VC_Money:1448671284748746905> ➥ Reward voto assegnata per 24 ore";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>")
@@ -369,7 +375,7 @@ async function handleVoteManagerMessage(message, client) {
         "",
         "\`Hai guadagnato:\`",
         `<a:VC_Events:1448688007438667796> ➥ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
-        `<a:VC_Money:1448671284748746905> ➥ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`,
+        voteRoleText,
         "",
         "<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
       ].join("\n"),
@@ -378,13 +384,17 @@ async function handleVoteManagerMessage(message, client) {
       text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",
     });
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setStyle(ButtonStyle.Link)
-      .setEmoji("<a:VC_HeartPink:1448673486603292685>")
-      .setLabel("Vota cliccando qui")
-      .setURL(VOTE_URL),
-  );
+  const components = [];
+  if (VOTE_URL) {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setEmoji("<a:VC_HeartPink:1448673486603292685>")
+        .setLabel("Vota cliccando qui")
+        .setURL(VOTE_URL),
+    );
+    components.push(row);
+  }
 
   const mention = user ? `${user}` : "";
   let sent = null;
@@ -392,11 +402,11 @@ async function handleVoteManagerMessage(message, client) {
     sent = await message.channel.send({
       content: mention,
       embeds: [embed],
-      components: [row],
+      components,
     });
   } catch (error) {
     const detail = error?.message || error?.code || error;
-    global.logger.error("[VOTE EMBED] Failed to send embed:", detail);
+    global.logger?.error?.("[VOTE EMBED] Failed to send embed:", detail);
   }
   if (sent) {
     await message.delete().catch(() => { });
@@ -407,34 +417,45 @@ async function handleVoteManagerMessage(message, client) {
 module.exports = {
   name: "messageCreate",
   async execute(message, client) {
+    if (!message) return;
+    const resolvedClient = client || message.client;
+    if (!resolvedClient) return;
+    const isAutomatedMessage = Boolean(
+      message.author?.bot || message.webhookId || message.applicationId,
+    );
+    const isOwnBotMessage =
+      String(message.author?.id || "") === String(resolvedClient.user?.id || "");
     const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
     const defaultPrefix = "+";
     if (!isEditedPrefixExecution && message?.guild) {
       try {
-        if (message.author?.id !== client?.user?.id) {
-          const handledVote = await handleVoteManagerMessage(message, client);
+        if (message.author?.id !== resolvedClient?.user?.id) {
+          const handledVote = await handleVoteManagerMessage(message, resolvedClient);
           if (handledVote) return;
         }
         if (message.author?.bot || message.webhookId || message.applicationId) {
-          const handledDisboard = await handleDisboardBump(message, client);
+          const handledDisboard = await handleDisboardBump(message, resolvedClient);
           if (handledDisboard) return;
-          const handledDiscadia = await handleDiscadiaBump(message, client);
+          const handledDiscadia = await handleDiscadiaBump(message, resolvedClient);
           if (handledDiscadia) return;
         }
       } catch (error) {
-        logEventError(client, "EARLY BUMP/VOTE HANDLER ERROR", error);
+        logEventError(resolvedClient, "EARLY BUMP/VOTE HANDLER ERROR", error);
       }
     }
     if (
       FORCE_DELETE_CHANNEL_IDS.has(String(message?.channelId || "")) &&
       !message?.system
     ) {
+      if (isAutomatedMessage && !isOwnBotMessage) return;
       if (!isEditedPrefixExecution) {
         try {
-          const automodResult = await runAutoModMessage(message);
-          if (automodResult?.blocked) return;
+          if (!isAutomatedMessage) {
+            const automodResult = await runAutoModMessage(message);
+            if (automodResult?.blocked) return;
+          }
         } catch (error) {
-          logEventError(client, "AUTOMOD ERROR", error);
+          logEventError(resolvedClient, "AUTOMOD ERROR", error);
         }
       }
       await message.delete().catch(() => { });
@@ -442,10 +463,12 @@ module.exports = {
     }
     if (!isEditedPrefixExecution) {
       try {
-        const automodResult = await runAutoModMessage(message);
-        if (automodResult?.blocked) return;
+        if (!isAutomatedMessage) {
+          const automodResult = await runAutoModMessage(message);
+          if (automodResult?.blocked) return;
+        }
       } catch (error) {
-        logEventError(client, "AUTOMOD ERROR", error);
+        logEventError(resolvedClient, "AUTOMOD ERROR", error);
       }
     }
     try {
@@ -453,7 +476,7 @@ module.exports = {
         if (
           message.guild &&
           message.member &&
-          !message.author?.bot &&
+          !isAutomatedMessage &&
           isMediaMessage(message) &&
           !isDiscordInviteLinkMessage(message) &&
           !hasMediaPermission(message.member) &&
@@ -478,19 +501,19 @@ module.exports = {
           });
           return;
         }
-        if (message.author?.id !== client?.user?.id) {
-          const handledVote = await handleVoteManagerMessage(message, client);
+        if (message.author?.id !== resolvedClient?.user?.id) {
+          const handledVote = await handleVoteManagerMessage(message, resolvedClient);
           if (handledVote) return;
         }
-        const handledDisboard = await handleDisboardBump(message, client);
+        const handledDisboard = await handleDisboardBump(message, resolvedClient);
         if (handledDisboard) return;
-        const handledDiscadia = await handleDiscadiaBump(message, client);
+        const handledDiscadia = await handleDiscadiaBump(message, resolvedClient);
         if (handledDiscadia) return;
         const handledSuggestion = await handleSuggestionChannelMessage(message);
         if (handledSuggestion) return;
       }
     } catch (error) {
-      logEventError(client, "DISBOARD REMINDER ERROR", error);
+      logEventError(resolvedClient, "DISBOARD REMINDER ERROR", error);
     }
     if (
       message.author.bot ||
@@ -499,7 +522,7 @@ module.exports = {
       message.webhookId
     )
       return;
-    const earlyOverrideMap = getPrefixOverrideMap(client);
+    const earlyOverrideMap = getPrefixOverrideMap(resolvedClient);
     const earlyOverridePrefix = findLongestMatchingPrefix(
       message.content,
       earlyOverrideMap.keys(),
@@ -517,8 +540,8 @@ module.exports = {
       const first = getCommandTokenAfterPrefix(message.content, defaultPrefix);
       if (!first) return false;
       return Boolean(
-        client.pcommands.get(first) ||
-        client.pcommands.get(client.aliases.get(first)),
+        resolvedClient.pcommands.get(first) ||
+        resolvedClient.pcommands.get(resolvedClient.aliases.get(first)),
       );
     })();
     if (!isEditedPrefixExecution) {
@@ -527,51 +550,51 @@ module.exports = {
           recordReminderActivity(message.channelId);
         }
       } catch (error) {
-        logEventError(client, "REMINDER ACTIVITY ERROR", error);
+        logEventError(resolvedClient, "REMINDER ACTIVITY ERROR", error);
       }
       try {
         await recordMessageActivity(message);
       } catch (error) {
-        logEventError(client, "ACTIVITY MESSAGE ERROR", error);
+        logEventError(resolvedClient, "ACTIVITY MESSAGE ERROR", error);
       }
       try {
-        await handleMinigameMessage(message, client);
+        await handleMinigameMessage(message, resolvedClient);
       } catch (error) {
-        logEventError(client, "MINIGAME ERROR", error);
+        logEventError(resolvedClient, "MINIGAME ERROR", error);
       }
       try {
         await handleAfk(message);
       } catch (error) {
-        logEventError(client, "AFK ERROR", error);
+        logEventError(resolvedClient, "AFK ERROR", error);
       }
       try {
         await handleMentionAutoReactions(message);
       } catch (error) {
-        logEventError(client, "MENTION REACTION ERROR", error);
+        logEventError(resolvedClient, "MENTION REACTION ERROR", error);
       }
       try {
         await handleAutoResponders(message);
       } catch (error) {
-        logEventError(client, "AUTORESPONDER ERROR", error);
+        logEventError(resolvedClient, "AUTORESPONDER ERROR", error);
       }
       try {
-        await handleCounting(message, client);
+        await handleCounting(message, resolvedClient);
       } catch (error) {
-        logEventError(client, "COUNTING ERROR", error);
+        logEventError(resolvedClient, "COUNTING ERROR", error);
       }
     }
     let overrideCommand = null;
 
-    const overrideMap = getPrefixOverrideMap(client);
+    const overrideMap = getPrefixOverrideMap(resolvedClient);
     const overridePrefix = findLongestMatchingPrefix(
       message.content,
       overrideMap.keys(),
     );
     if (!isEditedPrefixExecution) {
       try {
-        await handleTtsMessage(message, client, defaultPrefix);
+        await handleTtsMessage(message, resolvedClient, defaultPrefix);
       } catch (error) {
-        logEventError(client, "TTS ERROR", error);
+        logEventError(resolvedClient, "TTS ERROR", error);
       }
     }
     const startsWithDefault = message.content.startsWith(defaultPrefix);
@@ -600,8 +623,8 @@ module.exports = {
     }
     let command =
       overrideCommand ||
-      client.pcommands.get(cmd) ||
-      client.pcommands.get(client.aliases.get(cmd));
+      resolvedClient.pcommands.get(cmd) ||
+      resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
 
     if (!command) return;
     const isModerationPrefixCommand = ["staff", "admin"].includes(
@@ -646,8 +669,8 @@ module.exports = {
         "comando",
         "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.",
       );
-      const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => { }), 5000);
+      const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => { }), 5000);
       return;
     }
     const permissionResult = await checkPrefixPermission(
@@ -670,15 +693,15 @@ module.exports = {
       );
       const embed = buildGlobalPermissionDeniedEmbed(requiredRoles);
       await deleteCommandMessage();
-      const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => { }), 2000);
+      const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
       return;
     }
     if (command?.args && !args.length) {
       const embed = buildMissingArgumentsErrorEmbed();
       await deleteCommandMessage();
-      const msg = await message.channel.send({ embeds: [embed] });
-      setTimeout(() => msg.delete().catch(() => { }), 2000);
+      const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
       return;
     }
     let hasPrefixCooldownBypass = Boolean(
@@ -700,7 +723,7 @@ module.exports = {
         member: message.member,
       });
       const cooldownResult = consumeUserCooldown({
-        client,
+        client: resolvedClient,
         guildId: message.guild.id,
         userId: message.author.id,
         cooldownSeconds,
@@ -711,12 +734,12 @@ module.exports = {
           Math.ceil(cooldownResult.remainingMs / 1000),
         );
         const embed = buildCooldownErrorEmbed(remaining);
-        await message.channel.send({ embeds: [embed] });
+        await message.channel.send({ embeds: [embed] }).catch(() => null);
         return;
       }
     }
-    if (!client.prefixCommandLocks) client.prefixCommandLocks = new Set();
-    if (!client.prefixCommandQueue) client.prefixCommandQueue = new Map();
+    if (!resolvedClient.prefixCommandLocks) resolvedClient.prefixCommandLocks = new Set();
+    if (!resolvedClient.prefixCommandQueue) resolvedClient.prefixCommandQueue = new Map();
     const userId = message.author.id;
     const queueLockId = `${message.guild.id}:${userId}`;
     const enqueueCommand = async () => {
@@ -732,14 +755,14 @@ module.exports = {
       } else {
         await message.react("\u23F3").catch(() => { });
       }
-      if (!client.prefixCommandQueue.has(queueLockId)) {
-        client.prefixCommandQueue.set(queueLockId, []);
+      if (!resolvedClient.prefixCommandQueue.has(queueLockId)) {
+        resolvedClient.prefixCommandQueue.set(queueLockId, []);
       }
-      client.prefixCommandQueue
+      resolvedClient.prefixCommandQueue
         .get(queueLockId)
         .push({ message, args, command });
     };
-    if (client.prefixCommandLocks.has(queueLockId)) {
+    if (resolvedClient.prefixCommandLocks.has(queueLockId)) {
       await enqueueCommand();
       return;
     }
@@ -881,13 +904,14 @@ module.exports = {
       try {
         await runWithTimeout(
           Promise.resolve(
-            execCommand.execute(commandMessage, execArgs, client),
+            execCommand.execute(commandMessage, execArgs, resolvedClient),
           ),
           COMMAND_EXECUTION_TIMEOUT_MS,
           `prefix:${execCommand?.name || "unknown"}`,
         );
       } catch (error) {
-        if (error?.code === "COMMAND_TIMEOUT") {
+        const isTimeout = error?.code === "COMMAND_TIMEOUT";
+        if (isTimeout) {
           await execMessage
             .reply({
               embeds: [buildCommandTimeoutErrorEmbed()],
@@ -896,14 +920,17 @@ module.exports = {
         }
         const channelID =
           IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-        const errorChannel = client.channels.cache.get(channelID);
+        const errorChannel = channelID
+          ? resolvedClient.channels.cache.get(channelID) ||
+            (await resolvedClient.channels.fetch(channelID).catch(() => null))
+          : null;
         const errorEmbed = buildErrorLogEmbed({
           contextLabel: "Comando",
           contextValue: execCommand?.name || "unknown",
           userTag: execMessage.author?.tag || "unknown",
           error,
         });
-        if (errorChannel) {
+        if (errorChannel?.isTextBased?.()) {
           const pendingBtn = new ButtonBuilder()
             .setCustomId("error_pending")
             .setLabel("In risoluzione")
@@ -958,8 +985,11 @@ module.exports = {
             await sentError.edit({ embeds: [errorEmbed], components: [row] });
           });
         }
-        const feedback = buildInternalCommandErrorEmbed(error);
-        return execMessage.reply({ embeds: [feedback] });
+        if (!isTimeout) {
+          const feedback = buildInternalCommandErrorEmbed(error);
+          return execMessage.reply({ embeds: [feedback] }).catch(() => null);
+        }
+        return null;
       } finally {
         commandFinished = true;
         if (typingStartTimer) clearTimeout(typingStartTimer);
@@ -967,11 +997,11 @@ module.exports = {
       }
     };
     const lockId = queueLockId;
-    client.prefixCommandLocks.add(lockId);
+    resolvedClient.prefixCommandLocks.add(lockId);
     try {
       await executePrefixCommand({ message, args, command });
     } finally {
-      client.prefixCommandLocks.delete(lockId);
+      resolvedClient.prefixCommandLocks.delete(lockId);
       const removeLoadingReaction = async (msg) => {
         try {
           const loadingId = IDs.emojis?.loadingAnimatedId;
@@ -981,28 +1011,28 @@ module.exports = {
             : null;
           if (emoji) {
             const react = msg.reactions.resolve(emoji.id);
-            if (react) await react.users.remove(client.user.id);
+            if (react) await react.users.remove(resolvedClient.user.id);
           }
           const fallback =
             msg.reactions.resolve("VC_Loading") ||
             (fallbackId ? msg.reactions.resolve(fallbackId) : null);
-          if (fallback) await fallback.users.remove(client.user.id);
+          if (fallback) await fallback.users.remove(resolvedClient.user.id);
         } catch { }
       };
-      let queue = client.prefixCommandQueue.get(lockId);
+      let queue = resolvedClient.prefixCommandQueue.get(lockId);
       while (queue && queue.length > 0) {
         const next = queue.shift();
         await removeLoadingReaction(next.message);
-        client.prefixCommandLocks.add(lockId);
+        resolvedClient.prefixCommandLocks.add(lockId);
         try {
           await executePrefixCommand(next);
         } finally {
-          client.prefixCommandLocks.delete(lockId);
+          resolvedClient.prefixCommandLocks.delete(lockId);
         }
-        queue = client.prefixCommandQueue.get(lockId);
+        queue = resolvedClient.prefixCommandQueue.get(lockId);
       }
       if (queue && queue.length === 0) {
-        client.prefixCommandQueue.delete(lockId);
+        resolvedClient.prefixCommandQueue.delete(lockId);
       }
     }
   },
@@ -1279,7 +1309,7 @@ function logEventError(client, label, error) {
     client.logs.error(`[${label}]`, error);
     return;
   }
-  global.logger.error(`[${label}]`, error);
+  global.logger?.error?.(`[${label}]`, error);
 }
 
 async function handleDisboardBump(message, client) {

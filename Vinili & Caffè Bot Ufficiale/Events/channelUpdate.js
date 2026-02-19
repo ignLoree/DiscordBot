@@ -24,6 +24,8 @@ const CHANNEL_UPDATE_ACTION = AuditLogEvent?.ChannelUpdate ?? 11;
 const OVERWRITE_CREATE_ACTION = AuditLogEvent?.ChannelOverwriteCreate ?? 13;
 const OVERWRITE_UPDATE_ACTION = AuditLogEvent?.ChannelOverwriteUpdate ?? 14;
 const OVERWRITE_DELETE_ACTION = AuditLogEvent?.ChannelOverwriteDelete ?? 15;
+const AUDIT_RETRY_ATTEMPTS = 4;
+const AUDIT_RETRY_DELAY_MS = 900;
 
 function collectOverwriteDiffs(oldChannel, newChannel) {
   const diffs = [];
@@ -43,12 +45,10 @@ function collectOverwriteDiffs(oldChannel, newChannel) {
       continue;
     }
     if (!before || !after) continue;
-    if (before.allow.bitfield !== after.allow.bitfield) {
-      diffs.push({ kind: "update", before, after, field: "allow" });
-      continue;
-    }
-    if (before.deny.bitfield !== after.deny.bitfield) {
-      diffs.push({ kind: "update", before, after, field: "deny" });
+    const allowChanged = before.allow.bitfield !== after.allow.bitfield;
+    const denyChanged = before.deny.bitfield !== after.deny.bitfield;
+    if (allowChanged || denyChanged) {
+      diffs.push({ kind: "update", before, after });
     }
   }
   return diffs;
@@ -71,6 +71,21 @@ function targetName(guild, overwrite) {
   return role ? `${role}` : `@ruolo-${overwrite.id}`;
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveAuditWithRetry(guild, actionType, matcher) {
+  for (let attempt = 0; attempt < AUDIT_RETRY_ATTEMPTS; attempt += 1) {
+    const audit = await resolveResponsible(guild, actionType, matcher);
+    if (audit?.entry || audit?.executor) return audit;
+    if (attempt < AUDIT_RETRY_ATTEMPTS - 1) {
+      await wait(AUDIT_RETRY_DELAY_MS);
+    }
+  }
+  return { executor: null, reason: null, entry: null };
+}
+
 async function sendChannelUpdateLog(oldChannel, newChannel) {
   const guild = newChannel?.guild || oldChannel?.guild;
   if (!guild) return;
@@ -87,12 +102,12 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
   const logChannel = await resolveChannelRolesLogChannel(guild);
   if (!logChannel?.isTextBased?.()) return;
 
-  const audit = await resolveResponsible(
+  const audit = await resolveAuditWithRetry(
     guild,
     CHANNEL_UPDATE_ACTION,
     (entry) => String(entry?.target?.id || "") === String(newChannel?.id || ""),
   );
-  const responsible = formatAuditActor(audit.executor);
+  const responsible = formatAuditActor(audit?.executor || null);
 
   const lines = [
     `${ARROW} **Responsible:** ${responsible}`,
@@ -122,7 +137,14 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
     const newRate = Number(newChannel?.rateLimitPerUser || 0) || "None";
     lines.push(`${ARROW} **Rate Limit Per User:** ${oldRate} ${ARROW} ${newRate}`);
   }
-  lines.push(...buildAuditExtraLines(audit.entry, ["name", "type", "parent_id", "rate_limit_per_user"]));
+  lines.push(
+    ...buildAuditExtraLines(audit?.entry, [
+      "name",
+      "type",
+      "parent_id",
+      "rate_limit_per_user",
+    ]),
+  );
 
   const embed = new EmbedBuilder()
     .setColor("#F59E0B")
@@ -143,108 +165,111 @@ async function sendOverwriteLogs(oldChannel, newChannel) {
   const canSendLogs = Boolean(logChannel?.isTextBased?.());
 
   for (const diff of diffs) {
-    const kind = diff.kind;
-    const actionType =
-      kind === "create"
-        ? OVERWRITE_CREATE_ACTION
-        : kind === "delete"
-          ? OVERWRITE_DELETE_ACTION
-          : OVERWRITE_UPDATE_ACTION;
-    const source = diff.after || diff.before;
+    try {
+      const kind = diff.kind;
+      const actionType =
+        kind === "create"
+          ? OVERWRITE_CREATE_ACTION
+          : kind === "delete"
+            ? OVERWRITE_DELETE_ACTION
+            : OVERWRITE_UPDATE_ACTION;
+      const source = diff.after || diff.before;
+      if (!source) continue;
 
-    const audit = await resolveResponsible(guild, actionType, (entry) => {
-      const sameChannel =
-        String(entry?.extra?.channel?.id || "") === String(newChannel?.id || "");
-      const sameTarget = String(entry?.target?.id || "") === String(source?.id || "");
-      return sameChannel || sameTarget;
-    });
-    const responsible = formatAuditActor(audit.executor);
-    const executorId = String(audit?.executor?.id || "");
+      const audit = await resolveAuditWithRetry(guild, actionType, (entry) => {
+        const sameChannel =
+          String(entry?.extra?.channel?.id || "") === String(newChannel?.id || "");
+        const sameTarget = String(entry?.target?.id || "") === String(source?.id || "");
+        return sameChannel || sameTarget;
+      });
+      const responsible = formatAuditActor(audit?.executor || null);
+      const executorId = String(audit?.executor?.id || "");
 
-    const lines = [
-      `${ARROW} **Responsible:** ${responsible}`,
-      `${ARROW} **Channel:** ${channelDisplay(newChannel)} \`${newChannel.id}\``,
-      `${ARROW} **Target:** ${targetName(guild, source)} \`${source?.id || "sconosciuto"}\``,
-      `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
-      "",
-    ];
-
-    if (kind === "create") {
-      lines.push(
-        "**Settings**",
-        `${ARROW} **Id:** \`${source.id}\``,
-        `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
-        `${ARROW} **Allowed:** ${permissionList(source.allow.bitfield)}`,
-        `${ARROW} **Denied:** ${permissionList(source.deny.bitfield)}`,
-      );
-      lines.push(...buildAuditExtraLines(audit.entry, ["allow", "deny", "type", "id"]));
-    } else if (kind === "delete") {
-      lines.push(
-        "**Additional Information**",
-        `${ARROW} **Id:** \`${source.id}\``,
-        `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
-      );
-      lines.push(...buildAuditExtraLines(audit.entry, ["type", "id"]));
-    } else {
-      const deniedDiff = permissionDiff(
-        diff.before.deny.bitfield,
-        diff.after.deny.bitfield,
-      );
-      const grantedDiff = permissionDiff(
-        diff.before.allow.bitfield,
-        diff.after.allow.bitfield,
-      );
-      lines.push(
-        "**Changes**",
-        `${ARROW} **Denied:**`,
-        `  ${ARROW} **Removals:** ${deniedDiff.removals}`,
-        `  ${ARROW} **Additions:** ${deniedDiff.additions}`,
-        `${ARROW} **Granted:**`,
-        `  ${ARROW} **Removals:** ${grantedDiff.removals}`,
-        `  ${ARROW} **Additions:** ${grantedDiff.additions}`,
+      const lines = [
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} **Channel:** ${channelDisplay(newChannel)} \`${newChannel.id}\``,
+        `${ARROW} **Target:** ${targetName(guild, source)} \`${source?.id || "sconosciuto"}\``,
+        `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
         "",
-        "**Additional Information**",
-        `${ARROW} **Id:** \`${source.id}\``,
-        `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
-      );
-      lines.push(...buildAuditExtraLines(audit.entry, ["allow", "deny", "type", "id"]));
-    }
+      ];
 
-    if (canSendLogs) {
-      const embed = new EmbedBuilder()
-        .setColor(kind === "create" ? "#57F287" : kind === "delete" ? "#ED4245" : "#F59E0B")
-        .setTitle(
-          kind === "create"
-            ? "Channel Overwrite Create"
-            : kind === "delete"
-              ? "Channel Overwrite Delete"
-              : "Channel Overwrite Update",
-        )
-        .setDescription(lines.join("\n"));
+      if (kind === "create") {
+        lines.push(
+          "**Settings**",
+          `${ARROW} **Id:** \`${source.id}\``,
+          `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
+          `${ARROW} **Allowed:** ${permissionList(source.allow.bitfield)}`,
+          `${ARROW} **Denied:** ${permissionList(source.deny.bitfield)}`,
+        );
+        lines.push(...buildAuditExtraLines(audit?.entry, ["allow", "deny", "type", "id"]));
+      } else if (kind === "delete") {
+        lines.push(
+          "**Additional Information**",
+          `${ARROW} **Id:** \`${source.id}\``,
+          `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
+        );
+        lines.push(...buildAuditExtraLines(audit?.entry, ["type", "id"]));
+      } else {
+        const deniedDiff = permissionDiff(
+          diff.before.deny.bitfield,
+          diff.after.deny.bitfield,
+        );
+        const grantedDiff = permissionDiff(
+          diff.before.allow.bitfield,
+          diff.after.allow.bitfield,
+        );
+        lines.push(
+          "**Changes**",
+          `${ARROW} **Denied:**`,
+          `  ${ARROW} **Removals:** ${deniedDiff.removals}`,
+          `  ${ARROW} **Additions:** ${deniedDiff.additions}`,
+          `${ARROW} **Granted:**`,
+          `  ${ARROW} **Removals:** ${grantedDiff.removals}`,
+          `  ${ARROW} **Additions:** ${grantedDiff.additions}`,
+          "",
+          "**Additional Information**",
+          `${ARROW} **Id:** \`${source.id}\``,
+          `${ARROW} **Type:** ${overwriteTypeLabel(source)}`,
+        );
+        lines.push(...buildAuditExtraLines(audit?.entry, ["allow", "deny", "type", "id"]));
+      }
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
-    }
+      if (canSendLogs) {
+        const embed = new EmbedBuilder()
+          .setColor(
+            kind === "create" ? "#57F287" : kind === "delete" ? "#ED4245" : "#F59E0B",
+          )
+          .setTitle(
+            kind === "create"
+              ? "Channel Overwrite Create"
+              : kind === "delete"
+                ? "Channel Overwrite Delete"
+                : "Channel Overwrite Update",
+          )
+          .setDescription(lines.join("\n"));
 
-    const beforeAllow =
-      kind === "create"
-        ? 0n
-        : kind === "delete"
-          ? BigInt(diff.before?.allow?.bitfield || 0n)
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
+      }
+
+      const beforeAllow =
+        kind === "create"
+          ? 0n
           : BigInt(diff.before?.allow?.bitfield || 0n);
-    const afterAllow =
-      kind === "create"
-        ? BigInt(diff.after?.allow?.bitfield || 0n)
-        : kind === "delete"
+      const afterAllow =
+        kind === "delete"
           ? 0n
           : BigInt(diff.after?.allow?.bitfield || 0n);
-    await antiNukeHandleChannelOverwrite({
-      guild,
-      channel: newChannel,
-      overwrite: source,
-      beforeAllow,
-      afterAllow,
-      executorId,
-    }).catch(() => {});
+      await antiNukeHandleChannelOverwrite({
+        guild,
+        channel: newChannel,
+        overwrite: source,
+        beforeAllow,
+        afterAllow,
+        executorId,
+      }).catch(() => {});
+    } catch (error) {
+      global.logger?.error?.("[channelUpdate] overwrite log failed:", error);
+    }
   }
 }
 
@@ -254,8 +279,16 @@ module.exports = {
     const guildId = newChannel?.guildId || oldChannel?.guildId;
     if (!guildId) return;
 
-    await sendChannelUpdateLog(oldChannel, newChannel).catch(() => {});
-    await sendOverwriteLogs(oldChannel, newChannel).catch(() => {});
+    try {
+      await sendChannelUpdateLog(oldChannel, newChannel);
+    } catch (error) {
+      global.logger?.error?.("[channelUpdate] channel log failed:", error);
+    }
+    try {
+      await sendOverwriteLogs(oldChannel, newChannel);
+    } catch (error) {
+      global.logger?.error?.("[channelUpdate] overwrite logs failed:", error);
+    }
 
     const parentChanged = oldChannel?.parentId !== newChannel?.parentId;
     const positionChanged = oldChannel?.rawPosition !== newChannel?.rawPosition;
@@ -263,7 +296,9 @@ module.exports = {
     if (!parentChanged && !positionChanged && !nameChanged) return;
 
     await upsertChannelSnapshot(newChannel || oldChannel).catch(() => {});
-    queueCategoryRenumber(client, guildId);
-    queueIdsCatalogSync(client, guildId, "channelUpdate");
+    if (client) {
+      queueCategoryRenumber(client, guildId);
+      queueIdsCatalogSync(client, guildId, "channelUpdate");
+    }
   },
 };

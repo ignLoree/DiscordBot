@@ -1392,7 +1392,7 @@ async function runStaffListAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const { refreshStaffList } = require("../Utils/Community/staffListUtils");
 
-  await refreshStaffList(client, IDs.guilds.main, { force: true }).catch(
+  await refreshStaffList(client, IDs.guilds.main).catch(
     (err) => {
       global.logger.error("[STAFF LIST] initial render failed:", err);
     },

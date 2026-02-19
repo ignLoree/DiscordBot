@@ -11,6 +11,10 @@ const IDs = require("../Utils/Config/ids");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
   return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
@@ -40,28 +44,32 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
     return { executor: null, reason: null };
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.MemberUpdate,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) {
-    return { executor: null, reason: null };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.MemberUpdate,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const nowMs = Date.now();
+      const entry = logs.entries.find((item) => {
+        const createdMs = Number(item?.createdTimestamp || 0);
+        const targetId = String(item?.target?.id || "");
+        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+        return withinWindow && targetId === String(targetUserId || "");
+      });
+      if (entry) {
+        return {
+          executor: entry.executor || null,
+          reason: entry.reason || null,
+        };
+      }
+    }
+    if (attempt < 2) await sleep(700);
   }
 
-  const nowMs = Date.now();
-  const entry = logs.entries.find((item) => {
-    const createdMs = Number(item?.createdTimestamp || 0);
-    const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-    return withinWindow && targetId === String(targetUserId || "");
-  });
-
-  return {
-    executor: entry?.executor || null,
-    reason: entry?.reason || null,
-  };
+  return { executor: null, reason: null };
 }
 
 async function resolveMemberMoveAuditInfo(guild, targetUserId) {
@@ -73,31 +81,77 @@ async function resolveMemberMoveAuditInfo(guild, targetUserId) {
     return { executor: null, count: 1 };
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.MemberMove,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.MemberMove,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const nowMs = Date.now();
+      const entry = logs.entries.find((item) => {
+        const createdMs = Number(item?.createdTimestamp || 0);
+        const targetId = String(item?.target?.id || "");
+        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+        return withinWindow && targetId === String(targetUserId || "");
+      });
+      if (entry) {
+        return {
+          executor: entry.executor || null,
+          count: Math.max(1, Number(entry?.extra?.count || 1)),
+        };
+      }
+    }
+    if (attempt < 2) await sleep(700);
+  }
+
+  return { executor: null, count: 1 };
+}
+
+async function resolveMemberDisconnectAuditInfo(guild, targetUserId) {
+  if (
+    !guild?.members?.me?.permissions?.has?.(
+      PermissionsBitField.Flags.ViewAuditLog,
+    )
+  ) {
     return { executor: null, count: 1 };
   }
 
-  const nowMs = Date.now();
-  const entry = logs.entries.find((item) => {
-    const createdMs = Number(item?.createdTimestamp || 0);
-    const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-    return withinWindow && targetId === String(targetUserId || "");
-  });
+  const actionType = AuditLogEvent?.MemberDisconnect;
+  if (!Number.isFinite(Number(actionType))) {
+    return { executor: null, count: 1 };
+  }
 
-  return {
-    executor: entry?.executor || null,
-    count: Math.max(1, Number(entry?.extra?.count || 1)),
-  };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: actionType,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const nowMs = Date.now();
+      const entry = logs.entries.find((item) => {
+        const createdMs = Number(item?.createdTimestamp || 0);
+        const targetId = String(item?.target?.id || "");
+        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+        return withinWindow && targetId === String(targetUserId || "");
+      });
+      if (entry) {
+        return {
+          executor: entry.executor || null,
+          count: Math.max(1, Number(entry?.extra?.count || 1)),
+        };
+      }
+    }
+    if (attempt < 2) await sleep(700);
+  }
+
+  return { executor: null, count: 1 };
 }
 
-async function sendMemberDisconnectLog(oldState, newState, client) {
+async function sendMemberDisconnectLog(oldState, newState) {
   const member = newState?.member || oldState?.member;
   const user = member?.user;
   if (!member || !user) return;
@@ -108,21 +162,26 @@ async function sendMemberDisconnectLog(oldState, newState, client) {
 
   const logChannel = await resolveActivityLogChannel(guild);
   if (!logChannel?.isTextBased?.()) return;
+  const audit = await resolveMemberDisconnectAuditInfo(guild, user.id);
+  const oldChannelId = String(oldState?.channelId || "");
+  const fromChannel = oldState?.channel || (oldChannelId ? `<#${oldChannelId}>` : "#sconosciuto");
 
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Disconnect")
     .setDescription(
       [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(user)}`,
+        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
+        `<:VC_right_arrow:1473441155055096081> **Target:** ${user} \`${user.id}\``,
         `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Count:** 1`,
+        `<:VC_right_arrow:1473441155055096081> **Channel:** ${fromChannel} \`${oldChannelId || "sconosciuto"}\``,
+        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
       ].join("\n"),
     );
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] });
 }
 
 async function sendMemberMoveLog(oldState, newState) {
@@ -156,7 +215,7 @@ async function sendMemberMoveLog(oldState, newState) {
       ].join("\n"),
     );
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] });
 }
 
 function yesNo(value) {
@@ -203,15 +262,27 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     .setTitle("Member Update")
     .setDescription(lines.join("\n"));
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] });
 }
 
 module.exports = {
   name: "voiceStateUpdate",
   async execute(oldState, newState, client) {
-    await sendMemberMoveLog(oldState, newState).catch(() => {});
-    await sendMemberVoiceFlagsUpdateLog(oldState, newState).catch(() => {});
-    await sendMemberDisconnectLog(oldState, newState, client).catch(() => {});
+    try {
+      await sendMemberMoveLog(oldState, newState);
+    } catch (error) {
+      global.logger?.error?.("[voiceStateUpdate] move log failed:", error);
+    }
+    try {
+      await sendMemberVoiceFlagsUpdateLog(oldState, newState);
+    } catch (error) {
+      global.logger?.error?.("[voiceStateUpdate] flags log failed:", error);
+    }
+    try {
+      await sendMemberDisconnectLog(oldState, newState);
+    } catch (error) {
+      global.logger?.error?.("[voiceStateUpdate] disconnect log failed:", error);
+    }
 
     try {
       await handleVoiceActivity(oldState, newState);
@@ -219,13 +290,14 @@ module.exports = {
       if (client?.logs?.error) {
         client.logs.error("[ACTIVITY VOICE ERROR]", error);
       } else {
-        global.logger.error("[ACTIVITY VOICE ERROR]", error);
+        global.logger?.error?.("[ACTIVITY VOICE ERROR]", error);
       }
     }
 
+    if (!client?.user?.id) return;
     if (client?.config?.tts?.stayConnected) return;
 
-    const guild = newState.guild || oldState.guild;
+    const guild = newState?.guild || oldState?.guild;
     if (!guild) return;
 
     if (

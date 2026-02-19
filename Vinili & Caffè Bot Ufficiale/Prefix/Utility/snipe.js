@@ -9,7 +9,9 @@ module.exports = {
     if (!client.snipes || !(client.snipes instanceof Map)) {
       client.snipes = new Map();
     }
-    const snipe = client.snipes.get(message.channel.id);
+    const raw = client.snipes.get(message.channel.id);
+    const history = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    const snipe = history.find((item) => !item?.isEmbedOnly) || null;
 
     if (!message.guild) return;
 

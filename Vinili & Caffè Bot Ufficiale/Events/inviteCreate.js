@@ -2,6 +2,8 @@
 const IDs = require("../Utils/Config/ids");
 
 const INVITE_CREATE_ACTION = AuditLogEvent?.InviteCreate ?? 40;
+const AUDIT_FETCH_LIMIT = 20;
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -32,6 +34,15 @@ function yesNo(value) {
   return value ? "Yes" : "No";
 }
 
+function normalizeCount(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(0, n) : fallback;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -48,45 +59,54 @@ async function resolveResponsible(guild, code) {
     return null;
   }
 
-  const logs = await guild
-    .fetchAuditLogs({ type: INVITE_CREATE_ACTION, limit: 20 })
-    .catch(() => null);
-  if (!logs?.entries?.size) return null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({ type: INVITE_CREATE_ACTION, limit: AUDIT_FETCH_LIMIT })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const entry = logs.entries.find((item) => {
+        const created = Number(item?.createdTimestamp || 0);
+        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
+        return within && String(item?.target?.code || "") === String(code || "");
+      });
+      if (entry?.executor) return entry.executor;
+    }
 
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= 120 * 1000;
-    return within && String(item?.target?.code || "") === String(code || "");
-  });
+    if (attempt < 2) await sleep(700);
+  }
 
-  return entry?.executor || null;
+  return null;
 }
 
 module.exports = {
   name: "inviteCreate",
   async execute(invite) {
     try {
-      const client = invite.client;
+      const guild = invite?.guild;
+      const code = String(invite?.code || "");
+      const client = invite?.client || guild?.client || null;
+      if (!guild || !code || !client) return;
+
       if (!client.inviteCache) client.inviteCache = new Map();
-      if (!client.inviteCache.has(invite.guild.id)) {
-        client.inviteCache.set(invite.guild.id, new Map());
+      if (!client.inviteCache.has(guild.id)) {
+        client.inviteCache.set(guild.id, new Map());
       }
-      client.inviteCache.get(invite.guild.id).set(invite.code, {
-        uses: invite.uses || 0,
+      client.inviteCache.get(guild.id).set(code, {
+        uses: normalizeCount(invite.uses, 0),
         inviterId: invite.inviter?.id || null,
       });
 
-      const guild = invite.guild;
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
       const responsible =
-        (await resolveResponsible(guild, invite.code)) ||
+        (await resolveResponsible(guild, code)) ||
         invite?.inviter ||
         null;
       const responsibleText = formatAuditActor(responsible);
       const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
+      const inviteUrl = invite?.url || (code ? `https://discord.gg/${code}` : null);
 
       const embed = new EmbedBuilder()
         .setColor("#57F287")
@@ -97,17 +117,20 @@ module.exports = {
             `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081> **Code:** ${invite.code || "sconosciuto"}`,
+            `<:VC_right_arrow:1473441155055096081> **Code:** ${code}`,
+            inviteUrl ? `<:VC_right_arrow:1473441155055096081> **URL:** ${inviteUrl}` : null,
             `<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`,
-            `<:VC_right_arrow:1473441155055096081> **Max Uses:** ${Number.isFinite(invite.maxUses) ? invite.maxUses : 0}`,
+            `<:VC_right_arrow:1473441155055096081> **Max Uses:** ${normalizeCount(invite.maxUses, 0)}`,
             `<:VC_right_arrow:1473441155055096081> **Max Age:** ${formatMaxAge(invite.maxAge)}`,
             `<:VC_right_arrow:1473441155055096081> **Temporary:** ${yesNo(Boolean(invite.temporary))}`,
-          ].join("\n"),
+          ]
+            .filter(Boolean)
+            .join("\n"),
         );
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] });
     } catch (error) {
-      global.logger.error("[INVITE CREATE] Failed:", error);
+      global.logger?.error?.("[inviteCreate] failed:", error);
     }
   },
 };

@@ -10,6 +10,7 @@ function getStandardPrefixes(client) {
 }
 
 function getPrefixOverrideMap(client) {
+  if (!client) return new Map();
   const size = client?.pcommands?.size || 0;
   const cached = client?._prefixLoggingOverrideCache;
   if (cached?.size === size && cached?.map instanceof Map) return cached.map;
@@ -91,23 +92,26 @@ module.exports = {
   async execute(message, client) {
     if (!message) return;
     if (message.__fromMessageUpdatePrefix) return;
+    if (message.system || message.webhookId || message.author?.bot) return;
 
-    const resolved = resolveCommandFromContent(message, client);
+    const resolvedClient = client || message.client;
+    if (!resolvedClient) return;
+
+    const resolved = resolveCommandFromContent(message, resolvedClient);
     if (!resolved?.command) return;
 
     try {
-      await logCommandUsage(client, {
-        channelId: resolvePrefixLogChannelId(client),
+      if (!message.author?.id) return;
+      await logCommandUsage(resolvedClient, {
+        channelId: resolvePrefixLogChannelId(resolvedClient),
         serverName: message.guild?.name || "DM",
-        user: message.author.username,
+        user: message.author.tag || message.author.username || "unknown",
         userId: message.author.id,
         content: message.content,
-        userAvatarUrl: message.author.avatarURL({ dynamic: true }),
+        userAvatarUrl: message.author.displayAvatarURL?.({ size: 128 }),
       });
-    } catch {
-      client.logs.error(
-        "[PREFIX_COMMAND_USED] Error while logging command usage. Check if you have the correct channel ID in your config.",
-      );
+    } catch (error) {
+      global.logger?.error?.("[prefixCommandLogging] failed:", error);
     }
   },
 };

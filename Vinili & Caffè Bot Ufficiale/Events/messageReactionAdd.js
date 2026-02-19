@@ -123,11 +123,11 @@ async function prepareReplyData(message) {
   const replied = await message.channel.messages
     .fetch(message.reference.messageId)
     .catch(() => null);
-  if (!replied) return null;
+  if (!replied || !replied.author) return null;
 
   const repliedMember =
     replied.member ||
-    (await message.guild.members.fetch(replied.author.id).catch(() => null));
+    (await message.guild?.members?.fetch?.(replied.author.id).catch(() => null));
 
   return {
     content: String(replied.content || "").slice(0, MAX_REPLY_CONTENT_LENGTH),
@@ -142,12 +142,14 @@ async function resolveReactionMessage(reaction) {
   if (reaction.partial) {
     await reaction.fetch().catch(() => null);
   }
-  return reaction.message?.partial
+  const message = reaction.message?.partial
     ? await reaction.message.fetch().catch(() => null)
     : reaction.message;
+  return message || null;
 }
 
 async function findSkullboardChannel(guild) {
+  if (!guild || !SKULLBOARD_CHANNEL_ID) return null;
   return (
     guild.channels.cache.get(SKULLBOARD_CHANNEL_ID) ||
     (await guild.channels.fetch(SKULLBOARD_CHANNEL_ID).catch(() => null))
@@ -238,17 +240,29 @@ module.exports = {
   name: "messageReactionAdd",
 
   async execute(reaction, user) {
+    let inFlightKey = null;
+    let inFlightSet = null;
     try {
       if (!SkullboardPost) return;
       if (user?.bot) return;
       if (!isSkullReaction(reaction)) return;
 
       const message = await resolveReactionMessage(reaction);
-      if (!message || !message.guild) return;
+      if (!message || !message.guild || !message.author) return;
       if (!SKULL_SOURCE_WHITELIST_CHANNEL_IDS.has(String(message.channel?.id || ""))) {
         return;
       }
       if (message.channel?.id === SKULLBOARD_CHANNEL_ID) return;
+
+      if (message.client) {
+        if (!message.client._skullboardInFlight) {
+          message.client._skullboardInFlight = new Set();
+        }
+        inFlightSet = message.client._skullboardInFlight;
+        inFlightKey = `${message.guild.id}:${message.id}`;
+        if (inFlightSet.has(inFlightKey)) return;
+        inFlightSet.add(inFlightKey);
+      }
 
       const existing = await SkullboardPost.findOne({
         guildId: message.guild.id,
@@ -269,7 +283,10 @@ module.exports = {
       const firstAttachment = files[0];
       const mediaUrl = firstAttachment?.attachment || null;
       const hasMedia = Boolean(mediaUrl);
-      const hasEmbedOnly = !content && message.embeds?.length > 0;
+      const hasEmbedOnly =
+        !String(message.content || "").trim() &&
+        !(message.attachments?.size > 0) &&
+        (message.embeds?.length || 0) > 0;
 
       let canvasBuffer;
       try {
@@ -283,7 +300,7 @@ module.exports = {
           hasEmbedOnly,
         );
       } catch (error) {
-        global.logger.error("[SKULLBOARD] Canvas render failed:", error);
+        global.logger?.error?.("[SKULLBOARD] Canvas render failed:", error);
         return;
       }
 
@@ -341,7 +358,9 @@ module.exports = {
         })
         .catch(() => {});
     } catch (err) {
-      global.logger.error("[SKULLBOARD] Error:", err);
+      global.logger?.error?.("[SKULLBOARD] Error:", err);
+    } finally {
+      if (inFlightSet && inFlightKey) inFlightSet.delete(inFlightKey);
     }
   },
 };

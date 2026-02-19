@@ -9,6 +9,9 @@ const IDs = require("../Utils/Config/ids");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 
 const MAX_EMBED_DIFF_LENGTH = 900;
+const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
+  [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
+);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -102,6 +105,11 @@ function firstImageAttachment(message) {
   return null;
 }
 
+function isHttpUrl(value) {
+  const text = String(value || "").trim();
+  return /^https?:\/\/\S+$/i.test(text);
+}
+
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -113,6 +121,13 @@ async function resolveLogChannel(guild) {
 
 async function sendMessageEditLog(previous, updated) {
   if (!updated?.guild || !updated?.author) return;
+  if (
+    VERIFICATION_EXCLUDED_CHANNEL_IDS.has(
+      String(updated?.channelId || updated?.channel?.id || ""),
+    )
+  ) {
+    return;
+  }
   const logChannel = await resolveLogChannel(updated.guild);
   if (!logChannel?.isTextBased?.()) return;
 
@@ -169,16 +184,18 @@ async function sendMessageEditLog(previous, updated) {
     embed.setImage(preview.url);
   }
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setStyle(ButtonStyle.Link)
-      .setLabel("Go to Message")
-      .setURL(updated.url),
-  );
+  const payload = { embeds: [embed], files };
+  if (isHttpUrl(updated.url)) {
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setStyle(ButtonStyle.Link)
+        .setLabel("Go to Message")
+        .setURL(updated.url),
+    );
+    payload.components = [row];
+  }
 
-  await logChannel
-    .send({ embeds: [embed], components: [row], files })
-    .catch(() => {});
+  await logChannel.send(payload);
 }
 
 module.exports = {
@@ -186,42 +203,49 @@ module.exports = {
   async execute(oldMessage, newMessage, client) {
     let previous = oldMessage;
     let updated = newMessage;
+    const resolvedClient = client || newMessage?.client || oldMessage?.client;
 
-    if (previous?.partial) {
-      previous = await previous.fetch().catch(() => previous);
+    try {
+      if (previous?.partial) {
+        previous = await previous.fetch().catch(() => previous);
+      }
+      if (updated?.partial) {
+        updated = await updated.fetch().catch(() => updated);
+      }
+      if (!updated?.guild || !updated?.author) return;
+
+      const before = String(previous?.content || "");
+      const after = String(updated?.content || "");
+      const contentChanged = before !== after;
+
+      if (
+        contentChanged &&
+        after &&
+        !updated.author.bot &&
+        !updated.system &&
+        !updated.webhookId
+      ) {
+        try {
+          const automodResult = await runAutoModMessage(updated);
+          if (automodResult?.blocked) return;
+        } catch (error) {
+          global.logger?.error?.("[messageUpdate] automod failed:", error);
+        }
+      }
+
+      await sendMessageEditLog(previous, updated);
+
+      if (updated.author.bot || updated.system || updated.webhookId) return;
+      if (!after || !contentChanged) return;
+
+      const looksLikePrefix = after.startsWith("+") || after.startsWith("?");
+      if (!looksLikePrefix) return;
+
+      updated.__fromMessageUpdatePrefix = true;
+      resolvedClient?.emit?.("messageCreate", updated);
+    } catch (error) {
+      global.logger?.error?.("[messageUpdate] failed:", error);
     }
-    if (updated?.partial) {
-      updated = await updated.fetch().catch(() => updated);
-    }
-    if (!updated?.guild || !updated?.author) return;
-
-    const before = String(previous?.content || "");
-    const after = String(updated?.content || "");
-    const contentChanged = before !== after;
-
-    if (
-      contentChanged &&
-      after &&
-      !updated.author.bot &&
-      !updated.system &&
-      !updated.webhookId
-    ) {
-      try {
-        const automodResult = await runAutoModMessage(updated);
-        if (automodResult?.blocked) return;
-      } catch {}
-    }
-
-    await sendMessageEditLog(previous, updated);
-
-    if (updated.author.bot || updated.system || updated.webhookId) return;
-    if (!after || !contentChanged) return;
-
-    const looksLikePrefix = after.startsWith("+") || after.startsWith("?");
-    if (!looksLikePrefix) return;
-
-    updated.__fromMessageUpdatePrefix = true;
-    client.emit("messageCreate", updated);
   },
 };
 

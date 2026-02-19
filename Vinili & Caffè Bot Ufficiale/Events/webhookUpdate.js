@@ -11,6 +11,9 @@ const WEBHOOK_DELETE_ACTION = AuditLogEvent?.WebhookDelete ?? 52;
 const DEDUPE_TTL_MS = 15000;
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
+const AUDIT_RETRY_ATTEMPTS = 5;
+const AUDIT_RETRY_DELAY_MS = 1200;
+const localWebhookDedupeStore = new Map();
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -41,12 +44,14 @@ async function resolveLogChannel(guild) {
 }
 
 function getStore(client) {
-  if (!client._webhookAuditDedupe) client._webhookAuditDedupe = new Map();
+  const store = client
+    ? (client._webhookAuditDedupe || (client._webhookAuditDedupe = new Map()))
+    : localWebhookDedupeStore;
   const now = Date.now();
-  for (const [key, ts] of client._webhookAuditDedupe.entries()) {
-    if (now - Number(ts || 0) > DEDUPE_TTL_MS) client._webhookAuditDedupe.delete(key);
+  for (const [key, ts] of store.entries()) {
+    if (now - Number(ts || 0) > DEDUPE_TTL_MS) store.delete(key);
   }
-  return client._webhookAuditDedupe;
+  return store;
 }
 
 async function getLatestWebhookEntry(guild, channelId) {
@@ -69,6 +74,12 @@ async function getLatestWebhookEntry(guild, channelId) {
 
     let score = 0;
     if (targetChannelId) {
+      const matchesChannel =
+        (extraChannelId && extraChannelId === targetChannelId) ||
+        (targetWebhookChannelId && targetWebhookChannelId === targetChannelId);
+      if (!matchesChannel && (extraChannelId || targetWebhookChannelId)) {
+        return;
+      }
       if (extraChannelId && extraChannelId === targetChannelId) score += 4;
       if (targetWebhookChannelId && targetWebhookChannelId === targetChannelId) score += 3;
       if (!extraChannelId && !targetWebhookChannelId) score += 1;
@@ -88,6 +99,21 @@ async function getLatestWebhookEntry(guild, channelId) {
   return candidates[0] || null;
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForWebhookAuditEntry(guild, channelId) {
+  for (let attempt = 0; attempt < AUDIT_RETRY_ATTEMPTS; attempt += 1) {
+    const match = await getLatestWebhookEntry(guild, channelId);
+    if (match?.item) return match;
+    if (attempt < AUDIT_RETRY_ATTEMPTS - 1) {
+      await wait(AUDIT_RETRY_DELAY_MS);
+    }
+  }
+  return null;
+}
+
 module.exports = {
   name: "webhookUpdate",
   async execute(channel) {
@@ -95,13 +121,13 @@ module.exports = {
       const guild = channel?.guild;
       if (!guild) return;
 
-      const match = await getLatestWebhookEntry(guild, channel?.id || null);
+      const match = await waitForWebhookAuditEntry(guild, channel?.id || null);
       if (!match?.item) return;
       const entry = match.item;
       const executorId = String(entry?.executor?.id || "");
 
-      const dedupeKey = `${guild.id}:${entry.action}:${entry.id}`;
-      const store = getStore(guild.client);
+      const dedupeKey = `${guild.id}:${entry.action}:${entry.id || "unknown"}`;
+      const store = getStore(guild?.client || null);
       if (store.has(dedupeKey)) return;
       store.set(dedupeKey, Date.now());
 
@@ -126,7 +152,9 @@ module.exports = {
 
       const channelText = entry?.extra?.channel
         ? `${entry.extra.channel}`
-        : "#sconosciuto";
+        : channel
+          ? `${channel}`
+          : "#sconosciuto";
       const appId = String(entry?.target?.applicationId || "").trim();
       const typeText = webhookTypeLabel(entry?.target?.type);
 
@@ -141,11 +169,20 @@ module.exports = {
       if (action === WEBHOOK_UPDATE_ACTION) {
         const changes = Array.isArray(entry?.changes) ? entry.changes : [];
         const nameChange = changes.find((c) => String(c?.key || "") === "name");
+        const channelChange = changes.find((c) => String(c?.key || "") === "channel_id");
+        const avatarChange = changes.find((c) => String(c?.key || "") === "avatar_hash");
         if (nameChange) {
           lines.push(`<:VC_right_arrow:1473441155055096081> **Name**`);
           lines.push(`  ${String(nameChange?.old ?? "sconosciuto")} <:VC_right_arrow:1473441155055096081> ${String(nameChange?.new ?? targetName)}`);
         } else {
           lines.push(`<:VC_right_arrow:1473441155055096081> **Name:** ${targetName}`);
+        }
+        if (channelChange) {
+          lines.push(`<:VC_right_arrow:1473441155055096081> **Channel**`);
+          lines.push(`  ${channelChange?.old ? `<#${channelChange.old}>` : "none"} <:VC_right_arrow:1473441155055096081> ${channelChange?.new ? `<#${channelChange.new}>` : "none"}`);
+        }
+        if (avatarChange) {
+          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar Updated:** Yes`);
         }
       } else {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`);
@@ -158,7 +195,7 @@ module.exports = {
 
       if (logChannel?.isTextBased?.()) {
         const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
-        await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await logChannel.send({ embeds: [embed] });
       }
 
       const reliableForNuke =
@@ -169,13 +206,13 @@ module.exports = {
           guild,
           executorId,
           webhookId: targetId,
-        }).catch(() => {});
+        });
       } else if (action === WEBHOOK_DELETE_ACTION && reliableForNuke) {
         await antiNukeHandleWebhookDeletionAction({
           guild,
           executorId,
           webhookId: targetId,
-        }).catch(() => {});
+        });
       }
     } catch (error) {
       global.logger?.error?.("[webhookUpdate] log failed:", error);

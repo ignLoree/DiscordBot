@@ -20,6 +20,7 @@ const CHANGE_LABELS = new Map([
   ["entity_type", "Entity Type"],
   ["channel_id", "Channel"],
   ["location", "Location"],
+  ["entity_metadata.location", "Location"],
 ]);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
@@ -39,6 +40,10 @@ function formatAuditActor(actor) {
 function toEventUrl(guildId, eventId) {
   if (!guildId || !eventId) return null;
   return `https://discord.com/events/${guildId}/${eventId}`;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function privacyLabel(value) {
@@ -68,7 +73,59 @@ function formatValue(key, value) {
   if (key === "status") return statusLabel(value);
   if (key === "entity_type") return entityTypeLabel(value);
   if (key === "channel_id") return value ? `<#${value}>` : "none";
+  if (key === "location" || key === "entity_metadata.location") return String(value);
+  if (key === "scheduled_start_time" || key === "scheduled_end_time") {
+    const ms = new Date(value).getTime();
+    if (Number.isFinite(ms)) return `<t:${Math.floor(ms / 1000)}:F>`;
+  }
   return String(value);
+}
+
+function normalizeComparableValue(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number" || typeof value === "bigint") return String(value);
+  if (value instanceof Date) {
+    const ms = value.getTime();
+    return Number.isFinite(ms) ? String(ms) : null;
+  }
+  if (typeof value === "string") {
+    const ms = new Date(value).getTime();
+    if (Number.isFinite(ms)) return String(ms);
+    return value;
+  }
+  return String(value);
+}
+
+function eventValueByAuditKey(event, key) {
+  if (!event) return null;
+  if (key === "name") return event.name;
+  if (key === "description") return event.description;
+  if (key === "scheduled_start_time")
+    return event.scheduledStartTimestamp ?? event.scheduledStartAt ?? null;
+  if (key === "scheduled_end_time")
+    return event.scheduledEndTimestamp ?? event.scheduledEndAt ?? null;
+  if (key === "privacy_level") return event.privacyLevel;
+  if (key === "status") return event.status;
+  if (key === "entity_type") return event.entityType;
+  if (key === "channel_id") return event.channelId;
+  if (key === "location" || key === "entity_metadata.location") {
+    return event.entityMetadata?.location ?? null;
+  }
+  return null;
+}
+
+function buildFallbackTrackedChanges(oldEvent, newEvent) {
+  const trackedKeys = Array.from(CHANGE_LABELS.keys());
+  const out = [];
+  for (const key of trackedKeys) {
+    const oldRaw = eventValueByAuditKey(oldEvent, key);
+    const newRaw = eventValueByAuditKey(newEvent, key);
+    const oldComparable = normalizeComparableValue(oldRaw);
+    const newComparable = normalizeComparableValue(newRaw);
+    if (oldComparable === newComparable) continue;
+    out.push({ key, old: oldRaw, new: newRaw });
+  }
+  return out;
 }
 
 async function resolveLogChannel(guild) {
@@ -89,46 +146,54 @@ async function resolveAudit(guild, eventId) {
     return { executor: null, changes: [] };
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.GuildScheduledEventUpdate,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) {
-    return { executor: null, changes: [] };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.GuildScheduledEventUpdate,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const entry = logs.entries.find((item) => {
+        const created = Number(item?.createdTimestamp || 0);
+        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
+        return within && String(item?.target?.id || "") === String(eventId || "");
+      });
+      if (entry) {
+        return {
+          executor: entry.executor || null,
+          changes: Array.isArray(entry.changes) ? entry.changes : [],
+        };
+      }
+    }
+    if (attempt < 2) await sleep(700);
   }
 
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-    return within && String(item?.target?.id || "") === String(eventId || "");
-  });
-
-  return {
-    executor: entry?.executor || null,
-    changes: Array.isArray(entry?.changes) ? entry.changes : [],
-  };
+  return { executor: null, changes: [] };
 }
 
 module.exports = {
   name: "guildScheduledEventUpdate",
-  async execute(_oldEvent, newEvent) {
+  async execute(oldEvent, newEvent) {
     try {
-      const guild = newEvent?.guild;
-      if (!guild) return;
+      const guild = newEvent?.guild || oldEvent?.guild;
+      const eventId = String(newEvent?.id || oldEvent?.id || "");
+      if (!guild || !eventId) return;
 
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const { executor, changes } = await resolveAudit(guild, newEvent.id);
+      const { executor, changes } = await resolveAudit(guild, eventId);
       const responsibleText = formatAuditActor(executor);
-      const eventUrl = toEventUrl(guild.id, newEvent.id);
+      const eventUrl = toEventUrl(guild.id, eventId);
 
-      const tracked = changes.filter((change) =>
+      let tracked = changes.filter((change) =>
         CHANGE_LABELS.has(String(change?.key || "")),
       );
+      if (!tracked.length) {
+        tracked = buildFallbackTrackedChanges(oldEvent, newEvent);
+      }
       if (!tracked.length) return;
 
       const lines = [
@@ -164,7 +229,7 @@ module.exports = {
         ];
       }
 
-      await logChannel.send(payload).catch(() => {});
+      await logChannel.send(payload);
     } catch (error) {
       global.logger?.error?.("[guildScheduledEventUpdate] log failed:", error);
     }

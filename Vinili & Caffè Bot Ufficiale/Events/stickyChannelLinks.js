@@ -1,16 +1,29 @@
 const IDs = require("../Utils/Config/ids");
 
-const STICKY_CONFIG = {
-  [IDs.channels.mudae]:
-    "**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)_**",
-  [IDs.channels.poketwo]:
-    "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**",
-  [IDs.channels.ship]:
-    "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1469686181884072022)__**",
-};
+const STICKY_CONFIG = Object.fromEntries(
+  [
+    [
+      IDs.channels.mudae,
+      "**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)_**",
+    ],
+    [
+      IDs.channels.poketwo,
+      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**",
+    ],
+    [
+      IDs.channels.ship,
+      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1469686181884072022)__**",
+    ],
+  ].filter(([channelId, text]) => Boolean(channelId && text)),
+);
 
 const lastStickyMessageByChannel = new Map();
 const stickyProcessingChannels = new Set();
+const stickyPendingChannels = new Set();
+
+function logError(...args) {
+  global.logger?.error?.("[stickyChannelLinks]", ...args);
+}
 
 async function deletePreviousSticky(channel, stickyText, clientUserId) {
   const trackedId = lastStickyMessageByChannel.get(channel.id);
@@ -30,7 +43,9 @@ async function deletePreviousSticky(channel, stickyText, clientUserId) {
       String(msg.content || "").trim() === stickyText,
   );
   if (oldSticky) {
-    await oldSticky.delete().catch(() => {});
+    await oldSticky.delete().catch((error) => {
+      logError("delete old sticky failed:", error);
+    });
   }
 }
 
@@ -57,7 +72,48 @@ async function collapseStickyMessages(
   }
   for (const msg of matching.values()) {
     if (msg.id === keepId) continue;
-    await msg.delete().catch(() => {});
+    await msg.delete().catch((error) => {
+      logError("collapse sticky delete failed:", error);
+    });
+  }
+}
+
+async function processStickyChannel(channel, stickyText, clientUserId) {
+  await deletePreviousSticky(channel, stickyText, clientUserId);
+
+  const latest = await channel.messages
+    .fetch({ limit: 1 })
+    .catch(() => null);
+  const latestMessage = latest?.first();
+  if (
+    latestMessage &&
+    latestMessage.author?.id === clientUserId &&
+    String(latestMessage.content || "").trim() === stickyText
+  ) {
+    lastStickyMessageByChannel.set(channel.id, latestMessage.id);
+    await collapseStickyMessages(
+      channel,
+      stickyText,
+      clientUserId,
+      latestMessage.id,
+    );
+    return;
+  }
+
+  const sent = await channel
+    .send({ content: stickyText })
+    .catch((error) => {
+      logError("send sticky failed:", error);
+      return null;
+    });
+  if (sent) {
+    lastStickyMessageByChannel.set(channel.id, sent.id);
+    await collapseStickyMessages(
+      channel,
+      stickyText,
+      clientUserId,
+      sent.id,
+    );
   }
 }
 
@@ -65,50 +121,47 @@ module.exports = {
   name: "messageCreate",
   async execute(message, client) {
     if (!message?.guild || !message.channelId) return;
-    if (message.author?.id === client.user?.id) return;
+    const resolvedClient = client || message.client;
+    const clientUserId = String(resolvedClient?.user?.id || "");
+    if (!clientUserId) return;
+    if (message.author?.id === clientUserId) return;
 
     const stickyText = STICKY_CONFIG[message.channelId];
     if (!stickyText) return;
-    if (stickyProcessingChannels.has(message.channelId)) return;
+    const channelId = String(message.channelId);
+    if (stickyProcessingChannels.has(channelId)) {
+      stickyPendingChannels.add(channelId);
+      return;
+    }
 
     const channel = message.channel;
-    stickyProcessingChannels.add(message.channelId);
+    if (!channel?.isTextBased?.()) return;
+    stickyProcessingChannels.add(channelId);
     try {
-      await deletePreviousSticky(channel, stickyText, client.user.id);
+      let loops = 0;
+      do {
+        stickyPendingChannels.delete(channelId);
+        await processStickyChannel(channel, stickyText, clientUserId);
+        loops += 1;
+      } while (stickyPendingChannels.has(channelId) && loops < 3);
 
-      const latest = await channel.messages
-        .fetch({ limit: 1 })
-        .catch(() => null);
-      const latestMessage = latest?.first();
-      if (
-        latestMessage &&
-        latestMessage.author?.id === client.user.id &&
-        String(latestMessage.content || "").trim() === stickyText
-      ) {
-        lastStickyMessageByChannel.set(channel.id, latestMessage.id);
-        await collapseStickyMessages(
-          channel,
-          stickyText,
-          client.user.id,
-          latestMessage.id,
-        );
-        return;
-      }
-
-      const sent = await channel
-        .send({ content: stickyText })
-        .catch(() => null);
-      if (sent) {
-        lastStickyMessageByChannel.set(channel.id, sent.id);
-        await collapseStickyMessages(
-          channel,
-          stickyText,
-          client.user.id,
-          sent.id,
-        );
+      if (stickyPendingChannels.has(channelId)) {
+        stickyPendingChannels.delete(channelId);
+        setTimeout(() => {
+          const fakeMessage = {
+            guild: message.guild,
+            channelId,
+            channel,
+            author: { id: "sticky-retry" },
+            client: resolvedClient,
+          };
+          module.exports.execute(fakeMessage, resolvedClient).catch((error) => {
+            logError("deferred retry failed:", error);
+          });
+        }, 300);
       }
     } finally {
-      stickyProcessingChannels.delete(message.channelId);
+      stickyProcessingChannels.delete(channelId);
     }
   },
 };

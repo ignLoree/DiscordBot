@@ -38,19 +38,28 @@ async function resolveLogChannel(guild) {
   return guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function resolveResponsible(guild, stickerId) {
   if (!guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.ViewAuditLog)) {
     return null;
   }
-  const logs = await guild.fetchAuditLogs({ type: STICKER_CREATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
-  if (!logs?.entries?.size) return null;
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-    return within && String(item?.target?.id || "") === String(stickerId || "");
-  });
-  return entry?.executor || null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild.fetchAuditLogs({ type: STICKER_CREATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      const entry = logs.entries.find((item) => {
+        const created = Number(item?.createdTimestamp || 0);
+        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
+        return within && String(item?.target?.id || "") === String(stickerId || "");
+      });
+      if (entry?.executor) return entry.executor;
+    }
+    if (attempt < 2) await sleep(700);
+  }
+  return null;
 }
 
 module.exports = {
@@ -58,11 +67,12 @@ module.exports = {
   async execute(sticker) {
     try {
       const guild = sticker?.guild;
-      if (!guild) return;
+      const stickerId = String(sticker?.id || "");
+      if (!guild || !stickerId) return;
       const logChannel = await resolveLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const responsible = await resolveResponsible(guild, sticker.id);
+      const responsible = await resolveResponsible(guild, stickerId);
       const responsibleText = formatAuditActor(responsible);
 
       const embed = new EmbedBuilder()
@@ -74,7 +84,7 @@ module.exports = {
             `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081> **Id:** \`${sticker.id || "sconosciuto"}\``,
+            `<:VC_right_arrow:1473441155055096081> **Id:** \`${stickerId}\``,
             `<:VC_right_arrow:1473441155055096081> **Name:** ${sticker.name || "sconosciuto"}`,
             `<:VC_right_arrow:1473441155055096081> **Tags:** ${sticker.tags || "-"}`,
             `<:VC_right_arrow:1473441155055096081> **Type:** Local Server Sticker`,
@@ -85,7 +95,7 @@ module.exports = {
         );
 
       if (sticker.url) embed.setThumbnail(sticker.url);
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
+      await logChannel.send({ embeds: [embed] });
     } catch (error) {
       global.logger?.error?.("[stickerCreate] log failed:", error);
     }

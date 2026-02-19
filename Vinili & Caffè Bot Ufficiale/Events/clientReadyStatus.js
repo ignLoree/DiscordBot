@@ -12,13 +12,26 @@ const POLL_REMINDER_CHANNEL_ID = "1442569285909217301";
 const RESTART_CLEANUP_DELAY_MS = 2000;
 const RESTART_NOTIFY_FILE = "restart_notify.json";
 
+function logError(client, label, error) {
+  const detail = error?.stack || error?.message || error;
+  if (client?.logs?.error) client.logs.error(label, detail);
+  if (global?.logger?.error) global.logger.error(label, detail);
+  else console.error(label, detail);
+}
+
 function setPresence(client) {
-  client.user.setStatus(client.config.status);
-  client.user.setActivity({
-    type: 4,
-    name: "irrelevant",
-    state: "☕📀 discord.gg/viniliecaffe",
-  });
+  if (!client?.user) return;
+  try {
+    const status = String(client?.config?.status || "online");
+    client.user.setStatus(status);
+    client.user.setActivity({
+      type: 4,
+      name: "irrelevant",
+      state: "discord.gg/viniliecaffe",
+    });
+  } catch (error) {
+    logError(client, "[STATUS] Failed to set presence.", error);
+  }
 }
 
 function maybeCheckPackages(client) {
@@ -26,35 +39,46 @@ function maybeCheckPackages(client) {
   if (process.env.CHECK_PACKAGES_ON_READY !== "1") return;
 
   Promise.resolve(checkAndInstallPackages(client)).catch((err) => {
-    global.logger.error("[PACKAGES] Check failed:", err);
+    logError(client, "[PACKAGES] Check failed:", err);
   });
 }
 
 function schedulePollReminder(client) {
-  cron.schedule(
+  if (client?._pollReminderTask?.stop) {
+    try {
+      client._pollReminderTask.stop();
+    } catch {}
+  }
+
+  client._pollReminderTask = cron.schedule(
     "0 19 * * *",
     async () => {
-      const guild =
-        client.guilds.cache.get(IDs.guilds.main) ||
-        (await client.guilds.fetch(IDs.guilds.main).catch(() => null));
-      if (!guild) return;
+      try {
+        const guild =
+          client.guilds.cache.get(IDs.guilds.main) ||
+          (await client.guilds.fetch(IDs.guilds.main).catch(() => null));
+        if (!guild) return;
 
-      const channel =
-        guild.channels.cache.get(POLL_REMINDER_CHANNEL_ID) ||
-        (await guild.channels
-          .fetch(POLL_REMINDER_CHANNEL_ID)
-          .catch(() => null));
-      if (!channel) return;
+        const channel =
+          guild.channels.cache.get(POLL_REMINDER_CHANNEL_ID) ||
+          (await guild.channels
+            .fetch(POLL_REMINDER_CHANNEL_ID)
+            .catch(() => null));
+        if (!channel?.isTextBased?.()) return;
+        if (!POLL_REMINDER_ROLE_ID) return;
 
-      await channel.send({
-        content: `<:attentionfromvega:1443651874032062505> <@&${POLL_REMINDER_ROLE_ID}> ricordatevi di mettere il poll usando il comando dedicato! </poll create:1473280351462752399>`,
-      });
+        await channel.send({
+          content: `<:attentionfromvega:1443651874032062505> <@&${POLL_REMINDER_ROLE_ID}> ricordatevi di mettere il poll usando il comando dedicato! </poll create:1473280351462752399>`,
+        });
+      } catch (error) {
+        logError(client, "[STATUS] Poll reminder failed.", error);
+      }
     },
     { timezone: "Europe/Rome" },
   );
 }
 
-async function scheduleDelete(message) {
+function scheduleDelete(message) {
   if (!message) return;
   setTimeout(() => {
     message.delete().catch(() => {});
@@ -62,12 +86,12 @@ async function scheduleDelete(message) {
 }
 
 async function handleRestartNotification(client) {
-  const restartNotifyPath = path.resolve(
-    process.cwd(),
-    "..",
-    RESTART_NOTIFY_FILE,
-  );
-  if (!fs.existsSync(restartNotifyPath)) return;
+  const candidatePaths = [
+    path.resolve(process.cwd(), RESTART_NOTIFY_FILE),
+    path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE),
+  ];
+  const restartNotifyPath = candidatePaths.find((p) => fs.existsSync(p));
+  if (!restartNotifyPath) return;
 
   try {
     const raw = fs.readFileSync(restartNotifyPath, "utf8");
@@ -84,29 +108,34 @@ async function handleRestartNotification(client) {
           `<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`,
         )
         .catch(() => null);
-      await scheduleDelete(restartMsg);
+      scheduleDelete(restartMsg);
 
       if (data?.notifyMessageId) {
         const notifyMsg = await channel.messages
           .fetch(data.notifyMessageId)
           .catch(() => null);
-        await scheduleDelete(notifyMsg);
+        scheduleDelete(notifyMsg);
       }
 
       if (data?.commandMessageId) {
         const commandMsg = await channel.messages
           .fetch(data.commandMessageId)
           .catch(() => null);
-        await scheduleDelete(commandMsg);
+        scheduleDelete(commandMsg);
       }
     }
-
-    fs.unlinkSync(restartNotifyPath);
   } catch (err) {
-    global.logger.error(
+    logError(
+      client,
       "Errore durante il post-restart (restart_notify.json):",
-      err?.message || err,
+      err,
     );
+  } finally {
+    if (fs.existsSync(restartNotifyPath)) {
+      try {
+        fs.unlinkSync(restartNotifyPath);
+      } catch {}
+    }
   }
 }
 
@@ -120,9 +149,7 @@ module.exports = {
       schedulePollReminder(client);
       await handleRestartNotification(client);
     } catch (error) {
-      const detail = error?.stack || error?.message || error;
-      client.logs.error("[STATUS] Error while loading bot status.", detail);
-      global.logger.error("[STATUS] Error while loading bot status.", detail);
+      logError(client, "[STATUS] Error while loading bot status.", error);
     }
   },
 };

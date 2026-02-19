@@ -15,6 +15,11 @@ function notificationsLabel(value) {
   return String(n);
 }
 
+function normalizeComparable(value) {
+  if (value === null || typeof value === "undefined") return "";
+  return String(value);
+}
+
 module.exports = {
   name: "guildUpdate",
   async execute(oldGuild, newGuild) {
@@ -33,10 +38,10 @@ module.exports = {
           newGuild?.description || "N/A",
         ]);
       }
-      if ((oldGuild?.icon || "") !== (newGuild?.icon || "")) {
+      if (normalizeComparable(oldGuild?.icon) !== normalizeComparable(newGuild?.icon)) {
         changes.push(["Icon Hash", oldGuild?.icon || "N/A", newGuild?.icon || "N/A"]);
       }
-      if ((oldGuild?.banner || "") !== (newGuild?.banner || "")) {
+      if (normalizeComparable(oldGuild?.banner) !== normalizeComparable(newGuild?.banner)) {
         changes.push([
           "Banner Hash",
           oldGuild?.banner || "N/A",
@@ -53,13 +58,26 @@ module.exports = {
           notificationsLabel(newGuild?.defaultMessageNotifications),
         ]);
       }
+      if ((oldGuild?.vanityURLCode || "") !== (newGuild?.vanityURLCode || "")) {
+        changes.push([
+          "Vanity URL Code",
+          oldGuild?.vanityURLCode || "N/A",
+          newGuild?.vanityURLCode || "N/A",
+        ]);
+      }
       if (!changes.length) return;
+      const vanityChanged =
+        (oldGuild?.vanityURLCode || "") !== (newGuild?.vanityURLCode || "");
 
       const logChannel = await resolveModLogChannel(guild);
-      if (!logChannel?.isTextBased?.()) return;
+      const canLog = Boolean(logChannel?.isTextBased?.());
 
       let executor = null;
-      const auditEntry = await fetchRecentAuditEntry(guild, AuditLogEvent.GuildUpdate);
+      const auditEntry = await fetchRecentAuditEntry(
+        guild,
+        AuditLogEvent.GuildUpdate,
+        (entry) => String(entry?.target?.id || "") === String(guild.id || ""),
+      );
       if (auditEntry?.executor) executor = auditEntry.executor;
       const executorId = String(auditEntry?.executor?.id || "");
 
@@ -82,22 +100,28 @@ module.exports = {
           "icon_hash",
           "banner_hash",
           "default_message_notifications",
+          "vanity_url_code",
         ]),
       );
 
-      const embed = new EmbedBuilder()
-        .setColor("#F59E0B")
-        .setTitle("Guild Update")
-        .setDescription(lines.join("\n"));
+      if (canLog) {
+        const embed = new EmbedBuilder()
+          .setColor("#F59E0B")
+          .setTitle("Guild Update")
+          .setDescription(lines.join("\n"));
 
-      await logChannel.send({ embeds: [embed] }).catch(() => {});
-      await antiNukeHandleVanityGuard({
-        oldGuild,
-        newGuild,
-        executorId,
-      }).catch(() => {});
+        await logChannel.send({ embeds: [embed] });
+      }
+
+      if (vanityChanged) {
+        await antiNukeHandleVanityGuard({
+          oldGuild,
+          newGuild,
+          executorId,
+        });
+      }
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[guildUpdate] failed:", error);
     }
   },
 };

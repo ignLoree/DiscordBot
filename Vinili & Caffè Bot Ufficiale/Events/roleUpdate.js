@@ -91,7 +91,9 @@ module.exports = {
           executorId,
         }).catch(() => {});
       }
-    } catch {}
+    } catch (error) {
+      global.logger?.error?.("[roleUpdate] failed:", error);
+    }
 
     const nameChanged = oldRole?.name !== newRole?.name;
     const positionChanged = oldRole?.position !== newRole?.position;

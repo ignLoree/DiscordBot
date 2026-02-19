@@ -13,6 +13,23 @@ const { handleRoleCreationAction: antiNukeHandleRoleCreationAction } = require("
 
 const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ?? 30;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const audit = await resolveResponsible(
+      guild,
+      ROLE_CREATE_ACTION,
+      (entry) => String(entry?.target?.id || "") === String(roleId || ""),
+    );
+    if (audit?.executor || audit?.entry) return audit;
+    if (attempt < retries - 1) await sleep(delayMs);
+  }
+  return { executor: null, reason: null, entry: null };
+}
+
 module.exports = {
   name: "roleCreate",
   async execute(role, client) {
@@ -20,14 +37,16 @@ module.exports = {
     if (!guildId) return;
 
     try {
+      const guild =
+        role?.guild ||
+        client?.guilds?.cache?.get?.(guildId) ||
+        (await client?.guilds?.fetch?.(guildId).catch(() => null));
+      if (!guild) return;
+
       let executorId = "";
-      const audit = await resolveResponsible(
-        role.guild,
-        ROLE_CREATE_ACTION,
-        (entry) => String(entry?.target?.id || "") === String(role.id || ""),
-      );
+      const audit = await resolveResponsibleWithRetry(guild, role?.id);
       executorId = String(audit?.executor?.id || "");
-      const logChannel = await resolveChannelRolesLogChannel(role.guild);
+      const logChannel = await resolveChannelRolesLogChannel(guild);
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit.executor);
 
@@ -49,15 +68,20 @@ module.exports = {
           .setTitle("Role Create")
           .setDescription(lines.join("\n"));
 
-        await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await logChannel.send({ embeds: [embed] });
       }
+
       await antiNukeHandleRoleCreationAction({
-        guild: role.guild,
+        guild,
         executorId,
         roleId: String(role.id || ""),
-      }).catch(() => {});
-    } catch {}
+      });
+    } catch (error) {
+      global.logger?.error?.("[roleCreate] failed:", error);
+    }
 
-    queueIdsCatalogSync(client, guildId, "roleCreate");
+    if (client) {
+      queueIdsCatalogSync(client, guildId, "roleCreate");
+    }
   },
 };

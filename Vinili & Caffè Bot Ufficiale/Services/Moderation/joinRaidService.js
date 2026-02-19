@@ -61,7 +61,30 @@ const GUILD_STATE = new Map();
 const TEMP_BAN_TIMERS = new Map();
 const SAVE_TIMERS = new Map();
 const LOADED_GUILDS = new Set();
+const LOAD_GUILD_PROMISES = new Map();
+const GUILD_LOCKS = new Map();
+const LAST_RESTORE_AT = new Map();
 const VERIFIED_BOT_CACHE = new Map();
+const RESTORE_COOLDOWN_MS = 45_000;
+
+function formatRaidHours(ms) {
+  const hours = Number(ms || 0) / 3_600_000;
+  if (!Number.isFinite(hours) || hours <= 0) return "0";
+  return Number.isInteger(hours) ? String(hours) : hours.toFixed(1);
+}
+
+async function withGuildLock(guildId, task) {
+  const key = String(guildId || "");
+  const prev = GUILD_LOCKS.get(key) || Promise.resolve();
+  const run = prev.catch(() => {}).then(async () => task());
+  const lockPromise = run.finally(() => {
+    if (GUILD_LOCKS.get(key) === lockPromise) {
+      GUILD_LOCKS.delete(key);
+    }
+  });
+  GUILD_LOCKS.set(key, lockPromise);
+  return run;
+}
 
 function getGuildState(guildId) {
   const key = String(guildId || "");
@@ -89,20 +112,31 @@ async function loadGuildState(guildId) {
   const key = String(guildId || "");
   if (!key || LOADED_GUILDS.has(key)) return;
   if (!isDbReady()) return;
-  try {
-    const row = await JoinRaidState.findOne({ guildId: key }).lean();
-    if (row) {
-      GUILD_STATE.set(key, {
-        samples: Array.isArray(row.samples) ? row.samples : [],
-        flagged: Array.isArray(row.flagged) ? row.flagged : [],
-        tempBans: Array.isArray(row.tempBans) ? row.tempBans : [],
-        raidUntil: Number(row.raidUntil || 0),
-      });
-    }
-    LOADED_GUILDS.add(key);
-  } catch {
-    // Do not block runtime if persistence fails.
+  const existingLoad = LOAD_GUILD_PROMISES.get(key);
+  if (existingLoad) {
+    await existingLoad;
+    return;
   }
+  const loader = (async () => {
+    try {
+      const row = await JoinRaidState.findOne({ guildId: key }).lean();
+      if (row) {
+        GUILD_STATE.set(key, {
+          samples: Array.isArray(row.samples) ? row.samples : [],
+          flagged: Array.isArray(row.flagged) ? row.flagged : [],
+          tempBans: Array.isArray(row.tempBans) ? row.tempBans : [],
+          raidUntil: Number(row.raidUntil || 0),
+        });
+      }
+      LOADED_GUILDS.add(key);
+    } catch {
+      // Do not block runtime if persistence fails.
+    } finally {
+      LOAD_GUILD_PROMISES.delete(key);
+    }
+  })();
+  LOAD_GUILD_PROMISES.set(key, loader);
+  await loader;
 }
 
 function scheduleStateSave(guildId) {
@@ -327,12 +361,22 @@ async function scheduleTempUnban(guild, userId, reason) {
   TEMP_BAN_TIMERS.set(key, timer);
 }
 
-async function restoreTempBans(guild) {
+async function restoreTempBans(guild, options = {}) {
   if (!guild?.id) return;
-  await loadGuildState(guild.id);
+  const force = Boolean(options?.force);
   const at = nowMs();
+  const guildId = String(guild.id);
+  const lastAt = Number(LAST_RESTORE_AT.get(guildId) || 0);
+  if (!force && at - lastAt < RESTORE_COOLDOWN_MS) return;
+  LAST_RESTORE_AT.set(guildId, at);
+
+  await loadGuildState(guild.id);
   const state = getGuildState(guild.id);
+  const beforeTempBans = Array.isArray(state.tempBans) ? state.tempBans.length : 0;
   pruneState(state, at);
+  if (beforeTempBans !== state.tempBans.length) {
+    scheduleStateSave(guild.id);
+  }
   if (!state.tempBans.length) return;
 
   for (const row of state.tempBans) {
@@ -363,12 +407,17 @@ async function applyPunishment(member, reasons) {
     : "log";
   const guild = member.guild;
   const me = guild.members.me;
-  const dmSent = await sendPunishDm(member, action, reasons);
+  const canBan =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.BanMembers)) &&
+    Boolean(member?.bannable);
+  const canKick =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
+    Boolean(member?.kickable);
 
   let punished = false;
   let appliedAction = action;
   if (action === "ban") {
-    if (me?.permissions?.has(PermissionsBitField.Flags.BanMembers)) {
+    if (canBan) {
       punished = await guild.members
         .ban(member.id, {
           deleteMessageSeconds: 0,
@@ -385,24 +434,34 @@ async function applyPunishment(member, reasons) {
       }
     }
   } else if (action === "kick") {
-    punished = await member
-      .kick("Join Raid: flagged account during raid window")
-      .then(() => true)
-      .catch(() => false);
+    if (canKick) {
+      punished = await member
+        .kick("Join Raid: flagged account during raid window")
+        .then(() => true)
+        .catch(() => false);
+    }
   }
 
   if (!punished && action !== "log") {
     appliedAction = "log";
   }
+  const dmSent = await sendPunishDm(member, appliedAction, reasons);
+  const actionWord =
+    appliedAction === "ban"
+      ? "banned"
+      : appliedAction === "kick"
+        ? "kicked"
+        : "flagged";
 
   await sendJoinRaidLog(
     guild,
-    `${member.user.username} has been ${appliedAction}${action === "ban" ? "ned" : action === "kick" ? "ed" : ""} by Join Raid!`,
+    `${member.user.username} has been ${actionWord} by Join Raid!`,
     [
       `${ARROW} **JoinRaid Filter:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
       `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
-      `${ARROW} **Action:** ${appliedAction}`,
-      action === "ban"
+      `${ARROW} **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
+      `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"}`,
+      appliedAction === "ban"
         ? `${ARROW} **Duration:** ${Math.round(
             JOIN_RAID_CONFIG.raidDurationMs / 60_000,
           )} minutes`
@@ -418,6 +477,7 @@ async function applyPunishment(member, reasons) {
 async function processJoinRaidForMember(member) {
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
+  if (member.user?.bot) return { blocked: false };
   if (
     CORE_EXEMPT_USER_IDS.has(String(member.id || "")) ||
     String(member.guild.ownerId || "") === String(member.id || "")
@@ -427,72 +487,74 @@ async function processJoinRaidForMember(member) {
 
   await loadGuildState(member.guild.id);
   await restoreTempBans(member.guild);
-  const at = nowMs();
-  const state = getGuildState(member.guild.id);
-  pruneState(state, at);
+  return withGuildLock(member.guild.id, async () => {
+    const at = nowMs();
+    const state = getGuildState(member.guild.id);
+    pruneState(state, at);
 
-  const sample = {
-    ts: at,
-    userId: String(member.id),
-    createdAt: new Date(member.user.createdAt).getTime(),
-    skeleton: usernameSkeleton(
-      member.user.globalName || member.displayName || member.user.username,
-    ),
-  };
-
-  const reasons = getFlagReasons(state, member, at);
-  state.samples.push(sample);
-
-  if (reasons.length) {
-    state.flagged.push({
+    const sample = {
       ts: at,
       userId: String(member.id),
-      reasons: reasons.map((x) => x.key),
-    });
-  }
-  pruneState(state, at);
-  scheduleStateSave(member.guild.id);
-
-  const flaggedCount = state.flagged.length;
-  const wasActive = Number(state.raidUntil || 0) > at;
-  if (!wasActive && flaggedCount >= JOIN_RAID_CONFIG.triggerCount) {
-    state.raidUntil = at + JOIN_RAID_CONFIG.raidDurationMs;
-    const untilTs = Math.floor(state.raidUntil / 1000);
-    await warnRaidRoles(member.guild, [
-      `Join Raid triggered: **${flaggedCount}** flagged accounts in the last **${Math.round(
-        JOIN_RAID_CONFIG.triggerWindowMs / 60 / 60_000,
-      )}h**.`,
-      `Raid protection active until <t:${untilTs}:F>.`,
-    ]);
-    await sendJoinRaidLog(
-      member.guild,
-      "Join Raid protection enabled",
-      [
-        `${ARROW} **Trigger Count:** ${flaggedCount}/${JOIN_RAID_CONFIG.triggerCount}`,
-        `${ARROW} **Window:** ${Math.round(
-          JOIN_RAID_CONFIG.triggerWindowMs / 60 / 60_000,
-        )} hours`,
-        `${ARROW} **Raid Duration:** ${Math.round(
-          JOIN_RAID_CONFIG.raidDurationMs / 60_000,
-        )} minutes`,
-        `${ARROW} **Action:** ${JOIN_RAID_CONFIG.triggerAction}`,
-      ],
-      "#ED4245",
-    );
-    scheduleStateSave(member.guild.id);
-  }
-
-  const active = Number(state.raidUntil || 0) > at;
-  if (active && reasons.length) {
-    const outcome = await applyPunishment(member, reasons);
-    return {
-      blocked: Boolean(outcome?.punished && outcome?.appliedAction !== "log"),
-      punished: Boolean(outcome?.punished),
-      action: outcome?.appliedAction || JOIN_RAID_CONFIG.triggerAction,
-      reasons,
+      createdAt: new Date(member.user.createdAt).getTime(),
+      skeleton: usernameSkeleton(
+        member.user.globalName || member.displayName || member.user.username,
+      ),
     };
-  }
-  return { blocked: false, flagged: reasons.length > 0, reasons };
+
+    const reasons = getFlagReasons(state, member, at);
+    state.samples.push(sample);
+
+    if (reasons.length) {
+      state.flagged.push({
+        ts: at,
+        userId: String(member.id),
+        reasons: reasons.map((x) => x.key),
+      });
+    }
+    pruneState(state, at);
+    scheduleStateSave(member.guild.id);
+
+    const flaggedCount = state.flagged.length;
+    const wasActive = Number(state.raidUntil || 0) > at;
+    if (!wasActive && flaggedCount >= JOIN_RAID_CONFIG.triggerCount) {
+      state.raidUntil = at + JOIN_RAID_CONFIG.raidDurationMs;
+      const untilTs = Math.floor(state.raidUntil / 1000);
+      await warnRaidRoles(member.guild, [
+        `Join Raid triggered: **${flaggedCount}** flagged accounts in the last **${formatRaidHours(
+          JOIN_RAID_CONFIG.triggerWindowMs,
+        )}h**.`,
+        `Raid protection active until <t:${untilTs}:F>.`,
+      ]);
+      await sendJoinRaidLog(
+        member.guild,
+        "Join Raid protection enabled",
+        [
+          `${ARROW} **Trigger Count:** ${flaggedCount}/${JOIN_RAID_CONFIG.triggerCount}`,
+          `${ARROW} **Window:** ${formatRaidHours(
+            JOIN_RAID_CONFIG.triggerWindowMs,
+          )} hours`,
+          `${ARROW} **Raid Duration:** ${Math.round(
+            JOIN_RAID_CONFIG.raidDurationMs / 60_000,
+          )} minutes`,
+          `${ARROW} **Action:** ${JOIN_RAID_CONFIG.triggerAction}`,
+        ],
+        "#ED4245",
+      );
+      scheduleStateSave(member.guild.id);
+    }
+
+    const active = Number(state.raidUntil || 0) > at;
+    if (active && reasons.length) {
+      const outcome = await applyPunishment(member, reasons);
+      return {
+        blocked: Boolean(outcome?.punished && outcome?.appliedAction !== "log"),
+        punished: Boolean(outcome?.punished),
+        action: outcome?.appliedAction || JOIN_RAID_CONFIG.triggerAction,
+        reasons,
+      };
+    }
+    return { blocked: false, flagged: reasons.length > 0, reasons };
+  });
 }
 
 module.exports = {

@@ -51,6 +51,12 @@ function isAckError(error) {
 }
 
 function getButtonSpamState(client) {
+  if (!client) {
+    return {
+      cooldownByUser: new Map(),
+      inFlightByAction: new Map(),
+    };
+  }
   if (!client._buttonSpamState) {
     client._buttonSpamState = {
       cooldownByUser: new Map(),
@@ -231,13 +237,16 @@ async function runPermissionGate(interaction) {
 
 async function logInteractionError(interaction, client, err) {
   try {
+    const resolvedClient = client || interaction?.client || null;
     const errorChannelId =
       IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-    const errorChannel = errorChannelId
-      ? client.channels.cache.get(errorChannelId)
-      : null;
+    const errorChannel =
+      errorChannelId && resolvedClient
+        ? resolvedClient.channels.cache.get(errorChannelId) ||
+          (await resolvedClient.channels.fetch(errorChannelId).catch(() => null))
+        : null;
 
-    if (errorChannel) {
+    if (errorChannel?.isTextBased?.()) {
       const contextValue =
         interaction?.commandName || interaction?.customId || "unknown";
       const staffEmbed = buildErrorLogEmbed({
@@ -246,7 +255,7 @@ async function logInteractionError(interaction, client, err) {
         userTag: interaction?.user?.tag || "unknown",
         error: err,
       });
-      await errorChannel.send({ embeds: [staffEmbed] }).catch(() => {});
+      await errorChannel.send({ embeds: [staffEmbed] });
     }
 
     await sendPrivateInteractionResponse(interaction, {
@@ -267,12 +276,12 @@ module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
     if (!interaction) return;
-    if (interaction.replied || interaction.deferred) return;
+    const resolvedClient = client || interaction.client;
 
     let releaseButtonGuard = null;
 
     try {
-      const buttonGuard = acquireButtonSpamGuard(interaction, client);
+      const buttonGuard = acquireButtonSpamGuard(interaction, resolvedClient);
       releaseButtonGuard = buttonGuard.release;
       if (buttonGuard.blocked) {
         if (
@@ -286,20 +295,20 @@ module.exports = {
       }
 
       if (await handleVerifyInteraction(interaction)) return;
-      if (await handleDmBroadcastModal(interaction, client)) return;
+      if (await handleDmBroadcastModal(interaction, resolvedClient)) return;
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-        await handleAutocomplete(interaction, client);
+        await handleAutocomplete(interaction, resolvedClient);
         return;
       }
 
       if (interaction.isMessageContextMenuCommand?.()) {
-        await handleSlashCommand(interaction, client);
+        await handleSlashCommand(interaction, resolvedClient);
         return;
       }
 
       if (interaction.isChatInputCommand?.()) {
-        await handleSlashCommand(interaction, client);
+        await handleSlashCommand(interaction, resolvedClient);
         return;
       }
 
@@ -308,14 +317,14 @@ module.exports = {
 
       if (await handleTicketInteraction(interaction)) return;
       if (await handleTopPaginationModal(interaction)) return;
-      if (await handleEmbedBuilderInteraction(interaction, client)) return;
+      if (await handleEmbedBuilderInteraction(interaction, resolvedClient)) return;
       if (await handlePartnerModal(interaction)) return;
       if (await handleSuggestionVote(interaction)) return;
       if (await handlePauseButton(interaction)) return;
       if (await handleCustomRoleInteraction(interaction)) return;
-      if (await handleButtonInteraction(interaction, client)) return;
+      if (await handleButtonInteraction(interaction, resolvedClient)) return;
     } catch (err) {
-      await logInteractionError(interaction, client, err);
+      await logInteractionError(interaction, resolvedClient, err);
     } finally {
       if (typeof releaseButtonGuard === "function") {
         releaseButtonGuard();

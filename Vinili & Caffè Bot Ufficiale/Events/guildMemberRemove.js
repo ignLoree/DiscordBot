@@ -10,6 +10,8 @@ const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const {
   createTranscript,
+  createTranscriptHtml,
+  saveTranscriptHtml,
 } = require("../Utils/Ticket/transcriptUtils");
 const {
   InviteTrack,
@@ -28,6 +30,7 @@ const {
 } = require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
+const { consumeRecentJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
@@ -46,6 +49,15 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const JOIN_GATE_KICK_REASON_PATTERNS = [
+  "account is too young to be allowed",
+  "account too young to be allowed",
+  "unverified bot addition",
+  "bot added by unauthorized member",
+  "advertising invite link in username",
+  "username matches blocked pattern",
+  "post-join filter",
+];
 
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
@@ -56,13 +68,8 @@ function toUnix(date) {
   return Math.floor(date.getTime() / 1000);
 }
 
-function formatTodayAt(date = new Date()) {
-  return new Intl.DateTimeFormat("it-IT", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Europe/Rome",
-  }).format(date);
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function resolveGuildChannel(guild, channelId) {
@@ -78,10 +85,8 @@ async function sendLeaveLog(member) {
     member.guild,
     JOIN_LEAVE_LOG_CHANNEL_ID,
   );
-  if (!channel) return;
+  if (!channel?.isTextBased?.()) return;
 
-  const now = new Date();
-  const nowTs = toUnix(now);
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Left")
@@ -91,7 +96,7 @@ async function sendLeaveLog(member) {
         "",
       ].join("\n"),
     )
-    .setFooter({ text: `ID: ${member.user.id} •` })
+    .setFooter({ text: `ID: ${member.user.id}` })
     .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
@@ -115,9 +120,11 @@ async function closeOpenTicketsForMember(member) {
   }).catch(() => []);
   if (!openTickets.length) return;
 
-  const logChannel =
-    guild.channels.cache.get(IDs.channels.ticketLogs) ||
-    (await guild.channels.fetch(IDs.channels.ticketLogs).catch(() => null));
+  const ticketLogChannelId = IDs.channels.ticketLogs;
+  const logChannel = ticketLogChannelId
+    ? guild.channels.cache.get(ticketLogChannelId) ||
+      (await guild.channels.fetch(ticketLogChannelId).catch(() => null))
+    : null;
 
   for (const ticket of openTickets) {
     const channel =
@@ -132,6 +139,7 @@ async function closeOpenTicketsForMember(member) {
             open: false,
             closeReason: "Utente uscito dal server",
             closedAt: new Date(),
+            closedBy: member.client.user?.id || null,
           },
         },
       ).catch(() => { });
@@ -139,35 +147,120 @@ async function closeOpenTicketsForMember(member) {
     }
 
     const transcriptTXT = await createTranscript(channel).catch(() => "");
+    const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
+    const transcriptHtmlPath = transcriptHTML
+      ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
+      : null;
     ticket.open = false;
     ticket.transcript = transcriptTXT;
+    ticket.transcriptHtmlPath = transcriptHtmlPath || null;
     ticket.closeReason = "Utente uscito dal server";
     ticket.closedAt = new Date();
+    ticket.closedBy = member.client.user?.id || null;
     await ticket.save().catch(() => { });
 
-    const createdAtFormatted = ticket.createdAt
-      ? `<t:${Math.floor(ticket.createdAt.getTime() / 1000)}:F>`
-      : "Data non disponibile";
+    if (logChannel?.isTextBased?.()) {
+      const openedAt = ticket.createdAt
+        ? `<t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:F>`
+        : "Sconosciuto";
+      const closedAt = ticket.closedAt
+        ? `<t:${Math.floor(new Date(ticket.closedAt).getTime() / 1000)}:F>`
+        : `<t:${Math.floor(Date.now() / 1000)}:F>`;
+      const reasonText = "Utente uscito dal server";
 
-    if (logChannel) {
+      const closeEmbed = new EmbedBuilder()
+        .setAuthor({
+          name: guild?.name || "Ticket System",
+          iconURL: guild?.iconURL?.({ size: 128 }) || undefined,
+        })
+        .setTitle("Ticket Closed")
+        .setColor("#6f4e37")
+        .addFields(
+          {
+            name: "🆔 Ticket ID",
+            value: String(ticket.ticketNumber || "N/A"),
+            inline: true,
+          },
+          {
+            name: "✅ Opened By",
+            value: ticket.userId ? `<@${ticket.userId}>` : "Unknown",
+            inline: true,
+          },
+          {
+            name: "🛑 Closed By",
+            value: member.client.user?.id
+              ? `<@${member.client.user.id}>`
+              : "Unknown",
+            inline: true,
+          },
+          { name: "🕒 Open Time", value: openedAt, inline: true },
+          {
+            name: "🙋 Claimed By",
+            value: ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Not claimed",
+            inline: true,
+          },
+          { name: "⏹️ Close Time", value: closedAt, inline: true },
+          { name: "ℹ️ Reason", value: reasonText, inline: false },
+        );
+
+      const reordered = [
+        closeEmbed.data.fields?.[0],
+        closeEmbed.data.fields?.[1],
+        closeEmbed.data.fields?.[2],
+        closeEmbed.data.fields?.[3],
+        closeEmbed.data.fields?.[5],
+        closeEmbed.data.fields?.[4],
+        closeEmbed.data.fields?.[6],
+      ].filter(Boolean);
+      closeEmbed.setFields(reordered);
+
+      const htmlAttachment = transcriptHtmlPath
+        ? [
+            {
+              attachment: transcriptHtmlPath,
+              name: `transcript_ticket_${ticket.ticketNumber || ticket._id}.html`,
+            },
+          ]
+        : [];
+
+      let logSentMessage = null;
       await logChannel
-        .send({
-          embeds: [
-            new EmbedBuilder()
-              .setTitle("Ticket Chiuso")
-              .setDescription(
-                `
-**<:member_role_icon:1330530086792728618> Aperto da:** <@${ticket.userId}>
-**<:discordstaff:1443651872258003005> Chiuso da:** ${member.client.user}
-**<:Clock:1330530065133338685> Aperto il:** ${createdAtFormatted}
-**<a:VC_Verified:1448687631109197978> Claimato da:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Non claimato"}
-**<:reportmessage:1443670575376765130> Motivo:** Utente uscito dal server
-`,
-              )
-              .setColor("#6f4e37"),
-          ],
+        .send({ embeds: [closeEmbed], files: htmlAttachment })
+        .then((msg) => {
+          logSentMessage = msg;
+          return msg;
         })
         .catch(() => { });
+
+      if (logSentMessage && transcriptHtmlPath) {
+        const attachment = logSentMessage.attachments?.find((att) => {
+          const name = String(att?.name || "").toLowerCase();
+          const url = String(att?.url || "").toLowerCase();
+          return name.endsWith(".html") || url.includes(".html");
+        });
+        if (attachment?.url) {
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setStyle(ButtonStyle.Link)
+              .setURL(attachment.url)
+              .setLabel("View Transcript")
+              .setEmoji("📁"),
+          );
+          await logSentMessage.edit({ components: [row] }).catch(() => {});
+        }
+      }
+
+      if (logSentMessage?.id && logChannel?.id) {
+        await Ticket.updateOne(
+          { _id: ticket._id },
+          {
+            $set: {
+              closeLogChannelId: logChannel.id,
+              closeLogMessageId: logSentMessage.id,
+            },
+          },
+        ).catch(() => {});
+      }
     }
 
     setTimeout(() => channel.delete().catch(() => { }), 1000);
@@ -369,7 +462,10 @@ async function handlePartnershipOnLeave(member, client) {
 
 async function sendMemberKickLog(member) {
   const guild = member?.guild;
-  if (!guild) return;
+  const targetId = String(member?.user?.id || "");
+  if (!guild || !targetId) return;
+  const recentJoinGateKick = consumeRecentJoinGateKick(guild.id, targetId);
+  if (recentJoinGateKick) return;
 
   if (
     !guild.members.me?.permissions?.has?.(
@@ -379,24 +475,39 @@ async function sendMemberKickLog(member) {
     return;
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.MemberKick,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) return;
-
-  const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    return (
-      created > 0 &&
-      now - created <= AUDIT_LOOKBACK_MS &&
-      String(item?.target?.id || "") === String(member.user?.id || "")
-    );
-  });
+  let entry = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.MemberKick,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
+    if (logs?.entries?.size) {
+      const now = Date.now();
+      entry =
+        logs.entries.find((item) => {
+          const created = Number(item?.createdTimestamp || 0);
+          return (
+            created > 0 &&
+            now - created <= AUDIT_LOOKBACK_MS &&
+            String(item?.target?.id || "") === targetId
+          );
+        }) || null;
+    }
+    if (entry) break;
+    if (attempt < 2) await sleep(700);
+  }
   if (!entry) return;
+  const executorId = String(entry?.executor?.id || "");
+  const botUserId = String(guild?.members?.me?.id || guild?.client?.user?.id || "");
+  const reasonText = String(entry?.reason || "").trim().toLowerCase();
+  const isJoinGateKickByBot =
+    botUserId &&
+    executorId &&
+    executorId === botUserId &&
+    JOIN_GATE_KICK_REASON_PATTERNS.some((value) => reasonText.includes(value));
+  if (isJoinGateKickByBot) return;
 
   const logChannel =
     guild.channels.cache.get(IDs.channels.modLogs) ||
@@ -405,8 +516,6 @@ async function sendMemberKickLog(member) {
 
   const responsible = formatActor(entry.executor);
   const nowTs = Math.floor(Date.now() / 1000);
-  const executorId = String(entry?.executor?.id || "");
-
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Member Kick")
@@ -427,8 +536,8 @@ async function sendMemberKickLog(member) {
     guild,
     executorId,
     action: "kick",
-    targetId: String(member.user?.id || ""),
-  }).catch(() => {});
+    targetId,
+  });
 }
 async function cleanupUserData(guildId, userId) {
   await Promise.allSettled([
@@ -443,15 +552,16 @@ module.exports = {
   name: "guildMemberRemove",
   async execute(member, client) {
     try {
+      if (!member?.guild || !member?.user) return;
       if (member?.user?.bot && member?.guild?.id) {
-        queueIdsCatalogSync(client, member.guild.id, "botLeave");
+        if (client) queueIdsCatalogSync(client, member.guild.id, "botLeave");
       }
       if (member?.guild?.id === IDs.guilds.main) {
-        scheduleStaffListRefresh(client, member.guild.id);
+        if (client) scheduleStaffListRefresh(client, member.guild.id);
       }
 
       await sendLeaveLog(member);
-      await sendMemberKickLog(member).catch(() => { });
+      await sendMemberKickLog(member);
       await markInviteInactive(member);
 
       const guild = member.guild;
@@ -462,7 +572,7 @@ module.exports = {
       await handlePartnershipOnLeave(member, client);
       await cleanupUserData(guild.id, member.id);
     } catch (err) {
-      global.logger.error(err);
+      global.logger?.error?.("[guildMemberRemove] failed:", err);
     }
   },
 };

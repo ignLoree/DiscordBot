@@ -17,34 +17,60 @@ const {
 
 const THREAD_UPDATE_ACTION = AuditLogEvent?.ThreadUpdate ?? 111;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizeTagList(value) {
+  const list = Array.isArray(value) ? value.map((id) => String(id)) : [];
+  list.sort((a, b) => a.localeCompare(b));
+  return list;
+}
+
+function isHttpUrl(value) {
+  return /^https?:\/\/\S+$/i.test(String(value || "").trim());
+}
+
+async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs = 700) {
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    const audit = await resolveResponsible(
+      guild,
+      THREAD_UPDATE_ACTION,
+      (entry) => String(entry?.target?.id || "") === String(threadId || ""),
+    );
+    if (audit?.executor || audit?.entry) return audit;
+    if (attempt < retries - 1) await sleep(delayMs);
+  }
+  return { executor: null, reason: null, entry: null };
+}
+
 module.exports = {
   name: "threadUpdate",
   async execute(oldThread, newThread) {
     try {
       const guild = newThread?.guild || oldThread?.guild;
-      if (!guild) return;
+      const threadId = String(newThread?.id || oldThread?.id || "");
+      if (!guild || !threadId) return;
 
       const nameChanged = oldThread?.name !== newThread?.name;
       const archivedChanged = Boolean(oldThread?.archived) !== Boolean(newThread?.archived);
       const lockedChanged = Boolean(oldThread?.locked) !== Boolean(newThread?.locked);
+      const oldTags = normalizeTagList(oldThread?.appliedTags);
+      const newTags = normalizeTagList(newThread?.appliedTags);
       const tagsChanged =
-        String((oldThread?.appliedTags || []).join(",")) !==
-        String((newThread?.appliedTags || []).join(","));
+        String(oldTags.join(",")) !==
+        String(newTags.join(","));
       if (!nameChanged && !archivedChanged && !lockedChanged && !tagsChanged) return;
 
       const logChannel = await resolveChannelRolesLogChannel(guild);
       if (!logChannel?.isTextBased?.()) return;
 
-      const audit = await resolveResponsible(
-        guild,
-        THREAD_UPDATE_ACTION,
-        (entry) => String(entry?.target?.id || "") === String(newThread?.id || ""),
-      );
+      const audit = await resolveResponsibleWithRetry(guild, threadId);
       const responsible = formatAuditActor(audit.executor);
 
       const lines = [
         `${ARROW} **Responsible:** ${responsible}`,
-        `${ARROW} **Target:** ${newThread} \`${newThread.id}\``,
+        `${ARROW} **Target:** ${newThread || oldThread || "thread"} \`${threadId}\``,
         `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
         "",
         "**Changes**",
@@ -65,7 +91,7 @@ module.exports = {
       }
       if (tagsChanged) {
         lines.push(
-          `${ARROW} **Applied Tags:** \`${(oldThread.appliedTags || []).join(",") || "none"}\` ${ARROW} \`${(newThread.appliedTags || []).join(",") || "none"}\``,
+          `${ARROW} **Applied Tags:** \`${oldTags.join(",") || "none"}\` ${ARROW} \`${newTags.join(",") || "none"}\``,
         );
       }
       lines.push(...buildAuditExtraLines(audit.entry, ["name", "archived", "locked", "applied_tags"]));
@@ -76,7 +102,7 @@ module.exports = {
         .setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
-      if (newThread?.url) {
+      if (isHttpUrl(newThread?.url)) {
         payload.components = [
           new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -87,9 +113,9 @@ module.exports = {
         ];
       }
 
-      await logChannel.send(payload).catch(() => {});
+      await logChannel.send(payload);
     } catch (error) {
-      global.logger?.error?.("[threadUpdate] log failed:", error);
+      global.logger?.error?.("[threadUpdate] failed:", error);
     }
   },
 };

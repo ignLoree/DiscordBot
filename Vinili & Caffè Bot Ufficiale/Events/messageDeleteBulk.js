@@ -5,6 +5,10 @@
   PermissionsBitField,
 } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
+  [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
+);
+const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -18,6 +22,10 @@ function formatAuditActor(actor) {
   if (actor?.bot) flags.push("BOT");
   const suffix = flags.length ? ` [${flags.join("/")}]` : "";
   return `${actor}${suffix} \`${actor.id}\``;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function sanitizeText(value) {
@@ -126,108 +134,122 @@ async function resolvePurgeResponsible(guild, channelId, deletedCount, fallbackU
     return fallbackUser;
   }
 
-  const logs = await guild
-    .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 12 })
-    .catch(() => null);
-  if (!logs?.entries?.size) return fallbackUser;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 12 })
+      .catch(() => null);
+    if (!logs?.entries?.size) {
+      if (attempt < 2) await sleep(700);
+      continue;
+    }
 
-  const nowMs = Date.now();
-  const candidates = [];
-  logs.entries.forEach((item) => {
-    const createdMs = Number(item?.createdTimestamp || 0);
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= 120 * 1000;
-    if (!withinWindow) return;
+    const nowMs = Date.now();
+    const candidates = [];
+    logs.entries.forEach((item) => {
+      const createdMs = Number(item?.createdTimestamp || 0);
+      const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+      if (!withinWindow) return;
 
-    const sameChannelByExtra =
-      String(item?.extra?.channel?.id || "") === String(channelId || "");
-    const sameChannelByTarget =
-      String(item?.target?.id || "") === String(channelId || "");
-    const sameChannel = sameChannelByExtra || sameChannelByTarget;
+      const sameChannelByExtra =
+        String(item?.extra?.channel?.id || "") === String(channelId || "");
+      const sameChannelByTarget =
+        String(item?.target?.id || "") === String(channelId || "");
+      const sameChannel = sameChannelByExtra || sameChannelByTarget;
 
-    const count = Number(item?.extra?.count || 0);
-    const wantedCount = Number(deletedCount || 0);
-    const exactCount = count > 0 && count === wantedCount;
-    const nearCount = count > 0 && wantedCount > 0 && Math.abs(count - wantedCount) <= 2;
+      const count = Number(item?.extra?.count || 0);
+      const wantedCount = Number(deletedCount || 0);
+      const exactCount = count > 0 && count === wantedCount;
+      const nearCount =
+        count > 0 && wantedCount > 0 && Math.abs(count - wantedCount) <= 2;
 
-    let score = 0;
-    if (sameChannel) score += 5;
-    if (exactCount) score += 4;
-    else if (nearCount) score += 2;
-    else if (!count) score += 1;
+      let score = 0;
+      if (sameChannel) score += 5;
+      if (exactCount) score += 4;
+      else if (nearCount) score += 2;
+      else if (!count) score += 1;
 
-    // Prefer newer audit entries when score is tied.
-    candidates.push({ item, score, createdMs });
-  });
+      candidates.push({ item, score, createdMs });
+    });
 
-  if (!candidates.length) return fallbackUser;
+    if (candidates.length) {
+      candidates.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return b.createdMs - a.createdMs;
+      });
+      const best = candidates[0];
+      if (best?.score >= 3) return best.item?.executor || fallbackUser;
+    }
 
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.createdMs - a.createdMs;
-  });
+    if (attempt < 2) await sleep(700);
+  }
 
-  const best = candidates[0];
-  if (!best || best.score < 3) return fallbackUser;
-  return best.item?.executor || fallbackUser;
+  return fallbackUser;
 }
 
 module.exports = {
   name: "messageDeleteBulk",
   async execute(messages, client) {
-    if (!messages?.size) return;
-    const meaningful = messages.filter((msg) => isMeaningfulDeletedMessage(msg));
-    if (!meaningful.size) return;
+    try {
+      void client;
+      if (!messages?.size) return;
+      const meaningful = messages.filter((msg) => isMeaningfulDeletedMessage(msg));
+      if (!meaningful.size) return;
 
-    const sample = meaningful.first();
-    const guild = sample?.guild;
-    const channel = sample?.channel;
-    if (!guild || !channel) return;
+      const sample = meaningful.first();
+      const guild = sample?.guild;
+      const channelId = String(sample?.channel?.id || sample?.channelId || "");
+      const channelText = sample?.channel ? `${sample.channel}` : (channelId ? `<#${channelId}>` : "#sconosciuto");
+      if (!guild || !channelId) return;
+      if (VERIFICATION_EXCLUDED_CHANNEL_IDS.has(channelId)) return;
 
-    const logChannel = await resolveActivityLogChannel(guild);
-    if (!logChannel?.isTextBased?.()) return;
+      const logChannel = await resolveActivityLogChannel(guild);
+      if (!logChannel?.isTextBased?.()) return;
 
-    const count = Number(meaningful.size || 0);
-    if (count <= 0) return;
+      const count = Number(meaningful.size || 0);
+      if (count <= 0) return;
 
-    const responsible = await resolvePurgeResponsible(
-      guild,
-      channel.id,
-      count,
-      null,
-    );
-
-    const embed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setTitle("Messages Purged")
-      .setDescription(
-        [
-          `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
-          `<:VC_right_arrow:1473441155055096081> **Target:** ${channel} \`${channel.id}\``,
-          `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
-          "",
-          "**Additional Information**",
-          `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
-        ].join("\n"),
+      const responsible = await resolvePurgeResponsible(
+        guild,
+        channelId,
+        count,
+        null,
       );
 
-    const txt = buildPurgeLogText(meaningful, channel.id);
-    const chunks = splitTextToChunks(txt);
-    const cappedChunks = chunks.slice(0, 10);
-    const files = cappedChunks.map((chunk, index) => {
-      const suffix = chunks.length > 1 ? `_p${index + 1}` : "";
-      const fileName = `${channel.id}_${sample?.id || Date.now()}${suffix}.txt`;
-      return new AttachmentBuilder(Buffer.from(chunk, "utf8"), {
-        name: fileName,
-      });
-    });
-    if (chunks.length > 10) {
-      embed.addFields({
-        name: "Note",
-        value: `Dump diviso in più parti: inviate le prime 10/${chunks.length}.`,
-      });
-    }
+      const embed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setTitle("Messages Purged")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
+            `<:VC_right_arrow:1473441155055096081> **Target:** ${channelText} \`${channelId}\``,
+            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+            "",
+            "**Additional Information**",
+            `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
+          ].join("\n"),
+        );
 
-    await logChannel.send({ embeds: [embed], files }).catch(() => {});
+      const txt = buildPurgeLogText(meaningful, channelId);
+      const chunks = splitTextToChunks(txt);
+      const cappedChunks = chunks.slice(0, 10);
+      const files = cappedChunks.map((chunk, index) => {
+        const suffix = chunks.length > 1 ? `_p${index + 1}` : "";
+        const fileName = `${channelId}_${sample?.id || Date.now()}${suffix}.txt`;
+        return new AttachmentBuilder(Buffer.from(chunk, "utf8"), {
+          name: fileName,
+        });
+      });
+      if (chunks.length > 10) {
+        embed.addFields({
+          name: "Note",
+          value: `Dump diviso in più parti: inviate le prime 10/${chunks.length}.`,
+        });
+      }
+
+      await logChannel.send({ embeds: [embed], files });
+    } catch (error) {
+      global.logger?.error?.("[messageDeleteBulk] failed:", error);
+    }
   },
 };
 

@@ -19,8 +19,14 @@ module.exports = {
       const executor = entry.executor || null;
       const responsible = formatResponsible(executor);
 
-      const membersRemoved = Number(entry.extra?.removed ?? entry.extra?.membersRemoved ?? 0);
-      const deleteDays = Number(entry.extra?.deleteMemberDays ?? entry.extra?.days ?? 0);
+      const rawMembersRemoved = Number(entry.extra?.removed ?? entry.extra?.membersRemoved ?? 0);
+      const rawDeleteDays = Number(entry.extra?.deleteMemberDays ?? entry.extra?.days ?? 0);
+      const membersRemoved = Number.isFinite(rawMembersRemoved) ? Math.max(0, rawMembersRemoved) : 0;
+      const deleteDays = Number.isFinite(rawDeleteDays) ? Math.max(0, rawDeleteDays) : 0;
+      const extraLines = buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]);
+      const cleanedExtraLines = extraLines.filter(
+        (line, index) => !(index === 0 && line === "") && line !== "**Additional Information**",
+      );
 
       if (logChannel?.isTextBased?.()) {
         const embed = new EmbedBuilder()
@@ -33,23 +39,23 @@ module.exports = {
               entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
               "",
               "**Additional Information**",
-              `${ARROW} **Count:** ${Number.isFinite(membersRemoved) ? membersRemoved : 0}`,
-              `${ARROW} **Days:** ${Number.isFinite(deleteDays) ? deleteDays : 0}`,
-              ...buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]),
+              `${ARROW} **Count:** ${membersRemoved}`,
+              `${ARROW} **Days:** ${deleteDays}`,
+              ...(cleanedExtraLines.length ? ["", "**Audit Details**", ...cleanedExtraLines] : []),
             ]
               .filter(Boolean)
               .join("\n"),
           );
 
-        await logChannel.send({ embeds: [embed] }).catch(() => {});
+        await logChannel.send({ embeds: [embed] });
       }
       await antiNukeHandlePruneAction({
         guild,
         executorId: String(entry?.executor?.id || ""),
         removedCount: membersRemoved,
-      }).catch(() => {});
+      });
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[guildAuditLogEntryCreate] failed:", error);
     }
   },
 };

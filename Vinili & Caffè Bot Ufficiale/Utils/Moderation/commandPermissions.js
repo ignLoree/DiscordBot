@@ -1,6 +1,10 @@
 const fs = require("fs");
 const path = require("path");
-const { EmbedBuilder, PermissionsBitField } = require("discord.js");
+const {
+  EmbedBuilder,
+  PermissionsBitField,
+  PermissionFlagsBits,
+} = require("discord.js");
 const IDs = require("../Config/ids");
 const {
   buildPrefixLookupKeys,
@@ -117,6 +121,75 @@ function normalizeRoleList(roleIds) {
   return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
 }
 
+const PERMISSION_NAME_LOOKUP = (() => {
+  const map = new Map();
+  const sources = [PermissionsBitField?.Flags, PermissionFlagsBits];
+  for (const source of sources) {
+    const entries = Object.entries(source || {});
+    for (const [name, value] of entries) {
+      if (value == null) continue;
+      const exact = String(name).trim().toLowerCase();
+      const compact = String(name)
+        .replace(/[^a-z0-9]/gi, "")
+        .toLowerCase();
+      map.set(exact, value);
+      map.set(compact, value);
+    }
+  }
+  return map;
+})();
+
+function resolvePermissionReference(value) {
+  if (value == null) return null;
+
+  if (typeof value === "bigint") return value;
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    try {
+      return BigInt(Math.trunc(value));
+    } catch {
+      return null;
+    }
+  }
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  if (/^\d+$/.test(raw)) {
+    try {
+      return BigInt(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  let key = raw;
+  if (key.startsWith("PermissionFlagsBits.")) {
+    key = key.slice("PermissionFlagsBits.".length);
+  } else if (key.startsWith("PermissionsBitField.Flags.")) {
+    key = key.slice("PermissionsBitField.Flags.".length);
+  }
+
+  const exact = key.toLowerCase();
+  const compact = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  return (
+    PERMISSION_NAME_LOOKUP.get(exact) ??
+    PERMISSION_NAME_LOOKUP.get(compact) ??
+    null
+  );
+}
+
+function normalizePermissionList(permissionFlags) {
+  if (!Array.isArray(permissionFlags)) return permissionFlags;
+  const dedup = new Set();
+  for (const flag of permissionFlags) {
+    const resolved = resolvePermissionReference(flag);
+    if (resolved == null) continue;
+    dedup.add(String(resolved));
+  }
+  return Array.from(dedup, (value) => BigInt(value));
+}
+
 function resolveChannelReference(value) {
   if (value == null) return null;
   const raw = String(value).trim();
@@ -188,6 +261,16 @@ function hasAnyRole(member, roleIds) {
   return normalized.some((roleId) => memberRoleIds.has(String(roleId)));
 }
 
+function hasAllPermissions(member, permissionFlags) {
+  const normalized = normalizePermissionList(permissionFlags);
+  if (!Array.isArray(normalized)) return true;
+  if (normalized.length === 0) return false;
+  const memberPermissions = member?.permissions;
+  if (!memberPermissions || typeof memberPermissions.has !== "function")
+    return false;
+  return normalized.every((flag) => memberPermissions.has(flag));
+}
+
 async function fetchLiveMember(entity) {
   const guild = entity?.guild || entity?.member?.guild || null;
   const userId =
@@ -206,6 +289,13 @@ async function hasAnyRoleWithLiveFallback(entity, roleIds) {
   const freshMember = await fetchLiveMember(entity);
   if (!freshMember) return false;
   return hasAnyRole(freshMember, roleIds);
+}
+
+async function hasAllPermissionsWithLiveFallback(entity, permissionFlags) {
+  if (hasAllPermissions(entity?.member, permissionFlags)) return true;
+  const freshMember = await fetchLiveMember(entity);
+  if (!freshMember) return false;
+  return hasAllPermissions(freshMember, permissionFlags);
 }
 
 function resolveSlashRoles(data, commandName, groupName, subcommandName) {
@@ -230,6 +320,42 @@ function resolveSlashRoles(data, commandName, groupName, subcommandName) {
   return null;
 }
 
+function resolveSlashPermissions(data, commandName, groupName, subcommandName) {
+  const cmd = data?.slash?.[commandName];
+  if (!cmd || typeof cmd !== "object") return null;
+  const subcommands = cmd.subcommands || {};
+  if (groupName && subcommandName) {
+    const key = `${groupName}.${subcommandName}`;
+    const cfg = subcommands[key];
+    if (cfg && typeof cfg === "object") {
+      if (Array.isArray(cfg.permissions))
+        return normalizePermissionList(cfg.permissions);
+      if (typeof cfg.permissions === "string") {
+        const resolved = resolvePermissionReference(cfg.permissions);
+        return resolved != null ? [resolved] : [];
+      }
+    }
+  }
+  if (subcommandName) {
+    const cfg = subcommands[subcommandName];
+    if (cfg && typeof cfg === "object") {
+      if (Array.isArray(cfg.permissions))
+        return normalizePermissionList(cfg.permissions);
+      if (typeof cfg.permissions === "string") {
+        const resolved = resolvePermissionReference(cfg.permissions);
+        return resolved != null ? [resolved] : [];
+      }
+    }
+  }
+  if (Array.isArray(cmd.permissions))
+    return normalizePermissionList(cmd.permissions);
+  if (typeof cmd.permissions === "string") {
+    const resolved = resolvePermissionReference(cmd.permissions);
+    return resolved != null ? [resolved] : [];
+  }
+  return null;
+}
+
 function resolvePrefixRoles(data, commandName, subcommandName = null) {
   const cmd = data?.prefix?.[commandName];
   if (!cmd) return null;
@@ -243,6 +369,30 @@ function resolvePrefixRoles(data, commandName, subcommandName = null) {
   if (typeof cmd.roles === "string") {
     const resolved = resolveRoleReference(cmd.roles);
     return resolved ? [resolved] : [];
+  }
+  return null;
+}
+
+function resolvePrefixPermissions(data, commandName, subcommandName = null) {
+  const cmd = data?.prefix?.[commandName];
+  if (!cmd || typeof cmd !== "object") return null;
+  const subcommands = cmd.subcommands || {};
+  if (subcommandName) {
+    const cfg = subcommands[subcommandName];
+    if (cfg && typeof cfg === "object") {
+      if (Array.isArray(cfg.permissions))
+        return normalizePermissionList(cfg.permissions);
+      if (typeof cfg.permissions === "string") {
+        const resolved = resolvePermissionReference(cfg.permissions);
+        return resolved != null ? [resolved] : [];
+      }
+    }
+  }
+  if (Array.isArray(cmd.permissions))
+    return normalizePermissionList(cmd.permissions);
+  if (typeof cmd.permissions === "string") {
+    const resolved = resolvePermissionReference(cmd.permissions);
+    return resolved != null ? [resolved] : [];
   }
   return null;
 }
@@ -271,11 +421,11 @@ function normalizeButtonPolicy(policy) {
 
   if (typeof policy === "string") {
     const resolved = resolveRoleReference(policy);
-    return { roles: resolved ? [resolved] : [] };
+    return { roles: resolved ? [resolved] : [], permissions: null };
   }
 
   if (Array.isArray(policy)) {
-    return { roles: normalizeRoleList(policy) };
+    return { roles: normalizeRoleList(policy), permissions: null };
   }
 
   if (typeof policy === "object") {
@@ -285,6 +435,13 @@ function normalizeButtonPolicy(policy) {
     } else if (typeof policy.roles === "string") {
       const resolved = resolveRoleReference(policy.roles);
       roles = resolved ? [resolved] : [];
+    }
+    let permissions = null;
+    if (Array.isArray(policy.permissions)) {
+      permissions = normalizePermissionList(policy.permissions);
+    } else if (typeof policy.permissions === "string") {
+      const resolved = resolvePermissionReference(policy.permissions);
+      permissions = resolved != null ? [resolved] : [];
     }
 
     const parsedOwnerSegment = Number.parseInt(policy.ownerSegment, 10);
@@ -303,6 +460,7 @@ function normalizeButtonPolicy(policy) {
 
     return {
       roles,
+      permissions,
       ownerSegment,
       ownerSeparator,
       ownerFromMessageMention,
@@ -436,7 +594,13 @@ async function checkSlashPermission(interaction, options = {}) {
     }
   }
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
-  if (!Array.isArray(roles)) {
+  const permissions = resolveSlashPermissions(
+    data,
+    interaction.commandName,
+    group,
+    sub,
+  );
+  if (!Array.isArray(roles) && !Array.isArray(permissions)) {
     if (options.returnDetails) {
       return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
     }
@@ -444,20 +608,36 @@ async function checkSlashPermission(interaction, options = {}) {
   }
   if (!interaction.inGuild()) {
     if (options.returnDetails) {
-      return { allowed: false, reason: "missing_role", requiredRoles: roles, channels: channelPolicy || null };
+      return {
+        allowed: false,
+        reason: Array.isArray(roles) ? "missing_role" : "missing_permission",
+        requiredRoles: roles,
+        channels: channelPolicy || null,
+      };
     }
     return false;
   }
-  const hasRole = await hasAnyRoleWithLiveFallback(interaction, roles);
+  const hasRole = !Array.isArray(roles)
+    ? true
+    : await hasAnyRoleWithLiveFallback(interaction, roles);
+  const hasPermissions = !Array.isArray(permissions)
+    ? true
+    : await hasAllPermissionsWithLiveFallback(interaction, permissions);
+  const allowed = hasRole && hasPermissions;
+  const reason = !hasRole
+    ? "missing_role"
+    : !hasPermissions
+      ? "missing_permission"
+      : null;
   if (options.returnDetails) {
     return {
-      allowed: hasRole,
-      reason: hasRole ? null : "missing_role",
-      requiredRoles: hasRole ? null : roles,
+      allowed,
+      reason,
+      requiredRoles: !hasRole ? roles : null,
       channels: channelPolicy || null,
     };
   }
-  return hasRole;
+  return allowed;
 }
 
 async function checkPrefixPermission(
@@ -508,7 +688,8 @@ async function checkPrefixPermission(
     }
   }
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
-  if (!Array.isArray(roles)) {
+  const permissions = resolvePrefixPermissions(data, commandName, subcommandName);
+  if (!Array.isArray(roles) && !Array.isArray(permissions)) {
     if (options.returnDetails) {
       return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
     }
@@ -516,20 +697,36 @@ async function checkPrefixPermission(
   }
   if (!message.guild) {
     if (options.returnDetails) {
-      return { allowed: false, reason: "missing_role", requiredRoles: roles, channels: channelPolicy || null };
+      return {
+        allowed: false,
+        reason: Array.isArray(roles) ? "missing_role" : "missing_permission",
+        requiredRoles: roles,
+        channels: channelPolicy || null,
+      };
     }
     return false;
   }
-  const hasRole = await hasAnyRoleWithLiveFallback(message, roles);
+  const hasRole = !Array.isArray(roles)
+    ? true
+    : await hasAnyRoleWithLiveFallback(message, roles);
+  const hasPermissions = !Array.isArray(permissions)
+    ? true
+    : await hasAllPermissionsWithLiveFallback(message, permissions);
+  const allowed = hasRole && hasPermissions;
+  const reason = !hasRole
+    ? "missing_role"
+    : !hasPermissions
+      ? "missing_permission"
+      : null;
   if (options.returnDetails) {
     return {
-      allowed: hasRole,
-      reason: hasRole ? null : "missing_role",
-      requiredRoles: hasRole ? null : roles,
+      allowed,
+      reason,
+      requiredRoles: !hasRole ? roles : null,
       channels: channelPolicy || null,
     };
   }
-  return hasRole;
+  return allowed;
 }
 
 async function checkButtonPermission(interaction) {
@@ -626,12 +823,33 @@ async function checkButtonPermission(interaction) {
       rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
     }
   }
+  const hasPermissionConstraint = Array.isArray(policy.permissions);
+  let permissionPass = true;
+  if (hasPermissionConstraint) {
+    if (!interaction?.inGuild?.()) {
+      permissionPass = false;
+    } else {
+      permissionPass = await hasAllPermissionsWithLiveFallback(
+        interaction,
+        policy.permissions,
+      );
+    }
+  }
+  const accessPass = rolePass && permissionPass;
 
-  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
-    if (!(ownerPass || rolePass)) {
+  if (
+    policy.ownerOrRole &&
+    hasOwnerConstraint &&
+    (hasRoleConstraint || hasPermissionConstraint)
+  ) {
+    if (!(ownerPass || accessPass)) {
       return {
         allowed: false,
-        reason: ownerPass ? "missing_role" : "not_owner",
+        reason: ownerPass
+          ? hasRoleConstraint && !rolePass
+            ? "missing_role"
+            : "missing_permission"
+          : "not_owner",
         requiredRoles: policy.roles || null,
         ownerId: ownerId || null,
       };
@@ -658,6 +876,14 @@ async function checkButtonPermission(interaction) {
       allowed: false,
       reason: "missing_role",
       requiredRoles: policy.roles,
+      ownerId: null,
+    };
+  }
+  if (hasPermissionConstraint && !permissionPass) {
+    return {
+      allowed: false,
+      reason: "missing_permission",
+      requiredRoles: policy.roles || null,
       ownerId: null,
     };
   }
@@ -735,12 +961,33 @@ async function checkStringSelectPermission(interaction) {
       rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
     }
   }
+  const hasPermissionConstraint = Array.isArray(policy.permissions);
+  let permissionPass = true;
+  if (hasPermissionConstraint) {
+    if (!interaction?.inGuild?.()) {
+      permissionPass = false;
+    } else {
+      permissionPass = await hasAllPermissionsWithLiveFallback(
+        interaction,
+        policy.permissions,
+      );
+    }
+  }
+  const accessPass = rolePass && permissionPass;
 
-  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
-    if (!(ownerPass || rolePass)) {
+  if (
+    policy.ownerOrRole &&
+    hasOwnerConstraint &&
+    (hasRoleConstraint || hasPermissionConstraint)
+  ) {
+    if (!(ownerPass || accessPass)) {
       return {
         allowed: false,
-        reason: ownerPass ? "missing_role" : "not_owner",
+        reason: ownerPass
+          ? hasRoleConstraint && !rolePass
+            ? "missing_role"
+            : "missing_permission"
+          : "not_owner",
         requiredRoles: policy.roles || null,
         ownerId: ownerId || null,
       };
@@ -767,6 +1014,14 @@ async function checkStringSelectPermission(interaction) {
       allowed: false,
       reason: "missing_role",
       requiredRoles: policy.roles,
+      ownerId: null,
+    };
+  }
+  if (hasPermissionConstraint && !permissionPass) {
+    return {
+      allowed: false,
+      reason: "missing_permission",
+      requiredRoles: policy.roles || null,
       ownerId: null,
     };
   }
@@ -845,12 +1100,33 @@ async function checkModalPermission(interaction) {
       rolePass = await hasAnyRoleWithLiveFallback(interaction, policy.roles);
     }
   }
+  const hasPermissionConstraint = Array.isArray(policy.permissions);
+  let permissionPass = true;
+  if (hasPermissionConstraint) {
+    if (!interaction?.inGuild?.()) {
+      permissionPass = false;
+    } else {
+      permissionPass = await hasAllPermissionsWithLiveFallback(
+        interaction,
+        policy.permissions,
+      );
+    }
+  }
+  const accessPass = rolePass && permissionPass;
 
-  if (policy.ownerOrRole && hasOwnerConstraint && hasRoleConstraint) {
-    if (!(ownerPass || rolePass)) {
+  if (
+    policy.ownerOrRole &&
+    hasOwnerConstraint &&
+    (hasRoleConstraint || hasPermissionConstraint)
+  ) {
+    if (!(ownerPass || accessPass)) {
       return {
         allowed: false,
-        reason: ownerPass ? "missing_role" : "not_owner",
+        reason: ownerPass
+          ? hasRoleConstraint && !rolePass
+            ? "missing_role"
+            : "missing_permission"
+          : "not_owner",
         requiredRoles: policy.roles || null,
         ownerId: ownerId || null,
       };
@@ -877,6 +1153,14 @@ async function checkModalPermission(interaction) {
       allowed: false,
       reason: "missing_role",
       requiredRoles: policy.roles,
+      ownerId: null,
+    };
+  }
+  if (hasPermissionConstraint && !permissionPass) {
+    return {
+      allowed: false,
+      reason: "missing_permission",
+      requiredRoles: policy.roles || null,
       ownerId: null,
     };
   }

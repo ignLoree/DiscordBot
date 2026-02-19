@@ -59,6 +59,36 @@ const {
 const STARTUP_PANELS_RETRY_MS = 15000;
 const ENGAGEMENT_INTERVAL_MS = 60 * 1000;
 
+function logError(client, ...args) {
+  if (client?.logs?.error) {
+    client.logs.error(...args);
+    return;
+  }
+  global.logger?.error?.(...args);
+}
+
+function logInfo(client, ...args) {
+  if (client?.logs?.success) {
+    client.logs.success(...args);
+    return;
+  }
+  global.logger?.info?.(...args);
+}
+
+function logLaunch(client, ...args) {
+  if (client?.logs?.logging) {
+    client.logs.logging(...args);
+    return;
+  }
+  global.logger?.info?.(...args);
+}
+
+function resolveMaxListeners(client) {
+  const raw = Number(client?.config?.eventListeners ?? config?.eventListeners ?? 50);
+  if (!Number.isFinite(raw) || raw <= 0) return 50;
+  return Math.max(10, Math.floor(raw));
+}
+
 const getChannelSafe = async (client, channelId) => {
   if (!channelId) return null;
   return (
@@ -76,7 +106,8 @@ function buildMongoUrl(client) {
 async function connectMongo(client) {
   const mongoUrl = buildMongoUrl(client);
   if (!mongoUrl) {
-    client.logs.error(
+    logError(
+      client,
       "[DATABASE] No MongoDB URL has been provided. Set MONGO_URL (or MONGODB_URI) or fallback config.mongoURL.",
     );
     return false;
@@ -96,10 +127,11 @@ async function connectMongo(client) {
       });
     }
 
-    client.logs.success("[DATABASE] Connected to MongoDB successfully.");
+    logInfo(client, "[DATABASE] Connected to MongoDB successfully.");
     return true;
   } catch (err) {
-    client.logs.error(
+    logError(
+      client,
       `[DATABASE] Error connecting to the database (continuo comunque il bootstrap): ${err}`,
     );
     return false;
@@ -135,11 +167,11 @@ async function restoreBumpReminders(client) {
   ]);
 
   if (reminders.status === "rejected")
-    global.logger.error("[DISBOARD REMINDER ERROR]", reminders.reason);
+    global.logger?.error?.("[DISBOARD REMINDER ERROR]", reminders.reason);
   if (discadia.status === "rejected")
-    global.logger.error("[DISCADIA REMINDER ERROR]", discadia.reason);
+    global.logger?.error?.("[DISCADIA REMINDER ERROR]", discadia.reason);
   if (voteReminders.status === "rejected")
-    global.logger.error("[DISCADIA VOTE REMINDER ERROR]", voteReminders.reason);
+    global.logger?.error?.("[DISCADIA VOTE REMINDER ERROR]", voteReminders.reason);
 }
 
 async function restoreCoreStartupState(client) {
@@ -149,20 +181,22 @@ async function restoreCoreStartupState(client) {
     restoreTtsConnections(client),
     syncLiveVoiceSessionsFromGateway(client),
     Promise.allSettled(
-      [...client.guilds.cache.values()].map((guild) => restoreTempBans(guild)),
+      [...client.guilds.cache.values()].map((guild) =>
+        restoreTempBans(guild, { force: true }),
+      ),
     ),
   ]);
 
   if (bootstrap.status === "rejected")
-    global.logger.error("[PRESENCE BOOTSTRAP ERROR]", bootstrap.reason);
+    global.logger?.error?.("[PRESENCE BOOTSTRAP ERROR]", bootstrap.reason);
   if (inviteCache.status === "rejected")
-    global.logger.error("[INVITE CACHE] Failed to prime:", inviteCache.reason);
+    global.logger?.error?.("[INVITE CACHE] Failed to prime:", inviteCache.reason);
   if (tts.status === "rejected")
-    global.logger.error("[TTS RESTORE ERROR]", tts.reason);
+    global.logger?.error?.("[TTS RESTORE ERROR]", tts.reason);
   if (liveVoiceSync.status === "rejected")
-    global.logger.error("[VOICE LIVE SYNC ERROR]", liveVoiceSync.reason);
+    global.logger?.error?.("[VOICE LIVE SYNC ERROR]", liveVoiceSync.reason);
   if (joinRaidRestore.status === "rejected")
-    global.logger.error("[JOIN RAID RESTORE ERROR]", joinRaidRestore.reason);
+    global.logger?.error?.("[JOIN RAID RESTORE ERROR]", joinRaidRestore.reason);
 }
 
 async function runStartupPanels(client, label = "immediate") {
@@ -174,7 +208,7 @@ async function runStartupPanels(client, label = "immediate") {
       await startupPanelsTrigger.execute(client);
     }
   } catch (err) {
-    global.logger.error(
+    global.logger?.error?.(
       `[CLIENT READY] Startup panels refresh failed (${label}):`,
       err,
     );
@@ -184,9 +218,11 @@ async function runStartupPanels(client, label = "immediate") {
 }
 
 async function runPrimaryHeavyTasks(client, engagementTick) {
-  const mainGuild =
-    client.guilds.cache.get(IDs.guilds.main) ||
-    (await client.guilds.fetch(IDs.guilds.main).catch(() => null));
+  const mainGuildId = IDs.guilds.main || null;
+  const mainGuild = mainGuildId
+    ? client.guilds.cache.get(mainGuildId) ||
+      (await client.guilds.fetch(mainGuildId).catch(() => null))
+    : client.guilds.cache.first() || null;
 
   const heavyTasks = [
     mainGuild
@@ -214,19 +250,23 @@ async function runPrimaryHeavyTasks(client, engagementTick) {
   ];
   results.forEach((result, index) => {
     if (result.status === "rejected" && errLabels[index]) {
-      global.logger.error(errLabels[index], result.reason);
+      global.logger?.error?.(errLabels[index], result.reason);
     }
   });
 }
 
 function startPrimaryLoops(client, engagementTick) {
-  setInterval(engagementTick, ENGAGEMENT_INTERVAL_MS);
+  if (client._primaryLoopsStarted) return;
+  client._primaryLoopsStarted = true;
+
+  const interval = setInterval(engagementTick, ENGAGEMENT_INTERVAL_MS);
+  client._primaryEngagementInterval = interval;
 
   const startLoopSafely = (label, starter) => {
     try {
       starter();
     } catch (err) {
-      global.logger.error(label, err);
+      global.logger?.error?.(label, err);
     }
   };
 
@@ -290,18 +330,19 @@ async function queueStartupSync(client) {
       scheduleMemberCounterRefresh(guild, { delayMs: 800, secondPassMs: 2400 });
     }
   } catch (err) {
-    global.logger.error("[IDS AUTO SYNC] Startup queue failed", err);
+    global.logger?.error?.("[IDS AUTO SYNC] Startup queue failed", err);
   }
 }
 
 function scheduleMonthlyGif(client) {
   try {
-    cron.schedule(
+    if (client._monthlyGifTask) return;
+    client._monthlyGifTask = cron.schedule(
       "0 0 1 * *",
       async () => {
         const channelId = IDs.channels.joinLeaveLogs;
         const channel = await getChannelSafe(client, channelId);
-        if (!channel) return;
+        if (!channel?.isTextBased?.()) return;
 
         await channel.send({
           content: "@everyone",
@@ -317,24 +358,25 @@ function scheduleMonthlyGif(client) {
       { timezone: "Europe/Rome" },
     );
   } catch (err) {
-    global.logger.error("[MONTHLY GIF] Failed to schedule", err);
+    global.logger?.error?.("[MONTHLY GIF] Failed to schedule", err);
   }
 }
 
 function setClientPresence(client) {
   try {
-    client.user.setPresence({
+    client.user?.setPresence?.({
       status: client.config?.status || "idle",
       activities: [
         {
           type: 4,
           name: "irrelevant",
-          state: "☕📀 discord.gg/viniliecaffe",
+          state: "discord.gg/viniliecaffe",
         },
       ],
     });
   } catch (err) {
-    client.logs.error(
+    logError(
+      client,
       "[STATUS] Errore impostazione presence:",
       err?.message || err,
     );
@@ -345,8 +387,9 @@ module.exports = {
   name: "clientReady",
   once: true,
   async execute(client) {
-    client.setMaxListeners(client.config.eventListeners || 50);
-    require("events").EventEmitter.defaultMaxListeners = config.eventListeners;
+    const maxListeners = resolveMaxListeners(client);
+    client.setMaxListeners(maxListeners);
+    require("events").EventEmitter.defaultMaxListeners = maxListeners;
 
     await connectMongo(client);
 
@@ -356,7 +399,7 @@ module.exports = {
       try {
         startDailyPartnerAuditLoop(client);
       } catch (err) {
-        global.logger.error("[DAILY PARTNER AUDIT ERROR]", err);
+        global.logger?.error?.("[DAILY PARTNER AUDIT ERROR]", err);
       }
     }
 
@@ -370,7 +413,7 @@ module.exports = {
         try {
           await runDueOneTimeReminders(client);
         } catch (err) {
-          global.logger.error(err);
+          global.logger?.error?.(err);
         } finally {
           engagementTickRunning = false;
         }
@@ -380,14 +423,20 @@ module.exports = {
       startPrimaryLoops(client, engagementTick);
     }
 
-    setTimeout(() => {
-      runStartupPanels(client, "retry+15s").catch(() => {});
+    if (client._startupPanelsRetryTimer) {
+      clearTimeout(client._startupPanelsRetryTimer);
+    }
+    client._startupPanelsRetryTimer = setTimeout(() => {
+      runStartupPanels(client, "retry+15s").catch((err) => {
+        global.logger?.error?.("[STARTUP PANELS] retry failed", err);
+      });
     }, STARTUP_PANELS_RETRY_MS);
 
     await queueStartupSync(client);
-    scheduleMonthlyGif(client);
+    if (primaryScheduler) scheduleMonthlyGif(client);
     setClientPresence(client);
 
-    client.logs.logging(`[BOT] ${client.user.username} has been launched!`);
+    logLaunch(client, `[BOT] ${client.user?.username || "Bot"} has been launched!`);
   },
 };
+

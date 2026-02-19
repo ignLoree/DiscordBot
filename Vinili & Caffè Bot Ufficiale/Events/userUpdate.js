@@ -1,6 +1,7 @@
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
+const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const CORE_EXEMPT_USER_IDS = new Set([
@@ -62,6 +63,19 @@ function matchBlockedUsername(candidate) {
   return null;
 }
 
+function firstUsernameMatch(newUser) {
+  const checks = [
+    String(newUser?.globalName || "").trim(),
+    String(newUser?.username || "").trim(),
+  ].filter(Boolean);
+
+  for (const value of checks) {
+    const match = matchBlockedUsername(value);
+    if (match) return match;
+  }
+  return null;
+}
+
 async function punishUsernameMatch(member, match) {
   const reason = "Username matches blocked pattern (post-join filter).";
   const dmEmbed = new EmbedBuilder()
@@ -84,17 +98,28 @@ async function punishUsernameMatch(member, match) {
     dmSent = false;
   }
 
+  const me = member.guild.members.me;
+  const canKick =
+    Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.KickMembers)) &&
+    Boolean(member?.kickable);
   let punished = false;
-  try {
-    await member.kick(reason);
-    punished = true;
-  } catch {
-    punished = false;
+  if (canKick) {
+    try {
+      await member.kick(reason);
+      punished = true;
+    } catch {
+      punished = false;
+    }
+  }
+  if (punished) {
+    markJoinGateKick(member.guild.id, member.id, reason);
   }
 
   const logChannel =
-    member.guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+    IDs.channels.modLogs
+      ? member.guild.channels.cache.get(IDs.channels.modLogs) ||
+        (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null))
+      : null;
   if (logChannel?.isTextBased?.()) {
     const nowTs = Math.floor(Date.now() / 1000);
     const logEmbed = new EmbedBuilder()
@@ -106,48 +131,54 @@ async function punishUsernameMatch(member, match) {
           `${ARROW} **Rule:** Username Filter (post-join)`,
           `${ARROW} **Match Type:** ${match.type}`,
           `${ARROW} **Match:** ${match.value}`,
+          `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
           `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
           `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
           `${ARROW} <t:${nowTs}:F>`,
         ].join("\n"),
       );
-    await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+    await logChannel.send({ embeds: [logEmbed] }).catch((error) => {
+      global.logger?.error?.("[userUpdate] punish log send failed:", error);
+    });
   }
 }
 
 module.exports = {
   name: "userUpdate",
   async execute(oldUser, newUser, client) {
-    const usernameChanged = oldUser?.username !== newUser?.username;
-    const globalNameChanged = oldUser?.globalName !== newUser?.globalName;
-    if (!usernameChanged && !globalNameChanged) return;
+    try {
+      const resolvedClient = client || newUser?.client || oldUser?.client;
+      if (!resolvedClient || !newUser?.id) return;
 
-    if (!newUser?.bot) {
-      const candidate = String(newUser.globalName || newUser.username || "");
-      const match = matchBlockedUsername(candidate);
-      if (!match) return;
-      for (const guild of client.guilds.cache.values()) {
-        if (
-          CORE_EXEMPT_USER_IDS.has(String(newUser.id)) ||
-          String(guild.ownerId || "") === String(newUser.id)
-        ) {
-          continue;
+      const usernameChanged = oldUser?.username !== newUser?.username;
+      const globalNameChanged = oldUser?.globalName !== newUser?.globalName;
+
+      if (!newUser?.bot) {
+        if (!usernameChanged && !globalNameChanged) return;
+        const match = firstUsernameMatch(newUser);
+        if (!match) return;
+        for (const guild of resolvedClient.guilds.cache.values()) {
+          if (
+            CORE_EXEMPT_USER_IDS.has(String(newUser.id)) ||
+            String(guild.ownerId || "") === String(newUser.id)
+          ) {
+            continue;
+          }
+          const member =
+            guild.members.cache.get(newUser.id) ||
+            (await guild.members.fetch(newUser.id).catch(() => null));
+          if (!member || member.user?.bot) continue;
+          await punishUsernameMatch(member, match);
         }
-        const member =
-          guild.members.cache.get(newUser.id) ||
-          (await guild.members.fetch(newUser.id).catch(() => null));
-        if (!member || member.user?.bot) continue;
-        await punishUsernameMatch(member, match);
+        return;
       }
-      return;
-    }
 
-    for (const guild of client.guilds.cache.values()) {
-      const member =
-        guild.members.cache.get(newUser.id) ||
-        (await guild.members.fetch(newUser.id).catch(() => null));
-      if (!member) continue;
-      queueIdsCatalogSync(client, guild.id, "botUserUpdate");
+      // Bot profile updates can affect IDs catalog references in every guild.
+      for (const guild of resolvedClient.guilds.cache.values()) {
+        queueIdsCatalogSync(resolvedClient, guild.id, "botUserUpdate");
+      }
+    } catch (error) {
+      global.logger?.error?.("[userUpdate] failed:", error);
     }
   },
 };

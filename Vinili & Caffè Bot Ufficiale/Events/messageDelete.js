@@ -2,6 +2,9 @@
 const IDs = require("../Utils/Config/ids");
 
 const MAX_DIFF_LENGTH = 1800;
+const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
+  [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
+);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -20,12 +23,24 @@ async function resolveMessage(message) {
 
 function buildSnipePayload(message, channelId) {
   const firstAttachment = message.attachments?.first?.() || null;
+  const firstEmbed = Array.isArray(message?.embeds) ? message.embeds[0] : null;
+  const embedPreview = String(
+    firstEmbed?.description ||
+      firstEmbed?.title ||
+      firstEmbed?.author?.name ||
+      "",
+  ).trim();
   return {
-    content: message.content || "Nessun contenuto.",
+    content: message.content || embedPreview || "Nessun contenuto.",
     authorId: message.author?.id || null,
     authorTag: message.author?.tag || "Sconosciuto",
     channel: message.channel?.toString?.() || `<#${channelId}>`,
     attachment: firstAttachment?.proxyURL || null,
+    isEmbedOnly:
+      normalizeText(message?.content || "").length === 0 &&
+      !Boolean(message?.attachments?.size) &&
+      Array.isArray(message?.embeds) &&
+      message.embeds.length > 0,
   };
 }
 
@@ -84,14 +99,6 @@ function hasMeaningfulDeleteData(message) {
   return (hasContent || hasAttachments || hasEmbeds) && hasMessageId;
 }
 
-function hasEmbedsOnly(message) {
-  const content = normalizeText(message?.content || "");
-  const hasContent = content.length > 0;
-  const hasAttachments = Boolean(message?.attachments?.size);
-  const hasEmbeds = Array.isArray(message?.embeds) && message.embeds.length > 0;
-  return !hasContent && !hasAttachments && hasEmbeds;
-}
-
 async function resolveLogChannel(guild) {
   const channelId = IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
@@ -104,6 +111,13 @@ async function resolveLogChannel(guild) {
 async function sendDeleteLog(message) {
   const guild = message?.guild;
   if (!guild) return;
+  if (
+    VERIFICATION_EXCLUDED_CHANNEL_IDS.has(
+      String(message?.channelId || message?.channel?.id || ""),
+    )
+  ) {
+    return;
+  }
 
   const logChannel = await resolveLogChannel(guild);
   if (!logChannel?.isTextBased?.()) return;
@@ -154,25 +168,38 @@ async function sendDeleteLog(message) {
     embed.setImage(preview.url);
   }
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] });
 }
 
 module.exports = {
   name: "messageDelete",
   async execute(message, client) {
-    if (!message) return;
+    try {
+      if (!message) return;
+      const resolvedClient = client || message.client;
 
-    const resolved = await resolveMessage(message);
-    if (!resolved?.guild) return;
-    if (hasEmbedsOnly(resolved)) return;
-    if (!hasMeaningfulDeleteData(resolved)) return;
+      const resolved = await resolveMessage(message);
+      if (!resolved?.guild) return;
+      if (!hasMeaningfulDeleteData(resolved)) return;
 
-    await sendDeleteLog(resolved);
+      await sendDeleteLog(resolved);
 
-    const channelId = resolved.channel?.id || resolved.channelId;
-    if (!channelId) return;
+      const channelId = resolved.channel?.id || resolved.channelId;
+      if (!channelId || !resolvedClient) return;
+      if (!resolvedClient.snipes) resolvedClient.snipes = new Map();
 
-    client.snipes.set(channelId, buildSnipePayload(resolved, channelId));
+      const payload = buildSnipePayload(resolved, channelId);
+      const existing = resolvedClient.snipes.get(channelId);
+      const history = Array.isArray(existing)
+        ? existing.slice(0, 9)
+        : existing
+          ? [existing]
+          : [];
+      history.unshift(payload);
+      resolvedClient.snipes.set(channelId, history.slice(0, 10));
+    } catch (error) {
+      global.logger?.error?.("[messageDelete] failed:", error);
+    }
   },
 };
 

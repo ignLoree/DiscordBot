@@ -10,6 +10,10 @@ const IDs = require("../Utils/Config/ids");
 
 const DEDUPE_TTL_MS = 15 * 1000;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
+const AUDIT_FETCH_LIMIT = 10;
+const AUDIT_RETRY_ATTEMPTS = 4;
+const AUDIT_RETRY_DELAY_MS = 900;
+const fallbackPinAuditDedupe = new Map();
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -35,14 +39,16 @@ async function resolveLogChannel(guild) {
 }
 
 function getDedupeStore(client) {
-  if (!client._pinAuditDedupe) client._pinAuditDedupe = new Map();
+  const store = client
+    ? (client._pinAuditDedupe = client._pinAuditDedupe || new Map())
+    : fallbackPinAuditDedupe;
   const now = Date.now();
-  for (const [key, ts] of client._pinAuditDedupe.entries()) {
+  for (const [key, ts] of store.entries()) {
     if (now - Number(ts || 0) > DEDUPE_TTL_MS) {
-      client._pinAuditDedupe.delete(key);
+      store.delete(key);
     }
   }
-  return client._pinAuditDedupe;
+  return store;
 }
 
 function buildMessageUrl(guildId, channelId, messageId) {
@@ -61,10 +67,10 @@ async function fetchRecentPinEntry(guild, channelId) {
 
   const [pinLogs, unpinLogs] = await Promise.all([
     guild
-      .fetchAuditLogs({ type: AuditLogEvent.MessagePin, limit: 10 })
+      .fetchAuditLogs({ type: AuditLogEvent.MessagePin, limit: AUDIT_FETCH_LIMIT })
       .catch(() => null),
     guild
-      .fetchAuditLogs({ type: AuditLogEvent.MessageUnpin, limit: 10 })
+      .fetchAuditLogs({ type: AuditLogEvent.MessageUnpin, limit: AUDIT_FETCH_LIMIT })
       .catch(() => null),
   ]);
 
@@ -92,6 +98,21 @@ async function fetchRecentPinEntry(guild, channelId) {
   return candidates[0] || null;
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchRecentPinEntryWithRetry(guild, channelId) {
+  for (let attempt = 0; attempt < AUDIT_RETRY_ATTEMPTS; attempt += 1) {
+    const entry = await fetchRecentPinEntry(guild, channelId);
+    if (entry) return entry;
+    if (attempt < AUDIT_RETRY_ATTEMPTS - 1) {
+      await wait(AUDIT_RETRY_DELAY_MS);
+    }
+  }
+  return null;
+}
+
 module.exports = {
   name: "channelPinsUpdate",
   async execute(channel, _time, client) {
@@ -99,7 +120,7 @@ module.exports = {
       const guild = channel?.guild;
       if (!guild || !channel?.isTextBased?.()) return;
 
-      const entry = await fetchRecentPinEntry(guild, channel.id);
+      const entry = await fetchRecentPinEntryWithRetry(guild, channel.id);
       if (!entry) return;
 
       const action = entry.action;
@@ -108,8 +129,8 @@ module.exports = {
       if (!isPin && !isUnpin) return;
 
       const messageId = String(entry?.extra?.messageId || "").trim();
-      if (!messageId) return;
-      const dedupeKey = `${guild.id}:${channel.id}:${messageId}:${String(action)}`;
+      const dedupeMessagePart = messageId || `audit:${String(entry?.id || "unknown")}`;
+      const dedupeKey = `${guild.id}:${channel.id}:${dedupeMessagePart}:${String(action)}`;
       const dedupe = getDedupeStore(client);
       if (dedupe.has(dedupeKey)) return;
       dedupe.set(dedupeKey, Date.now());
@@ -118,7 +139,9 @@ module.exports = {
       if (!logChannel?.isTextBased?.()) return;
 
       const responsible = formatAuditActor(entry.executor);
-      const messageUrl = buildMessageUrl(guild.id, channel.id, messageId);
+      const messageUrl = messageId
+        ? buildMessageUrl(guild.id, channel.id, messageId)
+        : null;
 
       const lines = [
         `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,

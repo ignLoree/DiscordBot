@@ -23,7 +23,7 @@ const BOOST_FOLLOWUP_DELAY_MS = 5000;
 const PLUS_COLOR_REQUIRED_ROLE_IDS = [
   IDs.roles.ServerBooster,
   IDs.roles.Level50,
-];
+].filter(Boolean);
 const PLUS_COLOR_ROLE_IDS = [
   IDs.roles.redPlus,
   IDs.roles.orangePlus,
@@ -36,7 +36,7 @@ const PLUS_COLOR_ROLE_IDS = [
   IDs.roles.grayPlus,
   IDs.roles.whitePlus,
   IDs.roles.YinYangPlus,
-];
+].filter(Boolean);
 
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
@@ -53,6 +53,10 @@ function toRelativeDiscordTime(value) {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return null;
   return `<t:${Math.floor(ms / 1000)}:R>`;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function resolveActivityLogChannel(guild) {
@@ -97,23 +101,30 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
     return { executor: null, reason: null };
   }
 
-  const logs = await guild
-    .fetchAuditLogs({
-      type: AuditLogEvent.MemberUpdate,
-      limit: AUDIT_FETCH_LIMIT,
-    })
-    .catch(() => null);
-  if (!logs?.entries?.size) {
-    return { executor: null, reason: null };
-  }
+  let entry = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({
+        type: AuditLogEvent.MemberUpdate,
+        limit: AUDIT_FETCH_LIMIT,
+      })
+      .catch(() => null);
 
-  const nowMs = Date.now();
-  const entry = logs.entries.find((item) => {
-    const createdMs = Number(item?.createdTimestamp || 0);
-    const targetId = String(item?.target?.id || "");
-    const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-    return withinWindow && targetId === String(targetUserId || "");
-  });
+    if (logs?.entries?.size) {
+      const nowMs = Date.now();
+      entry =
+        logs.entries.find((item) => {
+          const createdMs = Number(item?.createdTimestamp || 0);
+          const targetId = String(item?.target?.id || "");
+          const withinWindow =
+            createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+          return withinWindow && targetId === String(targetUserId || "");
+        }) || null;
+    }
+
+    if (entry) break;
+    if (attempt < 2) await sleep(700);
+  }
 
   return {
     executor: entry?.executor || null,
@@ -162,7 +173,7 @@ async function sendMemberUpdateLog(oldMember, newMember) {
     .setTitle("Member Update")
     .setDescription(lines.join("\n"));
 
-  await logChannel.send({ embeds: [embed] }).catch(() => {});
+  await logChannel.send({ embeds: [embed] });
 }
 
 async function sendMemberRoleUpdateLog(oldMember, newMember) {
@@ -224,7 +235,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
       .setTitle("Member Role Update")
       .setDescription(lines.join("\n"));
 
-    await logChannel.send({ embeds: [embed] }).catch(() => {});
+    await logChannel.send({ embeds: [embed] });
   }
 
   if (additions.length) {
@@ -233,7 +244,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
       targetMember: newMember,
       addedRoles: additions,
       executorId,
-    }).catch(() => {});
+    });
   }
 }
 
@@ -243,6 +254,7 @@ function hasManageRolesPermission(member) {
 }
 
 async function addPerkRoleIfPossible(member) {
+  if (!PERK_ROLE_ID) return;
   const me = member.guild.members.me;
   if (!me) return;
   if (!hasManageRolesPermission(member)) return;
@@ -296,6 +308,7 @@ function buildBoostEmbed(member, boostCount) {
 }
 
 async function sendBoostEmbeds(channel, member, times, boostCount) {
+  if (!channel?.isTextBased?.()) return;
   const safeTimes = Math.max(0, Number(times || 0));
   for (let i = 0; i < safeTimes; i += 1) {
     await channel.send({
@@ -367,6 +380,7 @@ function scheduleBoostFollowup(
         boostCountCache.set(guildId, latestCount);
       }
     } catch {
+      global.logger?.error?.("[guildMemberUpdate] boost followup failed");
     } finally {
       boostFollowupLocks.delete(boostKey);
     }
@@ -374,10 +388,12 @@ function scheduleBoostFollowup(
 }
 
 async function handleBoostUpdate(oldMember, newMember) {
-  const boostAnnounceChannel = newMember.guild.channels.cache.get(
-    IDs.channels.supporters,
-  );
-  if (!boostAnnounceChannel) return;
+  const boostChannelId = IDs.channels.supporters;
+  if (!boostChannelId) return;
+  const boostAnnounceChannel =
+    newMember.guild.channels.cache.get(boostChannelId) ||
+    (await newMember.guild.channels.fetch(boostChannelId).catch(() => null));
+  if (!boostAnnounceChannel?.isTextBased?.()) return;
 
   const oldBoostTs = oldMember.premiumSinceTimestamp || 0;
   const newBoostTs = newMember.premiumSinceTimestamp || 0;
@@ -424,12 +440,14 @@ module.exports = {
   name: "guildMemberUpdate",
   async execute(oldMember, newMember, client) {
     try {
+      if (!oldMember || !newMember?.guild || !newMember?.user) return;
       await sendMemberUpdateLog(oldMember, newMember);
       await sendMemberRoleUpdateLog(oldMember, newMember);
 
       if (
         newMember?.guild?.id === IDs.guilds.main &&
-        rolesChanged(oldMember, newMember)
+        rolesChanged(oldMember, newMember) &&
+        client
       ) {
         scheduleStaffListRefresh(client, newMember.guild.id);
       }
@@ -437,7 +455,7 @@ module.exports = {
       await removePlusColorsIfNotEligible(newMember);
       await handleBoostUpdate(oldMember, newMember);
     } catch (error) {
-      global.logger.error(error);
+      global.logger?.error?.("[guildMemberUpdate] failed:", error);
     }
   },
 };
