@@ -67,7 +67,11 @@ async function runGuildAutoBackup(guild) {
   await pruneGuildBackups(guild.id, {
     maxManual: MAX_MANUAL_BACKUPS,
     maxAutomatic: MAX_AUTOMATIC_BACKUPS,
+    maxManualAgeDays: MAX_MANUAL_BACKUP_AGE_DAYS,
+    minManualToKeep: MIN_MANUAL_BACKUPS_TO_KEEP,
   }).catch(() => null);
+
+  await validateAndHealGuildBackups(guild.id, { limit: 30 }).catch(() => null);
 
   return created;
 }
@@ -79,6 +83,7 @@ function startAutoBackupLoop(client) {
   const runTick = async () => {
     for (const guild of client.guilds.cache.values()) {
       try {
+        await validateAndHealGuildBackups(guild.id, { limit: 20 }).catch(() => null);
         const result = await runGuildAutoBackup(guild);
         if (result) {
           global.logger?.info?.(

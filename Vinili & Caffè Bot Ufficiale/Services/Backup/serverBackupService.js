@@ -703,7 +703,9 @@ async function createGuildBackup(guild, options = {}) {
 
   const fileName = `${backupId}.json.gz`;
   const absolutePath = path.join(outputDir, fileName);
-  await fs.writeFile(absolutePath, compressed);
+  const backupPath = getBackupBakPath(guild.id, backupId);
+  await writeFileAtomic(absolutePath, compressed);
+  await fs.copyFile(absolutePath, backupPath).catch(() => null);
   await writeBackupMetaFile(guild.id, backupId, {
     schemaVersion: BACKUP_SCHEMA_VERSION,
     backupId,
@@ -714,6 +716,11 @@ async function createGuildBackup(guild, options = {}) {
       algorithm: "sha256",
       payload: payloadSha256,
       compressed: compressedSha256,
+    },
+    file: {
+      primary: path.basename(absolutePath),
+      backup: path.basename(backupPath),
+      sizeBytes: compressed.length,
     },
   });
 
@@ -746,59 +753,77 @@ async function createGuildBackup(guild, options = {}) {
 
 async function readGuildBackup(guildId, backupId) {
   const filePath = getBackupFilePath(guildId, backupId);
-  const compressed = await fs.readFile(filePath);
-  const compressedSha256 = sha256(compressed);
-  const uncompressed = await gunzipAsync(compressed);
-  const serialized = uncompressed.toString("utf8");
-  const payloadSha256 = sha256(Buffer.from(serialized, "utf8"));
-  const payload = JSON.parse(serialized);
+  const backupPath = getBackupBakPath(guildId, backupId);
   const meta = await readBackupMetaFile(guildId, backupId);
-
-  let integrity = {
-    algorithm: "sha256",
-    compressedVerified: null,
-    payloadVerified: null,
-  };
-
   const expectedCompressed = String(meta?.checksum?.compressed || "").trim().toLowerCase();
   const expectedPayload = String(meta?.checksum?.payload || "").trim().toLowerCase();
-  if (expectedCompressed) {
-    integrity.compressedVerified = expectedCompressed === compressedSha256.toLowerCase();
-    if (!integrity.compressedVerified) {
-      const err = new Error(`Checksum compresso non valido per backup ${String(backupId || "").toUpperCase()}.`);
+
+  const tryRead = async (targetPath, sourceLabel) => {
+    const compressed = await fs.readFile(targetPath);
+    const compressedSha256 = sha256(compressed);
+    const uncompressed = await gunzipAsync(compressed);
+    const serialized = uncompressed.toString("utf8");
+    const payloadSha256 = sha256(Buffer.from(serialized, "utf8"));
+
+    if (expectedCompressed && expectedCompressed !== compressedSha256.toLowerCase()) {
+      const err = new Error("checksum compressed mismatch");
       err.code = "EBADCHK";
       throw err;
     }
-  }
-  if (expectedPayload) {
-    integrity.payloadVerified = expectedPayload === payloadSha256.toLowerCase();
-    if (!integrity.payloadVerified) {
-      const err = new Error(`Checksum payload non valido per backup ${String(backupId || "").toUpperCase()}.`);
+
+    if (expectedPayload && expectedPayload !== payloadSha256.toLowerCase()) {
+      const err = new Error("checksum payload mismatch");
       err.code = "EBADCHK";
       throw err;
     }
+
+    const payload = JSON.parse(serialized);
+    return {
+      filePath: targetPath,
+      sizeBytes: compressed.length,
+      payload,
+      meta,
+      checksum: {
+        algorithm: "sha256",
+        compressed: compressedSha256,
+        payload: payloadSha256,
+        compressedVerified: expectedCompressed ? true : null,
+        payloadVerified: expectedPayload ? true : null,
+      },
+      source: sourceLabel,
+    };
+  };
+
+  let primaryError = null;
+  try {
+    return await tryRead(filePath, "primary");
+  } catch (error) {
+    primaryError = error;
   }
 
-  return {
-    filePath,
-    sizeBytes: compressed.length,
-    payload,
-    meta,
-    checksum: {
-      algorithm: "sha256",
-      compressed: compressedSha256,
-      payload: payloadSha256,
-      ...integrity,
-    },
-  };
+  const fromBackup = await tryRead(backupPath, "backup").catch(() => null);
+  if (fromBackup) {
+    await fs.copyFile(backupPath, filePath).catch(() => null);
+    return fromBackup;
+  }
+
+  const err = new Error(
+    `Backup ${String(backupId || "").toUpperCase()} non leggibile (primary+backup). ${String(
+      primaryError?.message || "",
+    )}`,
+  );
+  err.code = primaryError?.code || "EBADBACKUP";
+  throw err;
 }
 
 async function deleteGuildBackup(guildId, backupId) {
   const filePath = getBackupFilePath(guildId, backupId);
   const metaPath = getBackupMetaPath(guildId, backupId);
-  await fs.unlink(filePath);
+  const backupPath = getBackupBakPath(guildId, backupId);
+  await fs.unlink(filePath).catch(() => null);
   await fs.unlink(metaPath).catch(() => null);
-  return { filePath, metaPath };
+  await fs.unlink(backupPath).catch(() => null);
+  return { filePath, metaPath, backupPath };
 }
 
 function parseBackupIdFromFileName(fileName) {

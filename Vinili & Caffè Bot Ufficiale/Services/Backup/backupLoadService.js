@@ -110,7 +110,7 @@ const LOAD_ACTIONS = [
 const ACTION_KEYS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_ACTIONS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const SESSION_TTL_MS = 1000 * 60 * 20;
-const ACTIVE_LOAD_STALE_MS = 1000 * 60 * 30;
+const ACTIVE_LOAD_STALE_MS = 1000 * 60 * 60 * 6;
 const sessions = new Map();
 const activeLoadsByGuild = new Map();
 
@@ -199,6 +199,7 @@ function getActiveLoadState(guildId) {
 
   const phase = String(state.phase || "").toLowerCase();
   const startedAt = Number(state.startedAtMs || 0);
+  const updatedAt = Number(state.updatedAtMs || startedAt || 0);
   const now = Date.now();
 
   if (["completed", "failed", "cancelled", "done"].includes(phase)) {
@@ -206,7 +207,7 @@ function getActiveLoadState(guildId) {
     return null;
   }
 
-  if (!startedAt || now - startedAt > ACTIVE_LOAD_STALE_MS) {
+  if (!startedAt || now - Math.max(startedAt, updatedAt) > ACTIVE_LOAD_STALE_MS) {
     activeLoadsByGuild.delete(key);
     return null;
   }
@@ -774,6 +775,7 @@ async function applyBackupToGuild(guild, backupId, selectedActions, sourceGuildI
     const state = getActiveLoadState(guildKey);
     if (!state) return;
     state.processed = Number(state.processed || 0) + Number(delta || 0);
+    state.updatedAtMs = Date.now();
   };
 
   const stats = {
