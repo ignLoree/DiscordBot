@@ -393,14 +393,14 @@ async function handleBotJoin(member) {
     const result = await kickForJoinGate(member, "Unverified bot addition.", [
       `${ARROW} **Rule:** Unverified Bot Additions`,
       `${ARROW} **Responsible:** ${executorText}`,
-    ]);
+    ], JOIN_GATE.unverifiedBotAdditions.action);
     if (result?.blocked) return;
   }
 
   if (JOIN_GATE.botAdditions.enabled) {
     const authorized = executorId
       ? await isAuthorizedBotAdder(member.guild, executorId)
-      : true;
+      : Boolean(verifiedBot);
     if (!authorized) {
       const result = await kickForJoinGate(
         member,
@@ -409,6 +409,7 @@ async function handleBotJoin(member) {
           `${ARROW} **Rule:** Bot Additions`,
           `${ARROW} **Responsible:** ${executorText}${executorId ? "" : " (audit unavailable)"}`,
         ],
+        JOIN_GATE.botAdditions.action,
       );
       if (result?.blocked) return;
     }
@@ -629,16 +630,30 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
   }
 }
 
-async function kickForJoinGate(member, reason, extraLines = []) {
+async function kickForJoinGate(member, reason, extraLines = [], action = "kick") {
   const dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   const me = member.guild.members.me;
+  const normalizedAction = ["kick", "ban", "log"].includes(
+    String(action || "").toLowerCase(),
+  )
+    ? String(action || "").toLowerCase()
+    : "kick";
   const canKick =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
     Boolean(member?.kickable);
-  const punished = canKick
-    ? await member.kick(reason).then(() => true).catch(() => false)
-    : false;
-  const blocked = true;
+  const canBan =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.BanMembers)) &&
+    Boolean(member?.bannable);
+  let punished = false;
+  if (normalizedAction === "kick" && canKick) {
+    punished = await member.kick(reason).then(() => true).catch(() => false);
+  } else if (normalizedAction === "ban" && canBan) {
+    punished = await member.guild.members
+      .ban(member.id, { deleteMessageSeconds: 0, reason })
+      .then(() => true)
+      .catch(() => false);
+  }
+  const blocked = normalizedAction === "log" ? false : punished;
   if (punished) {
     markJoinGateKick(member.guild.id, member.id, reason);
   }
@@ -653,9 +668,10 @@ async function kickForJoinGate(member, reason, extraLines = []) {
       .setDescription(
         [
           `${ARROW} **Target:** ${member.user} [\`${member.user.id}\`]`,
-          `${ARROW} **Action:** Kick`,
+          `${ARROW} **Action:** ${normalizedAction.toUpperCase()}`,
           `${ARROW} **Reason:** ${reason}`,
           ...extraLines.filter(Boolean),
+          `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"}`,
           `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
           `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
           `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
@@ -664,7 +680,15 @@ async function kickForJoinGate(member, reason, extraLines = []) {
       );
     await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
-  return { blocked, attempted: canKick, punished, dmSent, canKick };
+  return {
+    blocked,
+    attempted: normalizedAction === "log" ? false : normalizedAction === "ban" ? canBan : canKick,
+    punished,
+    dmSent,
+    canKick,
+    canBan,
+    action: normalizedAction,
+  };
 }
 
 async function sendJoinGateNoAvatarLog(member) {
@@ -716,7 +740,7 @@ async function handleTooYoungAccount(member) {
     `${ARROW} **Rule:** Minimum Account Age`,
     `${ARROW} **Account Age:** <t:${createdTs}:R>`,
     `${ARROW} **Minimum Age:** ${MIN_ACCOUNT_AGE_DAYS} days`,
-  ]);
+  ], "kick");
 }
 
 async function sendJoinLog(member) {
@@ -856,22 +880,22 @@ module.exports = {
         JOIN_GATE.advertisingName.enabled &&
         inviteLikeInName(nameCandidate)
       ) {
-        await kickForJoinGate(member, "Advertising invite link in username.", [
+        const result = await kickForJoinGate(member, "Advertising invite link in username.", [
           `${ARROW} **Rule:** Advertising Name`,
           `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ]);
-        return;
+        ], JOIN_GATE.advertisingName.action);
+        if (result?.blocked) return;
       }
 
       const usernameMatch = matchUsernameFilters(nameCandidate);
       if (usernameMatch) {
-        await kickForJoinGate(member, "Username matches blocked pattern.", [
+        const result = await kickForJoinGate(member, "Username matches blocked pattern.", [
           `${ARROW} **Rule:** Username Filter`,
           `${ARROW} **Match Type:** ${usernameMatch.type}`,
           `${ARROW} **Match:** ${usernameMatch.value}`,
           `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ]);
-        return;
+        ], JOIN_GATE.usernameFilter.action);
+        if (result?.blocked) return;
       }
 
       if (JOIN_GATE.suspiciousAccount.enabled) {

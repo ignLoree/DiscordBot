@@ -522,6 +522,7 @@ module.exports = {
           }
         } catch (error) {
           logEventError(resolvedClient, "AUTOMOD ERROR", error);
+          return;
         }
       }
       await message.delete().catch(() => { });
@@ -535,6 +536,7 @@ module.exports = {
         }
       } catch (error) {
         logEventError(resolvedClient, "AUTOMOD ERROR", error);
+        return;
       }
     }
     try {

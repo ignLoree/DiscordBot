@@ -318,9 +318,14 @@ function sanitizeAutoModRuntimeConfig(rawCfg) {
   return merged;
 }
 
-let automodRuntimeConfig = sanitizeAutoModRuntimeConfig(
-  readJsonSafe(AUTOMOD_CONFIG_PATH, {}),
-);
+const rawAutomodRuntimeConfig = readJsonSafe(AUTOMOD_CONFIG_PATH, {});
+let automodRuntimeConfig = sanitizeAutoModRuntimeConfig(rawAutomodRuntimeConfig);
+if (
+  JSON.stringify(rawAutomodRuntimeConfig || {}) !==
+  JSON.stringify(automodRuntimeConfig || {})
+) {
+  writeJsonSafe(AUTOMOD_CONFIG_PATH, automodRuntimeConfig);
+}
 const automodMetrics = readJsonSafe(AUTOMOD_METRICS_PATH, { guilds: {} });
 let metricsSaveTimer = null;
 let lastRuntimeCleanupAt = 0;

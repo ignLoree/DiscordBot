@@ -1259,7 +1259,7 @@ async function handleKickBanAction({ guild, executorId, action = "unknown", targ
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.kickBanFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, targetId, `kickban:${action}`, now);
@@ -1346,7 +1346,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.roleCreationFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, roleId, "role:create", now);
@@ -1484,7 +1484,7 @@ async function handleRoleDeletionAction({ guild, executorId, roleName = "", role
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.roleDeletionFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, roleId, "role:delete", now);
@@ -1576,7 +1576,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.channelCreationFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   if (isCategoryWhitelisted(channel)) return;
   const now = Date.now();
@@ -1714,7 +1714,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.channelDeletionFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   if (isCategoryWhitelisted(channel)) return;
   const now = Date.now();
@@ -1812,16 +1812,24 @@ async function handleWebhookCreationAction({
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.webhookCreationFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
+  const normalizedWebhookId = String(webhookId || "").trim();
+  const panicActive = isAntiNukePanicActive(guild.id);
+  if (!normalizedWebhookId && !panicActive) return;
   const now = Date.now();
-  const trackerId = getTrackerExecutorId(actorId, webhookId, "webhook:create", now);
+  const trackerId = getTrackerExecutorId(
+    actorId,
+    normalizedWebhookId,
+    "webhook:create",
+    now,
+  );
   if (
     shouldSkipDuplicatedActionEvent({
       guildId: guild.id,
       executorId: actorId,
       actionKey: "webhook:create",
-      targetId: webhookId,
+      targetId: normalizedWebhookId,
       now,
     })
   ) {
@@ -1838,13 +1846,17 @@ async function handleWebhookCreationAction({
     "Webhook creation filter",
     ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction,
   );
-  const panicActive = isAntiNukePanicActive(guild.id);
-  if (panicActive && webhookId) {
-    getPanicState(guild.id).createdWebhookIds.add(String(webhookId));
+  if (panicActive && normalizedWebhookId) {
+    getPanicState(guild.id).createdWebhookIds.add(String(normalizedWebhookId));
   }
   const instantCfg = ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive;
-  if (panicActive && instantCfg?.enabled && instantCfg?.deleteCreatedWebhooks && webhookId) {
-    const removed = await deleteWebhookById(guild, webhookId, channelId);
+  if (
+    panicActive &&
+    instantCfg?.enabled &&
+    instantCfg?.deleteCreatedWebhooks &&
+    normalizedWebhookId
+  ) {
+    const removed = await deleteWebhookById(guild, normalizedWebhookId, channelId);
     const canQuarantine =
       instantCfg?.quarantineExecutor &&
       !shouldSkipPanicExecutorAction(guild.id, actorId, now);
@@ -1862,7 +1874,7 @@ async function handleWebhookCreationAction({
         [
           formatExecutorLine(actorId),
           `<:VC_right_arrow:1473441155055096081> **Action:** Webhook creation blocked during panic`,
-          `<:VC_right_arrow:1473441155055096081> **Webhook:** \`${webhookId}\``,
+          `<:VC_right_arrow:1473441155055096081> **Webhook:** \`${normalizedWebhookId}\``,
           `<:VC_right_arrow:1473441155055096081> **Result:** Webhook deleted immediately`,
           `<:VC_right_arrow:1473441155055096081> **Executor Quarantine:** ${quarantineOutcomeLabel(quarantine)}`,
         ],
@@ -1901,8 +1913,8 @@ async function handleWebhookCreationAction({
     "AntiNuke: Webhook Creations Filter",
     [
       formatExecutorLine(actorId),
-      webhookId
-        ? `<:VC_right_arrow:1473441155055096081> **Last Webhook:** \`${webhookId}\``
+      normalizedWebhookId
+        ? `<:VC_right_arrow:1473441155055096081> **Last Webhook:** \`${normalizedWebhookId}\``
         : null,
       `<:VC_right_arrow:1473441155055096081> **Minute Count:** ${minuteCount}/${ANTINUKE_CONFIG.webhookCreationFilter.minuteLimit}`,
       `<:VC_right_arrow:1473441155055096081> **Hour Count:** ${hourCount}/${ANTINUKE_CONFIG.webhookCreationFilter.hourLimit}`,
@@ -1936,16 +1948,24 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.webhookDeletionFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
+  const normalizedWebhookId = String(webhookId || "").trim();
+  const panicActive = isAntiNukePanicActive(guild.id);
+  if (!normalizedWebhookId && !panicActive) return;
   const now = Date.now();
-  const trackerId = getTrackerExecutorId(actorId, webhookId, "webhook:delete", now);
+  const trackerId = getTrackerExecutorId(
+    actorId,
+    normalizedWebhookId,
+    "webhook:delete",
+    now,
+  );
   if (
     shouldSkipDuplicatedActionEvent({
       guildId: guild.id,
       executorId: actorId,
       actionKey: "webhook:delete",
-      targetId: webhookId,
+      targetId: normalizedWebhookId,
       now,
     })
   ) {
@@ -1993,8 +2013,8 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
     "AntiNuke: Webhook Deletions Filter",
     [
       formatExecutorLine(actorId),
-      webhookId
-        ? `<:VC_right_arrow:1473441155055096081> **Last Webhook:** \`${webhookId}\``
+      normalizedWebhookId
+        ? `<:VC_right_arrow:1473441155055096081> **Last Webhook:** \`${normalizedWebhookId}\``
         : null,
       `<:VC_right_arrow:1473441155055096081> **Minute Count:** ${minuteCount}/${ANTINUKE_CONFIG.webhookDeletionFilter.minuteLimit}`,
       `<:VC_right_arrow:1473441155055096081> **Hour Count:** ${hourCount}/${ANTINUKE_CONFIG.webhookDeletionFilter.hourLimit}`,
@@ -2033,7 +2053,7 @@ async function handleInviteCreationAction({
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.inviteCreationFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, inviteCode, "invite:create", now);
@@ -2109,7 +2129,7 @@ async function handleRoleUpdate({ oldRole, newRole, executorId }) {
   const guild = newRole?.guild || oldRole?.guild;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   const addedDanger = dangerousAddedBits(
     oldRole?.permissions?.bitfield || 0n,
     newRole?.permissions?.bitfield || 0n,
@@ -2145,7 +2165,7 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.strictMemberRoleAddition) return;
   if (!guild || !targetMember || !Array.isArray(addedRoles) || !addedRoles.length) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   const dangerousRoles = addedRoles.filter((role) =>
     containsDangerousBits(role?.permissions?.bitfield || 0n, DANGEROUS_PERMS),
   );
@@ -2187,7 +2207,7 @@ async function handleChannelOverwrite({
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.monitorChannelPermissions) return;
   if (!guild || !channel || !overwrite) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (Number(overwrite.type) !== OverwriteType.Role) return;
 
   const mainRoleIds = getMainRoleIds(guild);
@@ -2230,7 +2250,7 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   const guild = newGuild || oldGuild;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   const oldVanity = String(oldGuild?.vanityURLCode || "");
   const newVanity = String(newGuild?.vanityURLCode || "");
   if (oldVanity === newVanity) return;
@@ -2259,7 +2279,7 @@ async function handlePruneAction({ guild, executorId, removedCount = 0 }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.detectPrune) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) return;
+  if (isUnknownExecutorId(actorId) && !isAntiNukePanicActive(guild.id)) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Member prune detected", 100);
   const quarantine = await quarantineExecutor(

@@ -18,9 +18,7 @@ function normalizeDiscordAttachmentUrl(value) {
 }
 
 function normalizeText(value) {
-  return String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
+  return String(value ?? "").trim();
 }
 
 function hashBuffer(bufferLike) {
@@ -205,9 +203,12 @@ async function upsertPanelMessage(channel, client, payload) {
     if (direct) {
       const editPayload = { ...payload };
       delete editPayload.messageId;
+      delete editPayload.attachmentName;
 
       if (await shouldEditMessage(direct, editPayload)) {
-        await direct.edit(editPayload).catch(() => {});
+        await direct.edit(editPayload).catch((error) => {
+          global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
+        });
       }
       return direct;
     }
@@ -255,14 +256,20 @@ async function upsertPanelMessage(channel, client, payload) {
 
   const cleanPayload = { ...payload };
   delete cleanPayload.messageId;
+  delete cleanPayload.attachmentName;
 
   if (!existing) {
-    const sent = await channel.send(cleanPayload).catch(() => null);
+    const sent = await channel.send(cleanPayload).catch((error) => {
+      global.logger?.error?.("[panelUpsert] send failed:", error);
+      return null;
+    });
     return sent;
   }
 
   if (await shouldEditMessage(existing, cleanPayload)) {
-    await existing.edit(cleanPayload).catch(() => {});
+    await existing.edit(cleanPayload).catch((error) => {
+      global.logger?.error?.("[panelUpsert] edit failed:", error);
+    });
   }
 
   return existing;

@@ -476,7 +476,13 @@ async function warnRaidRoles(guild, contentLines) {
 
 async function sendPunishDm(member, action, reasons) {
   const readableAction =
-    action === "ban" ? "banned" : action === "kick" ? "kicked" : "flagged";
+    action === "ban"
+      ? "banned"
+      : action === "kick"
+        ? "kicked"
+        : action === "timeout"
+          ? "timed out"
+          : "flagged";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(`You have been ${readableAction} in ${member.guild.name}!`)
@@ -495,20 +501,33 @@ async function sendPunishDm(member, action, reasons) {
   }
 }
 
-async function scheduleTempUnban(guild, userId, reason) {
+function makeJoinRaidBanMarker(guildId, userId, unbanAt) {
+  return `[JR:${String(guildId || "")}:${String(userId || "")}:${Number(unbanAt || 0)}]`;
+}
+
+function buildJoinRaidBanReason(marker = "") {
+  const suffix = String(marker || "").trim();
+  return suffix
+    ? `Join Raid: flagged account during raid window ${suffix}`
+    : "Join Raid: flagged account during raid window";
+}
+
+async function scheduleTempUnban(guild, userId, reason, marker = "") {
   const key = `${guild.id}:${userId}`;
   const old = TEMP_BAN_TIMERS.get(key);
   if (old) clearTimeout(old);
   const state = getGuildState(guild.id);
   const unbanAt = nowMs() + JOIN_RAID_CONFIG.raidDurationMs;
+  const effectiveMarker =
+    String(marker || "").trim() || makeJoinRaidBanMarker(guild.id, userId, unbanAt);
   state.tempBans = (state.tempBans || []).filter(
     (x) => String(x?.userId || "") !== String(userId),
   );
-  state.tempBans.push({ userId: String(userId), unbanAt });
+  state.tempBans.push({ userId: String(userId), unbanAt, marker: effectiveMarker });
   scheduleStateSave(guild.id);
   const timer = setTimeout(async () => {
     TEMP_BAN_TIMERS.delete(key);
-    const shouldUnban = await shouldUnbanJoinRaidBan(guild, userId);
+    const shouldUnban = await shouldUnbanJoinRaidBan(guild, userId, effectiveMarker);
     if (shouldUnban) {
       await guild.members.unban(userId, reason).catch(() => {});
     }
@@ -521,11 +540,14 @@ async function scheduleTempUnban(guild, userId, reason) {
   TEMP_BAN_TIMERS.set(key, timer);
 }
 
-async function shouldUnbanJoinRaidBan(guild, userId) {
+async function shouldUnbanJoinRaidBan(guild, userId, marker = "") {
   if (!guild?.id || !userId) return false;
   const ban = await guild.bans.fetch(String(userId)).catch(() => null);
   if (!ban) return false;
   const reason = String(ban?.reason || "").toLowerCase();
+  const token = String(marker || "").trim().toLowerCase();
+  if (token) return reason.includes(token);
+  if (!reason) return true;
   return reason.includes("join raid:");
 }
 
@@ -551,7 +573,11 @@ async function restoreTempBans(guild, options = {}) {
     for (const row of expiredRows) {
       const userId = String(row?.userId || "").trim();
       if (!userId) continue;
-      const shouldUnban = await shouldUnbanJoinRaidBan(guild, userId);
+      const shouldUnban = await shouldUnbanJoinRaidBan(
+        guild,
+        userId,
+        String(row?.marker || ""),
+      );
       if (shouldUnban) {
         await guild.members
           .unban(userId, "Join Raid temporary ban elapsed (restored late)")
@@ -580,7 +606,11 @@ async function restoreTempBans(guild, options = {}) {
     if (TEMP_BAN_TIMERS.has(key)) continue;
     const timer = setTimeout(async () => {
       TEMP_BAN_TIMERS.delete(key);
-      const shouldUnban = await shouldUnbanJoinRaidBan(guild, userId);
+      const shouldUnban = await shouldUnbanJoinRaidBan(
+        guild,
+        userId,
+        String(row?.marker || ""),
+      );
       if (shouldUnban) {
         await guild.members
           .unban(userId, "Join Raid temporary ban elapsed (restored)")
@@ -609,15 +639,23 @@ async function applyPunishment(member, reasons) {
   const canKick =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
     Boolean(member?.kickable);
+  const canTimeout =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
+    Boolean(member?.moderatable);
 
   let punished = false;
   let appliedAction = action;
   if (action === "ban") {
     if (canBan) {
+      const marker = makeJoinRaidBanMarker(
+        guild.id,
+        member.id,
+        nowMs() + JOIN_RAID_CONFIG.raidDurationMs,
+      );
       punished = await guild.members
         .ban(member.id, {
           deleteMessageSeconds: 0,
-          reason: "Join Raid: flagged account during raid window",
+          reason: buildJoinRaidBanReason(marker),
         })
         .then(() => true)
         .catch(() => false);
@@ -626,6 +664,7 @@ async function applyPunishment(member, reasons) {
           guild,
           member.id,
           "Join Raid temporary ban elapsed",
+          marker,
         );
       }
     }
@@ -639,7 +678,20 @@ async function applyPunishment(member, reasons) {
   }
 
   if (!punished && action !== "log") {
-    appliedAction = "log";
+    if (canTimeout) {
+      const timeoutMs = Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs);
+      punished = await member
+        .timeout(timeoutMs, "Join Raid: punitive fallback timeout")
+        .then(() => true)
+        .catch(() => false);
+      if (punished) {
+        appliedAction = "timeout";
+      } else {
+        appliedAction = "log";
+      }
+    } else {
+      appliedAction = "log";
+    }
   }
   const dmSent = await sendPunishDm(member, appliedAction, reasons);
   const actionWord =
@@ -647,6 +699,8 @@ async function applyPunishment(member, reasons) {
       ? "banned"
       : appliedAction === "kick"
         ? "kicked"
+        : appliedAction === "timeout"
+          ? "timed out"
         : "flagged";
 
   await sendJoinRaidLog(
@@ -656,7 +710,7 @@ async function applyPunishment(member, reasons) {
       `${ARROW} **JoinRaid Filter:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
       `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
       `${ARROW} **Action:** ${appliedAction}${punished ? "" : " (fallback)"}`,
-      `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"}`,
+      `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"} | **Can Kick:** ${canKick ? "Yes" : "No"} | **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
       appliedAction === "ban"
         ? `${ARROW} **Duration:** ${Math.round(
             JOIN_RAID_CONFIG.raidDurationMs / 60_000,

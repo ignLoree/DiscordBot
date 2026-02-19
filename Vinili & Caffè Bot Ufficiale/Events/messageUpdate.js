@@ -230,6 +230,7 @@ module.exports = {
           if (automodResult?.blocked) return;
         } catch (error) {
           global.logger?.error?.("[messageUpdate] automod failed:", error);
+          return;
         }
       }
 
