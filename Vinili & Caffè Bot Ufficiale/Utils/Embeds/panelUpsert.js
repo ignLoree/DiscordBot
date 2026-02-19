@@ -231,7 +231,7 @@ async function upsertPanelMessage(channel, client, payload) {
   }
 
   const messages = await channel.messages
-    .fetch({ limit: 15 })
+    .fetch({ limit: 100 })
     .catch(() => null);
   const botMessages = messages
     ? [...messages.values()].filter(
@@ -240,6 +240,9 @@ async function upsertPanelMessage(channel, client, payload) {
     : [];
 
   const payloadCustomIds = extractCustomIdsFromComponents(
+    payload?.components || [],
+  );
+  const payloadComponentsComparable = toComparableComponents(
     payload?.components || [],
   );
   const payloadSignature = buildEmbedSignatureFromPayload(
@@ -262,12 +265,45 @@ async function upsertPanelMessage(channel, client, payload) {
       }) || null;
   }
 
+  if (!existing && payloadComponentsComparable && payloadComponentsComparable !== "[]") {
+    existing =
+      botMessages.find(
+        (msg) =>
+          toComparableComponents(msg.components || []) ===
+          payloadComponentsComparable,
+      ) || null;
+  }
+
   if (!existing && payloadSignature) {
     existing =
       botMessages.find(
         (msg) =>
           buildEmbedSignatureFromMessage(msg.embeds || []) === payloadSignature,
       ) || null;
+  }
+
+  if (!existing) {
+    const payloadEmbedsCount = Array.isArray(payload?.embeds)
+      ? payload.embeds.length
+      : 0;
+    const payloadComponentsCount = Array.isArray(payload?.components)
+      ? payload.components.length
+      : 0;
+
+    const structuralCandidates = botMessages.filter((msg) => {
+      const msgEmbedsCount = Array.isArray(msg?.embeds) ? msg.embeds.length : 0;
+      const msgComponentsCount = Array.isArray(msg?.components)
+        ? msg.components.length
+        : 0;
+      return (
+        msgEmbedsCount === payloadEmbedsCount &&
+        msgComponentsCount === payloadComponentsCount
+      );
+    });
+
+    if (structuralCandidates.length === 1) {
+      existing = structuralCandidates[0];
+    }
   }
 
   const cleanPayload = { ...payload };
