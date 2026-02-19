@@ -170,7 +170,7 @@ const FOOTBALL_TEAM_BANK = [
     team: "Bayern Monaco",
     answers: ["Bayern Monaco", "Bayern Munich", "Bayern"],
     image:
-      "https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_M?nchen_logo_%282024%29.svg",
+      "https://upload.wikimedia.org/wikipedia/commons/1/1f/FC_Bayern_M%C3%BCnchen_logo_%282024%29.svg",
   },
   {
     team: "Paris Saint Germain",
@@ -335,7 +335,7 @@ const ITALIAN_GK_BANK = [
 const DRIVING_TRUE_FALSE_BANK = [
   {
     statement:
-      "In autostrada, salvo diversa segnalazione, il limite per le auto ? 130 km/h.",
+      "In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.",
     answer: true,
   },
   {
@@ -348,7 +348,7 @@ const DRIVING_TRUE_FALSE_BANK = [
   },
   {
     statement:
-      "Si pu? usare il telefono alla guida senza vivavoce se la chiamata ? breve.",
+      "Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.",
     answer: false,
   },
   {
@@ -366,7 +366,7 @@ const DRIVING_TRUE_FALSE_BANK = [
     answer: false,
   },
   {
-    statement: "Con pioggia intensa bisogna ridurre la velocit?.",
+    statement: "Con pioggia intensa bisogna ridurre la velocità.",
     answer: true,
   },
 ];
@@ -1188,7 +1188,7 @@ function buildSongAnswerAliases(rawTitle) {
   );
 
   const dashParts = raw
-    .split(/\s[-??]\s/)
+    .split(/\s[-–—]\s/)
     .map((p) => p.trim())
     .filter(Boolean);
   if (dashParts.length >= 2) {
@@ -1300,7 +1300,7 @@ function createMathQuestion() {
       const b = randomBetween(2, 12);
       const c = randomBetween(2, 6);
       return {
-        expression: `${a} ? ${b} ? ${c}`,
+        expression: `${a} × ${b} × ${c}`,
         answer: formatAnswer(a * b * c),
       };
     },
@@ -1309,7 +1309,7 @@ function createMathQuestion() {
       const result = randomBetween(2, 20);
       const dividend = divisor * result;
       return {
-        expression: `${dividend} ? ${divisor}`,
+        expression: `${dividend} ÷ ${divisor}`,
         answer: formatAnswer(result),
       };
     },
@@ -1317,7 +1317,7 @@ function createMathQuestion() {
       const root = randomBetween(2, 20);
       const n = root * root;
       return {
-        expression: `?${n}`,
+        expression: `√${n}`,
         answer: formatAnswer(root),
       };
     },
@@ -1328,7 +1328,7 @@ function createMathQuestion() {
       const d = randomBetween(2, 14);
       const left = a * b;
       return {
-        expression: `(${a} ? ${b}) + ${c} - ${d}`,
+        expression: `(${a} × ${b}) + ${c} - ${d}`,
         answer: formatAnswer(left + c - d),
       };
     },
@@ -1338,7 +1338,7 @@ function createMathQuestion() {
       const a = randomBetween(2, 30);
       const b = randomBetween(2, 20);
       return {
-        expression: `?${n} + ${a} - ${b}`,
+        expression: `√${n} + ${a} - ${b}`,
         answer: formatAnswer(root + a - b),
       };
     },
@@ -1500,7 +1500,7 @@ function isLooseAliasGuessCorrect(
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || "").toLowerCase();
   const tokens = lower
-    .split(/[^a-z?-??-?]+/i)
+    .split(/[^a-zà-öø-ÿ]+/i)
     .map((t) => t.trim())
     .filter(Boolean)
     .filter((t) => t.length >= 5 && t.length <= 6);
@@ -1563,7 +1563,7 @@ async function fetchPlayerInfo(cfg, name) {
     return {
       name: player.strPlayer,
       team: player.strTeam || "Squadra sconosciuta",
-      nationality: player.strNationality || "Nazionalit? sconosciuta",
+      nationality: player.strNationality || "Nazionalità sconosciuta",
       image: player.strThumb || player.strCutout || null,
       aliases: buildPlayerAliases(player),
     };
@@ -1591,7 +1591,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
       return {
         name: player.strPlayer,
         team: player.strTeam || "Squadra sconosciuta",
-        nationality: player.strNationality || "Nazionalit? sconosciuta",
+        nationality: player.strNationality || "Nazionalità sconosciuta",
         image: player.strThumb || player.strCutout || null,
         aliases: buildPlayerAliases(player),
       };
@@ -1689,7 +1689,7 @@ async function fetchRandomSong(cfg) {
         album: song.collectionName || "Album sconosciuto",
         artwork,
         genre,
-        artistCountry: artistCountry || "Nazionalit? sconosciuta",
+        artistCountry: artistCountry || "Nazionalità sconosciuta",
         previewUrl: song.previewUrl || null,
       };
     } catch {}
@@ -1800,7 +1800,7 @@ async function fetchPopularSong(cfg) {
       album: pick.album || "Album sconosciuto",
       artwork: pick.artwork || null,
       genre: pick.genre || "Genere sconosciuto",
-      artistCountry: artistCountry || "Nazionalit? sconosciuta",
+      artistCountry: artistCountry || "Nazionalità sconosciuta",
       previewUrl: pick.previewUrl || null,
     };
   }
@@ -1820,7 +1820,7 @@ async function fetchPopularSong(cfg) {
         ? item.artworkUrl100.replace("100x100bb", "600x600bb")
         : pick.artwork,
       genre,
-      artistCountry: artistCountry || "Nazionalit? sconosciuta",
+      artistCountry: artistCountry || "Nazionalità sconosciuta",
       previewUrl: item?.previewUrl || null,
     };
   } catch {
@@ -2387,7 +2387,7 @@ function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** ? ${artist}.`,
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`,
     );
 }
 
@@ -2907,7 +2907,7 @@ async function startGuessPlayerGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.team} ? ${info.nationality} ? ${buildMaskedTextHint(info.name)}`,
+    `${info.team} • ${info.nationality} • ${buildMaskedTextHint(info.name)}`,
   );
 
   activeGames.set(channelId, {
@@ -3001,7 +3001,7 @@ async function startGuessSongGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.artistCountry} ? ${info.genre} ? ${buildMaskedTextHint(info.title)}`,
+    `${info.artistCountry} • ${info.genre} • ${buildMaskedTextHint(info.title)}`,
   );
 
   activeGames.set(channelId, {
@@ -3462,7 +3462,7 @@ async function startGuessAlbumGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `Artista: **${pick.artist}** ? Album: ${buildMaskedTextHint(pick.album)}`,
+    `Artista: **${pick.artist}** • Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
   activeGames.set(channelId, {
@@ -3806,7 +3806,7 @@ async function startMathExpressionGame(client, cfg) {
   const answerNum = Number(row.answer);
   const hintRangeText = Number.isFinite(answerNum)
     ? `Il risultato è compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
-    : "Il risultato ? un numero intero.";
+    : "Il risultato è un numero intero.";
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
@@ -4946,7 +4946,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${team} ? ${nationality} ? ${buildMaskedTextHint(name)}`,
+      `${team} • ${nationality} • ${buildMaskedTextHint(name)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessPlayer",
@@ -4982,7 +4982,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${artistCountry} ? ${genre} ? ${buildMaskedTextHint(title)}`,
+      `${artistCountry} • ${genre} • ${buildMaskedTextHint(title)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessSong",
