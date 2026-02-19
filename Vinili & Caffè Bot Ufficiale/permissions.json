@@ -1,5 +1,33 @@
 {
   "slash": {
+    "backup": {
+      "roles": [
+        "roles.HighStaff"
+      ],
+      "subcommands": {
+        "info": [
+          "roles.HighStaff"
+        ],
+        "load": [
+          "roles.HighStaff"
+        ],
+        "create": [
+          "roles.HighStaff"
+        ],
+        "list": [
+          "roles.HighStaff"
+        ],
+        "delete": [
+          "roles.HighStaff"
+        ],
+        "status": [
+          "roles.HighStaff"
+        ],
+        "cancel": [
+          "roles.HighStaff"
+        ]
+      }
+    },
     "copy": {
       "roles": [
         "roles.HighStaff"
@@ -635,6 +663,30 @@
     "avatar_views": [
       "roles.Member"
     ],
+    "backup_delete_cancel:*": {
+      "ownerSegment": 2
+    },
+    "backup_delete_confirm:*": {
+      "ownerSegment": 2
+    },
+    "backup_info_delete:*": {
+      "ownerSegment": 2
+    },
+    "backup_info_delete_cancel:*": {
+      "ownerSegment": 2
+    },
+    "backup_info_delete_confirm:*": {
+      "ownerSegment": 2
+    },
+    "backup_info_load:*": {
+      "ownerSegment": 2
+    },
+    "backup_list_next:*": {
+      "ownerSegment": 1
+    },
+    "backup_list_prev:*": {
+      "ownerSegment": 1
+    },
     "banner_unblock:*": {
       "ownerSegment": 1
     },
@@ -905,6 +957,9 @@
       "ownerSegment": 1
     },
     "customrole_remove_select:*": {
+      "ownerSegment": 1
+    },
+    "backup_list_select:*": {
       "ownerSegment": 1
     },
     "personality_age": [

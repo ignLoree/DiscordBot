@@ -55,6 +55,15 @@ const VERIFY_OR_TICKET_IDS = new Set([
   "close_ticket_motivo",
   "ticket_open_menu",
 ]);
+function isBackupInteraction(customId) {
+  const id = String(customId || "").trim();
+  if (!id) return false;
+  return (
+    id.startsWith("backup_") ||
+    id.startsWith("backup-load_") ||
+    id.startsWith("backup_list_")
+  );
+}
 function isVerifyOrTicketInteraction(customId) {
   if (!customId || typeof customId !== "string") return false;
   const id = String(customId).trim();
@@ -65,6 +74,31 @@ function isVerifyOrTicketInteraction(customId) {
     id.startsWith("ticket_open_desc_modal_submit:")
   )
     return true;
+  return false;
+}
+
+async function isGuildOwnerOrAdmin(interaction) {
+  if (!interaction?.inGuild?.()) return false;
+  const userId = String(interaction?.user?.id || "");
+  if (!userId) return false;
+
+  const guild = interaction.guild || null;
+  const ownerId = String(guild?.ownerId || "");
+  if (ownerId && ownerId === userId) return true;
+
+  const member = interaction.member;
+  if (member?.permissions?.has?.(PermissionFlagsBits.Administrator)) return true;
+
+  const freshMember = await fetchLiveMember(interaction);
+  if (freshMember?.permissions?.has?.(PermissionFlagsBits.Administrator)) {
+    return true;
+  }
+
+  if (guild && typeof guild.fetchOwner === "function") {
+    const owner = await guild.fetchOwner().catch(() => null);
+    if (owner?.id && String(owner.id) === userId) return true;
+  }
+
   return false;
 }
 
@@ -543,6 +577,19 @@ function getDevIds(client) {
 async function checkSlashPermission(interaction, options = {}) {
   const userId = interaction?.user?.id || null;
 
+  if (String(interaction?.commandName || "").toLowerCase() === "backup") {
+    const allowed = await isGuildOwnerOrAdmin(interaction);
+    if (options.returnDetails) {
+      return {
+        allowed,
+        reason: allowed ? null : "missing_permission",
+        requiredRoles: null,
+        channels: null,
+      };
+    }
+    return allowed;
+  }
+
   if (interaction.commandName === "dmbroadcast") {
     const client = interaction.client;
     const devIds = getDevIds(client);
@@ -733,7 +780,7 @@ async function checkButtonPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
-    if (isVerifyOrTicketInteraction(customId)) {
+    if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
         reason: null,
@@ -900,7 +947,7 @@ async function checkStringSelectPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
-    if (isVerifyOrTicketInteraction(customId)) {
+    if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
         reason: null,
@@ -1038,7 +1085,7 @@ async function checkModalPermission(interaction) {
   const customId = String(interaction?.customId || "");
   const guildId = interaction?.guildId || interaction?.guild?.id;
   if (guildId && !isAllowedGuildUfficiale(guildId)) {
-    if (isVerifyOrTicketInteraction(customId)) {
+    if (isVerifyOrTicketInteraction(customId) || isBackupInteraction(customId)) {
       return {
         allowed: true,
         reason: null,

@@ -29,6 +29,15 @@ const {
   resolveRequestedPage,
   buildTopPageJumpModal,
 } = require("../../Prefix/Stats/top");
+const {
+  handleBackupLoadInteraction,
+} = require("../../Services/Backup/backupLoadService");
+const {
+  handleBackupInfoInteraction,
+} = require("../../Services/Backup/backupInfoService");
+const {
+  handleBackupListInteraction,
+} = require("../../Services/Backup/backupListService");
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
 const SNOWFLAKE_RE = /^\d{16,20}$/;
@@ -211,6 +220,16 @@ module.exports = {
   async handleButtonInteraction(interaction) {
     if (!interaction?.isButton?.() && !interaction?.isStringSelectMenu?.()) {
       return false;
+    }
+
+    if (await handleBackupLoadInteraction(interaction)) {
+      return true;
+    }
+    if (await handleBackupInfoInteraction(interaction)) {
+      return true;
+    }
+    if (await handleBackupListInteraction(interaction)) {
+      return true;
     }
 
     if (interaction.isStringSelectMenu?.()) {

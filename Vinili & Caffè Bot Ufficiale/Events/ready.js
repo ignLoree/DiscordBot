@@ -48,6 +48,7 @@ const {
   startTicketAutoClosePromptLoop,
   startTranscriptCleanupLoop,
 } = require("../Services/Ticket/ticketMaintenanceService");
+const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
@@ -308,6 +309,10 @@ function startPrimaryLoops(client, engagementTick) {
     [
       "[TRANSCRIPT CLEANUP] Failed to start loop",
       () => startTranscriptCleanupLoop(),
+    ],
+    [
+      "[AUTO BACKUP] Failed to start loop",
+      () => startAutoBackupLoop(client),
     ],
   ];
 

@@ -102,7 +102,8 @@ async function handleSlashCommand(interaction, client) {
   );
   if (
     interaction.guildId &&
-    !ALLOWED_GUILD_IDS.has(String(interaction.guildId))
+    !ALLOWED_GUILD_IDS.has(String(interaction.guildId)) &&
+    String(interaction.commandName || "").toLowerCase() !== "backup"
   ) {
     const embed = buildGlobalPermissionDeniedEmbed(
       [],
