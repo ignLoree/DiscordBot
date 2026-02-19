@@ -13,14 +13,14 @@ const levels = {
 function getMinLevel() {
   const configured = (config.logLevel || "info").toLowerCase();
   if (configured === "silent") return Infinity;
-  return levels[configured] ? levels.info;
+  return levels[configured] ?? levels.info;
 }
 
 function shouldLog(level) {
   if ((config.logLevel || "").toLowerCase() === "silent") {
     return level === "error";
   }
-  return (levels[level] ? levels.info) >= getMinLevel();
+  return (levels[level] ?? levels.info) >= getMinLevel();
 }
 
 function buildPayload(args) {
