@@ -45,6 +45,90 @@ function buildAutoPrefixDescription(command, folder) {
   return `Comando prefix per ${readable}.`;
 }
 
+function buildAutoPrefixSubcommandDescriptions(command) {
+  const commandName = String(command?.name || "")
+    .trim()
+    .toLowerCase();
+  const source =
+    command?.subcommandDescriptions ||
+    command?.subcommandsDescriptions ||
+    command?.subcommandHelp ||
+    command?.subcommandsHelp ||
+    {};
+  const out =
+    source && typeof source === "object" && !Array.isArray(source)
+      ? { ...source }
+      : {};
+
+  const declared = Array.isArray(command?.subcommands)
+    ? command.subcommands
+        .map((sub) =>
+          String(sub || "")
+            .trim()
+            .toLowerCase(),
+        )
+        .filter(Boolean)
+    : [];
+  const mappedTargets =
+    command?.subcommandAliases && typeof command.subcommandAliases === "object"
+      ? Object.values(command.subcommandAliases)
+          .map((sub) =>
+            String(sub || "")
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
+      : [];
+  const known = Array.from(new Set([...declared, ...mappedTargets]));
+  const verbDescriptions = {
+    add: "Aggiunge un elemento o un valore.",
+    remove: "Rimuove un elemento o un valore.",
+    list: "Mostra la lista degli elementi disponibili.",
+    clear: "Pulisce o resetta i dati della sezione.",
+    set: "Imposta un valore specifico.",
+    get: "Recupera e mostra i dati richiesti.",
+    create: "Crea una nuova configurazione o risorsa.",
+    delete: "Elimina una risorsa esistente.",
+    edit: "Modifica una configurazione esistente.",
+    update: "Aggiorna lo stato o i dati correnti.",
+    enable: "Attiva la funzionalita richiesta.",
+    disable: "Disattiva la funzionalita richiesta.",
+    lock: "Blocca la funzione indicata.",
+    unlock: "Sblocca la funzione indicata.",
+    claim: "Assegna a te la gestione dell'elemento.",
+    unclaim: "Rilascia la gestione dell'elemento.",
+    close: "Chiude l'elemento corrente.",
+    closerequest: "Invia una richiesta di chiusura.",
+    rename: "Rinomina l'elemento corrente.",
+    switchpanel: "Sposta su un pannello differente.",
+    grant: "Assegna permessi o risorse.",
+    revoke: "Revoca permessi o risorse.",
+    ignore: "Esclude dal comportamento previsto.",
+    unignore: "Rimuove l'esclusione precedente.",
+    multiplier: "Imposta un moltiplicatore temporaneo.",
+    config: "Mostra o modifica la configurazione.",
+    user: "Opera sul profilo utente.",
+    server: "Opera sulle impostazioni server.",
+    guild: "Opera sulle impostazioni server.",
+    avatar: "Gestisce le opzioni avatar.",
+    banner: "Gestisce le opzioni banner.",
+    quotes: "Gestisce le opzioni quote.",
+    alltime: "Mostra dati complessivi.",
+    weekly: "Mostra dati settimanali.",
+    voice: "Gestisce la voce TTS.",
+    autojoin: "Gestisce l'autojoin TTS.",
+    modify: "Apre la modifica avanzata.",
+    reset: "Ripristina lo stato iniziale.",
+  };
+  for (const sub of known) {
+    if (String(out[sub] || "").trim()) continue;
+    out[sub] =
+      verbDescriptions[sub] ||
+      `Gestisce l'opzione \`${sub}\` del comando \`+${commandName}\`.`;
+  }
+  return out;
+}
+
 module.exports = (client) => {
   client.prefixCommands = async (folders, basePath) => {
     const prefixBase = basePath || path.join(process.cwd(), "Prefix");
@@ -73,6 +157,8 @@ module.exports = (client) => {
           if (!String(command.description || "").trim()) {
             command.description = buildAutoPrefixDescription(command, folder);
           }
+          command.subcommandDescriptions =
+            buildAutoPrefixSubcommandDescriptions(command);
           newPcommands.set(command.name, command);
           statusMap.set(key, "Loaded");
           if (Array.isArray(command.aliases)) {

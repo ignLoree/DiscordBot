@@ -237,13 +237,15 @@ function normalizeDescription(
 
 function getPrefixDescription(command) {
   const commandName = String(command?.name || "").toLowerCase();
+  const fromCommand = normalizeDescription(
+    command?.description || command?.desc || command?.help || command?.usage,
+    "",
+  );
+  if (fromCommand) return fromCommand;
   if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
     return PREFIX_HELP_DESCRIPTIONS[commandName];
   }
-  return normalizeDescription(
-    command?.description || command?.desc || command?.help || command?.usage,
-    "Comando prefix.",
-  );
+  return "Comando prefix.";
 }
 
 function prettifySubcommandName(name) {
@@ -258,9 +260,6 @@ function prettifySubcommandName(name) {
 function getPrefixSubcommandDescription(command, subcommandName) {
   const commandName = String(command?.name || "").toLowerCase();
   const key = `${String(commandName || "").toLowerCase()}.${String(subcommandName || "").toLowerCase()}`;
-  if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
-    return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
-  }
   const commandSubDesc =
     command?.subcommandDescriptions ||
     command?.subcommandsDescriptions ||
@@ -274,8 +273,41 @@ function getPrefixSubcommandDescription(command, subcommandName) {
     if (String(fromCommand || "").trim())
       return normalizeDescription(fromCommand);
   }
+  if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
+    return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
+  }
+  const sub = String(subcommandName || "").toLowerCase();
+  const verbDescriptions = {
+    add: "Aggiunge un elemento o un valore.",
+    remove: "Rimuove un elemento o un valore.",
+    list: "Mostra la lista degli elementi disponibili.",
+    clear: "Pulisce o resetta i dati della sezione.",
+    set: "Imposta un valore specifico.",
+    get: "Recupera e mostra i dati richiesti.",
+    create: "Crea una nuova configurazione o risorsa.",
+    delete: "Elimina una risorsa esistente.",
+    edit: "Modifica una configurazione esistente.",
+    update: "Aggiorna lo stato o i dati correnti.",
+    enable: "Attiva la funzionalita richiesta.",
+    disable: "Disattiva la funzionalita richiesta.",
+    lock: "Blocca la funzione indicata.",
+    unlock: "Sblocca la funzione indicata.",
+    claim: "Assegna a te la gestione dell'elemento.",
+    unclaim: "Rilascia la gestione dell'elemento.",
+    close: "Chiude l'elemento corrente.",
+    closerequest: "Invia una richiesta di chiusura.",
+    rename: "Rinomina l'elemento corrente.",
+    switchpanel: "Sposta su un pannello differente.",
+    grant: "Assegna permessi o risorse.",
+    revoke: "Revoca permessi o risorse.",
+    ignore: "Esclude dal comportamento previsto.",
+    unignore: "Rimuove l'esclusione precedente.",
+    multiplier: "Imposta un moltiplicatore temporaneo.",
+    config: "Mostra o modifica la configurazione.",
+  };
+  if (verbDescriptions[sub]) return verbDescriptions[sub];
   const pretty = prettifySubcommandName(subcommandName);
-  return `Subcommand \`${pretty}\` di \`+${String(commandName || "").toLowerCase()}\`.`;
+  return `Gestisce l'opzione \`${pretty}\` del comando \`+${String(commandName || "").toLowerCase()}\`.`;
 }
 
 function getPrefixBase(command) {
@@ -301,7 +333,7 @@ function resolveContextCategory(command, dataJson) {
 }
 
 function extractPrefixSubcommands(command) {
-  const meta = Array.isArray(command?.subcommands)
+  const fromMeta = Array.isArray(command?.subcommands)
     ? command.subcommands
         .map((s) =>
           String(s || "")
@@ -310,7 +342,32 @@ function extractPrefixSubcommands(command) {
         )
         .filter(Boolean)
     : [];
-  if (meta.length) return Array.from(new Set(meta));
+  const fromAliases = command?.subcommandAliases &&
+    typeof command.subcommandAliases === "object"
+    ? Object.values(command.subcommandAliases)
+        .map((s) =>
+          String(s || "")
+            .trim()
+            .toLowerCase(),
+        )
+        .filter(Boolean)
+    : [];
+  const commandSubDesc =
+    command?.subcommandDescriptions ||
+    command?.subcommandsDescriptions ||
+    command?.subcommandHelp ||
+    command?.subcommandsHelp ||
+    null;
+  const fromSubDesc =
+    commandSubDesc && typeof commandSubDesc === "object"
+      ? Object.keys(commandSubDesc)
+          .map((s) =>
+            String(s || "")
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
+      : [];
 
   const src = String(command?.execute || "");
   const found = new Set();
@@ -326,7 +383,14 @@ function extractPrefixSubcommands(command) {
     found.add(String(match[1]).toLowerCase());
   }
 
-  return Array.from(found.values());
+  return Array.from(
+    new Set([
+      ...fromMeta,
+      ...fromAliases,
+      ...fromSubDesc,
+      ...Array.from(found.values()),
+    ]),
+  );
 }
 
 function extractDirectAliasesForSubcommand(command, subcommandName) {
@@ -450,18 +514,7 @@ function buildEntries(client, permissions) {
       roles: commandRoles,
     };
 
-    const subcommands = Array.from(
-      new Set([
-        ...extractPrefixSubcommands(command),
-        ...Object.keys(subcommandRoles || {})
-          .map((key) =>
-            String(key || "")
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean),
-      ]),
-    );
+    const subcommands = extractPrefixSubcommands(command);
     if (subcommands.length) {
       for (const sub of subcommands) {
         entries.push({
@@ -484,7 +537,7 @@ function buildEntries(client, permissions) {
 
   const seenSlash = new Set();
   for (const command of client.commands.values()) {
-    const dataJson = command?.data?.toJSON?.();
+    const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
     if (!dataJson?.name) continue;
     const commandType = dataJson.type || ApplicationCommandType.ChatInput;
     if (commandType !== ApplicationCommandType.ChatInput) continue;
@@ -527,7 +580,7 @@ function buildEntries(client, permissions) {
   }
 
   for (const command of client.commands.values()) {
-    const dataJson = command?.data?.toJSON?.();
+    const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
     if (!dataJson?.name) continue;
     const commandType = dataJson.type || ApplicationCommandType.ChatInput;
     if (
@@ -546,9 +599,12 @@ function buildEntries(client, permissions) {
     entries.push({
       invoke: `${dataJson.name}`,
       type: "context",
-      description:
-        CONTEXT_HELP_DESCRIPTIONS[dataJson.name] ||
-        `Comando context (${commandType === ApplicationCommandType.User ? "utente" : "messaggio"}).`,
+      description: normalizeDescription(
+        command?.helpDescription ||
+          command?.description ||
+          CONTEXT_HELP_DESCRIPTIONS[dataJson.name] ||
+          `Comando context (${commandType === ApplicationCommandType.User ? "utente" : "messaggio"}).`,
+      ),
       category: resolveContextCategory(command, dataJson),
       roles,
     });
@@ -1122,7 +1178,7 @@ function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
   const seen = new Set();
   const slashCommands = [];
   for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
-    const dataJson = cmd?.data?.toJSON?.();
+    const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
     if (!dataJson?.name) continue;
     const type = dataJson.type || ApplicationCommandType.ChatInput;
     if (type !== ApplicationCommandType.ChatInput) continue;
@@ -1372,14 +1428,6 @@ function resolvePrefixCommandByToken(client, token) {
 }
 
 function listPrefixSubcommandsForCommand(command, commandName, permissions) {
-  const permConfig = getPrefixPermissionConfig(permissions, commandName);
-  const fromPerms = Object.keys(permConfig.subcommands || {})
-    .map((key) =>
-      String(key || "")
-        .trim()
-        .toLowerCase(),
-    )
-    .filter(Boolean);
   const subcommands = Array.from(
     new Set([
       ...extractPrefixSubcommands(command),
@@ -1392,7 +1440,6 @@ function listPrefixSubcommandsForCommand(command, commandName, permissions) {
             )
             .filter(Boolean)
         : []),
-      ...fromPerms,
     ]),
   );
   return subcommands.sort((a, b) => a.localeCompare(b, "it"));
@@ -1438,7 +1485,7 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
   const seen = new Set();
   const slashCommands = [];
   for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
-    const dataJson = cmd?.data?.toJSON?.();
+    const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
     if (!dataJson?.name) continue;
     const type = dataJson.type || ApplicationCommandType.ChatInput;
     if (type !== ApplicationCommandType.ChatInput) continue;
