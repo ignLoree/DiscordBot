@@ -110,6 +110,7 @@ const LOAD_ACTIONS = [
 const ACTION_KEYS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_ACTIONS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const SESSION_TTL_MS = 1000 * 60 * 20;
+const ACTIVE_LOAD_STALE_MS = 1000 * 60 * 30;
 const sessions = new Map();
 const activeLoadsByGuild = new Map();
 
@@ -193,7 +194,24 @@ class BackupLoadCancelledError extends Error {
 function getActiveLoadState(guildId) {
   const key = String(guildId || "");
   if (!key) return null;
-  return activeLoadsByGuild.get(key) || null;
+  const state = activeLoadsByGuild.get(key) || null;
+  if (!state) return null;
+
+  const phase = String(state.phase || "").toLowerCase();
+  const startedAt = Number(state.startedAtMs || 0);
+  const now = Date.now();
+
+  if (["completed", "failed", "cancelled", "done"].includes(phase)) {
+    activeLoadsByGuild.delete(key);
+    return null;
+  }
+
+  if (!startedAt || now - startedAt > ACTIVE_LOAD_STALE_MS) {
+    activeLoadsByGuild.delete(key);
+    return null;
+  }
+
+  return state;
 }
 
 function startActiveLoad({ guildId, userId, backupId, actions }) {
@@ -205,6 +223,7 @@ function startActiveLoad({ guildId, userId, backupId, actions }) {
     backupId: String(backupId || "").toUpperCase(),
     actions: Array.from(sanitizeActions(actions)),
     startedAtMs: Date.now(),
+    updatedAtMs: Date.now(),
     cancelRequested: false,
     phase: "starting",
     processed: 0,
@@ -222,7 +241,7 @@ function finishActiveLoad(guildId) {
 function updateActiveLoad(guildId, patch = {}) {
   const state = getActiveLoadState(guildId);
   if (!state) return null;
-  Object.assign(state, patch);
+  Object.assign(state, patch, { updatedAtMs: Date.now() });
   return state;
 }
 
@@ -230,6 +249,7 @@ function requestCancelActiveLoad(guildId) {
   const state = getActiveLoadState(guildId);
   if (!state) return false;
   state.cancelRequested = true;
+  state.updatedAtMs = Date.now();
   return true;
 }
 
@@ -238,6 +258,28 @@ function throwIfCancelled(guildId) {
   if (state?.cancelRequested) {
     throw new BackupLoadCancelledError();
   }
+}
+
+function clearStaleActiveLoad(guildId) {
+  const key = String(guildId || "");
+  if (!key) return false;
+  const current = activeLoadsByGuild.get(key);
+  if (!current) return false;
+
+  const phase = String(current.phase || "").toLowerCase();
+  const startedAt = Number(current.startedAtMs || 0);
+  const updatedAt = Number(current.updatedAtMs || startedAt || 0);
+  const now = Date.now();
+
+  const isTerminal = ["completed", "failed", "cancelled", "done"].includes(phase);
+  const isStale = !startedAt || now - Math.max(startedAt, updatedAt) > ACTIVE_LOAD_STALE_MS;
+
+  if (isTerminal || isStale) {
+    activeLoadsByGuild.delete(key);
+    return true;
+  }
+
+  return false;
 }
 
 function buildLoadWarningEmbed(backupId) {
@@ -1528,6 +1570,7 @@ async function handleBackupLoadInteraction(interaction) {
   }
 
   if (isButton && customId.startsWith("backup_load_confirm:")) {
+    clearStaleActiveLoad(interaction.guildId);
     if (getActiveLoadState(interaction.guildId)) {
       await interaction
         .reply({
