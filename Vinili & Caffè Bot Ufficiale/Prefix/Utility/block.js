@@ -26,7 +26,6 @@ module.exports = {
     blockbn: "banner",
     blockquotes: "quotes",
   },
-  prefixOverride: "?",
 
   async execute(message, args = []) {
     if (!message.guild) return;

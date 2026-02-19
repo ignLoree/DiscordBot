@@ -3,7 +3,6 @@ const { joinTtsChannel } = require("../../Services/TTS/ttsService");
 
 module.exports = {
   name: "join",
-  prefixOverride: "-",
 
   async execute(message) {
     await message.channel.sendTyping();

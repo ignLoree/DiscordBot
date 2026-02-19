@@ -209,25 +209,8 @@ function getCommandTokenAfterPrefix(content, prefix) {
 }
 
 function getPrefixOverrideMap(client) {
-  if (!client?.pcommands?.values) return new Map();
-  const size = client.pcommands?.size || 0;
-  const cached = client._prefixOverrideCache;
-  if (cached && cached.size === size && cached.map) return cached.map;
-  const map = new Map();
-  for (const cmd of client.pcommands.values()) {
-    if (!cmd?.prefixOverride) continue;
-    if (!map.has(cmd.prefixOverride)) {
-      map.set(cmd.prefixOverride, new Map());
-    }
-    map.get(cmd.prefixOverride).set(cmd.name, cmd);
-    if (Array.isArray(cmd.aliases)) {
-      for (const alias of cmd.aliases) {
-        map.get(cmd.prefixOverride).set(alias, cmd);
-      }
-    }
-  }
-  client._prefixOverrideCache = { map, size };
-  return map;
+  void client;
+  return new Map();
 }
 async function resolveUserFromMessage(message) {
   const mentioned = message.mentions?.users?.first();
@@ -522,20 +505,7 @@ module.exports = {
       message.webhookId
     )
       return;
-    const earlyOverrideMap = getPrefixOverrideMap(resolvedClient);
-    const earlyOverridePrefix = findLongestMatchingPrefix(
-      message.content,
-      earlyOverrideMap.keys(),
-    );
     const isPrefixMessage = (() => {
-      if (earlyOverridePrefix) {
-        const first = getCommandTokenAfterPrefix(
-          message.content,
-          earlyOverridePrefix,
-        );
-        if (!first) return false;
-        return Boolean(earlyOverrideMap.get(earlyOverridePrefix)?.has(first));
-      }
       if (!message.content.startsWith(defaultPrefix)) return false;
       const first = getCommandTokenAfterPrefix(message.content, defaultPrefix);
       if (!first) return false;
@@ -584,12 +554,6 @@ module.exports = {
       }
     }
     let overrideCommand = null;
-
-    const overrideMap = getPrefixOverrideMap(resolvedClient);
-    const overridePrefix = findLongestMatchingPrefix(
-      message.content,
-      overrideMap.keys(),
-    );
     if (!isEditedPrefixExecution) {
       try {
         await handleTtsMessage(message, resolvedClient, defaultPrefix);
@@ -603,9 +567,9 @@ module.exports = {
       if (!shouldDeleteCommandMessage) return;
       await message.delete().catch(() => { });
     };
-    if (!overridePrefix && !startsWithDefault) return;
+    if (!startsWithDefault) return;
 
-    const usedPrefix = overridePrefix || defaultPrefix;
+    const usedPrefix = defaultPrefix;
 
     const args = message.content
       .slice(usedPrefix.length)
@@ -616,11 +580,6 @@ module.exports = {
       ? overrideCommand.name
       : args.shift()?.toLowerCase();
     if (!cmd) return;
-    if (overridePrefix) {
-      const prefixCommands = overrideMap.get(overridePrefix);
-      overrideCommand = prefixCommands?.get(cmd) || null;
-      if (!overrideCommand) return;
-    }
     let command =
       overrideCommand ||
       resolvedClient.pcommands.get(cmd) ||

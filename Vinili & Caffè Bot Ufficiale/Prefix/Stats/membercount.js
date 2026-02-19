@@ -3,7 +3,6 @@ const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
   name: "membercount",
-  prefixOverride: "?",
 
   async execute(message) {
     await message.channel.sendTyping();

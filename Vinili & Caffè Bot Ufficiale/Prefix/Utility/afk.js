@@ -4,7 +4,6 @@ const AFK = require("../../Schemas/Afk/afkSchema");
 
 module.exports = {
   name: "afk",
-  prefixOverride: "?",
 
   async execute(message, args) {
     await message.channel.sendTyping();

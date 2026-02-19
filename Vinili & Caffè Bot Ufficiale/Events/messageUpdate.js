@@ -238,7 +238,7 @@ module.exports = {
       if (updated.author.bot || updated.system || updated.webhookId) return;
       if (!after || !contentChanged) return;
 
-      const looksLikePrefix = after.startsWith("+") || after.startsWith("?");
+      const looksLikePrefix = after.startsWith("+");
       if (!looksLikePrefix) return;
 
       updated.__fromMessageUpdatePrefix = true;

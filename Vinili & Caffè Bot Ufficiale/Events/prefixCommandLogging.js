@@ -3,40 +3,13 @@ const { logCommandUsage } = require("../Utils/Logging/commandUsageLogger");
 const IDs = require("../Utils/Config/ids");
 
 function getStandardPrefixes(client) {
-  const list = [client?.config?.prefix, "+"]
-    .map((p) => String(p || "").trim())
-    .filter(Boolean);
-  return Array.from(new Set(list)).sort((a, b) => b.length - a.length);
+  void client;
+  return ["+"];
 }
 
 function getPrefixOverrideMap(client) {
-  if (!client) return new Map();
-  const size = client?.pcommands?.size || 0;
-  const cached = client?._prefixLoggingOverrideCache;
-  if (cached?.size === size && cached?.map instanceof Map) return cached.map;
-
-  const map = new Map();
-  for (const cmd of client?.pcommands?.values?.() || []) {
-    const prefixOverride = String(cmd?.prefixOverride || "").trim();
-    const commandName = String(cmd?.name || "").toLowerCase();
-    if (!prefixOverride || !commandName) continue;
-
-    if (!map.has(prefixOverride)) map.set(prefixOverride, new Map());
-    map.get(prefixOverride).set(commandName, cmd);
-
-    if (Array.isArray(cmd.aliases)) {
-      for (const alias of cmd.aliases) {
-        const normalizedAlias = String(alias || "")
-          .toLowerCase()
-          .trim();
-        if (!normalizedAlias) continue;
-        map.get(prefixOverride).set(normalizedAlias, cmd);
-      }
-    }
-  }
-
-  client._prefixLoggingOverrideCache = { size, map };
-  return map;
+  void client;
+  return new Map();
 }
 
 function resolveCommandFromContent(message, client) {

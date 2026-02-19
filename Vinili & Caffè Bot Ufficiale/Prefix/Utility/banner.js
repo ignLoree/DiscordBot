@@ -42,7 +42,6 @@ module.exports = {
   skipPrefix: false,
   name: "banner",
   aliases: ["bn"],
-  prefixOverride: "?",
 
   async execute(message, args) {
     if (!message.guild) {

@@ -42,7 +42,6 @@ module.exports = {
   skipPrefix: false,
   name: "avatar",
   aliases: ["av"],
-  prefixOverride: "?",
 
   async execute(message, args) {
     if (!message.guild) {

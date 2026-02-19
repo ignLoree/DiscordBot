@@ -28,7 +28,6 @@ function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
 
 module.exports = {
   name: "quote",
-  prefixOverride: "?",
 
   async execute(message) {
     if (!message?.guild) {

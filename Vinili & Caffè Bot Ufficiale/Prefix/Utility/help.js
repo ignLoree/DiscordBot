@@ -311,8 +311,8 @@ function getPrefixSubcommandDescription(command, subcommandName) {
 }
 
 function getPrefixBase(command) {
-  const override = String(command?.prefixOverride || "").trim();
-  return override || "+";
+  void command;
+  return "+";
 }
 
 function normalizeCategoryKey(value) {
