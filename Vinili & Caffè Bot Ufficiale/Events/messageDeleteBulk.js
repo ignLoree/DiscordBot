@@ -3,6 +3,7 @@
   AttachmentBuilder,
   AuditLogEvent,
   PermissionsBitField,
+  MessageFlagsBitField,
 } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
@@ -35,8 +36,35 @@ function sanitizeText(value) {
     .trim();
 }
 
+function hasMessageFlag(message, flag) {
+  if (!message) return false;
+  try {
+    if (typeof message.flags?.has === "function") {
+      return Boolean(message.flags.has(flag));
+    }
+  } catch {
+    // fallback below
+  }
+  const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
+  try {
+    const bits = typeof raw === "bigint" ? raw : BigInt(raw);
+    const target = typeof flag === "bigint" ? flag : BigInt(flag);
+    return (bits & target) === target;
+  } catch {
+    return false;
+  }
+}
+
+function isTransientInteractionMessage(message) {
+  if (!message) return false;
+  if (hasMessageFlag(message, MessageFlagsBitField.Flags.Ephemeral)) return true;
+  if (hasMessageFlag(message, MessageFlagsBitField.Flags.Loading)) return true;
+  return false;
+}
+
 function isMeaningfulDeletedMessage(msg) {
   if (!msg) return false;
+  if (isTransientInteractionMessage(msg)) return false;
   const hasContent = sanitizeText(msg.content || "").length > 0;
   const hasAttachments = Boolean(msg.attachments?.size);
   const hasEmbeds = Array.isArray(msg.embeds) && msg.embeds.length > 0;

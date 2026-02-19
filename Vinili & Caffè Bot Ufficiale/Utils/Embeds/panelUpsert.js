@@ -165,21 +165,37 @@ function extractCustomIdsFromComponents(components = []) {
   return ids;
 }
 
+function buildStableEmbedIdentity(rawEmbed) {
+  if (!rawEmbed || typeof rawEmbed !== "object") return "";
+  // Keep identity stable when only descriptive text changes.
+  const title = normalizeText(rawEmbed.title || "").toLowerCase();
+  const author = normalizeText(rawEmbed.author?.name || "").toLowerCase();
+  const footer = normalizeText(rawEmbed.footer?.text || "").toLowerCase();
+  const image = normalizeText(
+    normalizeDiscordAttachmentUrl(rawEmbed.image?.url || ""),
+  ).toLowerCase();
+  const thumbnail = normalizeText(
+    normalizeDiscordAttachmentUrl(rawEmbed.thumbnail?.url || ""),
+  ).toLowerCase();
+  const firstField = normalizeText(rawEmbed.fields?.[0]?.name || "").toLowerCase();
+
+  const parts = [title, author, footer, image, thumbnail, firstField].filter(
+    Boolean,
+  );
+  if (!parts.length) return "";
+  return parts.join("|").slice(0, 400);
+}
+
 function buildEmbedSignatureFromPayload(payloadEmbeds = []) {
   const first = Array.isArray(payloadEmbeds) ? payloadEmbeds[0] : null;
   const raw = typeof first?.toJSON === "function" ? first.toJSON() : first;
-  if (!raw) return "";
-  return normalizeText(`${raw.title || ""}|${raw.description || ""}`)
-    .toLowerCase()
-    .slice(0, 400);
+  return buildStableEmbedIdentity(raw);
 }
 
 function buildEmbedSignatureFromMessage(msgEmbeds = []) {
   const first = Array.isArray(msgEmbeds) ? msgEmbeds[0] : null;
-  if (!first) return "";
-  return normalizeText(`${first.title || ""}|${first.description || ""}`)
-    .toLowerCase()
-    .slice(0, 400);
+  const raw = typeof first?.toJSON === "function" ? first.toJSON() : first;
+  return buildStableEmbedIdentity(raw);
 }
 
 async function shouldEditMessage(message, payload) {

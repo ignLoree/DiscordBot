@@ -547,7 +547,7 @@ async function shouldUnbanJoinRaidBan(guild, userId, marker = "") {
   const reason = String(ban?.reason || "").toLowerCase();
   const token = String(marker || "").trim().toLowerCase();
   if (token) return reason.includes(token);
-  if (!reason) return true;
+  if (!reason) return false;
   return reason.includes("join raid:");
 }
 
@@ -802,7 +802,7 @@ async function processJoinRaidForMember(member) {
     if (active && highRisk) {
       const outcome = await applyPunishment(member, reasons);
       return {
-        blocked: Boolean(outcome?.punished && outcome?.appliedAction !== "log"),
+        blocked: true,
         punished: Boolean(outcome?.punished),
         action: outcome?.appliedAction || JOIN_RAID_CONFIG.triggerAction,
         reasons,

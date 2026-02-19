@@ -400,7 +400,7 @@ async function handleBotJoin(member) {
   if (JOIN_GATE.botAdditions.enabled) {
     const authorized = executorId
       ? await isAuthorizedBotAdder(member.guild, executorId)
-      : Boolean(verifiedBot);
+      : false;
     if (!authorized) {
       const result = await kickForJoinGate(
         member,
@@ -644,6 +644,9 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   const canBan =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.BanMembers)) &&
     Boolean(member?.bannable);
+  const canTimeout =
+    Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
+    Boolean(member?.moderatable);
   let punished = false;
   if (normalizedAction === "kick" && canKick) {
     punished = await member.kick(reason).then(() => true).catch(() => false);
@@ -653,9 +656,17 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       .then(() => true)
       .catch(() => false);
   }
+  if (!punished && normalizedAction !== "log" && canTimeout) {
+    punished = await member
+      .timeout(6 * 60 * 60_000, `JoinGate fallback timeout: ${reason}`)
+      .then(() => true)
+      .catch(() => false);
+  }
   const blocked = normalizedAction === "log" ? false : punished;
   if (punished) {
-    markJoinGateKick(member.guild.id, member.id, reason);
+    if (normalizedAction === "kick") {
+      markJoinGateKick(member.guild.id, member.id, reason);
+    }
   }
   const logChannel =
     member.guild.channels.cache.get(IDs.channels.modLogs) ||
@@ -673,6 +684,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
           ...extraLines.filter(Boolean),
           `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"}`,
           `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
+          `${ARROW} **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
           `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
           `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
           `${ARROW} <t:${nowTs}:F>`,
@@ -687,6 +699,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     dmSent,
     canKick,
     canBan,
+    canTimeout,
     action: normalizedAction,
   };
 }

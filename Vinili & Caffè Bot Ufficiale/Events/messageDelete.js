@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder, MessageFlagsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const MAX_DIFF_LENGTH = 1800;
@@ -48,6 +48,32 @@ function normalizeText(value) {
   return String(value || "").replace(/\r\n/g, "\n").trim();
 }
 
+function hasMessageFlag(message, flag) {
+  if (!message) return false;
+  try {
+    if (typeof message.flags?.has === "function") {
+      return Boolean(message.flags.has(flag));
+    }
+  } catch {
+    // fallback below
+  }
+  const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
+  try {
+    const bits = typeof raw === "bigint" ? raw : BigInt(raw);
+    const target = typeof flag === "bigint" ? flag : BigInt(flag);
+    return (bits & target) === target;
+  } catch {
+    return false;
+  }
+}
+
+function isTransientInteractionMessage(message) {
+  if (!message) return false;
+  if (hasMessageFlag(message, MessageFlagsBitField.Flags.Ephemeral)) return true;
+  if (hasMessageFlag(message, MessageFlagsBitField.Flags.Loading)) return true;
+  return false;
+}
+
 function buildDeletedDiff(content) {
   const text = normalizeText(content);
   const raw = text ? `- ${text}` : "- (vuoto)";
@@ -90,6 +116,7 @@ function buildAuthorLabel(message) {
 
 function hasMeaningfulDeleteData(message) {
   if (!message) return false;
+  if (isTransientInteractionMessage(message)) return false;
   const content = normalizeText(message.content || "");
   const hasContent = content.length > 0;
   const hasAttachments = Boolean(message.attachments?.size);
