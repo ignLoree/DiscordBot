@@ -77,7 +77,6 @@ function isTransientInteractionMessage(message) {
 function sanitizeDeletedContentForLog(content) {
   let text = String(content || "").replace(/\r\n/g, "\n");
   text = text.replace(/^```[a-zA-Z0-9_-]*\n?/, "").replace(/\n?```$/, "");
-  // Remove log-structure lines before emoji normalization.
   text = text
     .replace(
       /(^|\n)\s*(?:<:VC_right_arrow:\d+>|:VC_right_arrow:)\s+\*\*(Channel|Id|Content|Attachments|Author):\*\*[^\n]*/gi,
@@ -151,7 +150,6 @@ function hasMeaningfulDeleteData(message) {
   const hasContent = content.length > 0;
   const hasAttachments = Boolean(message.attachments?.size);
   const hasMessageId = Boolean(message.id);
-  // Embed-only deletes are skipped: embed payload is often not reliably visible.
   return (hasContent || hasAttachments) && hasMessageId;
 }
 
