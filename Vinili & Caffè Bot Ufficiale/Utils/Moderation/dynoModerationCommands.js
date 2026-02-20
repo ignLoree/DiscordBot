@@ -240,56 +240,56 @@ function buildTemproleHelpEmbed(mode = "default") {
   if (key === "toggle") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: ?temprole toggle**",
+        "**Command: +temprole toggle**",
         "",
         "**Description:** Toggle a temprole on a user.",
         "**Cooldown:** 5 seconds",
         "**Usage:**",
-        "?temprole toggle [user] [time] [role], [optional reason]",
+        "+temprole toggle [user] [time] [role], [optional reason]",
         "**Example:**",
-        "?temprole toggle @LoreeXO 1d Birthday, Happy Birthday",
+        "+temprole toggle @LoreeXO 1d Birthday, Happy Birthday",
       ].join("\n"),
     );
   }
   if (key === "add") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: ?temprole add**",
+        "**Command: +temprole add**",
         "",
         "**Description:** Adds a temprole to a user",
         "**Cooldown:** 5 seconds",
         "**Usage:**",
-        "?temprole add [user] [time] [role], [optional reason]",
+        "+temprole add [user] [time] [role], [optional reason]",
         "**Example:**",
-        "?temprole add @LoreeXO 1d Birthday, Happy Birthday",
+        "+temprole add @LoreeXO 1d Birthday, Happy Birthday",
       ].join("\n"),
     );
   }
   if (key === "remove") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: ?temprole remove**",
+        "**Command: +temprole remove**",
         "",
         "**Description:** Remove a temprole from a user",
         "**Cooldown:** 5 seconds",
         "**Usage:**",
-        "?temprole remove [user] role, (reason)",
+        "+temprole remove [user] role, (reason)",
         "**Example:**",
-        "?temprole remove @LoreeXO Birthday, Wrong date",
+        "+temprole remove @LoreeXO Birthday, Wrong date",
       ].join("\n"),
     );
   }
   return new EmbedBuilder().setColor("#3498DB").setDescription(
     [
-      "**Command: ?temprole**",
+      "**Command: +temprole**",
       "",
-      "**Aliases:** ?temprole",
+      "**Aliases:** +trole",
       "**Description:** Assign/unassign a role that persists for a limited time.",
       "**Cooldown:** 5 seconds",
       "**Usage:**",
-      "?temprole [user] [time] [role], [optional reason]",
+      "+temprole [user] [time] [role], [optional reason]",
       "**Example:**",
-      "?temprole @LoreeXO 1d Birthday, Happy Birthday",
+      "+temprole @LoreeXO 1d Birthday, Happy Birthday",
     ].join("\n"),
   );
 }
@@ -436,18 +436,18 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?ban**",
+            "**Command: +ban**",
             "",
             "**Description:** Ban a member, optional time limit",
             "**Cooldown:** 3 seconds",
             "**Usage:**",
-            "?ban [user] [limit] [reason]",
-            "?ban save [user] [limit] [reason]",
-            "?ban noappeal [user] [limit] [reason]",
+            "+ban [user] [limit] [reason]",
+            "+ban save [user] [limit] [reason]",
+            "+ban noappeal [user] [limit] [reason]",
             "**Example:**",
-            "?ban bean making bugs",
-            "?ban save gin 2d needs to calm down",
-            "?ban noappeal piguy dont come back",
+            "+ban bean making bugs",
+            "+ban save gin 2d needs to calm down",
+            "+ban noappeal piguy dont come back",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -480,14 +480,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?kick**",
+            "**Command: +kick**",
             "",
             "**Description:** Kick a member.",
             "**Cooldown:** 3 seconds",
             "**Usage:**",
-            "?kick [user] [reason]",
+            "+kick [user] [reason]",
             "**Example:**",
-            "?kick @LoreeXO Get out!",
+            "+kick @LoreeXO Get out!",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -522,17 +522,17 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?mute**",
+            "**Command: +mute**",
             "",
             "**Description:** Mute a member so they cannot type.",
             "**Cooldown:** 3 seconds",
             "**Usage:**",
-            "?mute [user] [limit] [reason]",
+            "+mute [user] [limit] [reason]",
             "**Example:**",
-            "?mute @LoreeXO 10 Shitposting",
-            "?mute User 10m spamming",
-            "?mute LoreeXO 1d Too Cool",
-            "?mute LoreeXO 5h He asked for it",
+            "+mute @LoreeXO 10 Shitposting",
+            "+mute User 10m spamming",
+            "+mute LoreeXO 1d Too Cool",
+            "+mute LoreeXO 5h He asked for it",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -621,14 +621,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?unban**",
+            "**Command: +unban**",
             "",
             "**Description:** Unban a member.",
             "**Cooldown:** 5 seconds",
             "**Usage:**",
-            "?unban [user id] (optional reason)",
+            "+unban [user id] (optional reason)",
             "**Example:**",
-            "?unban 155037590859284481 Appealed",
+            "+unban 155037590859284481 Appealed",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -686,14 +686,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?warn**",
+            "**Command: +warn**",
             "",
             "**Description:** Warn a member",
             "**Cooldown:** 3 seconds",
             "**Usage:**",
-            "?warn [user] (reason)",
+            "+warn [user] (reason)",
             "**Example:**",
-            "?warn @LoreeXO Stop posting lewd images",
+            "+warn @LoreeXO Stop posting lewd images",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -769,15 +769,15 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?delwarn**",
+            "**Command: +delwarn**",
             "",
-            "**Aliases:** ?unwarn",
+            "**Aliases:** +nwarn",
             "**Description:** Delete a warning",
             "**Cooldown:** 3 seconds",
             "**Usage:**",
-            "?delwarn [user] [warning text]",
+            "+delwarn [user] [warning text]",
             "**Example:**",
-            "?delwarn @chipped broke the rules",
+            "+delwarn @chipped broke the rules",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -831,14 +831,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: ?case**",
+              "**Command: +case**",
               "",
               "**Description:** Show a single mod log case",
               "**Cooldown:** 3 seconds",
               "**Usage:**",
-              "?case [Case ID]",
+              "+case [Case ID]",
               "**Example:**",
-              "?case 1234",
+              "+case 1234",
             ].join("\n"),
         );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -848,14 +848,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: ?reason**",
+              "**Command: +reason**",
               "",
               "**Description:** Supply a reason for a mod log case",
               "**Cooldown:** 3 seconds",
               "**Usage:**",
-              "?reason [case num] [reason]",
+              "+reason [case num] [reason]",
               "**Example:**",
-              "?reason 5 Spamming lewd images",
+              "+reason 5 Spamming lewd images",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -865,14 +865,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: ?duration**",
+              "**Command: +duration**",
               "",
               "**Description:** Change the duration of a mute/ban",
               "**Cooldown:** 60 seconds",
               "**Usage:**",
-              "?duration [modlog ID] [limit]",
+              "+duration [modlog ID] [limit]",
               "**Example:**",
-              "?duration 69 420m",
+              "+duration 69 420m",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -912,14 +912,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: ?reason**",
+              "**Command: +reason**",
               "",
               "**Description:** Supply a reason for a mod log case",
               "**Cooldown:** 3 seconds",
               "**Usage:**",
-              "?reason [case num] [reason]",
+              "+reason [case num] [reason]",
               "**Example:**",
-              "?reason 5 Spamming lewd images",
+              "+reason 5 Spamming lewd images",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -943,14 +943,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?duration**",
+            "**Command: +duration**",
             "",
             "**Description:** Change the duration of a mute/ban",
             "**Cooldown:** 60 seconds",
             "**Usage:**",
-            "?duration [modlog ID] [limit]",
+            "+duration [modlog ID] [limit]",
             "**Example:**",
-            "?duration 69 420m",
+            "+duration 69 420m",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -1021,13 +1021,13 @@ async function runNamed(name, message, args, client) {
                 .setColor("#3498DB")
                 .setDescription(
                   [
-                    "**Command: ?moderations**",
+                    "**Command: +moderations**",
                     "",
                     "**Description:** Get active timed moderations and remaining time",
                     "**Usage:**",
-                    "?moderations [user] (page)",
+                    "+moderations [user] (page)",
                     "**Example:**",
-                    "?moderations @LoreeXO",
+                    "+moderations @LoreeXO",
                   ].join("\n"),
                 ),
             ],
@@ -1138,7 +1138,7 @@ async function runNamed(name, message, args, client) {
       .setColor("#3498DB")
       .setTitle(`Modlogs for ${targetUser?.username || target.userId} (Page ${safePage} of ${totalPages})`)
       .setDescription(lines.join("\n\n"))
-      .setFooter({ text: `${total} total log | Use ?modlogs [user] [page] to view another page` });
+      .setFooter({ text: `${total} total log | Use +modlogs [user] [page] to view another page` });
 
     return message.channel.send({ embeds: [logsEmbed] }).catch(() => null);
   }
@@ -1210,16 +1210,16 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: ?lock**",
+              "**Command: +lock**",
               "",
               "**Description:** Lock a channel with optional timer and message.",
               "**Cooldown:** 5 seconds",
               "**Usage:**",
-              "?lock [channel] (time) (message)",
+              "+lock [channel] (time) (message)",
               "**Example:**",
-              "?lock #general We will be back soon",
-              "?lock #support 2h This channel will be locked for two hours.",
-              "?lock #help 4h",
+              "+lock #general We will be back soon",
+              "+lock #support 2h This channel will be locked for two hours.",
+              "+lock #help 4h",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -1228,15 +1228,15 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: ?unlock**",
+            "**Command: +unlock**",
             "",
             "**Description:** Unlock a previously locked channel.",
             "**Cooldown:** 5 seconds",
             "**Usage:**",
-            "?unlock [channel] (message)",
+            "+unlock [channel] (message)",
             "**Example:**",
-            "?unlock #general",
-            "?unlock #support We're back everyone!",
+            "+unlock #general",
+            "+unlock #support We're back everyone!",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);

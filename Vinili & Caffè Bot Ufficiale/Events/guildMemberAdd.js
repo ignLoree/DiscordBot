@@ -632,7 +632,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     String(action || "").toLowerCase(),
   )
     ? String(action || "").toLowerCase()
-    : "kick";
+    : "log";
   const canKick =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
     Boolean(member?.kickable);
@@ -990,6 +990,7 @@ module.exports = {
       if (JOIN_GATE.suspiciousAccount.enabled) {
         const suspiciousReason = detectSuspiciousAccount(member);
         if (suspiciousReason) {
+          await sendSuspiciousAccountLog(member, suspiciousReason).catch(() => {});
           const result = await kickForJoinGate(
             member,
             `Suspicious account: ${suspiciousReason}`,

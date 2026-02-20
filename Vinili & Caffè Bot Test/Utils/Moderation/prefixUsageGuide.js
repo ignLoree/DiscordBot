@@ -48,17 +48,17 @@ function getSubUsage(command, prefix, sub) {
 
 function buildDefaultGuideEmbed(command, prefix) {
   const aliases = Array.isArray(command?.aliases)
-    ? command.aliases.map((a) => `?${a}`).join(", ")
-    : "?undefined";
+    ? command.aliases.map((a) => `${prefix}${a}`).join(", ")
+    : `${prefix}undefined`;
   const description = String(command?.description || "").trim() || "Nessuna descrizione disponibile.";
   const usage = String(command?.usage || "").trim() || `${prefix}${command?.name} ...`;
   return new EmbedBuilder()
     .setColor(GUIDE_COLOR)
     .setDescription(
       [
-        `**Command: ?${command?.name}**`,
+        `**Command: ${prefix}${command?.name}**`,
         "",
-        `**Aliases:** ${aliases || "?undefined"}`,
+        `**Aliases:** ${aliases || `${prefix}undefined`}`,
         `**Description:** ${description}`,
         "**Usage:**",
         usage,
@@ -73,7 +73,7 @@ function buildSubGuideEmbed(command, prefix, sub) {
     .setColor(GUIDE_COLOR)
     .setDescription(
       [
-        `**Command: ?${command?.name} ${sub}**`,
+        `**Command: ${prefix}${command?.name} ${sub}**`,
         "",
         `**Description:** ${description}`,
         "**Usage:**",

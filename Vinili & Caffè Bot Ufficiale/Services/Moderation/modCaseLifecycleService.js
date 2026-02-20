@@ -82,7 +82,11 @@ async function closeExpiredBanCases(client, now) {
     const guild =
       client.guilds.cache.get(String(row.guildId || "")) ||
       (await client.guilds.fetch(String(row.guildId || "")).catch(() => null));
-    if (!guild) continue;
+    if (!guild) {
+      closeCase(row, "Ban temporaneo scaduto (guild non disponibile)");
+      await row.save().catch(() => null);
+      continue;
+    }
     const unbanned = await tryUnban(
       guild,
       row.userId,
@@ -109,7 +113,11 @@ async function closeExpiredLockCases(client, now) {
     const guild =
       client.guilds.cache.get(String(row.guildId || "")) ||
       (await client.guilds.fetch(String(row.guildId || "")).catch(() => null));
-    if (!guild) continue;
+    if (!guild) {
+      closeCase(row, "Lock temporaneo scaduto (guild non disponibile)");
+      await row.save().catch(() => null);
+      continue;
+    }
     const channelId = String(row.userId || "").replace(/^CHANNEL:/, "");
     const unlocked = await tryUnlockChannel(guild, channelId);
     if (!unlocked) continue;

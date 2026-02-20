@@ -39,7 +39,13 @@ async function dispatchPrefixMessage(message, client) {
   const args = tokens;
 
   if (command) {
-    if (command?.args && !args.length) {
+    const hasSubcommands = Boolean(
+      (Array.isArray(command?.subcommands) && command.subcommands.length > 0) ||
+      (command?.subcommandAliases &&
+        typeof command.subcommandAliases === "object" &&
+        Object.keys(command.subcommandAliases).length > 0),
+    );
+    if (!args.length && (Boolean(command?.args) || hasSubcommands)) {
       await showPrefixUsageGuide({
         message,
         command,

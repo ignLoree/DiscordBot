@@ -14,6 +14,7 @@ const recentMessages = new Map();
 const standbyChannels = new Set();
 const lastSentAtByChannel = new Map();
 const startingChannels = new Set();
+const recentQuestionKeysByChannel = new Map();
 
 const REWARD_CHANNEL_ID = IDs.channels.commands;
 const MINIGAME_WIN_EMOJI = "<a:VC_Verified:1448687631109197978>";
@@ -660,6 +661,30 @@ function pickRandomItem(list = []) {
   return list[randomBetween(0, list.length - 1)] || null;
 }
 
+function pickQuestionAvoidRecent(channelId, type, list = [], keySelector, recentLimit = 20) {
+  if (!channelId || !type || !Array.isArray(list) || !list.length) {
+    return pickRandomItem(list);
+  }
+  const key = `${channelId}:${type}`;
+  const recent = recentQuestionKeysByChannel.get(key) || [];
+  const seen = new Set(recent);
+  const pool = list.filter((item) => {
+    const k = String(keySelector?.(item) || "").trim().toLowerCase();
+    if (!k) return true;
+    return !seen.has(k);
+  });
+  const picked = pickRandomItem(pool.length ? pool : list);
+  if (!picked) return null;
+  const pickedKey = String(keySelector?.(picked) || "").trim().toLowerCase();
+  if (pickedKey) {
+    const next = recent.filter((x) => x !== pickedKey);
+    next.push(pickedKey);
+    while (next.length > Math.max(5, Number(recentLimit || 20))) next.shift();
+    recentQuestionKeysByChannel.set(key, next);
+  }
+  return picked;
+}
+
 function parseStateTarget(rawTarget, fallback = {}) {
   try {
     const parsed = JSON.parse(rawTarget || "{}");
@@ -911,6 +936,15 @@ async function loadRegionCapitalQuestionBank(cfg) {
         out.push({ region: String(region), answers });
       }
     } catch {}
+  }
+
+  if (!out.length) {
+    for (const row of ITALIAN_REGION_CAPITAL_BANK) {
+      const region = row?.region || null;
+      const answers = buildAliases(row?.answers || []);
+      if (!region || !answers.length) continue;
+      out.push({ region: String(region), answers });
+    }
   }
 
   cachedRegionCapitalQuestions = out;
@@ -1535,6 +1569,34 @@ function buildPlayerAliases(player) {
   return Array.from(aliases.values());
 }
 
+function isFootballPlayer(player) {
+  if (!player || typeof player !== "object") return false;
+  const sportRaw = String(player?.strSport || "").trim().toLowerCase();
+  const teamRaw = String(player?.strTeam || "").trim().toLowerCase();
+  const leagueRaw = String(player?.strLeague || "").trim().toLowerCase();
+  const footballSports = new Set([
+    "soccer",
+    "association football",
+    "football",
+    "calcio",
+  ]);
+  if (sportRaw && !footballSports.has(sportRaw)) return false;
+  const blockedHints = [
+    "rugby",
+    "nfl",
+    "basket",
+    "nba",
+    "hockey",
+    "baseball",
+    "cricket",
+    "volley",
+    "handball",
+  ];
+  const combined = `${teamRaw} ${leagueRaw}`;
+  if (blockedHints.some((hint) => combined.includes(hint))) return false;
+  return true;
+}
+
 async function fetchPlayerInfo(cfg, name) {
   const apiBase = cfg?.guessPlayer?.apiUrl;
   if (!apiBase || !name) return null;
@@ -1543,9 +1605,12 @@ async function fetchPlayerInfo(cfg, name) {
     const res = await axios.get(url, { timeout: 15000 });
     const players = res?.data?.player;
     if (!Array.isArray(players) || players.length === 0) return null;
+    const filteredPlayers = players.filter((p) => isFootballPlayer(p));
+    if (!filteredPlayers.length) return null;
+    const source = filteredPlayers;
     const player =
-      players.find((p) => (p?.strThumb || p?.strCutout) && p?.strPlayer) ||
-      players[0];
+      source.find((p) => (p?.strThumb || p?.strCutout) && p?.strPlayer) ||
+      source[0];
     if (!player?.strPlayer) return null;
     if (!player.strThumb && !player.strCutout) return null;
     return {
@@ -1571,8 +1636,11 @@ async function fetchPlayerFromRandomLetter(cfg) {
       const res = await axios.get(url, { timeout: 15000 });
       const players = res?.data?.player;
       if (!Array.isArray(players) || players.length === 0) continue;
-      const withImage = players.filter((p) => p?.strThumb || p?.strCutout);
-      const pool = withImage.length ? withImage : players;
+      const filteredPlayers = players.filter((p) => isFootballPlayer(p));
+      if (!filteredPlayers.length) continue;
+      const source = filteredPlayers;
+      const withImage = source.filter((p) => p?.strThumb || p?.strCutout);
+      const pool = withImage.length ? withImage : source;
       const player = pool[randomBetween(0, pool.length - 1)];
       if (!player?.strPlayer) continue;
       if (!player.strThumb && !player.strCutout) continue;
@@ -2474,12 +2542,12 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.guessPlayer?.apiUrl) types.push("guessPlayer");
   if (cfg?.guessSong) types.push("guessSong");
   if (cfg?.guessCapital !== false) types.push("guessCapital");
-  if (cfg?.guessRegionCapital?.apiUrl) types.push("guessRegionCapital");
-  if (cfg?.fastType?.apiUrl) types.push("fastType");
+  if (cfg?.guessRegionCapital !== false) types.push("guessRegionCapital");
+  if (cfg?.fastType !== false) types.push("fastType");
   if (cfg?.guessTeam) types.push("guessTeam");
   if (cfg?.guessSinger) types.push("guessSinger");
   if (cfg?.guessAlbum) types.push("guessAlbum");
-  if (cfg?.hangman?.apiUrl) types.push("hangman");
+  if (cfg?.hangman !== false) types.push("hangman");
   if (cfg?.italianGK?.apiUrl) types.push("italianGK");
   if (cfg?.drivingQuiz?.apiUrl) types.push("drivingQuiz");
   if (cfg?.mathExpression !== false) types.push("mathExpression");
@@ -3033,7 +3101,13 @@ async function startGuessCapitalGame(client, cfg) {
   if (!channelId || activeGames.has(channelId)) return false;
 
   const questions = await loadCapitalQuestionBank(cfg);
-  const pick = pickRandomItem(questions);
+  const pick = pickQuestionAvoidRecent(
+    channelId,
+    "guessCapital",
+    questions,
+    (row) => row?.country,
+    28,
+  );
   if (!pick?.country || !Array.isArray(pick?.answers) || !pick.answers.length)
     return false;
 
@@ -3118,7 +3192,13 @@ async function startGuessRegionCapitalGame(client, cfg) {
   if (!channelId || activeGames.has(channelId)) return false;
 
   const questions = await loadRegionCapitalQuestionBank(cfg);
-  const pick = pickRandomItem(questions);
+  const pick = pickQuestionAvoidRecent(
+    channelId,
+    "guessRegionCapital",
+    questions,
+    (row) => row?.region,
+    20,
+  );
   if (!pick?.region || !Array.isArray(pick?.answers) || !pick.answers.length)
     return false;
 
@@ -3200,14 +3280,22 @@ async function startFastTypeGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const apiUrl = cfg?.fastType?.apiUrl || null;
-  if (!apiUrl) return false;
   let phrase = "";
-  try {
-    const res = await axios.get(apiUrl, { timeout: 15000 });
-    const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
-    phrase = String(payload?.phrase || payload?.text || payload || "").trim();
-  } catch {}
+  const apiUrl = cfg?.fastType?.apiUrl || null;
+  if (apiUrl) {
+    try {
+      const res = await axios.get(apiUrl, { timeout: 15000 });
+      const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
+      phrase = String(payload?.phrase || payload?.text || payload || "").trim();
+    } catch {}
+  }
+  if (!phrase) {
+    const customPhrases = Array.isArray(cfg?.fastType?.phrases)
+      ? cfg.fastType.phrases
+      : [];
+    const fallbackPhrases = customPhrases.length ? customPhrases : FAST_TYPING_PHRASES;
+    phrase = String(pickRandomItem(fallbackPhrases) || "").trim();
+  }
   if (!phrase) return false;
 
   const rewardExp = Number(cfg?.fastType?.rewardExp || 100);
@@ -3488,18 +3576,26 @@ async function startHangmanGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const apiUrl = cfg?.hangman?.apiUrl || null;
-  if (!apiUrl) return false;
   let words = [];
-  try {
-    const res = await axios.get(apiUrl, { timeout: 15000 });
-    const list = Array.isArray(res?.data)
-      ? res.data
-      : Array.isArray(res?.data?.words)
-        ? res.data.words
-        : [];
-    words = list.map((v) => String(v || "").trim()).filter(Boolean);
-  } catch {}
+  const apiUrl = cfg?.hangman?.apiUrl || null;
+  if (apiUrl) {
+    try {
+      const res = await axios.get(apiUrl, { timeout: 15000 });
+      const list = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.words)
+          ? res.data.words
+          : [];
+      words = list.map((v) => String(v || "").trim()).filter(Boolean);
+    } catch {}
+  }
+  if (!words.length) {
+    const customWords = Array.isArray(cfg?.hangman?.words)
+      ? cfg.hangman.words
+      : [];
+    const fallbackWords = customWords.length ? customWords : HANGMAN_WORDS;
+    words = fallbackWords.map((v) => String(v || "").trim()).filter(Boolean);
+  }
   if (!words.length) return false;
 
   const word = normalizeCountryName(pickRandomItem(words));

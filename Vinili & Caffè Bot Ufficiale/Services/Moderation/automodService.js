@@ -1017,6 +1017,18 @@ function looksLikeLegitConversation(content) {
   );
 }
 
+function stripQuotedAndCodeText(content) {
+  const text = String(content || "");
+  if (!text) return "";
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`[^`\n]+`/g, " ")
+    .split("\n")
+    .filter((line) => !String(line || "").trim().startsWith(">"))
+    .join("\n")
+    .trim();
+}
+
 function detectInvite(content) {
   const text = String(content || "");
   const match = text.match(
@@ -1383,6 +1395,7 @@ async function getAutoModMemberSnapshot(member) {
 async function detectViolations(message, state, profile) {
   const at = nowMs();
   const content = String(message.content || "");
+  const moderationContent = stripQuotedAndCodeText(content);
   const normalized = normalizeContent(content);
   const violations = [];
   const channelId = String(message.channelId || "");
@@ -1391,7 +1404,7 @@ async function detectViolations(message, state, profile) {
   const attachmentsEnabled = profile?.attachmentsEnabled !== false;
   const inviteLinksEnabled = profile?.inviteLinksEnabled !== false;
   const profileHeat = (value) => applyProfileHeat(value, profile);
-  const legitConversation = looksLikeLegitConversation(content);
+  const legitConversation = looksLikeLegitConversation(moderationContent || content);
 
   if (TEXT_RULES.regularMessage.enabled) {
     state.msgTimes.push(at);
@@ -1494,7 +1507,7 @@ async function detectViolations(message, state, profile) {
   }
   }
 
-  const inviteCode = detectInvite(content);
+  const inviteCode = detectInvite(moderationContent);
   if (
     inviteCode &&
     !EXEMPT_INVITE_CHANNEL_IDS.has(channelId) &&
@@ -1514,7 +1527,7 @@ async function detectViolations(message, state, profile) {
     }
   }
 
-  if (TEXT_RULES.maliciousLinks.enabled && detectScam(content)) {
+  if (TEXT_RULES.maliciousLinks.enabled && detectScam(moderationContent)) {
     violations.push({
       key: "scam_pattern",
       heat: profileHeat(TEXT_RULES.maliciousLinks.heat),
@@ -1522,7 +1535,7 @@ async function detectViolations(message, state, profile) {
     });
   }
 
-  if (await isNsfwUrl(content)) {
+  if (await isNsfwUrl(moderationContent)) {
     violations.push({
       key: "nsfw_link",
       heat: profileHeat(TEXT_RULES.nsfwLinks.heat),
@@ -1530,7 +1543,7 @@ async function detectViolations(message, state, profile) {
     });
   }
 
-  const wordBlacklistMatch = findBlacklistedWordMatch(content);
+  const wordBlacklistMatch = findBlacklistedWordMatch(moderationContent);
   if (wordBlacklistMatch) {
     violations.push({
       key: "word_blacklist",
@@ -1542,7 +1555,7 @@ async function detectViolations(message, state, profile) {
     });
   }
 
-  if (await hasBlacklistedDomain(content)) {
+  if (await hasBlacklistedDomain(moderationContent)) {
     violations.push({
       key: "link_blacklist",
       heat: profileHeat(TEXT_RULES.linkBlacklist.heat),
@@ -1680,6 +1693,13 @@ async function detectViolations(message, state, profile) {
 
 function getCooldownKey(message) {
   return `${message.guildId}:${message.author.id}`;
+}
+
+function isLikelyCommandMessage(message) {
+  const content = String(message?.content || "").trim();
+  if (!content) return false;
+  const prefixes = ["+", "/", "-", "?", "!"];
+  return prefixes.some((prefix) => content.startsWith(prefix));
 }
 
 function canActNow(message) {
@@ -2114,6 +2134,9 @@ async function runAutoModMessage(message) {
   if (!message?.member) return { blocked: false };
   if (message.author?.bot || message.system) {
     return { blocked: false };
+  }
+  if (isLikelyCommandMessage(message)) {
+    return { blocked: false, action: "command_exempt" };
   }
   if (isExempt(message)) return { blocked: false };
 

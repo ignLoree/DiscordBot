@@ -800,7 +800,7 @@ async function processJoinRaidForMember(member) {
     }
 
     const active = Number(state.raidUntil || 0) > at;
-    if (active && reasons.length > 0) {
+    if (active && highRisk && reasons.length > 0) {
       const outcome = await applyPunishment(member, reasons);
       return {
         blocked: true,
@@ -808,6 +808,18 @@ async function processJoinRaidForMember(member) {
         action: outcome?.appliedAction || JOIN_RAID_CONFIG.triggerAction,
         reasons,
       };
+    }
+    if (active && reasons.length > 0) {
+      await sendJoinRaidLog(
+        member.guild,
+        "Join Raid flagged account",
+        [
+          `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
+          `${ARROW} **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+          `${ARROW} **Action:** \`log\``,
+        ],
+        "#F59E0B",
+      );
     }
     return { blocked: false, flagged: reasons.length > 0, reasons };
   });

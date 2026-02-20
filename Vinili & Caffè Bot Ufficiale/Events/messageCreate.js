@@ -743,12 +743,18 @@ module.exports = {
       if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
       return;
     }
-    if (command?.args && !args.length) {
+    const hasSubcommands = Boolean(
+      (Array.isArray(command?.subcommands) && command.subcommands.length > 0) ||
+      (command?.subcommandAliases &&
+        typeof command.subcommandAliases === "object" &&
+        Object.keys(command.subcommandAliases).length > 0),
+    );
+    if (!args.length && (Boolean(command?.args) || hasSubcommands)) {
       const shown = await showPrefixUsageGuide({
         message,
         command,
         prefix: usedPrefix || "+",
-        deleteCommandMessage,
+        deleteCommandMessage: null,
       });
       if (!shown) {
         const embed = buildMissingArgumentsErrorEmbed();

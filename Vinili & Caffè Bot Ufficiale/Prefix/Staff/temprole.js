@@ -5,7 +5,7 @@ module.exports = {
   aliases: ["trole"],
   args: true,
   description: "Assign/unassign a role that persists for a limited time.",
-  usage: "?temprole [user] [time] [role], [optional reason]",
+  usage: "+temprole [user] [time] [role], [optional reason]",
   subcommands: ["toggle", "add", "remove"],
   async execute(message, args, client) {
     return executeDynoModerationCommand("temprole", message, args, client);
