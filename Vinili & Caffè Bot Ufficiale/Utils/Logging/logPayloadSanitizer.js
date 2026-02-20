@@ -13,7 +13,7 @@ const PLACEHOLDER_SNIPPETS = [
   "no reason specified",
   "[ nessuno ]",
   "audit missing",
-  "â€”",
+  "-",
   "—",
 ];
 

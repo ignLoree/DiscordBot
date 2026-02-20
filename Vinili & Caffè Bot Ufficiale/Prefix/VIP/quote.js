@@ -1,4 +1,4 @@
-const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+﻿const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const renderQuoteCanvas = require("../../Utils/Render/quoteCanvas");
 const { nextQuoteCount } = require("../../Utils/Quote/quoteCounter");
@@ -9,7 +9,7 @@ const QUOTE_CHANNEL_ID = IDs.channels.quotes;
 function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione Ã¢Å“Â¨")
+    .setTitle("<a:VC_Sparkles:1468546911936974889> Nuova quotazione ✨")
     .setDescription("<:VC_Reply:1468262952934314131> Crea un post usando il comando **?quote** rispondendo al messaggio di un utente.")
     .addFields(
       { name: "Messaggio di:", value: `<@${messageAuthorId}>` },
@@ -28,7 +28,7 @@ module.exports = {
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Questo comando puÃƒÂ² essere usato solo in un server.",
+              "<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.",
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -155,7 +155,7 @@ module.exports = {
         `<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`,
       )
       .addFields({
-        name: "Ã°Å¸â€œÂ¸ Totale immagini generate:",
+        name: "📸 Totale immagini generate:",
         value: String(totalPosts),
       });
 
@@ -198,3 +198,4 @@ module.exports = {
     return replyMsg;
   },
 };
+

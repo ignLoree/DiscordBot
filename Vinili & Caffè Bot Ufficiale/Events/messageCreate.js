@@ -12,7 +12,7 @@ const { addExpWithLevel, shouldIgnoreExpForMember, } = require("../Services/Comm
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
-const { buildCooldownErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
+const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
 const { safeMessageReply } = require("../Utils/Moderation/reply");
@@ -789,8 +789,25 @@ module.exports = {
     }
     if (!resolvedClient.prefixCommandLocks) resolvedClient.prefixCommandLocks = new Set();
     if (!resolvedClient.prefixCommandQueue) resolvedClient.prefixCommandQueue = new Map();
+    if (!resolvedClient.prefixCommandBusyNoticeAt) {
+      resolvedClient.prefixCommandBusyNoticeAt = new Map();
+    }
     const userId = message.author.id;
     const queueLockId = `${message.guild.id}:${userId}`;
+    const sendBusyQueueNotice = async () => {
+      const now = Date.now();
+      const lastNoticeAt =
+        resolvedClient.prefixCommandBusyNoticeAt.get(queueLockId) || 0;
+      if (now - lastNoticeAt < 5000) return;
+      resolvedClient.prefixCommandBusyNoticeAt.set(queueLockId, now);
+      const embed = buildBusyCommandErrorEmbed();
+      const sent = await message.channel.send({ embeds: [embed] }).catch(() => null);
+      if (sent) {
+        setTimeout(() => {
+          sent.delete().catch(() => { });
+        }, 5000);
+      }
+    };
     const enqueueCommand = async () => {
       const loadingEmojiId = IDs.emojis?.loadingAnimatedId;
       const fallbackEmojiId = IDs.emojis?.loadingFallbackId;
@@ -809,10 +826,18 @@ module.exports = {
       }
       resolvedClient.prefixCommandQueue
         .get(queueLockId)
-        .push({ message, args, command });
+        .push({
+          message,
+          args,
+          command,
+          channelId: message.channelId,
+          messageId: message.id,
+          enqueuedAt: Date.now(),
+        });
     };
     if (resolvedClient.prefixCommandLocks.has(queueLockId)) {
       await enqueueCommand();
+      await sendBusyQueueNotice();
       return;
     }
     const executePrefixCommand = async (payload) => {
@@ -1051,6 +1076,21 @@ module.exports = {
       await executePrefixCommand({ message, args, command });
     } finally {
       resolvedClient.prefixCommandLocks.delete(lockId);
+      const resolveQueuedMessage = async (payload) => {
+        const fallback = payload?.message || null;
+        const channelId = String(payload?.channelId || fallback?.channelId || "");
+        const messageId = String(payload?.messageId || fallback?.id || "");
+        if (!channelId || !messageId) return fallback;
+        try {
+          const channel =
+            resolvedClient.channels?.cache?.get(channelId) ||
+            (await resolvedClient.channels.fetch(channelId).catch(() => null));
+          if (!channel?.messages?.fetch) return fallback;
+          return (await channel.messages.fetch(messageId).catch(() => null)) || fallback;
+        } catch {
+          return fallback;
+        }
+      };
       const removeLoadingReaction = async (msg) => {
         try {
           const loadingId = IDs.emojis?.loadingAnimatedId;
@@ -1071,6 +1111,9 @@ module.exports = {
       let queue = resolvedClient.prefixCommandQueue.get(lockId);
       while (queue && queue.length > 0) {
         const next = queue.shift();
+        const hydratedMessage = await resolveQueuedMessage(next);
+        if (!hydratedMessage?.channel) continue;
+        next.message = hydratedMessage;
         await removeLoadingReaction(next.message);
         resolvedClient.prefixCommandLocks.add(lockId);
         try {

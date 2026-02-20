@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require("discord.js");
+﻿const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const fs = require("fs");
 const path = require("path");
@@ -90,8 +90,8 @@ function buildUsageEmbed() {
     .setTitle("Comando restart")
     .setDescription(
       [
-        "`+restart full` â€” riavvia solo il bot Ufficiale",
-        "`+restart full both` â€” riavvia entrambi i bot (Ufficiale + Test)",
+        "`+restart full` - riavvia solo il bot Ufficiale",
+        "`+restart full both` - riavvia entrambi i bot (Ufficiale + Test)",
         "`+restart handlers`",
         "`+restart commands`",
         "`+restart prefix`",
@@ -189,8 +189,8 @@ module.exports = {
               .setColor("#6f4e37")
               .setDescription(
                 isFullBoth
-                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando Ã¨ completato."
-                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando Ã¨ completato.",
+                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato."
+                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",
               ),
           ],
           allowedMentions: { repliedUser: false },
@@ -294,4 +294,5 @@ module.exports = {
     }
   },
 };
+
 
