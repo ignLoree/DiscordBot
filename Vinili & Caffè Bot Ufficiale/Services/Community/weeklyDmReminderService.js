@@ -1104,7 +1104,8 @@ async function runExternalStartupBlastOnce(client, guild) {
 
     for (const userId of outsideIds) {
       if (noDmSet.has(String(userId))) continue;
-      if (entry.externalReminderHistory?.[String(userId)]?.stopped) continue;
+      const existing = entry.externalReminderHistory?.[String(userId)] || {};
+      if (existing?.stopped || existing?.returnedOnce) continue;
       const user =
         client.users.cache.get(String(userId)) ||
         (await client.users.fetch(String(userId)).catch(() => null));
@@ -1124,6 +1125,7 @@ async function runExternalStartupBlastOnce(client, guild) {
           sendCount: Math.max(1, Number(prev.sendCount || 0)),
           nextDueAt: Number(prev.firstSentAt || now) + secondDelayMs,
           stopped: false,
+          returnedOnce: Boolean(prev.returnedOnce),
         };
         sentCount += 1;
       } catch {
@@ -1158,10 +1160,16 @@ async function sendExternalReturnReminders(client, guild) {
   const now = Date.now();
   const { secondDelayMs, finalDelayMs } = getExternalTimelineMs(client);
 
-  // Clean users that are back in guild.
+  // If user returns at least once, stop external reminders forever for that user.
   for (const userId of Object.keys(entry.externalReminderHistory || {})) {
     if (guild.members.cache.has(userId)) {
-      delete entry.externalReminderHistory[userId];
+      const prev = entry.externalReminderHistory[userId] || {};
+      entry.externalReminderHistory[userId] = {
+        ...prev,
+        returnedOnce: true,
+        stopped: true,
+        returnedAt: Date.now(),
+      };
     }
   }
 
@@ -1172,7 +1180,7 @@ async function sendExternalReturnReminders(client, guild) {
     if (noDmSet.has(uid)) continue;
 
     const history = entry.externalReminderHistory?.[uid] || {};
-    if (history?.stopped) continue;
+    if (history?.stopped || history?.returnedOnce) continue;
 
     const firstSentAt = Number(history.firstSentAt || 0);
     const sendCount = Number(history.sendCount || 0);
@@ -1228,6 +1236,7 @@ async function sendExternalReturnReminders(client, guild) {
         sendCount: nextSendCount,
         nextDueAt,
         stopped: shouldStop,
+        returnedOnce: Boolean(history?.returnedOnce),
       };
     } catch {}
   }
