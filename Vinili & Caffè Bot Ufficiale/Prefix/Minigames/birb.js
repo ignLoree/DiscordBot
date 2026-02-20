@@ -10,11 +10,11 @@ module.exports = {
       const url = Array.isArray(data) ? String(data[0] || "") : "";
       if (!url) return replyError(message, "Immagine non disponibile al momento.");
       return safeMessageReply(message, {
-        embeds: [{ color: 0x2ecc71, title: "Birb", image: { url } }],
+        embeds: [{ color: 0x2ecc71, title: "Uccellino", image: { url } }],
         allowedMentions: { repliedUser: false },
       });
     } catch {
-      return replyError(message, "Non sono riuscito a recuperare un birb.");
+      return replyError(message, "Non sono riuscito a recuperare un'immagine di uccello.");
     }
   },
 };

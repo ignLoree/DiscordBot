@@ -2,6 +2,8 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../Moderation/reply");
 
+const TRANSLATE_CACHE = new Map();
+
 function buildEmbed(color, description, title = null) {
   const embed = new EmbedBuilder().setColor(color).setDescription(description);
   if (title) embed.setTitle(title);
@@ -40,6 +42,51 @@ async function fetchText(url, options = {}) {
   return String(response.data || "");
 }
 
+async function translateToItalian(text, options = {}) {
+  const raw = String(text || "").trim();
+  if (!raw) return "";
+  const maxLength = Number(options?.maxLength || 1400);
+  const source = raw.slice(0, Math.max(1, maxLength));
+  const cacheKey = source.toLowerCase();
+  const cached = TRANSLATE_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.at <= 12 * 60 * 60 * 1000) {
+    return cached.value;
+  }
+
+  try {
+    const response = await axios.get(
+      "https://translate.googleapis.com/translate_a/single",
+      {
+        timeout: 7000,
+        responseType: "json",
+        params: {
+          client: "gtx",
+          sl: "auto",
+          tl: "it",
+          dt: "t",
+          q: source,
+        },
+      },
+    );
+
+    const chunks = Array.isArray(response?.data?.[0]) ? response.data[0] : [];
+    const translated = chunks
+      .map((chunk) => String(chunk?.[0] || ""))
+      .join("")
+      .trim();
+
+    const value = translated || source;
+    TRANSLATE_CACHE.set(cacheKey, { value, at: Date.now() });
+    if (TRANSLATE_CACHE.size > 600) {
+      const keys = Array.from(TRANSLATE_CACHE.keys()).slice(0, 200);
+      for (const key of keys) TRANSLATE_CACHE.delete(key);
+    }
+    return value;
+  } catch {
+    return source;
+  }
+}
+
 function clamp(text, max = 1900) {
   const raw = String(text || "").trim();
   if (!raw) return "";
@@ -56,6 +103,7 @@ module.exports = {
   replyInfo,
   fetchJson,
   fetchText,
+  translateToItalian,
   clamp,
   stripCodeBlock,
 };

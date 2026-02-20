@@ -21,13 +21,27 @@ module.exports = {
     const count = parsed.count;
     const size = parsed.size;
 
-    if (!Number.isFinite(count) || !Number.isFinite(size) || count < 1 || count > 20 || size < 2 || size > 1000) {
-      return replyError(message, "Uso: +roll <dado> [quantità] oppure +roll <quantità>d<dado> (max 20d1000)");
+    if (
+      !Number.isFinite(count) ||
+      !Number.isFinite(size) ||
+      count < 1 ||
+      count > 20 ||
+      size < 2 ||
+      size > 1000
+    ) {
+      return replyError(
+        message,
+        "Uso: +roll <dado> [quantita] oppure +roll <quantita>d<dado> (max 20d1000)",
+      );
     }
 
     const out = [];
     for (let i = 0; i < count; i += 1) out.push(Math.floor(Math.random() * size) + 1);
     const total = out.reduce((a, b) => a + b, 0);
-    return replyInfo(message, "Tiri: **" + out.join(", ") + "**\nTotale: **" + total + "**", "Roll d" + size + " x" + count);
+    return replyInfo(
+      message,
+      "Tiri: **" + out.join(", ") + "**\nTotale: **" + total + "**",
+      "Lancio d" + size + " x" + count,
+    );
   },
 };

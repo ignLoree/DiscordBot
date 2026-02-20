@@ -28,6 +28,10 @@ module.exports = {
     let result = "Pareggio";
     if (choice !== bot) result = BEATS[choice] === bot ? "Hai vinto" : "Hai perso";
 
-    return replyInfo(message, "Tu: **" + choice + "**\nBot: **" + bot + "**\nEsito: **" + result + "**", "RPS");
+    return replyInfo(
+      message,
+      "Tu: **" + choice + "**\nBot: **" + bot + "**\nEsito: **" + result + "**",
+      "Sasso Carta Forbici",
+    );
   },
 };

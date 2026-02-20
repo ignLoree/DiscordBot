@@ -31,6 +31,7 @@ const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
+const { installLogPayloadSanitizer } = require("../Utils/Logging/logPayloadSanitizer");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
@@ -386,6 +387,8 @@ module.exports = {
   name: "clientReady",
   once: true,
   async execute(client) {
+    installLogPayloadSanitizer();
+
     const maxListeners = resolveMaxListeners(client);
     client.setMaxListeners(maxListeners);
     require("events").EventEmitter.defaultMaxListeners = maxListeners;

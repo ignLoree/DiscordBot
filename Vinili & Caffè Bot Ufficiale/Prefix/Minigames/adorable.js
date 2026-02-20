@@ -9,7 +9,7 @@ module.exports = {
     if (!seed) return replyError(message, "Seed non valido.");
     const image = "https://api.dicebear.com/9.x/fun-emoji/png?seed=" + encodeURIComponent(seed);
     return safeMessageReply(message, {
-      embeds: [{ color: 0x3498db, title: "Adorable Avatar", image: { url: image } }],
+      embeds: [{ color: 0x3498db, title: "Avatar Adorabile", image: { url: image } }],
       allowedMentions: { repliedUser: false },
     });
   },

@@ -10,11 +10,11 @@ module.exports = {
       const url = String(data?.message || "");
       if (!url) return replyError(message, "Immagine non disponibile.");
       return safeMessageReply(message, {
-        embeds: [{ color: 0x2ecc71, title: "Pug", image: { url } }],
+        embeds: [{ color: 0x2ecc71, title: "Carlino", image: { url } }],
         allowedMentions: { repliedUser: false },
       });
     } catch {
-      return replyError(message, "Non sono riuscito a recuperare un pug.");
+      return replyError(message, "Non sono riuscito a recuperare un'immagine di carlino.");
     }
   },
 };

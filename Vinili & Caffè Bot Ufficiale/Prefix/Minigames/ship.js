@@ -139,7 +139,7 @@ module.exports = {
       const fail = new EmbedBuilder()
         .setColor("Red")
         .setDescription(
-          "<:vegax:1443934876440068179> Non sono riuscito a generare la ship image.",
+          "<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine della ship.",
         );
       await safeMessageReply(message, {
         embeds: [fail],
@@ -148,3 +148,4 @@ module.exports = {
     }
   },
 };
+

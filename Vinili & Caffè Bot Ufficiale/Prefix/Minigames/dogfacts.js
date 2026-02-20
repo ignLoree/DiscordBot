@@ -1,4 +1,4 @@
-﻿const { replyError, replyInfo, fetchJson, clamp } = require("../../Utils/Minigames/dynoFunUtils");
+﻿const { replyError, replyInfo, fetchJson, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
   name: "dogfacts",
@@ -7,10 +7,11 @@ module.exports = {
     try {
       const data = await fetchJson("https://dogapi.dog/api/v2/facts");
       const fact = clamp(data?.data?.[0]?.attributes?.body || "");
-      if (!fact) return replyError(message, "Fact non disponibile.");
-      return replyInfo(message, fact, "Dog Fact");
+      if (!fact) return replyError(message, "Curiosita non disponibile.");
+      const translated = clamp(await translateToItalian(fact));
+      return replyInfo(message, translated, "Curiosita sui Cani");
     } catch {
-      return replyError(message, "Non sono riuscito a recuperare un dog fact.");
+      return replyError(message, "Non sono riuscito a recuperare una curiosita sui cani.");
     }
   },
 };

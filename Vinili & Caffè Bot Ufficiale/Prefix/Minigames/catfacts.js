@@ -1,4 +1,4 @@
-﻿const { replyError, replyInfo, fetchJson, clamp } = require("../../Utils/Minigames/dynoFunUtils");
+﻿const { replyError, replyInfo, fetchJson, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
   name: "catfacts",
@@ -7,10 +7,11 @@ module.exports = {
     try {
       const data = await fetchJson("https://catfact.ninja/fact");
       const fact = clamp(data?.fact || "");
-      if (!fact) return replyError(message, "Fact non disponibile.");
-      return replyInfo(message, fact, "Cat Fact");
+      if (!fact) return replyError(message, "Curiosita non disponibile.");
+      const translated = clamp(await translateToItalian(fact));
+      return replyInfo(message, translated, "Curiosita sui Gatti");
     } catch {
-      return replyError(message, "Non sono riuscito a recuperare un cat fact.");
+      return replyError(message, "Non sono riuscito a recuperare una curiosita sui gatti.");
     }
   },
 };

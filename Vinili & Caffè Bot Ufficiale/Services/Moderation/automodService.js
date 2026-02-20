@@ -93,7 +93,7 @@ const TEXT_RULES = {
     minCount: 6,
   },
   characters: {
-    enabled: true,
+    enabled: false,
     lowercaseHeat: 0.08,
     uppercaseHeat: 0.12,
     minChars: 40,
