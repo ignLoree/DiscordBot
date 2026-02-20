@@ -427,11 +427,14 @@ async function handleVoteManagerMessage(message, client) {
       }
     } catch { }
   }
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+
   const voteLabel =
     typeof resolvedVoteCount === "number" ? `${resolvedVoteCount}°` : "";
   const voteRoleText = VOTE_ROLE_ID
-    ? `<a:VC_Money:1448671284748746905> ➥ Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`
-    : "<a:VC_Money:1448671284748746905> ➥ Reward voto assegnata per 24 ore";
+    ? `<a:VC_Money:1448671284748746905> • Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`
+    : "<a:VC_Money:1448671284748746905> • Reward voto assegnata per 24 ore";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>")
@@ -440,7 +443,7 @@ async function handleVoteManagerMessage(message, client) {
         `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
         "",
         "\`Hai guadagnato:\`",
-        `<a:VC_Events:1448688007438667796> ➥ **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
+        `<a:VC_Events:1448688007438667796> • **${expValue} EXP** per il tuo ${voteLabel ? `**${voteLabel} voto**` : "**voto**"}`,
         voteRoleText,
         "",
         "<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
@@ -448,7 +451,8 @@ async function handleVoteManagerMessage(message, client) {
     )
     .setFooter({
       text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",
-    });
+    })
+    .setImage(DIVIDER_URL);
 
   const components = [];
   if (VOTE_URL) {

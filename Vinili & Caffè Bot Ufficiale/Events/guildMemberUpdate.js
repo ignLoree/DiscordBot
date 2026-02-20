@@ -264,7 +264,7 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return;
   if (member.roles.cache.has(PERK_ROLE_ID)) return;
 
-  await member.roles.add(role).catch(() => {});
+  await member.roles.add(role).catch(() => { });
 }
 
 async function removePlusColorsIfNotEligible(member) {
@@ -288,10 +288,13 @@ async function removePlusColorsIfNotEligible(member) {
   });
   if (!removableRoleIds.length) return;
 
-  await member.roles.remove(removableRoleIds).catch(() => {});
+  await member.roles.remove(removableRoleIds).catch(() => { });
 }
 
 function buildBoostEmbed(member, boostCount) {
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+
   return new EmbedBuilder()
     .setAuthor({ name: member.user.username })
     .setTitle(
@@ -304,7 +307,8 @@ function buildBoostEmbed(member, boostCount) {
     )
     .setColor("#6f4e37")
     .setFooter({ text: `Ora siamo a ${boostCount} boost!` })
-    .setThumbnail(member.user.displayAvatarURL());
+    .setThumbnail(member.user.displayAvatarURL())
+    .setImage(DIVIDER_URL)
 }
 
 async function sendBoostEmbeds(channel, member, times, boostCount) {
@@ -363,8 +367,8 @@ function scheduleBoostFollowup(
       const freshGuild = await newMember.guild.fetch().catch(() => null);
       const latestCount = Number(
         freshGuild?.premiumSubscriptionCount ||
-          newMember.guild.premiumSubscriptionCount ||
-          0,
+        newMember.guild.premiumSubscriptionCount ||
+        0,
       );
       const knownCount = Number(boostCountCache.get(guildId) || currentCount);
       const missing = Math.max(0, latestCount - knownCount);

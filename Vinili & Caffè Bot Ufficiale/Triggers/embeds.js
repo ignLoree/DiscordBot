@@ -17,6 +17,9 @@
     CANDIDATURE_MEDIA_NAME,
   );
 
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+
   const candidatureChannel =
     client.channels.cache.get(IDs.channels.candidatureStaff) ||
     (await client.channels
@@ -30,7 +33,8 @@
     return;
   }
 
-  const candidatureEmbed = new EmbedBuilder().setColor("#6f4e37")
+  const candidatureEmbed = new EmbedBuilder()
+    .setColor("#6f4e37")
     .setDescription(`<:7871discordstaff:1443651872258003005> Su **__Vinili & Caffè__** ci si può candidare a **__\`2\`__** _ruoli_: **__\`Helper\`__** e **__\`Partner Manager\`__**.
 > <:5751attentionfromvega:1443651874032062505> Per **candidarti** dovrai __cliccare__ il bottone in base al **ruolo** che vuoi __ricoprire__
 
@@ -38,12 +42,13 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 <:1_:1444099163116535930> Avere almeno **__14 anni (compiuti)__**
 <:2_:1444099161673826368> Rispettare i **[ToS](https://discord.com/terms)** e le **[Linee Guida](https://discord.com/guidelines)** di **Discord**
 <:3_:1444099160294031471> Essere **maturi** e **attivi**
-<:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`);
+<:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`)
+    .setImage(DIVIDER_URL)
 
-  candidatureEmbed.setImage(`attachment://${CANDIDATURE_MEDIA_NAME}`);
   const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, {
     name: CANDIDATURE_MEDIA_NAME,
   });
+  
   const rowCandidature = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setLabel("︲HELPER")
@@ -81,6 +86,9 @@ async function runInfoPanelAuto(client) {
   const INFO_CHANNEL_ID = IDs.channels.info;
   const INFO_MEDIA_NAME = "info.gif";
   const INFO_MEDIA_PATH = path.join(__dirname, "..", "Photos", INFO_MEDIA_NAME);
+
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
   const channel =
     client.channels.cache.get(INFO_CHANNEL_ID) ||
@@ -125,7 +133,8 @@ async function runInfoPanelAuto(client) {
         ].join("\n"),
         inline: true,
       },
-    );
+    )
+    .setImage(DIVIDER_URL);
 
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -155,7 +164,8 @@ async function runInfoPanelAuto(client) {
     )
     .setDescription(
       "Scopri tramite i bottoni sottostanti come sbloccare permessi, ad esempio: mandare link e immagini in chat, poter cambiare il nickname e molti altri.",
-    );
+    )
+    .setImage(DIVIDER_URL);
 
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -417,7 +427,8 @@ async function runVerifyPanelAuto(client) {
       serverName +
       "` devi prima verificarti.**\n" +
       "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
-    );
+    )
+    .setImage(DIVIDER_URL);
 
   const verifyRow = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -1244,7 +1255,8 @@ async function runTicketPanelAuto(client) {
     )
     .setFooter({
       text: `Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00`,
-    });
+    })
+    .setImage(DIVIDER_URL);
 
   const ticketMenu = new StringSelectMenuBuilder()
     .setCustomId("ticket_open_menu")
@@ -1333,7 +1345,7 @@ async function runSponsorPanelAuto(client) {
 
   const DIVIDER_URL =
     "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
-    
+
   const attachment = new AttachmentBuilder(SPONSOR_MEDIA_PATH, {
     name: SPONSOR_MEDIA_NAME,
   });

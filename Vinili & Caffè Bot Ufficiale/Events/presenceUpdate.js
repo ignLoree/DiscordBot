@@ -127,7 +127,7 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return false;
   if (member.roles.cache.has(PERK_ROLE_ID)) return false;
 
-  await member.roles.add(role).catch(() => {});
+  await member.roles.add(role).catch(() => { });
   return true;
 }
 
@@ -186,7 +186,7 @@ async function clearPending(userId, channel) {
 
   if (pending.timeout) clearTimeout(pending.timeout);
   if (pending.messageId && channel?.isTextBased?.()) {
-    await channel.messages.delete(pending.messageId).catch(() => {});
+    await channel.messages.delete(pending.messageId).catch(() => { });
   }
   pendingChecks.delete(userId);
 }
@@ -232,7 +232,7 @@ function scheduleRemovalConfirm(member, channel) {
 
     const info = statusCache.get(userId);
     if (info?.lastMessageId && liveChannel?.isTextBased?.()) {
-      await liveChannel.messages.delete(info.lastMessageId).catch(() => {});
+      await liveChannel.messages.delete(info.lastMessageId).catch(() => { });
     }
 
     statusCache.set(userId, {
@@ -279,6 +279,9 @@ async function getPersistedStatus(guildId, userId) {
 }
 
 function buildPendingEmbed(member) {
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setAuthor({
@@ -298,7 +301,8 @@ function buildPendingEmbed(member) {
         "<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status .",
       ].join("\n"),
     )
-    .setFooter({ text: "Grazie per il tuo supporto!" });
+    .setFooter({ text: "Grazie per il tuo supporto!" })
+    .setImage(DIVIDER_URL);
 }
 
 async function startPendingFlow(member, channel) {
@@ -306,7 +310,7 @@ async function startPendingFlow(member, channel) {
 
   const existing = statusCache.get(member.id);
   if (existing?.lastMessageId && channel?.isTextBased?.()) {
-    await channel.messages.delete(existing.lastMessageId).catch(() => {});
+    await channel.messages.delete(existing.lastMessageId).catch(() => { });
   }
 
   pendingChecks.set(member.id, {
@@ -316,7 +320,7 @@ async function startPendingFlow(member, channel) {
   });
   const sent = await channel
     .send({
-    content: `<@${member.id}>`,
+      content: `<@${member.id}>`,
       embeds: [buildPendingEmbed(member)],
     })
     .catch(() => null);
@@ -332,7 +336,7 @@ async function startPendingFlow(member, channel) {
       const stillHasInvite = hasInviteNow(freshMember);
       if (stillHasInvite === false) {
         if (liveChannel?.isTextBased?.()) {
-          await liveChannel.messages.delete(sent.id).catch(() => {});
+          await liveChannel.messages.delete(sent.id).catch(() => { });
         }
         pendingChecks.delete(member.id);
         statusCache.set(member.id, {
