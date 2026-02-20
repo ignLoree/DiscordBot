@@ -20,10 +20,41 @@ const VALID_SCOPES = new Set([
   "all",
 ]);
 
+function resolveGitRoot() {
+  const candidates = [
+    process.cwd(),
+    path.resolve(process.cwd(), ".."),
+    path.resolve(__dirname, "..", "..", "..", ".."),
+    path.resolve(__dirname, "..", "..", ".."),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (!fs.existsSync(candidate)) continue;
+      const probe = child_process.spawnSync(
+        "git",
+        ["rev-parse", "--show-toplevel"],
+        { cwd: candidate, encoding: "utf8" },
+      );
+      const top = String(probe.stdout || "").trim();
+      if (probe.status === 0 && top) return top;
+    } catch {}
+  }
+  return null;
+}
+
+function resolveRuntimeRoot() {
+  const gitRoot = resolveGitRoot();
+  if (gitRoot) return gitRoot;
+  const cwd = process.cwd();
+  return fs.existsSync(path.join(cwd, "loader.js"))
+    ? cwd
+    : path.resolve(cwd, "..");
+}
+
 function pullLatest() {
   try {
-    const repoRoot = path.resolve(process.cwd(), "..");
-    if (!fs.existsSync(path.join(repoRoot, ".git"))) return;
+    const repoRoot = resolveGitRoot();
+    if (!repoRoot) return;
     const branch = process.env.GIT_BRANCH || "main";
     const pull = child_process.spawnSync(
       "git",
@@ -167,12 +198,9 @@ module.exports = {
 
         pullLatest();
 
-        const notifyPath = path.resolve(
-          process.cwd(),
-          "..",
-          "restart_notify.json",
-        );
-        const flagPath = path.resolve(process.cwd(), "..", RESTART_FLAG);
+        const runtimeRoot = resolveRuntimeRoot();
+        const notifyPath = path.resolve(runtimeRoot, "restart_notify.json");
+        const flagPath = path.resolve(runtimeRoot, RESTART_FLAG);
         try {
           fs.writeFileSync(
             notifyPath,
