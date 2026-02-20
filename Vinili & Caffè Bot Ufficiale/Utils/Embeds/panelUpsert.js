@@ -316,10 +316,22 @@ async function upsertPanelMessage(channel, client, payload) {
       delete editPayload.messageId;
       delete editPayload.attachmentName;
 
-      if (await shouldEditMessage(direct, editPayload)) {
-        await direct.edit(editPayload).catch((error) => {
+      const needsEdit = await shouldEditMessage(direct, editPayload);
+      if (needsEdit) {
+        const edited = await direct.edit(editPayload).catch((error) => {
           global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
+          return null;
         });
+        if (!edited) {
+          const sent = await channel.send(editPayload).catch((error) => {
+            global.logger?.error?.(
+              "[panelUpsert] send fallback after edit-by-id failure failed:",
+              error,
+            );
+            return null;
+          });
+          return sent || direct;
+        }
       }
       return direct;
     }
@@ -426,10 +438,22 @@ async function upsertPanelMessage(channel, client, payload) {
     return sent;
   }
 
-  if (await shouldEditMessage(existing, cleanPayload)) {
-    await existing.edit(cleanPayload).catch((error) => {
+  const needsEdit = await shouldEditMessage(existing, cleanPayload);
+  if (needsEdit) {
+    const edited = await existing.edit(cleanPayload).catch((error) => {
       global.logger?.error?.("[panelUpsert] edit failed:", error);
+      return null;
     });
+    if (!edited) {
+      const sent = await channel.send(cleanPayload).catch((error) => {
+        global.logger?.error?.(
+          "[panelUpsert] send fallback after edit failure failed:",
+          error,
+        );
+        return null;
+      });
+      return sent || existing;
+    }
   }
 
   return existing;
