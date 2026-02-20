@@ -1,10 +1,6 @@
 ﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { deleteBackupByIdGlobal, readBackupByIdGlobal } = require("./serverBackupService");
-const {
-  createLoadSession,
-  buildLoadWarningEmbed,
-  buildLoadComponents,
-} = require("./backupLoadService");
+const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, } = require("./backupLoadService");
 
 function splitCustomId(customId) {
   return String(customId || "").split(":");

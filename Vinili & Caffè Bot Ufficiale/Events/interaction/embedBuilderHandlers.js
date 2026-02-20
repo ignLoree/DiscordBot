@@ -1,11 +1,4 @@
-const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-  EmbedBuilder,
-  PermissionsBitField,
-} = require("discord.js");
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, EmbedBuilder, PermissionsBitField, } = require("discord.js");
 
 function getSession(client, messageId) {
   return client?.embedBuilderSessions?.get(messageId) || null;
@@ -25,11 +18,7 @@ function buildPreviewEmbed(data = {}) {
 }
 
 function buildRows(ownerId) {
-  const {
-    ButtonBuilder,
-    ButtonStyle,
-    ActionRowBuilder,
-  } = require("discord.js");
+  const { ButtonBuilder, ButtonStyle, ActionRowBuilder, } = require("discord.js");
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`eb:title:${ownerId}`)

@@ -2,15 +2,7 @@
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ApplicationCommandType,
-  ComponentType,
-  MessageFlags,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;

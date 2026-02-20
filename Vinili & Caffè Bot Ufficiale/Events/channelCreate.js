@@ -1,8 +1,4 @@
-const {
-  AuditLogEvent,
-  EmbedBuilder,
-  PermissionsBitField,
-} = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField, } = require("discord.js");
 const {
   queueCategoryRenumber,
 } = require("../Services/Community/communityOpsService");
@@ -10,17 +6,7 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   upsertChannelSnapshot,
 } = require("../Utils/Community/channelSnapshotUtils");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  channelDisplay,
-  channelTypeLabel,
-  yesNo,
-  formatAuditActor,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, toDiscordTimestamp, channelDisplay, channelTypeLabel, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const {
   handleChannelCreationAction: antiNukeHandleChannelCreationAction,
 } = require("../Services/Moderation/antiNukeService");

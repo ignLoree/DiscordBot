@@ -1,10 +1,5 @@
 const { safeChannelSend } = require("../../Utils/Moderation/reply");
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { BannerPrivacy } = require("../../Schemas/Community/communitySchemas");
 
 function normalize(text) {

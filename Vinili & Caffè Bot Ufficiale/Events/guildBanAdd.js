@@ -3,12 +3,7 @@ const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
-const {
-  resolveModLogChannel,
-  fetchRecentAuditEntry,
-  formatResponsible,
-  nowDiscordTs,
-} = require("../Utils/Logging/modAuditLogUtils");
+const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 
 function sleep(ms) {

@@ -1,9 +1,6 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const {
-  handleWebhookCreationAction: antiNukeHandleWebhookCreationAction,
-  handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction,
-} = require("../Services/Moderation/antiNukeService");
+const { handleWebhookCreationAction: antiNukeHandleWebhookCreationAction, handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction, } = require("../Services/Moderation/antiNukeService");
 
 const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
 const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;

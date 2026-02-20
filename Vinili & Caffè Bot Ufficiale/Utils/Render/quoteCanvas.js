@@ -1,9 +1,5 @@
 const canvasModule = require("canvas");
-const {
-  registerCanvasFonts,
-  fontStack,
-  drawTextWithSpecialFallback,
-} = require("./canvasFonts");
+const { registerCanvasFonts, fontStack, drawTextWithSpecialFallback, } = require("./canvasFonts");
 const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth, maxLines = Infinity) {

@@ -1,20 +1,10 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  EmbedBuilder,
-  AttachmentBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-} = require("discord.js");
+const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, } = require("discord.js");
 const {
   PersonalityPanel: Panel,
 } = require("../Schemas/Community/communitySchemas");
-const {
-  upsertPanelMessage,
-  shouldEditMessage,
-} = require("../Utils/Embeds/panelUpsert");
+const { upsertPanelMessage, shouldEditMessage, } = require("../Utils/Embeds/panelUpsert");
 
 const TAG_IMAGE_NAME = "guildtag.gif";
 const TAG_IMAGE_PATH = path.join(__dirname, "..", "Photos", TAG_IMAGE_NAME);

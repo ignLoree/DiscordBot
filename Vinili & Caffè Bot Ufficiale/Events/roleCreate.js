@@ -1,14 +1,6 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  yesNo,
-  formatAuditActor,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, toDiscordTimestamp, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleRoleCreationAction: antiNukeHandleRoleCreationAction } = require("../Services/Moderation/antiNukeService");
 
 const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ?? 30;

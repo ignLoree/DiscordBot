@@ -1,8 +1,4 @@
-const {
-  ExpUser,
-  GlobalSettings,
-  LevelHistory,
-} = require("../../Schemas/Community/communitySchemas");
+const { ExpUser, GlobalSettings, LevelHistory, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set(

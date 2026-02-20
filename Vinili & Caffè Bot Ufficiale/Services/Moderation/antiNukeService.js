@@ -1,9 +1,4 @@
-const {
-  EmbedBuilder,
-  PermissionsBitField,
-  OverwriteType,
-  UserFlagsBitField,
-} = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, OverwriteType, UserFlagsBitField, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");

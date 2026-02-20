@@ -1,19 +1,5 @@
-const {
-  AuditLogEvent,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  yesNo,
-  formatAuditActor,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { AuditLogEvent, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { ARROW, toDiscordTimestamp, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 
 const THREAD_UPDATE_ACTION = AuditLogEvent?.ThreadUpdate ?? 111;
 

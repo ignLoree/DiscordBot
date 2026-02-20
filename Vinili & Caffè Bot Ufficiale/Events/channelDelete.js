@@ -6,15 +6,7 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   markDeletedChannelSnapshot,
 } = require("../Utils/Community/channelSnapshotUtils");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  channelTypeLabel,
-  formatAuditActor,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, toDiscordTimestamp, channelTypeLabel, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleChannelDeletionAction: antiNukeHandleChannelDeletionAction } = require("../Services/Moderation/antiNukeService");
 
 const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;

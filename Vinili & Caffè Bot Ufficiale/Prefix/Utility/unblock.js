@@ -1,10 +1,6 @@
 const { safeChannelSend } = require("../../Utils/Moderation/reply");
 const { EmbedBuilder } = require("discord.js");
-const {
-  AvatarPrivacy,
-  BannerPrivacy,
-  QuotePrivacy,
-} = require("../../Schemas/Community/communitySchemas");
+const { AvatarPrivacy, BannerPrivacy, QuotePrivacy, } = require("../../Schemas/Community/communitySchemas");
 
 function buildUsageEmbed() {
   return new EmbedBuilder()

@@ -1,11 +1,4 @@
-﻿const {
-  ChannelType,
-  EmbedBuilder,
-  PermissionsBitField,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+﻿const { ChannelType, EmbedBuilder, PermissionsBitField, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
@@ -13,10 +6,7 @@ const { formatDuration } = require("../../Utils/Moderation/moderation");
 const {
   parseFlexibleDuration,
 } = require("../../Utils/Moderation/durationParser");
-const {
-  resolveCustomRoleState,
-  buildExpiryText,
-} = require("../../Utils/Community/customRoleState");
+const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
 
 const CUSTOM_VOICE_CATEGORY_ID = IDs.categories.categoryPrivate;
 

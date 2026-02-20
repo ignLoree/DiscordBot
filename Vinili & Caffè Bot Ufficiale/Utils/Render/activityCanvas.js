@@ -1,10 +1,5 @@
 const canvasModule = require("canvas");
-const { createCanvas, loadImage } = canvasModule;
-const {
-  registerCanvasFonts,
-  drawTextWithSpecialFallback,
-  fontStack,
-} = require("./canvasFonts");
+const { createCanvas, loadImage } = canvasModule; const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack, } = require("./canvasFonts");
 const emojiImageCache = new Map();
 const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;
 const ROME_TIME_ZONE = "Europe/Rome";

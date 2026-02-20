@@ -1,11 +1,7 @@
 const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getAutoModDashboardData,
-  getAutoModConfigSnapshot,
-  updateAutoModConfig,
-} = require("../../Services/Moderation/automodService");
+const { getAutoModDashboardData, getAutoModConfigSnapshot, updateAutoModConfig, } = require("../../Services/Moderation/automodService");
 
 const STAFF_ROLE_IDS = [
   IDs.roles.Founder,

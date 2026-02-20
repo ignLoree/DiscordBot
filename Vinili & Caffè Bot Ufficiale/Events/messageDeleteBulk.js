@@ -1,10 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  AttachmentBuilder,
-  AuditLogEvent,
-  PermissionsBitField,
-  MessageFlagsBitField,
-} = require("discord.js");
+﻿const { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionsBitField, MessageFlagsBitField, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
   [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),

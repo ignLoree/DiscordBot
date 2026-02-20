@@ -8,10 +8,7 @@ const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../Servi
 const { handleMinigameMessage } = require("../Services/Minigames/minigameService");
 const { recordReminderActivity } = require("../Services/Community/chatReminderService");
 const { recordMessageActivity } = require("../Services/Community/activityService");
-const {
-  addExpWithLevel,
-  shouldIgnoreExpForMember,
-} = require("../Services/Community/expService");
+const { addExpWithLevel, shouldIgnoreExpForMember, } = require("../Services/Community/expService");
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");

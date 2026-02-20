@@ -1,15 +1,6 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  AttachmentBuilder,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  getUserRanks,
-  getGlobalMultiplier,
-} = require("../../Services/Community/expService");
+const { getUserRanks, getGlobalMultiplier, } = require("../../Services/Community/expService");
 const renderRankCanvas = require("../../Utils/Render/rankCanvas");
 
 module.exports = {

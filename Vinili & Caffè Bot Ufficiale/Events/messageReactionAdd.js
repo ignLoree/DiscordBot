@@ -1,10 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  AttachmentBuilder,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
 const communitySchemas = require("../Schemas/Community/communitySchemas");
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require("../Utils/Config/ids");

@@ -1,12 +1,4 @@
-﻿const {
-  ContextMenuCommandBuilder,
-  ApplicationCommandType,
-  EmbedBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-} = require("discord.js");
+﻿const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
 const { safeReply } = require("../../Utils/Moderation/reply");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const IDs = require("../../Utils/Config/ids");

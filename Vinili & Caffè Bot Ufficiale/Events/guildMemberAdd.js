@@ -1,23 +1,12 @@
-﻿const {
-  EmbedBuilder,
-  PermissionsBitField,
-  AuditLogEvent,
-  UserFlagsBitField,
-} = require("discord.js");
-const {
-  InviteTrack,
-  InviteReminderState,
-} = require("../Schemas/Community/communitySchemas");
+﻿const { EmbedBuilder, PermissionsBitField, AuditLogEvent, UserFlagsBitField, } = require("discord.js");
+const { InviteTrack, InviteReminderState, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
 const { getNoDmSet } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
-const {
-  processJoinRaidForMember,
-  getJoinRaidStatusSnapshot,
-} = require("../Services/Moderation/joinRaidService");
+const { processJoinRaidForMember, getJoinRaidStatusSnapshot, } = require("../Services/Moderation/joinRaidService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;

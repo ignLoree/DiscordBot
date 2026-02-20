@@ -1,15 +1,7 @@
 ﻿const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const {
-  checkSlashPermission,
-  checkButtonPermission,
-  checkStringSelectPermission,
-  checkModalPermission,
-  getSlashRequiredRoles,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-} = require("../Utils/Moderation/commandPermissions");
+const { checkSlashPermission, checkButtonPermission, checkStringSelectPermission, checkModalPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const backupCommand = require("../Commands/Staff/backup");
 const {
   handleBackupLoadInteraction,

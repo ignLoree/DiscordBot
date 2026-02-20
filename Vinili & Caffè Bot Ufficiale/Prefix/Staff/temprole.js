@@ -1,15 +1,7 @@
 ﻿const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  parseDuration,
-  formatDuration,
-} = require("../../Utils/Moderation/moderation");
-const {
-  grantTemporaryRole,
-  revokeTemporaryRole,
-  clearTemporaryRolesForUser,
-  listTemporaryRolesForUser,
-} = require("../../Services/Community/temporaryRoleService");
+const { parseDuration, formatDuration, } = require("../../Utils/Moderation/moderation");
+const { grantTemporaryRole, revokeTemporaryRole, clearTemporaryRolesForUser, listTemporaryRolesForUser, } = require("../../Services/Community/temporaryRoleService");
 
 function buildUsageEmbed() {
   return new EmbedBuilder()

@@ -1,10 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getNoDmSet, addNoDm } = require("../../Utils/noDmList");
 

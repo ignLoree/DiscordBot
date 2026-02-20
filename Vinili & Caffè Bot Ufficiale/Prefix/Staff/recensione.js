@@ -3,10 +3,7 @@ const IDs = require("../../Utils/Config/ids");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const { ReviewReward } = require("../../Schemas/Community/communitySchemas");
-const {
-  getLevelInfo,
-  addExpWithLevel,
-} = require("../../Services/Community/expService");
+const { getLevelInfo, addExpWithLevel, } = require("../../Services/Community/expService");
 
 const REVIEW_CHANNEL_ID = IDs.channels.supporters;
 const LEVELS_TO_ADD = 5;

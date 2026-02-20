@@ -1,15 +1,6 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const cron = require("node-cron");
-const {
-  ActivityUser,
-  ActivityDaily,
-  ExpUser,
-} = require("../../Schemas/Community/communitySchemas");
+const { ActivityUser, ActivityDaily, ExpUser, } = require("../../Schemas/Community/communitySchemas");
 const { VOICE_EXP_PER_MINUTE } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 

@@ -1,34 +1,6 @@
-const {
-  SERVER_REFRESH_CUSTOM_ID_PREFIX,
-  buildServerOverviewPayload,
-} = require("../../Prefix/Stats/server");
-const {
-  ME_REFRESH_CUSTOM_ID_PREFIX,
-  ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  ME_PERIOD_SET_CUSTOM_ID_PREFIX,
-  ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  buildMeOverviewPayload,
-  buildMeComponents,
-  normalizeLookbackDays,
-} = require("../../Prefix/Stats/me");
-const {
-  TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX,
-  TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX,
-  buildTopChannelPayload,
-  normalizeTopView,
-  normalizeControlsView,
-  normalizePage,
-  resolveRequestedPage,
-  buildTopPageJumpModal,
-} = require("../../Prefix/Stats/top");
+const { SERVER_REFRESH_CUSTOM_ID_PREFIX, buildServerOverviewPayload, } = require("../../Prefix/Stats/server");
+const { ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, buildMeOverviewPayload, buildMeComponents, normalizeLookbackDays, } = require("../../Prefix/Stats/me");
+const { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, buildTopChannelPayload, normalizeTopView, normalizeControlsView, normalizePage, resolveRequestedPage, buildTopPageJumpModal, } = require("../../Prefix/Stats/top");
 const {
   handleBackupLoadInteraction,
 } = require("../../Services/Backup/backupLoadService");

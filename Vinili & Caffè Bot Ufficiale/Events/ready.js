@@ -1,53 +1,28 @@
 const config = require("../config.json");
 const mongoose = require("mongoose");
 const cron = require("node-cron");
-const {
-  restorePendingVoteReminders,
-  restorePendingDiscadiaReminders,
-  restorePendingReminders,
-} = require("../Services/Bump/bumpService");
+const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders, } = require("../Services/Bump/bumpService");
 const { bootstrapSupporter } = require("./presenceUpdate");
 const { restoreTtsConnections } = require("../Services/TTS/ttsService");
 const {
   runDueOneTimeReminders,
 } = require("../Services/Reminders/oneTimeReminderService");
-const {
-  startMinigameLoop,
-  restoreActiveGames,
-} = require("../Services/Minigames/minigameService");
+const { startMinigameLoop, restoreActiveGames, } = require("../Services/Minigames/minigameService");
 const {
   startHourlyReminderLoop,
 } = require("../Services/Community/chatReminderService");
-const {
-  startVerificationTenureLoop,
-  backfillVerificationTenure,
-  startVoteRoleCleanupLoop,
-  runAllGuilds: renumberAllCategories,
-  startCategoryNumberingLoop,
-} = require("../Services/Community/communityOpsService");
+const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop, } = require("../Services/Community/communityOpsService");
 const {
   startWeeklyActivityWinnersLoop,
 } = require("../Services/Community/weeklyActivityWinnersService");
 const { restoreTempBans } = require("../Services/Moderation/joinRaidService");
-const {
-  syncLiveVoiceSessionsFromGateway,
-  startLiveVoiceExpLoop,
-} = require("../Services/Community/activityService");
-const {
-  removeExpiredTemporaryRoles,
-  startTemporaryRoleCleanupLoop,
-} = require("../Services/Community/temporaryRoleService");
-const {
-  runExpiredCustomRolesSweep,
-  startCustomRoleExpiryLoop,
-} = require("../Services/Community/customRoleExpiryService");
+const { syncLiveVoiceSessionsFromGateway, startLiveVoiceExpLoop, } = require("../Services/Community/activityService");
+const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop, } = require("../Services/Community/temporaryRoleService");
+const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop, } = require("../Services/Community/customRoleExpiryService");
 const {
   startDailyPartnerAuditLoop,
 } = require("../Services/Partner/partnerAuditService");
-const {
-  startTicketAutoClosePromptLoop,
-  startTranscriptCleanupLoop,
-} = require("../Services/Ticket/ticketMaintenanceService");
+const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");

@@ -1,16 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  EmbedBuilder,
-  PermissionsBitField,
-  PermissionFlagsBits,
-} = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("discord.js");
 const IDs = require("../Config/ids");
-const {
-  buildPrefixLookupKeys,
-  buildSlashLookupKeys,
-  hasTemporaryCommandPermission,
-} = require("./temporaryCommandPermissions");
+const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
 const PERMISSIONS_PATH = path.join(process.cwd(), "permissions.json");
 const EMPTY_PERMISSIONS = {
   slash: {},

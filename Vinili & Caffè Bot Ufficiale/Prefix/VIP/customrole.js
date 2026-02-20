@@ -1,11 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-  PermissionsBitField,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, PermissionsBitField, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const {
   createCustomRoleGrantRequest,
@@ -16,10 +9,7 @@ const { formatDuration } = require("../../Utils/Moderation/moderation");
 const {
   parseFlexibleDuration,
 } = require("../../Utils/Moderation/durationParser");
-const {
-  resolveCustomRoleState,
-  buildExpiryText,
-} = require("../../Utils/Community/customRoleState");
+const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
 
 const ANCHOR_ROLE_ID = IDs.roles.separatore1;
 const REQUEST_TIMEOUT_MS = 60_000;

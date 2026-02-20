@@ -1,13 +1,6 @@
 ﻿const { EmbedBuilder } = require("discord.js");
-const {
-  resolveTarget,
-  extractUserId,
-} = require("../../Utils/Moderation/prefixModeration");
-const {
-  getModConfig,
-  createModCase,
-  logModCase,
-} = require("../../Utils/Moderation/moderation");
+const { resolveTarget, extractUserId, } = require("../../Utils/Moderation/prefixModeration");
+const { getModConfig, createModCase, logModCase, } = require("../../Utils/Moderation/moderation");
 
 const DISCORD_BULK_DELETE_MAX = 100;
 const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;

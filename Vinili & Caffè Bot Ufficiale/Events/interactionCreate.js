@@ -1,8 +1,5 @@
 ﻿const { InteractionType } = require("discord.js");
-const {
-  handleAutocomplete,
-  handleSlashCommand,
-} = require("./interaction/commandHandlers");
+const { handleAutocomplete, handleSlashCommand, } = require("./interaction/commandHandlers");
 const { handleButtonInteraction } = require("./interaction/buttonHandlers");
 const { handlePartnerModal } = require("./interaction/partnerModal");
 const { handleSuggestionVote } = require("./interaction/suggestionHandlers");
@@ -21,13 +18,7 @@ const {
 } = require("./interaction/embedBuilderHandlers");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const {
-  checkButtonPermission,
-  checkStringSelectPermission,
-  checkModalPermission,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-} = require("../Utils/Moderation/commandPermissions");
+const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;

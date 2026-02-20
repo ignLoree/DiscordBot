@@ -1,8 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  AuditLogEvent,
-  PermissionsBitField,
-} = require("discord.js");
+﻿const { EmbedBuilder, AuditLogEvent, PermissionsBitField, } = require("discord.js");
 const { leaveTtsGuild } = require("../Services/TTS/ttsService");
 const {
   handleVoiceActivity,

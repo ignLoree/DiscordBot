@@ -1,8 +1,4 @@
-const {
-  EmbedBuilder,
-  PermissionsBitField,
-  UserFlagsBitField,
-} = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, UserFlagsBitField, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const mongoose = require("mongoose");

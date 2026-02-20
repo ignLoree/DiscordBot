@@ -1,9 +1,6 @@
 ﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { setUserTtsLang } = require("../../Services/TTS/ttsService");
-const {
-  TTS_LANGUAGE_CODES,
-  normalizeTtsLanguageInput,
-} = require("../../Services/TTS/ttsLanguages");
+const { TTS_LANGUAGE_CODES, normalizeTtsLanguageInput, } = require("../../Services/TTS/ttsLanguages");
 
 function parseBooleanState(raw) {
   const value = String(raw || "")

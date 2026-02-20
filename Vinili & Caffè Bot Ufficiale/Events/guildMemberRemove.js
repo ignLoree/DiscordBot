@@ -1,24 +1,8 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  AuditLogEvent,
-  PermissionsBitField,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AuditLogEvent, PermissionsBitField, } = require("discord.js");
 const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
-const {
-  createTranscript,
-  createTranscriptHtml,
-  saveTranscriptHtml,
-} = require("../Utils/Ticket/transcriptUtils");
-const {
-  InviteTrack,
-  ExpUser,
-  ActivityUser,
-  LevelHistory,
-} = require("../Schemas/Community/communitySchemas");
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../Utils/Ticket/transcriptUtils");
+const { InviteTrack, ExpUser, ActivityUser, LevelHistory, } = require("../Schemas/Community/communitySchemas");
 const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
 const IDs = require("../Utils/Config/ids");
 const {

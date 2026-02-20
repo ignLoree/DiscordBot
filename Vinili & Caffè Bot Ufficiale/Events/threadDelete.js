@@ -1,13 +1,5 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  yesNo,
-  formatAuditActor,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, toDiscordTimestamp, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleThreadDeletionAction: antiNukeHandleThreadDeletionAction } = require("../Services/Moderation/antiNukeService");
 
 const THREAD_DELETE_ACTION = AuditLogEvent?.ThreadDelete ?? 112;

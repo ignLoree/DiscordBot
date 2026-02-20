@@ -1,22 +1,8 @@
-﻿const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-  UserSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  PermissionsBitField,
-  ChannelType,
-} = require("discord.js");
+﻿const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType, } = require("discord.js");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
-const {
-  resolveCustomRoleState,
-  buildExpiryText,
-} = require("../../Utils/Community/customRoleState");
+const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
 
 const pendingRoleGrants = new Map();
 const CUSTOM_VOICE_CATEGORY_ID = IDs?.categories?.categoryPrivate || null;

@@ -1,23 +1,9 @@
-﻿const {
-  EmbedBuilder,
-  Events,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+﻿const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
-const {
-  AvatarPrivacy,
-  BannerPrivacy,
-} = require("../Schemas/Community/communitySchemas");
+const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
-const {
-  checkButtonPermission,
-  checkStringSelectPermission,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-} = require("../Utils/Moderation/commandPermissions");
+const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const DIVIDER_URL =
   "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 const PRIVATE_FLAG = 1 << 6;
@@ -284,7 +270,7 @@ async function enforceInteractionPermissions(interaction) {
       const deniedEmbed = buildDeniedEmbedFromGate(gate, "bottone");
       await interaction
         .reply({ embeds: [deniedEmbed], flags: PRIVATE_FLAG })
-        .catch(() => {});
+        .catch(() => { });
       return false;
     }
   }
@@ -295,7 +281,7 @@ async function enforceInteractionPermissions(interaction) {
       const deniedEmbed = buildDeniedEmbedFromGate(gate, "menu");
       await interaction
         .reply({ embeds: [deniedEmbed], flags: PRIVATE_FLAG })
-        .catch(() => {});
+        .catch(() => { });
       return false;
     }
   }
@@ -313,7 +299,7 @@ async function resolveMentionLabel(interaction, userId) {
 
     const user = await interaction.client.users.fetch(userId).catch(() => null);
     if (user) label = `<@${user.id}>`;
-  } catch {}
+  } catch { }
   return label;
 }
 
@@ -476,7 +462,7 @@ module.exports = {
 
       try {
         if (!values.length || values.includes("remove")) {
-          await member.roles.remove(roleIds).catch(() => {});
+          await member.roles.remove(roleIds).catch(() => { });
           return interaction.reply({
             content: "Ruoli rimossi correttamente.",
             flags: 1 << 6,
@@ -494,8 +480,8 @@ module.exports = {
             });
           }
         }
-        await member.roles.remove(roleIds).catch(() => {});
-        await member.roles.add(values).catch(() => {});
+        await member.roles.remove(roleIds).catch(() => { });
+        await member.roles.add(values).catch(() => { });
         return interaction.reply({
           content: "Ruolo aggiornato correttamente.",
           flags: 1 << 6,
@@ -531,7 +517,7 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch {}
+      } catch { }
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Comando sbloccato")
@@ -562,7 +548,7 @@ module.exports = {
           },
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
-      } catch {}
+      } catch { }
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Comando sbloccato")
@@ -622,18 +608,18 @@ module.exports = {
           const originMessage = await originChannel.messages
             .fetch(originMessageId)
             .catch(() => null);
-          if (originMessage) await originMessage.delete().catch(() => {});
+          if (originMessage) await originMessage.delete().catch(() => { });
         }
       }
       try {
         await decrementQuoteCount(interaction.guild?.id);
-      } catch {}
+      } catch { }
       return interaction
         .update({ embeds: [removedEmbed], components: [], files: [] })
         .catch(async () => {
           await interaction
             .reply({ embeds: [removedEmbed], flags: 1 << 6 })
-            .catch(() => {});
+            .catch(() => { });
         });
     }
 
@@ -800,11 +786,11 @@ module.exports = {
         return interaction.update(payload).catch(async () => {
           return interaction
             .reply({ ...payload, flags: 1 << 6 })
-            .catch(() => {});
+            .catch(() => { });
         });
       }
 
-      return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => {});
+      return interaction.reply({ ...payload, flags: 1 << 6 }).catch(() => { });
     };
 
     if (interaction.customId == "info_verifica") {
@@ -1044,6 +1030,16 @@ module.exports = {
             inline: true,
           },
           {
+            name: "\`VOTER\`",
+            value: [
+              "<@&1468266342682722679>",
+              "Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)",
+              "<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.",
+              "<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.",
+            ].join("\n"),
+            inline: true,
+          },
+          {
             name: "\`PROMOTER\`",
             value: [
               "<@&1469758545263198442>",
@@ -1054,12 +1050,22 @@ module.exports = {
             inline: true,
           },
           {
-            name: "\`VOTER\`",
+            name: "\`PROPULSOR\`",
             value: [
-              "<@&1468266342682722679>",
-              "Ottenibile votando il server su [Discadia](<https://discadia.com/vote/viniliecaffe/>)",
-              "<:VC_DoubleReply:1468713981152727120> EXP casuale da 100 a 250.",
-              "<:VC_Reply:1468262952934314131> Ruolo esclusivo per 24 ore.",
+              "<@&1469758545263198442>",
+              "Ottenibile invitando 25 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
+              "<:VC_DoubleReply:1468713981152727120> Inviare emoji e adesivi esterni",
+              "<:VC_Reply:1468262952934314131> Aggiungi reazioni ai messaggi",
+            ].join("\n"),
+            inline: true,
+          },
+          {
+            name: "\`CATALYST\`",
+            value: [
+              "<@&1469758545263198442>",
+              "Ottenibile invitando 100 persone nel server, attraverso [custom link](<https://imgur.com/a/3wpDOVj>)",
+              "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
+              "<:VC_Reply:1468262952934314131> Permesso di cambiare il tuo nickname",
             ].join("\n"),
             inline: true,
           },
@@ -1108,9 +1114,9 @@ module.exports = {
 
       const lines = entries.length
         ? entries.map(
-            ([roleId, multi]) =>
-              `<@&${roleId}> <a:VC_Arrow:1448672967721615452> x${multi}`,
-          )
+          ([roleId, multi]) =>
+            `<@&${roleId}> <a:VC_Arrow:1448672967721615452> x${multi}`,
+        )
         : ["Nessun moltiplicatore attivo."];
 
       const embed = new EmbedBuilder()

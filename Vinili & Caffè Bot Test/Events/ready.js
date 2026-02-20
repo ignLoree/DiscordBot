@@ -5,10 +5,7 @@ const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
 const sponsorPanels = require("../Triggers/embeds");
 const backupCommand = require("../Commands/Staff/backup");
-const {
-  startTicketAutoClosePromptLoop,
-  startTranscriptCleanupLoop,
-} = require("../Services/Ticket/ticketMaintenanceService");
+const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;

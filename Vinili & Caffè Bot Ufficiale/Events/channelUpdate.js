@@ -6,18 +6,7 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   upsertChannelSnapshot,
 } = require("../Utils/Community/channelSnapshotUtils");
-const {
-  ARROW,
-  toDiscordTimestamp,
-  channelDisplay,
-  channelTypeLabel,
-  formatAuditActor,
-  permissionList,
-  permissionDiff,
-  buildAuditExtraLines,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, toDiscordTimestamp, channelDisplay, channelTypeLabel, formatAuditActor, permissionList, permissionDiff, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleChannelOverwrite: antiNukeHandleChannelOverwrite } = require("../Services/Moderation/antiNukeService");
 
 const CHANNEL_UPDATE_ACTION = AuditLogEvent?.ChannelUpdate ?? 11;

@@ -1,19 +1,7 @@
 ﻿const axios = require("axios");
 const { createCanvas } = require("canvas");
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
-  PermissionsBitField,
-  AttachmentBuilder,
-} = require("discord.js");
-const {
-  MinigameUser,
-  MinigameState,
-  MinigameRotation,
-} = require("../../Schemas/Minigames/minigameSchema");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
+const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const IDs = require("../../Utils/Config/ids");
 

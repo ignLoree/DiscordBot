@@ -1,10 +1,6 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const {
-  handleInviteCreationAction: antiNukeHandleInviteCreationAction,
-  isAntiNukePanicActive,
-  isWhitelistedExecutorAsync,
-} = require("../Services/Moderation/antiNukeService");
+const { handleInviteCreationAction: antiNukeHandleInviteCreationAction, isAntiNukePanicActive, isWhitelistedExecutorAsync, } = require("../Services/Moderation/antiNukeService");
 
 const INVITE_CREATE_ACTION = AuditLogEvent?.InviteCreate ?? 40;
 const AUDIT_FETCH_LIMIT = 20;

@@ -1,11 +1,4 @@
-﻿const {
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  PermissionFlagsBits,
-} = require("discord.js");
+﻿const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, } = require("discord.js");
 const { readBackupByIdGlobal, createGuildBackup } = require("./serverBackupService");
 
 const LOAD_ACTIONS = [

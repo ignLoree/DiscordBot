@@ -1,8 +1,5 @@
 const { ChannelType, PermissionsBitField } = require("discord.js");
-const {
-  VoteRole,
-  VerificationTenure,
-} = require("../../Schemas/Community/communitySchemas");
+const { VoteRole, VerificationTenure, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 
 const VOTE_ROLE_ID = IDs.roles.Voter;

@@ -1,12 +1,6 @@
 ﻿async function runEmbedCandidaturePanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
   const CANDIDATURE_MEDIA_NAME = "candidature.gif";
@@ -71,13 +65,7 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 }
 
 async function runInfoPanelAuto(client) {
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
@@ -221,12 +209,7 @@ async function runInfoPanelAuto(client) {
 
 async function runStaffEmbedAuto(client) {
   const IDs = require("../Utils/Config/ids");
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
 
   const moderationChannel =
@@ -375,13 +358,7 @@ async function runStaffEmbedAuto(client) {
 
 async function runVerifyPanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const {
     PersonalityPanel: Panel,
@@ -484,12 +461,7 @@ async function runVerifyPanelAuto(client) {
 }
 
 async function runRuoliPanelAuto(client) {
-  const {
-    EmbedBuilder,
-    AttachmentBuilder,
-    ActionRowBuilder,
-    StringSelectMenuBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, StringSelectMenuBuilder, } = require("discord.js");
   const path = require("path");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
   const IDs = require("../Utils/Config/ids");
@@ -1196,12 +1168,7 @@ async function runRuoliPanelAuto(client) {
 
 async function runTicketPanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    StringSelectMenuBuilder,
-    AttachmentBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const {
     PersonalityPanel: Panel,
@@ -1332,13 +1299,7 @@ async function runTicketPanelAuto(client) {
 
 async function runSponsorPanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
-  const {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    AttachmentBuilder,
-  } = require("discord.js");
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
   const fs = require("fs");
   const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");

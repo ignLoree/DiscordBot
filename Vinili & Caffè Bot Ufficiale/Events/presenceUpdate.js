@@ -1,8 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  PermissionsBitField,
-  ActivityType,
-} = require("discord.js");
+﻿const { EmbedBuilder, PermissionsBitField, ActivityType, } = require("discord.js");
 const mongoose = require("mongoose");
 const SupporterStatus = require("../Schemas/Supporter/supporterStatusSchema");
 const IDs = require("../Utils/Config/ids");

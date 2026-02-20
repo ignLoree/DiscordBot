@@ -1,9 +1,5 @@
 const canvasModule = require("canvas");
-const { createCanvas, loadImage } = canvasModule;
-const {
-  registerCanvasFonts,
-  drawTextWithSpecialFallback,
-} = require("./canvasFonts");
+const { createCanvas, loadImage } = canvasModule; const { registerCanvasFonts, drawTextWithSpecialFallback, } = require("./canvasFonts");
 
 function roundedRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);

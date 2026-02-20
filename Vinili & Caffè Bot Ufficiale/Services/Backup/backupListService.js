@@ -1,10 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+﻿const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
 
 const PAGE_SIZE = 10;

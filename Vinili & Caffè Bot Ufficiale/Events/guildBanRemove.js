@@ -1,11 +1,6 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
-const {
-  resolveModLogChannel,
-  fetchRecentAuditEntry,
-  formatResponsible,
-  nowDiscordTs,
-} = require("../Utils/Logging/modAuditLogUtils");
+const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

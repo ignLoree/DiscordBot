@@ -1,10 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
-const {
-  checkPrefixPermission,
-  getPrefixRequiredRoles,
-  buildGlobalPermissionDeniedEmbed,
-} = require("../Moderation/commandPermissions");
+const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../Moderation/commandPermissions");
 
 const PREFIXES = ["-"];
 const BOT_MENTION_REGEX = /<@!?\d+>/;

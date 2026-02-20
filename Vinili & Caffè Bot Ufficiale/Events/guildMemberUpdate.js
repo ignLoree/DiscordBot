@@ -1,18 +1,9 @@
-﻿const {
-  EmbedBuilder,
-  PermissionsBitField,
-  AuditLogEvent,
-} = require("discord.js");
+﻿const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
 } = require("../Utils/Community/staffListUtils");
-const {
-  ARROW,
-  formatAuditActor,
-  resolveChannelRolesLogChannel,
-  resolveResponsible,
-} = require("../Utils/Logging/channelRolesLogUtils");
+const { ARROW, formatAuditActor, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleMemberRoleAddition: antiNukeHandleMemberRoleAddition } = require("../Services/Moderation/antiNukeService");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;

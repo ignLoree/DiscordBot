@@ -1,9 +1,5 @@
 ﻿const canvasModule = require("canvas");
-const { createCanvas, loadImage } = canvasModule;
-const {
-  registerCanvasFonts,
-  drawTextWithSpecialFallback,
-} = require("./canvasFonts");
+const { createCanvas, loadImage } = canvasModule; const { registerCanvasFonts, drawTextWithSpecialFallback, } = require("./canvasFonts");
 
 function hashSeed(source) {
   let h = 2166136261;

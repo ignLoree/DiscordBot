@@ -1,13 +1,4 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  AttachmentBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const PImage = require("pureimage");
 const { PassThrough } = require("stream");
 const path = require("path");
@@ -33,10 +24,7 @@ const VERIFY_CAPTCHA = {
 
 const MAIN_GUILD_ID = "1329080093599076474";
 
-const {
-  upsertVerifiedMember,
-  applyTenureForMember,
-} = require("../../Services/Community/communityOpsService");
+const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
 const {
   VerificationTenure,
 } = require("../../Schemas/Community/communitySchemas");

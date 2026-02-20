@@ -1,12 +1,7 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleVanityGuard: antiNukeHandleVanityGuard } = require("../Services/Moderation/antiNukeService");
-const {
-  resolveModLogChannel,
-  fetchRecentAuditEntry,
-  formatResponsible,
-  nowDiscordTs,
-} = require("../Utils/Logging/modAuditLogUtils");
+const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 
 function notificationsLabel(value) {
   const n = Number(value);

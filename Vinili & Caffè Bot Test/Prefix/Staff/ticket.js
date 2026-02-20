@@ -1,17 +1,7 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  PermissionFlagsBits,
-} = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
-const {
-  createTranscript,
-  createTranscriptHtml,
-  saveTranscriptHtml,
-} = require("../../Utils/Ticket/transcriptUtils");
+const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { TICKETS_CATEGORY_NAME } = require("../../Utils/Ticket/ticketCategoryUtils");
 const IDs = require("../../Utils/Config/ids");

@@ -1,19 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  ExpUser,
-  ActivityUser,
-} = require("../../Schemas/Community/communitySchemas");
-const {
-  getLevelInfo,
-  getTotalExpForLevel,
-  recordLevelHistory,
-  setLevelChannelLocked,
-  setRoleIgnored,
-  getGuildExpSettings,
-  setTemporaryEventMultiplier,
-  syncLevelRolesForMember,
-} = require("../../Services/Community/expService");
+const { ExpUser, ActivityUser, } = require("../../Schemas/Community/communitySchemas");
+const { getLevelInfo, getTotalExpForLevel, recordLevelHistory, setLevelChannelLocked, setRoleIgnored, getGuildExpSettings, setTemporaryEventMultiplier, syncLevelRolesForMember, } = require("../../Services/Community/expService");
 
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();

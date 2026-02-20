@@ -1,11 +1,7 @@
 const { AuditLogEvent, EmbedBuilder } = require("discord.js");
 const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handlePruneAction: antiNukeHandlePruneAction } = require("../Services/Moderation/antiNukeService");
-const {
-  resolveModLogChannel,
-  formatResponsible,
-  nowDiscordTs,
-} = require("../Utils/Logging/modAuditLogUtils");
+const { resolveModLogChannel, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 
 module.exports = {
   name: "guildAuditLogEntryCreate",

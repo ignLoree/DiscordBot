@@ -1,10 +1,4 @@
-﻿const {
-  EmbedBuilder,
-  AttachmentBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+﻿const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 

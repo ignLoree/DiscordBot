@@ -1,19 +1,7 @@
-const {
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const suggestion = require("../../Schemas/Suggestion/suggestionSchema.js");
 const IDs = require("../../Utils/Config/ids");
-const {
-  addExpWithLevel,
-  getLevelInfo,
-  getTotalExpForLevel,
-} = require("../../Services/Community/expService");
+const { addExpWithLevel, getLevelInfo, getTotalExpForLevel, } = require("../../Services/Community/expService");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 
 const STAFF_ACCEPT_BUTTON_ID = "suggestion_staff_accept";

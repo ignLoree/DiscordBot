@@ -1,29 +1,11 @@
-﻿const {
-  EmbedBuilder,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-  PermissionFlagsBits,
-} = require("discord.js");
+﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
 const { safeReply: safeReplyHelper } = require("../../Utils/Moderation/reply");
 const {
   applyDefaultFooterToEmbeds,
 } = require("../../Utils/Embeds/defaultFooter");
-const {
-  checkSlashPermission,
-  getSlashRequiredRoles,
-  buildGlobalPermissionDeniedEmbed,
-} = require("../../Utils/Moderation/commandPermissions");
-const {
-  getUserCommandCooldownSeconds,
-  consumeUserCooldown,
-} = require("../../Utils/Moderation/commandCooldown");
-const {
-  buildCooldownErrorEmbed,
-  buildBusyCommandErrorEmbed,
-  buildCommandTimeoutErrorEmbed,
-  buildInternalCommandErrorEmbed,
-} = require("../../Utils/Moderation/commandErrorEmbeds");
+const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../../Utils/Moderation/commandPermissions");
+const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../../Utils/Moderation/commandCooldown");
+const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");

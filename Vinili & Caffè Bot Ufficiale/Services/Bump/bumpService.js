@@ -1,9 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const DisboardBump = require("../../Schemas/Disboard/disboardBumpSchema");
-const {
-  DiscadiaBump,
-  DiscadiaVoter,
-} = require("../../Schemas/Discadia/discadiaSchemas");
+const { DiscadiaBump, DiscadiaVoter, } = require("../../Schemas/Discadia/discadiaSchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const discadiaVoteTimers = new Map();

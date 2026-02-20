@@ -2,18 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  parseDuration,
-  formatDuration,
-} = require("../../Utils/Moderation/moderation");
-const {
-  parseCommandTokenList,
-  parseRevokeTokenList,
-  grantTemporaryCommandPermissions,
-  revokeTemporaryCommandPermissions,
-  clearTemporaryCommandPermissionsForUser,
-  listTemporaryCommandPermissionsForUser,
-} = require("../../Utils/Moderation/temporaryCommandPermissions");
+const { parseDuration, formatDuration, } = require("../../Utils/Moderation/moderation");
+const { parseCommandTokenList, parseRevokeTokenList, grantTemporaryCommandPermissions, revokeTemporaryCommandPermissions, clearTemporaryCommandPermissionsForUser, listTemporaryCommandPermissionsForUser, } = require("../../Utils/Moderation/temporaryCommandPermissions");
 const IDs = require("../../Utils/Config/ids");
 
 const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");

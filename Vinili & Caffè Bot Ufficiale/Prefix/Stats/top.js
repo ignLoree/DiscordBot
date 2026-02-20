@@ -1,29 +1,12 @@
-﻿const {
-  AttachmentBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  StringSelectMenuBuilder,
-  ChannelType,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+﻿const { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const {
   getServerOverviewStats,
 } = require("../../Services/Community/activityService");
 const { InviteTrack } = require("../../Schemas/Community/communitySchemas");
-const {
-  renderTopStatisticsCanvas,
-  renderTopLeaderboardPageCanvas,
-} = require("../../Utils/Render/activityCanvas");
-const {
-  upsertChannelSnapshot,
-  syncGuildChannelSnapshots,
-  getChannelSnapshotMap,
-} = require("../../Utils/Community/channelSnapshotUtils");
+const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas, } = require("../../Utils/Render/activityCanvas");
+const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap, } = require("../../Utils/Community/channelSnapshotUtils");
 
 const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set(
   [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
