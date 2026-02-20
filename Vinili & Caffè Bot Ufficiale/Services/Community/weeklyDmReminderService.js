@@ -231,6 +231,30 @@ const defaultPool = [
     title: "Focus community",
     description: "Passa in chat, forum e poll: tre piccoli passi che migliorano davvero l'esperienza generale.",
   },
+  {
+    title: "Candidature staff aperte",
+    description: "Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.",
+  },
+  {
+    title: "Candidati con criterio",
+    description: `Prima di candidarti, leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")} e prepara una richiesta chiara.`,
+  },
+  {
+    title: "Percorso staff",
+    description: "Se punti allo staff, inizia mostrando presenza utile, comportamento corretto e collaborazione con la community.",
+  },
+  {
+    title: "Partner Manager",
+    description: `Se ti interessa il percorso Partner Manager, consulta indicazioni e canali dedicati prima di candidarti.`,
+  },
+  {
+    title: "Candidatura efficace",
+    description: "Una buona candidatura è concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.",
+  },
+  {
+    title: "Preparazione candidatura",
+    description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.",
+  },
 ];
 let loopHandle = null;
 let state = null;
