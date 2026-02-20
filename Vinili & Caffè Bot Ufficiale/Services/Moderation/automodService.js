@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
+const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 const USER_STATE = new Map();
@@ -189,7 +190,7 @@ const DEFAULT_AUTOMOD_RUNTIME = {
       inviteLinksEnabled: true,
     },
     ticket: {
-      exempt: false,
+      exempt: true,
       heatMultiplier: 0.6,
       mentionsEnabled: false,
       attachmentsEnabled: false,
@@ -518,6 +519,8 @@ function isTicketLikeCategory(category) {
 }
 
 function isTicketLikeChannel(channel) {
+  if (!channel) return false;
+  if (isChannelInTicketCategory(channel)) return true;
   const channelName = String(channel?.name || "").toLowerCase().trim();
   if (channelName.includes("ticket")) return true;
   const parent = channel?.parent || null;

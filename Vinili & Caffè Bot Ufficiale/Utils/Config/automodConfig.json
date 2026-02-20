@@ -36,7 +36,7 @@
       "inviteLinksEnabled": true
     },
     "ticket": {
-      "exempt": false,
+      "exempt": true,
       "heatMultiplier": 0.6,
       "mentionsEnabled": false,
       "attachmentsEnabled": false,
