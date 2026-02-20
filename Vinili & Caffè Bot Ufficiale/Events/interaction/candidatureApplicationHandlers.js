@@ -445,17 +445,11 @@ function buildModal(type, step) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId(q.id)
-        .setLabel(
-          String(q.text || q.modalLabel || "Domanda")
-            .replace(/\*\*/g, "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 45),
-        )
+        .setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45))
         .setStyle(q.style || TextInputStyle.Paragraph)
         .setRequired(true)
         .setPlaceholder(
-          String(q.placeholder || q.modalLabel || "Rispondi qui")
+          String(q.placeholder || q.text || "Rispondi qui")
             .replace(/\s+/g, " ")
             .trim()
             .slice(0, 100),
