@@ -24,6 +24,22 @@ const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED_TEXT =
   "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
 
+if (!EmbedBuilder.prototype.__vcDividerPatched) {
+  const originalToJSON = EmbedBuilder.prototype.toJSON;
+  EmbedBuilder.prototype.toJSON = function patchedToJSON(...args) {
+    if (!this?.data?.image?.url) {
+      this.setImage(DIVIDER_URL);
+    }
+    return originalToJSON.apply(this, args);
+  };
+  Object.defineProperty(EmbedBuilder.prototype, "__vcDividerPatched", {
+    value: true,
+    configurable: false,
+    enumerable: false,
+    writable: false,
+  });
+}
+
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
 
