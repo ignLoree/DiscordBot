@@ -14,6 +14,8 @@ const discadiaVoterSchema = new Schema({
   lastVoteAt: { type: Date, required: true },
   lastRemindedAt: { type: Date, default: null },
   voteCount: { type: Number, default: 0 },
+  voteMilestoneGranted: { type: [Number], default: [] },
+  voteMilestoneNearReminded: { type: [Number], default: [] },
 });
 discadiaVoterSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
