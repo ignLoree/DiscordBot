@@ -10,19 +10,11 @@ const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED_TEXT =
   "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
 
-if (!global.__vcEmbedToJSONOriginal) {
-  global.__vcEmbedToJSONOriginal = EmbedBuilder.prototype.toJSON;
-}
-EmbedBuilder.prototype.toJSON = function patchedToJSON(...args) {
-  if (!this?.data?.image?.url) this.setImage(DIVIDER_URL);
-  return global.__vcEmbedToJSONOriginal.apply(this, args);
-};
-
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
 
   if (interaction.customId == "sanzioni") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:reportmessage:1443670575376765130> Ogni staffer per sanzionare dovrà __seguire__ <#1329080096681758797>, chi non lo farà **riceverà** una __valutazione negativa__.
 
             > <a:VC_Arrow:1448672967721615452> **__LIMITI SETTIMANALI SULLE SANZIONI__**
@@ -36,7 +28,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "warnstaff") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:banhammer:1443651875441217639>  I **warn staff** vengono __assegnati__ dopo **3 valutazioni negative**. Raggiunti i \`2\` **warn staff** si verrà depexati al ruolo precedente. **__(Per i Mod sarà depex completo)__**
 
                     > L'<@&1442568894349840435> può decidere di grazie qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verrà depexato **__completamente__**
@@ -47,7 +39,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "valutazioni") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<a:1370everythingisstable:1444006799643508778> **__VALUTAZIONI POSITIVE__**
                     <a:questionexclaimanimated:1443660299994533960> Le **valutazioni positive** aumentano la Possibilità  di essere **pexati** e si possono **ottenere** generando un'__attività__ **superiore** a quella richiesta nei _limiti settimanali_ o facendo qualcosa per dare un **vantaggio** al __server__.
 
@@ -62,7 +54,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "pause") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:Clock:1330530065133338685> Vinili & Caffè presenta un **sistema** di **\`pause\`** _sofisticato_, infatti è tutto __organizzato__ per **garantire** al meglio l'__attività__ del server.
 
                 > Per __richiedere__ una pausa basta fare il comando **</pausa request:1215398004182491149>** in <#1442569262689554444>.
@@ -94,7 +86,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "limiti") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:infoglowingdot:1443660296823767110> I **\`limiti settimanali\`** sono dei **messaggi** e delle **ore di vocali** che entro una __settimana__ si devono __raggiungere__.
 
                 > <:attentionfromvega:1443651874032062505> **Superare** i limiti di __poco__ potrebbe comportare a un **depex**, mentre **superarli** di __tanto__ **__non garantisce__** un **pex**
@@ -121,7 +113,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "regolamento") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:dot:1443660294596329582> **Rispettare** le regole (<#1442569111119990887>) del server;
 
             <:dot:1443660294596329582> __Non__ **chiedere** pex _continuamente_;
@@ -142,7 +134,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "generalimoderazione") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:rules:1443307208543703131> **__Regola \`1.1\`__**
                 <:VC_Reply:1468262952934314131> Sanzione: **Ban**
 
@@ -167,7 +159,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "testualimoderazione") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:rules:1443307208543703131> **__Regola \`2.1\`__**
                 <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Mute __18h__**
                 <:VC_Reply:1468262952934314131> 2° Sanzione: **Ban**
@@ -197,7 +189,7 @@ async function handleStaffButtons(interaction) {
   }
 
   if (interaction.customId == "vocalimoderazione") {
-    const embed = new EmbedBuilder().setColor("#6f4e37")
+    const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<:rules:1443307208543703131> **__Regola \`3.1\`__**
                 <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
                 <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __16h__**
@@ -248,11 +240,18 @@ async function handleStaffButtons(interaction) {
 }
 
 function buildDeniedEmbedFromGate(gate, kind) {
-  if (gate.reason === "not_owner") return buildGlobalNotYourControlEmbed();
+  let embed = null;
+  if (gate.reason === "not_owner") embed = buildGlobalNotYourControlEmbed();
   if (gate.reason === "mono_guild") {
-    return buildGlobalPermissionDeniedEmbed([], kind, MONO_GUILD_DENIED_TEXT);
+    embed = buildGlobalPermissionDeniedEmbed([], kind, MONO_GUILD_DENIED_TEXT);
   }
-  return buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], kind);
+  if (!embed) {
+    embed = buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], kind);
+  }
+  if (typeof embed?.setImage === "function" && !embed?.data?.image?.url) {
+    embed.setImage(DIVIDER_URL);
+  }
+  return embed;
 }
 
 async function enforceInteractionPermissions(interaction) {
@@ -336,7 +335,7 @@ async function sendPrivacyViewsLeaderboard(interaction, Model, title) {
   });
   const footerText = `Classifica richiesta da ${interaction.user.username} • Oggi alle ${time}`;
 
-  const embed = new EmbedBuilder()
+  const embed = new EmbedBuilder().setImage(DIVIDER_URL)
     .setColor("#6f4e37")
     .setTitle(title)
     .setDescription(description)
@@ -510,7 +509,7 @@ module.exports = {
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
       } catch { }
-      const embed = new EmbedBuilder()
+      const embed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle("Comando sbloccato")
         .setDescription(
@@ -541,7 +540,7 @@ module.exports = {
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
       } catch { }
-      const embed = new EmbedBuilder()
+      const embed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle("Comando sbloccato")
         .setDescription(
@@ -559,7 +558,7 @@ module.exports = {
       const originChannelId = parts[2] || null;
       const originMessageId = parts[3] || null;
       if (interaction.user.id !== targetId) {
-        const denied = new EmbedBuilder()
+        const denied = new EmbedBuilder().setImage(DIVIDER_URL)
           .setColor("#e74c3c")
           .setTitle("<:vegax:1443934876440068179> Accesso negato")
           .setDescription("Solo l'autore della citazione può rimuoverla.");
@@ -571,7 +570,7 @@ module.exports = {
         hour: "2-digit",
         minute: "2-digit",
       });
-      const removedEmbed = new EmbedBuilder()
+      const removedEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle("🗑️ Citazione rimossa")
         .setDescription("Questa citazione è stata rimossa dall'autore.")
@@ -617,7 +616,7 @@ module.exports = {
 
     if (interaction.customId == "metodi") {
       const embeds = [
-        new EmbedBuilder().setColor("#6f4e37")
+        new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
           .setDescription(`<:Money:1330544713463500970> Per effettuare una sponsor con __Vinili & Caffè__ ci sono due modalità: **pagando** oppure esponendo una **collaborazione** in un <#${IDs.channels.ticket}> \`Terza Categoria\`.
 
                     <:dot:1443660294596329582> **€1,50** <a:VC_Arrow:1448672967721615452> sponsor per **2** settimane
@@ -628,7 +627,7 @@ module.exports = {
     }
     if (interaction.customId == "ping") {
       const embeds = [
-        new EmbedBuilder().setColor("#6f4e37")
+        new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
           .setDescription(`<:Discord_Mention:1329524304790028328> I **ping** variano in base al __numero__ di **membri** del server.
 
                     <:dot:1443660294596329582> Meno di **500** <a:VC_Arrow:1448672967721615452> \`no ping\`
@@ -639,12 +638,12 @@ module.exports = {
     }
 
     if (interaction.customId == "info_rules") {
-      const commonEmbed = new EmbedBuilder()
+      const commonEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setDescription(
           `<:5751attentionfromvega:1443651874032062505> __Lo staff si riserva il diritto di cambiare sanzioni e regole in base alla situazione.__`,
         );
-      const generalEmbed = new EmbedBuilder().setColor("#6f4e37")
+      const generalEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
         .setDescription(`
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.1\`**
         <:VC_Reply:1468262952934314131> **Rispettare** i [__ToS__](https://discord.com/terms) e le [__Linee Guida__](https://discord.com/terms) di Discord.
@@ -660,7 +659,7 @@ module.exports = {
 
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.5\`**
         <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dal server.`);
-      const textEmbed = new EmbedBuilder().setColor("#6f4e37")
+      const textEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
         .setDescription(`<:rules:1443307208543703131> **\`REGOLA TESTUALE 2.1\`**
                 <:VC_Reply:1468262952934314131> É __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
 
@@ -675,7 +674,7 @@ module.exports = {
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.5\`**
         <:VC_Reply:1468262952934314131> É __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.`);
-      const voiceEmbed = new EmbedBuilder().setColor("#6f4e37")
+      const voiceEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
         .setDescription(`<:rules:1443307208543703131> **\`REGOLA VOCALE 3.1\`**
                 <:VC_Reply:1468262952934314131> É __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
 
@@ -703,7 +702,7 @@ module.exports = {
     }
 
     if (interaction.customId == "info_donations") {
-      const donations = new EmbedBuilder()
+      const donations = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setAuthor({
           name: `Supporta il server con l'acquisto di un VIP o una donazione!`,
@@ -729,7 +728,7 @@ module.exports = {
         )
         .setImage(DIVIDER_URL);
 
-      const vip = new EmbedBuilder()
+      const vip = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setDescription(
           [
@@ -754,7 +753,7 @@ module.exports = {
         )
         .setImage(DIVIDER_URL);
 
-      const ticket = new EmbedBuilder()
+      const ticket = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(`Acquista ora!`)
         .setDescription(
@@ -786,7 +785,7 @@ module.exports = {
     };
 
     if (interaction.customId == "info_verifica") {
-      const verifyEmbed = new EmbedBuilder()
+      const verifyEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<a:VC_Verified:1448687631109197978>・**__Verificati per ottenere vantaggi unici__**",
@@ -807,7 +806,7 @@ module.exports = {
     }
 
     const buildBoostLevelsPayload = () => {
-      const boostEmbed = new EmbedBuilder()
+      const boostEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<a:VC_HeartWhite:1448673535253024860>・**__Potenzia il server e sblocca vantaggi unici__**",
@@ -828,7 +827,7 @@ module.exports = {
         )
         .setImage(DIVIDER_URL);
 
-      const howtoEmbed = new EmbedBuilder()
+      const howtoEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**",
@@ -853,7 +852,7 @@ module.exports = {
     };
 
     const buildLevelsPayload = () => {
-      const levelEmbed = new EmbedBuilder()
+      const levelEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<:exp:1470067108543987846>・**__Sali di livello e sblocca vantaggi sempre migliori__**",
@@ -936,7 +935,7 @@ module.exports = {
           text: "Se esci dal server o cambi account, i livelli ti verranno tolti e NON rimessi.",
         });
 
-      const howtoEmbed = new EmbedBuilder()
+      const howtoEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<:nitroboost:1470064881674883326>・**__Come creare ruolo personalizzato e vocale privata__**",
@@ -988,7 +987,7 @@ module.exports = {
     }
 
     if (interaction.customId == "info_badges_roles") {
-      const badgesEmbed = new EmbedBuilder()
+      const badgesEmbed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<:pinkstar:1470064804835229768>・**__Ottieni un ruolo speciale per il tuo profilo !__**",
@@ -1116,7 +1115,7 @@ module.exports = {
         )
         : ["Nessun moltiplicatore attivo."];
 
-      const embed = new EmbedBuilder()
+      const embed = new EmbedBuilder().setImage(DIVIDER_URL)
         .setColor("#6f4e37")
         .setTitle(
           "<:VC_EXP:1468714279673925883> Informazioni sui moltiplicatori",
@@ -1156,3 +1155,4 @@ module.exports = {
     }
   },
 };
+
