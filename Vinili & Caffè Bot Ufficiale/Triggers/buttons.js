@@ -995,6 +995,8 @@ module.exports = {
           [
             "I badge sono dei ruoli __aggiuntivi__ che ti permettono di sbloccare vantaggi e permessi all'interno del server. Possono essere ottenuti in diversi modi e tutti danno vantaggi diversi.",
             "",
+            "<:VC_Dot:1443932948599668746> ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── <:VC_Dot:1443932948599668746>",
+            "",
             "<a:VC_Arrow:1448672967721615452> **LISTA DEI BADGES:**",
           ].join("\n"),
         )
