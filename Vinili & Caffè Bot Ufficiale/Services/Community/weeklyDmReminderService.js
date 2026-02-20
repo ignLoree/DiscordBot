@@ -272,6 +272,109 @@ const defaultPool = [
     description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
   },
 ];
+const MASSIVE_REMINDER_TOPICS = [
+  {
+    title: "Panoramica server",
+    line: `Resta aggiornato passando da ${channelMention(IDs.channels.info, "canale info")} e ${channelMention(IDs.channels.news, "canale news")}.`,
+  },
+  {
+    title: "Comandi bot",
+    line: `Per usare bene il bot parti da +help e prova i comandi in ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+  },
+  {
+    title: "Crescita livelli",
+    line: "Con costanza in chat e vocale migliori il profilo e sblocchi vantaggi progressivi.",
+  },
+  {
+    title: "Forum community",
+    line: `Nel forum ${channelMention(IDs.channels.forum, "forum")} puoi aprire discussioni ordinate e utili.`,
+  },
+  {
+    title: "Suggerimenti utili",
+    line: `Le idee piu chiare in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")} vengono valutate meglio.`,
+  },
+  {
+    title: "Ticket supporto",
+    line: `Per problemi o dubbi usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}.`,
+  },
+  {
+    title: "News e avvisi",
+    line: `Controlla ${channelMention(IDs.channels.news, "canale news")} per non perdere novita importanti.`,
+  },
+  {
+    title: "Quote e contenuti",
+    line: `Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+  },
+  {
+    title: "Poll ed eventi",
+    line: `Partecipare in ${channelMention(IDs.channels.polls, "canale polls")} aiuta il server a scegliere meglio.`,
+  },
+  {
+    title: "Counting e attivita leggere",
+    line: `Un passaggio in ${channelMention(IDs.channels.counting, "canale counting")} mantiene il server vivo anche nei momenti lenti.`,
+  },
+  {
+    title: "Ruoli e colori",
+    line: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} trovi personalizzazione e vantaggi.`,
+  },
+  {
+    title: "Verifica accesso",
+    line: `Ricorda la verifica in ${channelMention(IDs.channels.verify, "canale verify")} per avere accesso completo.`,
+  },
+  {
+    title: "Media e condivisioni",
+    line: `In ${channelMention(IDs.channels.media, "canale media")} punta sempre su contenuti puliti e utili.`,
+  },
+  {
+    title: "Classifiche bot",
+    line: "Usa +rank, +classifica weekly e +classifica alltime per tracciare la tua crescita.",
+  },
+  {
+    title: "Candidature",
+    line: `Se vuoi candidarti, prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
+  },
+  {
+    title: "Staff pagato",
+    line: `Per il percorso staff pagato leggi i requisiti in ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}.`,
+  },
+];
+const MASSIVE_REMINDER_ANGLES = [
+  "Obiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.",
+  "Suggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.",
+  "Focus utile: qualita prima della quantita nelle interazioni.",
+  "Promemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.",
+  "Consiglio: una presenza costante vale piu di attivita casuale concentrata in un giorno.",
+  "Tip operativo: controlla periodicamente aggiornamenti e funzioni nuove.",
+  "Azione consigliata: contribuisci con un messaggio utile o un feedback concreto.",
+];
+const MASSIVE_REMINDER_CLOSINGS = [
+  "Se vuoi, questa settimana prova a seguire questo punto per primo.",
+  "Piccoli miglioramenti continui portano risultati reali.",
+  "Contribuire in modo ordinato aiuta davvero tutta la community.",
+  "Un uso corretto di canali e comandi rende tutto piu semplice.",
+  "Anche un solo contributo utile al giorno fa differenza.",
+];
+
+function buildMassiveReminderPool() {
+  const pool = [];
+  let index = 1;
+  for (const topic of MASSIVE_REMINDER_TOPICS) {
+    for (const angle of MASSIVE_REMINDER_ANGLES) {
+      const closing =
+        MASSIVE_REMINDER_CLOSINGS[
+          (index - 1) % MASSIVE_REMINDER_CLOSINGS.length
+        ];
+      pool.push({
+        title: `${topic.title} ${index}`,
+        description: `${topic.line}\n${angle}\n${closing}`,
+      });
+      index += 1;
+    }
+  }
+  return pool;
+}
+
+const MASSIVE_REMINDER_POOL = buildMassiveReminderPool();
 let loopHandle = null;
 let state = null;
 
@@ -521,7 +624,10 @@ async function buildWeeklyJobs(client, guild) {
     maxRecipients,
   );
   const selected = pickRandomDistinct(recipients, targetCount);
-  const pool = Array.isArray(cfg.pool) && cfg.pool.length ? cfg.pool : defaultPool;
+  const pool =
+    Array.isArray(cfg.pool) && cfg.pool.length
+      ? cfg.pool
+      : [...defaultPool, ...MASSIVE_REMINDER_POOL];
   const variants = buildUniqueReminderVariants(pool, selected.length);
   const dayOrder = pickRandomDistinct([0, 1, 2, 3, 4, 5, 6], 7);
   const availableVariantIndexes = variants.map((_, idx) => idx);
