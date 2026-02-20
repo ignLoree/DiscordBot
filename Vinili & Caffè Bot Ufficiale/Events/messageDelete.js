@@ -78,10 +78,25 @@ function sanitizeDeletedContentForLog(content) {
   let text = String(content || "").replace(/\r\n/g, "\n");
   text = text.replace(/^```[a-zA-Z0-9_-]*\n?/, "").replace(/\n?```$/, "");
   text = text.replace(/<a?:([a-zA-Z0-9_]+):\d+>/g, ":$1:");
-  text = text.replace(/`/g, "'").replace(/\u0000/g, "").trim();
+  text = text
+    .replace(/```+/g, "'''")
+    .replace(/`/g, "'")
+    .replace(/\u0000/g, "")
+    .replace(
+      /<:VC_right_arrow:\d+>\s+\*\*(Channel|Id|Content|Attachments|Author):\*\*/gi,
+      "",
+    )
+    .trim();
   if (!text) return "(vuoto)";
   if (text.length <= MAX_CONTENT_LOG_LENGTH) return text;
   return `${text.slice(0, MAX_CONTENT_LOG_LENGTH - 3)}...`;
+}
+
+function clampFieldValue(value, max = 1024) {
+  const text = String(value || "").trim();
+  if (!text) return "(vuoto)";
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 3)}...`;
 }
 
 function collectAttachmentNames(message) {
@@ -164,33 +179,35 @@ async function sendDeleteLog(message) {
     `<:VC_right_arrow:1473441155055096081> **Id:** \`${message.id || "sconosciuto"}\``,
   ];
 
-  if (hasContent) {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
-    lines.push("```txt");
-    lines.push(sanitizeDeletedContentForLog(content));
-    lines.push("```");
-  } else {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Content:** `(vuoto)`");
-  }
-
-  if (hasAttachments) {
-    lines.push(
-      `<:VC_right_arrow:1473441155055096081> **Attachments:** [ ${attachmentNames.join(", ")} ]`,
-    );
-  } else {
-    lines.push("<:VC_right_arrow:1473441155055096081> **Attachments:** `[ nessuno ]`");
-  }
-
-  if (message?.author) {
-    lines.push(
-      `<:VC_right_arrow:1473441155055096081> **Author:** ${buildAuthorLabel(message)}`,
-    );
-  }
+  const contentPreview = hasContent
+    ? sanitizeDeletedContentForLog(content)
+    : "(vuoto)";
 
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Message Deleted")
-    .setDescription(lines.join("\n"));
+    .setDescription(lines.join("\n"))
+    .addFields({
+      name: "Content",
+      value: clampFieldValue(contentPreview),
+      inline: false,
+    });
+
+  if (hasAttachments) {
+    embed.addFields({
+      name: "Attachments",
+      value: clampFieldValue(`[ ${attachmentNames.join(", ")} ]`),
+      inline: false,
+    });
+  }
+
+  if (message?.author) {
+    embed.addFields({
+      name: "Author",
+      value: clampFieldValue(buildAuthorLabel(message)),
+      inline: false,
+    });
+  }
 
   const preview = firstImageAttachment(message);
   if (preview?.url) {
