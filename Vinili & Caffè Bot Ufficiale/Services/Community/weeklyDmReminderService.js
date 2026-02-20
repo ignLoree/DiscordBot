@@ -318,10 +318,6 @@ const MASSIVE_REMINDER_TOPICS = [
     line: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} trovi personalizzazione e vantaggi.`,
   },
   {
-    title: "Verifica accesso",
-    line: `Ricorda la verifica in ${channelMention(IDs.channels.verify, "canale verify")} per avere accesso completo.`,
-  },
-  {
     title: "Media e condivisioni",
     line: `In ${channelMention(IDs.channels.media, "canale media")} punta sempre su contenuti puliti e utili.`,
   },
@@ -412,6 +408,12 @@ function saveState() {
 
 function getCfg(client) {
   return client?.config?.weeklyDmReminder || {};
+}
+
+function getMinMemberAgeDays(client) {
+  const raw = Number(getCfg(client).minMemberAgeDays);
+  if (!Number.isFinite(raw)) return 2;
+  return Math.max(0, raw);
 }
 
 function getTimeZone(client) {
@@ -581,11 +583,20 @@ function isStaffMember(member) {
   return STAFF_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId));
 }
 
+function isMemberOldEnough(member, minAgeDays) {
+  const minMs = Math.max(0, Number(minAgeDays || 0)) * 24 * 60 * 60 * 1000;
+  if (minMs <= 0) return true;
+  const joinedAt = Number(member?.joinedTimestamp || 0);
+  if (!joinedAt) return false;
+  return Date.now() - joinedAt >= minMs;
+}
+
 async function buildWeeklyJobs(client, guild) {
   await guild.members.fetch().catch(() => {});
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const cfg = getCfg(client);
   const timeZone = getTimeZone(client);
+  const minMemberAgeDays = getMinMemberAgeDays(client);
   const startHour = clamp(Number(cfg.startHour || 10), 0, 23);
   const endHour = clamp(Number(cfg.endHour || 22), startHour, 23);
   const ratio = clamp(Number(cfg.targetRatio || 0.1), 0.01, 1);
@@ -610,6 +621,7 @@ async function buildWeeklyJobs(client, guild) {
   for (const member of guild.members.cache.values()) {
     if (!member || member.user?.bot) continue;
     if (isStaffMember(member)) continue;
+    if (!isMemberOldEnough(member, minMemberAgeDays)) continue;
     const id = String(member.id);
     if (noDmSet.has(id)) continue;
     if (blockedUsers.has(id)) continue;
@@ -723,6 +735,7 @@ async function sendDueJobs(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+  const minMemberAgeDays = getMinMemberAgeDays(client);
   const now = Date.now();
 
   for (const job of entry.jobs) {
@@ -745,6 +758,10 @@ async function sendDueJobs(client, guild) {
     const member = guild.members.cache.get(userId) || null;
     if (!member) {
       job.skipped = "not-in-guild";
+      continue;
+    }
+    if (!isMemberOldEnough(member, minMemberAgeDays)) {
+      job.skipped = "member-too-new";
       continue;
     }
     if (isStaffMember(member)) {
