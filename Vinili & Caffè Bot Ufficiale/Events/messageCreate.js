@@ -10,7 +10,7 @@ const { recordReminderActivity } = require("../Services/Community/chatReminderSe
 const { recordMessageActivity } = require("../Services/Community/activityService");
 const { addExpWithLevel, shouldIgnoreExpForMember, } = require("../Services/Community/expService");
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
-const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
+const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
 const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
@@ -728,8 +728,11 @@ module.exports = {
     if (!permissionResult?.allowed) {
       if (permissionResult?.reason === "channel" && Array.isArray(permissionResult.channels)) {
         await deleteCommandMessage();
-        const channelsList = permissionResult.channels.map((id) => `<#${id}>`).join(", ");
-        const msg = await message.channel.send({ content: `Questo comando è utilizzabile solo in ${channelsList}.` }).catch(() => null);
+        const embed = buildGlobalChannelDeniedEmbed(
+          permissionResult.channels,
+          "comando",
+        );
+        const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
         if (msg) setTimeout(() => msg.delete().catch(() => { }), 5000);
         return;
       }

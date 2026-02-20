@@ -1319,6 +1319,32 @@ function buildGlobalPermissionDeniedEmbed(
   return embed;
 }
 
+function buildGlobalChannelDeniedEmbed(
+  allowedChannelIds = [],
+  entityLabel = "comando",
+) {
+  const channels = Array.isArray(allowedChannelIds)
+    ? allowedChannelIds.filter(Boolean).map(String)
+    : [];
+  const channelsText = channels.length
+    ? channels.map((id) => `<#${id}>`).join(", ")
+    : "Nessun canale configurato.";
+
+  const embed = new EmbedBuilder()
+    .setColor("Red")
+    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
+    .setDescription(
+      `Questo ${entityLabel} è disponibile solo in canali specifici.`,
+    );
+  if (channels.length > 0) {
+    embed.addFields({
+      name: "<a:VC_Rocket:1468544312475123753> **Per sbloccarlo:**",
+      value: `Usa il comando in uno dei seguenti canali: ${channelsText}`,
+    });
+  }
+  return embed;
+}
+
 function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
@@ -1335,6 +1361,7 @@ module.exports = {
   getSlashRequiredRoles,
   getPrefixRequiredRoles,
   buildGlobalPermissionDeniedEmbed,
+  buildGlobalChannelDeniedEmbed,
   buildGlobalNotYourControlEmbed,
   hasAnyRole,
 };

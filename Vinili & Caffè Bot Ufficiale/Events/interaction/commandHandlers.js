@@ -3,7 +3,7 @@ const { safeReply: safeReplyHelper } = require("../../Utils/Moderation/reply");
 const {
   applyDefaultFooterToEmbeds,
 } = require("../../Utils/Embeds/defaultFooter");
-const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../../Utils/Moderation/commandPermissions");
+const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed, } = require("../../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../../Utils/Moderation/commandCooldown");
 const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
@@ -105,9 +105,12 @@ async function handleSlashCommand(interaction, client) {
       slashPermission?.reason === "channel" &&
       Array.isArray(slashPermission.channels)
     ) {
-      const list = slashPermission.channels.map((id) => `<#${id}>`).join(", ");
+      const embed = buildGlobalChannelDeniedEmbed(
+        slashPermission.channels,
+        "comando",
+      );
       return interaction.reply({
-        content: `Questo comando è utilizzabile solo in ${list}.`,
+        embeds: [embed],
         flags: 1 << 6,
       });
     }
