@@ -135,7 +135,7 @@ module.exports = {
       if (removedPointsChannel) {
         await removedPointsChannel.send({
           content: `
-<:Discord_Mention:1329524304790028328> ${targetUser}  
+<:Discord_Mention:1329524304790028328> ${targetUser}
 <:discordchannelwhite:1443308552536985810> ${reason}
 <:partneredserverowner:1443651871125409812> ${messageLink}`,
         });

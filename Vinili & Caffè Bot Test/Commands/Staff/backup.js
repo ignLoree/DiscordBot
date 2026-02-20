@@ -255,7 +255,7 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
       {
         name: "Integrity",
         value: checksum
-          ? `\`SHA256\` payload: \`${String(checksum.payload || "").slice(0, 12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed || "").slice(0, 12)}...\`` 
+          ? `\`SHA256\` payload: \`${String(checksum.payload || "").slice(0, 12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed || "").slice(0, 12)}...\``
           : "N/A",
         inline: false,
       },
@@ -703,10 +703,3 @@ module.exports = {
     }
   },
 };
-
-
-
-
-
-
-

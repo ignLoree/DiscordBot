@@ -876,5 +876,3 @@ module.exports = {
   getCurrentWeekKey,
   ROLE_MULTIPLIERS,
 };
-
-

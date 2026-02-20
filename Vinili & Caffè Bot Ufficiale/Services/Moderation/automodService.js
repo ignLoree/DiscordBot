@@ -2269,5 +2269,3 @@ module.exports = {
   getAutoModConfigSnapshot,
   updateAutoModConfig,
 };
-
-

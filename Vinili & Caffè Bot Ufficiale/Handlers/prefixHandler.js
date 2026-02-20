@@ -194,4 +194,3 @@ module.exports = (client) => {
     client.logs.success("[FUNCTION] Successfully reloaded prefix commands.");
   };
 };
-

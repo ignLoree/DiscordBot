@@ -128,6 +128,3 @@ function startAutoBackupLoop(client) {
 module.exports = {
   startAutoBackupLoop,
 };
-
-
-

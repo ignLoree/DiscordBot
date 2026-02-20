@@ -528,4 +528,3 @@ module.exports = {
     if (subcommand === "remove") return handleRemove(message);
   },
 };
-

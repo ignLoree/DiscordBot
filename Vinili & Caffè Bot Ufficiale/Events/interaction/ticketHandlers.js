@@ -2087,5 +2087,3 @@ async function pinFirstTicketMessage(channel, message) {
 }
 
 module.exports = { handleTicketInteraction };
-
-

@@ -95,4 +95,3 @@ for (const item of badFiles) {
 }
 console.log(`Totale file: ${badFiles.length}`);
 process.exit(1);
-

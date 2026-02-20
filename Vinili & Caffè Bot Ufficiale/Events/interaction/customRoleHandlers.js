@@ -1273,4 +1273,3 @@ module.exports = {
   createCustomRoleGrantRequest,
   getPendingRoleGrantByToken,
 };
-

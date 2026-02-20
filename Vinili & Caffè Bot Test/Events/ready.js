@@ -251,4 +251,3 @@ module.exports = {
     await handleRestartNotification(activeClient);
   },
 };
-

@@ -612,7 +612,7 @@ function buildGlobalPermissionDeniedEmbed(
   const description =
     customDescription != null
       ? customDescription
-      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
+      : `Questo ${entityLabel} ï¿½ riservato ad una categoria di utenti specifici.`;
 
   const embed = new EmbedBuilder()
     .setColor("Red")
@@ -632,7 +632,7 @@ function buildGlobalNotYourControlEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> **Accesso negato**")
-    .setDescription("Questo controllo non è associato al tuo comando.");
+    .setDescription("Questo controllo non ï¿½ associato al tuo comando.");
 }
 
 module.exports = {

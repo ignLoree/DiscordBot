@@ -298,4 +298,3 @@ module.exports = {
     await safeMessageReply(message, payload);
   },
 };
-

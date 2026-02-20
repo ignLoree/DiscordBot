@@ -229,4 +229,3 @@ async function handleBackupInfoInteraction(interaction) {
 module.exports = {
   handleBackupInfoInteraction,
 };
-

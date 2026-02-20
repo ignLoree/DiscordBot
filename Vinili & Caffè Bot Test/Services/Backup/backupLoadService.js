@@ -1795,8 +1795,8 @@ async function handleBackupLoadInteraction(interaction) {
                 `Backup ID: \`${status.backupId}\``,
                 `Started: <t:${startedAt}:R>`,
                 `Phase: \`${status.phase}\``,
-                `Processed items: **${status.processed}**`, 
-                `Cancel requested: **${status.cancelRequested ? "yes" : "no"}**`, 
+                `Processed items: **${status.processed}**`,
+                `Cancel requested: **${status.cancelRequested ? "yes" : "no"}**`,
                 `Messages limit: \`${formatMessagesLimit(status.messagesLimit)}\``,
                 status.checkpointId ? `Checkpoint: \`${status.checkpointId}\`` : null,
               ].filter(Boolean).join("\n"),
@@ -1844,12 +1844,3 @@ module.exports = {
   runBackupDryRun,
   buildDryRunEmbed,
 };
-
-
-
-
-
-
-
-
-

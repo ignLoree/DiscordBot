@@ -257,5 +257,3 @@ module.exports = {
   renderList,
   handleBackupListInteraction,
 };
-
-

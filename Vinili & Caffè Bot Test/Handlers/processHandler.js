@@ -32,4 +32,3 @@ module.exports = function installProcessHandlers() {
 
   logs.success("[PROCESS] Process handlers loaded.");
 };
-

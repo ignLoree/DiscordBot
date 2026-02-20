@@ -235,7 +235,7 @@ async function runStaffEmbedAuto(client) {
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<a:questionexclaimanimated:1443660299994533960>  **__COME FUNZIONA?__**
 
-> Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li riceveranno sia un __**High Staff**__ che un __**Low Staff**__. 
+> Il premio _Staffer del Mese_ serve per premiare lo staffer **migliore** del \`mese\`. I premi li riceveranno sia un __**High Staff**__ che un __**Low Staff**__.
 
 <a:vegarightarrow:1443673039156936837> Il premio viene deciso in base all'**attività** e al **contributo** che lo staffer ha dato al server.
 
@@ -247,7 +247,7 @@ async function runStaffEmbedAuto(client) {
       .setImage(DIVIDER_URL),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<:discordstaff:1443651872258003005> La **__guida staff__** di __Vinili & Caffè__ serve per portar **ordine** tra lo __staff__, infatti son presenti delle **__regole__** che __tutti__ dovranno **rispettare**, in __caso__ vengano \`trasgredite\`, potreste andare in contro a **__sanzioni__**, come **__\`valutazioni negative\`__** o in casi estremi il **__\`depex\`__**.
-            
+
             > La __guida staff__ si divide in **__\`6\` sezioni__** che sono __accessibili__ **schiacciando** i \`bottoni\` sottostanti:
             <:dot:1443660294596329582> **Regolamento**
             <:dot:1443660294596329582> **Limiti Settimanali**
@@ -258,7 +258,7 @@ async function runStaffEmbedAuto(client) {
       .setImage(DIVIDER_URL),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<a:questionexclaimanimated:1443660299994533960> Per **applicare** le __sanzioni__, è necessario __attenersi__ alle **indicazioni** riportate di seguito e **consultare** le procedure disponibili __cliccando__ sui **bottoni** alla fine del messaggio.
-        
+
         <:dot:1443660294596329582> **__\`1\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** allegare le **prove** (screen, video, link di messaggi).
         <:dot:1443660294596329582> **__\`2\`__** <a:vegarightarrow:1443673039156936837> Il __numero__ della **sanzione** si basa su quante volte l'**utente** è stato **sanzionato __specificatamente__ per quella regola**.
         <:dot:1443660294596329582> **__\`3\`__** <a:vegarightarrow:1443673039156936837> Quando **sanzionate**, usate sempre l'**__articolo__** del **regolamento** infranto.
@@ -269,11 +269,11 @@ async function runStaffEmbedAuto(client) {
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.
                 > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
-                
+
                 <:dot:1443660294596329582> **__\`150\`__** partner <a:vegarightarrow:1443673039156936837> **__2__ euro** <:paypal:1329524292446191676>
                 <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>
                 <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>
-                
+
                 <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.`)
       .setImage(DIVIDER_URL),
   ];
@@ -1219,11 +1219,11 @@ async function runTicketPanelAuto(client) {
     .setDescription(
       `I ticket equivalgono a un sistema di supporto che permette di parlare direttamente con lo staff con il fine di chiedere chiarimenti, fare domande agli staffers riguardo al server, segnalare un accaduto all'interno di quest'ultimo o per altre richieste.
 
-<:VC_1:1444099819680563200> **Prima categoria** 
+<:VC_1:1444099819680563200> **Prima categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare segnalazioni, riportare dei problemi o bug, per avere delle informazioni o per qualunque altra cosa che non rientra nelle categorie sottostanti.
-<:VC_2:1444099781864722535> **Seconda categoria** 
+<:VC_2:1444099781864722535> **Seconda categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare partnership con noi.
-<:VC_3:1444099746116534282> **Terza categoria** 
+<:VC_3:1444099746116534282> **Terza categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare una donazione, per fare la "selfie verify", per richiedere una sponsor a pagamento o per parlare con un amministratore del server.
 
 <:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comportera un **warn**.`,

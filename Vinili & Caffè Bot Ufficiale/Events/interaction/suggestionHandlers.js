@@ -545,4 +545,3 @@ async function handleSuggestionVote(interaction) {
 }
 
 module.exports = { handleSuggestionVote, buildSuggestionRows };
-
