@@ -133,6 +133,15 @@ async function resolveLogChannel(guild) {
   );
 }
 
+async function sendRaw(channel, payload) {
+  if (!channel) return null;
+  const originalSend = channel.__vcOriginalSend;
+  if (typeof originalSend === "function") {
+    return originalSend.call(channel, payload);
+  }
+  return channel.send(payload);
+}
+
 async function sendDeleteLog(message) {
   const guild = message?.guild;
   if (!guild) return;
@@ -183,7 +192,7 @@ async function sendDeleteLog(message) {
     embed.setImage(preview.url);
   }
 
-  await logChannel.send({ embeds: [embed] });
+  await sendRaw(logChannel, { embeds: [embed] });
 }
 
 module.exports = {

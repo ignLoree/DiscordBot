@@ -113,6 +113,15 @@ async function resolveLogChannel(guild) {
   );
 }
 
+async function sendRaw(channel, payload) {
+  if (!channel) return null;
+  const originalSend = channel.__vcOriginalSend;
+  if (typeof originalSend === "function") {
+    return originalSend.call(channel, payload);
+  }
+  return channel.send(payload);
+}
+
 async function sendMessageEditLog(previous, updated) {
   if (!updated?.guild || !updated?.author) return;
   if (
@@ -189,7 +198,7 @@ async function sendMessageEditLog(previous, updated) {
     payload.components = [row];
   }
 
-  await logChannel.send(payload);
+  await sendRaw(logChannel, payload);
 }
 
 module.exports = {
