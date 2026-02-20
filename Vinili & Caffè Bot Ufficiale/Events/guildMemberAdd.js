@@ -889,7 +889,7 @@ async function maybeSendInviteNearRewardReminder(member, info) {
             `Quando raggiungi la soglia, ricevi ${rewardRoleText}.`,
             INFO_PERKS_CHANNEL_ID
               ? `Controlla i perks in <#${INFO_PERKS_CHANNEL_ID}>.`
-              : "Controlla il canale perks/info del server.",
+              : "Controlla il canale info del server.",
           ].join("\n"),
         ),
     ],

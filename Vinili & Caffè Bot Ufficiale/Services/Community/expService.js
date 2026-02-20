@@ -377,7 +377,7 @@ function buildPerkNearDmEmbed(member, targetLevel, roleId, missingExp) {
           `Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
             ? `Info perks: <#${PERKS_CHANNEL_ID}>`
-            : "Controlla il canale perks/info del server.",
+            : "Controlla il canale info del server.",
         ].join("\n"),
       },
     ],
