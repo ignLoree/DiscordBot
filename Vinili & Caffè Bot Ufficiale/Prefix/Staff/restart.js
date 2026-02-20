@@ -25,10 +25,27 @@ function pullLatest() {
     const repoRoot = path.resolve(process.cwd(), "..");
     if (!fs.existsSync(path.join(repoRoot, ".git"))) return;
     const branch = process.env.GIT_BRANCH || "main";
-    child_process.spawnSync("git", ["pull", "origin", branch, "--ff-only"], {
-      cwd: repoRoot,
-      stdio: "inherit",
-    });
+    const pull = child_process.spawnSync(
+      "git",
+      ["pull", "origin", branch, "--ff-only"],
+      { cwd: repoRoot, stdio: "inherit" },
+    );
+
+    if (pull.status !== 0) {
+      child_process.spawnSync("git", ["fetch", "origin", branch], {
+        cwd: repoRoot,
+        stdio: "inherit",
+      });
+      child_process.spawnSync("git", ["reset", "--hard", `origin/${branch}`], {
+        cwd: repoRoot,
+        stdio: "inherit",
+      });
+      child_process.spawnSync("git", ["clean", "-fd"], {
+        cwd: repoRoot,
+        stdio: "inherit",
+      });
+    }
+
     child_process.spawnSync(
       "git",
       ["submodule", "update", "--init", "--recursive"],
@@ -36,15 +53,14 @@ function pullLatest() {
     );
   } catch {}
 }
-
 function buildUsageEmbed() {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Comando restart")
     .setDescription(
       [
-        "`+restart full` — riavvia solo il bot Ufficiale",
-        "`+restart full both` — riavvia entrambi i bot (Ufficiale + Test)",
+        "`+restart full` â€” riavvia solo il bot Ufficiale",
+        "`+restart full both` â€” riavvia entrambi i bot (Ufficiale + Test)",
         "`+restart handlers`",
         "`+restart commands`",
         "`+restart prefix`",
@@ -142,12 +158,14 @@ module.exports = {
               .setColor("#6f4e37")
               .setDescription(
                 isFullBoth
-                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato."
-                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",
+                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando Ã¨ completato."
+                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando Ã¨ completato.",
               ),
           ],
           allowedMentions: { repliedUser: false },
         });
+
+        pullLatest();
 
         const notifyPath = path.resolve(
           process.cwd(),
@@ -248,3 +266,4 @@ module.exports = {
     }
   },
 };
+
