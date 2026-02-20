@@ -134,13 +134,21 @@ async function checkAndInstallPackages(
       client.logs.error(
         `Missing packages detected: ${missingPackages.join(", ")}`,
       );
-      for (const pkg of missingPackages) {
-        try {
-          client.logs.debug(`Installing ${pkg}...`);
-          execSync(`npm install ${pkg}`, { stdio: "inherit" });
-          client.logs.success(`${pkg} installed successfully.`);
-        } catch (err) {
-          client.logs.error(`Failed to install ${pkg}: ${err.message}`);
+      const allowAutoInstall =
+        String(process.env.AUTO_INSTALL_MISSING_PACKAGES || "0") === "1";
+      if (!allowAutoInstall) {
+        client.logs.warn(
+          "Auto install disabled (set AUTO_INSTALL_MISSING_PACKAGES=1 to enable).",
+        );
+      } else {
+        for (const pkg of missingPackages) {
+          try {
+            client.logs.debug(`Installing ${pkg}...`);
+            execSync(`npm install ${pkg}`, { stdio: "inherit" });
+            client.logs.success(`${pkg} installed successfully.`);
+          } catch (err) {
+            client.logs.error(`Failed to install ${pkg}: ${err.message}`);
+          }
         }
       }
     } else {

@@ -8,6 +8,7 @@ const timers = new Map();
 const pendingReasons = new Map();
 const runningGuilds = new Set();
 const rerunGuilds = new Set();
+let loggedDisabledNotice = false;
 
 function getCatalogPath(baseDir) {
   return path.join(baseDir, "Utils", "Config", "idsCatalog.js");
@@ -27,9 +28,23 @@ function consumeReasons(guildId) {
   return Array.from(reasons || []);
 }
 
+function isIdsAutoSyncWriteEnabled() {
+  return String(process.env.IDS_AUTOSYNC_WRITE || "0") === "1";
+}
+
 async function runIdsCatalogSync(client, guildId) {
   const gid = String(guildId || "");
   if (!gid) return { changed: false, reason: "missing-guild-id" };
+  if (!isIdsAutoSyncWriteEnabled()) {
+    if (!loggedDisabledNotice) {
+      loggedDisabledNotice = true;
+      global.logger?.info?.(
+        "[IDS AUTO SYNC] Runtime write disabled (set IDS_AUTOSYNC_WRITE=1 to enable).",
+      );
+    }
+    consumeReasons(gid);
+    return { changed: false, reason: "write-disabled" };
+  }
 
   if (runningGuilds.has(gid)) {
     rerunGuilds.add(gid);
@@ -74,6 +89,7 @@ async function runIdsCatalogSync(client, guildId) {
 }
 
 function queueIdsCatalogSync(client, guildId, reason = "event", options = {}) {
+  if (!isIdsAutoSyncWriteEnabled()) return;
   const gid = String(guildId || "");
   if (!gid) return;
   addReason(gid, reason);
