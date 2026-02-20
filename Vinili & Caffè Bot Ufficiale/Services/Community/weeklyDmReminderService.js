@@ -723,10 +723,15 @@ function createExternalReturnEmbed(guild) {
         "Se rientri, troverai tutto pronto.",
       ].join("\n"),
     )
-    .setFooter({
-      text: "Messaggio automatico periodico: se vuoi rientrare, ti aspettiamo.",
-    })
     .setTimestamp();
+}
+
+function getExternalTimelineMs(client) {
+  const firstGapDays = getExternalCooldownDays(client);
+  return {
+    secondDelayMs: firstGapDays * 24 * 60 * 60 * 1000,
+    finalDelayMs: 30 * 24 * 60 * 60 * 1000,
+  };
 }
 
 function collectOpenDmRecipientIds(client) {
@@ -1095,9 +1100,11 @@ async function runExternalStartupBlastOnce(client, guild) {
     let sentCount = 0;
     let failCount = 0;
     const now = Date.now();
+    const { secondDelayMs } = getExternalTimelineMs(client);
 
     for (const userId of outsideIds) {
       if (noDmSet.has(String(userId))) continue;
+      if (entry.externalReminderHistory?.[String(userId)]?.stopped) continue;
       const user =
         client.users.cache.get(String(userId)) ||
         (await client.users.fetch(String(userId)).catch(() => null));
@@ -1108,8 +1115,15 @@ async function runExternalStartupBlastOnce(client, guild) {
           embeds: [createExternalReturnEmbed(guild)],
           allowedMentions: { parse: [] },
         });
-        entry.externalReminderHistory[String(userId)] = {
+        const uid = String(userId);
+        const prev = entry.externalReminderHistory?.[uid] || {};
+        entry.externalReminderHistory[uid] = {
+          ...prev,
+          firstSentAt: Number(prev.firstSentAt || now),
           lastSentAt: now,
+          sendCount: Math.max(1, Number(prev.sendCount || 0)),
+          nextDueAt: Number(prev.firstSentAt || now) + secondDelayMs,
+          stopped: false,
         };
         sentCount += 1;
       } catch {
@@ -1142,7 +1156,7 @@ async function sendExternalReturnReminders(client, guild) {
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const dmIds = collectOpenDmRecipientIds(client);
   const now = Date.now();
-  const cooldownMs = getExternalCooldownDays(client) * 24 * 60 * 60 * 1000;
+  const { secondDelayMs, finalDelayMs } = getExternalTimelineMs(client);
 
   // Clean users that are back in guild.
   for (const userId of Object.keys(entry.externalReminderHistory || {})) {
@@ -1157,10 +1171,45 @@ async function sendExternalReturnReminders(client, guild) {
     if (guild.members.cache.has(uid)) continue;
     if (noDmSet.has(uid)) continue;
 
-    const lastSentAt = Number(
-      entry.externalReminderHistory?.[uid]?.lastSentAt || 0,
-    );
-    if (lastSentAt && now - lastSentAt < cooldownMs) continue;
+    const history = entry.externalReminderHistory?.[uid] || {};
+    if (history?.stopped) continue;
+
+    const firstSentAt = Number(history.firstSentAt || 0);
+    const sendCount = Number(history.sendCount || 0);
+    let shouldSend = false;
+    let nextSendCount = sendCount;
+    let nextDueAt = Number(history.nextDueAt || 0);
+    let shouldStop = false;
+
+    if (!firstSentAt || sendCount <= 0) {
+      shouldSend = true;
+      nextSendCount = 1;
+      nextDueAt = now + secondDelayMs;
+    } else if (sendCount === 1) {
+      const dueAt = firstSentAt + secondDelayMs;
+      if (now >= dueAt) {
+        shouldSend = true;
+        nextSendCount = 2;
+        nextDueAt = firstSentAt + finalDelayMs;
+      }
+    } else if (sendCount === 2) {
+      const dueAt = firstSentAt + finalDelayMs;
+      if (now >= dueAt) {
+        shouldSend = true;
+        nextSendCount = 3;
+        nextDueAt = 0;
+        shouldStop = true;
+      }
+    } else if (sendCount >= 3) {
+      entry.externalReminderHistory[uid] = {
+        ...history,
+        stopped: true,
+        sendCount,
+      };
+      continue;
+    }
+
+    if (!shouldSend) continue;
 
     const user =
       client.users.cache.get(uid) ||
@@ -1172,7 +1221,14 @@ async function sendExternalReturnReminders(client, guild) {
         embeds: [createExternalReturnEmbed(guild)],
         allowedMentions: { parse: [] },
       });
-      entry.externalReminderHistory[uid] = { lastSentAt: Date.now() };
+      entry.externalReminderHistory[uid] = {
+        ...history,
+        firstSentAt: firstSentAt || now,
+        lastSentAt: Date.now(),
+        sendCount: nextSendCount,
+        nextDueAt,
+        stopped: shouldStop,
+      };
     } catch {}
   }
 
