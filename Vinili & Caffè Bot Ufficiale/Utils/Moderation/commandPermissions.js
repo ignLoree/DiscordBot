@@ -742,21 +742,6 @@ async function checkPrefixPermission(
     return allowed;
   }
 
-  if (guildId && userId) {
-    const keys = buildPrefixLookupKeys(commandName, subcommandName);
-    const hasOverride = await hasTemporaryCommandPermission({
-      guildId,
-      userId,
-      keys,
-    });
-    if (hasOverride) {
-      if (options.returnDetails) {
-        return { allowed: true, reason: null, requiredRoles: null, channels: null };
-      }
-      return true;
-    }
-  }
-
   const data = loadPermissions();
   const channelPolicy = resolveCommandChannelPolicy(
     data,
@@ -777,6 +762,20 @@ async function checkPrefixPermission(
         };
       }
       return false;
+    }
+  }
+  if (guildId && userId) {
+    const keys = buildPrefixLookupKeys(commandName, subcommandName);
+    const hasOverride = await hasTemporaryCommandPermission({
+      guildId,
+      userId,
+      keys,
+    });
+    if (hasOverride) {
+      if (options.returnDetails) {
+        return { allowed: true, reason: null, requiredRoles: null, channels: channelPolicy || null };
+      }
+      return true;
     }
   }
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
