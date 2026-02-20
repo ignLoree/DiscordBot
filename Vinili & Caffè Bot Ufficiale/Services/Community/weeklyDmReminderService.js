@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
@@ -33,12 +33,12 @@ const STAFF_ROLE_IDS = [
 ].map((id) => String(id || "").trim()).filter(Boolean);
 const defaultPool = [
   {
-    title: "Tip Bot: ruoli e vantaggi",
+    title: "Ruoli e vantaggi del server",
     description:
-      "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
+      "Hai gia controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
   },
   {
-    title: "Ricorda i comandi utili",
+    title: "Comandi utili del bot",
     description:
       "Con +help trovi rapidamente i comandi principali del bot per utility, livelli e community.",
   },
@@ -48,29 +48,29 @@ const defaultPool = [
       "Se hai un tema interessante, aprilo nel forum del server: aiuta a tenere la community attiva e ordinata.",
   },
   {
-    title: "Sistema livelli",
+    title: "Livelli e progressione",
     description:
       "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi.",
   },
   {
     title: "Ticket e supporto",
     description:
-      "Se ti serve supporto, usa i ticket: e il modo piu veloce per ricevere assistenza staff.",
+      "Se ti serve supporto, usa i ticket: e il modo piu veloce per ricevere assistenza dallo staff.",
   },
   {
-    title: "No DM quando vuoi",
+    title: "Gestione DM",
     description:
       "Puoi sempre disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
   },
   {
-    title: "Reminder community",
+    title: "Attivita community",
     description:
       "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
   },
   {
-    title: "Bot features",
+    title: "Funzioni del bot",
     description:
-      "Tra quote, livelli, classifiche e comandi utility c'e molto da usare: prova qualcosa di nuovo questa settimana.",
+      "Tra quote, livelli, classifiche e comandi utility c'e molto da usare: prova una funzione nuova questa settimana.",
   },
 ];
 
@@ -389,3 +389,4 @@ function startWeeklyDmReminderLoop(client) {
 module.exports = {
   startWeeklyDmReminderLoop,
 };
+
