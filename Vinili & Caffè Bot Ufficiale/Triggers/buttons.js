@@ -9,21 +9,37 @@ const DIVIDER_URL =
 const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED_TEXT =
   "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
+const patchedInteractions = new WeakSet();
 
-if (!EmbedBuilder.prototype.__vcDividerPatched) {
-  const originalToJSON = EmbedBuilder.prototype.toJSON;
-  EmbedBuilder.prototype.toJSON = function patchedToJSON(...args) {
-    if (!this?.data?.image?.url) {
-      this.setImage(DIVIDER_URL);
-    }
-    return originalToJSON.apply(this, args);
-  };
-  Object.defineProperty(EmbedBuilder.prototype, "__vcDividerPatched", {
-    value: true,
-    configurable: false,
-    enumerable: false,
-    writable: false,
-  });
+function withDividerEmbed(embed) {
+  if (!embed || typeof embed !== "object") return embed;
+  if (embed instanceof EmbedBuilder) {
+    if (!embed.data?.image?.url) embed.setImage(DIVIDER_URL);
+    return embed;
+  }
+  const hasImageUrl = Boolean(embed.image?.url);
+  if (hasImageUrl) return embed;
+  return { ...embed, image: { url: DIVIDER_URL } };
+}
+
+function withDividerPayload(payload) {
+  if (!payload || typeof payload !== "object") return payload;
+  if (!Array.isArray(payload.embeds) || payload.embeds.length === 0) {
+    return payload;
+  }
+  return { ...payload, embeds: payload.embeds.map(withDividerEmbed) };
+}
+
+function patchInteractionEmbedReplies(interaction) {
+  if (!interaction || patchedInteractions.has(interaction)) return;
+  const methods = ["reply", "update", "editReply", "followUp"];
+  for (const method of methods) {
+    if (typeof interaction[method] !== "function") continue;
+    const original = interaction[method].bind(interaction);
+    interaction[method] = (options, ...args) =>
+      original(withDividerPayload(options), ...args);
+  }
+  patchedInteractions.add(interaction);
 }
 
 async function handleStaffButtons(interaction) {
@@ -363,6 +379,7 @@ module.exports = {
     if (!interaction.guild) return;
     if (!interaction.message) return;
     if (interaction.replied || interaction.deferred) return;
+    patchInteractionEmbedReplies(interaction);
     const allowed = await enforceInteractionPermissions(interaction);
     if (!allowed) return;
     if (await handleStaffButtons(interaction)) return;
