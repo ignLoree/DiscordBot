@@ -497,13 +497,28 @@ async function sendIntro(interaction, type) {
   });
 }
 
-async function handleStartButton(interaction, type) {
+async function handleStartButton(interaction, type, step = 1) {
   const stateKey = getStateKey(interaction, type);
-  pendingApplications.set(stateKey, {
-    createdAt: Date.now(),
-    answers: {},
-  });
-  const modal = buildModal(type, 1);
+  const normalizedStep = Number(step) || 1;
+  if (normalizedStep <= 1) {
+    pendingApplications.set(stateKey, {
+      createdAt: Date.now(),
+      answers: {},
+    });
+  } else {
+    const state = pendingApplications.get(stateKey);
+    if (!state) {
+      await interaction.reply({
+        content:
+          "<:vegax:1443934876440068179> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
+        flags: 1 << 6,
+      });
+      return true;
+    }
+    state.createdAt = Date.now();
+    pendingApplications.set(stateKey, state);
+  }
+  const modal = buildModal(type, normalizedStep);
   if (!modal) return false;
   await interaction.showModal(modal);
   return true;
@@ -623,8 +638,17 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   const nextStep = step + 1;
   if (nextStep <= chunks.length) {
     pendingApplications.set(stateKey, state);
-    const nextModal = buildModal(type, nextStep);
-    await interaction.showModal(nextModal);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
+        .setLabel(`Continua modulo (${nextStep}/${chunks.length})`)
+        .setStyle(ButtonStyle.Primary),
+    );
+    await interaction.reply({
+      content: "Sei quasi alla fine. Clicca per continuare la candidatura.",
+      components: [row],
+      flags: 1 << 6,
+    });
     return true;
   }
 
@@ -649,7 +673,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
     }
 
     if (String(interaction.customId || "").startsWith(`${APPLY_START_PREFIX}:`)) {
-      const [, type, ownerId] = String(interaction.customId).split(":");
+      const [, type, ownerId, rawStep] = String(interaction.customId).split(":");
       if (!type || !ownerId) return false;
       if (String(ownerId) !== String(interaction.user?.id || "")) {
         await interaction.reply({
@@ -661,7 +685,8 @@ async function handleCandidatureApplicationInteraction(interaction) {
       }
       const ok = await enforceEligibility(interaction, type);
       if (!ok) return true;
-      return handleStartButton(interaction, type);
+      const step = Number(rawStep || 1);
+      return handleStartButton(interaction, type, step);
     }
     return false;
   }
