@@ -418,6 +418,12 @@ function getBaseCooldownDays(client) {
   return Math.max(1, Math.floor(raw));
 }
 
+function getLowCooldownDays(client) {
+  const raw = Number(getCfg(client).lowCooldownDays);
+  if (!Number.isFinite(raw)) return 3;
+  return Math.max(1, Math.floor(raw));
+}
+
 function getMidCooldownDays(client) {
   const raw = Number(getCfg(client).midCooldownDays);
   if (!Number.isFinite(raw)) return 10;
@@ -452,6 +458,24 @@ function getHighWeeklyVoiceHours(client) {
   const raw = Number(getCfg(client).highWeeklyVoiceHours);
   if (!Number.isFinite(raw)) return 8;
   return Math.max(getMidWeeklyVoiceHours(client), raw);
+}
+
+function getLowWeeklyMessages(client) {
+  const raw = Number(getCfg(client).lowWeeklyMessages);
+  if (!Number.isFinite(raw)) return 25;
+  return Math.max(0, Math.floor(raw));
+}
+
+function getLowWeeklyVoiceHours(client) {
+  const raw = Number(getCfg(client).lowWeeklyVoiceHours);
+  if (!Number.isFinite(raw)) return 1;
+  return Math.max(0, raw);
+}
+
+function getLowSecondReminderCap(client) {
+  const raw = Number(getCfg(client).lowSecondReminderCap);
+  if (!Number.isFinite(raw)) return 40;
+  return Math.max(0, Math.floor(raw));
 }
 
 function getMinMemberAgeDays(client) {
@@ -611,10 +635,15 @@ function reminderSignature(reminder) {
   return `${title}||${description}`;
 }
 
-function pickVariantIndexForUser(variants, availableIndexes, lastSignature) {
+function pickVariantIndexForUser(
+  variants,
+  availableIndexes,
+  lastSignature,
+  forbiddenSignatures = new Set(),
+) {
   const candidates = availableIndexes.filter((idx) => {
     const sig = reminderSignature(variants[idx]);
-    return sig !== lastSignature;
+    return sig !== lastSignature && !forbiddenSignatures.has(sig);
   });
   const source = candidates.length ? candidates : availableIndexes;
   if (!source.length) return -1;
@@ -625,6 +654,21 @@ function pickVariantIndexForUser(variants, availableIndexes, lastSignature) {
 function isDmManagementReminder(reminder) {
   const title = String(reminder?.title || "").trim().toLowerCase();
   return title === "gestione dm";
+}
+
+function pickRandomDayOffset(existing = []) {
+  const used = new Set(existing.map((n) => Number(n)));
+  const candidates = [];
+  for (let day = 0; day <= 6; day += 1) {
+    if (!used.has(day)) candidates.push(day);
+  }
+  if (!candidates.length) return randomInt(0, 7);
+  if (!existing.length) return candidates[randomInt(0, candidates.length)];
+  const withGap = candidates.filter((day) =>
+    existing.every((ex) => Math.abs(day - ex) >= 2),
+  );
+  const source = withGap.length ? withGap : candidates;
+  return source[randomInt(0, source.length)];
 }
 
 function createReminderEmbed(entry) {
@@ -673,6 +717,10 @@ function getCooldownDaysForUser(client, activityRow) {
   const messagesWeekly = Number(activityRow?.messages?.weekly || 0);
   const voiceWeeklySeconds = Number(activityRow?.voice?.weeklySeconds || 0);
   const voiceWeeklyHours = voiceWeeklySeconds / 3600;
+  const low =
+    messagesWeekly <= getLowWeeklyMessages(client) &&
+    voiceWeeklyHours <= getLowWeeklyVoiceHours(client);
+  if (low) return getLowCooldownDays(client);
   const high =
     messagesWeekly >= getHighWeeklyMessages(client) ||
     voiceWeeklyHours >= getHighWeeklyVoiceHours(client);
@@ -682,6 +730,31 @@ function getCooldownDaysForUser(client, activityRow) {
     voiceWeeklyHours >= getMidWeeklyVoiceHours(client);
   if (medium) return getMidCooldownDays(client);
   return getBaseCooldownDays(client);
+}
+
+function getActivityTier(client, activityRow) {
+  const messagesWeekly = Number(activityRow?.messages?.weekly || 0);
+  const voiceWeeklySeconds = Number(activityRow?.voice?.weeklySeconds || 0);
+  const voiceWeeklyHours = voiceWeeklySeconds / 3600;
+  if (
+    messagesWeekly <= getLowWeeklyMessages(client) &&
+    voiceWeeklyHours <= getLowWeeklyVoiceHours(client)
+  ) {
+    return "low";
+  }
+  if (
+    messagesWeekly >= getHighWeeklyMessages(client) ||
+    voiceWeeklyHours >= getHighWeeklyVoiceHours(client)
+  ) {
+    return "high";
+  }
+  if (
+    messagesWeekly >= getMidWeeklyMessages(client) ||
+    voiceWeeklyHours >= getMidWeeklyVoiceHours(client)
+  ) {
+    return "mid";
+  }
+  return "base";
 }
 
 function hasRecentReminderForCooldown(historyEntry, cooldownDays) {
@@ -748,23 +821,35 @@ async function buildWeeklyJobs(client, guild) {
     maxRecipients,
   );
   const selected = pickRandomDistinct(recipients, targetCount);
+  const lowCandidates = selected.filter(
+    (userId) => getActivityTier(client, activityMap.get(userId)) === "low",
+  );
+  const secondReminderUsers = pickRandomDistinct(
+    lowCandidates,
+    Math.min(lowCandidates.length, getLowSecondReminderCap(client)),
+  );
+  const recipientSlots = [...selected, ...secondReminderUsers];
   const pool =
     Array.isArray(cfg.pool) && cfg.pool.length
       ? cfg.pool
       : [...defaultPool, ...MASSIVE_REMINDER_POOL];
-  const variants = buildUniqueReminderVariants(pool, selected.length);
-  const dayOrder = pickRandomDistinct([0, 1, 2, 3, 4, 5, 6], 7);
+  const variants = buildUniqueReminderVariants(pool, recipientSlots.length);
   const availableVariantIndexes = variants.map((_, idx) => idx);
   const jobs = [];
+  const userDayOffsets = new Map();
+  const userPlanSignatures = new Map();
 
-  for (let idx = 0; idx < selected.length; idx += 1) {
-    const userId = String(selected[idx]);
+  for (let idx = 0; idx < recipientSlots.length; idx += 1) {
+    const userId = String(recipientSlots[idx]);
     const lastSignature = String(history?.[userId]?.lastSignature || "");
     const hasHistory = Boolean(lastSignature);
+    if (!userPlanSignatures.has(userId)) userPlanSignatures.set(userId, new Set());
+    const forbidden = userPlanSignatures.get(userId);
     let variantIndex = pickVariantIndexForUser(
       variants,
       availableVariantIndexes,
       lastSignature,
+      forbidden,
     );
     if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
     let reminder = variants[variantIndex] || pool[idx % pool.length];
@@ -780,13 +865,17 @@ async function buildWeeklyJobs(client, guild) {
     }
     const usedPos = availableVariantIndexes.indexOf(variantIndex);
     if (usedPos !== -1) availableVariantIndexes.splice(usedPos, 1);
+    forbidden.add(reminderSignature(reminder));
     history[userId] = {
       lastSignature: reminderSignature(reminder),
       plannedAt: Date.now(),
       cooldownDays: getCooldownDaysForUser(client, activityMap.get(userId)),
       lastSentAt: Number(history?.[userId]?.lastSentAt || 0),
     };
-    const dayOffset = dayOrder[idx % dayOrder.length];
+    const existingDayOffsets = userDayOffsets.get(userId) || [];
+    const dayOffset = pickRandomDayOffset(existingDayOffsets);
+    existingDayOffsets.push(dayOffset);
+    userDayOffsets.set(userId, existingDayOffsets);
     jobs.push({
       id: `${Date.now()}_${idx}_${randomInt(1000, 999999)}`,
       userId,
