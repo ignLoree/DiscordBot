@@ -92,11 +92,14 @@ function sanitizeDeletedContentForLog(content) {
   return `${text.slice(0, MAX_CONTENT_LOG_LENGTH - 3)}...`;
 }
 
-function clampFieldValue(value, max = 1024) {
-  const text = String(value || "").trim();
-  if (!text) return "(vuoto)";
-  if (text.length <= max) return text;
-  return `${text.slice(0, max - 3)}...`;
+function buildDeletedDiff(value) {
+  const text = sanitizeDeletedContentForLog(value);
+  const lines = String(text || "(vuoto)").split("\n");
+  const diffBody = lines
+    .map((line, index) => `${index === 0 ? "-" : " "} ${line}`)
+    .join("\n");
+  if (diffBody.length <= MAX_CONTENT_LOG_LENGTH) return diffBody;
+  return `${diffBody.slice(0, MAX_CONTENT_LOG_LENGTH - 3)}...`;
 }
 
 function collectAttachmentNames(message) {
@@ -179,35 +182,23 @@ async function sendDeleteLog(message) {
     `<:VC_right_arrow:1473441155055096081> **Id:** \`${message.id || "sconosciuto"}\``,
   ];
 
-  const contentPreview = hasContent
-    ? sanitizeDeletedContentForLog(content)
-    : "(vuoto)";
+  lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
+  lines.push("```diff");
+  lines.push(buildDeletedDiff(hasContent ? content : "(vuoto)"));
+  lines.push("```");
+  lines.push(
+    `<:VC_right_arrow:1473441155055096081> **Attachments:** ${hasAttachments ? `[ ${attachmentNames.join(", ")} ]` : "[ nessuno ]"}`,
+  );
+  if (message?.author) {
+    lines.push(
+      `<:VC_right_arrow:1473441155055096081> **Author:** ${buildAuthorLabel(message)}`,
+    );
+  }
 
   const embed = new EmbedBuilder()
     .setColor("#ED4245")
     .setTitle("Message Deleted")
-    .setDescription(lines.join("\n"))
-    .addFields({
-      name: "Content",
-      value: clampFieldValue(contentPreview),
-      inline: false,
-    });
-
-  if (hasAttachments) {
-    embed.addFields({
-      name: "Attachments",
-      value: clampFieldValue(`[ ${attachmentNames.join(", ")} ]`),
-      inline: false,
-    });
-  }
-
-  if (message?.author) {
-    embed.addFields({
-      name: "Author",
-      value: clampFieldValue(buildAuthorLabel(message)),
-      inline: false,
-    });
-  }
+    .setDescription(lines.join("\n"));
 
   const preview = firstImageAttachment(message);
   if (preview?.url) {
