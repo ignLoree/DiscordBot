@@ -152,9 +152,12 @@ function getGuildEntry(guildId) {
   const key = String(guildId || "");
   if (!key) return null;
   if (!root[key] || typeof root[key] !== "object") {
-    root[key] = { plannedAt: 0, jobs: [] };
+    root[key] = { plannedAt: 0, jobs: [], reminderHistory: {} };
   }
   if (!Array.isArray(root[key].jobs)) root[key].jobs = [];
+  if (!root[key].reminderHistory || typeof root[key].reminderHistory !== "object") {
+    root[key].reminderHistory = {};
+  }
   return root[key];
 }
 
@@ -265,6 +268,23 @@ function buildUniqueReminderVariants(pool, count) {
   return out;
 }
 
+function reminderSignature(reminder) {
+  const title = String(reminder?.title || "").trim();
+  const description = String(reminder?.description || "").trim();
+  return `${title}||${description}`;
+}
+
+function pickVariantIndexForUser(variants, availableIndexes, lastSignature) {
+  const candidates = availableIndexes.filter((idx) => {
+    const sig = reminderSignature(variants[idx]);
+    return sig !== lastSignature;
+  });
+  const source = candidates.length ? candidates : availableIndexes;
+  if (!source.length) return -1;
+  const pick = source[randomInt(0, source.length)];
+  return Number(pick);
+}
+
 function createReminderEmbed(entry) {
   const title = String(entry?.title || "Reminder settimanale");
   const description = String(entry?.description || "").trim();
@@ -327,13 +347,30 @@ async function buildWeeklyJobs(client, guild) {
   const pool = Array.isArray(cfg.pool) && cfg.pool.length ? cfg.pool : defaultPool;
   const variants = buildUniqueReminderVariants(pool, selected.length);
   const dayOrder = pickRandomDistinct([0, 1, 2, 3, 4, 5, 6], 7);
+  const availableVariantIndexes = variants.map((_, idx) => idx);
+  const history = guildEntry.reminderHistory || {};
+  const jobs = [];
 
-  return selected.map((userId, idx) => {
-    const reminder = variants[idx] || pool[idx % pool.length];
+  for (let idx = 0; idx < selected.length; idx += 1) {
+    const userId = String(selected[idx]);
+    const lastSignature = String(history?.[userId]?.lastSignature || "");
+    let variantIndex = pickVariantIndexForUser(
+      variants,
+      availableVariantIndexes,
+      lastSignature,
+    );
+    if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
+    const reminder = variants[variantIndex] || pool[idx % pool.length];
+    const usedPos = availableVariantIndexes.indexOf(variantIndex);
+    if (usedPos !== -1) availableVariantIndexes.splice(usedPos, 1);
+    history[userId] = {
+      lastSignature: reminderSignature(reminder),
+      plannedAt: Date.now(),
+    };
     const dayOffset = dayOrder[idx % dayOrder.length];
-    return {
+    jobs.push({
       id: `${Date.now()}_${idx}_${randomInt(1000, 999999)}`,
-      userId: String(userId),
+      userId,
       sendAt: randomTimestampForDayOffset(
         Date.now(),
         dayOffset,
@@ -348,8 +385,16 @@ async function buildWeeklyJobs(client, guild) {
         title: String(reminder?.title || "Reminder settimanale"),
         description: String(reminder?.description || ""),
       },
-    };
-  });
+    });
+  }
+
+  const historyKeepAfterMs = Date.now() - 120 * 24 * 60 * 60 * 1000;
+  for (const [uid, info] of Object.entries(history)) {
+    const ts = Number(info?.plannedAt || 0);
+    if (!ts || ts < historyKeepAfterMs) delete history[uid];
+  }
+  guildEntry.reminderHistory = history;
+  return jobs;
 }
 
 async function maybePlanWeeklyBatch(client, guild) {
