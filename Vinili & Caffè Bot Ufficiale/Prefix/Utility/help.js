@@ -10,7 +10,11 @@ const HELP_EMBED_COLOR = "#6f4e37";
 const ERROR_EMBED_COLOR = "Red";
 const PRIVATE_FLAG = 1 << 6;
 const NO_REPLY_MENTIONS = { repliedUser: false };
-const PAGE_ROLE_IDS = [IDs.roles.Staff];
+const PAGE_ROLE_IDS = [
+  IDs.roles.Staff,
+  IDs.roles.HighStaff,
+  IDs.roles.Founder,
+].filter(Boolean);
 const PAGE_TITLES = {
   utente: "Comandi Utente",
   [IDs.roles.Staff]: "Comandi Staff",
