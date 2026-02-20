@@ -16,6 +16,9 @@ const {
 const {
   handleEmbedBuilderInteraction,
 } = require("./interaction/embedBuilderHandlers");
+const {
+  handleCandidatureApplicationInteraction,
+} = require("./interaction/candidatureApplicationHandlers");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
@@ -307,6 +310,7 @@ module.exports = {
       if (!allowedByGate) return;
 
       if (await handleTicketInteraction(interaction)) return;
+      if (await handleCandidatureApplicationInteraction(interaction)) return;
       if (await handleTopPaginationModal(interaction)) return;
       if (await handleEmbedBuilderInteraction(interaction, resolvedClient)) return;
       if (await handlePartnerModal(interaction)) return;

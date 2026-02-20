@@ -47,13 +47,13 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
     new ButtonBuilder()
       .setLabel("︲HELPER")
       .setEmoji("<:helper:1443651909448630312>")
-      .setStyle(ButtonStyle.Link)
-      .setURL("https://dyno.gg/form/b40bd751"),
+      .setStyle(ButtonStyle.Secondary)
+      .setCustomId("apply_helper"),
     new ButtonBuilder()
       .setLabel("︲PARTNER MANAGER")
       .setEmoji("<:partnermanager:1443651916838998099>")
-      .setStyle(ButtonStyle.Link)
-      .setURL("https://dyno.gg/form/f9013078"),
+      .setStyle(ButtonStyle.Secondary)
+      .setCustomId("apply_partnermanager"),
   );
 
   await upsertPanelMessage(candidatureChannel, client, {
