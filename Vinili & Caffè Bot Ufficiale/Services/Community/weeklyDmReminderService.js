@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
@@ -40,7 +40,7 @@ const defaultPool = [
   {
     title: "Ruoli e vantaggi del server",
     description:
-      "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
+      "Hai giÃ  controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
   },
   {
     title: "Comandi utili del bot",
@@ -57,7 +57,7 @@ const defaultPool = [
   },
   {
     title: "Ticket e supporto",
-    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: è il modo più veloce per ricevere assistenza dallo staff.`,
+    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: Ã¨ il modo piÃ¹ veloce per ricevere assistenza dallo staff.`,
   },
   {
     title: "Gestione DM",
@@ -65,14 +65,14 @@ const defaultPool = [
       "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
   },
   {
-    title: "Attività community",
+    title: "AttivitÃ  community",
     description:
       "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
   },
   {
     title: "Funzioni del bot",
     description:
-      "Tra quote, livelli, classifiche e comandi utility c'è molto da usare: prova una funzione nuova questa settimana.",
+      "Tra quote, livelli, classifiche e comandi utility c'Ã¨ molto da usare: prova una funzione nuova questa settimana.",
   },
   {
     title: "Canale suggerimenti",
@@ -80,7 +80,7 @@ const defaultPool = [
   },
   {
     title: "News e aggiornamenti",
-    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novità, cambi e annunci importanti del server.`,
+    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novitÃ , cambi e annunci importanti del server.`,
   },
   {
     title: "Ruoli colori e badge",
@@ -96,11 +96,11 @@ const defaultPool = [
   },
   {
     title: "Eventi e sondaggi",
-    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunità e resti aggiornato.`,
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunitÃ  e resti aggiornato.`,
   },
   {
-    title: "Contatore e mini-attività",
-    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
+    title: "Contatore e mini-attivitÃ ",
+    description: `Per attivitÃ  leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
   },
   {
     title: "Media e contenuti",
@@ -112,7 +112,7 @@ const defaultPool = [
   },
   {
     title: "Top settimanale",
-    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di più questa settimana.`,
+    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di piÃ¹ questa settimana.`,
   },
   {
     title: "Canale role info",
@@ -132,11 +132,11 @@ const defaultPool = [
   },
   {
     title: "Classifica globale",
-    description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.",
+    description: "Con +classifica alltime puoi vedere chi Ã¨ piÃ¹ costante nel lungo periodo.",
   },
   {
     title: "Obiettivo settimanale",
-    description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
+    description: "Impostati un mini-obiettivo: piÃ¹ costanza in chat, piÃ¹ presenza in vocale o piÃ¹ partecipazione ai poll.",
   },
   {
     title: "Sfrutta il forum",
@@ -152,11 +152,11 @@ const defaultPool = [
   },
   {
     title: "Canale polls",
-    description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")} aiuta a prendere decisioni più utili per tutti.`,
+    description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")} aiuta a prendere decisioni piÃ¹ utili per tutti.`,
   },
   {
     title: "Canale news",
-    description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")} per non perderti novità su eventi, regole e aggiornamenti.`,
+    description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")} per non perderti novitÃ  su eventi, regole e aggiornamenti.`,
   },
   {
     title: "Canale ruoli",
@@ -164,7 +164,7 @@ const defaultPool = [
   },
   {
     title: "Canale counting",
-    description: `In ${channelMention(IDs.channels.counting, "counting")} conta con attenzione: è una piccola attività ma tiene viva la community.`,
+    description: `In ${channelMention(IDs.channels.counting, "counting")} conta con attenzione: Ã¨ una piccola attivitÃ  ma tiene viva la community.`,
   },
   {
     title: "Comando help",
@@ -180,15 +180,15 @@ const defaultPool = [
   },
   {
     title: "Canali vocali",
-    description: "Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.",
+    description: "Un po' di presenza in vocale migliora l'attivitÃ  personale e rende piÃ¹ viva la community.",
   },
   {
     title: "Eventi community",
-    description: "Partecipa agli eventi quando puoi: è il modo più veloce per conoscere utenti nuovi.",
+    description: "Partecipa agli eventi quando puoi: Ã¨ il modo piÃ¹ veloce per conoscere utenti nuovi.",
   },
   {
     title: "Canale media",
-    description: "Condividi contenuti in modo pulito: qualità > quantità, sempre.",
+    description: "Condividi contenuti in modo pulito: qualitÃ  > quantitÃ , sempre.",
   },
   {
     title: "Comando classifica weekly",
@@ -200,11 +200,11 @@ const defaultPool = [
   },
   {
     title: "Comando rank",
-    description: "Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attività.",
+    description: "Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attivitÃ .",
   },
   {
     title: "Idea della settimana",
-    description: "Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati.",
+    description: "Prova a migliorare un'abitudine: meno messaggi casuali, piÃ¹ interventi utili e ordinati.",
   },
   {
     title: "Supporto rapido",
@@ -212,7 +212,7 @@ const defaultPool = [
   },
   {
     title: "Buone pratiche",
-    description: "Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.",
+    description: "Evita spam e flood: qualitÃ  dei messaggi e interazioni sane fanno la differenza.",
   },
   {
     title: "Profilo server",
@@ -236,7 +236,7 @@ const defaultPool = [
   },
   {
     title: "Candidature staff aperte",
-    description: "Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietà fanno la differenza.",
+    description: "Se vuoi entrare nello staff, controlla i requisiti e valuta la candidatura: costanza e serietÃ  fanno la differenza.",
   },
   {
     title: "Candidati con criterio",
@@ -252,11 +252,11 @@ const defaultPool = [
   },
   {
     title: "Candidatura efficace",
-    description: "Una buona candidatura è concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.",
+    description: "Una buona candidatura Ã¨ concreta: racconta cosa puoi offrire, non solo il ruolo che vuoi ottenere.",
   },
   {
     title: "Preparazione candidatura",
-    description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.",
+    description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilitÃ  di essere considerato.",
   },
   {
     title: "Staff pagato: informazioni",
@@ -264,11 +264,11 @@ const defaultPool = [
   },
   {
     title: "Staff pagato: requisiti",
-    description: "Per accedere a ruoli pagati servono costanza, affidabilità e risultati concreti nel tempo.",
+    description: "Per accedere a ruoli pagati servono costanza, affidabilitÃ  e risultati concreti nel tempo.",
   },
   {
     title: "Staff pagato: approccio",
-    description: "Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.",
+    description: "Prima di puntare al compenso, concentra il focus su qualitÃ  del supporto e responsabilitÃ  nelle attivitÃ  staff.",
   },
   {
     title: "Staff pagato: candidatura",
@@ -356,18 +356,20 @@ const MASSIVE_REMINDER_CLOSINGS = [
 
 function buildMassiveReminderPool() {
   const pool = [];
-  let index = 1;
+  const titleUsage = new Map();
   for (const topic of MASSIVE_REMINDER_TOPICS) {
     for (const angle of MASSIVE_REMINDER_ANGLES) {
       const closing =
         MASSIVE_REMINDER_CLOSINGS[
-          (index - 1) % MASSIVE_REMINDER_CLOSINGS.length
+          pool.length % MASSIVE_REMINDER_CLOSINGS.length
         ];
+      const baseTitle = String(topic.title || "Reminder");
+      const used = Number(titleUsage.get(baseTitle) || 0) + 1;
+      titleUsage.set(baseTitle, used);
       pool.push({
-        title: `${topic.title} ${index}`,
+        title: used > 1 ? `${baseTitle} •` : baseTitle,
         description: `${topic.line}\n${angle}\n${closing}`,
       });
-      index += 1;
     }
   }
   return pool;
@@ -606,42 +608,8 @@ function buildUniqueReminderVariants(pool, count) {
     ? normalizedPool
     : [{ title: "Reminder settimanale", description: "Dai un'occhiata al server." }];
 
-  const focusLines = [
-    `Focus: ${channelMention(IDs.channels.commands, "comandi")} e +help`,
-    `Focus: ${channelMention(IDs.channels.news, "news")} e aggiornamenti`,
-    `Focus: ${channelMention(IDs.channels.suggestions, "suggerimenti")} e feedback`,
-    `Focus: ${channelMention(IDs.channels.forum, "forum")} e discussioni`,
-    `Focus: ${channelMention(IDs.channels.ticket, "ticket")} e supporto`,
-    `Focus: ${channelMention(IDs.channels.ruoliColori, "ruoli")} e perks`,
-    `Focus: ${channelMention(IDs.channels.quotes, "quotes")} e contenuti`,
-    `Focus: ${channelMention(IDs.channels.polls, "polls")} e partecipazione`,
-    `Focus: ${channelMention(IDs.channels.counting, "counting")} e attività`,
-    `Focus: +rank / +classifica weekly`,
-  ];
-
-  const actionLines = [
-    "Azione della settimana: prova un comando che di solito non usi.",
-    "Azione della settimana: partecipa a una discussione costruttiva.",
-    "Azione della settimana: controlla i tuoi progressi e obiettivi.",
-    "Azione della settimana: lascia un feedback chiaro e utile.",
-    "Azione della settimana: esplora un canale che frequenti poco.",
-    "Azione della settimana: interagisci con eventi o sondaggi.",
-  ];
-
-  const combos = [];
-  for (const base of basePool) {
-    for (const focus of focusLines) {
-      for (const action of actionLines) {
-        combos.push({
-          title: base.title,
-          description: [base.description, "", focus, action].join("\n").trim(),
-        });
-      }
-    }
-  }
-
-  if (!combos.length) return [];
-  const picked = pickRandomDistinct(combos, Math.min(count, combos.length));
+  if (!basePool.length) return [];
+  const picked = pickRandomDistinct(basePool, Math.min(count, basePool.length));
   if (picked.length >= count) return picked;
 
   const out = picked.slice();
@@ -715,11 +683,11 @@ function createExternalReturnEmbed(guild) {
     .setTitle(`Ti aspettiamo su ${guildName}`)
     .setDescription(
       [
-        "Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",
+        "Se vuoi rientrare, sei il benvenuto: il server Ã¨ sempre attivo.",
         "",
-        "Trovi eventi, attività e contenuti nuovi con continuità.",
+        "Trovi eventi, attivitÃ  e contenuti nuovi con continuitÃ .",
         "Se ti interessa, puoi anche candidarti e valutare il percorso staff pagato.",
-        "Se vuoi chiedere partnership è importante che poi tu non esca dal server o essa verrà eliminata!",
+        "Se vuoi chiedere partnership Ã¨ importante che poi tu non esca dal server o essa verrÃ  eliminata!",
         "",
         "Se rientri, troverai tutto pronto.",
       ].join("\n"),
@@ -1363,3 +1331,4 @@ function startWeeklyDmReminderLoop(client) {
 module.exports = {
   startWeeklyDmReminderLoop,
 };
+
