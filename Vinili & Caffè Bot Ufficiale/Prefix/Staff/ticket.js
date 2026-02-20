@@ -1063,15 +1063,7 @@ module.exports = {
             ),
           ]
         : [];
-      const dmActionRows = [...ratingRows];
-      const htmlAttachment = transcriptHtmlPath
-        ? [
-            {
-              attachment: transcriptHtmlPath,
-              name: `transcript_ticket_${ticketNumber || claimed._id}.html`,
-            },
-          ]
-        : [];
+      const dmActionRows = [...transcriptRows, ...ratingRows];
 
       let logSentMessage = null;
       if (logChannel?.isTextBased?.()) {
@@ -1094,9 +1086,8 @@ module.exports = {
             member,
             {
               embeds: [closeEmbed],
-              files: htmlAttachment,
             },
-            Boolean(transcriptHtmlPath),
+            false,
             dmActionRows,
           );
         } catch (err) {

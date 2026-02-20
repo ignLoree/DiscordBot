@@ -1993,14 +1993,6 @@ async function pinFirstTicketMessage(channel, message) {
             ),
           ]
         : [];
-      const htmlAttachment = transcriptHtmlPath
-        ? [
-            {
-              attachment: transcriptHtmlPath,
-              name: `transcript_ticket_${ticketNumber || ticket._id}.html`,
-            },
-          ]
-        : [];
 
       let logSentMessage = null;
       if (logChannel?.isTextBased?.()) {
@@ -2013,7 +2005,7 @@ async function pinFirstTicketMessage(channel, message) {
           transcriptRows,
         );
       }
-      const dmActionRows = [...ratingRows];
+      const dmActionRows = [...transcriptRows, ...ratingRows];
       const member = await targetInteraction.guild.members
         .fetch(ticket.userId)
         .catch(() => null);
@@ -2023,9 +2015,8 @@ async function pinFirstTicketMessage(channel, message) {
             member,
             {
               embeds: [closeEmbed],
-              files: htmlAttachment,
             },
-            Boolean(transcriptHtmlPath),
+            false,
             dmActionRows,
           );
         } catch (err) {
