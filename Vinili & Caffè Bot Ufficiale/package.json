@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node index.js",
     "check:mojibake": "node scripts/check-mojibake.js",
+    "fix:mojibake": "node scripts/check-mojibake.js --fix",
     "automod:sync-words": "node scripts/sync-automod-wordlists.js"
   },
   "dependencies": {

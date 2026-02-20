@@ -2,6 +2,15 @@
 const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
 
 const PAGE_SIZE = 10;
+const CHANNEL_TYPE_LABEL = {
+  0: "#",
+  2: "🔊",
+  4: "▾",
+  5: "📢",
+  13: "🎙",
+  15: "🧵",
+  16: "🧵",
+};
 
 function splitCustomId(customId) {
   return String(customId || "").split(":");
@@ -19,6 +28,76 @@ function truncate(value, max) {
   const raw = String(value || "");
   if (raw.length <= max) return raw;
   return `${raw.slice(0, Math.max(0, max - 3))}...`;
+}
+
+function truncateLines(lines, maxLines = 32) {
+  if (!Array.isArray(lines)) return [];
+  if (lines.length <= maxLines) return lines;
+  return [...lines.slice(0, maxLines), `... (+${lines.length - maxLines})`];
+}
+
+function toCodeBlock(lines) {
+  const safe = truncateLines(lines)
+    .join("\n")
+    .slice(0, 950);
+  return `\`\`\`\n${safe || "-"}\n\`\`\``;
+}
+
+function sortChannels(channels = []) {
+  return [...channels].sort((a, b) => {
+    const typeA = Number(a?.type ?? 0);
+    const typeB = Number(b?.type ?? 0);
+    if (typeA === 4 && typeB !== 4) return -1;
+    if (typeA !== 4 && typeB === 4) return 1;
+    const posA = Number(a?.position ?? 0);
+    const posB = Number(b?.position ?? 0);
+    if (posA !== posB) return posA - posB;
+    return String(a?.name || "").localeCompare(String(b?.name || ""), "it");
+  });
+}
+
+function formatChannelList(channels = []) {
+  const sorted = sortChannels(channels);
+  const categories = sorted.filter((c) => Number(c.type) === 4);
+  const children = sorted.filter((c) => Number(c.type) !== 4);
+  const byParent = new Map();
+
+  for (const child of children) {
+    const parentId = child.parentId ? String(child.parentId) : "root";
+    if (!byParent.has(parentId)) byParent.set(parentId, []);
+    byParent.get(parentId).push(child);
+  }
+
+  let i = 1;
+  const out = [];
+
+  for (const category of categories) {
+    out.push(`${i}. ${CHANNEL_TYPE_LABEL[4]} ${category.name}`);
+    i += 1;
+
+    const list = sortChannels(byParent.get(String(category.id)) || []);
+    for (const ch of list) {
+      const icon = CHANNEL_TYPE_LABEL[Number(ch.type)] || "#";
+      out.push(`${i}.   ${icon} ${ch.name}`);
+      i += 1;
+    }
+  }
+
+  const uncategorized = sortChannels(byParent.get("root") || []);
+  for (const ch of uncategorized) {
+    const icon = CHANNEL_TYPE_LABEL[Number(ch.type)] || "#";
+    out.push(`${i}. ${icon} ${ch.name}`);
+    i += 1;
+  }
+
+  return out;
+}
+
+function formatRoleList(roles = []) {
+  const sorted = [...roles].sort(
+    (a, b) => Number(b?.position ?? 0) - Number(a?.position ?? 0),
+  );
+  return sorted.map((role, idx) => `${idx + 1}. ${role.name}`);
 }
 
 function countMessages(payload) {
@@ -62,13 +141,17 @@ function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
   const createdAtTs = Math.floor(
     new Date(payload?.createdAt || Date.now()).getTime() / 1000,
   );
-  const roles = Array.isArray(payload?.roles) ? payload.roles.length : 0;
-  const channels = Array.isArray(payload?.channels) ? payload.channels.length : 0;
+  const roleList = Array.isArray(payload?.roles) ? payload.roles : [];
+  const channelList = Array.isArray(payload?.channels) ? payload.channels : [];
+  const roles = roleList.length;
+  const channels = channelList.length;
   const threads = Array.isArray(payload?.threads) ? payload.threads.length : 0;
   const members = Array.isArray(payload?.members) ? payload.members.length : 0;
   const bans = Array.isArray(payload?.bans) ? payload.bans.length : 0;
   const messages = countMessages(payload);
   const sizeMb = (Number(sizeBytes || 0) / (1024 * 1024)).toFixed(2);
+  const channelLines = formatChannelList(channelList);
+  const roleLines = formatRoleList(roleList);
 
   return new EmbedBuilder()
     .setColor("#3498db")
@@ -83,6 +166,8 @@ function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
       { name: "Threads", value: String(threads), inline: true },
       { name: "Members", value: String(members), inline: true },
       { name: "Bans", value: String(bans), inline: true },
+      { name: "Channels", value: toCodeBlock(channelLines), inline: true },
+      { name: "Roles", value: toCodeBlock(roleLines), inline: true },
       {
         name: "File",
         value: `\`${String(backupId || "").toUpperCase()}.json.gz\` (${sizeMb} MB)`,

@@ -294,10 +294,6 @@ function startPrimaryLoops(client, engagementTick) {
       () => startTranscriptCleanupLoop(),
     ],
     [
-      "[AUTO BACKUP] Failed to start loop",
-      () => startAutoBackupLoop(client),
-    ],
-    [
       "[JOIN RAID RESTORE] Failed to start loop",
       () => {
         const tick = async () => {
@@ -407,6 +403,11 @@ module.exports = {
     }
 
     await restoreCoreStartupState(client);
+    try {
+      startAutoBackupLoop(client);
+    } catch (err) {
+      global.logger?.error?.("[AUTO BACKUP] Failed to start loop", err);
+    }
 
     if (primaryScheduler) {
       let engagementTickRunning = false;

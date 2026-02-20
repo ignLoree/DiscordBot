@@ -4,7 +4,7 @@
       "roles": [
         "roles.Founder"
       ],
-      "channels":[
+      "channels": [
         "1442569288161558528"
       ],
       "subcommands": {
@@ -661,6 +661,131 @@
     "verify": {
       "roles": [
         "roles.HighStaff"
+      ]
+    },
+    "adorable": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "birb": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "cat": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "catfacts": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "chucknorris": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "country": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "dadjoke": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "define": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "dog": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "dogfacts": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "flip": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "github": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "itunes": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "joke": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "math": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "movie": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "pokemon": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "pug": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "quotefun": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "roll": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "rps": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "slots": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "space": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "steamstatus": {
+      "roles": [
+        "roles.Member"
+      ]
+    },
+    "weather": {
+      "roles": [
+        "roles.Member"
       ]
     }
   },

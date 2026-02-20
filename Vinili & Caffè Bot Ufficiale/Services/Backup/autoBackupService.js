@@ -1,27 +1,52 @@
-﻿const fs = require("fs/promises");
+const fs = require("fs/promises");
 const path = require("path");
+const cron = require("node-cron");
 const { createGuildBackup, deleteGuildBackup, pruneGuildBackups, validateAndHealGuildBackups, } = require("./serverBackupService");
 
-const TICK_EVERY_MS = 60 * 60 * 1000;
 const MIN_BACKUP_GAP_MS = 50 * 60 * 1000;
 const MAX_MANUAL_BACKUPS = 50;
 const MAX_AUTOMATIC_BACKUPS = 1;
 const MAX_MANUAL_BACKUP_AGE_DAYS = 45;
 const MIN_MANUAL_BACKUPS_TO_KEEP = 8;
+const AUTO_BACKUP_TIMEZONE = "Europe/Rome";
+const STARTUP_CATCHUP_WINDOW_MINUTES = 10;
 
-function getLocalHourKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  const h = String(date.getHours()).padStart(2, "0");
-  return `${y}-${m}-${d}T${h}`;
+function getZonedParts(date = new Date(), timeZone = AUTO_BACKUP_TIMEZONE) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter
+    .formatToParts(date)
+    .reduce((acc, part) => {
+      if (part.type !== "literal") acc[part.type] = part.value;
+      return acc;
+    }, {});
+  return {
+    year: Number(parts.year || 0),
+    month: Number(parts.month || 0),
+    day: Number(parts.day || 0),
+    hour: Number(parts.hour || 0),
+    minute: Number(parts.minute || 0),
+  };
 }
 
-function getMsUntilNextHourBoundary(date = new Date()) {
-  const next = new Date(date);
-  next.setMinutes(0, 0, 0);
-  next.setHours(next.getHours() + 1);
-  return Math.max(1_000, next.getTime() - date.getTime());
+function getZonedDayKey(date = new Date(), timeZone = AUTO_BACKUP_TIMEZONE) {
+  const parts = getZonedParts(date, timeZone);
+  const y = String(parts.year).padStart(4, "0");
+  const m = String(parts.month).padStart(2, "0");
+  const d = String(parts.day).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function shouldRunStartupCatchup(date = new Date()) {
+  const parts = getZonedParts(date, AUTO_BACKUP_TIMEZONE);
+  return parts.hour === 0 && parts.minute <= STARTUP_CATCHUP_WINDOW_MINUTES;
 }
 
 function getMarkerPath(guildId) {
@@ -56,11 +81,11 @@ async function writeMarker(guildId, payload) {
 
 async function runGuildAutoBackup(guild) {
   const now = new Date();
-  const currentHourKey = getLocalHourKey(now);
+  const currentDayKey = getZonedDayKey(now);
   const marker = await readMarker(guild.id);
   const lastCreatedAt = Number(marker?.createdAtMs || 0);
-  const lastHourKey = String(marker?.hourKey || "");
-  if (lastHourKey === currentHourKey) return null;
+  const lastDayKey = String(marker?.dayKey || marker?.hourKey || "").split("T")[0];
+  if (lastDayKey === currentDayKey) return null;
   if (Date.now() - lastCreatedAt < MIN_BACKUP_GAP_MS) return null;
 
   const previousAutoId = String(marker?.backupId || "")
@@ -76,7 +101,7 @@ async function runGuildAutoBackup(guild) {
   await writeMarker(guild.id, {
     backupId: created.backupId,
     createdAtMs: Date.now(),
-    hourKey: currentHourKey,
+    dayKey: currentDayKey,
   });
 
   await pruneGuildBackups(guild.id, {
@@ -111,18 +136,19 @@ function startAutoBackupLoop(client) {
     }
   };
 
-  const bootNow = new Date();
-  if (bootNow.getMinutes() === 0) {
+  if (shouldRunStartupCatchup()) {
     runTick().catch(() => {});
   }
 
-  const scheduleHourly = () => {
-    runTick().catch(() => {});
-    client._autoBackupTick = setInterval(runTick, TICK_EVERY_MS);
-  };
-
-  const waitMs = getMsUntilNextHourBoundary(bootNow);
-  client._autoBackupTickStarter = setTimeout(scheduleHourly, waitMs);
+  client._autoBackupCron = cron.schedule(
+    "0 0 * * *",
+    () => {
+      runTick().catch(() => {});
+    },
+    {
+      timezone: AUTO_BACKUP_TIMEZONE,
+    },
+  );
 }
 
 module.exports = {
