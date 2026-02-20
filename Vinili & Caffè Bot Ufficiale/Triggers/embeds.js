@@ -48,7 +48,7 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
   const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, {
     name: CANDIDATURE_MEDIA_NAME,
   });
-  
+
   const rowCandidature = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setLabel("︲HELPER")
@@ -244,6 +244,10 @@ async function runStaffEmbedAuto(client) {
     client.channels.cache.get(IDs.channels.staffPagato) ||
     (await client.channels.fetch(IDs.channels.staffPagato).catch(() => null));
 
+  const DIVIDER_URL =
+    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+
+
   const embeds = [
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<a:questionexclaimanimated:1443660299994533960>  **__COME FUNZIONA?__**
@@ -256,7 +260,8 @@ async function runStaffEmbedAuto(client) {
 > Lo __Staffer del Mese__ ha anche dei **vantaggi** che sono _uguali_ per entrambi gli staffer:
 <:dot:1443660294596329582> Ruolo __<@&1442568895251611924>__
 <:dot:1443660294596329582> Ruolo __<@&1442568950805430312>__  per quel mese
-<:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`),
+<:dot:1443660294596329582> **__5__ giorni** di __pausa__ aggiuntivi`)
+      .setImage(DIVIDER_URL),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<:discordstaff:1443651872258003005> La **__guida staff__** di __Vinili & Caffè__ serve per portar **ordine** tra lo __staff__, infatti son presenti delle **__regole__** che __tutti__ dovranno **rispettare**, in __caso__ vengano \`trasgredite\`, potreste andare in contro a **__sanzioni__**, come **__\`valutazioni negative\`__** o in casi estremi il **__\`depex\`__**.
             
@@ -266,7 +271,8 @@ async function runStaffEmbedAuto(client) {
             <:dot:1443660294596329582> **Pause**
             <:dot:1443660294596329582> **Valutazioni**
             <:dot:1443660294596329582> **Sanzioni**
-            <:dot:1443660294596329582> **Warn Staff**`),
+            <:dot:1443660294596329582> **Warn Staff**`)
+      .setImage(DIVIDER_URL),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<a:questionexclaimanimated:1443660299994533960> Per **applicare** le __sanzioni__, è necessario __attenersi__ alle **indicazioni** riportate di seguito e **consultare** le procedure disponibili __cliccando__ sui **bottoni** alla fine del messaggio.
         
@@ -275,7 +281,8 @@ async function runStaffEmbedAuto(client) {
         <:dot:1443660294596329582> **__\`3\`__** <a:vegarightarrow:1443673039156936837> Quando **sanzionate**, usate sempre l'**__articolo__** del **regolamento** infranto.
         <:dot:1443660294596329582> **__\`4\`__** <a:vegarightarrow:1443673039156936837> Per visualizzare **quante** volte un __utente__ è stato **sanzionato** usate il comando ?modlogs **__\`ID\`__**
         <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Bisogna **__sempre__** sanzionare nel canale <#1442569245878648924> usando i comandi di <@155149108183695360>
-        <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`),
+        <:dot:1443660294596329582> **__\`5\`__** <a:vegarightarrow:1443673039156936837> Ogni volta che si __oltrepassa__ il numero di **sanzioni ottenibili** si **ricomincia** il __ciclo__ di sanzioni per quella **specifica __regola__**.`)
+      .setImage(DIVIDER_URL),
     new EmbedBuilder().setColor("#6f4e37")
       .setDescription(`<:partneredserverowner:1443651871125409812> **__Vinili & Caffè__** offre un servizio di __pagamento__ in base al numero di **partner** effettuate.
                 > Per riscattare eventuali premi bisognerà aprire un <#1442569095068254219> **__\`Terza Categoria\`__**
@@ -284,7 +291,8 @@ async function runStaffEmbedAuto(client) {
                 <:dot:1443660294596329582> **__\`175\`__** partner <a:vegarightarrow:1443673039156936837> **__3__ euro** <:paypal:1329524292446191676> / **Nitro __Basic__** <:sparkles_nitro_basic:1330196488336310383>
                 <:dot:1443660294596329582> **__\`250\`__** partner <a:vegarightarrow:1443673039156936837> **Nitro __Boost__** <:VC_NitroBoost:1448706966263435326>
                 
-                <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.`),
+                <a:flyingnitroboost:1443652205705170986> Naturalmente, in caso di riscatto del **Nitro __Boost__**, almeno un **boost** dovrà andare a **__Vinili & Caffè__**.`)
+      .setImage(DIVIDER_URL),
   ];
 
   const rowGuideMain = new ActionRowBuilder().addComponents(
