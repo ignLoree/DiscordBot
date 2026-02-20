@@ -26,7 +26,7 @@ const VERIFIED_BOT_IDS = new Set(
 
 const JOIN_RAID_CONFIG = {
   enabled: true,
-  triggerAction: "ban", // ban | kick | log
+  triggerAction: "kick", // ban | kick | log
   triggerCount: 10,
   triggerWindowMs: 3 * 60 * 60_000,
   raidDurationMs: 30 * 60_000,
@@ -799,7 +799,7 @@ async function processJoinRaidForMember(member) {
     }
 
     const active = Number(state.raidUntil || 0) > at;
-    if (active && highRisk) {
+    if (active && reasons.length > 0) {
       const outcome = await applyPunishment(member, reasons);
       return {
         blocked: true,

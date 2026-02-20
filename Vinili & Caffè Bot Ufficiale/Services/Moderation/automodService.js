@@ -1257,14 +1257,6 @@ function isExempt(message) {
   }
   if (EXEMPT_CHANNEL_IDS.has(String(message.channelId))) return true;
   if (isUnderExemptCategory(message.channel)) return true;
-  if (
-    message.member.permissions?.has(PermissionsBitField.Flags.Administrator)
-  ) {
-    return true;
-  }
-  if ([...STAFF_ROLE_IDS].some((id) => message.member.roles.cache.has(id))) {
-    return true;
-  }
   const profile = getProfileConfig(message);
   return Boolean(profile?.exempt);
 }
@@ -1292,13 +1284,7 @@ function isAutoModRoleExemptMember(guild, member) {
   if (!guild || !member) return false;
   if (String(guild.ownerId || "") === String(member.id || "")) return true;
   if (CORE_EXEMPT_USER_IDS.has(String(member.id || ""))) return true;
-  if (
-    member.permissions?.has?.(PermissionsBitField.Flags.Administrator) ||
-    member.permissions?.has?.(PermissionsBitField.Flags.ManageGuild)
-  ) {
-    return true;
-  }
-  return [...STAFF_ROLE_IDS].some((id) => member.roles?.cache?.has?.(id));
+  return false;
 }
 
 async function getAutoModMemberSnapshot(member) {
@@ -1876,7 +1862,7 @@ async function deleteMessage(message, state, violations) {
 }
 
 async function timeoutMember(message, state, violations, options = {}) {
-  const canPunishNow = options?.ignoreCooldown ? true : canActNow(message);
+  const canLogNow = options?.ignoreCooldown ? true : canActNow(message);
   const member = message.member;
   if (!member) return false;
   const timeoutDurations = [REGULAR_TIMEOUT_MS];
@@ -1923,7 +1909,6 @@ async function timeoutMember(message, state, violations, options = {}) {
   }
   const durationMs = Math.max(...timeoutDurations);
   const deleted = await message.delete().then(() => true).catch(() => false);
-  if (!canPunishNow) return deleted;
   if (!member?.moderatable) return false;
   const me = message.guild.members.me;
   if (!me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) {
@@ -1934,15 +1919,19 @@ async function timeoutMember(message, state, violations, options = {}) {
     .then(() => true)
     .catch(() => false);
   if (!timedOut) return false;
-  await markBadUserAction(message, "timeout", violations);
+  if (canLogNow) {
+    await markBadUserAction(message, "timeout", violations);
+  }
   state.heat = HEAT_RESET_ON_PUNISHMENT ? 0 : Math.max(35, state.heat * 0.45);
-  await sendAutomodActionInChannel(message, "timeout", violations, {
-    timeoutMs: durationMs,
-  });
-  await sendAutomodLog(message, "timeout", violations, state.heat, {
-    timeoutMs: durationMs,
-  });
-  recordAutomodMetric(message, "timeout", violations);
+  if (canLogNow) {
+    await sendAutomodActionInChannel(message, "timeout", violations, {
+      timeoutMs: durationMs,
+    });
+    await sendAutomodLog(message, "timeout", violations, state.heat, {
+      timeoutMs: durationMs,
+    });
+    recordAutomodMetric(message, "timeout", violations);
+  }
   return true;
 }
 
@@ -2077,7 +2066,7 @@ async function runAutoModMessage(message) {
     ]);
     return {
       blocked: Boolean(deleted),
-      action: deleted ? "delete" : "cooldown_skip",
+      action: deleted ? "delete" : "enforcement_failed",
       heat: state.heat,
     };
   }
@@ -2098,7 +2087,7 @@ async function runAutoModMessage(message) {
     ]);
     return {
       blocked: Boolean(deleted),
-      action: deleted ? "delete" : "cooldown_skip",
+      action: deleted ? "delete" : "enforcement_failed",
       heat: state.heat,
     };
   }
@@ -2115,7 +2104,7 @@ async function runAutoModMessage(message) {
     ]);
     return {
       blocked: Boolean(deleted),
-      action: deleted ? "delete" : "cooldown_skip",
+      action: deleted ? "delete" : "enforcement_failed",
       heat: state.heat,
     };
   }
@@ -2124,7 +2113,7 @@ async function runAutoModMessage(message) {
     const deleted = await deleteMessage(message, state, violations);
     return {
       blocked: Boolean(deleted),
-      action: deleted ? "delete" : "cooldown_skip",
+      action: deleted ? "delete" : "enforcement_failed",
       heat: state.heat,
     };
   }
@@ -2133,7 +2122,7 @@ async function runAutoModMessage(message) {
     const warned = await warnUser(message, state, violations);
     return {
       blocked: Boolean(warned),
-      action: warned ? "warn" : "cooldown_skip",
+      action: warned ? "warn" : "enforcement_failed",
       heat: state.heat,
     };
   }

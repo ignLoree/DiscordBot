@@ -12,6 +12,7 @@ const {
 } = require("../Utils/Community/memberCounterUtils");
 const {
   processJoinRaidForMember,
+  getJoinRaidStatusSnapshot,
 } = require("../Services/Moderation/joinRaidService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 
@@ -648,6 +649,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
     Boolean(member?.moderatable);
   let punished = false;
+  let appliedAction = normalizedAction;
   if (normalizedAction === "kick" && canKick) {
     punished = await member.kick(reason).then(() => true).catch(() => false);
   } else if (normalizedAction === "ban" && canBan) {
@@ -661,10 +663,14 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       .timeout(6 * 60 * 60_000, `JoinGate fallback timeout: ${reason}`)
       .then(() => true)
       .catch(() => false);
+    if (punished) appliedAction = "timeout";
   }
-  const blocked = normalizedAction === "log" ? false : punished;
+  if (!punished && normalizedAction !== "log") {
+    appliedAction = "log";
+  }
+  const blocked = appliedAction === "log" ? false : punished;
   if (punished) {
-    if (normalizedAction === "kick") {
+    if (appliedAction === "kick") {
       markJoinGateKick(member.guild.id, member.id, reason);
     }
   }
@@ -679,7 +685,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       .setDescription(
         [
           `${ARROW} **Target:** ${member.user} [\`${member.user.id}\`]`,
-          `${ARROW} **Action:** ${normalizedAction.toUpperCase()}`,
+          `${ARROW} **Action:** ${appliedAction.toUpperCase()}`,
           `${ARROW} **Reason:** ${reason}`,
           ...extraLines.filter(Boolean),
           `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"}`,
@@ -694,13 +700,13 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   }
   return {
     blocked,
-    attempted: normalizedAction === "log" ? false : normalizedAction === "ban" ? canBan : canKick,
+    attempted: appliedAction === "log" ? false : appliedAction === "ban" ? canBan : canKick,
     punished,
     dmSent,
     canKick,
     canBan,
     canTimeout,
-    action: normalizedAction,
+    action: appliedAction,
   };
 }
 
@@ -868,7 +874,23 @@ module.exports = {
           joinRaidResult = await processJoinRaidForMember(member);
         } catch (joinRaidError) {
           global.logger?.error?.("[guildMemberAdd] joinRaid failed:", joinRaidError);
-          joinRaidResult = { blocked: false };
+          const snapshot = await getJoinRaidStatusSnapshot(member.guild.id).catch(
+            () => null,
+          );
+          if (snapshot?.raidActive) {
+            const fallback = await kickForJoinGate(
+              member,
+              "Join Raid service error while raid protection is active.",
+              [
+                `${ARROW} **Rule:** Join Raid Fallback`,
+                `${ARROW} **Raid Active:** Yes`,
+              ],
+              "kick",
+            );
+            joinRaidResult = { blocked: Boolean(fallback?.blocked) };
+          } else {
+            joinRaidResult = { blocked: false };
+          }
         }
       }
       if (joinRaidResult?.blocked) return;
@@ -914,7 +936,16 @@ module.exports = {
       if (JOIN_GATE.suspiciousAccount.enabled) {
         const suspiciousReason = detectSuspiciousAccount(member);
         if (suspiciousReason) {
-          await sendSuspiciousAccountLog(member, suspiciousReason);
+          const result = await kickForJoinGate(
+            member,
+            `Suspicious account: ${suspiciousReason}`,
+            [
+              `${ARROW} **Rule:** Suspicious Account`,
+              `${ARROW} **Reason:** ${suspiciousReason}`,
+            ],
+            JOIN_GATE.suspiciousAccount.action,
+          );
+          if (result?.blocked) return;
         }
       }
 

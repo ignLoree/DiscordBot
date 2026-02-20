@@ -150,6 +150,41 @@ function toComparableComponents(components = []) {
   return JSON.stringify(simplifyComponents(components));
 }
 
+function messageHasAttachmentName(message, expectedName) {
+  const wanted = String(expectedName || "").trim().toLowerCase();
+  if (!wanted) return false;
+  const attachments = message?.attachments;
+  if (!attachments?.size) return false;
+  for (const item of attachments.values()) {
+    const name = String(item?.name || "").trim().toLowerCase();
+    if (name && name === wanted) return true;
+  }
+  return false;
+}
+
+async function fetchBotPanelMessages(channel, client, limit = 1200) {
+  const out = [];
+  let before = null;
+  while (out.length < limit) {
+    const batch = await channel.messages
+      .fetch(before ? { limit: 100, before } : { limit: 100 })
+      .catch(() => null);
+    if (!batch?.size) break;
+
+    const values = [...batch.values()];
+    for (const msg of values) {
+      if (msg?.author?.id !== client.user?.id) continue;
+      if (!Array.isArray(msg?.embeds) || !msg.embeds.length) continue;
+      out.push(msg);
+      if (out.length >= limit) break;
+    }
+
+    before = values[values.length - 1]?.id || null;
+    if (!before || values.length < 100) break;
+  }
+  return out;
+}
+
 function scoreEmbedSimilarity(message, payload) {
   const msgFirst =
     simplifyEmbed(Array.isArray(message?.embeds) ? message.embeds[0] : null) || {};
@@ -271,6 +306,9 @@ async function shouldEditMessage(message, payload) {
 
 async function upsertPanelMessage(channel, client, payload) {
   const messageId = payload?.messageId || null;
+  const attachmentName = String(payload?.attachmentName || "")
+    .trim()
+    .toLowerCase();
   if (messageId) {
     const direct = await channel.messages.fetch(messageId).catch(() => null);
     if (direct) {
@@ -287,14 +325,7 @@ async function upsertPanelMessage(channel, client, payload) {
     }
   }
 
-  const messages = await channel.messages
-    .fetch({ limit: 100 })
-    .catch(() => null);
-  const botMessages = messages
-    ? [...messages.values()].filter(
-        (msg) => msg.author?.id === client.user?.id && msg.embeds?.length,
-      )
-    : [];
+  const botMessages = await fetchBotPanelMessages(channel, client, 1200);
 
   const payloadCustomIds = extractCustomIdsFromComponents(
     payload?.components || [],
@@ -337,6 +368,12 @@ async function upsertPanelMessage(channel, client, payload) {
         (msg) =>
           buildEmbedSignatureFromMessage(msg.embeds || []) === payloadSignature,
       ) || null;
+  }
+
+  if (!existing && attachmentName) {
+    existing =
+      botMessages.find((msg) => messageHasAttachmentName(msg, attachmentName)) ||
+      null;
   }
 
   if (!existing) {
