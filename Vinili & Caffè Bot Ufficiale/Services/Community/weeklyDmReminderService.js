@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
@@ -31,6 +31,8 @@ const STAFF_ROLE_IDS = [
   IDs.roles.Founder,
   IDs.roles.CoFounder,
 ].map((id) => String(id || "").trim()).filter(Boolean);
+const channelMention = (channelId, fallback) =>
+  channelId ? `<#${channelId}>` : fallback;
 const defaultPool = [
   {
     title: "Ruoli e vantaggi del server",
@@ -39,28 +41,25 @@ const defaultPool = [
   },
   {
     title: "Comandi utili del bot",
-    description:
-      "Con +help trovi rapidamente i comandi principali del bot per utility, livelli e community.",
+    description: `Con +help trovi rapidamente i comandi principali del bot. Provali in ${channelMention(IDs.channels.commands, "chat comandi")}.`,
   },
   {
     title: "Forum e discussioni",
-    description:
-      "Se hai un tema interessante, aprilo nel forum del server: aiuta a tenere la community attiva e ordinata.",
+    description: `Se hai un tema interessante, aprilo nel forum del server (${channelMention(IDs.channels.forum, "canale forum")}): aiuta a tenere la community attiva e ordinata.`,
   },
   {
     title: "Livelli e progressione",
     description:
-      "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi.",
+      "Un po' di chat e vocale ogni settimana ti aiuta a salire di livello e sbloccare perks progressivi. Controlla +rank e +classifica.",
   },
   {
     title: "Ticket e supporto",
-    description:
-      "Se ti serve supporto, usa i ticket: e il modo piu veloce per ricevere assistenza dallo staff.",
+    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: e il modo piu veloce per ricevere assistenza dallo staff.`,
   },
   {
     title: "Gestione DM",
     description:
-      "Puoi sempre disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
+      "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
   },
   {
     title: "Attivita community",
@@ -72,8 +71,35 @@ const defaultPool = [
     description:
       "Tra quote, livelli, classifiche e comandi utility c'e molto da usare: prova una funzione nuova questa settimana.",
   },
+  {
+    title: "Canale suggerimenti",
+    description: `Hai un'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
+  },
+  {
+    title: "News e aggiornamenti",
+    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novita, cambi e annunci importanti del server.`,
+  },
+  {
+    title: "Ruoli colori e badge",
+    description: `Dai un'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} per colori e vantaggi sbloccabili.`,
+  },
+  {
+    title: "Quote della community",
+    description: `Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+  },
+  {
+    title: "Verifica e onboarding",
+    description: `Se inviti amici, ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
+  },
+  {
+    title: "Eventi e sondaggi",
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunita e resti aggiornato.`,
+  },
+  {
+    title: "Contatore e mini-attivita",
+    description: `Per attivita leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
+  },
 ];
-
 let loopHandle = null;
 let state = null;
 
@@ -389,4 +415,3 @@ function startWeeklyDmReminderLoop(client) {
 module.exports = {
   startWeeklyDmReminderLoop,
 };
-
