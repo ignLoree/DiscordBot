@@ -255,6 +255,22 @@ const defaultPool = [
     title: "Preparazione candidatura",
     description: "Prima di inviare la candidatura, cura grammatica, chiarezza e motivazioni: aumenta molto le possibilità di essere considerato.",
   },
+  {
+    title: "Staff pagato: informazioni",
+    description: `Se ti interessa il percorso staff pagato, consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")} per dettagli e requisiti.`,
+  },
+  {
+    title: "Staff pagato: requisiti",
+    description: "Per accedere a ruoli pagati servono costanza, affidabilità e risultati concreti nel tempo.",
+  },
+  {
+    title: "Staff pagato: approccio",
+    description: "Prima di puntare al compenso, concentra il focus su qualità del supporto e responsabilità nelle attività staff.",
+  },
+  {
+    title: "Staff pagato: candidatura",
+    description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
+  },
 ];
 let loopHandle = null;
 let state = null;
