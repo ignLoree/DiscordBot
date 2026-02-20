@@ -15,6 +15,7 @@ const STATE_PATH = path.join(
 const TICK_EVERY_MS = 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_RETRY_DELAY_MS = 6 * 60 * 60 * 1000;
+const STARTUP_BLAST_DM_DELAY_MS = 450;
 const DM_FOOTER =
   "Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel server.";
 const DEFAULT_TZ = "Europe/Rome";
@@ -429,11 +430,27 @@ function getGuildEntry(guildId) {
   const key = String(guildId || "");
   if (!key) return null;
   if (!root[key] || typeof root[key] !== "object") {
-    root[key] = { plannedAt: 0, jobs: [], reminderHistory: {} };
+    root[key] = {
+      plannedAt: 0,
+      jobs: [],
+      reminderHistory: {},
+      startupBlastDone: false,
+      startupBlastRunning: false,
+      startupBlastAt: 0,
+    };
   }
   if (!Array.isArray(root[key].jobs)) root[key].jobs = [];
   if (!root[key].reminderHistory || typeof root[key].reminderHistory !== "object") {
     root[key].reminderHistory = {};
+  }
+  if (typeof root[key].startupBlastDone !== "boolean") {
+    root[key].startupBlastDone = false;
+  }
+  if (typeof root[key].startupBlastRunning !== "boolean") {
+    root[key].startupBlastRunning = false;
+  }
+  if (!Number.isFinite(Number(root[key].startupBlastAt || 0))) {
+    root[key].startupBlastAt = 0;
   }
   return root[key];
 }
@@ -722,6 +739,100 @@ async function maybePlanWeeklyBatch(client, guild) {
   );
 }
 
+async function runStartupBlastOnce(client, guild) {
+  const entry = getGuildEntry(guild.id);
+  if (!entry) return;
+  if (entry.startupBlastDone || entry.startupBlastRunning) return;
+
+  entry.startupBlastRunning = true;
+  saveState();
+  try {
+    await guild.members.fetch().catch(() => {});
+    const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+    const eligibleMembers = [];
+    for (const member of guild.members.cache.values()) {
+      if (!member || member.user?.bot) continue;
+      if (isStaffMember(member)) continue;
+      const userId = String(member.id);
+      if (!userId || noDmSet.has(userId)) continue;
+      eligibleMembers.push(member);
+    }
+
+    if (!eligibleMembers.length) {
+      entry.startupBlastDone = true;
+      entry.startupBlastAt = Date.now();
+      entry.startupBlastRunning = false;
+      saveState();
+      return;
+    }
+
+    const pool = [...defaultPool, ...MASSIVE_REMINDER_POOL];
+    const variants = buildUniqueReminderVariants(pool, eligibleMembers.length);
+    const availableVariantIndexes = variants.map((_, idx) => idx);
+    const history = entry.reminderHistory || {};
+    const now = Date.now();
+    let sentCount = 0;
+    let failCount = 0;
+
+    for (let idx = 0; idx < eligibleMembers.length; idx += 1) {
+      const member = eligibleMembers[idx];
+      const userId = String(member.id);
+      const lastSignature = String(history?.[userId]?.lastSignature || "");
+      const hasHistory = Boolean(lastSignature);
+      let variantIndex = pickVariantIndexForUser(
+        variants,
+        availableVariantIndexes,
+        lastSignature,
+      );
+      if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
+      let reminder = variants[variantIndex] || pool[idx % pool.length];
+      if (!hasHistory && isDmManagementReminder(reminder)) {
+        const alternative = availableVariantIndexes.find((candidateIdx) => {
+          const candidate = variants[candidateIdx];
+          return !isDmManagementReminder(candidate);
+        });
+        if (Number.isInteger(alternative)) {
+          variantIndex = Number(alternative);
+          reminder = variants[variantIndex] || reminder;
+        }
+      }
+      const usedPos = availableVariantIndexes.indexOf(variantIndex);
+      if (usedPos !== -1) availableVariantIndexes.splice(usedPos, 1);
+
+      try {
+        await member.user.send({
+          embeds: [createReminderEmbed(reminder)],
+          allowedMentions: { parse: [] },
+        });
+        history[userId] = {
+          lastSignature: reminderSignature(reminder),
+          plannedAt: now,
+        };
+        sentCount += 1;
+      } catch {
+        failCount += 1;
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, STARTUP_BLAST_DM_DELAY_MS),
+      );
+    }
+
+    entry.reminderHistory = history;
+    entry.startupBlastDone = true;
+    entry.startupBlastAt = Date.now();
+    entry.startupBlastRunning = false;
+    saveState();
+    global.logger?.info?.(
+      `[WEEKLY DM] Startup blast done for guild ${guild.id}: sent=${sentCount}, failed=${failCount}.`,
+    );
+  } catch (error) {
+    entry.startupBlastRunning = false;
+    saveState();
+    global.logger?.error?.("[WEEKLY DM] Startup blast failed:", error);
+  }
+}
+
 function shouldRetry(job) {
   if (!job) return false;
   const attempts = Number(job.attempts || 0);
@@ -814,6 +925,7 @@ async function weeklyTick(client) {
       (await client.guilds.fetch(guildId).catch(() => null));
     if (!guild) return;
 
+    await runStartupBlastOnce(client, guild);
     await maybePlanWeeklyBatch(client, guild);
     await sendDueJobs(client, guild);
   } catch (error) {
