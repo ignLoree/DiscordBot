@@ -24,8 +24,9 @@ const APPLICATION_REACTIONS = [
 
 const NOMODULI_ROLE_ID = IDs.roles.blacklistModuli;
 const MEMBER_ROLE_ID = IDs.roles.Member;
-const STAFF_BLOCK_ROLE_IDS = [
-  IDs.roles.PartnerManager,
+const HELPER_ROLE_ID = IDs.roles.Helper;
+const PARTNER_MANAGER_ROLE_ID = IDs.roles.PartnerManager;
+const HELPER_REAPPLY_BLOCK_ROLE_IDS = [
   IDs.roles.Staff,
   IDs.roles.Helper,
   IDs.roles.Mod,
@@ -268,6 +269,16 @@ function hasAnyRole(interaction, roleIds) {
   return roleIds.some((id) => cache.has(id));
 }
 
+function getHighestRoleId(interaction, roleIds) {
+  const cache = getRoleCache(interaction);
+  if (!cache || !Array.isArray(roleIds) || roleIds.length === 0) return null;
+  const roles = roleIds
+    .map((id) => cache.get(id))
+    .filter(Boolean)
+    .sort((a, b) => Number(b.position || 0) - Number(a.position || 0));
+  return roles[0]?.id || null;
+}
+
 function hasMemberRole(interaction) {
   if (!MEMBER_ROLE_ID) return true;
   return hasAnyRole(interaction, [MEMBER_ROLE_ID]);
@@ -276,10 +287,6 @@ function hasMemberRole(interaction) {
 function hasNoModuliRole(interaction) {
   if (!NOMODULI_ROLE_ID) return false;
   return hasAnyRole(interaction, [NOMODULI_ROLE_ID]);
-}
-
-function isStaffOrPartnerManager(interaction) {
-  return hasAnyRole(interaction, STAFF_BLOCK_ROLE_IDS);
 }
 
 function getCooldownUntil(userId) {
@@ -302,7 +309,17 @@ function buildRoleDeniedEmbed() {
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
     .setDescription(
-      "<:vegax:1443934876440068179> Le candidature sono disponibili solo agli utenti con ruolo Member e non sono disponibili per Staff o Partner Manager.",
+      "<:vegax:1443934876440068179> Le candidature sono disponibili solo agli utenti con ruolo Member.",
+    );
+}
+
+function buildAlreadyRoleEmbed(roleId) {
+  const roleText = roleId ? `<@&${roleId}>` : "questo ruolo";
+  return new EmbedBuilder()
+    .setColor("Red")
+    .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
+    .setDescription(
+      `Sei già ${roleText}, perchè dovresti ricandidarti?`,
     );
 }
 
@@ -363,7 +380,13 @@ function buildFinalThanksEmbed(untilTs) {
     );
 }
 
-async function enforceEligibility(interaction) {
+function getTargetRoleIdByType(type) {
+  if (type === "partnermanager") return PARTNER_MANAGER_ROLE_ID;
+  if (type === "helper") return HELPER_ROLE_ID;
+  return null;
+}
+
+async function enforceEligibility(interaction, type) {
   if (hasNoModuliRole(interaction)) {
     await interaction.reply({
       embeds: [buildNoModuliDeniedEmbed()],
@@ -371,9 +394,27 @@ async function enforceEligibility(interaction) {
     });
     return false;
   }
-  if (!hasMemberRole(interaction) || isStaffOrPartnerManager(interaction)) {
+  if (!hasMemberRole(interaction)) {
     await interaction.reply({
       embeds: [buildRoleDeniedEmbed()],
+      flags: 1 << 6,
+    });
+    return false;
+  }
+  const targetRoleId = getTargetRoleIdByType(type);
+  if (targetRoleId && hasAnyRole(interaction, [targetRoleId])) {
+    await interaction.reply({
+      embeds: [buildAlreadyRoleEmbed(targetRoleId)],
+      flags: 1 << 6,
+    });
+    return false;
+  }
+  if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
+    const highestRoleId =
+      getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) ||
+      HELPER_ROLE_ID;
+    await interaction.reply({
+      embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
     });
     return false;
@@ -525,10 +566,30 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     });
     return true;
   }
-  if (!hasMemberRole(interaction) || isStaffOrPartnerManager(interaction)) {
+  if (!hasMemberRole(interaction)) {
     pendingApplications.delete(getStateKey(interaction, type));
     await interaction.reply({
       embeds: [buildRoleDeniedEmbed()],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+  const targetRoleId = getTargetRoleIdByType(type);
+  if (targetRoleId && hasAnyRole(interaction, [targetRoleId])) {
+    pendingApplications.delete(getStateKey(interaction, type));
+    await interaction.reply({
+      embeds: [buildAlreadyRoleEmbed(targetRoleId)],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+  if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
+    pendingApplications.delete(getStateKey(interaction, type));
+    const highestRoleId =
+      getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) ||
+      HELPER_ROLE_ID;
+    await interaction.reply({
+      embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
     });
     return true;
@@ -574,14 +635,14 @@ async function handleModalSubmit(interaction, type, stepRaw) {
 async function handleCandidatureApplicationInteraction(interaction) {
   if (interaction.isButton?.()) {
     if (interaction.customId === APPLY_HELPER_BUTTON) {
-      const ok = await enforceEligibility(interaction);
+      const ok = await enforceEligibility(interaction, "helper");
       if (!ok) return true;
       await sendIntro(interaction, "helper");
       return true;
     }
 
     if (interaction.customId === APPLY_PM_BUTTON) {
-      const ok = await enforceEligibility(interaction);
+      const ok = await enforceEligibility(interaction, "partnermanager");
       if (!ok) return true;
       await sendIntro(interaction, "partnermanager");
       return true;
@@ -598,7 +659,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
         });
         return true;
       }
-      const ok = await enforceEligibility(interaction);
+      const ok = await enforceEligibility(interaction, type);
       if (!ok) return true;
       return handleStartButton(interaction, type);
     }

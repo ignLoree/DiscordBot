@@ -1234,6 +1234,18 @@
         "verify_enter": {
             "verifyStartRequired": true
         },
+        "apply_helper": [
+            "roles.Member"
+        ],
+        "apply_partnermanager": [
+            "roles.Member"
+        ],
+        "apply_start:*": {
+            "roles": [
+                "roles.Member"
+            ],
+            "ownerSegment": 2
+        },
         "verify_start": null,
         "vocalimoderazione": [
             "roles.Staff"
@@ -1329,6 +1341,11 @@
         },
         "verify_code:*": {
             "ownerSegment": 1
+        },
+        "apply_form:*": {
+            "roles": [
+                "roles.Member"
+            ]
         }
     }
 }
