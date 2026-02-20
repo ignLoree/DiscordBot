@@ -50,6 +50,8 @@ function normalizeLine(line) {
 function shouldDropDescriptionLine(line) {
   const normalized = normalizeLine(line);
   if (!normalized) return false;
+  // Keep markdown code fences, otherwise diff blocks break in logs.
+  if (/^```/.test(normalized)) return false;
   if (isPlaceholderValue(normalized)) return true;
 
   const plain = normalizeText(normalized);
