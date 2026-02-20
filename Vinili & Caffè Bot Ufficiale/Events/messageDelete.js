@@ -77,15 +77,24 @@ function isTransientInteractionMessage(message) {
 function sanitizeDeletedContentForLog(content) {
   let text = String(content || "").replace(/\r\n/g, "\n");
   text = text.replace(/^```[a-zA-Z0-9_-]*\n?/, "").replace(/\n?```$/, "");
+  // Remove log-structure lines before emoji normalization.
+  text = text
+    .replace(
+      /(^|\n)\s*(?:<:VC_right_arrow:\d+>|:VC_right_arrow:)\s+\*\*(Channel|Id|Content|Attachments|Author):\*\*[^\n]*/gi,
+      "$1",
+    )
+    .replace(
+      /(^|\n)\s*\*\*(Channel|Id|Content|Attachments|Author):\*\*[^\n]*/gi,
+      "$1",
+    );
   text = text.replace(/<a?:([a-zA-Z0-9_]+):\d+>/g, ":$1:");
   text = text
     .replace(/```+/g, "'''")
     .replace(/`/g, "'")
     .replace(/\u0000/g, "")
-    .replace(
-      /<:VC_right_arrow:\d+>\s+\*\*(Channel|Id|Content|Attachments|Author):\*\*/gi,
-      "",
-    )
+    .replace(/(^|\n)\s*:VC_right_arrow:\s+\*\*(Channel|Id|Content|Attachments|Author):\*\*[^\n]*/gi, "$1")
+    .replace(/(^|\n)\s*(?:Attachments|Author)\s*:\s*[^\n]*/gi, "$1")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
   if (!text) return "(vuoto)";
   if (text.length <= MAX_CONTENT_LOG_LENGTH) return text;
