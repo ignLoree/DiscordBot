@@ -16,6 +16,7 @@ const APPLY_PM_BUTTON = "apply_partnermanager";
 const APPLY_START_PREFIX = "apply_start";
 const MODAL_PREFIX = "apply_form";
 const STATE_TTL_MS = 30 * 60 * 1000;
+const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const APPLICATION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 const APPLICATION_REACTIONS = [
   "<:thumbsup:1471292172145004768>",
@@ -49,9 +50,15 @@ const APPLICATION_COUNTERS_PATH = path.join(
   "Data",
   "applicationCounters.json",
 );
+const APPLICATION_DRAFTS_PATH = path.join(
+  process.cwd(),
+  "Data",
+  "applicationDrafts.json",
+);
 
 const pendingApplications = new Map();
 const cooldownByUser = new Map();
+const draftByStateKey = new Map();
 const applicationCounters = {
   helper: 0,
   partnermanager: 0,
@@ -234,6 +241,78 @@ function nextApplicationNumber(type) {
 
 loadApplicationCounters();
 
+function loadDraftMap() {
+  try {
+    if (!fs.existsSync(APPLICATION_DRAFTS_PATH)) return;
+    const raw = fs.readFileSync(APPLICATION_DRAFTS_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+    const now = Date.now();
+    for (const [stateKey, draft] of Object.entries(parsed)) {
+      if (!draft || typeof draft !== "object") continue;
+      const updatedAt = Number(draft.updatedAt || 0);
+      const nextStep = Number(draft.nextStep || 1);
+      if (!Number.isFinite(updatedAt) || now - updatedAt > DRAFT_TTL_MS) continue;
+      if (!Number.isFinite(nextStep) || nextStep < 1) continue;
+      draftByStateKey.set(stateKey, {
+        answers: draft.answers && typeof draft.answers === "object" ? draft.answers : {},
+        nextStep: Math.floor(nextStep),
+        updatedAt,
+      });
+    }
+  } catch {}
+}
+
+function persistDraftMap() {
+  try {
+    const dir = path.dirname(APPLICATION_DRAFTS_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const now = Date.now();
+    const out = {};
+    for (const [stateKey, draft] of draftByStateKey.entries()) {
+      const updatedAt = Number(draft?.updatedAt || 0);
+      const nextStep = Number(draft?.nextStep || 1);
+      if (!Number.isFinite(updatedAt) || now - updatedAt > DRAFT_TTL_MS) continue;
+      if (!Number.isFinite(nextStep) || nextStep < 1) continue;
+      out[stateKey] = {
+        answers: draft.answers && typeof draft.answers === "object" ? draft.answers : {},
+        nextStep: Math.floor(nextStep),
+        updatedAt,
+      };
+    }
+    fs.writeFileSync(APPLICATION_DRAFTS_PATH, JSON.stringify(out, null, 2), "utf8");
+  } catch {}
+}
+
+function setDraftState(stateKey, answers, nextStep) {
+  draftByStateKey.set(stateKey, {
+    answers: answers && typeof answers === "object" ? answers : {},
+    nextStep: Math.max(1, Math.floor(Number(nextStep) || 1)),
+    updatedAt: Date.now(),
+  });
+  persistDraftMap();
+}
+
+function getDraftState(stateKey) {
+  const draft = draftByStateKey.get(stateKey);
+  if (!draft) return null;
+  const updatedAt = Number(draft.updatedAt || 0);
+  if (!Number.isFinite(updatedAt) || Date.now() - updatedAt > DRAFT_TTL_MS) {
+    draftByStateKey.delete(stateKey);
+    persistDraftMap();
+    return null;
+  }
+  return draft;
+}
+
+function clearDraftState(stateKey) {
+  if (!draftByStateKey.has(stateKey)) return;
+  draftByStateKey.delete(stateKey);
+  persistDraftMap();
+}
+
+loadDraftMap();
+
 function pruneOldStates() {
   const now = Date.now();
   for (const [key, state] of pendingApplications.entries()) {
@@ -241,6 +320,15 @@ function pruneOldStates() {
       pendingApplications.delete(key);
     }
   }
+  let draftChanged = false;
+  for (const [key, draft] of draftByStateKey.entries()) {
+    const updatedAt = Number(draft?.updatedAt || 0);
+    if (!Number.isFinite(updatedAt) || now - updatedAt > DRAFT_TTL_MS) {
+      draftByStateKey.delete(key);
+      draftChanged = true;
+    }
+  }
+  if (draftChanged) persistDraftMap();
 }
 
 const cleanupTimer = setInterval(pruneOldStates, 5 * 60 * 1000);
@@ -353,14 +441,14 @@ function buildIntroEmbed(type) {
       .setColor("#6f4e37")
       .setTitle("Candidatura Partner Manager")
       .setDescription(
-        "Compilando questo modulo potrai candidarti come Partner Manager del server.\nSe hai dei dubbi apri un ticket terza categoria.",
+        "Compilando questo modulo potrai candidarti come Partner Manager del server.\nSe hai dei dubbi apri un ticket terza categoria.\n\n**__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
       );
   }
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Candidatura Helper")
     .setDescription(
-      "Compilando questo modulo potrai candidarti come Helper del server.\nIn caso verrete accettati farete una prova di 1/2 settimane\nSe hai dei dubbi apri un ticket terza categoria.",
+      "Compilando questo modulo potrai candidarti come Helper del server.\nIn caso verrete accettati farete una prova di 1/2 settimane\nSe hai dei dubbi apri un ticket terza categoria.\n\n**__LEGGI BENE ALL'INTERNO DEI RIQUADRI LA DOMANDA E POI RISPONDI__**",
     );
 }
 
@@ -449,7 +537,7 @@ function buildModal(type, step) {
         .setStyle(q.style || TextInputStyle.Paragraph)
         .setRequired(true)
         .setPlaceholder(
-          String(q.placeholder || q.text || "Rispondi qui")
+          `${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()} | ${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`
             .replace(/\s+/g, " ")
             .trim()
             .slice(0, 100),
@@ -504,22 +592,39 @@ async function handleStartButton(interaction, type, step = 1) {
   const stateKey = getStateKey(interaction, type);
   const normalizedStep = Number(step) || 1;
   if (normalizedStep <= 1) {
-    pendingApplications.set(stateKey, {
-      createdAt: Date.now(),
-      answers: {},
-    });
+    const draft = getDraftState(stateKey);
+    if (draft?.nextStep > 1) {
+      pendingApplications.set(stateKey, {
+        createdAt: Date.now(),
+        answers: draft.answers || {},
+      });
+      const resumeModal = buildModal(type, draft.nextStep);
+      if (!resumeModal) return false;
+      await interaction.showModal(resumeModal);
+      return true;
+    }
+    clearDraftState(stateKey);
+    pendingApplications.set(stateKey, { createdAt: Date.now(), answers: {} });
   } else {
     const state = pendingApplications.get(stateKey);
     if (!state) {
-      await interaction.reply({
-        content:
-          "<:vegax:1443934876440068179> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
-        flags: 1 << 6,
+      const draft = getDraftState(stateKey);
+      if (!draft?.answers) {
+        await interaction.reply({
+          content:
+            "<:vegax:1443934876440068179> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
+          flags: 1 << 6,
+        });
+        return true;
+      }
+      pendingApplications.set(stateKey, {
+        createdAt: Date.now(),
+        answers: draft.answers,
       });
-      return true;
+    } else {
+      state.createdAt = Date.now();
+      pendingApplications.set(stateKey, state);
     }
-    state.createdAt = Date.now();
-    pendingApplications.set(stateKey, state);
   }
   const modal = buildModal(type, normalizedStep);
   if (!modal) return false;
@@ -527,7 +632,7 @@ async function handleStartButton(interaction, type, step = 1) {
   return true;
 }
 
-async function finalizeApplication(interaction, type, state) {
+async function finalizeApplication(interaction, type, state, stateKey = null) {
   const cfg = APPLICATIONS[type];
   const channel = await resolveSubmissionChannel(interaction);
   if (!channel?.isTextBased?.()) {
@@ -585,6 +690,7 @@ async function finalizeApplication(interaction, type, state) {
 
   const nextAllowedAt = Date.now() + APPLICATION_COOLDOWN_MS;
   setCooldown(user.id, nextAllowedAt);
+  if (stateKey) clearDraftState(stateKey);
 
   await interaction.reply({
     embeds: [buildFinalThanksEmbed(nextAllowedAt)],
@@ -594,8 +700,10 @@ async function finalizeApplication(interaction, type, state) {
 }
 
 async function handleModalSubmit(interaction, type, stepRaw) {
+  const stateKey = getStateKey(interaction, type);
   if (hasNoModuliRole(interaction)) {
-    pendingApplications.delete(getStateKey(interaction, type));
+    pendingApplications.delete(stateKey);
+    clearDraftState(stateKey);
     await interaction.reply({
       embeds: [buildNoModuliDeniedEmbed()],
       flags: 1 << 6,
@@ -603,7 +711,8 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     return true;
   }
   if (!hasMemberRole(interaction)) {
-    pendingApplications.delete(getStateKey(interaction, type));
+    pendingApplications.delete(stateKey);
+    clearDraftState(stateKey);
     await interaction.reply({
       embeds: [buildRoleDeniedEmbed()],
       flags: 1 << 6,
@@ -612,7 +721,8 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   }
   const targetRoleId = getTargetRoleIdByType(type);
   if (targetRoleId && hasAnyRole(interaction, [targetRoleId])) {
-    pendingApplications.delete(getStateKey(interaction, type));
+    pendingApplications.delete(stateKey);
+    clearDraftState(stateKey);
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(targetRoleId)],
       flags: 1 << 6,
@@ -620,7 +730,8 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     return true;
   }
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
-    pendingApplications.delete(getStateKey(interaction, type));
+    pendingApplications.delete(stateKey);
+    clearDraftState(stateKey);
     const highestRoleId =
       getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) ||
       HELPER_ROLE_ID;
@@ -640,33 +751,50 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   const selected = chunks[step - 1];
   if (!selected) return false;
 
-  const stateKey = getStateKey(interaction, type);
   const state = pendingApplications.get(stateKey);
   if (!state) {
-    await interaction.reply({
-      content:
-        "<:vegax:1443934876440068179> Sessione candidatura non valida. Clicca di nuovo il bottone candidatura.",
-      flags: 1 << 6,
+    const draft = getDraftState(stateKey);
+    if (!draft?.answers) {
+      await interaction.reply({
+        content:
+          "<:vegax:1443934876440068179> Sessione candidatura non valida. Clicca di nuovo il bottone candidatura.",
+        flags: 1 << 6,
+      });
+      return true;
+    }
+    pendingApplications.set(stateKey, {
+      createdAt: Date.now(),
+      answers: draft.answers,
     });
-    return true;
   }
+  const activeState = pendingApplications.get(stateKey);
 
   for (const q of selected) {
     const value = interaction.fields.getTextInputValue(q.id);
-    state.answers[q.id] = String(value || "").trim();
+    activeState.answers[q.id] = String(value || "").trim();
   }
 
   const nextStep = step + 1;
   if (nextStep <= chunks.length) {
-    pendingApplications.set(stateKey, state);
-    const row = new ActionRowBuilder().addComponents(
+    pendingApplications.set(stateKey, activeState);
+    setDraftState(stateKey, activeState.answers, nextStep);
+    const controls = [
       new ButtonBuilder()
         .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
         .setLabel(`Continua modulo (${nextStep}/${chunks.length})`)
         .setStyle(ButtonStyle.Primary),
-    );
+    ];
+    if (step >= 1) {
+      controls.push(
+        new ButtonBuilder()
+          .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${step}`)
+          .setLabel(`Indietro (${step}/${chunks.length})`)
+          .setStyle(ButtonStyle.Secondary),
+      );
+    }
+    const row = new ActionRowBuilder().addComponents(...controls);
     await interaction.reply({
-      content: "Sei quasi alla fine. Clicca per continuare la candidatura.",
+      content: "Puoi continuare oppure tornare indietro per correggere le risposte.",
       components: [row],
       flags: 1 << 6,
     });
@@ -674,7 +802,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   }
 
   pendingApplications.delete(stateKey);
-  return finalizeApplication(interaction, type, state);
+  return finalizeApplication(interaction, type, activeState, stateKey);
 }
 
 async function handleCandidatureApplicationInteraction(interaction) {
