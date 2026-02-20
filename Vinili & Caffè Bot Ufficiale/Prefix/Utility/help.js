@@ -1699,16 +1699,26 @@ module.exports = {
       });
     }
 
+    const preferredFirstRole = [IDs.roles.Founder, IDs.roles.HighStaff, IDs.roles.Staff]
+      .filter(Boolean)
+      .find((roleId) => visibleRoleIds.includes(roleId));
+    const initialPageIndex = preferredFirstRole
+      ? Math.max(
+          0,
+          groupedPages.findIndex((page) => String(page.roleId) === String(preferredFirstRole)),
+        )
+      : 0;
+
     const uniqueToken = `${message.id}_${Date.now()}`;
     const navState = {
-      currentIndex: 0,
+      currentIndex: initialPageIndex,
       total: groupedPages.length,
       prevId: `help_prev_${uniqueToken}`,
       nextId: `help_next_${uniqueToken}`,
     };
 
     const sent = await safeMessageReply(message, {
-      components: [buildHelpV2Container(groupedPages[0], navState)],
+      components: [buildHelpV2Container(groupedPages[navState.currentIndex], navState)],
       flags: MessageFlags.IsComponentsV2,
       allowedMentions: NO_REPLY_MENTIONS,
     });

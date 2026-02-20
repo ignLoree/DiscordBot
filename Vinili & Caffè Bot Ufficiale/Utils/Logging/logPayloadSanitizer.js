@@ -1,4 +1,4 @@
-const { BaseGuildTextChannel, ThreadChannel } = require("discord.js");
+﻿const { BaseGuildTextChannel, ThreadChannel } = require("discord.js");
 const IDs = require("../Config/ids");
 
 const PLACEHOLDER_SNIPPETS = [
@@ -14,7 +14,12 @@ const PLACEHOLDER_SNIPPETS = [
   "[ nessuno ]",
   "audit missing",
   "-",
+  "â€”",
   "—",
+  "--",
+  "___",
+  "null",
+  "undefined",
 ];
 
 function normalizeText(value) {
@@ -28,7 +33,12 @@ function normalizeText(value) {
 function isPlaceholderValue(value) {
   const normalized = normalizeText(value);
   if (!normalized) return true;
-  return PLACEHOLDER_SNIPPETS.some((snippet) => normalized.includes(snippet));
+  if (PLACEHOLDER_SNIPPETS.includes(normalized)) return true;
+  const unbracketed = normalized
+    .replace(/^\[+\s*/, "")
+    .replace(/\s*\]+$/, "")
+    .trim();
+  return PLACEHOLDER_SNIPPETS.includes(unbracketed);
 }
 
 function normalizeLine(line) {
@@ -82,8 +92,11 @@ function sanitizeEmbedObject(embedLike) {
 
   if (Array.isArray(out.fields)) {
     out.fields = out.fields.filter((field) => {
+      const name = String(field?.name || "");
       const value = String(field?.value || "");
-      return !isPlaceholderValue(value);
+      if (isPlaceholderValue(value)) return false;
+      if (name && isPlaceholderValue(name)) return false;
+      return true;
     });
     if (!out.fields.length) delete out.fields;
   }
@@ -120,7 +133,16 @@ function sanitizeLogPayload(payload) {
   if (!payload || typeof payload !== "object") return payload;
   const out = { ...payload };
   if (Array.isArray(out.embeds) && out.embeds.length) {
-    out.embeds = out.embeds.map((embed) => sanitizeEmbedObject(embed));
+    out.embeds = out.embeds
+      .map((embed) => sanitizeEmbedObject(embed))
+      .filter((embed) => {
+        if (!embed || typeof embed !== "object") return false;
+        const hasTitle = Boolean(String(embed.title || "").trim());
+        const hasDescription = Boolean(String(embed.description || "").trim());
+        const hasFields = Array.isArray(embed.fields) && embed.fields.length > 0;
+        const hasMedia = Boolean(embed.image || embed.thumbnail || embed.author || embed.footer);
+        return hasTitle || hasDescription || hasFields || hasMedia;
+      });
   }
   return out;
 }

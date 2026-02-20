@@ -348,19 +348,6 @@ async function pinFirstTicketMessage(channel, message) {
       }
     } else if (ticketCategories.length > 0) {
       const firstTicketCategory = ticketCategories[0];
-      if (firstTicketCategory.name !== TICKETS_CATEGORY_NAME) {
-        const nameAlreadyUsed = guild.channels.cache.some(
-          (ch) =>
-            ch.type === 4 &&
-            ch.id !== firstTicketCategory.id &&
-            ch.name === TICKETS_CATEGORY_NAME,
-        );
-        if (!nameAlreadyUsed) {
-          await firstTicketCategory
-            .setName(TICKETS_CATEGORY_NAME)
-            .catch(() => {});
-        }
-      }
       if (getChildrenCount(firstTicketCategory.id) < 50) {
         await moveCategoryToTop(firstTicketCategory);
         interaction.client.ticketCategoryCache.set(

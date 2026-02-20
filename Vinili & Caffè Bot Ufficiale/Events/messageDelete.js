@@ -1,7 +1,7 @@
 ﻿const { EmbedBuilder, MessageFlagsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
-const MAX_DIFF_LENGTH = 1800;
+const MAX_CONTENT_LOG_LENGTH = 1800;
 const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
   [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
 );
@@ -74,11 +74,14 @@ function isTransientInteractionMessage(message) {
   return false;
 }
 
-function buildDeletedDiff(content) {
-  const text = normalizeText(content);
-  const raw = text ? `- ${text}` : "- (vuoto)";
-  if (raw.length <= MAX_DIFF_LENGTH) return raw;
-  return `${raw.slice(0, MAX_DIFF_LENGTH - 3)}...`;
+function sanitizeDeletedContentForLog(content) {
+  let text = String(content || "").replace(/\r\n/g, "\n");
+  text = text.replace(/^```[a-zA-Z0-9_-]*\n?/, "").replace(/\n?```$/, "");
+  text = text.replace(/<a?:([a-zA-Z0-9_]+):\d+>/g, ":$1:");
+  text = text.replace(/`/g, "'").replace(/\u0000/g, "").trim();
+  if (!text) return "(vuoto)";
+  if (text.length <= MAX_CONTENT_LOG_LENGTH) return text;
+  return `${text.slice(0, MAX_CONTENT_LOG_LENGTH - 3)}...`;
 }
 
 function collectAttachmentNames(message) {
@@ -163,8 +166,8 @@ async function sendDeleteLog(message) {
 
   if (hasContent) {
     lines.push("<:VC_right_arrow:1473441155055096081> **Content:**");
-    lines.push("```diff");
-    lines.push(buildDeletedDiff(content));
+    lines.push("```txt");
+    lines.push(sanitizeDeletedContentForLog(content));
     lines.push("```");
   } else {
     lines.push("<:VC_right_arrow:1473441155055096081> **Content:** `(vuoto)`");
