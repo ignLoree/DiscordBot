@@ -203,7 +203,8 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
 function runfile(bot, options = {}) {
     return new Promise((resolve) => {
         const { workingDir, file } = splitStartPath(bot.start);
-        const skipGitPull = Boolean(options.skipGitPull);
+        // Force-disable git pull on runtime to avoid merge conflicts on hosted panels.
+        const skipGitPull = true;
         const bypassDelay = Boolean(options.bypassDelay);
         const useWorkspaces = WORKSPACES_ENABLED;
 
@@ -253,20 +254,20 @@ function restartBot(botKey, options = {}) {
         proc.once('exit', () => {
             clearTimeout(forceTimer);
             restarting[botKey] = false;
-            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
+            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
         });
 
         try {
             proc.kill();
         } catch {
             restarting[botKey] = false;
-            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
+            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
         }
         return;
     }
 
     restarting[botKey] = false;
-    runfile(bot, { bypassDelay: !respectDelay, skipGitPull: false });
+    runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
 }
 
 function readRestartPayload() {
@@ -282,7 +283,7 @@ function readRestartPayload() {
     }
 }
 
-BOTS.forEach((bot) => runfile(bot, { skipGitPull: false }));
+BOTS.forEach((bot) => runfile(bot, { skipGitPull: true }));
 
 setInterval(() => {
     const payload = readRestartPayload();
