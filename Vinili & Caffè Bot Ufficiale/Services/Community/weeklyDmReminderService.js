@@ -719,6 +719,7 @@ function createExternalReturnEmbed(guild) {
         "",
         "Trovi eventi, attività e contenuti nuovi con continuità.",
         "Se ti interessa, puoi anche candidarti e valutare il percorso staff pagato.",
+        "Se vuoi chiedere partnership è importante che poi tu non esca dal server o essa verrà eliminata!",
         "",
         "Se rientri, troverai tutto pronto.",
       ].join("\n"),
