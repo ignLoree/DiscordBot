@@ -112,16 +112,8 @@ const defaultPool = [
     description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di più questa settimana.`,
   },
   {
-    title: "Resoconti staff",
-    description: `Se vuoi capire meglio l'andamento del server, quando disponibili guarda i report in ${channelMention(IDs.channels.resocontiStaff, "resoconti")}.`,
-  },
-  {
     title: "Canale role info",
     description: `In ${channelMention(IDs.channels.info, "canale info")} trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.`,
-  },
-  {
-    title: "Canale verify",
-    description: `La verifica in ${channelMention(IDs.channels.verify, "canale verify")} è il primo passo per accedere a tutte le funzioni principali.`,
   },
   {
     title: "Canale partnership",
@@ -425,6 +417,11 @@ function pickVariantIndexForUser(variants, availableIndexes, lastSignature) {
   return Number(pick);
 }
 
+function isDmManagementReminder(reminder) {
+  const title = String(reminder?.title || "").trim().toLowerCase();
+  return title === "gestione dm";
+}
+
 function createReminderEmbed(entry) {
   const title = String(entry?.title || "Reminder settimanale");
   const description = String(entry?.description || "").trim();
@@ -494,13 +491,24 @@ async function buildWeeklyJobs(client, guild) {
   for (let idx = 0; idx < selected.length; idx += 1) {
     const userId = String(selected[idx]);
     const lastSignature = String(history?.[userId]?.lastSignature || "");
+    const hasHistory = Boolean(lastSignature);
     let variantIndex = pickVariantIndexForUser(
       variants,
       availableVariantIndexes,
       lastSignature,
     );
     if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
-    const reminder = variants[variantIndex] || pool[idx % pool.length];
+    let reminder = variants[variantIndex] || pool[idx % pool.length];
+    if (!hasHistory && isDmManagementReminder(reminder)) {
+      const alternative = availableVariantIndexes.find((candidateIdx) => {
+        const candidate = variants[candidateIdx];
+        return !isDmManagementReminder(candidate);
+      });
+      if (Number.isInteger(alternative)) {
+        variantIndex = Number(alternative);
+        reminder = variants[variantIndex] || reminder;
+      }
+    }
     const usedPos = availableVariantIndexes.indexOf(variantIndex);
     if (usedPos !== -1) availableVariantIndexes.splice(usedPos, 1);
     history[userId] = {
