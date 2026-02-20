@@ -4,6 +4,7 @@ const { randomInt } = require("crypto");
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
+const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
 
 const STATE_PATH = path.join(
   __dirname,
@@ -411,6 +412,48 @@ function getCfg(client) {
   return client?.config?.weeklyDmReminder || {};
 }
 
+function getBaseCooldownDays(client) {
+  const raw = Number(getCfg(client).baseCooldownDays);
+  if (!Number.isFinite(raw)) return 7;
+  return Math.max(1, Math.floor(raw));
+}
+
+function getMidCooldownDays(client) {
+  const raw = Number(getCfg(client).midCooldownDays);
+  if (!Number.isFinite(raw)) return 10;
+  return Math.max(getBaseCooldownDays(client), Math.floor(raw));
+}
+
+function getHighCooldownDays(client) {
+  const raw = Number(getCfg(client).highCooldownDays);
+  if (!Number.isFinite(raw)) return 14;
+  return Math.max(getMidCooldownDays(client), Math.floor(raw));
+}
+
+function getMidWeeklyMessages(client) {
+  const raw = Number(getCfg(client).midWeeklyMessages);
+  if (!Number.isFinite(raw)) return 120;
+  return Math.max(1, Math.floor(raw));
+}
+
+function getHighWeeklyMessages(client) {
+  const raw = Number(getCfg(client).highWeeklyMessages);
+  if (!Number.isFinite(raw)) return 250;
+  return Math.max(getMidWeeklyMessages(client), Math.floor(raw));
+}
+
+function getMidWeeklyVoiceHours(client) {
+  const raw = Number(getCfg(client).midWeeklyVoiceHours);
+  if (!Number.isFinite(raw)) return 4;
+  return Math.max(0, raw);
+}
+
+function getHighWeeklyVoiceHours(client) {
+  const raw = Number(getCfg(client).highWeeklyVoiceHours);
+  if (!Number.isFinite(raw)) return 8;
+  return Math.max(getMidWeeklyVoiceHours(client), raw);
+}
+
 function getMinMemberAgeDays(client) {
   const raw = Number(getCfg(client).minMemberAgeDays);
   if (!Number.isFinite(raw)) return 2;
@@ -608,6 +651,46 @@ function isMemberOldEnough(member, minAgeDays) {
   return Date.now() - joinedAt >= minMs;
 }
 
+async function getActivityMapForUsers(guildId, userIds) {
+  const map = new Map();
+  const ids = Array.isArray(userIds)
+    ? [...new Set(userIds.map((id) => String(id || "")).filter(Boolean))]
+    : [];
+  if (!ids.length) return map;
+  const rows = await ActivityUser.find(
+    { guildId: String(guildId), userId: { $in: ids } },
+    { _id: 0, userId: 1, messages: 1, voice: 1 },
+  )
+    .lean()
+    .catch(() => []);
+  for (const row of rows) {
+    map.set(String(row.userId), row);
+  }
+  return map;
+}
+
+function getCooldownDaysForUser(client, activityRow) {
+  const messagesWeekly = Number(activityRow?.messages?.weekly || 0);
+  const voiceWeeklySeconds = Number(activityRow?.voice?.weeklySeconds || 0);
+  const voiceWeeklyHours = voiceWeeklySeconds / 3600;
+  const high =
+    messagesWeekly >= getHighWeeklyMessages(client) ||
+    voiceWeeklyHours >= getHighWeeklyVoiceHours(client);
+  if (high) return getHighCooldownDays(client);
+  const medium =
+    messagesWeekly >= getMidWeeklyMessages(client) ||
+    voiceWeeklyHours >= getMidWeeklyVoiceHours(client);
+  if (medium) return getMidCooldownDays(client);
+  return getBaseCooldownDays(client);
+}
+
+function hasRecentReminderForCooldown(historyEntry, cooldownDays) {
+  const lastSentAt = Number(historyEntry?.lastSentAt || 0);
+  if (!lastSentAt) return false;
+  const cooldownMs = Math.max(1, Number(cooldownDays || 7)) * 24 * 60 * 60 * 1000;
+  return Date.now() - lastSentAt < cooldownMs;
+}
+
 async function buildWeeklyJobs(client, guild) {
   await guild.members.fetch().catch(() => {});
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
@@ -621,27 +704,39 @@ async function buildWeeklyJobs(client, guild) {
   const maxRecipients = Math.max(minRecipients, Number(cfg.maxRecipients || 80));
   const recipients = [];
   const guildEntry = getGuildEntry(guild.id);
+  const history = guildEntry.reminderHistory || {};
   const recentThreshold = Date.now() - WEEK_MS;
   const blockedUsers = new Set();
 
   for (const job of guildEntry?.jobs || []) {
     const uid = String(job?.userId || "");
     if (!uid) continue;
-    const sentAt = Number(job?.sentAt || 0);
     const sendAt = Number(job?.sendAt || 0);
-    if (sentAt >= recentThreshold) blockedUsers.add(uid);
     if (!job?.sentAt && !job?.skipped && sendAt >= recentThreshold) {
       blockedUsers.add(uid);
     }
   }
 
+  const candidates = [];
   for (const member of guild.members.cache.values()) {
     if (!member || member.user?.bot) continue;
     if (isStaffMember(member)) continue;
     if (!isMemberOldEnough(member, minMemberAgeDays)) continue;
     const id = String(member.id);
     if (noDmSet.has(id)) continue;
+    candidates.push(member);
+  }
+
+  const activityMap = await getActivityMapForUsers(
+    guild.id,
+    candidates.map((member) => String(member.id)),
+  );
+
+  for (const member of candidates) {
+    const id = String(member.id);
     if (blockedUsers.has(id)) continue;
+    const cooldownDays = getCooldownDaysForUser(client, activityMap.get(id));
+    if (hasRecentReminderForCooldown(history[id], cooldownDays)) continue;
     recipients.push(id);
   }
 
@@ -660,7 +755,6 @@ async function buildWeeklyJobs(client, guild) {
   const variants = buildUniqueReminderVariants(pool, selected.length);
   const dayOrder = pickRandomDistinct([0, 1, 2, 3, 4, 5, 6], 7);
   const availableVariantIndexes = variants.map((_, idx) => idx);
-  const history = guildEntry.reminderHistory || {};
   const jobs = [];
 
   for (let idx = 0; idx < selected.length; idx += 1) {
@@ -689,6 +783,8 @@ async function buildWeeklyJobs(client, guild) {
     history[userId] = {
       lastSignature: reminderSignature(reminder),
       plannedAt: Date.now(),
+      cooldownDays: getCooldownDaysForUser(client, activityMap.get(userId)),
+      lastSentAt: Number(history?.[userId]?.lastSentAt || 0),
     };
     const dayOffset = dayOrder[idx % dayOrder.length];
     jobs.push({
@@ -807,6 +903,8 @@ async function runStartupBlastOnce(client, guild) {
         history[userId] = {
           lastSignature: reminderSignature(reminder),
           plannedAt: now,
+          lastSentAt: now,
+          cooldownDays: getBaseCooldownDays(client),
         };
         sentCount += 1;
       } catch {
@@ -896,6 +994,10 @@ async function sendDueJobs(client, guild) {
       });
       job.sentAt = Date.now();
       job.nextAttemptAt = null;
+      entry.reminderHistory[userId] = {
+        ...(entry.reminderHistory[userId] || {}),
+        lastSentAt: Number(job.sentAt || Date.now()),
+      };
     } catch {
       job.attempts = Number(job.attempts || 0) + 1;
       if (job.attempts >= 2) {
