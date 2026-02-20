@@ -135,6 +135,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Generated at runtime; keep untracked to avoid deploy merge conflicts
+Vinili & Caffè Bot Ufficiale/Utils/Config/idsCatalog.snapshot.txt
+
 # Cursor IDE
 .cursor/
 
