@@ -345,6 +345,10 @@ async function resolveUserFromMessage(message) {
 async function handleVoteManagerMessage(message, client) {
   if (!message.guild) return false;
   if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
+  const isAutomatedSource = Boolean(
+    message.author?.bot || message.applicationId || message.webhookId,
+  );
+  if (!isAutomatedSource) return false;
   const allowedBotIds = getVoteManagerBotIds(client);
   const isVoteManagerAuthor = allowedBotIds.has(
     String(message.author?.id || ""),
@@ -352,7 +356,13 @@ async function handleVoteManagerMessage(message, client) {
   const isVoteManagerApp = allowedBotIds.has(
     String(message.applicationId || ""),
   );
-  if (!isVoteManagerAuthor && !isVoteManagerApp) return false;
+  const sourceName = String(
+    `${message.author?.globalName || ""} ${message.author?.username || ""}`,
+  ).toLowerCase();
+  const hasVoteLikeBotName = /(vote|discadia|disboard)/i.test(sourceName);
+  if (!isVoteManagerAuthor && !isVoteManagerApp && !hasVoteLikeBotName) {
+    return false;
+  }
   const { content, embedText, embedTitle, fieldsText } =
     getMessageTextParts(message);
   const voteText =
@@ -1122,11 +1132,19 @@ async function handleAfk(message) {
 
 function getVoteManagerBotIds(client) {
   void client;
-  return new Set(
+  const out = new Set(
     [IDs.bots.VoteManager, IDs.bots.Discadia, IDs.bots.DISBOARD]
       .filter(Boolean)
       .map((id) => String(id)),
   );
+  const rawBots = IDs?.raw?.bots || {};
+  for (const [name, id] of Object.entries(rawBots)) {
+    if (!id) continue;
+    if (/(vote|discadia|disboard)/i.test(String(name || ""))) {
+      out.add(String(id));
+    }
+  }
+  return out;
 }
 
 function resolveReactionToken(token) {
@@ -1400,17 +1418,20 @@ async function handleDiscadiaBump(message, client) {
   const discadia = client?.config?.discadia;
   if (!discadia) return false;
   if (!message.guild) return false;
+  const isAutomatedSource = Boolean(
+    message.author?.bot || message.applicationId || message.webhookId,
+  );
+  if (!isAutomatedSource) return false;
 
+  const knownBotIds = getVoteManagerBotIds(client);
   const authorName = String(
     message.author?.globalName || message.author?.username || "",
   );
   const isDiscadiaNamedBot =
     Boolean(message.author?.bot) && /(discadia|disboard)/i.test(authorName);
-  const isDiscadiaAuthor = message.author?.id === IDs.bots.Discadia;
-  const isDiscadiaApp = message.applicationId === IDs.bots.Discadia;
-  const isFallbackSource =
-    message.author?.id === IDs.bots.DISBOARD ||
-    message.applicationId === IDs.bots.DISBOARD;
+  const isDiscadiaAuthor = knownBotIds.has(String(message.author?.id || ""));
+  const isDiscadiaApp = knownBotIds.has(String(message.applicationId || ""));
+  const isFallbackSource = isDiscadiaAuthor || isDiscadiaApp;
   const patterns = Array.isArray(discadia.bumpSuccessPatterns)
     ? discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
     : [
@@ -1442,14 +1463,23 @@ async function handleDiscadiaBump(message, client) {
   const joined = normalized.join("\n");
 
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
+  const hasSuccessWord =
+    /(server has been bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again)/i.test(
+      joined,
+    );
   const hasFailureWord =
     /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(
       joined,
     );
+  const hasDiscadiaWord = /\bdiscadia\b/i.test(joined);
 
   const fromDiscadiaBot =
-    isDiscadiaAuthor || isDiscadiaApp || isDiscadiaNamedBot || isFallbackSource;
-  const isBump = fromDiscadiaBot && !hasFailureWord && hasPattern;
+    isDiscadiaAuthor ||
+    isDiscadiaApp ||
+    isDiscadiaNamedBot ||
+    isFallbackSource ||
+    (isAutomatedSource && hasDiscadiaWord);
+  const isBump = fromDiscadiaBot && !hasFailureWord && (hasPattern || hasSuccessWord);
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
