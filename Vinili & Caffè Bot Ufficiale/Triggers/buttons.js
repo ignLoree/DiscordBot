@@ -9,38 +9,14 @@ const DIVIDER_URL =
 const PRIVATE_FLAG = 1 << 6;
 const MONO_GUILD_DENIED_TEXT =
   "Questo bot è utilizzabile solo sul server principale di Vinili & Caffè.";
-const patchedInteractions = new WeakSet();
 
-function withDividerEmbed(embed) {
-  if (!embed || typeof embed !== "object") return embed;
-  if (embed instanceof EmbedBuilder) {
-    if (!embed.data?.image?.url) embed.setImage(DIVIDER_URL);
-    return embed;
-  }
-  const hasImageUrl = Boolean(embed.image?.url);
-  if (hasImageUrl) return embed;
-  return { ...embed, image: { url: DIVIDER_URL } };
+if (!global.__vcEmbedToJSONOriginal) {
+  global.__vcEmbedToJSONOriginal = EmbedBuilder.prototype.toJSON;
 }
-
-function withDividerPayload(payload) {
-  if (!payload || typeof payload !== "object") return payload;
-  if (!Array.isArray(payload.embeds) || payload.embeds.length === 0) {
-    return payload;
-  }
-  return { ...payload, embeds: payload.embeds.map(withDividerEmbed) };
-}
-
-function patchInteractionEmbedReplies(interaction) {
-  if (!interaction || patchedInteractions.has(interaction)) return;
-  const methods = ["reply", "update", "editReply", "followUp"];
-  for (const method of methods) {
-    if (typeof interaction[method] !== "function") continue;
-    const original = interaction[method].bind(interaction);
-    interaction[method] = (options, ...args) =>
-      original(withDividerPayload(options), ...args);
-  }
-  patchedInteractions.add(interaction);
-}
+EmbedBuilder.prototype.toJSON = function patchedToJSON(...args) {
+  if (!this?.data?.image?.url) this.setImage(DIVIDER_URL);
+  return global.__vcEmbedToJSONOriginal.apply(this, args);
+};
 
 async function handleStaffButtons(interaction) {
   if (!interaction.isButton()) return false;
@@ -379,7 +355,6 @@ module.exports = {
     if (!interaction.guild) return;
     if (!interaction.message) return;
     if (interaction.replied || interaction.deferred) return;
-    patchInteractionEmbedReplies(interaction);
     const allowed = await enforceInteractionPermissions(interaction);
     if (!allowed) return;
     if (await handleStaffButtons(interaction)) return;
