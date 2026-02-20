@@ -865,6 +865,8 @@ module.exports = {
             "",
             `<:dot:1443660294596329582> Per __vedere i tuoi exp__ e le tue statistiche, usa i comandi: \`+rank\` in  <#${IDs.channels.commands}>.`,
             "",
+            "<:VC_Dot:1443932948599668746> ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── ୨♡୧ ────⋆⋅☆⋅⋆──── <:VC_Dot:1443932948599668746>",
+            "",
             "<a:VC_Arrow:1448672967721615452> **LISTA DEI LIVELLI:**",
           ].join("\n"),
         )
