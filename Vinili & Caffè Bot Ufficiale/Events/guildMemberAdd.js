@@ -4,8 +4,12 @@
   AuditLogEvent,
   UserFlagsBitField,
 } = require("discord.js");
-const { InviteTrack } = require("../Schemas/Community/communitySchemas");
+const {
+  InviteTrack,
+  InviteReminderState,
+} = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
+const { getNoDmSet } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
@@ -21,6 +25,7 @@ const THANKS_CHANNEL_ID = IDs.channels.supporters;
 const INVITE_REWARD_ROLE_ID = IDs.roles.Promoter;
 const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || "1468938195348754515";
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
+const INVITE_REWARD_TARGET = 5;
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const MIN_ACCOUNT_AGE_DAYS = 3;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -845,6 +850,61 @@ async function maybeSendInviteReward(member, info) {
   await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
 }
 
+async function maybeSendInviteNearRewardReminder(member, info) {
+  if (!member?.guild || !info || info.isVanity || !info.inviterId) return;
+  const totalInvites = Number(info.totalInvites || 0);
+  if (totalInvites >= INVITE_REWARD_TARGET) return;
+  if (INVITE_REWARD_TARGET - totalInvites !== 1) return;
+
+  const inviterId = String(info.inviterId);
+  const guild = member.guild;
+  const inviterMember =
+    guild.members.cache.get(inviterId) ||
+    (await guild.members.fetch(inviterId).catch(() => null));
+  if (!inviterMember || inviterMember.user?.bot) return;
+
+  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+  if (noDmSet.has(inviterId)) return;
+
+  const state = await InviteReminderState.findOne({
+    guildId: guild.id,
+    userId: inviterId,
+  }).lean().catch(() => null);
+  const sentTargets = Array.isArray(state?.inviteNearTargets)
+    ? state.inviteNearTargets.map((x) => Number(x)).filter(Number.isFinite)
+    : [];
+  if (sentTargets.includes(INVITE_REWARD_TARGET)) return;
+
+  const rewardRoleText = INVITE_REWARD_ROLE_ID
+    ? `<@&${INVITE_REWARD_ROLE_ID}>`
+    : "ruolo reward inviti";
+  const payload = {
+    embeds: [
+      new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle("Ci sei quasi con gli inviti!")
+        .setDescription(
+          [
+            `<a:VC_PandaClap:1331620157398712330> Ti manca solo **1 invito** per arrivare a **${INVITE_REWARD_TARGET}**.`,
+            `Quando raggiungi la soglia, ricevi ${rewardRoleText}.`,
+            INFO_PERKS_CHANNEL_ID
+              ? `Controlla i perks in <#${INFO_PERKS_CHANNEL_ID}>.`
+              : "Controlla il canale perks/info del server.",
+          ].join("\n"),
+        ),
+    ],
+  };
+
+  const sent = await inviterMember.user.send(payload).then(() => true).catch(() => false);
+  if (!sent) return;
+
+  await InviteReminderState.updateOne(
+    { guildId: guild.id, userId: inviterId },
+    { $addToSet: { inviteNearTargets: INVITE_REWARD_TARGET } },
+    { upsert: true },
+  ).catch(() => null);
+}
+
 module.exports = {
   name: "guildMemberAdd",
   async execute(member) {
@@ -977,6 +1037,7 @@ module.exports = {
       if (info && !info.isVanity && info.inviterId) {
         await trackInviteJoin(member, info.inviterId).catch(() => {});
       }
+      await maybeSendInviteNearRewardReminder(member, info);
       await maybeSendInviteReward(member, info);
       await announceInviteInfo(member, welcomeChannel, info);
     } catch (error) {

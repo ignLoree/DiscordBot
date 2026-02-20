@@ -171,6 +171,16 @@ const inviteTrackSchema = new Schema(
 inviteTrackSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 inviteTrackSchema.index({ guildId: 1, inviterId: 1 });
 
+const inviteReminderStateSchema = new Schema(
+  {
+    guildId: { type: String, required: true },
+    userId: { type: String, required: true, index: true },
+    inviteNearTargets: { type: [Number], default: [] },
+  },
+  { timestamps: true },
+);
+inviteReminderStateSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+
 const customRoleSchema = new Schema(
   {
     guildId: { type: String, required: true },
@@ -273,6 +283,9 @@ const PersonalityPanel =
   models.PersonalityPanel || model("PersonalityPanel", personalityPanelSchema);
 const InviteTrack =
   models.InviteTrack || model("InviteTrack", inviteTrackSchema);
+const InviteReminderState =
+  models.InviteReminderState ||
+  model("InviteReminderState", inviteReminderStateSchema);
 const CustomRole = models.CustomRole || model("CustomRole", customRoleSchema);
 const ChatReminderSchedule =
   models.ChatReminderSchedule ||
@@ -302,6 +315,7 @@ module.exports = {
   ReviewReward,
   PersonalityPanel,
   InviteTrack,
+  InviteReminderState,
   CustomRole,
   ChatReminderSchedule,
   ChatReminderRotation,
