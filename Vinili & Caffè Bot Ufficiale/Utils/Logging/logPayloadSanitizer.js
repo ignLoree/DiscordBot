@@ -88,6 +88,13 @@ function sanitizeEmbedObject(embedLike) {
   if (!data || typeof data !== "object") return data;
 
   const out = { ...data };
+  const title = String(out.title || "").trim().toLowerCase();
+  const isMessageLogTitle =
+    title === "message deleted" || title === "message edited";
+  if (isMessageLogTitle) {
+    // Keep message log descriptions untouched to avoid breaking diff fences.
+    return out;
+  }
   if (out.description !== undefined) {
     out.description = cleanupDescription(out.description);
   }
