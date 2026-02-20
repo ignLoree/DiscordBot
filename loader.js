@@ -5,15 +5,12 @@ const os = require('os');
 
 const baseDir = __dirname;
 
-const ENABLE_TEST_BOT = String(process.env.ENABLE_TEST_BOT || '0') === '1';
 const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = false;
 
 const BOTS = [
     { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
-    ...(ENABLE_TEST_BOT
-        ? [{ key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }]
-        : [])
+    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
