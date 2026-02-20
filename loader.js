@@ -5,9 +5,15 @@ const os = require('os');
 
 const baseDir = __dirname;
 
+const ENABLE_TEST_BOT = String(process.env.ENABLE_TEST_BOT || '0') === '1';
+const ENABLE_LOADER_GIT_PULL = String(process.env.LOADER_GIT_PULL || '0') === '1';
+const ENABLE_LOADER_NPM_INSTALL = String(process.env.LOADER_NPM_INSTALL || '0') === '1';
+
 const BOTS = [
     { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }
+    ...(ENABLE_TEST_BOT
+        ? [{ key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }]
+        : [])
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
@@ -205,11 +211,15 @@ function runfile(bot, options = {}) {
             cleanupStalePid(bot.key);
 
             const repoRoot = fs.existsSync(path.join(baseDir, '.git')) ? baseDir : workingDir;
-            if (!skipGitPull) {
+            if (!skipGitPull && ENABLE_LOADER_GIT_PULL) {
                 updateRepo(repoRoot);
             }
 
-            ensureDependencies(workingDir, useWorkspaces)
+            const depTask = ENABLE_LOADER_NPM_INSTALL
+                ? ensureDependencies(workingDir, useWorkspaces)
+                : Promise.resolve();
+
+            depTask
                 .finally(() => spawnBotProcess(bot, workingDir, file, resolve));
         };
 
