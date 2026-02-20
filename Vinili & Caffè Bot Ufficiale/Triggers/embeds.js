@@ -180,7 +180,7 @@ async function runInfoPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: INFO_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch {}
+  } catch { }
 
   const msg1 = await upsertPanelMessage(channel, client, {
     messageId: panel?.infoMessageId1 || null,
@@ -205,7 +205,7 @@ async function runInfoPanelAuto(client) {
           infoMessageId2: msg2?.id || panel?.infoMessageId2 || null,
         },
       },
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -401,7 +401,7 @@ async function runVerifyPanelAuto(client) {
     )
     .setDescription(
       "<:vegacheckmark:1443666279058772028> Per **verificarti** premi il pulsante **__`Verify`__**, poi inserisci il **codice** che riceverai in **risposta effimera**.\n" +
-        "<:vsl_ticket:1329520261053022208> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",
+      "<:vsl_ticket:1329520261053022208> Per **qualsiasi** problema, non **esitate** ad aprire un **__<#1442569095068254219> `Prima Categoria`__**",
     )
     .setImage(DIVIDER_URL);
 
@@ -414,9 +414,9 @@ async function runVerifyPanelAuto(client) {
     )
     .setDescription(
       "<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" +
-        serverName +
-        "` devi prima verificarti.**\n" +
-        "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
+      serverName +
+      "` devi prima verificarti.**\n" +
+      "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
     );
 
   const verifyRow = new ActionRowBuilder().addComponents(
@@ -433,7 +433,7 @@ async function runVerifyPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: VERIFY_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch {}
+  } catch { }
 
   const infoMessage = await upsertPanelMessage(channel, client, {
     messageId: panelDoc?.verifyInfoMessageId || null,
@@ -460,7 +460,7 @@ async function runVerifyPanelAuto(client) {
             panelMessage?.id || panelDoc?.verifyPanelMessageId || null,
         },
       },
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -1105,7 +1105,7 @@ async function runRuoliPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch {}
+  } catch { }
 
   const updatePanel = async (
     personalityMessageId,
@@ -1125,7 +1125,7 @@ async function runRuoliPanelAuto(client) {
           },
         },
       );
-    } catch {}
+    } catch { }
   };
 
   const personalityMessage = await upsertPanelMessage(channel, client, {
@@ -1279,7 +1279,7 @@ async function runTicketPanelAuto(client) {
       { $setOnInsert: { guildId, channelId: TICKET_CHANNEL_ID } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-  } catch {}
+  } catch { }
 
   const infoMessage = await upsertPanelMessage(channel, client, {
     messageId: panelDoc?.ticketInfoMessageId || null,
@@ -1306,7 +1306,7 @@ async function runTicketPanelAuto(client) {
             panelMessage?.id || panelDoc?.ticketPanelMessageId || null,
         },
       },
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }
 
@@ -1330,6 +1330,11 @@ async function runSponsorPanelAuto(client) {
     "Photos",
     SPONSOR_MEDIA_NAME,
   );
+
+  const attachment = new AttachmentBuilder(SPONSOR_MEDIA_PATH, {
+    name: SPONSOR_MEDIA_NAME,
+  });
+
   const channelId = IDs.channels?.infoSponsor || IDs.channels?.sponsor1;
   if (!channelId) return;
 
@@ -1348,15 +1353,12 @@ async function runSponsorPanelAuto(client) {
     .setColor("#6f4e37")
     .setDescription(
       "<:pinnednew:1443670849990430750> **Vinili & Caffè** offre un servizio di __sponsor__ con dei **requisiti** da rispettare. Per fare una __sponsor__ bisognerà aprire un <#1442569095068254219> `Terza Categoria`.\n\n" +
-        "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" +
-        "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" +
-        "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" +
-        "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)",
-    );
-
-  try {
-    sponsorEmbed.setImage(`attachment://${SPONSOR_MEDIA_NAME}`);
-  } catch (e) {}
+      "> Ogni server che vorrà effettuare una **sponsor** dovrà rispettare questi 3 requisiti:\n" +
+      "> <:dot:1443660294596329582> Rispettare i [**ToS di Discord**](https://discord.com/terms)\n" +
+      "> <:dot:1443660294596329582> Rispettare le [**Linee Guida di Discord**](https://discord.com/guidelines)\n" +
+      "> <:dot:1443660294596329582> Rispettare il [**Regolamento di Vinili & Caffè**](https://discord.com/channels/1329080093599076474/1442569111119990887)",
+    )
+    .setImage(DIVIDER_URL);
 
   const rowSponsor = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -1378,13 +1380,13 @@ async function runSponsorPanelAuto(client) {
         new AttachmentBuilder(SPONSOR_MEDIA_PATH, { name: SPONSOR_MEDIA_NAME }),
       );
     }
-  } catch (e) {}
+  } catch (e) { }
 
   await upsertPanelMessage(sponsorChannel, client, {
     embeds: [sponsorEmbed],
     components: [rowSponsor],
-    files: files.length ? files : undefined,
-    attachmentName: files.length ? SPONSOR_MEDIA_NAME : undefined,
+    files: [attachment],
+    attachmentName: SPONSOR_MEDIA_NAME,
   });
 }
 
