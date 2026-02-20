@@ -1083,16 +1083,10 @@ async function runNamed(name, message, args, client) {
     }
 
     const rawPage = Number.parseInt(args[1], 10);
-    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const requestedPage = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
     const perPage = 6;
-    const skip = (page - 1) * perPage;
-
-    const [rows, total] = await Promise.all([
-      ModCase.find(query).sort({ caseId: -1 }).skip(skip).limit(perPage).lean().catch(() => []),
-      ModCase.countDocuments(query).catch(() => 0),
-    ]);
-
-    if (!rows.length || total <= 0) {
+    const total = await ModCase.countDocuments(query).catch(() => 0);
+    if (total <= 0) {
       return message.channel
         .send({
           embeds: [
@@ -1104,7 +1098,23 @@ async function runNamed(name, message, args, client) {
 
     const targetUser = await message.client.users.fetch(target.userId).catch(() => null);
     const totalPages = Math.max(1, Math.ceil(total / perPage));
-    const safePage = Math.min(page, totalPages);
+    const safePage = Math.min(requestedPage, totalPages);
+    const skip = (safePage - 1) * perPage;
+    const rows = await ModCase.find(query)
+      .sort({ caseId: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .lean()
+      .catch(() => []);
+    if (!rows.length) {
+      return message.channel
+        .send({
+          embeds: [
+            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> No logs found for that user"),
+          ],
+        })
+        .catch(() => null);
+    }
     const lines = [];
     for (const row of rows) {
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);

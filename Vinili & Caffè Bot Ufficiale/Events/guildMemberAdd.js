@@ -610,7 +610,7 @@ async function isAuthorizedBotAdder(guild, executorId) {
 async function sendJoinGatePunishDm(member, reason, extraLines = []) {
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle(`You have been kicked! in ${member.guild.name}!`)
+    .setTitle(`JoinGate action in ${member.guild.name}`)
     .setDescription(
       [
         `${ARROW} **Member:** ${member.user} [\`${member.user.id}\`]`,
@@ -627,7 +627,6 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
 }
 
 async function kickForJoinGate(member, reason, extraLines = [], action = "kick") {
-  const dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   const me = member.guild.members.me;
   const normalizedAction = ["kick", "ban", "log"].includes(
     String(action || "").toLowerCase(),
@@ -662,6 +661,10 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   }
   if (!punished && normalizedAction !== "log") {
     appliedAction = "log";
+  }
+  let dmSent = false;
+  if (appliedAction !== "log" && punished) {
+    dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   }
   const blocked = appliedAction === "log" ? false : punished;
   if (punished) {

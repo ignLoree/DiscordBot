@@ -946,6 +946,9 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
       "#57F287",
     );
   }, Math.max(1_000, Number(state.activeUntil || 0) - now));
+  if (typeof state.unlockTimer?.unref === "function") {
+    state.unlockTimer.unref();
+  }
 
   if (!wasActive) {
     await sendAntiNukeLog(
@@ -985,6 +988,7 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
       // No-op
     }
   }, Math.max(1_000, Number(durationMs || 0)));
+  if (typeof timer.unref === "function") timer.unref();
   QUARANTINE_ROLE_TIMERS.set(key, timer);
 }
 

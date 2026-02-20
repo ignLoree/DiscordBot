@@ -533,6 +533,7 @@ async function scheduleTempUnban(guild, userId, reason, marker = "") {
     );
     scheduleStateSave(guild.id);
   }, JOIN_RAID_CONFIG.raidDurationMs);
+  if (typeof timer.unref === "function") timer.unref();
   TEMP_BAN_TIMERS.set(key, timer);
 }
 
@@ -618,6 +619,7 @@ async function restoreTempBans(guild, options = {}) {
       );
       scheduleStateSave(guild.id);
     }, Math.max(1_000, unbanAt - at));
+    if (typeof timer.unref === "function") timer.unref();
     TEMP_BAN_TIMERS.set(key, timer);
   }
 }
@@ -689,7 +691,10 @@ async function applyPunishment(member, reasons) {
       appliedAction = "log";
     }
   }
-  const dmSent = await sendPunishDm(member, appliedAction, reasons);
+  const dmSent =
+    punished && appliedAction !== "log"
+      ? await sendPunishDm(member, appliedAction, reasons)
+      : false;
   const actionWord =
     appliedAction === "ban"
       ? "banned"

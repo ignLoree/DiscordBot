@@ -3,7 +3,10 @@ const path = require("path");
 const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("discord.js");
 const IDs = require("../Config/ids");
 const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
-const PERMISSIONS_PATH = path.join(process.cwd(), "permissions.json");
+const PERMISSIONS_CANDIDATES = [
+  path.join(process.cwd(), "permissions.json"),
+  path.resolve(__dirname, "../../permissions.json"),
+];
 const EMPTY_PERMISSIONS = {
   slash: {},
   prefix: {},
@@ -12,7 +15,7 @@ const EMPTY_PERMISSIONS = {
   selectMenus: {},
   modals: {},
 };
-let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
+let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS };
 let idsFallbackCache = null;
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
@@ -106,10 +109,18 @@ function getIdsConfig() {
 
 function loadPermissions() {
   try {
-    if (!fs.existsSync(PERMISSIONS_PATH)) return EMPTY_PERMISSIONS;
-    const stat = fs.statSync(PERMISSIONS_PATH);
-    if (cache.data && cache.mtimeMs === stat.mtimeMs) return cache.data;
-    const raw = fs.readFileSync(PERMISSIONS_PATH, "utf-8");
+    const permissionsPath =
+      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
+    if (!permissionsPath) return EMPTY_PERMISSIONS;
+    const stat = fs.statSync(permissionsPath);
+    if (
+      cache.data &&
+      cache.filePath === permissionsPath &&
+      cache.mtimeMs === stat.mtimeMs
+    ) {
+      return cache.data;
+    }
+    const raw = fs.readFileSync(permissionsPath, "utf-8");
     const parsed = JSON.parse(raw) || {};
     const normalized = {
       slash: parsed.slash || {},
@@ -119,7 +130,7 @@ function loadPermissions() {
       selectMenus: parsed.selectMenus || {},
       modals: parsed.modals || {},
     };
-    cache = { mtimeMs: stat.mtimeMs, data: normalized };
+    cache = { filePath: permissionsPath, mtimeMs: stat.mtimeMs, data: normalized };
     return cache.data;
   } catch {
     return EMPTY_PERMISSIONS;

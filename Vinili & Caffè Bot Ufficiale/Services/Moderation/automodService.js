@@ -524,8 +524,14 @@ function isTicketLikeChannel(channel) {
   if (isChannelInTicketCategory(channel)) return true;
   const channelName = String(channel?.name || "").toLowerCase().trim();
   if (channelName.includes("ticket")) return true;
-  const parent = channel?.parent || null;
+  const parent =
+    channel?.parent ||
+    channel?.parentChannel ||
+    channel?.parentThread ||
+    null;
   if (parent && isTicketLikeCategory(parent)) return true;
+  const grandParent = parent?.parent || parent?.parentChannel || null;
+  if (grandParent && isTicketLikeCategory(grandParent)) return true;
   return false;
 }
 
@@ -982,6 +988,35 @@ function normalizeContent(content) {
     .trim();
 }
 
+function countDistinctWords(content) {
+  const text = String(content || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (!text) return 0;
+  const words = text
+    .split(/[^\p{L}\p{N}]+/gu)
+    .map((x) => String(x || "").trim())
+    .filter((x) => x.length >= 2);
+  return new Set(words).size;
+}
+
+function looksLikeLegitConversation(content) {
+  const text = String(content || "").trim();
+  if (!text) return false;
+  const distinctWords = countDistinctWords(text);
+  const hasSentencePunctuation = /[.!?;,]/.test(text);
+  const hasSpaces = /\s/.test(text);
+  const hasTooManyLinks = (text.match(/https?:\/\/\S+/gi) || []).length >= 2;
+  return (
+    text.length >= 120 &&
+    distinctWords >= 10 &&
+    hasSpaces &&
+    hasSentencePunctuation &&
+    !hasTooManyLinks
+  );
+}
+
 function detectInvite(content) {
   const text = String(content || "");
   const match = text.match(
@@ -1356,6 +1391,7 @@ async function detectViolations(message, state, profile) {
   const attachmentsEnabled = profile?.attachmentsEnabled !== false;
   const inviteLinksEnabled = profile?.inviteLinksEnabled !== false;
   const profileHeat = (value) => applyProfileHeat(value, profile);
+  const legitConversation = looksLikeLegitConversation(content);
 
   if (TEXT_RULES.regularMessage.enabled) {
     state.msgTimes.push(at);
@@ -1377,11 +1413,12 @@ async function detectViolations(message, state, profile) {
       if (!x?.c || x.t === at) return false;
       return similarityRatio(x.c, normalized) >= ratio;
     }).length;
-    if (similarCount >= 1) {
+    const similarThreshold = legitConversation ? 2 : 1;
+    if (similarCount >= similarThreshold) {
       violations.push({
         key: "similar_message",
         heat: profileHeat(TEXT_RULES.similarMessage.heat),
-        info: `ratio>=${ratio.toFixed(2)}`,
+        info: `ratio>=${ratio.toFixed(2)} count:${similarCount}`,
       });
     }
   }
@@ -1567,6 +1604,12 @@ async function detectViolations(message, state, profile) {
   if (TEXT_RULES.characters.enabled) {
     const { lower, upper, total } = countCaseCharacters(content);
     if (total >= TEXT_RULES.characters.minChars) {
+      const upperRatio = total > 0 ? upper / total : 0;
+      const repeatedCharBurst = /(.)\1{10,}/.test(content);
+      const noisyShape = upperRatio >= 0.45 || repeatedCharBurst;
+      if (legitConversation && !noisyShape) {
+        // Skip character-based punishment for long, normal conversation messages.
+      } else {
       const lowerHeat =
         lower *
         TEXT_RULES.characters.lowercaseHeat *
@@ -1580,8 +1623,9 @@ async function detectViolations(message, state, profile) {
         violations.push({
           key: "characters",
           heat: profileHeat(heat),
-          info: `lower:${lower} upper:${upper}`,
+          info: `lower:${lower} upper:${upper} ratio:${upperRatio.toFixed(2)}`,
         });
+      }
       }
     }
   }
