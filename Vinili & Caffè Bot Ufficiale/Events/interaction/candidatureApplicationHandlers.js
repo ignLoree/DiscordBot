@@ -445,10 +445,21 @@ function buildModal(type, step) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId(q.id)
-        .setLabel(q.modalLabel)
+        .setLabel(
+          String(q.text || q.modalLabel || "Domanda")
+            .replace(/\*\*/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 45),
+        )
         .setStyle(q.style || TextInputStyle.Paragraph)
         .setRequired(true)
-        .setPlaceholder(q.placeholder || "Rispondi qui")
+        .setPlaceholder(
+          String(q.placeholder || q.modalLabel || "Rispondi qui")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 100),
+        )
         .setMaxLength(q.style === TextInputStyle.Short ? 120 : 1000),
     ),
   );
@@ -458,14 +469,12 @@ function buildModal(type, step) {
 
 function formatApplicationDescription(type, answers) {
   const cfg = APPLICATIONS[type];
-  const lines = [];
+  const blocks = [];
   for (const q of cfg.questions) {
-    const answer = String(answers?.[q.id] || "Nessuna risposta").trim();
-    lines.push(`**${q.text}**`);
-    lines.push(answer || "Nessuna risposta");
-    lines.push("");
+    const answer = String(answers?.[q.id] || "Nessuna risposta").trim() || "Nessuna risposta";
+    blocks.push(`**${q.text}**\n${answer}`);
   }
-  return lines.join("\n").trim();
+  return blocks.join("\n\n").trim();
 }
 
 async function resolveSubmissionChannel(interaction) {
@@ -557,6 +566,24 @@ async function finalizeApplication(interaction, type, state) {
     content: mention || undefined,
     embeds: [embed],
   });
+
+  if (typeof sent.startThread === "function") {
+    const thread = await sent
+      .startThread({
+        name: `Candidatura <@${user.id}>`,
+        autoArchiveDuration: 1440,
+        reason: `Thread candidatura ${cfg.label} per ${user.tag}`,
+      })
+      .catch(() => null);
+    if (thread?.isTextBased?.() && highStaffRoleId) {
+      const pingMsg = await thread.send({ content: `<@&${highStaffRoleId}>` }).catch(() => null);
+      if (pingMsg) {
+        setTimeout(() => {
+          pingMsg.delete().catch(() => {});
+        }, 2500);
+      }
+    }
+  }
 
   for (const emoji of APPLICATION_REACTIONS) {
     await sent.react(emoji).catch(() => {});
