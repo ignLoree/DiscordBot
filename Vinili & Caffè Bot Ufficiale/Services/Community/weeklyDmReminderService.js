@@ -99,6 +99,146 @@ const defaultPool = [
     title: "Contatore e mini-attività",
     description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
   },
+  {
+    title: "Media e contenuti",
+    description: `Passa da ${channelMention(IDs.channels.media, "canale media")} per condividere contenuti interessanti in linea con il regolamento.`,
+  },
+  {
+    title: "Canale comandi",
+    description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+  },
+  {
+    title: "Top settimanale",
+    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di più questa settimana.`,
+  },
+  {
+    title: "Resoconti staff",
+    description: `Se vuoi capire meglio l'andamento del server, quando disponibili guarda i report in ${channelMention(IDs.channels.resocontiStaff, "resoconti")}.`,
+  },
+  {
+    title: "Canale role info",
+    description: `In ${channelMention(IDs.channels.info, "canale info")} trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.`,
+  },
+  {
+    title: "Canale verify",
+    description: `La verifica in ${channelMention(IDs.channels.verify, "canale verify")} è il primo passo per accedere a tutte le funzioni principali.`,
+  },
+  {
+    title: "Canale partnership",
+    description: `Se ti interessano le collaborazioni, tieni d'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
+  },
+  {
+    title: "Supporter e badge",
+    description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`,
+  },
+  {
+    title: "Classifica personale",
+    description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.",
+  },
+  {
+    title: "Classifica globale",
+    description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.",
+  },
+  {
+    title: "Obiettivo settimanale",
+    description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
+  },
+  {
+    title: "Sfrutta il forum",
+    description: `Nel ${channelMention(IDs.channels.forum, "forum")} puoi creare discussioni ordinate invece di disperdere messaggi in chat.`,
+  },
+  {
+    title: "Canale quote",
+    description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}: ottimo per salvare momenti top della community.`,
+  },
+  {
+    title: "Canale suggestions",
+    description: `Quando proponi un'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
+  },
+  {
+    title: "Canale polls",
+    description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")} aiuta a prendere decisioni più utili per tutti.`,
+  },
+  {
+    title: "Canale news",
+    description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")} per non perderti novità su eventi, regole e aggiornamenti.`,
+  },
+  {
+    title: "Canale ruoli",
+    description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
+  },
+  {
+    title: "Canale counting",
+    description: `In ${channelMention(IDs.channels.counting, "counting")} conta con attenzione: è una piccola attività ma tiene viva la community.`,
+  },
+  {
+    title: "Comando help",
+    description: "Se ti senti perso tra i comandi, +help resta sempre il punto migliore da cui partire.",
+  },
+  {
+    title: "Comandi utility",
+    description: "Dedica 2 minuti a provare un comando utility che non hai mai usato: spesso scopri funzioni utilissime.",
+  },
+  {
+    title: "Onboarding amici",
+    description: "Quando inviti qualcuno, accompagnalo nei primi passaggi: verifica, regole, canali utili e comandi base.",
+  },
+  {
+    title: "Canali vocali",
+    description: "Un po' di presenza in vocale migliora l'attività personale e rende più viva la community.",
+  },
+  {
+    title: "Eventi community",
+    description: "Partecipa agli eventi quando puoi: è il modo più veloce per conoscere utenti nuovi.",
+  },
+  {
+    title: "Canale media",
+    description: "Condividi contenuti in modo pulito: qualità > quantità, sempre.",
+  },
+  {
+    title: "Comando classifica weekly",
+    description: "Usa +classifica weekly per vedere il tuo posizionamento reale nella settimana corrente.",
+  },
+  {
+    title: "Comando classifica alltime",
+    description: "Usa +classifica alltime per monitorare la tua crescita nel lungo periodo.",
+  },
+  {
+    title: "Comando rank",
+    description: "Con +rank puoi verificare subito se stai mantenendo un buon ritmo di attività.",
+  },
+  {
+    title: "Idea della settimana",
+    description: "Prova a migliorare un'abitudine: meno messaggi casuali, più interventi utili e ordinati.",
+  },
+  {
+    title: "Supporto rapido",
+    description: "Se hai un dubbio tecnico o organizzativo, apri ticket invece di aspettare: risolvi prima e meglio.",
+  },
+  {
+    title: "Buone pratiche",
+    description: "Evita spam e flood: qualità dei messaggi e interazioni sane fanno la differenza.",
+  },
+  {
+    title: "Profilo server",
+    description: "Ogni tanto aggiorna il tuo profilo ruoli/interessi: aiuta a trovare persone con gusti simili.",
+  },
+  {
+    title: "Partecipazione utile",
+    description: "Anche un singolo contributo utile al giorno mantiene alto il livello della community.",
+  },
+  {
+    title: "Focus comandi",
+    description: "Questa settimana prova una combinazione: +help, poi +rank, poi +classifica weekly.",
+  },
+  {
+    title: "Focus feedback",
+    description: "Se trovi qualcosa che non funziona bene, segnalarlo con chiarezza aiuta tutti.",
+  },
+  {
+    title: "Focus community",
+    description: "Passa in chat, forum e poll: tre piccoli passi che migliorano davvero l'esperienza generale.",
+  },
 ];
 let loopHandle = null;
 let state = null;
