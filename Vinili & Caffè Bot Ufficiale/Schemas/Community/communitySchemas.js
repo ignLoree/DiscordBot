@@ -35,6 +35,7 @@ const expUserSchema = new Schema(
     weeklyExp: { type: Number, default: 0 },
     level: { type: Number, default: 0 },
     weeklyKey: { type: String, default: "" },
+    perkNearReminderLevels: { type: [Number], default: [] },
   },
   { timestamps: true },
 );

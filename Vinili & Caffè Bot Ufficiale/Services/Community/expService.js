@@ -1,9 +1,10 @@
-﻿const {
+const {
   ExpUser,
   GlobalSettings,
   LevelHistory,
 } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
+const { getNoDmSet } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set(
   [IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),
 );
@@ -26,6 +27,7 @@ const LEVEL_ROLE_MAP = new Map([
   [70, IDs.roles.Level70],
   [100, IDs.roles.Level100],
 ]);
+const PERK_NEAR_LEVEL_DISTANCE = 2;
 const ROLE_MULTIPLIERS = new Map([
   [IDs.roles.Donator, 3],
   [IDs.roles.VIP, 4],
@@ -124,6 +126,15 @@ function getTotalExpForLevel(level) {
     threshold = roundToNearest50(threshold + Math.max(110, getLevelStep(l)));
   }
   return threshold;
+}
+
+function getNextPerkLevel(currentLevel) {
+  const safeLevel = Math.max(0, Math.floor(Number(currentLevel || 0)));
+  return (
+    Array.from(LEVEL_ROLE_MAP.keys())
+      .filter((level) => level > safeLevel)
+      .sort((a, b) => a - b)[0] || null
+  );
 }
 
 function normalizeSettingsDoc(doc) {
@@ -351,6 +362,72 @@ async function sendPerksLevelMessage(guild, member, level) {
   await sendLevelUpPayload(channel, member, payload);
 }
 
+function buildPerkNearDmEmbed(member, targetLevel, roleId, missingExp) {
+  return {
+    embeds: [
+      {
+        color: 0x6f4e37,
+        title: "Sei vicino a un nuovo perk!",
+        thumbnail: {
+          url: member?.user?.displayAvatarURL({ size: 256 }),
+        },
+        description: [
+          `<a:VC_PandaClap:1331620157398712330> ${member}, ci sei quasi!`,
+          `Sei vicino al ruolo <@&${roleId}> (livello \`${targetLevel}\`).`,
+          `Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
+          PERKS_CHANNEL_ID
+            ? `Info perks: <#${PERKS_CHANNEL_ID}>`
+            : "Controlla il canale perks/info del server.",
+        ].join("\n"),
+      },
+    ],
+  };
+}
+
+async function maybeSendPerkNearReminder(guild, member, result) {
+  if (!guild || !member || !result?.doc || !result?.levelInfo) return;
+  if (member.user?.bot) return;
+
+  const currentLevel = Number(result.levelInfo.level || 0);
+  const nextPerkLevel = getNextPerkLevel(currentLevel);
+  if (!nextPerkLevel) return;
+
+  if (nextPerkLevel - currentLevel > PERK_NEAR_LEVEL_DISTANCE) return;
+
+  const roleId = LEVEL_ROLE_MAP.get(nextPerkLevel);
+  if (!roleId) return;
+
+  const reminded = Array.isArray(result.doc.perkNearReminderLevels)
+    ? result.doc.perkNearReminderLevels
+        .map((value) => Number(value))
+        .filter(Number.isFinite)
+    : [];
+  if (reminded.includes(nextPerkLevel)) return;
+
+  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+  if (noDmSet.has(String(member.id))) return;
+
+  const targetExp = getTotalExpForLevel(nextPerkLevel);
+  const missingExp = Math.max(0, targetExp - Number(result.afterExp || 0));
+  const payload = buildPerkNearDmEmbed(
+    member,
+    nextPerkLevel,
+    roleId,
+    missingExp,
+  );
+
+  const sent = await member.user.send(payload).then(() => true).catch(() => false);
+  if (!sent) return;
+
+  const nextReminded = Array.from(
+    new Set([...reminded.filter((level) => level > currentLevel), nextPerkLevel]),
+  );
+  await ExpUser.updateOne(
+    { guildId: guild.id, userId: member.id },
+    { $set: { perkNearReminderLevels: nextReminded } },
+  ).catch(() => null);
+}
+
 async function getLevelUpChannel(guild) {
   if (!guild || !LEVEL_UP_CHANNEL_ID) return null;
   return (
@@ -492,11 +569,18 @@ async function addExpWithLevel(
       if (result.levelInfo.level >= 10) {
         await addPerkRoleIfPossible(member);
       }
+      await maybeSendPerkNearReminder(guild, member, result);
     }
   } else if (result.levelInfo.level >= 10) {
     const member = await fetchGuildMember(guild, userId);
     if (member) {
       await addPerkRoleIfPossible(member);
+      await maybeSendPerkNearReminder(guild, member, result);
+    }
+  } else {
+    const member = await fetchGuildMember(guild, userId);
+    if (member) {
+      await maybeSendPerkNearReminder(guild, member, result);
     }
   }
   return result;
@@ -796,3 +880,5 @@ module.exports = {
   getCurrentWeekKey,
   ROLE_MULTIPLIERS,
 };
+
+
