@@ -204,6 +204,67 @@ function pickRandomDistinct(arr, count) {
   return list.slice(0, Math.max(0, Math.min(count, list.length)));
 }
 
+function buildUniqueReminderVariants(pool, count) {
+  const normalizedPool = (Array.isArray(pool) ? pool : [])
+    .map((item) => ({
+      title: String(item?.title || "Reminder settimanale").trim(),
+      description: String(item?.description || "").trim(),
+    }))
+    .filter((item) => item.title || item.description);
+
+  const basePool = normalizedPool.length
+    ? normalizedPool
+    : [{ title: "Reminder settimanale", description: "Dai un'occhiata al server." }];
+
+  const focusLines = [
+    `Focus: ${channelMention(IDs.channels.commands, "comandi")} e +help`,
+    `Focus: ${channelMention(IDs.channels.news, "news")} e aggiornamenti`,
+    `Focus: ${channelMention(IDs.channels.suggestions, "suggerimenti")} e feedback`,
+    `Focus: ${channelMention(IDs.channels.forum, "forum")} e discussioni`,
+    `Focus: ${channelMention(IDs.channels.ticket, "ticket")} e supporto`,
+    `Focus: ${channelMention(IDs.channels.ruoliColori, "ruoli")} e perks`,
+    `Focus: ${channelMention(IDs.channels.quotes, "quotes")} e contenuti`,
+    `Focus: ${channelMention(IDs.channels.polls, "polls")} e partecipazione`,
+    `Focus: ${channelMention(IDs.channels.counting, "counting")} e attivita`,
+    `Focus: +rank / +classifica weekly`,
+  ];
+
+  const actionLines = [
+    "Azione della settimana: prova un comando che non usi di solito.",
+    "Azione della settimana: partecipa a una discussione utile.",
+    "Azione della settimana: controlla i tuoi progressi e obiettivi.",
+    "Azione della settimana: contribuisci con un feedback costruttivo.",
+    "Azione della settimana: esplora un canale che visiti poco.",
+    "Azione della settimana: interagisci con eventi o sondaggi.",
+  ];
+
+  const combos = [];
+  for (const base of basePool) {
+    for (const focus of focusLines) {
+      for (const action of actionLines) {
+        combos.push({
+          title: base.title,
+          description: [base.description, "", focus, action].join("\n").trim(),
+        });
+      }
+    }
+  }
+
+  if (!combos.length) return [];
+  const picked = pickRandomDistinct(combos, Math.min(count, combos.length));
+  if (picked.length >= count) return picked;
+
+  const out = picked.slice();
+  while (out.length < count) {
+    const base = basePool[out.length % basePool.length];
+    out.push({
+      title: base.title,
+      description: base.description,
+    });
+  }
+  return out;
+}
+
 function createReminderEmbed(entry) {
   const title = String(entry?.title || "Reminder settimanale");
   const description = String(entry?.description || "").trim();
@@ -264,10 +325,11 @@ async function buildWeeklyJobs(client, guild) {
   );
   const selected = pickRandomDistinct(recipients, targetCount);
   const pool = Array.isArray(cfg.pool) && cfg.pool.length ? cfg.pool : defaultPool;
+  const variants = buildUniqueReminderVariants(pool, selected.length);
   const dayOrder = pickRandomDistinct([0, 1, 2, 3, 4, 5, 6], 7);
 
   return selected.map((userId, idx) => {
-    const reminder = pool[idx % pool.length];
+    const reminder = variants[idx] || pool[idx % pool.length];
     const dayOffset = dayOrder[idx % dayOrder.length];
     return {
       id: `${Date.now()}_${idx}_${randomInt(1000, 999999)}`,
