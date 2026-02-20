@@ -11,6 +11,9 @@ const { startMinigameLoop, restoreActiveGames, } = require("../Services/Minigame
 const {
   startHourlyReminderLoop,
 } = require("../Services/Community/chatReminderService");
+const {
+  startWeeklyDmReminderLoop,
+} = require("../Services/Community/weeklyDmReminderService");
 const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop, } = require("../Services/Community/communityOpsService");
 const {
   startWeeklyActivityWinnersLoop,
@@ -257,6 +260,10 @@ function startPrimaryLoops(client, engagementTick) {
     [
       "[CHAT REMINDER] Failed to start hourly loop",
       () => startHourlyReminderLoop(client),
+    ],
+    [
+      "[WEEKLY DM REMINDER] Failed to start loop",
+      () => startWeeklyDmReminderLoop(client),
     ],
     [
       "[VERIFY TENURE] Failed to start loop",
