@@ -17,6 +17,7 @@ const TICK_EVERY_MS = 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_RETRY_DELAY_MS = 6 * 60 * 60 * 1000;
 const STARTUP_BLAST_DM_DELAY_MS = 450;
+const EXTERNAL_STARTUP_DM_DELAY_MS = 600;
 const DM_FOOTER =
   "Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel server.";
 const DEFAULT_TZ = "Europe/Rome";
@@ -412,6 +413,12 @@ function getCfg(client) {
   return client?.config?.weeklyDmReminder || {};
 }
 
+function getExternalCooldownDays(client) {
+  const raw = Number(getCfg(client).externalCooldownDays);
+  if (!Number.isFinite(raw)) return 15;
+  return Math.max(1, Math.floor(raw));
+}
+
 function getBaseCooldownDays(client) {
   const raw = Number(getCfg(client).baseCooldownDays);
   if (!Number.isFinite(raw)) return 7;
@@ -504,6 +511,10 @@ function getGuildEntry(guildId) {
       startupBlastDone: false,
       startupBlastRunning: false,
       startupBlastAt: 0,
+      externalStartupBlastDone: false,
+      externalStartupBlastRunning: false,
+      externalStartupBlastAt: 0,
+      externalReminderHistory: {},
     };
   }
   if (!Array.isArray(root[key].jobs)) root[key].jobs = [];
@@ -518,6 +529,21 @@ function getGuildEntry(guildId) {
   }
   if (!Number.isFinite(Number(root[key].startupBlastAt || 0))) {
     root[key].startupBlastAt = 0;
+  }
+  if (typeof root[key].externalStartupBlastDone !== "boolean") {
+    root[key].externalStartupBlastDone = false;
+  }
+  if (typeof root[key].externalStartupBlastRunning !== "boolean") {
+    root[key].externalStartupBlastRunning = false;
+  }
+  if (!Number.isFinite(Number(root[key].externalStartupBlastAt || 0))) {
+    root[key].externalStartupBlastAt = 0;
+  }
+  if (
+    !root[key].externalReminderHistory ||
+    typeof root[key].externalReminderHistory !== "object"
+  ) {
+    root[key].externalReminderHistory = {};
   }
   return root[key];
 }
@@ -680,6 +706,40 @@ function createReminderEmbed(entry) {
     .setDescription(description || "Ricordati di dare un'occhiata al server.")
     .setFooter({ text: DM_FOOTER })
     .setTimestamp();
+}
+
+function createExternalReturnEmbed(guild) {
+  const guildName = String(guild?.name || "il server");
+  return new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`Ti aspettiamo su ${guildName}`)
+    .setDescription(
+      [
+        "Se vuoi rientrare, sei il benvenuto: il server è sempre attivo.",
+        "",
+        "Trovi eventi, attività e contenuti nuovi con continuità.",
+        "Se ti interessa, puoi anche candidarti e valutare il percorso staff pagato.",
+        "",
+        "Se rientri, troverai tutto pronto.",
+      ].join("\n"),
+    )
+    .setFooter({
+      text: "Messaggio automatico periodico: se vuoi rientrare, ti aspettiamo.",
+    })
+    .setTimestamp();
+}
+
+function collectOpenDmRecipientIds(client) {
+  const ids = new Set();
+  if (!client?.channels?.cache) return ids;
+  for (const channel of client.channels.cache.values()) {
+    if (!channel?.isDMBased?.()) continue;
+    const recipientId = String(
+      channel?.recipientId || channel?.recipient?.id || "",
+    );
+    if (recipientId) ids.add(recipientId);
+  }
+  return ids;
 }
 
 function isStaffMember(member) {
@@ -1020,6 +1080,105 @@ async function runStartupBlastOnce(client, guild) {
   }
 }
 
+async function runExternalStartupBlastOnce(client, guild) {
+  const entry = getGuildEntry(guild.id);
+  if (!entry) return;
+  if (entry.externalStartupBlastDone || entry.externalStartupBlastRunning) return;
+
+  entry.externalStartupBlastRunning = true;
+  saveState();
+  try {
+    await guild.members.fetch().catch(() => {});
+    const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+    const dmIds = collectOpenDmRecipientIds(client);
+    const outsideIds = [...dmIds].filter((id) => !guild.members.cache.has(id));
+    let sentCount = 0;
+    let failCount = 0;
+    const now = Date.now();
+
+    for (const userId of outsideIds) {
+      if (noDmSet.has(String(userId))) continue;
+      const user =
+        client.users.cache.get(String(userId)) ||
+        (await client.users.fetch(String(userId)).catch(() => null));
+      if (!user || user.bot) continue;
+
+      try {
+        await user.send({
+          embeds: [createExternalReturnEmbed(guild)],
+          allowedMentions: { parse: [] },
+        });
+        entry.externalReminderHistory[String(userId)] = {
+          lastSentAt: now,
+        };
+        sentCount += 1;
+      } catch {
+        failCount += 1;
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, EXTERNAL_STARTUP_DM_DELAY_MS),
+      );
+    }
+
+    entry.externalStartupBlastDone = true;
+    entry.externalStartupBlastAt = Date.now();
+    entry.externalStartupBlastRunning = false;
+    saveState();
+    global.logger?.info?.(
+      `[WEEKLY DM] External startup blast done for guild ${guild.id}: sent=${sentCount}, failed=${failCount}.`,
+    );
+  } catch (error) {
+    entry.externalStartupBlastRunning = false;
+    saveState();
+    global.logger?.error?.("[WEEKLY DM] External startup blast failed:", error);
+  }
+}
+
+async function sendExternalReturnReminders(client, guild) {
+  const entry = getGuildEntry(guild.id);
+  if (!entry) return;
+  await guild.members.fetch().catch(() => {});
+  const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
+  const dmIds = collectOpenDmRecipientIds(client);
+  const now = Date.now();
+  const cooldownMs = getExternalCooldownDays(client) * 24 * 60 * 60 * 1000;
+
+  // Clean users that are back in guild.
+  for (const userId of Object.keys(entry.externalReminderHistory || {})) {
+    if (guild.members.cache.has(userId)) {
+      delete entry.externalReminderHistory[userId];
+    }
+  }
+
+  for (const userId of dmIds) {
+    const uid = String(userId);
+    if (!uid) continue;
+    if (guild.members.cache.has(uid)) continue;
+    if (noDmSet.has(uid)) continue;
+
+    const lastSentAt = Number(
+      entry.externalReminderHistory?.[uid]?.lastSentAt || 0,
+    );
+    if (lastSentAt && now - lastSentAt < cooldownMs) continue;
+
+    const user =
+      client.users.cache.get(uid) ||
+      (await client.users.fetch(uid).catch(() => null));
+    if (!user || user.bot) continue;
+
+    try {
+      await user.send({
+        embeds: [createExternalReturnEmbed(guild)],
+        allowedMentions: { parse: [] },
+      });
+      entry.externalReminderHistory[uid] = { lastSentAt: Date.now() };
+    } catch {}
+  }
+
+  saveState();
+}
+
 function shouldRetry(job) {
   if (!job) return false;
   const attempts = Number(job.attempts || 0);
@@ -1117,6 +1276,8 @@ async function weeklyTick(client) {
     if (!guild) return;
 
     await runStartupBlastOnce(client, guild);
+    await runExternalStartupBlastOnce(client, guild);
+    await sendExternalReturnReminders(client, guild);
     await maybePlanWeeklyBatch(client, guild);
     await sendDueJobs(client, guild);
   } catch (error) {
