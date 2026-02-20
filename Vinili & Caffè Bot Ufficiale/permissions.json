@@ -1,1171 +1,1334 @@
-{
-  "slash": {
-    "backup": {
-      "roles": [
-        "roles.Founder"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "info": [
-          "roles.HighStaff"
-        ],
-        "load": [
-          "roles.HighStaff"
-        ],
-        "create": [
-          "roles.HighStaff"
-        ],
-        "list": [
-          "roles.HighStaff"
-        ],
-        "delete": [
-          "roles.HighStaff"
-        ],
-        "status": [
-          "roles.HighStaff"
-        ],
-        "cancel": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "copy": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "subcommands": {
-        "emoji": [
-          "roles.HighStaff"
-        ],
-        "sticker": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "dmbroadcast": {
-      "roles": [
-        "roles.Founder"
-      ]
-    },
-    "leaderboard": {
-      "roles": [
-        "roles.PartnerManager",
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569209849843823",
-        "1442569262689554444",
-        "1442569288161558528"
-      ]
-    },
-    "partner": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569209849843823",
-        "1442569262689554444",
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "modifypoint.add": {
-          "roles": [
-            "roles.HighStaff"
-          ]
+﻿{
+    "slash": {
+        "backup": {
+            "roles": [
+                "roles.Founder"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "info": [
+                    "roles.HighStaff"
+                ],
+                "load": [
+                    "roles.HighStaff"
+                ],
+                "create": [
+                    "roles.HighStaff"
+                ],
+                "list": [
+                    "roles.HighStaff"
+                ],
+                "delete": [
+                    "roles.HighStaff"
+                ],
+                "status": [
+                    "roles.HighStaff"
+                ],
+                "cancel": [
+                    "roles.HighStaff"
+                ]
+            }
         },
-        "modifypoint.remove": {
-          "roles": [
-            "roles.HighStaff"
-          ]
+        "copy": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "subcommands": {
+                "emoji": [
+                    "roles.HighStaff"
+                ],
+                "sticker": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "dmbroadcast": {
+            "roles": [
+                "roles.Founder"
+            ]
+        },
+        "leaderboard": {
+            "roles": [
+                "roles.PartnerManager",
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569209849843823",
+                "1442569262689554444",
+                "1442569288161558528"
+            ]
+        },
+        "partner": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569209849843823",
+                "1442569262689554444",
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "modifypoint.add": {
+                    "roles": [
+                        "roles.HighStaff"
+                    ]
+                },
+                "modifypoint.remove": {
+                    "roles": [
+                        "roles.HighStaff"
+                    ]
+                }
+            }
+        },
+        "partnership": {
+            "roles": [
+                "roles.PartnerManager"
+            ]
+        },
+        "pausa": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569209849843823",
+                "1442569262689554444",
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "request": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "list": [
+                    "roles.Staff",
+                    "roles.PartnerManager",
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "poll": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "subcommands": {
+                "create": [
+                    "roles.HighStaff"
+                ],
+                "remove": [
+                    "roles.HighStaff"
+                ],
+                "edit": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "say": {
+            "roles": [
+                "roles.Founder"
+            ]
+        },
+        "staff": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569209849843823",
+                "1442569262689554444",
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "pex": [
+                    "roles.HighStaff"
+                ],
+                "depex": [
+                    "roles.HighStaff"
+                ],
+                "warn": [
+                    "roles.HighStaff"
+                ],
+                "resoconto.staffer": [
+                    "roles.HighStaff",
+                    "roles.Coordinator",
+                    "roles.Supervisor"
+                ],
+                "resoconto.pm": [
+                    "roles.HighStaff",
+                    "roles.Coordinator",
+                    "roles.Supervisor"
+                ]
+            }
+        },
+        "valutazione": {
+            "roles": "roles.HighStaff",
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "positiva.add": [
+                    "roles.HighStaff"
+                ],
+                "positiva.remove": [
+                    "roles.HighStaff"
+                ],
+                "negativa.add": [
+                    "roles.HighStaff"
+                ],
+                "negativa.remove": [
+                    "roles.HighStaff"
+                ],
+                "media": [
+                    "roles.Staff"
+                ]
+            }
         }
-      }
     },
-    "partnership": {
-      "roles": [
-        "roles.PartnerManager"
-      ]
-    },
-    "pausa": {
-      "roles": [
-        "roles.Staff"
-      ],
-      "channels": [
-        "1442569209849843823",
-        "1442569262689554444",
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "request": [
-          "roles.Staff",
-          "roles.PartnerManager"
+    "prefix": {
+        "afk": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "avatar": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "get": [
+                    "roles.Member"
+                ],
+                "server": [
+                    "roles.Member"
+                ],
+                "user": [
+                    "roles.Member"
+                ],
+                "guild": [
+                    "roles.Member"
+                ]
+            }
+        },
+        "banner": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "user": [
+                    "roles.Member"
+                ],
+                "server": [
+                    "roles.Member"
+                ],
+                "guild": [
+                    "roles.Member"
+                ]
+            }
+        },
+        "block": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "avatar": [
+                    "roles.Member"
+                ],
+                "banner": [
+                    "roles.Member"
+                ],
+                "quotes": [
+                    "roles.Member"
+                ]
+            }
+        },
+        "classifica": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "alltime": [
+                    "roles.Member"
+                ],
+                "weekly": [
+                    "roles.Member"
+                ]
+            }
+        },
+        "antinuke": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
+        },
+        "customregister": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
+        },
+        "customrole": {
+            "roles": [
+                "roles.vip",
+                "roles.donator",
+                "roles.ServerBooster",
+                "roles.Level70"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ],
+            "subcommands": {
+                "create": [
+                    "roles.vip",
+                    "roles.donator",
+                    "roles.ServerBooster",
+                    "roles.Level70"
+                ],
+                "modify": [
+                    "roles.vip",
+                    "roles.donator",
+                    "roles.ServerBooster",
+                    "roles.Level70"
+                ],
+                "add": [
+                    "roles.vip",
+                    "roles.donator",
+                    "roles.ServerBooster",
+                    "roles.Level70"
+                ],
+                "remove": [
+                    "roles.vip",
+                    "roles.donator",
+                    "roles.ServerBooster",
+                    "roles.Level70"
+                ]
+            }
+        },
+        "customvoc": {
+            "roles": [
+                "roles.vip",
+                "roles.donator",
+                "roles.ServerBooster",
+                "roles.Level70"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "description": [
+            "roles.PartnerManager"
         ],
-        "list": [
-          "roles.Staff",
-          "roles.PartnerManager",
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "poll": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "subcommands": {
-        "create": [
-          "roles.HighStaff"
-        ],
-        "remove": [
-          "roles.HighStaff"
-        ],
-        "edit": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "say": {
-      "roles": [
-        "roles.Founder"
-      ]
-    },
-    "staff": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569209849843823",
-        "1442569262689554444",
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "pex": [
-          "roles.HighStaff"
-        ],
-        "depex": [
-          "roles.HighStaff"
-        ],
-        "warn": [
-          "roles.HighStaff"
-        ],
-        "resoconto.staffer": [
-          "roles.HighStaff",
-          "roles.Coordinator",
-          "roles.Supervisor"
-        ],
-        "resoconto.pm": [
-          "roles.HighStaff",
-          "roles.Coordinator",
-          "roles.Supervisor"
-        ]
-      }
-    },
-    "valutazione": {
-      "roles": "roles.HighStaff",
-      "channels": [
-        "1442569262689554444",
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "positiva.add": [
-          "roles.HighStaff"
-        ],
-        "positiva.remove": [
-          "roles.HighStaff"
-        ],
-        "negativa.add": [
-          "roles.HighStaff"
-        ],
-        "negativa.remove": [
-          "roles.HighStaff"
-        ],
-        "media": [
-          "roles.Staff"
-        ]
-      }
-    }
-  },
-  "prefix": {
-    "afk": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "avatar": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "get": [
-          "roles.Member"
-        ],
-        "server": [
-          "roles.Member"
-        ],
-        "user": [
-          "roles.Member"
-        ],
-        "guild": [
-          "roles.Member"
-        ]
-      }
-    },
-    "banner": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "user": [
-          "roles.Member"
-        ],
-        "server": [
-          "roles.Member"
-        ],
-        "guild": [
-          "roles.Member"
-        ]
-      }
-    },
-    "block": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "avatar": [
-          "roles.Member"
-        ],
-        "banner": [
-          "roles.Member"
-        ],
-        "quotes": [
-          "roles.Member"
-        ]
-      }
-    },
-    "classifica": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "alltime": [
-          "roles.Member"
-        ],
-        "weekly": [
-          "roles.Member"
-        ]
-      }
-    },
-    "antinuke": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ]
-    },
-    "customregister": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ]
-    },
-    "customrole": {
-      "roles": [
-        "roles.vip",
-        "roles.donator",
-        "roles.ServerBooster",
-        "roles.Level70"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ],
-      "subcommands": {
-        "create": [
-          "roles.vip",
-          "roles.donator",
-          "roles.ServerBooster",
-          "roles.Level70"
-        ],
-        "modify": [
-          "roles.vip",
-          "roles.donator",
-          "roles.ServerBooster",
-          "roles.Level70"
-        ],
-        "add": [
-          "roles.vip",
-          "roles.donator",
-          "roles.ServerBooster",
-          "roles.Level70"
-        ],
-        "remove": [
-          "roles.vip",
-          "roles.donator",
-          "roles.ServerBooster",
-          "roles.Level70"
-        ]
-      }
-    },
-    "customvoc": {
-      "roles": [
-        "roles.vip",
-        "roles.donator",
-        "roles.ServerBooster",
-        "roles.Level70"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "description": [
-      "roles.PartnerManager"
-    ],
-    "dm-disable": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "dm-enable": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "embed": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "create": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "gmulti": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ]
-    },
-    "help": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "info": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ]
-    },
-    "invites": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "join": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569187376763010"
-      ]
-    },
-    "languages": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569187376763010"
-      ]
-    },
-    "leave": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569187376763010"
-      ]
-    },
-    "level": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "set": [
-          "roles.HighStaff"
-        ],
-        "add": [
-          "roles.HighStaff"
-        ],
-        "remove": [
-          "roles.HighStaff"
-        ],
-        "reset": [
-          "roles.HighStaff"
-        ],
-        "lock": [
-          "roles.HighStaff"
-        ],
-        "unlock": [
-          "roles.HighStaff"
-        ],
-        "multiplier": [
-          "roles.HighStaff"
-        ],
-        "ignore": [
-          "roles.HighStaff"
-        ],
-        "unignore": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "me": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "membercount": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "mstats": [
-      "roles.Member"
-    ],
-    "no-dm-list": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ]
-    },
-    "perm": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "grant": [
-          "roles.HighStaff"
-        ],
-        "revoke": [
-          "roles.HighStaff"
-        ],
-        "list": [
-          "roles.HighStaff"
-        ],
-        "clear": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "ping": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490",
-        "1442569262689554444",
-        "1442569288161558528"
-      ]
-    },
-    "purge": [
-      "roles.HighStaff"
-    ],
-    "quote": {
-      "roles": [
-        "roles.ServerBooster",
-        "roles.donator",
-        "roles.vip",
-        "roles.Level10"
-      ],
-      "channels": [
-        "1442569130573303898",
-        "1442569136067575809",
-        "1442569138114662490",
-        "1442569141717438495"
-      ]
-    },
-    "rank": [
-      "roles.Member"
-    ],
-    "reaction": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569262689554444",
-        "1442569288161558528"
-      ]
-    },
-    "recensione": [
-      "roles.HighStaff"
-    ],
-    "restart": [
-      "roles.Founder"
-    ],
-    "server": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "set": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "autojoin": [
-          "roles.HighStaff"
-        ],
-        "voice": {
-          "roles": [
+        "dm-disable": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "dm-enable": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "embed": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "create": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "gmulti": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
+        },
+        "help": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "info": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
+        },
+        "invites": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "join": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569187376763010"
+            ]
+        },
+        "languages": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569187376763010"
+            ]
+        },
+        "leave": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569187376763010"
+            ]
+        },
+        "level": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "set": [
+                    "roles.HighStaff"
+                ],
+                "add": [
+                    "roles.HighStaff"
+                ],
+                "remove": [
+                    "roles.HighStaff"
+                ],
+                "reset": [
+                    "roles.HighStaff"
+                ],
+                "lock": [
+                    "roles.HighStaff"
+                ],
+                "unlock": [
+                    "roles.HighStaff"
+                ],
+                "multiplier": [
+                    "roles.HighStaff"
+                ],
+                "ignore": [
+                    "roles.HighStaff"
+                ],
+                "unignore": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "me": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "membercount": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "mstats": [
             "roles.Member"
-          ],
-          "channels": [
-            "1442569187376763010"
-          ]
+        ],
+        "no-dm-list": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
+        },
+        "perm": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "grant": [
+                    "roles.HighStaff"
+                ],
+                "revoke": [
+                    "roles.HighStaff"
+                ],
+                "list": [
+                    "roles.HighStaff"
+                ],
+                "clear": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "ping": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490",
+                "1442569262689554444",
+                "1442569288161558528"
+            ]
+        },
+        "purge": [
+            "roles.HighStaff"
+        ],
+        "quote": {
+            "roles": [
+                "roles.ServerBooster",
+                "roles.donator",
+                "roles.vip",
+                "roles.Level10"
+            ],
+            "channels": [
+                "1442569130573303898",
+                "1442569136067575809",
+                "1442569138114662490",
+                "1442569141717438495"
+            ]
+        },
+        "rank": [
+            "roles.Member"
+        ],
+        "reaction": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528"
+            ]
+        },
+        "recensione": [
+            "roles.HighStaff"
+        ],
+        "restart": [
+            "roles.Founder"
+        ],
+        "server": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "set": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "autojoin": [
+                    "roles.HighStaff"
+                ],
+                "voice": {
+                    "roles": [
+                        "roles.Member"
+                    ],
+                    "channels": [
+                        "1442569187376763010"
+                    ]
+                }
+            }
+        },
+        "ship": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1469685688814407726"
+            ]
+        },
+        "snipe": [
+            "roles.Member"
+        ],
+        "temprole": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "toggle": [
+                    "roles.Staff"
+                ],
+                "add": [
+                    "roles.Staff"
+                ],
+                "remove": [
+                    "roles.Staff"
+                ]
+            }
+        },
+        "ticket": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "subcommands": {
+                "add": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "remove": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "closerequest": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "close": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "claim": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "unclaim": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "switchpanel": [
+                    "roles.HighStaff"
+                ],
+                "rename": [
+                    "roles.HighStaff"
+                ],
+                "reopen": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "top": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "unblock": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "avatar": [
+                    "roles.Member"
+                ],
+                "banner": [
+                    "roles.Member"
+                ],
+                "quotes": [
+                    "roles.Member"
+                ]
+            }
+        },
+        "verify": {
+            "roles": [
+                "roles.HighStaff"
+            ]
+        },
+        "adorable": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "birb": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "cat": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "catfacts": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "chucknorris": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "country": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "dadjoke": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "define": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "dog": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "dogfacts": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "flip": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "github": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "itunes": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "joke": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "math": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "movie": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "pokemon": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "pug": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "quotefun": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "roll": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "rps": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "slots": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "space": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "steamstatus": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "weather": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "ban": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "case": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "delwarn": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "duration": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "kick": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "lock": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "moderations": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "modlogs": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "modstats": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "mute": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "reason": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "unban": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "unlock": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "unmute": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "warn": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "warnings": {
+            "roles": [
+                "roles.Staff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
         }
-      }
     },
-    "ship": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1469685688814407726"
-      ]
-    },
-    "snipe": [
-      "roles.Member"
-    ],
-    "temprole": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "channels": [
-        "1442569288161558528"
-      ],
-      "subcommands": {
-        "grant": [
-          "roles.HighStaff"
+    "buttons": {
+        "accetta": {
+            "ownerFromMessageMention": true
+        },
+        "avatar_unblock:*": {
+            "ownerSegment": 1
+        },
+        "avatar_views": [
+            "roles.Member"
         ],
-        "revoke": [
-          "roles.HighStaff"
+        "backup_delete_cancel:*": {
+            "ownerSegment": 2
+        },
+        "backup_delete_confirm:*": {
+            "ownerSegment": 2
+        },
+        "backup_info_delete:*": {
+            "ownerSegment": 2
+        },
+        "backup_info_delete_cancel:*": {
+            "ownerSegment": 2
+        },
+        "backup_info_delete_confirm:*": {
+            "ownerSegment": 2
+        },
+        "backup_info_load:*": {
+            "ownerSegment": 2
+        },
+        "backup_list_next:*": {
+            "ownerSegment": 1
+        },
+        "backup_list_prev:*": {
+            "ownerSegment": 1
+        },
+        "banner_unblock:*": {
+            "ownerSegment": 1
+        },
+        "banner_views": [
+            "roles.Member"
         ],
-        "list": [
-          "roles.HighStaff"
+        "claim_ticket": [
+            "roles.Staff",
+            "roles.HighStaff",
+            "roles.PartnerManager"
         ],
-        "clear": [
-          "roles.HighStaff"
-        ]
-      }
-    },
-    "ticket": {
-      "roles": [
-        "roles.Staff"
-      ],
-      "subcommands": {
-        "add": [
-          "roles.Staff",
-          "roles.PartnerManager"
+        "close_ticket": [
+            "roles.Staff",
+            "roles.HighStaff",
+            "roles.PartnerManager"
         ],
-        "remove": [
-          "roles.Staff",
-          "roles.PartnerManager"
+        "close_ticket_motivo": [
+            "roles.Staff",
+            "roles.HighStaff",
+            "roles.PartnerManager"
         ],
-        "closerequest": [
-          "roles.Staff",
-          "roles.PartnerManager"
+        "customrole_color:*": {
+            "ownerSegment": 1
+        },
+        "customrole_delete:*": {
+            "ownerSegment": 1
+        },
+        "customrole_emoji:*": {
+            "ownerSegment": 1
+        },
+        "customrole_grant:*": {
+            "grantRecipientOnly": true
+        },
+        "customrole_members:*": {
+            "ownerSegment": 1
+        },
+        "customrole_name:*": {
+            "ownerSegment": 1
+        },
+        "customvoc_emoji:*": {
+            "ownerSegment": 1
+        },
+        "customvoc_name:*": {
+            "ownerSegment": 1
+        },
+        "downv": [
+            "roles.Member"
         ],
-        "close": [
-          "roles.Staff",
-          "roles.PartnerManager"
+        "eb:author:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:color:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:content:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:description:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:footer:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:image:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:send:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:thumbnail:*": {
+            "ownerFromMessageMention": true
+        },
+        "eb:title:*": {
+            "ownerFromMessageMention": true
+        },
+        "error_pending": {
+            "permissions": "Administrator"
+        },
+        "error_solved": {
+            "permissions": "Administrator"
+        },
+        "error_unsolved": {
+            "permissions": "Administrator"
+        },
+        "generalimoderazione": [
+            "roles.Staff"
         ],
-        "claim": [
-          "roles.Staff",
-          "roles.PartnerManager"
+        "info_badges_roles": [
+            "roles.Member"
         ],
+        "info_boost_levels": [
+            "roles.Member"
+        ],
+        "info_donations": [
+            "roles.Member"
+        ],
+        "info_levels": [
+            "roles.Member"
+        ],
+        "info_rules": [
+            "roles.Member"
+        ],
+        "info_strike_close:*": {
+            "ownerFromMessageMention": true
+        },
+        "info_strike_first:*": {
+            "ownerFromMessageMention": true
+        },
+        "info_strike_last:*": {
+            "ownerFromMessageMention": true
+        },
+        "info_strike_next:*": {
+            "ownerFromMessageMention": true
+        },
+        "info_strike_prev:*": {
+            "ownerFromMessageMention": true
+        },
+        "info_verifica": [
+            "roles.Member"
+        ],
+        "limiti": [
+            "roles.Staff"
+        ],
+        "metodi": [
+            "roles.Member"
+        ],
+        "next": [
+            "roles.PartnerManager",
+            "roles.HighStaff"
+        ],
+        "pause": [
+            "roles.Staff"
+        ],
+        "pause_accept:*": [
+            "roles.HighStaff"
+        ],
+        "pause_cancel:*": [
+            "roles.HighStaff"
+        ],
+        "pause_list:*": {
+            "roles": [
+                "roles.Staff",
+                "roles.PartnerManager",
+                "roles.HighStaff"
+            ],
+            "ownerSegment": 1
+        },
+        "pause_reject:*": [
+            "roles.HighStaff"
+        ],
+        "ping": [
+            "roles.Member"
+        ],
+        "prev": [
+            "roles.PartnerManager",
+            "roles.HighStaff"
+        ],
+        "r_multiplier_info": [
+            "roles.Member"
+        ],
+        "regolamento": [
+            "roles.Staff"
+        ],
+        "rifiuta": {
+            "ownerFromMessageMention": true
+        },
+        "sanzioni": [
+            "roles.Staff"
+        ],
+        "stats_me_period_back*": {
+            "ownerSegment": 1
+        },
+        "stats_me_period_open*": {
+            "ownerSegment": 1
+        },
+        "stats_me_period_set*": {
+            "ownerSegment": 1
+        },
+        "stats_me_refresh*": {
+            "ownerSegment": 1
+        },
+        "stats_server_refresh*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_first*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_last*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_modal_open*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_next*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_prev*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_period_back*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_period_open*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_period_set*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_refresh*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_view_select*": {
+            "ownerSegment": 1
+        },
+        "suggestion_staff_accept": [
+            "roles.HighStaff"
+        ],
+        "suggestion_staff_reject": [
+            "roles.HighStaff"
+        ],
+        "testualimoderazione": [
+            "roles.Staff"
+        ],
+        "ticket_rate:*": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "ownerFromMessageMention": true,
+            "ownerOrRole": true
+        },
+        "ticket_transcript:*": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "ownerFromMessageMention": true,
+            "ownerOrRole": true
+        },
+        "torna_indietro": {
+            "ownerFromMessageMention": true
+        },
         "unclaim": [
-          "roles.Staff",
-          "roles.PartnerManager"
+            "roles.Staff",
+            "roles.HighStaff",
+            "roles.PartnerManager"
         ],
-        "switchpanel": [
-          "roles.HighStaff"
+        "upv": [
+            "roles.Member"
         ],
-        "rename": [
-          "roles.HighStaff"
+        "valutazioni": [
+            "roles.Staff"
         ],
-        "reopen": [
-          "roles.HighStaff"
+        "verify_enter": {
+            "verifyStartRequired": true
+        },
+        "verify_start": null,
+        "vocalimoderazione": [
+            "roles.Staff"
+        ],
+        "warnstaff": [
+            "roles.Staff"
         ]
-      }
     },
-    "top": {
-      "roles": [
-        "roles.Member"
-      ],
-      "channels": [
-        "1442569138114662490"
-      ]
-    },
-    "unblock": {
-      "roles": [
-        "roles.Member"
-      ],
-      "subcommands": {
-        "avatar": [
-          "roles.Member"
+    "selectMenus": {
+        "customrole_add_select:*": {
+            "ownerSegment": 1
+        },
+        "customrole_remove_select:*": {
+            "ownerSegment": 1
+        },
+        "backup_list_select:*": {
+            "ownerSegment": 1
+        },
+        "usage_guide:*": {
+            "ownerSegment": 2
+        },
+        "dyno_temprole_help:*": {
+            "ownerSegment": 1
+        },
+        "personality_age": [
+            "roles.Member"
         ],
-        "banner": [
-          "roles.Member"
+        "personality_colors_1": [
+            "roles.Member"
         ],
-        "quotes": [
-          "roles.Member"
-        ]
-      }
+        "personality_colors_2": [
+            "roles.Member"
+        ],
+        "personality_colors_plus": [
+            "roles.Donator",
+            "roles.vip",
+            "roles.Level70",
+            "roles.ServerBooster"
+        ],
+        "personality_dm": [
+            "roles.Member"
+        ],
+        "personality_mentions": [
+            "roles.Member"
+        ],
+        "personality_pronouns": [
+            "roles.Member"
+        ],
+        "personality_region": [
+            "roles.Member"
+        ],
+        "personality_relationship": [
+            "roles.Member"
+        ],
+        "stats_top_channel_view_select*": {
+            "ownerSegment": 1
+        },
+        "ticket_open_menu": null
     },
-    "verify": {
-      "roles": [
-        "roles.HighStaff"
-      ]
-    },
-    "adorable": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "birb": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "cat": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "catfacts": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "chucknorris": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "country": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "dadjoke": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "define": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "dog": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "dogfacts": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "flip": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "github": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "itunes": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "joke": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "math": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "movie": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "pokemon": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "pug": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "quotefun": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "roll": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "rps": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "slots": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "space": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "steamstatus": {
-      "roles": [
-        "roles.Member"
-      ]
-    },
-    "weather": {
-      "roles": [
-        "roles.Member"
-      ]
+    "modals": {
+        "customrole_modal_*": {
+            "ownerSegment": 1
+        },
+        "customvoc_modal_*": {
+            "ownerSegment": 1
+        },
+        "dm_broadcast:*": {
+            "ownerSegment": 1
+        },
+        "ebm:*": {
+            "ownerSegment": 1
+        },
+        "ebm:send:*": {
+            "ownerSegment": 1
+        },
+        "modal_close_ticket:*": {
+            "ownerSegment": 1
+        },
+        "partnershipModal_*": {
+            "ownerSegment": 1
+        },
+        "partnershipModal_cmd_*": {
+            "ownerSegment": 1
+        },
+        "partnershipModal_ctx_*": {
+            "ownerSegment": 1
+        },
+        "stats_top_channel_page_modal:*": {
+            "ownerSegment": 1
+        },
+        "suggestion_staff_modal:*": {
+            "ownerSegment": 1
+        },
+        "verify_code:*": {
+            "ownerSegment": 1
+        }
     }
-  },
-  "buttons": {
-    "accetta": {
-      "ownerFromMessageMention": true
-    },
-    "avatar_unblock:*": {
-      "ownerSegment": 1
-    },
-    "avatar_views": [
-      "roles.Member"
-    ],
-    "backup_delete_cancel:*": {
-      "ownerSegment": 2
-    },
-    "backup_delete_confirm:*": {
-      "ownerSegment": 2
-    },
-    "backup_info_delete:*": {
-      "ownerSegment": 2
-    },
-    "backup_info_delete_cancel:*": {
-      "ownerSegment": 2
-    },
-    "backup_info_delete_confirm:*": {
-      "ownerSegment": 2
-    },
-    "backup_info_load:*": {
-      "ownerSegment": 2
-    },
-    "backup_list_next:*": {
-      "ownerSegment": 1
-    },
-    "backup_list_prev:*": {
-      "ownerSegment": 1
-    },
-    "banner_unblock:*": {
-      "ownerSegment": 1
-    },
-    "banner_views": [
-      "roles.Member"
-    ],
-    "claim_ticket": [
-      "roles.Staff",
-      "roles.HighStaff",
-      "roles.PartnerManager"
-    ],
-    "close_ticket": [
-      "roles.Staff",
-      "roles.HighStaff",
-      "roles.PartnerManager"
-    ],
-    "close_ticket_motivo": [
-      "roles.Staff",
-      "roles.HighStaff",
-      "roles.PartnerManager"
-    ],
-    "customrole_color:*": {
-      "ownerSegment": 1
-    },
-    "customrole_delete:*": {
-      "ownerSegment": 1
-    },
-    "customrole_emoji:*": {
-      "ownerSegment": 1
-    },
-    "customrole_grant:*": {
-      "grantRecipientOnly": true
-    },
-    "customrole_members:*": {
-      "ownerSegment": 1
-    },
-    "customrole_name:*": {
-      "ownerSegment": 1
-    },
-    "customvoc_emoji:*": {
-      "ownerSegment": 1
-    },
-    "customvoc_name:*": {
-      "ownerSegment": 1
-    },
-    "downv": [
-      "roles.Member"
-    ],
-    "eb:author:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:color:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:content:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:description:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:footer:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:image:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:send:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:thumbnail:*": {
-      "ownerFromMessageMention": true
-    },
-    "eb:title:*": {
-      "ownerFromMessageMention": true
-    },
-    "error_pending": {
-      "permissions": "Administrator"
-    },
-    "error_solved": {
-      "permissions": "Administrator"
-    },
-    "error_unsolved": {
-      "permissions": "Administrator"
-    },
-    "generalimoderazione": [
-      "roles.Staff"
-    ],
-    "info_badges_roles": [
-      "roles.Member"
-    ],
-    "info_boost_levels": [
-      "roles.Member"
-    ],
-    "info_donations": [
-      "roles.Member"
-    ],
-    "info_levels": [
-      "roles.Member"
-    ],
-    "info_rules": [
-      "roles.Member"
-    ],
-    "info_strike_close:*": {
-      "ownerFromMessageMention": true
-    },
-    "info_strike_first:*": {
-      "ownerFromMessageMention": true
-    },
-    "info_strike_last:*": {
-      "ownerFromMessageMention": true
-    },
-    "info_strike_next:*": {
-      "ownerFromMessageMention": true
-    },
-    "info_strike_prev:*": {
-      "ownerFromMessageMention": true
-    },
-    "info_verifica": [
-      "roles.Member"
-    ],
-    "limiti": [
-      "roles.Staff"
-    ],
-    "metodi": [
-      "roles.Member"
-    ],
-    "next": [
-      "roles.PartnerManager",
-      "roles.HighStaff"
-    ],
-    "pause": [
-      "roles.Staff"
-    ],
-    "pause_accept:*": [
-      "roles.HighStaff"
-    ],
-    "pause_cancel:*": [
-      "roles.HighStaff"
-    ],
-    "pause_list:*": {
-      "roles": [
-        "roles.Staff",
-        "roles.PartnerManager",
-        "roles.HighStaff"
-      ],
-      "ownerSegment": 1
-    },
-    "pause_reject:*": [
-      "roles.HighStaff"
-    ],
-    "ping": [
-      "roles.Member"
-    ],
-    "prev": [
-      "roles.PartnerManager",
-      "roles.HighStaff"
-    ],
-    "r_multiplier_info": [
-      "roles.Member"
-    ],
-    "regolamento": [
-      "roles.Staff"
-    ],
-    "rifiuta": {
-      "ownerFromMessageMention": true
-    },
-    "sanzioni": [
-      "roles.Staff"
-    ],
-    "stats_me_period_back*": {
-      "ownerSegment": 1
-    },
-    "stats_me_period_open*": {
-      "ownerSegment": 1
-    },
-    "stats_me_period_set*": {
-      "ownerSegment": 1
-    },
-    "stats_me_refresh*": {
-      "ownerSegment": 1
-    },
-    "stats_server_refresh*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_first*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_last*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_modal_open*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_next*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_prev*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_period_back*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_period_open*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_period_set*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_refresh*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_view_select*": {
-      "ownerSegment": 1
-    },
-    "suggestion_staff_accept": [
-      "roles.HighStaff"
-    ],
-    "suggestion_staff_reject": [
-      "roles.HighStaff"
-    ],
-    "testualimoderazione": [
-      "roles.Staff"
-    ],
-    "ticket_rate:*": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "ownerFromMessageMention": true,
-      "ownerOrRole": true
-    },
-    "ticket_transcript:*": {
-      "roles": [
-        "roles.HighStaff"
-      ],
-      "ownerFromMessageMention": true,
-      "ownerOrRole": true
-    },
-    "torna_indietro": {
-      "ownerFromMessageMention": true
-    },
-    "unclaim": [
-      "roles.Staff",
-      "roles.HighStaff",
-      "roles.PartnerManager"
-    ],
-    "upv": [
-      "roles.Member"
-    ],
-    "valutazioni": [
-      "roles.Staff"
-    ],
-    "verify_enter": {
-      "verifyStartRequired": true
-    },
-    "verify_start": null,
-    "vocalimoderazione": [
-      "roles.Staff"
-    ],
-    "warnstaff": [
-      "roles.Staff"
-    ]
-  },
-  "selectMenus": {
-    "customrole_add_select:*": {
-      "ownerSegment": 1
-    },
-    "customrole_remove_select:*": {
-      "ownerSegment": 1
-    },
-    "backup_list_select:*": {
-      "ownerSegment": 1
-    },
-    "personality_age": [
-      "roles.Member"
-    ],
-    "personality_colors_1": [
-      "roles.Member"
-    ],
-    "personality_colors_2": [
-      "roles.Member"
-    ],
-    "personality_colors_plus": [
-      "roles.Donator",
-      "roles.vip",
-      "roles.Level70",
-      "roles.ServerBooster"
-    ],
-    "personality_dm": [
-      "roles.Member"
-    ],
-    "personality_mentions": [
-      "roles.Member"
-    ],
-    "personality_pronouns": [
-      "roles.Member"
-    ],
-    "personality_region": [
-      "roles.Member"
-    ],
-    "personality_relationship": [
-      "roles.Member"
-    ],
-    "stats_top_channel_view_select*": {
-      "ownerSegment": 1
-    },
-    "ticket_open_menu": null
-  },
-  "modals": {
-    "customrole_modal_*": {
-      "ownerSegment": 1
-    },
-    "customvoc_modal_*": {
-      "ownerSegment": 1
-    },
-    "dm_broadcast:*": {
-      "ownerSegment": 1
-    },
-    "ebm:*": {
-      "ownerSegment": 1
-    },
-    "ebm:send:*": {
-      "ownerSegment": 1
-    },
-    "modal_close_ticket:*": {
-      "ownerSegment": 1
-    },
-    "partnershipModal_*": {
-      "ownerSegment": 1
-    },
-    "partnershipModal_cmd_*": {
-      "ownerSegment": 1
-    },
-    "partnershipModal_ctx_*": {
-      "ownerSegment": 1
-    },
-    "stats_top_channel_page_modal:*": {
-      "ownerSegment": 1
-    },
-    "suggestion_staff_modal:*": {
-      "ownerSegment": 1
-    },
-    "verify_code:*": {
-      "ownerSegment": 1
-    }
-  }
 }

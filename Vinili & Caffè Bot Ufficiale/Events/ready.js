@@ -27,6 +27,7 @@ const {
 } = require("../Services/Partner/partnerAuditService");
 const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
+const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
@@ -285,6 +286,10 @@ function startPrimaryLoops(client, engagementTick) {
     [
       "[CUSTOM ROLE EXPIRY] Failed to start cleanup loop",
       () => startCustomRoleExpiryLoop(client),
+    ],
+    [
+      "[MOD CASE LIFECYCLE] Failed to start loop",
+      () => startModCaseLifecycleLoop(client),
     ],
     [
       "[TICKET AUTO CLOSE PROMPT] Failed to start loop",

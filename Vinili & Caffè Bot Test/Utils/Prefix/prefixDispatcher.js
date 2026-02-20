@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../Moderation/commandPermissions");
+const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 
 const PREFIXES = ["-"];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
@@ -38,6 +39,14 @@ async function dispatchPrefixMessage(message, client) {
   const args = tokens;
 
   if (command) {
+    if (command?.args && !args.length) {
+      await showPrefixUsageGuide({
+        message,
+        command,
+        prefix: usedPrefix || "-",
+      });
+      return true;
+    }
     const subcommandName = args[0] ? String(args[0]).toLowerCase() : null;
     const allowed = await checkPrefixPermission(
       message,

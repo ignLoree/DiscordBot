@@ -19,6 +19,7 @@ const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
+const { showPrefixUsageGuide } = require("../Utils/Moderation/prefixUsageGuide");
 const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
 
@@ -743,10 +744,18 @@ module.exports = {
       return;
     }
     if (command?.args && !args.length) {
-      const embed = buildMissingArgumentsErrorEmbed();
-      await deleteCommandMessage();
-      const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
-      if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
+      const shown = await showPrefixUsageGuide({
+        message,
+        command,
+        prefix: usedPrefix || "+",
+        deleteCommandMessage,
+      });
+      if (!shown) {
+        const embed = buildMissingArgumentsErrorEmbed();
+        await deleteCommandMessage();
+        const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
+        if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
+      }
       return;
     }
     let hasPrefixCooldownBypass = Boolean(

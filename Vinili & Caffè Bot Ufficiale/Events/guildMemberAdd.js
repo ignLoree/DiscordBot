@@ -8,6 +8,7 @@ const {
 } = require("../Utils/Community/memberCounterUtils");
 const { processJoinRaidForMember, getJoinRaidStatusSnapshot, } = require("../Services/Moderation/joinRaidService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
+const { applyRolePersistForMember } = require("../Services/Moderation/rolePersistService");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -949,6 +950,7 @@ module.exports = {
           delayMs: 250,
           secondPassMs: 1800,
         });
+        await applyRolePersistForMember(member).catch(() => {});
         await sendJoinLog(member);
         return;
       }
@@ -1010,6 +1012,7 @@ module.exports = {
         delayMs: 250,
         secondPassMs: 1800,
       });
+      await applyRolePersistForMember(member).catch(() => {});
       await sendJoinLog(member);
       await sendDmWelcome(member);
 

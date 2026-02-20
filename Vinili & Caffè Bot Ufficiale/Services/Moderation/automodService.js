@@ -6,6 +6,7 @@ const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
+const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
 const USER_STATE = new Map();
@@ -1696,6 +1697,68 @@ function formatDurationShort(ms) {
   return `${totalMinutes}m`;
 }
 
+function buildAutoModCaseReason(action, violations = [], context = {}) {
+  const keys = Array.isArray(violations)
+    ? violations
+        .map((v) => String(v?.key || "").trim())
+        .filter(Boolean)
+        .slice(0, 6)
+    : [];
+  const rules = keys.length ? keys.join(", ") : "unknown";
+  const timeoutText = context?.timeoutMs
+    ? ` | timeout ${formatDuration(context.timeoutMs)}`
+    : "";
+  const snippetRaw = String(context?.content || "").trim();
+  const snippet = snippetRaw ? ` | msg: ${truncateText(snippetRaw, 120)}` : "";
+  return `[AUTOMOD] ${String(action || "action").toUpperCase()} | rules: ${rules}${timeoutText}${snippet}`;
+}
+
+async function registerAutoModCase(message, action, violations = [], context = {}) {
+  try {
+    const guild = message?.guild;
+    const userId = String(message?.author?.id || "");
+    const modId = String(message?.client?.user?.id || "");
+    if (!guild?.id || !userId || !modId) return null;
+    const normalizedAction = String(action || "").trim().toLowerCase();
+    const mappedAction =
+      normalizedAction === "timeout"
+        ? "MUTE"
+        : normalizedAction === "warn"
+          ? "WARN"
+          : "DELETE";
+    const durationMs =
+      mappedAction === "MUTE" && Number(context?.timeoutMs) > 0
+        ? Number(context.timeoutMs)
+        : null;
+    const reason = buildAutoModCaseReason(action, violations, {
+      timeoutMs: durationMs,
+      content: message?.content || "",
+    });
+    const config = await getModConfig(guild.id);
+    const { doc } = await createModCase({
+      guildId: guild.id,
+      action: mappedAction,
+      userId,
+      modId,
+      reason,
+      durationMs,
+      context: {
+        channelId: String(message?.channelId || message?.channel?.id || ""),
+        messageId: String(message?.id || ""),
+      },
+    });
+    await logModCase({
+      client: message.client,
+      guild,
+      modCase: doc,
+      config,
+    });
+    return doc;
+  } catch {
+    return null;
+  }
+}
+
 async function sendAutomodActionInChannel(
   message,
   action,
@@ -1847,6 +1910,7 @@ async function warnUser(message, state, violations) {
   const deleted = await message.delete().then(() => true).catch(() => false);
   if (!canActNow(message)) return deleted;
   await markBadUserAction(message, "warn", violations);
+  await registerAutoModCase(message, "warn", violations);
   await sendAutomodActionInChannel(message, "warn", violations);
   await sendAutomodLog(message, "warn", violations, state.heat);
   recordAutomodMetric(message, "warn", violations);
@@ -1857,6 +1921,7 @@ async function deleteMessage(message, state, violations) {
   const deleted = await message.delete().then(() => true).catch(() => false);
   if (deleted && canActNow(message)) {
     await markBadUserAction(message, "delete", violations);
+    await registerAutoModCase(message, "delete", violations);
     await sendAutomodActionInChannel(message, "delete", violations);
     await sendAutomodLog(message, "delete", violations, state.heat);
     recordAutomodMetric(message, "delete", violations);
@@ -1924,6 +1989,9 @@ async function timeoutMember(message, state, violations, options = {}) {
   if (!timedOut) return false;
   if (canLogNow) {
     await markBadUserAction(message, "timeout", violations);
+    await registerAutoModCase(message, "timeout", violations, {
+      timeoutMs: durationMs,
+    });
   }
   state.heat = HEAT_RESET_ON_PUNISHMENT ? 0 : Math.max(35, state.heat * 0.45);
   if (canLogNow) {
@@ -1968,6 +2036,11 @@ async function runAutoModMessage(message) {
     await markBadUserAction(message, "delete_webhook", [
       { key: "unwhitelisted_webhook" },
     ]);
+    await registerAutoModCase(
+      message,
+      "delete_webhook",
+      [{ key: "unwhitelisted_webhook" }],
+    );
     await sendAutomodActionInChannel(
       message,
       "delete_webhook",

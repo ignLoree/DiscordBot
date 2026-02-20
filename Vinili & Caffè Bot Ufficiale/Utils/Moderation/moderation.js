@@ -2,6 +2,10 @@ const { EmbedBuilder } = require("discord.js");
 const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 
+function normalizeAction(action) {
+  return String(action || "UNKNOWN").trim().toUpperCase();
+}
+
 async function getModConfig(guildId) {
   return ModConfig.findOneAndUpdate(
     { guildId },
@@ -77,7 +81,7 @@ async function createModCase({
   const doc = await ModCase.create({
     guildId,
     caseId,
-    action,
+    action: normalizeAction(action),
     userId,
     modId,
     reason: reason || "Nessun motivo fornito",
@@ -89,6 +93,31 @@ async function createModCase({
     },
   });
   return { doc, config: cfg };
+}
+
+function normalizeEditValue(value) {
+  if (value == null) return "";
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function appendCaseEdit(modCase, field, previous, next, editedBy) {
+  if (!modCase || !field) return;
+  if (!Array.isArray(modCase.edits)) modCase.edits = [];
+  modCase.edits.push({
+    field: String(field),
+    previous: normalizeEditValue(previous),
+    next: normalizeEditValue(next),
+    editedBy: editedBy ? String(editedBy) : null,
+    editedAt: new Date(),
+  });
+}
+
+function closeCase(modCase, closeReason = null) {
+  if (!modCase) return;
+  modCase.active = false;
+  modCase.closedAt = new Date();
+  modCase.closeReason = closeReason ? String(closeReason).slice(0, 300) : null;
 }
 
 async function logModCase({ client, guild, modCase, config }) {
@@ -142,6 +171,8 @@ module.exports = {
   getModConfig,
   isExempt,
   createModCase,
+  appendCaseEdit,
+  closeCase,
   logModCase,
   formatDuration,
   parseDuration,

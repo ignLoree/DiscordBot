@@ -245,7 +245,7 @@ module.exports = {
       }
 
       await safeMessageReply(message, {
-        content: `✅ AutoMod aggiornato: \`${pathArg}\` = \`${String(nextValue)}\``,
+        content: `<:success:1461731530333229226> AutoMod aggiornato: \`${pathArg}\` = \`${String(nextValue)}\``,
         allowedMentions: { repliedUser: false },
       });
       return;
@@ -280,7 +280,7 @@ module.exports = {
         }
         await safeMessageReply(message, {
           content:
-            "✅ Preset AutoMod `safe` applicato. Usa `+automod tune show` per confermare i valori correnti.",
+            "<:success:1461731530333229226> Preset AutoMod `safe` applicato. Usa `+automod tune show` per confermare i valori correnti.",
           allowedMentions: { repliedUser: false },
         });
         return;
