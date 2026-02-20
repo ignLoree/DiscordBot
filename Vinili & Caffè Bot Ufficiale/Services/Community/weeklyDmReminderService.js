@@ -37,7 +37,7 @@ const defaultPool = [
   {
     title: "Ruoli e vantaggi del server",
     description:
-      "Hai gia controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
+      "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
   },
   {
     title: "Comandi utili del bot",
@@ -54,7 +54,7 @@ const defaultPool = [
   },
   {
     title: "Ticket e supporto",
-    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: e il modo piu veloce per ricevere assistenza dallo staff.`,
+    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: è il modo più veloce per ricevere assistenza dallo staff.`,
   },
   {
     title: "Gestione DM",
@@ -62,14 +62,14 @@ const defaultPool = [
       "Puoi disattivare questi promemoria con +dm-disable e riattivarli in seguito con +dm-enable.",
   },
   {
-    title: "Attivita community",
+    title: "Attività community",
     description:
       "Partecipare a eventi, sondaggi e discussioni aiuta il server a crescere e migliora l'esperienza di tutti.",
   },
   {
     title: "Funzioni del bot",
     description:
-      "Tra quote, livelli, classifiche e comandi utility c'e molto da usare: prova una funzione nuova questa settimana.",
+      "Tra quote, livelli, classifiche e comandi utility c'è molto da usare: prova una funzione nuova questa settimana.",
   },
   {
     title: "Canale suggerimenti",
@@ -77,7 +77,7 @@ const defaultPool = [
   },
   {
     title: "News e aggiornamenti",
-    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novita, cambi e annunci importanti del server.`,
+    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novità, cambi e annunci importanti del server.`,
   },
   {
     title: "Ruoli colori e badge",
@@ -93,11 +93,11 @@ const defaultPool = [
   },
   {
     title: "Eventi e sondaggi",
-    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunita e resti aggiornato.`,
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunità e resti aggiornato.`,
   },
   {
-    title: "Contatore e mini-attivita",
-    description: `Per attivita leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
+    title: "Contatore e mini-attività",
+    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
   },
 ];
 let loopHandle = null;
@@ -225,16 +225,16 @@ function buildUniqueReminderVariants(pool, count) {
     `Focus: ${channelMention(IDs.channels.ruoliColori, "ruoli")} e perks`,
     `Focus: ${channelMention(IDs.channels.quotes, "quotes")} e contenuti`,
     `Focus: ${channelMention(IDs.channels.polls, "polls")} e partecipazione`,
-    `Focus: ${channelMention(IDs.channels.counting, "counting")} e attivita`,
+    `Focus: ${channelMention(IDs.channels.counting, "counting")} e attività`,
     `Focus: +rank / +classifica weekly`,
   ];
 
   const actionLines = [
-    "Azione della settimana: prova un comando che non usi di solito.",
-    "Azione della settimana: partecipa a una discussione utile.",
+    "Azione della settimana: prova un comando che di solito non usi.",
+    "Azione della settimana: partecipa a una discussione costruttiva.",
     "Azione della settimana: controlla i tuoi progressi e obiettivi.",
-    "Azione della settimana: contribuisci con un feedback costruttivo.",
-    "Azione della settimana: esplora un canale che visiti poco.",
+    "Azione della settimana: lascia un feedback chiaro e utile.",
+    "Azione della settimana: esplora un canale che frequenti poco.",
     "Azione della settimana: interagisci con eventi o sondaggi.",
   ];
 
