@@ -138,6 +138,17 @@ dist
 # Generated at runtime; keep untracked to avoid deploy merge conflicts
 Vinili & Caffè Bot Ufficiale/Utils/Config/idsCatalog.snapshot.txt
 
+# Runtime data folders for bot instances
+Vinili & Caffè Bot Ufficiale/Data/**
+!Vinili & Caffè Bot Ufficiale/Data/.gitkeep
+!Vinili & Caffè Bot Ufficiale/Data/Backups/
+!Vinili & Caffè Bot Ufficiale/Data/Backups/.gitkeep
+
+Vinili & Caffè Bot Test/Data/**
+!Vinili & Caffè Bot Test/Data/.gitkeep
+!Vinili & Caffè Bot Test/Data/Backups/
+!Vinili & Caffè Bot Test/Data/Backups/.gitkeep
+
 # Cursor IDE
 .cursor/
 
