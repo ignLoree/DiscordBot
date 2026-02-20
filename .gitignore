@@ -135,5 +135,13 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Runtime/generated config artifacts (must never block git pull on host)
-Vinili & Caffè Bot Ufficiale/Utils/Config/idsCatalog.snapshot.txt
+# Cursor IDE
+.cursor/
+
+# Scripts
+Vinili & Caffè Bot Test/scripts/
+Vinili & Caffè Bot Ufficiale/scripts/
+
+# Restart
+restart_notify.json
+restart.json
