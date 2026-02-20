@@ -134,8 +134,7 @@ async function checkAndInstallPackages(
       client.logs.error(
         `Missing packages detected: ${missingPackages.join(", ")}`,
       );
-      const allowAutoInstall =
-        String(process.env.AUTO_INSTALL_MISSING_PACKAGES || "0") === "1";
+      const allowAutoInstall = false;
       if (!allowAutoInstall) {
         client.logs.warn(
           "Auto install disabled (set AUTO_INSTALL_MISSING_PACKAGES=1 to enable).",

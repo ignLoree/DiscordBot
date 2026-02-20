@@ -134,3 +134,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Runtime/generated config artifacts (must never block git pull on host)
+Vinili & Caffè Bot Ufficiale/Utils/Config/idsCatalog.snapshot.txt

@@ -6,8 +6,8 @@ const os = require('os');
 const baseDir = __dirname;
 
 const ENABLE_TEST_BOT = String(process.env.ENABLE_TEST_BOT || '0') === '1';
-const ENABLE_LOADER_GIT_PULL = String(process.env.LOADER_GIT_PULL || '0') === '1';
-const ENABLE_LOADER_NPM_INSTALL = String(process.env.LOADER_NPM_INSTALL || '0') === '1';
+const ENABLE_LOADER_GIT_PULL = false;
+const ENABLE_LOADER_NPM_INSTALL = false;
 
 const BOTS = [
     { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
