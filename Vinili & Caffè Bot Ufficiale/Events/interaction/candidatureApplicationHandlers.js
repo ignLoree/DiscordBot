@@ -15,6 +15,7 @@ const APPLY_HELPER_BUTTON = "apply_helper";
 const APPLY_PM_BUTTON = "apply_partnermanager";
 const APPLY_START_PREFIX = "apply_start";
 const APPLY_BACK_PREFIX = "apply_back";
+const APPLY_PAGE_PREFIX = "apply_page";
 const MODAL_PREFIX = "apply_form";
 const STATE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -549,6 +550,22 @@ function buildModal(type, step) {
   return modal;
 }
 
+function buildPagePickerRow(type, userId, totalSteps, currentStep) {
+  const safeTotal = Math.max(1, Math.min(5, Number(totalSteps) || 1));
+  const safeCurrent = Math.max(1, Number(currentStep) || 1);
+  const buttons = [];
+  for (let page = 1; page <= safeTotal; page += 1) {
+    buttons.push(
+      new ButtonBuilder()
+        .setCustomId(`${APPLY_PAGE_PREFIX}:${type}:${userId}:${page}`)
+        .setLabel(`Pagina ${page}`)
+        .setStyle(page === safeCurrent ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        .setDisabled(page === safeCurrent),
+    );
+  }
+  return new ActionRowBuilder().addComponents(...buttons);
+}
+
 function formatApplicationDescription(type, answers) {
   const cfg = APPLICATIONS[type];
   const blocks = [];
@@ -594,13 +611,20 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
   if (normalizedStep <= 1 && !forceStep) {
     const draft = getDraftState(stateKey);
     if (draft?.nextStep > 1) {
-      pendingApplications.set(stateKey, {
-        createdAt: Date.now(),
-        answers: draft.answers || {},
+      const totalSteps = splitQuestions(APPLICATIONS[type]?.questions || [], 4).length || 1;
+      const row1 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
+          .setLabel(`Riprendi dalla pagina ${draft.nextStep}`)
+          .setStyle(ButtonStyle.Primary),
+      );
+      const row2 = buildPagePickerRow(type, interaction.user.id, totalSteps, draft.nextStep);
+      await interaction.reply({
+        content:
+          "Hai una candidatura in bozza. Puoi riprendere dall'ultima pagina o aprire una pagina specifica per correggere.",
+        components: [row1, row2],
+        flags: 1 << 6,
       });
-      const resumeModal = buildModal(type, draft.nextStep);
-      if (!resumeModal) return false;
-      await interaction.showModal(resumeModal);
       return true;
     }
     clearDraftState(stateKey);
@@ -793,9 +817,10 @@ async function handleModalSubmit(interaction, type, stepRaw) {
       );
     }
     const row = new ActionRowBuilder().addComponents(...controls);
+    const pageRow = buildPagePickerRow(type, interaction.user.id, chunks.length, nextStep);
     await interaction.reply({
       content: "Puoi continuare oppure tornare indietro per correggere le risposte.",
-      components: [row],
+      components: [row, pageRow],
       flags: 1 << 6,
     });
     return true;
@@ -839,6 +864,23 @@ async function handleCandidatureApplicationInteraction(interaction) {
     }
 
     if (String(interaction.customId || "").startsWith(`${APPLY_BACK_PREFIX}:`)) {
+      const [, type, ownerId, rawStep] = String(interaction.customId).split(":");
+      if (!type || !ownerId) return false;
+      if (String(ownerId) !== String(interaction.user?.id || "")) {
+        await interaction.reply({
+          content:
+            "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
+          flags: 1 << 6,
+        });
+        return true;
+      }
+      const ok = await enforceEligibility(interaction, type);
+      if (!ok) return true;
+      const step = Math.max(1, Number(rawStep || 1));
+      return handleStartButton(interaction, type, step, true);
+    }
+
+    if (String(interaction.customId || "").startsWith(`${APPLY_PAGE_PREFIX}:`)) {
       const [, type, ownerId, rawStep] = String(interaction.customId).split(":");
       if (!type || !ownerId) return false;
       if (String(ownerId) !== String(interaction.user?.id || "")) {
