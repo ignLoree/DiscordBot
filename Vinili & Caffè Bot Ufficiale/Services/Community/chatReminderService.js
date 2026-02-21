@@ -124,9 +124,9 @@ const reminderPool = [
         [
           "<a:VC_StarPurple:1330195026688344156> __**RICORDO CHE SONO APERTE LE CANDIDATURE**__",
           "",
-          "<a:VC_Coffe:1448695567244066827> Vinili & Caffè in questo __momento__ ha bisogno di **staff**, aiutateci __candidandovi__ a questo link <https://dyno.gg/form/b40bd751>",
+          `<a:VC_Coffe:1448695567244066827> Vinili & Caffè in questo __momento__ ha bisogno di **staff**: apri <#${IDs.channels.candidatureStaff}> e candidati cliccando il pulsante.`,
           "",
-          "> <:VC_Eye:1331619214410383381> Ricordo inoltre che potete __candidarvi__ come **Partner Manager** tramite questo link <https://dyno.gg/form/f9013078>. Essi saranno anche __pagati__ per le partner fatte, per più info __<#1442579412280410194>__.",
+          `> <:VC_Eye:1331619214410383381> Puoi candidarti anche come **Partner Manager** direttamente dallo stesso pannello in <#${IDs.channels.candidatureStaff}>, cliccando il pulsante dedicato. Essi saranno anche __pagati__ per le partner fatte, per più info __<#1442579412280410194>__.`,
         ].join("\n"),
       ),
   () =>
