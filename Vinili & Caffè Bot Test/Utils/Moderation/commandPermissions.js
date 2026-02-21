@@ -1,9 +1,6 @@
-﻿const fs = require("fs");
-const path = require("path");
 const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
 
-const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");
 const EMPTY_PERMISSIONS = {
   slash: {},
   prefix: {},
@@ -12,7 +9,6 @@ const EMPTY_PERMISSIONS = {
   modals: {},
 };
 
-let cache = { mtimeMs: 0, data: EMPTY_PERMISSIONS };
 const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
 
@@ -64,17 +60,7 @@ function hasVerificatoRole(member, guildId) {
 }
 
 function loadPermissions() {
-  try {
-    if (!fs.existsSync(PERMISSIONS_PATH)) return EMPTY_PERMISSIONS;
-    const stat = fs.statSync(PERMISSIONS_PATH);
-    if (cache.data && cache.mtimeMs === stat.mtimeMs) return cache.data;
-    const raw = fs.readFileSync(PERMISSIONS_PATH, "utf-8");
-    const parsed = JSON.parse(raw);
-    cache = { mtimeMs: stat.mtimeMs, data: parsed || EMPTY_PERMISSIONS };
-    return cache.data;
-  } catch {
-    return EMPTY_PERMISSIONS;
-  }
+  return EMPTY_PERMISSIONS;
 }
 
 function resolveRoleReference(value) {

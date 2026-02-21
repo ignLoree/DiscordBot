@@ -105,7 +105,7 @@ const APPLICATIONS = {
       },
       {
         id: "flame_testuale",
-        text: "6. Se due utenti si flammano in testuale a vicenda su un determinato argomento, come ti comporti?",
+        text: "6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)",
         modalLabel: "6. Gestione flame",
         style: TextInputStyle.Paragraph,
       },
@@ -565,8 +565,15 @@ function formatApplicationDescription(type, answers) {
   const cfg = APPLICATIONS[type];
   const blocks = [];
   for (const q of cfg.questions) {
-    const answer = String(answers?.[q.id] || "Nessuna risposta").trim() || "Nessuna risposta";
-    blocks.push(`**${q.text}**\n${answer}`);
+    const answer =
+      String(answers?.[q.id] || "Nessuna risposta")
+        .replace(/\r/g, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim() || "Nessuna risposta";
+    const question = String(q.text || "")
+      .replace(/^(\d+)\./, "$1\\.")
+      .trim();
+    blocks.push(`**${question}**\n${answer}`);
   }
   return blocks.join("\n\n").trim();
 }
@@ -687,9 +694,14 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   });
 
   if (typeof sent.startThread === "function") {
+    const threadUserLabel = String(user.globalName || user.username || user.id)
+      .replace(/[\r\n#:@<>`]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 70) || user.id;
     const thread = await sent
       .startThread({
-        name: `Candidatura <@${user.id}>`,
+        name: `Candidatura ${threadUserLabel}`,
         autoArchiveDuration: 1440,
         reason: `Thread candidatura ${cfg.label} per ${user.tag}`,
       })
