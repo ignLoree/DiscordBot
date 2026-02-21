@@ -1,4 +1,4 @@
-const cron = require("node-cron");
+﻿const cron = require("node-cron");
 const IDs = require("../../Utils/Config/ids");
 const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema");
 
@@ -46,10 +46,11 @@ function buildBirthdayAnnouncement(docs, currentYear) {
     .filter((doc) => doc.showAge && Number.isFinite(Number(doc.birthYear)))
     .map((doc) => Math.max(1, currentYear - Number(doc.birthYear)));
 
-  if (!visibleAges.length) return intro;
-
-  const ageWord = visibleAges.length === 1 ? "compie" : "compiono";
-  return `${intro} e oggi ${ageWord} ${visibleAges.join(", ")}`;
+  if (!visibleAges.length) return `${intro}.`;
+  if (visibleAges.length === 1) {
+    return `${intro} e oggi compie ${visibleAges[0]} anni.`;
+  }
+  return `${intro} e oggi compiono ${visibleAges.join(", ")} anni.`;
 }
 
 async function assignBirthdayRole(guild, userId) {
@@ -153,3 +154,4 @@ module.exports = {
   getRomeDateParts,
   inferBirthYearFromAge,
 };
+

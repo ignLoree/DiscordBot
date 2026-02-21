@@ -4,6 +4,9 @@
   ButtonBuilder,
   ButtonStyle,
   ComponentType,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
@@ -73,8 +76,8 @@ function buildPanelEmbed(user, state) {
         `${user}, usa i pulsanti qui sotto per configurare il tuo profilo compleanno.`,
         "",
         `Data: ${dateValue}`,
-        `Eta: ${ageValue}`,
-        `Privacy eta: ${privacyValue}`,
+        `Età: ${ageValue}`,
+        `Privacy età: ${privacyValue}`,
       ].join("\n"),
     )
     .setFooter({ text: "Quando hai finito, premi Salva." });
@@ -90,12 +93,12 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
         .setDisabled(disabled),
       new ButtonBuilder()
         .setCustomId(`bh_age:${ownerId}:${nonce}`)
-        .setLabel("Imposta eta")
+        .setLabel("Imposta età")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(disabled),
       new ButtonBuilder()
         .setCustomId(`bh_privacy:${ownerId}:${nonce}`)
-        .setLabel(showAge ? "Eta visibile: SI" : "Eta visibile: NO")
+        .setLabel(showAge ? "Età visibile: SI" : "Età visibile: NO")
         .setStyle(showAge ? ButtonStyle.Success : ButtonStyle.Danger)
         .setDisabled(disabled),
     ),
@@ -114,19 +117,6 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
   ];
 }
 
-async function waitForUserMessage(channel, userId, timeoutMs = INPUT_TIMEOUT_MS) {
-  const collected = await channel
-    .awaitMessages({
-      max: 1,
-      time: timeoutMs,
-      errors: ["time"],
-      filter: (msg) => String(msg.author?.id || "") === String(userId),
-    })
-    .catch(() => null);
-  if (!collected?.size) return null;
-  return collected.first();
-}
-
 async function sendBirthSaveEmbed(client, guild, user, state) {
   const channelId = IDs.channels.birthday;
   if (!guild || !channelId) return;
@@ -137,7 +127,7 @@ async function sendBirthSaveEmbed(client, guild, user, state) {
 
   const agePart =
     state.showAge && Number.isInteger(state.age)
-      ? ` con la tua eta (**${state.age}**)`
+      ? ` con la tua età (**${state.age}**)`
       : "";
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
@@ -183,29 +173,38 @@ async function openBirthdayPanel(message, client, initialState = null) {
       }
 
       if (interaction.customId === `bh_date:${ownerId}:${nonce}`) {
-        await interaction
-          .reply({
-            content: "Scrivi la data nel formato `gg/mm` (esempio: `21/02`).",
-            flags: PRIVATE_FLAG,
+        const modalId = `bh_modal_date:${ownerId}:${nonce}:${Date.now()}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalId)
+          .setTitle("Imposta data compleanno")
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId("bh_date_input")
+                .setLabel("Data (gg/mm)")
+                .setPlaceholder("21/02")
+                .setRequired(true)
+                .setStyle(TextInputStyle.Short),
+            ),
+          );
+        await interaction.showModal(modal).catch(() => {});
+
+        const modalSubmit = await interaction
+          .awaitModalSubmit({
+            time: INPUT_TIMEOUT_MS,
+            filter: (i) =>
+              i.customId === modalId &&
+              String(i.user?.id || "") === String(ownerId),
           })
-          .catch(() => {});
+          .catch(() => null);
+        if (!modalSubmit) return;
 
-        const userMessage = await waitForUserMessage(panelMessage.channel, ownerId);
-        if (!userMessage) {
-          await interaction
-            .followUp({
-              content: "Tempo scaduto: nessuna data ricevuta.",
-              flags: PRIVATE_FLAG,
-            })
-            .catch(() => {});
-          return;
-        }
-
-        const parsed = parseBirthdayDate(userMessage.content);
+        const rawDate = modalSubmit.fields.getTextInputValue("bh_date_input");
+        const parsed = parseBirthdayDate(rawDate);
         if (!parsed) {
-          await interaction
-            .followUp({
-              content: "Data non valida. Usa formato `gg/mm` con un giorno reale.",
+          await modalSubmit
+            .reply({
+              content: "Data non valida. Usa il formato `gg/mm` con un giorno reale.",
               flags: PRIVATE_FLAG,
             })
             .catch(() => {});
@@ -220,8 +219,8 @@ async function openBirthdayPanel(message, client, initialState = null) {
             components: buildPanelRows(ownerId, nonce, state.showAge, false),
           })
           .catch(() => {});
-        await interaction
-          .followUp({
+        await modalSubmit
+          .reply({
             content: `Data impostata: \`${pad2(state.day)}/${pad2(state.month)}\`.`,
             flags: PRIVATE_FLAG,
           })
@@ -230,29 +229,38 @@ async function openBirthdayPanel(message, client, initialState = null) {
       }
 
       if (interaction.customId === `bh_age:${ownerId}:${nonce}`) {
-        await interaction
-          .reply({
-            content: "Scrivi la tua eta attuale (numero tra 1 e 120).",
-            flags: PRIVATE_FLAG,
+        const modalId = `bh_modal_age:${ownerId}:${nonce}:${Date.now()}`;
+        const modal = new ModalBuilder()
+          .setCustomId(modalId)
+          .setTitle("Imposta età")
+          .addComponents(
+            new ActionRowBuilder().addComponents(
+              new TextInputBuilder()
+                .setCustomId("bh_age_input")
+                .setLabel("Età attuale (1-120)")
+                .setPlaceholder("18")
+                .setRequired(true)
+                .setStyle(TextInputStyle.Short),
+            ),
+          );
+        await interaction.showModal(modal).catch(() => {});
+
+        const modalSubmit = await interaction
+          .awaitModalSubmit({
+            time: INPUT_TIMEOUT_MS,
+            filter: (i) =>
+              i.customId === modalId &&
+              String(i.user?.id || "") === String(ownerId),
           })
-          .catch(() => {});
+          .catch(() => null);
+        if (!modalSubmit) return;
 
-        const userMessage = await waitForUserMessage(panelMessage.channel, ownerId);
-        if (!userMessage) {
-          await interaction
-            .followUp({
-              content: "Tempo scaduto: nessuna eta ricevuta.",
-              flags: PRIVATE_FLAG,
-            })
-            .catch(() => {});
-          return;
-        }
-
-        const age = parseAge(userMessage.content);
+        const rawAge = modalSubmit.fields.getTextInputValue("bh_age_input");
+        const age = parseAge(rawAge);
         if (!Number.isInteger(age)) {
-          await interaction
-            .followUp({
-              content: "Eta non valida. Inserisci un numero tra 1 e 120.",
+          await modalSubmit
+            .reply({
+              content: "Età non valida. Inserisci un numero tra 1 e 120.",
               flags: PRIVATE_FLAG,
             })
             .catch(() => {});
@@ -266,9 +274,9 @@ async function openBirthdayPanel(message, client, initialState = null) {
             components: buildPanelRows(ownerId, nonce, state.showAge, false),
           })
           .catch(() => {});
-        await interaction
-          .followUp({
-            content: `Eta impostata: **${state.age}**.`,
+        await modalSubmit
+          .reply({
+            content: `Età impostata: **${state.age}**.`,
             flags: PRIVATE_FLAG,
           })
           .catch(() => {});
@@ -315,7 +323,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
         if (!Number.isInteger(state.age)) {
           await interaction
             .reply({
-              content: "Prima imposta la tua eta.",
+              content: "Prima imposta la tua età.",
               flags: PRIVATE_FLAG,
             })
             .catch(() => {});
@@ -346,8 +354,8 @@ async function openBirthdayPanel(message, client, initialState = null) {
 
         finished = true;
         const ageSummary = state.showAge
-          ? `Eta visibile: **${state.age}**`
-          : "Eta salvata con privacy attiva.";
+          ? `Età visibile: **${state.age}**`
+          : "Età salvata con privacy attiva.";
 
         await interaction
           .update({
@@ -439,7 +447,7 @@ async function handleRemoveBirthday(message) {
           embeds: [
             new EmbedBuilder()
               .setColor("#6f4e37")
-              .setDescription("Il tuo compleanno e stato rimosso dal database."),
+              .setDescription("Il tuo compleanno è stato rimosso dal database."),
           ],
           components: [],
         })
@@ -555,3 +563,5 @@ module.exports = {
     await handleRemoveBirthday(message);
   },
 };
+
+
