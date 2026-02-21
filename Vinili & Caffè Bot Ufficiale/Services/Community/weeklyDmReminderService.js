@@ -415,6 +415,14 @@ function getCfg(client) {
   return client?.config?.weeklyDmReminder || {};
 }
 
+function isStartupBlastEnabled(client) {
+  return Boolean(getCfg(client).startupBlastEnabled === true);
+}
+
+function isExternalStartupBlastEnabled(client) {
+  return Boolean(getCfg(client).externalStartupBlastEnabled === true);
+}
+
 function getExternalCooldownDays(client) {
   const raw = Number(getCfg(client).externalCooldownDays);
   if (!Number.isFinite(raw)) return 15;
@@ -1309,8 +1317,12 @@ async function weeklyTick(client) {
       (await client.guilds.fetch(guildId).catch(() => null));
     if (!guild) return;
 
-    await runStartupBlastOnce(client, guild);
-    await runExternalStartupBlastOnce(client, guild);
+    if (isStartupBlastEnabled(client)) {
+      await runStartupBlastOnce(client, guild);
+    }
+    if (isExternalStartupBlastEnabled(client)) {
+      await runExternalStartupBlastOnce(client, guild);
+    }
     await sendExternalReturnReminders(client, guild);
     await maybePlanWeeklyBatch(client, guild);
     await sendDueJobs(client, guild);
