@@ -1,0 +1,93 @@
+﻿<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control Center</title>
+  <link rel="stylesheet" href="/dashboard.css" />
+</head>
+<body>
+  <main class="layout">
+    <section class="hero">
+      <h1>Vinili & Caffe - Control Center</h1>
+      <p>Dashboard live: stato bot, moduli, comandi, eventi, routing e preview realtime.</p>
+
+      <div class="auth-row">
+        <button id="oauthLoginBtn">Login Discord</button>
+        <button id="oauthLogoutBtn">Logout</button>
+        <span id="authState">Auth: non autenticato</span>
+      </div>
+
+      <div class="auth-row">
+        <input id="tokenInput" type="password" placeholder="Token dashboard (fallback admin)" />
+        <button id="saveTokenBtn">Salva token</button>
+      </div>
+
+      <div class="scope-row">
+        <label for="guildSelect">Scope</label>
+        <select id="guildSelect">
+          <option value="global">Globale (tutti i server)</option>
+        </select>
+        <button id="refreshBtn">Aggiorna ora</button>
+      </div>
+    </section>
+
+    <section class="cards" id="overviewCards"></section>
+
+    <section class="grid-2">
+      <article class="panel">
+        <h2>Moduli</h2>
+        <div id="modulesTable" class="rows"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Eventi</h2>
+        <div class="route-box">
+          <select id="routeEventSelect"></select>
+          <select id="routeChannelSelect">
+            <option value="">Nessun canale (disattiva route)</option>
+          </select>
+          <button id="saveRouteBtn">Salva route evento</button>
+        </div>
+        <div class="route-box">
+          <select id="routeGroupSelect"></select>
+          <select id="routeGroupChannelSelect">
+            <option value="">Nessun canale (disattiva route gruppo)</option>
+          </select>
+          <button id="saveRouteGroupBtn">Salva route gruppo</button>
+        </div>
+        <div id="eventsTable" class="rows"></div>
+      </article>
+    </section>
+
+    <section class="grid-2">
+      <article class="panel">
+        <h2>Comandi Prefix</h2>
+        <div id="prefixCommandsTable" class="rows"></div>
+      </article>
+      <article class="panel">
+        <h2>Comandi Slash</h2>
+        <div id="slashCommandsTable" class="rows"></div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Preview Live Eventi</h2>
+      <div id="activityTable" class="rows"></div>
+    </section>
+  </main>
+
+  <template id="rowTemplate">
+    <div class="row">
+      <div class="row-title"></div>
+      <div class="row-actions">
+        <button data-mode="enabled">Enabled</button>
+        <button data-mode="maintenance">Maintenance</button>
+        <button data-mode="disabled">Disabled</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="/dashboard.js"></script>
+</body>
+</html>

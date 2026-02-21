@@ -21,6 +21,10 @@ const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
 const { consumePrefixRateLimit } = require("../Services/Moderation/staffCommandRateLimitService");
+const {
+  getCommandExecutionGate,
+  inferModuleKeyFromPrefixCommand,
+} = require("../Services/Dashboard/controlCenterService");
 const { showPrefixUsageGuide } = require("../Utils/Moderation/prefixUsageGuide");
 const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
@@ -689,6 +693,28 @@ module.exports = {
       resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
 
     if (!command) return;
+    const dashboardGate = getCommandExecutionGate({
+      guildId: message.guild?.id,
+      commandType: "prefix",
+      commandName: command?.name,
+      moduleKey: inferModuleKeyFromPrefixCommand(command),
+      member: message.member,
+      guildOwnerId: message.guild?.ownerId,
+    });
+    if (!dashboardGate.allowed) {
+      await deleteCommandMessage();
+      const reasonText =
+        dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled"
+          ? "Comando disattivato dalla dashboard."
+          : "Comando in manutenzione dalla dashboard.";
+      const msg = await message.channel
+        .send({
+          content: `<:VC_right_arrow:1473441155055096081> ${reasonText}`,
+        })
+        .catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);
+      return;
+    }
     const isAntiNukeRecoveryCommand =
       ["antinuke", "security"].includes(
         String(command?.name || "").toLowerCase(),

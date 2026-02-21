@@ -1,6 +1,11 @@
 ﻿const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
+const {
+  inferGuildIdFromEventArgs,
+  isEventExecutionAllowed,
+  maybeMirrorEventToRoute,
+} = require("../Services/Dashboard/controlCenterService");
 
 const LEGACY_READY_EVENT = "ready";
 const READY_EVENT_ALIAS = "clientReady";
@@ -42,6 +47,24 @@ function trackBoundHandler(client, mapKey, eventName, handler) {
   client[mapKey].get(eventName).push(handler);
 }
 
+function findGuildFromArgs(args = [], guildId = "") {
+  if (guildId) {
+    const direct = args.find(
+      (x) => String(x?.id || "") === guildId && x?.channels?.cache,
+    );
+    if (direct) return direct;
+
+    const byNested = args.find((x) => String(x?.guild?.id || "") === guildId);
+    if (byNested?.guild) return byNested.guild;
+  }
+
+  for (const arg of args) {
+    if (arg?.channels?.cache && arg?.members?.cache && arg?.id) return arg;
+    if (arg?.guild?.channels?.cache && arg?.guild?.id) return arg.guild;
+  }
+  return null;
+}
+
 module.exports = (client) => {
   if (!client._eventHandlers) client._eventHandlers = new Map();
 
@@ -63,10 +86,22 @@ module.exports = (client) => {
         }
 
         const eventName = normalizeEventName(event.name);
-        const handler = (...args) => event.execute(...args, client);
-        const bind = event.once
-          ? client.once.bind(client)
-          : client.on.bind(client);
+        const handler = async (...args) => {
+          const guildId = inferGuildIdFromEventArgs(args);
+          const gate = isEventExecutionAllowed({ eventName, guildId });
+          await maybeMirrorEventToRoute({
+            guild: findGuildFromArgs(args, guildId),
+            guildId,
+            eventName,
+            args,
+            allowed: gate.allowed,
+          }).catch(() => null);
+          if (!gate.allowed) return;
+
+          return event.execute(...args, client);
+        };
+
+        const bind = event.once ? client.once.bind(client) : client.on.bind(client);
         bind(eventName, handler);
 
         trackBoundHandler(client, "_eventHandlers", eventName, handler);

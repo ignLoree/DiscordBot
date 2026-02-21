@@ -4,6 +4,7 @@ const path = require("path");
 const os = require("os");
 const dotenv = require("dotenv");
 const APP_ROOT = __dirname;
+const { startDashboardServer } = require("./Services/Dashboard/dashboardServer");
 
 function loadEnvFiles() {
   const envCandidates = [
@@ -238,6 +239,7 @@ client.snipes = new Map();
   client.handleTriggers(triggerFiles, APP_ROOT);
   await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
   await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
+  startDashboardServer(client);
 
   if (typeof client.logBootTables === "function") {
     client.logBootTables();

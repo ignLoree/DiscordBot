@@ -11,6 +11,10 @@ const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
 const { consumeSlashRateLimit } = require("../../Services/Moderation/staffCommandRateLimitService");
+const {
+  getCommandExecutionGate,
+  inferModuleKeyFromSlashCommand,
+} = require("../../Services/Dashboard/controlCenterService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 const STAFF_BYPASS_PERMISSIONS = [
@@ -73,6 +77,23 @@ async function handleSlashCommand(interaction, client) {
     getCommandKey(interaction.commandName, interaction.commandType),
   );
   if (!command) return;
+  const dashboardGate = getCommandExecutionGate({
+    guildId: interaction.guildId,
+    commandType: "slash",
+    commandName: command?.name || interaction.commandName,
+    moduleKey: inferModuleKeyFromSlashCommand(command),
+    member: interaction.member,
+    guildOwnerId: interaction.guild?.ownerId,
+  });
+  if (!dashboardGate.allowed) {
+    return interaction.reply({
+      content:
+        dashboardGate.reason === "module_disabled" || dashboardGate.reason === "command_disabled"
+          ? "Comando disattivato dalla dashboard."
+          : "Comando in manutenzione dalla dashboard.",
+      flags: 1 << 6,
+    });
+  }
   const isAntiNukeRecoveryCommand =
     ["antinuke", "security"].includes(
       String(command?.name || "").toLowerCase(),
