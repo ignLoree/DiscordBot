@@ -20,6 +20,7 @@ const PRIVATE_FLAG = 1 << 6;
 const PANEL_TIMEOUT_MS = 10 * 60 * 1000;
 const INPUT_TIMEOUT_MS = 90 * 1000;
 const REMOVE_CONFIRM_TIMEOUT_MS = 60 * 1000;
+const BRAND_COLOR = "#6f4e37";
 
 function daysInMonth(month) {
   if (month === 2) return 29;
@@ -31,11 +32,13 @@ function parseBirthdayDate(rawValue) {
   const value = String(rawValue || "").trim();
   const match = value.match(/^(\d{1,2})[\/\-.](\d{1,2})$/);
   if (!match) return null;
+
   const day = Number(match[1]);
   const month = Number(match[2]);
   if (!Number.isInteger(day) || !Number.isInteger(month)) return null;
   if (month < 1 || month > 12) return null;
   if (day < 1 || day > daysInMonth(month)) return null;
+
   return { day, month };
 }
 
@@ -50,6 +53,16 @@ function pad2(value) {
   return String(value).padStart(2, "0");
 }
 
+function formatDateLabel(day, month) {
+  if (!Number.isInteger(day) || !Number.isInteger(month)) return "Non impostata";
+  return `${pad2(day)}/${pad2(month)}`;
+}
+
+function formatAgeLabel(age) {
+  if (!Number.isInteger(age)) return "Non impostata";
+  return `${age} anni`;
+}
+
 function computeAgeNow(day, month, birthYear) {
   const today = getRomeDateParts(new Date());
   const hasBirthdayPassed =
@@ -58,29 +71,55 @@ function computeAgeNow(day, month, birthYear) {
   return Math.max(1, raw);
 }
 
-function buildPanelEmbed(user, state) {
-  const dateValue =
-    Number.isInteger(state.day) && Number.isInteger(state.month)
-      ? `${pad2(state.day)}/${pad2(state.month)}`
-      : "`non impostata`";
-  const ageValue = Number.isInteger(state.age)
-    ? `**${state.age}**`
-    : "`non impostata`";
-  const privacyValue = state.showAge ? "`visibile`" : "`nascosta`";
+function buildHelpEmbed() {
+  return new EmbedBuilder()
+    .setColor(BRAND_COLOR)
+    .setTitle("Birthday Hub")
+    .setDescription("Gestisci il tuo compleanno e la privacy dell'età con i subcommand dedicati.")
+    .addFields(
+      { name: "+bh set", value: "Apre il pannello per creare il tuo profilo compleanno.", inline: false },
+      { name: "+bh edit", value: "Riapre il pannello con i dati già salvati.", inline: false },
+      { name: "+bh remove", value: "Rimuove il tuo profilo con conferma.", inline: false },
+    )
+    .setFooter({ text: "Formato data supportato: gg/mm" });
+}
+
+function buildPanelEmbed(user, state, mode = "set") {
+  const modeLabel = mode === "edit" ? "Modifica profilo" : "Nuovo profilo";
+  const privacyLabel = state.showAge ? "Visibile" : "Nascosta";
 
   return new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Configurazione compleanno")
+    .setColor(BRAND_COLOR)
+    .setTitle(`Birthday Hub • ${modeLabel}`)
+    .setDescription(`${user}, configura il tuo compleanno usando i pulsanti qui sotto.`)
+    .addFields(
+      { name: "Data di nascita", value: formatDateLabel(state.day, state.month), inline: true },
+      { name: "Età", value: formatAgeLabel(state.age), inline: true },
+      { name: "Privacy età", value: privacyLabel, inline: true },
+      {
+        name: "Come funziona",
+        value:
+          "Alla mezzanotte del tuo compleanno il bot invierà il messaggio in chat e assegnerà il ruolo dedicato.",
+        inline: false,
+      },
+    )
+    .setFooter({ text: "Quando hai finito premi Salva profilo." });
+}
+
+function buildSavedEmbed(state) {
+  const ageSummary = state.showAge
+    ? `Età visibile: **${state.age}**`
+    : "Età salvata con privacy attiva.";
+
+  return new EmbedBuilder()
+    .setColor(BRAND_COLOR)
+    .setTitle("Profilo compleanno salvato")
     .setDescription(
       [
-        `${user}, usa i pulsanti qui sotto per configurare il tuo profilo compleanno.`,
-        "",
-        `Data: ${dateValue}`,
-        `Età: ${ageValue}`,
-        `Privacy età: ${privacyValue}`,
+        `Data: **${formatDateLabel(state.day, state.month)}**`,
+        ageSummary,
       ].join("\n"),
-    )
-    .setFooter({ text: "Quando hai finito, premi Salva." });
+    );
 }
 
 function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
@@ -88,30 +127,30 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`bh_date:${ownerId}:${nonce}`)
-        .setLabel("Imposta data")
+        .setLabel("Data")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(disabled),
       new ButtonBuilder()
         .setCustomId(`bh_age:${ownerId}:${nonce}`)
-        .setLabel("Imposta età")
+        .setLabel("Età")
         .setStyle(ButtonStyle.Secondary)
         .setDisabled(disabled),
       new ButtonBuilder()
         .setCustomId(`bh_privacy:${ownerId}:${nonce}`)
-        .setLabel(showAge ? "Età visibile: SI" : "Età visibile: NO")
+        .setLabel(showAge ? "Età visibile" : "Età nascosta")
         .setStyle(showAge ? ButtonStyle.Success : ButtonStyle.Danger)
         .setDisabled(disabled),
     ),
     new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId(`bh_save:${ownerId}:${nonce}`)
-        .setLabel("Salva")
+        .setLabel("Salva profilo")
         .setStyle(ButtonStyle.Success)
         .setDisabled(disabled),
       new ButtonBuilder()
         .setCustomId(`bh_cancel:${ownerId}:${nonce}`)
-        .setLabel("Annulla")
-        .setStyle(ButtonStyle.Danger)
+        .setLabel("Chiudi")
+        .setStyle(ButtonStyle.Secondary)
         .setDisabled(disabled),
     ),
   ];
@@ -120,22 +159,36 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
 async function sendBirthSaveEmbed(client, guild, user, state) {
   const channelId = IDs.channels.birthday;
   if (!guild || !channelId) return;
+
   const channel =
     guild.channels.cache.get(channelId) ||
     (await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return;
 
-  const agePart =
+  const ageLine =
     state.showAge && Number.isInteger(state.age)
-      ? ` con la tua età (**${state.age}**)`
-      : "";
+      ? `Età impostata: **${state.age} anni**`
+      : "Età impostata con privacy nascosta";
+
   const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setDescription(`${user} hai impostato la tua data di nascita${agePart}.`);
+    .setColor(BRAND_COLOR)
+    .setTitle("Compleanno registrato")
+    .setDescription(
+      [
+        `${user} hai impostato la tua data di nascita.`,
+        "Ricorderò a tutti il giorno del tuo compleanno.",
+      ].join("\n"),
+    )
+    .addFields(
+      { name: "Data", value: formatDateLabel(state.day, state.month), inline: true },
+      { name: "Privacy", value: state.showAge ? "Età visibile" : "Età nascosta", inline: true },
+      { name: "Dettaglio", value: ageLine, inline: false },
+    );
+
   await channel.send({ embeds: [embed] }).catch(() => {});
 }
 
-async function openBirthdayPanel(message, client, initialState = null) {
+async function openBirthdayPanel(message, client, initialState = null, mode = "set") {
   const nonce = `${Date.now()}${Math.floor(Math.random() * 9999)}`;
   const ownerId = message.author.id;
   const state = {
@@ -147,7 +200,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
   };
 
   const panelMessage = await safeMessageReply(message, {
-    embeds: [buildPanelEmbed(message.author, state)],
+    embeds: [buildPanelEmbed(message.author, state, mode)],
     components: buildPanelRows(ownerId, nonce, state.showAge, false),
     allowedMentions: { repliedUser: false },
   });
@@ -164,8 +217,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
       if (String(interaction.user?.id || "") !== ownerId) {
         await interaction
           .reply({
-            content:
-              "<:vegax:1443934876440068179> Non puoi usare questi pulsanti.",
+            content: "<:vegax:1443934876440068179> Non puoi usare questi pulsanti.",
             flags: PRIVATE_FLAG,
           })
           .catch(() => {});
@@ -187,7 +239,15 @@ async function openBirthdayPanel(message, client, initialState = null) {
                 .setStyle(TextInputStyle.Short),
             ),
           );
-        await interaction.showModal(modal).catch(() => {});
+
+        await interaction.showModal(modal).catch(async () => {
+          await interaction
+            .reply({
+              content: "Non sono riuscito ad aprire il modulo per la data.",
+              flags: PRIVATE_FLAG,
+            })
+            .catch(() => {});
+        });
 
         const modalSubmit = await interaction
           .awaitModalSubmit({
@@ -213,15 +273,17 @@ async function openBirthdayPanel(message, client, initialState = null) {
 
         state.day = parsed.day;
         state.month = parsed.month;
+
         await panelMessage
           .edit({
-            embeds: [buildPanelEmbed(message.author, state)],
+            embeds: [buildPanelEmbed(message.author, state, mode)],
             components: buildPanelRows(ownerId, nonce, state.showAge, false),
           })
           .catch(() => {});
+
         await modalSubmit
           .reply({
-            content: `Data impostata: \`${pad2(state.day)}/${pad2(state.month)}\`.`,
+            content: `Data impostata su **${formatDateLabel(state.day, state.month)}**.`,
             flags: PRIVATE_FLAG,
           })
           .catch(() => {});
@@ -243,7 +305,15 @@ async function openBirthdayPanel(message, client, initialState = null) {
                 .setStyle(TextInputStyle.Short),
             ),
           );
-        await interaction.showModal(modal).catch(() => {});
+
+        await interaction.showModal(modal).catch(async () => {
+          await interaction
+            .reply({
+              content: "Non sono riuscito ad aprire il modulo per l'età.",
+              flags: PRIVATE_FLAG,
+            })
+            .catch(() => {});
+        });
 
         const modalSubmit = await interaction
           .awaitModalSubmit({
@@ -268,15 +338,17 @@ async function openBirthdayPanel(message, client, initialState = null) {
         }
 
         state.age = age;
+
         await panelMessage
           .edit({
-            embeds: [buildPanelEmbed(message.author, state)],
+            embeds: [buildPanelEmbed(message.author, state, mode)],
             components: buildPanelRows(ownerId, nonce, state.showAge, false),
           })
           .catch(() => {});
+
         await modalSubmit
           .reply({
-            content: `Età impostata: **${state.age}**.`,
+            content: `Età impostata su **${state.age} anni**.`,
             flags: PRIVATE_FLAG,
           })
           .catch(() => {});
@@ -287,7 +359,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
         state.showAge = !state.showAge;
         await interaction
           .update({
-            embeds: [buildPanelEmbed(message.author, state)],
+            embeds: [buildPanelEmbed(message.author, state, mode)],
             components: buildPanelRows(ownerId, nonce, state.showAge, false),
           })
           .catch(() => {});
@@ -300,8 +372,9 @@ async function openBirthdayPanel(message, client, initialState = null) {
           .update({
             embeds: [
               new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setDescription("Configurazione compleanno annullata."),
+                .setColor(BRAND_COLOR)
+                .setTitle("Pannello chiuso")
+                .setDescription("Nessuna modifica è stata salvata."),
             ],
             components: buildPanelRows(ownerId, nonce, state.showAge, true),
           })
@@ -314,7 +387,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
         if (!Number.isInteger(state.day) || !Number.isInteger(state.month)) {
           await interaction
             .reply({
-              content: "Prima imposta la tua data di nascita.",
+              content: "Prima imposta la data di nascita.",
               flags: PRIVATE_FLAG,
             })
             .catch(() => {});
@@ -323,7 +396,7 @@ async function openBirthdayPanel(message, client, initialState = null) {
         if (!Number.isInteger(state.age)) {
           await interaction
             .reply({
-              content: "Prima imposta la tua età.",
+              content: "Prima imposta l'età.",
               flags: PRIVATE_FLAG,
             })
             .catch(() => {});
@@ -353,23 +426,9 @@ async function openBirthdayPanel(message, client, initialState = null) {
         );
 
         finished = true;
-        const ageSummary = state.showAge
-          ? `Età visibile: **${state.age}**`
-          : "Età salvata con privacy attiva.";
-
         await interaction
           .update({
-            embeds: [
-              new EmbedBuilder()
-                .setColor("#6f4e37")
-                .setTitle("Compleanno salvato")
-                .setDescription(
-                  [
-                    `Data: **${pad2(state.day)}/${pad2(state.month)}**`,
-                    ageSummary,
-                  ].join("\n"),
-                ),
-            ],
+            embeds: [buildSavedEmbed(state)],
             components: buildPanelRows(ownerId, nonce, state.showAge, true),
           })
           .catch(() => {});
@@ -397,22 +456,23 @@ async function handleRemoveBirthday(message) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(yesId)
-      .setLabel("Conferma")
+      .setLabel("Conferma rimozione")
       .setStyle(ButtonStyle.Danger),
     new ButtonBuilder()
       .setCustomId(noId)
-      .setLabel("Rifiuta")
+      .setLabel("Annulla")
       .setStyle(ButtonStyle.Secondary),
   );
 
   const prompt = await safeMessageReply(message, {
     embeds: [
       new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle("Rimuovi compleanno")
+        .setColor(BRAND_COLOR)
+        .setTitle("Rimuovi profilo compleanno")
         .setDescription(
-          "Vuoi davvero rimuovere completamente il tuo compleanno dal database?",
-        ),
+          "Confermando, il tuo compleanno verrà rimosso dal database e non sarà più annunciato in chat.",
+        )
+        .setFooter({ text: "Questa azione è reversibile solo impostando di nuovo il profilo con +bh set." }),
     ],
     components: [row],
     allowedMentions: { repliedUser: false },
@@ -442,16 +502,19 @@ async function handleRemoveBirthday(message) {
         guildId: message.guild.id,
         userId: ownerId,
       }).catch(() => {});
+
       await interaction
         .update({
           embeds: [
             new EmbedBuilder()
-              .setColor("#6f4e37")
+              .setColor(BRAND_COLOR)
+              .setTitle("Profilo rimosso")
               .setDescription("Il tuo compleanno è stato rimosso dal database."),
           ],
           components: [],
         })
         .catch(() => {});
+
       collector.stop("confirmed");
       return;
     }
@@ -462,8 +525,9 @@ async function handleRemoveBirthday(message) {
         .update({
           embeds: [
             new EmbedBuilder()
-              .setColor("#6f4e37")
-              .setDescription("Operazione annullata. Nessuna modifica applicata."),
+              .setColor(BRAND_COLOR)
+              .setTitle("Operazione annullata")
+              .setDescription("Nessuna modifica è stata applicata."),
           ],
           components: [],
         })
@@ -497,19 +561,14 @@ module.exports = {
     const sub = String(args?.[0] || "").trim().toLowerCase();
     if (!["set", "edit", "remove"].includes(sub)) {
       await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#6f4e37")
-            .setDescription(
-              "Usa `+bh set`, `+bh edit` o `+bh remove` per gestire il tuo compleanno.",
-            ),
-        ],
+        embeds: [buildHelpEmbed()],
+        allowedMentions: { repliedUser: false },
       });
       return;
     }
 
     if (sub === "set") {
-      await openBirthdayPanel(message, client, null);
+      await openBirthdayPanel(message, client, null, "set");
       return;
     }
 
@@ -525,25 +584,29 @@ module.exports = {
         await safeMessageReply(message, {
           embeds: [
             new EmbedBuilder()
-              .setColor("#6f4e37")
-              .setDescription(
-                "Non hai ancora un compleanno salvato. Usa prima `+bh set`.",
-              ),
+              .setColor(BRAND_COLOR)
+              .setDescription("Non hai ancora un compleanno salvato. Usa prima `+bh set`."),
           ],
+          allowedMentions: { repliedUser: false },
         });
         return;
       }
 
-      await openBirthdayPanel(message, client, {
-        day: Number(existing.day || 0),
-        month: Number(existing.month || 0),
-        age: computeAgeNow(
-          Number(existing.day || 1),
-          Number(existing.month || 1),
-          Number(existing.birthYear || 2000),
-        ),
-        showAge: Boolean(existing.showAge),
-      });
+      await openBirthdayPanel(
+        message,
+        client,
+        {
+          day: Number(existing.day || 0),
+          month: Number(existing.month || 0),
+          age: computeAgeNow(
+            Number(existing.day || 1),
+            Number(existing.month || 1),
+            Number(existing.birthYear || 2000),
+          ),
+          showAge: Boolean(existing.showAge),
+        },
+        "edit",
+      );
       return;
     }
 
@@ -551,11 +614,10 @@ module.exports = {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
-            .setColor("#6f4e37")
-            .setDescription(
-              "Non hai un compleanno salvato da rimuovere. Usa `+bh set`.",
-            ),
+            .setColor(BRAND_COLOR)
+            .setDescription("Non hai un compleanno salvato da rimuovere. Usa `+bh set`."),
         ],
+        allowedMentions: { repliedUser: false },
       });
       return;
     }
@@ -563,5 +625,3 @@ module.exports = {
     await handleRemoveBirthday(message);
   },
 };
-
-

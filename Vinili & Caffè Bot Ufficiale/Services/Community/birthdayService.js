@@ -4,6 +4,10 @@ const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema")
 
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const BIRTHDAY_ROLE_ID = "1474729085719548048";
+const BIRTHDAY_REACTIONS = [
+  "<a:VC_Events:1448688007438667796>",
+  "<a:VC_HelloKittyGift:1329447876857958471>",
+];
 let birthdayLoopHandle = null;
 let birthdayTickRunning = false;
 
@@ -35,22 +39,29 @@ function inferBirthYearFromAge(day, month, age, now = new Date()) {
   return Math.max(1900, birthYear);
 }
 
+function joinMentionsNicely(mentions) {
+  if (!mentions.length) return "";
+  if (mentions.length === 1) return mentions[0];
+  if (mentions.length === 2) return `${mentions[0]} e ${mentions[1]}`;
+  return `${mentions.slice(0, -1).join(", ")} e ${mentions[mentions.length - 1]}`;
+}
+
 function buildBirthdayAnnouncement(docs, currentYear) {
   const mentions = docs.map((doc) => `<@${doc.userId}>`);
-  const intro =
-    mentions.length === 1
-      ? `Oggi è il compleanno di ${mentions[0]}`
-      : `Oggi è il compleanno di ${mentions.join(", ")}`;
+  const who = joinMentionsNicely(mentions);
+  const intro = `Oggi è il compleanno di ${who}.`;
 
   const visibleAges = docs
     .filter((doc) => doc.showAge && Number.isFinite(Number(doc.birthYear)))
     .map((doc) => Math.max(1, currentYear - Number(doc.birthYear)));
 
-  if (!visibleAges.length) return `${intro}.`;
-  if (visibleAges.length === 1) {
-    return `${intro} e oggi compie ${visibleAges[0]} anni.`;
+  if (!visibleAges.length) {
+    return `${intro}\nFate gli auguri.`;
   }
-  return `${intro} e oggi compiono ${visibleAges.join(", ")} anni.`;
+  if (visibleAges.length === 1) {
+    return `${intro}\nOggi compie ${visibleAges[0]} anni. Tantissimi auguri.`;
+  }
+  return `${intro}\nOggi compiono ${visibleAges.join(", ")} anni. Tantissimi auguri.`;
 }
 
 async function assignBirthdayRole(guild, userId) {
@@ -112,7 +123,12 @@ async function runBirthdayTick(client) {
       if (!channel?.isTextBased?.()) continue;
 
       const content = buildBirthdayAnnouncement(guildDocs, today.year);
-      await channel.send({ content });
+      const sent = await channel.send({ content }).catch(() => null);
+      if (sent) {
+        for (const reaction of BIRTHDAY_REACTIONS) {
+          await sent.react(reaction).catch(() => {});
+        }
+      }
 
       for (const doc of guildDocs) {
         await assignBirthdayRole(guild, String(doc.userId || ""));
@@ -154,4 +170,3 @@ module.exports = {
   getRomeDateParts,
   inferBirthYearFromAge,
 };
-
