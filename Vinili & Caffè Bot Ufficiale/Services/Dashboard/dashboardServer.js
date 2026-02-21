@@ -5,6 +5,7 @@ const url = require("url");
 const crypto = require("crypto");
 const https = require("https");
 const IDs = require("../../Utils/Config/ids");
+const logsApi = require("../../Utils/Moderation/logs");
 
 const {
   CONTROL_MODES,
@@ -250,6 +251,148 @@ function listGuildChannels(client, guildId) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function buildCommandsHelpPayload(client) {
+  const prefix = [];
+  for (const command of client?.pcommands?.values?.() || []) {
+    prefix.push({
+      name: String(command?.name || ""),
+      aliases: Array.isArray(command?.aliases) ? command.aliases : [],
+      category: String(command?.folder || "utility"),
+      description: String(command?.description || ""),
+      usage: String(command?.usage || ""),
+      examples: Array.isArray(command?.examples) ? command.examples : [],
+      subcommands: Array.isArray(command?.subcommands) ? command.subcommands : [],
+      subcommandDescriptions:
+        command?.subcommandDescriptions && typeof command.subcommandDescriptions === "object"
+          ? command.subcommandDescriptions
+          : {},
+    });
+  }
+  prefix.sort((a, b) => a.name.localeCompare(b.name));
+
+  const slashMap = new Map();
+  for (const command of client?.commands?.values?.() || []) {
+    const name = String(command?.data?.name || command?.name || "").trim().toLowerCase();
+    const type = Number(command?.data?.type || 1);
+    if (!name || type !== 1 || slashMap.has(name)) continue;
+    const json = command?._helpDataJson || command?.data?.toJSON?.() || {};
+    slashMap.set(name, {
+      name,
+      category: String(command?.category || "utility"),
+      description: String(json?.description || command?.helpDescription || ""),
+      options: Array.isArray(json?.options) ? json.options : [],
+    });
+  }
+  const slash = Array.from(slashMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return { prefix, slash };
+}
+
+function getGuildRoleOptions(guild) {
+  if (!guild?.roles?.cache) return [];
+  return guild.roles.cache
+    .filter((role) => !role.managed && role.id !== guild.id)
+    .sort((a, b) => b.position - a.position)
+    .map((role) => ({ id: role.id, name: role.name }));
+}
+
+async function getGuildUsersPage(client, guildId, query = "") {
+  const guild = client?.guilds?.cache?.get(guildId) || null;
+  if (!guild) return { ok: false, reason: "guild_not_found" };
+  await guild.members.fetch().catch(() => {});
+
+  const q = String(query || "").trim().toLowerCase();
+  const users = guild.members.cache
+    .map((member) => {
+      const user = member.user;
+      return {
+        id: user.id,
+        username: user.username,
+        tag: user.tag || `${user.username}`,
+        displayName: member.displayName || user.username,
+        bot: Boolean(user.bot),
+        joinedAt: Number(member.joinedTimestamp || 0),
+        createdAt: Number(user.createdTimestamp || 0),
+        timedOutUntil: Number(member.communicationDisabledUntilTimestamp || 0),
+        roles: member.roles.cache
+          .filter((role) => role.id !== guild.id)
+          .sort((a, b) => b.position - a.position)
+          .map((role) => ({ id: role.id, name: role.name })),
+      };
+    })
+    .filter((row) => {
+      if (!q) return true;
+      return (
+        row.id.includes(q) ||
+        row.username.toLowerCase().includes(q) ||
+        row.tag.toLowerCase().includes(q) ||
+        row.displayName.toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => b.joinedAt - a.joinedAt);
+
+  return { ok: true, guild, users };
+}
+
+async function runUserAction(client, payload = {}) {
+  const guildId = sanitizeGuildId(payload.guildId);
+  const userId = String(payload.userId || "").trim();
+  const action = String(payload.action || "").trim().toLowerCase();
+  const reason = String(payload.reason || "Dashboard action").slice(0, 450);
+  if (!guildId || !/^\d{16,20}$/.test(userId)) return { ok: false, reason: "invalid_target" };
+
+  const guild = client?.guilds?.cache?.get(guildId) || (await client?.guilds?.fetch?.(guildId).catch(() => null));
+  if (!guild) return { ok: false, reason: "guild_not_found" };
+  const member =
+    guild.members.cache.get(userId) ||
+    (await guild.members.fetch(userId).catch(() => null));
+  const roleId = String(payload.roleId || "").trim();
+  const nicknameRaw = String(payload.nickname ?? "").trim();
+  const durationMinutes = Math.max(1, Math.min(28 * 24 * 60, Number(payload.durationMinutes || 60)));
+  const durationMs = durationMinutes * 60_000;
+
+  if (action === "timeout") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    await member.timeout(durationMs, reason);
+    return { ok: true, message: `Timeout ${durationMinutes}m applicato.` };
+  }
+  if (action === "untimeout") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    await member.timeout(null, reason);
+    return { ok: true, message: "Timeout rimosso." };
+  }
+  if (action === "kick") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    await member.kick(reason);
+    return { ok: true, message: "Utente espulso." };
+  }
+  if (action === "ban") {
+    await guild.members.ban(userId, { reason, deleteMessageSeconds: 0 });
+    return { ok: true, message: "Utente bannato." };
+  }
+  if (action === "unban") {
+    await guild.bans.remove(userId, reason);
+    return { ok: true, message: "Ban rimosso." };
+  }
+  if (action === "add_role") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
+    await member.roles.add(roleId, reason);
+    return { ok: true, message: "Ruolo aggiunto." };
+  }
+  if (action === "remove_role") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
+    await member.roles.remove(roleId, reason);
+    return { ok: true, message: "Ruolo rimosso." };
+  }
+  if (action === "set_nickname") {
+    if (!member) return { ok: false, reason: "member_not_found" };
+    await member.setNickname(nicknameRaw || null, reason);
+    return { ok: true, message: "Nickname aggiornato." };
+  }
+  return { ok: false, reason: "invalid_action" };
+}
+
 async function canManageScope(client, session, guildId) {
   if (!session?.user?.id) return false;
   if (!guildId) return false;
@@ -272,6 +415,11 @@ function ensureApiAuth(client, req, parsedUrl) {
   const session = getSession(req);
   if (session) return { ok: true, via: "oauth", session };
   return { ok: false, reason: "unauthorized" };
+}
+
+function isTokenAdmin(client, req, parsedUrl) {
+  const token = getDashboardToken(client);
+  return isAuthorizedByToken(req, parsedUrl, token);
 }
 
 function createDashboardServer(client) {
@@ -352,6 +500,67 @@ function createDashboardServer(client) {
       return json(res, 200, { ok: true, channels: listGuildChannels(client, guildId) });
     }
 
+    if (pathname === "/api/dashboard/commands-help" && req.method === "GET") {
+      return json(res, 200, { ok: true, data: buildCommandsHelpPayload(client) });
+    }
+
+    if (pathname === "/api/dashboard/errors" && req.method === "GET") {
+      const limit = Number(parsedUrl.query?.limit || 80);
+      const rows =
+        typeof logsApi?.getRecentErrors === "function"
+          ? logsApi.getRecentErrors(limit)
+          : [];
+      return json(res, 200, { ok: true, rows });
+    }
+
+    if (pathname === "/api/dashboard/console" && req.method === "GET") {
+      const limit = Number(parsedUrl.query?.limit || 220);
+      const rows =
+        typeof logsApi?.getRecentConsole === "function"
+          ? logsApi.getRecentConsole(limit)
+          : [];
+      return json(res, 200, { ok: true, rows });
+    }
+
+    if (pathname === "/api/dashboard/process" && req.method === "POST") {
+      if (!isTokenAdmin(client, req, parsedUrl)) {
+        return json(res, 403, { ok: false, reason: "token_required" });
+      }
+      const body = await new Promise((resolve) => {
+        let raw = "";
+        req.on("data", (chunk) => {
+          raw += String(chunk || "");
+          if (raw.length > 1_000_000) req.destroy();
+        });
+        req.on("end", () => {
+          try {
+            resolve(raw ? JSON.parse(raw) : {});
+          } catch {
+            resolve({});
+          }
+        });
+        req.on("error", () => resolve({}));
+      });
+      const action = String(body.action || "").trim().toLowerCase();
+      if (action === "start") {
+        return json(res, 200, {
+          ok: true,
+          message: "Bot già avviato. Da spento va avviato dal pannello hosting.",
+        });
+      }
+      if (action === "restart") {
+        json(res, 200, { ok: true, message: "Riavvio avviato." });
+        setTimeout(() => process.exit(0), 600);
+        return;
+      }
+      if (action === "stop") {
+        json(res, 200, { ok: true, message: "Spegnimento avviato." });
+        setTimeout(() => process.exit(0), 600);
+        return;
+      }
+      return json(res, 400, { ok: false, reason: "invalid_action" });
+    }
+
     if (!pathname.startsWith("/api/dashboard/")) {
       return json(res, 404, { ok: false, reason: "not_found" });
     }
@@ -379,9 +588,51 @@ function createDashboardServer(client) {
     }
 
     const scopeGuildId = normalizeScopeGuildId(body.guildId);
-    if (auth.session) {
+    if (auth.session && req.method === "POST") {
       const allowed = await canManageScope(client, auth.session, scopeGuildId);
       if (!allowed) return json(res, 403, { ok: false, reason: "missing_founder_or_cofounder" });
+    }
+
+    if (pathname === "/api/dashboard/users" && req.method === "GET") {
+      const guildId = sanitizeGuildId(parsedUrl.query?.guildId);
+      if (!guildId) return json(res, 400, { ok: false, reason: "guild_required" });
+      if (auth.session) {
+        const allowed = await canManageScope(client, auth.session, guildId);
+        if (!allowed) return json(res, 403, { ok: false, reason: "missing_founder_or_cofounder" });
+      }
+      const page = Math.max(1, Number(parsedUrl.query?.page || 1));
+      const limit = Math.max(10, Math.min(100, Number(parsedUrl.query?.limit || 40)));
+      const q = String(parsedUrl.query?.q || "");
+      const data = await getGuildUsersPage(client, guildId, q);
+      if (!data.ok) return json(res, 404, data);
+
+      const total = data.users.length;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const safePage = Math.min(page, totalPages);
+      const start = (safePage - 1) * limit;
+      const rows = data.users.slice(start, start + limit);
+      return json(res, 200, {
+        ok: true,
+        page: safePage,
+        total,
+        totalPages,
+        rows,
+        roleOptions: getGuildRoleOptions(data.guild),
+      });
+    }
+
+    if (pathname === "/api/dashboard/user-action" && req.method === "POST") {
+      const guildId = sanitizeGuildId(body.guildId);
+      if (!guildId) return json(res, 400, { ok: false, reason: "guild_required" });
+      if (auth.session) {
+        const allowed = await canManageScope(client, auth.session, guildId);
+        if (!allowed) return json(res, 403, { ok: false, reason: "missing_founder_or_cofounder" });
+      }
+      const out = await runUserAction(client, body).catch((error) => ({
+        ok: false,
+        reason: String(error?.message || "action_failed"),
+      }));
+      return json(res, out.ok ? 200 : 400, out);
     }
 
     if (pathname === "/api/dashboard/module" && req.method === "POST") {

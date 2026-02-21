@@ -11,6 +11,32 @@ const color = {
   purple: "\x1b[38;5;57m",
   reset: "\x1b[0m",
 };
+const ERROR_BUFFER_MAX = 300;
+const errorBuffer = [];
+const CONSOLE_BUFFER_MAX = 1200;
+const consoleBuffer = [];
+
+function normalizeToText(message) {
+  if (typeof message === "string") return message;
+  try {
+    return inspect(message, { depth: 3, colors: false });
+  } catch {
+    return String(message);
+  }
+}
+
+function pushConsole(level, message) {
+  try {
+    consoleBuffer.unshift({
+      at: Date.now(),
+      level: String(level || "info"),
+      message: normalizeToText(message),
+    });
+    if (consoleBuffer.length > CONSOLE_BUFFER_MAX) {
+      consoleBuffer.length = CONSOLE_BUFFER_MAX;
+    }
+  } catch {}
+}
 
 function getTimestamp() {
   const date = new Date();
@@ -53,28 +79,53 @@ function write(message = "", prefix = "", colors = true) {
   }
 }
 function info(message) {
+  pushConsole("info", message);
   return write(message, `${color.yellow}[${getTimestamp()}]${color.reset} `);
 }
 function warn(message) {
+  pushConsole("warn", message);
   return write(message, `${color.orange}[${getTimestamp()}]${color.reset} `);
 }
 function error(message) {
+  pushConsole("error", message);
+  try {
+    errorBuffer.unshift({
+      at: Date.now(),
+      message: typeof message === "string" ? message : inspect(message, { depth: 3, colors: false }),
+    });
+    if (errorBuffer.length > ERROR_BUFFER_MAX) errorBuffer.length = ERROR_BUFFER_MAX;
+  } catch {}
   return write(message, `${color.red}[${getTimestamp()}] `, false);
 }
 function success(message) {
+  pushConsole("success", message);
   return write(message, `${color.green}[${getTimestamp()}]${color.reset} `);
 }
 function debug(message) {
+  pushConsole("debug", message);
   return write(message, `${color.blue}[${getTimestamp()}]${color.reset} `);
 }
 function logging(message) {
+  pushConsole("logging", message);
   return write(message, `${color.pink}[${getTimestamp()}]${color.reset} `);
 }
 function torquise(message) {
+  pushConsole("torquise", message);
   return write(message, `${color.torquise}[${getTimestamp()}]${color.reset} `);
 }
 function purple(message) {
+  pushConsole("purple", message);
   return write(message, `${color.purple}[${getTimestamp()}]${color.reset} `);
+}
+
+function getRecentErrors(limit = 80) {
+  const safe = Math.max(1, Math.min(300, Number(limit || 80)));
+  return errorBuffer.slice(0, safe);
+}
+
+function getRecentConsole(limit = 250) {
+  const safe = Math.max(1, Math.min(CONSOLE_BUFFER_MAX, Number(limit || 250)));
+  return consoleBuffer.slice(0, safe);
 }
 
 module.exports = {
@@ -88,5 +139,7 @@ module.exports = {
   logging,
   torquise,
   purple,
+  getRecentErrors,
+  getRecentConsole,
   color,
 };

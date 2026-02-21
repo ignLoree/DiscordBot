@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Control Center</title>
-  <link rel="stylesheet" href="/dashboard.css?v=20260221b" />
+  <link rel="stylesheet" href="/dashboard.css?v=20260221d" />
 </head>
 <body>
   <main class="layout">
@@ -29,6 +29,12 @@
           <option value="global">Globale (tutti i server)</option>
         </select>
         <button id="refreshBtn">Aggiorna ora</button>
+      </div>
+      <div class="scope-row">
+        <button id="processStartBtn">Avvia Bot</button>
+        <button id="processRestartBtn">Riavvia Bot</button>
+        <button id="processStopBtn">Spegni Bot</button>
+        <span id="processStatus">Process: idle</span>
       </div>
     </section>
 
@@ -75,6 +81,49 @@
       <h2>Preview Live Eventi</h2>
       <div id="activityTable" class="rows"></div>
     </section>
+
+    <section class="panel">
+      <h2>Utenti</h2>
+      <div class="route-box">
+        <input id="usersSearchInput" type="text" placeholder="Cerca username, tag o id..." />
+        <button id="usersSearchBtn">Cerca</button>
+        <button id="usersPrevBtn">Prev</button>
+        <button id="usersNextBtn">Next</button>
+        <span id="usersPageInfo">Pagina 1</span>
+      </div>
+      <div class="route-box">
+        <select id="usersRoleSelect">
+          <option value="">Seleziona ruolo</option>
+        </select>
+        <input id="usersNicknameInput" type="text" placeholder="Nickname (vuoto = reset)" />
+        <input id="usersReasonInput" type="text" placeholder="Motivo azione" />
+      </div>
+      <div id="usersTable" class="rows"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Pagina Comandi</h2>
+      <div class="grid-2">
+        <article class="panel">
+          <h3>Comandi Prefix</h3>
+          <div id="commandsHelpPrefix" class="rows"></div>
+        </article>
+        <article class="panel">
+          <h3>Comandi Slash</h3>
+          <div id="commandsHelpSlash" class="rows"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Pagina Errori</h2>
+      <div id="errorsTable" class="rows"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Console Bot (Live)</h2>
+      <div id="consoleTable" class="rows"></div>
+    </section>
   </main>
 
   <template id="rowTemplate">
@@ -88,6 +137,6 @@
     </div>
   </template>
 
-  <script src="/dashboard.js?v=20260221b"></script>
+  <script src="/dashboard.js?v=20260221f"></script>
 </body>
 </html>

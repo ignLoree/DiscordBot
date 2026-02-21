@@ -108,6 +108,18 @@ button:hover { transform: translateY(-1px); border-color: #3f5f94; }
   text-overflow: ellipsis;
 }
 
+.console-row {
+  align-items: flex-start;
+}
+
+.console-title {
+  font-family: "JetBrains Mono", "Consolas", monospace;
+  white-space: pre-wrap;
+  overflow: visible;
+  text-overflow: initial;
+  line-height: 1.35;
+}
+
 .row-actions {
   display: flex;
   gap: 6px;
