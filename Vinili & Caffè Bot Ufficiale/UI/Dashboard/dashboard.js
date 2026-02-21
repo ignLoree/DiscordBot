@@ -47,6 +47,7 @@ let usersTotalPages = 1;
 let usersQuery = "";
 let currentScope = "global";
 let controlsRequestSeq = 0;
+let refreshRunning = false;
 
 function escapeHtml(value) {
   return String(value || "")
@@ -77,6 +78,10 @@ async function api(path, options = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.reason || `HTTP ${response.status}`);
   return data;
+}
+
+function hasAuthContext() {
+  return Boolean(getToken() || currentAuth?.authenticated);
 }
 
 function modeFromTables(globalTable = {}, guildTable = {}, key = "") {
@@ -306,23 +311,37 @@ function renderConsole(rows = []) {
 }
 
 async function refreshCommandsHelp() {
+  if (!hasAuthContext()) {
+    renderCommandsHelp([], []);
+    return;
+  }
   const data = await api("/api/dashboard/commands-help");
   renderCommandsHelp(data?.data?.prefix || [], data?.data?.slash || []);
 }
 
 async function refreshErrors() {
+  if (!hasAuthContext()) {
+    renderErrors([]);
+    return;
+  }
   const data = await api("/api/dashboard/errors?limit=80");
   renderErrors(data.rows || []);
 }
 
 async function refreshConsole() {
+  if (!hasAuthContext()) {
+    renderConsole([]);
+    return;
+  }
   const data = await api("/api/dashboard/console?limit=250");
   renderConsole(data.rows || []);
 }
 
-async function refreshControls() {
+async function refreshControls(scopeOverride = "") {
   const reqId = ++controlsRequestSeq;
-  const scope = String(currentScope || guildSelect.value || "global");
+  const selectedScope = String(scopeOverride || guildSelect.value || currentScope || "global");
+  const scope = selectedScope === "global" ? "global" : selectedScope;
+  currentScope = scope;
   const guildQuery = scope === "global" ? "" : `?guildId=${encodeURIComponent(scope)}`;
   const data = await api(`/api/dashboard/controls${guildQuery}`);
   if (reqId !== controlsRequestSeq) return;
@@ -409,17 +428,24 @@ async function refreshAuth() {
 }
 
 async function refreshAll() {
+  if (refreshRunning) return;
+  refreshRunning = true;
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = "Aggiornamento...";
   currentScope = String(guildSelect.value || currentScope || "global");
-  await refreshAuth();
-  await Promise.all([
+  await refreshAuth().catch(() => {});
+  await Promise.allSettled([
     refreshOverview(),
-    refreshControls(),
+    refreshControls(currentScope),
     refreshActivity(),
     refreshUsers(),
     refreshCommandsHelp(),
     refreshErrors(),
     refreshConsole(),
   ]);
+  refreshBtn.disabled = false;
+  refreshBtn.textContent = "Aggiorna ora";
+  refreshRunning = false;
 }
 
 async function processAction(action) {
@@ -450,11 +476,11 @@ saveTokenBtn.addEventListener("click", async () => {
   await refreshAll();
 });
 
-refreshBtn.addEventListener("click", refreshAll);
+refreshBtn.addEventListener("click", () => refreshAll().catch(() => {}));
 guildSelect.addEventListener("change", async () => {
   currentScope = String(guildSelect.value || "global");
   usersPage = 1;
-  await refreshControls();
+  await refreshControls(currentScope);
   await refreshUsers().catch(() => {});
 });
 processStartBtn.addEventListener("click", () => processAction("start"));
