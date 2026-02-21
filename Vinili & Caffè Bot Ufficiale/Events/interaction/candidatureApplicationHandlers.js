@@ -94,7 +94,6 @@ const APPLICATIONS = {
         id: "motivo_candidatura",
         text: "4. Come mai ti sei voluto candidare su Vinili & Caffè?",
         modalLabel: "4. Motivo candidatura",
-        placeholder: "Spiega il motivo",
         style: TextInputStyle.Paragraph,
       },
       {
@@ -106,44 +105,38 @@ const APPLICATIONS = {
       },
       {
         id: "flame_testuale",
-        text: "6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (flame testuale)",
+        text: "6. Se due utenti si flammano in testuale a vicenda su un determinato argomento, come ti comporti?",
         modalLabel: "6. Gestione flame",
-        placeholder: "Come ti comporti?",
         style: TextInputStyle.Paragraph,
       },
       {
         id: "comandi_dyno",
         text: "7. Elenca i comandi di moderazioni più importanti di Dyno",
         modalLabel: "7. Comandi Dyno",
-        placeholder: "Elenca i comandi",
         style: TextInputStyle.Paragraph,
       },
       {
         id: "critica_staff",
         text: "8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?",
         modalLabel: "8. Gestione critica",
-        placeholder: "Come ti comporti?",
         style: TextInputStyle.Paragraph,
       },
       {
         id: "vocale",
         text: "9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?",
         modalLabel: "9. Disponibilità vocale",
-        placeholder: "Spiega la tua disponibilità",
         style: TextInputStyle.Paragraph,
       },
       {
         id: "definizione_flame",
         text: "10. Definizione di flame",
         modalLabel: "10. Definizione flame",
-        placeholder: "Scrivi la definizione",
         style: TextInputStyle.Paragraph,
       },
       {
         id: "troll_pubblico",
-        text: "11. Se due utenti iniziassero a trollare in pubblico, come agiresti ?",
+        text: "11. Se due utenti iniziassero a trollare in pubblico, come agiresti?",
         modalLabel: "11. Gestione troll",
-        placeholder: "Come agiresti?",
         style: TextInputStyle.Paragraph,
       },
     ],
@@ -519,7 +512,7 @@ async function enforceEligibility(interaction, type) {
   return true;
 }
 
-function buildModal(type, step) {
+function buildModal(type, step, prefillAnswers = {}) {
   const cfg = APPLICATIONS[type];
   if (!cfg) return null;
   const chunks = splitQuestions(cfg.questions, 4);
@@ -530,22 +523,24 @@ function buildModal(type, step) {
     .setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
     .setTitle(`${cfg.label} - Modulo ${step}/${chunks.length}`);
 
-  const rows = selected.map((q) =>
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId(q.id)
-        .setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45))
-        .setStyle(q.style || TextInputStyle.Paragraph)
-        .setRequired(true)
-        .setPlaceholder(
-          `${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()} | ${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 100),
-        )
-        .setMaxLength(q.style === TextInputStyle.Short ? 120 : 1000),
-    ),
-  );
+  const rows = selected.map((q) => {
+    const maxLen = q.style === TextInputStyle.Short ? 120 : 1000;
+    const input = new TextInputBuilder()
+      .setCustomId(q.id)
+      .setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45))
+      .setStyle(q.style || TextInputStyle.Paragraph)
+      .setRequired(true)
+      .setPlaceholder(
+        `${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()} | ${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 100),
+      )
+      .setMaxLength(maxLen);
+    const saved = String(prefillAnswers?.[q.id] || "").trim();
+    if (saved) input.setValue(saved.slice(0, maxLen));
+    return new ActionRowBuilder().addComponents(input);
+  });
   modal.addComponents(...rows);
   return modal;
 }
@@ -650,7 +645,8 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
       pendingApplications.set(stateKey, state);
     }
   }
-  const modal = buildModal(type, normalizedStep);
+  const currentState = pendingApplications.get(stateKey);
+  const modal = buildModal(type, normalizedStep, currentState?.answers || {});
   if (!modal) return false;
   await interaction.showModal(modal);
   return true;
