@@ -20,9 +20,13 @@ const {
 } = require("./controlCenterService");
 
 let dashboardServer = null;
-const SESSION_TTL_MS = 8 * 60 * 60_000;
+const SESSION_TTL_HOURS = Math.max(1, Number(process.env.DASHBOARD_SESSION_TTL_HOURS || 24 * 30));
+const SESSION_TTL_MS = SESSION_TTL_HOURS * 60 * 60_000;
+const DASHBOARD_DATA_DIR = path.resolve(__dirname, "../../Data/Dashboard");
+const SESSION_STORE_PATH = path.join(DASHBOARD_DATA_DIR, "sessions.json");
 const sessions = new Map();
 const oauthStates = new Map();
+let sessionsPersistTimer = null;
 
 function readStatic(filePath, fallback = "") {
   try {
@@ -52,10 +56,22 @@ function getDashboardToken(client) {
   return process.env.DASHBOARD_TOKEN || process.env.BOT_DASHBOARD_TOKEN || client?.config?.dashboard?.token || "";
 }
 
-function getOauthConfig(client) {
+function getRequestBaseUrl(req) {
+  const protoHeader = String(req?.headers?.["x-forwarded-proto"] || "").trim().toLowerCase();
+  const proto = protoHeader === "https" ? "https" : "http";
+  const host = String(req?.headers?.host || "").trim();
+  if (host) return `${proto}://${host}`;
+  const fallbackHost = process.env.DASHBOARD_HOST || "127.0.0.1";
+  const fallbackPort = process.env.DASHBOARD_PORT || 4050;
+  return `http://${fallbackHost}:${fallbackPort}`;
+}
+
+function getOauthConfig(client, req = null) {
   const clientId = process.env.DASHBOARD_OAUTH_CLIENT_ID || process.env.DISCORD_CLIENT_ID || IDs.bots.ViniliCaffeBot;
   const clientSecret = process.env.DASHBOARD_OAUTH_CLIENT_SECRET || process.env.DISCORD_CLIENT_SECRET || "";
-  const redirectUri = process.env.DASHBOARD_OAUTH_REDIRECT_URI || `http://${process.env.DASHBOARD_HOST || "127.0.0.1"}:${process.env.DASHBOARD_PORT || 4050}/api/auth/callback`;
+  const redirectUri =
+    process.env.DASHBOARD_OAUTH_REDIRECT_URI ||
+    `${getRequestBaseUrl(req)}/api/auth/callback`;
   const enabled = Boolean(clientId && clientSecret);
   return { enabled, clientId, clientSecret, redirectUri };
 }
@@ -85,12 +101,17 @@ function setCookie(res, name, value, maxAgeSec = 0) {
 
 function cleanupMaps() {
   const now = Date.now();
+  let sessionsChanged = false;
   for (const [k, row] of sessions.entries()) {
-    if (!row || Number(row.expiresAt || 0) <= now) sessions.delete(k);
+    if (!row || Number(row.expiresAt || 0) <= now) {
+      sessions.delete(k);
+      sessionsChanged = true;
+    }
   }
   for (const [k, row] of oauthStates.entries()) {
     if (!row || Number(row.expiresAt || 0) <= now) oauthStates.delete(k);
   }
+  if (sessionsChanged) schedulePersistSessions();
 }
 
 function getSession(req) {
@@ -114,17 +135,24 @@ function createSession(res, user) {
     expiresAt: Date.now() + SESSION_TTL_MS,
   });
   setCookie(res, "dash_sid", sid, Math.floor(SESSION_TTL_MS / 1000));
+  schedulePersistSessions();
 }
 
 function destroySession(req, res) {
   const sid = String(parseCookies(req).dash_sid || "").trim();
-  if (sid) sessions.delete(sid);
+  if (sid) {
+    sessions.delete(sid);
+    schedulePersistSessions();
+  }
   setCookie(res, "dash_sid", "", 0);
 }
 
 function buildDiscordAuthorizeUrl(oauth) {
   const state = crypto.randomBytes(16).toString("hex");
-  oauthStates.set(state, { expiresAt: Date.now() + 10 * 60_000 });
+  oauthStates.set(state, {
+    expiresAt: Date.now() + 10 * 60_000,
+    redirectUri: String(oauth.redirectUri || ""),
+  });
   const params = new URLSearchParams({
     client_id: oauth.clientId,
     redirect_uri: oauth.redirectUri,
@@ -187,6 +215,51 @@ async function exchangeCodeForToken(oauth, code) {
     throw new Error(`oauth_token_failed_${result.status}`);
   }
   return result.data;
+}
+
+function loadSessionsFromDisk() {
+  try {
+    fs.mkdirSync(DASHBOARD_DATA_DIR, { recursive: true });
+    if (!fs.existsSync(SESSION_STORE_PATH)) return;
+    const raw = JSON.parse(fs.readFileSync(SESSION_STORE_PATH, "utf8"));
+    const now = Date.now();
+    for (const row of Array.isArray(raw?.rows) ? raw.rows : []) {
+      const sid = String(row?.sid || "").trim();
+      const expiresAt = Number(row?.expiresAt || 0);
+      if (!sid || expiresAt <= now) continue;
+      sessions.set(sid, {
+        user: row.user || null,
+        createdAt: Number(row?.createdAt || now),
+        expiresAt,
+      });
+    }
+  } catch {}
+}
+
+function persistSessionsNow() {
+  try {
+    fs.mkdirSync(DASHBOARD_DATA_DIR, { recursive: true });
+    const rows = [];
+    const now = Date.now();
+    for (const [sid, row] of sessions.entries()) {
+      if (!row || Number(row.expiresAt || 0) <= now) continue;
+      rows.push({
+        sid,
+        user: row.user || null,
+        createdAt: Number(row.createdAt || now),
+        expiresAt: Number(row.expiresAt || now + SESSION_TTL_MS),
+      });
+    }
+    fs.writeFileSync(SESSION_STORE_PATH, `${JSON.stringify({ rows }, null, 2)}\n`, "utf8");
+  } catch {}
+}
+
+function schedulePersistSessions() {
+  if (sessionsPersistTimer) return;
+  sessionsPersistTimer = setTimeout(() => {
+    sessionsPersistTimer = null;
+    persistSessionsNow();
+  }, 400);
 }
 
 async function fetchDiscordUser(accessToken) {
@@ -431,7 +504,7 @@ function createDashboardServer(client) {
   return http.createServer(async (req, res) => {
     const parsedUrl = url.parse(req.url, true);
     const pathname = String(parsedUrl.pathname || "/");
-    const oauth = getOauthConfig(client);
+    const oauth = getOauthConfig(client, req);
 
     if (pathname === "/dashboard" || pathname === "/dashboard/") {
       return text(res, 200, html, "text/html; charset=utf-8");
@@ -454,13 +527,21 @@ function createDashboardServer(client) {
         return text(res, 400, "OAuth state non valido o scaduto");
       }
       try {
-        const tokenPayload = await exchangeCodeForToken(oauth, code);
+        const callbackOauth = {
+          ...oauth,
+          redirectUri: String(stateRow.redirectUri || oauth.redirectUri || ""),
+        };
+        const tokenPayload = await exchangeCodeForToken(callbackOauth, code);
         const user = await fetchDiscordUser(String(tokenPayload.access_token || ""));
         createSession(res, user);
         res.writeHead(302, { Location: "/dashboard" });
         return res.end();
       } catch (error) {
-        return text(res, 500, `OAuth error: ${error.message}`);
+        return text(
+          res,
+          500,
+          `OAuth error: ${error.message}\nredirect_uri=${String(stateRow?.redirectUri || oauth.redirectUri || "")}`,
+        );
       }
     }
 
@@ -679,6 +760,7 @@ function startDashboardServer(client) {
   if (dashboardServer) return dashboardServer;
   const enabled = String(process.env.DASHBOARD_ENABLED || "true").toLowerCase() !== "false";
   if (!enabled) return null;
+  loadSessionsFromDisk();
 
   const port = Math.max(1024, Number(process.env.DASHBOARD_PORT || client?.config?.dashboard?.port || 4050));
   const host = process.env.DASHBOARD_HOST || "127.0.0.1";
