@@ -331,13 +331,6 @@ function createDashboardServer(client) {
       return json(res, 200, { ok: true });
     }
 
-    if (!pathname.startsWith("/api/dashboard/")) {
-      return json(res, 404, { ok: false, reason: "not_found" });
-    }
-
-    const auth = ensureApiAuth(client, req, parsedUrl);
-    if (!auth.ok) return json(res, 401, { ok: false, reason: auth.reason });
-
     if (pathname === "/api/dashboard/overview" && req.method === "GET") {
       const overview = await getOverviewPayload(client);
       return json(res, 200, { ok: true, overview });
@@ -358,6 +351,13 @@ function createDashboardServer(client) {
       const guildId = sanitizeGuildId(parsedUrl.query?.guildId);
       return json(res, 200, { ok: true, channels: listGuildChannels(client, guildId) });
     }
+
+    if (!pathname.startsWith("/api/dashboard/")) {
+      return json(res, 404, { ok: false, reason: "not_found" });
+    }
+
+    const auth = ensureApiAuth(client, req, parsedUrl);
+    if (!auth.ok) return json(res, 401, { ok: false, reason: auth.reason });
 
     let body = {};
     if (req.method === "POST") {
