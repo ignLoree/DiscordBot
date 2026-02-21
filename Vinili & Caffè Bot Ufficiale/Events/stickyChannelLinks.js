@@ -4,7 +4,7 @@ const STICKY_CONFIG = Object.fromEntries(
   [
     [
       IDs.channels.mudae,
-      "**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)_**",
+      "**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)__**",
     ],
     [
       IDs.channels.poketwo,
