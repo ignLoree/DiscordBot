@@ -14,6 +14,7 @@ const IDs = require("../../Utils/Config/ids");
 const APPLY_HELPER_BUTTON = "apply_helper";
 const APPLY_PM_BUTTON = "apply_partnermanager";
 const APPLY_START_PREFIX = "apply_start";
+const APPLY_BACK_PREFIX = "apply_back";
 const MODAL_PREFIX = "apply_form";
 const STATE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -86,7 +87,6 @@ const APPLICATIONS = {
         id: "staff_server",
         text: "3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi",
         modalLabel: "3. Esperienze staff",
-        placeholder: "Server, tempo e ruolo",
         style: TextInputStyle.Paragraph,
       },
       {
@@ -101,7 +101,7 @@ const APPLICATIONS = {
         text: "5. Saresti disposto ad aiutare il server economicamente?",
         modalLabel: "5. Aiuto economico",
         placeholder: "Si / No",
-        style: TextInputStyle.Short,
+        style: TextInputStyle.Paragraph,
       },
       {
         id: "flame_testuale",
@@ -588,10 +588,10 @@ async function sendIntro(interaction, type) {
   });
 }
 
-async function handleStartButton(interaction, type, step = 1) {
+async function handleStartButton(interaction, type, step = 1, forceStep = false) {
   const stateKey = getStateKey(interaction, type);
   const normalizedStep = Number(step) || 1;
-  if (normalizedStep <= 1) {
+  if (normalizedStep <= 1 && !forceStep) {
     const draft = getDraftState(stateKey);
     if (draft?.nextStep > 1) {
       pendingApplications.set(stateKey, {
@@ -787,7 +787,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     if (step >= 1) {
       controls.push(
         new ButtonBuilder()
-          .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${step}`)
+          .setCustomId(`${APPLY_BACK_PREFIX}:${type}:${interaction.user.id}:${step}`)
           .setLabel(`Indietro (${step}/${chunks.length})`)
           .setStyle(ButtonStyle.Secondary),
       );
@@ -835,7 +835,24 @@ async function handleCandidatureApplicationInteraction(interaction) {
       const ok = await enforceEligibility(interaction, type);
       if (!ok) return true;
       const step = Number(rawStep || 1);
-      return handleStartButton(interaction, type, step);
+      return handleStartButton(interaction, type, step, false);
+    }
+
+    if (String(interaction.customId || "").startsWith(`${APPLY_BACK_PREFIX}:`)) {
+      const [, type, ownerId, rawStep] = String(interaction.customId).split(":");
+      if (!type || !ownerId) return false;
+      if (String(ownerId) !== String(interaction.user?.id || "")) {
+        await interaction.reply({
+          content:
+            "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
+          flags: 1 << 6,
+        });
+        return true;
+      }
+      const ok = await enforceEligibility(interaction, type);
+      if (!ok) return true;
+      const step = Math.max(1, Number(rawStep || 1));
+      return handleStartButton(interaction, type, step, true);
     }
     return false;
   }
