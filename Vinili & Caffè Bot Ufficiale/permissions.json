@@ -1373,6 +1373,12 @@
         "ebm:send:*": {
             "ownerSegment": 1
         },
+        "bh_modal_date:*": {
+            "ownerSegment": 1
+        },
+        "bh_modal_age:*": {
+            "ownerSegment": 1
+        },
         "modal_close_ticket:*": {
             "ownerSegment": 1
         },
