@@ -130,7 +130,7 @@ function buildDiscordAuthorizeUrl(oauth) {
     response_type: "code",
     scope: "identify guilds",
     state,
-    prompt: "none",
+    prompt: "consent",
   });
   return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 }
