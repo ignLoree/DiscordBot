@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "github",
+
+  allowEmptyArgs: true,
   aliases: ["gh"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -51,3 +52,4 @@ module.exports = {
     }
   },
 };
+

@@ -2,7 +2,8 @@
 const { fetchJson, replyError } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "dog",
+
+  allowEmptyArgs: true,
   aliases: ["doggo"],
   async execute(message) {
     try {
@@ -18,3 +19,4 @@ module.exports = {
     }
   },
 };
+

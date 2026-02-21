@@ -11,7 +11,7 @@ function formatUptime(uptime) {
 
 module.exports = {
   name: "ping",
-
+  allowEmptyArgs: true,
   async execute(message) {
     await message.channel.sendTyping();
     try {

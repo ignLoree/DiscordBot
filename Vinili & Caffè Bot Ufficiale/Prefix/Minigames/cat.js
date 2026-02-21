@@ -1,7 +1,8 @@
 ﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
 
 module.exports = {
-  name: "cat",
+
+  allowEmptyArgs: true,
   aliases: ["kitty"],
   async execute(message) {
     const url = "https://cataas.com/cat?width=700&height=500&r=" + Date.now();
@@ -11,3 +12,4 @@ module.exports = {
     });
   },
 };
+

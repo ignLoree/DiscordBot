@@ -2,7 +2,8 @@
 const { replyError } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "adorable",
+
+  allowEmptyArgs: true,
   aliases: ["avatarfun"],
   async execute(message, args) {
     const seed = String((args || []).join(" ") || message.author?.id || "user").trim().slice(0, 80);
@@ -14,3 +15,4 @@ module.exports = {
     });
   },
 };
+

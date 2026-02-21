@@ -145,7 +145,7 @@ function buildStrikeButtons(scope, page, totalPages) {
 module.exports = {
   name: "info",
   aliases: ["whois", "uinfo"],
-
+  allowEmptyArgs: true,
   async execute(message, args) {
     if (!message.guild) return;
     const member = await resolveMember(message, args.join(" "));

@@ -2,7 +2,8 @@
 const { fetchJson, replyError, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "weather",
+
+  allowEmptyArgs: true,
   aliases: ["meteo"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -41,3 +42,4 @@ module.exports = {
     }
   },
 };
+

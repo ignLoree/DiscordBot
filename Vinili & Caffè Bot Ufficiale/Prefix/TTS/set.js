@@ -16,7 +16,6 @@ function parseBooleanState(raw) {
 module.exports = {
   name: "set",
   subcommands: ["autojoin", "voice"],
-
   async execute(message, args = [], client) {
     const sub = String(args[0] || "")
       .trim()

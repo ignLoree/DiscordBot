@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "quotefun",
+
+  allowEmptyArgs: true,
   aliases: ["citazionefun", "randquote"],
   async execute(message) {
     try {
@@ -36,3 +37,4 @@ module.exports = {
     }
   },
 };
+

@@ -280,6 +280,7 @@ async function buildAllTimeEmbed(message) {
 module.exports = {
   name: "classifica",
   aliases: ["c", "cs", "classificasettimanale"],
+  allowEmptyArgs: true,
   subcommands: ["alltime", "weekly"],
   subcommandAliases: {
     cs: "weekly",

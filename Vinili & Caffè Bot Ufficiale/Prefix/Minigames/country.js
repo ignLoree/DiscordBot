@@ -2,7 +2,8 @@
 const { fetchJson, replyError, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "country",
+
+  allowEmptyArgs: true,
   aliases: ["nazione"],
   async execute(message, args) {
     const code = String(args?.[0] || "").trim();
@@ -38,7 +39,8 @@ module.exports = {
               { name: "Capitale", value: String(capital), inline: true },
               { name: "Regione", value: String(regionLabel || "N/D"), inline: true },
               {
-                name: "Popolazione",
+
+  allowEmptyArgs: true,
                 value: Number(row.population || 0).toLocaleString("it-IT"),
                 inline: true,
               },
@@ -53,3 +55,4 @@ module.exports = {
     }
   },
 };
+

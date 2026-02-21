@@ -14,7 +14,8 @@ function parseRoll(inputA, inputB) {
 }
 
 module.exports = {
-  name: "roll",
+
+  allowEmptyArgs: true,
   aliases: ["dice"],
   async execute(message, args) {
     const parsed = parseRoll(args?.[0], args?.[1]);
@@ -45,3 +46,4 @@ module.exports = {
     );
   },
 };
+

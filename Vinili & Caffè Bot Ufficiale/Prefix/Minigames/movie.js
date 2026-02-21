@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "movie",
+
+  allowEmptyArgs: true,
   aliases: ["film"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -44,3 +45,4 @@ module.exports = {
     }
   },
 };
+

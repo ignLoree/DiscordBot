@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "define",
+
+  allowEmptyArgs: true,
   aliases: ["def", "dictionary"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -33,7 +34,8 @@ module.exports = {
             fields: [
               { name: "Fonetica", value: String(phonetic), inline: true },
               {
-                name: "Parte del discorso",
+
+  allowEmptyArgs: true,
                 value: String(firstMeaning?.partOfSpeech || "N/D"),
                 inline: true,
               },
@@ -47,3 +49,4 @@ module.exports = {
     }
   },
 };
+

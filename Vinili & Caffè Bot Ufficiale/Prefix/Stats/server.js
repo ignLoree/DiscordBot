@@ -256,6 +256,7 @@ async function buildServerOverviewPayload(
 
 module.exports = {
   name: "server",
+  allowEmptyArgs: true,
   SERVER_REFRESH_CUSTOM_ID_PREFIX,
   buildServerOverviewPayload,
 

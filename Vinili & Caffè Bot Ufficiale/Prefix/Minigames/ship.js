@@ -51,8 +51,8 @@ function randomPercent() {
 }
 
 module.exports = {
-  name: "ship",
 
+  allowEmptyArgs: true,
   async execute(message, args) {
     await message.channel.sendTyping();
 
@@ -148,4 +148,5 @@ module.exports = {
     }
   },
 };
+
 

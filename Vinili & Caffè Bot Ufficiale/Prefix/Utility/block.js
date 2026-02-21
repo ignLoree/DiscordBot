@@ -11,6 +11,7 @@ function buildUsageEmbed() {
 module.exports = {
   name: "block",
   aliases: ["blockav", "blockbn", "blockquotes"],
+  allowEmptyArgs: true,
   subcommands: ["avatar", "banner", "quotes"],
   subcommandAliases: {
     blockav: "avatar",

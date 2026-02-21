@@ -13,6 +13,7 @@ function buildUsageEmbed() {
 module.exports = {
   name: "unblock",
   aliases: ["unblockav", "unblockbn", "unblockquotes"],
+  allowEmptyArgs: true,
   subcommands: ["avatar", "banner", "quotes"],
   subcommandAliases: {
     unblockav: "avatar",

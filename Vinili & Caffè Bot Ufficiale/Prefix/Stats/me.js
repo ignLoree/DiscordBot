@@ -287,6 +287,7 @@ async function buildMeOverviewPayload(
 
 module.exports = {
   name: "me",
+  allowEmptyArgs: true,
   ME_REFRESH_CUSTOM_ID_PREFIX,
   ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
   ME_PERIOD_SET_CUSTOM_ID_PREFIX,

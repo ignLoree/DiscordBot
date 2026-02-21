@@ -2,7 +2,8 @@
 const { fetchJson, replyError, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "pokemon",
+
+  allowEmptyArgs: true,
   aliases: ["poke"],
   async execute(message, args) {
     const query = String(args?.[0] || "pikachu").trim().toLowerCase();
@@ -47,3 +48,4 @@ module.exports = {
     }
   },
 };
+

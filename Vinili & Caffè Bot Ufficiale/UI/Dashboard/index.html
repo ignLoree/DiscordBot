@@ -7,124 +7,144 @@
   <link rel="stylesheet" href="/dashboard.css?v=20260221d" />
 </head>
 <body>
-  <main class="layout">
-    <section class="hero">
-      <h1>Vinili & Caffe - Control Center</h1>
-      <p>Dashboard live: stato bot, moduli, comandi, eventi, routing e preview realtime.</p>
+  <div class="app-shell">
+    <aside class="sidebar panel">
+      <h2>Pagine</h2>
+      <button class="nav-btn active" data-nav-page="overview">Overview</button>
+      <button class="nav-btn" data-nav-page="controls">Controlli</button>
+      <button class="nav-btn" data-nav-page="commands">Comandi</button>
+      <button class="nav-btn" data-nav-page="users">Utenti</button>
+      <button class="nav-btn" data-nav-page="logs">Log & Console</button>
+    </aside>
 
-      <div class="auth-row">
-        <button id="oauthLoginBtn">Login Discord</button>
-        <button id="oauthLogoutBtn">Logout</button>
-        <span id="authState">Auth: non autenticato</span>
-      </div>
+    <main class="layout">
+      <section class="hero">
+        <h1>Vinili & Caffe - Control Center</h1>
+        <p>Dashboard live: stato bot, moduli, comandi, eventi, routing e preview realtime.</p>
 
-      <div class="auth-row">
-        <input id="tokenInput" type="password" placeholder="Token dashboard (fallback admin)" />
-        <button id="saveTokenBtn">Salva token</button>
-      </div>
-
-      <div class="scope-row">
-        <label for="guildSelect">Scope</label>
-        <select id="guildSelect">
-          <option value="global">Globale (tutti i server)</option>
-        </select>
-        <button id="refreshBtn">Aggiorna ora</button>
-      </div>
-      <div class="scope-row">
-        <button id="processStartBtn">Avvia Bot</button>
-        <button id="processRestartBtn">Riavvia Bot</button>
-        <button id="processStopBtn">Spegni Bot</button>
-        <span id="processStatus">Process: idle</span>
-      </div>
-    </section>
-
-    <section class="cards" id="overviewCards"></section>
-
-    <section class="grid-2">
-      <article class="panel">
-        <h2>Moduli</h2>
-        <div id="modulesTable" class="rows"></div>
-      </article>
-
-      <article class="panel">
-        <h2>Eventi</h2>
-        <div class="route-box">
-          <select id="routeEventSelect"></select>
-          <select id="routeChannelSelect">
-            <option value="">Nessun canale (disattiva route)</option>
-          </select>
-          <button id="saveRouteBtn">Salva route evento</button>
+        <div class="auth-row">
+          <button id="oauthLoginBtn">Login Discord</button>
+          <button id="oauthLogoutBtn">Logout</button>
+          <span id="authState">Auth: non autenticato</span>
         </div>
-        <div class="route-box">
-          <select id="routeGroupSelect"></select>
-          <select id="routeGroupChannelSelect">
-            <option value="">Nessun canale (disattiva route gruppo)</option>
-          </select>
-          <button id="saveRouteGroupBtn">Salva route gruppo</button>
+
+        <div class="auth-row">
+          <input id="tokenInput" type="password" placeholder="Token dashboard (fallback admin)" />
+          <button id="saveTokenBtn">Salva token</button>
         </div>
-        <div id="eventsTable" class="rows"></div>
-      </article>
-    </section>
 
-    <section class="grid-2">
-      <article class="panel">
-        <h2>Comandi Prefix</h2>
-        <div id="prefixCommandsTable" class="rows"></div>
-      </article>
-      <article class="panel">
-        <h2>Comandi Slash</h2>
-        <div id="slashCommandsTable" class="rows"></div>
-      </article>
-    </section>
+        <div class="scope-row">
+          <label for="guildSelect">Scope</label>
+          <select id="guildSelect">
+            <option value="global">Globale (tutti i server)</option>
+          </select>
+          <button id="refreshBtn">Aggiorna ora</button>
+        </div>
+        <div class="scope-row">
+          <button id="processStartBtn">Avvia Bot</button>
+          <button id="processRestartBtn">Riavvia Bot</button>
+          <button id="processStopBtn">Spegni Bot</button>
+          <span id="processStatus">Process: idle</span>
+        </div>
+      </section>
 
-    <section class="panel">
-      <h2>Preview Live Eventi</h2>
-      <div id="activityTable" class="rows"></div>
-    </section>
+      <section class="page active" data-page="overview">
+        <section class="cards" id="overviewCards"></section>
+        <section class="panel">
+          <h2>Preview Live Eventi</h2>
+          <div id="activityTable" class="rows"></div>
+        </section>
+      </section>
 
-    <section class="panel">
-      <h2>Utenti</h2>
-      <div class="route-box">
-        <input id="usersSearchInput" type="text" placeholder="Cerca username, tag o id..." />
-        <button id="usersSearchBtn">Cerca</button>
-        <button id="usersPrevBtn">Prev</button>
-        <button id="usersNextBtn">Next</button>
-        <span id="usersPageInfo">Pagina 1</span>
-      </div>
-      <div class="route-box">
-        <select id="usersRoleSelect">
-          <option value="">Seleziona ruolo</option>
-        </select>
-        <input id="usersNicknameInput" type="text" placeholder="Nickname (vuoto = reset)" />
-        <input id="usersReasonInput" type="text" placeholder="Motivo azione" />
-      </div>
-      <div id="usersTable" class="rows"></div>
-    </section>
+      <section class="page" data-page="controls">
+        <section class="grid-2">
+          <article class="panel">
+            <h2>Moduli</h2>
+            <div id="modulesTable" class="rows"></div>
+          </article>
 
-    <section class="panel">
-      <h2>Pagina Comandi</h2>
-      <div class="grid-2">
-        <article class="panel">
-          <h3>Comandi Prefix</h3>
-          <div id="commandsHelpPrefix" class="rows"></div>
-        </article>
-        <article class="panel">
-          <h3>Comandi Slash</h3>
-          <div id="commandsHelpSlash" class="rows"></div>
-        </article>
-      </div>
-    </section>
+          <article class="panel">
+            <h2>Eventi</h2>
+            <div class="route-box">
+              <select id="routeEventSelect"></select>
+              <select id="routeChannelSelect">
+                <option value="">Nessun canale (disattiva route)</option>
+              </select>
+              <button id="saveRouteBtn">Salva route evento</button>
+            </div>
+            <div class="route-box">
+              <select id="routeGroupSelect"></select>
+              <select id="routeGroupChannelSelect">
+                <option value="">Nessun canale (disattiva route gruppo)</option>
+              </select>
+              <button id="saveRouteGroupBtn">Salva route gruppo</button>
+            </div>
+            <div id="eventsTable" class="rows"></div>
+          </article>
+        </section>
 
-    <section class="panel">
-      <h2>Pagina Errori</h2>
-      <div id="errorsTable" class="rows"></div>
-    </section>
+        <section class="grid-2">
+          <article class="panel">
+            <h2>Comandi Prefix</h2>
+            <div id="prefixCommandsTable" class="rows"></div>
+          </article>
+          <article class="panel">
+            <h2>Comandi Slash</h2>
+            <div id="slashCommandsTable" class="rows"></div>
+          </article>
+        </section>
+      </section>
 
-    <section class="panel">
-      <h2>Console Bot (Live)</h2>
-      <div id="consoleTable" class="rows"></div>
-    </section>
-  </main>
+      <section class="page" data-page="commands">
+        <section class="panel">
+          <h2>Pagina Comandi</h2>
+          <div class="grid-2">
+            <article class="panel">
+              <h3>Comandi Prefix</h3>
+              <div id="commandsHelpPrefix" class="rows"></div>
+            </article>
+            <article class="panel">
+              <h3>Comandi Slash</h3>
+              <div id="commandsHelpSlash" class="rows"></div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" data-page="users">
+        <section class="panel">
+          <h2>Utenti</h2>
+          <div class="route-box">
+            <input id="usersSearchInput" type="text" placeholder="Cerca username, tag o id..." />
+            <button id="usersSearchBtn">Cerca</button>
+            <button id="usersPrevBtn">Prev</button>
+            <button id="usersNextBtn">Next</button>
+            <span id="usersPageInfo">Pagina 1</span>
+          </div>
+          <div class="route-box">
+            <select id="usersRoleSelect">
+              <option value="">Seleziona ruolo</option>
+            </select>
+            <input id="usersNicknameInput" type="text" placeholder="Nickname (vuoto = reset)" />
+            <input id="usersReasonInput" type="text" placeholder="Motivo azione" />
+          </div>
+          <div id="usersTable" class="rows"></div>
+        </section>
+      </section>
+
+      <section class="page" data-page="logs">
+        <section class="panel">
+          <h2>Pagina Errori</h2>
+          <div id="errorsTable" class="rows"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Console Bot (Live)</h2>
+          <div id="consoleTable" class="rows"></div>
+        </section>
+      </section>
+    </main>
+  </div>
 
   <template id="rowTemplate">
     <div class="row">
@@ -137,6 +157,6 @@
     </div>
   </template>
 
-  <script src="/dashboard.js?v=20260221g"></script>
+  <script src="/dashboard.js?v=20260221h"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ const { getNoDmSet, removeNoDm } = require("../../Utils/noDmList");
 module.exports = {
   name: "dm-enable",
   aliases: ["dmenable"],
-
+  allowEmptyArgs: true,
   async execute(message) {
     if (!message.guild) {
       await safeMessageReply(message, {

@@ -36,7 +36,7 @@ async function getCurrentInviteUsesForUser(guild, userId) {
 
 module.exports = {
   name: "invites",
-
+  allowEmptyArgs: true,
   async execute(message) {
     await message.channel.sendTyping();
 

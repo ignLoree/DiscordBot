@@ -3,7 +3,7 @@ const { joinTtsChannel } = require("../../Services/TTS/ttsService");
 
 module.exports = {
   name: "join",
-
+  allowEmptyArgs: true,
   async execute(message) {
     await message.channel.sendTyping();
     const voiceChannel = message.member?.voice?.channel;
@@ -13,7 +13,7 @@ module.exports = {
         message,
         "<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",
       );
-      if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      if (warn?.delete) setTimeout(() => warn.delete().catch(() => { }), 5000);
       return;
     }
 

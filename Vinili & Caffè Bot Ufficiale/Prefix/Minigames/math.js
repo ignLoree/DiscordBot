@@ -2,7 +2,8 @@
 const { replyError, replyInfo, fetchJson, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "math",
+
+  allowEmptyArgs: true,
   aliases: ["calc", "numbers"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -25,3 +26,4 @@ module.exports = {
     }
   },
 };
+

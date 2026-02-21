@@ -6,7 +6,7 @@ const renderRankCanvas = require("../../Utils/Render/rankCanvas");
 module.exports = {
   name: "rank",
   aliases: ["r"],
-
+  allowEmptyArgs: true, 
   async execute(message, args = []) {
     await message.channel.sendTyping();
 

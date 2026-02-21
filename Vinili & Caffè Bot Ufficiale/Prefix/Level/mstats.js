@@ -34,7 +34,7 @@ async function resolveTargetUser(message, args = []) {
 
 module.exports = {
   name: "mstats",
-
+  allowEmptyArgs: true,
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const targetUser = await resolveTargetUser(message, args);

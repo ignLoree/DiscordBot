@@ -49,31 +49,73 @@ function isServerOwner(member, guild) {
   return Boolean(member && guild && String(member.id) === String(guild.ownerId));
 }
 
-async function validateModerationTarget(message, member, actionLabel) {
-  if (!member) return { ok: true };
-  const me = message.guild.members.me;
-  if (!me) return { ok: false, error: "Non riesco a verificare i miei permessi." };
-  if (String(member.id) === String(message.author.id)) {
+async function validateModerationTarget(message, member, actionLabel, targetUserId = "") {
+  let targetMember = member || null;
+  const fallbackId = String(targetUserId || targetMember?.id || "").trim();
+  if (!targetMember && /^\d{17,20}$/.test(fallbackId)) {
+    targetMember = await message.guild.members.fetch(fallbackId).catch(() => null);
+  }
+  if (!targetMember) return { ok: true };
+  if (String(targetMember.id) === String(message.author.id)) {
     return { ok: false, error: `Non puoi usare \`${actionLabel}\` su te stesso.` };
   }
-  if (String(member.id) === String(message.client.user.id)) {
+  if (String(targetMember.id) === String(message.client.user.id)) {
     return { ok: false, error: "Non puoi moderare il bot." };
   }
-  if (isServerOwner(member, message.guild)) {
+  if (isServerOwner(targetMember, message.guild)) {
     return { ok: false, error: "Non puoi moderare il proprietario del server." };
   }
-  if (member.roles?.highest && me.roles?.highest) {
-    if (member.roles.highest.position >= me.roles.highest.position) {
-      return { ok: false, error: "Non posso moderare questo utente per gerarchia ruoli." };
-    }
+  const protectedRoleIds = [
+    IDs?.roles?.Staff,
+    IDs?.roles?.Helper,
+    IDs?.roles?.Mod,
+    IDs?.roles?.Coordinator,
+    IDs?.roles?.Supervisor,
+    IDs?.roles?.HighStaff,
+    IDs?.roles?.Admin,
+    IDs?.roles?.Manager,
+    IDs?.roles?.CoFounder,
+    IDs?.roles?.Founder,
+  ]
+    .map((id) => String(id || "").trim())
+    .filter(Boolean);
+  const actorHighStaffBypass = [
+    IDs?.roles?.HighStaff,
+    IDs?.roles?.Admin,
+    IDs?.roles?.Manager,
+    IDs?.roles?.CoFounder,
+    IDs?.roles?.Founder,
+  ]
+    .map((id) => String(id || "").trim())
+    .filter(Boolean)
+    .some((roleId) => message.member?.roles?.cache?.has(roleId));
+  const targetHasStaffRole = String(IDs?.roles?.Staff || "").trim() &&
+    targetMember.roles?.cache?.has(String(IDs?.roles?.Staff || "").trim());
+  const targetHasCoreProtectedRole = [
+    IDs?.roles?.HighStaff,
+    IDs?.roles?.Admin,
+    IDs?.roles?.Manager,
+    IDs?.roles?.CoFounder,
+    IDs?.roles?.Founder,
+  ]
+    .map((id) => String(id || "").trim())
+    .filter(Boolean)
+    .some((roleId) => targetMember.roles?.cache?.has(roleId));
+
+  // HighStaff (or above) can moderate Staff, but not governance roles.
+  if (
+    actorHighStaffBypass &&
+    targetHasStaffRole &&
+    !targetHasCoreProtectedRole
+  ) {
+    return { ok: true };
   }
-  if (message.member?.roles?.highest && member.roles?.highest) {
-    if (
-      member.roles.highest.position >= message.member.roles.highest.position &&
-      String(message.author.id) !== String(message.guild.ownerId)
-    ) {
-      return { ok: false, error: "Non puoi moderare un utente con ruolo uguale o superiore al tuo." };
-    }
+
+  if (protectedRoleIds.some((roleId) => targetMember.roles?.cache?.has(roleId))) {
+    return {
+      ok: false,
+      error: "Non puoi moderare un utente con ruolo Staff o superiore.",
+    };
   }
   return { ok: true };
 }
@@ -452,7 +494,7 @@ async function runNamed(name, message, args, client) {
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
-    const guard = await validateModerationTarget(message, member, "ban");
+    const guard = await validateModerationTarget(message, member, "ban", userId);
     if (!guard.ok) return reply(message, client, "Ban", guard.error, "Red");
     const duration = parseMaybeDuration(args[targetIndex + 1]);
     const reason = reasonFrom(args, duration ? targetIndex + 2 : targetIndex + 1);
@@ -492,7 +534,7 @@ async function runNamed(name, message, args, client) {
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
-    const guard = await validateModerationTarget(message, member, "kick");
+    const guard = await validateModerationTarget(message, member, "kick", userId);
     if (!guard.ok) return reply(message, client, "Kick", guard.error, "Red");
     const reason = reasonFrom(args, 1);
     const ok = await member.kick(reason).then(() => true).catch(() => false);
@@ -537,7 +579,7 @@ async function runNamed(name, message, args, client) {
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
-    const guard = await validateModerationTarget(message, member, "mute");
+    const guard = await validateModerationTarget(message, member, "mute", userId);
     if (!guard.ok) return reply(message, client, "Mute", guard.error, "Red");
     const durationRaw = String(args[1] || "").trim();
     if (!durationRaw) {
@@ -687,7 +729,7 @@ async function runNamed(name, message, args, client) {
     const warnMember =
       message.guild.members.cache.get(String(userId)) ||
       (await message.guild.members.fetch(String(userId)).catch(() => null));
-    const guard = await validateModerationTarget(message, warnMember, "warn");
+    const guard = await validateModerationTarget(message, warnMember, "warn", userId);
     if (!guard.ok) return reply(message, client, "Warn", guard.error, "Red");
     if (!String(args.slice(1).join(" ") || "").trim()) {
       const helpEmbed = new EmbedBuilder()

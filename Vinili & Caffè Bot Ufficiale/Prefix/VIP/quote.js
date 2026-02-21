@@ -20,7 +20,7 @@ function buildQuotePostEmbed({ messageAuthorId, creatorId, totalPosts }) {
 
 module.exports = {
   name: "quote",
-
+  allowEmptyArgs: true,
   async execute(message) {
     if (!message?.guild) {
       return safeMessageReply(message, {

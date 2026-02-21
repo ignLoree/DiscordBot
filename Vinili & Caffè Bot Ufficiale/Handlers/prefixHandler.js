@@ -194,7 +194,9 @@ function ensurePrefixUsageMetadata(command) {
   const usage =
     String(command?.usage || "").trim() ||
     (subs.length
-      ? `${prefix}${name} <${subs.slice(0, 8).join("|")}>`
+      ? Boolean(command?.allowEmptyArgs)
+        ? `${prefix}${name} [${subs.slice(0, 8).join("|")}]`
+        : `${prefix}${name} <${subs.slice(0, 8).join("|")}>`
       : Boolean(command?.args)
         ? `${prefix}${name} <opzioni>`
         : `${prefix}${name}`);

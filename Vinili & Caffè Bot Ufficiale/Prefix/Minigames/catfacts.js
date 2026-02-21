@@ -1,7 +1,8 @@
 ﻿const { replyError, replyInfo, fetchJson, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "catfacts",
+
+  allowEmptyArgs: true,
   aliases: ["catfact"],
   async execute(message) {
     try {
@@ -15,3 +16,4 @@ module.exports = {
     }
   },
 };
+

@@ -3,7 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 
 module.exports = {
   name: "membercount",
-
+  allowEmptyArgs: true,
   async execute(message) {
     await message.channel.sendTyping();
     const guild = message.guild;

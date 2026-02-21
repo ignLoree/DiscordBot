@@ -24,10 +24,41 @@ body {
 }
 
 .layout {
-  width: min(1400px, 96vw);
-  margin: 24px auto 40px;
+  width: min(1360px, 100%);
+  margin: 24px 0 40px;
   display: grid;
   gap: 16px;
+}
+
+.app-shell {
+  width: min(1600px, 96vw);
+  margin: 24px auto 40px;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar h2 {
+  margin: 0 0 6px;
+}
+
+.nav-btn {
+  width: 100%;
+  text-align: left;
+  font-weight: 600;
+}
+
+.nav-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .hero, .panel {
@@ -83,6 +114,15 @@ button:hover { transform: translateY(-1px); border-color: #3f5f94; }
   gap: 12px;
 }
 
+.page {
+  display: none;
+  gap: 16px;
+}
+
+.page.active {
+  display: grid;
+}
+
 .rows {
   max-height: 420px;
   overflow: auto;
@@ -135,5 +175,15 @@ button.mode-maintenance.active { border-color: var(--warn); color: var(--warn); 
 button.mode-disabled.active { border-color: var(--bad); color: var(--bad); }
 
 @media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sidebar h2 {
+    grid-column: 1 / -1;
+  }
   .grid-2 { grid-template-columns: 1fr; }
 }

@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "space",
+
+  allowEmptyArgs: true,
   aliases: ["iss"],
   async execute(message) {
     try {
@@ -47,3 +48,4 @@ module.exports = {
     }
   },
 };
+

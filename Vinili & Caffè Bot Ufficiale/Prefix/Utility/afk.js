@@ -4,7 +4,7 @@ const AFK = require("../../Schemas/Afk/afkSchema");
 
 module.exports = {
   name: "afk",
-
+  allowEmptyArgs: true,
   async execute(message, args) {
     await message.channel.sendTyping();
     const afkMessage = args.join(" ");

@@ -2,7 +2,8 @@
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-  name: "itunes",
+
+  allowEmptyArgs: true,
   aliases: ["songsearch"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
@@ -33,12 +34,14 @@ module.exports = {
             fields: [
               { name: "Album", value: String(track.collectionName || "N/D"), inline: true },
               {
-                name: "Genere",
+
+  allowEmptyArgs: true,
                 value: String(await translateToItalian(track.primaryGenreName || "N/D")),
                 inline: true,
               },
               {
-                name: "Durata",
+
+  allowEmptyArgs: true,
                 value: String(Math.round(Number(track.trackTimeMillis || 0) / 1000) + "s"),
                 inline: true,
               },
@@ -52,3 +55,4 @@ module.exports = {
     }
   },
 };
+

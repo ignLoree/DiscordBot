@@ -37,6 +37,7 @@ module.exports = {
   skipPrefix: false,
   name: "banner",
   aliases: ["bn"],
+  allowEmptyArgs: true,
   subcommands: ["user", "server", "guild"],
   subcommandAliases: {
     user: "user",

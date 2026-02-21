@@ -37,6 +37,8 @@ const saveRouteBtn = document.getElementById("saveRouteBtn");
 const routeGroupSelect = document.getElementById("routeGroupSelect");
 const routeGroupChannelSelect = document.getElementById("routeGroupChannelSelect");
 const saveRouteGroupBtn = document.getElementById("saveRouteGroupBtn");
+const navButtons = Array.from(document.querySelectorAll("[data-nav-page]"));
+const pages = Array.from(document.querySelectorAll(".page[data-page]"));
 
 const rowTemplate = document.getElementById("rowTemplate");
 
@@ -48,6 +50,7 @@ let usersQuery = "";
 let currentScope = "global";
 let controlsRequestSeq = 0;
 let refreshRunning = false;
+let activePage = "overview";
 
 function escapeHtml(value) {
   return String(value || "")
@@ -82,6 +85,35 @@ async function api(path, options = {}) {
 
 function hasAuthContext() {
   return Boolean(getToken() || currentAuth?.authenticated);
+}
+
+function normalizePage(value) {
+  const safe = String(value || "").trim().toLowerCase();
+  const known = new Set(["overview", "controls", "commands", "users", "logs"]);
+  return known.has(safe) ? safe : "overview";
+}
+
+function showPage(pageName, updateHash = true) {
+  activePage = normalizePage(pageName);
+  for (const page of pages) {
+    page.classList.toggle("active", page.dataset.page === activePage);
+  }
+  for (const btn of navButtons) {
+    btn.classList.toggle("active", btn.dataset.navPage === activePage);
+  }
+  if (updateHash) window.location.hash = `#${activePage}`;
+}
+
+function initNavigation() {
+  const fromHash = normalizePage(String(window.location.hash || "").replace("#", ""));
+  showPage(fromHash, false);
+  for (const btn of navButtons) {
+    btn.addEventListener("click", () => showPage(btn.dataset.navPage));
+  }
+  window.addEventListener("hashchange", () => {
+    const nextPage = normalizePage(String(window.location.hash || "").replace("#", ""));
+    showPage(nextPage, false);
+  });
 }
 
 function modeFromTables(globalTable = {}, guildTable = {}, key = "") {
@@ -517,6 +549,7 @@ saveRouteGroupBtn.addEventListener("click", async () => {
 });
 
 (async function boot() {
+  initNavigation();
   tokenInput.value = getToken();
   await refreshAll().catch((error) => {
     console.error(error);

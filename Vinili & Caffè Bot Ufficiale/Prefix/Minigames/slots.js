@@ -3,7 +3,8 @@
 const EMOJIS = ["🍒", "🍋", "🔔", "💎", "🍻", "⭐"];
 
 module.exports = {
-  name: "slots",
+
+  allowEmptyArgs: true,
   aliases: ["slot"],
   async execute(message) {
     const spin = Array.from({ length: 3 }, () =>
@@ -15,3 +16,4 @@ module.exports = {
     return replyInfo(message, "| " + spin.join(" | ") + " |\n**" + result + "**", "Slot Machine");
   },
 };
+

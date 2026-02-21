@@ -25,7 +25,8 @@ function formatProbe(result) {
 }
 
 module.exports = {
-  name: "steamstatus",
+
+  allowEmptyArgs: true,
   aliases: ["steam"],
   async execute(message) {
     try {
@@ -54,3 +55,4 @@ module.exports = {
     }
   },
 };
+

@@ -424,9 +424,9 @@ function getFlagReasons(state, member, at = nowMs()) {
 function isHighRiskJoinRaidReasons(reasons = []) {
   const keys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
   if (!keys.size) return false;
-  if (keys.has("id_flag")) return true;
-  if (keys.has("age_flag") && keys.has("no_pfp")) return true;
-  return false;
+  // Treat only adaptive ID correlation as high-risk.
+  // "young account" and "no pfp" alone are too noisy and can trigger false positives.
+  return keys.has("id_flag");
 }
 
 async function resolveModLogChannel(guild) {
@@ -776,11 +776,6 @@ async function processJoinRaidForMember(member) {
     if (!wasActive && uniqueFlaggedUsers >= JOIN_RAID_CONFIG.triggerCount) {
       state.raidUntil = at + JOIN_RAID_CONFIG.raidDurationMs;
       const untilTs = Math.floor(state.raidUntil / 1000);
-      await triggerAntiNukePanicExternal(
-        member.guild,
-        "Join Raid escalation",
-        500,
-      ).catch(() => null);
       triggerAutoModPanicExternal(
         member.guild.id,
         member.id,
@@ -814,11 +809,6 @@ async function processJoinRaidForMember(member) {
 
     const active = Number(state.raidUntil || 0) > at;
     if (active && highRisk && reasons.length > 0) {
-      await triggerAntiNukePanicExternal(
-        member.guild,
-        "Join Raid high-risk account during active window",
-        500,
-      ).catch(() => null);
       triggerAutoModPanicExternal(
         member.guild.id,
         member.id,
@@ -900,16 +890,16 @@ async function activateJoinRaidWindow(
 async function registerJoinRaidSecuritySignal(member, options = {}) {
   if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
   const at = nowMs();
-  const heat = Math.max(0, Number(options.antiNukeHeat || 40));
+  const enableAntiNuke = Boolean(options.enableAntiNuke);
+  const enableAutoMod = options.enableAutoMod !== false;
+  const heat = Math.max(0, Number(options.antiNukeHeat || 0));
   const reason = String(options.reason || "Join Gate security signal");
-  const raidBoost = Math.max(0, Number(options.raidBoost || 1));
-  await triggerAntiNukePanicExternal(member.guild, reason, heat).catch(() => null);
-  const panic = triggerAutoModPanicExternal(
-    member.guild.id,
-    member.id,
-    { raidBoost, activityBoost: 1 },
-    at,
-  );
+  const raidBoost = Math.max(0, Number(options.raidBoost || 0));
+  if (enableAntiNuke && heat > 0) {
+    await triggerAntiNukePanicExternal(member.guild, reason, heat).catch(() => null);
+  }
+  if (!enableAutoMod) return { ok: true, panic: { activated: false, active: false, count: 0 } };
+  const panic = triggerAutoModPanicExternal(member.guild.id, member.id, { raidBoost, activityBoost: 0 }, at);
   return { ok: true, panic };
 }
 

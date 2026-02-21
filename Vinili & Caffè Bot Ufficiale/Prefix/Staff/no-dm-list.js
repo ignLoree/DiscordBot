@@ -20,7 +20,7 @@ function chunkLines(lines, maxLen = 1900) {
 module.exports = {
   name: "no-dm-list",
   aliases: ["nodmlist"],
-
+  allowEmptyArgs: true,
   async execute(message) {
     const set = await getNoDmSet(message.guild.id);
     const ids = Array.from(set);

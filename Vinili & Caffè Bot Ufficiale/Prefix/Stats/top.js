@@ -773,6 +773,7 @@ async function sendTopPayload(message, payload) {
 
 module.exports = {
   name: "top",
+  allowEmptyArgs: true,
   TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
   TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
   TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,

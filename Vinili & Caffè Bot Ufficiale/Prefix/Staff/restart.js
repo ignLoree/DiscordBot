@@ -122,6 +122,7 @@ module.exports = {
   name: "restart",
   folder: "Dev",
   aliases: ["rs", "reload"],
+  allowEmptyArgs: true,
   subcommands: [
     "full",
     "handlers",

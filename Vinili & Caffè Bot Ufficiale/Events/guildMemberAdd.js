@@ -682,14 +682,16 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     }
     await registerJoinRaidSecuritySignal(member, {
       reason: `Join Gate action: ${reason}`,
-      antiNukeHeat: appliedAction === "ban" ? 80 : 60,
-      raidBoost: appliedAction === "ban" ? 2 : 1,
+      enableAntiNuke: false,
+      antiNukeHeat: 0,
+      raidBoost: appliedAction === "ban" ? 1 : 0.5,
     }).catch(() => null);
   } else if (appliedAction === "log") {
     await registerJoinRaidSecuritySignal(member, {
       reason: `Join Gate suspicious log: ${reason}`,
-      antiNukeHeat: 25,
-      raidBoost: 1,
+      enableAntiNuke: false,
+      antiNukeHeat: 0,
+      raidBoost: 0,
     }).catch(() => null);
   }
   const logChannel =

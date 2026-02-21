@@ -816,7 +816,9 @@ module.exports = {
         typeof command.subcommandAliases === "object" &&
         Object.keys(command.subcommandAliases).length > 0),
     );
-    if (!args.length && (Boolean(command?.args) || hasSubcommands)) {
+    const requireArgsForSubcommands =
+      hasSubcommands && !Boolean(command?.allowEmptyArgs);
+    if (!args.length && (Boolean(command?.args) || requireArgsForSubcommands)) {
       const shown = await showPrefixUsageGuide({
         message,
         command,

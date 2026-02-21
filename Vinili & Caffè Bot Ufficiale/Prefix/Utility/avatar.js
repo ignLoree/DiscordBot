@@ -37,6 +37,7 @@ module.exports = {
   skipPrefix: false,
   name: "avatar",
   aliases: ["av"],
+  allowEmptyArgs: true,
   subcommands: ["get", "server", "user", "guild"],
   subcommandAliases: {
     get: "get",

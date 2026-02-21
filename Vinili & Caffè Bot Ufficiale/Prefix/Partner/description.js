@@ -15,6 +15,7 @@ async function resolveTargetUser(message, rawArg) {
 module.exports = {
   name: "description",
   aliases: ["desc"],
+  allowEmptyArgs: true,
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
