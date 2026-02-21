@@ -4,6 +4,8 @@ const path = require("path");
 const mongoose = require("mongoose");
 const IDs = require("../../Utils/Config/ids");
 const JoinRaidState = require("../../Schemas/Moderation/joinRaidStateSchema");
+const { triggerAntiNukePanicExternal } = require("./antiNukeService");
+const { triggerAutoModPanicExternal } = require("./automodService");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const HIGH_STAFF_ROLE_ID = String(IDs.roles?.HighStaff || "");
@@ -774,6 +776,17 @@ async function processJoinRaidForMember(member) {
     if (!wasActive && uniqueFlaggedUsers >= JOIN_RAID_CONFIG.triggerCount) {
       state.raidUntil = at + JOIN_RAID_CONFIG.raidDurationMs;
       const untilTs = Math.floor(state.raidUntil / 1000);
+      await triggerAntiNukePanicExternal(
+        member.guild,
+        "Join Raid escalation",
+        500,
+      ).catch(() => null);
+      triggerAutoModPanicExternal(
+        member.guild.id,
+        member.id,
+        { raidBoost: 2, activityBoost: 1 },
+        at,
+      );
       await warnRaidRoles(member.guild, [
         `Join Raid triggered: **${uniqueFlaggedUsers}** unique flagged users in the last **${formatRaidHours(
           JOIN_RAID_CONFIG.triggerWindowMs,
@@ -801,6 +814,17 @@ async function processJoinRaidForMember(member) {
 
     const active = Number(state.raidUntil || 0) > at;
     if (active && highRisk && reasons.length > 0) {
+      await triggerAntiNukePanicExternal(
+        member.guild,
+        "Join Raid high-risk account during active window",
+        500,
+      ).catch(() => null);
+      triggerAutoModPanicExternal(
+        member.guild.id,
+        member.id,
+        { raidBoost: 1 },
+        at,
+      );
       const outcome = await applyPunishment(member, reasons);
       return {
         blocked: true,
@@ -823,6 +847,70 @@ async function processJoinRaidForMember(member) {
     }
     return { blocked: false, flagged: reasons.length > 0, reasons };
   });
+}
+
+async function activateJoinRaidWindow(
+  guild,
+  reason = "Security escalation",
+  minDurationMs = 0,
+) {
+  if (!guild?.id) return { ok: false, reason: "missing_guild" };
+  await loadGuildState(guild.id);
+  return withGuildLock(guild.id, async () => {
+    const at = nowMs();
+    const state = getGuildState(guild.id);
+    pruneState(state, at);
+    const currentUntil = Number(state.raidUntil || 0);
+    const requestedDuration = Math.max(
+      Number(JOIN_RAID_CONFIG.raidDurationMs || 0),
+      Number(minDurationMs || 0),
+    );
+    const safeDuration = Math.max(60_000, requestedDuration);
+    const targetUntil = at + safeDuration;
+    const wasActive = currentUntil > at;
+    const changed = !wasActive || targetUntil > currentUntil;
+    if (!changed) {
+      return { ok: true, activated: false, raidUntil: currentUntil };
+    }
+    state.raidUntil = Math.max(currentUntil, targetUntil);
+    scheduleStateSave(guild.id);
+    const untilTs = Math.floor(state.raidUntil / 1000);
+    if (!wasActive) {
+      await warnRaidRoles(guild, [
+        `Join Raid attivato da escalation sicurezza.`,
+        `Protezione raid attiva fino a <t:${untilTs}:F>.`,
+      ]);
+    }
+    await sendJoinRaidLog(
+      guild,
+      "Join Raid escalation attivata",
+      [
+        `${ARROW} **Reason:** ${String(reason || "Security escalation")}`,
+        `${ARROW} **Raid Duration:** ${Math.round(
+          safeDuration / 60_000,
+        )} minutes`,
+        `${ARROW} **Raid Until:** <t:${untilTs}:F>`,
+      ],
+      "#ED4245",
+    );
+    return { ok: true, activated: !wasActive, raidUntil: state.raidUntil };
+  });
+}
+
+async function registerJoinRaidSecuritySignal(member, options = {}) {
+  if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
+  const at = nowMs();
+  const heat = Math.max(0, Number(options.antiNukeHeat || 40));
+  const reason = String(options.reason || "Join Gate security signal");
+  const raidBoost = Math.max(0, Number(options.raidBoost || 1));
+  await triggerAntiNukePanicExternal(member.guild, reason, heat).catch(() => null);
+  const panic = triggerAutoModPanicExternal(
+    member.guild.id,
+    member.id,
+    { raidBoost, activityBoost: 1 },
+    at,
+  );
+  return { ok: true, panic };
 }
 
 function applyJoinRaidPreset(name = "balanced") {
@@ -899,6 +987,8 @@ module.exports = {
   JOIN_RAID_CONFIG,
   JOIN_RAID_PRESETS,
   processJoinRaidForMember,
+  activateJoinRaidWindow,
+  registerJoinRaidSecuritySignal,
   restoreTempBans,
   applyJoinRaidPreset,
   getJoinRaidStatusSnapshot,

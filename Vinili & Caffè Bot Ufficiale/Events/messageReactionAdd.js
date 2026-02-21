@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
 const communitySchemas = require("../Schemas/Community/communitySchemas");
 const SkullboardPost = communitySchemas?.SkullboardPost;
 const IDs = require("../Utils/Config/ids");
@@ -33,7 +33,7 @@ function clamp(value, max) {
 }
 
 function sanitizeUsername(member, author) {
-  const fallback = author?.username || "Unknown";
+  const fallback = author?.username || "Sconosciuto";
   const raw = (member?.displayName || fallback).replace(/\n/g, " ").trim();
   return clamp(raw || fallback, MAX_DISPLAY_NAME_LENGTH);
 }

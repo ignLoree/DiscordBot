@@ -45,6 +45,12 @@ module.exports = {
   name: "customregister",
   aliases: ["customsync", "registercustom"],
   description: "Registra custom role/vocale già esistenti nel sistema.",
+  subcommands: ["role", "voc", "voice"],
+  subcommandAliases: {
+    role: "role",
+    voc: "voc",
+    voice: "voc",
+  },
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;

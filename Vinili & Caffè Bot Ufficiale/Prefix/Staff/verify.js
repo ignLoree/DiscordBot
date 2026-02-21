@@ -10,7 +10,7 @@ const VERIFY_ROLE_IDS = [
 ].filter(Boolean);
 
 function formatUserList(list) {
-  if (!Array.isArray(list) || list.length === 0) return "None";
+  if (!Array.isArray(list) || list.length === 0) return "Nessuno";
   const maxVisible = 5;
   const shown = list.slice(0, maxVisible);
   const lines = shown.map((entry, index) =>
@@ -60,10 +60,10 @@ function buildCancelledEmbed() {
 }
 
 function buildResultEmbed(staffId, ownerId, successList, failList) {
-  const successText = successList.length ? formatUserList(successList) : "None";
+  const successText = successList.length ? formatUserList(successList) : "Nessuno";
   const failText = failList.length
     ? formatUserList(failList)
-    : "All users were verified!";
+    : "Tutti gli utenti sono stati verificati!";
   const ownerMark =
     ownerId && staffId === ownerId ? " <:owner:1465451914039787654>" : "";
   return new EmbedBuilder()
@@ -89,7 +89,7 @@ function buildNoMemberEmbed() {
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle("Unsuccessful Operation!")
-    .setDescription("No actual members were found! Try again!");
+    .setDescription("Non sono stati trovati membri validi. Riprova!");
 }
 
 function buildConfirmRow(yesId, noId, opts = {}) {

@@ -37,6 +37,13 @@ module.exports = {
   skipPrefix: false,
   name: "avatar",
   aliases: ["av"],
+  subcommands: ["get", "server", "user", "guild"],
+  subcommandAliases: {
+    get: "get",
+    server: "server",
+    user: "user",
+    guild: "guild",
+  },
 
   async execute(message, args) {
     if (!message.guild) {

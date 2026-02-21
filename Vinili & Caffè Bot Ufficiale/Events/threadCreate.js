@@ -23,10 +23,10 @@ async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs
 }
 
 function threadTypeLabel(threadType) {
-  if (threadType === ChannelType.PrivateThread) return "Private Thread";
-  if (threadType === ChannelType.PublicThread) return "Public Thread";
-  if (threadType === ChannelType.AnnouncementThread) return "Announcement Thread";
-  return `Unknown (${Number(threadType || 0)})`;
+  if (threadType === ChannelType.PrivateThread) return "Thread privato";
+  if (threadType === ChannelType.PublicThread) return "Thread pubblico";
+  if (threadType === ChannelType.AnnouncementThread) return "Thread annuncio";
+  return `Sconosciuto (${Number(threadType || 0)})`;
 }
 
 module.exports = {
@@ -55,19 +55,19 @@ module.exports = {
           `${ARROW} **Name:** ${thread.name || "sconosciuto"}`,
           `${ARROW} **Type:** ${threadTypeLabel(thread.type)}`,
           `${ARROW} **Archived:** ${yesNo(Boolean(thread.archived))}`,
-          `${ARROW} **Locked:** ${yesNo(Boolean(thread.locked))}`,
-          `${ARROW} **Auto Archive Duration:** ${Number(thread.autoArchiveDuration || 0) ? `${thread.autoArchiveDuration} minutes` : "None"}`,
-          `${ARROW} **Rate Limit Per User:** ${Number(thread.rateLimitPerUser || 0) || "None"}`,
+          `${ARROW} **Bloccato:** ${yesNo(Boolean(thread.locked))}`,
+          `${ARROW} **Durata auto-archiviazione:** ${Number(thread.autoArchiveDuration || 0) ? `${thread.autoArchiveDuration} minuti` : "Nessuna"}`,
+          `${ARROW} **Slowmode per utente:** ${Number(thread.rateLimitPerUser || 0) || "Nessuna"}`,
         ];
 
         if (Array.isArray(thread.appliedTags) && thread.appliedTags.length) {
-          lines.push(`${ARROW} **Applied Tags:** \`${thread.appliedTags.map((id) => String(id)).join(",")}\``);
+          lines.push(`${ARROW} **Tag applicati:** \`${thread.appliedTags.map((id) => String(id)).join(",")}\``);
         }
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "type", "archived", "locked", "auto_archive_duration", "rate_limit_per_user", "applied_tags"]));
 
         const embed = new EmbedBuilder()
           .setColor("#57F287")
-          .setTitle("Thread Create")
+          .setTitle("Creazione thread")
           .setDescription(lines.join("\n"));
 
         const payload = { embeds: [embed] };
@@ -76,7 +76,7 @@ module.exports = {
             new ActionRowBuilder().addComponents(
               new ButtonBuilder()
                 .setStyle(ButtonStyle.Link)
-                .setLabel("Go to Thread")
+                .setLabel("Vai al thread")
                 .setURL(thread.url),
             ),
           ];

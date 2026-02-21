@@ -33,6 +33,23 @@ const DANGEROUS_CHANNEL_PERMS = [
   PermissionsBitField.Flags.ManageMessages,
   PermissionsBitField.Flags.MentionEveryone,
 ];
+const LOCKDOWN_CHANNEL_PERMISSION_FLAGS = [
+  ["SendMessages", PermissionsBitField.Flags.SendMessages],
+  ["AddReactions", PermissionsBitField.Flags.AddReactions],
+  ["CreatePublicThreads", PermissionsBitField.Flags.CreatePublicThreads],
+  ["CreatePrivateThreads", PermissionsBitField.Flags.CreatePrivateThreads],
+  ["SendMessagesInThreads", PermissionsBitField.Flags.SendMessagesInThreads],
+  ["Connect", PermissionsBitField.Flags.Connect],
+  ["Speak", PermissionsBitField.Flags.Speak],
+  ["Stream", PermissionsBitField.Flags.Stream],
+  ["UseApplicationCommands", PermissionsBitField.Flags.UseApplicationCommands],
+].filter(([, bit]) => Boolean(bit));
+const LOCKDOWN_EXTRA_ROLE_IDS = [
+  IDs.roles?.Member,
+  IDs.roles?.Staff,
+]
+  .map((id) => String(id || "").trim())
+  .filter(Boolean);
 const KICK_BAN_TRACKER = new Map();
 const ROLE_CREATION_TRACKER = new Map();
 const ROLE_DELETION_TRACKER = new Map();
@@ -57,6 +74,8 @@ const PANIC_EXECUTOR_COOLDOWN = new Map();
 const PANIC_EXECUTOR_COOLDOWN_MS = 20_000;
 const MAINTENANCE_ALLOWLIST = new Map();
 const MAINTENANCE_MAX_MS = 2 * 60 * 60_000;
+const COMMAND_LOCK_CACHE = new Map();
+const COMMAND_LOCK_CACHE_TTL_MS = 2_000;
 const ANTINUKE_CONFIG_PATH = path.resolve(
   __dirname,
   "../../Utils/Config/antiNukeConfig.json",
@@ -141,6 +160,9 @@ const ANTINUKE_CONFIG = {
       dangerousRoles: true,
       unlockDangerousRolesOnFinish: true,
       lockModerationCommands: true,
+      lockAllCommands: true,
+      channelLockdown: true,
+      banAttackExecutor: true,
       roleAllowlistIds: new Set([]),
     },
     warnedRoleIds: new Set([
@@ -447,6 +469,18 @@ function applyPersistentAntiNukeConfig(raw) {
     pm.lockdown?.lockModerationCommands,
     ANTINUKE_CONFIG.panicMode.lockdown.lockModerationCommands,
   );
+  ANTINUKE_CONFIG.panicMode.lockdown.lockAllCommands = boolOr(
+    pm.lockdown?.lockAllCommands,
+    ANTINUKE_CONFIG.panicMode.lockdown.lockAllCommands,
+  );
+  ANTINUKE_CONFIG.panicMode.lockdown.channelLockdown = boolOr(
+    pm.lockdown?.channelLockdown,
+    ANTINUKE_CONFIG.panicMode.lockdown.channelLockdown,
+  );
+  ANTINUKE_CONFIG.panicMode.lockdown.banAttackExecutor = boolOr(
+    pm.lockdown?.banAttackExecutor,
+    ANTINUKE_CONFIG.panicMode.lockdown.banAttackExecutor,
+  );
   ANTINUKE_CONFIG.panicMode.autoBackupSync.enabled = boolOr(
     pm.autoBackupSync?.enabled,
     ANTINUKE_CONFIG.panicMode.autoBackupSync.enabled,
@@ -497,6 +531,16 @@ function saveAntiNukePersistentConfig() {
   return writeJsonSafe(ANTINUKE_CONFIG_PATH, getSerializableAntiNukeConfig());
 }
 
+function setAntiNukeConfigSnapshot(rawConfig) {
+  try {
+    applyPersistentAntiNukeConfig(rawConfig || {});
+    const saved = saveAntiNukePersistentConfig();
+    return saved ? { ok: true, config: getSerializableAntiNukeConfig() } : { ok: false, reason: "save_failed" };
+  } catch {
+    return { ok: false, reason: "apply_failed" };
+  }
+}
+
 applyPersistentAntiNukeConfig(readJsonSafe(ANTINUKE_CONFIG_PATH, null));
 
 function hasAllPerms(member, flags) {
@@ -515,7 +559,7 @@ function isUnknownExecutorId(executorId) {
 function formatExecutorLine(executorId) {
   const actorId = String(executorId || "").trim();
   if (!actorId || actorId === UNKNOWN_EXECUTOR_ID) {
-    return `<:VC_right_arrow:1473441155055096081> **Executor:** Unknown (audit missing)`;
+    return `<:VC_right_arrow:1473441155055096081> **Executor:** Sconosciuto (audit mancante)`;
   }
   return `<:VC_right_arrow:1473441155055096081> **Executor:** <@${actorId}> \`${actorId}\``;
 }
@@ -760,6 +804,17 @@ function getDangerMask(flags = DANGEROUS_PERMS) {
   return mask;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms || 0))));
+}
+
+function getLockdownDenyMask() {
+  return LOCKDOWN_CHANNEL_PERMISSION_FLAGS.reduce(
+    (mask, [, bit]) => mask | BigInt(bit || 0n),
+    0n,
+  );
+}
+
 function getPanicState(guildId) {
   const now = Date.now();
   for (const [gid, state] of ANTINUKE_PANIC_STATE.entries()) {
@@ -767,6 +822,7 @@ function getPanicState(guildId) {
     const active = Number(state?.activeUntil || 0) > now;
     const hasArtifacts =
       Number(state?.lockedRoles?.size || 0) > 0 ||
+      Number(state?.lockedChannels?.size || 0) > 0 ||
       Number(state?.createdRoleIds?.size || 0) > 0 ||
       Number(state?.createdChannelIds?.size || 0) > 0 ||
       Number(state?.createdWebhookIds?.size || 0) > 0;
@@ -783,10 +839,13 @@ function getPanicState(guildId) {
     panicStartedAt: 0,
     activeUntil: 0,
     lockedRoles: new Map(),
+    lockedChannels: new Map(),
     createdRoleIds: new Set(),
     createdChannelIds: new Set(),
     createdWebhookIds: new Set(),
     unlockTimer: null,
+    restoreRetryTimer: null,
+    restoreRetryCount: 0,
   };
   ANTINUKE_PANIC_STATE.set(key, initial);
   return initial;
@@ -834,9 +893,14 @@ async function lockDangerousRolesForPanic(guild, state) {
 }
 
 async function unlockDangerousRolesAfterPanic(guild, state) {
-  if (!ANTINUKE_CONFIG.panicMode.lockdown.unlockDangerousRolesOnFinish) return;
+  if (!ANTINUKE_CONFIG.panicMode.lockdown.unlockDangerousRolesOnFinish) {
+    state?.lockedRoles?.clear?.();
+    return { completed: true };
+  }
   const me = guild?.members?.me;
-  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) return;
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) {
+    return { completed: false, reason: "missing_manage_roles" };
+  }
 
   for (const [roleId, oldBitsStr] of state.lockedRoles.entries()) {
     const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
@@ -848,6 +912,195 @@ async function unlockDangerousRolesAfterPanic(guild, state) {
       .catch(() => {});
   }
   state.lockedRoles.clear();
+  return { completed: true };
+}
+
+function buildLockdownRestorePayload(snapshot) {
+  const allowBits = BigInt(snapshot?.allowBits || 0n);
+  const denyBits = BigInt(snapshot?.denyBits || 0n);
+  const payload = {};
+  for (const [name, bit] of LOCKDOWN_CHANNEL_PERMISSION_FLAGS) {
+    const f = BigInt(bit || 0n);
+    if ((allowBits & f) !== 0n) payload[name] = true;
+    else if ((denyBits & f) !== 0n) payload[name] = false;
+    else payload[name] = null;
+  }
+  return payload;
+}
+
+function getLockdownTargetIds(guild) {
+  const everyoneId = String(guild?.id || "").trim();
+  return Array.from(
+    new Set(
+      [everyoneId, ...LOCKDOWN_EXTRA_ROLE_IDS]
+        .map((id) => String(id || "").trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+async function lockGuildChannelsForPanic(guild, state) {
+  if (!ANTINUKE_CONFIG.panicMode.lockdown.channelLockdown) return;
+  const me = guild?.members?.me;
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) return;
+  const targetIds = getLockdownTargetIds(guild);
+  if (!targetIds.length) return;
+  await guild.channels.fetch().catch(() => null);
+  const denyMask = getLockdownDenyMask();
+  let ops = 0;
+  for (const channel of guild.channels.cache.values()) {
+    if (!channel?.permissionOverwrites?.edit) continue;
+    if (!state.lockedChannels.has(String(channel.id))) {
+      state.lockedChannels.set(String(channel.id), {
+        targets: {},
+      });
+    }
+    const channelSnapshot = state.lockedChannels.get(String(channel.id));
+    if (
+      !channelSnapshot ||
+      typeof channelSnapshot !== "object" ||
+      Array.isArray(channelSnapshot)
+    ) {
+      continue;
+    }
+    if (
+      !channelSnapshot.targets ||
+      typeof channelSnapshot.targets !== "object" ||
+      Array.isArray(channelSnapshot.targets)
+    ) {
+      channelSnapshot.targets = {};
+    }
+
+    for (const targetId of targetIds) {
+      const current = channel.permissionOverwrites.cache.get(targetId) || null;
+      const currentDeny = BigInt(current?.deny?.bitfield || 0n);
+      if (!channelSnapshot.targets[targetId]) {
+        channelSnapshot.targets[targetId] = {
+          hadOverwrite: Boolean(current),
+          allowBits: String(BigInt(current?.allow?.bitfield || 0n)),
+          denyBits: String(BigInt(current?.deny?.bitfield || 0n)),
+        };
+      }
+      if ((currentDeny & denyMask) === denyMask) continue;
+      await channel.permissionOverwrites
+        .edit(
+          targetId,
+          Object.fromEntries(
+            LOCKDOWN_CHANNEL_PERMISSION_FLAGS.map(([name]) => [name, false]),
+          ),
+          { reason: "AntiNuke Panic: global channel lockdown" },
+        )
+        .catch(() => {});
+      ops += 1;
+      if (ops % 8 === 0) {
+        await sleep(125);
+      }
+    }
+  }
+}
+
+async function unlockGuildChannelsAfterPanic(guild, state) {
+  if (!ANTINUKE_CONFIG.panicMode.lockdown.channelLockdown) {
+    state?.lockedChannels?.clear?.();
+    return { completed: true };
+  }
+  const me = guild?.members?.me;
+  if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
+    return { completed: false, reason: "missing_manage_channels" };
+  }
+  const targetIds = getLockdownTargetIds(guild);
+  if (!targetIds.length) {
+    return { completed: false, reason: "missing_everyone_id" };
+  }
+
+  let ops = 0;
+  for (const [channelId, snapshot] of state.lockedChannels.entries()) {
+    const channel =
+      guild.channels.cache.get(String(channelId)) ||
+      (await guild.channels.fetch(String(channelId)).catch(() => null));
+    if (!channel?.permissionOverwrites) continue;
+    const targetsSnapshot =
+      snapshot?.targets && typeof snapshot.targets === "object"
+        ? snapshot.targets
+        : {
+          [String(guild.id || "")]: snapshot,
+        };
+    const restoreTargetIds = Array.from(
+      new Set(
+        Object.keys(targetsSnapshot || {}).concat(targetIds).filter(Boolean),
+      ),
+    );
+    for (const targetId of restoreTargetIds) {
+      const targetSnapshot = targetsSnapshot?.[targetId];
+      if (!targetSnapshot) continue;
+      if (!targetSnapshot?.hadOverwrite) {
+        await channel.permissionOverwrites
+          .delete(targetId, "AntiNuke Panic: restore channel overwrite")
+          .catch(() => {});
+        ops += 1;
+        if (ops % 8 === 0) {
+          await sleep(125);
+        }
+        continue;
+      }
+      await channel.permissionOverwrites
+        .edit(
+          targetId,
+          buildLockdownRestorePayload(targetSnapshot),
+          { reason: "AntiNuke Panic: restore channel permissions" },
+        )
+        .catch(() => {});
+      ops += 1;
+      if (ops % 8 === 0) {
+        await sleep(125);
+      }
+    }
+  }
+  state.lockedChannels.clear();
+  return { completed: true };
+}
+
+function schedulePanicRestoreRetry(guild, state, reason = "retry") {
+  if (!guild?.id || !state) return;
+  if (state.restoreRetryTimer) return;
+  const maxTries = 30;
+  const delayMs = 60_000;
+  state.restoreRetryTimer = setTimeout(async () => {
+    state.restoreRetryTimer = null;
+    if (Number(state.activeUntil || 0) > Date.now()) {
+      schedulePanicRestoreRetry(guild, state, "still_active");
+      return;
+    }
+    state.restoreRetryCount = Number(state.restoreRetryCount || 0) + 1;
+    const roleResult = await unlockDangerousRolesAfterPanic(guild, state);
+    const channelResult = await unlockGuildChannelsAfterPanic(guild, state);
+    const done =
+      Boolean(roleResult?.completed) &&
+      Boolean(channelResult?.completed) &&
+      Number(state.lockedRoles?.size || 0) === 0 &&
+      Number(state.lockedChannels?.size || 0) === 0;
+    if (done) {
+      state.restoreRetryCount = 0;
+      return;
+    }
+    if (state.restoreRetryCount < maxTries) {
+      schedulePanicRestoreRetry(guild, state, reason);
+      return;
+    }
+    await sendAntiNukeLog(
+      guild,
+      "AntiNuke Panic Restore Pending",
+      [
+        `<:VC_right_arrow:1473441155055096081> **Reason:** restore retry limit reached`,
+        `<:VC_right_arrow:1473441155055096081> **Locked Roles Pending:** ${Number(state.lockedRoles?.size || 0)}`,
+        `<:VC_right_arrow:1473441155055096081> **Locked Channels Pending:** ${Number(state.lockedChannels?.size || 0)}`,
+      ],
+      "#F59E0B",
+    );
+  }, delayMs);
+  if (typeof state.restoreRetryTimer?.unref === "function") {
+    state.restoreRetryTimer.unref();
+  }
 }
 
 async function runAutoBackupSyncAfterPanic(guild, state) {
@@ -900,6 +1153,11 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   }
   const now = Date.now();
   const state = getPanicState(guild.id);
+  if (state.restoreRetryTimer) {
+    clearTimeout(state.restoreRetryTimer);
+    state.restoreRetryTimer = null;
+  }
+  state.restoreRetryCount = 0;
   if (ANTINUKE_CONFIG.panicMode.useHeatAlgorithm) {
     decayPanicHeat(state, now);
   }
@@ -926,7 +1184,10 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   }
   state.heat = 0;
 
-  await lockDangerousRolesForPanic(guild, state);
+  if (!wasActive) {
+    await lockDangerousRolesForPanic(guild, state);
+    await lockGuildChannelsForPanic(guild, state);
+  }
 
   if (state.unlockTimer) clearTimeout(state.unlockTimer);
   state.unlockTimer = setTimeout(async () => {
@@ -934,14 +1195,23 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     current.unlockTimer = null;
     if (Number(current.activeUntil || 0) > Date.now()) return;
     current.panicStartedAt = 0;
-    await unlockDangerousRolesAfterPanic(guild, current);
+    const roleResult = await unlockDangerousRolesAfterPanic(guild, current);
+    const channelResult = await unlockGuildChannelsAfterPanic(guild, current);
     await runAutoBackupSyncAfterPanic(guild, current);
+    const restored =
+      Boolean(roleResult?.completed) &&
+      Boolean(channelResult?.completed) &&
+      Number(current.lockedRoles?.size || 0) === 0 &&
+      Number(current.lockedChannels?.size || 0) === 0;
+    if (!restored) {
+      schedulePanicRestoreRetry(guild, current, "panic_end");
+    }
     await sendAntiNukeLog(
       guild,
       "AntiNuke Panic Mode Ended",
       [
         `<:VC_right_arrow:1473441155055096081> **Reason:** Panic duration ended`,
-        `<:VC_right_arrow:1473441155055096081> **Lockdown:** roles restored`,
+        `<:VC_right_arrow:1473441155055096081> **Lockdown:** ruoli e canali ripristinati`,
       ],
       "#57F287",
     );
@@ -951,6 +1221,14 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   }
 
   if (!wasActive) {
+    try {
+      const { activateJoinRaidWindow } = require("./joinRaidService");
+      await activateJoinRaidWindow(
+        guild,
+        "AntiNuke panic escalation",
+        baseDuration,
+      );
+    } catch {}
     await sendAntiNukeLog(
       guild,
       "AntiNuke Panic Mode Enabled",
@@ -960,12 +1238,24 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
         `<:VC_right_arrow:1473441155055096081> **Duration:** ${Math.round(ANTINUKE_CONFIG.panicMode.durationMs / 60_000)} min`,
         `<:VC_right_arrow:1473441155055096081> **Max Duration:** ${Math.round(maxDuration / 60_000)} min`,
         `<:VC_right_arrow:1473441155055096081> **Dangerous Roles Lockdown:** ${ANTINUKE_CONFIG.panicMode.lockdown.dangerousRoles ? "ON" : "OFF"}`,
+        `<:VC_right_arrow:1473441155055096081> **Channel Lockdown:** ${ANTINUKE_CONFIG.panicMode.lockdown.channelLockdown ? "ON" : "OFF"}`,
       ],
       "#ED4245",
     );
   }
 
   return { activated: !wasActive, active: true };
+}
+
+async function triggerAntiNukePanicExternal(
+  guild,
+  reason = "External security signal",
+  addedHeat = 100,
+) {
+  if (!guild?.id) return { ok: false, reason: "missing_guild" };
+  const safeHeat = Math.max(0, Number(addedHeat || 0));
+  const panic = await enableAntiNukePanic(guild, String(reason || "External security signal"), safeHeat);
+  return { ok: true, ...panic };
 }
 
 function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
@@ -994,6 +1284,7 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
 
 function quarantineOutcomeLabel(outcome) {
   if (!outcome?.applied) return "Quarantine not applied";
+  if (outcome.method === "ban") return "Banned";
   if (outcome.method === "already_role") return "Quarantine active (existing role)";
   if (outcome.method === "role") return "Quarantined via role";
   if (outcome.method === "timeout") return "Quarantined via timeout";
@@ -1014,6 +1305,23 @@ async function quarantineExecutor(guild, executorId, reason) {
   }
   const member = guild?.members?.cache?.get(userId) || (await guild?.members?.fetch(userId).catch(() => null));
   if (!member) return { applied: false, method: "missing_member" };
+  const panicActive = isAntiNukePanicActive(guild.id);
+  if (
+    panicActive &&
+    ANTINUKE_CONFIG.panicMode.lockdown.banAttackExecutor &&
+    member?.bannable &&
+    guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.BanMembers) &&
+    String(guild?.ownerId || "") !== userId
+  ) {
+    const banned = await guild.members
+      .ban(userId, {
+        deleteMessageSeconds: 0,
+        reason: `AntiNuke panic: ${String(reason || "malicious executor")}`,
+      })
+      .then(() => true)
+      .catch(() => false);
+    if (banned) return { applied: true, method: "ban" };
+  }
 
   const me = guild?.members?.me || null;
   const quarantineRoleId = String(
@@ -1410,7 +1718,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
             `<:VC_right_arrow:1473441155055096081> **Action:** Role creation blocked during panic`,
             `<:VC_right_arrow:1473441155055096081> **Role:** \`${roleId}\``,
             `<:VC_right_arrow:1473441155055096081> **Result:** Role deleted immediately`,
-            `<:VC_right_arrow:1473441155055096081> **Executor Quarantine:** ${quarantineOutcomeLabel(quarantine)}`,
+            `<:VC_right_arrow:1473441155055096081> **Quarantena executor:** ${quarantineOutcomeLabel(quarantine)}`,
           ],
         );
       }
@@ -1640,7 +1948,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
             `<:VC_right_arrow:1473441155055096081> **Action:** Channel creation blocked during panic`,
             `<:VC_right_arrow:1473441155055096081> **Channel:** \`${channelId}\``,
             `<:VC_right_arrow:1473441155055096081> **Result:** Channel deleted immediately`,
-            `<:VC_right_arrow:1473441155055096081> **Executor Quarantine:** ${quarantineOutcomeLabel(quarantine)}`,
+            `<:VC_right_arrow:1473441155055096081> **Quarantena executor:** ${quarantineOutcomeLabel(quarantine)}`,
           ],
         );
       }
@@ -1875,7 +2183,7 @@ async function handleWebhookCreationAction({
           `<:VC_right_arrow:1473441155055096081> **Action:** Webhook creation blocked during panic`,
           `<:VC_right_arrow:1473441155055096081> **Webhook:** \`${normalizedWebhookId}\``,
           `<:VC_right_arrow:1473441155055096081> **Result:** Webhook deleted immediately`,
-          `<:VC_right_arrow:1473441155055096081> **Executor Quarantine:** ${quarantineOutcomeLabel(quarantine)}`,
+          `<:VC_right_arrow:1473441155055096081> **Quarantena executor:** ${quarantineOutcomeLabel(quarantine)}`,
         ],
       );
     }
@@ -2292,7 +2600,7 @@ async function handlePruneAction({ guild, executorId, removedCount = 0 }) {
     [
       formatExecutorLine(actorId),
       `<:VC_right_arrow:1473441155055096081> **Action:** Member prune`,
-      `<:VC_right_arrow:1473441155055096081> **Removed:** ${Number(removedCount || 0)}`,
+      `<:VC_right_arrow:1473441155055096081> **Rimossi:** ${Number(removedCount || 0)}`,
       `<:VC_right_arrow:1473441155055096081> **Result:** ${quarantineOutcomeLabel(quarantine)}`,
     ],
   );
@@ -2414,6 +2722,15 @@ function getAntiNukeStatusSnapshot(guildId = "") {
           lockModerationCommands: Boolean(
             ANTINUKE_CONFIG.panicMode.lockdown?.lockModerationCommands,
           ),
+          lockAllCommands: Boolean(
+            ANTINUKE_CONFIG.panicMode.lockdown?.lockAllCommands,
+          ),
+          channelLockdown: Boolean(
+            ANTINUKE_CONFIG.panicMode.lockdown?.channelLockdown,
+          ),
+          banAttackExecutor: Boolean(
+            ANTINUKE_CONFIG.panicMode.lockdown?.banAttackExecutor,
+          ),
         },
       },
     },
@@ -2432,8 +2749,17 @@ async function stopAntiNukePanic(guild, reason = "manual stop", stoppedById = ""
     clearTimeout(state.unlockTimer);
     state.unlockTimer = null;
   }
-  await unlockDangerousRolesAfterPanic(guild, state);
+  const roleResult = await unlockDangerousRolesAfterPanic(guild, state);
+  const channelResult = await unlockGuildChannelsAfterPanic(guild, state);
   await runAutoBackupSyncAfterPanic(guild, state);
+  const restored =
+    Boolean(roleResult?.completed) &&
+    Boolean(channelResult?.completed) &&
+    Number(state.lockedRoles?.size || 0) === 0 &&
+    Number(state.lockedChannels?.size || 0) === 0;
+  if (!restored) {
+    schedulePanicRestoreRetry(guild, state, "manual_stop");
+  }
   await sendAntiNukeLog(
     guild,
     "AntiNuke Panic Mode Ended",
@@ -2496,7 +2822,16 @@ async function shouldBlockModerationCommands(guild, userId) {
   if (!ANTINUKE_CONFIG.panicMode.enabled) return false;
   if (!ANTINUKE_CONFIG.panicMode.lockdown.lockModerationCommands) return false;
   if (!guild?.id || !userId) return false;
-  if (!isAntiNukePanicActive(guild.id)) return false;
+  let panicActive = isAntiNukePanicActive(guild.id);
+  if (!panicActive) {
+    try {
+      const { isAutoModPanicActiveForGuild } = require("./automodService");
+      panicActive = Boolean(isAutoModPanicActiveForGuild?.(guild.id));
+    } catch {
+      panicActive = false;
+    }
+  }
+  if (!panicActive) return false;
   if (String(guild.ownerId || "") === String(userId)) return false;
   const member =
     guild.members.cache.get(String(userId)) ||
@@ -2531,6 +2866,42 @@ async function shouldBlockModerationCommands(guild, userId) {
   return !(await isWhitelistedExecutorAsync(guild, userId));
 }
 
+async function shouldBlockAllCommands(guild) {
+  if (!guild?.id) return false;
+  const cacheKey = String(guild.id || "");
+  for (const [k, payload] of COMMAND_LOCK_CACHE.entries()) {
+    if (Date.now() - Number(payload?.ts || 0) > COMMAND_LOCK_CACHE_TTL_MS * 4) {
+      COMMAND_LOCK_CACHE.delete(k);
+    }
+  }
+  const cached = COMMAND_LOCK_CACHE.get(cacheKey);
+  const now = Date.now();
+  if (cached && now - Number(cached.ts || 0) < COMMAND_LOCK_CACHE_TTL_MS) {
+    return Boolean(cached.value);
+  }
+  let blocked = false;
+  if (ANTINUKE_CONFIG.enabled && ANTINUKE_CONFIG.panicMode.lockdown.lockAllCommands) {
+    if (isAntiNukePanicActive(guild.id)) {
+      blocked = true;
+    }
+    try {
+      const { isAutoModPanicActiveForGuild } = require("./automodService");
+      if (Boolean(isAutoModPanicActiveForGuild?.(guild.id))) {
+        blocked = true;
+      }
+    } catch {}
+  }
+  if (!blocked) {
+    try {
+      const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
+      const raid = await getJoinRaidStatusSnapshot(guild.id);
+      if (raid?.raidActive) blocked = true;
+    } catch {}
+  }
+  COMMAND_LOCK_CACHE.set(cacheKey, { value: blocked, ts: now });
+  return blocked;
+}
+
 module.exports = {
   ANTINUKE_CONFIG,
   ANTINUKE_PRESETS,
@@ -2551,11 +2922,14 @@ module.exports = {
   handlePruneAction,
   isAntiNukePanicActive,
   shouldBlockModerationCommands,
+  shouldBlockAllCommands,
   isWhitelistedExecutor,
   isWhitelistedExecutorAsync,
   applyAntiNukePreset,
   getAntiNukeStatusSnapshot,
   stopAntiNukePanic,
+  triggerAntiNukePanicExternal,
+  setAntiNukeConfigSnapshot,
   addMaintenanceAllowlistUser,
   removeMaintenanceAllowlistUser,
   listMaintenanceAllowlist,

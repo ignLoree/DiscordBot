@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const fs = require("fs");
@@ -188,12 +188,12 @@ async function pinFirstTicketMessage(channel, message) {
         },
         {
           name: "✅ Opened By",
-          value: data?.userId ? `<@${data.userId}>` : "Unknown",
+          value: data?.userId ? `<@${data.userId}>` : "Sconosciuto",
           inline: true,
         },
         {
           name: "🛑 Closed By",
-          value: data?.closedBy ? `<@${data.closedBy}>` : "Unknown",
+          value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto",
           inline: true,
         },
         { name: "🕒 Open Time", value: openedAt, inline: true },

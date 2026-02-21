@@ -72,19 +72,19 @@ module.exports = {
       }
       if (lockedChanged) {
         lines.push(
-          `${ARROW} **Locked:** ${yesNo(Boolean(oldThread.locked))} ${ARROW} ${yesNo(Boolean(newThread.locked))}`,
+          `${ARROW} **Bloccato:** ${yesNo(Boolean(oldThread.locked))} ${ARROW} ${yesNo(Boolean(newThread.locked))}`,
         );
       }
       if (tagsChanged) {
         lines.push(
-          `${ARROW} **Applied Tags:** \`${oldTags.join(",") || "none"}\` ${ARROW} \`${newTags.join(",") || "none"}\``,
+          `${ARROW} **Tag applicati:** \`${oldTags.join(",") || "nessuno"}\` ${ARROW} \`${newTags.join(",") || "nessuno"}\``,
         );
       }
       lines.push(...buildAuditExtraLines(audit.entry, ["name", "archived", "locked", "applied_tags"]));
 
       const embed = new EmbedBuilder()
         .setColor("#F59E0B")
-        .setTitle("Thread Update")
+        .setTitle("Aggiornamento thread")
         .setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
@@ -93,7 +93,7 @@ module.exports = {
           new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setStyle(ButtonStyle.Link)
-              .setLabel("Go to Thread")
+              .setLabel("Vai al thread")
               .setURL(newThread.url),
           ),
         ];

@@ -1,4 +1,4 @@
-﻿const fs = require("fs/promises");
+const fs = require("fs/promises");
 const path = require("path");
 const zlib = require("zlib");
 const crypto = require("crypto");
@@ -834,7 +834,7 @@ function parseBackupIdFromFileName(fileName) {
 
 function toSafeDateLabel(value) {
   const date = new Date(value || Date.now());
-  if (Number.isNaN(date.getTime())) return "Unknown date";
+  if (Number.isNaN(date.getTime())) return "Data sconosciuta";
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
@@ -916,7 +916,7 @@ async function listGuildBackupMetas(
     const meta = await readBackupMeta(guildId, backupId).catch(() => null);
     if (!meta) continue;
 
-    const guildName = meta.guildName || "Unknown Guild";
+    const guildName = meta.guildName || "Server sconosciuto";
     const dateLabel = toSafeDateLabel(meta.createdAt || file.mtimeMs);
     const label = `${guildName} | ${dateLabel} (${meta.backupId})`;
     const haystack = `${label} ${meta.backupId}`.toLowerCase();
@@ -983,7 +983,7 @@ async function listAllBackupMetas({ search = "", limit = 25, offset = 0 } = {}) 
     const meta = await readBackupMeta(entry.guildId, entry.backupId).catch(() => null);
     if (!meta) continue;
 
-    const guildName = meta.guildName || "Unknown Guild";
+    const guildName = meta.guildName || "Server sconosciuto";
     const dateLabel = toSafeDateLabel(meta.createdAt || entry.mtimeMs);
     const label = `${guildName} | ${dateLabel} (${meta.backupId})`;
     const haystack = `${label} ${meta.backupId} ${entry.guildId}`.toLowerCase();

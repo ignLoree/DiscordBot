@@ -19,6 +19,8 @@ const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
+const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
+const { consumePrefixRateLimit } = require("../Services/Moderation/staffCommandRateLimitService");
 const { showPrefixUsageGuide } = require("../Utils/Moderation/prefixUsageGuide");
 const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
@@ -505,6 +507,13 @@ module.exports = {
       String(message.author?.id || "") === String(resolvedClient.user?.id || "");
     const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
     const defaultPrefix = "+";
+    let automodProcessed = false;
+    const runAutomodOnce = async () => {
+      if (automodProcessed) return { blocked: false, skipped: true };
+      automodProcessed = true;
+      if (isAutomatedMessage) return { blocked: false, skipped: true };
+      return runAutoModMessage(message);
+    };
     if (!isEditedPrefixExecution && message?.guild) {
       try {
         if (message.author?.id !== resolvedClient?.user?.id) {
@@ -528,10 +537,8 @@ module.exports = {
       if (isAutomatedMessage && !isOwnBotMessage) return;
       if (!isEditedPrefixExecution) {
         try {
-          if (!isAutomatedMessage) {
-            const automodResult = await runAutoModMessage(message);
-            if (automodResult?.blocked) return;
-          }
+          const automodResult = await runAutomodOnce();
+          if (automodResult?.blocked) return;
         } catch (error) {
           logEventError(resolvedClient, "AUTOMOD ERROR", error);
         }
@@ -541,10 +548,8 @@ module.exports = {
     }
     if (!isEditedPrefixExecution) {
       try {
-        if (!isAutomatedMessage) {
-          const automodResult = await runAutoModMessage(message);
-          if (automodResult?.blocked) return;
-        }
+        const automodResult = await runAutomodOnce();
+        if (automodResult?.blocked) return;
       } catch (error) {
         logEventError(resolvedClient, "AUTOMOD ERROR", error);
       }
@@ -684,14 +689,28 @@ module.exports = {
       resolvedClient.pcommands.get(resolvedClient.aliases.get(cmd));
 
     if (!command) return;
-    const isModerationPrefixCommand = ["staff", "admin"].includes(
-      String(command.folder || "").toLowerCase(),
-    );
     const isAntiNukeRecoveryCommand =
-      String(command?.name || "").toLowerCase() === "antinuke";
+      ["antinuke", "security"].includes(
+        String(command?.name || "").toLowerCase(),
+      );
+    const securityLockState = await getSecurityLockState(message.guild);
     if (
-      isModerationPrefixCommand &&
       !isAntiNukeRecoveryCommand &&
+      securityLockState.commandLockActive
+    ) {
+      await deleteCommandMessage();
+      const msg = await message.channel
+        .send({
+          content:
+            `<:VC_right_arrow:1473441155055096081> Server in lockdown di sicurezza: comandi temporaneamente bloccati.${securityLockState.sources.length ? ` (${securityLockState.sources.join(", ")})` : ""}`,
+        })
+        .catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);
+      return;
+    }
+    if (
+      !isAntiNukeRecoveryCommand &&
+      ["staff", "admin"].includes(String(command.folder || "").toLowerCase()) &&
       (await shouldBlockModerationCommands(
         message.guild,
         String(message.author?.id || ""),
@@ -701,7 +720,7 @@ module.exports = {
       const msg = await message.channel
         .send({
           content:
-            "<:VC_right_arrow:1473441155055096081> Comandi di moderazione temporaneamente bloccati (AntiNuke panic mode attiva).",
+            "<:VC_right_arrow:1473441155055096081> Comandi di moderazione temporaneamente bloccati (panic mode sicurezza attiva).",
         })
         .catch(() => null);
       if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);
@@ -744,6 +763,24 @@ module.exports = {
       await deleteCommandMessage();
       const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
       if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
+      return;
+    }
+    const staffRateLimit = consumePrefixRateLimit({
+      guildId: message.guild?.id,
+      userId: message.author?.id,
+      commandName: command?.name,
+      command,
+    });
+    if (!staffRateLimit.ok) {
+      await deleteCommandMessage();
+      const remaining = Math.max(1, Math.ceil(Number(staffRateLimit.remainingMs || 0) / 1000));
+      const msg = await message.channel
+        .send({
+          content:
+            `<:VC_right_arrow:1473441155055096081> Rallenta: riprova tra **${remaining}s**.`,
+        })
+        .catch(() => null);
+      if (msg) setTimeout(() => msg.delete().catch(() => {}), 4000);
       return;
     }
     const hasSubcommands = Boolean(

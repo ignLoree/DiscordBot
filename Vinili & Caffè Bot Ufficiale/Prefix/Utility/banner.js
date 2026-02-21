@@ -37,6 +37,12 @@ module.exports = {
   skipPrefix: false,
   name: "banner",
   aliases: ["bn"],
+  subcommands: ["user", "server", "guild"],
+  subcommandAliases: {
+    user: "user",
+    server: "server",
+    guild: "guild",
+  },
 
   async execute(message, args) {
     if (!message.guild) {

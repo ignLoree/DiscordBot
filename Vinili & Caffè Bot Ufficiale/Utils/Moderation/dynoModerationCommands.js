@@ -32,9 +32,9 @@ async function reply(message, client, title, description, color = null) {
 }
 
 function successText(subject, verb, reason) {
-  const left = `<:success:1461731530333229226> **_${subject}_** was ${verb}.`;
+  const left = `<:success:1461731530333229226> **_${subject}_** ${verb}.`;
   if (!reason) return left;
-  return `${left} | ${reason}`;
+  return `${left} Motivo: ${reason}`;
 }
 
 function formatTargetLabel(target) {
@@ -42,7 +42,7 @@ function formatTargetLabel(target) {
   const username = String(target?.username || "").trim();
   if (username) return username.toLowerCase();
   if (/^\d{17,20}$/.test(id)) return id;
-  return id || "unknown";
+  return id || "sconosciuto";
 }
 
 function isServerOwner(member, guild) {
@@ -105,17 +105,17 @@ async function sendModerationDm({
   const actionKey = String(action || "").toLowerCase();
   let baseText = "";
   if (actionKey === "warn") {
-    baseText = `You were warned in ${guildName}${safeReason ? ` for ${safeReason}` : ""}`;
+    baseText = `Hai ricevuto un avviso in ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
   } else if (actionKey === "ban") {
-    baseText = `You were banned in ${guildName}${safeReason ? ` | ${safeReason}` : ""}`;
+    baseText = `Sei stato bannato da ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
   } else if (actionKey === "kick") {
-    baseText = `You were kicked from ${guildName}${safeReason ? ` for ${safeReason}` : ""}`;
+    baseText = `Sei stato espulso da ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
   } else if (actionKey === "mute") {
-    baseText = `You were muted in ${guildName}${safeDuration ? ` for ${safeDuration}` : ""}${safeReason ? ` | ${safeReason}` : ""}`;
+    baseText = `Sei stato silenziato in ${guildName}${safeDuration ? ` per ${safeDuration}` : ""}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
   } else if (actionKey === "unban") {
-    baseText = `You were unbanned in ${guildName}`;
+    baseText = `Il tuo ban in ${guildName} è stato revocato.`;
   } else if (actionKey === "unmute") {
-    baseText = `You were unmuted in ${guildName}`;
+    baseText = `Il tuo mute in ${guildName} è stato revocato.`;
   } else {
     return false;
   }
@@ -129,13 +129,13 @@ async function sendModerationDm({
     null;
   if (includeAppeal && appealUrl) {
     embed.setDescription(
-      `${baseText}\n\nYou can submit an appeal in 1 day.`,
+      `${baseText}\n\nPuoi inviare un appello tra 1 giorno.`,
     );
     payload.components = [
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setStyle(ButtonStyle.Link)
-          .setLabel("Appeal")
+          .setLabel("Appello")
           .setURL(String(appealUrl)),
       ),
     ];
@@ -197,10 +197,10 @@ function formatRemainingWords(ms) {
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = total % 60;
   const parts = [];
-  if (days > 0) parts.push(`${days} day${days === 1 ? "" : "s"}`);
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (minutes > 0) parts.push(`${minutes} min${minutes === 1 ? "" : "s"}`);
-  if (seconds > 0 || !parts.length) parts.push(`${seconds} sec${seconds === 1 ? "" : "s"}`);
+  if (days > 0) parts.push(`${days} giorno${days === 1 ? "" : "i"}`);
+  if (hours > 0) parts.push(`${hours} ora${hours === 1 ? "" : "e"}`);
+  if (minutes > 0) parts.push(`${minutes} minuto${minutes === 1 ? "" : "i"}`);
+  if (seconds > 0 || !parts.length) parts.push(`${seconds} secondo${seconds === 1 ? "" : "i"}`);
   return parts.join(", ");
 }
 
@@ -212,17 +212,17 @@ function formatDurationWords(ms) {
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = total % 60;
   const parts = [];
-  if (days > 0) parts.push(`${days} day${days === 1 ? "" : "s"}`);
-  if (hours > 0) parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  if (minutes > 0) parts.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
-  if (seconds > 0 && !parts.length) parts.push(`${seconds} second${seconds === 1 ? "" : "s"}`);
+  if (days > 0) parts.push(`${days} giorno${days === 1 ? "" : "i"}`);
+  if (hours > 0) parts.push(`${hours} ora${hours === 1 ? "" : "e"}`);
+  if (minutes > 0) parts.push(`${minutes} minuto${minutes === 1 ? "" : "i"}`);
+  if (seconds > 0 && !parts.length) parts.push(`${seconds} secondo${seconds === 1 ? "" : "i"}`);
   return parts.join(", ");
 }
 
 function formatDynoDate(value) {
-  if (!value) return "Unknown date";
+  if (!value) return "Data sconosciuta";
   const dt = new Date(value);
-  if (Number.isNaN(dt.getTime())) return "Unknown date";
+  if (Number.isNaN(dt.getTime())) return "Data sconosciuta";
   const formatted = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "2-digit",
@@ -240,56 +240,56 @@ function buildTemproleHelpEmbed(mode = "default") {
   if (key === "toggle") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: +temprole toggle**",
+        "**Comando: +temprole toggle**",
         "",
-        "**Description:** Toggle a temprole on a user.",
-        "**Cooldown:** 5 seconds",
-        "**Usage:**",
-        "+temprole toggle [user] [time] [role], [optional reason]",
-        "**Example:**",
-        "+temprole toggle @LoreeXO 1d Birthday, Happy Birthday",
+        "**Descrizione:** Attiva/disattiva un temprole su un utente.",
+        "**Cooldown:** 5 secondi",
+        "**Uso:**",
+        "+temprole toggle [utente] [durata] [ruolo], [motivo opzionale]",
+        "**Esempio:**",
+        "+temprole toggle @LoreeXO 1d Birthday, Buon compleanno",
       ].join("\n"),
     );
   }
   if (key === "add") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: +temprole add**",
+        "**Comando: +temprole add**",
         "",
-        "**Description:** Adds a temprole to a user",
-        "**Cooldown:** 5 seconds",
-        "**Usage:**",
-        "+temprole add [user] [time] [role], [optional reason]",
-        "**Example:**",
-        "+temprole add @LoreeXO 1d Birthday, Happy Birthday",
+        "**Descrizione:** Assegna un temprole a un utente.",
+        "**Cooldown:** 5 secondi",
+        "**Uso:**",
+        "+temprole add [utente] [durata] [ruolo], [motivo opzionale]",
+        "**Esempio:**",
+        "+temprole add @LoreeXO 1d Birthday, Buon compleanno",
       ].join("\n"),
     );
   }
   if (key === "remove") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
-        "**Command: +temprole remove**",
+        "**Comando: +temprole remove**",
         "",
-        "**Description:** Remove a temprole from a user",
-        "**Cooldown:** 5 seconds",
-        "**Usage:**",
-        "+temprole remove [user] role, (reason)",
-        "**Example:**",
-        "+temprole remove @LoreeXO Birthday, Wrong date",
+        "**Descrizione:** Rimuove un temprole da un utente.",
+        "**Cooldown:** 5 secondi",
+        "**Uso:**",
+        "+temprole remove [utente] [ruolo], (motivo)",
+        "**Esempio:**",
+        "+temprole remove @LoreeXO Birthday, Data errata",
       ].join("\n"),
     );
   }
   return new EmbedBuilder().setColor("#3498DB").setDescription(
     [
-      "**Command: +temprole**",
+      "**Comando: +temprole**",
       "",
-      "**Aliases:** +trole",
-      "**Description:** Assign/unassign a role that persists for a limited time.",
-      "**Cooldown:** 5 seconds",
-      "**Usage:**",
-      "+temprole [user] [time] [role], [optional reason]",
-      "**Example:**",
-      "+temprole @LoreeXO 1d Birthday, Happy Birthday",
+      "**Alias:** +trole",
+      "**Descrizione:** Assegna o rimuove un ruolo con durata limitata.",
+      "**Cooldown:** 5 secondi",
+      "**Uso:**",
+      "+temprole [utente] [durata] [ruolo], [motivo opzionale]",
+      "**Esempio:**",
+      "+temprole @LoreeXO 1d Birthday, Buon compleanno",
     ].join("\n"),
   );
 }
@@ -300,17 +300,17 @@ function buildTemproleHelpRow(ownerId, currentValue = "default") {
   const options = [
     {
       label: "toggle",
-      description: "Toggle a temprole on a user.",
+      description: "Attiva o disattiva un temprole su un utente.",
       value: "toggle",
     },
     {
       label: "add",
-      description: "Adds a temprole to a user",
+      description: "Assegna un temprole a un utente.",
       value: "add",
     },
     {
       label: "remove",
-      description: "Remove a temprole from a user",
+      description: "Rimuove un temprole da un utente.",
       value: "remove",
     },
   ];
@@ -319,12 +319,12 @@ function buildTemproleHelpRow(ownerId, currentValue = "default") {
     : options.filter((item) => String(item.value).toLowerCase() !== hidden);
   const menu = new StringSelectMenuBuilder()
     .setCustomId(customId)
-    .setPlaceholder("View Subcommands")
+    .setPlaceholder("Vedi sotto-comandi")
     .addOptions(
       ...filtered,
       {
-        label: "Main Command",
-        description: "Go back to the main command help",
+        label: "Comando principale",
+        description: "Torna all'aiuto principale",
         value: "default",
       },
     );
@@ -436,18 +436,18 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +ban**",
+            "**Comando: +ban**",
             "",
-            "**Description:** Ban a member, optional time limit",
-            "**Cooldown:** 3 seconds",
-            "**Usage:**",
-            "+ban [user] [limit] [reason]",
-            "+ban save [user] [limit] [reason]",
-            "+ban noappeal [user] [limit] [reason]",
-            "**Example:**",
-            "+ban bean making bugs",
-            "+ban save gin 2d needs to calm down",
-            "+ban noappeal piguy dont come back",
+            "**Descrizione:** Bana un utente, con durata opzionale.",
+            "**Cooldown:** 3 secondi",
+            "**Uso:**",
+            "+ban [utente] [durata] [motivo]",
+            "+ban save [utente] [durata] [motivo]",
+            "+ban noappeal [utente] [durata] [motivo]",
+            "**Esempio:**",
+            "+ban @utente 2d Spam",
+            "",
+            "",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -456,6 +456,12 @@ async function runNamed(name, message, args, client) {
     if (!guard.ok) return reply(message, client, "Ban", guard.error, "Red");
     const duration = parseMaybeDuration(args[targetIndex + 1]);
     const reason = reasonFrom(args, duration ? targetIndex + 2 : targetIndex + 1);
+    const deleteSeconds = mode === "save" ? 0 : 604800;
+    const ok = await message.guild.members
+      .ban(userId, { reason, deleteMessageSeconds: deleteSeconds })
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) return reply(message, client, "Ban", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
       guildName: message.guild.name,
@@ -463,14 +469,8 @@ async function runNamed(name, message, args, client) {
       reason,
       includeAppeal: mode !== "noappeal",
     });
-    const deleteSeconds = mode === "save" ? 0 : 604800;
-    const ok = await message.guild.members
-      .ban(userId, { reason, deleteMessageSeconds: deleteSeconds })
-      .then(() => true)
-      .catch(() => false);
-    if (!ok) return reply(message, client, "Ban", "Operazione fallita.", "Red");
     await makeCase(client, message, "BAN", userId, reason, duration);
-    return successReply(message, formatTargetLabel(user || { id: userId }), "banned", reason);
+    return successReply(message, formatTargetLabel(user || { id: userId }), "è stato bannato", reason);
   }
 
   if (cmd === "kick") {
@@ -480,14 +480,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +kick**",
+            "**Comando: +kick**",
             "",
-            "**Description:** Kick a member.",
-            "**Cooldown:** 3 seconds",
-            "**Usage:**",
-            "+kick [user] [reason]",
-            "**Example:**",
-            "+kick @LoreeXO Get out!",
+            "**Descrizione:** Espelle un utente dal server.",
+            "**Cooldown:** 3 secondi",
+            "**Uso:**",
+            "+kick [utente] [motivo]",
+            "**Esempio:**",
+            "+kick @utente Regolamento non rispettato",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -495,21 +495,21 @@ async function runNamed(name, message, args, client) {
     const guard = await validateModerationTarget(message, member, "kick");
     if (!guard.ok) return reply(message, client, "Kick", guard.error, "Red");
     const reason = reasonFrom(args, 1);
+    const ok = await member.kick(reason).then(() => true).catch(() => false);
+    if (!ok) return reply(message, client, "Kick", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
       guildName: message.guild.name,
       action: "kick",
       reason,
     });
-    const ok = await member.kick(reason).then(() => true).catch(() => false);
-    if (!ok) return reply(message, client, "Kick", "Operazione fallita.", "Red");
     await makeCase(client, message, "KICK", userId, reason);
     return message.channel
       .send({
         embeds: [
           new EmbedBuilder()
             .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** was kicked.`),
+            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** è stato espulso.`),
         ],
       })
       .catch(() => null);
@@ -522,17 +522,17 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +mute**",
+            "**Comando: +mute**",
             "",
-            "**Description:** Mute a member so they cannot type.",
-            "**Cooldown:** 3 seconds",
-            "**Usage:**",
-            "+mute [user] [limit] [reason]",
-            "**Example:**",
-            "+mute @LoreeXO 10 Shitposting",
-            "+mute User 10m spamming",
-            "+mute LoreeXO 1d Too Cool",
-            "+mute LoreeXO 5h He asked for it",
+            "**Descrizione:** Silenzia un utente per un tempo definito.",
+            "**Cooldown:** 3 secondi",
+            "**Uso:**",
+            "+mute [utente] [durata] [motivo]",
+            "**Esempio:**",
+            "+mute @utente 10m Spam",
+            "+mute @utente 1d Flood",
+            "",
+            "",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -546,7 +546,7 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setDescription("<:cancel:1461730653677551691> You must specify a mute duration."),
+              .setDescription("<:cancel:1461730653677551691> Devi specificare una durata per il mute."),
           ],
         })
         .catch(() => null);
@@ -560,7 +560,7 @@ async function runNamed(name, message, args, client) {
             new EmbedBuilder()
               .setColor("#ED4245")
               .setDescription(
-                "<:cancel:1461730653677551691> Please use a valid limit less then 14 days. ex 3m, 2h, 1d",
+                "<:cancel:1461730653677551691> Usa una durata valida inferiore a 14 giorni (esempio: 3m, 2h, 1d).",
               ),
           ],
         })
@@ -583,7 +583,7 @@ async function runNamed(name, message, args, client) {
         embeds: [
           new EmbedBuilder()
             .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** was muted.`),
+            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** è stato silenziato.`),
         ],
       })
       .catch(() => null);
@@ -611,7 +611,7 @@ async function runNamed(name, message, args, client) {
       await item.save().catch(() => null);
     }
     await makeCase(client, message, "UNMUTE", userId, reason);
-    return successReply(message, formatTargetLabel(member.user || { id: userId }), "unmuted", reason);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato smutato", reason);
   }
 
   if (cmd === "unban") {
@@ -621,14 +621,14 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +unban**",
+            "**Comando: +unban**",
             "",
-            "**Description:** Unban a member.",
-            "**Cooldown:** 5 seconds",
-            "**Usage:**",
-            "+unban [user id] (optional reason)",
-            "**Example:**",
-            "+unban 155037590859284481 Appealed",
+            "**Descrizione:** Revoca il ban di un utente.",
+            "**Cooldown:** 5 secondi",
+            "**Uso:**",
+            "+unban [id_utente] (motivo opzionale)",
+            "**Esempio:**",
+            "+unban 155037590859284481 Appello accettato",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -640,7 +640,7 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setDescription("<:cancel:1461730653677551691> Unban only supports user ids."),
+              .setDescription("<:cancel:1461730653677551691> Il comando unban accetta solo ID utente."),
           ],
         })
         .catch(() => null);
@@ -672,7 +672,7 @@ async function runNamed(name, message, args, client) {
         embeds: [
           new EmbedBuilder()
             .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${subject}_** was unbanned.`),
+            .setDescription(`<:success:1461731530333229226> **_${subject}_** è stato sbannato.`),
         ],
       })
       .catch(() => null);
@@ -681,19 +681,27 @@ async function runNamed(name, message, args, client) {
   if (cmd === "warn") {
     const { user, userId } = await pickUser(message, args, 0);
     if (!userId) return reply(message, client, "Warn", "Uso: `+warn @utente [testo]`.", "Red");
+    if (String(userId) === String(message.author.id)) {
+      return reply(message, client, "Warn", "Non puoi usare `warn` su te stesso.", "Red");
+    }
+    const warnMember =
+      message.guild.members.cache.get(String(userId)) ||
+      (await message.guild.members.fetch(String(userId)).catch(() => null));
+    const guard = await validateModerationTarget(message, warnMember, "warn");
+    if (!guard.ok) return reply(message, client, "Warn", guard.error, "Red");
     if (!String(args.slice(1).join(" ") || "").trim()) {
       const helpEmbed = new EmbedBuilder()
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +warn**",
+            "**Comando: +warn**",
             "",
-            "**Description:** Warn a member",
-            "**Cooldown:** 3 seconds",
-            "**Usage:**",
-            "+warn [user] (reason)",
-            "**Example:**",
-            "+warn @LoreeXO Stop posting lewd images",
+            "**Descrizione:** Assegna un avviso a un utente.",
+            "**Cooldown:** 3 secondi",
+            "**Uso:**",
+            "+warn [utente] (motivo)",
+            "**Esempio:**",
+            "+warn @utente Linguaggio non appropriato",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -713,7 +721,7 @@ async function runNamed(name, message, args, client) {
         embeds: [
           new EmbedBuilder()
             .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${label}_** has been warned.`),
+            .setDescription(`<:success:1461731530333229226> **_${label}_** ha ricevuto un warn.`),
         ],
       })
       .catch(() => null);
@@ -733,14 +741,14 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#3498DB")
-              .setDescription("ℹ️ There are no warnings"),
+              .setDescription("Nessun warning attivo trovato."),
           ],
         })
         .catch(() => null);
     }
     const targetUser =
       (await message.client.users.fetch(userId).catch(() => null)) || null;
-    const titleCount = rows.length === 1 ? "1 Warning" : `${rows.length} Warnings`;
+    const titleCount = rows.length === 1 ? "1 warning" : `${rows.length} warning`;
     const lines = [];
     for (const row of rows.slice(0, 10)) {
       let moderator = row.modId;
@@ -751,11 +759,11 @@ async function runNamed(name, message, args, client) {
       const when = row.createdAt
         ? `<t:${Math.floor(new Date(row.createdAt).getTime() / 1000)}:R>`
         : "data sconosciuta";
-      lines.push(`**Moderator:** ${moderator}\n${row.reason || "Nessun motivo"} - ${when}`);
+      lines.push(`**Moderatore:** ${moderator}\n${row.reason || "Nessun motivo"} - ${when}`);
     }
     const warningEmbed = new EmbedBuilder()
       .setColor("#ED4245")
-      .setTitle(`${titleCount} for ${targetUser?.username || userId} (${userId})`)
+      .setTitle(`${titleCount} per ${targetUser?.username || userId} (${userId})`)
       .setDescription(lines.join("\n\n"))
       .setThumbnail(targetUser?.displayAvatarURL?.({ size: 128 }) || null);
     return message.channel.send({ embeds: [warningEmbed] }).catch(() => null);
@@ -769,15 +777,15 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +delwarn**",
+            "**Comando: +delwarn**",
             "",
-            "**Aliases:** +nwarn",
-            "**Description:** Delete a warning",
-            "**Cooldown:** 3 seconds",
-            "**Usage:**",
-            "+delwarn [user] [warning text]",
-            "**Example:**",
-            "+delwarn @chipped broke the rules",
+            "**Alias:** +nwarn",
+            "**Descrizione:** Rimuove un warning.",
+            "**Cooldown:** 3 secondi",
+            "**Uso:**",
+            "+delwarn [utente] [testo warning]",
+            "**Esempio:**",
+            "+delwarn @utente Flood in chat generale",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -802,12 +810,12 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setDescription("<:cancel:1461730653677551691> No warning found for that text."),
+              .setDescription("<:cancel:1461730653677551691> Nessun warning trovato con quel testo."),
           ],
         })
         .catch(() => null);
     }
-    closeCase(row, `Warning rimosso da ${message.author.id}`);
+    closeCase(row, `Avviso rimosso da ${message.author.id}`);
     await row.save().catch(() => null);
     const targetUser = await message.client.users.fetch(target.userId).catch(() => null);
     return message.channel
@@ -816,7 +824,7 @@ async function runNamed(name, message, args, client) {
           new EmbedBuilder()
             .setColor("#57F287")
             .setDescription(
-              `<:success:1461731530333229226> Deleted warning \`${warningText}\` for ${targetUser?.username || target.userId}`,
+              `<:success:1461731530333229226> Avviso \`${warningText}\` rimosso per ${targetUser?.username || target.userId}.`,
             ),
         ],
       })
@@ -831,13 +839,13 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: +case**",
+              "**Comando: +case**",
               "",
-              "**Description:** Show a single mod log case",
-              "**Cooldown:** 3 seconds",
-              "**Usage:**",
-              "+case [Case ID]",
-              "**Example:**",
+              "**Descrizione:** Mostra un caso moderazione specifico.",
+              "**Cooldown:** 3 secondi",
+              "**Uso:**",
+              "+case [id caso]",
+              "**Esempio:**",
               "+case 1234",
             ].join("\n"),
         );
@@ -848,14 +856,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: +reason**",
+              "**Comando: +reason**",
               "",
-              "**Description:** Supply a reason for a mod log case",
-              "**Cooldown:** 3 seconds",
-              "**Usage:**",
+              "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.",
+              "**Cooldown:** 3 secondi",
+              "**Uso:**",
               "+reason [case num] [reason]",
-              "**Example:**",
-              "+reason 5 Spamming lewd images",
+              "**Esempio:**",
+              "+reason 5 Spam in immagini non appropriate",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -865,13 +873,13 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: +duration**",
+              "**Comando: +duration**",
               "",
-              "**Description:** Change the duration of a mute/ban",
-              "**Cooldown:** 60 seconds",
-              "**Usage:**",
+              "**Descrizione:** Modifica la durata di un mute/ban.",
+              "**Cooldown:** 60 secondi",
+              "**Uso:**",
               "+duration [modlog ID] [limit]",
-              "**Example:**",
+              "**Esempio:**",
               "+duration 69 420m",
             ].join("\n"),
           );
@@ -880,11 +888,11 @@ async function runNamed(name, message, args, client) {
       return reply(message, client, cmd, `Uso: \`+${cmd} <case> [...]\`.`, "Red");
     }
     const row = await ModCase.findOne({ guildId: message.guild.id, caseId }).catch(() => null);
-    if (!row) return reply(message, client, cmd, "Case non trovata.", "Red");
+    if (!row) return reply(message, client, cmd, "Caso non trovato.", "Red");
     if (cmd === "case") {
       const targetUser = await message.client.users.fetch(String(row.userId || "")).catch(() => null);
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);
-      const action = String(row.action || "Unknown")
+      const action = String(row.action || "Sconosciuto")
         .toLowerCase()
         .replace(/^\w/, (c) => c.toUpperCase());
       const hh = new Date(row.createdAt || Date.now()).toLocaleTimeString("it-IT", {
@@ -896,12 +904,12 @@ async function runNamed(name, message, args, client) {
         .setColor("#FEE75C")
         .setTitle(`Case ${caseId} | ${action} | ${targetUser?.username || row.userId}`)
         .addFields(
-          { name: "User", value: targetUser?.username || String(row.userId || "Unknown"), inline: true },
-          { name: "Moderator", value: modUser ? `<@${modUser.id}>` : String(row.modId || "Unknown"), inline: true },
-          { name: "Reason", value: row.reason || "No reason provided", inline: true },
+          { name: "Utente", value: targetUser?.username || String(row.userId || "Sconosciuto"), inline: true },
+          { name: "Moderatore", value: modUser ? `<@${modUser.id}>` : String(row.modId || "Sconosciuto"), inline: true },
+          { name: "Motivo", value: row.reason || "Nessun motivo fornito", inline: true },
         )
         .setFooter({
-          text: `ID: ${row.userId} - Oggi alle ${hh}${Array.isArray(row.edits) && row.edits.length ? ` | Edited ${row.edits.length}x` : ""}`,
+          text: `ID: ${row.userId} - Oggi alle ${hh}${Array.isArray(row.edits) && row.edits.length ? ` | Modificato ${row.edits.length} volta/e` : ""}`,
         });
       return message.channel.send({ embeds: [caseEmbed] }).catch(() => null);
     }
@@ -912,14 +920,14 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: +reason**",
+              "**Comando: +reason**",
               "",
-              "**Description:** Supply a reason for a mod log case",
-              "**Cooldown:** 3 seconds",
-              "**Usage:**",
+              "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.",
+              "**Cooldown:** 3 secondi",
+              "**Uso:**",
               "+reason [case num] [reason]",
-              "**Example:**",
-              "+reason 5 Spamming lewd images",
+              "**Esempio:**",
+              "+reason 5 Spam in immagini non appropriate",
             ].join("\n"),
           );
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -933,7 +941,7 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#57F287")
-              .setDescription(`<:success:1461731530333229226> Updated reason for case #${caseId}`),
+              .setDescription(`<:success:1461731530333229226> Motivo aggiornato per il caso #${caseId}.`),
           ],
         })
         .catch(() => null);
@@ -943,13 +951,13 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +duration**",
+            "**Comando: +duration**",
             "",
-            "**Description:** Change the duration of a mute/ban",
-            "**Cooldown:** 60 seconds",
-            "**Usage:**",
+            "**Descrizione:** Modifica la durata di un mute/ban.",
+            "**Cooldown:** 60 secondi",
+            "**Uso:**",
             "+duration [modlog ID] [limit]",
-            "**Example:**",
+            "**Esempio:**",
             "+duration 69 420m",
           ].join("\n"),
         );
@@ -961,7 +969,7 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setDescription("<:cancel:1461730653677551691> Duration can only be changed for mute/ban cases."),
+              .setDescription("<:cancel:1461730653677551691> La durata può essere modificata solo per casi mute/ban."),
           ],
         })
         .catch(() => null);
@@ -974,7 +982,7 @@ async function runNamed(name, message, args, client) {
             new EmbedBuilder()
               .setColor("#ED4245")
               .setDescription(
-                "<:cancel:1461730653677551691> Please use a valid limit less then 14 days. ex 3m, 2h, 1d",
+                "<:cancel:1461730653677551691> Usa una durata valida inferiore a 14 giorni (esempio: 3m, 2h, 1d).",
               ),
           ],
         })
@@ -994,7 +1002,7 @@ async function runNamed(name, message, args, client) {
     if (String(row.action || "").toUpperCase() === "MUTE") {
       const member = await message.guild.members.fetch(String(row.userId || "")).catch(() => null);
       if (member) {
-        await member.timeout(duration, `Updated case #${caseId}`).catch(() => null);
+        await member.timeout(duration, `Caso #${caseId} aggiornato`).catch(() => null);
       }
     }
     return message.channel
@@ -1002,7 +1010,7 @@ async function runNamed(name, message, args, client) {
         embeds: [
           new EmbedBuilder()
             .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> Updated case #${caseId}`),
+            .setDescription(`<:success:1461731530333229226> Caso #${caseId} aggiornato.`),
         ],
       })
       .catch(() => null);
@@ -1021,12 +1029,12 @@ async function runNamed(name, message, args, client) {
                 .setColor("#3498DB")
                 .setDescription(
                   [
-                    "**Command: +moderations**",
+                    "**Comando: +moderations**",
                     "",
-                    "**Description:** Get active timed moderations and remaining time",
-                    "**Usage:**",
-                    "+moderations [user] (page)",
-                    "**Example:**",
+                    "**Descrizione:** Mostra moderazioni temporanee attive e tempo rimanente.",
+                    "**Uso:**",
+                    "+moderations [utente] (pagina)",
+                    "**Esempio:**",
                     "+moderations @LoreeXO",
                   ].join("\n"),
                 ),
@@ -1048,7 +1056,7 @@ async function runNamed(name, message, args, client) {
             embeds: [
               new EmbedBuilder()
                 .setColor("#ED4245")
-                .setDescription("<:cancel:1461730653677551691> No active moderations found for that user"),
+                .setDescription("<:cancel:1461730653677551691> Nessuna moderazione attiva trovata per quell'utente."),
             ],
           })
           .catch(() => null);
@@ -1057,17 +1065,17 @@ async function runNamed(name, message, args, client) {
       const username = (targetUser?.username || target.userId).toLowerCase();
       const now = Date.now();
       const lines = rows.map((row, index) => {
-        const type = String(row.action || "").toUpperCase() === "MUTE" ? "Timeout" : "Ban";
+        const type = String(row.action || "").toUpperCase() === "MUTE" ? "Mute" : "Ban";
         const expiresAt = new Date(row.expiresAt || Date.now()).getTime();
         const remaining = formatRemainingWords(expiresAt - now);
-        return `${index + 1}. ${username}\n${type} | Time Remaining: ${remaining}`;
+        return `${index + 1}. ${username}\n${type} | Tempo rimanente: ${remaining}`;
       });
       const activeEmbed = new EmbedBuilder()
         .setColor("#3498DB")
-        .setTitle(`Active Moderations for ${username}`)
+        .setTitle(`Moderazioni attive per ${username}`)
         .setDescription(lines.join("\n\n"))
         .setFooter({
-          text: `${rows.length} active moderation${rows.length === 1 ? "" : "s"}`,
+          text: `${rows.length} moderazione attiva${rows.length === 1 ? "" : "e"}`,
         });
       return message.channel.send({ embeds: [activeEmbed] }).catch(() => null);
     }
@@ -1076,7 +1084,7 @@ async function runNamed(name, message, args, client) {
       return message.channel
         .send({
           embeds: [
-            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> No logs found for that user"),
+            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> Nessun log trovato per quell'utente."),
           ],
         })
         .catch(() => null);
@@ -1090,7 +1098,7 @@ async function runNamed(name, message, args, client) {
       return message.channel
         .send({
           embeds: [
-            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> No logs found for that user"),
+            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> Nessun log trovato per quell'utente."),
           ],
         })
         .catch(() => null);
@@ -1110,7 +1118,7 @@ async function runNamed(name, message, args, client) {
       return message.channel
         .send({
           embeds: [
-            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> No logs found for that user"),
+            new EmbedBuilder().setColor("#ED4245").setDescription("<:cancel:1461730653677551691> Nessun log trovato per quell'utente."),
           ],
         })
         .catch(() => null);
@@ -1118,27 +1126,27 @@ async function runNamed(name, message, args, client) {
     const lines = [];
     for (const row of rows) {
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);
-      const type = String(row.action || "Unknown")
+      const type = String(row.action || "Sconosciuto")
         .toLowerCase()
         .replace(/^\w/, (c) => c.toUpperCase());
       const createdAt = formatDynoDate(row.createdAt);
       const length = formatDurationWords(row.durationMs);
       const blockLines = [
         `**Case ${row.caseId}**`,
-        `**Type:** ${type}`,
-        `**User:** (${target.userId}) ${targetUser?.username || "Unknown"}`,
-        `**Moderator:** ${modUser?.username || row.modId || "Unknown"}`,
+        `**Tipo:** ${type}`,
+        `**Utente:** (${target.userId}) ${targetUser?.username || "Sconosciuto"}`,
+        `**Moderatore:** ${modUser?.username || row.modId || "Sconosciuto"}`,
       ];
-      if (length) blockLines.push(`**Length:** ${length}`);
-      blockLines.push(`**Reason:** ${row.reason || "No reason given."} - ${createdAt}`);
+      if (length) blockLines.push(`**Durata:** ${length}`);
+      blockLines.push(`**Motivo:** ${row.reason || "Nessun motivo fornito."} - ${createdAt}`);
       lines.push(blockLines.join("\n"));
     }
 
     const logsEmbed = new EmbedBuilder()
       .setColor("#3498DB")
-      .setTitle(`Modlogs for ${targetUser?.username || target.userId} (Page ${safePage} of ${totalPages})`)
+      .setTitle(`Modlog di ${targetUser?.username || target.userId} (Pagina ${safePage} di ${totalPages})`)
       .setDescription(lines.join("\n\n"))
-      .setFooter({ text: `${total} total log | Use +modlogs [user] [page] to view another page` });
+      .setFooter({ text: `${total} log totali | Usa +modlogs [utente] [pagina] per vedere un'altra pagina` });
 
     return message.channel.send({ embeds: [logsEmbed] }).catch(() => null);
   }
@@ -1175,17 +1183,17 @@ async function runNamed(name, message, args, client) {
     const t30 = Number(m30) + Number(b30) + Number(k30) + Number(w30);
     const tall = Number(mall) + Number(ball) + Number(kall) + Number(wall);
     const description = [
-      "**Moderation Statistics**",
+      "**Statistiche Moderazione**",
       "",
-      `**Mutes (last 7 days):** ${m7}    **Mutes (last 30 days):** ${m30}    **Mutes (all time):** ${mall}`,
+      `**Mute (ultimi 7 giorni):** ${m7}    **Mute (ultimi 30 giorni):** ${m30}    **Mute (totale):** ${mall}`,
       "",
-      `**Bans (last 7 days):** ${b7}    **Bans (last 30 days):** ${b30}    **Bans (all time):** ${ball}`,
+      `**Ban (ultimi 7 giorni):** ${b7}    **Ban (ultimi 30 giorni):** ${b30}    **Ban (totale):** ${ball}`,
       "",
-      `**Kicks (last 7 days):** ${k7}    **Kicks (last 30 days):** ${k30}    **Kicks (all time):** ${kall}`,
+      `**Kick (ultimi 7 giorni):** ${k7}    **Kick (ultimi 30 giorni):** ${k30}    **Kick (totale):** ${kall}`,
       "",
-      `**Warns (last 7 days):** ${w7}    **Warns (last 30 days):** ${w30}    **Warns (all time):** ${wall}`,
+      `**Warn (ultimi 7 giorni):** ${w7}    **Warn (ultimi 30 giorni):** ${w30}    **Warn (totale):** ${wall}`,
       "",
-      `**Total (last 7 days):** ${t7}    **Total (last 30 days):** ${t30}    **Total (all time):** ${tall}`,
+      `**Totale (ultimi 7 giorni):** ${t7}    **Totale (ultimi 30 giorni):** ${t30}    **Totale (complessivo):** ${tall}`,
     ].join("\n");
     const hh = new Date().toLocaleTimeString("it-IT", {
       hour: "2-digit",
@@ -1210,15 +1218,15 @@ async function runNamed(name, message, args, client) {
           .setColor("#3498DB")
           .setDescription(
             [
-              "**Command: +lock**",
+              "**Comando: +lock**",
               "",
-              "**Description:** Lock a channel with optional timer and message.",
-              "**Cooldown:** 5 seconds",
-              "**Usage:**",
-              "+lock [channel] (time) (message)",
-              "**Example:**",
-              "+lock #general We will be back soon",
-              "+lock #support 2h This channel will be locked for two hours.",
+              "**Descrizione:** Blocca un canale con timer e messaggio opzionali.",
+              "**Cooldown:** 5 secondi",
+              "**Uso:**",
+              "+lock [canale] (durata) (messaggio)",
+              "**Esempio:**",
+              "+lock #general Torniamo subito",
+              "+lock #support 2h Questo canale restera bloccato per due ore.",
               "+lock #help 4h",
             ].join("\n"),
           );
@@ -1228,15 +1236,15 @@ async function runNamed(name, message, args, client) {
         .setColor("#3498DB")
         .setDescription(
           [
-            "**Command: +unlock**",
+            "**Comando: +unlock**",
             "",
-            "**Description:** Unlock a previously locked channel.",
-            "**Cooldown:** 5 seconds",
-            "**Usage:**",
-            "+unlock [channel] (message)",
-            "**Example:**",
+            "**Descrizione:** Sblocca un canale bloccato in precedenza.",
+            "**Cooldown:** 5 secondi",
+            "**Uso:**",
+            "+unlock [canale] (messaggio)",
+            "**Esempio:**",
             "+unlock #general",
-            "+unlock #support We're back everyone!",
+            "+unlock #support Siamo tornati!",
           ].join("\n"),
         );
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
@@ -1249,7 +1257,7 @@ async function runNamed(name, message, args, client) {
     const start = message.mentions?.channels?.size ? 1 : 0;
     const duration = cmd === "lock" ? parseLockDuration(args[start]) : null;
     const reasonStart = cmd === "lock" && duration ? start + 1 : start;
-    const reason = reasonFrom(args, reasonStart, cmd === "lock" ? "Channel locked." : "Channel unlocked.");
+    const reason = reasonFrom(args, reasonStart, cmd === "lock" ? "Canale bloccato." : "Canale sbloccato.");
     const me = message.guild.members.me;
     const perms = channel?.permissionsFor?.(me);
     if (!perms?.has(PermissionsBitField.Flags.ManageChannels)) return reply(message, client, cmd, "Non posso gestire quel canale.", "Red");
@@ -1269,8 +1277,8 @@ async function runNamed(name, message, args, client) {
           embeds: [
             new EmbedBuilder()
               .setColor("#ED4245")
-              .setTitle("Channel Locked")
-              .setDescription(`🔒 ${reason}`),
+              .setTitle("Canale bloccato")
+              .setDescription(`Lock: ${reason}`),
           ],
         })
         .catch(() => null);
@@ -1280,7 +1288,7 @@ async function runNamed(name, message, args, client) {
             .edit(
               message.guild.roles.everyone,
               { SendMessages: null, SendMessagesInThreads: null },
-              { reason: "Automatic unlock (timer elapsed)." },
+              { reason: "Sblocco automatico (timer scaduto)." },
             )
             .catch(() => null);
         }, duration);
@@ -1294,7 +1302,7 @@ async function runNamed(name, message, args, client) {
           new EmbedBuilder()
             .setColor("#57F287")
             .setDescription(
-              `<:success:1461731530333229226> ${cmd === "lock" ? "Locked" : "Unlocked"} channel <#${channel.id}>`,
+              `<:success:1461731530333229226> Canale <#${channel.id}> ${cmd === "lock" ? "bloccato" : "sbloccato"}.`,
             ),
         ],
       })
@@ -1314,7 +1322,7 @@ async function runNamed(name, message, args, client) {
     if (sub === "remove") {
       const roleArg = args[base + 1];
       const role = await resolveRoleFlexible(message, roleArg);
-      if (!role) return errorTemprole(message, "I can't find that role");
+      if (!role) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
       await revokeTemporaryRole({
         guild: message.guild,
         userId: target.userId,
@@ -1333,7 +1341,7 @@ async function runNamed(name, message, args, client) {
       );
       return successTemprole(
         message,
-        `Removed ${role.name} from ${(target.user?.username || target.userId).toLowerCase()}.`,
+        `Ruolo ${role.name} rimosso da ${(target.user?.username || target.userId).toLowerCase()}.`,
       );
     }
 
@@ -1342,7 +1350,7 @@ async function runNamed(name, message, args, client) {
     if (!duration) return sendTemproleHelpWithMenu(message);
     const roleArg = args[base + 2];
     const role = await resolveRoleFlexible(message, roleArg);
-    if (!role) return errorTemprole(message, "I can't find that role");
+    if (!role) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
 
     if (sub === "toggle") {
       const existing = await listTemporaryRolesForUser({
@@ -1369,7 +1377,7 @@ async function runNamed(name, message, args, client) {
         );
         return successTemprole(
           message,
-          `Removed ${role.name} from ${(target.user?.username || target.userId).toLowerCase()}.`,
+          `Ruolo ${role.name} rimosso da ${(target.user?.username || target.userId).toLowerCase()}.`,
         );
       }
     }
@@ -1381,7 +1389,7 @@ async function runNamed(name, message, args, client) {
       grantedBy: message.author.id,
       durationMs: duration,
     });
-    if (!out?.ok) return errorTemprole(message, "I can't find that role");
+    if (!out?.ok) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
     await makeCase(
       client,
       message,
@@ -1392,7 +1400,7 @@ async function runNamed(name, message, args, client) {
     );
     return successTemprole(
       message,
-      `Added ${role.name} to ${(target.user?.username || target.userId).toLowerCase()}.`,
+      `Ruolo ${role.name} aggiunto a ${(target.user?.username || target.userId).toLowerCase()}.`,
     );
   }
 
@@ -1405,3 +1413,4 @@ async function executeDynoModerationCommand(commandName, message, args, client) 
 }
 
 module.exports = { executeDynoModerationCommand };
+

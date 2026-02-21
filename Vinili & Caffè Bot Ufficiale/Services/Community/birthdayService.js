@@ -164,9 +164,18 @@ function startBirthdayLoop(client) {
   return birthdayLoopHandle;
 }
 
+function getBirthdayLoopStatus() {
+  return {
+    active: Boolean(birthdayLoopHandle),
+    tickRunning: Boolean(birthdayTickRunning),
+    timezone: DEFAULT_TIME_ZONE,
+  };
+}
+
 module.exports = {
   startBirthdayLoop,
   runBirthdayTick,
   getRomeDateParts,
   inferBirthYearFromAge,
+  getBirthdayLoopStatus,
 };

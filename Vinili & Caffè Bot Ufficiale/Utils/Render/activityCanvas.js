@@ -695,7 +695,7 @@ async function renderUserActivityCanvas({
 
   drawMetricPanel(
     ctx,
-    "Messages",
+    "Messaggi",
     [
       { label: "1d", value: `${compactNumber(windows?.d1?.text)} messages` },
       { label: "7d", value: `${compactNumber(windows?.d7?.text)} messages` },
@@ -814,7 +814,7 @@ async function renderServerActivityCanvas({
 
   drawMetricPanel(
     ctx,
-    "Messages",
+    "Messaggi",
     [
       { label: "1d", value: `${compactNumber(windows?.d1?.text)} messages` },
       { label: "7d", value: `${compactNumber(windows?.d7?.text)} messages` },

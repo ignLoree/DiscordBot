@@ -75,7 +75,7 @@ const reminderPool = [
       .setTitle("📌 Marca un messaggio e rendilo un post")
       .setDescription(
         [
-          "Rispondendo al messaggio che si vuole postare con \`?quote\`, potrai poi vederlo nel canale <#1468540884537573479>",
+          "Rispondendo al messaggio che si vuole postare con \`+quote\`, potrai poi vederlo nel canale <#1468540884537573479>",
         ].join("\n"),
       ),
   () =>
@@ -516,4 +516,17 @@ function startHourlyReminderLoop(client) {
   return hourlyLoopHandle;
 }
 
-module.exports = { startHourlyReminderLoop, recordReminderActivity };
+function getChatReminderLoopStatus() {
+  return {
+    active: Boolean(hourlyLoopHandle),
+    scheduledHours: Number(scheduledHours.size || 0),
+    scheduledTimeouts: Number(scheduledTimeouts.size || 0),
+    timezone: DEFAULT_TIME_ZONE,
+  };
+}
+
+module.exports = {
+  startHourlyReminderLoop,
+  recordReminderActivity,
+  getChatReminderLoopStatus,
+};

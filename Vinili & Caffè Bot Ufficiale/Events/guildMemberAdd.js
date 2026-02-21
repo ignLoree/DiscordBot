@@ -6,7 +6,12 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
-const { processJoinRaidForMember, getJoinRaidStatusSnapshot, } = require("../Services/Moderation/joinRaidService");
+const {
+  processJoinRaidForMember,
+  getJoinRaidStatusSnapshot,
+  registerJoinRaidSecuritySignal,
+} = require("../Services/Moderation/joinRaidService");
+const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const { applyRolePersistForMember } = require("../Services/Moderation/rolePersistService");
 
@@ -651,6 +656,10 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       .ban(member.id, { deleteMessageSeconds: 0, reason })
       .then(() => true)
       .catch(() => false);
+  } else if (normalizedAction === "ban" && !canBan && canKick) {
+    // Fall back from ban to kick if ban is unavailable but kick is possible.
+    punished = await member.kick(reason).then(() => true).catch(() => false);
+    if (punished) appliedAction = "kick";
   }
   if (!punished && normalizedAction !== "log" && canTimeout) {
     punished = await member
@@ -671,6 +680,17 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     if (appliedAction === "kick") {
       markJoinGateKick(member.guild.id, member.id, reason);
     }
+    await registerJoinRaidSecuritySignal(member, {
+      reason: `Join Gate action: ${reason}`,
+      antiNukeHeat: appliedAction === "ban" ? 80 : 60,
+      raidBoost: appliedAction === "ban" ? 2 : 1,
+    }).catch(() => null);
+  } else if (appliedAction === "log") {
+    await registerJoinRaidSecuritySignal(member, {
+      reason: `Join Gate suspicious log: ${reason}`,
+      antiNukeHeat: 25,
+      raidBoost: 1,
+    }).catch(() => null);
   }
   const logChannel =
     member.guild.channels.cache.get(IDs.channels.modLogs) ||
@@ -698,7 +718,16 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   }
   return {
     blocked,
-    attempted: appliedAction === "log" ? false : appliedAction === "ban" ? canBan : canKick,
+    attempted:
+      appliedAction === "log"
+        ? false
+        : appliedAction === "ban"
+          ? canBan
+          : appliedAction === "kick"
+            ? canKick
+            : appliedAction === "timeout"
+              ? canTimeout
+              : false,
     punished,
     dmSent,
     canKick,
@@ -751,6 +780,7 @@ async function sendSuspiciousAccountLog(member, reason) {
     );
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
+
 async function handleTooYoungAccount(member) {
   const createdTs = toUnix(member.user.createdAt);
   await kickForJoinGate(member, "Account is too young to be allowed.", [
@@ -906,6 +936,21 @@ module.exports = {
       const isCoreExempt =
         CORE_EXEMPT_USER_IDS.has(String(member?.id || "")) ||
         String(member?.guild?.ownerId || "") === String(member?.id || "");
+      if (!isCoreExempt) {
+        const lockState = await getSecurityLockState(member.guild);
+        if (lockState.joinLockActive) {
+          await kickForJoinGate(
+            member,
+            "Ingresso bloccato: lockdown di sicurezza attivo.",
+            [
+              `${ARROW} **Rule:** Security Join Lock`,
+              `${ARROW} **Sources:** ${lockState.sources.join(", ")}`,
+            ],
+            "ban",
+          );
+          return;
+        }
+      }
 
       if (member.user?.bot) {
         if (isCoreExempt) {

@@ -547,8 +547,14 @@ async function handleRemoveBirthday(message) {
 }
 
 module.exports = {
-  name: "bh",
-  aliases: ["birthday", "compleanno"],
+  name: "birthday",
+  aliases: ["bh", "compleanno"],
+  subcommands: ["set", "edit", "remove"],
+  subcommandAliases: {
+    set: "set",
+    edit: "edit",
+    remove: "remove",
+  },
 
   async execute(message, args = [], client) {
     if (!message?.guild) {

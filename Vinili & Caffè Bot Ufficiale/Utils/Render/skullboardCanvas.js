@@ -138,7 +138,7 @@ module.exports = async function renderSkullboardCanvas({
     }
 
     ctx.font = fontStack(12, "600");
-    const replyName = reply.author || "Unknown";
+    const replyName = reply.author || "Sconosciuto";
     const replyNameColor = reply.nameColor || "#b9bbbe";
     const replyTextY = replyY + 6;
     drawTextWithSpecialFallback(ctx, replyName, rx, replyTextY, {

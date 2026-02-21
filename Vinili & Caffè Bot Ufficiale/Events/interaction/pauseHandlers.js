@@ -1,4 +1,4 @@
-﻿const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
 
@@ -155,7 +155,7 @@ function getBasePauseLimit(member) {
 }
 
 function getPauseStatusLabel(pause, todayUtc) {
-  if (!pause) return "Unknown";
+  if (!pause) return "Sconosciuto";
   if (pause.status === "cancelled") return "Annullata";
   if (pause.status === "pending") return "Richiesta";
   if (pause.status === "rejected") return "Rifiutata";

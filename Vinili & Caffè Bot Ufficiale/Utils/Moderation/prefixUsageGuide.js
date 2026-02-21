@@ -4,9 +4,59 @@
   StringSelectMenuBuilder,
   ComponentType,
 } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
 
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
+const PERMISSIONS_CANDIDATES = [
+  path.join(process.cwd(), "permissions.json"),
+  path.resolve(__dirname, "../../permissions.json"),
+];
+let permissionsCache = { filePath: null, mtimeMs: 0, data: {} };
+
+function loadPrefixPermissions() {
+  try {
+    const permissionsPath =
+      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
+    if (!permissionsPath) return {};
+    const stat = fs.statSync(permissionsPath);
+    if (
+      permissionsCache.filePath === permissionsPath &&
+      permissionsCache.mtimeMs === stat.mtimeMs
+    ) {
+      return permissionsCache.data || {};
+    }
+    const raw = fs.readFileSync(permissionsPath, "utf8");
+    const parsed = JSON.parse(raw) || {};
+    const prefix = parsed.prefix && typeof parsed.prefix === "object"
+      ? parsed.prefix
+      : {};
+    permissionsCache = {
+      filePath: permissionsPath,
+      mtimeMs: stat.mtimeMs,
+      data: prefix,
+    };
+    return prefix;
+  } catch {
+    return {};
+  }
+}
+
+function getPermissionSubcommands(commandName) {
+  const safeName = String(commandName || "").trim().toLowerCase();
+  if (!safeName) return [];
+  const prefixPerms = loadPrefixPermissions();
+  const cfg = prefixPerms?.[safeName];
+  const subMap =
+    cfg?.subcommands && typeof cfg.subcommands === "object"
+      ? cfg.subcommands
+      : null;
+  if (!subMap) return [];
+  return Object.keys(subMap)
+    .map((s) => String(s || "").trim().toLowerCase())
+    .filter(Boolean);
+}
 
 function normalizeSubcommands(command) {
   const direct = Array.isArray(command?.subcommands)
@@ -14,9 +64,10 @@ function normalizeSubcommands(command) {
     : [];
   const aliases = command?.subcommandAliases || {};
   const mapped = Object.values(aliases || {});
+  const fromPermissions = getPermissionSubcommands(command?.name);
   return Array.from(
     new Set(
-      [...direct, ...mapped]
+      [...direct, ...mapped, ...fromPermissions]
         .map((v) => String(v || "").trim().toLowerCase())
         .filter(Boolean),
     ),
@@ -32,7 +83,7 @@ function getSubDescription(command, sub) {
     {};
   const value = meta?.[sub];
   if (String(value || "").trim()) return String(value).trim();
-  return `Mostra come usare il subcommand \`${sub}\`.`;
+  return `Mostra come usare il sotto-comando \`${sub}\`.`;
 }
 
 function getSubUsage(command, prefix, sub) {
@@ -56,11 +107,11 @@ function buildDefaultGuideEmbed(command, prefix) {
     .setColor(GUIDE_COLOR)
     .setDescription(
       [
-        `**Command: ${prefix}${command?.name}**`,
+        `**Comando: ${prefix}${command?.name}**`,
         "",
-        `**Aliases:** ${aliases || `${prefix}undefined`}`,
-        `**Description:** ${description}`,
-        "**Usage:**",
+        `**Alias:** ${aliases || `${prefix}undefined`}`,
+        `**Descrizione:** ${description}`,
+        "**Uso:**",
         usage,
       ].join("\n"),
     );
@@ -73,10 +124,10 @@ function buildSubGuideEmbed(command, prefix, sub) {
     .setColor(GUIDE_COLOR)
     .setDescription(
       [
-        `**Command: ${prefix}${command?.name} ${sub}**`,
+        `**Comando: ${prefix}${command?.name} ${sub}**`,
         "",
-        `**Description:** ${description}`,
-        "**Usage:**",
+        `**Descrizione:** ${description}`,
+        "**Uso:**",
         usage,
       ].join("\n"),
     );
@@ -93,7 +144,7 @@ function buildSubcommandRow(command, ownerId, currentValue = "__default") {
 
   const menu = new StringSelectMenuBuilder()
     .setCustomId(`usage_guide:${command.name}:${ownerId}`)
-    .setPlaceholder("View Subcommands")
+    .setPlaceholder("Vedi sotto-comandi")
     .addOptions(
       ...filteredSubs.slice(0, 24).map((sub) => ({
         label: sub,

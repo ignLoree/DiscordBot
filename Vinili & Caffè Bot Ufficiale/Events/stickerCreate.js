@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const STICKER_CREATE_ACTION = AuditLogEvent?.StickerCreate ?? 90;
@@ -29,7 +29,7 @@ function stickerFormatLabel(value) {
   if (n === 2) return "APNG (.png)";
   if (n === 3) return "Lottie (.json)";
   if (n === 4) return "GIF (.gif)";
-  return `Unknown (${n || 0})`;
+  return `Sconosciuto (${n || 0})`;
 }
 
 async function resolveLogChannel(guild) {

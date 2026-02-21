@@ -61,10 +61,22 @@ async function closeExpiredMuteCases(client, now) {
       continue;
     }
     const member = await guild.members.fetch(String(row.userId || "")).catch(() => null);
-    if (!member || !member.communicationDisabledUntilTimestamp || member.communicationDisabledUntilTimestamp <= Date.now()) {
-      closeCase(row, "Mute scaduto automaticamente");
+    if (!member) {
+      closeCase(row, "Mute scaduto automaticamente (utente non disponibile)");
       await row.save().catch(() => null);
+      continue;
     }
+    const untilTs = Number(member.communicationDisabledUntilTimestamp || 0);
+    if (untilTs > Date.now()) {
+      closeCase(
+        row,
+        `Mute case scaduto: utente ancora in timeout fino a ${new Date(untilTs).toISOString()}`,
+      );
+      await row.save().catch(() => null);
+      continue;
+    }
+    closeCase(row, "Mute scaduto automaticamente");
+    await row.save().catch(() => null);
   }
 }
 

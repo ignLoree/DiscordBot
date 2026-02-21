@@ -47,7 +47,7 @@ function overwriteTypeLabel(overwrite) {
   const t = Number(overwrite?.type ?? -1);
   if (t === OverwriteType.Member) return "Member";
   if (t === OverwriteType.Role) return "Role";
-  return `Unknown (${t})`;
+  return `Sconosciuto (${t})`;
 }
 
 function targetName(guild, overwrite) {
@@ -122,8 +122,8 @@ async function sendChannelUpdateLog(oldChannel, newChannel) {
     lines.push(`${ARROW} **Parent:** ${oldParent} ${ARROW} ${newParent}`);
   }
   if (rateLimitChanged) {
-    const oldRate = Number(oldChannel?.rateLimitPerUser || 0) || "None";
-    const newRate = Number(newChannel?.rateLimitPerUser || 0) || "None";
+    const oldRate = Number(oldChannel?.rateLimitPerUser || 0) || "Nessuno";
+    const newRate = Number(newChannel?.rateLimitPerUser || 0) || "Nessuno";
     lines.push(`${ARROW} **Rate Limit Per User:** ${oldRate} ${ARROW} ${newRate}`);
   }
   lines.push(

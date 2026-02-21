@@ -23,10 +23,10 @@ async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs
 
 function threadTypeLabel(threadType) {
   const value = Number(threadType || 0);
-  if (value === 12) return "Private Thread";
-  if (value === 11) return "Public Thread";
-  if (value === 10) return "Announcement Thread";
-  return `Unknown (${value})`;
+  if (value === 12) return "Thread privato";
+  if (value === 11) return "Thread pubblico";
+  if (value === 10) return "Thread annuncio";
+  return `Sconosciuto (${value})`;
 }
 
 module.exports = {
@@ -50,19 +50,19 @@ module.exports = {
           `${ARROW} **Name:** ${thread?.name || "sconosciuto"} \`[${threadId}]\``,
           `${ARROW} **Type:** ${threadTypeLabel(thread?.type)}`,
           `${ARROW} **Archived:** ${yesNo(Boolean(thread?.archived))}`,
-          `${ARROW} **Locked:** ${yesNo(Boolean(thread?.locked))}`,
-          `${ARROW} **Auto Archive Duration:** ${Number(thread?.autoArchiveDuration || 0) ? `${thread.autoArchiveDuration} minutes` : "None"}`,
-          `${ARROW} **Rate Limit Per User:** ${Number(thread?.rateLimitPerUser || 0) || "None"}`,
+          `${ARROW} **Bloccato:** ${yesNo(Boolean(thread?.locked))}`,
+          `${ARROW} **Durata auto-archiviazione:** ${Number(thread?.autoArchiveDuration || 0) ? `${thread.autoArchiveDuration} minuti` : "Nessuna"}`,
+          `${ARROW} **Slowmode per utente:** ${Number(thread?.rateLimitPerUser || 0) || "Nessuna"}`,
         ];
 
         if (Array.isArray(thread?.appliedTags) && thread.appliedTags.length) {
-          lines.push(`${ARROW} **Applied Tags:** \`${thread.appliedTags.map((id) => String(id)).join(",")}\``);
+          lines.push(`${ARROW} **Tag applicati:** \`${thread.appliedTags.map((id) => String(id)).join(",")}\``);
         }
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "type", "archived", "locked", "auto_archive_duration", "rate_limit_per_user", "applied_tags"]));
 
         const embed = new EmbedBuilder()
           .setColor("#ED4245")
-          .setTitle("Thread Delete")
+          .setTitle("Eliminazione thread")
           .setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});

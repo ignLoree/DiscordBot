@@ -1,4 +1,4 @@
-﻿const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { createGuildBackup, readBackupByIdGlobal, listAllBackupMetas, verifyBackupByIdGlobal, } = require("../../Services/Backup/serverBackupService");
 const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildBackupLoadStatus, cancelGuildBackupLoad, runBackupDryRun, buildDryRunEmbed, } = require("../../Services/Backup/backupLoadService");
@@ -7,12 +7,12 @@ const { renderList } = require("../../Services/Backup/backupListService");
 const EPHEMERAL_FLAG = 1 << 6;
 const CHANNEL_TYPE_LABEL = {
   0: "#",
-  2: "🔊",
-  4: "▾",
-  5: "📢",
-  13: "🎙",
-  15: "🧵",
-  16: "🧵",
+  2: "[VC]",
+  4: "[CAT]",
+  5: "[ANN]",
+  13: "[STAGE]",
+  15: "[FORUM]",
+  16: "[MEDIA]",
 };
 
 function formatBytes(bytes) {
@@ -43,31 +43,31 @@ function toCodeBlock(lines) {
 function buildCreatingEmbed() {
   return new EmbedBuilder()
     .setColor("#4aa3ff")
-    .setDescription("<a:loading:1443934440614264924> **Creating backup ...**");
+    .setDescription("<a:loading:1443934440614264924> **Creazione backup in corso...**");
 }
 
 function buildSuccessEmbed(interaction, result) {
   return new EmbedBuilder()
     .setColor("#2ecc71")
-    .setTitle("Success")
+    .setTitle("Completato")
     .setDescription(
       [
-        `Successfully created backup with id \`${result.backupId}\`.`,
+        `Backup creato con successo con ID \`${result.backupId}\`.`,
         "",
-        "Usage",
+        "Comandi utili",
         `\`/backup info backup_id: ${result.backupId}\``,
         `\`/backup load backup_id: ${result.backupId}\``,
       ].join("\n"),
     )
     .addFields([
       {
-        name: "Saved",
+        name: "Salvato",
         value: [
-          `Members/Bots: **${result.stats.members}**`,
-          `Roles: **${result.stats.roles}**`,
-          `Channels: **${result.stats.channels}**`,
-          `Threads: **${result.stats.threads}**`,
-          `Messages: **${result.stats.messages}**`,
+          `Membri/Bot: **${result.stats.members}**`,
+          `Ruoli: **${result.stats.roles}**`,
+          `Canali: **${result.stats.channels}**`,
+          `Thread: **${result.stats.threads}**`,
+          `Messaggi: **${result.stats.messages}**`,
           `Bans: **${result.stats.bans}**`,
           `Invites: **${result.stats.invites}**`,
           `Webhooks: **${result.stats.webhooks}**`,
@@ -184,22 +184,22 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
   const embed = new EmbedBuilder()
     .setColor("#3498db")
     .setTitle(
-      `Backup Info - ${guild.name || interaction.guild?.name || "Unknown Guild"}`,
+      `Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
     )
     .setDescription(
       minimalBackup
-        ? "This backup doesn't contain any messages, members, or bans."
-        : "This backup contains a full server snapshot.",
+        ? "Questo backup non contiene messaggi, membri o ban."
+        : "Questo backup contiene uno snapshot completo del server.",
     )
     .addFields([
       {
-        name: "Created At",
+        name: "Creato il",
         value: `<t:${createdAt}:R>`,
         inline: true,
       },
       {
-        name: "Stored Until",
-        value: "forever",
+        name: "Conservato fino a",
+        value: "per sempre",
         inline: true,
       },
       {
@@ -208,55 +208,55 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
         inline: true,
       },
       {
-        name: "Channels",
+        name: "Canali",
         value: String(channels.length),
         inline: true,
       },
       {
-        name: "Roles",
+        name: "Ruoli",
         value: String(roles.length),
         inline: true,
       },
       {
-        name: "Threads",
+        name: "Thread",
         value: String(threads.length),
         inline: true,
       },
       {
-        name: "Members",
+        name: "Membri",
         value: String(members.length),
         inline: true,
       },
       {
-        name: "Bans",
+        name: "Ban",
         value: String(bans.length),
         inline: true,
       },
       {
-        name: "Messages",
-        value: `${totalMessages} total`,
+        name: "Messaggi",
+        value: `${totalMessages} totali`,
         inline: true,
       },
       {
-        name: "Channels",
+        name: "Canali",
         value: toCodeBlock(channelLines),
         inline: true,
       },
       {
-        name: "Roles",
+        name: "Ruoli",
         value: toCodeBlock(roleLines),
         inline: true,
       },
       {
-        name: "File",
+        name: "File backup",
         value: `\`${backupId}.json.gz\` (${formatBytes(fileSize)})`,
         inline: false,
       },
       {
-        name: "Integrity",
+        name: "Integrità",
         value: checksum
           ? `\`SHA256\` payload: \`${String(checksum.payload || "").slice(0, 12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed || "").slice(0, 12)}...\``
-          : "N/A",
+          : "N/D",
         inline: false,
       },
     ])
@@ -280,12 +280,12 @@ function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`backup_info_load:${token}:${ownerId}`)
-      .setLabel("Load this backup")
+      .setLabel("Carica backup")
       .setStyle(ButtonStyle.Primary)
       .setDisabled(false),
     new ButtonBuilder()
       .setCustomId(`backup_info_delete:${token}:${ownerId}`)
-      .setLabel("Delete this backup")
+      .setLabel("Elimina backup")
       .setStyle(ButtonStyle.Danger)
       .setDisabled(false),
   );
@@ -294,9 +294,9 @@ function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
 function buildDeleteWarningEmbed() {
   return new EmbedBuilder()
     .setColor("#f1c40f")
-    .setTitle("Warning")
+    .setTitle("Conferma eliminazione")
     .setDescription(
-      "Are you sure that you want to delete this backup? **This can not be undone.**",
+      "Vuoi davvero eliminare questo backup? **Questa azione non è reversibile.**",
     );
 }
 
@@ -305,11 +305,11 @@ function buildDeleteConfirmButtons(backupId, ownerId, sourceGuildId = null) {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId(`backup_delete_confirm:${token}:${ownerId}`)
-      .setLabel("Confirm")
+      .setLabel("Conferma")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`backup_delete_cancel:${token}:${ownerId}`)
-      .setLabel("Cancel")
+      .setLabel("Annulla")
       .setStyle(ButtonStyle.Danger),
   );
 }
@@ -318,23 +318,23 @@ function buildLoadStatusEmbed(status) {
   if (!status) {
     return new EmbedBuilder()
       .setColor("#3498db")
-      .setTitle("Backup Load Status")
+      .setTitle("Stato caricamento backup")
       .setDescription("Nessun backup load in corso in questo server.");
   }
   const startedAt = Math.floor(Number(status.startedAtMs || Date.now()) / 1000);
   const actions = Array.isArray(status.actions) ? status.actions : [];
   return new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle("Backup Load Status")
+    .setTitle("Stato caricamento backup")
     .setDescription(
       [
         `Backup ID: \`${String(status.backupId || "").toUpperCase()}\``,
-        `Started: <t:${startedAt}:R>`,
-        `Phase: \`${String(status.phase || "starting")}\``,
-        `Processed items: **${Number(status.processed || 0)}**`,
-        `Cancel requested: **${status.cancelRequested ? "yes" : "no"}**`,
-        `Messages limit: \`${status.messagesLimit == null ? "ALL" : Number(status.messagesLimit || 0)}\``,
-        `Actions: ${actions.length ? `\`${actions.join("`, `")}\`` : "none"}`,
+        `Avviato: <t:${startedAt}:R>`,
+        `Fase: \`${String(status.phase || "avvio")}\``,
+        `Elementi processati: **${Number(status.processed || 0)}**`,
+        `Annullamento richiesto: **${status.cancelRequested ? "sì" : "no"}**`,
+        `Limite messaggi: \`${status.messagesLimit == null ? "TUTTI" : Number(status.messagesLimit || 0)}\``,
+        `Azioni: ${actions.length ? `\`${actions.join("`, `")}\`` : "nessuna"}`,
       ].join("\n"),
     );
 }
@@ -342,7 +342,7 @@ function buildLoadStatusEmbed(status) {
 function buildLoadCancelResultEmbed(cancelled) {
   return new EmbedBuilder()
     .setColor(cancelled ? "#2ecc71" : "#3498db")
-    .setTitle(cancelled ? "Success" : "Info")
+    .setTitle(cancelled ? "Completato" : "Info")
     .setDescription(
       cancelled
         ? "Richiesta di annullamento inviata. Il processo verrà fermato appena possibile."
@@ -431,7 +431,7 @@ module.exports = {
         ),
     ),
 
-  helpDescription: "Gestisce backup completi del server (create, info, load, list, delete, status, cancel, dryrun).",
+  helpDescrizione: "Gestisce backup completi del server (create, info, load, list, delete, status, cancel, dryrun).",
 
   async autocomplete(interaction) {
     try {

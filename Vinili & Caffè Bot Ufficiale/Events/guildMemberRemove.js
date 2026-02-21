@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AuditLogEvent, PermissionsBitField, } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AuditLogEvent, PermissionsBitField, } = require("discord.js");
 const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../Utils/Ticket/transcriptUtils");
@@ -163,14 +163,14 @@ async function closeOpenTicketsForMember(member) {
           },
           {
             name: "✅ Opened By",
-            value: ticket.userId ? `<@${ticket.userId}>` : "Unknown",
+            value: ticket.userId ? `<@${ticket.userId}>` : "Sconosciuto",
             inline: true,
           },
           {
             name: "🛑 Closed By",
             value: member.client.user?.id
               ? `<@${member.client.user.id}>`
-              : "Unknown",
+              : "Sconosciuto",
             inline: true,
           },
           { name: "🕒 Open Time", value: openedAt, inline: true },

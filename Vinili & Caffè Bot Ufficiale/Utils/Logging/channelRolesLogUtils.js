@@ -28,13 +28,13 @@ function channelTypeLabel(channelOrType) {
   if (value === 2) return "Voice";
   if (value === 4) return "Category";
   if (value === 5) return "Announcement";
-  if (value === 10) return "Announcement Thread";
-  if (value === 11) return "Public Thread";
-  if (value === 12) return "Private Thread";
+  if (value === 10) return "Thread annuncio";
+  if (value === 11) return "Thread pubblico";
+  if (value === 12) return "Thread privato";
   if (value === 13) return "Stage";
   if (value === 15) return "Forum";
   if (value === 16) return "Media";
-  return `Unknown (${value})`;
+  return `Sconosciuto (${value})`;
 }
 
 function formatAuditActor(actor, fallback = "sconosciuto") {
@@ -50,7 +50,7 @@ function formatAuditActor(actor, fallback = "sconosciuto") {
 function permissionList(bitfield) {
   const bits = new PermissionsBitField(bitfield ?? 0n);
   const names = bits.toArray();
-  if (!names.length) return "None";
+  if (!names.length) return "Nessuno";
   return names.join(", ");
 }
 
@@ -74,8 +74,8 @@ function permissionDiff(oldBitfield, newBitfield) {
   removals.sort((a, b) => a.localeCompare(b));
 
   return {
-    additions: additions.length ? additions.join(", ") : "None",
-    removals: removals.length ? removals.join(", ") : "None",
+    additions: additions.length ? additions.join(", ") : "Nessuno",
+    removals: removals.length ? removals.join(", ") : "Nessuno",
   };
 }
 

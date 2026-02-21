@@ -95,7 +95,7 @@ module.exports = {
               new EmbedBuilder()
                 .setColor("#6f4e37")
                 .setDescription(
-                  "Ok! **Non riceverai piu** DM automatici dal bot.\nPer riattivarli usa `+dm-enable`.",
+                  "Ok! **Non riceverai più** DM automatici dal bot.\nPer riattivarli usa `+dm-enable`.",
                 ),
             ],
             components: [],

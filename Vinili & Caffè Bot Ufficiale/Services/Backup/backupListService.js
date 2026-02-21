@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
 
 const PAGE_SIZE = 10;
@@ -155,19 +155,19 @@ function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
 
   return new EmbedBuilder()
     .setColor("#3498db")
-    .setTitle(`Backup Info - ${guild?.name || "Unknown Guild"}`)
+    .setTitle(`Info Backup - ${guild?.name || "Server sconosciuto"}`)
     .setDescription(`Backup ID: \`${String(backupId || "").toUpperCase()}\``)
     .addFields(
-      { name: "Created At", value: `<t:${createdAtTs}:R>`, inline: true },
-      { name: "Stored Until", value: "forever", inline: true },
-      { name: "Messages", value: String(messages), inline: true },
-      { name: "Channels", value: String(channels), inline: true },
-      { name: "Roles", value: String(roles), inline: true },
+      { name: "Creato il", value: `<t:${createdAtTs}:R>`, inline: true },
+      { name: "Conservato fino a", value: "forever", inline: true },
+      { name: "Messaggi", value: String(messages), inline: true },
+      { name: "Canali", value: String(channels), inline: true },
+      { name: "Ruoli", value: String(roles), inline: true },
       { name: "Threads", value: String(threads), inline: true },
-      { name: "Members", value: String(members), inline: true },
+      { name: "Membri", value: String(members), inline: true },
       { name: "Bans", value: String(bans), inline: true },
-      { name: "Channels", value: toCodeBlock(channelLines), inline: true },
-      { name: "Roles", value: toCodeBlock(roleLines), inline: true },
+      { name: "Canali", value: toCodeBlock(channelLines), inline: true },
+      { name: "Ruoli", value: toCodeBlock(roleLines), inline: true },
       {
         name: "File",
         value: `\`${String(backupId || "").toUpperCase()}.json.gz\` (${sizeMb} MB)`,
@@ -184,7 +184,7 @@ function buildListEmbed({ pageData }) {
   const lines = [];
   for (const item of items) {
     const backupId = String(item?.backupId || "").toUpperCase();
-    const guildName = item?.guildName || "Unknown Guild";
+    const guildName = item?.guildName || "Server sconosciuto";
     const ts = toUnix(item?.createdAt);
     lines.push(`**${backupId}**`);
     lines.push(`${guildName} (<t:${ts}:R>)`);
@@ -220,7 +220,7 @@ function buildListComponents({ ownerId, pageData }) {
         const backupRef = String(
           item?.guildId ? `${item.guildId}:${backupId}` : backupId,
         ).slice(0, 100);
-        const guildName = truncate(item?.guildName || "Unknown Guild", 70);
+        const guildName = truncate(item?.guildName || "Server sconosciuto", 70);
         const ts = toUnix(item?.createdAt);
         return {
           label: backupId.slice(0, 100),

@@ -1,7 +1,17 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { ExpUser, ActivityUser, } = require("../../Schemas/Community/communitySchemas");
-const { getLevelInfo, getTotalExpForLevel, recordLevelHistory, setLevelChannelLocked, setRoleIgnored, getGuildExpSettings, setTemporaryEventMultiplier, syncLevelRolesForMember, } = require("../../Services/Community/expService");
+const { ExpUser } = require("../../Schemas/Community/communitySchemas");
+const {
+  getLevelInfo,
+  getTotalExpForLevel,
+  recordLevelHistory,
+  setLevelChannelLocked,
+  setRoleIgnored,
+  getGuildExpSettings,
+  setTemporaryEventMultiplier,
+  setGlobalMultiplier,
+  syncLevelRolesForMember,
+} = require("../../Services/Community/expService");
 
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -26,6 +36,7 @@ function fmtDate(dateValue) {
 module.exports = {
   name: "level",
   aliases: [
+    "gmulti",
     "levelset",
     "leveladdexp",
     "levelremoveexp",
@@ -36,8 +47,10 @@ module.exports = {
     "levelignore",
     "levelunignore",
     "levelconfig",
+    "levelgmulti",
   ],
   subcommandAliases: {
+    gmulti: "gmulti",
     levelset: "set",
     leveladdexp: "add",
     levelremoveexp: "remove",
@@ -48,6 +61,7 @@ module.exports = {
     levelignore: "ignore",
     levelunignore: "unignore",
     levelconfig: "config",
+    levelgmulti: "gmulti",
   },
 
   async execute(message, args = []) {
@@ -69,6 +83,7 @@ module.exports = {
             "`+level lock <#canale|id>`",
             "`+level unlock <#canale|id>`",
             "`+level multiplier <valore> [minuti]`",
+            "`+level gmulti <valore>`",
             "`+level ignore <@ruolo|id>`",
             "`+level unignore <@ruolo|id>`",
             "`+level config`",
@@ -196,6 +211,48 @@ module.exports = {
       return;
     }
 
+    if (sub === "gmulti") {
+      const value = Number(args[1]);
+      if (!Number.isFinite(value) || value <= 0) {
+        await safeMessageReply(message, {
+          content:
+            "<:vegax:1443934876440068179> Usa: `+level gmulti <numero>`",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const stored = await setGlobalMultiplier(guildId, value);
+      const embed = new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setDescription(
+          `<:vegacheckmark:1443666279058772028> Moltiplicatore globale impostato a **${stored}x**.`,
+        );
+      await safeMessageReply(message, {
+        embeds: [embed],
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
+
+    const target = await resolveTargetUser(message, args[1]);
+    if (!target) {
+      await safeMessageReply(message, {
+        content:
+          "<:vegax:1443934876440068179> Specifica un utente valido (`@utente` o `id`).",
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
+
+    let doc = await ExpUser.findOne({ guildId, userId: target.id });
+    if (!doc) {
+      doc = new ExpUser({ guildId, userId: target.id });
+    }
+
+    const beforeExp = Math.max(0, Math.floor(Number(doc.totalExp || 0)));
+    const beforeLevel = getLevelInfo(beforeExp).level;
+    let afterExp = beforeExp;
+
     if (sub === "set") {
       const mode = String(args[2] || "").toLowerCase();
       const value = asInt(args[3]);
@@ -263,7 +320,7 @@ module.exports = {
       .setTitle("Aggiornamento Level")
       .setDescription(
         [
-          `- Utente: ${target}`,
+          `- Utente: <@${target.id}>`,
           `- Azione: **${sub}**`,
           `- Livello: **${beforeLevel} -> ${doc.level}**`,
           `- EXP: **${beforeExp} -> ${doc.totalExp}**`,

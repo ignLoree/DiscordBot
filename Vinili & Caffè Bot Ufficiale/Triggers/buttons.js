@@ -722,7 +722,7 @@ module.exports = {
             "<:dot:1443660294596329582> Bypass dei requisiti nei giveaway",
             "<:dot:1443660294596329582> Possibilità di cambiare il tuo nickname",
             "<:dot:1443660294596329582> Sblocchi i COLORI PLUS (gradienti) su <#1469429150669602961>",
-            "<:dot:1443660294596329582> Sblocchi il comando \`?quote\`",
+            "<:dot:1443660294596329582> Sblocchi il comando \`+quote\`",
             "<:dot:1443660294596329582> X3 EXP boost",
           ].join("\n"),
         )
@@ -821,7 +821,7 @@ module.exports = {
             "<:pinkstar:1470064804835229768>・Permesso di mandare emoji e adesivi di altri server",
             "<:sparkle:1470064801811140866>・Permesso di usare le Soundboard del server",
             "<:blueflash:1470064803157643468>・Possibilità di creare un **ruolo personalizzato** e una **vocale privata personalizzata**",
-            "<a:reddiamond:1443652837346377841>・Sblocchi il comando \`?quote\`",
+            "<a:reddiamond:1443652837346377841>・Sblocchi il comando \`+quote\`",
             "<:exp:1470067108543987846>・X2 EXP Boost",
           ].join("\n"),
         )
@@ -876,7 +876,7 @@ module.exports = {
               `<@&${IDs.roles.Level10}>`,
               "<:VC_DoubleReply:1468713981152727120> Permesso di cambiare nickname",
               "<:VC_DoubleReply:1468713981152727120> Permesso di allegare link e immagini in chat",
-              "<:VC_Reply:1468262952934314131> Sblocchi il comando \`?quote\`",
+              "<:VC_Reply:1468262952934314131> Sblocchi il comando \`+quote\`",
             ].join("\n"),
             inline: true,
           },

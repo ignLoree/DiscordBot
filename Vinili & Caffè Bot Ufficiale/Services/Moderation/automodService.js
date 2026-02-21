@@ -691,6 +691,24 @@ function isPanicModeActive(guildId, at = nowMs()) {
   return state.activeUntil > at;
 }
 
+function getAutoModPanicSnapshot(guildId, at = nowMs()) {
+  const state = getPanicState(guildId);
+  const activeUntil = Number(state?.activeUntil || 0);
+  return {
+    enabled: Boolean(PANIC_MODE.enabled),
+    active: Boolean(PANIC_MODE.enabled && activeUntil > at),
+    activeUntil,
+    remainingMs: Math.max(0, activeUntil - at),
+    trackedAccounts: Number(state?.triggerAccounts?.size || 0),
+  };
+}
+
+function triggerAutoModPanicExternal(guildId, sourceUserId = "external", options = {}, at = nowMs()) {
+  if (!PANIC_MODE.enabled) return { activated: false, active: false, count: 0 };
+  if (!guildId) return { activated: false, active: false, count: 0 };
+  return registerPanicTrigger(String(guildId), String(sourceUserId || "external"), options, at);
+}
+
 function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
   if (!PANIC_MODE.enabled) return { activated: false, active: false, count: 0 };
   const activityBoost = Number(options.activityBoost || 0);
@@ -2185,6 +2203,22 @@ async function runAutoModMessage(message) {
 
     if (panic.activated) {
       const activeUntil = getPanicState(message.guildId).activeUntil;
+      try {
+        const { triggerAntiNukePanicExternal } = require("./antiNukeService");
+        await triggerAntiNukePanicExternal(
+          message.guild,
+          "AutoMod panic escalation",
+          500,
+        );
+      } catch {}
+      try {
+        const { activateJoinRaidWindow } = require("./joinRaidService");
+        await activateJoinRaidWindow(
+          message.guild,
+          "AutoMod panic escalation",
+          PANIC_MODE.durationMs,
+        );
+      } catch {}
       await sendPanicModeLog(
         message,
         "panic_enabled",
@@ -2411,4 +2445,7 @@ module.exports = {
   getAutoModDashboardData,
   getAutoModConfigSnapshot,
   updateAutoModConfig,
+  isPanicModeActiveForGuild: isPanicModeActive,
+  getAutoModPanicSnapshot,
+  triggerAutoModPanicExternal,
 };

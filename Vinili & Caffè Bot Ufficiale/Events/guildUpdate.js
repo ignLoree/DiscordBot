@@ -5,7 +5,7 @@ const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDisco
 
 function notificationsLabel(value) {
   const n = Number(value);
-  if (n === 0) return "All Messages";
+  if (n === 0) return "Tutti i messaggi";
   if (n === 1) return "Only Mentions";
   return String(n);
 }

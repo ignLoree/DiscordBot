@@ -1,4 +1,4 @@
-﻿const { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
+const { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const {
@@ -364,7 +364,7 @@ function resolveViewConfig(selectedView, source) {
   }
   if (safeView === "message_channels") {
     return {
-      title: "Top Message Channels",
+      title: "Top canali messaggi",
       rows: source.topChannelsText,
       unit: "msg",
       mode: "messages",
@@ -379,7 +379,7 @@ function resolveViewConfig(selectedView, source) {
     };
   }
   return {
-    title: "Top Voice Channels",
+    title: "Top canali vocali",
     rows: source.topChannelsVoice,
     unit: "h",
     mode: "voice",
@@ -418,12 +418,12 @@ function buildTopChannelSelectRow(
           default: safeView === "voice_users",
         },
         {
-          label: "Top Message Channels",
+          label: "Top canali messaggi",
           value: "message_channels",
           default: safeView === "message_channels",
         },
         {
-          label: "Top Voice Channels",
+          label: "Top canali vocali",
           value: "voice_channels",
           default: safeView === "voice_channels",
         },

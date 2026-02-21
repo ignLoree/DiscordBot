@@ -139,7 +139,7 @@ function messageContentToHtml(message) {
   }
 
   if (!body) {
-    body = '<div class="content muted">*No message content*</div>';
+    body = '<div class="content muted">*Nessun contenuto messaggio*</div>';
   }
 
   return body;
@@ -170,16 +170,16 @@ async function fetchAllMessages(channel, maxMessages = 2000) {
 
 async function createTranscript(channel) {
   const sorted = await fetchAllMessages(channel);
-  let txt = `Transcript of: ${channel.name}\n\n`;
+  let txt = `Transcript del canale: ${channel.name}\n\n`;
   sorted.forEach((msg) => {
     let content = renderRichTextPlain(msg, msg.content || "");
     if (msg.embeds.length > 0) {
       msg.embeds.forEach((embed, i) => {
         content += `\n[Embed ${i + 1}]\n`;
         if (embed.title)
-          content += `Title: ${renderRichTextPlain(msg, embed.title)}\n`;
+          content += `Titolo: ${renderRichTextPlain(msg, embed.title)}\n`;
         if (embed.description)
-          content += `Description: ${renderRichTextPlain(msg, embed.description)}\n`;
+          content += `Descrizione: ${renderRichTextPlain(msg, embed.description)}\n`;
         if (embed.fields) {
           embed.fields.forEach((f) => {
             content += `${renderRichTextPlain(msg, f.name)}: ${renderRichTextPlain(msg, f.value)}\n`;
@@ -192,7 +192,7 @@ async function createTranscript(channel) {
         content += `\n[Attachment] ${att.url}`;
       });
     }
-    if (!content) content = "*No message content*";
+    if (!content) content = "*Nessun contenuto messaggio*";
     txt += `[${new Date(msg.createdTimestamp).toLocaleString()}] ${msg.author.tag}: ${content}\n\n`;
   });
   return txt;
@@ -208,7 +208,7 @@ async function createTranscriptHtml(channel) {
       const avatar =
         message.author?.displayAvatarURL?.({ extension: "png", size: 64 }) ||
         "";
-      const author = escapeHtml(message.author?.tag || "Unknown User");
+      const author = escapeHtml(message.author?.tag || "Utente sconosciuto");
       const time = escapeHtml(formatDate(message.createdTimestamp));
       const messageBody = messageContentToHtml(message);
 

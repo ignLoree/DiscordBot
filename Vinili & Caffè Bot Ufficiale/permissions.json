@@ -1,4 +1,4 @@
-﻿{
+{
     "slash": {
         "backup": {
             "roles": [
@@ -255,13 +255,57 @@
                 ]
             }
         },
-        "antinuke": {
+        "security": {
             "roles": [
                 "roles.HighStaff"
             ],
             "channels": [
                 "1442569288161558528"
-            ]
+            ],
+            "subcommands": {
+                "status": [
+                    "roles.HighStaff"
+                ],
+                "health": [
+                    "roles.HighStaff"
+                ],
+                "drill": [
+                    "roles.HighStaff"
+                ],
+                "backup": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "joingate": [
+                    "roles.HighStaff"
+                ],
+                "join-gate": [
+                    "roles.HighStaff"
+                ],
+                "jg": [
+                    "roles.HighStaff"
+                ],
+                "raid": [
+                    "roles.HighStaff"
+                ],
+                "panic": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "maintenance": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "preset": [
+                    "roles.HighStaff"
+                ],
+                "antinuke": [
+                    "roles.HighStaff"
+                ],
+                "automod": [
+                    "roles.HighStaff"
+                ]
+            }
         },
         "customregister": {
             "roles": [
@@ -269,7 +313,18 @@
             ],
             "channels": [
                 "1442569288161558528"
-            ]
+            ],
+            "subcommands": {
+                "role": [
+                    "roles.HighStaff"
+                ],
+                "voc": [
+                    "roles.HighStaff"
+                ],
+                "voice": [
+                    "roles.HighStaff"
+                ]
+            }
         },
         "customrole": {
             "roles": [
@@ -357,6 +412,25 @@
                 ]
             }
         },
+        "birthday": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ],
+            "subcommands": {
+                "set": [
+                    "roles.Member"
+                ],
+                "edit": [
+                    "roles.Member"
+                ],
+                "remove": [
+                    "roles.Member"
+                ]
+            }
+        },
         "embed": {
             "roles": [
                 "roles.HighStaff"
@@ -369,14 +443,6 @@
                     "roles.HighStaff"
                 ]
             }
-        },
-        "gmulti": {
-            "roles": [
-                "roles.HighStaff"
-            ],
-            "channels": [
-                "1442569288161558528"
-            ]
         },
         "help": {
             "roles": [
@@ -455,10 +521,16 @@
                 "multiplier": [
                     "roles.HighStaff"
                 ],
+                "gmulti": [
+                    "roles.HighStaff"
+                ],
                 "ignore": [
                     "roles.HighStaff"
                 ],
                 "unignore": [
+                    "roles.HighStaff"
+                ],
+                "config": [
                     "roles.HighStaff"
                 ]
             }
@@ -546,7 +618,18 @@
             "channels": [
                 "1442569262689554444",
                 "1442569288161558528"
-            ]
+            ],
+            "subcommands": {
+                "mention": [
+                    "roles.HighStaff"
+                ],
+                "auto": [
+                    "roles.HighStaff"
+                ],
+                "help": [
+                    "roles.HighStaff"
+                ]
+            }
         },
         "recensione": [
             "roles.HighStaff"
@@ -560,6 +643,14 @@
             ],
             "channels": [
                 "1442569138114662490"
+            ]
+        },
+        "status": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
             ]
         },
         "set": {

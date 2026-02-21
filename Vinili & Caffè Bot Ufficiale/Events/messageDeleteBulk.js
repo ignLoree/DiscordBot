@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionsBitField, MessageFlagsBitField, } = require("discord.js");
+const { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionsBitField, MessageFlagsBitField, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
   [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
@@ -237,7 +237,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor("#ED4245")
-        .setTitle("Messages Purged")
+        .setTitle("Messaggi eliminati")
         .setDescription(
           [
             `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,

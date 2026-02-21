@@ -442,6 +442,17 @@ async function handleAutoResponders(message, args) {
 module.exports = {
   name: "reaction",
   aliases: ["myreaction", "autoreaction", "autoresponder", "ar", "autorespond"],
+  subcommands: ["mention", "auto", "help"],
+  subcommandAliases: {
+    mention: "mention",
+    mentions: "mention",
+    me: "mention",
+    mine: "mention",
+    auto: "auto",
+    autoresponder: "auto",
+    ar: "auto",
+    help: "help",
+  },
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});

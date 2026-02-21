@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { handleWebhookCreationAction: antiNukeHandleWebhookCreationAction, handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction, } = require("../Services/Moderation/antiNukeService");
 
@@ -31,7 +31,7 @@ function webhookTypeLabel(value) {
   if (type === 1) return "Normal (Incoming)";
   if (type === 2) return "Channel Follower";
   if (type === 3) return "Application";
-  return `Unknown (${type || 0})`;
+  return `Sconosciuto (${type || 0})`;
 }
 
 async function resolveLogChannel(guild) {
@@ -179,7 +179,7 @@ module.exports = {
           lines.push(`  ${channelChange?.old ? `<#${channelChange.old}>` : "none"} <:VC_right_arrow:1473441155055096081> ${channelChange?.new ? `<#${channelChange.new}>` : "none"}`);
         }
         if (avatarChange) {
-          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar Updated:** Yes`);
+          lines.push(`<:VC_right_arrow:1473441155055096081> **Avatar aggiornato:** Si`);
         }
       } else {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`);

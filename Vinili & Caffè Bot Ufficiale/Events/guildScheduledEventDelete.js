@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
@@ -24,7 +24,7 @@ function toEventTimeLabel(value) {
 }
 
 function privacyLabel(value) {
-  return Number(value) === 2 ? "Local Server Event" : `Unknown (${value})`;
+  return Number(value) === 2 ? "Evento locale del server" : `Sconosciuto (${value})`;
 }
 
 function statusLabel(value) {
@@ -33,7 +33,7 @@ function statusLabel(value) {
   if (n === 2) return "Active";
   if (n === 3) return "Completed";
   if (n === 4) return "Canceled";
-  return `Unknown (${n})`;
+  return `Sconosciuto (${n})`;
 }
 
 function entityTypeLabel(value) {
@@ -41,7 +41,7 @@ function entityTypeLabel(value) {
   if (n === 1) return "Stage Channel";
   if (n === 2) return "Voice Channel";
   if (n === 3) return "External (Text Channel / URL / Off Discord)";
-  return `Unknown (${n})`;
+  return `Sconosciuto (${n})`;
 }
 
 async function resolveLogChannel(guild) {

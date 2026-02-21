@@ -1,4 +1,4 @@
-﻿const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, } = require("discord.js");
+const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, } = require("discord.js");
 const { readBackupByIdGlobal, createGuildBackup } = require("./serverBackupService");
 
 const LOAD_ACTIONS = [
@@ -785,7 +785,7 @@ async function syncLoadedChannels({
 }
 
 function normalizeMessagePayload(message, backupId) {
-  const authorTag = message?.author?.tag || message?.author?.username || message?.author?.id || "Unknown";
+  const authorTag = message?.author?.tag || message?.author?.username || message?.author?.id || "Sconosciuto";
   const contentRaw = String(message?.content || "").trim();
   const header = `**[${backupId}] ${authorTag}**`;
   const content = contentRaw ? `${header}\n${contentRaw}` : header;

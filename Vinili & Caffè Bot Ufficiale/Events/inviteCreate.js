@@ -1,6 +1,7 @@
 ﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { handleInviteCreationAction: antiNukeHandleInviteCreationAction, isAntiNukePanicActive, isWhitelistedExecutorAsync, } = require("../Services/Moderation/antiNukeService");
+const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
 
 const INVITE_CREATE_ACTION = AuditLogEvent?.InviteCreate ?? 40;
 const AUDIT_FETCH_LIMIT = 20;
@@ -113,8 +114,11 @@ module.exports = {
         channelId: String(invite?.channel?.id || ""),
       }).catch(() => {});
 
+      const securityState = await getSecurityLockState(guild).catch(() => ({
+        commandLockActive: false,
+      }));
       if (
-        isAntiNukePanicActive(guild.id) &&
+        (isAntiNukePanicActive(guild.id) || securityState.commandLockActive) &&
         !(executorId && (await isWhitelistedExecutorAsync(guild, executorId)))
       ) {
         await invite

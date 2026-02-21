@@ -92,7 +92,7 @@ module.exports = {
           `${ARROW} **Name:** ${channel.name || "sconosciuto"}`,
           `${ARROW} **Type:** ${channelTypeLabel(channel)}`,
           `${ARROW} **Nsfw:** ${yesNo(Boolean(channel.nsfw))}`,
-          `${ARROW} **Rate Limit Per User:** ${Number(channel.rateLimitPerUser || 0) || "None"}`,
+          `${ARROW} **Rate Limit Per User:** ${Number(channel.rateLimitPerUser || 0) || "Nessuno"}`,
         ];
         lines.push(
           ...buildAuditExtraLines(audit?.entry, [

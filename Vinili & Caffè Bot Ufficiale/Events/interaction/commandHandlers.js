@@ -9,6 +9,8 @@ const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildCommandTimeout
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
+const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
+const { consumeSlashRateLimit } = require("../../Services/Moderation/staffCommandRateLimitService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
 const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 const STAFF_BYPASS_PERMISSIONS = [
@@ -71,11 +73,24 @@ async function handleSlashCommand(interaction, client) {
     getCommandKey(interaction.commandName, interaction.commandType),
   );
   if (!command) return;
+  const isAntiNukeRecoveryCommand =
+    ["antinuke", "security"].includes(
+      String(command?.name || "").toLowerCase(),
+    );
+  const securityLockState = await getSecurityLockState(interaction.guild);
+  if (
+    !isAntiNukeRecoveryCommand &&
+    securityLockState.commandLockActive
+  ) {
+    return interaction.reply({
+      content:
+        `Server in lockdown di sicurezza: comandi temporaneamente bloccati.${securityLockState.sources.length ? ` (${securityLockState.sources.join(", ")})` : ""}`,
+      flags: 1 << 6,
+    });
+  }
   const isModerationSlashCommand = ["staff", "admin"].includes(
     String(command?.category || "").toLowerCase(),
   );
-  const isAntiNukeRecoveryCommand =
-    String(command?.name || "").toLowerCase() === "antinuke";
   if (
     isModerationSlashCommand &&
     !isAntiNukeRecoveryCommand &&
@@ -86,7 +101,7 @@ async function handleSlashCommand(interaction, client) {
   ) {
     return interaction.reply({
       content:
-        "Comandi di moderazione temporaneamente bloccati (AntiNuke panic mode attiva).",
+        "Comandi di moderazione temporaneamente bloccati (panic mode sicurezza attiva).",
       flags: 1 << 6,
     });
   }
@@ -125,6 +140,21 @@ async function handleSlashCommand(interaction, client) {
         : buildGlobalPermissionDeniedEmbed(requiredRoles);
     return interaction.reply({
       embeds: [embed],
+      flags: 1 << 6,
+    });
+  }
+  const staffRateLimit = consumeSlashRateLimit({
+    guildId: interaction.guildId,
+    userId: interaction.user?.id,
+    command,
+  });
+  if (!staffRateLimit.ok) {
+    const remaining = Math.max(
+      1,
+      Math.ceil(Number(staffRateLimit.remainingMs || 0) / 1000),
+    );
+    return interaction.reply({
+      content: `Rallenta: riprova tra **${remaining}s**.`,
       flags: 1 << 6,
     });
   }
