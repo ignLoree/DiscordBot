@@ -8,12 +8,12 @@
     "enabled": true,
     "considerActivityHistory": true,
     "useGlobalBadUsersDb": true,
-    "triggerCount": 3,
+    "triggerCount": 6,
     "triggerWindowMs": 600000,
     "durationMs": 600000,
     "raidWindowMs": 120000,
-    "raidUserThreshold": 3,
-    "raidYoungThreshold": 2
+    "raidUserThreshold": 6,
+    "raidYoungThreshold": 4
   },
   "shorteners": {
     "crawl": true,

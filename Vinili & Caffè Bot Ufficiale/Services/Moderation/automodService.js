@@ -16,6 +16,7 @@ const GUILD_PANIC_STATE = new Map();
 const BAD_USER_CACHE = new Map();
 const GUILD_INSTANT_EVENTS = new Map();
 const URL_EXPANSION_CACHE = new Map();
+const EXTERNAL_PANIC_SIGNAL_COOLDOWN = new Map();
 
 const DECAY_PER_SEC = 5;
 const MAX_HEAT = 100;
@@ -27,6 +28,7 @@ const ACTION_CHANNEL_LOG_COOLDOWN_MS = 6_000;
 const ACTION_CHANNEL_NOTICE_DELETE_MS = 10_000;
 const RUNTIME_CLEANUP_INTERVAL_MS = 30_000;
 const REGULAR_TIMEOUT_MS = 15 * 60_000;
+const EXTERNAL_PANIC_SIGNAL_COOLDOWN_MS = 90_000;
 const HEAT_RESET_ON_PUNISHMENT = true;
 const MENTION_LOCKDOWN_TRIGGER = 50;
 const MENTION_LOCKDOWN_WINDOW_MS = 3_000;
@@ -34,12 +36,12 @@ const PANIC_MODE = {
   enabled: true,
   considerActivityHistory: true,
   useGlobalBadUsersDb: true,
-  triggerCount: 3,
+  triggerCount: 6,
   triggerWindowMs: 10 * 60_000,
   durationMs: 10 * 60_000,
   raidWindowMs: 120_000,
-  raidUserThreshold: 3,
-  raidYoungThreshold: 2,
+  raidUserThreshold: 6,
+  raidYoungThreshold: 4,
 };
 const MENTION_RULES = {
   enabled: true,
@@ -163,12 +165,12 @@ const DEFAULT_AUTOMOD_RUNTIME = {
     enabled: true,
     considerActivityHistory: true,
     useGlobalBadUsersDb: true,
-    triggerCount: 3,
+    triggerCount: 6,
     triggerWindowMs: 10 * 60_000,
     durationMs: 10 * 60_000,
     raidWindowMs: 120_000,
-    raidUserThreshold: 3,
-    raidYoungThreshold: 2,
+    raidUserThreshold: 6,
+    raidYoungThreshold: 4,
   },
   shorteners: {
     crawl: true,
@@ -338,6 +340,7 @@ function scheduleMetricsSave() {
     metricsSaveTimer = null;
     writeJsonSafe(AUTOMOD_METRICS_PATH, automodMetrics);
   }, 1200);
+  if (typeof metricsSaveTimer?.unref === "function") metricsSaveTimer.unref();
 }
 
 function applyAutomodRuntime() {
@@ -706,14 +709,33 @@ function getAutoModPanicSnapshot(guildId, at = nowMs()) {
 function triggerAutoModPanicExternal(guildId, sourceUserId = "external", options = {}, at = nowMs()) {
   if (!PANIC_MODE.enabled) return { activated: false, active: false, count: 0 };
   if (!guildId) return { activated: false, active: false, count: 0 };
+  const signalKey = `${String(guildId)}:${String(sourceUserId || "external")}`;
+  const lastTs = Number(EXTERNAL_PANIC_SIGNAL_COOLDOWN.get(signalKey) || 0);
+  if (at - lastTs < EXTERNAL_PANIC_SIGNAL_COOLDOWN_MS) {
+    return {
+      activated: false,
+      active: isPanicModeActive(guildId, at),
+      count: Number(getPanicState(guildId)?.triggerAccounts?.size || 0),
+    };
+  }
+  EXTERNAL_PANIC_SIGNAL_COOLDOWN.set(signalKey, at);
   return registerPanicTrigger(String(guildId), String(sourceUserId || "external"), options, at);
 }
 
 function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
   if (!PANIC_MODE.enabled) return { activated: false, active: false, count: 0 };
-  const activityBoost = Number(options.activityBoost || 0);
-  const dbBoost = Number(options.dbBoost || 0);
-  const raidBoost = Number(options.raidBoost || 0);
+  const activityBoost = Math.max(
+    0,
+    Math.min(1, Math.floor(Number(options.activityBoost || 0))),
+  );
+  const dbBoost = Math.max(
+    0,
+    Math.min(1, Math.floor(Number(options.dbBoost || 0))),
+  );
+  const raidBoost = Math.max(
+    0,
+    Math.min(1, Math.floor(Number(options.raidBoost || 0))),
+  );
   const state = getPanicState(guildId);
   prunePanicAccounts(state, at);
   state.triggerAccounts.set(String(userId), {
@@ -728,11 +750,11 @@ function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
       count += 1;
       continue;
     }
-    count +=
-      1 +
+    const bonus =
       Number(payload?.activityBoost || 0) +
       Number(payload?.dbBoost || 0) +
       Number(payload?.raidBoost || 0);
+    count += 1 + Math.max(0, Math.min(1, bonus));
   }
   const alreadyActive = state.activeUntil > at;
   if (count >= PANIC_MODE.triggerCount) {
@@ -765,10 +787,10 @@ function registerGuildInstantSignal(message, at = nowMs()) {
 
 function getCachedBadUser(userId, at = nowMs()) {
   const cached = BAD_USER_CACHE.get(String(userId));
-  if (!cached) return null;
+  if (!cached) return undefined;
   if (cached.expiresAt < at) {
     BAD_USER_CACHE.delete(String(userId));
-    return null;
+    return undefined;
   }
   return cached.value;
 }
@@ -782,7 +804,7 @@ function setCachedBadUser(userId, value, ttlMs = 60_000) {
 
 async function getBadUserProfile(userId) {
   const cached = getCachedBadUser(userId);
-  if (cached) return cached;
+  if (cached !== undefined) return cached;
   if (!isDbReady()) return null;
   try {
     const row = await AutoModBadUser.findOne(
@@ -799,7 +821,7 @@ async function getBadUserProfile(userId) {
         lastAction: 1,
       },
     ).lean();
-    if (row) setCachedBadUser(userId, row);
+    setCachedBadUser(userId, row || null, row ? 60_000 : 15_000);
     return row || null;
   } catch {
     return null;
@@ -825,21 +847,7 @@ async function markBadUserTrigger(message, violations, heatValue) {
       },
       { upsert: true },
     );
-    const updated = await AutoModBadUser.findOne(
-      { userId },
-      {
-        _id: 0,
-        userId: 1,
-        totalTriggers: 1,
-        warnPoints: 1,
-        activeStrikes: 1,
-        activeStrikeReasons: 1,
-        lastTriggerAt: 1,
-        lastActionAt: 1,
-        lastAction: 1,
-      },
-    ).lean();
-    if (updated) setCachedBadUser(userId, updated);
+    BAD_USER_CACHE.delete(userId);
   } catch {
     // Do not break automod flow on DB issues.
   }
@@ -879,21 +887,7 @@ async function markBadUserAction(message, action, violations = []) {
       update,
       { upsert: true },
     );
-    const updated = await AutoModBadUser.findOne(
-      { userId },
-      {
-        _id: 0,
-        userId: 1,
-        totalTriggers: 1,
-        warnPoints: 1,
-        activeStrikes: 1,
-        activeStrikeReasons: 1,
-        lastTriggerAt: 1,
-        lastActionAt: 1,
-        lastAction: 1,
-      },
-    ).lean();
-    if (updated) setCachedBadUser(userId, updated);
+    BAD_USER_CACHE.delete(userId);
   } catch {
     // Do not break automod flow on DB issues.
   }
@@ -974,6 +968,12 @@ function cleanupRuntimeMaps(at = nowMs()) {
   for (const [url, payload] of URL_EXPANSION_CACHE.entries()) {
     if (Number(payload?.expiresAt || 0) <= at) URL_EXPANSION_CACHE.delete(url);
   }
+
+  for (const [key, ts] of EXTERNAL_PANIC_SIGNAL_COOLDOWN.entries()) {
+    if (at - Number(ts || 0) > EXTERNAL_PANIC_SIGNAL_COOLDOWN_MS * 2) {
+      EXTERNAL_PANIC_SIGNAL_COOLDOWN.delete(key);
+    }
+  }
 }
 
 function decayHeat(state, at = nowMs()) {
@@ -987,13 +987,19 @@ function addHeat(state, amount) {
 }
 
 function trimWindow(list, windowMs, at = nowMs()) {
+  if (!Array.isArray(list) || !list.length) return;
   const min = at - windowMs;
-  while (list.length && list[0] < min) list.shift();
+  let idx = 0;
+  while (idx < list.length && Number(list[idx] || 0) < min) idx += 1;
+  if (idx > 0) list.splice(0, idx);
 }
 
 function trimNormHistory(history, windowMs, at = nowMs()) {
+  if (!Array.isArray(history) || !history.length) return;
   const min = at - windowMs;
-  while (history.length && history[0].t < min) history.shift();
+  let idx = 0;
+  while (idx < history.length && Number(history[idx]?.t || 0) < min) idx += 1;
+  if (idx > 0) history.splice(0, idx);
 }
 
 function normalizeContent(content) {
@@ -1153,7 +1159,7 @@ function isImageAttachment(att) {
   return /\.(png|jpe?g|gif|webp|bmp|tiff?|avif|heic|heif|svg)$/.test(name);
 }
 
-async function isNsfwUrl(content) {
+async function isNsfwUrl(content, preExtractedUrls = null) {
   if (!TEXT_RULES.nsfwLinks.enabled) return false;
   const nsfwTokens = [
     "porn",
@@ -1168,7 +1174,9 @@ async function isNsfwUrl(content) {
     "onlyfans",
   ];
   const shortenerConfig = automodRuntimeConfig?.shorteners || {};
-  const urls = extractUrls(content);
+  const urls = Array.isArray(preExtractedUrls)
+    ? preExtractedUrls
+    : extractUrls(content);
   for (const url of urls) {
     let host = String(url.hostname || "").toLowerCase();
     const path = String(url.pathname || "").toLowerCase();
@@ -1186,9 +1194,11 @@ async function isNsfwUrl(content) {
   return false;
 }
 
-async function hasBlacklistedDomain(content) {
+async function hasBlacklistedDomain(content, preExtractedUrls = null) {
   if (!TEXT_RULES.linkBlacklist.enabled) return false;
-  const urls = extractUrls(content);
+  const urls = Array.isArray(preExtractedUrls)
+    ? preExtractedUrls
+    : extractUrls(content);
   if (!urls.length) return false;
   const blockedDomains = (TEXT_RULES.linkBlacklist.domains || [])
     .map((x) => String(x || "").trim().toLowerCase())
@@ -1415,6 +1425,7 @@ async function detectViolations(message, state, profile) {
   const content = String(message.content || "");
   const moderationContent = stripQuotedAndCodeText(content);
   const normalized = normalizeContent(content);
+  const extractedUrls = extractUrls(moderationContent);
   const violations = [];
   const channelId = String(message.channelId || "");
   const parentChannelId = String(message.channel?.parentId || "");
@@ -1440,11 +1451,15 @@ async function detectViolations(message, state, profile) {
     state.normHistory.push({ t: at, c: normalized });
     trimNormHistory(state.normHistory, 18_000, at);
     const ratio = TEXT_RULES.similarMessage.ratio;
-    const similarCount = state.normHistory.filter((x) => {
-      if (!x?.c || x.t === at) return false;
-      return similarityRatio(x.c, normalized) >= ratio;
-    }).length;
     const similarThreshold = legitConversation ? 2 : 1;
+    let similarCount = 0;
+    for (const x of state.normHistory) {
+      if (!x?.c || x.t === at) continue;
+      if (similarityRatio(x.c, normalized) >= ratio) {
+        similarCount += 1;
+        if (similarCount >= similarThreshold) break;
+      }
+    }
     if (similarCount >= similarThreshold) {
       violations.push({
         key: "similar_message",
@@ -1474,7 +1489,12 @@ async function detectViolations(message, state, profile) {
     mentionsEnabled
   ) {
     if (mentionCount > 0) {
-      for (let i = 0; i < mentionCount; i += 1) {
+      const shortCap = Math.max(MENTION_LOCKDOWN_TRIGGER * 2, 100);
+      const hourCap = Math.max(MENTION_RULES.hourCap * 2, 100);
+      const roomShort = Math.max(0, shortCap - state.mentionTimes.length);
+      const roomHour = Math.max(0, hourCap - state.mentionHourTimes.length);
+      const toPush = Math.min(mentionCount, roomShort, roomHour);
+      for (let i = 0; i < toPush; i += 1) {
         state.mentionTimes.push(at);
         state.mentionHourTimes.push(at);
       }
@@ -1553,7 +1573,7 @@ async function detectViolations(message, state, profile) {
     });
   }
 
-  if (await isNsfwUrl(moderationContent)) {
+  if (await isNsfwUrl(moderationContent, extractedUrls)) {
     violations.push({
       key: "nsfw_link",
       heat: profileHeat(TEXT_RULES.nsfwLinks.heat),
@@ -1573,7 +1593,7 @@ async function detectViolations(message, state, profile) {
     });
   }
 
-  if (await hasBlacklistedDomain(moderationContent)) {
+  if (await hasBlacklistedDomain(moderationContent, extractedUrls)) {
     violations.push({
       key: "link_blacklist",
       heat: profileHeat(TEXT_RULES.linkBlacklist.heat),
@@ -1667,7 +1687,7 @@ async function detectViolations(message, state, profile) {
     const attachmentList = [...(message.attachments?.values?.() || [])];
     const imageCount = attachmentList.filter((att) => isImageAttachment(att)).length;
     const fileCount = Math.max(0, attachmentList.length - imageCount);
-    const linkCount = extractUrls(content).length;
+    const linkCount = extractedUrls.length;
 
     if (ATTACHMENT_RULES.embeds.enabled && embedCount > 0) {
       violations.push({

@@ -151,7 +151,7 @@ const ANTINUKE_CONFIG = {
   panicMode: {
     enabled: true,
     useHeatAlgorithm: true,
-    thresholdHeat: 100,
+    thresholdHeat: 130,
     decayPerSec: 5,
     durationMs: 10 * 60_000,
     maxDurationMs: 45 * 60_000,
@@ -202,7 +202,7 @@ const ANTINUKE_PRESETS = {
     webhookDeletionFilter: { minuteLimit: 4, hourLimit: 10, heatPerAction: 10 },
     inviteCreationFilter: { minuteLimit: 5, hourLimit: 16, heatPerAction: 10 },
     panicMode: {
-      thresholdHeat: 110,
+      thresholdHeat: 140,
       decayPerSec: 5,
       durationMs: 8 * 60_000,
       maxDurationMs: 30 * 60_000,
@@ -219,7 +219,7 @@ const ANTINUKE_PRESETS = {
     webhookDeletionFilter: { minuteLimit: 3, hourLimit: 8, heatPerAction: 10 },
     inviteCreationFilter: { minuteLimit: 4, hourLimit: 15, heatPerAction: 12 },
     panicMode: {
-      thresholdHeat: 100,
+      thresholdHeat: 130,
       decayPerSec: 5,
       durationMs: 10 * 60_000,
       maxDurationMs: 45 * 60_000,
@@ -236,7 +236,7 @@ const ANTINUKE_PRESETS = {
     webhookDeletionFilter: { minuteLimit: 2, hourLimit: 6, heatPerAction: 14 },
     inviteCreationFilter: { minuteLimit: 3, hourLimit: 10, heatPerAction: 15 },
     panicMode: {
-      thresholdHeat: 80,
+      thresholdHeat: 110,
       decayPerSec: 4,
       durationMs: 12 * 60_000,
       maxDurationMs: 60 * 60_000,
@@ -594,6 +594,20 @@ function getMainRoleIds(guild) {
   );
 }
 
+function hasStaffProtection(member) {
+  if (!member?.roles?.cache) return false;
+  const protectedRoleIds = [
+    IDs.roles.Staff,
+    IDs.roles.HighStaff,
+    IDs.roles.Founder,
+    IDs.roles.CoFounder,
+  ]
+    .map((id) => String(id || "").trim())
+    .filter(Boolean);
+  if (!protectedRoleIds.length) return false;
+  return protectedRoleIds.some((roleId) => member.roles.cache.has(roleId));
+}
+
 function cleanupMaintenanceAllowlist(guildId, at = Date.now()) {
   const key = String(guildId || "");
   const bucket = MAINTENANCE_ALLOWLIST.get(key);
@@ -625,6 +639,8 @@ function isWhitelistedExecutor(guild, executorId) {
   const member = guild?.members?.cache?.get(userId);
   if (!member) return false;
   if (
+    member.roles.cache.has(String(IDs.roles.Staff || "")) ||
+    member.roles.cache.has(String(IDs.roles.HighStaff || "")) ||
     member.roles.cache.has(String(IDs.roles.Founder || "")) ||
     member.roles.cache.has(String(IDs.roles.CoFounder || ""))
   ) {
@@ -673,6 +689,8 @@ async function isWhitelistedExecutorAsync(guild, executorId) {
   if (!member) member = await guild?.members?.fetch(userId).catch(() => null);
   if (!member) return false;
   if (
+    member.roles.cache.has(String(IDs.roles.Staff || "")) ||
+    member.roles.cache.has(String(IDs.roles.HighStaff || "")) ||
     member.roles.cache.has(String(IDs.roles.Founder || "")) ||
     member.roles.cache.has(String(IDs.roles.CoFounder || ""))
   ) {
@@ -1305,9 +1323,16 @@ async function quarantineExecutor(guild, executorId, reason) {
   }
   const member = guild?.members?.cache?.get(userId) || (await guild?.members?.fetch(userId).catch(() => null));
   if (!member) return { applied: false, method: "missing_member" };
+  if (hasStaffProtection(member)) {
+    return { applied: false, method: "staff_protected" };
+  }
   const panicActive = isAntiNukePanicActive(guild.id);
+  const panicState = getPanicState(guild.id);
+  const highConfidenceHeat =
+    Number(panicState?.heat || 0) >= Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100) + 40;
   if (
     panicActive &&
+    highConfidenceHeat &&
     ANTINUKE_CONFIG.panicMode.lockdown.banAttackExecutor &&
     member?.bannable &&
     guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.BanMembers) &&
@@ -1529,7 +1554,7 @@ async function applyBurstPanicGuard(guild, actorId, actionLabel, addedHeat) {
   await enableAntiNukePanic(
     guild,
     `Coordinated burst detected (${actionLabel || "unknown"})`,
-    Math.max(100, Number(addedHeat || 0)),
+    Math.max(70, Number(addedHeat || 0)),
   );
   await sendAntiNukeLog(
     guild,

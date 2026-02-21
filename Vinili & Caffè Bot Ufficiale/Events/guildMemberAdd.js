@@ -684,14 +684,8 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       reason: `Join Gate action: ${reason}`,
       enableAntiNuke: false,
       antiNukeHeat: 0,
-      raidBoost: appliedAction === "ban" ? 1 : 0.5,
-    }).catch(() => null);
-  } else if (appliedAction === "log") {
-    await registerJoinRaidSecuritySignal(member, {
-      reason: `Join Gate suspicious log: ${reason}`,
-      enableAntiNuke: false,
-      antiNukeHeat: 0,
-      raidBoost: 0,
+      enableAutoMod: appliedAction === "ban",
+      raidBoost: appliedAction === "ban" ? 1 : 0,
     }).catch(() => null);
   }
   const logChannel =
@@ -948,7 +942,7 @@ module.exports = {
               `${ARROW} **Rule:** Security Join Lock`,
               `${ARROW} **Sources:** ${lockState.sources.join(", ")}`,
             ],
-            "ban",
+            "kick",
           );
           return;
         }
@@ -1045,7 +1039,7 @@ module.exports = {
               `${ARROW} **Rule:** Suspicious Account`,
               `${ARROW} **Reason:** ${suspiciousReason}`,
             ],
-            JOIN_GATE.suspiciousAccount.action,
+            "log",
           );
           if (result?.blocked) return;
         }

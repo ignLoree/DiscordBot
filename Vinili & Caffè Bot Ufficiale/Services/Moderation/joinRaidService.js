@@ -71,7 +71,7 @@ const JOIN_RAID_PRESETS = {
     ageFlag: { minimumAgeMs: 2 * 24 * 60 * 60_000 },
   },
   balanced: {
-    triggerAction: "ban",
+    triggerAction: "kick",
     triggerCount: 10,
     triggerWindowMs: 3 * 60 * 60_000,
     raidDurationMs: 30 * 60_000,
@@ -83,7 +83,7 @@ const JOIN_RAID_PRESETS = {
     ageFlag: { minimumAgeMs: 3 * 24 * 60 * 60_000 },
   },
   strict: {
-    triggerAction: "ban",
+    triggerAction: "kick",
     triggerCount: 8,
     triggerWindowMs: 2 * 60 * 60_000,
     raidDurationMs: 45 * 60_000,
@@ -104,7 +104,9 @@ const LOAD_GUILD_PROMISES = new Map();
 const GUILD_LOCKS = new Map();
 const LAST_RESTORE_AT = new Map();
 const VERIFIED_BOT_CACHE = new Map();
+const LOW_RISK_FLAG_LOG_COOLDOWN = new Map();
 const RESTORE_COOLDOWN_MS = 45_000;
+const LOW_RISK_FLAG_LOG_COOLDOWN_MS = 20_000;
 const JOIN_RAID_CONFIG_PATH = path.resolve(
   __dirname,
   "../../Utils/Config/joinRaidConfig.json",
@@ -320,8 +322,18 @@ function scheduleStateSave(guildId) {
 function pruneState(state, at = nowMs()) {
   const minSampleTs = at - JOIN_RAID_CONFIG.idFlag.compareWindowMs;
   const minFlagTs = at - JOIN_RAID_CONFIG.triggerWindowMs;
-  state.samples = state.samples.filter((x) => Number(x?.ts || 0) >= minSampleTs);
-  state.flagged = state.flagged.filter((x) => Number(x?.ts || 0) >= minFlagTs);
+  if (!Array.isArray(state.samples)) state.samples = [];
+  if (!Array.isArray(state.flagged)) state.flagged = [];
+  let sampleIdx = 0;
+  while (sampleIdx < state.samples.length && Number(state.samples[sampleIdx]?.ts || 0) < minSampleTs) {
+    sampleIdx += 1;
+  }
+  if (sampleIdx > 0) state.samples.splice(0, sampleIdx);
+  let flaggedIdx = 0;
+  while (flaggedIdx < state.flagged.length && Number(state.flagged[flaggedIdx]?.ts || 0) < minFlagTs) {
+    flaggedIdx += 1;
+  }
+  if (flaggedIdx > 0) state.flagged.splice(0, flaggedIdx);
   if (!Array.isArray(state.tempBans)) state.tempBans = [];
   state.tempBans = state.tempBans.filter(
     (x) =>
@@ -628,8 +640,13 @@ async function restoreTempBans(guild, options = {}) {
 
 async function applyPunishment(member, reasons) {
   const configuredAction = String(JOIN_RAID_CONFIG.triggerAction || "log").toLowerCase();
-  const action = ["ban", "kick", "log"].includes(configuredAction)
-    ? configuredAction
+  const reasonKeys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
+  const allowBanByEvidence = reasonKeys.has("id_flag") && reasonKeys.size >= 2;
+  const normalizedAction = configuredAction === "ban" && !allowBanByEvidence
+    ? "kick"
+    : configuredAction;
+  const action = ["ban", "kick", "log"].includes(normalizedAction)
+    ? normalizedAction
     : "log";
   const guild = member.guild;
   const me = guild.members.me;
@@ -743,6 +760,11 @@ async function processJoinRaidForMember(member) {
   return withGuildLock(member.guild.id, async () => {
     const at = nowMs();
     const state = getGuildState(member.guild.id);
+    for (const [key, ts] of LOW_RISK_FLAG_LOG_COOLDOWN.entries()) {
+      if (Number(ts || 0) + LOW_RISK_FLAG_LOG_COOLDOWN_MS < at) {
+        LOW_RISK_FLAG_LOG_COOLDOWN.delete(key);
+      }
+    }
     pruneState(state, at);
 
     const sample = {
@@ -779,7 +801,7 @@ async function processJoinRaidForMember(member) {
       triggerAutoModPanicExternal(
         member.guild.id,
         member.id,
-        { raidBoost: 2, activityBoost: 1 },
+        { raidBoost: 1, activityBoost: 0 },
         at,
       );
       await warnRaidRoles(member.guild, [
@@ -808,11 +830,16 @@ async function processJoinRaidForMember(member) {
     }
 
     const active = Number(state.raidUntil || 0) > at;
-    if (active && highRisk && reasons.length > 0) {
+    const reasonKeys = new Set(reasons.map((x) => String(x?.key || "")));
+    const strongEvidence =
+      reasonKeys.has("id_flag") &&
+      (reasonKeys.size >= 2 ||
+        uniqueFlaggedUsers >= Number(JOIN_RAID_CONFIG.triggerCount || 0) + 2);
+    if (active && highRisk && reasons.length > 0 && strongEvidence) {
       triggerAutoModPanicExternal(
         member.guild.id,
         member.id,
-        { raidBoost: 1 },
+        { raidBoost: 0 },
         at,
       );
       const outcome = await applyPunishment(member, reasons);
@@ -824,16 +851,21 @@ async function processJoinRaidForMember(member) {
       };
     }
     if (active && reasons.length > 0) {
-      await sendJoinRaidLog(
-        member.guild,
-        "Join Raid flagged account",
-        [
-          `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
-          `${ARROW} **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
-          `${ARROW} **Action:** \`log\``,
-        ],
-        "#F59E0B",
-      );
+      const cooldownKey = `${member.guild.id}:${member.id}`;
+      const lastSentAt = Number(LOW_RISK_FLAG_LOG_COOLDOWN.get(cooldownKey) || 0);
+      if (at - lastSentAt >= LOW_RISK_FLAG_LOG_COOLDOWN_MS) {
+        LOW_RISK_FLAG_LOG_COOLDOWN.set(cooldownKey, at);
+        await sendJoinRaidLog(
+          member.guild,
+          "Join Raid flagged account",
+          [
+            `${ARROW} **Member:** ${member.user} [\`${member.id}\`]`,
+            `${ARROW} **Reasons:** ${reasons.map((x) => x.label).join(", ") || "N/A"}`,
+            `${ARROW} **Action:** \`log\``,
+          ],
+          "#F59E0B",
+        );
+      }
     }
     return { blocked: false, flagged: reasons.length > 0, reasons };
   });
@@ -891,10 +923,10 @@ async function registerJoinRaidSecuritySignal(member, options = {}) {
   if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
   const at = nowMs();
   const enableAntiNuke = Boolean(options.enableAntiNuke);
-  const enableAutoMod = options.enableAutoMod !== false;
+  const enableAutoMod = options.enableAutoMod === true;
   const heat = Math.max(0, Number(options.antiNukeHeat || 0));
   const reason = String(options.reason || "Join Gate security signal");
-  const raidBoost = Math.max(0, Number(options.raidBoost || 0));
+  const raidBoost = Math.max(0, Math.min(2, Math.floor(Number(options.raidBoost || 0))));
   if (enableAntiNuke && heat > 0) {
     await triggerAntiNukePanicExternal(member.guild, reason, heat).catch(() => null);
   }
