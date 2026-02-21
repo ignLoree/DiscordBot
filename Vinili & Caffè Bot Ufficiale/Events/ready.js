@@ -18,6 +18,7 @@ const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCl
 const {
   startWeeklyActivityWinnersLoop,
 } = require("../Services/Community/weeklyActivityWinnersService");
+const { startBirthdayLoop } = require("../Services/Community/birthdayService");
 const { restoreTempBans } = require("../Services/Moderation/joinRaidService");
 const { syncLiveVoiceSessionsFromGateway, startLiveVoiceExpLoop, } = require("../Services/Community/activityService");
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop, } = require("../Services/Community/temporaryRoleService");
@@ -278,6 +279,7 @@ function startPrimaryLoops(client, engagementTick) {
       "[WEEKLY ACTIVITY] Failed to start loop",
       () => startWeeklyActivityWinnersLoop(client),
     ],
+    ["[BIRTHDAY] Failed to start loop", () => startBirthdayLoop(client)],
     [
       "[TEMP ROLE] Failed to start cleanup loop",
       () => startTemporaryRoleCleanupLoop(client),

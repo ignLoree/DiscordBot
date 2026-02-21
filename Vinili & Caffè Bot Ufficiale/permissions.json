@@ -338,6 +338,25 @@
                 "1442569138114662490"
             ]
         },
+        "bh": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ],
+            "subcommands": {
+                "set": [
+                    "roles.Member"
+                ],
+                "edit": [
+                    "roles.Member"
+                ],
+                "remove": [
+                    "roles.Member"
+                ]
+            }
+        },
         "embed": {
             "roles": [
                 "roles.HighStaff"
@@ -986,6 +1005,27 @@
         "banner_views": [
             "roles.Member"
         ],
+        "bh_age:*": {
+            "ownerSegment": 1
+        },
+        "bh_cancel:*": {
+            "ownerSegment": 1
+        },
+        "bh_date:*": {
+            "ownerSegment": 1
+        },
+        "bh_privacy:*": {
+            "ownerSegment": 1
+        },
+        "bh_remove_no:*": {
+            "ownerSegment": 1
+        },
+        "bh_remove_yes:*": {
+            "ownerSegment": 1
+        },
+        "bh_save:*": {
+            "ownerSegment": 1
+        },
         "claim_ticket": [
             "roles.Staff",
             "roles.HighStaff",

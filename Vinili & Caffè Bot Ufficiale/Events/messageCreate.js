@@ -1467,8 +1467,17 @@ async function handleDisboardBump(message, client) {
     "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**\n" +
     "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n" +
     bumpMention;
-  await message.channel.send({ content: thanksMessage.trim() });
+
+  // Persist bump even if the thank-you reply fails (e.g. missing send perms).
   await recordBump(client, message.guild.id, bumpUserId || null);
+  try {
+    await message.channel.send({ content: thanksMessage.trim() });
+  } catch (error) {
+    global.logger?.warn?.(
+      "[DISBOARD BUMP] Thanks message send failed, bump recorded anyway:",
+      error?.message || error,
+    );
+  }
   return true;
 }
 
@@ -1525,11 +1534,18 @@ async function handleDiscadiaBump(message, client) {
     /(server has been bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again)/i.test(
       joined,
     );
+  const hasBumpWord = /\bbump(?:ed)?\b/i.test(joined);
   const hasFailureWord =
     /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(
       joined,
     );
   const hasDiscadiaWord = /\bdiscadia\b/i.test(joined);
+  const interactionCommandName = String(
+    message.interaction?.commandName || message.interactionMetadata?.name || "",
+  )
+    .trim()
+    .toLowerCase();
+  const isBumpInteraction = interactionCommandName === "bump";
 
   const fromDiscadiaBot =
     isDiscadiaAuthor ||
@@ -1537,7 +1553,10 @@ async function handleDiscadiaBump(message, client) {
     isDiscadiaNamedBot ||
     isFallbackSource ||
     (isAutomatedSource && hasDiscadiaWord);
-  const isBump = fromDiscadiaBot && !hasFailureWord && (hasPattern || hasSuccessWord);
+  const isBump =
+    fromDiscadiaBot &&
+    !hasFailureWord &&
+    (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord));
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
@@ -1553,8 +1572,16 @@ async function handleDiscadiaBump(message, client) {
     "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" +
     bumpMention;
 
-  await message.channel.send({ content: thanksMessage.trim() });
+  // Persist bump even if the thank-you reply fails (e.g. missing send perms).
   await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
+  try {
+    await message.channel.send({ content: thanksMessage.trim() });
+  } catch (error) {
+    global.logger?.warn?.(
+      "[DISCADIA BUMP] Thanks message send failed, bump recorded anyway:",
+      error?.message || error,
+    );
+  }
   return true;
 }
 
