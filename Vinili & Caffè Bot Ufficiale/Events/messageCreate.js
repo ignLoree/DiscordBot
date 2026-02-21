@@ -1,5 +1,6 @@
 ﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require("discord.js");
 const math = require("mathjs");
+const { inspect } = require("node:util");
 const { MentionReaction, AutoResponder } = require("../Schemas/Community/autoInteractionSchemas");
 const countschema = require("../Schemas/Counting/countingSchema");
 const AFK = require("../Schemas/Afk/afkSchema");
@@ -1486,11 +1487,25 @@ async function handleCounting(message, client) {
 }
 
 function logEventError(client, label, error) {
+  const normalizeErrorText = (value) => {
+    if (value instanceof Error) {
+      return value.stack || value.message || String(value);
+    }
+    if (typeof value === "string") return value;
+    if (typeof value === "undefined") return "Unknown error";
+    try {
+      return inspect(value, { depth: 3, colors: false });
+    } catch {
+      return String(value);
+    }
+  };
+
+  const payload = `[${label}] ${normalizeErrorText(error)}`;
   if (client?.logs?.error) {
-    client.logs.error(`[${label}]`, error);
+    client.logs.error(payload);
     return;
   }
-  global.logger?.error?.(`[${label}]`, error);
+  global.logger?.error?.(payload);
 }
 
 async function handleDisboardBump(message, client) {
