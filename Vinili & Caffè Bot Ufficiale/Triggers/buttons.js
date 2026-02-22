@@ -1069,7 +1069,7 @@ module.exports = {
             name: "\`GUILDED\`",
             value: [
               "<@&1471955147692179497>",
-              "Ottenibile mettendo una delle nostre [Guild Tags](<https://discord.com/channels/1329080093599076474/1442569115972669541/1472309478555652360>)",
+              "Ottenibile mettendo una delle nostre <#1475223034057982184>",
               "९ Esclusività del ruolo.",
             ].join("\n"),
             inline: true,
