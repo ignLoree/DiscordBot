@@ -319,7 +319,7 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const voiceRows = topVoice.length
     ? topVoice.map((item, index) =>
-        formatRankLine(index, `<@${item.userId}>`, item.value, "exp base"),
+        formatRankLine(index, `<@${item.userId}>`, item.value, "exp"),
       )
     : [buildEmptyLine("exp vocale")];
 
@@ -334,10 +334,8 @@ async function publishWeeklyActivityWinners(client, options = {}) {
         `<a:VC_HeartsBlue:1468686100045369404> • **Classifica testuale:**`,
         ...messageRows,
         "",
-        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale (exp base):**`,
+        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale:**`,
         ...voiceRows,
-        "",
-        "<:VC_Reply:1468262952934314131> Solo utenti con ruolo Member, staff escluso.",
       ].join("\n"),
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null);
@@ -367,10 +365,10 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   await channel
     .send({
       content: `<@&${IDs.roles.Member}>
-<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attivita.
+<a:VC_Winner:1448687700235256009> Ciao a tutti! Annunciamo i vincitori di questa settimana per attività.
 
-<a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **chat testuale**.
-<a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp base**, ${voiceWinnerMention} ottieni il primo posto per **chat vocale**.
+<a:VC_Arrow:1448672967721615452> Con un totale di **${messageWinnerTotal} messaggi**, ${messageWinnerMention} ottieni il primo posto per **__chat testuale__**.
+<a:VC_Arrow:1448672967721615452> Con un totale di **${voiceWinnerTotal} exp**, ${voiceWinnerMention} ottieni il primo posto per **__chat vocale__**.
 _ _`,
       embeds: [embed],
       components: [button],

@@ -28,7 +28,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+avatar server`
 
 ## +ban
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+ban`
 - Subcommand: -
@@ -71,7 +71,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+block banner`
 
 ## +case
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+case`
 - Subcommand: -
@@ -120,7 +120,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+country`
 
 ## +customregister
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `customsync`, `registercustom`
 - Uso: `+customregister <role|voc|voice>`
 - Subcommand: `role`, `voc`, `voice`
@@ -162,7 +162,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+define`
 
 ## +delwarn
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+delwarn`
 - Subcommand: -
@@ -292,7 +292,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+joke`
 
 ## +kick
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+kick`
 - Subcommand: -
@@ -316,7 +316,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+leave`
 
 ## +level
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `gmulti`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`
 - Uso: `+level <gmulti|set|add|remove|reset|lock|unlock|multiplier>`
 - Subcommand: `gmulti`, `set`, `add`, `remove`, `reset`, `lock`, `unlock`, `multiplier`, `ignore`, `unignore`, `config`, `exp`, `level`
@@ -325,7 +325,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+level set`
 
 ## +lock
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+lock`
 - Subcommand: -
@@ -357,7 +357,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+membercount`
 
 ## +moderations
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+moderations`
 - Subcommand: -
@@ -365,7 +365,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+moderations`
 
 ## +modlogs
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+modlogs`
 - Subcommand: -
@@ -373,7 +373,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+modlogs`
 
 ## +modstats
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+modstats`
 - Subcommand: -
@@ -397,7 +397,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+mstats`
 
 ## +mute
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+mute`
 - Subcommand: -
@@ -405,7 +405,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+mute`
 
 ## +no-dm-list
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `nodmlist`
 - Uso: `+no-dm-list`
 - Subcommand: -
@@ -413,7 +413,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+no-dm-list`
 
 ## +perm
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `tempperm`, `permgrant`, `permrevoke`, `permlist`, `permclear`, `permchannel`, `permchannels`
 - Uso: `+perm <grant|revoke|list|clear|channel-set|channel-add|channel-remove|channel-clear>`
 - Subcommand: `grant`, `revoke`, `list`, `clear`, `channel-set`, `channel-add`, `channel-remove`, `channel-clear`, `channel-list`, `channel`, `channels`
@@ -446,7 +446,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+pug`
 
 ## +purge
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+purge`
 - Subcommand: -
@@ -478,7 +478,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+rank`
 
 ## +reaction
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `myreaction`, `autoreaction`, `autoresponder`, `ar`, `autorespond`
 - Uso: `+reaction <mention|auto|help|autoresponder|ar|mentions|me|mine>`
 - Subcommand: `mention`, `auto`, `help`, `autoresponder`, `ar`, `mentions`, `me`, `mine`
@@ -487,7 +487,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+reaction auto`
 
 ## +reason
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+reason`
 - Subcommand: -
@@ -495,7 +495,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+reason`
 
 ## +recensione
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `review`, `disboardreview`
 - Uso: `+recensione`
 - Subcommand: -
@@ -586,7 +586,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+space`
 
 ## +status
-- Categoria: `Staff`
+- Categoria: `Dev`
 - Alias: `health`
 - Uso: `+status`
 - Subcommand: -
@@ -602,7 +602,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+steamstatus`
 
 ## +temprole
-- Categoria: `Staff`
+- Categoria: `Admin`
 - Alias: `trole`
 - Uso: `+temprole [user] [time] [role], [optional reason]`
 - Subcommand: `toggle`, `add`, `remove`
@@ -611,7 +611,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+temprole add`
 
 ## +ticket
-- Categoria: `Staff`
+- Categoria: `Ticket`
 - Alias: `add`, `remove`, `close`, `closerequest`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `tadd`, `tremove`, `ticketadd`, `ticketremove`
 - Uso: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename>`
 - Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `partnership`, `supporto`, `high`
@@ -628,7 +628,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+top`
 
 ## +unban
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+unban`
 - Subcommand: -
@@ -645,7 +645,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+unblock banner`
 
 ## +unlock
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+unlock`
 - Subcommand: -
@@ -653,7 +653,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+unlock`
 
 ## +unmute
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+unmute`
 - Subcommand: -
@@ -661,7 +661,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+unmute`
 
 ## +verify
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+verify`
 - Subcommand: -
@@ -669,7 +669,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+verify`
 
 ## +warn
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+warn`
 - Subcommand: -
@@ -677,7 +677,7 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - `+warn`
 
 ## +warnings
-- Categoria: `Staff`
+- Categoria: `Moderation`
 - Alias: -
 - Uso: `+warnings`
 - Subcommand: -

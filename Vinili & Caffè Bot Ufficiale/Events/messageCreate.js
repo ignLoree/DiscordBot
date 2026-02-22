@@ -1576,6 +1576,8 @@ async function handleDiscadiaBump(message, client) {
   );
   const isDiscadiaNamedBot =
     Boolean(message.author?.bot) && /(discadia|disboard)/i.test(authorName);
+  const isDisboardNamedBot =
+    Boolean(message.author?.bot) && /disboard/i.test(authorName);
   const isDiscadiaAuthor = knownBotIds.has(String(message.author?.id || ""));
   const isDiscadiaApp = knownBotIds.has(String(message.applicationId || ""));
   const isFallbackSource = isDiscadiaAuthor || isDiscadiaApp;
@@ -1611,28 +1613,33 @@ async function handleDiscadiaBump(message, client) {
 
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
   const hasSuccessWord =
-    /(server has been bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again)/i.test(
+    /(server has been bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(
       joined,
     );
   const hasBumpWord = /\bbump(?:ed)?\b/i.test(joined);
   const hasFailureWord =
-    /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare/i.test(
+    /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare|devi aspettare|attendi prima di bumpare|troppo presto per bumpare|bump non riuscito|bump fallito/i.test(
       joined,
     );
   const hasDiscadiaWord = /\bdiscadia\b/i.test(joined);
+  const hasDiscadiaDomain = /discadia\.com/i.test(joined);
   const interactionCommandName = String(
     message.interaction?.commandName || message.interactionMetadata?.name || "",
   )
     .trim()
     .toLowerCase();
   const isBumpInteraction = interactionCommandName === "bump";
+  const isLikelyCommandChannel =
+    String(message.channelId || "") === String(IDs.channels.commands || "");
 
   const fromDiscadiaBot =
     isDiscadiaAuthor ||
     isDiscadiaApp ||
-    isDiscadiaNamedBot ||
+    (isDiscadiaNamedBot && !isDisboardNamedBot) ||
     isFallbackSource ||
-    (isAutomatedSource && hasDiscadiaWord);
+    hasDiscadiaWord ||
+    hasDiscadiaDomain ||
+    (isAutomatedSource && isBumpInteraction && isLikelyCommandChannel);
   const isBump =
     fromDiscadiaBot &&
     !hasFailureWord &&
@@ -1654,6 +1661,9 @@ async function handleDiscadiaBump(message, client) {
 
   // Persist bump even if the thank-you reply fails (e.g. missing send perms).
   await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
+  global.logger?.info?.(
+    `[DISCADIA BUMP] Recorded bump for guild=${message.guild.id} user=${bumpUserId || "unknown"} msg=${message.id}`,
+  );
   try {
     await message.channel.send({ content: thanksMessage.trim() });
   } catch (error) {

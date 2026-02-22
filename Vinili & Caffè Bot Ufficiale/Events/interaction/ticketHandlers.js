@@ -18,6 +18,8 @@ const HANDLED_TICKET_BUTTONS = new Set([
   "close_ticket_motivo",
   "accetta",
   "rifiuta",
+  "ticket_autoclose_accept",
+  "ticket_autoclose_reject",
   "unclaim",
 ]);
 
@@ -531,6 +533,8 @@ async function pinFirstTicketMessage(channel, message) {
           "close_ticket_motivo",
           "accetta",
           "rifiuta",
+          "ticket_autoclose_accept",
+          "ticket_autoclose_reject",
           "unclaim",
         ].includes(interaction.customId) &&
         !isTicketTranscriptButton(interaction.customId) &&
@@ -1663,8 +1667,10 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
         const canHandleCloseRequest =
-          interaction.user.id === ticketDoc.userId ||
-          interaction.user.id === ticketDoc.claimedBy ||
+          String(interaction.user.id || "").trim() ===
+            String(ticketDoc.userId || "").trim() ||
+          String(interaction.user.id || "").trim() ===
+            String(ticketDoc.claimedBy || "").trim() ||
           isHighStaffActor();
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
@@ -1723,8 +1729,10 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
         const canHandleCloseRequest =
-          interaction.user.id === ticketDoc.userId ||
-          interaction.user.id === ticketDoc.claimedBy ||
+          String(interaction.user.id || "").trim() ===
+            String(ticketDoc.userId || "").trim() ||
+          String(interaction.user.id || "").trim() ===
+            String(ticketDoc.claimedBy || "").trim() ||
           isHighStaffActor();
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
@@ -1745,6 +1753,101 @@ async function pinFirstTicketMessage(channel, message) {
                 .setTitle("Richiesta di chiusura")
                 .setDescription(
                   `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta di chiusura`,
+                )
+                .setColor("Red"),
+            ],
+            components: [],
+          })
+          .catch(() => {});
+        await Ticket.updateOne(
+          { _id: ticketDoc._id },
+          {
+            $set: {
+              closeReason: null,
+              closeRequestedBy: null,
+              closeRequestedAt: null,
+            },
+          },
+        ).catch(() => {});
+        return true;
+      }
+      if (
+        interaction.customId === "ticket_autoclose_accept" ||
+        interaction.customId === "ticket_autoclose_reject"
+      ) {
+        if (!interaction.channel) {
+          await safeReply(interaction, {
+            embeds: [
+              makeErrorEmbed(
+                "Errore",
+                "<:vegax:1443934876440068179> Interazione fuori canale",
+              ),
+            ],
+            flags: 1 << 6,
+          });
+          return true;
+        }
+        const ticketDoc = await Ticket.findOne({
+          channelId: interaction.channel.id,
+        });
+        if (!ticketDoc) {
+          await safeReply(interaction, {
+            embeds: [
+              makeErrorEmbed(
+                "Errore",
+                "<:vegax:1443934876440068179> Non puoi gestire questo ticket",
+              ),
+            ],
+            flags: 1 << 6,
+          });
+          return true;
+        }
+        const openerId = String(ticketDoc.userId || "").trim();
+        const claimerId = String(ticketDoc.claimedBy || "").trim();
+        const actorId = String(interaction.user.id || "").trim();
+        const canHandleAutoClosePrompt =
+          actorId === openerId ||
+          actorId === claimerId ||
+          isHighStaffActor();
+        if (!canHandleAutoClosePrompt) {
+          await safeReply(interaction, {
+            embeds: [
+              makeErrorEmbed(
+                "Errore",
+                "<:vegax:1443934876440068179> Solo opener o claimer possono gestire questa richiesta automatica.",
+              ),
+            ],
+            flags: 1 << 6,
+          });
+          return true;
+        }
+
+        if (interaction.customId === "ticket_autoclose_accept") {
+          try {
+            await interaction
+              .deferReply({ flags: 1 << 6 })
+              .catch(() => {})
+              .catch(() => {});
+          } catch {}
+          const motivo =
+            ticketDoc.closeReason || "Chiusura proposta automaticamente dopo 24h.";
+          await closeTicket(interaction, motivo, {
+            safeReply,
+            safeEditReply,
+            makeErrorEmbed,
+            LOG_CHANNEL,
+            closedById: interaction.user.id,
+          });
+          return true;
+        }
+
+        await interaction
+          .update({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle("Richiesta di chiusura")
+                .setDescription(
+                  `<:vegax:1443934876440068179> ${interaction.user} ha rifiutato la richiesta automatica di chiusura`,
                 )
                 .setColor("Red"),
             ],

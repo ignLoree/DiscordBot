@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("discord.js");
 const IDs = require("../Config/ids");
+const { hasAdminsProfileCapability } = require("../../Services/Moderation/securityProfilesService");
 const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
 const PERMISSIONS_CANDIDATES = [
   path.join(process.cwd(), "permissions.json"),
@@ -716,6 +717,17 @@ async function checkPrefixPermission(
   const userId = message?.author?.id || null;
   const safeCommand = String(commandName || "").toLowerCase();
   const onMainGuild = isMainGuild(guildId);
+
+  if (
+    safeCommand === "verify" &&
+    message?.member &&
+    hasAdminsProfileCapability(message.member, "verifyCommand")
+  ) {
+    if (options.returnDetails) {
+      return { allowed: true, reason: null, requiredRoles: null, channels: null };
+    }
+    return true;
+  }
 
   if (safeCommand === "restart") {
     let allowed = false;

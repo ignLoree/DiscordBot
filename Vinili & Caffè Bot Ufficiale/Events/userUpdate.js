@@ -2,6 +2,10 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
+const {
+  isSecurityProfileImmune,
+  hasAdminsProfileCapability,
+} = require("../Services/Moderation/securityProfilesService");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const CORE_EXEMPT_USER_IDS = new Set([
@@ -160,7 +164,8 @@ module.exports = {
         for (const guild of resolvedClient.guilds.cache.values()) {
           if (
             CORE_EXEMPT_USER_IDS.has(String(newUser.id)) ||
-            String(guild.ownerId || "") === String(newUser.id)
+            String(guild.ownerId || "") === String(newUser.id) ||
+            isSecurityProfileImmune(String(guild?.id || ""), String(newUser.id || ""))
           ) {
             continue;
           }
@@ -168,6 +173,7 @@ module.exports = {
             guild.members.cache.get(newUser.id) ||
             (await guild.members.fetch(newUser.id).catch(() => null));
           if (!member || member.user?.bot) continue;
+          if (hasAdminsProfileCapability(member, "fullImmunity")) continue;
           await punishUsernameMatch(member, match);
         }
         return;

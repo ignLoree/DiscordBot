@@ -2,6 +2,11 @@ const { EmbedBuilder, PermissionsBitField, OverwriteType, UserFlagsBitField, } =
 const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
+const {
+  isSecurityProfileImmune,
+  hasAdminsProfileCapability,
+  getSecurityStaticsSnapshot,
+} = require("./securityProfilesService");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
 const HIGH_STAFF_MENTION = IDs.roles?.HighStaff
   ? `<@&${IDs.roles.HighStaff}>`
@@ -56,6 +61,7 @@ const ROLE_DELETION_TRACKER = new Map();
 const CHANNEL_CREATION_TRACKER = new Map();
 const CHANNEL_DELETION_TRACKER = new Map();
 const WEBHOOK_CREATION_TRACKER = new Map();
+const WEBHOOK_UPDATE_TRACKER = new Map();
 const WEBHOOK_DELETION_TRACKER = new Map();
 const INVITE_CREATION_TRACKER = new Map();
 const ANTINUKE_PANIC_STATE = new Map();
@@ -136,6 +142,12 @@ const ANTINUKE_CONFIG = {
     hourLimit: 10,
     heatPerAction: 15,
   },
+  webhookUpdateFilter: {
+    enabled: true,
+    minuteLimit: 4,
+    hourLimit: 12,
+    heatPerAction: 12,
+  },
   webhookDeletionFilter: {
     enabled: true,
     minuteLimit: 3,
@@ -199,6 +211,7 @@ const ANTINUKE_PRESETS = {
     channelCreationFilter: { minuteLimit: 5, hourLimit: 12, heatPerAction: 14 },
     channelDeletionFilter: { minuteLimit: 3, hourLimit: 8, heatPerAction: 24 },
     webhookCreationFilter: { minuteLimit: 4, hourLimit: 12, heatPerAction: 12 },
+    webhookUpdateFilter: { minuteLimit: 5, hourLimit: 14, heatPerAction: 10 },
     webhookDeletionFilter: { minuteLimit: 4, hourLimit: 10, heatPerAction: 10 },
     inviteCreationFilter: { minuteLimit: 5, hourLimit: 16, heatPerAction: 10 },
     panicMode: {
@@ -207,6 +220,14 @@ const ANTINUKE_PRESETS = {
       durationMs: 8 * 60_000,
       maxDurationMs: 30 * 60_000,
       extendByMsOnTrigger: 90_000,
+      autoBackupSync: {
+        enabled: true,
+        restoreDeletedRoles: true,
+        deleteNewRoles: true,
+        restoreDeletedChannels: true,
+        deleteNewChannels: true,
+        deleteNewWebhooks: true,
+      },
     },
   },
   balanced: {
@@ -216,6 +237,7 @@ const ANTINUKE_PRESETS = {
     channelCreationFilter: { minuteLimit: 4, hourLimit: 12, heatPerAction: 16 },
     channelDeletionFilter: { minuteLimit: 3, hourLimit: 8, heatPerAction: 25 },
     webhookCreationFilter: { minuteLimit: 3, hourLimit: 10, heatPerAction: 15 },
+    webhookUpdateFilter: { minuteLimit: 4, hourLimit: 12, heatPerAction: 12 },
     webhookDeletionFilter: { minuteLimit: 3, hourLimit: 8, heatPerAction: 10 },
     inviteCreationFilter: { minuteLimit: 4, hourLimit: 15, heatPerAction: 12 },
     panicMode: {
@@ -224,6 +246,14 @@ const ANTINUKE_PRESETS = {
       durationMs: 10 * 60_000,
       maxDurationMs: 45 * 60_000,
       extendByMsOnTrigger: 2 * 60_000,
+      autoBackupSync: {
+        enabled: true,
+        restoreDeletedRoles: true,
+        deleteNewRoles: true,
+        restoreDeletedChannels: true,
+        deleteNewChannels: true,
+        deleteNewWebhooks: true,
+      },
     },
   },
   strict: {
@@ -233,6 +263,7 @@ const ANTINUKE_PRESETS = {
     channelCreationFilter: { minuteLimit: 3, hourLimit: 10, heatPerAction: 18 },
     channelDeletionFilter: { minuteLimit: 2, hourLimit: 6, heatPerAction: 30 },
     webhookCreationFilter: { minuteLimit: 2, hourLimit: 8, heatPerAction: 18 },
+    webhookUpdateFilter: { minuteLimit: 3, hourLimit: 9, heatPerAction: 16 },
     webhookDeletionFilter: { minuteLimit: 2, hourLimit: 6, heatPerAction: 14 },
     inviteCreationFilter: { minuteLimit: 3, hourLimit: 10, heatPerAction: 15 },
     panicMode: {
@@ -241,6 +272,14 @@ const ANTINUKE_PRESETS = {
       durationMs: 12 * 60_000,
       maxDurationMs: 60 * 60_000,
       extendByMsOnTrigger: 3 * 60_000,
+      autoBackupSync: {
+        enabled: true,
+        restoreDeletedRoles: true,
+        deleteNewRoles: true,
+        restoreDeletedChannels: true,
+        deleteNewChannels: true,
+        deleteNewWebhooks: true,
+      },
     },
   },
 };
@@ -290,6 +329,7 @@ function getSerializableAntiNukeConfig() {
     channelCreationFilter: { ...ANTINUKE_CONFIG.channelCreationFilter },
     channelDeletionFilter: { ...ANTINUKE_CONFIG.channelDeletionFilter },
     webhookCreationFilter: { ...ANTINUKE_CONFIG.webhookCreationFilter },
+    webhookUpdateFilter: { ...ANTINUKE_CONFIG.webhookUpdateFilter },
     webhookDeletionFilter: { ...ANTINUKE_CONFIG.webhookDeletionFilter },
     inviteCreationFilter: { ...ANTINUKE_CONFIG.inviteCreationFilter },
     panicMode: {
@@ -377,6 +417,10 @@ function applyPersistentAntiNukeConfig(raw) {
     src.webhookCreationFilter || {},
   );
   Object.assign(
+    ANTINUKE_CONFIG.webhookUpdateFilter,
+    src.webhookUpdateFilter || {},
+  );
+  Object.assign(
     ANTINUKE_CONFIG.webhookDeletionFilter,
     src.webhookDeletionFilter || {},
   );
@@ -391,6 +435,7 @@ function applyPersistentAntiNukeConfig(raw) {
     ANTINUKE_CONFIG.channelCreationFilter,
     ANTINUKE_CONFIG.channelDeletionFilter,
     ANTINUKE_CONFIG.webhookCreationFilter,
+    ANTINUKE_CONFIG.webhookUpdateFilter,
     ANTINUKE_CONFIG.webhookDeletionFilter,
     ANTINUKE_CONFIG.inviteCreationFilter,
   ];
@@ -531,9 +576,14 @@ function saveAntiNukePersistentConfig() {
   return writeJsonSafe(ANTINUKE_CONFIG_PATH, getSerializableAntiNukeConfig());
 }
 
+function enforceCriticalAntiNukeGuards() {
+  ANTINUKE_CONFIG.autoQuarantine.monitorPublicRoles = true;
+}
+
 function setAntiNukeConfigSnapshot(rawConfig) {
   try {
     applyPersistentAntiNukeConfig(rawConfig || {});
+    enforceCriticalAntiNukeGuards();
     const saved = saveAntiNukePersistentConfig();
     return saved ? { ok: true, config: getSerializableAntiNukeConfig() } : { ok: false, reason: "save_failed" };
   } catch {
@@ -542,6 +592,17 @@ function setAntiNukeConfigSnapshot(rawConfig) {
 }
 
 applyPersistentAntiNukeConfig(readJsonSafe(ANTINUKE_CONFIG_PATH, null));
+ANTINUKE_CONFIG.vanityGuard = true;
+ANTINUKE_CONFIG.autoQuarantine.strictMode = true;
+enforceCriticalAntiNukeGuards();
+ANTINUKE_CONFIG.autoQuarantine.monitorChannelPermissions = true;
+ANTINUKE_CONFIG.autoQuarantine.strictMemberRoleAddition = true;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.enabled = false;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.restoreDeletedRoles = true;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.restoreDeletedChannels = true;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewRoles = true;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewChannels = true;
+ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewWebhooks = true;
 
 function hasAllPerms(member, flags) {
   return flags.every((flag) => member?.permissions?.has?.(flag));
@@ -582,14 +643,21 @@ function dangerousAddedBits(beforeBits, afterBits, dangerList = DANGEROUS_PERMS)
 }
 
 function getMainRoleIds(guild) {
+  const statics = getSecurityStaticsSnapshot(String(guild?.id || ""));
+  const dynamicMainRoles = Array.isArray(statics?.mainRoleIds)
+    ? statics.mainRoleIds.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+  if (dynamicMainRoles.length) {
+    return new Set([String(guild?.id || ""), ...dynamicMainRoles].filter(Boolean));
+  }
   return new Set(
     [
       String(guild?.id || ""),
       String(IDs.roles.Member || ""),
-      String(IDs.roles.Staff || ""),
-      String(IDs.roles.HighStaff || ""),
-      String(IDs.roles.Founder || ""),
-      String(IDs.roles.CoFounder || ""),
+      String(IDs.roles.separatore6 || ""),
+      String(IDs.roles.separatore8 || ""),
+      String(IDs.roles.separatore5 || ""),
+      String(IDs.roles.separatore7 || ""),
     ].filter(Boolean),
   );
 }
@@ -597,8 +665,6 @@ function getMainRoleIds(guild) {
 function hasStaffProtection(member) {
   if (!member?.roles?.cache) return false;
   const protectedRoleIds = [
-    IDs.roles.Staff,
-    IDs.roles.HighStaff,
     IDs.roles.Founder,
     IDs.roles.CoFounder,
   ]
@@ -633,14 +699,13 @@ function isWhitelistedExecutor(guild, executorId) {
   if (!userId || userId === UNKNOWN_EXECUTOR_ID) return false;
   if (isMaintenanceAllowed(guild?.id, userId)) return true;
   if (String(guild?.ownerId || "") === userId) return true;
+  const member = guild?.members?.cache?.get(userId);
+  if (isSecurityProfileImmune(String(guild?.id || ""), userId)) return true;
+  if (hasAdminsProfileCapability(member, "fullImmunity")) return true;
   if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
   if (VERIFIED_BOT_IDS.has(userId)) return true;
-  if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
-  const member = guild?.members?.cache?.get(userId);
   if (!member) return false;
   if (
-    member.roles.cache.has(String(IDs.roles.Staff || "")) ||
-    member.roles.cache.has(String(IDs.roles.HighStaff || "")) ||
     member.roles.cache.has(String(IDs.roles.Founder || "")) ||
     member.roles.cache.has(String(IDs.roles.CoFounder || ""))
   ) {
@@ -681,16 +746,16 @@ async function isWhitelistedExecutorAsync(guild, executorId) {
   if (!userId || userId === UNKNOWN_EXECUTOR_ID) return false;
   if (isMaintenanceAllowed(guild?.id, userId)) return true;
   if (String(guild?.ownerId || "") === userId) return true;
+  let member = guild?.members?.cache?.get(userId) || null;
+  if (isSecurityProfileImmune(String(guild?.id || ""), userId)) return true;
+  if (hasAdminsProfileCapability(member, "fullImmunity")) return true;
   if (CORE_EXEMPT_USER_IDS.has(userId)) return true;
   if (VERIFIED_BOT_IDS.has(userId)) return true;
   if (await isVerifiedBotExecutor(guild, userId)) return true;
-  if (ANTINUKE_CONFIG.autoQuarantine.whitelistUserIds.has(userId)) return true;
-  let member = guild?.members?.cache?.get(userId) || null;
   if (!member) member = await guild?.members?.fetch(userId).catch(() => null);
+  if (hasAdminsProfileCapability(member, "fullImmunity")) return true;
   if (!member) return false;
   if (
-    member.roles.cache.has(String(IDs.roles.Staff || "")) ||
-    member.roles.cache.has(String(IDs.roles.HighStaff || "")) ||
     member.roles.cache.has(String(IDs.roles.Founder || "")) ||
     member.roles.cache.has(String(IDs.roles.CoFounder || ""))
   ) {
@@ -838,12 +903,14 @@ function getPanicState(guildId) {
   for (const [gid, state] of ANTINUKE_PANIC_STATE.entries()) {
     const idleFor = now - Number(state?.lastAt || 0);
     const active = Number(state?.activeUntil || 0) > now;
-    const hasArtifacts =
+  const hasArtifacts =
       Number(state?.lockedRoles?.size || 0) > 0 ||
       Number(state?.lockedChannels?.size || 0) > 0 ||
       Number(state?.createdRoleIds?.size || 0) > 0 ||
       Number(state?.createdChannelIds?.size || 0) > 0 ||
-      Number(state?.createdWebhookIds?.size || 0) > 0;
+      Number(state?.createdWebhookIds?.size || 0) > 0 ||
+      Number(state?.deletedRoleSnapshots?.size || 0) > 0 ||
+      Number(state?.deletedChannelSnapshots?.size || 0) > 0;
     if (!active && !hasArtifacts && idleFor > 6 * 60 * 60_000) {
       ANTINUKE_PANIC_STATE.delete(gid);
     }
@@ -861,12 +928,147 @@ function getPanicState(guildId) {
     createdRoleIds: new Set(),
     createdChannelIds: new Set(),
     createdWebhookIds: new Set(),
+    deletedRoleSnapshots: new Map(),
+    deletedChannelSnapshots: new Map(),
     unlockTimer: null,
     restoreRetryTimer: null,
     restoreRetryCount: 0,
+    panicCaseId: "",
+    panicReport: null,
   };
   ANTINUKE_PANIC_STATE.set(key, initial);
   return initial;
+}
+
+function createPanicCaseId() {
+  const base = Date.now().toString(36).slice(-6);
+  const rand = Math.floor(Math.random() * 46656)
+    .toString(36)
+    .padStart(3, "0");
+  return `${base}${rand}`;
+}
+
+function ensurePanicReport(state) {
+  if (!state.panicReport || typeof state.panicReport !== "object") {
+    state.panicReport = {
+      quarantinedUserIds: new Set(),
+      roles: { deleted: 0, recovered: 0, edited: 0 },
+      channels: { deleted: 0, recovered: 0, edited: 0 },
+      categories: { deleted: 0, recovered: 0, edited: 0 },
+      webhooks: { deleted: 0 },
+      backup: {
+        enabled: Boolean(ANTINUKE_CONFIG.panicMode.autoBackupSync?.enabled),
+        loaded: false,
+      },
+      settings: {
+        server: Boolean(ANTINUKE_CONFIG.panicMode.lockdown?.lockAllCommands),
+        wick: Boolean(ANTINUKE_CONFIG.panicMode.lockdown?.lockModerationCommands),
+      },
+    };
+  }
+  if (!(state.panicReport.quarantinedUserIds instanceof Set)) {
+    state.panicReport.quarantinedUserIds = new Set(
+      Array.isArray(state.panicReport.quarantinedUserIds)
+        ? state.panicReport.quarantinedUserIds
+        : [],
+    );
+  }
+  return state.panicReport;
+}
+
+function resetPanicReport(state) {
+  state.panicCaseId = createPanicCaseId();
+  state.panicReport = null;
+  ensurePanicReport(state);
+}
+
+function incrementPanicMetric(state, bucket, field, value = 1) {
+  const report = ensurePanicReport(state);
+  if (!report?.[bucket] || typeof report[bucket] !== "object") return;
+  const prev = Number(report[bucket][field] || 0);
+  report[bucket][field] = Math.max(0, prev + Number(value || 0));
+}
+
+async function sendPanicModeDetailedReport(
+  guild,
+  state,
+  {
+    reason = "panic_end",
+    backupSummary = null,
+  } = {},
+) {
+  if (!guild || !state) return;
+  const report = ensurePanicReport(state);
+  if (backupSummary) {
+    report.backup.loaded = Boolean(backupSummary.loaded);
+    incrementPanicMetric(state, "roles", "deleted", Number(backupSummary.rolesDeleted || 0));
+    incrementPanicMetric(state, "roles", "recovered", Number(backupSummary.rolesRecovered || 0));
+    incrementPanicMetric(
+      state,
+      "channels",
+      "deleted",
+      Number(backupSummary.channelsDeleted || 0),
+    );
+    incrementPanicMetric(
+      state,
+      "channels",
+      "recovered",
+      Number(backupSummary.channelsRecovered || 0),
+    );
+    incrementPanicMetric(
+      state,
+      "categories",
+      "deleted",
+      Number(backupSummary.categoriesDeleted || 0),
+    );
+    incrementPanicMetric(
+      state,
+      "categories",
+      "recovered",
+      Number(backupSummary.categoriesRecovered || 0),
+    );
+    incrementPanicMetric(
+      state,
+      "webhooks",
+      "deleted",
+      Number(backupSummary.webhooksDeleted || 0),
+    );
+  }
+
+  const caseId = String(state.panicCaseId || createPanicCaseId());
+  const quarantinedCount = Number(report.quarantinedUserIds?.size || 0);
+  const backupEnabled = Boolean(ANTINUKE_CONFIG.panicMode.autoBackupSync?.enabled);
+  const backupLabel = backupEnabled
+    ? report.backup.loaded
+      ? "Backup/restore completato."
+      : "Backup abilitato ma senza modifiche applicate."
+    : "Backup disabilitato.";
+
+  const lines = [
+    `**Panic Mode Triggered! [Anti Nuke]**`,
+    `<:VC_right_arrow:1473441155055096081> Attivato monitoraggio anomalo e lockdown.`,
+    "",
+    `**Panic Mode Report**`,
+    `${ARROW} **CASE:** \`${caseId}\``,
+    `${ARROW} **Reason:** ${String(reason || "panic_end")}`,
+    `${ARROW} **Members Quarantined:** ${quarantinedCount}`,
+    "",
+    `**Backup System Report**`,
+    `${ARROW} ${backupLabel}`,
+    "",
+    `**Roles**`,
+    `${ARROW} Deleted: ${Number(report.roles.deleted || 0)} | Recovered: ${Number(report.roles.recovered || 0)} | Edited: ${Number(report.roles.edited || 0)}`,
+    `**Channels**`,
+    `${ARROW} Deleted: ${Number(report.channels.deleted || 0)} | Recovered: ${Number(report.channels.recovered || 0)} | Edited: ${Number(report.channels.edited || 0)}`,
+    `**Categories**`,
+    `${ARROW} Deleted: ${Number(report.categories.deleted || 0)} | Recovered: ${Number(report.categories.recovered || 0)} | Edited: ${Number(report.categories.edited || 0)}`,
+    `**Webhooks**`,
+    `${ARROW} Deleted: ${Number(report.webhooks.deleted || 0)}`,
+    `**Settings**`,
+    `${ARROW} Server: ${report.settings.server ? "ON" : "OFF"} | Wick: ${report.settings.wick ? "ON" : "OFF"}`,
+  ];
+
+  await sendAntiNukeLog(guild, "AntiNuke Panic Mode Report", lines, "#57F287");
 }
 
 function isAntiNukePanicActive(guildId) {
@@ -906,6 +1108,7 @@ async function lockDangerousRolesForPanic(guild, state) {
           "AntiNuke Panic: lock dangerous role permissions",
         )
         .catch(() => {});
+      incrementPanicMetric(state, "roles", "edited", 1);
     }
   }
 }
@@ -1121,22 +1324,203 @@ function schedulePanicRestoreRetry(guild, state, reason = "retry") {
   }
 }
 
+function buildRoleBackupSnapshot(role) {
+  if (!role?.id) return null;
+  return {
+    id: String(role.id),
+    name: String(role.name || "restored-role"),
+    color: Number(role.color || 0),
+    hoist: Boolean(role.hoist),
+    mentionable: Boolean(role.mentionable),
+    permissions: String(BigInt(role.permissions?.bitfield || 0n)),
+    position: Number(role.position || 0),
+  };
+}
+
+function buildChannelBackupSnapshot(channel) {
+  if (!channel?.id) return null;
+  const overwrites = Array.from(channel.permissionOverwrites?.cache?.values?.() || [])
+    .map((ov) => ({
+      id: String(ov?.id || ""),
+      type: Number(ov?.type ?? 0),
+      allow: String(BigInt(ov?.allow?.bitfield || 0n)),
+      deny: String(BigInt(ov?.deny?.bitfield || 0n)),
+    }))
+    .filter((ov) => ov.id);
+  return {
+    id: String(channel.id),
+    type: Number(channel.type ?? 0),
+    name: String(channel.name || "restored-channel"),
+    topic: typeof channel.topic === "string" ? channel.topic : "",
+    nsfw: Boolean(channel.nsfw),
+    rateLimitPerUser: Number(channel.rateLimitPerUser || 0),
+    bitrate: Number(channel.bitrate || 0),
+    userLimit: Number(channel.userLimit || 0),
+    rtcRegion: channel.rtcRegion || null,
+    videoQualityMode: Number(channel.videoQualityMode ?? 1),
+    defaultAutoArchiveDuration: Number(channel.defaultAutoArchiveDuration || 1440),
+    parentId: channel.parentId ? String(channel.parentId) : "",
+    position: Number(channel.position || 0),
+    permissionOverwrites: overwrites,
+  };
+}
+
+function queueDeletedRoleSnapshot(guildId, roleSnapshot) {
+  const gid = String(guildId || "");
+  if (!gid || !roleSnapshot?.id) return;
+  const state = getPanicState(gid);
+  if (!state.deletedRoleSnapshots) state.deletedRoleSnapshots = new Map();
+  state.deletedRoleSnapshots.set(String(roleSnapshot.id), roleSnapshot);
+}
+
+function queueDeletedChannelSnapshot(guildId, channelSnapshot) {
+  const gid = String(guildId || "");
+  if (!gid || !channelSnapshot?.id) return;
+  const state = getPanicState(gid);
+  if (!state.deletedChannelSnapshots) state.deletedChannelSnapshots = new Map();
+  state.deletedChannelSnapshots.set(String(channelSnapshot.id), channelSnapshot);
+}
+
+async function restoreDeletedRoleSnapshots(guild, state) {
+  const pending = Array.from(state?.deletedRoleSnapshots?.values?.() || []);
+  if (!pending.length) return { restored: 0, failed: 0 };
+  const me = guild?.members?.me;
+  if (!me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles)) {
+    return { restored: 0, failed: pending.length, reason: "missing_manage_roles" };
+  }
+  let restored = 0;
+  let failed = 0;
+  pending.sort((a, b) => Number(a.position || 0) - Number(b.position || 0));
+  for (const snap of pending) {
+    const payload = {
+      name: String(snap.name || "restored-role"),
+      color: Number(snap.color || 0),
+      hoist: Boolean(snap.hoist),
+      mentionable: Boolean(snap.mentionable),
+      permissions: BigInt(String(snap.permissions || "0")),
+      reason: "AntiNuke restore: deleted role snapshot",
+    };
+    const role = await guild.roles.create(payload).catch(() => null);
+    if (!role) {
+      failed += 1;
+      continue;
+    }
+    const targetPosition = Math.max(1, Number(snap.position || 1));
+    await role.setPosition(targetPosition, { reason: "AntiNuke restore: role position" }).catch(() => {});
+    restored += 1;
+  }
+  state.deletedRoleSnapshots?.clear?.();
+  return { restored, failed };
+}
+
+async function restoreDeletedChannelSnapshots(guild, state) {
+  const pending = Array.from(state?.deletedChannelSnapshots?.values?.() || []);
+  if (!pending.length) return { restored: 0, failed: 0 };
+  const me = guild?.members?.me;
+  if (!me?.permissions?.has?.(PermissionsBitField.Flags.ManageChannels)) {
+    return { restored: 0, failed: pending.length, reason: "missing_manage_channels" };
+  }
+  let restored = 0;
+  let failed = 0;
+  for (const snap of pending) {
+    const type = Number(snap.type ?? 0);
+    if ([10, 11, 12, 14].includes(type)) {
+      failed += 1;
+      continue;
+    }
+    const parentId = String(snap.parentId || "").trim();
+    const parentChannel = parentId
+      ? guild.channels.cache.get(parentId) ||
+        (await guild.channels.fetch(parentId).catch(() => null))
+      : null;
+    const overwritePayload = (Array.isArray(snap.permissionOverwrites) ? snap.permissionOverwrites : [])
+      .map((ov) => ({
+        id: String(ov?.id || ""),
+        type: Number(ov?.type ?? 0),
+        allow: BigInt(String(ov?.allow || "0")),
+        deny: BigInt(String(ov?.deny || "0")),
+      }))
+      .filter((ov) => {
+        if (!ov.id) return false;
+        if (ov.type === OverwriteType.Role) {
+          return ov.id === String(guild.id || "") || guild.roles.cache.has(ov.id);
+        }
+        if (ov.type === OverwriteType.Member) {
+          return guild.members.cache.has(ov.id);
+        }
+        return false;
+      })
+      .filter((ov) => ov.id);
+
+    const createPayload = {
+      name: String(snap.name || "restored-channel"),
+      type,
+      parent: parentChannel?.type === 4 ? String(parentChannel.id) : null,
+      permissionOverwrites: overwritePayload,
+      reason: "AntiNuke restore: deleted channel snapshot",
+    };
+    if (typeof snap.nsfw === "boolean") createPayload.nsfw = snap.nsfw;
+    if (typeof snap.topic === "string" && [0, 5, 15, 16].includes(type)) createPayload.topic = snap.topic;
+    if (Number.isFinite(Number(snap.rateLimitPerUser)) && [0, 5, 15, 16].includes(type)) {
+      createPayload.rateLimitPerUser = Math.max(0, Number(snap.rateLimitPerUser || 0));
+    }
+    if (Number.isFinite(Number(snap.bitrate)) && [2, 13].includes(type)) {
+      createPayload.bitrate = Number(snap.bitrate || 0);
+    }
+    if (Number.isFinite(Number(snap.userLimit)) && [2, 13].includes(type)) {
+      createPayload.userLimit = Math.max(0, Number(snap.userLimit || 0));
+    }
+    if (snap.rtcRegion && [2, 13].includes(type)) createPayload.rtcRegion = snap.rtcRegion;
+    if (Number.isFinite(Number(snap.videoQualityMode)) && [2, 13].includes(type)) {
+      createPayload.videoQualityMode = Number(snap.videoQualityMode || 1);
+    }
+    if (Number.isFinite(Number(snap.defaultAutoArchiveDuration)) && [0, 5, 15, 16].includes(type)) {
+      createPayload.defaultAutoArchiveDuration = Number(snap.defaultAutoArchiveDuration || 1440);
+    }
+
+    const restoredChannel = await guild.channels.create(createPayload).catch(() => null);
+    if (!restoredChannel) {
+      failed += 1;
+      continue;
+    }
+    const position = Number(snap.position || 0);
+    if (Number.isFinite(position) && position >= 0) {
+      await restoredChannel.setPosition(position, { reason: "AntiNuke restore: channel position" }).catch(() => {});
+    }
+    restored += 1;
+  }
+  state.deletedChannelSnapshots?.clear?.();
+  return { restored, failed };
+}
+
 async function runAutoBackupSyncAfterPanic(guild, state) {
   const cfg = ANTINUKE_CONFIG.panicMode.autoBackupSync;
-  if (!cfg?.enabled || !guild) return;
+  if (!guild || !state) return;
   const me = guild.members?.me;
+  const enabled = Boolean(cfg?.enabled);
 
-  if (cfg.deleteNewChannels && me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
+  let channelsDeleted = 0;
+  let categoriesDeleted = 0;
+  let rolesDeleted = 0;
+  let webhooksDeleted = 0;
+  if (enabled && cfg.deleteNewChannels && me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     for (const channelId of state.createdChannelIds) {
       const channel =
         guild.channels.cache.get(String(channelId)) ||
         (await guild.channels.fetch(String(channelId)).catch(() => null));
       if (!channel) continue;
-      await channel.delete("AntiNuke panic cleanup: delete new channel").catch(() => {});
+      const deleted = await channel
+        .delete("AntiNuke panic cleanup: delete new channel")
+        .then(() => true)
+        .catch(() => false);
+      if (deleted) {
+        if (Number(channel.type) === 4) categoriesDeleted += 1;
+        else channelsDeleted += 1;
+      }
     }
   }
 
-  if (cfg.deleteNewRoles && me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) {
+  if (enabled && cfg.deleteNewRoles && me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) {
     for (const roleId of state.createdRoleIds) {
       const role =
         guild.roles.cache.get(String(roleId)) ||
@@ -1144,18 +1528,26 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
       if (!role) continue;
       if (role.managed) continue;
       if (role.position >= me.roles.highest.position) continue;
-      await role.delete("AntiNuke panic cleanup: delete new role").catch(() => {});
+      const deleted = await role
+        .delete("AntiNuke panic cleanup: delete new role")
+        .then(() => true)
+        .catch(() => false);
+      if (deleted) rolesDeleted += 1;
     }
   }
 
-  if (cfg.deleteNewWebhooks && me?.permissions?.has(PermissionsBitField.Flags.ManageWebhooks)) {
+  if (enabled && cfg.deleteNewWebhooks && me?.permissions?.has(PermissionsBitField.Flags.ManageWebhooks)) {
     for (const channel of guild.channels.cache.values()) {
       if (!channel?.isTextBased?.()) continue;
       const webhooks = await channel.fetchWebhooks().catch(() => null);
       if (!webhooks?.size) continue;
       for (const webhook of webhooks.values()) {
         if (!state.createdWebhookIds.has(String(webhook.id))) continue;
-        await webhook.delete("AntiNuke panic cleanup: delete new webhook").catch(() => {});
+        const deleted = await webhook
+          .delete("AntiNuke panic cleanup: delete new webhook")
+          .then(() => true)
+          .catch(() => false);
+        if (deleted) webhooksDeleted += 1;
       }
     }
   }
@@ -1163,6 +1555,58 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
   state.createdRoleIds.clear();
   state.createdChannelIds.clear();
   state.createdWebhookIds.clear();
+
+  const pendingCategorySnapshots = Array.from(
+    state?.deletedChannelSnapshots?.values?.() || [],
+  ).filter((snap) => Number(snap?.type) === 4).length;
+  const restoredRoles = enabled && cfg.restoreDeletedRoles
+    ? await restoreDeletedRoleSnapshots(guild, state)
+    : { restored: 0, failed: 0 };
+  const restoredChannels = enabled && cfg.restoreDeletedChannels
+    ? await restoreDeletedChannelSnapshots(guild, state)
+    : { restored: 0, failed: 0 };
+
+  const recoveredCategories = pendingCategorySnapshots;
+  const recoveredChannels = Math.max(
+    0,
+    Number(restoredChannels.restored || 0) - recoveredCategories,
+  );
+
+  if (!enabled) {
+    state.deletedRoleSnapshots?.clear?.();
+    state.deletedChannelSnapshots?.clear?.();
+  }
+
+  if (
+    Number(restoredRoles.restored || 0) > 0 ||
+    Number(restoredRoles.failed || 0) > 0 ||
+    Number(restoredChannels.restored || 0) > 0 ||
+    Number(restoredChannels.failed || 0) > 0
+  ) {
+    await sendAntiNukeLog(
+      guild,
+      "AntiNuke: Restore System",
+      [
+        `<:VC_right_arrow:1473441155055096081> **Roles ripristinati:** ${Number(restoredRoles.restored || 0)}`,
+        `<:VC_right_arrow:1473441155055096081> **Ruoli falliti:** ${Number(restoredRoles.failed || 0)}`,
+        `<:VC_right_arrow:1473441155055096081> **Canali ripristinati:** ${Number(restoredChannels.restored || 0)}`,
+        `<:VC_right_arrow:1473441155055096081> **Canali falliti:** ${Number(restoredChannels.failed || 0)}`,
+      ],
+      Number(restoredRoles.failed || 0) > 0 || Number(restoredChannels.failed || 0) > 0
+        ? "#F59E0B"
+        : "#57F287",
+    );
+  }
+  return {
+    loaded: enabled,
+    rolesDeleted,
+    rolesRecovered: Number(restoredRoles.restored || 0),
+    channelsDeleted,
+    channelsRecovered: recoveredChannels,
+    categoriesDeleted,
+    categoriesRecovered: recoveredCategories,
+    webhooksDeleted,
+  };
 }
 
 async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
@@ -1203,6 +1647,7 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   state.heat = 0;
 
   if (!wasActive) {
+    resetPanicReport(state);
     await lockDangerousRolesForPanic(guild, state);
     await lockGuildChannelsForPanic(guild, state);
   }
@@ -1215,7 +1660,7 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     current.panicStartedAt = 0;
     const roleResult = await unlockDangerousRolesAfterPanic(guild, current);
     const channelResult = await unlockGuildChannelsAfterPanic(guild, current);
-    await runAutoBackupSyncAfterPanic(guild, current);
+    const backupSummary = await runAutoBackupSyncAfterPanic(guild, current);
     const restored =
       Boolean(roleResult?.completed) &&
       Boolean(channelResult?.completed) &&
@@ -1224,15 +1669,10 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
     if (!restored) {
       schedulePanicRestoreRetry(guild, current, "panic_end");
     }
-    await sendAntiNukeLog(
-      guild,
-      "AntiNuke Panic Mode Ended",
-      [
-        `<:VC_right_arrow:1473441155055096081> **Reason:** Panic duration ended`,
-        `<:VC_right_arrow:1473441155055096081> **Lockdown:** ruoli e canali ripristinati`,
-      ],
-      "#57F287",
-    );
+    await sendPanicModeDetailedReport(guild, current, {
+      reason: "panic_duration_ended",
+      backupSummary,
+    });
   }, Math.max(1_000, Number(state.activeUntil || 0) - now));
   if (typeof state.unlockTimer?.unref === "function") {
     state.unlockTimer.unref();
@@ -1345,7 +1785,10 @@ async function quarantineExecutor(guild, executorId, reason) {
       })
       .then(() => true)
       .catch(() => false);
-    if (banned) return { applied: true, method: "ban" };
+    if (banned) {
+      ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
+      return { applied: true, method: "ban" };
+    }
   }
 
   const me = guild?.members?.me || null;
@@ -1369,6 +1812,7 @@ async function quarantineExecutor(guild, executorId, reason) {
         .then(() => true)
         .catch(() => false);
       if (roleApplied) {
+        ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
         scheduleQuarantineRoleRollback(
           guild,
           userId,
@@ -1385,9 +1829,11 @@ async function quarantineExecutor(guild, executorId, reason) {
     .timeout(ANTINUKE_CONFIG.autoQuarantine.quarantineTimeoutMs, reason)
     .then(() => true)
     .catch(() => false);
-  return timeoutApplied
-    ? { applied: true, method: "timeout" }
-    : { applied: false, method: "timeout_failed" };
+  if (timeoutApplied) {
+    ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
+    return { applied: true, method: "timeout" };
+  }
+  return { applied: false, method: "timeout_failed" };
 }
 
 async function deleteWebhookById(guild, webhookId, preferredChannelId = "") {
@@ -1812,7 +2258,13 @@ function trimRoleDeletionState(state, at = Date.now()) {
     Number(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25);
 }
 
-async function handleRoleDeletionAction({ guild, executorId, roleName = "", roleId = "" }) {
+async function handleRoleDeletionAction({
+  guild,
+  executorId,
+  roleName = "",
+  roleId = "",
+  roleSnapshot = null,
+}) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.roleDeletionFilter.enabled) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
@@ -1842,6 +2294,14 @@ async function handleRoleDeletionAction({ guild, executorId, roleName = "", role
     "Role deletion filter",
     ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction,
   );
+  if (
+    isAntiNukePanicActive(guild.id) &&
+    ANTINUKE_CONFIG.panicMode.autoBackupSync?.enabled &&
+    ANTINUKE_CONFIG.panicMode.autoBackupSync?.restoreDeletedRoles &&
+    roleSnapshot?.id
+  ) {
+    queueDeletedRoleSnapshot(guild.id, roleSnapshot);
+  }
 
   const { state } = getRoleDeletionState(guild.id, trackerId);
   trimRoleDeletionState(state, now);
@@ -2073,6 +2533,17 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
     "Channel deletion filter",
     ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction,
   );
+  if (
+    isAntiNukePanicActive(guild.id) &&
+    ANTINUKE_CONFIG.panicMode.autoBackupSync?.enabled &&
+    ANTINUKE_CONFIG.panicMode.autoBackupSync?.restoreDeletedChannels &&
+    channel?.id
+  ) {
+    const backup = buildChannelBackupSnapshot(channel);
+    if (backup?.id) {
+      queueDeletedChannelSnapshot(guild.id, backup);
+    }
+  }
 
   const { state } = getChannelDeletionState(guild.id, trackerId);
   trimChannelDeletionState(state, now);
@@ -2264,6 +2735,104 @@ function getWebhookDeletionState(guildId, executorId) {
   const initial = { minuteHits: [], hourHits: [], heat: 0, lastPunishAt: 0 };
   WEBHOOK_DELETION_TRACKER.set(key, initial);
   return { key, state: initial };
+}
+
+function getWebhookUpdateState(guildId, executorId) {
+  cleanupTrackerMap(WEBHOOK_UPDATE_TRACKER);
+  const key = `${String(guildId || "")}:${String(executorId || "")}`;
+  const existing = WEBHOOK_UPDATE_TRACKER.get(key);
+  if (existing) return { key, state: existing };
+  const initial = { minuteHits: [], hourHits: [], heat: 0, lastPunishAt: 0 };
+  WEBHOOK_UPDATE_TRACKER.set(key, initial);
+  return { key, state: initial };
+}
+
+function trimWebhookUpdateState(state, at = Date.now()) {
+  const minCutoff = at - 60_000;
+  const hourCutoff = at - 60 * 60_000;
+  state.minuteHits = state.minuteHits.filter((ts) => ts >= minCutoff);
+  state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
+  state.heat =
+    state.hourHits.length *
+    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
+}
+
+async function handleWebhookUpdateAction({ guild, executorId, webhookId = "" }) {
+  if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.webhookUpdateFilter.enabled) return;
+  if (!guild) return;
+  const actorId = normalizeExecutorId(executorId);
+  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
+  if (await isWhitelistedExecutorAsync(guild, actorId)) return;
+  const normalizedWebhookId = String(webhookId || "").trim();
+  const now = Date.now();
+  const trackerId = getTrackerExecutorId(
+    actorId,
+    normalizedWebhookId,
+    "webhook:update",
+    now,
+  );
+  if (
+    shouldSkipDuplicatedActionEvent({
+      guildId: guild.id,
+      executorId: actorId,
+      actionKey: "webhook:update",
+      targetId: normalizedWebhookId,
+      now,
+    })
+  ) {
+    return;
+  }
+  await applyBurstPanicGuard(
+    guild,
+    actorId,
+    "webhook update",
+    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12),
+  );
+  await enableAntiNukePanic(
+    guild,
+    "Webhook update filter",
+    ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction,
+  );
+
+  const { state } = getWebhookUpdateState(guild.id, trackerId);
+  trimWebhookUpdateState(state, now);
+  state.minuteHits.push(now);
+  state.hourHits.push(now);
+  state.heat =
+    state.hourHits.length *
+    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
+
+  const minuteCount = state.minuteHits.length;
+  const hourCount = state.hourHits.length;
+  const exceededMinute =
+    minuteCount >= Number(ANTINUKE_CONFIG.webhookUpdateFilter.minuteLimit || 4);
+  const exceededHour =
+    hourCount >= Number(ANTINUKE_CONFIG.webhookUpdateFilter.hourLimit || 12);
+  const exceededHeat = state.heat >= 100;
+  if (!exceededMinute && !exceededHour && !exceededHeat) return;
+
+  if (now - Number(state.lastPunishAt || 0) < 15_000) return;
+  state.lastPunishAt = now;
+
+  const quarantine = await quarantineExecutor(
+    guild,
+    actorId,
+    "AntiNuke: webhook update spam detected",
+  );
+  await sendAntiNukeLog(
+    guild,
+    "AntiNuke: Webhook Updates Filter",
+    [
+      formatExecutorLine(actorId),
+      normalizedWebhookId
+        ? `<:VC_right_arrow:1473441155055096081> **Last Webhook:** \`${normalizedWebhookId}\``
+        : null,
+      `<:VC_right_arrow:1473441155055096081> **Minute Count:** ${minuteCount}/${ANTINUKE_CONFIG.webhookUpdateFilter.minuteLimit}`,
+      `<:VC_right_arrow:1473441155055096081> **Hour Count:** ${hourCount}/${ANTINUKE_CONFIG.webhookUpdateFilter.hourLimit}`,
+      `<:VC_right_arrow:1473441155055096081> **Heat:** ${state.heat}/100`,
+      `<:VC_right_arrow:1473441155055096081> **Result:** ${quarantineOutcomeLabel(quarantine)}`,
+    ].filter(Boolean),
+  );
 }
 
 function trimWebhookDeletionState(state, at = Date.now()) {
@@ -2458,8 +3027,11 @@ async function handleInviteCreationAction({
 
 async function handleRoleUpdate({ oldRole, newRole, executorId }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.strictMode) return;
+  if (!ANTINUKE_CONFIG.autoQuarantine.monitorPublicRoles) return;
   const guild = newRole?.guild || oldRole?.guild;
   if (!guild) return;
+  const monitoredRoleIds = getMainRoleIds(guild);
+  if (!monitoredRoleIds.has(String(newRole?.id || oldRole?.id || ""))) return;
   const actorId = normalizeExecutorId(executorId);
   if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   const addedDanger = dangerousAddedBits(
@@ -2586,11 +3158,16 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   const oldVanity = String(oldGuild?.vanityURLCode || "");
   const newVanity = String(newGuild?.vanityURLCode || "");
   if (oldVanity === newVanity) return;
-  if (!oldVanity || !newGuild?.setVanityCode) return;
+  if (!newGuild?.setVanityCode) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Vanity URL unauthorized update", 100);
 
-  await newGuild.setVanityCode(oldVanity, "AntiNuke: restore vanity url").catch(() => {});
+  if (oldVanity) {
+    await newGuild.setVanityCode(oldVanity, "AntiNuke: restore vanity url").catch(() => {});
+  } else {
+    // Revert unauthorized vanity set when previous code was empty.
+    await newGuild.setVanityCode(null, "AntiNuke: clear unauthorized vanity url").catch(() => {});
+  }
   const quarantine = await quarantineExecutor(
     guild,
     actorId,
@@ -2601,7 +3178,9 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
     "AntiNuke: Vanity Guard",
     [
       formatExecutorLine(actorId),
-      `<:VC_right_arrow:1473441155055096081> **Action:** Vanity restored to \`${oldVanity}\``,
+      oldVanity
+        ? `<:VC_right_arrow:1473441155055096081> **Action:** Vanity restored to \`${oldVanity}\``
+        : `<:VC_right_arrow:1473441155055096081> **Action:** Unauthorized vanity removed`,
       `<:VC_right_arrow:1473441155055096081> **Result:** ${quarantineOutcomeLabel(quarantine)}`,
     ],
   );
@@ -2678,6 +3257,7 @@ function applyAntiNukePreset(name = "balanced") {
   applyPresetSection(ANTINUKE_CONFIG.channelCreationFilter, preset.channelCreationFilter);
   applyPresetSection(ANTINUKE_CONFIG.channelDeletionFilter, preset.channelDeletionFilter);
   applyPresetSection(ANTINUKE_CONFIG.webhookCreationFilter, preset.webhookCreationFilter);
+  applyPresetSection(ANTINUKE_CONFIG.webhookUpdateFilter, preset.webhookUpdateFilter);
   applyPresetSection(ANTINUKE_CONFIG.webhookDeletionFilter, preset.webhookDeletionFilter);
   applyPresetSection(ANTINUKE_CONFIG.inviteCreationFilter, preset.inviteCreationFilter);
   applyPresetSection(ANTINUKE_CONFIG.panicMode, preset.panicMode);
@@ -2712,6 +3292,7 @@ function getAntiNukeStatusSnapshot(guildId = "") {
     channelCreate: CHANNEL_CREATION_TRACKER.size,
     channelDelete: CHANNEL_DELETION_TRACKER.size,
     webhookCreate: WEBHOOK_CREATION_TRACKER.size,
+    webhookUpdate: WEBHOOK_UPDATE_TRACKER.size,
     webhookDelete: WEBHOOK_DELETION_TRACKER.size,
     inviteCreate: INVITE_CREATION_TRACKER.size,
   };
@@ -2731,15 +3312,21 @@ function getAntiNukeStatusSnapshot(guildId = "") {
       channelCreationFilter: { ...ANTINUKE_CONFIG.channelCreationFilter },
       channelDeletionFilter: { ...ANTINUKE_CONFIG.channelDeletionFilter },
       webhookCreationFilter: { ...ANTINUKE_CONFIG.webhookCreationFilter },
+      webhookUpdateFilter: { ...ANTINUKE_CONFIG.webhookUpdateFilter },
       webhookDeletionFilter: { ...ANTINUKE_CONFIG.webhookDeletionFilter },
       inviteCreationFilter: { ...ANTINUKE_CONFIG.inviteCreationFilter },
       panicMode: {
         enabled: Boolean(ANTINUKE_CONFIG.panicMode.enabled),
+        useHeatAlgorithm: Boolean(ANTINUKE_CONFIG.panicMode.useHeatAlgorithm),
         thresholdHeat: Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 0),
         decayPerSec: Number(ANTINUKE_CONFIG.panicMode.decayPerSec || 0),
         durationMs: Number(ANTINUKE_CONFIG.panicMode.durationMs || 0),
         maxDurationMs: Number(ANTINUKE_CONFIG.panicMode.maxDurationMs || 0),
         extendByMsOnTrigger: Number(ANTINUKE_CONFIG.panicMode.extendByMsOnTrigger || 0),
+        warnedRoleIds: Array.from(ANTINUKE_CONFIG.panicMode.warnedRoleIds || []),
+        whitelistCategoryIds: Array.from(
+          ANTINUKE_CONFIG.panicMode.whitelistCategoryIds || [],
+        ),
         lockdown: {
           dangerousRoles: Boolean(
             ANTINUKE_CONFIG.panicMode.lockdown?.dangerousRoles,
@@ -2755,6 +3342,47 @@ function getAntiNukeStatusSnapshot(guildId = "") {
           ),
           banAttackExecutor: Boolean(
             ANTINUKE_CONFIG.panicMode.lockdown?.banAttackExecutor,
+          ),
+          unlockDangerousRolesOnFinish: Boolean(
+            ANTINUKE_CONFIG.panicMode.lockdown?.unlockDangerousRolesOnFinish,
+          ),
+          roleAllowlistIds: Array.from(
+            ANTINUKE_CONFIG.panicMode.lockdown?.roleAllowlistIds || [],
+          ),
+        },
+        autoBackupSync: {
+          enabled: Boolean(ANTINUKE_CONFIG.panicMode.autoBackupSync?.enabled),
+          restoreDeletedRoles: Boolean(
+            ANTINUKE_CONFIG.panicMode.autoBackupSync?.restoreDeletedRoles,
+          ),
+          restoreDeletedChannels: Boolean(
+            ANTINUKE_CONFIG.panicMode.autoBackupSync?.restoreDeletedChannels,
+          ),
+          deleteNewRoles: Boolean(
+            ANTINUKE_CONFIG.panicMode.autoBackupSync?.deleteNewRoles,
+          ),
+          deleteNewChannels: Boolean(
+            ANTINUKE_CONFIG.panicMode.autoBackupSync?.deleteNewChannels,
+          ),
+          deleteNewWebhooks: Boolean(
+            ANTINUKE_CONFIG.panicMode.autoBackupSync?.deleteNewWebhooks,
+          ),
+        },
+        instantRollbackWhileActive: {
+          enabled: Boolean(
+            ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive?.enabled,
+          ),
+          quarantineExecutor: Boolean(
+            ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive?.quarantineExecutor,
+          ),
+          deleteCreatedRoles: Boolean(
+            ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive?.deleteCreatedRoles,
+          ),
+          deleteCreatedChannels: Boolean(
+            ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive?.deleteCreatedChannels,
+          ),
+          deleteCreatedWebhooks: Boolean(
+            ANTINUKE_CONFIG.panicMode.instantRollbackWhileActive?.deleteCreatedWebhooks,
           ),
         },
       },
@@ -2776,7 +3404,7 @@ async function stopAntiNukePanic(guild, reason = "manual stop", stoppedById = ""
   }
   const roleResult = await unlockDangerousRolesAfterPanic(guild, state);
   const channelResult = await unlockGuildChannelsAfterPanic(guild, state);
-  await runAutoBackupSyncAfterPanic(guild, state);
+  const backupSummary = await runAutoBackupSyncAfterPanic(guild, state);
   const restored =
     Boolean(roleResult?.completed) &&
     Boolean(channelResult?.completed) &&
@@ -2785,19 +3413,10 @@ async function stopAntiNukePanic(guild, reason = "manual stop", stoppedById = ""
   if (!restored) {
     schedulePanicRestoreRetry(guild, state, "manual_stop");
   }
-  await sendAntiNukeLog(
-    guild,
-    "AntiNuke Panic Mode Ended",
-    [
-      stoppedById
-        ? `<:VC_right_arrow:1473441155055096081> **Executor:** <@${stoppedById}> \`${stoppedById}\``
-        : null,
-      `<:VC_right_arrow:1473441155055096081> **Reason:** ${reason || "manual stop"}`,
-      `<:VC_right_arrow:1473441155055096081> **Action:** Panic mode disabled manually`,
-      `<:VC_right_arrow:1473441155055096081> **Was Active:** ${wasActive ? "Yes" : "No"}`,
-    ].filter(Boolean),
-    "#57F287",
-  );
+  await sendPanicModeDetailedReport(guild, state, {
+    reason: `${reason || "manual_stop"}${stoppedById ? ` | by:${stoppedById}` : ""}`,
+    backupSummary,
+  });
   return { ok: true, wasActive };
 }
 
@@ -2861,21 +3480,10 @@ async function shouldBlockModerationCommands(guild, userId) {
   const member =
     guild.members.cache.get(String(userId)) ||
     (await guild.members.fetch(String(userId)).catch(() => null));
-  if (
-    member?.permissions?.has?.(PermissionsBitField.Flags.Administrator) ||
-    member?.permissions?.has?.(PermissionsBitField.Flags.ManageGuild)
-  ) {
-    return false;
-  }
   const emergencyBypassRoleIds = new Set(
     [
       IDs.roles.Founder,
       IDs.roles.CoFounder,
-      IDs.roles.Manager,
-      IDs.roles.Admin,
-      IDs.roles.HighStaff,
-      IDs.roles.Supervisor,
-      IDs.roles.Coordinator,
     ]
       .filter(Boolean)
       .map(String),
@@ -2940,6 +3548,7 @@ module.exports = {
   handleChannelCreationAction,
   handleChannelDeletionAction,
   handleWebhookCreationAction,
+  handleWebhookUpdateAction,
   handleWebhookDeletionAction,
   handleInviteCreationAction,
   handleThreadCreationAction,

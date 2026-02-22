@@ -28,6 +28,9 @@ const CATEGORY_LABELS = {
   minigames: "Minigames",
   stats: "Stats",
   partner: "Partner",
+  ticket: "Ticket",
+  moderation: "Moderation",
+  admin: "Admin",
   staff: "Staff",
   vip: "VIP",
   dev: "Dev",
@@ -41,6 +44,9 @@ const CATEGORY_ORDER = [
   "minigames",
   "stats",
   "partner",
+  "ticket",
+  "moderation",
+  "admin",
   "staff",
   "vip",
   "dev",
@@ -94,10 +100,20 @@ const PREFIX_HELP_DESCRIPTIONS = {
   classifica: "Mostra la classifica livelli (totale/settimanale).",
   mstats: "Mostra statistiche minigiochi di un utente.",
   me: "Mostra le tue statistiche attività (1d/7d/14d/21d/30d) con refresh live.",
+  user:
+    "Mostra le statistiche attività di un utente tramite ID (1d/7d/14d/21d/30d) con refresh live.",
   server:
     "Mostra statistiche server (1d/7d/14d/21d/30d), top e grafici con aggiornamento live.",
   top: "Mostra la top completa utenti/canali (testo+vocale) con canvas, refresh e periodo.",
   rank: "Mostra livello, exp e posizione in classifica di un utente.",
+  birthday:
+    "Gestisce il tuo profilo compleanno (data, età e privacy) con pannello interattivo.",
+  "dm-disable":
+    "Disattiva i DM automatici del bot dopo una conferma tramite pulsanti.",
+  embed:
+    "Apre il builder embed interattivo per creare e inviare embed personalizzati.",
+  info:
+    "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",
   reaction:
     "Gestisce reaction menzioni e autoresponder con parole/frasi trigger.",
   description: "Manda la descrizione del server direttamente nel ticket.",
@@ -132,7 +148,9 @@ const PREFIX_HELP_DESCRIPTIONS = {
   smartembed: "Crea un embed intelligente spostando i ping fuori dall'embed.",
   customregister: "Registra retroattivamente custom role/vocale già esistenti.",
   security:
-    "Hub sicurezza unificato: status, health, drill, backup, joingate, raid, panic, antinuke e automod.",
+    "Hub sicurezza unificato: status, health, drill, backup, profiles, joingate, raid, panic, antinuke e automod.",
+  statics:
+    "Gestisce statics di sicurezza (ruoli, canali e utenti) con pannello e operazioni add/remove/set.",
   status: "Mostra lo stato tecnico del sistema sicurezza (healthcheck rapido).",
   level:
     "Gestisce il sistema livelli: set, add, remove, reset, lock, unlock, multiplier, gmulti, ignore, unignore, config.",
@@ -157,6 +175,8 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "security.health": "Mostra healthcheck tecnico: DB, scheduler, uptime, lock.",
   "security.drill": "Esegue una simulazione lockdown senza applicare modifiche.",
   "security.backup": "Gestisce backup e restore della configurazione sicurezza.",
+  "security.profiles":
+    "Gestisce i profili Trusted Admins, Extra Owners e Admins (HighStaff).",
   "security.joingate": "Mostra stato protezioni Join Gate e collegamenti sicurezza.",
   "security.raid": "Inoltra ai controlli Join Raid (stato/preset) via AntiNuke.",
   "security.panic": "Inoltra ai controlli Panic Mode AntiNuke.",
@@ -164,6 +184,10 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "security.preset": "Gestisce preset AntiNuke/raid dal pannello security.",
   "security.antinuke": "Gestisce il modulo AntiNuke da Security.",
   "security.automod": "Gestisce il modulo AutoMod da Security.",
+  "security.joinraid":
+    "Gestisce stato e preset del modulo Join Raid (safe/balanced/strict).",
+  "security.help":
+    "Mostra la guida rapida dei subcommand disponibili nel Security Hub.",
   "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
   "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
   "ticket.closerequest": "Invia richiesta di chiusura ticket.",
@@ -172,6 +196,14 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "ticket.unclaim": "Rimuove la presa in carico del ticket.",
   "ticket.switchpanel": "Sposta il ticket a un pannello differente.",
   "ticket.rename": "Rinomina il canale ticket.",
+  "ticket.reopen":
+    "Riapre un ticket già chiuso e ripristina il canale alla gestione staff.",
+  "birthday.set":
+    "Apre il pannello per impostare data, età e privacy del tuo compleanno.",
+  "birthday.edit":
+    "Apre il pannello in modifica usando i dati compleanno già salvati.",
+  "birthday.remove":
+    "Rimuove il tuo profilo compleanno con conferma esplicita.",
   "avatar.get": "Avatar globale dell'utente (default).",
   "avatar.server": "Avatar dell'utente solo in questo server.",
   "avatar.user": "Avatar globale dell'utente.",
@@ -189,6 +221,14 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "classifica.weekly": "Mostra la classifica settimanale exp.",
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
+  "customregister.role":
+    "Registra nel database un custom role già esistente e lo assegna all'utente indicato.",
+  "customregister.voc":
+    "Registra una vocale privata già esistente collegandola a utente e ruolo custom.",
+  "customregister.voice":
+    "Alias di `voc`: registra una vocale privata esistente nel sistema custom.",
+  "embed.create":
+    "Avvia il builder interattivo dell'embed con anteprima e invio finale.",
   "perm.grant":
     "Assegna permessi temporanei a un utente su uno o più comandi.",
   "perm.revoke": "Revoca permessi temporanei specifici a un utente.",
@@ -199,6 +239,34 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "perm.channel-remove": "Rimuove canali dalla whitelist di un comando.",
   "perm.channel-clear": "Rimuove la restrizione canali di un comando.",
   "perm.channel-list": "Mostra le whitelist canali configurate.",
+  "reaction.mention":
+    "Gestisce reaction automatiche quando vieni menzionato (show/set/add/remove/clear).",
+  "reaction.auto":
+    "Gestisce regole autoresponder testuali con risposta e reaction opzionali.",
+  "reaction.help":
+    "Mostra la guida completa del comando reaction e dei suoi moduli.",
+  "restart.full":
+    "Riavvia il bot; con `both` riavvia anche il bot Test.",
+  "restart.handlers":
+    "Ricarica soltanto gli handler runtime senza riavvio completo.",
+  "restart.commands":
+    "Ricarica i comandi slash e context menu.",
+  "restart.prefix":
+    "Ricarica esclusivamente i comandi prefix.",
+  "restart.events":
+    "Ricarica gli event listener Discord.",
+  "restart.triggers":
+    "Ricarica i trigger automatici del bot.",
+  "restart.services":
+    "Ricarica i servizi applicativi interni.",
+  "restart.utils":
+    "Ricarica i moduli utility condivisi.",
+  "restart.schemas":
+    "Ricarica gli schema/modelli del database.",
+  "restart.all":
+    "Esegue il reload completo di tutte le scope ricaricabili.",
+  "statics.status":
+    "Mostra il pannello statics con ruoli, canali e utenti configurati.",
   "temprole.toggle":
     "Aggiunge o rimuove automaticamente un ruolo temporaneo in base allo stato corrente.",
   "temprole.add": "Assegna un ruolo temporaneo a un utente.",
@@ -367,7 +435,6 @@ function getPrefixBase(command) {
 
 function normalizeCategoryKey(value) {
   const key = String(value || "misc").toLowerCase();
-  if (key === "admin") return "dev";
   if (key === "utiliy") return "utility";
   return key;
 }

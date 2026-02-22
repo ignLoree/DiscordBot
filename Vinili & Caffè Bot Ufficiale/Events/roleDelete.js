@@ -68,6 +68,15 @@ module.exports = {
         executorId,
         roleName: String(role.name || ""),
         roleId: String(role.id || ""),
+        roleSnapshot: {
+          id: String(role.id || ""),
+          name: String(role.name || "restored-role"),
+          color: Number(role.color || 0),
+          hoist: Boolean(role.hoist),
+          mentionable: Boolean(role.mentionable),
+          permissions: String(BigInt(role.permissions?.bitfield || 0n)),
+          position: Number(role.position || 0),
+        },
       });
     } catch (error) {
       global.logger?.error?.("[roleDelete] failed:", error);

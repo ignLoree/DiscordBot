@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const IDs = require("../Utils/Config/ids");
 
 const STICKY_CONFIG = Object.fromEntries(
@@ -20,10 +22,56 @@ const STICKY_CONFIG = Object.fromEntries(
 const lastStickyMessageByChannel = new Map();
 const stickyProcessingChannels = new Set();
 const stickyPendingChannels = new Set();
+const STICKY_STATE_PATH = path.resolve(
+  __dirname,
+  "../Data/stickyMessageState.json",
+);
 
 function logError(...args) {
   global.logger?.error?.("[stickyChannelLinks]", ...args);
 }
+
+function loadStickyState() {
+  try {
+    if (!fs.existsSync(STICKY_STATE_PATH)) return;
+    const raw = fs.readFileSync(STICKY_STATE_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return;
+    for (const [channelId, messageId] of Object.entries(parsed)) {
+      if (!channelId || !messageId) continue;
+      lastStickyMessageByChannel.set(String(channelId), String(messageId));
+    }
+  } catch (error) {
+    logError("load state failed:", error);
+  }
+}
+
+function saveStickyState() {
+  try {
+    fs.mkdirSync(path.dirname(STICKY_STATE_PATH), { recursive: true });
+    const serializable = Object.fromEntries(lastStickyMessageByChannel.entries());
+    fs.writeFileSync(
+      STICKY_STATE_PATH,
+      `${JSON.stringify(serializable, null, 2)}\n`,
+      "utf8",
+    );
+  } catch (error) {
+    logError("save state failed:", error);
+  }
+}
+
+function setStickyMessage(channelId, messageId) {
+  lastStickyMessageByChannel.set(String(channelId), String(messageId));
+  saveStickyState();
+}
+
+function clearStickyMessage(channelId) {
+  if (lastStickyMessageByChannel.delete(String(channelId))) {
+    saveStickyState();
+  }
+}
+
+loadStickyState();
 
 async function deletePreviousSticky(channel, stickyText, clientUserId) {
   const trackedId = lastStickyMessageByChannel.get(channel.id);
@@ -31,8 +79,10 @@ async function deletePreviousSticky(channel, stickyText, clientUserId) {
     const tracked = await channel.messages.fetch(trackedId).catch(() => null);
     if (tracked && tracked.author?.id === clientUserId) {
       await tracked.delete().catch(() => {});
+      clearStickyMessage(channel.id);
       return;
     }
+    clearStickyMessage(channel.id);
   }
 
   const recent = await channel.messages.fetch({ limit: 20 }).catch(() => null);
@@ -46,6 +96,7 @@ async function deletePreviousSticky(channel, stickyText, clientUserId) {
     await oldSticky.delete().catch((error) => {
       logError("delete old sticky failed:", error);
     });
+    clearStickyMessage(channel.id);
   }
 }
 
@@ -90,7 +141,7 @@ async function processStickyChannel(channel, stickyText, clientUserId) {
     latestMessage.author?.id === clientUserId &&
     String(latestMessage.content || "").trim() === stickyText
   ) {
-    lastStickyMessageByChannel.set(channel.id, latestMessage.id);
+    setStickyMessage(channel.id, latestMessage.id);
     await collapseStickyMessages(
       channel,
       stickyText,
@@ -107,7 +158,7 @@ async function processStickyChannel(channel, stickyText, clientUserId) {
       return null;
     });
   if (sent) {
-    lastStickyMessageByChannel.set(channel.id, sent.id);
+    setStickyMessage(channel.id, sent.id);
     await collapseStickyMessages(
       channel,
       stickyText,

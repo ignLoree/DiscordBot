@@ -1,5 +1,6 @@
 const { SERVER_REFRESH_CUSTOM_ID_PREFIX, buildServerOverviewPayload, } = require("../../Prefix/Stats/server");
 const { ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, buildMeOverviewPayload, buildMeComponents, normalizeLookbackDays, } = require("../../Prefix/Stats/me");
+const { USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX, buildUserOverviewPayload, buildUserComponents, } = require("../../Prefix/Stats/user");
 const { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, buildTopChannelPayload, normalizeTopView, normalizeControlsView, normalizePage, resolveRequestedPage, buildTopPageJumpModal, } = require("../../Prefix/Stats/top");
 const {
   handleBackupLoadInteraction,
@@ -54,6 +55,30 @@ function parseMeCustomId(rawCustomId) {
   const lookbackDays = normalizeLookbackDays(lookbackRaw || "14");
   const wantsEmbed = String(modeRaw || "embed").toLowerCase() !== "image";
   return { prefix, ownerId, lookbackDays, wantsEmbed };
+}
+
+function parseUserCustomId(rawCustomId) {
+  const raw = String(rawCustomId || "");
+  const prefixes = [
+    USER_REFRESH_CUSTOM_ID_PREFIX,
+    USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,
+    USER_PERIOD_SET_CUSTOM_ID_PREFIX,
+    USER_PERIOD_BACK_CUSTOM_ID_PREFIX,
+  ];
+  const prefix = prefixes.find(
+    (item) => raw === item || raw.startsWith(`${item}:`),
+  );
+  if (!prefix) return null;
+  const parts = raw.split(":");
+  const ownerId = SNOWFLAKE_RE.test(String(parts[1] || ""))
+    ? String(parts[1])
+    : null;
+  const targetUserId = SNOWFLAKE_RE.test(String(parts[2] || ""))
+    ? String(parts[2])
+    : null;
+  const lookbackDays = normalizeLookbackDays(parts[3] || "14");
+  const wantsEmbed = String(parts[4] || "embed").toLowerCase() !== "image";
+  return { prefix, ownerId, targetUserId, lookbackDays, wantsEmbed };
 }
 
 function parseTopChannelCustomId(rawCustomId) {
@@ -292,6 +317,80 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[ME BUTTON] Failed:", error);
+      }
+
+      return true;
+    }
+
+    const parsedUser = parseUserCustomId(interaction.customId);
+    if (parsedUser) {
+      try {
+        await interaction.deferUpdate();
+
+        if (!parsedUser.targetUserId) {
+          await interaction.message.edit({
+            content:
+              "<:vegax:1443934876440068179> Utente non valido per il refresh delle statistiche.",
+            components: [],
+          });
+          return true;
+        }
+
+        if (parsedUser.prefix === USER_PERIOD_OPEN_CUSTOM_ID_PREFIX) {
+          await interaction.message.edit({
+            components: normalizeComponentsForDiscord(
+              buildUserComponents(
+                parsedUser.ownerId || interaction.user?.id,
+                parsedUser.targetUserId,
+                parsedUser.lookbackDays,
+                parsedUser.wantsEmbed,
+                "period",
+              ),
+            ),
+          });
+          return true;
+        }
+
+        if (parsedUser.prefix === USER_PERIOD_BACK_CUSTOM_ID_PREFIX) {
+          await interaction.message.edit({
+            components: normalizeComponentsForDiscord(
+              buildUserComponents(
+                parsedUser.ownerId || interaction.user?.id,
+                parsedUser.targetUserId,
+                parsedUser.lookbackDays,
+                parsedUser.wantsEmbed,
+                "main",
+              ),
+            ),
+          });
+          return true;
+        }
+
+        const controlsView =
+          parsedUser.prefix === USER_PERIOD_SET_CUSTOM_ID_PREFIX
+            ? "period"
+            : "main";
+        const payload = await buildUserOverviewPayload(
+          interaction.guild,
+          parsedUser.targetUserId,
+          parsedUser.lookbackDays,
+          parsedUser.wantsEmbed,
+          controlsView,
+        );
+        payload.components = buildUserComponents(
+          parsedUser.ownerId || interaction.user?.id,
+          parsedUser.targetUserId,
+          parsedUser.lookbackDays,
+          parsedUser.wantsEmbed,
+          controlsView,
+        );
+        await interaction.message.edit({
+          ...payload,
+          components: normalizeComponentsForDiscord(payload?.components),
+          content: payload.content || null,
+        });
+      } catch (error) {
+        global.logger?.error?.("[USER BUTTON] Failed:", error);
       }
 
       return true;

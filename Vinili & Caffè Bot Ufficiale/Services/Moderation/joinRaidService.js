@@ -6,6 +6,10 @@ const IDs = require("../../Utils/Config/ids");
 const JoinRaidState = require("../../Schemas/Moderation/joinRaidStateSchema");
 const { triggerAntiNukePanicExternal } = require("./antiNukeService");
 const { triggerAutoModPanicExternal } = require("./automodService");
+const {
+  isSecurityProfileImmune,
+  hasAdminsProfileCapability,
+} = require("./securityProfilesService");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const HIGH_STAFF_ROLE_ID = String(IDs.roles?.HighStaff || "");
@@ -24,7 +28,10 @@ const VERIFIED_BOT_IDS = new Set(
 
 const JOIN_RAID_CONFIG = {
   enabled: true,
-  triggerAction: "kick", // ban | kick | log
+  triggerAction: "kick", // ban | kick | timeout | log
+  triggerType: "unique", // unique | events
+  accountType: "any", // any | young | no_pfp | young_or_no_pfp | id_flag
+  punishOnActiveRaid: true,
   triggerCount: 10,
   triggerWindowMs: 3 * 60 * 60_000,
   raidDurationMs: 30 * 60_000,
@@ -60,6 +67,9 @@ const JOIN_RAID_CONFIG = {
 const JOIN_RAID_PRESETS = {
   safe: {
     triggerAction: "kick",
+    triggerType: "unique",
+    accountType: "young_or_no_pfp",
+    punishOnActiveRaid: true,
     triggerCount: 12,
     triggerWindowMs: 3 * 60 * 60_000,
     raidDurationMs: 20 * 60_000,
@@ -72,6 +82,9 @@ const JOIN_RAID_PRESETS = {
   },
   balanced: {
     triggerAction: "kick",
+    triggerType: "unique",
+    accountType: "any",
+    punishOnActiveRaid: true,
     triggerCount: 10,
     triggerWindowMs: 3 * 60 * 60_000,
     raidDurationMs: 30 * 60_000,
@@ -83,7 +96,10 @@ const JOIN_RAID_PRESETS = {
     ageFlag: { minimumAgeMs: 3 * 24 * 60 * 60_000 },
   },
   strict: {
-    triggerAction: "kick",
+    triggerAction: "ban",
+    triggerType: "events",
+    accountType: "any",
+    punishOnActiveRaid: true,
     triggerCount: 8,
     triggerWindowMs: 2 * 60 * 60_000,
     raidDurationMs: 45 * 60_000,
@@ -98,6 +114,7 @@ const JOIN_RAID_PRESETS = {
 
 const GUILD_STATE = new Map();
 const TEMP_BAN_TIMERS = new Map();
+const RAID_REPORT_TIMERS = new Map();
 const SAVE_TIMERS = new Map();
 const LOADED_GUILDS = new Set();
 const LOAD_GUILD_PROMISES = new Map();
@@ -143,9 +160,32 @@ function applyPersistentJoinRaidConfig(raw) {
   }
   if (typeof raw.triggerAction === "string") {
     const action = String(raw.triggerAction || "").toLowerCase();
-    if (["ban", "kick", "log"].includes(action)) {
+    if (["ban", "kick", "timeout", "log"].includes(action)) {
       JOIN_RAID_CONFIG.triggerAction = action;
     }
+  }
+  if (typeof raw.triggerType === "string") {
+    const triggerType = String(raw.triggerType || "").toLowerCase();
+    if (["unique", "events"].includes(triggerType)) {
+      JOIN_RAID_CONFIG.triggerType = triggerType;
+    }
+  }
+  if (typeof raw.accountType === "string") {
+    const accountType = String(raw.accountType || "").toLowerCase();
+    if (
+      [
+        "any",
+        "young",
+        "no_pfp",
+        "young_or_no_pfp",
+        "id_flag",
+      ].includes(accountType)
+    ) {
+      JOIN_RAID_CONFIG.accountType = accountType;
+    }
+  }
+  if (typeof raw.punishOnActiveRaid === "boolean") {
+    JOIN_RAID_CONFIG.punishOnActiveRaid = raw.punishOnActiveRaid;
   }
   JOIN_RAID_CONFIG.triggerCount = clamp(raw.triggerCount, 1, 500, JOIN_RAID_CONFIG.triggerCount);
   JOIN_RAID_CONFIG.triggerWindowMs = clamp(
@@ -160,6 +200,15 @@ function applyPersistentJoinRaidConfig(raw) {
     24 * 60 * 60_000,
     JOIN_RAID_CONFIG.raidDurationMs,
   );
+  if (Array.isArray(raw.warnedRoleIds)) {
+    const ids = raw.warnedRoleIds
+      .map((x) => String(x || "").trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    JOIN_RAID_CONFIG.warnedRoleIds = ids.length
+      ? ids
+      : [HIGH_STAFF_ROLE_ID].filter(Boolean);
+  }
   Object.assign(JOIN_RAID_CONFIG.idFlag, raw.idFlag || {});
   Object.assign(JOIN_RAID_CONFIG.noPfpFlag, raw.noPfpFlag || {});
   Object.assign(JOIN_RAID_CONFIG.ageFlag, raw.ageFlag || {});
@@ -167,6 +216,17 @@ function applyPersistentJoinRaidConfig(raw) {
     typeof JOIN_RAID_CONFIG.idFlag.enabled === "boolean"
       ? JOIN_RAID_CONFIG.idFlag.enabled
       : true;
+  JOIN_RAID_CONFIG.idFlag.categorization =
+    typeof JOIN_RAID_CONFIG.idFlag.categorization === "string"
+      ? String(JOIN_RAID_CONFIG.idFlag.categorization || "").toLowerCase()
+      : "adaptive";
+  if (
+    !["static", "algorithm", "adaptive"].includes(
+      JOIN_RAID_CONFIG.idFlag.categorization,
+    )
+  ) {
+    JOIN_RAID_CONFIG.idFlag.categorization = "adaptive";
+  }
   JOIN_RAID_CONFIG.idFlag.minimumMatches = clamp(
     JOIN_RAID_CONFIG.idFlag.minimumMatches,
     1,
@@ -205,13 +265,47 @@ function saveJoinRaidPersistentConfig() {
   return writeJsonSafe(JOIN_RAID_CONFIG_PATH, {
     enabled: Boolean(JOIN_RAID_CONFIG.enabled),
     triggerAction: String(JOIN_RAID_CONFIG.triggerAction || "log"),
+    triggerType: String(JOIN_RAID_CONFIG.triggerType || "unique"),
+    accountType: String(JOIN_RAID_CONFIG.accountType || "any"),
+    punishOnActiveRaid: Boolean(JOIN_RAID_CONFIG.punishOnActiveRaid),
     triggerCount: Number(JOIN_RAID_CONFIG.triggerCount || 0),
     triggerWindowMs: Number(JOIN_RAID_CONFIG.triggerWindowMs || 0),
     raidDurationMs: Number(JOIN_RAID_CONFIG.raidDurationMs || 0),
+    warnedRoleIds: [...new Set((JOIN_RAID_CONFIG.warnedRoleIds || []).map(String).filter(Boolean))],
     idFlag: { ...JOIN_RAID_CONFIG.idFlag },
     noPfpFlag: { ...JOIN_RAID_CONFIG.noPfpFlag },
     ageFlag: { ...JOIN_RAID_CONFIG.ageFlag },
   });
+}
+
+function getJoinRaidConfigSnapshot() {
+  return JSON.parse(
+    JSON.stringify({
+      enabled: Boolean(JOIN_RAID_CONFIG.enabled),
+      triggerAction: String(JOIN_RAID_CONFIG.triggerAction || "log"),
+      triggerType: String(JOIN_RAID_CONFIG.triggerType || "unique"),
+      accountType: String(JOIN_RAID_CONFIG.accountType || "any"),
+      punishOnActiveRaid: Boolean(JOIN_RAID_CONFIG.punishOnActiveRaid),
+      triggerCount: Number(JOIN_RAID_CONFIG.triggerCount || 0),
+      triggerWindowMs: Number(JOIN_RAID_CONFIG.triggerWindowMs || 0),
+      raidDurationMs: Number(JOIN_RAID_CONFIG.raidDurationMs || 0),
+      warnedRoleIds: [...new Set((JOIN_RAID_CONFIG.warnedRoleIds || []).map(String).filter(Boolean))],
+      idFlag: { ...JOIN_RAID_CONFIG.idFlag },
+      noPfpFlag: { ...JOIN_RAID_CONFIG.noPfpFlag },
+      ageFlag: { ...JOIN_RAID_CONFIG.ageFlag },
+    }),
+  );
+}
+
+function setJoinRaidConfigSnapshot(rawConfig) {
+  try {
+    applyPersistentJoinRaidConfig(rawConfig || {});
+    const saved = saveJoinRaidPersistentConfig();
+    if (!saved) return { ok: false, reason: "save_failed" };
+    return { ok: true, config: getJoinRaidConfigSnapshot() };
+  } catch {
+    return { ok: false, reason: "apply_failed" };
+  }
 }
 
 applyPersistentJoinRaidConfig(readJsonSafe(JOIN_RAID_CONFIG_PATH, null));
@@ -244,6 +338,10 @@ function getGuildState(guildId) {
     flagged: [],
     tempBans: [],
     raidUntil: 0,
+    raidCaseCode: "",
+    raidStartedAt: 0,
+    raidInitialFlaggedUserIds: [],
+    raidCaughtUserIds: [],
   };
   GUILD_STATE.set(key, initial);
   return initial;
@@ -275,6 +373,14 @@ async function loadGuildState(guildId) {
           flagged: Array.isArray(row.flagged) ? row.flagged : [],
           tempBans: Array.isArray(row.tempBans) ? row.tempBans : [],
           raidUntil: Number(row.raidUntil || 0),
+          raidCaseCode: String(row.raidCaseCode || ""),
+          raidStartedAt: Number(row.raidStartedAt || 0),
+          raidInitialFlaggedUserIds: Array.isArray(row.raidInitialFlaggedUserIds)
+            ? row.raidInitialFlaggedUserIds.map((x) => String(x || "")).filter(Boolean)
+            : [],
+          raidCaughtUserIds: Array.isArray(row.raidCaughtUserIds)
+            ? row.raidCaughtUserIds.map((x) => String(x || "")).filter(Boolean)
+            : [],
         });
       }
       LOADED_GUILDS.add(key);
@@ -308,6 +414,14 @@ function scheduleStateSave(guildId) {
             tempBans: Array.isArray(state.tempBans)
               ? state.tempBans.slice(-300)
               : [],
+            raidCaseCode: String(state.raidCaseCode || ""),
+            raidStartedAt: Number(state.raidStartedAt || 0),
+            raidInitialFlaggedUserIds: Array.isArray(state.raidInitialFlaggedUserIds)
+              ? state.raidInitialFlaggedUserIds.slice(-80)
+              : [],
+            raidCaughtUserIds: Array.isArray(state.raidCaughtUserIds)
+              ? state.raidCaughtUserIds.slice(-300)
+              : [],
           },
         },
         { upsert: true },
@@ -335,12 +449,93 @@ function pruneState(state, at = nowMs()) {
   }
   if (flaggedIdx > 0) state.flagged.splice(0, flaggedIdx);
   if (!Array.isArray(state.tempBans)) state.tempBans = [];
+  if (!Array.isArray(state.raidInitialFlaggedUserIds)) {
+    state.raidInitialFlaggedUserIds = [];
+  }
+  if (!Array.isArray(state.raidCaughtUserIds)) state.raidCaughtUserIds = [];
+  if (typeof state.raidCaseCode !== "string") state.raidCaseCode = "";
+  if (!Number.isFinite(Number(state.raidStartedAt || 0))) state.raidStartedAt = 0;
   state.tempBans = state.tempBans.filter(
     (x) =>
       String(x?.userId || "").length > 0 &&
       Number(x?.unbanAt || 0) > at,
   );
-  if (Number(state.raidUntil || 0) <= at) state.raidUntil = 0;
+}
+
+function makeJoinRaidCaseCode() {
+  const token = Math.random().toString(36).slice(2, 10);
+  const stamp = String(Date.now()).slice(-8);
+  return `${token}_${stamp}`;
+}
+
+function buildInitialFlagRows(guild, state, limit = 8) {
+  const ids = Array.isArray(state?.raidInitialFlaggedUserIds)
+    ? state.raidInitialFlaggedUserIds
+    : [];
+  const unique = Array.from(new Set(ids.map((x) => String(x || "")).filter(Boolean)));
+  return unique.slice(0, Math.max(1, limit)).map((userId) => {
+    const member = guild?.members?.cache?.get?.(userId) || null;
+    const tag =
+      member?.user?.tag ||
+      member?.user?.username ||
+      member?.displayName ||
+      `user:${userId.slice(-4)}`;
+    return `\`${tag}\` | \`${userId}\``;
+  });
+}
+
+function scheduleJoinRaidReport(guild) {
+  if (!guild?.id) return;
+  const guildId = String(guild.id);
+  const state = getGuildState(guildId);
+  const until = Number(state.raidUntil || 0);
+  if (until <= Date.now()) return;
+  const old = RAID_REPORT_TIMERS.get(guildId);
+  if (old) clearTimeout(old);
+  const delay = Math.max(1_000, until - Date.now() + 1_000);
+  const timer = setTimeout(async () => {
+    RAID_REPORT_TIMERS.delete(guildId);
+    await finalizeJoinRaidAndReport(guild, "elapsed").catch(() => null);
+  }, delay);
+  if (typeof timer.unref === "function") timer.unref();
+  RAID_REPORT_TIMERS.set(guildId, timer);
+}
+
+async function finalizeJoinRaidAndReport(guild, reason = "elapsed") {
+  if (!guild?.id) return;
+  await loadGuildState(guild.id);
+  await withGuildLock(guild.id, async () => {
+    const at = nowMs();
+    const state = getGuildState(guild.id);
+    pruneState(state, at);
+    const isStillActive = Number(state.raidUntil || 0) > at;
+    if (reason !== "force" && isStillActive) return;
+    const code = String(state.raidCaseCode || "").trim();
+    if (!code) return;
+    const caughtCount = new Set(
+      (Array.isArray(state.raidCaughtUserIds) ? state.raidCaughtUserIds : [])
+        .map((x) => String(x || ""))
+        .filter(Boolean),
+    ).size;
+
+    await sendJoinRaidLog(
+      guild,
+      "Join Raid Report!",
+      [
+        `${ARROW} **${caughtCount} users** have been caught by the join raid.`,
+        `${ARROW} **Code:** \`${code}\``,
+        `${ARROW} **Duration:** ${Math.round(Number(JOIN_RAID_CONFIG.raidDurationMs || 0) / 60_000)} minutes`,
+      ],
+      "#57F287",
+    );
+
+    state.raidUntil = 0;
+    state.raidCaseCode = "";
+    state.raidStartedAt = 0;
+    state.raidInitialFlaggedUserIds = [];
+    state.raidCaughtUserIds = [];
+    scheduleStateSave(guild.id);
+  });
 }
 
 function normalizeUsername(input) {
@@ -376,6 +571,18 @@ function countIdMatches(state, member, at = nowMs()) {
   return matches;
 }
 
+function getRequiredIdMatches(state, at = nowMs()) {
+  const base = Math.max(1, Number(JOIN_RAID_CONFIG.idFlag.minimumMatches || 4));
+  const mode = String(JOIN_RAID_CONFIG.idFlag.categorization || "adaptive").toLowerCase();
+  if (mode === "static") return base;
+  const recentSamples = (Array.isArray(state?.samples) ? state.samples : []).filter(
+    (sample) => at - Number(sample?.ts || 0) <= Number(JOIN_RAID_CONFIG.idFlag.compareWindowMs || 0),
+  ).length;
+  const algorithmicThreshold = Math.max(2, Math.min(10, Math.round(recentSamples / 6)));
+  if (mode === "algorithm") return algorithmicThreshold;
+  return Math.max(2, Math.min(base, algorithmicThreshold + 1));
+}
+
 function isNoPfp(member) {
   return !member?.user?.avatar;
 }
@@ -408,11 +615,12 @@ function getFlagReasons(state, member, at = nowMs()) {
   const reasons = [];
   if (JOIN_RAID_CONFIG.idFlag.enabled) {
     const matches = countIdMatches(state, member, at);
-    if (matches >= JOIN_RAID_CONFIG.idFlag.minimumMatches) {
+    const needed = getRequiredIdMatches(state, at);
+    if (matches >= needed) {
       reasons.push({
         key: "id_flag",
         label: "ID Flag (Adaptive)",
-        detail: `${matches} matches`,
+        detail: `${matches} matches (need ${needed})`,
       });
     }
   }
@@ -431,6 +639,19 @@ function getFlagReasons(state, member, at = nowMs()) {
     });
   }
   return reasons;
+}
+
+function matchJoinRaidAccountType(member, reasons = []) {
+  const accountType = String(JOIN_RAID_CONFIG.accountType || "any").toLowerCase();
+  const keys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
+  if (accountType === "any") return keys.size > 0;
+  if (accountType === "young") return keys.has("age_flag");
+  if (accountType === "no_pfp") return keys.has("no_pfp");
+  if (accountType === "young_or_no_pfp") {
+    return keys.has("age_flag") || keys.has("no_pfp");
+  }
+  if (accountType === "id_flag") return keys.has("id_flag");
+  return keys.size > 0;
 }
 
 function isHighRiskJoinRaidReasons(reasons = []) {
@@ -640,13 +861,8 @@ async function restoreTempBans(guild, options = {}) {
 
 async function applyPunishment(member, reasons) {
   const configuredAction = String(JOIN_RAID_CONFIG.triggerAction || "log").toLowerCase();
-  const reasonKeys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
-  const allowBanByEvidence = reasonKeys.has("id_flag") && reasonKeys.size >= 2;
-  const normalizedAction = configuredAction === "ban" && !allowBanByEvidence
-    ? "kick"
-    : configuredAction;
-  const action = ["ban", "kick", "log"].includes(normalizedAction)
-    ? normalizedAction
+  const action = ["ban", "kick", "timeout", "log"].includes(configuredAction)
+    ? configuredAction
     : "log";
   const guild = member.guild;
   const me = guild.members.me;
@@ -689,6 +905,14 @@ async function applyPunishment(member, reasons) {
     if (canKick) {
       punished = await member
         .kick("Join Raid: flagged account during raid window")
+        .then(() => true)
+        .catch(() => false);
+    }
+  } else if (action === "timeout") {
+    if (canTimeout) {
+      const timeoutMs = Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs);
+      punished = await member
+        .timeout(timeoutMs, "Join Raid: flagged account during raid window")
         .then(() => true)
         .catch(() => false);
     }
@@ -750,7 +974,9 @@ async function processJoinRaidForMember(member) {
   if (member.user?.bot) return { blocked: false };
   if (
     CORE_EXEMPT_USER_IDS.has(String(member.id || "")) ||
-    String(member.guild.ownerId || "") === String(member.id || "")
+    String(member.guild.ownerId || "") === String(member.id || "") ||
+    isSecurityProfileImmune(String(member.guild?.id || ""), String(member.id || "")) ||
+    hasAdminsProfileCapability(member, "fullImmunity")
   ) {
     return { blocked: false };
   }
@@ -766,6 +992,10 @@ async function processJoinRaidForMember(member) {
       }
     }
     pruneState(state, at);
+    if (Number(state.raidUntil || 0) > 0 && Number(state.raidUntil || 0) <= at) {
+      await finalizeJoinRaidAndReport(member.guild, "elapsed");
+      pruneState(state, at);
+    }
 
     const sample = {
       ts: at,
@@ -780,7 +1010,8 @@ async function processJoinRaidForMember(member) {
     state.samples.push(sample);
 
     const highRisk = isHighRiskJoinRaidReasons(reasons);
-    if (highRisk) {
+    const qualifiesForTrigger = matchJoinRaidAccountType(member, reasons);
+    if (qualifiesForTrigger) {
       state.flagged.push({
         ts: at,
         userId: String(member.id),
@@ -794,9 +1025,23 @@ async function processJoinRaidForMember(member) {
     const uniqueFlaggedUsers = new Set(
       state.flagged.map((x) => String(x?.userId || "")).filter(Boolean),
     ).size;
+    const triggerCountNow =
+      String(JOIN_RAID_CONFIG.triggerType || "unique") === "events"
+        ? flaggedCount
+        : uniqueFlaggedUsers;
     const wasActive = Number(state.raidUntil || 0) > at;
-    if (!wasActive && uniqueFlaggedUsers >= JOIN_RAID_CONFIG.triggerCount) {
+    if (!wasActive && triggerCountNow >= JOIN_RAID_CONFIG.triggerCount) {
       state.raidUntil = at + JOIN_RAID_CONFIG.raidDurationMs;
+      state.raidStartedAt = at;
+      state.raidCaseCode = makeJoinRaidCaseCode();
+      state.raidCaughtUserIds = [];
+      state.raidInitialFlaggedUserIds = Array.from(
+        new Set(
+          state.flagged
+            .map((x) => String(x?.userId || ""))
+            .filter(Boolean),
+        ),
+      ).slice(-8);
       const untilTs = Math.floor(state.raidUntil / 1000);
       triggerAutoModPanicExternal(
         member.guild.id,
@@ -804,38 +1049,55 @@ async function processJoinRaidForMember(member) {
         { raidBoost: 1, activityBoost: 0 },
         at,
       );
+      const initialFlags = buildInitialFlagRows(member.guild, state, 8);
+      const actionVerb =
+        JOIN_RAID_CONFIG.triggerAction === "ban"
+          ? "banned"
+          : JOIN_RAID_CONFIG.triggerAction === "kick"
+            ? "kicked"
+            : JOIN_RAID_CONFIG.triggerAction === "timeout"
+              ? "timed out"
+              : "logged";
       await warnRaidRoles(member.guild, [
-        `Join Raid triggered: **${uniqueFlaggedUsers}** unique flagged users in the last **${formatRaidHours(
+        `Join Raid triggered: **${triggerCountNow}** flagged ${
+          String(JOIN_RAID_CONFIG.triggerType || "unique") === "events"
+            ? "events"
+            : "users"
+        } in the last **${formatRaidHours(
           JOIN_RAID_CONFIG.triggerWindowMs,
         )}h**.`,
         `Raid protection active until <t:${untilTs}:F>.`,
       ]);
       await sendJoinRaidLog(
         member.guild,
-        "Join Raid protection enabled",
+        "Join Raid Trigger!",
         [
-          `${ARROW} **Trigger Count:** ${uniqueFlaggedUsers}/${JOIN_RAID_CONFIG.triggerCount}`,
-          `${ARROW} **Flagged Events:** ${flaggedCount}`,
-          `${ARROW} **Window:** ${formatRaidHours(
-            JOIN_RAID_CONFIG.triggerWindowMs,
-          )} hours`,
-          `${ARROW} **Raid Duration:** ${Math.round(
-            JOIN_RAID_CONFIG.raidDurationMs / 60_000,
-          )} minutes`,
-          `${ARROW} **Action:** ${JOIN_RAID_CONFIG.triggerAction}`,
+          `${ARROW} Wick has identified a weird join pattern.`,
+          `${ARROW} Flagged accounts joining for the next **${Math.round(JOIN_RAID_CONFIG.raidDurationMs / 60_000)}m** will be **${actionVerb}**.`,
+          `${ARROW} A full report will be posted once the duration ends.`,
+          "",
+          "**Initial Flags:**",
+          ...(initialFlags.length ? initialFlags : ["`No record found.`"]),
+          "",
+          `**Code:** \`${state.raidCaseCode}\``,
         ],
         "#ED4245",
       );
+      scheduleJoinRaidReport(member.guild);
       scheduleStateSave(member.guild.id);
     }
 
     const active = Number(state.raidUntil || 0) > at;
     const reasonKeys = new Set(reasons.map((x) => String(x?.key || "")));
     const strongEvidence =
-      reasonKeys.has("id_flag") &&
-      (reasonKeys.size >= 2 ||
-        uniqueFlaggedUsers >= Number(JOIN_RAID_CONFIG.triggerCount || 0) + 2);
-    if (active && highRisk && reasons.length > 0 && strongEvidence) {
+      reasonKeys.has("id_flag") ||
+      (reasonKeys.has("age_flag") && reasonKeys.has("no_pfp"));
+    const punishableDuringRaid =
+      JOIN_RAID_CONFIG.punishOnActiveRaid &&
+      reasons.length > 0 &&
+      matchJoinRaidAccountType(member, reasons) &&
+      (highRisk || strongEvidence || String(JOIN_RAID_CONFIG.accountType || "any") !== "id_flag");
+    if (active && punishableDuringRaid) {
       triggerAutoModPanicExternal(
         member.guild.id,
         member.id,
@@ -843,6 +1105,13 @@ async function processJoinRaidForMember(member) {
         at,
       );
       const outcome = await applyPunishment(member, reasons);
+      if (Boolean(outcome?.punished)) {
+        state.raidCaughtUserIds.push(String(member.id));
+        state.raidCaughtUserIds = Array.from(
+          new Set(state.raidCaughtUserIds.map((x) => String(x || "")).filter(Boolean)),
+        ).slice(-300);
+        scheduleStateSave(member.guild.id);
+      }
       return {
         blocked: true,
         punished: Boolean(outcome?.punished),
@@ -895,6 +1164,12 @@ async function activateJoinRaidWindow(
       return { ok: true, activated: false, raidUntil: currentUntil };
     }
     state.raidUntil = Math.max(currentUntil, targetUntil);
+    if (!wasActive) {
+      state.raidStartedAt = at;
+      state.raidCaseCode = makeJoinRaidCaseCode();
+      state.raidCaughtUserIds = [];
+      state.raidInitialFlaggedUserIds = [];
+    }
     scheduleStateSave(guild.id);
     const untilTs = Math.floor(state.raidUntil / 1000);
     if (!wasActive) {
@@ -908,6 +1183,7 @@ async function activateJoinRaidWindow(
       "Join Raid escalation attivata",
       [
         `${ARROW} **Reason:** ${String(reason || "Security escalation")}`,
+        `${ARROW} **Code:** \`${state.raidCaseCode || "N/A"}\``,
         `${ARROW} **Raid Duration:** ${Math.round(
           safeDuration / 60_000,
         )} minutes`,
@@ -915,6 +1191,7 @@ async function activateJoinRaidWindow(
       ],
       "#ED4245",
     );
+    scheduleJoinRaidReport(guild);
     return { ok: true, activated: !wasActive, raidUntil: state.raidUntil };
   });
 }
@@ -942,6 +1219,16 @@ function applyJoinRaidPreset(name = "balanced") {
   JOIN_RAID_CONFIG.triggerAction = String(
     preset.triggerAction || JOIN_RAID_CONFIG.triggerAction,
   );
+  JOIN_RAID_CONFIG.triggerType = String(
+    preset.triggerType || JOIN_RAID_CONFIG.triggerType,
+  );
+  JOIN_RAID_CONFIG.accountType = String(
+    preset.accountType || JOIN_RAID_CONFIG.accountType,
+  );
+  JOIN_RAID_CONFIG.punishOnActiveRaid =
+    typeof preset.punishOnActiveRaid === "boolean"
+      ? preset.punishOnActiveRaid
+      : JOIN_RAID_CONFIG.punishOnActiveRaid;
   JOIN_RAID_CONFIG.triggerCount = Number(
     preset.triggerCount || JOIN_RAID_CONFIG.triggerCount,
   );
@@ -987,13 +1274,24 @@ async function getJoinRaidStatusSnapshot(guildId) {
     ).size,
     samplesRecent: Array.isArray(state.samples) ? state.samples.length : 0,
     tempBans: Array.isArray(state.tempBans) ? state.tempBans.length : 0,
+    raidCaseCode: String(state.raidCaseCode || ""),
+    raidCaughtCount: new Set(
+      (Array.isArray(state.raidCaughtUserIds) ? state.raidCaughtUserIds : [])
+        .map((x) => String(x || ""))
+        .filter(Boolean),
+    ).size,
     config: {
       triggerAction: JOIN_RAID_CONFIG.triggerAction,
+      triggerType: JOIN_RAID_CONFIG.triggerType,
+      accountType: JOIN_RAID_CONFIG.accountType,
+      punishOnActiveRaid: Boolean(JOIN_RAID_CONFIG.punishOnActiveRaid),
       triggerCount: Number(JOIN_RAID_CONFIG.triggerCount || 0),
       triggerWindowMs: Number(JOIN_RAID_CONFIG.triggerWindowMs || 0),
       raidDurationMs: Number(JOIN_RAID_CONFIG.raidDurationMs || 0),
+      warnedRoleIds: [...new Set((JOIN_RAID_CONFIG.warnedRoleIds || []).map(String).filter(Boolean))],
       idFlag: {
         enabled: Boolean(JOIN_RAID_CONFIG.idFlag.enabled),
+        categorization: String(JOIN_RAID_CONFIG.idFlag.categorization || "adaptive"),
         minimumMatches: Number(JOIN_RAID_CONFIG.idFlag.minimumMatches || 0),
       },
       noPfpFlag: { enabled: Boolean(JOIN_RAID_CONFIG.noPfpFlag.enabled) },
@@ -1008,6 +1306,8 @@ async function getJoinRaidStatusSnapshot(guildId) {
 module.exports = {
   JOIN_RAID_CONFIG,
   JOIN_RAID_PRESETS,
+  getJoinRaidConfigSnapshot,
+  setJoinRaidConfigSnapshot,
   processJoinRaidForMember,
   activateJoinRaidWindow,
   registerJoinRaidSecuritySignal,

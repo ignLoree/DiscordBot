@@ -7,6 +7,7 @@ const autoModBadUserSchema = new Schema(
     totalTriggers: { type: Number, default: 0 },
     warnPoints: { type: Number, default: 0 },
     activeStrikes: { type: Number, default: 0 },
+    timeoutActions: { type: Number, default: 0 },
     lastTriggerAt: { type: Date, default: null, index: true },
     lastActionAt: { type: Date, default: null },
     lastGuildId: { type: String, default: null },

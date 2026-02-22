@@ -4,6 +4,12 @@ const path = require("path");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
+const {
+  isSecurityProfileImmune,
+  hasAdminsProfileCapability,
+  hasModeratorsProfileCapability,
+  getSecurityStaticsSnapshot,
+} = require("./securityProfilesService");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
@@ -17,26 +23,39 @@ const BAD_USER_CACHE = new Map();
 const GUILD_INSTANT_EVENTS = new Map();
 const URL_EXPANSION_CACHE = new Map();
 const EXTERNAL_PANIC_SIGNAL_COOLDOWN = new Map();
+const AUTO_TIMEOUT_PROFILE = new Map();
+const VERIFIED_BOT_USER_CACHE = new Map();
 
-const DECAY_PER_SEC = 5;
-const MAX_HEAT = 100;
+let DECAY_PER_SEC = 2;
+let MAX_HEAT = 100;
 let WARN_THRESHOLD = 35;
 let DELETE_THRESHOLD = 65;
-let TIMEOUT_THRESHOLD = 95;
+let TIMEOUT_THRESHOLD = 100;
 const ACTION_COOLDOWN_MS = 12_000;
 const ACTION_CHANNEL_LOG_COOLDOWN_MS = 6_000;
 const ACTION_CHANNEL_NOTICE_DELETE_MS = 10_000;
 const RUNTIME_CLEANUP_INTERVAL_MS = 30_000;
-const REGULAR_TIMEOUT_MS = 15 * 60_000;
+let AUTO_TIMEOUTS_ENABLED = true;
+let AUTO_TIMEOUT_REGULAR_MS = 1 * 60_000;
+let AUTO_TIMEOUT_CAP_MS = 11 * 60_000;
+let AUTO_TIMEOUT_CAP_STRIKE = 3;
+let AUTO_TIMEOUT_MULTIPLIER_ENABLED = true;
+let AUTO_TIMEOUT_MULTIPLIER_PERCENT = 200;
+let AUTO_TIMEOUT_PROFILE_RESET_MS = 6 * 60 * 60_000;
+const DISCORD_TIMEOUT_MAX_MS = 28 * 24 * 60 * 60_000;
+let REGULAR_TIMEOUT_MS = AUTO_TIMEOUT_REGULAR_MS;
 const EXTERNAL_PANIC_SIGNAL_COOLDOWN_MS = 90_000;
-const HEAT_RESET_ON_PUNISHMENT = true;
-const MENTION_LOCKDOWN_TRIGGER = 50;
-const MENTION_LOCKDOWN_WINDOW_MS = 3_000;
+let HEAT_RESET_ON_PUNISHMENT = true;
+let MENTION_LOCKDOWN_TRIGGER = 50;
+let MENTION_LOCKDOWN_WINDOW_MS = 3_000;
+let AUTOMOD_ENABLED = true;
+let AUTOMOD_ANTISPAM_ENABLED = true;
+let AUTOMOD_MONITOR_UNWHITELISTED_WEBHOOKS = true;
 const PANIC_MODE = {
   enabled: true,
   considerActivityHistory: true,
   useGlobalBadUsersDb: true,
-  triggerCount: 6,
+  triggerCount: 3,
   triggerWindowMs: 10 * 60_000,
   durationMs: 10 * 60_000,
   raidWindowMs: 120_000,
@@ -62,7 +81,7 @@ const MENTION_RULES = {
 };
 const ATTACHMENT_RULES = {
   enabled: true,
-  timeoutMs: 60_000,
+  timeoutMs: 0,
   embeds: { enabled: true, heat: 15 },
   images: { enabled: true, heat: 20 },
   files: { enabled: true, heat: 15 },
@@ -72,34 +91,45 @@ const ATTACHMENT_RULES = {
 
 const TEXT_RULES = {
   regularMessage: {
-    enabled: false,
+    enabled: true,
     heat: 15,
+    timeoutMs: 15 * 60_000,
+  },
+  suspiciousAccount: {
+    enabled: true,
+    heat: 7,
+    timeoutMs: 15 * 60_000,
   },
   similarMessage: {
     enabled: true,
     heat: 22,
     ratio: 0.8,
+    timeoutMs: 15 * 60_000,
   },
   emojis: {
     enabled: true,
     heat: 9,
     minCount: 8,
+    timeoutMs: 15 * 60_000,
   },
   newLines: {
     enabled: true,
     heat: 5,
     minCount: 6,
+    timeoutMs: 15 * 60_000,
   },
   zalgo: {
     enabled: true,
     heat: 1.5,
     minCount: 6,
+    timeoutMs: 15 * 60_000,
   },
   characters: {
-    enabled: false,
+    enabled: true,
     lowercaseHeat: 0.08,
     uppercaseHeat: 0.12,
     minChars: 40,
+    timeoutMs: 15 * 60_000,
   },
   inviteLinks: {
     enabled: true,
@@ -156,16 +186,81 @@ const SHORTENER_HOSTS = new Set([
 ]);
 
 const DEFAULT_AUTOMOD_RUNTIME = {
+  status: {
+    enabled: true,
+    antiSpamEnabled: true,
+    monitorUnwhitelistedWebhooks: true,
+  },
   thresholds: {
     warn: 35,
     delete: 65,
-    timeout: 95,
+    timeout: 100,
+  },
+  heatSystem: {
+    maxHeat: 100,
+    decayPerSec: 2,
+    resetOnPunishment: true,
+  },
+  autoTimeouts: {
+    enabled: true,
+    regularStrikeDurationMs: 60_000,
+    capStrikeDurationMs: 11 * 60_000,
+    capStrike: 3,
+    multiplierEnabled: true,
+    multiplierPercent: 200,
+    profileResetMs: 6 * 60 * 60_000,
+  },
+  autoLockdown: {
+    enabled: true,
+    mentionTrigger: 50,
+    mentionWindowMs: 3_000,
+    mentionHourCap: 20,
+  },
+  heatFilters: {
+    regularMessage: true,
+    suspiciousAccount: true,
+    similarMessage: true,
+    emojis: true,
+    newLines: true,
+    zalgo: true,
+    characters: true,
+    inviteLinks: true,
+    maliciousLinks: true,
+    nsfwLinks: true,
+    wordBlacklist: true,
+    linkBlacklist: true,
+    mentions: true,
+    attachments: true,
+    webhookMessages: true,
+  },
+  heatFactors: {
+    regularMessage: 1,
+    suspiciousAccount: 1,
+    similarMessage: 1,
+    emojis: 1,
+    newLines: 1,
+    zalgo: 1,
+    characters: 1,
+    inviteLinks: 1,
+    maliciousLinks: 1,
+    nsfwLinks: 1,
+    wordBlacklist: 1,
+    linkBlacklist: 1,
+    mentions: 1,
+    attachments: 1,
+  },
+  heatCaps: {
+    maxPerMessage: 85,
+    charactersMax: 40,
+    textClusterMax: 35,
+    attachmentClusterMax: 28,
+    mentionClusterMax: 70,
   },
   panic: {
     enabled: true,
     considerActivityHistory: true,
     useGlobalBadUsersDb: true,
-    triggerCount: 6,
+    triggerCount: 3,
     triggerWindowMs: 10 * 60_000,
     durationMs: 10 * 60_000,
     raidWindowMs: 120_000,
@@ -256,6 +351,19 @@ function clampNumber(value, min, max, fallback) {
 
 function sanitizeAutoModRuntimeConfig(rawCfg) {
   const merged = deepMerge(DEFAULT_AUTOMOD_RUNTIME, rawCfg || {});
+  merged.status = merged.status || {};
+  merged.status.enabled =
+    typeof merged.status.enabled === "boolean"
+      ? merged.status.enabled
+      : DEFAULT_AUTOMOD_RUNTIME.status.enabled;
+  merged.status.antiSpamEnabled =
+    typeof merged.status.antiSpamEnabled === "boolean"
+      ? merged.status.antiSpamEnabled
+      : DEFAULT_AUTOMOD_RUNTIME.status.antiSpamEnabled;
+  merged.status.monitorUnwhitelistedWebhooks =
+    typeof merged.status.monitorUnwhitelistedWebhooks === "boolean"
+      ? merged.status.monitorUnwhitelistedWebhooks
+      : DEFAULT_AUTOMOD_RUNTIME.status.monitorUnwhitelistedWebhooks;
   merged.thresholds = merged.thresholds || {};
   merged.thresholds.warn = clampNumber(
     merged.thresholds.warn,
@@ -281,6 +389,136 @@ function sanitizeAutoModRuntimeConfig(rawCfg) {
   if (merged.thresholds.timeout < merged.thresholds.delete) {
     merged.thresholds.timeout = merged.thresholds.delete;
   }
+  merged.heatSystem = merged.heatSystem || {};
+  merged.heatSystem.maxHeat = clampNumber(
+    merged.heatSystem.maxHeat,
+    50,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.heatSystem.maxHeat,
+  );
+  merged.heatSystem.decayPerSec = clampNumber(
+    merged.heatSystem.decayPerSec,
+    0,
+    10,
+    DEFAULT_AUTOMOD_RUNTIME.heatSystem.decayPerSec,
+  );
+  merged.heatSystem.resetOnPunishment =
+    typeof merged.heatSystem.resetOnPunishment === "boolean"
+      ? merged.heatSystem.resetOnPunishment
+      : DEFAULT_AUTOMOD_RUNTIME.heatSystem.resetOnPunishment;
+
+  merged.autoTimeouts = merged.autoTimeouts || {};
+  merged.autoTimeouts.enabled =
+    typeof merged.autoTimeouts.enabled === "boolean"
+      ? merged.autoTimeouts.enabled
+      : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.enabled;
+  merged.autoTimeouts.regularStrikeDurationMs = clampNumber(
+    merged.autoTimeouts.regularStrikeDurationMs,
+    30_000,
+    24 * 60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.regularStrikeDurationMs,
+  );
+  merged.autoTimeouts.capStrikeDurationMs = clampNumber(
+    merged.autoTimeouts.capStrikeDurationMs,
+    merged.autoTimeouts.regularStrikeDurationMs,
+    28 * 24 * 60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.capStrikeDurationMs,
+  );
+  merged.autoTimeouts.capStrike = clampNumber(
+    merged.autoTimeouts.capStrike,
+    2,
+    20,
+    DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.capStrike,
+  );
+  merged.autoTimeouts.multiplierEnabled =
+    typeof merged.autoTimeouts.multiplierEnabled === "boolean"
+      ? merged.autoTimeouts.multiplierEnabled
+      : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.multiplierEnabled;
+  merged.autoTimeouts.multiplierPercent = clampNumber(
+    merged.autoTimeouts.multiplierPercent,
+    100,
+    500,
+    DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.multiplierPercent,
+  );
+  merged.autoTimeouts.profileResetMs = clampNumber(
+    merged.autoTimeouts.profileResetMs,
+    60_000,
+    7 * 24 * 60 * 60_000,
+    DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.profileResetMs,
+  );
+
+  merged.autoLockdown = merged.autoLockdown || {};
+  merged.autoLockdown.enabled =
+    typeof merged.autoLockdown.enabled === "boolean"
+      ? merged.autoLockdown.enabled
+      : DEFAULT_AUTOMOD_RUNTIME.autoLockdown.enabled;
+  merged.autoLockdown.mentionTrigger = clampNumber(
+    merged.autoLockdown.mentionTrigger,
+    5,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionTrigger,
+  );
+  merged.autoLockdown.mentionWindowMs = clampNumber(
+    merged.autoLockdown.mentionWindowMs,
+    1_000,
+    60_000,
+    DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionWindowMs,
+  );
+  merged.autoLockdown.mentionHourCap = clampNumber(
+    merged.autoLockdown.mentionHourCap,
+    5,
+    400,
+    DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionHourCap,
+  );
+
+  merged.heatFilters = merged.heatFilters || {};
+  for (const key of Object.keys(DEFAULT_AUTOMOD_RUNTIME.heatFilters)) {
+    merged.heatFilters[key] =
+      typeof merged.heatFilters[key] === "boolean"
+        ? merged.heatFilters[key]
+        : DEFAULT_AUTOMOD_RUNTIME.heatFilters[key];
+  }
+
+  merged.heatFactors = merged.heatFactors || {};
+  for (const [key, fallback] of Object.entries(DEFAULT_AUTOMOD_RUNTIME.heatFactors)) {
+    merged.heatFactors[key] = clampNumber(
+      merged.heatFactors[key],
+      0,
+      5,
+      fallback,
+    );
+  }
+  merged.heatCaps = merged.heatCaps || {};
+  merged.heatCaps.maxPerMessage = clampNumber(
+    merged.heatCaps.maxPerMessage,
+    20,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.heatCaps.maxPerMessage,
+  );
+  merged.heatCaps.charactersMax = clampNumber(
+    merged.heatCaps.charactersMax,
+    5,
+    150,
+    DEFAULT_AUTOMOD_RUNTIME.heatCaps.charactersMax,
+  );
+  merged.heatCaps.textClusterMax = clampNumber(
+    merged.heatCaps.textClusterMax,
+    5,
+    150,
+    DEFAULT_AUTOMOD_RUNTIME.heatCaps.textClusterMax,
+  );
+  merged.heatCaps.attachmentClusterMax = clampNumber(
+    merged.heatCaps.attachmentClusterMax,
+    5,
+    150,
+    DEFAULT_AUTOMOD_RUNTIME.heatCaps.attachmentClusterMax,
+  );
+  merged.heatCaps.mentionClusterMax = clampNumber(
+    merged.heatCaps.mentionClusterMax,
+    5,
+    200,
+    DEFAULT_AUTOMOD_RUNTIME.heatCaps.mentionClusterMax,
+  );
 
   merged.panic = merged.panic || {};
   merged.panic.triggerCount = clampNumber(
@@ -344,6 +582,19 @@ function scheduleMetricsSave() {
 }
 
 function applyAutomodRuntime() {
+  const status = automodRuntimeConfig?.status || {};
+  AUTOMOD_ENABLED =
+    typeof status.enabled === "boolean"
+      ? status.enabled
+      : DEFAULT_AUTOMOD_RUNTIME.status.enabled;
+  AUTOMOD_ANTISPAM_ENABLED =
+    typeof status.antiSpamEnabled === "boolean"
+      ? status.antiSpamEnabled
+      : DEFAULT_AUTOMOD_RUNTIME.status.antiSpamEnabled;
+  AUTOMOD_MONITOR_UNWHITELISTED_WEBHOOKS =
+    typeof status.monitorUnwhitelistedWebhooks === "boolean"
+      ? status.monitorUnwhitelistedWebhooks
+      : DEFAULT_AUTOMOD_RUNTIME.status.monitorUnwhitelistedWebhooks;
   const t = automodRuntimeConfig?.thresholds || {};
   WARN_THRESHOLD = Number.isFinite(Number(t.warn))
     ? Number(t.warn)
@@ -354,6 +605,113 @@ function applyAutomodRuntime() {
   TIMEOUT_THRESHOLD = Number.isFinite(Number(t.timeout))
     ? Number(t.timeout)
     : DEFAULT_AUTOMOD_RUNTIME.thresholds.timeout;
+  const hs = automodRuntimeConfig?.heatSystem || {};
+  MAX_HEAT = Number.isFinite(Number(hs.maxHeat))
+    ? Number(hs.maxHeat)
+    : DEFAULT_AUTOMOD_RUNTIME.heatSystem.maxHeat;
+  DECAY_PER_SEC = Number.isFinite(Number(hs.decayPerSec))
+    ? Number(hs.decayPerSec)
+    : DEFAULT_AUTOMOD_RUNTIME.heatSystem.decayPerSec;
+  HEAT_RESET_ON_PUNISHMENT =
+    typeof hs.resetOnPunishment === "boolean"
+      ? hs.resetOnPunishment
+      : DEFAULT_AUTOMOD_RUNTIME.heatSystem.resetOnPunishment;
+
+  const at = automodRuntimeConfig?.autoTimeouts || {};
+  AUTO_TIMEOUTS_ENABLED =
+    typeof at.enabled === "boolean"
+      ? at.enabled
+      : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.enabled;
+  AUTO_TIMEOUT_REGULAR_MS = Number.isFinite(Number(at.regularStrikeDurationMs))
+    ? Number(at.regularStrikeDurationMs)
+    : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.regularStrikeDurationMs;
+  AUTO_TIMEOUT_CAP_MS = Number.isFinite(Number(at.capStrikeDurationMs))
+    ? Number(at.capStrikeDurationMs)
+    : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.capStrikeDurationMs;
+  AUTO_TIMEOUT_CAP_STRIKE = Number.isFinite(Number(at.capStrike))
+    ? Number(at.capStrike)
+    : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.capStrike;
+  AUTO_TIMEOUT_MULTIPLIER_ENABLED =
+    typeof at.multiplierEnabled === "boolean"
+      ? at.multiplierEnabled
+      : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.multiplierEnabled;
+  AUTO_TIMEOUT_MULTIPLIER_PERCENT = Number.isFinite(Number(at.multiplierPercent))
+    ? Number(at.multiplierPercent)
+    : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.multiplierPercent;
+  AUTO_TIMEOUT_PROFILE_RESET_MS = Number.isFinite(Number(at.profileResetMs))
+    ? Number(at.profileResetMs)
+    : DEFAULT_AUTOMOD_RUNTIME.autoTimeouts.profileResetMs;
+  REGULAR_TIMEOUT_MS = AUTO_TIMEOUT_REGULAR_MS;
+
+  const al = automodRuntimeConfig?.autoLockdown || {};
+  MENTION_LOCKDOWN_TRIGGER = Number.isFinite(Number(al.mentionTrigger))
+    ? Number(al.mentionTrigger)
+    : DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionTrigger;
+  MENTION_LOCKDOWN_WINDOW_MS = Number.isFinite(Number(al.mentionWindowMs))
+    ? Number(al.mentionWindowMs)
+    : DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionWindowMs;
+  MENTION_RULES.hourCap = Number.isFinite(Number(al.mentionHourCap))
+    ? Number(al.mentionHourCap)
+    : DEFAULT_AUTOMOD_RUNTIME.autoLockdown.mentionHourCap;
+
+  const hf = automodRuntimeConfig?.heatFilters || {};
+  MENTION_RULES.enabled =
+    hf.mentions !== undefined
+      ? Boolean(hf.mentions)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.mentions;
+  ATTACHMENT_RULES.enabled =
+    hf.attachments !== undefined
+      ? Boolean(hf.attachments)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.attachments;
+  TEXT_RULES.regularMessage.enabled =
+    hf.regularMessage !== undefined
+      ? Boolean(hf.regularMessage)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.regularMessage;
+  TEXT_RULES.suspiciousAccount.enabled =
+    hf.suspiciousAccount !== undefined
+      ? Boolean(hf.suspiciousAccount)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.suspiciousAccount;
+  TEXT_RULES.similarMessage.enabled =
+    hf.similarMessage !== undefined
+      ? Boolean(hf.similarMessage)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.similarMessage;
+  TEXT_RULES.emojis.enabled =
+    hf.emojis !== undefined
+      ? Boolean(hf.emojis)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.emojis;
+  TEXT_RULES.newLines.enabled =
+    hf.newLines !== undefined
+      ? Boolean(hf.newLines)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.newLines;
+  TEXT_RULES.zalgo.enabled =
+    hf.zalgo !== undefined
+      ? Boolean(hf.zalgo)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.zalgo;
+  TEXT_RULES.characters.enabled =
+    hf.characters !== undefined
+      ? Boolean(hf.characters)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.characters;
+  TEXT_RULES.inviteLinks.enabled =
+    hf.inviteLinks !== undefined
+      ? Boolean(hf.inviteLinks)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.inviteLinks;
+  TEXT_RULES.maliciousLinks.enabled =
+    hf.maliciousLinks !== undefined
+      ? Boolean(hf.maliciousLinks)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.maliciousLinks;
+  TEXT_RULES.nsfwLinks.enabled =
+    hf.nsfwLinks !== undefined
+      ? Boolean(hf.nsfwLinks)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.nsfwLinks;
+  TEXT_RULES.wordBlacklist.enabled =
+    hf.wordBlacklist !== undefined
+      ? Boolean(hf.wordBlacklist)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.wordBlacklist;
+  TEXT_RULES.linkBlacklist.enabled =
+    hf.linkBlacklist !== undefined
+      ? Boolean(hf.linkBlacklist)
+      : DEFAULT_AUTOMOD_RUNTIME.heatFilters.linkBlacklist;
+
   const p = automodRuntimeConfig?.panic || {};
   Object.assign(PANIC_MODE, p);
 }
@@ -509,8 +867,38 @@ const EXEMPT_CHANNEL_IDS = new Set(
 );
 
 const EXEMPT_CATEGORY_IDS = new Set(["1442569074310643845"]);
-const EXEMPT_INVITE_CHANNEL_IDS = new Set(["1442569193470824448"]);
-const EXEMPT_MENTION_CHANNEL_IDS = new Set(["1442569193470824448"]);
+const SPAM_WHITELIST_CATEGORY_IDS = new Set(
+  [
+    IDs?.categories?.categoryGames,
+    "1442569074310643845",
+  ]
+    .filter(Boolean)
+    .map(String),
+);
+const INVITE_WHITELIST_CHANNEL_IDS = new Set(
+  [
+    IDs?.channels?.partnerships,
+    "1442569193470824448",
+  ]
+    .filter(Boolean)
+    .map(String),
+);
+const MENTION_WHITELIST_CHANNEL_IDS = new Set(
+  [
+    IDs?.channels?.partnerships,
+    "1442569193470824448",
+  ]
+    .filter(Boolean)
+    .map(String),
+);
+const EVERYONE_WHITELIST_CHANNEL_IDS = new Set(
+  [
+    IDs?.channels?.partnerships,
+    "1442569193470824448",
+  ]
+    .filter(Boolean)
+    .map(String),
+);
 
 function isTicketLikeCategory(category) {
   const name = String(category?.name || "").toLowerCase().trim();
@@ -549,6 +937,25 @@ function isUnderExemptCategory(channel) {
   return false;
 }
 
+function isWhitelistedByCategory(channel, setRef) {
+  if (!channel) return false;
+  const set = setRef instanceof Set ? setRef : new Set();
+  if (!set.size) return false;
+  if (set.has(String(channel.id || ""))) return true;
+  if (set.has(String(channel.parentId || ""))) return true;
+  const parent = channel.parent;
+  if (!parent) return false;
+  if (set.has(String(parent.id || ""))) return true;
+  if (set.has(String(parent.parentId || ""))) return true;
+  return false;
+}
+
+function isWhitelistedByChannel(channelId, parentChannelId, setRef) {
+  const set = setRef instanceof Set ? setRef : new Set();
+  if (!set.size) return false;
+  return set.has(String(channelId || "")) || set.has(String(parentChannelId || ""));
+}
+
 function resolveProfileKey(message) {
   const channelId = String(message?.channelId || "");
   const parentId = String(message?.channel?.parentId || "");
@@ -580,6 +987,110 @@ function applyProfileHeat(heat, profile) {
   const multiplier = Number(profile?.heatMultiplier || 1);
   const scaled = Number(heat || 0) * (Number.isFinite(multiplier) ? multiplier : 1);
   return Number(Math.max(0, scaled).toFixed(2));
+}
+
+function applyHeatFactor(key, heat) {
+  const factors = automodRuntimeConfig?.heatFactors || {};
+  const base = Number(heat || 0);
+  const factor = Number(factors?.[key]);
+  const safeFactor = Number.isFinite(factor) ? factor : 1;
+  return Number(Math.max(0, base * safeFactor).toFixed(2));
+}
+
+function getHeatCaps() {
+  const c = automodRuntimeConfig?.heatCaps || {};
+  const d = DEFAULT_AUTOMOD_RUNTIME.heatCaps;
+  return {
+    maxPerMessage: Number.isFinite(Number(c.maxPerMessage))
+      ? Number(c.maxPerMessage)
+      : d.maxPerMessage,
+    charactersMax: Number.isFinite(Number(c.charactersMax))
+      ? Number(c.charactersMax)
+      : d.charactersMax,
+    textClusterMax: Number.isFinite(Number(c.textClusterMax))
+      ? Number(c.textClusterMax)
+      : d.textClusterMax,
+    attachmentClusterMax: Number.isFinite(Number(c.attachmentClusterMax))
+      ? Number(c.attachmentClusterMax)
+      : d.attachmentClusterMax,
+    mentionClusterMax: Number.isFinite(Number(c.mentionClusterMax))
+      ? Number(c.mentionClusterMax)
+      : d.mentionClusterMax,
+  };
+}
+
+function normalizeViolationsForHeat(violations = [], options = {}) {
+  const caps = getHeatCaps();
+  const legitConversation = Boolean(options?.legitConversation);
+  const mergedByKey = new Map();
+  for (const entry of Array.isArray(violations) ? violations : []) {
+    const key = String(entry?.key || "").trim();
+    if (!key) continue;
+    const prev = mergedByKey.get(key);
+    const heat = Math.max(0, Number(entry?.heat || 0));
+    if (!prev || heat > Number(prev.heat || 0)) {
+      mergedByKey.set(key, { ...entry, heat });
+    }
+  }
+  const items = Array.from(mergedByKey.values());
+  const hasInstant = items.some((v) => INSTANT_LINK_KEYS.has(String(v?.key || "")));
+  const textClusterKeys = new Set([
+    "regular_message",
+    "similar_message",
+    "emoji_spam",
+    "new_lines",
+    "zalgo",
+  ]);
+  const attachmentKeys = new Set([
+    "attachment_embed",
+    "attachment_image",
+    "attachment_file",
+    "attachment_link",
+    "attachment_sticker",
+  ]);
+  const mentionKeys = new Set([
+    "mention_user",
+    "mention_role",
+    "mention_everyone",
+    "mention_hour_cap",
+    "mentions_lockdown",
+  ]);
+
+  let textClusterHeat = 0;
+  let attachmentClusterHeat = 0;
+  let mentionClusterHeat = 0;
+  let totalHeat = 0;
+
+  for (const v of items) {
+    const key = String(v?.key || "");
+    let heat = Math.max(0, Number(v?.heat || 0));
+    if (hasInstant && (textClusterKeys.has(key) || key === "characters")) {
+      heat = Math.min(heat, 8);
+    }
+    if (legitConversation && (key === "regular_message" || key === "similar_message")) {
+      heat = heat * 0.65;
+    }
+    if (key === "characters") {
+      heat = Math.min(heat, caps.charactersMax);
+    } else if (textClusterKeys.has(key)) {
+      const room = Math.max(0, caps.textClusterMax - textClusterHeat);
+      heat = Math.min(heat, room);
+      textClusterHeat += heat;
+    } else if (attachmentKeys.has(key)) {
+      const room = Math.max(0, caps.attachmentClusterMax - attachmentClusterHeat);
+      heat = Math.min(heat, room);
+      attachmentClusterHeat += heat;
+    } else if (mentionKeys.has(key)) {
+      const room = Math.max(0, caps.mentionClusterMax - mentionClusterHeat);
+      heat = Math.min(heat, room);
+      mentionClusterHeat += heat;
+    }
+    const globalRoom = Math.max(0, caps.maxPerMessage - totalHeat);
+    heat = Math.min(heat, globalRoom);
+    v.heat = Number(Math.max(0, heat).toFixed(2));
+    totalHeat += v.heat;
+  }
+  return items.filter((v) => Number(v?.heat || 0) > 0);
 }
 
 function getThresholdsForProfile(profile) {
@@ -744,18 +1255,9 @@ function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
     dbBoost,
     raidBoost,
   });
-  let count = 0;
-  for (const payload of state.triggerAccounts.values()) {
-    if (typeof payload === "number") {
-      count += 1;
-      continue;
-    }
-    const bonus =
-      Number(payload?.activityBoost || 0) +
-      Number(payload?.dbBoost || 0) +
-      Number(payload?.raidBoost || 0);
-    count += 1 + Math.max(0, Math.min(1, bonus));
-  }
+  // Panic trigger must be based on distinct accounts, not weighted boosts.
+  // Boost fields are kept for diagnostics/future use but do not alter threshold count.
+  const count = Number(state.triggerAccounts.size || 0);
   const alreadyActive = state.activeUntil > at;
   if (count >= PANIC_MODE.triggerCount) {
     state.activeUntil = Math.max(state.activeUntil, at + PANIC_MODE.durationMs);
@@ -783,6 +1285,54 @@ function registerGuildInstantSignal(message, at = nowMs()) {
     events.filter((e) => e.young).map((e) => String(e.userId || "")),
   ).size;
   return { uniqueUsers, youngUsers };
+}
+
+function getAutoTimeoutProfileKey(message) {
+  return `${String(message?.guildId || "")}:${String(message?.author?.id || "")}`;
+}
+
+function computeNextAutoTimeoutDuration(message, at = nowMs()) {
+  const key = getAutoTimeoutProfileKey(message);
+  if (!key || key.startsWith(":")) {
+    return { durationMs: AUTO_TIMEOUT_REGULAR_MS, strike: 1, capReached: false };
+  }
+  const existing = AUTO_TIMEOUT_PROFILE.get(key) || {
+    strikes: 0,
+    currentDurationMs: AUTO_TIMEOUT_REGULAR_MS,
+    lastAt: 0,
+    capReached: false,
+  };
+  if (at - Number(existing.lastAt || 0) > AUTO_TIMEOUT_PROFILE_RESET_MS) {
+    existing.strikes = 0;
+    existing.currentDurationMs = AUTO_TIMEOUT_REGULAR_MS;
+    existing.capReached = false;
+  }
+
+  const nextStrike = Number(existing.strikes || 0) + 1;
+  let durationMs = AUTO_TIMEOUT_REGULAR_MS;
+  if (nextStrike < AUTO_TIMEOUT_CAP_STRIKE) {
+    durationMs = AUTO_TIMEOUT_REGULAR_MS;
+  } else if (nextStrike === AUTO_TIMEOUT_CAP_STRIKE) {
+    durationMs = AUTO_TIMEOUT_CAP_MS;
+    existing.capReached = true;
+  } else if (AUTO_TIMEOUT_MULTIPLIER_ENABLED) {
+    const base = Math.max(
+      AUTO_TIMEOUT_CAP_MS,
+      Number(existing.currentDurationMs || AUTO_TIMEOUT_CAP_MS),
+    );
+    durationMs = Math.round(base * (AUTO_TIMEOUT_MULTIPLIER_PERCENT / 100));
+    existing.capReached = true;
+  } else {
+    durationMs = AUTO_TIMEOUT_CAP_MS;
+    existing.capReached = true;
+  }
+
+  durationMs = Math.max(60_000, Math.min(DISCORD_TIMEOUT_MAX_MS, durationMs));
+  existing.strikes = nextStrike;
+  existing.currentDurationMs = durationMs;
+  existing.lastAt = at;
+  AUTO_TIMEOUT_PROFILE.set(key, existing);
+  return { durationMs, strike: nextStrike, capReached: Boolean(existing.capReached) };
 }
 
 function getCachedBadUser(userId, at = nowMs()) {
@@ -815,6 +1365,7 @@ async function getBadUserProfile(userId) {
         totalTriggers: 1,
         warnPoints: 1,
         activeStrikes: 1,
+        timeoutActions: 1,
         activeStrikeReasons: 1,
         lastTriggerAt: 1,
         lastActionAt: 1,
@@ -890,6 +1441,57 @@ async function markBadUserAction(message, action, violations = []) {
     BAD_USER_CACHE.delete(userId);
   } catch {
     // Do not break automod flow on DB issues.
+  }
+}
+
+async function registerAutoModTimeoutStrike(message) {
+  if (!isDbReady()) return { ok: false, timeoutActions: 0, escalate1h: false };
+  const userId = String(message?.author?.id || "");
+  if (!userId) return { ok: false, timeoutActions: 0, escalate1h: false };
+  try {
+    const updated = await AutoModBadUser.findOneAndUpdate(
+      { userId },
+      {
+        $inc: { timeoutActions: 1 },
+        $set: {
+          lastActionAt: new Date(),
+          lastAction: "timeout",
+          lastGuildId: String(message?.guildId || ""),
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+        projection: { _id: 0, timeoutActions: 1 },
+      },
+    ).lean();
+    BAD_USER_CACHE.delete(userId);
+    const timeoutActions = Math.max(0, Number(updated?.timeoutActions || 0));
+    return {
+      ok: true,
+      timeoutActions,
+      escalate1h: timeoutActions > 0 && timeoutActions % 5 === 0,
+    };
+  } catch {
+    return { ok: false, timeoutActions: 0, escalate1h: false };
+  }
+}
+
+async function shouldEscalateNextAutoTimeout(message) {
+  if (!isDbReady()) return false;
+  const userId = String(message?.author?.id || "");
+  if (!userId) return false;
+  try {
+    const row = await AutoModBadUser.findOne(
+      { userId },
+      { _id: 0, timeoutActions: 1 },
+    ).lean();
+    const current = Math.max(0, Number(row?.timeoutActions || 0));
+    const next = current + 1;
+    return next > 0 && next % 5 === 0;
+  } catch {
+    return false;
   }
 }
 
@@ -972,6 +1574,12 @@ function cleanupRuntimeMaps(at = nowMs()) {
   for (const [key, ts] of EXTERNAL_PANIC_SIGNAL_COOLDOWN.entries()) {
     if (at - Number(ts || 0) > EXTERNAL_PANIC_SIGNAL_COOLDOWN_MS * 2) {
       EXTERNAL_PANIC_SIGNAL_COOLDOWN.delete(key);
+    }
+  }
+
+  for (const [key, payload] of AUTO_TIMEOUT_PROFILE.entries()) {
+    if (at - Number(payload?.lastAt || 0) > AUTO_TIMEOUT_PROFILE_RESET_MS * 2) {
+      AUTO_TIMEOUT_PROFILE.delete(key);
     }
   }
 }
@@ -1330,7 +1938,16 @@ function isExempt(message) {
   if (!message.member) return false;
   if (
     CORE_EXEMPT_USER_IDS.has(String(message.author?.id || "")) ||
-    String(message.guild.ownerId || "") === String(message.author?.id || "")
+    String(message.guild.ownerId || "") === String(message.author?.id || "") ||
+    isSecurityProfileImmune(
+      String(message.guild?.id || ""),
+      String(message.author?.id || ""),
+    ) ||
+    hasAdminsProfileCapability(message.member, "fullImmunity") ||
+    hasAdminsProfileCapability(message.member, "automodImmunity") ||
+    hasAdminsProfileCapability(message.member, "profanityWhitelist") ||
+    hasModeratorsProfileCapability(message.member, "automodImmunity") ||
+    hasModeratorsProfileCapability(message.member, "profanityWhitelist")
   ) {
     return true;
   }
@@ -1359,9 +1976,42 @@ async function isVerifiedBotMessage(message) {
   return false;
 }
 
+async function isVerifiedBotUserId(client, userId) {
+  const id = String(userId || "").trim();
+  if (!id) return false;
+  if (VERIFIED_BOT_IDS.has(id)) return true;
+  if (VERIFIED_BOT_USER_CACHE.has(id)) {
+    return VERIFIED_BOT_USER_CACHE.get(id);
+  }
+  let verified = false;
+  try {
+    const user =
+      client?.users?.cache?.get?.(id) ||
+      (await client?.users?.fetch?.(id).catch(() => null));
+    if (user?.bot) {
+      const flags =
+        user.flags ||
+        (typeof user.fetchFlags === "function"
+          ? await user.fetchFlags().catch(() => null)
+          : null);
+      verified = Boolean(flags?.has?.(UserFlagsBitField.Flags.VerifiedBot));
+    }
+  } catch {
+    verified = false;
+  }
+  VERIFIED_BOT_USER_CACHE.set(id, verified);
+  return verified;
+}
+
 function isAutoModRoleExemptMember(guild, member) {
   if (!guild || !member) return false;
   if (String(guild.ownerId || "") === String(member.id || "")) return true;
+  if (isSecurityProfileImmune(String(guild?.id || ""), String(member.id || ""))) {
+    return true;
+  }
+  if (hasAdminsProfileCapability(member, "fullImmunity")) return true;
+  if (hasAdminsProfileCapability(member, "automodImmunity")) return true;
+  if (hasModeratorsProfileCapability(member, "automodImmunity")) return true;
   if (CORE_EXEMPT_USER_IDS.has(String(member.id || ""))) return true;
   return false;
 }
@@ -1429,25 +2079,90 @@ async function detectViolations(message, state, profile) {
   const violations = [];
   const channelId = String(message.channelId || "");
   const parentChannelId = String(message.channel?.parentId || "");
+  const statics = getSecurityStaticsSnapshot(String(message?.guild?.id || ""));
+  const dynamicPartneringChannels = Array.isArray(statics?.partneringChannelIds)
+    ? statics.partneringChannelIds.map((id) => String(id || "").trim()).filter(Boolean)
+    : [];
+  const inviteWhitelistSet = new Set([
+    ...INVITE_WHITELIST_CHANNEL_IDS,
+    ...dynamicPartneringChannels,
+  ]);
+  const mentionWhitelistSet = new Set([
+    ...MENTION_WHITELIST_CHANNEL_IDS,
+    ...dynamicPartneringChannels,
+  ]);
+  const everyoneWhitelistSet = new Set([
+    ...EVERYONE_WHITELIST_CHANNEL_IDS,
+    ...dynamicPartneringChannels,
+  ]);
+  const spamWhitelisted =
+    isWhitelistedByCategory(message.channel, SPAM_WHITELIST_CATEGORY_IDS);
+  const inviteWhitelisted = isWhitelistedByChannel(
+    channelId,
+    parentChannelId,
+    inviteWhitelistSet,
+  );
+  const mentionWhitelisted = isWhitelistedByChannel(
+    channelId,
+    parentChannelId,
+    mentionWhitelistSet,
+  );
+  const everyoneWhitelisted = isWhitelistedByChannel(
+    channelId,
+    parentChannelId,
+    everyoneWhitelistSet,
+  );
   const mentionsEnabled = profile?.mentionsEnabled !== false;
   const attachmentsEnabled = profile?.attachmentsEnabled !== false;
   const inviteLinksEnabled = profile?.inviteLinksEnabled !== false;
-  const profileHeat = (value) => applyProfileHeat(value, profile);
+  const autoLockdownEnabled = automodRuntimeConfig?.autoLockdown?.enabled !== false;
+  const profileHeat = (value, factorKey = "regularMessage") =>
+    applyProfileHeat(applyHeatFactor(factorKey, value), profile);
   const legitConversation = looksLikeLegitConversation(moderationContent || content);
+  let suspiciousMessageAuthor = false;
+  try {
+    const badProfile = await getBadUserProfile(message.author?.id);
+    const totalTriggers = Number(badProfile?.totalTriggers || 0);
+    const activeStrikes = Number(badProfile?.activeStrikes || 0);
+    suspiciousMessageAuthor = totalTriggers >= 5 || activeStrikes >= 3;
+  } catch {
+    suspiciousMessageAuthor = false;
+  }
 
-  if (TEXT_RULES.regularMessage.enabled) {
+  if (
+    !spamWhitelisted &&
+    TEXT_RULES.suspiciousAccount.enabled &&
+    suspiciousMessageAuthor
+  ) {
+    violations.push({
+      key: "suspicious_account",
+      heat: profileHeat(TEXT_RULES.suspiciousAccount.heat, "suspiciousAccount"),
+      info: "suspicious member profile",
+    });
+  }
+
+  if (
+    !spamWhitelisted &&
+    AUTOMOD_ANTISPAM_ENABLED &&
+    TEXT_RULES.regularMessage.enabled
+  ) {
     state.msgTimes.push(at);
     trimWindow(state.msgTimes, 8_000, at);
     if (state.msgTimes.length >= 6) {
       violations.push({
         key: "regular_message",
-        heat: profileHeat(TEXT_RULES.regularMessage.heat),
+        heat: profileHeat(TEXT_RULES.regularMessage.heat, "regularMessage"),
         info: `${state.msgTimes.length}/8s`,
       });
     }
   }
 
-  if (TEXT_RULES.similarMessage.enabled && normalized.length >= 8) {
+  if (
+    !spamWhitelisted &&
+    AUTOMOD_ANTISPAM_ENABLED &&
+    TEXT_RULES.similarMessage.enabled &&
+    normalized.length >= 8
+  ) {
     state.normHistory.push({ t: at, c: normalized });
     trimNormHistory(state.normHistory, 18_000, at);
     const ratio = TEXT_RULES.similarMessage.ratio;
@@ -1463,7 +2178,7 @@ async function detectViolations(message, state, profile) {
     if (similarCount >= similarThreshold) {
       violations.push({
         key: "similar_message",
-        heat: profileHeat(TEXT_RULES.similarMessage.heat),
+        heat: profileHeat(TEXT_RULES.similarMessage.heat, "similarMessage"),
         info: `ratio>=${ratio.toFixed(2)} count:${similarCount}`,
       });
     }
@@ -1481,19 +2196,16 @@ async function detectViolations(message, state, profile) {
   );
   const roleMentionCount = message.mentions?.roles?.size || 0;
   const everyoneMentionCount = message.mentions?.everyone ? 1 : 0;
-  const mentionCount = userMentionCount + roleMentionCount + everyoneMentionCount;
-  if (
-    !EXEMPT_MENTION_CHANNEL_IDS.has(channelId) &&
-    !EXEMPT_MENTION_CHANNEL_IDS.has(parentChannelId) &&
-    MENTION_RULES.enabled &&
-    mentionsEnabled
-  ) {
-    if (mentionCount > 0) {
+  const effectiveMentionCount =
+    (mentionWhitelisted ? 0 : userMentionCount + roleMentionCount) +
+    (everyoneWhitelisted ? 0 : everyoneMentionCount);
+  if (MENTION_RULES.enabled && mentionsEnabled) {
+    if (effectiveMentionCount > 0) {
       const shortCap = Math.max(MENTION_LOCKDOWN_TRIGGER * 2, 100);
       const hourCap = Math.max(MENTION_RULES.hourCap * 2, 100);
       const roomShort = Math.max(0, shortCap - state.mentionTimes.length);
       const roomHour = Math.max(0, hourCap - state.mentionHourTimes.length);
-      const toPush = Math.min(mentionCount, roomShort, roomHour);
+      const toPush = Math.min(effectiveMentionCount, roomShort, roomHour);
       for (let i = 0; i < toPush; i += 1) {
         state.mentionTimes.push(at);
         state.mentionHourTimes.push(at);
@@ -1502,55 +2214,64 @@ async function detectViolations(message, state, profile) {
       trimWindow(state.mentionHourTimes, 60 * 60_000, at);
     }
 
-    if (MENTION_RULES.userMentions.enabled && userMentionCount > 0) {
+    if (
+      !mentionWhitelisted &&
+      MENTION_RULES.userMentions.enabled &&
+      userMentionCount > 0
+    ) {
       violations.push({
         key: "mention_user",
-        heat: profileHeat(userMentionCount * MENTION_RULES.userMentions.heat),
+        heat: profileHeat(userMentionCount * MENTION_RULES.userMentions.heat, "mentions"),
         info: `${userMentionCount} @user`,
       });
     }
 
-    if (MENTION_RULES.roleMentions.enabled && roleMentionCount > 0) {
+    if (
+      !mentionWhitelisted &&
+      MENTION_RULES.roleMentions.enabled &&
+      roleMentionCount > 0
+    ) {
       violations.push({
         key: "mention_role",
-        heat: profileHeat(roleMentionCount * MENTION_RULES.roleMentions.heat),
+        heat: profileHeat(roleMentionCount * MENTION_RULES.roleMentions.heat, "mentions"),
         info: `${roleMentionCount} @role`,
       });
     }
 
-    if (MENTION_RULES.everyoneMentions.enabled && everyoneMentionCount > 0) {
+    if (
+      !everyoneWhitelisted &&
+      MENTION_RULES.everyoneMentions.enabled &&
+      everyoneMentionCount > 0
+    ) {
       violations.push({
         key: "mention_everyone",
         heat: profileHeat(
           everyoneMentionCount * MENTION_RULES.everyoneMentions.heat,
+          "mentions",
         ),
         info: "@everyone/@here",
       });
     }
 
-    if (state.mentionHourTimes.length >= MENTION_RULES.hourCap) {
+    if (autoLockdownEnabled && state.mentionHourTimes.length >= MENTION_RULES.hourCap) {
       violations.push({
         key: "mention_hour_cap",
-        heat: profileHeat(100),
+        heat: profileHeat(100, "mentions"),
         info: `${state.mentionHourTimes.length}/${MENTION_RULES.hourCap} pings/1h`,
       });
     }
 
-    if (state.mentionTimes.length >= MENTION_LOCKDOWN_TRIGGER) {
+    if (autoLockdownEnabled && state.mentionTimes.length >= MENTION_LOCKDOWN_TRIGGER) {
       violations.push({
         key: "mentions_lockdown",
-        heat: profileHeat(100),
+        heat: profileHeat(100, "mentions"),
         info: `${state.mentionTimes.length}/${Math.floor(MENTION_LOCKDOWN_WINDOW_MS / 1000)}s`,
       });
   }
   }
 
   const inviteCode = detectInvite(moderationContent);
-  if (
-    inviteCode &&
-    !EXEMPT_INVITE_CHANNEL_IDS.has(channelId) &&
-    !EXEMPT_INVITE_CHANNEL_IDS.has(parentChannelId)
-  ) {
+  if (inviteCode && !inviteWhitelisted) {
     const allowedCodes = getAllowedInviteCodes(message);
     if (
       inviteLinksEnabled &&
@@ -1559,7 +2280,7 @@ async function detectViolations(message, state, profile) {
     ) {
       violations.push({
         key: "invite",
-        heat: profileHeat(TEXT_RULES.inviteLinks.heat),
+        heat: profileHeat(TEXT_RULES.inviteLinks.heat, "inviteLinks"),
         info: `discord.gg/${inviteCode}`,
       });
     }
@@ -1568,7 +2289,7 @@ async function detectViolations(message, state, profile) {
   if (TEXT_RULES.maliciousLinks.enabled && detectScam(moderationContent)) {
     violations.push({
       key: "scam_pattern",
-      heat: profileHeat(TEXT_RULES.maliciousLinks.heat),
+      heat: profileHeat(TEXT_RULES.maliciousLinks.heat, "maliciousLinks"),
       info: "pattern scam/malicious link",
     });
   }
@@ -1576,7 +2297,7 @@ async function detectViolations(message, state, profile) {
   if (await isNsfwUrl(moderationContent, extractedUrls)) {
     violations.push({
       key: "nsfw_link",
-      heat: profileHeat(TEXT_RULES.nsfwLinks.heat),
+      heat: profileHeat(TEXT_RULES.nsfwLinks.heat, "nsfwLinks"),
       info: "nsfw domain/url",
     });
   }
@@ -1585,7 +2306,7 @@ async function detectViolations(message, state, profile) {
   if (wordBlacklistMatch) {
     violations.push({
       key: "word_blacklist",
-      heat: profileHeat(TEXT_RULES.wordBlacklist.heat),
+      heat: profileHeat(TEXT_RULES.wordBlacklist.heat, "wordBlacklist"),
       info:
         wordBlacklistMatch.term && wordBlacklistMatch.source
           ? `racist list (${wordBlacklistMatch.source}: ${wordBlacklistMatch.term})`
@@ -1596,12 +2317,12 @@ async function detectViolations(message, state, profile) {
   if (await hasBlacklistedDomain(moderationContent, extractedUrls)) {
     violations.push({
       key: "link_blacklist",
-      heat: profileHeat(TEXT_RULES.linkBlacklist.heat),
+      heat: profileHeat(TEXT_RULES.linkBlacklist.heat, "linkBlacklist"),
       info: "blacklisted domain",
     });
   }
 
-  if (TEXT_RULES.emojis.enabled) {
+  if (!spamWhitelisted && TEXT_RULES.emojis.enabled) {
     const emojiCount = countEmojiApprox(content);
     if (emojiCount >= TEXT_RULES.emojis.minCount) {
       violations.push({
@@ -1612,13 +2333,14 @@ async function detectViolations(message, state, profile) {
               2,
             ),
           ),
+          "emojis",
         ),
         info: `${emojiCount} emoji`,
       });
     }
   }
 
-  if (TEXT_RULES.newLines.enabled) {
+  if (!spamWhitelisted && TEXT_RULES.newLines.enabled) {
     const lineBreaks = (content.match(/\n/g) || []).length;
     if (lineBreaks >= TEXT_RULES.newLines.minCount) {
       violations.push({
@@ -1629,13 +2351,14 @@ async function detectViolations(message, state, profile) {
               TEXT_RULES.newLines.heat * WICK_EQUIV.textClusterMultiplier
             ).toFixed(2),
           ),
+          "newLines",
         ),
         info: `${lineBreaks} new lines`,
       });
     }
   }
 
-  if (TEXT_RULES.zalgo.enabled) {
+  if (!spamWhitelisted && TEXT_RULES.zalgo.enabled) {
     const zalgoCount = countZalgo(content);
     if (zalgoCount >= TEXT_RULES.zalgo.minCount) {
       violations.push({
@@ -1646,13 +2369,14 @@ async function detectViolations(message, state, profile) {
               2,
             ),
           ),
+          "zalgo",
         ),
         info: `${zalgoCount} combining chars`,
       });
     }
   }
 
-  if (TEXT_RULES.characters.enabled) {
+  if (!spamWhitelisted && TEXT_RULES.characters.enabled) {
     const { lower, upper, total } = countCaseCharacters(content);
     if (total >= TEXT_RULES.characters.minChars) {
       const upperRatio = total > 0 ? upper / total : 0;
@@ -1673,7 +2397,7 @@ async function detectViolations(message, state, profile) {
       if (heat > 0) {
         violations.push({
           key: "characters",
-          heat: profileHeat(heat),
+          heat: profileHeat(heat, "characters"),
           info: `lower:${lower} upper:${upper} ratio:${upperRatio.toFixed(2)}`,
         });
       }
@@ -1681,7 +2405,7 @@ async function detectViolations(message, state, profile) {
     }
   }
 
-  if (ATTACHMENT_RULES.enabled && attachmentsEnabled) {
+  if (!spamWhitelisted && ATTACHMENT_RULES.enabled && attachmentsEnabled) {
     const embedCount = Array.isArray(message.embeds) ? message.embeds.length : 0;
     const stickerCount = message.stickers?.size || 0;
     const attachmentList = [...(message.attachments?.values?.() || [])];
@@ -1692,35 +2416,35 @@ async function detectViolations(message, state, profile) {
     if (ATTACHMENT_RULES.embeds.enabled && embedCount > 0) {
       violations.push({
         key: "attachment_embed",
-        heat: profileHeat(embedCount * ATTACHMENT_RULES.embeds.heat),
+        heat: profileHeat(embedCount * ATTACHMENT_RULES.embeds.heat, "attachments"),
         info: `${embedCount} embed`,
       });
     }
     if (ATTACHMENT_RULES.images.enabled && imageCount > 0) {
       violations.push({
         key: "attachment_image",
-        heat: profileHeat(imageCount * ATTACHMENT_RULES.images.heat),
+        heat: profileHeat(imageCount * ATTACHMENT_RULES.images.heat, "attachments"),
         info: `${imageCount} image`,
       });
     }
     if (ATTACHMENT_RULES.files.enabled && fileCount > 0) {
       violations.push({
         key: "attachment_file",
-        heat: profileHeat(fileCount * ATTACHMENT_RULES.files.heat),
+        heat: profileHeat(fileCount * ATTACHMENT_RULES.files.heat, "attachments"),
         info: `${fileCount} file`,
       });
     }
     if (ATTACHMENT_RULES.links.enabled && linkCount > 0) {
       violations.push({
         key: "attachment_link",
-        heat: profileHeat(linkCount * ATTACHMENT_RULES.links.heat),
+        heat: profileHeat(linkCount * ATTACHMENT_RULES.links.heat, "attachments"),
         info: `${linkCount} link`,
       });
     }
     if (ATTACHMENT_RULES.stickers.enabled && stickerCount > 0) {
       violations.push({
         key: "attachment_sticker",
-        heat: profileHeat(stickerCount * ATTACHMENT_RULES.stickers.heat),
+        heat: profileHeat(stickerCount * ATTACHMENT_RULES.stickers.heat, "attachments"),
         info: `${stickerCount} sticker`,
       });
     }
@@ -1767,6 +2491,7 @@ function firstViolationLabel(violations = []) {
   const key = String(violations?.[0]?.key || "unknown");
   const labels = {
     regular_message: "Sending too many messages",
+    suspicious_account: "Suspicious account message",
     similar_message: "Sending similar messages",
     emoji_spam: "Using too many emojis",
     new_lines: "Using too many newlines",
@@ -2032,52 +2757,21 @@ async function deleteMessage(message, state, violations) {
 }
 
 async function timeoutMember(message, state, violations, options = {}) {
+  if (!AUTO_TIMEOUTS_ENABLED) return false;
   const canLogNow = options?.ignoreCooldown ? true : canActNow(message);
   const member = message.member;
   if (!member) return false;
-  const timeoutDurations = [REGULAR_TIMEOUT_MS];
-  if (violations.some((v) => v.key === "invite")) {
-    timeoutDurations.push(TEXT_RULES.inviteLinks.timeoutMs);
+  const timeoutProfile = computeNextAutoTimeoutDuration(message, nowMs());
+  let durationMs = Number(timeoutProfile.durationMs || REGULAR_TIMEOUT_MS);
+  const forcedDuration = Number(options?.forceDurationMs || 0);
+  if (Number.isFinite(forcedDuration) && forcedDuration > 0) {
+    durationMs = forcedDuration;
   }
-  if (violations.some((v) => v.key === "scam_pattern")) {
-    timeoutDurations.push(TEXT_RULES.maliciousLinks.timeoutMs);
+  const escalate1h = await shouldEscalateNextAutoTimeout(message);
+  if (escalate1h) {
+    durationMs = Math.max(durationMs, 60 * 60_000);
   }
-  if (violations.some((v) => v.key === "nsfw_link")) {
-    timeoutDurations.push(TEXT_RULES.nsfwLinks.timeoutMs);
-  }
-  if (violations.some((v) => v.key === "word_blacklist")) {
-    timeoutDurations.push(TEXT_RULES.wordBlacklist.timeoutMs);
-  }
-  if (violations.some((v) => v.key === "link_blacklist")) {
-    timeoutDurations.push(TEXT_RULES.linkBlacklist.timeoutMs);
-  }
-  if (
-    violations.some((v) =>
-      [
-        "mention_user",
-        "mention_role",
-        "mention_everyone",
-        "mention_hour_cap",
-        "mentions_lockdown",
-      ].includes(v.key),
-    )
-  ) {
-    timeoutDurations.push(MENTION_RULES.timeoutMs);
-  }
-  if (
-    violations.some((v) =>
-      [
-        "attachment_embed",
-        "attachment_image",
-        "attachment_file",
-        "attachment_link",
-        "attachment_sticker",
-      ].includes(v.key),
-    )
-  ) {
-    timeoutDurations.push(ATTACHMENT_RULES.timeoutMs);
-  }
-  const durationMs = Math.max(...timeoutDurations);
+  durationMs = Math.max(60_000, Math.min(DISCORD_TIMEOUT_MAX_MS, durationMs));
   const deleted = await message.delete().then(() => true).catch(() => false);
   if (!member?.moderatable) return false;
   const me = message.guild.members.me;
@@ -2089,13 +2783,20 @@ async function timeoutMember(message, state, violations, options = {}) {
     .then(() => true)
     .catch(() => false);
   if (!timedOut) return false;
+  await registerAutoModTimeoutStrike(message);
   if (canLogNow) {
     await markBadUserAction(message, "timeout", violations);
     await registerAutoModCase(message, "timeout", violations, {
       timeoutMs: durationMs,
     });
   }
-  state.heat = HEAT_RESET_ON_PUNISHMENT ? 0 : Math.max(35, state.heat * 0.45);
+  if (HEAT_RESET_ON_PUNISHMENT) {
+    state.heat = 0;
+  }
+  state.msgTimes = [];
+  state.normHistory = [];
+  state.mentionTimes = [];
+  state.mentionHourTimes = [];
   if (canLogNow) {
     await sendAutomodActionInChannel(message, "timeout", violations, {
       timeoutMs: durationMs,
@@ -2108,6 +2809,55 @@ async function timeoutMember(message, state, violations, options = {}) {
   return true;
 }
 
+function resolveInstantTimeoutOverrideMs(violations = []) {
+  let maxMs = 0;
+  for (const violation of Array.isArray(violations) ? violations : []) {
+    const key = String(violation?.key || "");
+    if (key === "regular_message") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.regularMessage.timeoutMs || 0));
+    } else if (key === "suspicious_account") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.suspiciousAccount.timeoutMs || 0));
+    } else if (key === "similar_message") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.similarMessage.timeoutMs || 0));
+    } else if (
+      key === "mention_user" ||
+      key === "mention_role" ||
+      key === "mention_everyone" ||
+      key === "mention_hour_cap" ||
+      key === "mentions_lockdown"
+    ) {
+      maxMs = Math.max(maxMs, Number(MENTION_RULES.timeoutMs || 0));
+    } else if (key === "invite") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.inviteLinks.timeoutMs || 0));
+    } else if (key === "scam_pattern") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.maliciousLinks.timeoutMs || 0));
+    } else if (key === "nsfw_link") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.nsfwLinks.timeoutMs || 0));
+    } else if (key === "word_blacklist") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.wordBlacklist.timeoutMs || 0));
+    } else if (key === "link_blacklist") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.linkBlacklist.timeoutMs || 0));
+    } else if (key === "emoji_spam") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.emojis.timeoutMs || 0));
+    } else if (key === "new_lines") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.newLines.timeoutMs || 0));
+    } else if (key === "zalgo") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.zalgo.timeoutMs || 0));
+    } else if (key === "characters") {
+      maxMs = Math.max(maxMs, Number(TEXT_RULES.characters.timeoutMs || 0));
+    } else if (
+      key === "attachment_embed" ||
+      key === "attachment_image" ||
+      key === "attachment_file" ||
+      key === "attachment_link" ||
+      key === "attachment_sticker"
+    ) {
+      maxMs = Math.max(maxMs, Number(ATTACHMENT_RULES.timeoutMs || 0));
+    }
+  }
+  return Number.isFinite(maxMs) && maxMs > 0 ? maxMs : 0;
+}
+
 async function runAutoModMessage(message) {
   const now = nowMs();
   if (now - Number(lastRuntimeCleanupAt || 0) >= RUNTIME_CLEANUP_INTERVAL_MS) {
@@ -2115,23 +2865,40 @@ async function runAutoModMessage(message) {
     lastRuntimeCleanupAt = now;
   }
   if (!message?.guild) return { blocked: false };
+  if (!AUTOMOD_ENABLED) return { blocked: false, action: "automod_disabled" };
   if (await isVerifiedBotMessage(message)) return { blocked: false };
   if (message.webhookId) {
+    if (
+      !AUTOMOD_MONITOR_UNWHITELISTED_WEBHOOKS ||
+      automodRuntimeConfig?.heatFilters?.webhookMessages === false
+    ) {
+      return { blocked: false, action: "webhook_filter_disabled" };
+    }
     const webhookId = String(message.webhookId);
     const authorId = String(message.author?.id || "");
     const applicationId = String(message.applicationId || "");
     const clientAppId = String(message.client?.user?.id || "");
 
-    if (CORE_EXEMPT_USER_IDS.has(authorId)) return { blocked: false };
+    if (
+      CORE_EXEMPT_USER_IDS.has(authorId) ||
+      isSecurityProfileImmune(String(message.guildId || ""), authorId)
+    ) {
+      return { blocked: false };
+    }
     if (TRUSTED_WEBHOOK_AUTHOR_IDS.has(authorId)) return { blocked: false };
     if (applicationId && TRUSTED_WEBHOOK_AUTHOR_IDS.has(applicationId)) {
       return { blocked: false };
     }
     if (
       applicationId &&
-      (applicationId === clientAppId || CORE_EXEMPT_USER_IDS.has(applicationId))
+      (applicationId === clientAppId ||
+        CORE_EXEMPT_USER_IDS.has(applicationId) ||
+        isSecurityProfileImmune(String(message.guildId || ""), applicationId))
     ) {
       return { blocked: false };
+    }
+    if (applicationId && (await isVerifiedBotUserId(message.client, applicationId))) {
+      return { blocked: false, action: "verified_bot_webhook_exempt" };
     }
     if (WHITELISTED_WEBHOOK_IDS.has(webhookId)) return { blocked: false };
     await message.delete().catch(() => {});
@@ -2182,11 +2949,15 @@ async function runAutoModMessage(message) {
   const thresholds = getThresholdsForProfile(profile);
   const state = getState(message);
   decayHeat(state);
-  const violations = await detectViolations(message, state, profile);
+  const rawViolations = await detectViolations(message, state, profile);
+  const legitConversation = looksLikeLegitConversation(
+    stripQuotedAndCodeText(String(message.content || "")) || String(message.content || ""),
+  );
+  const violations = normalizeViolationsForHeat(rawViolations, { legitConversation });
   if (!violations.length) return { blocked: false };
 
   const at = nowMs();
-  const shouldCountForPanic = violations.some((v) => INSTANT_LINK_KEYS.has(v.key));
+  const shouldCountForPanic = violations.length > 0;
   if (shouldCountForPanic) {
     state.automodHits.push(at);
     trimWindow(state.automodHits, PANIC_MODE.triggerWindowMs, at);
@@ -2252,10 +3023,11 @@ async function runAutoModMessage(message) {
   if (panicActive) {
     state.heat = MAX_HEAT;
     await markBadUserTrigger(message, violations, state.heat);
+    const instantOverrideMs = resolveInstantTimeoutOverrideMs(violations);
     const done = await timeoutMember(message, state, [
       ...violations,
       { key: "panic_mode", heat: 0, info: "elevated mode active" },
-    ], { ignoreCooldown: true });
+    ], { ignoreCooldown: true, forceDurationMs: instantOverrideMs });
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
       ...violations,
@@ -2274,8 +3046,10 @@ async function runAutoModMessage(message) {
   if (hasInstantLinkViolation) {
     state.heat = MAX_HEAT;
     await markBadUserTrigger(message, violations, state.heat);
+    const instantOverrideMs = resolveInstantTimeoutOverrideMs(violations);
     const done = await timeoutMember(message, state, violations, {
       ignoreCooldown: true,
+      forceDurationMs: instantOverrideMs,
     });
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
@@ -2293,7 +3067,10 @@ async function runAutoModMessage(message) {
   await markBadUserTrigger(message, violations, state.heat);
 
   if (state.heat >= thresholds.timeout) {
-    const done = await timeoutMember(message, state, violations);
+    const timeoutOverrideMs = resolveInstantTimeoutOverrideMs(violations);
+    const done = await timeoutMember(message, state, violations, {
+      forceDurationMs: timeoutOverrideMs,
+    });
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
     const deleted = await deleteMessage(message, state, [
       ...violations,
@@ -2381,6 +3158,21 @@ function getAutoModConfigSnapshot() {
   return JSON.parse(JSON.stringify(automodRuntimeConfig || DEFAULT_AUTOMOD_RUNTIME));
 }
 
+function getAutoModRulesSnapshot() {
+  return JSON.parse(
+    JSON.stringify({
+      status: {
+        enabled: Boolean(AUTOMOD_ENABLED),
+        antiSpamEnabled: Boolean(AUTOMOD_ANTISPAM_ENABLED),
+        monitorUnwhitelistedWebhooks: Boolean(AUTOMOD_MONITOR_UNWHITELISTED_WEBHOOKS),
+      },
+      textRules: TEXT_RULES,
+      mentionRules: MENTION_RULES,
+      attachmentRules: ATTACHMENT_RULES,
+    }),
+  );
+}
+
 function setByPath(target, pathExpr, value) {
   const path = String(pathExpr || "")
     .split(".")
@@ -2409,7 +3201,13 @@ function isFiniteNumber(value) {
 }
 
 function validateAutoModRuntimeConfig(cfg) {
+  const status = cfg?.status || {};
   const t = cfg?.thresholds || {};
+  const hs = cfg?.heatSystem || {};
+  const at = cfg?.autoTimeouts || {};
+  const al = cfg?.autoLockdown || {};
+  const hf = cfg?.heatFactors || {};
+  const hc = cfg?.heatCaps || {};
   const p = cfg?.panic || {};
   if (!isFiniteNumber(t.warn) || Number(t.warn) < 0 || Number(t.warn) > 200) {
     return { ok: false, reason: "invalid_threshold_warn" };
@@ -2422,6 +3220,69 @@ function validateAutoModRuntimeConfig(cfg) {
   }
   if (!(Number(t.warn) <= Number(t.delete) && Number(t.delete) <= Number(t.timeout))) {
     return { ok: false, reason: "invalid_threshold_order" };
+  }
+  if (
+    typeof status.enabled !== "boolean" ||
+    typeof status.antiSpamEnabled !== "boolean" ||
+    typeof status.monitorUnwhitelistedWebhooks !== "boolean"
+  ) {
+    return { ok: false, reason: "invalid_status_toggles" };
+  }
+  const heatChecks = [
+    ["maxHeat", hs.maxHeat, 50, 200],
+    ["decayPerSec", hs.decayPerSec, 0, 10],
+  ];
+  for (const [key, value, min, max] of heatChecks) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < min || n > max) {
+      return { ok: false, reason: `invalid_heat_${key}` };
+    }
+  }
+  const autoTimeoutChecks = [
+    ["regularStrikeDurationMs", at.regularStrikeDurationMs, 30_000, 24 * 60 * 60_000],
+    ["capStrikeDurationMs", at.capStrikeDurationMs, 30_000, 28 * 24 * 60 * 60_000],
+    ["capStrike", at.capStrike, 2, 20],
+    ["multiplierPercent", at.multiplierPercent, 100, 500],
+    ["profileResetMs", at.profileResetMs, 60_000, 7 * 24 * 60 * 60_000],
+  ];
+  for (const [key, value, min, max] of autoTimeoutChecks) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < min || n > max) {
+      return { ok: false, reason: `invalid_autotimeout_${key}` };
+    }
+  }
+  if (Number(at.capStrikeDurationMs) < Number(at.regularStrikeDurationMs)) {
+    return { ok: false, reason: "invalid_autotimeout_cap_duration" };
+  }
+  const autoLockdownChecks = [
+    ["mentionTrigger", al.mentionTrigger, 5, 200],
+    ["mentionWindowMs", al.mentionWindowMs, 1_000, 60_000],
+    ["mentionHourCap", al.mentionHourCap, 5, 400],
+  ];
+  for (const [key, value, min, max] of autoLockdownChecks) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < min || n > max) {
+      return { ok: false, reason: `invalid_autolockdown_${key}` };
+    }
+  }
+  for (const [key, value] of Object.entries(hf || {})) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < 0 || n > 5) {
+      return { ok: false, reason: `invalid_heatfactor_${key}` };
+    }
+  }
+  const heatCapChecks = [
+    ["maxPerMessage", hc.maxPerMessage, 20, 200],
+    ["charactersMax", hc.charactersMax, 5, 150],
+    ["textClusterMax", hc.textClusterMax, 5, 150],
+    ["attachmentClusterMax", hc.attachmentClusterMax, 5, 150],
+    ["mentionClusterMax", hc.mentionClusterMax, 5, 200],
+  ];
+  for (const [key, value, min, max] of heatCapChecks) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n < min || n > max) {
+      return { ok: false, reason: `invalid_heatcap_${key}` };
+    }
   }
 
   const panicChecks = [
@@ -2464,6 +3325,7 @@ module.exports = {
   isAutoModRoleExemptMember,
   getAutoModDashboardData,
   getAutoModConfigSnapshot,
+  getAutoModRulesSnapshot,
   updateAutoModConfig,
   isPanicModeActiveForGuild: isPanicModeActive,
   getAutoModPanicSnapshot,

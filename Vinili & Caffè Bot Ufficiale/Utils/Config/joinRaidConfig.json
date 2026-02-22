@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "triggerAction": "ban",
+  "triggerType": "unique",
+  "accountType": "any",
+  "punishOnActiveRaid": true,
+  "triggerCount": 10,
+  "triggerWindowMs": 10800000,
+  "raidDurationMs": 1800000,
+  "warnedRoleIds": [
+    "1442568894349840435"
+  ],
+  "idFlag": {
+    "enabled": true,
+    "categorization": "adaptive",
+    "minimumMatches": 4,
+    "compareWindowMs": 10800000,
+    "createdAtDeltaMs": 1200000
+  },
+  "noPfpFlag": {
+    "enabled": true
+  },
+  "ageFlag": {
+    "enabled": true,
+    "minimumAgeMs": 259200000
+  }
+}

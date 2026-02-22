@@ -3,6 +3,7 @@ const path = require("path");
 const os = require("os");
 const mongoose = require("mongoose");
 const IDs = require("../../Utils/Config/ids");
+const { isSecurityProfileImmune } = require("../Moderation/securityProfilesService");
 
 const DATA_DIR = path.resolve(__dirname, "../../Data/Dashboard");
 const STATE_PATH = path.join(DATA_DIR, "controlCenter.json");
@@ -160,6 +161,7 @@ function hasMaintenanceBypass(member, guildOwnerId = "") {
   if (!member) return false;
   const memberId = String(member.id || member.user?.id || "");
   if (memberId && String(guildOwnerId || "") === memberId) return true;
+  if (isSecurityProfileImmune(String(member?.guild?.id || ""), memberId)) return true;
   const fromCache = BYPASS_ROLE_IDS.some((roleId) => member.roles?.cache?.has?.(roleId));
   if (fromCache) return true;
   if (Array.isArray(member.roles)) {

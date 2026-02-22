@@ -1,4 +1,4 @@
-﻿const securityCommand = require("./security");
+﻿const securityCommand = require("../Admin/security");
 
 module.exports = {
   name: "status",

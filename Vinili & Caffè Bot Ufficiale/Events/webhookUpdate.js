@@ -1,6 +1,10 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const { handleWebhookCreationAction: antiNukeHandleWebhookCreationAction, handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction, } = require("../Services/Moderation/antiNukeService");
+const {
+  handleWebhookCreationAction: antiNukeHandleWebhookCreationAction,
+  handleWebhookUpdateAction: antiNukeHandleWebhookUpdateAction,
+  handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction,
+} = require("../Services/Moderation/antiNukeService");
 
 const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
 const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;
@@ -32,6 +36,19 @@ function webhookTypeLabel(value) {
   if (type === 2) return "Channel Follower";
   if (type === 3) return "Application";
   return `Sconosciuto (${type || 0})`;
+}
+
+async function shouldMonitorExecutor(guild, executor) {
+  if (!guild || !executor?.id) return false;
+  if (executor.bot) return false;
+  const highStaffRoleId = String(IDs?.roles?.HighStaff || "").trim();
+  if (!highStaffRoleId) return true;
+
+  const member =
+    guild.members.cache.get(String(executor.id)) ||
+    (await guild.members.fetch(String(executor.id)).catch(() => null));
+  if (!member) return true;
+  return !member.roles.cache.has(highStaffRoleId);
 }
 
 async function resolveLogChannel(guild) {
@@ -133,6 +150,7 @@ module.exports = {
       const targetName = String(entry?.target?.name || "sconosciuto");
       const targetId = String(entry?.target?.id || "sconosciuto");
       const action = Number(entry.action || 0);
+      const monitorableExecutor = await shouldMonitorExecutor(guild, entry.executor);
 
       let title = "Webhook Update";
       let color = "#F59E0B";
@@ -190,7 +208,7 @@ module.exports = {
         lines.push(`<:VC_right_arrow:1473441155055096081> **Type:** ${typeText}`);
       }
 
-      if (logChannel?.isTextBased?.()) {
+      if (monitorableExecutor && logChannel?.isTextBased?.()) {
         const embed = new EmbedBuilder().setColor(color).setTitle(title).setDescription(lines.join("\n"));
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }
@@ -202,6 +220,12 @@ module.exports = {
           executorId,
           webhookId: targetWebhookId,
           channelId: String(channel?.id || entry?.extra?.channel?.id || ""),
+        });
+      } else if (action === WEBHOOK_UPDATE_ACTION) {
+        await antiNukeHandleWebhookUpdateAction({
+          guild,
+          executorId,
+          webhookId: targetWebhookId,
         });
       } else if (action === WEBHOOK_DELETE_ACTION) {
         await antiNukeHandleWebhookDeletionAction({

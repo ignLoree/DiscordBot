@@ -264,29 +264,40 @@
             ],
             "subcommands": {
                 "status": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "health": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "drill": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "backup": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
+                "profiles": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
                 "joingate": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "join-gate": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "jg": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "raid": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "panic": [
                     "roles.Founder",
@@ -297,15 +308,27 @@
                     "roles.CoFounder"
                 ],
                 "preset": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "antinuke": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "automod": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ]
             }
+        },
+        "statics": {
+            "roles": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ]
         },
         "customregister": {
             "roles": [
@@ -536,6 +559,14 @@
             }
         },
         "me": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569138114662490"
+            ]
+        },
+        "user": {
             "roles": [
                 "roles.Member"
             ],
@@ -1132,6 +1163,8 @@
             "roles.HighStaff",
             "roles.PartnerManager"
         ],
+        "ticket_autoclose_accept": null,
+        "ticket_autoclose_reject": null,
         "customrole_color:*": {
             "ownerSegment": 1
         },
@@ -1292,6 +1325,18 @@
         "stats_me_refresh*": {
             "ownerSegment": 1
         },
+        "stats_user_period_back*": {
+            "ownerSegment": 1
+        },
+        "stats_user_period_open*": {
+            "ownerSegment": 1
+        },
+        "stats_user_period_set*": {
+            "ownerSegment": 1
+        },
+        "stats_user_refresh*": {
+            "ownerSegment": 1
+        },
         "stats_server_refresh*": {
             "ownerSegment": 1
         },
@@ -1320,6 +1365,9 @@
             "ownerSegment": 1
         },
         "stats_top_channel_refresh*": {
+            "ownerSegment": 1
+        },
+        "statics:*": {
             "ownerSegment": 1
         },
         "stats_top_channel_view_select*": {

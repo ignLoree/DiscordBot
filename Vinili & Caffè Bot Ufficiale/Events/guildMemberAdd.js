@@ -11,9 +11,16 @@ const {
   getJoinRaidStatusSnapshot,
   registerJoinRaidSecuritySignal,
 } = require("../Services/Moderation/joinRaidService");
+const {
+  getJoinGateConfigSnapshot,
+} = require("../Services/Moderation/joinGateService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const { applyRolePersistForMember } = require("../Services/Moderation/rolePersistService");
+const {
+  isSecurityProfileImmune,
+  hasAdminsProfileCapability,
+} = require("../Services/Moderation/securityProfilesService");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -22,7 +29,6 @@ const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || "1468938195348754515";
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
 const INVITE_REWARD_TARGET = 5;
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
-const MIN_ACCOUNT_AGE_DAYS = 3;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const JOIN_GATE_WHITELIST_ROLE_IDS = new Set(
   [
@@ -39,43 +45,15 @@ const CORE_EXEMPT_USER_IDS = new Set([
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
-const JOIN_GATE = {
-  botAdditions: {
-    enabled: true,
-    action: "kick",
-  },
-  unverifiedBotAdditions: {
-    enabled: true,
-    action: "kick",
-  },
-  suspiciousAccount: {
-    enabled: true,
-    action: "log",
-  },
-  advertisingName: {
-    enabled: true,
-    action: "kick",
-  },
-  usernameFilter: {
-    enabled: true,
-    action: "kick",
-    strictWords: [
-      "discord staff",
-      "discord support",
-      "nitro free",
-      "steam gift",
-      "free nitro",
-      "airdrop",
-    ],
-    wildcardWords: [
-      "*discord*support*",
-      "*discord*staff*",
-      "*nitro*free*",
-      "*steam*gift*",
-      "*crypto*airdrop*",
-    ],
-  },
-};
+function isConfiguredExempt(guild, userId, member = null) {
+  const uid = String(userId || "");
+  if (!uid) return false;
+  if (CORE_EXEMPT_USER_IDS.has(uid)) return true;
+  if (String(guild?.ownerId || "") === uid) return true;
+  if (hasAdminsProfileCapability(member, "fullImmunity")) return true;
+  if (isSecurityProfileImmune(String(guild?.id || ""), uid)) return true;
+  return false;
+}
 
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
@@ -378,7 +356,7 @@ async function sendBotAddLog(member) {
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
-async function handleBotJoin(member) {
+async function handleBotJoin(member, joinGateConfig) {
   queueIdsCatalogSync(member.client, member.guild.id, "botJoin");
   await sendBotAddLog(member).catch(() => {});
   await sendJoinGateNoAvatarLog(member).catch(() => {});
@@ -390,29 +368,37 @@ async function handleBotJoin(member) {
     : "sconosciuto";
   const verifiedBot = await isVerifiedBot(member.user);
 
-  if (JOIN_GATE.unverifiedBotAdditions.enabled && !verifiedBot) {
+  if (
+    joinGateConfig?.enabled &&
+    joinGateConfig?.unverifiedBotAdditions?.enabled &&
+    !verifiedBot
+  ) {
     const result = await kickForJoinGate(member, "Unverified bot addition.", [
       `${ARROW} **Rule:** Unverified Bot Additions`,
       `${ARROW} **Responsible:** ${executorText}`,
-    ], JOIN_GATE.unverifiedBotAdditions.action);
+    ], joinGateConfig?.unverifiedBotAdditions?.action || "kick");
     if (result?.blocked) return;
   }
 
-  if (JOIN_GATE.botAdditions.enabled) {
-    const authorized = executorId
-      ? await isAuthorizedBotAdder(member.guild, executorId)
-      : false;
-    if (!authorized) {
-      const result = await kickForJoinGate(
-        member,
-        "Bot added by unauthorized member.",
-        [
-          `${ARROW} **Rule:** Bot Additions`,
-          `${ARROW} **Responsible:** ${executorText}${executorId ? "" : " (audit unavailable)"}`,
-        ],
-        JOIN_GATE.botAdditions.action,
+  if (joinGateConfig?.enabled && joinGateConfig?.botAdditions?.enabled) {
+    if (!executorId) {
+      global.logger?.warn?.(
+        `[JoinGate] botAdditions skipped (audit unavailable) target=${member.user?.id || "unknown"}`,
       );
-      if (result?.blocked) return;
+    } else {
+      const authorized = await isAuthorizedBotAdder(member.guild, executorId);
+      if (!authorized) {
+        const result = await kickForJoinGate(
+          member,
+          "Bot added by unauthorized member.",
+          [
+            `${ARROW} **Rule:** Bot Additions`,
+            `${ARROW} **Responsible:** ${executorText}`,
+          ],
+          joinGateConfig?.botAdditions?.action || "kick",
+        );
+        if (result?.blocked) return;
+      }
     }
   }
 
@@ -460,8 +446,9 @@ async function handleBotJoin(member) {
   } catch {}
 }
 
-function isTooYoungAccount(member) {
-  const minAgeMs = MIN_ACCOUNT_AGE_DAYS * 24 * 60 * 60 * 1000;
+function isTooYoungAccount(member, minAgeDays = 3) {
+  const safeMinDays = Math.max(0, Number(minAgeDays || 0));
+  const minAgeMs = safeMinDays * 24 * 60 * 60 * 1000;
   const accountAgeMs = Date.now() - member.user.createdAt.getTime();
   return accountAgeMs < minAgeMs;
 }
@@ -501,7 +488,7 @@ function wildcardToRegex(pattern) {
   return new RegExp(`^${escaped}$`, "i");
 }
 
-function matchUsernameFilters(candidate, rules = JOIN_GATE.usernameFilter) {
+function matchUsernameFilters(candidate, rules) {
   if (!rules?.enabled) return null;
   const normalized = normalizeText(candidate);
   if (!normalized) return null;
@@ -595,11 +582,11 @@ async function isVerifiedBot(user) {
 
 async function isAuthorizedBotAdder(guild, executorId) {
   if (!guild || !executorId) return false;
-  if (CORE_EXEMPT_USER_IDS.has(String(executorId))) return true;
-  if (String(guild.ownerId || "") === String(executorId)) return true;
-  const executor =
-    guild.members.cache.get(executorId) ||
-    (await guild.members.fetch(executorId).catch(() => null));
+  const executorMember =
+    guild.members.cache.get(String(executorId || "")) ||
+    (await guild.members.fetch(String(executorId || "")).catch(() => null));
+  if (isConfiguredExempt(guild, executorId, executorMember)) return true;
+  const executor = executorMember;
   if (!executor) return false;
   if (
     executor.permissions.has(PermissionsBitField.Flags.Administrator) ||
@@ -633,7 +620,7 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
 
 async function kickForJoinGate(member, reason, extraLines = [], action = "kick") {
   const me = member.guild.members.me;
-  const normalizedAction = ["kick", "ban", "log"].includes(
+  const normalizedAction = ["kick", "ban", "timeout", "log"].includes(
     String(action || "").toLowerCase(),
   )
     ? String(action || "").toLowerCase()
@@ -660,6 +647,11 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     // Fall back from ban to kick if ban is unavailable but kick is possible.
     punished = await member.kick(reason).then(() => true).catch(() => false);
     if (punished) appliedAction = "kick";
+  } else if (normalizedAction === "timeout" && canTimeout) {
+    punished = await member
+      .timeout(6 * 60 * 60_000, `JoinGate timeout: ${reason}`)
+      .then(() => true)
+      .catch(() => false);
   }
   if (!punished && normalizedAction !== "log" && canTimeout) {
     punished = await member
@@ -672,7 +664,12 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     appliedAction = "log";
   }
   let dmSent = false;
-  if (appliedAction !== "log" && punished) {
+  const joinGateCfg = getJoinGateConfigSnapshot();
+  const dmPunishedMembers =
+    typeof joinGateCfg?.dmPunishedMembers === "boolean"
+      ? joinGateCfg.dmPunishedMembers
+      : true;
+  if (appliedAction !== "log" && punished && dmPunishedMembers) {
     dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   }
   const blocked = appliedAction === "log" ? false : punished;
@@ -777,13 +774,15 @@ async function sendSuspiciousAccountLog(member, reason) {
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 
-async function handleTooYoungAccount(member) {
+async function handleTooYoungAccount(member, joinGateConfig = null) {
   const createdTs = toUnix(member.user.createdAt);
+  const cfg = joinGateConfig || getJoinGateConfigSnapshot();
+  const minAgeDays = Number(cfg?.newAccounts?.minAgeDays || 3);
   await kickForJoinGate(member, "Account is too young to be allowed.", [
     `${ARROW} **Rule:** Minimum Account Age`,
     `${ARROW} **Account Age:** <t:${createdTs}:R>`,
-    `${ARROW} **Minimum Age:** ${MIN_ACCOUNT_AGE_DAYS} days`,
-  ], "kick");
+    `${ARROW} **Minimum Age:** ${minAgeDays} days`,
+  ], cfg?.newAccounts?.action || "kick");
 }
 
 async function sendJoinLog(member) {
@@ -929,9 +928,8 @@ module.exports = {
   async execute(member) {
     try {
       if (!member?.guild || !member?.user) return;
-      const isCoreExempt =
-        CORE_EXEMPT_USER_IDS.has(String(member?.id || "")) ||
-        String(member?.guild?.ownerId || "") === String(member?.id || "");
+      const joinGateConfig = getJoinGateConfigSnapshot();
+      const isCoreExempt = isConfiguredExempt(member?.guild, member?.id, member);
       if (!isCoreExempt) {
         const lockState = await getSecurityLockState(member.guild);
         if (lockState.joinLockActive) {
@@ -954,12 +952,8 @@ module.exports = {
           return;
         }
         await sendJoinLog(member);
-        await handleBotJoin(member);
+        await handleBotJoin(member, joinGateConfig);
         return;
-      }
-
-      if (!isCoreExempt) {
-        await sendJoinGateNoAvatarLog(member).catch(() => {});
       }
 
       let joinRaidResult = { blocked: false };
@@ -999,39 +993,63 @@ module.exports = {
         return;
       }
 
-      if (isTooYoungAccount(member)) {
-        await handleTooYoungAccount(member);
+      if (
+        joinGateConfig?.enabled &&
+        joinGateConfig?.newAccounts?.enabled &&
+        isTooYoungAccount(member, joinGateConfig?.newAccounts?.minAgeDays)
+      ) {
+        await handleTooYoungAccount(member, joinGateConfig);
         return;
+      }
+
+      if (
+        joinGateConfig?.enabled &&
+        joinGateConfig?.noAvatar?.enabled &&
+        hasNoAvatar(member)
+      ) {
+        const result = await kickForJoinGate(
+          member,
+          "Account has no avatar.",
+          [
+            `${ARROW} **Rule:** No Avatar`,
+          ],
+          joinGateConfig?.noAvatar?.action || "log",
+        );
+        if (result?.blocked) {
+          return;
+        }
       }
 
       const nameCandidate = getJoinGateNameCandidate(member);
 
       if (
-        JOIN_GATE.advertisingName.enabled &&
+        joinGateConfig?.enabled &&
+        joinGateConfig?.advertisingName?.enabled &&
         inviteLikeInName(nameCandidate)
       ) {
         const result = await kickForJoinGate(member, "Advertising invite link in username.", [
           `${ARROW} **Rule:** Advertising Name`,
           `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ], JOIN_GATE.advertisingName.action);
+        ], joinGateConfig?.advertisingName?.action || "kick");
         if (result?.blocked) return;
       }
 
-      const usernameMatch = matchUsernameFilters(nameCandidate);
+      const usernameMatch = joinGateConfig?.enabled
+        ? matchUsernameFilters(nameCandidate, joinGateConfig?.usernameFilter)
+        : null;
       if (usernameMatch) {
         const result = await kickForJoinGate(member, "Username matches blocked pattern.", [
           `${ARROW} **Rule:** Username Filter`,
           `${ARROW} **Match Type:** ${usernameMatch.type}`,
           `${ARROW} **Match:** ${usernameMatch.value}`,
           `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ], JOIN_GATE.usernameFilter.action);
+        ], joinGateConfig?.usernameFilter?.action || "kick");
         if (result?.blocked) return;
       }
 
-      if (JOIN_GATE.suspiciousAccount.enabled) {
+      if (joinGateConfig?.enabled && joinGateConfig?.suspiciousAccount?.enabled) {
         const suspiciousReason = detectSuspiciousAccount(member);
         if (suspiciousReason) {
-          await sendSuspiciousAccountLog(member, suspiciousReason).catch(() => {});
           const result = await kickForJoinGate(
             member,
             `Suspicious account: ${suspiciousReason}`,
@@ -1039,7 +1057,7 @@ module.exports = {
               `${ARROW} **Rule:** Suspicious Account`,
               `${ARROW} **Reason:** ${suspiciousReason}`,
             ],
-            "log",
+            joinGateConfig?.suspiciousAccount?.action || "log",
           );
           if (result?.blocked) return;
         }

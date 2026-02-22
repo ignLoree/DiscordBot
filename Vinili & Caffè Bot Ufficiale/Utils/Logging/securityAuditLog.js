@@ -1,5 +1,6 @@
 ﻿const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
+const { getSecurityStaticsSnapshot } = require("../../Services/Moderation/securityProfilesService");
 
 const DEFAULT_LOG_CHANNEL_IDS = [
   IDs.channels?.activityLogs,
@@ -8,8 +9,17 @@ const DEFAULT_LOG_CHANNEL_IDS = [
 ].filter(Boolean).map(String);
 
 async function resolveSecurityLogChannel(guild) {
-  if (!guild || !DEFAULT_LOG_CHANNEL_IDS.length) return null;
-  for (const channelId of DEFAULT_LOG_CHANNEL_IDS) {
+  if (!guild) return null;
+  const statics = getSecurityStaticsSnapshot(String(guild.id || ""));
+  const dynamicIds = [
+    statics?.modLoggingChannelId,
+    statics?.loggingChannelId,
+  ]
+    .filter(Boolean)
+    .map(String);
+  const candidates = [...dynamicIds, ...DEFAULT_LOG_CHANNEL_IDS];
+  if (!candidates.length) return null;
+  for (const channelId of candidates) {
     const channel =
       guild.channels.cache.get(channelId) ||
       (await guild.channels.fetch(channelId).catch(() => null));

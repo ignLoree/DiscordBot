@@ -17,12 +17,12 @@ let cleanupHandle = null;
 function buildCloseRequestRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId("accetta")
+      .setCustomId("ticket_autoclose_accept")
       .setEmoji("<:vegacheckmark:1443666279058772028>")
       .setLabel("Accetta e chiudi")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
-      .setCustomId("rifiuta")
+      .setCustomId("ticket_autoclose_reject")
       .setEmoji("<:vegax:1443934876440068179>")
       .setLabel("Rifiuta e mantieni aperto")
       .setStyle(ButtonStyle.Secondary),

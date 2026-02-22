@@ -18,6 +18,7 @@ const recentQuestionKeysByChannel = new Map();
 
 const REWARD_CHANNEL_ID = IDs.channels.commands;
 const MINIGAME_WIN_EMOJI = "<a:VC_Verified:1448687631109197978>";
+const MINIGAME_CORRECT_FALLBACK_EMOJI = "✅";
 const MINIGAMES_ITALIAN_ONLY = true;
 const EXP_REWARDS = [
   { exp: 100, roleId: IDs.roles.Initiate },
@@ -557,6 +558,16 @@ function normalizeCountryName(raw) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeUserAnswerText(raw) {
+  return String(raw || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\u00A0/g, " ")
+    .replace(/[`´‘’‚‛′]/g, "'")
+    .replace(/[“”„‟]/g, '"')
+    .replace(/[‐‑‒–—−]/g, "-")
     .trim();
 }
 
@@ -1370,6 +1381,110 @@ function createMathQuestion() {
   return pick();
 }
 
+function parseMathGuess(raw) {
+  const base = normalizeUserAnswerText(raw)
+    .replace(/\s+/g, "")
+    .replace(/,/g, ".")
+    .replace(/×/g, "*")
+    .replace(/÷/g, "/");
+  if (!base) return null;
+  if (/^-?\d+(\.\d+)?$/.test(base)) {
+    const value = Number(base);
+    return Number.isFinite(value) ? value : null;
+  }
+  if (!/^[0-9+\-*/().]+$/.test(base)) return null;
+  try {
+    const evaluated = Number(Function(`"use strict"; return (${base});`)());
+    return Number.isFinite(evaluated) ? evaluated : null;
+  } catch {
+    return null;
+  }
+}
+
+function wrapPromptText(ctx, text, maxWidth) {
+  const source = String(text || "").replace(/\s+/g, " ").trim();
+  if (!source) return [""];
+  const words = source.split(" ");
+  const lines = [];
+  let current = "";
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (current) lines.push(current);
+    if (ctx.measureText(word).width <= maxWidth) {
+      current = word;
+      continue;
+    }
+    let chunk = "";
+    for (const ch of word) {
+      const chunkCandidate = `${chunk}${ch}`;
+      if (ctx.measureText(chunkCandidate).width <= maxWidth) {
+        chunk = chunkCandidate;
+      } else {
+        if (chunk) lines.push(chunk);
+        chunk = ch;
+      }
+    }
+    current = chunk;
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [source];
+}
+
+function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame") {
+  try {
+    const width = 1400;
+    const height = 780;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, "#141a26");
+    grad.addColorStop(1, "#3b2f25");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = "rgba(111, 78, 55, 0.88)";
+    ctx.fillRect(40, 40, width - 80, height - 80);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#f7f1e8";
+    ctx.font = "bold 68px Sans";
+    ctx.fillText(String(title || "Minigioco"), width / 2, 92);
+
+    const usableWidth = width - 220;
+    const sourceLines = Array.isArray(lines)
+      ? lines.map((line) => String(line || "").trim()).filter(Boolean)
+      : [];
+    const renderedLines = [];
+    for (const line of sourceLines) {
+      ctx.font = "bold 56px Sans";
+      renderedLines.push(...wrapPromptText(ctx, line, usableWidth));
+    }
+    if (!renderedLines.length) renderedLines.push("...");
+
+    ctx.font = "bold 56px Sans";
+    const lineHeight = 76;
+    const totalHeight = renderedLines.length * lineHeight;
+    let y = Math.max(220, Math.round((height - totalHeight) / 2));
+    for (const line of renderedLines) {
+      ctx.fillText(line, width / 2, y, usableWidth);
+      y += lineHeight;
+    }
+
+    const name = `${String(fileBaseName || "minigame")
+      .replace(/[^a-z0-9_-]/gi, "_")
+      .toLowerCase()}.png`;
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), { name });
+  } catch {
+    return null;
+  }
+}
+
 function buildMathExpressionImageAttachment(expression) {
   try {
     const width = 1200;
@@ -1401,6 +1516,10 @@ function maskHangmanWord(word, guessed = new Set()) {
     .split("")
     .map((ch) => (guessed.has(ch) ? ch : "_"))
     .join(" ");
+}
+
+function countHangmanLetters(word) {
+  return String(word || "").replace(/\s+/g, "").length;
 }
 
 function levenshteinDistance(aRaw, bRaw) {
@@ -2104,6 +2223,7 @@ function buildGuessRegionCapitalEmbed(
   rewardExp,
   durationMs,
   imageUrl = null,
+  imageName = null,
 ) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
@@ -2115,7 +2235,8 @@ function buildGuessRegionCapitalEmbed(
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
-  if (imageUrl) embed.setImage(imageUrl);
+  if (imageName) embed.setImage(`attachment://${imageName}`);
+  else if (imageUrl) embed.setImage(imageUrl);
   return embed;
 }
 
@@ -2186,18 +2307,49 @@ function buildHangmanEmbed(
   durationMs,
 ) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
+  const letters = countHangmanLetters(maskedWord);
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Impiccato .ᐟ ✧")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
-        `Parola: **${maskedWord}**`,
+        `Parola: \`${maskedWord}\``,
+        `Lettere: **${letters}**`,
         `Errori: **${misses}/${maxMisses}**`,
         `Ricompensa: **${rewardExp} exp**`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
+}
+
+function buildRegionNameImageAttachment(regionName) {
+  const safeRegion = String(regionName || "").trim();
+  if (!safeRegion) return null;
+  try {
+    const width = 1200;
+    const height = 420;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#101522";
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = "#6f4e37";
+    ctx.fillRect(24, 24, width - 48, height - 48);
+    ctx.fillStyle = "#f7f1e8";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 52px Sans";
+    ctx.fillText("Regione", width / 2, 140);
+    ctx.font = "bold 96px Sans";
+    ctx.fillText(safeRegion, width / 2, 250, width - 120);
+
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), {
+      name: "region_name.png",
+    });
+  } catch {
+    return null;
+  }
 }
 
 function buildItalianGkEmbed(question, rewardExp, durationMs) {
@@ -2711,8 +2863,20 @@ async function startGuessNumberGame(client, cfg) {
   if (roleId) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
+  const numberAttachment = buildPromptImageAttachment(
+    "Indovina il numero",
+    [`${min} - ${max}`],
+    "guess_number",
+  );
+  const numberEmbed = buildGuessNumberEmbed(min, max, rewardExp, durationMs);
+  if (numberAttachment) {
+    numberEmbed.setImage(`attachment://${numberAttachment.name}`);
+  }
   const gameMessage = await channel
-    .send({ embeds: [buildGuessNumberEmbed(min, max, rewardExp, durationMs)] })
+    .send({
+      embeds: [numberEmbed],
+      files: numberAttachment ? [numberAttachment] : [],
+    })
     .catch(() => null);
 
   const timeout = setTimeout(async () => {
@@ -2790,8 +2954,20 @@ async function startGuessWordGame(client, cfg) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
   const scrambled = shuffleString(target);
+  const wordAttachment = buildPromptImageAttachment(
+    "Indovina la parola",
+    [scrambled],
+    "guess_word",
+  );
+  const wordEmbed = buildGuessWordEmbed(scrambled, rewardExp, durationMs);
+  if (wordAttachment) {
+    wordEmbed.setImage(`attachment://${wordAttachment.name}`);
+  }
   const gameMessage = await channel
-    .send({ embeds: [buildGuessWordEmbed(scrambled, rewardExp, durationMs)] })
+    .send({
+      embeds: [wordEmbed],
+      files: wordAttachment ? [wordAttachment] : [],
+    })
     .catch(() => null);
 
   const timeout = setTimeout(async () => {
@@ -2941,10 +3117,26 @@ async function startGuessPlayerGame(client, cfg) {
   if (roleId) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
+  const playerFallbackAttachment = !info.image
+    ? buildPromptImageAttachment(
+        "Indovina il calciatore",
+        [buildMaskedTextHint(info.name) || info.name],
+        "guess_player",
+      )
+    : null;
+  const playerEmbed = buildGuessPlayerEmbed(
+    rewardExp,
+    durationMs,
+    info.image || null,
+  );
+  if (playerFallbackAttachment) {
+    playerEmbed.setImage(`attachment://${playerFallbackAttachment.name}`);
+  }
 
   const gameMessage = await channel
     .send({
-      embeds: [buildGuessPlayerEmbed(rewardExp, durationMs, info.image)],
+      embeds: [playerEmbed],
+      files: playerFallbackAttachment ? [playerFallbackAttachment] : [],
     })
     .catch(() => null);
 
@@ -3215,11 +3407,21 @@ async function startGuessRegionCapitalGame(client, cfg) {
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
   const image = await fetchWikiRegionImage(pick.region);
+  const regionNameAttachment = !image
+    ? buildRegionNameImageAttachment(pick.region)
+    : null;
   const gameMessage = await channel
     .send({
       embeds: [
-        buildGuessRegionCapitalEmbed(pick.region, rewardExp, durationMs, image),
+        buildGuessRegionCapitalEmbed(
+          pick.region,
+          rewardExp,
+          durationMs,
+          image,
+          regionNameAttachment?.name || null,
+        ),
       ],
+      files: regionNameAttachment ? [regionNameAttachment] : [],
     })
     .catch(() => null);
 
@@ -3310,8 +3512,20 @@ async function startFastTypeGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const fastTypeAttachment = buildPromptImageAttachment(
+    "Scrivi la frase",
+    [phrase],
+    "fast_type",
+  );
+  const fastTypeEmbed = buildFastTypeEmbed(phrase, rewardExp, durationMs);
+  if (fastTypeAttachment) {
+    fastTypeEmbed.setImage(`attachment://${fastTypeAttachment.name}`);
+  }
   const gameMessage = await channel
-    .send({ embeds: [buildFastTypeEmbed(phrase, rewardExp, durationMs)] })
+    .send({
+      embeds: [fastTypeEmbed],
+      files: fastTypeAttachment ? [fastTypeAttachment] : [],
+    })
     .catch(() => null);
 
   const timeout = setTimeout(async () => {
@@ -3616,11 +3830,25 @@ async function startHangmanGame(client, cfg) {
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
   const guessedLetters = [];
   const maskedWord = maskHangmanWord(word, new Set(guessedLetters));
+  const hangmanAttachment = buildPromptImageAttachment(
+    "Impiccato",
+    [maskedWord, `Errori: 0/${maxMisses}`],
+    "hangman",
+  );
+  const hangmanEmbed = buildHangmanEmbed(
+    maskedWord,
+    0,
+    maxMisses,
+    rewardExp,
+    durationMs,
+  );
+  if (hangmanAttachment) {
+    hangmanEmbed.setImage(`attachment://${hangmanAttachment.name}`);
+  }
   const gameMessage = await channel
     .send({
-      embeds: [
-        buildHangmanEmbed(maskedWord, 0, maxMisses, rewardExp, durationMs),
-      ],
+      embeds: [hangmanEmbed],
+      files: hangmanAttachment ? [hangmanAttachment] : [],
     })
     .catch(() => null);
 
@@ -3673,18 +3901,28 @@ async function startItalianGkGame(client, cfg) {
   if (!channelId || activeGames.has(channelId)) return false;
 
   const apiUrls = buildItalianGkApiUrls(cfg);
-  if (!apiUrls.length) return false;
   let questionRow = null;
   const requireItalian = cfg?.italianGK?.requireItalian !== false;
-  for (const apiUrl of apiUrls) {
-    try {
-      const res = await axios.get(apiUrl, { timeout: 15000 });
-      const parsed = parseItalianGkQuestionFromPayload(res?.data);
-      if (!parsed?.question || !parsed?.answers?.length) continue;
-      if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
-      questionRow = parsed;
-      break;
-    } catch {}
+  if (apiUrls.length) {
+    for (const apiUrl of apiUrls) {
+      try {
+        const res = await axios.get(apiUrl, { timeout: 15000 });
+        const parsed = parseItalianGkQuestionFromPayload(res?.data);
+        if (!parsed?.question || !parsed?.answers?.length) continue;
+        if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
+        questionRow = parsed;
+        break;
+      } catch {}
+    }
+  }
+  if (!questionRow) {
+    const localPick = pickRandomItem(ITALIAN_GK_BANK);
+    if (localPick?.question && Array.isArray(localPick?.answers)) {
+      questionRow = {
+        question: String(localPick.question),
+        answers: buildAliases(localPick.answers),
+      };
+    }
   }
   if (!questionRow) return false;
   if (!questionRow.answers.length) return false;
@@ -3701,11 +3939,19 @@ async function startItalianGkGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const gkAttachment = buildPromptImageAttachment(
+    "Cultura generale",
+    [questionRow.question],
+    "italian_gk",
+  );
+  const gkEmbed = buildItalianGkEmbed(questionRow.question, rewardExp, durationMs);
+  if (gkAttachment) {
+    gkEmbed.setImage(`attachment://${gkAttachment.name}`);
+  }
   const gameMessage = await channel
     .send({
-      embeds: [
-        buildItalianGkEmbed(questionRow.question, rewardExp, durationMs),
-      ],
+      embeds: [gkEmbed],
+      files: gkAttachment ? [gkAttachment] : [],
     })
     .catch(() => null);
   const displayAnswer = String(questionRow.answers[0] || "sconosciuta");
@@ -3761,23 +4007,33 @@ async function startDrivingQuizGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
   const apiUrl = cfg?.drivingQuiz?.apiUrl || null;
-  if (!apiUrl) return false;
   let row = null;
-  try {
-    const res = await axios.get(apiUrl, { timeout: 15000 });
-    const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
-    if (payload?.statement != null && payload?.answer != null) {
-      const parsedAnswer =
-        typeof payload.answer === "boolean"
-          ? payload.answer
-          : normalizeTruthValue(String(payload.answer));
-      if (parsedAnswer === null) return false;
+  if (apiUrl) {
+    try {
+      const res = await axios.get(apiUrl, { timeout: 15000 });
+      const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
+      if (payload?.statement != null && payload?.answer != null) {
+        const parsedAnswer =
+          typeof payload.answer === "boolean"
+            ? payload.answer
+            : normalizeTruthValue(String(payload.answer));
+        if (parsedAnswer === null) return false;
+        row = {
+          statement: String(payload.statement),
+          answer: parsedAnswer,
+        };
+      }
+    } catch {}
+  }
+  if (!row) {
+    const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
+    if (localPick?.statement != null && typeof localPick?.answer === "boolean") {
       row = {
-        statement: String(payload.statement),
-        answer: parsedAnswer,
+        statement: String(localPick.statement),
+        answer: Boolean(localPick.answer),
       };
     }
-  } catch {}
+  }
   if (!row) return false;
 
   const rewardExp = Number(cfg?.drivingQuiz?.rewardExp || 120);
@@ -3792,9 +4048,19 @@ async function startDrivingQuizGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
+  const drivingAttachment = buildPromptImageAttachment(
+    "Quiz patente",
+    [row.statement],
+    "driving_quiz",
+  );
+  const drivingEmbed = buildDrivingQuizEmbed(row.statement, rewardExp, durationMs);
+  if (drivingAttachment) {
+    drivingEmbed.setImage(`attachment://${drivingAttachment.name}`);
+  }
   const gameMessage = await channel
     .send({
-      embeds: [buildDrivingQuizEmbed(row.statement, rewardExp, durationMs)],
+      embeds: [drivingEmbed],
+      files: drivingAttachment ? [drivingAttachment] : [],
     })
     .catch(() => null);
 
@@ -4222,7 +4488,14 @@ async function awardWinAndReply(message, rewardExp) {
       );
     } catch {}
   }
-  await message.react(MINIGAME_WIN_EMOJI).catch(() => {});
+  let reacted = false;
+  try {
+    await message.react(MINIGAME_WIN_EMOJI);
+    reacted = true;
+  } catch {}
+  if (!reacted) {
+    await message.react(MINIGAME_CORRECT_FALLBACK_EMOJI).catch(() => {});
+  }
   await message
     .reply({ embeds: [buildWinEmbed(message.author.id, rewardExp, nextTotal)] })
     .catch(() => {});
@@ -4421,7 +4694,10 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === "fastType") {
-    if (normalizeCountryName(content) === game.normalizedPhrase) {
+    const normalizedContent = normalizeCountryName(
+      normalizeUserAnswerText(content),
+    );
+    if (normalizedContent === game.normalizedPhrase) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -4429,7 +4705,7 @@ async function handleMinigameMessage(message, client) {
       return true;
     }
     if (
-      isNearTextGuess(content, [game.normalizedPhrase], {
+      isNearTextGuess(normalizedContent, [game.normalizedPhrase], {
         maxDistance: 2,
         maxRatio: 0.2,
         minGuessLength: 6,
@@ -4534,11 +4810,8 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === "mathExpression") {
-    const numeric = String(content || "")
-      .replace(",", ".")
-      .trim();
-    if (!/^-?\d+(\.\d+)?$/.test(numeric)) return false;
-    const guessNum = Number(numeric);
+    const guessNum = parseMathGuess(content);
+    if (!Number.isFinite(guessNum)) return false;
     const answerNum = Number(String(game.answer).replace(",", "."));
     if (
       Number.isFinite(guessNum) &&
@@ -4562,7 +4835,7 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === "hangman") {
-    const normalized = normalizeCountryName(content);
+    const normalized = normalizeCountryName(normalizeUserAnswerText(content));
     if (!normalized) return false;
 
     if (normalized === game.word) {
@@ -4592,7 +4865,12 @@ async function handleMinigameMessage(message, client) {
     if (guessed.has(letter)) return false;
     guessed.add(letter);
     game.guessedLetters = Array.from(guessed.values());
-    if (!game.word.includes(letter)) game.misses = Number(game.misses || 0) + 1;
+    const isCorrectLetter = game.word.includes(letter);
+    if (!isCorrectLetter) {
+      game.misses = Number(game.misses || 0) + 1;
+    } else {
+      await message.react(MINIGAME_CORRECT_FALLBACK_EMOJI).catch(() => {});
+    }
 
     const solved = game.word.split("").every((ch) => guessed.has(ch));
     if (solved) {
@@ -4615,17 +4893,28 @@ async function handleMinigameMessage(message, client) {
     }
 
     const maskedWord = maskHangmanWord(game.word, guessed);
+    const hangmanUpdateAttachment = buildPromptImageAttachment(
+      "Impiccato",
+      [
+        maskedWord,
+        `Errori: ${Number(game.misses || 0)}/${Number(game.maxMisses || 7)}`,
+      ],
+      "hangman",
+    );
+    const hangmanUpdateEmbed = buildHangmanEmbed(
+      maskedWord,
+      Number(game.misses || 0),
+      Number(game.maxMisses || 7),
+      game.rewardExp,
+      Math.max(1000, game.endsAt - Date.now()),
+    );
+    if (hangmanUpdateAttachment) {
+      hangmanUpdateEmbed.setImage(`attachment://${hangmanUpdateAttachment.name}`);
+    }
     await message.channel
       .send({
-        embeds: [
-          buildHangmanEmbed(
-            maskedWord,
-            Number(game.misses || 0),
-            Number(game.maxMisses || 7),
-            game.rewardExp,
-            Math.max(1000, game.endsAt - Date.now()),
-          ),
-        ],
+        embeds: [hangmanUpdateEmbed],
+        files: hangmanUpdateAttachment ? [hangmanUpdateAttachment] : [],
       })
       .catch(() => {});
     await saveActiveGame(client, cfg, {

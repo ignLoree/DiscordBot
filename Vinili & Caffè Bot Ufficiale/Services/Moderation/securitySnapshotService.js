@@ -9,6 +9,14 @@ const {
   getAntiNukeStatusSnapshot,
   setAntiNukeConfigSnapshot,
 } = require("./antiNukeService");
+const {
+  getJoinGateConfigSnapshot,
+  setJoinGateConfigSnapshot,
+} = require("./joinGateService");
+const {
+  getJoinRaidConfigSnapshot,
+  setJoinRaidConfigSnapshot,
+} = require("./joinRaidService");
 
 const DATA_DIR = path.resolve(__dirname, "../../Data/Security");
 const SNAPSHOT_PATH = path.join(DATA_DIR, "securitySnapshots.json");
@@ -69,6 +77,8 @@ function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" 
     : "{}\n";
   const antiNukeConfig = getAntiNukeStatusSnapshot(String(guildId || ""))?.config || {};
   const autoModConfig = getAutoModConfigSnapshot();
+  const joinGateConfig = getJoinGateConfigSnapshot();
+  const joinRaidConfig = getJoinRaidConfigSnapshot();
 
   const entry = {
     id: makeSnapshotId(),
@@ -80,6 +90,8 @@ function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" 
       permissionsRaw,
       antiNukeConfig,
       autoModConfig,
+      joinGateConfig,
+      joinRaidConfig,
     },
   };
 
@@ -142,6 +154,12 @@ function restoreSecuritySnapshot(idOrLast = "last") {
 
   const autoModResult = restoreAutoModConfigSnapshot(payload.autoModConfig || {});
   if (!autoModResult?.ok) return { ok: false, reason: autoModResult.reason };
+
+  const joinGateResult = setJoinGateConfigSnapshot(payload.joinGateConfig || {});
+  if (!joinGateResult?.ok) return { ok: false, reason: "joingate_restore_failed" };
+
+  const joinRaidResult = setJoinRaidConfigSnapshot(payload.joinRaidConfig || {});
+  if (!joinRaidResult?.ok) return { ok: false, reason: "joinraid_restore_failed" };
 
   return { ok: true, snapshot };
 }

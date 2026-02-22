@@ -1,14 +1,79 @@
 {
+  "status": {
+    "enabled": true,
+    "antiSpamEnabled": true,
+    "monitorUnwhitelistedWebhooks": true
+  },
   "thresholds": {
     "warn": 35,
     "delete": 65,
-    "timeout": 95
+    "timeout": 100
+  },
+  "heatSystem": {
+    "maxHeat": 100,
+    "decayPerSec": 5,
+    "resetOnPunishment": true
+  },
+  "autoTimeouts": {
+    "enabled": true,
+    "regularStrikeDurationMs": 60000,
+    "capStrikeDurationMs": 660000,
+    "capStrike": 3,
+    "multiplierEnabled": true,
+    "multiplierPercent": 200,
+    "profileResetMs": 21600000
+  },
+  "autoLockdown": {
+    "enabled": true,
+    "mentionTrigger": 50,
+    "mentionWindowMs": 3000,
+    "mentionHourCap": 20
+  },
+  "heatFilters": {
+    "regularMessage": true,
+    "suspiciousAccount": true,
+    "similarMessage": true,
+    "emojis": true,
+    "newLines": true,
+    "zalgo": true,
+    "characters": true,
+    "inviteLinks": true,
+    "maliciousLinks": true,
+    "nsfwLinks": true,
+    "wordBlacklist": true,
+    "linkBlacklist": true,
+    "mentions": true,
+    "attachments": true,
+    "webhookMessages": true
+  },
+  "heatFactors": {
+    "regularMessage": 1,
+    "suspiciousAccount": 1,
+    "similarMessage": 1,
+    "emojis": 1,
+    "newLines": 1,
+    "zalgo": 1,
+    "characters": 1,
+    "inviteLinks": 1,
+    "maliciousLinks": 1,
+    "nsfwLinks": 1,
+    "wordBlacklist": 1,
+    "linkBlacklist": 1,
+    "mentions": 1,
+    "attachments": 1
+  },
+  "heatCaps": {
+    "maxPerMessage": 85,
+    "charactersMax": 40,
+    "textClusterMax": 35,
+    "attachmentClusterMax": 28,
+    "mentionClusterMax": 70
   },
   "panic": {
     "enabled": true,
     "considerActivityHistory": true,
     "useGlobalBadUsersDb": true,
-    "triggerCount": 6,
+    "triggerCount": 3,
     "triggerWindowMs": 600000,
     "durationMs": 600000,
     "raidWindowMs": 120000,
