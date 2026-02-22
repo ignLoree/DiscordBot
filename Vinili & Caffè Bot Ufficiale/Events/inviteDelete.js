@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const INVITE_DELETE_ACTION = AuditLogEvent?.InviteDelete ?? 42;
@@ -125,7 +125,7 @@ module.exports = {
             .join("\n"),
         );
 
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[inviteDelete] failed:", error);
     }

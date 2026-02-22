@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
 const { safeReply: safeReplyHelper } = require("../../Utils/Moderation/reply");
 const {
   applyDefaultFooterToEmbeds,
@@ -372,7 +372,7 @@ async function handleSlashCommand(interaction, client) {
               content:
                 "<:vegax:1443934876440068179> Non hai i permessi per fare questo comando.",
               flags: 1 << 6,
-            });
+            }).catch(() => null);
           }
           await btn.deferUpdate();
           const updatedEmbed = EmbedBuilder.from(staffEmbed);
@@ -381,7 +381,7 @@ async function handleSlashCommand(interaction, client) {
           if (btn.customId === "error_solved") updatedEmbed.setColor("#2ecc71");
           if (btn.customId === "error_unsolved")
             updatedEmbed.setColor("#e74c3c");
-          await msg.edit({ embeds: [updatedEmbed] });
+          await msg.edit({ embeds: [updatedEmbed] }).catch(() => null);
         } catch (collectorErr) {
           global.logger?.error?.(
             "[commandHandlers] error collector failure",
@@ -392,7 +392,7 @@ async function handleSlashCommand(interaction, client) {
       collector.on("end", async () => {
         try {
           row.components.forEach((b) => b.setDisabled(true));
-          await msg.edit({ components: [row] });
+          await msg.edit({ components: [row] }).catch(() => null);
         } catch {}
       });
     }

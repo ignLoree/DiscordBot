@@ -96,12 +96,19 @@ module.exports = {
     const reason = interaction.options.getString("motivo");
     const messageLink = interaction.options.getString("linkmessaggio");
     const removedPointsChannel = interaction.guild.channels.cache.get(
-      IDs.channels.puntiTolti,
+      IDs.channels?.puntiTolti,
     );
 
     if (amount < 0) {
       return safeEditReply(interaction, {
         content: "<:vegax:1443934876440068179> Il valore deve essere positivo.",
+        flags: PRIVATE_FLAG,
+      });
+    }
+    const MAX_AMOUNT_PER_OP = 10000;
+    if (amount > MAX_AMOUNT_PER_OP) {
+      return safeEditReply(interaction, {
+        content: `<:vegax:1443934876440068179> Puoi aggiungere/rimuovere al massimo \`${MAX_AMOUNT_PER_OP}\` punti per operazione.`,
         flags: PRIVATE_FLAG,
       });
     }
@@ -138,7 +145,7 @@ module.exports = {
 <:Discord_Mention:1329524304790028328> ${targetUser}
 <:discordchannelwhite:1443308552536985810> ${reason}
 <:partneredserverowner:1443651871125409812> ${messageLink}`,
-        });
+        }).catch(() => null);
       }
 
       return safeEditReply(interaction, { embeds: [embed] });

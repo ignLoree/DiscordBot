@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const STICKER_UPDATE_ACTION = AuditLogEvent?.StickerUpdate ?? 91;
@@ -101,7 +101,7 @@ module.exports = {
         .setDescription(lines.join("\n"));
 
       if (newSticker?.url) embed.setThumbnail(newSticker.url);
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[stickerUpdate] log failed:", error);
     }

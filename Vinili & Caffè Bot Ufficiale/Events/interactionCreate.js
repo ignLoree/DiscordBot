@@ -1,4 +1,4 @@
-﻿const { InteractionType } = require("discord.js");
+const { InteractionType } = require("discord.js");
 const { handleAutocomplete, handleSlashCommand, } = require("./interaction/commandHandlers");
 const { handleButtonInteraction } = require("./interaction/buttonHandlers");
 const { handlePartnerModal } = require("./interaction/partnerModal");
@@ -249,7 +249,7 @@ async function logInteractionError(interaction, client, err) {
         userTag: interaction?.user?.tag || "unknown",
         error: err,
       });
-      await errorChannel.send({ embeds: [staffEmbed] });
+      await errorChannel.send({ embeds: [staffEmbed] }).catch(() => null);
     }
 
     await sendPrivateInteractionResponse(interaction, {

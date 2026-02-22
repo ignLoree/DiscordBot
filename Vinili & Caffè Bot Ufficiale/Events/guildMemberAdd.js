@@ -324,9 +324,11 @@ async function sendBotAddLog(member) {
   const guild = member?.guild;
   if (!guild || !member?.user?.bot) return;
 
-  const logChannel =
-    guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const modLogId = IDs.channels?.modLogs;
+  const logChannel = modLogId
+    ? (guild.channels.cache.get(modLogId) ||
+        (await guild.channels.fetch(modLogId).catch(() => null)))
+    : null;
   if (!logChannel?.isTextBased?.()) return;
 
   let executor = null;
@@ -704,9 +706,11 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       raidBoost: 0,
     }).catch(() => null);
   }
-  const logChannel =
-    member.guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const modLogId = IDs.channels?.modLogs;
+  const logChannel = modLogId
+    ? (member.guild.channels.cache.get(modLogId) ||
+        (await member.guild.channels.fetch(modLogId).catch(() => null)))
+    : null;
   if (logChannel?.isTextBased?.()) {
     const nowTs = Math.floor(Date.now() / 1000);
     const embed = new EmbedBuilder()
@@ -753,9 +757,11 @@ async function sendJoinGateNoAvatarLog(member) {
   if (!member?.guild || !member?.user) return;
   if (!hasNoAvatar(member)) return;
 
-  const logChannel =
-    member.guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const modLogId = IDs.channels?.modLogs;
+  const logChannel = modLogId
+    ? (member.guild.channels.cache.get(modLogId) ||
+        (await member.guild.channels.fetch(modLogId).catch(() => null)))
+    : null;
   if (!logChannel?.isTextBased?.()) return;
 
   const embed = new EmbedBuilder()
@@ -774,9 +780,11 @@ async function sendJoinGateNoAvatarLog(member) {
 
 async function sendSuspiciousAccountLog(member, reason) {
   if (!member?.guild || !reason) return;
-  const logChannel =
-    member.guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const modLogId = IDs.channels?.modLogs;
+  const logChannel = modLogId
+    ? (member.guild.channels.cache.get(modLogId) ||
+        (await member.guild.channels.fetch(modLogId).catch(() => null)))
+    : null;
   if (!logChannel?.isTextBased?.()) return;
   const nowTs = Math.floor(Date.now() / 1000);
   const embed = new EmbedBuilder()

@@ -61,7 +61,7 @@ module.exports = {
             .join("\n"),
         );
 
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[guildBanRemove] failed:", error);
     }

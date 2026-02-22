@@ -105,7 +105,7 @@ module.exports = {
           .setTitle("Guild Update")
           .setDescription(lines.join("\n"));
 
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => null);
       }
 
       if (vanityChanged) {

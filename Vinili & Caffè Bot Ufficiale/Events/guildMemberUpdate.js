@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
@@ -175,7 +175,7 @@ async function sendMemberUpdateLog(oldMember, newMember) {
     .setTitle("Member Update")
     .setDescription(lines.join("\n"));
 
-  await logChannel.send({ embeds: [embed] });
+  await logChannel.send({ embeds: [embed] }).catch(() => null);
 }
 
 async function sendMemberRoleUpdateLog(oldMember, newMember) {
@@ -237,7 +237,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
       .setTitle("Member Role Update")
       .setDescription(lines.join("\n"));
 
-    await logChannel.send({ embeds: [embed] });
+    await logChannel.send({ embeds: [embed] }).catch(() => null);
   }
 
   if (additions.length) {
@@ -320,7 +320,7 @@ async function sendBoostEmbeds(channel, member, times, boostCount) {
     await channel.send({
       content: `<a:VC_Boost:1448670271115497617> \`|\`  ${member.user} \`|\` <@&1442568910070349985>`,
       embeds: [buildBoostEmbed(member, boostCount)],
-    });
+    }).catch(() => null);
   }
 }
 
@@ -486,9 +486,11 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
     ]);
   }
 
-  const logChannel =
-    newMember.guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await newMember.guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const modLogId = IDs.channels?.modLogs;
+  const logChannel = modLogId
+    ? (newMember.guild.channels.cache.get(modLogId) ||
+        (await newMember.guild.channels.fetch(modLogId).catch(() => null)))
+    : null;
   if (!logChannel?.isTextBased?.()) return;
 
   const nowTs = Math.floor(Date.now() / 1000);

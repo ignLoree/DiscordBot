@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 
@@ -119,7 +119,7 @@ async function sendRaw(channel, payload) {
   if (typeof originalSend === "function") {
     return originalSend.call(channel, payload);
   }
-  return channel.send(payload);
+  return channel.send(payload).catch(() => null);
 }
 
 async function sendMessageEditLog(previous, updated) {

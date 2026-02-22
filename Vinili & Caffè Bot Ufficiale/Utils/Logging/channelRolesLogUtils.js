@@ -149,12 +149,13 @@ function buildAuditExtraLines(entry, knownChangeKeys = []) {
 
 async function resolveChannelRolesLogChannel(guild) {
   const channelId =
-    IDs.channels.channelRolesLogs || IDs.channels.logCanaliRuoli || null;
+    IDs.channels?.channelRolesLogs || IDs.channels?.logCanaliRuoli || null;
   if (!guild || !channelId) return null;
-  return (
+  const channel =
     guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+    (await guild.channels.fetch(channelId).catch(() => null));
+  if (!channel?.isTextBased?.()) return null;
+  return channel;
 }
 
 async function resolveResponsible(guild, actionType, matcher) {

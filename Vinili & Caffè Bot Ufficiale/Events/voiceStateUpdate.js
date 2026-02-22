@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, AuditLogEvent, PermissionsBitField, } = require("discord.js");
+const { EmbedBuilder, AuditLogEvent, PermissionsBitField, } = require("discord.js");
 const { leaveTtsGuild } = require("../Services/TTS/ttsService");
 const {
   handleVoiceActivity,
@@ -177,7 +177,9 @@ async function sendMemberDisconnectLog(oldState, newState) {
       ].join("\n"),
     );
 
-  await logChannel.send({ embeds: [embed] });
+  await logChannel.send({ embeds: [embed] }).catch((err) => {
+    global.logger?.warn?.("[voiceStateUpdate] sendMemberDisconnectLog failed:", err?.message || err);
+  });
 }
 
 async function sendMemberMoveLog(oldState, newState) {
@@ -211,7 +213,9 @@ async function sendMemberMoveLog(oldState, newState) {
       ].join("\n"),
     );
 
-  await logChannel.send({ embeds: [embed] });
+  await logChannel.send({ embeds: [embed] }).catch((err) => {
+    global.logger?.warn?.("[voiceStateUpdate] sendMemberMoveLog failed:", err?.message || err);
+  });
 }
 
 function yesNo(value) {
@@ -258,7 +262,9 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     .setTitle("Member Update")
     .setDescription(lines.join("\n"));
 
-  await logChannel.send({ embeds: [embed] });
+  await logChannel.send({ embeds: [embed] }).catch((err) => {
+    global.logger?.warn?.("[voiceStateUpdate] sendMemberVoiceFlagsUpdateLog failed:", err?.message || err);
+  });
 }
 
 module.exports = {
@@ -301,7 +307,9 @@ module.exports = {
       oldState.channelId &&
       !newState.channelId
     ) {
-      await leaveTtsGuild(guild.id, client);
+      await leaveTtsGuild(guild.id, client).catch((err) => {
+        global.logger?.warn?.("[voiceStateUpdate] leaveTtsGuild failed:", err?.message || err);
+      });
       return;
     }
 
@@ -311,7 +319,9 @@ module.exports = {
 
     const humans = botChannel.members.filter((m) => !m.user.bot);
     if (humans.size === 0) {
-      await leaveTtsGuild(guild.id, client);
+      await leaveTtsGuild(guild.id, client).catch((err) => {
+        global.logger?.warn?.("[voiceStateUpdate] leaveTtsGuild failed:", err?.message || err);
+      });
     }
   },
 };

@@ -28,7 +28,9 @@ async function logCommandUsage(
       { name: "Utente", value: `${user} | ${userId}` },
     )
     .setTimestamp();
-  await channel.send({ embeds: [embed] });
+  await channel.send({ embeds: [embed] }).catch((err) => {
+    global.logger?.warn?.("[commandUsageLogger] send failed:", channelId, err?.message || err);
+  });
 }
 
 module.exports = { logCommandUsage, getChannelSafe };

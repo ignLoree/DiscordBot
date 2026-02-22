@@ -157,7 +157,7 @@ module.exports = {
         ];
       }
 
-      await logChannel.send(payload);
+      await logChannel.send(payload).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[guildScheduledEventCreate] log failed:", error);
     }

@@ -8,6 +8,7 @@ const {
 } = require("../Utils/Community/channelSnapshotUtils");
 const { ARROW, toDiscordTimestamp, channelTypeLabel, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleChannelDeletionAction: antiNukeHandleChannelDeletionAction } = require("../Services/Moderation/antiNukeService");
+const { clearGameForChannel } = require("../Services/Minigames/minigameService");
 
 const CHANNEL_DELETE_ACTION = AuditLogEvent?.ChannelDelete ?? 12;
 const AUDIT_RETRY_ATTEMPTS = 3;
@@ -47,6 +48,8 @@ module.exports = {
       client?.guilds?.cache?.get(channel.guildId) ||
       (await client?.guilds?.fetch?.(channel.guildId).catch(() => null));
     if (!guild) return;
+
+    clearGameForChannel(channel.id);
 
     let executorId = "";
     try {

@@ -1586,7 +1586,7 @@ async function handleBackupLoadInteraction(interaction) {
     customId.startsWith("backup_load_status:");
   if (!isTarget) return false;
 
-  const sessionId = customId.split(":")[1] || "";
+  const sessionId = String(customId || "").split(":")[1] || "";
   const session = getLoadSession(sessionId);
   if (!session) {
     await interaction

@@ -120,6 +120,7 @@ const LOADED_GUILDS = new Set();
 const LOAD_SUCCEEDED_GUILDS = new Set();
 const LOAD_GUILD_PROMISES = new Map();
 const GUILD_LOCKS = new Map();
+const CLEARED_GUILDS = new Set();
 const LAST_RESTORE_AT = new Map();
 const VERIFIED_BOT_CACHE = new Map();
 const LOW_RISK_FLAG_LOG_COOLDOWN = new Map();
@@ -358,7 +359,7 @@ function isDbReady() {
 
 async function loadGuildState(guildId) {
   const key = String(guildId || "");
-  if (!key || LOADED_GUILDS.has(key)) return;
+  if (!key || CLEARED_GUILDS.has(key) || LOADED_GUILDS.has(key)) return;
   if (!isDbReady()) return;
   const existingLoad = LOAD_GUILD_PROMISES.get(key);
   if (existingLoad) {
@@ -367,7 +368,9 @@ async function loadGuildState(guildId) {
   }
   const loader = (async () => {
     try {
+      if (CLEARED_GUILDS.has(key)) return;
       const row = await JoinRaidState.findOne({ guildId: key }).lean();
+      if (CLEARED_GUILDS.has(key)) return;
       if (row) {
         GUILD_STATE.set(key, {
           samples: Array.isArray(row.samples) ? row.samples : [],
@@ -384,11 +387,11 @@ async function loadGuildState(guildId) {
             : [],
         });
       }
-      LOAD_SUCCEEDED_GUILDS.add(key);
+      if (!CLEARED_GUILDS.has(key)) LOAD_SUCCEEDED_GUILDS.add(key);
     } catch (err) {
       global.logger?.warn?.("[joinRaid] loadGuildState failed:", key, err?.message || err);
     } finally {
-      LOADED_GUILDS.add(key);
+      if (!CLEARED_GUILDS.has(key)) LOADED_GUILDS.add(key);
       LOAD_GUILD_PROMISES.delete(key);
     }
   })();
@@ -398,7 +401,7 @@ async function loadGuildState(guildId) {
 
 function scheduleStateSave(guildId) {
   const key = String(guildId || "");
-  if (!key || !isDbReady()) return;
+  if (!key || !isDbReady() || CLEARED_GUILDS.has(key)) return;
   if (!LOAD_SUCCEEDED_GUILDS.has(key)) return;
   const old = SAVE_TIMERS.get(key);
   if (old) clearTimeout(old);
@@ -506,6 +509,7 @@ function scheduleJoinRaidReport(guild) {
 
 async function finalizeJoinRaidAndReport(guild, reason = "elapsed") {
   if (!guild?.id) return;
+  if (CLEARED_GUILDS.has(String(guild.id))) return;
   await loadGuildState(guild.id);
   await withGuildLock(guild.id, async () => {
     const at = nowMs();
@@ -666,7 +670,7 @@ function isHighRiskJoinRaidReasons(reasons = []) {
 }
 
 async function resolveModLogChannel(guild) {
-  const channelId = IDs.channels.modLogs || IDs.channels.activityLogs;
+  const channelId = IDs.channels?.modLogs || IDs.channels?.activityLogs;
   if (!guild || !channelId) return null;
   return guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
 }
@@ -987,6 +991,8 @@ async function processJoinRaidForMember(member, options = {}) {
   const joinGateFeedOnly = Boolean(options?.joinGateFeedOnly);
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
+  const guildKey = String(member.guild.id || "");
+  if (CLEARED_GUILDS.has(guildKey)) return { blocked: false };
   if (member.user?.bot) return { blocked: false };
   if (
     CORE_EXEMPT_USER_IDS.has(String(member.id || "")) ||
@@ -1334,6 +1340,7 @@ async function getJoinRaidStatusSnapshot(guildId) {
 function clearGuildState(guildId) {
   const key = String(guildId || "");
   if (!key) return;
+  CLEARED_GUILDS.add(key);
   GUILD_STATE.delete(key);
   LOADED_GUILDS.delete(key);
   LOAD_SUCCEEDED_GUILDS.delete(key);

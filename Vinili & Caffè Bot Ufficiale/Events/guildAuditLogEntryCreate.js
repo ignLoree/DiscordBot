@@ -43,7 +43,7 @@ module.exports = {
               .join("\n"),
           );
 
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => null);
       }
       await antiNukeHandlePruneAction({
         guild,

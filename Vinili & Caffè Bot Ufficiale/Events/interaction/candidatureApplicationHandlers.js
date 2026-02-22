@@ -473,14 +473,14 @@ async function enforceEligibility(interaction, type) {
     await interaction.reply({
       embeds: [buildNoModuliDeniedEmbed()],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return false;
   }
   if (!hasMemberRole(interaction)) {
     await interaction.reply({
       embeds: [buildRoleDeniedEmbed()],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return false;
   }
   const targetRoleId = getTargetRoleIdByType(type);
@@ -488,7 +488,7 @@ async function enforceEligibility(interaction, type) {
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(targetRoleId)],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return false;
   }
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
@@ -498,7 +498,7 @@ async function enforceEligibility(interaction, type) {
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return false;
   }
   const until = getCooldownUntil(interaction.user?.id);
@@ -506,7 +506,7 @@ async function enforceEligibility(interaction, type) {
     await interaction.reply({
       embeds: [buildCooldownDeniedEmbed(until)],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return false;
   }
   return true;
@@ -581,7 +581,7 @@ function formatApplicationDescription(type, answers) {
 async function resolveSubmissionChannel(interaction) {
   const guild = interaction.guild;
   if (!guild) return null;
-  const targetId = IDs.channels.visioneModuli;
+  const targetId = IDs.channels?.visioneModuli;
   if (targetId) {
     return (
       guild.channels.cache.get(targetId) ||
@@ -604,7 +604,7 @@ async function sendIntro(interaction, type) {
     embeds: [embed],
     components: [row],
     flags: 1 << 6,
-  });
+  }).catch(() => null);
 }
 
 async function handleStartButton(interaction, type, step = 1, forceStep = false) {
@@ -626,7 +626,7 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
           "Hai una candidatura in bozza. Puoi riprendere dall'ultima pagina o aprire una pagina specifica per correggere.",
         components: [row1, row2],
         flags: 1 << 6,
-      });
+      }).catch(() => null);
       return true;
     }
     clearDraftState(stateKey);
@@ -640,7 +640,7 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
           content:
             "<:vegax:1443934876440068179> Sessione candidatura scaduta. Clicca di nuovo il bottone candidatura.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
         return true;
       }
       pendingApplications.set(stateKey, {
@@ -667,7 +667,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
       content:
         "<:vegax:1443934876440068179> Non trovo il canale `visioneModuli` per inviare la candidatura.",
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
 
@@ -691,7 +691,8 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   const sent = await channel.send({
     content: mention || undefined,
     embeds: [embed],
-  });
+  }).catch(() => null);
+  if (!sent) return null;
 
   if (typeof sent.startThread === "function") {
     const threadUserLabel = String(user.globalName || user.username || user.id)
@@ -727,7 +728,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   await interaction.reply({
     embeds: [buildFinalThanksEmbed(nextAllowedAt)],
     flags: 1 << 6,
-  });
+  }).catch(() => null);
   return true;
 }
 
@@ -739,7 +740,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     await interaction.reply({
       embeds: [buildNoModuliDeniedEmbed()],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
   if (!hasMemberRole(interaction)) {
@@ -748,7 +749,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     await interaction.reply({
       embeds: [buildRoleDeniedEmbed()],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
   const targetRoleId = getTargetRoleIdByType(type);
@@ -758,7 +759,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(targetRoleId)],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
@@ -770,7 +771,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
 
@@ -791,7 +792,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
         content:
           "<:vegax:1443934876440068179> Sessione candidatura non valida. Clicca di nuovo il bottone candidatura.",
         flags: 1 << 6,
-      });
+      }).catch(() => null);
       return true;
     }
     pendingApplications.set(stateKey, {
@@ -830,7 +831,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
       content: "Puoi continuare oppure tornare indietro per correggere le risposte.",
       components: [row, pageRow],
       flags: 1 << 6,
-    });
+    }).catch(() => null);
     return true;
   }
 
@@ -862,7 +863,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
           content:
             "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
         return true;
       }
       const ok = await enforceEligibility(interaction, type);
@@ -879,7 +880,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
           content:
             "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
         return true;
       }
       const ok = await enforceEligibility(interaction, type);
@@ -896,7 +897,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
           content:
             "<:vegax:1443934876440068179> Questo modulo non è associato al tuo click iniziale.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
         return true;
       }
       const ok = await enforceEligibility(interaction, type);
@@ -910,7 +911,9 @@ async function handleCandidatureApplicationInteraction(interaction) {
   if (!interaction.isModalSubmit?.()) return false;
   const raw = String(interaction.customId || "");
   if (!raw.startsWith(`${MODAL_PREFIX}:`)) return false;
-  const [, type, step] = raw.split(":");
+  const modalParts = raw.split(":");
+  if (modalParts.length < 3) return false;
+  const [, type, step] = modalParts;
   return handleModalSubmit(interaction, type, step);
 }
 

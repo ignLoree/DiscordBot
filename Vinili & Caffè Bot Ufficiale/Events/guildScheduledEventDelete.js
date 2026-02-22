@@ -136,7 +136,7 @@ module.exports = {
         .setTitle("Guild Scheduled Event Delete")
         .setDescription(lines.filter(Boolean).join("\n"));
 
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[guildScheduledEventDelete] log failed:", error);
     }

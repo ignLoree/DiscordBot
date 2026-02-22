@@ -1,4 +1,4 @@
-﻿const ascii = require("ascii-table");
+const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
 const {
@@ -98,7 +98,9 @@ module.exports = (client) => {
           }).catch(() => null);
           if (!gate.allowed) return;
 
-          return event.execute(...args, client);
+          return Promise.resolve(event.execute(...args, client)).catch((err) => {
+            global.logger?.error?.(`[EVENT ${eventName}]`, err);
+          });
         };
 
         const bind = event.once ? client.once.bind(client) : client.on.bind(client);

@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, MessageFlagsBitField } = require("discord.js");
+const { EmbedBuilder, MessageFlagsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 
 const MAX_CONTENT_LOG_LENGTH = 1800;
@@ -139,7 +139,7 @@ async function sendRaw(channel, payload) {
   if (typeof originalSend === "function") {
     return originalSend.call(channel, payload);
   }
-  return channel.send(payload);
+  return channel.send(payload).catch(() => null);
 }
 
 async function sendDeleteLog(message) {

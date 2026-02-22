@@ -1,4 +1,4 @@
-﻿const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
+const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { handleInviteCreationAction: antiNukeHandleInviteCreationAction, isAntiNukePanicActive, isWhitelistedExecutorAsync, } = require("../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
@@ -151,7 +151,7 @@ module.exports = {
               .join("\n"),
           );
 
-        await logChannel.send({ embeds: [embed] });
+        await logChannel.send({ embeds: [embed] }).catch(() => null);
       }
     } catch (error) {
       global.logger?.error?.("[inviteCreate] failed:", error);

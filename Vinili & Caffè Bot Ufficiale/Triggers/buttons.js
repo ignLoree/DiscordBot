@@ -23,7 +23,7 @@ async function handleStaffButtons(interaction) {
             <:dot:1443660294596329582> Ogni <@&1442568896237277295> dovrà __eseguire__ almeno: **\`4 sanzioni\`**
 
             > Chi __rispetterà__ questi limiti riceverà **una valutazione positiva**.`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -34,7 +34,7 @@ async function handleStaffButtons(interaction) {
                     > L'<@&1442568894349840435> può decidere di grazie qualcuno al secondo warn, ma in caso di **terzo warn** lo staffer verrà depexato **__completamente__**
 
                     <:attentionfromvega:1443651874032062505> I **warn staff** non possono essere __rimossi__. Il **reset** dei __warn staff__ avviene ogni **__6 mesi__**.`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -49,7 +49,7 @@ async function handleStaffButtons(interaction) {
                     > Le **valutazioni negative** diminuiscono la possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.
 
                     > Le **valutazioni negative** possono essere **__rimosse__** completando compiti extra assegnati dall'<@&1442568894349840435> o rinunciando a _almeno_ \`3 o più valutazioni positive\` in base al motivo per cui è stata assegnata la valutazione. `);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -81,7 +81,7 @@ async function handleStaffButtons(interaction) {
             <:infoglowingdot:1443660296823767110> Gli __\`Helper\`__ potranno richiedere una __pausa__ nella loro prima settimana **solo** in per **__problemi personali__ o __familiari gravi__**. Se l'<@&1442568894349840435> viene a conoscenza di un **__falso__ motivo** per usare una pausa, **in qualsiasi circostanza**, si verrà **__depexati__** all'**__istante__**.
 
             > <:banhammer:1443651875441217639> Se l'<@&1442568894349840435> verrà a conoscenza di uno **staffer** __in pausa__ ma **attivo** in un **altro server** nel periodo di tempo della pausa, **toglierà** la pausa e **sanzionerà** lo staffer.`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -108,7 +108,7 @@ async function handleStaffButtons(interaction) {
             <:VC_Reply:1468262952934314131> **__4h__** in vocale
 
             > <:attentionfromvega:1443651874032062505> verrà **valutato** anche il **modo** in cui questi __limiti__ vengono raggiunti, ovvero se lo **staffer** è stato costante o no. `);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -129,7 +129,7 @@ async function handleStaffButtons(interaction) {
             <:dot:1443660294596329582> __Non__ passare la maggior parte del **tempo** nei **canali vocali privati**, poiché non vengono **conteggiati** al fine dei __limiti settimanali__
 
             <:dot:1443660294596329582> __Non__ **stare da soli** in una __vocale pubblica__ se in un'altra vi è già un altro **staffer** da solo. Inoltre, almeno uno dei due **deve** essere __smutato__`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -154,7 +154,7 @@ async function handleStaffButtons(interaction) {
 
                 <:rules:1443307208543703131> **__Regola \`1.5\`__**
                 <:VC_Reply:1468262952934314131> Sanzione: **Ban**`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -184,7 +184,7 @@ async function handleStaffButtons(interaction) {
                 <:rules:1443307208543703131> **__Regola \`2.5\`__**
                 <:VC_DoubleReply:1468713981152727120> 1° Sanzione: **Richiamo verbale**
                 <:VC_Reply:1468262952934314131> 2° Sanzione: **Mute __2h__**`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -232,7 +232,7 @@ async function handleStaffButtons(interaction) {
                 <:VC_Reply:1468262952934314131> 3° Sanzione: **Mute __12h__**
                 <:VC_Reply:1468262952934314131> 4° Sanzione: **Mute __18h__**
                 <:VC_Reply:1468262952934314131> 5° Sanzione: **Ban**`);
-    await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+    await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     return true;
   }
 
@@ -491,13 +491,19 @@ module.exports = {
       interaction.customId &&
       interaction.customId.startsWith("avatar_unblock:")
     ) {
-      const targetId = interaction.customId.split(":")[1];
+      const targetId = interaction.customId.split(":")[1] ?? "";
+      if (!targetId) {
+        return interaction.reply({
+          content: "<:vegax:1443934876440068179> Link non valido.",
+          flags: 1 << 6,
+        }).catch(() => null);
+      }
       if (interaction.user.id !== targetId) {
         return interaction.reply({
           content:
             "<:vegax:1443934876440068179> Non puoi sbloccare l'avatar di un altro utente.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
       }
       try {
         await AvatarPrivacy.findOneAndUpdate(
@@ -522,13 +528,19 @@ module.exports = {
       interaction.customId &&
       interaction.customId.startsWith("banner_unblock:")
     ) {
-      const targetId = interaction.customId.split(":")[1];
+      const targetId = interaction.customId.split(":")[1] ?? "";
+      if (!targetId) {
+        return interaction.reply({
+          content: "<:vegax:1443934876440068179> Link non valido.",
+          flags: 1 << 6,
+        }).catch(() => null);
+      }
       if (interaction.user.id !== targetId) {
         return interaction.reply({
           content:
             "<:vegax:1443934876440068179> Non puoi sbloccare il banner di un altro utente.",
           flags: 1 << 6,
-        });
+        }).catch(() => null);
       }
       try {
         await BannerPrivacy.findOneAndUpdate(
@@ -553,7 +565,13 @@ module.exports = {
       interaction.customId &&
       interaction.customId.startsWith("quote_remove:")
     ) {
-      const parts = interaction.customId.split(":");
+      const parts = String(interaction.customId || "").split(":");
+      if (!parts[1]) {
+        return interaction.reply({
+          content: "<:vegax:1443934876440068179> Link non valido.",
+          flags: 1 << 6,
+        }).catch(() => null);
+      }
       const targetId = parts[1];
       const originChannelId = parts[2] || null;
       const originMessageId = parts[3] || null;
@@ -623,7 +641,7 @@ module.exports = {
                     <:dot:1443660294596329582> **€3** <a:VC_Arrow:1448672967721615452> sponsor per **1 **mese
                     <:dot:1443660294596329582> **€5** <a:VC_Arrow:1448672967721615452> sponsor **lifetime**`),
       ];
-      await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
+      await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 }).catch(() => null);
     }
     if (interaction.customId == "ping") {
       const embeds = [
@@ -634,7 +652,7 @@ module.exports = {
                     <:dot:1443660294596329582> Tra i **500** e i **1000** <a:VC_Arrow:1448672967721615452> \`ping @here\`
                     <:dot:1443660294596329582> **1000+** <a:VC_Arrow:1448672967721615452> \`ping @here & @everyone\``),
       ];
-      await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 });
+      await interaction.reply({ embeds: [embeds[0]], flags: 1 << 6 }).catch(() => null);
     }
 
     if (interaction.customId == "info_rules") {
@@ -698,7 +716,7 @@ module.exports = {
       await interaction.reply({
         embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed],
         flags: 1 << 6,
-      });
+      }).catch(() => null);
     }
 
     if (interaction.customId == "info_donations") {
@@ -762,7 +780,7 @@ module.exports = {
       await interaction.reply({
         embeds: [donations, vip, ticket],
         flags: 1 << 6,
-      });
+      }).catch(() => null);
     }
     const sendUpdatedView = async (payload) => {
       const msgFlags = interaction.message?.flags;
@@ -802,7 +820,7 @@ module.exports = {
           ].join("\n"),
         );
 
-      await interaction.reply({ embeds: [verifyEmbed], flags: 1 << 6 });
+      await interaction.reply({ embeds: [verifyEmbed], flags: 1 << 6 }).catch(() => null);
     }
 
     const buildBoostLevelsPayload = () => {
@@ -1097,7 +1115,7 @@ module.exports = {
           text: "⚠️ ▸ Se dovessi uscire dal server o cambiare account perderai i tuoi badge e i vantaggi annessi.",
         });
 
-      await interaction.reply({ embeds: [badgesEmbed], flags: 1 << 6 });
+      await interaction.reply({ embeds: [badgesEmbed], flags: 1 << 6 }).catch(() => null);
     }
 
     if (interaction.customId == "r_multiplier_info") {
@@ -1135,7 +1153,7 @@ module.exports = {
           ].join("\n"),
         );
 
-      await interaction.reply({ embeds: [embed], flags: 1 << 6 });
+      await interaction.reply({ embeds: [embed], flags: 1 << 6 }).catch(() => null);
     }
 
     if (interaction.customId == "avatar_views") {

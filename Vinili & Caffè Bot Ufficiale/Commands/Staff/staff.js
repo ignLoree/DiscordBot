@@ -93,7 +93,7 @@ ${user}
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569199229730836>
 __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
-  });
+  }).catch(() => null);
 }
 
 async function sendHelperWelcome(staffChannel, user) {
@@ -106,7 +106,7 @@ ${user}
 <:dot:1443660294596329582> <#1442569239063167139>
 <:dot:1443660294596329582> <#1442569243626307634>
 __Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
-  });
+  }).catch(() => null);
 }
 
 async function applyPexSideEffects(
@@ -439,13 +439,13 @@ module.exports = {
     await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => {});
 
     const pexDepexChannel = interaction.guild.channels.cache.get(
-      IDs.channels.pexDepex,
+      IDs.channels?.pexDepex,
     );
     const pmChannel = interaction.guild.channels.cache.get(
-      IDs.channels.partnersChat,
+      IDs.channels?.partnersChat,
     );
     const staffChat = interaction.guild.channels.cache.get(
-      IDs.channels.staffChat,
+      IDs.channels?.staffChat,
     );
 
     if (sub === "pex") {
@@ -487,7 +487,7 @@ module.exports = {
           content: `**<a:everythingisstable:1444006799643508778> PEX** ${targetUser}
 <:member_role_icon:1330530086792728618> \`${roleBefore.name}\` <a:vegarightarrow:1443673039156936837> \`${roleAfter.name}\`
 <:discordstaff:1443651872258003005> __${reason}__`,
-        });
+        }).catch(() => null);
 
         staffDoc.rolesHistory.push({
           oldRole: roleBefore.id,
@@ -537,7 +537,7 @@ module.exports = {
           content: `**<a:laydowntorest:1444006796661358673> DEPEX** ${targetUser}
 <:member_role_icon:1330530086792728618> \`${oldRole.name}\` <a:vegarightarrow:1443673039156936837> \`${newRole.name}\`
 <:discordstaff:1443651872258003005> __${reason}__`,
-        });
+        }).catch(() => null);
         return;
       } catch (err) {
         global.logger.error(err);
@@ -550,7 +550,7 @@ module.exports = {
         const targetUser = interaction.options.getUser("staffer");
         const reason = interaction.options.getString("motivo");
         const warnChannel = interaction.guild.channels.cache.get(
-          IDs.channels.warnStaff,
+          IDs.channels?.warnStaff,
         );
 
         const staffDoc = await getOrCreateStaffDoc(
@@ -586,7 +586,7 @@ module.exports = {
           await warnChannel.send({
             content: `${targetUser}`,
             embeds: [warnEmbed],
-          });
+          }).catch(() => null);
         }
 
         return replySuccess(interaction);
@@ -599,7 +599,7 @@ module.exports = {
     if (group === "resoconto" && sub === "staffer") {
       try {
         const resocontoChannel = interaction.guild.channels.cache.get(
-          IDs.channels.resocontiStaff,
+          IDs.channels?.resocontiStaff,
         );
         const staffer = interaction.options.getUser("staffer");
         const role = interaction.options.getRole("ruolo");
@@ -613,8 +613,9 @@ module.exports = {
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
         if (!(await ensureNotSelf(interaction, staffer))) return;
 
-        await resocontoChannel.send({
-          content: `
+        if (resocontoChannel) {
+          await resocontoChannel.send({
+            content: `
 <:discordstaff:1443651872258003005> **Staffer:** __**<@${staffer.id}>**__
 <:dot:1443660294596329582> **Ruolo:** __${role}__
 <:dot:1443660294596329582> **Messaggi in una settimana:** __${messages}__
@@ -623,7 +624,8 @@ module.exports = {
 <:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
 <:dot:1443660294596329582> **Azione:** __${action}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`,
-        });
+          }).catch(() => null);
+        }
 
         return replySuccess(interaction);
       } catch (err) {
@@ -635,7 +637,7 @@ module.exports = {
     if (group === "resoconto" && sub === "pm") {
       try {
         const resocontoChannel = interaction.guild.channels.cache.get(
-          IDs.channels.resocontiStaff,
+          IDs.channels?.resocontiStaff,
         );
         const staffer = interaction.options.getUser("staffer");
         const action = interaction.options.getString("azione");
@@ -645,12 +647,14 @@ module.exports = {
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
         if (!(await ensureNotSelf(interaction, staffer))) return;
 
-        await resocontoChannel.send({
-          content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${staffer.id}>__
+        if (resocontoChannel) {
+          await resocontoChannel.send({
+            content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${staffer.id}>__
 <:dot:1443660294596329582> **Partner:** __${partners}__
 <:dot:1443660294596329582> **Azione:** __${action}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`,
-        });
+          }).catch(() => null);
+        }
 
         return replySuccess(interaction);
       } catch (err) {

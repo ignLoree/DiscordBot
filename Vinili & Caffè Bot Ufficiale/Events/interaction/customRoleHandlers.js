@@ -45,13 +45,17 @@ async function replyEphemeral(interaction, payload) {
 }
 
 function parseRoleActionId(customId) {
-  const [head, ownerId, roleId] = String(customId || "").split(":");
+  const parts = String(customId || "").split(":");
+  if (parts.length !== 3) return null;
+  const [head, ownerId, roleId] = parts;
   if (!head || !ownerId || !roleId) return null;
   return { head, ownerId, roleId };
 }
 
 function parseVoiceActionId(customId) {
-  const [head, ownerId, channelId] = String(customId || "").split(":");
+  const parts = String(customId || "").split(":");
+  if (parts.length !== 3) return null;
+  const [head, ownerId, channelId] = parts;
   if (!head || !ownerId || !channelId) return null;
   if (head !== "customvoc_name" && head !== "customvoc_emoji") return null;
   return { head, ownerId, channelId };
@@ -525,7 +529,9 @@ async function handleRoleActionModal(interaction) {
     "customrole_modal_",
     "",
   );
-  const [action, ownerId, roleId, panelMessageId] = modalBody.split(":");
+  const modalParts = modalBody.split(":");
+  if (modalParts.length < 4) return false;
+  const [action, ownerId, roleId, panelMessageId] = modalParts;
   if (!action || !ownerId || !roleId) return false;
   if (!(await checkOwnership(interaction, ownerId))) return true;
   const ownerState = await ensureOwnerCustomRoleActive(
@@ -691,7 +697,9 @@ async function handleAddRemoveSelectMenus(interaction) {
     interaction.isUserSelectMenu() &&
     String(interaction.customId || "").startsWith("customrole_add_select:")
   ) {
-    const [, ownerId, roleId] = String(interaction.customId).split(":");
+    const addParts = String(interaction.customId).split(":");
+    if (addParts.length !== 3) return true;
+    const [, ownerId, roleId] = addParts;
     if (!ownerId || !roleId) return true;
     if (!(await checkOwnership(interaction, ownerId))) return true;
     const ownerState = await ensureOwnerCustomRoleActive(
@@ -754,7 +762,9 @@ async function handleAddRemoveSelectMenus(interaction) {
     interaction.isStringSelectMenu() &&
     String(interaction.customId || "").startsWith("customrole_remove_select:")
   ) {
-    const [, ownerId, roleId] = String(interaction.customId).split(":");
+    const removeParts = String(interaction.customId).split(":");
+    if (removeParts.length !== 3) return true;
+    const [, ownerId, roleId] = removeParts;
     if (!ownerId || !roleId) return true;
     if (!(await checkOwnership(interaction, ownerId))) return true;
     const ownerState = await ensureOwnerCustomRoleActive(
@@ -948,7 +958,9 @@ async function handleCustomVocModal(interaction) {
   const isNameModal = customId.startsWith("customvoc_modal_name:");
   const isEmojiModal = customId.startsWith("customvoc_modal_emoji:");
   if (!isNameModal && !isEmojiModal) return false;
-  const [, ownerId, channelId] = customId.split(":");
+  const vocParts = customId.split(":");
+  if (vocParts.length !== 3) return true;
+  const [, ownerId, channelId] = vocParts;
   if (!ownerId || !channelId) return true;
 
   const send = async (payload) => {
@@ -1058,7 +1070,9 @@ async function handleGrantButtons(interaction) {
   )
     return false;
 
-  const [, token, action] = String(interaction.customId).split(":");
+  const grantParts = String(interaction.customId).split(":");
+  if (grantParts.length !== 3) return false;
+  const [, token, action] = grantParts;
   const request = pendingRoleGrants.get(token);
   if (!request) {
     await interaction

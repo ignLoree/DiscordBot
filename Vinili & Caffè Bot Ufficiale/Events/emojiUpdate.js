@@ -134,7 +134,7 @@ module.exports = {
       const imageUrl = newEmoji?.imageURL?.({ extension: "png", size: 256 }) || newEmoji?.url || null;
       if (imageUrl) embed.setThumbnail(imageUrl);
 
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[emojiUpdate] log failed:", error);
     }

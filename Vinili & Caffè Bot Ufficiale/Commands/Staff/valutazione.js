@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
@@ -75,7 +75,7 @@ function makeRemovalEmbed(
 
 async function sendChannelEmbed(channel, payload) {
   if (!channel) return;
-  await channel.send(payload);
+  await channel.send(payload).catch(() => null);
 }
 
 async function handlePositiveAdd(
@@ -117,7 +117,11 @@ async function handlePositiveRemove(
   channel,
 ) {
   const removeId = interaction.options.getInteger("id");
-  if (!staffDoc.positiveReasons?.[removeId - 1]) {
+  if (
+    !Number.isInteger(removeId) ||
+    removeId < 1 ||
+    !staffDoc.positiveReasons?.[removeId - 1]
+  ) {
     return safeEditReply(interaction, {
       embeds: [errorEmbed("<:vegax:1443934876440068179> ID non valido")],
       flags: EPHEMERAL_FLAG,
@@ -188,7 +192,11 @@ async function handleNegativeRemove(
   channel,
 ) {
   const removeId = interaction.options.getInteger("id");
-  if (!staffDoc.negativeReasons?.[removeId - 1]) {
+  if (
+    !Number.isInteger(removeId) ||
+    removeId < 1 ||
+    !staffDoc.negativeReasons?.[removeId - 1]
+  ) {
     return safeEditReply(interaction, {
       embeds: [errorEmbed("<:vegax:1443934876440068179> ID non valido")],
       flags: EPHEMERAL_FLAG,
@@ -371,7 +379,7 @@ module.exports = {
     const reason = interaction.options.getString("motivo");
     const guildId = interaction.guild.id;
     const channel = interaction.guild.channels.cache.get(
-      IDs.channels.valutazioniStaff,
+      IDs.channels?.valutazioniStaff,
     );
 
     await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});

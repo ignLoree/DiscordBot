@@ -1,7 +1,9 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
 const { getSecurityStaticsSnapshot } = require("../../Services/Moderation/securityProfilesService");
 
+const EMBED_DESCRIPTION_MAX = 4096;
+const EMBED_TITLE_MAX = 256;
 const DEFAULT_LOG_CHANNEL_IDS = [
   IDs.channels?.activityLogs,
   IDs.channels?.modLogs,
@@ -39,17 +41,19 @@ async function sendSecurityAuditLog(guild, payload = {}) {
       ? payload.details.filter(Boolean).map((x) => String(x))
       : [];
 
+    const descriptionLines = [
+      actorId ? `Attore: <@${actorId}> \`${actorId}\`` : null,
+      ...details,
+    ].filter(Boolean);
+    let description = descriptionLines.join("\n");
+    if (description.length > EMBED_DESCRIPTION_MAX) {
+      description = `${description.slice(0, EMBED_DESCRIPTION_MAX - 3)}...`;
+    }
+    const title = `Security Audit • ${action}`.slice(0, EMBED_TITLE_MAX);
     const embed = new EmbedBuilder()
       .setColor(String(payload.color || "#6f4e37"))
-      .setTitle(`Security Audit • ${action}`)
-      .setDescription(
-        [
-          actorId ? `Attore: <@${actorId}> \`${actorId}\`` : null,
-          ...details,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      )
+      .setTitle(title)
+      .setDescription(description)
       .setTimestamp();
 
     await channel.send({ embeds: [embed] }).catch(() => null);

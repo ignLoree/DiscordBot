@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder } = require("discord.js");
 
 const EPHEMERAL_FLAG = 1 << 6;
@@ -120,7 +120,7 @@ module.exports = {
         payload.allowedMentions = { repliedUser: true };
       }
 
-      await target.channel.send(payload);
+      await target.channel.send(payload).catch(() => null);
     } catch (err) {
       global.logger.error(err);
       return safeEditReply(interaction, {

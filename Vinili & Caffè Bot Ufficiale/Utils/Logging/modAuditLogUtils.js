@@ -2,12 +2,13 @@ const { PermissionsBitField } = require("discord.js");
 const IDs = require("../Config/ids");
 
 async function resolveModLogChannel(guild) {
-  const channelId = IDs.channels.modLogs;
+  const channelId = IDs.channels?.modLogs;
   if (!guild || !channelId) return null;
-  return (
+  const channel =
     guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+    (await guild.channels.fetch(channelId).catch(() => null));
+  if (!channel?.isTextBased?.()) return null;
+  return channel;
 }
 
 function canViewAuditLog(guild) {

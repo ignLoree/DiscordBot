@@ -95,7 +95,7 @@ module.exports = {
         );
 
       if (sticker.url) embed.setThumbnail(sticker.url);
-      await logChannel.send({ embeds: [embed] });
+      await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[stickerDelete] log failed:", error);
     }

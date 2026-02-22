@@ -27,11 +27,11 @@ function successEmbed(description) {
 }
 
 async function getPollChannel(interaction) {
+  const channelId = IDs.channels?.polls;
+  if (!channelId) return null;
   const channel =
-    interaction.guild.channels.cache.get(IDs.channels.polls) ||
-    (await interaction.guild.channels
-      .fetch(IDs.channels.polls)
-      .catch(() => null));
+    interaction.guild.channels.cache.get(channelId) ||
+    (await interaction.guild.channels.fetch(channelId).catch(() => null));
   if (!channel || !channel.isTextBased?.()) return null;
   return channel;
 }
@@ -174,7 +174,13 @@ async function handleCreate(interaction) {
   const pollNumber = Number(counter?.pollcount || 1);
   const pollMessage = await channel.send({
     content: buildPollMessageContent(pollNumber, question, answersText),
-  });
+  }).catch(() => null);
+  if (!pollMessage) {
+    return safeEditReply(interaction, {
+      embeds: [errorEmbed("<:vegax:1443934876440068179> Impossibile inviare il poll nel canale (permessi o canale non valido).")],
+      flags: EPHEMERAL_FLAG,
+    });
+  }
 
   await applyPollReactions(pollMessage, validEmojis);
 
@@ -198,7 +204,7 @@ async function handleCreate(interaction) {
   return safeEditReply(interaction, {
     embeds: [
       successEmbed(
-        `<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#${IDs.channels.polls}>!`,
+        `<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#${IDs.channels?.polls || ""}>!`,
       ),
     ],
   });
@@ -310,7 +316,7 @@ async function handleEdit(interaction) {
 
   await pollMessage.edit({
     content: buildPollMessageContent(pollId, question, answersText),
-  });
+  }).catch(() => null);
 
   await pollMessage.reactions.removeAll().catch(() => {});
   await applyPollReactions(pollMessage, validEmojis);

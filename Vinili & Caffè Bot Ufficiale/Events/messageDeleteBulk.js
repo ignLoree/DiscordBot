@@ -266,7 +266,7 @@ module.exports = {
         });
       }
 
-      await logChannel.send({ embeds: [embed], files });
+      await logChannel.send({ embeds: [embed], files }).catch(() => null);
     } catch (error) {
       global.logger?.error?.("[messageDeleteBulk] failed:", error);
     }

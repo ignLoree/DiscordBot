@@ -1,4 +1,4 @@
-﻿const { Client, GatewayIntentBits, Collection, Partials, } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, Partials, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -233,22 +233,26 @@ client.buttons = new Collection();
 client.snipes = new Map();
 
 (async () => {
-  installHandlers(client);
+  try {
+    installHandlers(client);
 
-  client.handleEvents(path.join(APP_ROOT, "Events"));
-  client.handleTriggers(triggerFiles, APP_ROOT);
-  await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
-  await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
-  startDashboardServer(client);
+    client.handleEvents(path.join(APP_ROOT, "Events"));
+    client.handleTriggers(triggerFiles, APP_ROOT);
+    await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
+    await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
+    startDashboardServer(client);
 
-  if (typeof client.logBootTables === "function") {
-    client.logBootTables();
+    if (typeof client.logBootTables === "function") {
+      client.logBootTables();
+    }
+
+    client.login(client.config.token).catch((error) => {
+      global.logger.error(
+        "[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.",
+        error,
+      );
+    });
+  } catch (err) {
+    global.logger?.error?.("[STARTUP]", err);
   }
-
-  client.login(client.config.token).catch((error) => {
-    global.logger.error(
-      "[LOGIN] Error while logging in. Check if your token is correct or double check your also using the correct intents.",
-      error,
-    );
-  });
 })();

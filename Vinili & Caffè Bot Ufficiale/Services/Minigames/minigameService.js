@@ -359,6 +359,213 @@ const DRIVING_TRUE_FALSE_BANK = [
     statement: "Con pioggia intensa bisogna ridurre la velocità.",
     answer: true,
   },
+  { statement: "I segnali triangolari con bordo rosso indicano un pericolo.", answer: true },
+  { statement: "I segnali di divieto sono di forma circolare.", answer: true },
+  { statement: "Il segnale di obbligo è di forma circolare con sfondo blu.", answer: true },
+  { statement: "Fuori dai centri abitati il limite per le auto è 90 km/h salvo diversa segnalazione.", answer: true },
+  { statement: "È vietato sorpassare a destra salvo che il veicolo sorpassato stia svoltando a sinistra.", answer: true },
+  { statement: "In autostrada è vietato usare la corsia di emergenza per marciare.", answer: true },
+  { statement: "Il conducente deve avere con sé la patente e il libretto di circolazione.", answer: true },
+  { statement: "L'assicurazione RC auto è obbligatoria per legge.", answer: true },
+  { statement: "In caso di nebbia è obbligatorio tenere accesi i fendinebbia o le luci antinebbia.", answer: true },
+  { statement: "Il semaforo giallo obbliga a fermarsi se ci si può fermare in sicurezza.", answer: true },
+  { statement: "La sosta è vietata in corrispondenza dei passaggi pedonali.", answer: true },
+  { statement: "È vietato fermarsi sulle strisce pedonali.", answer: true },
+  { statement: "In una rotatoria ha precedenza chi sta già circolando nella rotatoria.", answer: true },
+  { statement: "Le catene da neve vanno montate sulle ruote motrici.", answer: true },
+  { statement: "È vietato circolare con il veicolo in condizioni di scarsa visibilità senza luci accese.", answer: true },
+  { statement: "Il segnale STOP obbliga a fermarsi e dare la precedenza.", answer: true },
+  { statement: "La doppia striscia continua non può essere oltrepassata.", answer: true },
+  { statement: "In caso di incidente con feriti bisogna prestare assistenza e chiamare i soccorsi.", answer: true },
+  { statement: "È consentito sorpassare in corrispondenza degli attraversamenti pedonali se non ci sono pedoni.", answer: false },
+  { statement: "Si può parcheggiare in doppia fila se si lascia il motore acceso.", answer: false },
+  { statement: "In autostrada si può fare retromarcia per recuperare un uscita persa.", answer: false },
+  { statement: "I segnali luminosi del semaforo valgono più dei segnali verticali.", answer: false },
+  { statement: "È consentito superare i 130 km/h in autostrada per sorpassare.", answer: false },
+  { statement: "La patente si rinnova solo dopo i 50 anni.", answer: false },
+  { statement: "In galleria è obbligatorio tenere accesi solo gli anabbaglianti.", answer: true },
+  { statement: "Il casco è obbligatorio per i conducenti di ciclomotori e motocicli.", answer: true },
+  { statement: "Il segnale di divieto di sosta vieta di fermarsi anche momentaneamente.", answer: false },
+  { statement: "In caso di frenata di emergenza è consigliato azionare ripetutamente il freno (pompaggio).", answer: true },
+];
+
+const DRIVING_MULTIPLE_CHOICE_BANK = [
+  {
+    statement: "In un incrocio senza segnaletica, chi ha la precedenza?",
+    options: ["Chi proviene da destra", "Chi proviene da sinistra", "I veicoli più veloci", "I veicoli più pesanti"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Il segnale triangolare con bordo rosso indica:",
+    options: ["Pericolo", "Divieto", "Obbligo", "Informazione"],
+    correctIndex: 0,
+  },
+  {
+    statement: "A cosa serve la corsia di emergenza in autostrada?",
+    options: ["Solo a veicoli in panne o in emergenza", "Anche al sorpasso", "Alla sosta per riposo", "Alla retromarcia"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Il limite di velocità nei centri abitati è di default:",
+    options: ["50 km/h", "30 km/h", "70 km/h", "90 km/h"],
+    correctIndex: 0,
+  },
+  {
+    statement: "In caso di nebbia fitta, è obbligatorio:",
+    options: ["Accendere le luci anabbaglianti e i fendinebbia", "Solo i fari abbaglianti", "Nessuna luce obbligatoria", "Solo le luci di posizione"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Cosa indica un segnale circolare con bordo rosso e sfondo bianco?",
+    options: ["Divieto", "Obbligo", "Pericolo", "Preavviso"],
+    correctIndex: 0,
+  },
+  {
+    statement: "In una strada a senso unico, dove si può normalmente sostare?",
+    options: ["Sul lato destro o sinistro", "Solo sul lato destro", "Solo in aree attrezzate", "È vietata la sosta"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Quale documento deve avere con sé il conducente?",
+    options: ["Patente e libretto di circolazione", "Solo la patente", "Solo il libretto", "Nessuno se il veicolo è assicurato"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Cosa significa il segnale raffigurante un triangolo con un bambino?",
+    options: ["Attraversamento pedonale", "Divieto di transito ai bambini", "Zona scolastica", "Parco giochi"],
+    correctIndex: 0,
+  },
+  {
+    statement: "In autostrada, qual è il limite minimo di velocità?",
+    options: ["Non esiste un limite minimo obbligatorio", "60 km/h", "80 km/h", "90 km/h"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Il segnale con freccia gialla lampeggiante nel semaforo indica:",
+    options: ["Attenzione, passaggio con prudenza", "Via libera", "Divieto di passaggio", "Obbligo di svoltare"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Quando è obbligatorio usare i proiettori anabbaglianti?",
+    options: ["Di giorno in galleria e in caso di scarsa visibilità", "Solo di notte", "Solo in autostrada", "Mai, sono facoltativi"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Cosa indica la striscia bianca continua sulla carreggiata?",
+    options: ["Non si può oltrepassare", "Si può sorpassare con prudenza", "Corsia riservata ai bus", "Limite di parcheggio"],
+    correctIndex: 0,
+  },
+  {
+    statement: "In caso di incidente, il conducente deve:",
+    options: ["Fermarsi e prestare assistenza agli eventuali feriti", "Allontanarsi subito", "Solo avvisare i soccorsi", "Rimuovere subito i veicoli"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Il segnale ottagonale rosso con la scritta STOP obbliga a:",
+    options: ["Fermarsi e dare la precedenza", "Rallentare solo", "Fermarsi solo se arrivano altri veicoli", "Accelerare per passare prima"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Su strada extraurbana secondaria il limite per le auto è in genere:",
+    options: ["90 km/h", "50 km/h", "110 km/h", "70 km/h"],
+    correctIndex: 0,
+  },
+  {
+    statement: "La segnaletica orizzontale gialla:",
+    options: ["Prevale su quella bianca quando sono entrambe presenti", "È solo indicativa", "Indica un divieto assoluto", "Si trova solo in autostrada"],
+    correctIndex: 0,
+  },
+  {
+    statement: "In caso di strada sdrucciolevole è opportuno:",
+    options: ["Ridurre la velocità e manovrare con delicatezza", "Frenare a fondo", "Accelerare per uscire dalla zona", "Sterzare bruscamente"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Il pannello integrativo con tre barre nere oblique sotto un segnale indica:",
+    options: ["Distanza di pericolo (150-250-350 m)", "Limite di velocità 30 km/h", "Divieto di sorpasso per 3 km", "Altezza massima 3 m"],
+    correctIndex: 0,
+  },
+  {
+    statement: "Chi guida un veicolo deve:",
+    options: ["Avere capacità psico-fisiche adeguate", "Essere maggiorenne per qualsiasi veicolo", "Avere solo la patente", "Non aver assunto farmaci negli ultimi 24 ore"],
+    correctIndex: 0,
+  },
+];
+
+/** Domande quiz patente con immagine del segnale (signType = tipo da disegnare). */
+const DRIVING_SIGN_QUESTIONS = [
+  {
+    signType: "danger",
+    statement: "Cosa indica questo segnale?",
+    options: ["Pericolo", "Divieto", "Obbligo", "Fine divieto"],
+    correctIndex: 0,
+  },
+  {
+    signType: "stop",
+    statement: "Cosa indica questo segnale?",
+    options: ["Obbligo di fermarsi e dare precedenza", "Dare precedenza", "Passaggio obbligatorio", "Strada con diritto di precedenza"],
+    correctIndex: 0,
+  },
+  {
+    signType: "give_way",
+    statement: "Cosa indica questo segnale?",
+    options: ["Dare la precedenza", "Fermarsi", "Strada con diritto di precedenza", "Divieto di accesso"],
+    correctIndex: 0,
+  },
+  {
+    signType: "no_entry",
+    statement: "Cosa indica questo segnale?",
+    options: ["Divieto di accesso", "Senso unico", "Precedenza ai veicoli provenienti dal senso opposto", "Strada chiusa"],
+    correctIndex: 0,
+  },
+  {
+    signType: "parking",
+    statement: "Cosa indica questo segnale?",
+    options: ["Parcheggio consentito", "Divieto di sosta", "Zona a sosta limitata", "Parcheggio riservato"],
+    correctIndex: 0,
+  },
+  {
+    signType: "no_parking",
+    statement: "Cosa indica questo segnale?",
+    options: ["Divieto di sosta", "Divieto di fermata", "Sosta consentita solo a pagamento", "Parcheggio a tempo limitato"],
+    correctIndex: 0,
+  },
+  {
+    signType: "speed_50",
+    statement: "Cosa indica questo segnale?",
+    options: ["Limite massimo di velocità 50 km/h", "Limite minimo 50 km/h", "Consigliato 50 km/h", "Fine limite 50 km/h"],
+    correctIndex: 0,
+  },
+  {
+    signType: "obligation_right",
+    statement: "Cosa indica questo segnale?",
+    options: ["Obbligo di svoltare a destra", "Preavviso di svolta a destra", "Divieto di svoltare a destra", "Senso unico a destra"],
+    correctIndex: 0,
+  },
+  {
+    signType: "obligation_forward",
+    statement: "Cosa indica questo segnale?",
+    options: ["Passaggio obbligatorio dritto", "Obbligo di proseguire diritto", "Divieto di svoltare", "Senso unico"],
+    correctIndex: 0,
+  },
+  {
+    signType: "pedestrian_crossing",
+    statement: "Cosa indica questo segnale?",
+    options: ["Attraversamento pedonale", "Zona pedonale", "Divieto di transito ai pedoni", "Passaggio obbligatorio per pedoni"],
+    correctIndex: 0,
+  },
+  {
+    signType: "no_overtaking",
+    statement: "Cosa indica questo segnale?",
+    options: ["Divieto di sorpasso", "Sorpasso consentito", "Fine divieto di sorpasso", "Preavviso di divieto di sorpasso"],
+    correctIndex: 0,
+  },
+  {
+    signType: "priority_road",
+    statement: "Cosa indica questo segnale?",
+    options: ["Strada con diritto di precedenza", "Dare la precedenza", "Incrocio con strada prioritaria", "Fine diritto di precedenza"],
+    correctIndex: 0,
+  },
 ];
 
 const FAST_TYPING_PHRASES = [
@@ -367,6 +574,59 @@ const FAST_TYPING_PHRASES = [
   "la musica unisce le persone",
   "oggi vinco io",
 ];
+
+/** API predefinita per frasi/citazioni (es. quotable.io). Usata se fastType.apiUrl non è impostata. */
+const DEFAULT_FAST_TYPE_API_URL = "https://api.quotable.io/random";
+
+/** Lunghezza massima frasi "scrivi la frase" (troncate a parola intera se superano). */
+const DEFAULT_MAX_FAST_TYPE_PHRASE_LENGTH = 180;
+
+/** API predefinita quiz patente: mix vero/falso e risposta multipla (Open Trivia, categoria Veicoli). */
+const DEFAULT_DRIVING_QUIZ_API_URL =
+  "https://opentdb.com/api.php?amount=5&category=28&encode=url3986";
+
+/** Limite caratteri per richiesta MyMemory (sotto 500 bytes). */
+const MYMEMORY_MAX_CHARS = 450;
+const MYMEMORY_BASE = "https://api.mymemory.translated.net/get";
+
+/**
+ * Traduce un testo in italiano (en -> it) tramite MyMemory.
+ * Se translateApiToItalian è false in config, non chiamare.
+ * @param {string} text - Testo da tradurre (es. da API inglese)
+ * @param {{ translateApiToItalian?: boolean }} [cfg] - Config (minigames); se translateApiToItalian === false ritorna il testo originale
+ * @returns {Promise<string>} Testo tradotto o originale in caso di errore/disabled
+ */
+async function translateToItalian(text, cfg = {}) {
+  if (cfg?.translateApiToItalian === false) return String(text || "").trim();
+  const raw = String(text || "").trim();
+  if (!raw) return raw;
+
+  const chunks = [];
+  let rest = raw;
+  while (rest.length > MYMEMORY_MAX_CHARS) {
+    const slice = rest.slice(0, MYMEMORY_MAX_CHARS);
+    const lastDot = slice.lastIndexOf(".");
+    const splitAt = lastDot >= 0 ? lastDot + 1 : MYMEMORY_MAX_CHARS;
+    chunks.push(rest.slice(0, splitAt).trim());
+    rest = rest.slice(splitAt).trim();
+  }
+  if (rest) chunks.push(rest);
+
+  const translated = [];
+  for (const chunk of chunks) {
+    if (!chunk) continue;
+    try {
+      const url = `${MYMEMORY_BASE}?q=${encodeURIComponent(chunk)}&langpair=en|it`;
+      const res = await axios.get(url, { timeout: 8000 });
+      const t = res?.data?.responseData?.translatedText;
+      if (t && typeof t === "string") translated.push(t.trim());
+      else translated.push(chunk);
+    } catch {
+      translated.push(chunk);
+    }
+  }
+  return translated.length ? translated.join(" ").replace(/\s+\./g, ".").trim() : raw;
+}
 
 const HANGMAN_WORDS = [
   "computer",
@@ -1284,8 +1544,8 @@ function isSingerGuessCorrect(rawGuess, rawAnswers) {
 function normalizeTruthValue(raw) {
   const v = normalizeCountryName(raw);
   if (!v) return null;
-  if (["vero", "v"].includes(v)) return true;
-  if (["falso", "f"].includes(v)) return false;
+  if (["vero", "v", "true", "t", "si", "sì", "yes", "y"].includes(v)) return true;
+  if (["falso", "f", "false", "no", "n"].includes(v)) return false;
   return null;
 }
 
@@ -1434,7 +1694,380 @@ function wrapPromptText(ctx, text, maxWidth) {
   return lines.length ? lines : [source];
 }
 
+function buildFastTypePromptImage(phrase) {
+  try {
+    const width = 1200;
+    const height = 420;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+    const padding = 48;
+    const radius = 20;
+
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, "#2c2419");
+    bgGrad.addColorStop(1, "#1a1510");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const cardX = padding;
+    const cardY = padding;
+    const cardW = width - padding * 2;
+    const cardH = height - padding * 2;
+    ctx.fillStyle = "rgba(247, 241, 232, 0.97)";
+    roundRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(111, 78, 55, 0.5)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.stroke();
+
+    const labelY = cardY + 52;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#8b7355";
+    ctx.font = "600 28px Sans";
+    ctx.fillText("Scrivi esattamente questa frase", width / 2, labelY);
+
+    const phraseText = String(phrase || "").trim() || "...";
+    const usableWidth = cardW - 80;
+    ctx.font = "bold 42px Sans";
+    const phraseLines = wrapPromptText(ctx, phraseText, usableWidth);
+    const lineHeight = 54;
+    const totalPhraseHeight = phraseLines.length * lineHeight;
+    let phraseY = Math.round((height - totalPhraseHeight) / 2) - 10;
+    ctx.fillStyle = "#2c2419";
+    for (const line of phraseLines) {
+      ctx.fillText(line, width / 2, phraseY, usableWidth);
+      phraseY += lineHeight;
+    }
+
+    const name = "fast_type.png";
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), { name });
+  } catch {
+    return null;
+  }
+}
+
+function buildDrivingQuizPromptImage(row) {
+  try {
+    const width = 1200;
+    const padding = 48;
+    const radius = 20;
+    const cardW = width - padding * 2;
+    const height = 520;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    const hasSign = Boolean(row?.signType);
+    const signAreaW = hasSign ? 320 : 0;
+    const textAreaW = cardW - signAreaW - (hasSign ? 24 : 0);
+    const usableWidth = textAreaW - 40;
+
+    const isMultiple =
+      (row?.questionType === "multiple" || hasSign) &&
+      Array.isArray(row?.options) &&
+      row.options.length >= 2;
+    const statement = String(row?.statement ?? "").trim() || "Domanda";
+    ctx.font = "bold 38px Sans";
+    const statementLines = wrapPromptText(ctx, statement, usableWidth);
+    let optionsLines = [];
+    if (isMultiple) {
+      ctx.font = "bold 32px Sans";
+      for (let i = 0; i < row.options.length; i++) {
+        const opt = String(row.options[i] ?? "").trim();
+        const letter = ["A", "B", "C", "D"][i] ?? String(i + 1);
+        optionsLines.push(...wrapPromptText(ctx, `${letter}) ${opt}`, usableWidth - 50));
+      }
+    }
+    const cardH = height - padding * 2;
+
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, "#2c2419");
+    bgGrad.addColorStop(1, "#1a1510");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const cardX = padding;
+    const cardY = padding;
+    ctx.fillStyle = "rgba(247, 241, 232, 0.97)";
+    roundRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(111, 78, 55, 0.5)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cardX, cardY, cardW, cardH, radius);
+    ctx.stroke();
+
+    let textStartX = cardX + (cardW - textAreaW) / 2;
+    if (hasSign) {
+      textStartX = cardX + signAreaW + 24;
+      const signCx = cardX + signAreaW / 2;
+      const signCy = cardY + cardH / 2;
+      drawRoadSign(ctx, row.signType, signCx, signCy, 200);
+    }
+
+    const textCenterX = hasSign ? textStartX + textAreaW / 2 : width / 2;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#8b7355";
+    ctx.font = "600 26px Sans";
+    ctx.fillText("Quiz patente", hasSign ? textCenterX : width / 2, cardY + 36);
+
+    let y = cardY + 88;
+    ctx.fillStyle = "#2c2419";
+    ctx.font = "bold 38px Sans";
+    for (const line of statementLines) {
+      ctx.fillText(line, textCenterX, y, usableWidth);
+      y += 46;
+    }
+
+    if (isMultiple) {
+      y += 14;
+      ctx.font = "bold 32px Sans";
+      for (const line of optionsLines) {
+        ctx.fillText(line, textCenterX, y, usableWidth);
+        y += 40;
+      }
+    } else {
+      y += 12;
+      ctx.fillStyle = "#6f4e37";
+      ctx.font = "600 28px Sans";
+      ctx.fillText("Rispondi: Vero o Falso", textCenterX, y);
+    }
+
+    const name = "driving_quiz.png";
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), { name });
+  } catch {
+    return null;
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  if (r <= 0) {
+    ctx.rect(x, y, w, h);
+    return;
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawRoadSign(ctx, signType, cx, cy, size) {
+  const s = Math.max(20, size || 120);
+  const r = s / 2;
+  ctx.save();
+
+  switch (String(signType || "").toLowerCase()) {
+    case "danger": {
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(2, s / 25);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r + 8);
+      ctx.lineTo(cx + r - 8, cy + r * 0.5);
+      ctx.lineTo(cx - r + 8, cy + r * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#e00";
+      ctx.font = `bold ${Math.round(s / 3)}px Sans`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", cx, cy);
+      break;
+    }
+    case "stop": {
+      const pts = 8;
+      ctx.fillStyle = "#e00";
+      ctx.beginPath();
+      for (let i = 0; i < pts; i++) {
+        const a = (i / pts) * Math.PI * 2 - Math.PI / 2;
+        const x = cx + (r - 4) * Math.cos(a);
+        const y = cy + (r - 4) * Math.sin(a);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${Math.round(s / 4.5)}px Sans`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("STOP", cx, cy);
+      break;
+    }
+    case "give_way": {
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(2, s / 25);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + r - 8);
+      ctx.lineTo(cx + r - 8, cy - r * 0.5);
+      ctx.lineTo(cx - r + 8, cy - r * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    case "no_entry": {
+      ctx.fillStyle = "#e00";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(cx - r * 0.6, cy - s / 8, r * 1.2, s / 4);
+      break;
+    }
+    case "parking": {
+      ctx.fillStyle = "#0066b3";
+      ctx.fillRect(cx - r + 4, cy - r * 0.7, (r - 4) * 2, r * 1.4);
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${Math.round(s / 2.2)}px Sans`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("P", cx, cy);
+      break;
+    }
+    case "no_parking": {
+      ctx.fillStyle = "#0066b3";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(3, s / 20);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(4, s / 15);
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.5, cy + r * 0.5);
+      ctx.lineTo(cx + r * 0.5, cy - r * 0.5);
+      ctx.stroke();
+      break;
+    }
+    case "speed_50": {
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(2, s / 25);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#000";
+      ctx.font = `bold ${Math.round(s / 2.5)}px Sans`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("50", cx, cy);
+      break;
+    }
+    case "obligation_right": {
+      ctx.fillStyle = "#0066b3";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.35, cy);
+      ctx.lineTo(cx + r * 0.35, cy - r * 0.35);
+      ctx.lineTo(cx + r * 0.35, cy + r * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case "obligation_forward": {
+      ctx.fillStyle = "#0066b3";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r * 0.4);
+      ctx.lineTo(cx - r * 0.25, cy + r * 0.35);
+      ctx.lineTo(cx, cy + r * 0.15);
+      ctx.lineTo(cx + r * 0.25, cy + r * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case "pedestrian_crossing": {
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(2, s / 25);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r + 8);
+      ctx.lineTo(cx + r - 8, cy + r * 0.5);
+      ctx.lineTo(cx - r + 8, cy + r * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#000";
+      ctx.font = `bold ${Math.round(s / 4)}px Sans`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("PED", cx, cy);
+      break;
+    }
+    case "no_overtaking": {
+      ctx.fillStyle = "#fff";
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(2, s / 25);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#e00";
+      ctx.fillRect(cx - r * 0.5, cy - r * 0.2, r * 0.35, r * 0.4);
+      ctx.fillRect(cx + r * 0.15, cy - r * 0.2, r * 0.35, r * 0.4);
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.45, cy);
+      ctx.lineTo(cx + r * 0.45, cy);
+      ctx.strokeStyle = "#e00";
+      ctx.lineWidth = Math.max(3, s / 25);
+      ctx.stroke();
+      break;
+    }
+    case "priority_road": {
+      const d = r - 4;
+      ctx.fillStyle = "#ffcc00";
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = Math.max(2, s / 30);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - d);
+      ctx.lineTo(cx + d, cy);
+      ctx.lineTo(cx, cy + d);
+      ctx.lineTo(cx - d, cy);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+    default:
+      ctx.fillStyle = "#888";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r - 4, 0, Math.PI * 2);
+      ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame") {
+  if (fileBaseName === "fast_type" && Array.isArray(lines) && lines.length > 0) {
+    const out = buildFastTypePromptImage(lines[0]);
+    if (out) return out;
+  }
+
   try {
     const width = 1400;
     const height = 780;
@@ -2366,19 +2999,35 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
     );
 }
 
-function buildDrivingQuizEmbed(statement, rewardExp, durationMs) {
+const DRIVING_QUIZ_LETTERS = ["A", "B", "C", "D"];
+
+function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
+  const statement = row?.statement ?? "";
+  const isMultiple =
+    row?.questionType === "multiple" &&
+    Array.isArray(row.options) &&
+    row.options.length >= 2;
+  const lines = [
+    `<a:VC_Beer:1448687940560490547> **${isMultiple ? "Domanda" : "Affermazione"}:** ${statement}`,
+  ];
+  if (isMultiple) {
+    row.options.forEach((opt, i) => {
+      const letter = DRIVING_QUIZ_LETTERS[i] ?? String(i + 1);
+      lines.push(`**${letter})** ${opt}`);
+    });
+    lines.push("Rispondi con la lettera (A, B, C, D), il numero (1-4) o il testo della risposta.");
+  } else {
+    lines.push("Rispondi con `vero` o `falso`.");
+  }
+  lines.push(
+    `Ricompensa: **${rewardExp} exp**`,
+    `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
+  );
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle("Quiz patente .ᐟ ✧")
-    .setDescription(
-      [
-        `<a:VC_Beer:1448687940560490547> **Affermazione:** ${statement}`,
-        "Rispondi con `vero` o `falso`.",
-        `Ricompensa: **${rewardExp} exp**`,
-        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
-      ].join("\n"),
-    );
+    .setDescription(lines.join("\n"));
 }
 
 function buildMathExpressionEmbed(
@@ -2671,11 +3320,22 @@ function buildTimeoutItalianGkEmbed(answer) {
     );
 }
 
-function buildTimeoutDrivingQuizEmbed(answerBool) {
+function buildTimeoutDrivingQuizEmbed(game) {
+  const isMultiple =
+    game?.questionType === "multiple" &&
+    Array.isArray(game?.options) &&
+    Number.isFinite(game?.correctIndex);
+  let text;
+  if (isMultiple && game.options[game.correctIndex] != null) {
+    const letter = DRIVING_QUIZ_LETTERS[game.correctIndex] ?? String(game.correctIndex + 1);
+    text = `La risposta corretta era **${letter}) ${game.options[game.correctIndex]}**.`;
+  } else {
+    text = `La risposta corretta era **${game?.answer ? "vero" : "falso"}**.`;
+  }
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Tempo scaduto! La risposta corretta era **${answerBool ? "vero" : "falso"}**.`,
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! ${text}`,
     );
 }
 
@@ -2701,7 +3361,7 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.guessAlbum) types.push("guessAlbum");
   if (cfg?.hangman !== false) types.push("hangman");
   if (cfg?.italianGK?.apiUrl) types.push("italianGK");
-  if (cfg?.drivingQuiz?.apiUrl) types.push("drivingQuiz");
+  if (cfg?.drivingQuiz !== false) types.push("drivingQuiz");
   if (cfg?.mathExpression !== false) types.push("mathExpression");
   return types;
 }
@@ -3478,18 +4138,47 @@ async function startGuessRegionCapitalGame(client, cfg) {
   return true;
 }
 
+function parsePhraseFromApiPayload(payload) {
+  if (payload == null) return "";
+  if (typeof payload === "string") return payload.trim();
+  const text =
+    payload.content ??
+    payload.quote ??
+    payload.text ??
+    payload.phrase ??
+    payload.frase ??
+    "";
+  return String(text).trim();
+}
+
+async function fetchPhraseFromApi(apiUrl, timeoutMs = 15000) {
+  try {
+    const res = await axios.get(apiUrl, { timeout: timeoutMs });
+    const data = res?.data;
+    if (Array.isArray(data)) {
+      const item = pickRandomItem(data);
+      return parsePhraseFromApiPayload(item);
+    }
+    return parsePhraseFromApiPayload(data);
+  } catch {
+    return "";
+  }
+}
+
 async function startFastTypeGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
   let phrase = "";
-  const apiUrl = cfg?.fastType?.apiUrl || null;
-  if (apiUrl) {
-    try {
-      const res = await axios.get(apiUrl, { timeout: 15000 });
-      const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
-      phrase = String(payload?.phrase || payload?.text || payload || "").trim();
-    } catch {}
+  let fromApi = false;
+  const customApiUrl = cfg?.fastType?.apiUrl || null;
+  if (customApiUrl) {
+    phrase = await fetchPhraseFromApi(customApiUrl);
+    if (phrase) fromApi = true;
+  }
+  if (!phrase && (cfg?.fastType?.useDefaultApi !== false)) {
+    phrase = await fetchPhraseFromApi(DEFAULT_FAST_TYPE_API_URL);
+    if (phrase) fromApi = true;
   }
   if (!phrase) {
     const customPhrases = Array.isArray(cfg?.fastType?.phrases)
@@ -3497,6 +4186,17 @@ async function startFastTypeGame(client, cfg) {
       : [];
     const fallbackPhrases = customPhrases.length ? customPhrases : FAST_TYPING_PHRASES;
     phrase = String(pickRandomItem(fallbackPhrases) || "").trim();
+  }
+  if (!phrase) return false;
+  if (fromApi) {
+    const translated = await translateToItalian(phrase, cfg);
+    if (translated) phrase = translated;
+  }
+
+  const maxLen = Number(cfg?.fastType?.maxPhraseLength) || DEFAULT_MAX_FAST_TYPE_PHRASE_LENGTH;
+  if (phrase.length > maxLen) {
+    const lastSpace = phrase.slice(0, maxLen).lastIndexOf(" ");
+    phrase = (lastSpace > 0 ? phrase.slice(0, lastSpace) : phrase.slice(0, maxLen)).trim();
   }
   if (!phrase) return false;
 
@@ -3997,38 +4697,192 @@ async function startItalianGkGame(client, cfg) {
   return true;
 }
 
+function shuffleArray(arr) {
+  const a = Array.isArray(arr) ? [...arr] : [];
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function parseDrivingQuizFromPayload(payload) {
+  if (payload == null) return null;
+
+  if (Array.isArray(payload?.results) && payload.results.length > 0) {
+    const item = pickRandomItem(payload.results);
+    const question = item?.question;
+    if (!question) return null;
+    try {
+      const statement = decodeURIComponent(String(question).replace(/\+/g, " "));
+      if (!statement) return null;
+
+      const qType = String(item?.type || "boolean").toLowerCase();
+      if (qType === "multiple") {
+        const correct = decodeURIComponent(
+          String(item?.correct_answer || "").replace(/\+/g, " "),
+        );
+        const incorrect = Array.isArray(item?.incorrect_answers)
+          ? item.incorrect_answers.map((a) =>
+              decodeURIComponent(String(a || "").replace(/\+/g, " ")),
+            )
+          : [];
+        const all = shuffleArray([correct, ...incorrect]);
+        const correctIndex = all.indexOf(correct);
+        if (correctIndex < 0 || all.length < 2) return null;
+        return {
+          questionType: "multiple",
+          statement,
+          options: all,
+          correctIndex,
+        };
+      }
+
+      const correct = String(item?.correct_answer || "").toLowerCase();
+      if (correct === "true" || correct === "false")
+        return {
+          questionType: "trueFalse",
+          statement,
+          answer: correct === "true",
+        };
+    } catch {}
+    return null;
+  }
+
+  const statement =
+    payload.statement ?? payload.question ?? payload.text ?? "";
+  if (!statement) return null;
+
+  const options = payload.options ?? payload.choices;
+  if (Array.isArray(options) && options.length >= 2) {
+    const correctIndex =
+      typeof payload.correctIndex === "number"
+        ? payload.correctIndex
+        : typeof payload.correct === "number"
+          ? payload.correct
+          : -1;
+    const correctAnswer = payload.correctAnswer ?? payload.correct_answer;
+    let idx = correctIndex;
+    if (idx < 0 && correctAnswer != null) {
+      const norm = normalizeCountryName(String(correctAnswer));
+      idx = options.findIndex(
+        (o) => normalizeCountryName(String(o)) === norm,
+      );
+    }
+    if (idx >= 0 && idx < options.length)
+      return {
+        questionType: "multiple",
+        statement: String(statement).trim(),
+        options: options.map((o) => String(o).trim()),
+        correctIndex: idx,
+      };
+  }
+
+  const rawAnswer = payload.answer ?? payload.correct_answer ?? payload.correct;
+  const parsedAnswer =
+    typeof rawAnswer === "boolean"
+      ? rawAnswer
+      : normalizeTruthValue(String(rawAnswer ?? ""));
+  if (parsedAnswer === null) return null;
+  return {
+    questionType: "trueFalse",
+    statement: String(statement).trim(),
+    answer: parsedAnswer,
+  };
+}
+
+async function fetchDrivingQuizFromApi(apiUrl, timeoutMs = 15000) {
+  try {
+    const res = await axios.get(apiUrl, { timeout: timeoutMs });
+    const data = res?.data;
+    if (Array.isArray(data)) {
+      const item = pickRandomItem(data);
+      return parseDrivingQuizFromPayload(item);
+    }
+    return parseDrivingQuizFromPayload(data);
+  } catch {
+    return null;
+  }
+}
+
 async function startDrivingQuizGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
-  const apiUrl = cfg?.drivingQuiz?.apiUrl || null;
+
   let row = null;
-  if (apiUrl) {
-    try {
-      const res = await axios.get(apiUrl, { timeout: 15000 });
-      const payload = Array.isArray(res?.data) ? pickRandomItem(res.data) : res?.data;
-      if (payload?.statement != null && payload?.answer != null) {
-        const parsedAnswer =
-          typeof payload.answer === "boolean"
-            ? payload.answer
-            : normalizeTruthValue(String(payload.answer));
-        if (parsedAnswer === null) return false;
-        row = {
-          statement: String(payload.statement),
-          answer: parsedAnswer,
-        };
-      }
-    } catch {}
+  let fromApi = false;
+  const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
+  if (customApiUrl) {
+    row = await fetchDrivingQuizFromApi(customApiUrl);
+    if (row) fromApi = true;
+  }
+  if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
+    row = await fetchDrivingQuizFromApi(DEFAULT_DRIVING_QUIZ_API_URL);
+    if (row) fromApi = true;
   }
   if (!row) {
-    const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
-    if (localPick?.statement != null && typeof localPick?.answer === "boolean") {
-      row = {
-        statement: String(localPick.statement),
-        answer: Boolean(localPick.answer),
-      };
+    const roll = Math.random();
+    if (roll < 0.4) {
+      const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS);
+      if (
+        signPick?.statement &&
+        signPick?.signType &&
+        Array.isArray(signPick?.options) &&
+        signPick.options.length >= 2 &&
+        typeof signPick?.correctIndex === "number" &&
+        signPick.correctIndex >= 0 &&
+        signPick.correctIndex < signPick.options.length
+      ) {
+        row = {
+          questionType: "multiple",
+          signType: String(signPick.signType),
+          statement: String(signPick.statement),
+          options: signPick.options.map((o) => String(o)),
+          correctIndex: signPick.correctIndex,
+        };
+      }
+    }
+    if (!row && roll < 0.7) {
+      const localPick = pickRandomItem(DRIVING_MULTIPLE_CHOICE_BANK);
+      if (
+        localPick?.statement &&
+        Array.isArray(localPick?.options) &&
+        localPick.options.length >= 2 &&
+        typeof localPick?.correctIndex === "number" &&
+        localPick.correctIndex >= 0 &&
+        localPick.correctIndex < localPick.options.length
+      ) {
+        row = {
+          questionType: "multiple",
+          statement: String(localPick.statement),
+          options: localPick.options.map((o) => String(o)),
+          correctIndex: localPick.correctIndex,
+        };
+      }
+    }
+    if (!row) {
+      const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
+      if (localPick?.statement != null && typeof localPick?.answer === "boolean") {
+        row = {
+          questionType: "trueFalse",
+          statement: String(localPick.statement),
+          answer: Boolean(localPick.answer),
+        };
+      }
     }
   }
   if (!row) return false;
+  if (fromApi && row.statement) {
+    const translated = await translateToItalian(row.statement, cfg);
+    if (translated) row = { ...row, statement: translated };
+    if (row.questionType === "multiple" && Array.isArray(row.options)) {
+      const translatedOpts = await Promise.all(
+        row.options.map((o) => translateToItalian(o, cfg)),
+      );
+      if (translatedOpts.every(Boolean))
+        row = { ...row, options: translatedOpts };
+    }
+  }
 
   const rewardExp = Number(cfg?.drivingQuiz?.rewardExp || 120);
   const durationMs = Math.max(
@@ -4042,12 +4896,8 @@ async function startDrivingQuizGame(client, cfg) {
 
   if (cfg.roleId)
     await channel.send({ content: `<@&${cfg.roleId}>` }).catch(() => {});
-  const drivingAttachment = buildPromptImageAttachment(
-    "Quiz patente",
-    [row.statement],
-    "driving_quiz",
-  );
-  const drivingEmbed = buildDrivingQuizEmbed(row.statement, rewardExp, durationMs);
+  const drivingAttachment = buildDrivingQuizPromptImage(row);
+  const drivingEmbed = buildDrivingQuizEmbed(row, rewardExp, durationMs);
   if (drivingAttachment) {
     drivingEmbed.setImage(`attachment://${drivingAttachment.name}`);
   }
@@ -4064,29 +4914,56 @@ async function startDrivingQuizGame(client, cfg) {
     activeGames.delete(channelId);
     if (game.hintTimeout) clearTimeout(game.hintTimeout);
     await channel
-      .send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] })
+      .send({ embeds: [buildTimeoutDrivingQuizEmbed(game)] })
       .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
 
-  activeGames.set(channelId, {
+  let hintTimeout = null;
+  if (row.questionType === "multiple" && Number.isFinite(row.correctIndex)) {
+    const letter = DRIVING_QUIZ_LETTERS[row.correctIndex] ?? String(row.correctIndex + 1);
+    hintTimeout = await scheduleGenericHint(
+      client,
+      channelId,
+      durationMs,
+      `La risposta corretta è la **${letter}**.`,
+    );
+  }
+
+  const gameState = {
     type: "drivingQuiz",
+    questionType: row.questionType ?? "trueFalse",
     statement: row.statement,
-    answer: Boolean(row.answer),
     rewardExp,
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
-    hintTimeout: null,
+    hintTimeout,
     gameMessageId: gameMessage?.id || null,
-  });
+  };
+  if (row.questionType === "multiple") {
+    gameState.options = row.options;
+    gameState.correctIndex = row.correctIndex;
+  } else {
+    gameState.answer = Boolean(row.answer);
+  }
+
+  activeGames.set(channelId, gameState);
 
   await saveActiveGame(client, cfg, {
     type: "drivingQuiz",
-    target: JSON.stringify({
-      statement: row.statement,
-      answer: Boolean(row.answer),
-    }),
+    target: JSON.stringify(
+      row.questionType === "multiple"
+        ? {
+            statement: row.statement,
+            options: row.options,
+            correctIndex: row.correctIndex,
+          }
+        : {
+            statement: row.statement,
+            answer: row.answer,
+          },
+    ),
     rewardExp,
     startedAt: new Date(),
     endsAt: new Date(Date.now() + durationMs),
@@ -4785,9 +5662,29 @@ async function handleMinigameMessage(message, client) {
   }
 
   if (game.type === "drivingQuiz") {
-    const guess = normalizeTruthValue(content);
-    if (guess === null) return false;
-    if (guess === game.answer) {
+    const isMultiple =
+      game.questionType === "multiple" &&
+      Array.isArray(game.options) &&
+      Number.isFinite(game.correctIndex);
+    let correct = false;
+    if (isMultiple) {
+      const norm = normalizeCountryName(content);
+      const letter = norm.charAt(0);
+      const num = Number.parseInt(norm, 10);
+      if (Number.isFinite(num) && num >= 1 && num <= game.options.length && num - 1 === game.correctIndex)
+        correct = true;
+      else if (DRIVING_QUIZ_LETTERS.indexOf(letter.toUpperCase()) >= 0) {
+        const idx = DRIVING_QUIZ_LETTERS.indexOf(letter.toUpperCase());
+        if (idx < game.options.length && idx === game.correctIndex) correct = true;
+      } else {
+        const correctText = normalizeCountryName(game.options[game.correctIndex] || "");
+        if (correctText && norm === correctText) correct = true;
+      }
+    } else {
+      const guess = normalizeTruthValue(content);
+      if (guess !== null && guess === game.answer) correct = true;
+    }
+    if (correct) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -5163,13 +6060,17 @@ async function restoreActiveGames(client) {
         .send({ embeds: [buildTimeoutItalianGkEmbed(displayAnswer)] })
         .catch(() => {});
     } else if (state.type === "drivingQuiz") {
-      let answer = false;
+      let gamePayload = { answer: false };
       try {
         const parsed = JSON.parse(state.target || "{}");
-        answer = Boolean(parsed?.answer);
+        if (Array.isArray(parsed?.options) && Number.isFinite(parsed?.correctIndex)) {
+          gamePayload = { questionType: "multiple", options: parsed.options, correctIndex: parsed.correctIndex };
+        } else {
+          gamePayload = { answer: Boolean(parsed?.answer) };
+        }
       } catch {}
       await channel
-        .send({ embeds: [buildTimeoutDrivingQuizEmbed(answer)] })
+        .send({ embeds: [buildTimeoutDrivingQuizEmbed(gamePayload)] })
         .catch(() => {});
     } else if (state.type === "mathExpression") {
       let answer = "0";
@@ -5590,26 +6491,35 @@ async function restoreActiveGames(client) {
   if (state.type === "drivingQuiz") {
     const parsed = parseStateTarget(state.target);
     const statement = parsed?.statement || "";
-    const answer = Boolean(parsed?.answer);
+    const isMultiple =
+      Array.isArray(parsed?.options) && Number.isFinite(parsed?.correctIndex);
+    const gameState = {
+      type: "drivingQuiz",
+      questionType: isMultiple ? "multiple" : "trueFalse",
+      statement,
+      rewardExp: Number(state.rewardExp || 0),
+      startedAt: new Date(state.startedAt).getTime(),
+      endsAt,
+      timeout: null,
+      gameMessageId: state.gameMessageId || null,
+    };
+    if (isMultiple) {
+      gameState.options = parsed.options;
+      gameState.correctIndex = parsed.correctIndex;
+    } else {
+      gameState.answer = Boolean(parsed?.answer);
+    }
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
       activeGames.delete(cfg.channelId);
       await channel
-        .send({ embeds: [buildTimeoutDrivingQuizEmbed(game.answer)] })
+        .send({ embeds: [buildTimeoutDrivingQuizEmbed(game)] })
         .catch(() => {});
       await clearActiveGame(client, cfg);
     }, remainingMs);
-    activeGames.set(cfg.channelId, {
-      type: "drivingQuiz",
-      statement,
-      answer,
-      rewardExp: Number(state.rewardExp || 0),
-      startedAt: new Date(state.startedAt).getTime(),
-      endsAt,
-      timeout,
-      gameMessageId: state.gameMessageId || null,
-    });
+    gameState.timeout = timeout;
+    activeGames.set(cfg.channelId, gameState);
     return;
   }
   if (state.type === "mathExpression") {
@@ -5691,10 +6601,27 @@ async function restoreActiveGames(client) {
   }
 }
 
+/**
+ * Rimuove lo stato di un minigioco per un canale (es. canale eliminato).
+ * Evita memory leak e esecuzione di timeout su canale inesistente.
+ * Pulisce sia hintTimeout sia timeout (game principale) dove presenti.
+ */
+function clearGameForChannel(channelId) {
+  const id = String(channelId || "");
+  if (!id) return;
+  const game = activeGames.get(id);
+  if (game) {
+    if (game.timeout) clearTimeout(game.timeout);
+    if (game.hintTimeout) clearTimeout(game.hintTimeout);
+  }
+  activeGames.delete(id);
+}
+
 module.exports = {
   startMinigameLoop,
   forceStartMinigame,
   restoreActiveGames,
   handleMinigameMessage,
   handleMinigameButton,
+  clearGameForChannel,
 };

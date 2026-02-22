@@ -261,8 +261,23 @@ async function handlePauseButton(interaction) {
   )
     return false;
 
-  const [action, userId, pauseId] = interaction.customId.split(":");
+  const parts = interaction.customId.split(":");
+  const [action, userId, pauseId] = parts;
   if (!userId) {
+    await interaction
+      .reply({
+        content: "<:vegax:1443934876440068179> Dati pausa non validi.",
+        flags: 1 << 6,
+      })
+      .catch(() => {});
+    return true;
+  }
+  if (
+    (action === "pause_accept" ||
+      action === "pause_reject" ||
+      action === "pause_cancel") &&
+    parts.length !== 3
+  ) {
     await interaction
       .reply({
         content: "<:vegax:1443934876440068179> Dati pausa non validi.",

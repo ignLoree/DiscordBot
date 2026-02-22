@@ -877,7 +877,15 @@ async function pinFirstTicketMessage(channel, message) {
         }
       }
       if (isTicketRatingButton(interaction.customId)) {
-        const [, ticketDbId, scoreRaw] = String(interaction.customId).split(":");
+        const ratingParts = String(interaction.customId).split(":");
+        if (ratingParts.length !== 3) {
+          await safeReply(interaction, {
+            embeds: [makeErrorEmbed("Errore", "Valutazione non valida.")],
+            flags: 1 << 6,
+          });
+          return true;
+        }
+        const [, ticketDbId, scoreRaw] = ratingParts;
         const score = Number(scoreRaw);
         if (!ticketDbId || !Number.isInteger(score) || score < 1 || score > 5) {
           await safeReply(interaction, {
@@ -968,7 +976,15 @@ async function pinFirstTicketMessage(channel, message) {
         return true;
       }
       if (isTicketTranscriptButton(interaction.customId)) {
-        const [, ticketDbId] = String(interaction.customId).split(":");
+        const transcriptParts = String(interaction.customId).split(":");
+        if (transcriptParts.length < 2) {
+          await safeReply(interaction, {
+            embeds: [makeErrorEmbed("Errore", "Transcript non valido.")],
+            flags: 1 << 6,
+          });
+          return true;
+        }
+        const [, ticketDbId] = transcriptParts;
         if (!ticketDbId) {
           await safeReply(interaction, {
             embeds: [makeErrorEmbed("Errore", "Transcript non valido.")],

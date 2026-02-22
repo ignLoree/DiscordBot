@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
@@ -328,7 +328,7 @@ async function handlePauseRequest(interaction, guildId) {
   const rawEnd = interaction.options.getString("data_ritorno");
   const reason = interaction.options.getString("motivazione");
 
-  const pauseChannel = interaction.guild.channels.cache.get(IDs.channels.pause);
+  const pauseChannel = interaction.guild.channels.cache.get(IDs.channels?.pause);
   const normalized = normalizePauseDates(rawStart, rawEnd);
   if (!normalized) {
     return safeEditReply(interaction, {
@@ -375,10 +375,12 @@ async function handlePauseRequest(interaction, guildId) {
     flags: EPHEMERAL_FLAG,
   });
 
-  await pauseChannel.send({
-    content: `<@&${IDs.roles.HighStaff}> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${normalized.dataRichiesta}\nData ritorno: ${normalized.dataRitorno}\nMotivo: ${reason}`,
-    components: pauseId ? [row] : [],
-  });
+  if (pauseChannel?.isTextBased?.()) {
+    await pauseChannel.send({
+      content: `<@&${IDs.roles.HighStaff}> ${interaction.user} ha richiesto una pausa.\nData richiesta: ${normalized.dataRichiesta}\nData ritorno: ${normalized.dataRitorno}\nMotivo: ${reason}`,
+      components: pauseId ? [row] : [],
+    }).catch(() => null);
+  }
 }
 
 async function handlePauseList(interaction, guildId) {

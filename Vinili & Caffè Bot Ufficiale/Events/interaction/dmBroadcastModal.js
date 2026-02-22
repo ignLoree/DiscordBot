@@ -67,7 +67,14 @@ async function handleDmBroadcastModal(interaction, client) {
     !interaction.customId.startsWith("dm_broadcast:")
   )
     return false;
-  const partsId = interaction.customId.split(":");
+  const partsId = String(interaction.customId || "").split(":");
+  if (partsId.length < 4) {
+    await interaction.reply({
+      content: "<:vegax:1443934876440068179> Dati modal non validi.",
+      flags: 1 << 6,
+    });
+    return true;
+  }
   const userId = partsId[1];
   const rawTargetId = partsId[2];
   const allConfirmed = partsId[3] === "1";

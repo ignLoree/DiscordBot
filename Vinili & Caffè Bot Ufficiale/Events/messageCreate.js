@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require("discord.js");
 const math = require("mathjs");
 const { inspect } = require("node:util");
 const { MentionReaction, AutoResponder } = require("../Schemas/Community/autoInteractionSchemas");
@@ -586,7 +586,7 @@ module.exports = {
           await message.channel.send({
             content: `${message.author}`,
             embeds: [embed],
-          });
+          }).catch(() => null);
           return;
         }
         if (message.author?.id !== resolvedClient?.user?.id) {
@@ -1109,7 +1109,8 @@ module.exports = {
           const sentError = await errorChannel.send({
             embeds: [errorEmbed],
             components: [row],
-          });
+          }).catch(() => null);
+          if (!sentError) return null;
           const collector = sentError.createMessageComponentCollector({
             time: 1000 * 60 * 60 * 24,
           });
@@ -1125,22 +1126,22 @@ module.exports = {
                 content:
                   "<:vegax:1443934876440068179> Non hai i permessi per fare questo comando.",
                 flags: 1 << 6,
-              });
+              }).catch(() => null);
               return;
             }
             if (btn.customId === "error_pending") {
               errorEmbed.setColor("Yellow");
-              await btn.reply({ content: "In risoluzione.", flags: 1 << 6 });
+              await btn.reply({ content: "In risoluzione.", flags: 1 << 6 }).catch(() => null);
             }
             if (btn.customId === "error_solved") {
               errorEmbed.setColor("Green");
-              await btn.reply({ content: "Risolto.", flags: 1 << 6 });
+              await btn.reply({ content: "Risolto.", flags: 1 << 6 }).catch(() => null);
             }
             if (btn.customId === "error_unsolved") {
               errorEmbed.setColor("Red");
-              await btn.reply({ content: "Irrisolto.", flags: 1 << 6 });
+              await btn.reply({ content: "Irrisolto.", flags: 1 << 6 }).catch(() => null);
             }
-            await sentError.edit({ embeds: [errorEmbed], components: [row] });
+            await sentError.edit({ embeds: [errorEmbed], components: [row] }).catch(() => null);
           });
         }
         if (!isTimeout) {
