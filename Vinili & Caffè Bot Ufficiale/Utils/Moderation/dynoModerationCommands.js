@@ -480,7 +480,7 @@ async function runNamed(name, message, args, client) {
           [
             "**Comando: +ban**",
             "",
-            "**Descrizione:** Bana un utente, con durata opzionale.",
+            "**Descrizione:** Banna un utente, con durata opzionale.",
             "**Cooldown:** 3 secondi",
             "**Uso:**",
             "+ban [utente] [durata] [motivo]",
@@ -1117,7 +1117,7 @@ async function runNamed(name, message, args, client) {
         .setTitle(`Moderazioni attive per ${username}`)
         .setDescription(lines.join("\n\n"))
         .setFooter({
-          text: `${rows.length} moderazione attiva${rows.length === 1 ? "" : "e"}`,
+          text: rows.length === 1 ? "1 moderazione attiva" : `${rows.length} moderazioni attive`,
         });
       return message.channel.send({ embeds: [activeEmbed] }).catch(() => null);
     }

@@ -1,4 +1,4 @@
-﻿async function runEmbedCandidaturePanelAuto(client) {
+async function runEmbedCandidaturePanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
   const path = require("path");
@@ -36,7 +36,7 @@ Per candidarsi, è necessario **soddisfare** i seguenti __requisiti__:
 <:1_:1444099163116535930> Avere almeno **__14 anni (compiuti)__**
 <:2_:1444099161673826368> Rispettare i **[ToS](https://discord.com/terms)** e le **[Linee Guida](https://discord.com/guidelines)** di **Discord**
 <:3_:1444099160294031471> Essere **maturi** e **attivi**
-<:4_:1444099158859321435> Non essere stato **sanzionato** nel server.`)
+<:4_:1444099158859321435> Non essere mai stato **sanzionato** nel server.`)
     .setImage(DIVIDER_URL)
 
   const candidatureAttachment = new AttachmentBuilder(CANDIDATURE_MEDIA_PATH, {
@@ -1226,7 +1226,7 @@ async function runTicketPanelAuto(client) {
 <:VC_3:1444099746116534282> **Terza categoria**
 <a:VC_Arrow:1448672967721615452> Usalo per fare una donazione, per fare la "selfie verify", per richiedere una sponsor a pagamento o per parlare con un amministratore del server.
 
-<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comportera un **warn**.`,
+<:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`,
     )
     .setFooter({
       text: `Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00`,

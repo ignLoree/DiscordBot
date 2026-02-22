@@ -1,4 +1,4 @@
-﻿const { safeEditReply } = require("../../Utils/Moderation/reply");
+const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { default: axios } = require("axios");
 
@@ -88,7 +88,7 @@ async function handleEmojiCopy(interaction) {
     return replyWithEmbed(
       interaction,
       "Red",
-      "<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perchè hai raggiunto il limite di emoji del server.",
+      "<:vegax:1443934876440068179> Non puoi aggiungere questa emoji perché hai raggiunto il limite di emoji del server.",
     );
   }
 }
@@ -151,7 +151,7 @@ async function handleStickerCopy(interaction) {
         embeds: [
           buildEmbed(
             "Red",
-            "<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perchè hai raggiunto il limite di sticker del server.",
+            "<:vegax:1443934876440068179> Non puoi aggiungere questo sticker perché hai raggiunto il limite di sticker del server.",
           ),
         ],
         flags: EPHEMERAL_FLAG,

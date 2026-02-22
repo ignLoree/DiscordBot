@@ -1,4 +1,4 @@
-﻿const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType, } = require("discord.js");
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, UserSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionsBitField, ChannelType, } = require("discord.js");
 const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
@@ -448,7 +448,7 @@ async function handleRoleActionButton(interaction) {
             .setColor("#6f4e37")
             .setTitle("Seleziona un utente")
             .setDescription(
-              "Seleziona un utente: ricevera una richiesta in DM per accettare il ruolo.",
+              "Seleziona un utente: riceverà una richiesta in DM per accettare il ruolo.",
             ),
         ],
         components: [

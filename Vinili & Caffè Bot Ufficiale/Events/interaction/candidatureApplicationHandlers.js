@@ -401,7 +401,7 @@ function buildAlreadyRoleEmbed(roleId) {
     .setColor("Red")
     .setTitle("<:VC_Lock:1468544444113617063> Accesso negato")
     .setDescription(
-      `Sei già ${roleText}, perchè dovresti ricandidarti?`,
+      `Sei già ${roleText}, perché dovresti ricandidarti?`,
     );
 }
 

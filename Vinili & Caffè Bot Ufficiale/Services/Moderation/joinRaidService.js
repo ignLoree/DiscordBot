@@ -117,6 +117,7 @@ const TEMP_BAN_TIMERS = new Map();
 const RAID_REPORT_TIMERS = new Map();
 const SAVE_TIMERS = new Map();
 const LOADED_GUILDS = new Set();
+const LOAD_SUCCEEDED_GUILDS = new Set();
 const LOAD_GUILD_PROMISES = new Map();
 const GUILD_LOCKS = new Map();
 const LAST_RESTORE_AT = new Map();
@@ -383,10 +384,11 @@ async function loadGuildState(guildId) {
             : [],
         });
       }
-      LOADED_GUILDS.add(key);
-    } catch {
-      // Do not block runtime if persistence fails.
+      LOAD_SUCCEEDED_GUILDS.add(key);
+    } catch (err) {
+      global.logger?.warn?.("[joinRaid] loadGuildState failed:", key, err?.message || err);
     } finally {
+      LOADED_GUILDS.add(key);
       LOAD_GUILD_PROMISES.delete(key);
     }
   })();
@@ -397,6 +399,7 @@ async function loadGuildState(guildId) {
 function scheduleStateSave(guildId) {
   const key = String(guildId || "");
   if (!key || !isDbReady()) return;
+  if (!LOAD_SUCCEEDED_GUILDS.has(key)) return;
   const old = SAVE_TIMERS.get(key);
   if (old) clearTimeout(old);
   const timer = setTimeout(async () => {
@@ -426,8 +429,8 @@ function scheduleStateSave(guildId) {
         },
         { upsert: true },
       );
-    } catch {
-      // Do not block runtime if persistence fails.
+    } catch (err) {
+      global.logger?.warn?.("[joinRaid] scheduleStateSave failed:", key, err?.message || err);
     }
   }, 1_500);
   SAVE_TIMERS.set(key, timer);
@@ -891,7 +894,10 @@ async function applyPunishment(member, reasons) {
           reason: buildJoinRaidBanReason(marker),
         })
         .then(() => true)
-        .catch(() => false);
+        .catch((err) => {
+          global.logger?.warn?.("[joinRaid] applyPunishment ban failed:", guild.id, member.id, err?.message || err);
+          return false;
+        });
       if (punished) {
         await scheduleTempUnban(
           guild,
@@ -906,7 +912,10 @@ async function applyPunishment(member, reasons) {
       punished = await member
         .kick("Join Raid: flagged account during raid window")
         .then(() => true)
-        .catch(() => false);
+        .catch((err) => {
+          global.logger?.warn?.("[joinRaid] applyPunishment kick failed:", guild.id, member.id, err?.message || err);
+          return false;
+        });
     }
   } else if (action === "timeout") {
     if (canTimeout) {
@@ -914,7 +923,10 @@ async function applyPunishment(member, reasons) {
       punished = await member
         .timeout(timeoutMs, "Join Raid: flagged account during raid window")
         .then(() => true)
-        .catch(() => false);
+        .catch((err) => {
+          global.logger?.warn?.("[joinRaid] applyPunishment timeout failed:", guild.id, member.id, err?.message || err);
+          return false;
+        });
     }
   }
 
@@ -924,7 +936,10 @@ async function applyPunishment(member, reasons) {
       punished = await member
         .timeout(timeoutMs, "Join Raid: punitive fallback timeout")
         .then(() => true)
-        .catch(() => false);
+        .catch((err) => {
+          global.logger?.warn?.("[joinRaid] applyPunishment fallback timeout failed:", guild.id, member.id, err?.message || err);
+          return false;
+        });
       if (punished) {
         appliedAction = "timeout";
       } else {
@@ -968,7 +983,8 @@ async function applyPunishment(member, reasons) {
   return { punished, appliedAction };
 }
 
-async function processJoinRaidForMember(member) {
+async function processJoinRaidForMember(member, options = {}) {
+  const joinGateFeedOnly = Boolean(options?.joinGateFeedOnly);
   if (!JOIN_RAID_CONFIG.enabled) return { blocked: false };
   if (!member?.guild || !member?.user) return { blocked: false };
   if (member.user?.bot) return { blocked: false };
@@ -1043,12 +1059,14 @@ async function processJoinRaidForMember(member) {
         ),
       ).slice(-8);
       const untilTs = Math.floor(state.raidUntil / 1000);
-      triggerAutoModPanicExternal(
-        member.guild.id,
-        member.id,
-        { raidBoost: 1, activityBoost: 0 },
-        at,
-      );
+      if (!joinGateFeedOnly) {
+        triggerAutoModPanicExternal(
+          member.guild.id,
+          member.id,
+          { raidBoost: 1, activityBoost: 0 },
+          at,
+        );
+      }
       const initialFlags = buildInitialFlagRows(member.guild, state, 8);
       const actionVerb =
         JOIN_RAID_CONFIG.triggerAction === "ban"
@@ -1098,12 +1116,22 @@ async function processJoinRaidForMember(member) {
       matchJoinRaidAccountType(member, reasons) &&
       (highRisk || strongEvidence || String(JOIN_RAID_CONFIG.accountType || "any") !== "id_flag");
     if (active && punishableDuringRaid) {
-      triggerAutoModPanicExternal(
-        member.guild.id,
-        member.id,
-        { raidBoost: 0 },
-        at,
-      );
+      if (!joinGateFeedOnly) {
+        triggerAutoModPanicExternal(
+          member.guild.id,
+          member.id,
+          { raidBoost: 0 },
+          at,
+        );
+      }
+      if (joinGateFeedOnly) {
+        state.raidCaughtUserIds.push(String(member.id));
+        state.raidCaughtUserIds = Array.from(
+          new Set(state.raidCaughtUserIds.map((x) => String(x || "")).filter(Boolean)),
+        ).slice(-300);
+        scheduleStateSave(member.guild.id);
+        return { blocked: false, flagged: true, reasons };
+      }
       const outcome = await applyPunishment(member, reasons);
       if (Boolean(outcome?.punished)) {
         state.raidCaughtUserIds.push(String(member.id));
@@ -1303,6 +1331,33 @@ async function getJoinRaidStatusSnapshot(guildId) {
   };
 }
 
+function clearGuildState(guildId) {
+  const key = String(guildId || "");
+  if (!key) return;
+  GUILD_STATE.delete(key);
+  LOADED_GUILDS.delete(key);
+  LOAD_SUCCEEDED_GUILDS.delete(key);
+  const saveTimer = SAVE_TIMERS.get(key);
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    SAVE_TIMERS.delete(key);
+  }
+  RAID_REPORT_TIMERS.delete(key);
+  LOAD_GUILD_PROMISES.delete(key);
+  GUILD_LOCKS.delete(key);
+  LAST_RESTORE_AT.delete(key);
+  const tempBanKeys = [...TEMP_BAN_TIMERS.keys()].filter((k) => k.startsWith(`${key}:`));
+  for (const timerKey of tempBanKeys) {
+    const t = TEMP_BAN_TIMERS.get(timerKey);
+    if (t) clearTimeout(t);
+    TEMP_BAN_TIMERS.delete(timerKey);
+  }
+  const cooldownKeys = [...LOW_RISK_FLAG_LOG_COOLDOWN.keys()].filter((k) => k.startsWith(`${key}:`));
+  for (const cooldownKey of cooldownKeys) {
+    LOW_RISK_FLAG_LOG_COOLDOWN.delete(cooldownKey);
+  }
+}
+
 module.exports = {
   JOIN_RAID_CONFIG,
   JOIN_RAID_PRESETS,
@@ -1314,4 +1369,5 @@ module.exports = {
   restoreTempBans,
   applyJoinRaidPreset,
   getJoinRaidStatusSnapshot,
+  clearGuildState,
 };

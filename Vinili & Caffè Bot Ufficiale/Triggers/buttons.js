@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
+const { EmbedBuilder, Events, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
 const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
@@ -41,12 +41,12 @@ async function handleStaffButtons(interaction) {
   if (interaction.customId == "valutazioni") {
     const embed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
       .setDescription(`<a:1370everythingisstable:1444006799643508778> **__VALUTAZIONI POSITIVE__**
-                    <a:questionexclaimanimated:1443660299994533960> Le **valutazioni positive** aumentano la Possibilità  di essere **pexati** e si possono **ottenere** generando un'__attività__ **superiore** a quella richiesta nei _limiti settimanali_ o facendo qualcosa per dare un **vantaggio** al __server__.
+                    <a:questionexclaimanimated:1443660299994533960> Le **valutazioni positive** aumentano la possibilità di essere **pexati** e si possono **ottenere** generando un'__attività__ **superiore** a quella richiesta nei _limiti settimanali_ o facendo qualcosa per dare un **vantaggio** al __server__.
 
                     > Le **valutazioni positive** si possono **__scambiare__** per dei giorni in più di **pausa**.
 
                     <a:laydowntorest:1444006796661358673> **__VALUTAZIONI NEGATIVE__**
-                    > Le **valutazioni negative** diminuscono la Possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.
+                    > Le **valutazioni negative** diminuiscono la possibilità di essere **pexati** e si ottengono **non completando** i _limiti settimanali_ o facendo qualcosa di _nocivo_ per il **server**.
 
                     > Le **valutazioni negative** possono essere **__rimosse__** completando compiti extra assegnati dall'<@&1442568894349840435> o rinunciando a _almeno_ \`3 o più valutazioni positive\` in base al motivo per cui è stata assegnata la valutazione. `);
     await interaction.reply({ embeds: [embed], flags: 1 << 6 });
@@ -655,46 +655,46 @@ module.exports = {
         <:VC_Reply:1468262952934314131> **Rispettare** gli __utenti__ e lo __staff__ del server.
 
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.4\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ **auto-promuoversi**.
+        <:VC_Reply:1468262952934314131> È __vietato__ **auto-promuoversi**.
 
         <:rules:1443307208543703131> **\`REGOLA GENERALE 1.5\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dal server.`);
+        <:VC_Reply:1468262952934314131> È __vietato__ **uscire** e **rientrare** continuamente dal server.`);
       const textEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
         .setDescription(`<:rules:1443307208543703131> **\`REGOLA TESTUALE 2.1\`**
-                <:VC_Reply:1468262952934314131> É __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> È __vietato__ inviare **file** **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.2\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.3\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
+        <:VC_Reply:1468262952934314131> È __vietato__ inviare **link** contenenti virus, grabber, sponsor o social.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.4\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
+        <:VC_Reply:1468262952934314131> È __vietato__ inviare **flood** o **Wall Of Text** che intasano la chat.
 
         <:rules:1443307208543703131> **\`REGOLA TESTUALE 2.5\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.`);
+        <:VC_Reply:1468262952934314131> È __vietato__ abusare di **parolacce**, **bestemmie** e ogni tipo di **insulto** a **divinità**.`);
       const voiceEmbed = new EmbedBuilder().setImage(DIVIDER_URL).setColor("#6f4e37")
         .setDescription(`<:rules:1443307208543703131> **\`REGOLA VOCALE 3.1\`**
-                <:VC_Reply:1468262952934314131> É __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
+                <:VC_Reply:1468262952934314131> È __vietato__ mostrare contenuti **gore**, **NSFW** o **dati sensibili** di un utente.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.2\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
+        <:VC_Reply:1468262952934314131> È __vietato__ avere **comportamenti toxic** o **troll** che conducono al flame.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.3\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
+        <:VC_Reply:1468262952934314131> È __vietato__ **disconnettere il bot** o cambiare musica mentre un utente sta ascoltando una canzone tramite il bot.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.4\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
+        <:VC_Reply:1468262952934314131> È __vietato__ utilizzare **SoundBoard** o qualunque tipo di **VoiceChanger**.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.5\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ **urlare** o fare **errape** col microfono.
+        <:VC_Reply:1468262952934314131> È __vietato__ **urlare** o fare **errori** col microfono.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.6\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinità**.
+        <:VC_Reply:1468262952934314131> È __vietato__ abusare di **parolacce** e **bestemmie** e ogni tipo di **insulto** a **divinità**.
 
         <:rules:1443307208543703131> **\`REGOLA VOCALE 3.7\`**
-        <:VC_Reply:1468262952934314131> É __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`);
+        <:VC_Reply:1468262952934314131> È __vietato__ **uscire** e **rientrare** continuamente dalle vocali.`);
       await interaction.reply({
         embeds: [generalEmbed, textEmbed, voiceEmbed, commonEmbed],
         flags: 1 << 6,
@@ -732,7 +732,7 @@ module.exports = {
         .setColor("#6f4e37")
         .setDescription(
           [
-            `**Vuoi sostenere il server?** Acqusita il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>`,
+            `**Vuoi sostenere il server?** Acquista il VIP e riscatta tutti i vantaggi che hai sbloccato qui nel server! <a:VC_HeartsBlue:1468686100045369404>`,
             "",
             "ACQUISTA IL <@&1442568950805430312> <a:VC_HeartsPink:1468685897389052008>",
             "\`10,00€\`☆",

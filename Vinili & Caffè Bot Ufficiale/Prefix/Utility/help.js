@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
@@ -881,16 +881,19 @@ function buildNavigationRow(state) {
 }
 
 function buildHelpV2Container(page, navState) {
+  const components = [
+    {
+      type: ComponentType.TextDisplay,
+      content: renderPageText(page),
+    },
+  ];
+  if (navState.total > 1) {
+    components.push(buildNavigationRow(navState).toJSON());
+  }
   return {
     type: ComponentType.Container,
     accentColor: 0x6f4e37,
-    components: [
-      {
-        type: ComponentType.TextDisplay,
-        content: renderPageText(page),
-      },
-      buildNavigationRow(navState).toJSON(),
-    ],
+    components,
   };
 }
 
@@ -1759,19 +1762,18 @@ module.exports = {
       return;
     }
 
-    const groupedPages = [];
-    for (const roleId of visibleRoleIds) {
-      const filtered = filterByPage(allEntries, roleId, memberRoles);
-      const roleChunks = chunkEntries(filtered, HELP_PAGE_SIZE);
-      roleChunks.forEach((items, idx) => {
-        groupedPages.push({
-          roleId,
-          items,
-          indexLabel: `${idx + 1}/${roleChunks.length}`,
-          groupLabel: PAGE_TITLES[roleId] || roleId,
-        });
-      });
-    }
+    const singleList = dedupeAndSortEntries(
+      visibleRoleIds.flatMap((roleId) =>
+        filterByPage(allEntries, roleId, memberRoles),
+      ),
+    );
+    const allChunks = chunkEntries(singleList, HELP_PAGE_SIZE);
+    const groupedPages = allChunks.map((items, idx) => ({
+      roleId: "utente",
+      items,
+      indexLabel: `${idx + 1}/${allChunks.length}`,
+      groupLabel: PAGE_TITLES.utente || "Comandi Utente",
+    }));
 
     if (!groupedPages.length) {
       return safeMessageReply(message, {
@@ -1780,15 +1782,7 @@ module.exports = {
       });
     }
 
-    const preferredFirstRole = [IDs.roles.Founder, IDs.roles.HighStaff, IDs.roles.Staff]
-      .filter(Boolean)
-      .find((roleId) => visibleRoleIds.includes(roleId));
-    const initialPageIndex = preferredFirstRole
-      ? Math.max(
-          0,
-          groupedPages.findIndex((page) => String(page.roleId) === String(preferredFirstRole)),
-        )
-      : 0;
+    const initialPageIndex = 0;
 
     const uniqueToken = `${message.id}_${Date.now()}`;
     const navState = {

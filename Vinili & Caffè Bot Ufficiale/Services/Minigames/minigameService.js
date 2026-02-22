@@ -1,4 +1,4 @@
-﻿const axios = require("axios");
+const axios = require("axios");
 const { createCanvas } = require("canvas");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
@@ -3538,12 +3538,6 @@ async function startFastTypeGame(client, cfg) {
       .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
-  const hintTimeout = await scheduleGenericHint(
-    client,
-    channelId,
-    durationMs,
-    `Frase da scrivere: ${buildMaskedTextHint(phrase)}`,
-  );
 
   activeGames.set(channelId, {
     type: "fastType",
@@ -3553,7 +3547,7 @@ async function startFastTypeGame(client, cfg) {
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
-    hintTimeout,
+    hintTimeout: null,
     gameMessageId: gameMessage?.id || null,
   });
 
@@ -4074,12 +4068,6 @@ async function startDrivingQuizGame(client, cfg) {
       .catch(() => {});
     await clearActiveGame(client, cfg);
   }, durationMs);
-  const hintTimeout = await scheduleGenericHint(
-    client,
-    channelId,
-    durationMs,
-    "Nel dubbio nel quiz patente prevale sempre la scelta più prudente.",
-  );
 
   activeGames.set(channelId, {
     type: "drivingQuiz",
@@ -4089,7 +4077,7 @@ async function startDrivingQuizGame(client, cfg) {
     startedAt: Date.now(),
     endsAt: Date.now() + durationMs,
     timeout,
-    hintTimeout,
+    hintTimeout: null,
     gameMessageId: gameMessage?.id || null,
   });
 

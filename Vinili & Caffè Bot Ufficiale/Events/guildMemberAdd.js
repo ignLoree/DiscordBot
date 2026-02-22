@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder, PermissionsBitField, AuditLogEvent, UserFlagsBitField, } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, AuditLogEvent, UserFlagsBitField, } = require("discord.js");
 const { InviteTrack, InviteReminderState, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
 const { getNoDmSet } = require("../Utils/noDmList");
@@ -8,7 +8,6 @@ const {
 } = require("../Utils/Community/memberCounterUtils");
 const {
   processJoinRaidForMember,
-  getJoinRaidStatusSnapshot,
   registerJoinRaidSecuritySignal,
 } = require("../Services/Moderation/joinRaidService");
 const {
@@ -637,27 +636,47 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   let punished = false;
   let appliedAction = normalizedAction;
   if (normalizedAction === "kick" && canKick) {
-    punished = await member.kick(reason).then(() => true).catch(() => false);
+    punished = await member
+      .kick(reason)
+      .then(() => true)
+      .catch((err) => {
+        global.logger?.warn?.("[JoinGate] kick failed:", member.guild.id, member.id, err?.message || err);
+        return false;
+      });
   } else if (normalizedAction === "ban" && canBan) {
     punished = await member.guild.members
       .ban(member.id, { deleteMessageSeconds: 0, reason })
       .then(() => true)
-      .catch(() => false);
+      .catch((err) => {
+        global.logger?.warn?.("[JoinGate] ban failed:", member.guild.id, member.id, err?.message || err);
+        return false;
+      });
   } else if (normalizedAction === "ban" && !canBan && canKick) {
-    // Fall back from ban to kick if ban is unavailable but kick is possible.
-    punished = await member.kick(reason).then(() => true).catch(() => false);
+    punished = await member
+      .kick(reason)
+      .then(() => true)
+      .catch((err) => {
+        global.logger?.warn?.("[JoinGate] kick (ban fallback) failed:", member.guild.id, member.id, err?.message || err);
+        return false;
+      });
     if (punished) appliedAction = "kick";
   } else if (normalizedAction === "timeout" && canTimeout) {
     punished = await member
       .timeout(6 * 60 * 60_000, `JoinGate timeout: ${reason}`)
       .then(() => true)
-      .catch(() => false);
+      .catch((err) => {
+        global.logger?.warn?.("[JoinGate] timeout failed:", member.guild.id, member.id, err?.message || err);
+        return false;
+      });
   }
   if (!punished && normalizedAction !== "log" && canTimeout) {
     punished = await member
       .timeout(6 * 60 * 60_000, `JoinGate fallback timeout: ${reason}`)
       .then(() => true)
-      .catch(() => false);
+      .catch((err) => {
+        global.logger?.warn?.("[JoinGate] fallback timeout failed:", member.guild.id, member.id, err?.message || err);
+        return false;
+      });
     if (punished) appliedAction = "timeout";
   }
   if (!punished && normalizedAction !== "log") {
@@ -681,8 +700,8 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       reason: `Join Gate action: ${reason}`,
       enableAntiNuke: false,
       antiNukeHeat: 0,
-      enableAutoMod: appliedAction === "ban",
-      raidBoost: appliedAction === "ban" ? 1 : 0,
+      enableAutoMod: false,
+      raidBoost: 0,
     }).catch(() => null);
   }
   const logChannel =
@@ -838,7 +857,7 @@ async function announceInviteInfo(member, channel, info) {
 
   await channel
     .send({
-      content: `<:VC_Reply:1468262952934314131> e entratx con il link <${info.link}>,\n-# -> invitatx da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
+      content: `<:VC_Reply:1468262952934314131> è entratx con il link <${info.link}>,\n-# -> invitato da ${info.inviterTag} che ora ha **${info.totalInvites} inviti**.`,
     })
     .catch(() => {});
 }
@@ -956,32 +975,94 @@ module.exports = {
         return;
       }
 
-      let joinRaidResult = { blocked: false };
+      // Join Raid is fed ONLY when Join Gate flags the join (one of its rules), and only ONCE per join.
+      // Those feeds do NOT trigger AutoMod or AntiNuke panic. Normal joins (that pass Join Gate) do not feed Join Raid.
       if (!isCoreExempt) {
-        try {
-          joinRaidResult = await processJoinRaidForMember(member);
-        } catch (joinRaidError) {
-          global.logger?.error?.("[guildMemberAdd] joinRaid failed:", joinRaidError);
-          const snapshot = await getJoinRaidStatusSnapshot(member.guild.id).catch(
-            () => null,
-          );
-          if (snapshot?.raidActive) {
-            const fallback = await kickForJoinGate(
-              member,
-              "Join Raid service error while raid protection is active.",
-              [
-                `${ARROW} **Rule:** Join Raid Fallback`,
-                `${ARROW} **Raid Active:** Yes`,
+        let joinGateMatch = null;
+        if (
+          joinGateConfig?.enabled &&
+          joinGateConfig?.newAccounts?.enabled &&
+          isTooYoungAccount(member, joinGateConfig?.newAccounts?.minAgeDays)
+        ) {
+          joinGateMatch = { rule: "tooYoung", action: "kick" };
+        }
+        if (!joinGateMatch && joinGateConfig?.enabled && joinGateConfig?.noAvatar?.enabled && hasNoAvatar(member)) {
+          joinGateMatch = {
+            rule: "noAvatar",
+            reason: "Account has no avatar.",
+            extraLines: [`${ARROW} **Rule:** No Avatar`],
+            action: joinGateConfig?.noAvatar?.action || "log",
+          };
+        }
+        const nameCandidate = getJoinGateNameCandidate(member);
+        if (
+          !joinGateMatch &&
+          joinGateConfig?.enabled &&
+          joinGateConfig?.advertisingName?.enabled &&
+          inviteLikeInName(nameCandidate)
+        ) {
+          joinGateMatch = {
+            rule: "advertising",
+            reason: "Advertising invite link in username.",
+            extraLines: [
+              `${ARROW} **Rule:** Advertising Name`,
+              `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
+            ],
+            action: joinGateConfig?.advertisingName?.action || "kick",
+          };
+        }
+        const usernameMatch =
+          !joinGateMatch && joinGateConfig?.enabled
+            ? matchUsernameFilters(nameCandidate, joinGateConfig?.usernameFilter)
+            : null;
+        if (!joinGateMatch && usernameMatch) {
+          joinGateMatch = {
+            rule: "usernameFilter",
+            reason: "Username matches blocked pattern.",
+            extraLines: [
+              `${ARROW} **Rule:** Username Filter`,
+              `${ARROW} **Match Type:** ${usernameMatch.type}`,
+              `${ARROW} **Match:** ${usernameMatch.value}`,
+              `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
+            ],
+            action: joinGateConfig?.usernameFilter?.action || "kick",
+          };
+        }
+        if (
+          !joinGateMatch &&
+          joinGateConfig?.enabled &&
+          joinGateConfig?.suspiciousAccount?.enabled
+        ) {
+          const suspiciousReason = detectSuspiciousAccount(member);
+          if (suspiciousReason) {
+            joinGateMatch = {
+              rule: "suspicious",
+              reason: `Suspicious account: ${suspiciousReason}`,
+              extraLines: [
+                `${ARROW} **Rule:** Suspicious Account`,
+                `${ARROW} **Reason:** ${suspiciousReason}`,
               ],
-              "kick",
-            );
-            joinRaidResult = { blocked: Boolean(fallback?.blocked) };
-          } else {
-            joinRaidResult = { blocked: false };
+              action: joinGateConfig?.suspiciousAccount?.action || "log",
+            };
           }
         }
+        if (joinGateMatch) {
+          await processJoinRaidForMember(member, { joinGateFeedOnly: true }).catch((err) => {
+            global.logger?.warn?.("[guildMemberAdd] Join Raid feed (Join Gate) failed:", member.guild.id, member.id, err?.message || err);
+          });
+          if (joinGateMatch.rule === "tooYoung") {
+            await handleTooYoungAccount(member, joinGateConfig);
+            return;
+          }
+          const kickResult = await kickForJoinGate(
+            member,
+            joinGateMatch.reason,
+            joinGateMatch.extraLines || [],
+            joinGateMatch.action,
+          );
+          if (kickResult?.blocked) return;
+        }
       }
-      if (joinRaidResult?.blocked) return;
 
       if (isCoreExempt) {
         scheduleMemberCounterRefresh(member.guild, {
@@ -991,76 +1072,6 @@ module.exports = {
         await applyRolePersistForMember(member).catch(() => {});
         await sendJoinLog(member);
         return;
-      }
-
-      if (
-        joinGateConfig?.enabled &&
-        joinGateConfig?.newAccounts?.enabled &&
-        isTooYoungAccount(member, joinGateConfig?.newAccounts?.minAgeDays)
-      ) {
-        await handleTooYoungAccount(member, joinGateConfig);
-        return;
-      }
-
-      if (
-        joinGateConfig?.enabled &&
-        joinGateConfig?.noAvatar?.enabled &&
-        hasNoAvatar(member)
-      ) {
-        const result = await kickForJoinGate(
-          member,
-          "Account has no avatar.",
-          [
-            `${ARROW} **Rule:** No Avatar`,
-          ],
-          joinGateConfig?.noAvatar?.action || "log",
-        );
-        if (result?.blocked) {
-          return;
-        }
-      }
-
-      const nameCandidate = getJoinGateNameCandidate(member);
-
-      if (
-        joinGateConfig?.enabled &&
-        joinGateConfig?.advertisingName?.enabled &&
-        inviteLikeInName(nameCandidate)
-      ) {
-        const result = await kickForJoinGate(member, "Advertising invite link in username.", [
-          `${ARROW} **Rule:** Advertising Name`,
-          `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ], joinGateConfig?.advertisingName?.action || "kick");
-        if (result?.blocked) return;
-      }
-
-      const usernameMatch = joinGateConfig?.enabled
-        ? matchUsernameFilters(nameCandidate, joinGateConfig?.usernameFilter)
-        : null;
-      if (usernameMatch) {
-        const result = await kickForJoinGate(member, "Username matches blocked pattern.", [
-          `${ARROW} **Rule:** Username Filter`,
-          `${ARROW} **Match Type:** ${usernameMatch.type}`,
-          `${ARROW} **Match:** ${usernameMatch.value}`,
-          `${ARROW} **Name:** ${nameCandidate || "N/A"}`,
-        ], joinGateConfig?.usernameFilter?.action || "kick");
-        if (result?.blocked) return;
-      }
-
-      if (joinGateConfig?.enabled && joinGateConfig?.suspiciousAccount?.enabled) {
-        const suspiciousReason = detectSuspiciousAccount(member);
-        if (suspiciousReason) {
-          const result = await kickForJoinGate(
-            member,
-            `Suspicious account: ${suspiciousReason}`,
-            [
-              `${ARROW} **Rule:** Suspicious Account`,
-              `${ARROW} **Reason:** ${suspiciousReason}`,
-            ],
-            joinGateConfig?.suspiciousAccount?.action || "log",
-          );
-          if (result?.blocked) return;
-        }
       }
 
       const welcomeChannel = await resolveGuildChannel(
