@@ -1,5 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
+const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
 
 const VERIFY_ROLE_IDS = [
   IDs.roles.Member,
@@ -226,23 +227,62 @@ module.exports = {
       }
       const success = [];
       const fail = [];
+      const guild = message.guild;
+      const guildId = guild?.id;
       for (const member of targets) {
-        const rolesToAdd = validVerifyRoleIds.filter(
-          (id) => !member.roles.cache.has(id),
-        );
+        const fresh =
+          guildId && member?.id
+            ? await guild.members.fetch(member.id).catch(() => null)
+            : member;
+        const targetMember = fresh || member;
+        const cache = targetMember?.roles?.cache;
+        const rolesToAdd =
+          cache &&
+          validVerifyRoleIds.filter((id) => !cache.has(id));
         const displayName =
-          member.user?.username || member.displayName || member.id;
+          targetMember?.user?.username ||
+          targetMember?.displayName ||
+          targetMember?.id;
         try {
-          if (rolesToAdd.length > 0) {
-            await member.roles.add(rolesToAdd);
+          if (rolesToAdd?.length > 0) {
+            await targetMember.roles.add(rolesToAdd);
             success.push(displayName);
+            try {
+              const record = await upsertVerifiedMember(
+                guildId,
+                targetMember.id,
+                new Date(),
+              );
+              await applyTenureForMember(targetMember, record);
+            } catch (dbErr) {
+              global.logger?.warn?.("[+verify] upsertVerifiedMember/applyTenureForMember:", dbErr);
+            }
           } else {
             fail.push(displayName);
           }
         } catch (err) {
-          global.logger.error(err);
+          global.logger?.error?.(err);
           fail.push(displayName);
         }
+      }
+      const modLogId = IDs.channels?.modLogs;
+      const logChannel = modLogId
+        ? (guild?.channels?.cache?.get(modLogId) ||
+            (await guild.channels.fetch(modLogId).catch(() => null)))
+        : null;
+      if (logChannel?.isTextBased?.() && success.length > 0) {
+        const staffMention = `<@${message.author.id}>`;
+        const targetList = success.join(", ");
+        const logEmbed = new EmbedBuilder()
+          .setColor("#6f4e37")
+          .setTitle("Verifica manuale (Staff)")
+          .setDescription(
+            `<:profile:1461732907508039834> **Staff:** ${staffMention}\n` +
+              `<:success:1461731530333229226> **Verificati:** ${targetList}\n` +
+              "<:space:1461733157840621608><:rightSort:1461726104422453298> Ruoli verifica assegnati.",
+          )
+          .setTimestamp();
+        await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
       }
       try {
         if (!i.deferred && !i.replied) {
