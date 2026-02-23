@@ -496,11 +496,11 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 ## +restart
 - Categoria: `Dev`
 - Alias: `rs`, `reload`
-- Uso: `+restart <full|handlers|commands|prefix|events|triggers|services|utils>`
-- Subcommand: `full`, `handlers`, `commands`, `prefix`, `events`, `triggers`, `services`, `utils`, `schemas`, `all`
+- Uso: `+restart <full|all>`
+- Subcommand: `full`, `all`
 - Esempi:
 - `+restart full`
-- `+restart handlers`
+- `+restart all`
 
 ## +roll
 - Categoria: `Minigames`

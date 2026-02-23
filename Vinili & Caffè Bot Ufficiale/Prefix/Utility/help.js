@@ -192,7 +192,6 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "reaction.auto": "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.",
   "restart.full": "Riavvia il bot; con `both` riavvia anche il bot Test.",
   "restart.all": "Esegue il reload completo di tutte le scope ricaricabili.",
-  "statics.status": "Mostra i ruoli, canali e utenti configurati per la sicurezza.",
   "temprole.add": "Assegna un ruolo temporaneo a un utente.",
   "temprole.remove": "Rimuove un ruolo temporaneo da un utente.",
   "customrole.create": "Crea o aggiorna il tuo ruolo personalizzato.",
@@ -276,14 +275,14 @@ function normalizeDescription(
 
 function getPrefixDescription(command) {
   const commandName = String(command?.name || "").toLowerCase();
+  if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
+    return PREFIX_HELP_DESCRIPTIONS[commandName];
+  }
   const fromCommand = normalizeDescription(
     command?.description || command?.desc || command?.help || command?.usage,
     "",
   );
   if (fromCommand) return fromCommand;
-  if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
-    return PREFIX_HELP_DESCRIPTIONS[commandName];
-  }
   return "Descrizione non disponibile.";
 }
 
@@ -299,6 +298,9 @@ function prettifySubcommandName(name) {
 function getPrefixSubcommandDescription(command, subcommandName) {
   const commandName = String(command?.name || "").toLowerCase();
   const key = `${String(commandName || "").toLowerCase()}.${String(subcommandName || "").toLowerCase()}`;
+  if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
+    return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
+  }
   const commandSubDesc =
     command?.subcommandDescriptions ||
     command?.subcommandsDescriptions ||
@@ -311,9 +313,6 @@ function getPrefixSubcommandDescription(command, subcommandName) {
       commandSubDesc[String(subcommandName || "").trim()];
     if (String(fromCommand || "").trim())
       return normalizeDescription(fromCommand);
-  }
-  if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
-    return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
   }
   return "Descrizione non disponibile.";
 }
@@ -694,10 +693,12 @@ function entryBelongsToPage(entry, pageRoleId) {
 function memberCanSeeEntry(entry, memberRoles, pageRoleId) {
   if (pageRoleId === "utente") {
     if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
-    const category = String(entry.category || "").toLowerCase();
-    const isVipCategory = category === "vip";
     if (entry.roles.some((r) => STAFF_TIER_ROLES.includes(r))) return false;
-    if (isVipCategory) return hasAnyRole(memberRoles, entry.roles);
+    const entryOnlyVip =
+      entry.roles.length > 0 &&
+      entry.roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
+    const memberHasMemberRole = IDs.roles.Member && memberRoles?.has(IDs.roles.Member);
+    if (entryOnlyVip && memberHasMemberRole) return true;
     return hasAnyRole(memberRoles, entry.roles);
   }
   return hasAnyRole(memberRoles, entry.roles);
@@ -714,7 +715,13 @@ function filterByPage(entries, pageRoleId, memberRoles) {
 function canMemberSeeEntry(entry, memberRoles) {
   const roles = entry?.roles;
   if (!Array.isArray(roles) || roles.length === 0) return true;
-  return hasAnyRole(memberRoles, roles);
+  if (hasAnyRole(memberRoles, roles)) return true;
+  const memberHasMemberRole = IDs.roles.Member && memberRoles?.has(IDs.roles.Member);
+  const entryOnlyVip =
+    roles.length > 0 &&
+    roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
+  if (memberHasMemberRole && entryOnlyVip) return true;
+  return false;
 }
 
 function chunkEntries(entries, size) {
@@ -792,17 +799,30 @@ function renderPageText(page) {
       CATEGORY_LABELS[categoryKey] ||
       categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
     const rows = categoryEntries.map((entry) => {
+      const invokeNorm = normalizeInvokeLookup(entry.invoke);
+      const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+";
+      const aliasList = Array.isArray(entry.aliases) && entry.aliases.length
+        ? entry.aliases
+            .map((a) => String(a || "").trim())
+            .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
+        : Array.isArray(entry.subAliases) && entry.subAliases.length
+          ? entry.subAliases
+              .map((a) => String(a || "").trim())
+              .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
+          : [];
+      const aliasPart = aliasList.length
+        ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ")
+        : "";
+      const onlyMemberRole =
+        Array.isArray(entry.roles) &&
+        entry.roles.length === 1 &&
+        String(entry.roles[0]) === String(IDs.roles.Member);
       const roleHint =
         Array.isArray(entry.roles) &&
-          entry.roles.length > 0
+          entry.roles.length > 0 &&
+          !onlyMemberRole
           ? ` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`
           : "";
-      const aliasPart =
-        Array.isArray(entry.aliases) && entry.aliases.length
-          ? ` (${entry.aliases.join(", ")})`
-          : Array.isArray(entry.subAliases) && entry.subAliases.length
-            ? ` (${entry.subAliases.join(", ")})`
-            : "";
       return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}${roleHint}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
@@ -1660,16 +1680,28 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   const lines = limited.map((entry) => {
     const categoryKey = String(entry.category || "").toLowerCase();
     const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || "Misc";
+    const invokeNorm = normalizeInvokeLookup(entry.invoke);
+    const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+";
+    const aliasList = Array.isArray(entry.aliases) && entry.aliases.length
+      ? entry.aliases
+          .map((a) => String(a || "").trim())
+          .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
+      : Array.isArray(entry.subAliases) && entry.subAliases.length
+        ? entry.subAliases
+            .map((a) => String(a || "").trim())
+            .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
+        : [];
+    const aliasPart = aliasList.length
+      ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ")
+      : "";
+    const onlyMemberRole =
+      Array.isArray(entry.roles) &&
+      entry.roles.length === 1 &&
+      String(entry.roles[0]) === String(IDs.roles.Member);
     const roleHint =
-      Array.isArray(entry.roles) && entry.roles.length > 0
+      Array.isArray(entry.roles) && entry.roles.length > 0 && !onlyMemberRole
         ? `\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`
         : "";
-    const aliasPart =
-      Array.isArray(entry.aliases) && entry.aliases.length
-        ? ` (${entry.aliases.join(", ")})`
-        : Array.isArray(entry.subAliases) && entry.subAliases.length
-          ? ` (${entry.subAliases.join(", ")})`
-          : "";
     return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}\n  \`Categoria:\` ${categoryLabel}${roleHint}`;
   });
   const extra =

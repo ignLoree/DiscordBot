@@ -106,7 +106,6 @@ module.exports = {
   allowEmptyArgs: true,
   subcommands: [
     "full",
-    "handlers",
     "all",
   ],
 

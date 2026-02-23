@@ -82,9 +82,14 @@ module.exports = async function renderSkullboardCanvas({
   const width = 600;
   const outerPad = 16;
   const avatarSize = 40;
-  const contentX = outerPad + avatarSize + 12;
+  const avatarToContentGap = 12;
+  const contentX = outerPad + avatarSize + avatarToContentGap;
   const textMaxWidth = width - contentX - outerPad;
   const topY = outerPad;
+  const headerLineHeight = 20;
+  const usernameToIconGap = 12;
+  const roleIconSize = 14;
+  const roleIconToTimestampGap = 10;
 
   const probe = createCanvas(width, 10).getContext("2d");
   probe.font = fontStack(16, "500");
@@ -101,6 +106,7 @@ module.exports = async function renderSkullboardCanvas({
   let y = topY;
   const replyY = hasReply ? y : null;
   const headerY = hasReply ? y + 24 : y;
+  const avatarTop = headerY + headerLineHeight / 2 - avatarSize / 2;
   const messageY = headerY + 26;
   const messageH = messageLines.length ? messageLines.length * 20 : 0;
   y = messageY + messageH;
@@ -129,30 +135,34 @@ module.exports = async function renderSkullboardCanvas({
   if (hasReply) {
     let rx = contentX;
     const replyAvatarSize = 16;
+    const replyLineHeight = 16;
+    const replyTextY = replyY + (replyLineHeight - 12) / 2;
+    const replyAvatarTop = replyY + (replyLineHeight - replyAvatarSize) / 2;
     if (reply.avatarUrl) {
       const rAvatar = await loadImage(reply.avatarUrl).catch(() => null);
       if (rAvatar) {
-        drawCircleImage(ctx, rAvatar, rx, replyY - 2, replyAvatarSize);
-        rx += replyAvatarSize + 6;
+        drawCircleImage(ctx, rAvatar, rx, replyAvatarTop, replyAvatarSize);
+        rx += replyAvatarSize + 8;
       }
     }
 
     ctx.font = fontStack(12, "600");
     const replyName = reply.author || "Sconosciuto";
     const replyNameColor = reply.nameColor || "#b9bbbe";
-    const replyTextY = replyY + 6;
     drawTextWithSpecialFallback(ctx, replyName, rx, replyTextY, {
       size: 12,
       weight: "600",
       color: replyNameColor,
     });
-    rx += ctx.measureText(replyName).width + 6;
+    rx += ctx.measureText(replyName).width + 8;
 
     if (reply.roleIconUrl) {
       const replyIcon = await loadImage(reply.roleIconUrl).catch(() => null);
       if (replyIcon) {
-        drawCircleImage(ctx, replyIcon, rx, replyTextY + 1, 12);
-        rx += 14;
+        const replyIconSize = 12;
+        const replyIconTop = replyY + (replyLineHeight - replyIconSize) / 2;
+        drawCircleImage(ctx, replyIcon, rx, replyIconTop, replyIconSize);
+        rx += replyIconSize + 8;
       }
     }
 
@@ -164,9 +174,9 @@ module.exports = async function renderSkullboardCanvas({
     });
 
     const connStartX = outerPad + avatarSize / 2;
-    const connStartY = headerY + 2;
+    const connStartY = avatarTop + avatarSize / 2;
     const connEndX = contentX - 10;
-    const connEndY = replyY;
+    const connEndY = replyY + 10;
     const radius = 8;
 
     ctx.strokeStyle = "#4e5058";
@@ -181,13 +191,7 @@ module.exports = async function renderSkullboardCanvas({
   }
 
   const avatar = await loadImage(avatarUrl);
-  drawCircleImage(
-    ctx,
-    avatar,
-    outerPad,
-    headerY - avatarSize / 2 + 2,
-    avatarSize,
-  );
+  drawCircleImage(ctx, avatar, outerPad, avatarTop, avatarSize);
 
   const userColor = nameColor || "#f2f3f5";
   ctx.textBaseline = "top";
@@ -200,19 +204,21 @@ module.exports = async function renderSkullboardCanvas({
   });
 
   ctx.font = fontStack(usernameSize, usernameWeight);
-  let cursorX = contentX + ctx.measureText(username || "").width + 8;
+  let cursorX = contentX + ctx.measureText(username || "").width + usernameToIconGap;
   if (roleIconUrl) {
     const roleIcon = await loadImage(roleIconUrl).catch(() => null);
     if (roleIcon) {
-      drawCircleImage(ctx, roleIcon, cursorX, headerY + 1, 14);
-      cursorX += 22;
+      const iconTop = headerY + (headerLineHeight - roleIconSize) / 2;
+      drawCircleImage(ctx, roleIcon, cursorX, iconTop, roleIconSize);
+      cursorX += roleIconSize + roleIconToTimestampGap;
     }
   }
+  const timestampY = headerY + (headerLineHeight - 14) / 2;
   drawTextWithSpecialFallback(
     ctx,
     formatTimestamp(createdAt || new Date()),
     cursorX,
-    headerY + 1,
+    timestampY,
     {
       size: 12,
       weight: "500",
