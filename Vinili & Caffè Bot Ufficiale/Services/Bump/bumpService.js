@@ -96,6 +96,9 @@ function createBumpReminderService(options) {
   }
 
   function scheduleReminder(client, guildId, lastBumpAt) {
+    global.logger?.info?.(
+      `${errorTag} scheduleReminder called guild=${guildId} lastBumpAt=${lastBumpAt}`,
+    );
     const existing = bumpTimers.get(guildId);
     if (existing) clearTimeout(existing);
 
@@ -137,18 +140,24 @@ function createBumpReminderService(options) {
 
   async function setBumpAt(client, guildId, bumpAt, userId) {
     const bumpDate = bumpAt instanceof Date ? bumpAt : new Date(bumpAt);
-    const doc = await model.findOneAndUpdate(
-      { guildId },
-      {
-        $set: {
-          lastBumpAt: bumpDate,
-          lastBumpUserId: userId || null,
-          reminderSentAt: null,
+    let lastBumpAt = bumpDate;
+    let doc = null;
+    try {
+      doc = await model.findOneAndUpdate(
+        { guildId },
+        {
+          $set: {
+            lastBumpAt: bumpDate,
+            lastBumpUserId: userId || null,
+            reminderSentAt: null,
+          },
         },
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
-    const lastBumpAt = doc?.lastBumpAt ? new Date(doc.lastBumpAt) : bumpDate;
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+      if (doc?.lastBumpAt) lastBumpAt = new Date(doc.lastBumpAt);
+    } catch (err) {
+      global.logger?.error?.(`${errorTag} setBumpAt DB failed, scheduling in-memory anyway:`, err?.message || err);
+    }
     scheduleReminder(client, guildId, lastBumpAt);
     return doc;
   }

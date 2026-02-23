@@ -1633,14 +1633,21 @@ async function handleDiscadiaBump(message, client) {
   const isLikelyCommandChannel =
     String(message.channelId || "") === String(IDs.channels.commands || "");
 
+  const sourceNameForDisboard = `${authorName} ${String(message.applicationId || "")}`.toLowerCase();
+  const isDisboardSource =
+    message.author?.id === IDs.bots.DISBOARD ||
+    (Boolean(message.author?.bot) && /disboard/i.test(authorName)) ||
+    /disboard/i.test(sourceNameForDisboard);
+  const hasBumpSuccessText = hasPattern || hasSuccessWord;
   const fromDiscadiaBot =
     isDiscadiaAuthor ||
     isDiscadiaApp ||
     (isDiscadiaNamedBot && !isDisboardNamedBot) ||
-    isFallbackSource ||
     hasDiscadiaWord ||
     hasDiscadiaDomain ||
-    (isAutomatedSource && isBumpInteraction && isLikelyCommandChannel);
+    (isAutomatedSource && isBumpInteraction && isLikelyCommandChannel) ||
+    (isAutomatedSource && !isDisboardSource && hasBumpSuccessText);
+
   const isBump =
     fromDiscadiaBot &&
     !hasFailureWord &&
