@@ -761,39 +761,54 @@ function hasAnyRole(memberRoles, roleIds) {
   return roleIds.some((roleId) => memberRoles.has(roleId));
 }
 
-function filterByPage(entries, pageRoleId, memberRoles) {
-  if (pageRoleId === "utente") {
-    return entries.filter((entry) => {
-      if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
-      const category = String(entry.category || "").toLowerCase();
-      const isVipCategory = category === "vip";
-      const hasMemberRoleRequirement = entry.roles.includes(IDs.roles.Member);
+const STAFF_TIER_ROLES = [
+  IDs.roles.Founder,
+  IDs.roles.HighStaff,
+  IDs.roles.Staff,
+  IDs.roles.PartnerManager,
+].filter(Boolean);
 
-      if (hasMemberRoleRequirement) return hasAnyRole(memberRoles, entry.roles);
-      if (isVipCategory) return hasAnyRole(memberRoles, entry.roles);
-      return false;
-    });
+function getEntryDisplayTier(entry) {
+  const roles = entry?.roles;
+  if (!Array.isArray(roles) || roles.length === 0) return "utente";
+  let minTier = 3;
+  for (const r of roles) {
+    if (r === IDs.roles.Founder) minTier = Math.min(minTier, 3);
+    else if (r === IDs.roles.HighStaff) minTier = Math.min(minTier, 2);
+    else if (
+      r === IDs.roles.Staff ||
+      r === IDs.roles.PartnerManager
+    )
+      minTier = Math.min(minTier, 1);
+    else minTier = Math.min(minTier, 0);
   }
-  if (pageRoleId === IDs.roles.Staff) {
-    const hasPartnerManager = Boolean(
-      memberRoles?.has?.(IDs.roles.PartnerManager),
-    );
-    const hasStaff = Boolean(memberRoles?.has?.(IDs.roles.Staff));
-    const hasHighStaff = Boolean(memberRoles?.has?.(IDs.roles.HighStaff));
-    const hasFounder = Boolean(memberRoles?.has?.(IDs.roles.Founder));
-    return entries.filter((entry) => {
-      if (!Array.isArray(entry.roles) || !entry.roles.length) return false;
-      if (hasPartnerManager && entry.roles.includes(IDs.roles.PartnerManager))
-        return true;
-      if (hasStaff && entry.roles.includes(IDs.roles.Staff)) return true;
-      if (hasHighStaff && entry.roles.includes(IDs.roles.HighStaff))
-        return true;
-      if (hasFounder && entry.roles.includes(IDs.roles.Founder)) return true;
-      return false;
-    });
+  if (minTier === 0) return "utente";
+  if (minTier === 1) return IDs.roles.Staff;
+  if (minTier === 2) return IDs.roles.HighStaff;
+  return IDs.roles.Founder;
+}
+
+function entryBelongsToPage(entry, pageRoleId) {
+  return getEntryDisplayTier(entry) === pageRoleId;
+}
+
+function memberCanSeeEntry(entry, memberRoles, pageRoleId) {
+  if (pageRoleId === "utente") {
+    if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
+    const category = String(entry.category || "").toLowerCase();
+    const isVipCategory = category === "vip";
+    if (entry.roles.some((r) => STAFF_TIER_ROLES.includes(r))) return false;
+    if (isVipCategory) return hasAnyRole(memberRoles, entry.roles);
+    return hasAnyRole(memberRoles, entry.roles);
   }
+  return hasAnyRole(memberRoles, entry.roles);
+}
+
+function filterByPage(entries, pageRoleId, memberRoles) {
   return entries.filter(
-    (entry) => Array.isArray(entry.roles) && entry.roles.includes(pageRoleId),
+    (entry) =>
+      entryBelongsToPage(entry, pageRoleId) &&
+      memberCanSeeEntry(entry, memberRoles, pageRoleId),
   );
 }
 
@@ -1746,18 +1761,25 @@ module.exports = {
       return;
     }
 
-    const singleList = dedupeAndSortEntries(
-      visibleRoleIds.flatMap((roleId) =>
-        filterByPage(allEntries, roleId, memberRoles),
-      ),
-    );
-    const allChunks = chunkEntries(singleList, HELP_PAGE_SIZE);
-    const groupedPages = allChunks.map((items, idx) => ({
-      roleId: "utente",
-      items,
-      indexLabel: `${idx + 1}/${allChunks.length}`,
-      groupLabel: PAGE_TITLES.utente || "Comandi Utente",
-    }));
+    const groupedPages = [];
+    for (const roleId of visibleRoleIds) {
+      const entriesForRole = filterByPage(allEntries, roleId, memberRoles);
+      const sortedForRole = dedupeAndSortEntries(entriesForRole);
+      const chunks = chunkEntries(sortedForRole, HELP_PAGE_SIZE);
+      const roleLabel = PAGE_TITLES[roleId] || "Comandi";
+      for (let i = 0; i < chunks.length; i++) {
+        groupedPages.push({
+          roleId,
+          items: chunks[i],
+          indexLabel: "", // set below after we know total
+          groupLabel: roleLabel,
+        });
+      }
+    }
+    const totalPages = groupedPages.length;
+    groupedPages.forEach((page, idx) => {
+      page.indexLabel = `${idx + 1}/${totalPages}`;
+    });
 
     if (!groupedPages.length) {
       return safeMessageReply(message, {
