@@ -650,18 +650,22 @@ function buildEntries(client, permissions) {
     };
 
     const subcommands = extractPrefixSubcommands(command);
-    if (subcommands.length) {
-      for (const sub of subcommands) {
-        entries.push({
-          ...base,
-          invoke: `${prefixBase}${command.name} ${sub}`,
-          description: getPrefixSubcommandDescription(command, sub),
-          roles: Array.isArray(subcommandRoles[sub])
-            ? subcommandRoles[sub]
-            : commandRoles,
-          aliases: extractDirectAliasesForSubcommand(command, sub),
-        });
-      }
+    const canonicalSubs = Array.isArray(command?.subcommands)
+      ? command.subcommands
+          .map((s) => String(s || "").trim().toLowerCase())
+          .filter(Boolean)
+      : [];
+    const uniqueCanonicalSubs = Array.from(new Set(canonicalSubs.length ? canonicalSubs : subcommands));
+    if (uniqueCanonicalSubs.length) {
+      const subList = uniqueCanonicalSubs.join(", ");
+      const subDesc = ` Subcomandi: \`${subList}\`. Usa \`+help ${command.name}\` per i dettagli.`;
+      entries.push({
+        ...base,
+        invoke: `${prefixBase}${command.name}`,
+        description: (base.description || "").replace(/\s*$/, "") + subDesc,
+        _hasSubcommands: true,
+        _subcommands: uniqueCanonicalSubs,
+      });
     } else {
       entries.push({
         ...base,
@@ -687,20 +691,32 @@ function buildEntries(client, permissions) {
       Array.isArray(dataJson.options) &&
       dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
+    const roles = normalizePermissionRoles(perm);
     if (hasSubcommands) {
-      entries.push(
-        ...getSubcommandEntries(
-          dataJson.name,
-          dataJson,
-          perm,
-          commandType,
-          category,
-        ),
-      );
+      const subNames = [];
+      for (const opt of dataJson.options || []) {
+        if (opt?.type === 1 && opt?.name) subNames.push(opt.name);
+        if (opt?.type === 2 && Array.isArray(opt.options)) {
+          for (const sub of opt.options) {
+            if (sub?.type === 1 && sub?.name) subNames.push(`${opt.name} ${sub.name}`);
+          }
+        }
+      }
+      const subList = subNames.length ? subNames.join(", ") : "";
+      const topDesc = getSlashTopLevelDescription(dataJson);
+      const desc = subList
+        ? `${topDesc} Subcomandi: \`${subList}\`. Usa \`+help ${dataJson.name}\` per i dettagli.`
+        : topDesc;
+      entries.push({
+        invoke: `/${dataJson.name}`,
+        type: "slash",
+        description: desc,
+        category,
+        roles,
+      });
       continue;
     }
 
-    const roles = normalizePermissionRoles(perm);
     entries.push({
       invoke: `/${dataJson.name}`,
       type: "slash",
@@ -837,13 +853,7 @@ function renderPageText(page) {
       CATEGORY_LABELS[categoryKey] ||
       categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
     const rows = categoryEntries.map((entry) => {
-      const aliasText =
-        entry.type === "prefix" &&
-        Array.isArray(entry.aliases) &&
-        entry.aliases.length
-          ? ` (alias: ${entry.aliases.map((alias) => `${entry.prefixBase || "+"}${alias}`).join(", ")})`
-          : "";
-      return `- \`${entry.invoke}\` - ${entry.description}${aliasText}`;
+      return `- \`${entry.invoke}\` - ${entry.description}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
@@ -1140,15 +1150,21 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   }
 
   const usageLines = [];
-  const allSubs = Array.from(
-    new Set(
-      visibleForCommand
-        .map(
-          (entry) => normalizeInvokeLookup(entry.invoke).split(" ")[1] || null,
-        )
-        .filter(Boolean),
-    ),
-  );
+  const hasSubcommands =
+    visibleForCommand.some((e) => e._hasSubcommands) ||
+    (Array.isArray(command?.subcommands) && command.subcommands.length > 0);
+  const allSubs = hasSubcommands
+    ? listPrefixSubcommandsForCommand(command, commandName, permissions)
+    : Array.from(
+        new Set(
+          visibleForCommand
+            .map(
+              (entry) =>
+                normalizeInvokeLookup(entry.invoke).split(" ")[1] || null,
+            )
+            .filter(Boolean),
+        ),
+      );
   if (allSubs.length) {
     usageLines.push(`\`${prefixBase}${commandName} <subcommand>\``);
   } else {
@@ -1185,8 +1201,30 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 
   const subLines = [];
   const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
+  const subsToShow =
+    hasSubcommands && allSubs.length
+      ? requestedSub
+        ? allSubs.filter((s) => s === requestedSub)
+        : allSubs
+      : [];
+  for (const subName of subsToShow) {
+    const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
+      ? permConfig.subcommands[subName]
+      : permConfig.roles;
+    const aliasesForSub = extractDirectAliasesForSubcommand(command, subName);
+    subLines.push(
+      `- \`${prefixBase}${commandName} ${subName}\` - ${getPrefixSubcommandDescription(command, subName)}`,
+    );
+    if (aliasesForSub.length) {
+      subLines.push(
+        `  Alias: ${aliasesForSub.map((alias) => `\`${prefixBase}${commandName} ${alias}\``).join(", ")}`,
+      );
+    }
+    subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
+  }
   for (const entry of subEntries) {
     const subName = normalizeInvokeLookup(entry.invoke).split(" ")[1];
+    if (subsToShow.includes(subName)) continue;
     const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
       ? permConfig.subcommands[subName]
       : permConfig.roles;
@@ -1201,31 +1239,18 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     }
     subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
   }
-  if (requestedSub && !subLines.length) {
-    const allKnownSubs = listPrefixSubcommandsForCommand(
-      command,
-      commandName,
-      permissions,
-    );
-    for (const sub of allKnownSubs) {
-      const invoke = `${prefixBase}${commandName} ${sub}`;
-      const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-      const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-      const subRoleIds = Array.isArray(permConfig.subcommands?.[sub])
-        ? permConfig.subcommands[sub]
-        : permConfig.roles;
-      subLines.push(
-        `- \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
-      );
-      subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
-    }
-  }
 
+  const subInvokesForExamples =
+    subsToShow.length > 0
+      ? subsToShow.map((sub) => ({
+          invoke: `${prefixBase}${commandName} ${sub}`,
+        }))
+      : subEntries.map((entry) => ({ invoke: entry.invoke }));
   const snippetLines = collectPrefixExampleLines(
     command,
     commandName,
     prefixBase,
-    subEntries.map((entry) => ({ invoke: entry.invoke })),
+    subInvokesForExamples,
     requestedSub,
   );
 

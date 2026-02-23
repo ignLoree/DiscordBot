@@ -1,6 +1,6 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { ActivityDaily } = require("../../Schemas/Community/communitySchemas");
+const { ActivityDaily, ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { MESSAGE_EXP, VOICE_EXP_PER_MINUTE, getLevelInfo, } = require("../../Services/Community/expService");
 
@@ -191,6 +191,25 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
     .filter((entry) => entry.exp > 0)
     .sort((a, b) => b.exp - a.exp)
     .slice(0, TOP_LIMIT);
+
+  if (mode === "alltime" && rows.length > 0) {
+    const userIds = rows.map((r) => r.userId);
+    const expUsers = await ExpUser.find({
+      guildId: guild.id,
+      userId: { $in: userIds },
+    })
+      .select("userId totalExp level")
+      .lean();
+    const expByUser = new Map(
+      expUsers.map((d) => [String(d.userId), { totalExp: Number(d.totalExp || 0), level: Number(d.level || 0) }]),
+    );
+    for (const row of rows) {
+      const eu = expByUser.get(row.userId);
+      if (eu != null) {
+        row.level = eu.level > 0 ? eu.level : getLevelInfo(eu.totalExp).level;
+      }
+    }
+  }
 
   leaderboardCache.set(key, {
     rows,
