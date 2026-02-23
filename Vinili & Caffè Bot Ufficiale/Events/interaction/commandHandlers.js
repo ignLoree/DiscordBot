@@ -10,7 +10,6 @@ const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
-const { consumeSlashRateLimit } = require("../../Services/Moderation/staffCommandRateLimitService");
 const {
   getCommandExecutionGate,
   inferModuleKeyFromSlashCommand,
@@ -161,21 +160,6 @@ async function handleSlashCommand(interaction, client) {
         : buildGlobalPermissionDeniedEmbed(requiredRoles);
     return interaction.reply({
       embeds: [embed],
-      flags: 1 << 6,
-    });
-  }
-  const staffRateLimit = consumeSlashRateLimit({
-    guildId: interaction.guildId,
-    userId: interaction.user?.id,
-    command,
-  });
-  if (!staffRateLimit.ok) {
-    const remaining = Math.max(
-      1,
-      Math.ceil(Number(staffRateLimit.remainingMs || 0) / 1000),
-    );
-    return interaction.reply({
-      content: `Rallenta: riprova tra **${remaining}s**.`,
       flags: 1 << 6,
     });
   }

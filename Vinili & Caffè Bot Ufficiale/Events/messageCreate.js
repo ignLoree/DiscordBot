@@ -21,7 +21,6 @@ const { upsertVoteRole } = require("../Services/Community/communityOpsService");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
-const { consumePrefixRateLimit } = require("../Services/Moderation/staffCommandRateLimitService");
 const {
   getCommandExecutionGate,
   inferModuleKeyFromPrefixCommand,
@@ -790,24 +789,6 @@ module.exports = {
       await deleteCommandMessage();
       const msg = await message.channel.send({ embeds: [embed] }).catch(() => null);
       if (msg) setTimeout(() => msg.delete().catch(() => { }), 2000);
-      return;
-    }
-    const staffRateLimit = consumePrefixRateLimit({
-      guildId: message.guild?.id,
-      userId: message.author?.id,
-      commandName: command?.name,
-      command,
-    });
-    if (!staffRateLimit.ok) {
-      await deleteCommandMessage();
-      const remaining = Math.max(1, Math.ceil(Number(staffRateLimit.remainingMs || 0) / 1000));
-      const msg = await message.channel
-        .send({
-          content:
-            `<:VC_right_arrow:1473441155055096081> Rallenta: riprova tra **${remaining}s**.`,
-        })
-        .catch(() => null);
-      if (msg) setTimeout(() => msg.delete().catch(() => {}), 4000);
       return;
     }
     const hasSubcommands = Boolean(

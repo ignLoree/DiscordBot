@@ -73,11 +73,6 @@ const PANIC_CONTROL_ROLE_IDS = [
   IDs.roles.CoFounder,
 ].filter(Boolean);
 
-const SYSTEM_DISABLE_ROLE_IDS = [
-  IDs.roles.Founder,
-  IDs.roles.CoFounder,
-].filter(Boolean);
-
 const AUTOMOD_PRESETS = {
   safe: {
     thresholds: {
@@ -133,16 +128,6 @@ const AUTOMOD_PRESETS = {
     },
   },
 };
-
-const DRILL_DANGEROUS_PERMS = [
-  PermissionsBitField.Flags.Administrator,
-  PermissionsBitField.Flags.ManageGuild,
-  PermissionsBitField.Flags.ManageRoles,
-  PermissionsBitField.Flags.ManageChannels,
-  PermissionsBitField.Flags.ManageWebhooks,
-  PermissionsBitField.Flags.BanMembers,
-  PermissionsBitField.Flags.KickMembers,
-];
 
 function toTs(ms, style = "R") {
   const n = Number(ms || 0);
@@ -211,34 +196,6 @@ function hasPanicControlAccess(member, guild) {
   return hasAnyRole(member, PANIC_CONTROL_ROLE_IDS);
 }
 
-function hasSystemDisableAccess(member, guild) {
-  if (!member || !guild) return false;
-  if (String(guild.ownerId || "") === String(member.id || "")) return true;
-  return hasAnyRole(member, SYSTEM_DISABLE_ROLE_IDS);
-}
-
-function hasProfilesManageAccess(member, guild) {
-  if (!member || !guild) return false;
-  if (String(guild.ownerId || "") === String(member.id || "")) return true;
-  return hasAnyRole(member, PANIC_CONTROL_ROLE_IDS);
-}
-
-function parseScalar(raw) {
-  const value = String(raw || "").trim();
-  if (!value.length) return "";
-  if (value === "true") return true;
-  if (value === "false") return false;
-  if (/^-?\d+(?:\.\d+)?$/.test(value)) return Number(value);
-  return value;
-}
-
-function isDisableSystemOperation(pathArg, nextValue) {
-  if (nextValue !== false) return false;
-  const path = String(pathArg || "").trim().toLowerCase();
-  if (!path) return false;
-  return path === "enabled" || path.endsWith(".enabled");
-}
-
 function parseUserId(input, message) {
   const mention = message?.mentions?.users?.first?.();
   if (mention?.id) return String(mention.id);
@@ -254,8 +211,7 @@ function usageEmbed() {
     .setDescription(
       [
         "`+security joingate <status|set>`",
-        "`+security joinraid <status|preset>`",
-        "`+security raid ...`",
+        "`+security raid <status|preset>` (alias: joinraid, jr)",
         "`+security panic ...`",
         "`+security antinuke <status|preset|panic|raid>`",
       ].join("\n"),
@@ -286,24 +242,6 @@ function antiNukeUsageEmbed() {
     );
 }
 
-function autoModUsageEmbed() {
-  return new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Security AutoMod")
-    .setDescription(
-      [
-        "`+security automod stats [days]`",
-        "`+security automod heat`",
-        "`+security automod filters`",
-        "`+security automod top <rules|channels|users> [days] [limit]`",
-        "`+security automod preset show`",
-        "`+security automod preset safe`",
-        "`+security automod tune show`",
-        "`+security automod tune <path> <value>`",
-      ].join("\n"),
-    );
-}
-
 function applyAutoModPresetConfig(preset) {
   const steps = [
     ["thresholds", preset.thresholds],
@@ -316,66 +254,6 @@ function applyAutoModPresetConfig(preset) {
     if (!updated?.ok) return { ok: false, failedPath: path };
   }
   return { ok: true };
-}
-
-async function buildSecurityStatusEmbed(guild) {
-  const guildId = String(guild?.id || "");
-  const orchestrated = guild ? await getSecurityLockState(guild) : null;
-  const antiNuke = getAntiNukeStatusSnapshot(guildId);
-  const raid = await getJoinRaidStatusSnapshot(guildId);
-  const automodPanic = getAutoModPanicSnapshot(guildId);
-  const automodCfg = getAutoModConfigSnapshot();
-  const panicThreshold = Number(automodCfg?.panic?.triggerCount || 0);
-  const panicWindowMin = Math.round(
-    Number(automodCfg?.panic?.triggerWindowMs || 0) / 60_000,
-  );
-
-  return new EmbedBuilder()
-    .setColor(
-      antiNuke?.panicActive || automodPanic?.active || raid?.raidActive
-        ? "#ED4245"
-        : "#57F287",
-    )
-    .setTitle("Security Center")
-    .setDescription(
-      [
-        "**Join Gate**",
-        "Regole attive sugli ingressi: anti-bot, filtri nome, account sospetti.",
-        "",
-        "**Join Raid**",
-        `Stato: **${raid?.raidActive ? "ATTIVO" : "IDLE"}**`,
-        `Azione: **${raid?.config?.triggerAction || "N/A"}**`,
-        `Trigger: **${raid?.uniqueFlaggedRecent || 0}/${raid?.config?.triggerCount || 0}**`,
-        raid?.raidActive ? `Fine: ${toTs(raid.raidUntil, "F")}` : null,
-        "",
-        "**AntiNuke**",
-        `Panic: **${antiNuke?.panicActive ? "ATTIVO" : "IDLE"}**`,
-        antiNuke?.panicActive
-          ? `Fine panic: ${toTs(antiNuke.panicActiveUntil, "F")}`
-          : null,
-        `Lock comandi mod: **${antiNuke?.config?.panicMode?.lockdown?.lockModerationCommands ? "ON" : "OFF"}**`,
-        `Utenti maintenance: **${antiNuke?.maintenanceEntries?.length || 0}**`,
-        "",
-        "**AutoMod**",
-        `Panic: **${automodPanic?.active ? "ATTIVO" : "IDLE"}**`,
-        automodPanic?.active
-          ? `Fine panic: ${toTs(automodPanic.activeUntil, "F")}`
-          : null,
-        `Soglia trigger: **${panicThreshold}** in **${panicWindowMin} min**`,
-        `Account tracciati: **${automodPanic?.trackedAccounts || 0}**`,
-        "",
-        "**Lockdown Orchestrato**",
-        `Blocca join: **${orchestrated?.joinLockActive ? "ON" : "OFF"}**`,
-        `Blocca comandi: **${orchestrated?.commandLockActive ? "ON" : "OFF"}**`,
-        orchestrated?.sources?.length
-          ? `Sorgenti attive: ${orchestrated.sources.join(", ")}`
-          : "Sorgenti attive: nessuna",
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    )
-    .setFooter({ text: "Sistema di sicurezza collegato" })
-    .setTimestamp();
 }
 
 async function handleAntiNuke(message, args = []) {
@@ -830,7 +708,7 @@ async function handleAntiNuke(message, args = []) {
       if (applied?.ok) {
         await sendSecurityAuditLog(message.guild, {
           actorId: message.author.id,
-          action: "joinraid.preset",
+          action: "raid.preset",
           details: [`Preset: \`${mode}\``],
           color: "#57F287",
         });
@@ -1611,124 +1489,21 @@ async function buildHealthEmbed(guild, client) {
     );
 }
 
-async function handleSecurityBackup(message, args = []) {
-  const action = String(args[0] || "create").toLowerCase();
-  if (!canControlBackup(message.member, message.guild)) {
-    await safeMessageReply(message, {
-      content:
-        "<:vegax:1443934876440068179> Solo Founder e Co Founder possono gestire i backup sicurezza.",
-      allowedMentions: { repliedUser: false },
-    });
-    return;
-  }
-
-  if (action === "create") {
-    const reason = String(args.slice(1).join(" ").trim() || "manual backup");
-    const created = createSecuritySnapshot({
-      guildId: message.guild.id,
-      actorId: message.author.id,
-      reason,
-    });
-    if (!created?.ok) {
-      await safeMessageReply(message, {
-        content: "<:vegax:1443934876440068179> Backup non creato.",
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-    await sendSecurityAuditLog(message.guild, {
-      actorId: message.author.id,
-      action: "backup.create",
-      details: [
-        `Snapshot: \`${created.snapshot.id}\``,
-        `Motivo: ${reason}`,
-      ],
-      color: "#57F287",
-    });
-    await safeMessageReply(message, {
-      content: `<:success:1461731530333229226> Backup creato: \`${created.snapshot.id}\`.`,
-      allowedMentions: { repliedUser: false },
-    });
-    return;
-  }
-
-  if (action === "list") {
-    const rows = listSecuritySnapshots(8);
-    const text = rows.length
-      ? rows
-          .map(
-            (s, i) =>
-              `${i + 1}. \`${s.id}\` • ${toTs(s.createdAt, "F")} • ${s.reason || "-"}`,
-          )
-          .join("\n")
-      : "Nessun backup disponibile.";
-    await safeMessageReply(message, {
-      embeds: [
-        new EmbedBuilder()
-          .setColor("#6f4e37")
-          .setTitle("Security Backup List")
-          .setDescription(text),
-      ],
-      allowedMentions: { repliedUser: false },
-    });
-    return;
-  }
-
-  if (action === "restore") {
-    const idOrLast = String(args[1] || "last").trim().toLowerCase();
-    const restored = restoreSecuritySnapshot(idOrLast);
-    if (!restored?.ok) {
-      await safeMessageReply(message, {
-        content: `<:vegax:1443934876440068179> Restore fallito: \`${restored?.reason || "unknown"}\`.`,
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-    await sendSecurityAuditLog(message.guild, {
-      actorId: message.author.id,
-      action: "backup.restore",
-      details: [
-        `Snapshot: \`${restored.snapshot.id}\``,
-        `Motivo originario: ${restored.snapshot.reason || "-"}`,
-      ],
-      color: "#FEE75C",
-    });
-    await safeMessageReply(message, {
-      content: `<:success:1461731530333229226> Restore completato da \`${restored.snapshot.id}\`.`,
-      allowedMentions: { repliedUser: false },
-    });
-    return;
-  }
-
-  await safeMessageReply(message, {
-    content:
-      "<:vegax:1443934876440068179> Usa `+security backup <create|list|restore>`.",
-    allowedMentions: { repliedUser: false },
-  });
-}
-
 module.exports = {
   name: "security",
-  aliases: ["sec", "guard", "shield"],
   subcommands: [
     "joingate",
-    "joinraid",
     "raid",
     "panic",
     "antinuke",
   ],
   subcommandAliases: {
-    profiles: "profiles",
-    profile: "profiles",
-    trusted: "profiles",
-    extraowner: "profiles",
-    extraowners: "profiles",
     joingate: "joingate",
     "join-gate": "joingate",
     jg: "joingate",
-    joinraid: "joinraid",
-    "join-raid": "joinraid",
-    jr: "joinraid",
+    joinraid: "raid",
+    "join-raid": "raid",
+    jr: "raid",
     raid: "raid",
     panic: "panic",
     antinuke: "antinuke",
@@ -1896,8 +1671,3 @@ module.exports = {
     });
   },
 };
-
-
-
-
-
