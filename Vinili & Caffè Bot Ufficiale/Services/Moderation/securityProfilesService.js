@@ -141,7 +141,7 @@ function normalizeState(raw) {
         mainRoleIds: normalizeEntityArray(row?.mainRoleIds, 30),
         loggingChannelId:
           normalizeEntityId(row?.loggingChannelId) ||
-          normalizeEntityId(IDs?.channels?.activityLogs),
+          normalizeEntityId(IDs?.channels?.modLogs),
         modLoggingChannelId:
           normalizeEntityId(row?.modLoggingChannelId) ||
           normalizeEntityId(IDs?.channels?.modLogs),
@@ -187,7 +187,7 @@ function getGuildBucket(guildId, create = false) {
       extraOwners: [],
       quarantineRoleId: normalizeEntityId(IDs?.roles?.Muted),
       mainRoleIds: [...DEFAULT_MAIN_ROLE_IDS],
-      loggingChannelId: normalizeEntityId(IDs?.channels?.activityLogs),
+      loggingChannelId: normalizeEntityId(IDs?.channels?.modLogs),
       modLoggingChannelId: normalizeEntityId(IDs?.channels?.modLogs),
       partneringChannelIds: fallbackPartner ? [fallbackPartner] : [],
       mainChannelId: normalizeEntityId(IDs?.channels?.chat),
@@ -203,7 +203,7 @@ function getSecurityProfilesSnapshot(guildId) {
     extraOwners: [],
     quarantineRoleId: normalizeEntityId(IDs?.roles?.Muted),
     mainRoleIds: [...DEFAULT_MAIN_ROLE_IDS],
-    loggingChannelId: normalizeEntityId(IDs?.channels?.activityLogs),
+    loggingChannelId: normalizeEntityId(IDs?.channels?.modLogs),
     modLoggingChannelId: normalizeEntityId(IDs?.channels?.modLogs),
     partneringChannelIds: normalizeEntityId(IDs?.channels?.partnerships)
       ? [normalizeEntityId(IDs?.channels?.partnerships)]
