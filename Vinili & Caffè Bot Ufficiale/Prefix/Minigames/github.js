@@ -1,10 +1,9 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "github",
   allowEmptyArgs: true,
-  aliases: ["gh"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
     if (!query) return replyError(message, "Uso: +github <owner/repo | parola chiave>");
@@ -37,7 +36,7 @@ module.exports = {
             fields: [
               { name: "Stelle", value: String(repo.stargazers_count ?? 0), inline: true },
               { name: "Fork", value: String(repo.forks_count ?? 0), inline: true },
-              { name: "Issue", value: String(repo.open_issues_count ?? 0), inline: true },
+              { name: "Issue aperte", value: String(repo.open_issues_count ?? 0), inline: true },
               { name: "Linguaggio", value: String(repo.language || "N/D"), inline: true },
             ],
             thumbnail: repo.owner?.avatar_url

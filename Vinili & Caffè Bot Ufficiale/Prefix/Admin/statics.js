@@ -59,7 +59,7 @@ function usageEmbed() {
       ].join("\n"),
     )
     .setFooter({
-      text: "2=Quarantine Role, 5=Main Roles, 6=Logging, 7=Mod-Logging, 8=Partnering, 9=Main Channel, 10=Trusted Admins, 11=Extra Owners, 12=Verification Channel",
+      text: "2=Quarantine Role, 5=Main Roles, 6=Logging Channel, 7=Mod-Logging Channel, 8=Partnering Channels, 9=Main Channel, 10=Trusted Admins, 11=Extra Owners, 12=Verification Channel",
     });
 }
 
@@ -143,12 +143,12 @@ function buildStaticPanelEmbed(guildId, page = PAGE_ROLES) {
       .setTitle("Static Channels")
       .setDescription(
         [
-          `[6]. Logging Channel (${statics.loggingChannelId ? "1/1" : "0/1"}):`,
-          statics.loggingChannelId ? `<#${statics.loggingChannelId}>` : "`No record found.`",
+          `[6]. Logging Channel (${statics.modLoggingChannelId ? "1/1" : "0/1"}):`,
+          statics.modLoggingChannelId ? `<#${statics.modLoggingChannelId}>` : "`No record found.`",
           "",
-          `[7]. Mod-Logging Channel (${statics.modLoggingChannelId ? "1/1" : "0/1"}):`,
-          statics.modLoggingChannelId
-            ? `<#${statics.modLoggingChannelId}>`
+          `[7]. Mod-Logging Channel (${statics.loggingChannelId ? "1/1" : "0/1"}):`,
+          statics.loggingChannelId
+            ? `<#${statics.loggingChannelId}>`
             : "`No record found.`",
           "",
           `[8]. Partnering Channels (${partneringChannels.length}/10):`,
@@ -294,25 +294,15 @@ async function openStaticsPanel(message) {
 
 module.exports = {
   name: "statics",
-  aliases: ["static", "sconfig"],
-  subcommands: ["status"],
-  allowEmptyArgs: false,
+  allowEmptyArgs: true,
 
   async execute(message, args = []) {
     const guild = message?.guild;
     if (!guild || !message.member) return;
 
-    if (!args.length || String(args[0] || "").toLowerCase() === "status") {
-      await openStaticsPanel(message);
-      return;
-    }
-
     const request = parseStaticRequest(args);
     if (!request) {
-      await safeMessageReply(message, {
-        embeds: [usageEmbed()],
-        allowedMentions: { repliedUser: false },
-      });
+      await openStaticsPanel(message);
       return;
     }
 
@@ -437,9 +427,9 @@ module.exports = {
       }
       const update =
         slot === 6
-          ? setLoggingChannel(guild.id, channel.id)
+          ? setModLoggingChannel(guild.id, channel.id)
           : slot === 7
-            ? setModLoggingChannel(guild.id, channel.id)
+            ? setLoggingChannel(guild.id, channel.id)
             : slot === 9
               ? setMainChannel(guild.id, channel.id)
               : setVerificationChannel(guild.id, channel.id);
@@ -454,9 +444,9 @@ module.exports = {
         actorId: message.author.id,
         action:
           slot === 6
-            ? "statics.set_logging_channel"
+            ? "statics.set_mod_logging_channel"
             : slot === 7
-              ? "statics.set_mod_logging_channel"
+              ? "statics.set_logging_channel"
               : slot === 9
                 ? "statics.set_main_channel"
                 : "statics.set_verification_channel",

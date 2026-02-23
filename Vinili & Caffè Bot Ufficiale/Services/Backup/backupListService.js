@@ -159,15 +159,15 @@ function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
     .setDescription(`Backup ID: \`${String(backupId || "").toUpperCase()}\``)
     .addFields(
       { name: "Creato il", value: `<t:${createdAtTs}:R>`, inline: true },
-      { name: "Conservato fino a", value: "forever", inline: true },
+      { name: "Conservato fino a", value: "per sempre", inline: true },
       { name: "Messaggi", value: String(messages), inline: true },
       { name: "Canali", value: String(channels), inline: true },
       { name: "Ruoli", value: String(roles), inline: true },
       { name: "Threads", value: String(threads), inline: true },
-      { name: "Membri", value: String(members), inline: true },
-      { name: "Bans", value: String(bans), inline: true },
       { name: "Canali", value: toCodeBlock(channelLines), inline: true },
       { name: "Ruoli", value: toCodeBlock(roleLines), inline: true },
+      { name: "Membri", value: String(members), inline: true },
+      { name: "Bans", value: String(bans), inline: true },
       {
         name: "File",
         value: `\`${String(backupId || "").toUpperCase()}.json.gz\` (${sizeMb} MB)`,

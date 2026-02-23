@@ -279,20 +279,6 @@ function formatDynoDate(value) {
 
 function buildTemproleHelpEmbed(mode = "default") {
   const key = String(mode || "default").toLowerCase();
-  if (key === "toggle") {
-    return new EmbedBuilder().setColor("#3498DB").setDescription(
-      [
-        "**Comando: +temprole toggle**",
-        "",
-        "**Descrizione:** Attiva/disattiva un temprole su un utente.",
-        "**Cooldown:** 5 secondi",
-        "**Uso:**",
-        "+temprole toggle [utente] [durata] [ruolo], [motivo opzionale]",
-        "**Esempio:**",
-        "+temprole toggle @LoreeXO 1d Birthday, Buon compleanno",
-      ].join("\n"),
-    );
-  }
   if (key === "add") {
     return new EmbedBuilder().setColor("#3498DB").setDescription(
       [
@@ -340,11 +326,6 @@ function buildTemproleHelpRow(ownerId, currentValue = "default") {
   const customId = `dyno_temprole_help:${ownerId}`;
   const hidden = String(currentValue || "default").toLowerCase();
   const options = [
-    {
-      label: "toggle",
-      description: "Attiva o disattiva un temprole su un utente.",
-      value: "toggle",
-    },
     {
       label: "add",
       description: "Assegna un temprole a un utente.",
@@ -1353,7 +1334,16 @@ async function runNamed(name, message, args, client) {
 
   if (cmd === "temprole") {
     const first = String(args[0] || "").toLowerCase();
-    const knownSub = new Set(["add", "remove", "toggle"]);
+    if (first === "toggle") {
+      return reply(
+        message,
+        client,
+        "Temprole",
+        "Comando rimosso. Usa `+temprole add` o `+temprole remove`.",
+        "Red",
+      );
+    }
+    const knownSub = new Set(["add", "remove"]);
     const sub = knownSub.has(first) ? first : "add";
     const base = sub === "add" ? 0 : 1;
     const target = await pickUser(message, args, base);
@@ -1394,36 +1384,6 @@ async function runNamed(name, message, args, client) {
     const role = await resolveRoleFlexible(message, roleArg);
     if (!role) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
 
-    if (sub === "toggle") {
-      const existing = await listTemporaryRolesForUser({
-        guildId: message.guild.id,
-        userId: target.userId,
-      });
-      const hasActive = existing.some((row) => String(row.roleId) === String(role.id));
-      if (hasActive) {
-        await revokeTemporaryRole({
-          guild: message.guild,
-          userId: target.userId,
-          roleId: role.id,
-        }).catch(() => null);
-        const member = await message.guild.members.fetch(target.userId).catch(() => null);
-        if (member?.roles?.cache?.has(role.id)) {
-          await member.roles.remove(role.id, "Temprole toggle remove").catch(() => null);
-        }
-        await makeCase(
-          client,
-          message,
-          "TEMPROLE_TOGGLE_REMOVE",
-          target.userId,
-          reasonFrom(args, base + 3, "Temprole toggle remove"),
-        );
-        return successTemprole(
-          message,
-          `Ruolo ${role.name} rimosso da ${(target.user?.username || target.userId).toLowerCase()}.`,
-        );
-      }
-    }
-
     const out = await grantTemporaryRole({
       guild: message.guild,
       userId: target.userId,
@@ -1435,7 +1395,7 @@ async function runNamed(name, message, args, client) {
     await makeCase(
       client,
       message,
-      sub === "toggle" ? "TEMPROLE_TOGGLE_ADD" : "TEMPROLE",
+      "TEMPROLE",
       target.userId,
       reasonFrom(args, base + 3, "Temprole add"),
       duration,

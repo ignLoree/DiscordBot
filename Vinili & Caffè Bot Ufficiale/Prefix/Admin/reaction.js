@@ -441,8 +441,8 @@ async function handleAutoResponders(message, args) {
 
 module.exports = {
   name: "reaction",
-  aliases: ["myreaction", "autoreaction", "autoresponder", "ar", "autorespond"],
-  subcommands: ["mention", "auto", "help"],
+  aliases: ["autoreaction", "autoresponder"],
+  subcommands: ["mention", "auto"],
   subcommandAliases: {
     mention: "mention",
     mentions: "mention",
@@ -451,7 +451,6 @@ module.exports = {
     auto: "auto",
     autoresponder: "auto",
     ar: "auto",
-    help: "help",
   },
 
   async execute(message, args = []) {
@@ -459,27 +458,6 @@ module.exports = {
 
     const modeRaw = String(args[0] || "").toLowerCase();
     const mode = modeRaw || "mention";
-
-    if (mode === "help") {
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle("Comando Reaction")
-        .setDescription(
-          [
-            "`+reaction mention show|set|add|remove|clear`",
-            "`+reaction auto list|add|remove|clear`",
-            "",
-            "Compatibilità:",
-            "- `+autoresponder ...` ora usa automaticamente `+reaction auto ...`",
-            "- `+reaction set/add/remove/clear` continua a gestire le reaction menzioni",
-          ].join("\n"),
-        );
-      await safeMessageReply(message, {
-        embeds: [embed],
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
 
     if (mode === "auto" || mode === "autoresponder" || mode === "ar") {
       await handleAutoResponders(message, args.slice(1));

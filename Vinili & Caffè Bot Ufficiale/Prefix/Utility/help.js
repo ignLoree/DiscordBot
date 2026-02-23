@@ -10,12 +10,13 @@ const ERROR_EMBED_COLOR = "Red";
 const PRIVATE_FLAG = 1 << 6;
 const NO_REPLY_MENTIONS = { repliedUser: false };
 const PAGE_ROLE_IDS = [
+  IDs.roles.Member,
   IDs.roles.Staff,
   IDs.roles.HighStaff,
   IDs.roles.Founder,
 ].filter(Boolean);
 const PAGE_TITLES = {
-  utente: "Comandi Utente",
+  [IDs.roles.Member]: "Comandi Utente",
   [IDs.roles.Staff]: "Comandi Staff",
   [IDs.roles.HighStaff]: "Comandi High Staff",
   [IDs.roles.Founder]: "Comandi Dev",
@@ -23,7 +24,6 @@ const PAGE_TITLES = {
 };
 const CATEGORY_LABELS = {
   utility: "Utility",
-  community: "Community",
   tts: "TTS",
   level: "Level",
   minigames: "Minigames",
@@ -35,11 +35,9 @@ const CATEGORY_LABELS = {
   staff: "Staff",
   vip: "VIP",
   dev: "Dev",
-  contextmenubuilder: "Context Menu",
 };
 const CATEGORY_ORDER = [
   "utility",
-  "community",
   "tts",
   "level",
   "minigames",
@@ -51,44 +49,42 @@ const CATEGORY_ORDER = [
   "admin",
   "staff",
   "dev",
-  "contextmenubuilder",
 ];
 const HELP_PAGE_SIZE = 18;
 const PREFIX_HELP_DESCRIPTIONS = {
-  help: "Mostra il pannello con tutti i comandi disponibili in base ai tuoi ruoli.",
+  help: "Mostra tutti i comandi disponibili con il bot.",
   afk: "Imposta il tuo stato AFK con un messaggio personalizzato.",
-  avatar:
-    "Mostra l'avatar di un utente (get/server/user) o l'icona del server (guild).",
-  banner: "Mostra il banner di un utente o del server (server/guild).",
+  avatar: "Mostra l'avatar di un utenteo l'icona del server.",
+  banner: "Mostra il banner di un utente o del server.",
   block: "Blocca privacy contenuti: avatar, banner, quotes.",
-  invites: "Mostra le statistiche inviti del server o di un utente.",
-  languages: "Mostra le lingue TTS disponibili per il comando set voice.",
+  invites: "Mostra le statistiche inviti di un utente.",
+  languages: "Mostra le lingue TTS disponibili per il comando \`+set voice\`.",
   membercount: "Mostra il numero totale di membri del server.",
-  "no-dm": "Disattiva i DM automatici (`+dm-disable`).",
-  "dm-enable": "Riattiva i DM automatici (`+dm-enable`).",
+  "no-dm": "Disattiva i DM del bot.",
+  "dm-enable": "Riattiva i DM del bot.",
   ping: "Mostra latenza bot, database e informazioni di uptime.",
-  set: "Impostazioni bot TTS: voice.",
+  set: "Imposta la lingua TTS personale.",
   ship: "Calcola la compatibilità tra due utenti.",
   adorable: "Genera un avatar stile fun partendo da un seed o testo.",
   birb: "Invia un'immagine casuale di un uccellino.",
   cat: "Invia un'immagine casuale di un gatto.",
   catfacts: "Mostra una curiosità casuale sui gatti.",
   chucknorris: "Mostra una battuta casuale su Chuck Norris.",
-  country: "Mostra informazioni su un paese tramite codice.",
-  dadjoke: "Mostra una dad joke casuale.",
-  define: "Cerca la definizione inglese di una parola.",
+  country: "Mostra informazioni su un paese.",
+  dadjoke: "Mostra una battuta spiritosa casuale.",
+  define: "Cerca la definizione di una parola.",
   dog: "Invia un'immagine casuale di un cane.",
   dogfacts: "Mostra una curiosità casuale sui cani.",
-  flip: "Lancia una moneta (testa o croce).",
+  flip: "Lancia una moneta.",
   github: "Cerca un repository GitHub per nome o keyword.",
   itunes: "Cerca una traccia musicale su iTunes.",
   joke: "Mostra una battuta casuale.",
-  math: "Calcola espressioni matematiche o mostra fact numerici.",
+  math: "Calcola espressioni matematiche o mostra curiosità sui numeri.",
   movie: "Cerca informazioni su un film.",
   pokemon: "Mostra info e stats base di un Pokémon.",
   pug: "Invia un'immagine casuale di un pug.",
-  quotefun: "Mostra una citazione casuale testuale.",
-  roll: "Tira uno o più dadi (es. 2d20).",
+  quotes: "Mostra una citazione casuale testuale.",
+  roll: "Tira uno o più dadi.",
   rps: "Gioca a sasso, carta, forbici contro il bot.",
   slots: "Gioca alle slot machine.",
   space: "Mostra posizione ISS e persone nello spazio.",
@@ -98,73 +94,49 @@ const PREFIX_HELP_DESCRIPTIONS = {
   join: "Fa entrare il bot nel tuo canale vocale.",
   leave: "Fa uscire il bot dal canale vocale.",
   unblock: "Sblocca privacy contenuti: avatar, banner, quotes.",
-  classifica: "Mostra la classifica livelli (totale/settimanale).",
+  classifica: "Mostra la classifica livelli.",
   mstats: "Mostra statistiche minigiochi di un utente.",
-  me: "Mostra le tue statistiche attività (1d/7d/14d/21d/30d) con refresh live.",
-  user:
-    "Mostra le statistiche attività di un utente tramite ID (1d/7d/14d/21d/30d) con refresh live.",
-  server:
-    "Mostra statistiche server (1d/7d/14d/21d/30d), top e grafici con aggiornamento live.",
-  top: "Mostra la top completa utenti/canali (testo+vocale) con canvas, refresh e periodo.",
+  me: "Mostra le tue statistiche attività.",
+  user: "Mostra le statistiche attività di un utente specifico.",
+  server: "Mostra statistiche attività del server.",
+  top: "Mostra la top completa utenti/canali.",
   rank: "Mostra livello, exp e posizione in classifica di un utente.",
-  birthday:
-    "Imposta o modifica la tua data di compleanno, età e privacy; il bot può augurare buon compleanno nel server.",
-  "dm-disable":
-    "Disattiva i DM automatici del bot dopo una conferma tramite pulsanti.",
-  embed:
-    "Apre il builder embed interattivo per creare e inviare embed personalizzati.",
-  info:
-    "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",
-  reaction:
-    "Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",
-  description: "Invia nel ticket la descrizione ufficiale del server (per supporto).",
-  addlevel: "Aggiunge livelli/exp a un utente.",
+  birthday: "Imposta o modifica la tua data di compleanno, età e privacy.",
+  "dm-disable": "Disattiva i DM automatici del bot.",
+  embed: "Apre il builder embed interattivo per creare e inviare embed personalizzati.",
+  info: "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",
+  reaction: "Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",
+  description: "Invia nel ticket la descrizione ufficiale del server.",
   "no-dm-list": "Mostra la lista utenti con blocco DM attivo.",
   purge: "Elimina messaggi da un canale.",
-  ban: "Banna un utente con motivo e durata opzionale.",
-  unban: "Rimuove il ban di un utente tramite ID.",
-  kick: "Espelle un utente dal server.",
-  mute: "Applica timeout ad un utente (durata opzionale).",
+  ban: "Banna un utente.",
+  unban: "Rimuove il ban di un utente.",
+  kick: "Kicka un utente dal server.",
+  mute: "Applica timeout ad un utente.",
   unmute: "Rimuove il timeout da un utente.",
-  warn: "Registra un warn per un utente.",
+  warn: "Warna un utente.",
   warnings: "Mostra i warn attivi di un utente.",
   delwarn: "Rimuove un warn attivo da un utente.",
   case: "Mostra una singola case moderazione.",
-  reason: "Aggiorna il motivo di una case moderazione.",
+  reason: "Aggiorna il motivo di una case.",
   duration: "Aggiorna la durata di una case temporanea.",
   modlogs: "Mostra gli ultimi log moderazione di un utente.",
   moderations: "Mostra le moderazioni temporanee attive.",
   modstats: "Mostra statistiche moderazione per staffer.",
-  lock: "Blocca un canale in scrittura.",
+  lock: "Blocca un canale.",
   unlock: "Sblocca un canale.",
   recensione: "Premia una recensione assegnando livelli.",
-  removelevel: "Rimuove livelli/exp da un utente.",
-  reviewlock: "Blocca o sblocca premio recensione per un utente.",
-  ticket:
-    "Apre, chiude e gestisce i ticket di supporto: aggiungi utenti, rinomina, cambia pannello, claim/unclaim.",
-  verify:
-    "Avvia o gestisce la verifica nuovi utenti (join gate, approvazione manuale, stato verifica).",
-  restart:
-    "Riavvia il bot o ricarica moduli specifici (handlers, commands, prefix, events, triggers, services, utils, schemas).",
-  perm:
-    "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
-  temprole:
-    "Assegna o rimuove ruoli temporanei agli utenti (es. ruolo “in prova” con scadenza).",
-  smartembed: "Crea un embed intelligente spostando i ping fuori dall'embed.",
-  customregister: "Registra retroattivamente custom role/vocale già esistenti.",
-  security:
-    "Hub sicurezza unificato: status, health, drill, backup, profiles, joingate, raid, panic, antinuke e automod.",
-  statics:
-    "Configura ruoli, canali e utenti “statici” per la sicurezza (pannello add/remove/set).",
-  status:
-    "Mostra healthcheck del sistema sicurezza: lock, join gate, stato servizi.",
-  level:
-    "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
-  customrole:
-    "Crea o modifica il tuo ruolo personalizzato (nome/colore) e gestisci chi può usarlo (add/remove).",
-  customvoc:
-    "Crea e gestisce la tua vocale privata (anche temporanea: es. `+customvoc 2w`).",
-  quote: "Genera una quote grafica da un messaggio.",
+  ticket: "Gestisce i ticket.",
+  verify: "Verifica manualmente un utente.",
+  restart: "Riavvia il bot o ricarica moduli specifici.",
+  perms: "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
+  temprole: "Assegna o rimuove ruoli temporanei agli utenti.",
+  security: "Hub sicurezza: joingate, joinraid, raid, panic, antinuke.",
+  statics: "Configura ruoli, canali e utenti “statici” per la sicurezza.",
+  level: "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
+  customrole: "Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",
+  customvoc: "Crea e gestisce la tua vocale privata.",
+  quote: "Genera una quote da un messaggio.",
 };
 const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "level.set": "Imposta EXP o livello a un valore preciso per un utente.",
@@ -178,121 +150,58 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "level.config": "Mostra la configurazione EXP corrente del server.",
   "level.ignore": "Esclude un ruolo dal guadagno EXP.",
   "level.unignore": "Riabilita un ruolo al guadagno EXP.",
-  "security.status": "Mostra stato sicurezza aggregato (join lock/command lock).",
-  "security.health": "Mostra healthcheck tecnico: DB, scheduler, uptime, lock.",
-  "security.drill": "Esegue una simulazione lockdown senza applicare modifiche.",
-  "security.backup":
-    "Salva o ripristina la configurazione sicurezza (backup/restore).",
-  "security.profiles":
-    "Configura i profili Trusted Admins, Extra Owners e Admins (HighStaff) per AntiNuke.",
-  "security.joingate": "Mostra stato protezioni Join Gate e collegamenti sicurezza.",
-  "security.raid": "Inoltra ai controlli Join Raid (stato/preset) via AntiNuke.",
-  "security.panic": "Inoltra ai controlli Panic Mode AntiNuke.",
-  "security.maintenance":
-    "Aggiunge o rimuove utenti/canali dalla allowlist durante la manutenzione.",
-  "security.preset":
-    "Imposta o cambia i preset AntiNuke/raid dal pannello security.",
-  "security.antinuke":
-    "Attiva o configura il modulo AntiNuke (ban/kick automatici su azioni pericolose).",
-  "security.automod":
-    "Attiva o configura il modulo AutoMod (filtri automatici su messaggi e utenti).",
-  "security.joinraid":
-    "Imposta stato e preset del Join Raid: safe, balanced o strict.",
-  "security.help":
-    "Mostra la guida rapida dei subcommand disponibili nel Security Hub.",
+  "security.joingate": "Mostra le impostazioni del modulo Join Gate.",
+  "security.raid": "Mostra le impostazioni del modulo Join Raid.",
+  "security.panic": "Mostra le impostazioni del modulo Panic Mode.",
+  "security.antinuke": "Mostra le impostazioni del modulo Anti Nuke.",
+  "security.joinraid": "Mostra le impostazioni del modulo Join Raid.",
   "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
   "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
   "ticket.closerequest": "Invia richiesta di chiusura ticket.",
   "ticket.close": "Chiude il ticket corrente.",
-  "ticket.claim": "Assegna il ticket a te.",
-  "ticket.unclaim": "Rimuove la presa in carico del ticket.",
+  "ticket.claim": "Claima un ticket.",
+  "ticket.unclaim": "Unclaim un ticket.",
   "ticket.switchpanel": "Sposta il ticket a un pannello differente.",
   "ticket.rename": "Rinomina il canale ticket.",
-  "ticket.reopen":
-    "Riapre un ticket già chiuso e ripristina il canale alla gestione staff.",
-  "birthday.set":
-    "Apre il pannello per impostare data, età e privacy del tuo compleanno.",
-  "birthday.edit":
-    "Apre il pannello in modifica usando i dati compleanno già salvati.",
-  "birthday.remove":
-    "Rimuove il tuo profilo compleanno con conferma esplicita.",
-  "avatar.get": "Avatar globale dell'utente (default).",
-  "avatar.server": "Avatar dell'utente solo in questo server.",
-  "avatar.user": "Avatar globale dell'utente.",
-  "avatar.guild": "Icona del server.",
-  "banner.user": "Banner profilo dell'utente (default).",
-  "banner.server": "Banner del server.",
-  "banner.guild": "Banner del server.",
+  "ticket.reopen": "Riapre un ticket già chiuso.",
+  "birthday.set": "Imposta la tua data di compleanno.",
+  "birthday.edit": "Modifica la tua data di compleanno.",
+  "birthday.remove": "Rimuove il tuo profilo compleanno.",
+  "avatar.server": "Mostra l'avatar di un utente impostato per questo server.",
+  "avatar.user": "Mostra l'avatar di un utente.",
+  "avatar.guild": "Mostra l'icona del server.",
+  "banner.user": "Mostra il banner di un utente.",
+  "banner.server": "Mostra il banner di un utente impostato per questo server.",
+  "banner.guild": "Mostra il banner del server.",
   "block.avatar": "Blocca la visualizzazione del tuo avatar.",
   "block.banner": "Blocca la visualizzazione del tuo banner.",
   "block.quotes": "Blocca la creazione di quote dei tuoi messaggi.",
   "unblock.avatar": "Sblocca la visualizzazione del tuo avatar.",
   "unblock.banner": "Sblocca la visualizzazione del tuo banner.",
   "unblock.quotes": "Sblocca la creazione di quote dei tuoi messaggi.",
-  "classifica.alltime": "Mostra la classifica generale livelli/exp.",
-  "classifica.weekly": "Mostra la classifica settimanale exp.",
+  "classifica.alltime": "Mostra la classifica alltime.",
+  "classifica.weekly": "Mostra la classifica settimanale.",
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
-  "customregister.role":
-    "Registra nel database un custom role già esistente e lo assegna all'utente indicato.",
-  "customregister.voc":
-    "Registra una vocale privata già esistente collegandola a utente e ruolo custom.",
-  "customregister.voice":
-    "Alias di `voc`: registra una vocale privata esistente nel sistema custom.",
-  "embed.create":
-    "Avvia il builder interattivo dell'embed con anteprima e invio finale.",
-  "perm.grant":
-    "Assegna permessi temporanei a un utente su uno o più comandi.",
-  "perm.revoke": "Revoca permessi temporanei specifici a un utente.",
-  "perm.list": "Mostra i permessi temporanei attivi di un utente.",
-  "perm.clear": "Rimuove tutti i permessi temporanei di un utente.",
-  "perm.channel-set": "Imposta i canali consentiti per un comando.",
-  "perm.channel-add": "Aggiunge canali consentiti a un comando.",
-  "perm.channel-remove": "Rimuove canali dalla whitelist di un comando.",
-  "perm.channel-clear": "Rimuove la restrizione canali di un comando.",
-  "perm.channel-list": "Mostra le whitelist canali configurate.",
-  "reaction.mention":
-    "Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona (set/add/remove/clear).",
-  "reaction.auto":
-    "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.",
-  "reaction.help":
-    "Mostra la guida completa del comando reaction e dei suoi moduli.",
-  "restart.full":
-    "Riavvia il bot; con `both` riavvia anche il bot Test.",
-  "restart.handlers":
-    "Ricarica soltanto gli handler runtime senza riavvio completo.",
-  "restart.commands":
-    "Ricarica i comandi slash e context menu.",
-  "restart.prefix":
-    "Ricarica esclusivamente i comandi prefix.",
-  "restart.events":
-    "Ricarica gli event listener Discord.",
-  "restart.triggers":
-    "Ricarica i trigger automatici del bot.",
-  "restart.services":
-    "Ricarica i servizi applicativi interni.",
-  "restart.utils":
-    "Ricarica i moduli utility condivisi.",
-  "restart.schemas":
-    "Ricarica gli schema/modelli del database.",
-  "restart.all":
-    "Esegue il reload completo di tutte le scope ricaricabili.",
-  "statics.status":
-    "Mostra il pannello statics con ruoli, canali e utenti configurati.",
-  "temprole.toggle":
-    "Aggiunge o rimuove automaticamente un ruolo temporaneo in base allo stato corrente.",
+  "embed.create": "Avvia il builder interattivo dell'embed con anteprima e invio finale.",
+  "perms.grant": "Assegna permessi a un utente su comandi.",
+  "perms.revoke": "Revoca permessi specifici a un utente.",
+  "perms.list": "Mostra i permessi attivi di un utente.",
+  "perms.clear": "Rimuove tutti i permessi temporanei di un utente.",
+  "reaction.mention": "Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona.",
+  "reaction.auto": "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.",
+  "restart.full": "Riavvia il bot; con `both` riavvia anche il bot Test.",
+  "restart.all": "Esegue il reload completo di tutte le scope ricaricabili.",
+  "statics.status": "Mostra i ruoli, canali e utenti configurati per la sicurezza.",
   "temprole.add": "Assegna un ruolo temporaneo a un utente.",
   "temprole.remove": "Rimuove un ruolo temporaneo da un utente.",
-  "customrole.create":
-    "Crea o aggiorna il tuo ruolo personalizzato (durata opzionale).",
-  "customrole.modify":
-    "Apre il pannello di modifica del tuo ruolo personalizzato.",
-  "customrole.add":
-    "Aggiunge un utente al tuo ruolo personalizzato (con richiesta DM).",
+  "customrole.create": "Crea o aggiorna il tuo ruolo personalizzato.",
+  "customrole.modify": "Apre il pannello di modifica del tuo ruolo personalizzato.",
+  "customrole.add": "Aggiunge un utente al tuo ruolo personalizzato.",
   "customrole.remove": "Rimuove un utente dal tuo ruolo personalizzato.",
 };
 const CONTEXT_HELP_DESCRIPTIONS = {
-  Partnership: "Apre il modal partnership partendo dal messaggio selezionato.",
+  Partnership: "Esegui una partnership direttamente dal messaggio.",
 };
 const CONTEXT_CATEGORY_OVERRIDES = {
   partnership: "partner",
@@ -433,22 +342,22 @@ function resolveContextCategory(command, dataJson) {
 function extractPrefixSubcommands(command) {
   const fromMeta = Array.isArray(command?.subcommands)
     ? command.subcommands
-        .map((s) =>
-          String(s || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
+      .map((s) =>
+        String(s || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean)
     : [];
   const fromAliases = command?.subcommandAliases &&
     typeof command.subcommandAliases === "object"
     ? Object.values(command.subcommandAliases)
-        .map((s) =>
-          String(s || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
+      .map((s) =>
+        String(s || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean)
     : [];
   const commandSubDesc =
     command?.subcommandDescriptions ||
@@ -459,12 +368,12 @@ function extractPrefixSubcommands(command) {
   const fromSubDesc =
     commandSubDesc && typeof commandSubDesc === "object"
       ? Object.keys(commandSubDesc)
-          .map((s) =>
-            String(s || "")
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean)
+        .map((s) =>
+          String(s || "")
+            .trim()
+            .toLowerCase(),
+        )
+        .filter(Boolean)
       : [];
 
   const src = String(command?.execute || "");
@@ -496,17 +405,6 @@ function extractDirectAliasesForSubcommand(command, subcommandName) {
     command?.subcommandAliases && typeof command.subcommandAliases === "object"
       ? command.subcommandAliases
       : {};
-  const declaredAliases = Array.isArray(command?.aliases)
-    ? new Set(
-        command.aliases
-          .map((alias) =>
-            String(alias || "")
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean),
-      )
-    : null;
   const out = [];
 
   for (const [alias, target] of Object.entries(mapped)) {
@@ -518,7 +416,6 @@ function extractDirectAliasesForSubcommand(command, subcommandName) {
       .toLowerCase();
     if (!normalizedAlias || !normalizedTarget) continue;
     if (normalizedTarget !== subcommandName) continue;
-    if (declaredAliases && !declaredAliases.has(normalizedAlias)) continue;
     out.push(normalizedAlias);
   }
 
@@ -617,8 +514,8 @@ function buildEntries(client, permissions) {
         : {};
     const aliases = Array.isArray(command.aliases)
       ? command.aliases.filter(
-          (alias) => typeof alias === "string" && alias.trim().length,
-        )
+        (alias) => typeof alias === "string" && alias.trim().length,
+      )
       : [];
     const prefixBase = getPrefixBase(command);
     const base = {
@@ -632,20 +529,20 @@ function buildEntries(client, permissions) {
 
     const canonicalSubs = Array.isArray(command?.canonicalSubcommands)
       ? Array.from(
+        new Set(
+          command.canonicalSubcommands
+            .map((s) => String(s || "").trim().toLowerCase())
+            .filter(Boolean),
+        ),
+      )
+      : Array.isArray(command?.subcommands)
+        ? Array.from(
           new Set(
-            command.canonicalSubcommands
+            command.subcommands
               .map((s) => String(s || "").trim().toLowerCase())
               .filter(Boolean),
           ),
         )
-      : Array.isArray(command?.subcommands)
-        ? Array.from(
-            new Set(
-              command.subcommands
-                .map((s) => String(s || "").trim().toLowerCase())
-                .filter(Boolean),
-            ),
-          )
         : [];
     if (canonicalSubs.length) {
       for (const sub of canonicalSubs) {
@@ -657,6 +554,7 @@ function buildEntries(client, permissions) {
             ? subcommandRoles[sub]
             : commandRoles,
           aliases: [],
+          subAliases: extractDirectAliasesForSubcommand(command, sub),
         });
       }
     } else {
@@ -725,9 +623,9 @@ function buildEntries(client, permissions) {
       type: "context",
       description: normalizeDescription(
         command?.helpDescription ||
-          command?.description ||
-          CONTEXT_HELP_DESCRIPTIONS[dataJson.name] ||
-          `Comando context (${commandType === ApplicationCommandType.User ? "utente" : "messaggio"}).`,
+        command?.description ||
+        CONTEXT_HELP_DESCRIPTIONS[dataJson.name] ||
+        `Comando context (${commandType === ApplicationCommandType.User ? "utente" : "messaggio"}).`,
       ),
       category: resolveContextCategory(command, dataJson),
       roles,
@@ -896,28 +794,34 @@ function renderPageText(page) {
     const rows = categoryEntries.map((entry) => {
       const roleHint =
         Array.isArray(entry.roles) &&
-        entry.roles.length > 0
+          entry.roles.length > 0
           ? ` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`
           : "";
-      return `- \`${entry.invoke}\` - ${entry.description}${roleHint}`;
+      const aliasPart =
+        Array.isArray(entry.aliases) && entry.aliases.length
+          ? ` (${entry.aliases.join(", ")})`
+          : Array.isArray(entry.subAliases) && entry.subAliases.length
+            ? ` (${entry.subAliases.join(", ")})`
+            : "";
+      return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}${roleHint}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
 
   return page.items.length
     ? [
-        "## Comandi Disponibili",
-        "",
-        `### ${PAGE_TITLES[page.roleId] || "Comandi"}`,
-        "",
-        "Ecco la lista dei comandi disponibili.",
-        "Usa il prefix, slash o context menu in base al comando.",
-        "Mini-help rapido: `+help <comando>`.",
-        "",
-        sections.join("\n\n"),
-        "",
-        `**Pagina ${page.indexLabel}**`,
-      ].join("\n")
+      "## Comandi Disponibili",
+      "",
+      `### ${PAGE_TITLES[page.roleId] || "Comandi"}`,
+      "",
+      "Ecco la lista dei comandi disponibili.",
+      "Usa il prefix, slash o context menu in base al comando.",
+      "Mini-help rapido: `+help <comando>`.",
+      "",
+      sections.join("\n\n"),
+      "",
+      `**Pagina ${page.indexLabel}**`,
+    ].join("\n")
     : "<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.";
 }
 
@@ -1039,12 +943,12 @@ function collectCommandUsageSnippets(command, commandName, prefixBase) {
   const prefix = String(prefixBase || "+");
   const knownAliases = Array.isArray(command?.aliases)
     ? command.aliases
-        .map((alias) =>
-          String(alias || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
+      .map((alias) =>
+        String(alias || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean)
     : [];
 
   const addSnippet = (value) => {
@@ -1213,12 +1117,12 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 
   const aliases = Array.isArray(command.aliases)
     ? command.aliases
-        .map((alias) =>
-          String(alias || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
+      .map((alias) =>
+        String(alias || "")
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean)
     : [];
   if (aliases.length) {
     usageLines.push(
@@ -1246,8 +1150,10 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
     const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
       ? permConfig.subcommands[subName]
       : permConfig.roles;
+    const subAliases = entry.subAliases ?? extractDirectAliasesForSubcommand(command, subName);
+    const subAliasPart = Array.isArray(subAliases) && subAliases.length ? ` (${subAliases.join(", ")})` : "";
     subLines.push(
-      `- \`${prefixBase}${commandName} ${subName}\` - ${entry.description}`,
+      `- \`${prefixBase}${commandName} ${subName}\`${subAliasPart} - ${entry.description}`,
     );
     subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
   }
@@ -1264,8 +1170,10 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
       const subRoleIds = Array.isArray(permConfig.subcommands?.[sub])
         ? permConfig.subcommands[sub]
         : permConfig.roles;
+      const subAliases = extractDirectAliasesForSubcommand(command, sub);
+      const subAliasPart = subAliases.length ? ` (${subAliases.join(", ")})` : "";
       subLines.push(
-        `- \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
+        `- \`${invoke}\`${subAliasPart} - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
       );
       subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
     }
@@ -1597,10 +1505,10 @@ function resolvePrefixCommandByToken(client, token) {
     if (name && name === safeToken) return command;
     const aliases = Array.isArray(command?.aliases)
       ? command.aliases.map((alias) =>
-          String(alias || "")
-            .trim()
-            .toLowerCase(),
-        )
+        String(alias || "")
+          .trim()
+          .toLowerCase(),
+      )
       : [];
     if (aliases.includes(safeToken)) return command;
   }
@@ -1613,12 +1521,12 @@ function listPrefixSubcommandsForCommand(command, commandName, permissions) {
       ...extractPrefixSubcommands(command),
       ...(Array.isArray(command?.subcommands)
         ? command.subcommands
-            .map((s) =>
-              String(s || "")
-                .trim()
-                .toLowerCase(),
-            )
-            .filter(Boolean)
+          .map((s) =>
+            String(s || "")
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
         : []),
     ]),
   );
@@ -1653,7 +1561,9 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
         const invoke = `${prefixBase}${commandName} ${sub}`;
         const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
         const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-        return `- \`${invoke}\` - ${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
+        const subAliases = extractDirectAliasesForSubcommand(prefixCommand, sub);
+        const subAliasPart = subAliases.length ? ` (${subAliases.join(", ")})` : "";
+        return `- \`${invoke}\`${subAliasPart} - ${getPrefixSubcommandDescription(prefixCommand, sub)}${lock}`;
       });
       return new EmbedBuilder()
         .setColor(HELP_EMBED_COLOR)
@@ -1754,7 +1664,13 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
       Array.isArray(entry.roles) && entry.roles.length > 0
         ? `\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`
         : "";
-    return `- \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}${roleHint}`;
+    const aliasPart =
+      Array.isArray(entry.aliases) && entry.aliases.length
+        ? ` (${entry.aliases.join(", ")})`
+        : Array.isArray(entry.subAliases) && entry.subAliases.length
+          ? ` (${entry.subAliases.join(", ")})`
+          : "";
+    return `- \`${entry.invoke}\`${aliasPart} - ${entry.description}\n  \`Categoria:\` ${categoryLabel}${roleHint}`;
   });
   const extra =
     matches.length > limited.length
@@ -1772,7 +1688,7 @@ module.exports = {
   allowEmptyArgs: true,
   async execute(message, args, client) {
     if (!message.guild || !message.member) return;
-    await message.channel.sendTyping().catch(() => {});
+    await message.channel.sendTyping().catch(() => { });
 
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
@@ -1866,7 +1782,7 @@ module.exports = {
               "<:vegax:1443934876440068179> Puoi usare i bottoni solo sul tuo help.",
             flags: PRIVATE_FLAG,
           })
-          .catch(() => {});
+          .catch(() => { });
         return;
       }
 
@@ -1887,7 +1803,7 @@ module.exports = {
         .update({
           components: [buildHelpV2Container(page, navState)],
         })
-        .catch(() => {});
+        .catch(() => { });
     });
   },
 };

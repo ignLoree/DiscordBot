@@ -1,10 +1,9 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "pokemon",
   allowEmptyArgs: true,
-  aliases: ["poke"],
   async execute(message, args) {
     const query = String(args?.[0] || "pikachu").trim().toLowerCase();
     try {
@@ -29,7 +28,7 @@ module.exports = {
         embeds: [
           {
             color: 0xf1c40f,
-            title: "Pokemon: " + String(data?.name || query).toUpperCase(),
+            title: "Pokémon: " + String(data?.name || query).toUpperCase(),
             thumbnail: data?.sprites?.other?.["official-artwork"]?.front_default
               ? { url: data.sprites.other["official-artwork"].front_default }
               : undefined,
@@ -37,14 +36,14 @@ module.exports = {
               { name: "Tipo", value: String(types || "N/D"), inline: true },
               { name: "Altezza", value: String(data?.height ?? "N/D"), inline: true },
               { name: "Peso", value: String(data?.weight ?? "N/D"), inline: true },
-              { name: "Abilita", value: String(abilities || "N/D"), inline: false },
+              { name: "Abilità", value: String(abilities || "N/D"), inline: false },
             ],
           },
         ],
         allowedMentions: { repliedUser: false },
       });
     } catch {
-      return replyError(message, "Pokemon non trovato.");
+      return replyError(message, "Pokémon non trovato.");
     }
   },
 };

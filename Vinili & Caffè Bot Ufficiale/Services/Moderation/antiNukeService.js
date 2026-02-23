@@ -179,10 +179,6 @@ const ANTINUKE_CONFIG = {
     },
     warnedRoleIds: new Set([
       String(IDs.roles.HighStaff || ""),
-      String(IDs.roles.Supervisor || ""),
-      String(IDs.roles.Coordinator || ""),
-      String(IDs.roles.Mod || ""),
-      String(IDs.roles.Helper || ""),
     ].filter(Boolean)),
     whitelistCategoryIds: new Set([]),
     autoBackupSync: {
@@ -578,6 +574,10 @@ function saveAntiNukePersistentConfig() {
 
 function enforceCriticalAntiNukeGuards() {
   ANTINUKE_CONFIG.autoQuarantine.monitorPublicRoles = true;
+  const highStaffId = String(IDs.roles.HighStaff || "");
+  if (highStaffId) {
+    ANTINUKE_CONFIG.panicMode.warnedRoleIds = new Set([highStaffId]);
+  }
 }
 
 function setAntiNukeConfigSnapshot(rawConfig) {
@@ -1591,6 +1591,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
         `<:VC_right_arrow:1473441155055096081> **Ruoli falliti:** ${Number(restoredRoles.failed || 0)}`,
         `<:VC_right_arrow:1473441155055096081> **Canali ripristinati:** ${Number(restoredChannels.restored || 0)}`,
         `<:VC_right_arrow:1473441155055096081> **Canali falliti:** ${Number(restoredChannels.failed || 0)}`,
+        `<:VC_right_arrow:1473441155055096081> Per ripristino completo canali/ruoli usa \`/backup load\`.`,
       ],
       Number(restoredRoles.failed || 0) > 0 || Number(restoredChannels.failed || 0) > 0
         ? "#F59E0B"

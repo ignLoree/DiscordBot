@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { normalizeTextForCanvas } = require("./canvasUtils");
 
 const PRIMARY_FONT = "Noto Sans";
 const TIBETAN_FONT = "Noto Serif Tibetan";
@@ -155,9 +156,8 @@ function fontStackWithPrimary(primary, size, weight) {
 
 function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   const rawValue = text == null ? "" : String(text);
-  const value = options.normalizeCompatibility
-    ? rawValue.normalize("NFKC")
-    : rawValue;
+  let value = options.skipNormalize ? rawValue : normalizeTextForCanvas(rawValue);
+  if (options.normalizeCompatibility) value = value.normalize("NFKC");
   const size = options.size || 16;
   const weight = options.weight || "";
   const align = options.align || ctx.textAlign || "left";

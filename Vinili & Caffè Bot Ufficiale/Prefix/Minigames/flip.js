@@ -1,7 +1,7 @@
-﻿const { replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
+const { replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "flip",
   allowEmptyArgs: true,
   aliases: ["coinflip"],
   async execute(message) {

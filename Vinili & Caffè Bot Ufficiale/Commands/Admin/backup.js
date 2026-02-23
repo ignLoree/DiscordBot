@@ -223,6 +223,16 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
         inline: true,
       },
       {
+        name: "Canali",
+        value: toCodeBlock(channelLines),
+        inline: true,
+      },
+      {
+        name: "Ruoli",
+        value: toCodeBlock(roleLines),
+        inline: true,
+      },
+      {
         name: "Membri",
         value: String(members.length),
         inline: true,
@@ -235,16 +245,6 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
       {
         name: "Messaggi",
         value: `${totalMessages} totali`,
-        inline: true,
-      },
-      {
-        name: "Canali",
-        value: toCodeBlock(channelLines),
-        inline: true,
-      },
-      {
-        name: "Ruoli",
-        value: toCodeBlock(roleLines),
         inline: true,
       },
       {

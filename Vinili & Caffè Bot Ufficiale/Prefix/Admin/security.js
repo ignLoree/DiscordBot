@@ -1,4 +1,4 @@
-﻿const {
+const {
   EmbedBuilder,
   PermissionsBitField,
   ActionRowBuilder,
@@ -253,19 +253,11 @@ function usageEmbed() {
     .setTitle("Security Hub")
     .setDescription(
       [
-        "`+security status`",
-        "`+security health`",
-        "`+security drill`",
-        "`+security backup <create|list|restore>`",
-        "`+security profiles <status|trusted|owner>`",
         "`+security joingate <status|set>`",
         "`+security joinraid <status|preset>`",
-        "`+security antinuke <status|preset|panic|maintenance|raid>`",
-        "`+security automod <stats|top|preset|tune>`",
         "`+security raid ...`",
         "`+security panic ...`",
-        "`+security maintenance ...`",
-        "`+security preset ...`",
+        "`+security antinuke <status|preset|panic|raid>`",
       ].join("\n"),
     );
 }
@@ -1719,26 +1711,13 @@ module.exports = {
   name: "security",
   aliases: ["sec", "guard", "shield"],
   subcommands: [
-    "status",
-    "health",
-    "drill",
-    "backup",
-    "profiles",
     "joingate",
     "joinraid",
     "raid",
     "panic",
-    "maintenance",
-    "preset",
     "antinuke",
-    "automod",
-    "help",
   ],
   subcommandAliases: {
-    status: "status",
-    health: "health",
-    drill: "drill",
-    backup: "backup",
     profiles: "profiles",
     profile: "profiles",
     trusted: "profiles",
@@ -1752,11 +1731,7 @@ module.exports = {
     jr: "joinraid",
     raid: "raid",
     panic: "panic",
-    maintenance: "maintenance",
-    preset: "preset",
     antinuke: "antinuke",
-    automod: "automod",
-    help: "help",
   },
 
   async execute(message, args = []) {
@@ -1769,59 +1744,7 @@ module.exports = {
       return;
     }
 
-    const sub = String(args[0] || "status").toLowerCase();
-    if (sub === "status") {
-      const embed = await buildSecurityStatusEmbed(message.guild);
-      await safeMessageReply(message, {
-        embeds: [embed],
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    if (sub === "health") {
-      const embed = await buildHealthEmbed(message.guild, message.client);
-      await safeMessageReply(message, {
-        embeds: [embed],
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    if (sub === "drill") {
-      const embed = await buildSecurityDrillEmbed(message.guild);
-      await sendSecurityAuditLog(message.guild, {
-        actorId: message.author.id,
-        action: "security.drill",
-        details: ["Simulazione lockdown eseguita senza modifiche."],
-        color: "#FEE75C",
-      });
-      await safeMessageReply(message, {
-        embeds: [embed],
-        allowedMentions: { repliedUser: false },
-      });
-      return;
-    }
-
-    if (sub === "backup") {
-      await handleSecurityBackup(message, args.slice(1));
-      return;
-    }
-
-    if (
-      sub === "profiles" ||
-      sub === "profile" ||
-      sub === "trusted" ||
-      sub === "extraowner" ||
-      sub === "extraowners"
-    ) {
-      const profileArgs = sub === "profiles" || sub === "profile"
-        ? args.slice(1)
-        : [sub, ...args.slice(1)];
-      await handleSecurityProfiles(message, profileArgs);
-      return;
-    }
-
+    const sub = String(args[0] || "joingate").toLowerCase();
     if (sub === "joingate" || sub === "join-gate" || sub === "jg") {
       const action = String(args[1] || "status").toLowerCase();
       if (action === "status") {
@@ -1866,8 +1789,6 @@ module.exports = {
               `\u25b8 [A] Status: \`${cfg?.usernameFilter?.enabled ? "Enabled" : "Disabled"}\``,
               `\u25b8 [B] Action: \`${formatActionLabel(cfg?.usernameFilter?.action, "kick")}\``,
               "\u25b8 [✅] Custom: `Dashboard`",
-              "",
-              "Integrazione: i segnali Join Gate alimentano Join Raid, AntiNuke e AutoMod panic.",
             ].join("\n"),
           );
         await safeMessageReply(message, {
@@ -1959,26 +1880,13 @@ module.exports = {
       return;
     }
 
-    if (sub === "raid" || sub === "panic" || sub === "maintenance" || sub === "preset") {
+    if (sub === "raid" || sub === "panic") {
       await handleAntiNuke(message, [sub, ...args.slice(1)]);
       return;
     }
 
     if (sub === "antinuke") {
       await handleAntiNuke(message, args.slice(1));
-      return;
-    }
-
-    if (sub === "automod") {
-      await handleAutoMod(message, args.slice(1));
-      return;
-    }
-
-    if (sub === "help") {
-      await safeMessageReply(message, {
-        embeds: [usageEmbed()],
-        allowedMentions: { repliedUser: false },
-      });
       return;
     }
 

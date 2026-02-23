@@ -1,9 +1,9 @@
-﻿const RATE_LIMIT_BUCKET = new Map();
+const RATE_LIMIT_BUCKET = new Map();
 const RATE_LIMIT_WINDOW_MS = 6_000;
 
 const PREFIX_SENSITIVE_COMMANDS = new Set([
   "security",
-  "perm",
+  "perms",
   "temprole",
   "restart",
 ]);

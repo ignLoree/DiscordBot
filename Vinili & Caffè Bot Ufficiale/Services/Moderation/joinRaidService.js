@@ -1065,6 +1065,7 @@ async function processJoinRaidForMember(member, options = {}) {
         ),
       ).slice(-8);
       const untilTs = Math.floor(state.raidUntil / 1000);
+      // Join Gate feeds only Join Raid: when joinGateFeedOnly is true do NOT trigger AutoMod or AntiNuke panic.
       if (!joinGateFeedOnly) {
         triggerAutoModPanicExternal(
           member.guild.id,
@@ -1122,6 +1123,7 @@ async function processJoinRaidForMember(member, options = {}) {
       matchJoinRaidAccountType(member, reasons) &&
       (highRisk || strongEvidence || String(JOIN_RAID_CONFIG.accountType || "any") !== "id_flag");
     if (active && punishableDuringRaid) {
+      // Join Gate feed: do not trigger AutoMod panic when punishing during raid.
       if (!joinGateFeedOnly) {
         triggerAutoModPanicExternal(
           member.guild.id,

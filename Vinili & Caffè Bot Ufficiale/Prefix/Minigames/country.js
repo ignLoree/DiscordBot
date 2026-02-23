@@ -1,8 +1,8 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "country",
   allowEmptyArgs: true,
   aliases: ["nazione"],
   async execute(message, args) {
@@ -38,12 +38,7 @@ module.exports = {
             fields: [
               { name: "Capitale", value: String(capital), inline: true },
               { name: "Regione", value: String(regionLabel || "N/D"), inline: true },
-              {
-
-  allowEmptyArgs: true,
-                value: Number(row.population || 0).toLocaleString("it-IT"),
-                inline: true,
-              },
+              { name: "Popolazione", value: Number(row.population || 0).toLocaleString("it-IT"), inline: true },
               { name: "Valuta", value: String(currencies || "N/D"), inline: false },
             ],
           },

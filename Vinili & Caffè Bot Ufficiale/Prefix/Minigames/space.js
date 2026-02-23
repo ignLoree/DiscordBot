@@ -1,10 +1,9 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "space",
   allowEmptyArgs: true,
-  aliases: ["iss"],
   async execute(message) {
     try {
       const [iss, astronauts] = await Promise.all([
@@ -35,7 +34,7 @@ module.exports = {
               { name: "Latitudine ISS", value: String(lat), inline: true },
               { name: "Longitudine ISS", value: String(lon), inline: true },
               { name: "Altitudine ISS", value: String(alt + " km"), inline: true },
-              { name: "Velocita ISS", value: String(vel + " km/h"), inline: true },
+              { name: "Velocità ISS", value: String(vel + " km/h"), inline: true },
               { name: "Persone nello spazio", value: String(people), inline: true },
               { name: "Equipaggio", value: clamp(String(translatedCrew || "N/D"), 1000), inline: false },
             ],

@@ -196,9 +196,6 @@
                 "roles.Member"
             ],
             "subcommands": {
-                "get": [
-                    "roles.Member"
-                ],
                 "server": [
                     "roles.Member"
                 ],
@@ -263,26 +260,6 @@
                 "1442569288161558528"
             ],
             "subcommands": {
-                "status": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "health": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "drill": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "backup": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "profiles": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
                 "joingate": [
                     "roles.Founder",
                     "roles.CoFounder"
@@ -303,19 +280,7 @@
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
-                "maintenance": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "preset": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
                 "antinuke": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "automod": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ]
@@ -323,31 +288,12 @@
         },
         "statics": {
             "roles": [
-                    "roles.Founder",
-                    "roles.CoFounder"
+                "roles.Founder",
+                "roles.CoFounder"
             ],
             "channels": [
                 "1442569288161558528"
             ]
-        },
-        "customregister": {
-            "roles": [
-                "roles.HighStaff"
-            ],
-            "channels": [
-                "1442569288161558528"
-            ],
-            "subcommands": {
-                "role": [
-                    "roles.HighStaff"
-                ],
-                "voc": [
-                    "roles.HighStaff"
-                ],
-                "voice": [
-                    "roles.HighStaff"
-                ]
-            }
         },
         "customrole": {
             "roles": [
@@ -590,7 +536,7 @@
                 "1442569288161558528"
             ]
         },
-        "perm": {
+        "perms": {
             "roles": [
                 "roles.HighStaff"
             ],
@@ -656,9 +602,6 @@
                 ],
                 "auto": [
                     "roles.HighStaff"
-                ],
-                "help": [
-                    "roles.HighStaff"
                 ]
             }
         },
@@ -674,14 +617,6 @@
             ],
             "channels": [
                 "1442569138114662490"
-            ]
-        },
-        "status": {
-            "roles": [
-                "roles.HighStaff"
-            ],
-            "channels": [
-                "1442569288161558528"
             ]
         },
         "set": {
@@ -721,9 +656,6 @@
                 "1442569288161558528"
             ],
             "subcommands": {
-                "toggle": [
-                    "roles.Staff"
-                ],
                 "add": [
                     "roles.Staff"
                 ],
@@ -891,7 +823,7 @@
                 "roles.Member"
             ]
         },
-        "quotefun": {
+        "quotes": {
             "roles": [
                 "roles.Member"
             ]

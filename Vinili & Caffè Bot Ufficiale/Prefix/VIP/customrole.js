@@ -240,7 +240,7 @@ async function resolveOrCreateRole(message, durationOption) {
     await CustomRole.deleteOne({
       guildId: guild.id,
       userId: message.author.id,
-    }).catch(() => {});
+    }).catch(() => { });
     doc = null;
     role = null;
   }
@@ -259,7 +259,7 @@ async function resolveOrCreateRole(message, durationOption) {
     if (!role) return { error: "Non sono riuscito a creare il ruolo." };
 
     if (role.position >= me.roles.highest.position) {
-      await role.delete().catch(() => {});
+      await role.delete().catch(() => { });
       return {
         error: "Non posso gestire quel ruolo: sposta il mio ruolo più in alto.",
       };
@@ -271,12 +271,12 @@ async function resolveOrCreateRole(message, durationOption) {
     if (anchor) {
       const targetPosition = Math.max(1, anchor.position - 1);
       if (targetPosition < me.roles.highest.position) {
-        await role.setPosition(targetPosition).catch(() => {});
+        await role.setPosition(targetPosition).catch(() => { });
       }
     }
   }
 
-  await message.member.roles.add(role.id).catch(() => {});
+  await message.member.roles.add(role.id).catch(() => { });
 
   const update = {
     guildId: guild.id,
@@ -423,7 +423,7 @@ async function handleRemove(message) {
     return;
   }
 
-  await message.guild.members.fetch().catch(() => {});
+  await message.guild.members.fetch().catch(() => { });
   const membersWithRole = Array.from(role.members.values())
     .filter((m) => !m.user?.bot && m.id !== message.author.id)
     .slice(0, 25);
@@ -480,32 +480,14 @@ async function handleRemove(message) {
 
 module.exports = {
   name: "customrole",
-  aliases: [
-    "cr",
-    "customrolecreate",
-    "crcreate",
-    "customrolemodify",
-    "customroleedit",
-    "crmodify",
-    "customroleadd",
-    "cradd",
-    "customroleremove",
-    "crremove",
-  ],
   subcommands: ["create", "modify", "add", "remove"],
   subcommandAliases: {
     customrolecreate: "create",
-    crcreate: "create",
     customrolemodify: "modify",
-    customroleedit: "modify",
-    crmodify: "modify",
     customroleadd: "add",
-    cradd: "add",
     customroleremove: "remove",
-    crremove: "remove",
   },
-  description:
-    "Gestisce il custom role con subcommands: create, modify, add, remove.",
+  allowEmptyArgs: true,
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;

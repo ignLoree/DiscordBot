@@ -1,10 +1,9 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "itunes",
   allowEmptyArgs: true,
-  aliases: ["songsearch"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
     if (!query) return replyError(message, "Uso: +itunes <titolo o artista>");
@@ -34,15 +33,13 @@ module.exports = {
             fields: [
               { name: "Album", value: String(track.collectionName || "N/D"), inline: true },
               {
-
-  allowEmptyArgs: true,
+                name: "Genere",
                 value: String(await translateToItalian(track.primaryGenreName || "N/D")),
                 inline: true,
               },
               {
-
-  allowEmptyArgs: true,
-                value: String(Math.round(Number(track.trackTimeMillis || 0) / 1000) + "s"),
+                name: "Durata",
+                value: String(Math.round(Number(track.trackTimeMillis || 0) / 1000) + " s"),
                 inline: true,
               },
             ],

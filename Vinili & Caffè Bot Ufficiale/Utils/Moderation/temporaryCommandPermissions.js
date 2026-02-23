@@ -114,26 +114,31 @@ async function hasTemporaryCommandPermission({ guildId, userId, keys }) {
   }
 }
 
+const PERMANENT_EXPIRY_MS = 100 * 365.25 * 24 * 60 * 60 * 1000;
+
 async function grantTemporaryCommandPermissions({
   guildId,
   userId,
   grantedBy = null,
   commandKeys = [],
   durationMs,
+  permanent = false,
 }) {
-  const safeDuration = Number(durationMs || 0);
+  const permanentGrant = permanent || durationMs == null || durationMs === "";
+  const safeDuration = permanentGrant ? 0 : Number(durationMs || 0);
   if (
     !guildId ||
     !userId ||
     !Array.isArray(commandKeys) ||
     !commandKeys.length ||
-    !Number.isFinite(safeDuration) ||
-    safeDuration <= 0
+    (!permanentGrant && (!Number.isFinite(safeDuration) || safeDuration <= 0))
   ) {
     return { upserted: 0, modified: 0, expiresAt: null };
   }
 
-  const expiresAt = new Date(Date.now() + safeDuration);
+  const expiresAt = permanentGrant
+    ? new Date(Date.now() + PERMANENT_EXPIRY_MS)
+    : new Date(Date.now() + safeDuration);
   const ops = commandKeys.map((rawKey) => ({
     updateOne: {
       filter: {

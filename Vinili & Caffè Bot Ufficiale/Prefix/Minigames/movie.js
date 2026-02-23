@@ -1,8 +1,8 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "movie",
   allowEmptyArgs: true,
   aliases: ["film"],
   async execute(message, args) {
@@ -20,6 +20,9 @@ module.exports = {
       const translatedPlot = clamp(
         await translateToItalian(data.Plot || "Trama non disponibile."),
       );
+      const translatedGenre = data.Genre
+        ? await translateToItalian(String(data.Genre))
+        : "N/D";
 
       return safeMessageReply(message, {
         embeds: [
@@ -34,7 +37,7 @@ module.exports = {
             fields: [
               { name: "Valutazione", value: String(data.imdbRating || "N/D"), inline: true },
               { name: "Durata", value: String(data.Runtime || "N/D"), inline: true },
-              { name: "Genere", value: String(data.Genre || "N/D"), inline: true },
+              { name: "Genere", value: String(translatedGenre), inline: true },
             ],
           },
         ],

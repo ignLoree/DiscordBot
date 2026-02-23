@@ -1,10 +1,9 @@
-﻿const math = require("mathjs");
+const math = require("mathjs");
 const { replyError, replyInfo, fetchJson, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "math",
   allowEmptyArgs: true,
-  aliases: ["calc", "numbers"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
     if (!query) {
@@ -12,9 +11,9 @@ module.exports = {
       try {
         const data = await fetchJson("https://numbersapi.com/" + n + "?json");
         const fact = await translateToItalian(data?.text || "Nessun dato.");
-        return replyInfo(message, String(n + ": " + fact), "Curiosita sui Numeri");
+        return replyInfo(message, String(n + ": " + fact), "Curiosità sui numeri");
       } catch {
-        return replyInfo(message, "Numero casuale: **" + String(n) + "**", "Matematica");
+        return replyInfo(message, "Numero casuale: **" + String(n) + "**", "Numero casuale");
       }
     }
 

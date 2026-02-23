@@ -119,15 +119,6 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - Esempi:
 - `+country`
 
-## +customregister
-- Categoria: `Admin`
-- Alias: `customsync`, `registercustom`
-- Uso: `+customregister <role|voc|voice>`
-- Subcommand: `role`, `voc`, `voice`
-- Esempi:
-- `+customregister role`
-- `+customregister voc`
-
 ## +customrole
 - Categoria: `VIP`
 - Alias: `cr`, `customrolecreate`, `crcreate`, `customrolemodify`, `customroleedit`, `crmodify`, `customroleadd`, `cradd`, `customroleremove`, `crremove`
@@ -412,14 +403,14 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - Esempi:
 - `+no-dm-list`
 
-## +perm
+## +perms
 - Categoria: `Admin`
-- Alias: `tempperm`, `permgrant`, `permrevoke`, `permlist`, `permclear`, `permchannel`, `permchannels`
-- Uso: `+perm <grant|revoke|list|clear|channel-set|channel-add|channel-remove|channel-clear>`
-- Subcommand: `grant`, `revoke`, `list`, `clear`, `channel-set`, `channel-add`, `channel-remove`, `channel-clear`, `channel-list`, `channel`, `channels`
+- Alias: `perm`, `tempperm`, `permgrant`, `permrevoke`, `permlist`, `permclear`
+- Uso: `+perms <grant|revoke|list|clear>`
+- Subcommand: `grant`, `revoke`, `list`, `clear`
 - Esempi:
-- `+perm grant`
-- `+perm revoke`
+- `+perms grant`
+- `+perms revoke`
 
 ## +ping
 - Categoria: `Utility`
@@ -461,13 +452,13 @@ Generato automaticamente il 2026-02-21T16:51:42.934Z.
 - Esempi:
 - `+quote`
 
-## +quotefun
+## +quotes
 - Categoria: `Minigames`
-- Alias: `citazionefun`, `randquote`
-- Uso: `+quotefun`
+- Alias: `quotefun`, `citazionefun`, `randquote`
+- Uso: `+quotes`
 - Subcommand: -
 - Esempi:
-- `+quotefun`
+- `+quotes`
 
 ## +rank
 - Categoria: `Level`

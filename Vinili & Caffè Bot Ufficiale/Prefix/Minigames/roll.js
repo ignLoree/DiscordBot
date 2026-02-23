@@ -1,4 +1,4 @@
-﻿const { replyError, replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
+const { replyError, replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
 
 function parseRoll(inputA, inputB) {
   const a = String(inputA || "").trim().toLowerCase();
@@ -14,7 +14,7 @@ function parseRoll(inputA, inputB) {
 }
 
 module.exports = {
-
+  name: "roll",
   allowEmptyArgs: true,
   aliases: ["dice"],
   async execute(message, args) {
@@ -42,7 +42,7 @@ module.exports = {
     return replyInfo(
       message,
       "Tiri: **" + out.join(", ") + "**\nTotale: **" + total + "**",
-      "Lancio d" + size + " x" + count,
+      "Lancio dadi (" + count + "d" + size + ")",
     );
   },
 };

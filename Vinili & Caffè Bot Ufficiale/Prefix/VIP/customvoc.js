@@ -130,9 +130,7 @@ async function updateCustomRoleTiming(
 
 module.exports = {
   name: "customvoc",
-  aliases: ["customvoice", "crvoice", "vocprivata"],
-  description:
-    "Crea la tua vocale privata nella categoria dedicata usando il tuo ruolo personalizzato.",
+  allowEmptyArgs: true,
 
   async execute(message, args = []) {
     if (!message.guild || !message.member) return;

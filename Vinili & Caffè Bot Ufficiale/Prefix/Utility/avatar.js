@@ -38,9 +38,8 @@ module.exports = {
   name: "avatar",
   aliases: ["av"],
   allowEmptyArgs: true,
-  subcommands: ["get", "server", "user", "guild"],
+  subcommands: ["server", "user", "guild"],
   subcommandAliases: {
-    get: "get",
     server: "server",
     user: "user",
     guild: "guild",
@@ -60,10 +59,10 @@ module.exports = {
     }
 
     const subRaw = args[0] ? String(args[0]).toLowerCase() : "";
-    const sub = ["get", "server", "user", "guild"].includes(subRaw)
+    const sub = ["server", "user", "guild"].includes(subRaw)
       ? subRaw
-      : "get";
-    const query = ["get", "server", "user", "guild"].includes(subRaw)
+      : "user";
+    const query = ["server", "user", "guild"].includes(subRaw)
       ? args.slice(1).join(" ")
       : args.join(" ");
 

@@ -1,4 +1,4 @@
-﻿const axios = require("axios");
+const axios = require("axios");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { replyError } = require("../../Utils/Minigames/dynoFunUtils");
 
@@ -21,11 +21,11 @@ async function probe(url, timeoutMs = 6000) {
 
 function formatProbe(result) {
   if (!result?.ok) return "Non disponibile";
-  return `Online (${result.ms} ms)`;
+  return `In linea (${result.ms} ms)`;
 }
 
 module.exports = {
-
+  name: "steamstatus",
   allowEmptyArgs: true,
   aliases: ["steam"],
   async execute(message) {
@@ -43,8 +43,8 @@ module.exports = {
             title: "Stato Servizi Steam",
             fields: [
               { name: "Community", value: formatProbe(community), inline: false },
-              { name: "Store", value: formatProbe(store), inline: false },
-              { name: "Web API", value: formatProbe(webapi), inline: false },
+              { name: "Negozio", value: formatProbe(store), inline: false },
+              { name: "API Web", value: formatProbe(webapi), inline: false },
             ],
           },
         ],

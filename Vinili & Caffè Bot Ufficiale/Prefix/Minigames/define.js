@@ -1,10 +1,27 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError, clamp, translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
-module.exports = {
+const PART_OF_SPEECH_IT = {
+  noun: "sostantivo",
+  verb: "verbo",
+  adjective: "aggettivo",
+  adverb: "avverbio",
+  pronoun: "pronome",
+  preposition: "preposizione",
+  conjunction: "congiunzione",
+  interjection: "interiezione",
+  determiner: "determinante",
+  particle: "particella",
+  numeral: "numerale",
+  phrase: "locuzione",
+  idiom: "modo di dire",
+  "phrasal verb": "verbo frasale",
+};
 
+module.exports = {
+  name: "define",
   allowEmptyArgs: true,
-  aliases: ["def", "dictionary"],
+  aliases: ["definizione"],
   async execute(message, args) {
     const query = String((args || []).join(" ") || "").trim();
     if (!query) return replyError(message, "Uso: +define <parola>");
@@ -24,6 +41,10 @@ module.exports = {
       const translatedDef = clamp(await translateToItalian(firstDef), 1500);
       const phonetic =
         row?.phonetic || row?.phonetics?.find((p) => p?.text)?.text || "N/D";
+      const partRaw = firstMeaning?.partOfSpeech || "N/D";
+      const partIt =
+        PART_OF_SPEECH_IT[String(partRaw).toLowerCase()] ||
+        (await translateToItalian(partRaw));
 
       return safeMessageReply(message, {
         embeds: [
@@ -34,9 +55,8 @@ module.exports = {
             fields: [
               { name: "Fonetica", value: String(phonetic), inline: true },
               {
-
-  allowEmptyArgs: true,
-                value: String(firstMeaning?.partOfSpeech || "N/D"),
+                name: "Parte del discorso",
+                value: String(partIt),
                 inline: true,
               },
             ],

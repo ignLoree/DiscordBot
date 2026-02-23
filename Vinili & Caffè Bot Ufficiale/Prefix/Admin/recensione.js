@@ -51,7 +51,6 @@ async function resolveTargetUser(message, raw) {
 
 module.exports = {
   name: "recensione",
-  aliases: ["review", "disboardreview"],
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});

@@ -698,6 +698,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     if (appliedAction === "kick") {
       markJoinGateKick(member.guild.id, member.id, reason);
     }
+    // Join Gate → only feed Join Raid; do not trigger AntiNuke or AutoMod panic.
     await registerJoinRaidSecuritySignal(member, {
       reason: `Join Gate action: ${reason}`,
       enableAntiNuke: false,

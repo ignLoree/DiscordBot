@@ -1,10 +1,9 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { fetchJson, replyError } = require("../../Utils/Minigames/dynoFunUtils");
 
 module.exports = {
-
+  name: "dog",
   allowEmptyArgs: true,
-  aliases: ["doggo"],
   async execute(message) {
     try {
       const data = await fetchJson("https://dog.ceo/api/breeds/image/random");

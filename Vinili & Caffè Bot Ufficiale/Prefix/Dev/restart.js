@@ -1,4 +1,4 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const fs = require("fs");
 const path = require("path");
@@ -7,18 +7,7 @@ const child_process = require("child_process");
 const RESTART_FLAG = "restart.json";
 const RESTART_CLEANUP_DELAY_MS = 2000;
 const PROCESS_EXIT_DELAY_MS = 1200;
-const VALID_SCOPES = new Set([
-  "full",
-  "handlers",
-  "commands",
-  "prefix",
-  "events",
-  "triggers",
-  "services",
-  "utils",
-  "schemas",
-  "all",
-]);
+const VALID_SCOPES = new Set(["full", "all"]);
 
 function resolveGitRoot() {
   const candidates = [
@@ -92,15 +81,7 @@ function buildUsageEmbed() {
       [
         "`+restart full` - riavvia solo il bot Ufficiale",
         "`+restart full both` - riavvia entrambi i bot (Ufficiale + Test)",
-        "`+restart handlers`",
-        "`+restart commands`",
-        "`+restart prefix`",
-        "`+restart events`",
-        "`+restart triggers`",
-        "`+restart services`",
-        "`+restart utils`",
-        "`+restart schemas`",
-        "`+restart all`",
+        "`+restart all` - reload completo di tutte le scope ricaricabili",
         "",
         "Alias: `+rs`, `+reload`",
         "Se non specifichi la scope, usa `full`.",
@@ -126,13 +107,6 @@ module.exports = {
   subcommands: [
     "full",
     "handlers",
-    "commands",
-    "prefix",
-    "events",
-    "triggers",
-    "services",
-    "utils",
-    "schemas",
     "all",
   ],
 

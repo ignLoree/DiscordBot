@@ -79,9 +79,7 @@ module.exports = {
   name: "embed",
   description: "Crea un embed tramite un builder interattivo.",
   subcommands: ["create"],
-  subcommandAliases: { create: "create" },
-  aliases: ["emb", "embedcreate"],
-
+  allowEmptyArgs: true,
   async execute(message, args = []) {
     if (!message.inGuild?.()) {
       return safeMessageReply(message, {

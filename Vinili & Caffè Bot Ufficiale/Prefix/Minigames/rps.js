@@ -1,4 +1,4 @@
-﻿const { replyError, replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
+const { replyError, replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
 
 const MAP = {
   rock: "sasso",
@@ -16,9 +16,8 @@ const BEATS = {
 };
 
 module.exports = {
-
+  name: "rps",
   allowEmptyArgs: true,
-  aliases: ["morra", "sassocartaforbici"],
   async execute(message, args) {
     const choice = MAP[String(args?.[0] || "").toLowerCase()];
     if (!choice) return replyError(message, "Uso: +rps <sasso|carta|forbici>");
