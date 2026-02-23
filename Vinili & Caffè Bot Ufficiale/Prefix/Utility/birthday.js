@@ -1,4 +1,4 @@
-﻿const {
+const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
@@ -122,6 +122,34 @@ function buildSavedEmbed(state) {
     );
 }
 
+function buildRegistrationEmbed(user, state, isEdit = false) {
+  const ageLine =
+    state.showAge && Number.isInteger(state.age)
+      ? `Età impostata: **${state.age} anni**`
+      : "Età impostata con privacy nascosta";
+
+  const title = isEdit ? "Compleanno aggiornato" : "Compleanno registrato";
+  const description = isEdit
+    ? [
+        `${user} hai aggiornato la tua data di nascita.`,
+        "Ricorderò a tutti il giorno del tuo compleanno.",
+      ].join("\n")
+    : [
+        `${user} hai impostato la tua data di nascita.`,
+        "Ricorderò a tutti il giorno del tuo compleanno.",
+      ].join("\n");
+
+  return new EmbedBuilder()
+    .setColor(BRAND_COLOR)
+    .setTitle(title)
+    .setDescription(description)
+    .addFields(
+      { name: "Data", value: formatDateLabel(state.day, state.month), inline: true },
+      { name: "Privacy", value: state.showAge ? "Età visibile" : "Età nascosta", inline: true },
+      { name: "Dettaglio", value: ageLine, inline: false },
+    );
+}
+
 function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
   return [
     new ActionRowBuilder().addComponents(
@@ -156,36 +184,30 @@ function buildPanelRows(ownerId, nonce, showAge, disabled = false) {
   ];
 }
 
-async function sendBirthSaveEmbed(client, guild, user, state) {
+/**
+ * Invia o aggiorna il messaggio "Compleanno registrato/aggiornato" nel canale birthday.
+ * Se messageToEdit è fornito, modifica quel messaggio; altrimenti invia un nuovo messaggio.
+ * @returns {Promise<import("discord.js").Message|null>} Il messaggio (editato o inviato) o null
+ */
+async function sendBirthSaveEmbed(client, guild, user, state, options = {}) {
+  const { messageToEdit = null, isEdit = false } = options;
   const channelId = IDs.channels.birthday;
-  if (!guild || !channelId) return;
+  if (!guild || !channelId) return null;
 
   const channel =
     guild.channels.cache.get(channelId) ||
     (await guild.channels.fetch(channelId).catch(() => null));
-  if (!channel?.isTextBased?.()) return;
+  if (!channel?.isTextBased?.()) return null;
 
-  const ageLine =
-    state.showAge && Number.isInteger(state.age)
-      ? `Età impostata: **${state.age} anni**`
-      : "Età impostata con privacy nascosta";
+  const embed = buildRegistrationEmbed(user, state, isEdit);
 
-  const embed = new EmbedBuilder()
-    .setColor(BRAND_COLOR)
-    .setTitle("Compleanno registrato")
-    .setDescription(
-      [
-        `${user} hai impostato la tua data di nascita.`,
-        "Ricorderò a tutti il giorno del tuo compleanno.",
-      ].join("\n"),
-    )
-    .addFields(
-      { name: "Data", value: formatDateLabel(state.day, state.month), inline: true },
-      { name: "Privacy", value: state.showAge ? "Età visibile" : "Età nascosta", inline: true },
-      { name: "Dettaglio", value: ageLine, inline: false },
-    );
+  if (messageToEdit && messageToEdit.editable) {
+    const edited = await messageToEdit.edit({ embeds: [embed] }).catch(() => null);
+    return edited;
+  }
 
-  await channel.send({ embeds: [embed] }).catch(() => {});
+  const sent = await channel.send({ embeds: [embed] }).catch(() => null);
+  return sent;
 }
 
 async function openBirthdayPanel(message, client, initialState = null, mode = "set") {
@@ -404,25 +426,55 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
         }
 
         const birthYear = inferBirthYearFromAge(state.day, state.month, state.age);
+        const isEdit = mode === "edit";
 
-        await BirthdayProfile.findOneAndUpdate(
-          { guildId: message.guild.id, userId: ownerId },
-          {
-            $set: {
-              day: state.day,
-              month: state.month,
-              birthYear,
-              showAge: state.showAge,
-            },
-          },
-          { upsert: true, new: true, setDefaultsOnInsert: true },
-        );
+        let messageToEdit = null;
+        if (isEdit) {
+          const existingProfile = await BirthdayProfile.findOne({
+            guildId: message.guild.id,
+            userId: ownerId,
+          })
+            .lean()
+            .catch(() => null);
+          const regChannelId =
+            existingProfile?.registrationChannelId || IDs.channels.birthday;
+          const regMessageId = existingProfile?.registrationMessageId;
+          if (regMessageId && regChannelId) {
+            const ch =
+              message.guild.channels.cache.get(regChannelId) ||
+              (await message.guild.channels.fetch(regChannelId).catch(() => null));
+            if (ch?.isTextBased?.()) {
+              messageToEdit = await ch.messages.fetch(regMessageId).catch(() => null);
+            }
+          }
+        }
 
-        await sendBirthSaveEmbed(
+        const registrationMessage = await sendBirthSaveEmbed(
           client || message.client,
           message.guild,
           message.author,
           state,
+          {
+            messageToEdit: messageToEdit || null,
+            isEdit,
+          },
+        );
+
+        const updatePayload = {
+          day: state.day,
+          month: state.month,
+          birthYear,
+          showAge: state.showAge,
+        };
+        if (registrationMessage?.id && registrationMessage?.channelId) {
+          updatePayload.registrationMessageId = registrationMessage.id;
+          updatePayload.registrationChannelId = registrationMessage.channelId;
+        }
+
+        await BirthdayProfile.findOneAndUpdate(
+          { guildId: message.guild.id, userId: ownerId },
+          { $set: updatePayload },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
         );
 
         finished = true;

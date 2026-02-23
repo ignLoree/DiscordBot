@@ -11,7 +11,9 @@ const {
   hasAdminsProfileCapability,
 } = require("../Services/Moderation/securityProfilesService");
 const { ARROW, formatAuditActor, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
+const { resolveModLogChannel, formatResponsible, nowDiscordTs } = require("../Utils/Logging/modAuditLogUtils");
 const { handleMemberRoleAddition: antiNukeHandleMemberRoleAddition } = require("../Services/Moderation/antiNukeService");
+const { createModCase, getModConfig, logModCase } = require("../Utils/Moderation/moderation");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
@@ -134,6 +136,38 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
   };
 }
 
+async function sendTimeoutRemovedModLog(oldMember, newMember) {
+  const guild = newMember?.guild || oldMember?.guild;
+  if (!guild || !newMember?.user) return;
+  const hadTimeout = Number(oldMember?.communicationDisabledUntilTimestamp || 0) > 0;
+  const hasTimeout = Number(newMember?.communicationDisabledUntilTimestamp || 0) > 0;
+  if (!hadTimeout || hasTimeout) return;
+
+  const modLogChannel = await resolveModLogChannel(guild);
+  if (!modLogChannel?.isTextBased?.()) return;
+
+  const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
+  const responsible = formatResponsible(audit.executor);
+
+  const embed = new EmbedBuilder()
+    .setColor("#57F287")
+    .setTitle("Timeout Removed")
+    .setDescription(
+      [
+        `${ARROW} **Timeout for** ${newMember.user} **has been removed**`,
+        `${ARROW} **Responsible:** ${responsible}`,
+        `${ARROW} ${nowDiscordTs()}`,
+        audit.reason ? `${ARROW} **Reason:** ${audit.reason}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    )
+    .setFooter({ text: `ID: ${newMember.user.id}` })
+    .setTimestamp();
+
+  await modLogChannel.send({ embeds: [embed] }).catch(() => null);
+}
+
 async function sendMemberUpdateLog(oldMember, newMember) {
   const guild = newMember?.guild || oldMember?.guild;
   if (!guild || !newMember?.user) return;
@@ -141,6 +175,12 @@ async function sendMemberUpdateLog(oldMember, newMember) {
   const nickChanged = didNickChange(oldMember, newMember);
   const timeoutChanged = didTimeoutChange(oldMember, newMember);
   if (!nickChanged && !timeoutChanged) return;
+
+  if (timeoutChanged) {
+    const hadTimeout = Number(oldMember?.communicationDisabledUntilTimestamp || 0) > 0;
+    const hasTimeout = Number(newMember?.communicationDisabledUntilTimestamp || 0) > 0;
+    if (hadTimeout && !hasTimeout) await sendTimeoutRemovedModLog(oldMember, newMember);
+  }
 
   const logChannel = await resolveActivityLogChannel(guild);
   if (!logChannel?.isTextBased?.()) return;
@@ -484,6 +524,28 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
       `${ARROW} **Match:** ${match.value}`,
       `${ARROW} **Name:** ${newCandidate || "N/A"}`,
     ]);
+  }
+
+  if (punished && appliedAction !== "log" && newMember.guild?.client) {
+    const modAction =
+      appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
+    const durationMs = appliedAction === "timeout" ? 6 * 60 * 60_000 : null;
+    const caseReason = `JoinGate post-join: ${reason}`;
+    try {
+      const config = await getModConfig(newMember.guild.id);
+      const { doc } = await createModCase({
+        guildId: newMember.guild.id,
+        action: modAction,
+        userId: newMember.id,
+        modId: newMember.client.user.id,
+        reason: caseReason,
+        durationMs,
+        context: {},
+      });
+      await logModCase({ client: newMember.client, guild: newMember.guild, modCase: doc, config });
+    } catch (e) {
+      global.logger?.warn?.("[JoinGate post-join] ModCase creation failed:", newMember.guild.id, newMember.id, e?.message || e);
+    }
   }
 
   const modLogId = IDs.channels?.modLogs;

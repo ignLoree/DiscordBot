@@ -7,6 +7,7 @@ const {
   hasAdminsProfileCapability,
   getSecurityStaticsSnapshot,
 } = require("./securityProfilesService");
+const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
 const HIGH_STAFF_MENTION = IDs.roles?.HighStaff
   ? `<@&${IDs.roles.HighStaff}>`
@@ -1787,15 +1788,33 @@ async function quarantineExecutor(guild, executorId, reason) {
     guild?.members?.me?.permissions?.has?.(PermissionsBitField.Flags.BanMembers) &&
     String(guild?.ownerId || "") !== userId
   ) {
+    const banReason = `AntiNuke panic: ${String(reason || "malicious executor")}`;
     const banned = await guild.members
       .ban(userId, {
         deleteMessageSeconds: 0,
-        reason: `AntiNuke panic: ${String(reason || "malicious executor")}`,
+        reason: banReason,
       })
       .then(() => true)
       .catch(() => false);
     if (banned) {
       ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
+      if (guild?.client) {
+        try {
+          const config = await getModConfig(guild.id);
+          const { doc } = await createModCase({
+            guildId: guild.id,
+            action: "BAN",
+            userId,
+            modId: guild.client.user.id,
+            reason: banReason,
+            durationMs: null,
+            context: {},
+          });
+          await logModCase({ client: guild.client, guild, modCase: doc, config });
+        } catch (e) {
+          global.logger?.warn?.("[antiNuke] ModCase creation (ban) failed:", guild.id, userId, e?.message || e);
+        }
+      }
       return { applied: true, method: "ban" };
     }
   }
@@ -1834,12 +1853,30 @@ async function quarantineExecutor(guild, executorId, reason) {
   }
 
   if (!member.moderatable) return { applied: false, method: "not_moderatable" };
+  const quarantineTimeoutMs = ANTINUKE_CONFIG.autoQuarantine.quarantineTimeoutMs || 0;
   const timeoutApplied = await member
-    .timeout(ANTINUKE_CONFIG.autoQuarantine.quarantineTimeoutMs, reason)
+    .timeout(quarantineTimeoutMs, reason)
     .then(() => true)
     .catch(() => false);
   if (timeoutApplied) {
     ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
+    if (guild?.client && quarantineTimeoutMs > 0) {
+      try {
+        const config = await getModConfig(guild.id);
+        const { doc } = await createModCase({
+          guildId: guild.id,
+          action: "MUTE",
+          userId,
+          modId: guild.client.user.id,
+          reason: String(reason || "AntiNuke quarantine"),
+          durationMs: quarantineTimeoutMs,
+          context: {},
+        });
+        await logModCase({ client: guild.client, guild, modCase: doc, config });
+      } catch (e) {
+        global.logger?.warn?.("[antiNuke] ModCase creation (timeout) failed:", guild.id, userId, e?.message || e);
+      }
+    }
     return { applied: true, method: "timeout" };
   }
   return { applied: false, method: "timeout_failed" };

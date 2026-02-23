@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
+const { sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
 
 function normalizeAction(action) {
   return String(action || "UNKNOWN").trim().toUpperCase();
@@ -122,9 +123,10 @@ function closeCase(modCase, closeReason = null) {
 
 async function logModCase({ client, guild, modCase, config }) {
   const channelId = config?.logChannelId;
-  if (!channelId) return;
-  const channel = guild.channels.cache.get(channelId);
-  if (!channel) return;
+  const channel = channelId
+    ? (guild.channels.cache.get(channelId) ||
+        (await guild.channels.fetch(channelId).catch(() => null)))
+    : null;
   const duration = modCase.durationMs
     ? formatDuration(modCase.durationMs)
     : null;
@@ -151,7 +153,10 @@ async function logModCase({ client, guild, modCase, config }) {
       inline: true,
     });
   }
-  await channel.send({ embeds: [embed] }).catch(() => {});
+  if (channel?.isTextBased?.()) {
+    await channel.send({ embeds: [embed] }).catch(() => {});
+  }
+  await sendStaffActionToModLogs(guild, modCase).catch(() => null);
 }
 
 async function tryDmUser(user, content) {

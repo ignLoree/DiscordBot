@@ -16,6 +16,7 @@ const {
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const { applyRolePersistForMember } = require("../Services/Moderation/rolePersistService");
+const { createModCase, getModConfig, logModCase } = require("../Utils/Moderation/moderation");
 const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
@@ -706,6 +707,27 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       enableAutoMod: false,
       raidBoost: 0,
     }).catch(() => null);
+
+    if (member.guild?.client && appliedAction !== "log") {
+      const modAction =
+        appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
+      const durationMs = appliedAction === "timeout" ? 6 * 60 * 60_000 : null;
+      try {
+        const config = await getModConfig(member.guild.id);
+        const { doc } = await createModCase({
+          guildId: member.guild.id,
+          action: modAction,
+          userId: member.id,
+          modId: member.client.user.id,
+          reason: `JoinGate: ${reason}`,
+          durationMs,
+          context: {},
+        });
+        await logModCase({ client: member.client, guild: member.guild, modCase: doc, config });
+      } catch (e) {
+        global.logger?.warn?.("[JoinGate] ModCase creation failed:", member.guild.id, member.id, e?.message || e);
+      }
+    }
   }
   const modLogId = IDs.channels?.modLogs;
   const logChannel = modLogId

@@ -1,4 +1,4 @@
-﻿const http = require("http");
+const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const url = require("url");
@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const https = require("https");
 const IDs = require("../../Utils/Config/ids");
 const logsApi = require("../../Utils/Moderation/logs");
+const { getModConfig, createModCase, logModCase } = require("../../Utils/Moderation/moderation");
 
 const {
   CONTROL_MODES,
@@ -426,6 +427,21 @@ async function runUserAction(client, payload = {}) {
   if (action === "timeout") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.timeout(durationMs, reason);
+    try {
+      const config = await getModConfig(guild.id);
+      const { doc } = await createModCase({
+        guildId: guild.id,
+        action: "MUTE",
+        userId,
+        modId: client.user?.id || guild.client?.user?.id,
+        reason: `[Dashboard] ${reason}`,
+        durationMs,
+        context: null,
+      });
+      await logModCase({ client, guild, modCase: doc, config });
+    } catch (e) {
+      global.logger?.warn?.("[Dashboard] ModCase creation (timeout) failed:", guild.id, userId, e?.message || e);
+    }
     return { ok: true, message: `Timeout ${durationMinutes}m applicato.` };
   }
   if (action === "untimeout") {
@@ -436,10 +452,40 @@ async function runUserAction(client, payload = {}) {
   if (action === "kick") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.kick(reason);
+    try {
+      const config = await getModConfig(guild.id);
+      const { doc } = await createModCase({
+        guildId: guild.id,
+        action: "KICK",
+        userId,
+        modId: client.user?.id || guild.client?.user?.id,
+        reason: `[Dashboard] ${reason}`,
+        durationMs: null,
+        context: null,
+      });
+      await logModCase({ client, guild, modCase: doc, config });
+    } catch (e) {
+      global.logger?.warn?.("[Dashboard] ModCase creation (kick) failed:", guild.id, userId, e?.message || e);
+    }
     return { ok: true, message: "Utente espulso." };
   }
   if (action === "ban") {
     await guild.members.ban(userId, { reason, deleteMessageSeconds: 0 });
+    try {
+      const config = await getModConfig(guild.id);
+      const { doc } = await createModCase({
+        guildId: guild.id,
+        action: "BAN",
+        userId,
+        modId: client.user?.id || guild.client?.user?.id,
+        reason: `[Dashboard] ${reason}`,
+        durationMs: null,
+        context: null,
+      });
+      await logModCase({ client, guild, modCase: doc, config });
+    } catch (e) {
+      global.logger?.warn?.("[Dashboard] ModCase creation (ban) failed:", guild.id, userId, e?.message || e);
+    }
     return { ok: true, message: "Utente bannato." };
   }
   if (action === "unban") {

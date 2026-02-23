@@ -3,6 +3,11 @@ const path = require("path");
 const mongoose = require("mongoose");
 const NoDmPreference = require("../Schemas/Community/noDmPreferenceSchema");
 
+/**
+ * Invii DM per moderazione, ticket, verify, security e altre comunicazioni importanti
+ * devono usare sendDm(..., { bypassNoDm: true }) e non devono essere filtrati dalla lista no-dm.
+ */
+
 const DATA_PATH = path.join(__dirname, "..", "Data", "noDmList.json");
 const BACKUP_PATH = `${DATA_PATH}.bak`;
 const TMP_PATH = `${DATA_PATH}.tmp`;
@@ -184,8 +189,28 @@ async function removeNoDm(guildId, userId) {
   await mirrorRemoveFromFile(key, uid);
 }
 
+/**
+ * Invia un DM all'utente. Con bypassNoDm: true non applica il filtro no-dm (per moderazione, ticket, security, ecc.).
+ * @param {import("discord.js").User} user
+ * @param {import("discord.js").MessageCreateOptions} payload
+ * @param {{ guildId?: string, bypassNoDm?: boolean }} options - bypassNoDm: true per DM importanti (moderation, ticket, ...)
+ * @returns {Promise<import("discord.js").Message|null>} Il messaggio inviato o null
+ */
+async function sendDm(user, payload, options = {}) {
+  const { guildId, bypassNoDm = false } = options;
+  if (!user?.send) return null;
+  if (bypassNoDm) {
+    return user.send(payload).catch(() => null);
+  }
+  if (!guildId) return user.send(payload).catch(() => null);
+  const set = await getNoDmSet(guildId).catch(() => new Set());
+  if (set.has(String(user.id))) return null;
+  return user.send(payload).catch(() => null);
+}
+
 module.exports = {
   getNoDmSet,
   addNoDm,
   removeNoDm,
+  sendDm,
 };

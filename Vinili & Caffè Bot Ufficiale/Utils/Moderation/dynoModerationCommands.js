@@ -11,6 +11,8 @@ const IDs = require("../Config/ids");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { appendCaseEdit, closeCase, createModCase, getModConfig, logModCase, parseDuration, formatDuration } = require("./moderation");
 const { resolveTarget } = require("./prefixModeration");
+const { resolveModLogChannel, sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
+const { sendDm } = require("../noDmList");
 const { grantTemporaryRole, revokeTemporaryRole, listTemporaryRolesForUser } = require("../../Services/Community/temporaryRoleService");
 
 function embed(client, title, description, color = null) {
@@ -135,59 +137,40 @@ async function successReply(message, subject, verb, reason = "") {
 
 async function sendModerationDm({
   user,
+  guildId,
   guildName,
   action,
   reason = "",
   durationText = "",
-  includeAppeal = false,
 }) {
   if (!user) return false;
   const safeReason = String(reason || "").trim();
   const safeDuration = String(durationText || "").trim();
   const actionKey = String(action || "").toLowerCase();
+  const withReason = safeReason ? ` | ${safeReason}` : "";
   let baseText = "";
   if (actionKey === "warn") {
-    baseText = `Hai ricevuto un avviso in ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
+    baseText = `Hai ricevuto un avviso in ${guildName}.${withReason}`;
   } else if (actionKey === "ban") {
-    baseText = `Sei stato bannato da ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
+    baseText = `Sei stato bannato da ${guildName}.${withReason}`;
   } else if (actionKey === "kick") {
-    baseText = `Sei stato espulso da ${guildName}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
+    baseText = `Sei stato espulso da ${guildName}.${withReason}`;
   } else if (actionKey === "mute") {
-    baseText = `Sei stato silenziato in ${guildName}${safeDuration ? ` per ${safeDuration}` : ""}${safeReason ? `.\nMotivo: ${safeReason}` : "."}`;
+    const durationPart = safeDuration ? ` per ${safeDuration}` : "";
+    baseText = `Sei stato silenziato in ${guildName}${durationPart}.${withReason}`;
   } else if (actionKey === "unban") {
-    baseText = `Il tuo ban in ${guildName} è stato revocato.`;
+    baseText = `Il tuo ban in ${guildName} è stato revocato.${withReason}`;
   } else if (actionKey === "unmute") {
-    baseText = `Il tuo mute in ${guildName} è stato revocato.`;
+    baseText = `Il tuo mute in ${guildName} è stato revocato.${withReason}`;
+  } else if (actionKey === "delwarn") {
+    baseText = `Un avviso ti è stato rimosso in ${guildName}.${withReason}`;
   } else {
     return false;
   }
 
   const embed = new EmbedBuilder().setColor("#ED4245").setDescription(baseText);
-  const payload = { embeds: [embed] };
-  const appealUrl =
-    IDs?.links?.appeal ||
-    IDs?.raw?.links?.appeal ||
-    IDs?.links?.invite ||
-    null;
-  if (includeAppeal && appealUrl) {
-    embed.setDescription(
-      `${baseText}\n\nPuoi inviare un appello tra 1 giorno.`,
-    );
-    payload.components = [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setStyle(ButtonStyle.Link)
-          .setLabel("Appello")
-          .setURL(String(appealUrl)),
-      ),
-    ];
-  }
-  try {
-    await user.send(payload);
-    return true;
-  } catch {
-    return false;
-  }
+  const sent = await sendDm(user, { embeds: [embed] }, { guildId, bypassNoDm: true });
+  return Boolean(sent);
 }
 
 async function makeCase(client, message, action, userId, reason, durationMs = null) {
@@ -478,7 +461,10 @@ async function runNamed(name, message, args, client) {
     const guard = await validateModerationTarget(message, member, "ban", userId);
     if (!guard.ok) return reply(message, client, "Ban", guard.error, "Red");
     const duration = parseMaybeDuration(args[targetIndex + 1]);
-    const reason = reasonFrom(args, duration ? targetIndex + 2 : targetIndex + 1);
+    const reason = reasonFrom(args, duration ? targetIndex + 2 : targetIndex + 1, "");
+    if (!reason || !reason.trim()) {
+      return reply(message, client, "Ban", "Il motivo è obbligatorio per il ban. Uso: `+ban [utente] [durata] [motivo]`", "Red");
+    }
     const deleteSeconds = mode === "save" ? 0 : 604800;
     const ok = await message.guild.members
       .ban(userId, { reason, deleteMessageSeconds: deleteSeconds })
@@ -487,10 +473,10 @@ async function runNamed(name, message, args, client) {
     if (!ok) return reply(message, client, "Ban", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "ban",
       reason,
-      includeAppeal: mode !== "noappeal",
     });
     await makeCase(client, message, "BAN", userId, reason, duration);
     return successReply(message, formatTargetLabel(user || { id: userId }), "è stato bannato", reason);
@@ -517,25 +503,21 @@ async function runNamed(name, message, args, client) {
     }
     const guard = await validateModerationTarget(message, member, "kick", userId);
     if (!guard.ok) return reply(message, client, "Kick", guard.error, "Red");
-    const reason = reasonFrom(args, 1);
+    const reason = reasonFrom(args, 1, "");
+    if (!reason || !reason.trim()) {
+      return reply(message, client, "Kick", "Il motivo è obbligatorio per il kick. Uso: `+kick [utente] [motivo]`", "Red");
+    }
     const ok = await member.kick(reason).then(() => true).catch(() => false);
     if (!ok) return reply(message, client, "Kick", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "kick",
       reason,
     });
     await makeCase(client, message, "KICK", userId, reason);
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** è stato espulso.`),
-        ],
-      })
-      .catch(() => null);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato espulso", reason);
   }
 
   if (cmd === "mute") {
@@ -589,27 +571,22 @@ async function runNamed(name, message, args, client) {
         })
         .catch(() => null);
     }
-    const reason = reasonFrom(args, 2);
+    const reason = reasonFrom(args, 2, "");
+    if (!reason || !reason.trim()) {
+      return reply(message, client, "Mute", "Il motivo è obbligatorio per il mute. Uso: `+mute [utente] [durata] [motivo]`", "Red");
+    }
     const ok = await member.timeout(duration, reason).then(() => true).catch(() => false);
     if (!ok) return reply(message, client, "Mute", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "mute",
       reason,
       durationText: formatDuration(duration),
-      includeAppeal: true,
     });
     await makeCase(client, message, "MUTE", userId, reason, duration);
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${formatTargetLabel(member.user || { id: userId })}_** è stato silenziato.`),
-        ],
-      })
-      .catch(() => null);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato silenziato", reason);
   }
 
   if (cmd === "unmute") {
@@ -620,8 +597,10 @@ async function runNamed(name, message, args, client) {
     if (!ok) return reply(message, client, "Unmute", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "unmute",
+      reason,
     });
     const openMutes = await ModCase.find({
       guildId: message.guild.id,
@@ -675,8 +654,10 @@ async function runNamed(name, message, args, client) {
     const targetUser = banInfo?.user || (await message.client.users.fetch(id).catch(() => null));
     await sendModerationDm({
       user: targetUser,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "unban",
+      reason,
     });
     const openBans = await ModCase.find({
       guildId: message.guild.id,
@@ -712,42 +693,22 @@ async function runNamed(name, message, args, client) {
       (await message.guild.members.fetch(String(userId)).catch(() => null));
     const guard = await validateModerationTarget(message, warnMember, "warn", userId);
     if (!guard.ok) return reply(message, client, "Warn", guard.error, "Red");
-    if (!String(args.slice(1).join(" ") || "").trim()) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +warn**",
-            "",
-            "**Descrizione:** Assegna un avviso a un utente.",
-            "**Cooldown:** 3 secondi",
-            "**Uso:**",
-            "+warn [utente] (motivo)",
-            "**Esempio:**",
-            "+warn @utente Linguaggio non appropriato",
-          ].join("\n"),
-        );
-      return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
+    const content = String(args.slice(1).join(" ") || "").trim();
+    if (!content) {
+      return reply(message, client, "Warn", "Il motivo è obbligatorio per il warn. Uso: `+warn [utente] [motivo]`", "Red");
     }
-    const content = reasonFrom(args, 1);
-    await makeCase(client, message, "WARN", userId, content);
+    const reasonContent = content.slice(0, 512);
+    await makeCase(client, message, "WARN", userId, reasonContent);
     await sendModerationDm({
       user,
+      guildId: message.guild.id,
       guildName: message.guild.name,
       action: "warn",
-      reason: content,
+      reason: reasonContent,
     });
     const targetUser = await message.client.users.fetch(userId).catch(() => null);
     const label = formatTargetLabel(targetUser || { id: userId });
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${label}_** ha ricevuto un warn.`),
-        ],
-      })
-      .catch(() => null);
+    return successReply(message, label, "ha ricevuto un warn", reasonContent);
   }
 
   if (cmd === "warnings") {
@@ -841,6 +802,32 @@ async function runNamed(name, message, args, client) {
     closeCase(row, `Avviso rimosso da ${message.author.id}`);
     await row.save().catch(() => null);
     const targetUser = await message.client.users.fetch(target.userId).catch(() => null);
+    await sendModerationDm({
+      user: targetUser,
+      guildId: message.guild.id,
+      guildName: message.guild.name,
+      action: "delwarn",
+      reason: warningText,
+    }).catch(() => null);
+    const modLogChannel = await resolveModLogChannel(message.guild);
+    if (modLogChannel?.isTextBased?.()) {
+      const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
+      const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
+      const warnRemovedEmbed = new EmbedBuilder()
+        .setColor("#57F287")
+        .setTitle("Warning Removed")
+        .setDescription(
+          [
+            `<:VC_right_arrow:1473441155055096081> **Warning for** ${targetLabel} **has been removed**`,
+            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleLabel}`,
+            `<:VC_right_arrow:1473441155055096081> <t:${Math.floor(Date.now() / 1000)}:F>`,
+            `<:VC_right_arrow:1473441155055096081> **Warning text:** ${(warningText || "").slice(0, 200)}${(warningText || "").length > 200 ? "…" : ""}`,
+          ].join("\n"),
+        )
+        .setFooter({ text: `ID: ${target.userId}` })
+        .setTimestamp();
+      await modLogChannel.send({ embeds: [warnRemovedEmbed] }).catch(() => null);
+    }
     return message.channel
       .send({
         embeds: [
@@ -959,6 +946,11 @@ async function runNamed(name, message, args, client) {
       appendCaseEdit(row, "reason", row.reason, nextReason, message.author.id);
       row.reason = nextReason;
       await row.save().catch(() => null);
+      await sendStaffActionToModLogs(message.guild, row, {
+        actionLabel: "Reason Updated",
+        moderatorId: message.author.id,
+        reasonOverride: nextReason,
+      }).catch(() => null);
       return message.channel
         .send({
           embeds: [
@@ -1022,6 +1014,11 @@ async function runNamed(name, message, args, client) {
     row.expiresAt = new Date(Date.now() + duration);
     row.active = true;
     await row.save().catch(() => null);
+    await sendStaffActionToModLogs(message.guild, row, {
+      actionLabel: "Duration Updated",
+      moderatorId: message.author.id,
+      extraFields: [{ name: "New duration", value: formatDuration(row.durationMs), inline: true }],
+    }).catch(() => null);
     if (String(row.action || "").toUpperCase() === "MUTE") {
       const member = await message.guild.members.fetch(String(row.userId || "")).catch(() => null);
       if (member) {

@@ -10,6 +10,7 @@ const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
 } = require("./securityProfilesService");
+const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const HIGH_STAFF_ROLE_ID = String(IDs.roles?.HighStaff || "");
@@ -953,6 +954,34 @@ async function applyPunishment(member, reasons) {
       appliedAction = "log";
     }
   }
+
+  if (punished && appliedAction !== "log" && guild?.client) {
+    const caseReason = `Join Raid: ${reasons.map((r) => r.label || r).join(", ") || "flagged account during raid window"}`;
+    const caseDurationMs =
+      appliedAction === "timeout"
+        ? Math.max(10 * 60_000, JOIN_RAID_CONFIG.raidDurationMs)
+        : appliedAction === "ban"
+          ? JOIN_RAID_CONFIG.raidDurationMs
+          : null;
+    const modAction =
+      appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
+    try {
+      const config = await getModConfig(guild.id);
+      const { doc } = await createModCase({
+        guildId: guild.id,
+        action: modAction,
+        userId: member.id,
+        modId: guild.client.user.id,
+        reason: caseReason,
+        durationMs: caseDurationMs,
+        context: {},
+      });
+      await logModCase({ client: guild.client, guild, modCase: doc, config });
+    } catch (e) {
+      global.logger?.warn?.("[joinRaid] ModCase creation failed:", guild.id, member.id, e?.message || e);
+    }
+  }
+
   const dmSent =
     punished && appliedAction !== "log"
       ? await sendPunishDm(member, appliedAction, reasons)

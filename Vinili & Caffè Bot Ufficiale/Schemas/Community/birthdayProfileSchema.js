@@ -9,6 +9,8 @@ const birthdayProfileSchema = new Schema(
     birthYear: { type: Number, required: true, min: 1900, max: 3000 },
     showAge: { type: Boolean, default: true },
     lastCelebratedYear: { type: Number, default: null },
+    registrationMessageId: { type: String, default: null },
+    registrationChannelId: { type: String, default: null },
   },
   { timestamps: true },
 );

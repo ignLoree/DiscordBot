@@ -46,20 +46,23 @@ module.exports = {
 
       const responsible = formatResponsible(executor);
 
+      const targetLabel = ban.user ? `${ban.user}` : "sconosciuto";
       const embed = new EmbedBuilder()
         .setColor("#57F287")
-        .setTitle("Member Unbanned")
+        .setTitle("Ban Removed")
         .setDescription(
           [
+            `${ARROW} **Ban for** ${targetLabel} **has been removed**`,
             `${ARROW} **Responsible:** ${responsible}`,
-            `${ARROW} **Target:** ${ban.user || "sconosciuto"} \`${targetId}\``,
             `${ARROW} ${nowDiscordTs()}`,
             reason ? `${ARROW} **Reason:** ${reason}` : null,
             ...buildAuditExtraLines(auditEntry, ["reason"]),
           ]
             .filter(Boolean)
             .join("\n"),
-        );
+        )
+        .setFooter({ text: `ID: ${targetId}` })
+        .setTimestamp();
 
       await logChannel.send({ embeds: [embed] }).catch(() => null);
     } catch (error) {

@@ -8,6 +8,7 @@ const {
 } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
+const { sendDm } = require("../../Utils/noDmList");
 
 const HANDLED_TICKET_BUTTONS = new Set([
   "ticket_partnership",
@@ -235,9 +236,14 @@ async function pinFirstTicketMessage(channel, message) {
     payload,
     hasHtml,
     extraRows = [],
+    options = {},
   ) {
     if (!target?.send) return null;
-    const sent = await target.send(payload).catch(() => null);
+    const { guildId, bypassNoDm } = options;
+    const isUserDm = Boolean(bypassNoDm && guildId && (target.user || target.id));
+    const sent = isUserDm
+      ? await sendDm(target.user || target, payload, { guildId, bypassNoDm: true })
+      : await target.send(payload).catch(() => null);
     if (!sent) return sent;
     const safeExtraRows = Array.isArray(extraRows)
       ? extraRows.filter(Boolean)
@@ -504,7 +510,7 @@ async function pinFirstTicketMessage(channel, message) {
               "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
             )
             .setDescription(
-              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Scrivi direttamente qui tutti i dettagli utili della partnership.`,
+              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione `,
             )
             .setColor("#6f4e37"),
         },
@@ -2137,6 +2143,7 @@ async function pinFirstTicketMessage(channel, message) {
             },
             false,
             dmActionRows,
+            { guildId: targetInteraction.guild.id, bypassNoDm: true },
           );
         } catch (err) {
           if (err.code !== 50007) {
