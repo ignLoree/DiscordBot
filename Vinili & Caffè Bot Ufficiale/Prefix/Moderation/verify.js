@@ -257,6 +257,18 @@ module.exports = {
             } catch (dbErr) {
               global.logger?.warn?.("[+verify] upsertVerifiedMember/applyTenureForMember:", dbErr);
             }
+            const serverName = guild?.name || "this server";
+            await targetMember.send({
+              content: "<:vegacheckmark:1443666279058772028> Verification done.",
+              embeds: [
+                new EmbedBuilder()
+                  .setColor("#57f287")
+                  .setTitle("**You have been verified!**")
+                  .setDescription(
+                    `<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\``,
+                  ),
+              ],
+            }).catch(() => {});
           } else {
             fail.push(displayName);
           }
@@ -275,7 +287,7 @@ module.exports = {
         const targetList = success.join(", ");
         const logEmbed = new EmbedBuilder()
           .setColor("#6f4e37")
-          .setTitle("Verifica manuale (Staff)")
+          .setTitle("Verifica manuale")
           .setDescription(
             `<:profile:1461732907508039834> **Staff:** ${staffMention}\n` +
               `<:success:1461731530333229226> **Verificati:** ${targetList}\n` +
