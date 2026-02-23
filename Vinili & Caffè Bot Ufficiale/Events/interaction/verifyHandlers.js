@@ -69,6 +69,15 @@ function makeWrongAnswerEmbed() {
     );
 }
 
+function makeTooManyAttemptsEmbed() {
+  return new EmbedBuilder()
+    .setColor("Red")
+    .setTitle("<:cancel:1461730653677551691> Unsuccessful Operation!")
+    .setDescription(
+      "<:space:1461733157840621608> <:rightSort:1461726104422453298> Too many wrong attempts. Press **Verify** to start again.",
+    );
+}
+
 function makeVerifyStartRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -322,6 +331,38 @@ async function finalizeVerification(interaction, member) {
   const guild = interaction.guild;
   const guildId = guild?.id;
 
+  if (!guild || !guildId) {
+    await safeReply(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setColor("Red")
+          .setDescription(
+            "<:vegax:1443934876440068179> Verifica disponibile solo nei server.",
+          ),
+      ],
+      flags: 1 << 6,
+    }).catch(() => {});
+    return true;
+  }
+
+  const freshMember =
+    member?.id &&
+    (await guild.members.fetch(member.id).catch(() => null));
+  const targetMember = freshMember || member;
+  if (!targetMember?.roles?.cache) {
+    await safeReply(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setColor("Red")
+          .setDescription(
+            "<:vegax:1443934876440068179> Impossibile caricare il membro. Riprova.",
+          ),
+      ],
+      flags: 1 << 6,
+    }).catch(() => {});
+    return true;
+  }
+
   const validRoleIds = await resolveValidVerifyRoleIds(guild);
   if (!validRoleIds.length) {
     await safeReply(interaction, {
@@ -337,21 +378,31 @@ async function finalizeVerification(interaction, member) {
     return true;
   }
 
-  const rolesToAdd = validRoleIds.filter((id) => !member.roles.cache.has(id));
+  const rolesToAdd = validRoleIds.filter(
+    (id) => !targetMember.roles.cache.has(id),
+  );
   await safeDeferReply(interaction, { flags: 1 << 6 });
 
   if (rolesToAdd.length > 0) {
-    await member.roles.add(rolesToAdd).catch((err) => {
+    await targetMember.roles.add(rolesToAdd).catch((err) => {
       global.logger?.error?.("[VERIFY] Failed to add roles:", err);
     });
   }
 
   try {
-    const record = await upsertVerifiedMember(guildId, member.id, new Date());
-    await applyTenureForMember(member, record);
-  } catch {}
+    const record = await upsertVerifiedMember(
+      guildId,
+      targetMember.id,
+      new Date(),
+    );
+    await applyTenureForMember(targetMember, record);
+  } catch (err) {
+    global.logger?.warn?.("[VERIFY] upsertVerifiedMember/applyTenureForMember:", err);
+  }
 
-  const logChannel = guild?.channels?.cache?.get(VERIFY_LOG_CHANNEL_ID);
+  const logChannel =
+    guild?.channels?.cache?.get(VERIFY_LOG_CHANNEL_ID) ||
+    (await guild.channels.fetch(VERIFY_LOG_CHANNEL_ID).catch(() => null));
   if (logChannel) {
     const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
     const createdAtText = `<t:${createdAtUnix}:F>`;
@@ -369,10 +420,18 @@ async function finalizeVerification(interaction, member) {
       )
       .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
 
-    await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
+    await logChannel.send({ embeds: [logEmbed] }).catch((err) => {
+      global.logger?.warn?.("[VERIFY] Failed to send verification log:", err);
+    });
+  } else if (VERIFY_LOG_CHANNEL_ID) {
+    global.logger?.warn?.("[VERIFY] Log channel not found:", VERIFY_LOG_CHANNEL_ID);
   }
 
-  const pingChannel = guild?.channels?.cache?.get(VERIFY_PING_CHANNEL_ID);
+  const pingChannel =
+    guild?.channels?.cache?.get(VERIFY_PING_CHANNEL_ID) ||
+    (VERIFY_PING_CHANNEL_ID
+      ? await guild.channels.fetch(VERIFY_PING_CHANNEL_ID).catch(() => null)
+      : null);
   if (pingChannel) {
     const pingMsg = await pingChannel
       .send({ content: `<@${interaction.user.id}>` })
@@ -545,9 +604,24 @@ async function handleVerifyInteraction(interaction) {
       return true;
     }
 
-    const inputCode = interaction.fields
-      .getTextInputValue("verify_input")
-      .trim();
+    let inputCode = "";
+    try {
+      inputCode = String(
+        interaction.fields.getTextInputValue("verify_input") ?? "",
+      ).trim();
+    } catch {
+      await safeReply(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Risposta non valida. Riprova con **Verify**.",
+            ),
+        ],
+        flags: 1 << 6,
+      }).catch(() => {});
+      return true;
+    }
     if (inputCode.toLowerCase() !== state.code.toLowerCase()) {
       state.attemptsLeft -= 1;
       if (state.attemptsLeft <= 0) {
@@ -556,14 +630,14 @@ async function handleVerifyInteraction(interaction) {
         if (state?.promptMessage) {
           await state.promptMessage
             .edit({
-              embeds: [makeExpiredEmbed()],
+              embeds: [makeTooManyAttemptsEmbed()],
               components: [retryRow],
               files: [],
             })
             .catch(() => {});
         }
         await safeReply(interaction, {
-          embeds: [makeExpiredEmbed()],
+          embeds: [makeTooManyAttemptsEmbed()],
           components: [makeVerifyStartRow()],
           flags: 1 << 6,
         });
