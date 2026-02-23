@@ -107,7 +107,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   top: "Mostra la top completa utenti/canali (testo+vocale) con canvas, refresh e periodo.",
   rank: "Mostra livello, exp e posizione in classifica di un utente.",
   birthday:
-    "Gestisce il tuo profilo compleanno (data, età e privacy) con pannello interattivo.",
+    "Imposta o modifica la tua data di compleanno, età e privacy; il bot può augurare buon compleanno nel server.",
   "dm-disable":
     "Disattiva i DM automatici del bot dopo una conferma tramite pulsanti.",
   embed:
@@ -115,8 +115,8 @@ const PREFIX_HELP_DESCRIPTIONS = {
   info:
     "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",
   reaction:
-    "Gestisce reaction menzioni e autoresponder con parole/frasi trigger.",
-  description: "Manda la descrizione del server direttamente nel ticket.",
+    "Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",
+  description: "Invia nel ticket la descrizione ufficiale del server (per supporto).",
   addlevel: "Aggiunge livelli/exp a un utente.",
   "no-dm-list": "Mostra la lista utenti con blocco DM attivo.",
   purge: "Elimina messaggi da un canale.",
@@ -139,22 +139,28 @@ const PREFIX_HELP_DESCRIPTIONS = {
   recensione: "Premia una recensione assegnando livelli.",
   removelevel: "Rimuove livelli/exp da un utente.",
   reviewlock: "Blocca o sblocca premio recensione per un utente.",
-  ticket: "Gestisce i ticket.",
-  verify: "Gestisce il flusso di verifica utenti.",
+  ticket:
+    "Apre, chiude e gestisce i ticket di supporto: aggiungi utenti, rinomina, cambia pannello, claim/unclaim.",
+  verify:
+    "Avvia o gestisce la verifica nuovi utenti (join gate, approvazione manuale, stato verifica).",
   restart:
     "Riavvia il bot o ricarica moduli specifici (handlers, commands, prefix, events, triggers, services, utils, schemas).",
-  perm: "Gestisce permessi temporanei e whitelist canali per comando.",
-  temprole: "Gestisce assegnazioni di ruoli temporanei ad utenti.",
+  perm:
+    "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
+  temprole:
+    "Assegna o rimuove ruoli temporanei agli utenti (es. ruolo “in prova” con scadenza).",
   smartembed: "Crea un embed intelligente spostando i ping fuori dall'embed.",
   customregister: "Registra retroattivamente custom role/vocale già esistenti.",
   security:
     "Hub sicurezza unificato: status, health, drill, backup, profiles, joingate, raid, panic, antinuke e automod.",
   statics:
-    "Gestisce statics di sicurezza (ruoli, canali e utenti) con pannello e operazioni add/remove/set.",
-  status: "Mostra lo stato tecnico del sistema sicurezza (healthcheck rapido).",
+    "Configura ruoli, canali e utenti “statici” per la sicurezza (pannello add/remove/set).",
+  status:
+    "Mostra healthcheck del sistema sicurezza: lock, join gate, stato servizi.",
   level:
-    "Gestisce il sistema livelli: set, add, remove, reset, lock, unlock, multiplier, gmulti, ignore, unignore, config.",
-  customrole: "Gestisce il custom role: create, modify, add, remove.",
+    "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
+  customrole:
+    "Crea o modifica il tuo ruolo personalizzato (nome/colore) e gestisci chi può usarlo (add/remove).",
   customvoc:
     "Crea e gestisce la tua vocale privata (anche temporanea: es. `+customvoc 2w`).",
   quote: "Genera una quote grafica da un messaggio.",
@@ -174,18 +180,23 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "security.status": "Mostra stato sicurezza aggregato (join lock/command lock).",
   "security.health": "Mostra healthcheck tecnico: DB, scheduler, uptime, lock.",
   "security.drill": "Esegue una simulazione lockdown senza applicare modifiche.",
-  "security.backup": "Gestisce backup e restore della configurazione sicurezza.",
+  "security.backup":
+    "Salva o ripristina la configurazione sicurezza (backup/restore).",
   "security.profiles":
-    "Gestisce i profili Trusted Admins, Extra Owners e Admins (HighStaff).",
+    "Configura i profili Trusted Admins, Extra Owners e Admins (HighStaff) per AntiNuke.",
   "security.joingate": "Mostra stato protezioni Join Gate e collegamenti sicurezza.",
   "security.raid": "Inoltra ai controlli Join Raid (stato/preset) via AntiNuke.",
   "security.panic": "Inoltra ai controlli Panic Mode AntiNuke.",
-  "security.maintenance": "Gestisce allowlist maintenance AntiNuke.",
-  "security.preset": "Gestisce preset AntiNuke/raid dal pannello security.",
-  "security.antinuke": "Gestisce il modulo AntiNuke da Security.",
-  "security.automod": "Gestisce il modulo AutoMod da Security.",
+  "security.maintenance":
+    "Aggiunge o rimuove utenti/canali dalla allowlist durante la manutenzione.",
+  "security.preset":
+    "Imposta o cambia i preset AntiNuke/raid dal pannello security.",
+  "security.antinuke":
+    "Attiva o configura il modulo AntiNuke (ban/kick automatici su azioni pericolose).",
+  "security.automod":
+    "Attiva o configura il modulo AutoMod (filtri automatici su messaggi e utenti).",
   "security.joinraid":
-    "Gestisce stato e preset del modulo Join Raid (safe/balanced/strict).",
+    "Imposta stato e preset del Join Raid: safe, balanced o strict.",
   "security.help":
     "Mostra la guida rapida dei subcommand disponibili nel Security Hub.",
   "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
@@ -240,9 +251,9 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "perm.channel-clear": "Rimuove la restrizione canali di un comando.",
   "perm.channel-list": "Mostra le whitelist canali configurate.",
   "reaction.mention":
-    "Gestisce reaction automatiche quando vieni menzionato (show/set/add/remove/clear).",
+    "Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona (set/add/remove/clear).",
   "reaction.auto":
-    "Gestisce regole autoresponder testuali con risposta e reaction opzionali.",
+    "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.",
   "reaction.help":
     "Mostra la guida completa del comando reaction e dei suoi moduli.",
   "restart.full":
@@ -363,7 +374,7 @@ function getPrefixDescription(command) {
   if (PREFIX_HELP_DESCRIPTIONS[commandName]) {
     return PREFIX_HELP_DESCRIPTIONS[commandName];
   }
-  return "Comando prefix.";
+  return "Descrizione non disponibile.";
 }
 
 function prettifySubcommandName(name) {
@@ -394,38 +405,7 @@ function getPrefixSubcommandDescription(command, subcommandName) {
   if (PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key]) {
     return PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS[key];
   }
-  const sub = String(subcommandName || "").toLowerCase();
-  const verbDescriptions = {
-    add: "Aggiunge un elemento o un valore.",
-    remove: "Rimuove un elemento o un valore.",
-    list: "Mostra la lista degli elementi disponibili.",
-    clear: "Pulisce o resetta i dati della sezione.",
-    set: "Imposta un valore specifico.",
-    get: "Recupera e mostra i dati richiesti.",
-    create: "Crea una nuova configurazione o risorsa.",
-    delete: "Elimina una risorsa esistente.",
-    edit: "Modifica una configurazione esistente.",
-    update: "Aggiorna lo stato o i dati correnti.",
-    enable: "Attiva la funzionalita richiesta.",
-    disable: "Disattiva la funzionalita richiesta.",
-    lock: "Blocca la funzione indicata.",
-    unlock: "Sblocca la funzione indicata.",
-    claim: "Assegna a te la gestione dell'elemento.",
-    unclaim: "Rilascia la gestione dell'elemento.",
-    close: "Chiude l'elemento corrente.",
-    closerequest: "Invia una richiesta di chiusura.",
-    rename: "Rinomina l'elemento corrente.",
-    switchpanel: "Sposta su un pannello differente.",
-    grant: "Assegna permessi o risorse.",
-    revoke: "Revoca permessi o risorse.",
-    ignore: "Esclude dal comportamento previsto.",
-    unignore: "Rimuove l'esclusione precedente.",
-    multiplier: "Imposta un moltiplicatore temporaneo.",
-    config: "Mostra o modifica la configurazione.",
-  };
-  if (verbDescriptions[sub]) return verbDescriptions[sub];
-  const pretty = prettifySubcommandName(subcommandName);
-  return `Gestisce l'opzione \`${pretty}\` del comando \`+${String(commandName || "").toLowerCase()}\`.`;
+  return "Descrizione non disponibile.";
 }
 
 function getPrefixBase(command) {
@@ -649,23 +629,27 @@ function buildEntries(client, permissions) {
       roles: commandRoles,
     };
 
-    const subcommands = extractPrefixSubcommands(command);
     const canonicalSubs = Array.isArray(command?.subcommands)
-      ? command.subcommands
-          .map((s) => String(s || "").trim().toLowerCase())
-          .filter(Boolean)
+      ? Array.from(
+          new Set(
+            command.subcommands
+              .map((s) => String(s || "").trim().toLowerCase())
+              .filter(Boolean),
+          ),
+        )
       : [];
-    const uniqueCanonicalSubs = Array.from(new Set(canonicalSubs.length ? canonicalSubs : subcommands));
-    if (uniqueCanonicalSubs.length) {
-      const subList = uniqueCanonicalSubs.join(", ");
-      const subDesc = ` Subcomandi: \`${subList}\`. Usa \`+help ${command.name}\` per i dettagli.`;
-      entries.push({
-        ...base,
-        invoke: `${prefixBase}${command.name}`,
-        description: (base.description || "").replace(/\s*$/, "") + subDesc,
-        _hasSubcommands: true,
-        _subcommands: uniqueCanonicalSubs,
-      });
+    if (canonicalSubs.length) {
+      for (const sub of canonicalSubs) {
+        entries.push({
+          ...base,
+          invoke: `${prefixBase}${command.name} ${sub}`,
+          description: getPrefixSubcommandDescription(command, sub),
+          roles: Array.isArray(subcommandRoles[sub])
+            ? subcommandRoles[sub]
+            : commandRoles,
+          aliases: [],
+        });
+      }
     } else {
       entries.push({
         ...base,
@@ -693,27 +677,15 @@ function buildEntries(client, permissions) {
 
     const roles = normalizePermissionRoles(perm);
     if (hasSubcommands) {
-      const subNames = [];
-      for (const opt of dataJson.options || []) {
-        if (opt?.type === 1 && opt?.name) subNames.push(opt.name);
-        if (opt?.type === 2 && Array.isArray(opt.options)) {
-          for (const sub of opt.options) {
-            if (sub?.type === 1 && sub?.name) subNames.push(`${opt.name} ${sub.name}`);
-          }
-        }
-      }
-      const subList = subNames.length ? subNames.join(", ") : "";
-      const topDesc = getSlashTopLevelDescription(dataJson);
-      const desc = subList
-        ? `${topDesc} Subcomandi: \`${subList}\`. Usa \`+help ${dataJson.name}\` per i dettagli.`
-        : topDesc;
-      entries.push({
-        invoke: `/${dataJson.name}`,
-        type: "slash",
-        description: desc,
-        category,
-        roles,
-      });
+      entries.push(
+        ...getSubcommandEntries(
+          dataJson.name,
+          dataJson,
+          perm,
+          commandType,
+          category,
+        ),
+      );
       continue;
     }
 
@@ -1150,21 +1122,15 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
   }
 
   const usageLines = [];
-  const hasSubcommands =
-    visibleForCommand.some((e) => e._hasSubcommands) ||
-    (Array.isArray(command?.subcommands) && command.subcommands.length > 0);
-  const allSubs = hasSubcommands
-    ? listPrefixSubcommandsForCommand(command, commandName, permissions)
-    : Array.from(
-        new Set(
-          visibleForCommand
-            .map(
-              (entry) =>
-                normalizeInvokeLookup(entry.invoke).split(" ")[1] || null,
-            )
-            .filter(Boolean),
-        ),
-      );
+  const allSubs = Array.from(
+    new Set(
+      visibleForCommand
+        .map(
+          (entry) => normalizeInvokeLookup(entry.invoke).split(" ")[1] || null,
+        )
+        .filter(Boolean),
+    ),
+  );
   if (allSubs.length) {
     usageLines.push(`\`${prefixBase}${commandName} <subcommand>\``);
   } else {
@@ -1201,56 +1167,41 @@ function buildPrefixDetailedHelpEmbed(query, entries, context = {}) {
 
   const subLines = [];
   const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
-  const subsToShow =
-    hasSubcommands && allSubs.length
-      ? requestedSub
-        ? allSubs.filter((s) => s === requestedSub)
-        : allSubs
-      : [];
-  for (const subName of subsToShow) {
-    const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
-      ? permConfig.subcommands[subName]
-      : permConfig.roles;
-    const aliasesForSub = extractDirectAliasesForSubcommand(command, subName);
-    subLines.push(
-      `- \`${prefixBase}${commandName} ${subName}\` - ${getPrefixSubcommandDescription(command, subName)}`,
-    );
-    if (aliasesForSub.length) {
-      subLines.push(
-        `  Alias: ${aliasesForSub.map((alias) => `\`${prefixBase}${commandName} ${alias}\``).join(", ")}`,
-      );
-    }
-    subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
-  }
   for (const entry of subEntries) {
     const subName = normalizeInvokeLookup(entry.invoke).split(" ")[1];
-    if (subsToShow.includes(subName)) continue;
     const subRoleIds = Array.isArray(permConfig.subcommands?.[subName])
       ? permConfig.subcommands[subName]
       : permConfig.roles;
-    const aliasesForSub = extractDirectAliasesForSubcommand(command, subName);
     subLines.push(
       `- \`${prefixBase}${commandName} ${subName}\` - ${entry.description}`,
     );
-    if (aliasesForSub.length) {
-      subLines.push(
-        `  Alias: ${aliasesForSub.map((alias) => `\`${prefixBase}${commandName} ${alias}\``).join(", ")}`,
-      );
-    }
     subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
   }
+  if (requestedSub && !subLines.length) {
+    const allKnownSubs = listPrefixSubcommandsForCommand(
+      command,
+      commandName,
+      permissions,
+    );
+    for (const sub of allKnownSubs) {
+      const invoke = `${prefixBase}${commandName} ${sub}`;
+      const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+      const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
+      const subRoleIds = Array.isArray(permConfig.subcommands?.[sub])
+        ? permConfig.subcommands[sub]
+        : permConfig.roles;
+      subLines.push(
+        `- \`${invoke}\` - ${getPrefixSubcommandDescription(command, sub)}${lock}`,
+      );
+      subLines.push(`  Ruoli: ${formatRoleMentions(subRoleIds)}`);
+    }
+  }
 
-  const subInvokesForExamples =
-    subsToShow.length > 0
-      ? subsToShow.map((sub) => ({
-          invoke: `${prefixBase}${commandName} ${sub}`,
-        }))
-      : subEntries.map((entry) => ({ invoke: entry.invoke }));
   const snippetLines = collectPrefixExampleLines(
     command,
     commandName,
     prefixBase,
-    subInvokesForExamples,
+    subEntries.map((entry) => ({ invoke: entry.invoke })),
     requestedSub,
   );
 
