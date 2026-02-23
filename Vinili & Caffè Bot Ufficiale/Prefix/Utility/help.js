@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   [IDs.roles.Staff]: "Comandi Staff",
   [IDs.roles.HighStaff]: "Comandi High Staff",
   [IDs.roles.Founder]: "Comandi Dev",
+  all: "Comandi Disponibili",
 };
 const CATEGORY_LABELS = {
   utility: "Utility",
@@ -812,12 +813,57 @@ function filterByPage(entries, pageRoleId, memberRoles) {
   );
 }
 
+function canMemberSeeEntry(entry, memberRoles) {
+  const roles = entry?.roles;
+  if (!Array.isArray(roles) || roles.length === 0) return true;
+  return hasAnyRole(memberRoles, roles);
+}
+
 function chunkEntries(entries, size) {
   const chunks = [];
   for (let i = 0; i < entries.length; i += size) {
     chunks.push(entries.slice(i, i + size));
   }
   return chunks.length ? chunks : [[]];
+}
+
+function chunkEntriesByCategory(entries, maxPerPage) {
+  if (!entries.length) return [];
+  const byCategory = new Map();
+  for (const entry of entries) {
+    const key = String(entry?.category || "misc").toLowerCase();
+    if (key === "misc") continue;
+    if (!byCategory.has(key)) byCategory.set(key, []);
+    byCategory.get(key).push(entry);
+  }
+  const orderedCategories = Array.from(byCategory.keys()).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    const safeA = ai === -1 ? CATEGORY_ORDER.length : ai;
+    const safeB = bi === -1 ? CATEGORY_ORDER.length : bi;
+    return safeA - safeB;
+  });
+  const chunks = [];
+  let currentPage = [];
+  for (const cat of orderedCategories) {
+    const catEntries = (byCategory.get(cat) || []).slice().sort((a, b) =>
+      String(a.invoke || "").localeCompare(String(b.invoke || ""), "it"),
+    );
+    if (!catEntries.length) continue;
+    if (currentPage.length + catEntries.length <= maxPerPage) {
+      currentPage.push(...catEntries);
+    } else {
+      if (currentPage.length) chunks.push(currentPage);
+      currentPage = [];
+      if (catEntries.length <= maxPerPage) {
+        currentPage = catEntries;
+      } else {
+        chunks.push(catEntries);
+      }
+    }
+  }
+  if (currentPage.length) chunks.push(currentPage);
+  return chunks.length ? chunks : [];
 }
 
 function renderPageText(page) {
@@ -1741,16 +1787,13 @@ module.exports = {
     ) {
       rolePages.push(IDs.roles.Staff);
     }
-    const visibleRoleIds = ["utente", ...rolePages];
-    const visibleEntries = dedupeAndSortEntries(
-      visibleRoleIds.flatMap((roleId) =>
-        filterByPage(allEntries, roleId, memberRoles),
-      ),
+    const visibleEntriesForQuery = dedupeAndSortEntries(
+      allEntries.filter((entry) => canMemberSeeEntry(entry, memberRoles)),
     );
 
     const query = Array.isArray(args) ? args.join(" ").trim() : "";
     if (query.length) {
-      const embed = buildMiniHelpEmbed(query, visibleEntries, {
+      const embed = buildMiniHelpEmbed(query, visibleEntriesForQuery, {
         client,
         permissions,
       });
@@ -1761,21 +1804,17 @@ module.exports = {
       return;
     }
 
-    const groupedPages = [];
-    for (const roleId of visibleRoleIds) {
-      const entriesForRole = filterByPage(allEntries, roleId, memberRoles);
-      const sortedForRole = dedupeAndSortEntries(entriesForRole);
-      const chunks = chunkEntries(sortedForRole, HELP_PAGE_SIZE);
-      const roleLabel = PAGE_TITLES[roleId] || "Comandi";
-      for (let i = 0; i < chunks.length; i++) {
-        groupedPages.push({
-          roleId,
-          items: chunks[i],
-          indexLabel: "", // set below after we know total
-          groupLabel: roleLabel,
-        });
-      }
-    }
+    const allVisibleEntries = allEntries.filter((entry) =>
+      canMemberSeeEntry(entry, memberRoles),
+    );
+    const sortedVisible = dedupeAndSortEntries(allVisibleEntries);
+    const chunks = chunkEntriesByCategory(sortedVisible, HELP_PAGE_SIZE);
+    const groupedPages = chunks.map((items, idx) => ({
+      roleId: "all",
+      items,
+      indexLabel: "",
+      groupLabel: PAGE_TITLES.all || "Comandi Disponibili",
+    }));
     const totalPages = groupedPages.length;
     groupedPages.forEach((page, idx) => {
       page.indexLabel = `${idx + 1}/${totalPages}`;
