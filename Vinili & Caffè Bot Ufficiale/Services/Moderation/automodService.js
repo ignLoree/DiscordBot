@@ -2400,7 +2400,11 @@ async function detectViolations(message, state, profile) {
     }
   }
 
-  if (!spamWhitelisted && TEXT_RULES.characters.enabled) {
+  if (
+    !spamWhitelisted &&
+    TEXT_RULES.characters.enabled &&
+    !violations.some((v) => v.key === "suspicious_account")
+  ) {
     const { lower, upper, total } = countCaseCharacters(content);
     if (total >= TEXT_RULES.characters.minChars) {
       const upperRatio = total > 0 ? upper / total : 0;
@@ -3100,7 +3104,10 @@ async function runAutoModMessage(message) {
     };
   }
 
-  for (const v of violations) addHeat(state, v.heat);
+  // Una sola regola per messaggio: si aggiunge solo l'heat della prima violazione (nessuna somma).
+  const heatToAdd =
+    violations.length > 0 ? Number(violations[0]?.heat || 0) : 0;
+  if (heatToAdd > 0) addHeat(state, heatToAdd);
   await markBadUserTrigger(message, violations, state.heat);
 
   if (state.heat >= thresholds.timeout) {
