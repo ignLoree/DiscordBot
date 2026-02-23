@@ -13,11 +13,6 @@ module.exports = {
   aliases: ["blockav", "blockbn", "blockquotes"],
   allowEmptyArgs: true,
   subcommands: ["avatar", "banner", "quotes"],
-  subcommandAliases: {
-    blockav: "avatar",
-    blockbn: "banner",
-    blockquotes: "quotes",
-  },
 
   async execute(message, args = []) {
     if (!message.guild) return;

@@ -248,9 +248,6 @@ function buildDeniedEmbedFromGate(gate, kind) {
   if (!embed) {
     embed = buildGlobalPermissionDeniedEmbed(gate.requiredRoles || [], kind);
   }
-  if (typeof embed?.setImage === "function" && !embed?.data?.image?.url) {
-    embed.setImage(DIVIDER_URL);
-  }
   return embed;
 }
 
@@ -576,7 +573,7 @@ module.exports = {
       const originChannelId = parts[2] || null;
       const originMessageId = parts[3] || null;
       if (interaction.user.id !== targetId) {
-        const denied = new EmbedBuilder().setImage(DIVIDER_URL)
+        const denied = new EmbedBuilder()
           .setColor("#e74c3c")
           .setTitle("<:vegax:1443934876440068179> Accesso negato")
           .setDescription("Solo l'autore della citazione può rimuoverla.");

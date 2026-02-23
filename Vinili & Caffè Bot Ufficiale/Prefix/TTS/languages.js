@@ -3,7 +3,7 @@ const { TTS_LANGUAGE_LOCALES } = require("../../Services/TTS/ttsLanguages");
 
 module.exports = {
   name: "languages",
-  aliases: ["langs", "ttslanguages"],
+  aliases: ["langs"],
   allowEmptyArgs: true,
   async execute(message) {
     const formatted = TTS_LANGUAGE_LOCALES.map(

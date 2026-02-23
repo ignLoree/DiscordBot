@@ -11,10 +11,6 @@ const STAFF_REASON_INPUT_ID = "staff_reason";
 const DIVIDER_URL =
   "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
-function buildDividerEmbed() {
-  return new EmbedBuilder().setImage(DIVIDER_URL);
-}
-
 function hasSuggestionStaffAccess(interaction) {
   const highStaffRoleId = IDs?.roles?.HighStaff
     ? String(IDs.roles.HighStaff)
@@ -83,7 +79,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Suggerimento non trovato nel database.",
@@ -106,7 +102,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Messaggio suggerimento non disponibile.",
@@ -126,7 +122,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setColor("Red")
                 .setDescription(
                   "<:vegax:1443934876440068179> Questo controllo è riservato all'High Staff.",
@@ -145,7 +141,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setColor("Yellow")
                 .setDescription(
                   "<:attentionfromvega:1443651874032062505> Questo suggerimento è già stato gestito.",
@@ -183,7 +179,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setColor("Yellow")
                 .setDescription(
                   "<:attentionfromvega:1443651874032062505> Questo suggerimento è già stato gestito.",
@@ -198,7 +194,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setDescription(
                   "<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai già votato per questo suggerimento",
                 )
@@ -247,7 +243,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setColor("Yellow")
                 .setDescription(
                   "<:attentionfromvega:1443651874032062505> Questo suggerimento è già stato gestito.",
@@ -262,7 +258,7 @@ async function handleSuggestionVote(interaction) {
         await interaction
           .reply({
             embeds: [
-              buildDividerEmbed()
+              new EmbedBuilder()
                 .setDescription(
                   "<:vegax:1443934876440068179> Non puoi votare di nuovo! Hai già votato per questo suggerimento",
                 )
@@ -317,7 +313,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Questo modulo è riservato all'High Staff.",
@@ -334,7 +330,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Richiesta non valida.",
@@ -353,7 +349,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Devi inserire un motivo.",
@@ -373,7 +369,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Suggerimento non trovato.",
@@ -398,7 +394,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Red")
               .setDescription(
                 "<:vegax:1443934876440068179> Messaggio suggerimento non trovato.",
@@ -416,7 +412,7 @@ async function handleSuggestionVote(interaction) {
       await interaction
         .reply({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor("Yellow")
               .setDescription(
                 "<:attentionfromvega:1443651874032062505> Questo suggerimento è già stato gestito.",
@@ -429,7 +425,7 @@ async function handleSuggestionVote(interaction) {
     }
 
     const isAccept = action === "accept";
-    const resultEmbed = buildDividerEmbed()
+    const resultEmbed = new EmbedBuilder()
       .setColor(isAccept ? "Green" : "Red")
       .setTitle(
         isAccept
@@ -511,7 +507,7 @@ async function handleSuggestionVote(interaction) {
       await suggestionAuthor
         .send({
           embeds: [
-            buildDividerEmbed()
+            new EmbedBuilder()
               .setColor(isAccept ? "Green" : "Red")
               .setDescription(
                 isAccept
@@ -526,7 +522,7 @@ async function handleSuggestionVote(interaction) {
     await interaction
       .reply({
         embeds: [
-          buildDividerEmbed()
+          new EmbedBuilder()
             .setColor(isAccept ? "Green" : "Red")
             .setDescription(
               isAccept

@@ -1,6 +1,14 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const DEFAULT_FOOTER_TEXT = "© 2025 Vinili & Caffè. Tutti i diritti riservati.";
 const DEFAULT_COLOR = "#6f4e37";
+
+const ERROR_EMBED_COLORS = new Set([
+  0xed4245, 0xe74c3c, 0xbe3851, 0xff0000,
+]);
+const ERROR_TITLE_SUBSTRINGS = [
+  "errore", "error", "cooldown", "non hai i permessi", "accesso negato",
+  "argomenti mancanti", "comando in esecuzione", "comando scaduto",
+];
 
 function hexToInt(hex) {
   if (!hex) return null;
@@ -38,8 +46,21 @@ function getGuildIconUrl(guild) {
   } catch {}
   return null;
 }
+function isErrorEmbedInstance(embed) {
+  if (!embed) return false;
+  const color = embed.data?.color ?? embed.color;
+  if (color != null) {
+    const n = typeof color === "number" ? color : Number(color);
+    if (ERROR_EMBED_COLORS.has(n)) return true;
+  }
+  const title = (embed.data?.title ?? embed.title ?? "").toLowerCase();
+  if (ERROR_TITLE_SUBSTRINGS.some((s) => title.includes(s))) return true;
+  return false;
+}
+
 function applyDefaultFooter(embed, guild) {
   if (!embed) return embed;
+  if (isErrorEmbedInstance(embed)) return embed;
   const iconURL = getBotIconUrl(guild) || getGuildIconUrl(guild);
   if (typeof embed.setFooter === "function") {
     if (!hasFooter(embed)) {
@@ -81,11 +102,21 @@ function applyDefaultFooterToEmbeds(payload, guild) {
   };
 }
 
+function isErrorEmbed(data) {
+  if (!data || typeof data !== "object") return false;
+  const color = data.color != null ? Number(data.color) : null;
+  if (color != null && ERROR_EMBED_COLORS.has(color)) return true;
+  const title = (data.title ?? "").toLowerCase();
+  if (ERROR_TITLE_SUBSTRINGS.some((s) => title.includes(s))) return true;
+  return false;
+}
+
 function installEmbedFooterPatch() {
   if (EmbedBuilder.prototype.__defaultFooterPatched) return;
   const originalToJSON = EmbedBuilder.prototype.toJSON;
   EmbedBuilder.prototype.toJSON = function toJSONWithDefaultFooter(...args) {
     const data = originalToJSON.apply(this, args);
+    if (isErrorEmbed(data)) return data;
     const iconURL = getGlobalBotIconUrl();
     if (!data.footer) {
       data.footer = { text: DEFAULT_FOOTER_TEXT };

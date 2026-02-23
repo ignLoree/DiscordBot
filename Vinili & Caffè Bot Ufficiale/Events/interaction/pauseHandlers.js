@@ -290,6 +290,9 @@ async function handlePauseButton(interaction) {
   const isHighStaff = Boolean(
     interaction.member?.roles?.cache?.has(IDs.roles.HighStaff),
   );
+  const isStaff = Boolean(
+    interaction.member?.roles?.cache?.has(IDs.roles.Staff),
+  );
   if (
     (action === "pause_accept" ||
       action === "pause_reject" ||
@@ -308,6 +311,7 @@ async function handlePauseButton(interaction) {
   if (
     action === "pause_list" &&
     !isHighStaff &&
+    !isStaff &&
     interaction.user.id !== userId
   ) {
     await interaction

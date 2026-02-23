@@ -801,15 +801,24 @@ function renderPageText(page) {
     const rows = categoryEntries.map((entry) => {
       const invokeNorm = normalizeInvokeLookup(entry.invoke);
       const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+";
-      const aliasList = Array.isArray(entry.aliases) && entry.aliases.length
+      let aliasList = Array.isArray(entry.aliases) && entry.aliases.length
         ? entry.aliases
             .map((a) => String(a || "").trim())
             .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
-        : Array.isArray(entry.subAliases) && entry.subAliases.length
-          ? entry.subAliases
-              .map((a) => String(a || "").trim())
-              .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
-          : [];
+        : [];
+      const isTicketCommand = invokeNorm.startsWith("ticket") || String(entry.invoke || "").toLowerCase().startsWith("+ticket");
+      if (isTicketCommand && Array.isArray(entry.subAliases) && entry.subAliases.length) {
+        const existingNorm = new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, ""))));
+        for (const a of entry.subAliases) {
+          const s = String(a || "").trim();
+          if (!s) continue;
+          const norm = normalizeInvokeLookup(prefixForAlias + s.replace(/^[/+]+/, ""));
+          if (norm !== invokeNorm && !existingNorm.has(norm)) {
+            existingNorm.add(norm);
+            aliasList.push(s);
+          }
+        }
+      }
       const aliasPart = aliasList.length
         ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ")
         : "";
@@ -828,7 +837,8 @@ function renderPageText(page) {
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
 
-  return page.items.length
+  const MAX_DISPLAY_LENGTH = 3900;
+  const raw = page.items.length
     ? [
       "## Comandi Disponibili",
       "",
@@ -843,6 +853,9 @@ function renderPageText(page) {
       `**Pagina ${page.indexLabel}**`,
     ].join("\n")
     : "<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.";
+  return raw.length > MAX_DISPLAY_LENGTH
+    ? raw.slice(0, MAX_DISPLAY_LENGTH - 20) + "\n\n...(testo troncato)"
+    : raw;
 }
 
 function buildNavigationRow(state) {
@@ -1682,15 +1695,24 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
     const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || "Misc";
     const invokeNorm = normalizeInvokeLookup(entry.invoke);
     const prefixForAlias = entry.prefixBase != null ? String(entry.prefixBase) : "+";
-    const aliasList = Array.isArray(entry.aliases) && entry.aliases.length
+    let aliasList = Array.isArray(entry.aliases) && entry.aliases.length
       ? entry.aliases
           .map((a) => String(a || "").trim())
           .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
-      : Array.isArray(entry.subAliases) && entry.subAliases.length
-        ? entry.subAliases
-            .map((a) => String(a || "").trim())
-            .filter((a) => a && normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, "")) !== invokeNorm)
-        : [];
+      : [];
+    const isTicketCommand = invokeNorm.startsWith("ticket") || String(entry.invoke || "").toLowerCase().startsWith("+ticket");
+    if (isTicketCommand && Array.isArray(entry.subAliases) && entry.subAliases.length) {
+      const existingNorm = new Set(aliasList.map((a) => normalizeInvokeLookup(prefixForAlias + a.replace(/^[/+]+/, ""))));
+      for (const a of entry.subAliases) {
+        const s = String(a || "").trim();
+        if (!s) continue;
+        const norm = normalizeInvokeLookup(prefixForAlias + s.replace(/^[/+]+/, ""));
+        if (norm !== invokeNorm && !existingNorm.has(norm)) {
+          existingNorm.add(norm);
+          aliasList.push(s);
+        }
+      }
+    }
     const aliasPart = aliasList.length
       ? " | " + aliasList.map((a) => "`" + (a.startsWith("+") || a.startsWith("/") ? a : prefixForAlias + a) + "`").join(", ")
       : "";
@@ -1818,6 +1840,7 @@ module.exports = {
         return;
       }
 
+      const prevIndex = navState.currentIndex;
       if (
         interaction.customId === navState.prevId &&
         navState.currentIndex > 0
@@ -1831,11 +1854,15 @@ module.exports = {
       }
 
       const page = groupedPages[navState.currentIndex];
-      await interaction
+      const updated = await interaction
         .update({
           components: [buildHelpV2Container(page, navState)],
         })
-        .catch(() => { });
+        .then(() => true)
+        .catch(() => false);
+      if (!updated) {
+        navState.currentIndex = prevIndex;
+      }
     });
   },
 };

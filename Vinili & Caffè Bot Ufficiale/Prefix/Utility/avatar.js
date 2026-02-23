@@ -39,11 +39,6 @@ module.exports = {
   aliases: ["av"],
   allowEmptyArgs: true,
   subcommands: ["server", "user", "guild"],
-  subcommandAliases: {
-    server: "server",
-    user: "user",
-    guild: "guild",
-  },
 
   async execute(message, args) {
     if (!message.guild) {

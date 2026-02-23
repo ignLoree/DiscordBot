@@ -435,28 +435,6 @@ async function ensureTicketsCategory(guild) {
 
 module.exports = {
   name: "ticket",
-  aliases: [
-    "add",
-    "remove",
-    "close",
-    "closerequest",
-    "claim",
-    "unclaim",
-    "switchpanel",
-    "rename",
-    "reopen",
-    "ticketclose",
-    "ticketclaim",
-    "ticketunclaim",
-    "ticketswitchpanel",
-    "ticketrename",
-    "ticketreopen",
-    "trename",
-    "tadd",
-    "tremove",
-    "ticketadd",
-    "ticketremove",
-  ],
   description: "Gestione ticket.",
   subcommands: [
     "add",

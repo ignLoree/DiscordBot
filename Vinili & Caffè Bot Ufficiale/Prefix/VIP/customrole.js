@@ -481,12 +481,6 @@ async function handleRemove(message) {
 module.exports = {
   name: "customrole",
   subcommands: ["create", "modify", "add", "remove"],
-  subcommandAliases: {
-    customrolecreate: "create",
-    customrolemodify: "modify",
-    customroleadd: "add",
-    customroleremove: "remove",
-  },
   allowEmptyArgs: true,
 
   async execute(message, args = []) {

@@ -101,13 +101,8 @@ function canUseRestart(message) {
 
 module.exports = {
   name: "restart",
-  folder: "Dev",
-  aliases: ["rs", "reload"],
+  aliases: ["rs"],
   allowEmptyArgs: true,
-  subcommands: [
-    "full",
-    "all",
-  ],
 
   async execute(message, args = [], client) {
     if (!canUseRestart(message)) {
