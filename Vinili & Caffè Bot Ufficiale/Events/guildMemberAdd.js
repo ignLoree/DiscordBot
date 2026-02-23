@@ -984,8 +984,7 @@ module.exports = {
         return;
       }
 
-      // Join Raid is fed ONLY when Join Gate flags the join (one of its rules), and only ONCE per join.
-      // Those feeds do NOT trigger AutoMod or AntiNuke panic. Normal joins (that pass Join Gate) do not feed Join Raid.
+      // Come Wick: Join Raid gira per ogni join (regardless of Join Gate). Se Join Gate fa match si passa joinGateFeedOnly per non doppia escalation.
       if (!isCoreExempt) {
         let joinGateMatch = null;
         if (
@@ -1055,10 +1054,10 @@ module.exports = {
             };
           }
         }
+        await processJoinRaidForMember(member, { joinGateFeedOnly: !!joinGateMatch }).catch((err) => {
+          global.logger?.warn?.("[guildMemberAdd] Join Raid failed:", member.guild.id, member.id, err?.message || err);
+        });
         if (joinGateMatch) {
-          await processJoinRaidForMember(member, { joinGateFeedOnly: true }).catch((err) => {
-            global.logger?.warn?.("[guildMemberAdd] Join Raid feed (Join Gate) failed:", member.guild.id, member.id, err?.message || err);
-          });
           if (joinGateMatch.rule === "tooYoung") {
             await handleTooYoungAccount(member, joinGateConfig);
             return;

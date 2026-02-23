@@ -1237,7 +1237,8 @@ async function registerJoinRaidSecuritySignal(member, options = {}) {
   const at = nowMs();
   const enableAntiNuke = Boolean(options.enableAntiNuke);
   const enableAutoMod = options.enableAutoMod === true;
-  const heat = Math.max(0, Number(options.antiNukeHeat || 0));
+  // antiNukeHeat in percentuale (0–100); il servizio anti-nuke converte in heat effettivo
+  const heat = Math.max(0, Math.min(100, Number(options.antiNukeHeat || 0)));
   const reason = String(options.reason || "Join Gate security signal");
   const raidBoost = Math.max(0, Math.min(2, Math.floor(Number(options.raidBoost || 0))));
   if (enableAntiNuke && heat > 0) {

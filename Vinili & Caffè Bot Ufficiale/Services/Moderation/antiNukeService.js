@@ -280,6 +280,14 @@ const ANTINUKE_PRESETS = {
   },
 };
 
+/** Scala heat anti-nuke (0–100). I valori in config sono percentuali. */
+const ANTINUKE_MAX_HEAT = 100;
+
+/** Converte una percentuale (da config/UI) in heat effettivo: 20 → 20% di ANTINUKE_MAX_HEAT. */
+function percentToHeat(percent) {
+  return (Number(percent) / 100) * ANTINUKE_MAX_HEAT;
+}
+
 function readJsonSafe(filePath, fallback) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
@@ -1624,7 +1632,7 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   if (ANTINUKE_CONFIG.panicMode.useHeatAlgorithm) {
     decayPanicHeat(state, now);
   }
-  state.heat += Number(addedHeat || 0);
+  state.heat += percentToHeat(addedHeat || 0);
 
   const wasActive = Number(state.activeUntil || 0) > now;
   if (state.heat < Number(ANTINUKE_CONFIG.panicMode.thresholdHeat || 100) && !wasActive) {
@@ -1712,8 +1720,8 @@ async function triggerAntiNukePanicExternal(
   addedHeat = 100,
 ) {
   if (!guild?.id) return { ok: false, reason: "missing_guild" };
-  const safeHeat = Math.max(0, Number(addedHeat || 0));
-  const panic = await enableAntiNukePanic(guild, String(reason || "External security signal"), safeHeat);
+  // addedHeat è in percentuale (es. 100 = 100%); enableAntiNukePanic converte con percentToHeat
+  const panic = await enableAntiNukePanic(guild, String(reason || "External security signal"), Number(addedHeat || 0));
   return { ok: true, ...panic };
 }
 
@@ -1994,14 +2002,15 @@ function registerGuildBurstActivity(guildId, addedHeat, now = Date.now()) {
   return { triggered: canTrigger, totalHeat };
 }
 
-async function applyBurstPanicGuard(guild, actorId, actionLabel, addedHeat) {
+async function applyBurstPanicGuard(guild, actorId, actionLabel, addedHeatPercent) {
   if (!guild?.id) return;
-  const burst = registerGuildBurstActivity(guild.id, addedHeat, Date.now());
+  const heatPoints = percentToHeat(addedHeatPercent || 0);
+  const burst = registerGuildBurstActivity(guild.id, heatPoints, Date.now());
   if (!burst.triggered) return;
   await enableAntiNukePanic(
     guild,
     `Coordinated burst detected (${actionLabel || "unknown"})`,
-    Math.max(70, Number(addedHeat || 0)),
+    Math.max(70, Number(addedHeatPercent || 0)),
   );
   await sendAntiNukeLog(
     guild,
@@ -2031,7 +2040,7 @@ function trimKickBanState(state, at = Date.now()) {
   const hourCutoff = at - 60 * 60_000;
   state.minuteHits = state.minuteHits.filter((ts) => ts >= minCutoff);
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
-  state.heat = state.hourHits.length * Number(ANTINUKE_CONFIG.kickBanFilter.heatPerAction || 20);
+  state.heat = state.hourHits.length * percentToHeat(ANTINUKE_CONFIG.kickBanFilter.heatPerAction || 20);
 }
 
 async function handleKickBanAction({ guild, executorId, action = "unknown", targetId = "" }) {
@@ -2057,19 +2066,19 @@ async function handleKickBanAction({ guild, executorId, action = "unknown", targ
     guild,
     actorId,
     `kick/ban (${action})`,
-    Number(ANTINUKE_CONFIG.kickBanFilter.heatPerAction || 20),
+    ANTINUKE_CONFIG.kickBanFilter.heatPerAction ?? 20,
   );
   await enableAntiNukePanic(
     guild,
     `Kick/Ban filter: ${action}`,
-    ANTINUKE_CONFIG.kickBanFilter.heatPerAction,
+    ANTINUKE_CONFIG.kickBanFilter.heatPerAction ?? 20,
   );
 
   const { state } = getKickBanState(guild.id, trackerId);
   trimKickBanState(state, now);
   state.minuteHits.push(now);
   state.hourHits.push(now);
-  state.heat = state.hourHits.length * Number(ANTINUKE_CONFIG.kickBanFilter.heatPerAction || 20);
+  state.heat = state.hourHits.length * percentToHeat(ANTINUKE_CONFIG.kickBanFilter.heatPerAction || 20);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2118,7 +2127,7 @@ function trimRoleCreationState(state, at = Date.now()) {
   const hourCutoff = at - 60 * 60_000;
   state.minuteHits = state.minuteHits.filter((ts) => ts >= minCutoff);
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
-  state.heat = state.hourHits.length * Number(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10);
+  state.heat = state.hourHits.length * percentToHeat(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10);
 }
 
 async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
@@ -2144,7 +2153,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
     guild,
     actorId,
     "role create",
-    Number(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10),
+    percentToHeat(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10),
   );
   await enableAntiNukePanic(
     guild,
@@ -2204,7 +2213,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10);
+    percentToHeat(ANTINUKE_CONFIG.roleCreationFilter.heatPerAction || 10);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2256,7 +2265,7 @@ function trimRoleDeletionState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25);
+    percentToHeat(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25);
 }
 
 async function handleRoleDeletionAction({
@@ -2288,7 +2297,7 @@ async function handleRoleDeletionAction({
     guild,
     actorId,
     "role delete",
-    Number(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25),
+    percentToHeat(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25),
   );
   await enableAntiNukePanic(
     guild,
@@ -2310,7 +2319,7 @@ async function handleRoleDeletionAction({
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25);
+    percentToHeat(ANTINUKE_CONFIG.roleDeletionFilter.heatPerAction || 25);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2362,7 +2371,7 @@ function trimChannelCreationState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16);
+    percentToHeat(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16);
 }
 
 async function handleChannelCreationAction({ guild, executorId, channelId = "", channel = null }) {
@@ -2389,7 +2398,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
     guild,
     actorId,
     "channel create",
-    Number(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16),
+    percentToHeat(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16),
   );
   await enableAntiNukePanic(
     guild,
@@ -2448,7 +2457,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16);
+    percentToHeat(ANTINUKE_CONFIG.channelCreationFilter.heatPerAction || 16);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2500,7 +2509,7 @@ function trimChannelDeletionState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25);
+    percentToHeat(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25);
 }
 
 async function handleChannelDeletionAction({ guild, executorId, channelName = "", channelId = "", channel = null }) {
@@ -2527,7 +2536,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
     guild,
     actorId,
     "channel delete",
-    Number(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25),
+    percentToHeat(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25),
   );
   await enableAntiNukePanic(
     guild,
@@ -2552,7 +2561,7 @@ async function handleChannelDeletionAction({ guild, executorId, channelName = ""
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25);
+    percentToHeat(ANTINUKE_CONFIG.channelDeletionFilter.heatPerAction || 25);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2604,7 +2613,7 @@ function trimWebhookCreationState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15);
+    percentToHeat(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15);
 }
 
 async function handleWebhookCreationAction({
@@ -2643,7 +2652,7 @@ async function handleWebhookCreationAction({
     guild,
     actorId,
     "webhook create",
-    Number(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15),
+    percentToHeat(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15),
   );
   await enableAntiNukePanic(
     guild,
@@ -2693,7 +2702,7 @@ async function handleWebhookCreationAction({
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15);
+    percentToHeat(ANTINUKE_CONFIG.webhookCreationFilter.heatPerAction || 15);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2755,7 +2764,7 @@ function trimWebhookUpdateState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
+    percentToHeat(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
 }
 
 async function handleWebhookUpdateAction({ guild, executorId, webhookId = "" }) {
@@ -2787,7 +2796,7 @@ async function handleWebhookUpdateAction({ guild, executorId, webhookId = "" }) 
     guild,
     actorId,
     "webhook update",
-    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12),
+    percentToHeat(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12),
   );
   await enableAntiNukePanic(
     guild,
@@ -2801,7 +2810,7 @@ async function handleWebhookUpdateAction({ guild, executorId, webhookId = "" }) 
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
+    percentToHeat(ANTINUKE_CONFIG.webhookUpdateFilter.heatPerAction || 12);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2843,7 +2852,7 @@ function trimWebhookDeletionState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10);
+    percentToHeat(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10);
 }
 
 async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }) {
@@ -2877,7 +2886,7 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
     guild,
     actorId,
     "webhook delete",
-    Number(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10),
+    percentToHeat(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10),
   );
   await enableAntiNukePanic(
     guild,
@@ -2891,7 +2900,7 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10);
+    percentToHeat(ANTINUKE_CONFIG.webhookDeletionFilter.heatPerAction || 10);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
@@ -2943,7 +2952,7 @@ function trimInviteCreationState(state, at = Date.now()) {
   state.hourHits = state.hourHits.filter((ts) => ts >= hourCutoff);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12);
+    percentToHeat(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12);
 }
 
 async function handleInviteCreationAction({
@@ -2974,7 +2983,7 @@ async function handleInviteCreationAction({
     guild,
     actorId,
     "invite create",
-    Number(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12),
+    percentToHeat(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12),
   );
   await enableAntiNukePanic(
     guild,
@@ -2988,7 +2997,7 @@ async function handleInviteCreationAction({
   state.hourHits.push(now);
   state.heat =
     state.hourHits.length *
-    Number(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12);
+    percentToHeat(ANTINUKE_CONFIG.inviteCreationFilter.heatPerAction || 12);
 
   const minuteCount = state.minuteHits.length;
   const hourCount = state.hourHits.length;
