@@ -58,7 +58,7 @@ function createBumpReminderService(options) {
   async function sendReminder(client, guildId) {
     const reminderChannelId = getReminderChannelId();
     if (!reminderChannelId) {
-      global.logger.warn(
+      global.logger?.warn?.(
         `${errorTag} reminderChannelId missing for guild ${guildId}`,
       );
       return;
@@ -67,7 +67,7 @@ function createBumpReminderService(options) {
       client.channels.cache.get(reminderChannelId) ||
       (await client.channels.fetch(reminderChannelId).catch(() => null));
     if (!channel) {
-      global.logger.warn(
+      global.logger?.warn?.(
         `${errorTag} reminder channel not found (${reminderChannelId}) for guild ${guildId}`,
       );
       return;
@@ -101,19 +101,29 @@ function createBumpReminderService(options) {
 
     const cooldownMs = getCooldownMs(client);
     const now = Date.now();
-    const targetTime = new Date(lastBumpAt).getTime() + cooldownMs;
+    const lastBumpTime = new Date(lastBumpAt).getTime();
+    const targetTime = lastBumpTime + cooldownMs;
     const remaining = targetTime - now;
 
     if (remaining <= 0) {
       bumpTimers.delete(guildId);
-      sendReminder(client, guildId).catch((err) =>
-        global.logger.error(`${errorTag} sendReminder failed:`, err),
+      global.logger?.info?.(
+        `${errorTag} cooldown already passed, sending reminder now guild=${guildId}`,
       );
+      sendReminder(client, guildId).catch((err) => {
+        global.logger.error(`${errorTag} sendReminder failed:`, err);
+      });
       return;
     }
 
+    const remainingMinutes = Math.round(remaining / 60_000);
+    global.logger?.info?.(
+      `${errorTag} reminder scheduled for guild=${guildId} in ${remainingMinutes} minutes`,
+    );
+
     const timeout = setTimeout(async () => {
       try {
+        global.logger?.info?.(`${errorTag} firing reminder for guild=${guildId}`);
         await sendReminder(client, guildId);
       } catch (error) {
         global.logger.error(errorTag, error);
@@ -126,18 +136,20 @@ function createBumpReminderService(options) {
   }
 
   async function setBumpAt(client, guildId, bumpAt, userId) {
+    const bumpDate = bumpAt instanceof Date ? bumpAt : new Date(bumpAt);
     const doc = await model.findOneAndUpdate(
       { guildId },
       {
         $set: {
-          lastBumpAt: bumpAt,
+          lastBumpAt: bumpDate,
           lastBumpUserId: userId || null,
           reminderSentAt: null,
         },
       },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-    scheduleReminder(client, guildId, doc.lastBumpAt);
+    const lastBumpAt = doc?.lastBumpAt ? new Date(doc.lastBumpAt) : bumpDate;
+    scheduleReminder(client, guildId, lastBumpAt);
     return doc;
   }
 
@@ -150,6 +162,11 @@ function createBumpReminderService(options) {
       reminderSentAt: null,
       lastBumpAt: { $exists: true },
     });
+    if (docs.length > 0) {
+      global.logger?.info?.(
+        `${errorTag} restoring ${docs.length} pending reminder(s)`,
+      );
+    }
     for (const doc of docs) {
       scheduleReminder(client, doc.guildId, doc.lastBumpAt);
     }
