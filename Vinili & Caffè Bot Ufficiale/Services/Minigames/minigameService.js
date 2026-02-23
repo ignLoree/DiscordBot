@@ -1722,20 +1722,25 @@ function buildFastTypePromptImage(phrase) {
     roundRect(ctx, cardX, cardY, cardW, cardH, radius);
     ctx.stroke();
 
-    const labelY = cardY + 52;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillStyle = "#8b7355";
-    ctx.font = "600 28px Sans";
-    ctx.fillText("Scrivi esattamente questa frase", width / 2, labelY);
-
     const phraseText = String(phrase || "").trim() || "...";
     const usableWidth = cardW - 80;
     ctx.font = "bold 42px Sans";
     const phraseLines = wrapPromptText(ctx, phraseText, usableWidth);
     const lineHeight = 54;
     const totalPhraseHeight = phraseLines.length * lineHeight;
-    let phraseY = Math.round((height - totalPhraseHeight) / 2) - 10;
+    const labelHeight = 36;
+    const gapLabelPhrase = 16;
+    const totalContentHeight = labelHeight + gapLabelPhrase + totalPhraseHeight;
+    const contentStartY = cardY + (cardH - totalContentHeight) / 2;
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "#8b7355";
+    ctx.font = "600 28px Sans";
+    ctx.fillText("Scrivi esattamente questa frase", width / 2, contentStartY);
+
+    let phraseY = contentStartY + labelHeight + gapLabelPhrase;
+    ctx.font = "bold 42px Sans";
     ctx.fillStyle = "#2c2419";
     for (const line of phraseLines) {
       ctx.fillText(line, width / 2, phraseY, usableWidth);
