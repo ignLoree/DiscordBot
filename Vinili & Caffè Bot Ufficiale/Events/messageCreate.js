@@ -1672,12 +1672,28 @@ async function handleDiscadiaBump(message, client) {
   global.logger?.info?.(
     `[DISCADIA BUMP] Recorded bump for guild=${message.guild.id} user=${bumpUserId || "unknown"} msg=${message.id}`,
   );
-  try {
-    await message.channel.send({ content: thanksMessage.trim() });
-  } catch (error) {
+  const payload = { content: thanksMessage.trim() };
+  const channel =
+    message.channel ??
+    (message.channelId
+      ? await message.guild.channels.fetch(message.channelId).catch(() => null)
+      : null);
+  if (channel?.isTextBased?.()) {
+    try {
+      await message.reply(payload);
+    } catch {
+      try {
+        await channel.send(payload);
+      } catch (err) {
+        global.logger?.warn?.(
+          "[DISCADIA BUMP] Thanks message send failed, bump recorded anyway:",
+          err?.message || err,
+        );
+      }
+    }
+  } else {
     global.logger?.warn?.(
-      "[DISCADIA BUMP] Thanks message send failed, bump recorded anyway:",
-      error?.message || error,
+      "[DISCADIA BUMP] No text channel to send thanks, bump recorded anyway.",
     );
   }
   return true;

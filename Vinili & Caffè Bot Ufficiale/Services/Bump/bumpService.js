@@ -41,6 +41,7 @@ function createBumpReminderService(options) {
     url,
     description,
     errorTag,
+    logTag = errorTag,
   } = options;
 
   const bumpTimers = new Map();
@@ -111,7 +112,7 @@ function createBumpReminderService(options) {
     if (remaining <= 0) {
       bumpTimers.delete(guildId);
       global.logger?.info?.(
-        `${errorTag} cooldown already passed, sending reminder now guild=${guildId}`,
+        `${logTag} cooldown already passed, sending reminder now guild=${guildId}`,
       );
       sendReminder(client, guildId).catch((err) => {
         global.logger.error(`${errorTag} sendReminder failed:`, err);
@@ -121,12 +122,12 @@ function createBumpReminderService(options) {
 
     const remainingMinutes = Math.round(remaining / 60_000);
     global.logger?.info?.(
-      `${errorTag} reminder scheduled for guild=${guildId} in ${remainingMinutes} minutes`,
+      `${logTag} reminder scheduled for guild=${guildId} in ${remainingMinutes} minutes`,
     );
 
     const timeout = setTimeout(async () => {
       try {
-        global.logger?.info?.(`${errorTag} firing reminder for guild=${guildId}`);
+        global.logger?.info?.(`${logTag} firing reminder for guild=${guildId}`);
         await sendReminder(client, guildId);
       } catch (error) {
         global.logger.error(errorTag, error);
@@ -173,7 +174,7 @@ function createBumpReminderService(options) {
     });
     if (docs.length > 0) {
       global.logger?.info?.(
-        `${errorTag} restoring ${docs.length} pending reminder(s)`,
+        `${logTag} restoring ${docs.length} pending reminder(s)`,
       );
     }
     for (const doc of docs) {
@@ -198,6 +199,7 @@ const disboardService = createBumpReminderService({
   description:
     "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",
   errorTag: "[DISBOARD REMINDER ERROR]",
+  logTag: "[DISBOARD REMINDER]",
 });
 
 const discadiaBumpService = createBumpReminderService({
@@ -210,6 +212,7 @@ const discadiaBumpService = createBumpReminderService({
   description:
     "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",
   errorTag: "[DISCADIA REMINDER ERROR]",
+  logTag: "[DISCADIA REMINDER]",
 });
 let discadiaVoteReminderLoopHandle = null;
 
