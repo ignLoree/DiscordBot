@@ -229,6 +229,13 @@ module.exports = {
       const fail = [];
       const guild = message.guild;
       const guildId = guild?.id;
+      const modLogId = IDs.channels?.modLogs;
+      const logChannel = modLogId
+        ? (guild?.channels?.cache?.get(modLogId) ||
+            (await guild.channels.fetch(modLogId).catch(() => null)))
+        : null;
+      const sanitizeEmbed = (v) =>
+        String(v || "").replace(/[\\`*_~|>]/g, "\\$&").replace(/\n/g, " ").trim();
       for (const member of targets) {
         const fresh =
           guildId && member?.id
@@ -257,18 +264,24 @@ module.exports = {
             } catch (dbErr) {
               global.logger?.warn?.("[+verify] upsertVerifiedMember/applyTenureForMember:", dbErr);
             }
-            const serverName = guild?.name || "this server";
-            await targetMember.send({
-              content: "<:vegacheckmark:1443666279058772028> Verification done.",
-              embeds: [
-                new EmbedBuilder()
-                  .setColor("#57f287")
-                  .setTitle("**You have been verified!**")
-                  .setDescription(
-                    `<:success:1461731530333229226> You passed the verification successfully. You can now access \`${serverName}\``,
-                  ),
-              ],
-            }).catch(() => {});
+            if (logChannel?.isTextBased?.() && targetMember?.user) {
+              const user = targetMember.user;
+              const createdAtUnix = Math.floor((user.createdTimestamp || 0) / 1000);
+              const createdAtText = createdAtUnix ? `<t:${createdAtUnix}:F>` : "—";
+              const safeUsername = sanitizeEmbed(user.username);
+              const resultEmbed = new EmbedBuilder()
+                .setColor("#6f4e37")
+                .setTitle(`**${safeUsername}'s Verification Result:**`)
+                .setDescription(
+                  `<:profile:1461732907508039834> **Member**: ${safeUsername} **[${user.id}]**\n` +
+                    `<:creation:1461732905016492220> Creation: ${createdAtText}\n\n` +
+                    "Status:\n" +
+                    `<:space:1461733157840621608><:success:1461731530333229226> \`${safeUsername}\` has passed verification successfully.\n` +
+                    "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",
+                )
+                .setThumbnail(user.displayAvatarURL({ dynamic: true }));
+              await logChannel.send({ embeds: [resultEmbed] }).catch(() => {});
+            }
           } else {
             fail.push(displayName);
           }
@@ -276,25 +289,6 @@ module.exports = {
           global.logger?.error?.(err);
           fail.push(displayName);
         }
-      }
-      const modLogId = IDs.channels?.modLogs;
-      const logChannel = modLogId
-        ? (guild?.channels?.cache?.get(modLogId) ||
-            (await guild.channels.fetch(modLogId).catch(() => null)))
-        : null;
-      if (logChannel?.isTextBased?.() && success.length > 0) {
-        const staffMention = `<@${message.author.id}>`;
-        const targetList = success.join(", ");
-        const logEmbed = new EmbedBuilder()
-          .setColor("#6f4e37")
-          .setTitle("Verifica manuale")
-          .setDescription(
-            `<:profile:1461732907508039834> **Staff:** ${staffMention}\n` +
-              `<:success:1461731530333229226> **Verificati:** ${targetList}\n` +
-              "<:space:1461733157840621608><:rightSort:1461726104422453298> Ruoli verifica assegnati.",
-          )
-          .setTimestamp();
-        await logChannel.send({ embeds: [logEmbed] }).catch(() => {});
       }
       try {
         if (!i.deferred && !i.replied) {
