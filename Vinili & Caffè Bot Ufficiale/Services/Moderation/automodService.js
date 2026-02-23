@@ -983,6 +983,11 @@ function getProfileConfig(message) {
   return { key, ...defaults, ...configured };
 }
 
+/** Converte una percentuale (da config UI) in heat effettivo: percent = 7 → 7% di MAX_HEAT. */
+function percentToHeat(percent) {
+  return (Number(percent) / 100) * MAX_HEAT;
+}
+
 function applyProfileHeat(heat, profile) {
   const multiplier = Number(profile?.heatMultiplier || 1);
   const scaled = Number(heat || 0) * (Number.isFinite(multiplier) ? multiplier : 1);
@@ -2136,7 +2141,10 @@ async function detectViolations(message, state, profile) {
   ) {
     violations.push({
       key: "suspicious_account",
-      heat: profileHeat(TEXT_RULES.suspiciousAccount.heat, "suspiciousAccount"),
+      heat: profileHeat(
+        percentToHeat(TEXT_RULES.suspiciousAccount.heat),
+        "suspiciousAccount",
+      ),
       info: "suspicious member profile",
     });
   }
@@ -2151,7 +2159,10 @@ async function detectViolations(message, state, profile) {
     if (state.msgTimes.length >= 6) {
       violations.push({
         key: "regular_message",
-        heat: profileHeat(TEXT_RULES.regularMessage.heat, "regularMessage"),
+        heat: profileHeat(
+          percentToHeat(TEXT_RULES.regularMessage.heat),
+          "regularMessage",
+        ),
         info: `${state.msgTimes.length}/8s`,
       });
     }
@@ -2178,7 +2189,10 @@ async function detectViolations(message, state, profile) {
     if (similarCount >= similarThreshold) {
       violations.push({
         key: "similar_message",
-        heat: profileHeat(TEXT_RULES.similarMessage.heat, "similarMessage"),
+        heat: profileHeat(
+          percentToHeat(TEXT_RULES.similarMessage.heat),
+          "similarMessage",
+        ),
         info: `ratio>=${ratio.toFixed(2)} count:${similarCount}`,
       });
     }
@@ -2221,7 +2235,10 @@ async function detectViolations(message, state, profile) {
     ) {
       violations.push({
         key: "mention_user",
-        heat: profileHeat(userMentionCount * MENTION_RULES.userMentions.heat, "mentions"),
+        heat: profileHeat(
+          userMentionCount * percentToHeat(MENTION_RULES.userMentions.heat),
+          "mentions",
+        ),
         info: `${userMentionCount} @user`,
       });
     }
@@ -2233,7 +2250,10 @@ async function detectViolations(message, state, profile) {
     ) {
       violations.push({
         key: "mention_role",
-        heat: profileHeat(roleMentionCount * MENTION_RULES.roleMentions.heat, "mentions"),
+        heat: profileHeat(
+          roleMentionCount * percentToHeat(MENTION_RULES.roleMentions.heat),
+          "mentions",
+        ),
         info: `${roleMentionCount} @role`,
       });
     }
@@ -2246,7 +2266,8 @@ async function detectViolations(message, state, profile) {
       violations.push({
         key: "mention_everyone",
         heat: profileHeat(
-          everyoneMentionCount * MENTION_RULES.everyoneMentions.heat,
+          everyoneMentionCount *
+            percentToHeat(MENTION_RULES.everyoneMentions.heat),
           "mentions",
         ),
         info: "@everyone/@here",
@@ -2256,7 +2277,7 @@ async function detectViolations(message, state, profile) {
     if (autoLockdownEnabled && state.mentionHourTimes.length >= MENTION_RULES.hourCap) {
       violations.push({
         key: "mention_hour_cap",
-        heat: profileHeat(100, "mentions"),
+        heat: profileHeat(percentToHeat(100), "mentions"),
         info: `${state.mentionHourTimes.length}/${MENTION_RULES.hourCap} pings/1h`,
       });
     }
@@ -2264,10 +2285,10 @@ async function detectViolations(message, state, profile) {
     if (autoLockdownEnabled && state.mentionTimes.length >= MENTION_LOCKDOWN_TRIGGER) {
       violations.push({
         key: "mentions_lockdown",
-        heat: profileHeat(100, "mentions"),
+        heat: profileHeat(percentToHeat(100), "mentions"),
         info: `${state.mentionTimes.length}/${Math.floor(MENTION_LOCKDOWN_WINDOW_MS / 1000)}s`,
       });
-  }
+    }
   }
 
   const inviteCode = detectInvite(moderationContent);
@@ -2280,7 +2301,10 @@ async function detectViolations(message, state, profile) {
     ) {
       violations.push({
         key: "invite",
-        heat: profileHeat(TEXT_RULES.inviteLinks.heat, "inviteLinks"),
+        heat: profileHeat(
+          percentToHeat(TEXT_RULES.inviteLinks.heat),
+          "inviteLinks",
+        ),
         info: `discord.gg/${inviteCode}`,
       });
     }
@@ -2289,7 +2313,10 @@ async function detectViolations(message, state, profile) {
   if (TEXT_RULES.maliciousLinks.enabled && detectScam(moderationContent)) {
     violations.push({
       key: "scam_pattern",
-      heat: profileHeat(TEXT_RULES.maliciousLinks.heat, "maliciousLinks"),
+      heat: profileHeat(
+        percentToHeat(TEXT_RULES.maliciousLinks.heat),
+        "maliciousLinks",
+      ),
       info: "pattern scam/malicious link",
     });
   }
@@ -2297,7 +2324,10 @@ async function detectViolations(message, state, profile) {
   if (await isNsfwUrl(moderationContent, extractedUrls)) {
     violations.push({
       key: "nsfw_link",
-      heat: profileHeat(TEXT_RULES.nsfwLinks.heat, "nsfwLinks"),
+      heat: profileHeat(
+        percentToHeat(TEXT_RULES.nsfwLinks.heat),
+        "nsfwLinks",
+      ),
       info: "nsfw domain/url",
     });
   }
@@ -2306,7 +2336,10 @@ async function detectViolations(message, state, profile) {
   if (wordBlacklistMatch) {
     violations.push({
       key: "word_blacklist",
-      heat: profileHeat(TEXT_RULES.wordBlacklist.heat, "wordBlacklist"),
+      heat: profileHeat(
+        percentToHeat(TEXT_RULES.wordBlacklist.heat),
+        "wordBlacklist",
+      ),
       info:
         wordBlacklistMatch.term && wordBlacklistMatch.source
           ? `racist list (${wordBlacklistMatch.source}: ${wordBlacklistMatch.term})`
@@ -2317,7 +2350,10 @@ async function detectViolations(message, state, profile) {
   if (await hasBlacklistedDomain(moderationContent, extractedUrls)) {
     violations.push({
       key: "link_blacklist",
-      heat: profileHeat(TEXT_RULES.linkBlacklist.heat, "linkBlacklist"),
+      heat: profileHeat(
+        percentToHeat(TEXT_RULES.linkBlacklist.heat),
+        "linkBlacklist",
+      ),
       info: "blacklisted domain",
     });
   }
@@ -2328,11 +2364,7 @@ async function detectViolations(message, state, profile) {
       violations.push({
         key: "emoji_spam",
         heat: profileHeat(
-          Number(
-            (TEXT_RULES.emojis.heat * WICK_EQUIV.textClusterMultiplier).toFixed(
-              2,
-            ),
-          ),
+          percentToHeat(TEXT_RULES.emojis.heat),
           "emojis",
         ),
         info: `${emojiCount} emoji`,
@@ -2346,11 +2378,7 @@ async function detectViolations(message, state, profile) {
       violations.push({
         key: "new_lines",
         heat: profileHeat(
-          Number(
-            (
-              TEXT_RULES.newLines.heat * WICK_EQUIV.textClusterMultiplier
-            ).toFixed(2),
-          ),
+          percentToHeat(TEXT_RULES.newLines.heat),
           "newLines",
         ),
         info: `${lineBreaks} new lines`,
@@ -2364,11 +2392,7 @@ async function detectViolations(message, state, profile) {
       violations.push({
         key: "zalgo",
         heat: profileHeat(
-          Number(
-            (TEXT_RULES.zalgo.heat * WICK_EQUIV.textClusterMultiplier).toFixed(
-              2,
-            ),
-          ),
+          percentToHeat(TEXT_RULES.zalgo.heat),
           "zalgo",
         ),
         info: `${zalgoCount} combining chars`,
@@ -2385,14 +2409,12 @@ async function detectViolations(message, state, profile) {
       if (legitConversation && !noisyShape) {
         // Skip character-based punishment for long, normal conversation messages.
       } else {
+      // lowercaseHeat/uppercaseHeat sono percentuali (es. 0.08 = 0.08%): ogni carattere
+      // aggiunge quella % del max heat, così l’UI (“Heat Added 0.08%”) è rispettata.
       const lowerHeat =
-        lower *
-        TEXT_RULES.characters.lowercaseHeat *
-        WICK_EQUIV.lowerCharMultiplier;
+        lower * (Number(TEXT_RULES.characters.lowercaseHeat) / 100) * MAX_HEAT;
       const upperHeat =
-        upper *
-        TEXT_RULES.characters.uppercaseHeat *
-        WICK_EQUIV.upperCharMultiplier;
+        upper * (Number(TEXT_RULES.characters.uppercaseHeat) / 100) * MAX_HEAT;
       const heat = Number((lowerHeat + upperHeat).toFixed(2));
       if (heat > 0) {
         violations.push({
@@ -2416,35 +2438,50 @@ async function detectViolations(message, state, profile) {
     if (ATTACHMENT_RULES.embeds.enabled && embedCount > 0) {
       violations.push({
         key: "attachment_embed",
-        heat: profileHeat(embedCount * ATTACHMENT_RULES.embeds.heat, "attachments"),
+        heat: profileHeat(
+          embedCount * percentToHeat(ATTACHMENT_RULES.embeds.heat),
+          "attachments",
+        ),
         info: `${embedCount} embed`,
       });
     }
     if (ATTACHMENT_RULES.images.enabled && imageCount > 0) {
       violations.push({
         key: "attachment_image",
-        heat: profileHeat(imageCount * ATTACHMENT_RULES.images.heat, "attachments"),
+        heat: profileHeat(
+          imageCount * percentToHeat(ATTACHMENT_RULES.images.heat),
+          "attachments",
+        ),
         info: `${imageCount} image`,
       });
     }
     if (ATTACHMENT_RULES.files.enabled && fileCount > 0) {
       violations.push({
         key: "attachment_file",
-        heat: profileHeat(fileCount * ATTACHMENT_RULES.files.heat, "attachments"),
+        heat: profileHeat(
+          fileCount * percentToHeat(ATTACHMENT_RULES.files.heat),
+          "attachments",
+        ),
         info: `${fileCount} file`,
       });
     }
     if (ATTACHMENT_RULES.links.enabled && linkCount > 0) {
       violations.push({
         key: "attachment_link",
-        heat: profileHeat(linkCount * ATTACHMENT_RULES.links.heat, "attachments"),
+        heat: profileHeat(
+          linkCount * percentToHeat(ATTACHMENT_RULES.links.heat),
+          "attachments",
+        ),
         info: `${linkCount} link`,
       });
     }
     if (ATTACHMENT_RULES.stickers.enabled && stickerCount > 0) {
       violations.push({
         key: "attachment_sticker",
-        heat: profileHeat(stickerCount * ATTACHMENT_RULES.stickers.heat, "attachments"),
+        heat: profileHeat(
+          stickerCount * percentToHeat(ATTACHMENT_RULES.stickers.heat),
+          "attachments",
+        ),
         info: `${stickerCount} sticker`,
       });
     }
