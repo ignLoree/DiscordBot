@@ -1,4 +1,4 @@
-﻿const ascii = require("ascii-table");
+const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
 
@@ -160,6 +160,7 @@ function ensurePrefixSubcommandMetadata(command) {
 
   if (!known.length) return;
 
+  command.canonicalSubcommands = Array.from(new Set(declared));
   command.subcommands = known;
   if (
     !command.subcommandAliases ||

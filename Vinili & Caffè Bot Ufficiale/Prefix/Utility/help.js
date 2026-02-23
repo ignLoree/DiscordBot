@@ -629,15 +629,23 @@ function buildEntries(client, permissions) {
       roles: commandRoles,
     };
 
-    const canonicalSubs = Array.isArray(command?.subcommands)
+    const canonicalSubs = Array.isArray(command?.canonicalSubcommands)
       ? Array.from(
           new Set(
-            command.subcommands
+            command.canonicalSubcommands
               .map((s) => String(s || "").trim().toLowerCase())
               .filter(Boolean),
           ),
         )
-      : [];
+      : Array.isArray(command?.subcommands)
+        ? Array.from(
+            new Set(
+              command.subcommands
+                .map((s) => String(s || "").trim().toLowerCase())
+                .filter(Boolean),
+            ),
+          )
+        : [];
     if (canonicalSubs.length) {
       for (const sub of canonicalSubs) {
         entries.push({
