@@ -44,12 +44,12 @@ const CATEGORY_ORDER = [
   "level",
   "minigames",
   "stats",
+  "vip",
   "partner",
   "ticket",
   "moderation",
   "admin",
   "staff",
-  "vip",
   "dev",
   "contextmenubuilder",
 ];
@@ -894,7 +894,12 @@ function renderPageText(page) {
       CATEGORY_LABELS[categoryKey] ||
       categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1);
     const rows = categoryEntries.map((entry) => {
-      return `- \`${entry.invoke}\` - ${entry.description}`;
+      const roleHint =
+        Array.isArray(entry.roles) &&
+        entry.roles.length > 0
+          ? ` *(Richiede: ${entry.roles.map((id) => `<@&${id}>`).join(", ")})*`
+          : "";
+      return `- \`${entry.invoke}\` - ${entry.description}${roleHint}`;
     });
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
@@ -1745,7 +1750,11 @@ function buildMiniHelpEmbed(query, entries, context = {}) {
   const lines = limited.map((entry) => {
     const categoryKey = String(entry.category || "").toLowerCase();
     const categoryLabel = CATEGORY_LABELS[categoryKey] || categoryKey || "Misc";
-    return `- \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}`;
+    const roleHint =
+      Array.isArray(entry.roles) && entry.roles.length > 0
+        ? `\n  \`Ruolo:\` ${entry.roles.map((id) => `<@&${id}>`).join(", ")}`
+        : "";
+    return `- \`${entry.invoke}\` - ${entry.description}\n  \`Categoria:\` ${categoryLabel}${roleHint}`;
   });
   const extra =
     matches.length > limited.length
