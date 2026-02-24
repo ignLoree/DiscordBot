@@ -1052,10 +1052,16 @@ async function runNamed(name, message, args, client) {
         .catch(() => []);
       if (!rows.length) {
         const msg = target.userId
-          ? "<:cancel:1461730653677551691> Nessuna moderazione attiva trovata per quell'utente."
-          : "<:cancel:1461730653677551691> Nessuna moderazione attiva al momento.";
+          ? "Non ci sono moderazioni attive per questo utente."
+          : "Non ci sono moderazioni attive al momento.";
         return message.channel
-          .send({ embeds: [new EmbedBuilder().setColor("#ED4245").setDescription(msg)] })
+          .send({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("#3498DB")
+                .setDescription(`ℹ️ **${msg}**`),
+            ],
+          })
           .catch(() => null);
       }
       const now = Date.now();

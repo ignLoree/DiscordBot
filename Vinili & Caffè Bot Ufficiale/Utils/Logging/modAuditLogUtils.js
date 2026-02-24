@@ -107,9 +107,9 @@ function buildStaffActionModLogEmbed(modCase, options = {}) {
       { name: "Moderator", value: `<@${moderatorId}>`, inline: true },
       { name: "Reason", value: reasonText, inline: false },
     )
-    .setTimestamp();
-  const now = new Date();
-  const footerTs = now.toLocaleString("it-IT", {
+  const sanctionDate = modCase.createdAt ? new Date(modCase.createdAt) : new Date();
+  embed.setTimestamp(sanctionDate.getTime());
+  const footerTs = sanctionDate.toLocaleString("it-IT", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
