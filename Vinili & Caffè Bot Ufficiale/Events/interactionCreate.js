@@ -21,6 +21,7 @@ const {
 } = require("./interaction/candidatureApplicationHandlers");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
+const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
 const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
@@ -236,8 +237,7 @@ async function logInteractionError(interaction, client, err) {
       IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
     const errorChannel =
       errorChannelId && resolvedClient
-        ? resolvedClient.channels.cache.get(errorChannelId) ||
-          (await resolvedClient.channels.fetch(errorChannelId).catch(() => null))
+        ? await getCentralChannel(resolvedClient, errorChannelId)
         : null;
 
     if (errorChannel?.isTextBased?.()) {
@@ -248,6 +248,7 @@ async function logInteractionError(interaction, client, err) {
         contextValue,
         userTag: interaction?.user?.tag || "unknown",
         error: err,
+        serverName: interaction?.guild?.name || null,
       });
       await errorChannel.send({ embeds: [staffEmbed] }).catch(() => null);
     }

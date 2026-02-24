@@ -1,3 +1,4 @@
+const path = require("path");
 const catalog = require("./idsCatalog");
 
 const maps = catalog.maps || {};
@@ -166,6 +167,7 @@ const ids = {
     supporters: "1442569123426074736",
     moderazioneStaff: "1442569243626307634",
     modLogs: "1442569294796820541",
+    verifyLogs: "1442569294796820541",
     activityLogs: "1442569299725385851",
     joinLeaveLogs: "1442569306608111776",
     pexDepex: "1442569234004709391",
@@ -364,6 +366,83 @@ const ids = {
   },
 
   allowedPrefixCommandsChannelId: "1442569138114662490",
+};
+
+let sponsorConfig = {};
+try {
+  const config = require(path.join(__dirname, "..", "..", "config.json"));
+  sponsorConfig = {
+    sponsorGuildIds: Array.isArray(config.sponsorGuildIds)
+      ? config.sponsorGuildIds
+      : [],
+    sponsorVerifyChannelIds: config.sponsorVerifyChannelIds || {},
+    sponsorTicketChannelIds: config.sponsorTicketChannelIds || {},
+    verificatoRoleIds: config.verificatoRoleIds || {},
+    sponsorStaffRoleIds: config.sponsorStaffRoleIds || {},
+  };
+} catch (_) {}
+if (!sponsorConfig.sponsorGuildIds?.length) {
+  sponsorConfig.sponsorGuildIds = [
+    ids.guilds.luna,
+    ids.guilds.cash,
+    ids.guilds.porn,
+    ids.guilds[69],
+    ids.guilds.weed,
+    ids.guilds.figa,
+  ].filter(Boolean);
+}
+ids.guilds.sponsorGuildIds = sponsorConfig.sponsorGuildIds;
+ids.sponsorVerifyChannelIds = sponsorConfig.sponsorVerifyChannelIds;
+ids.sponsorTicketChannelIds = sponsorConfig.sponsorTicketChannelIds;
+ids.verificatoRoleIds = sponsorConfig.verificatoRoleIds;
+ids.roles.sponsorStaffRoleIds = sponsorConfig.sponsorStaffRoleIds || {};
+
+ids.sponsorChannels = {
+  lunaTag: "1471522979706835018",
+  lunaTicket: "1471974302109667410",
+  cashTag: "1471522798315901019",
+  cashTicket: "1471974355964657765",
+  pornTag: "1471522526931714170",
+  pornTicket: "1471974536357347570",
+  "69Tag": "1471522161192730695",
+  "69Ticket": "1471974622777049098",
+  weedTag: "1471521963125112942",
+  weedTicket: "1471974712958648412",
+  figaTag: "1471521322785050676",
+  figaTicket: "1471974799453720740",
+};
+
+ids.sponsorRoles = {
+  lunaBooster: "1471512868494118975",
+  lunaGuilded: "1471627231637012572",
+  cashBooster: "1471512411306459348",
+  cashGuilded: "1471628245404483762",
+  pornBooster: "1471513685976420443",
+  pornGuilded: "1471628136172097638",
+  "69Booster": "1471514106598260892",
+  "69Guilded": "1471628002050838790",
+  weedBooster: "1471514709420413111",
+  weedGuilded: "1471627880575275008",
+  figaBooster: "1471515516291121213",
+  figaGuilded: "1471627711901470781",
+};
+
+ids.sponsorGuildTagConfig = {
+  [ids.guilds.luna]: { channelId: ids.sponsorChannels.lunaTag, tagName: "Luna", emoji: "🌙", boosterRoleId: ids.sponsorRoles.lunaBooster },
+  [ids.guilds.cash]: { channelId: ids.sponsorChannels.cashTag, tagName: "Cash", emoji: "💸", boosterRoleId: ids.sponsorRoles.cashBooster },
+  [ids.guilds.porn]: { channelId: ids.sponsorChannels.pornTag, tagName: "Porn", emoji: "🔞", boosterRoleId: ids.sponsorRoles.pornBooster },
+  [ids.guilds[69]]: { channelId: ids.sponsorChannels["69Tag"], tagName: "69", emoji: "😈", boosterRoleId: ids.sponsorRoles["69Booster"] },
+  [ids.guilds.weed]: { channelId: ids.sponsorChannels.weedTag, tagName: "Weed", emoji: "🍃", boosterRoleId: ids.sponsorRoles.weedBooster },
+  [ids.guilds.figa]: { channelId: ids.sponsorChannels.figaTag, tagName: "Figa", emoji: "🍑", boosterRoleId: ids.sponsorRoles.figaBooster },
+};
+
+ids.sponsorTicketConfig = {
+  [ids.guilds.luna]: { ticketChannelId: ids.sponsorChannels.lunaTicket, guildedRoleId: ids.sponsorRoles.lunaGuilded, tagName: "Luna", emoji: "🌙" },
+  [ids.guilds.cash]: { ticketChannelId: ids.sponsorChannels.cashTicket, guildedRoleId: ids.sponsorRoles.cashGuilded, tagName: "Cash", emoji: "💸" },
+  [ids.guilds.porn]: { ticketChannelId: ids.sponsorChannels.pornTicket, guildedRoleId: ids.sponsorRoles.pornGuilded, tagName: "Porn", emoji: "🔞" },
+  [ids.guilds[69]]: { ticketChannelId: ids.sponsorChannels["69Ticket"], guildedRoleId: ids.sponsorRoles["69Guilded"], tagName: "69", emoji: "😈" },
+  [ids.guilds.weed]: { ticketChannelId: ids.sponsorChannels.weedTicket, guildedRoleId: ids.sponsorRoles.weedGuilded, tagName: "Weed", emoji: "🍃" },
+  [ids.guilds.figa]: { ticketChannelId: ids.sponsorChannels.figaTicket, guildedRoleId: ids.sponsorRoles.figaGuilded, tagName: "Figa", emoji: "🍑" },
 };
 
 ids.aliases = {

@@ -1297,6 +1297,315 @@ async function runTicketPanelAuto(client) {
   }
 }
 
+// ---------- Sponsor server panels (verify + ticket + guild-tag nei server sponsor) ----------
+const path = require("path");
+const fs = require("fs");
+const SPONSOR_PANEL_COLOR = "#6f4e37";
+const TAG_IMAGE_NAME = "guildtag.gif";
+const TICKET_IMAGE_NAME = "ticket.gif";
+const TAG_IMAGE_PATH = path.join(__dirname, "..", "Photos", TAG_IMAGE_NAME);
+const TICKET_IMAGE_PATH = path.join(__dirname, "..", "Photos", TICKET_IMAGE_NAME);
+
+const IDs = require("../Utils/Config/ids");
+
+function sponsorDividerLine() {
+  return "<a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531><a:xdivisore:1471892113426874531>";
+}
+
+function buildSponsorTagEmbed(config, boosterRoleMention) {
+  const { EmbedBuilder } = require("discord.js");
+  return new EmbedBuilder()
+    .setColor(SPONSOR_PANEL_COLOR)
+    .setDescription(
+      [
+        `## <:LC_wNew:1471891729471770819> ── .✦ <a:VC_RightWing:1448672889845973214> ₊⋆˚｡ ${config.tagName}'s Guild-TAG`,
+        sponsorDividerLine(),
+        "",
+        "",
+        "**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
+        "────────୨ৎ────────",
+        "<a:VC_Exclamation:1448687427836444854> Ti basta essere parte di https://discord.gg/viniliecaffe oppure",
+        `boostare questo server (<a:flyingnitroboost:1472995328956567754> ${boosterRoleMention})`,
+        "",
+        "",
+        "**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
+        "────────୨ৎ────────",
+        "<a:VC_Exclamation:1448687427836444854> You just need to be in https://discord.gg/viniliecaffe or boost",
+        `this server (<a:flyingnitroboost:1472995328956567754> ${boosterRoleMention})`,
+        "",
+        "",
+        "<:VC_PepeComfy:1331591439599272004> Keep up! Nuovi aggiornamenti in arrivo...",
+      ].join("\n"),
+    )
+    .setFooter({
+      text: `.gg/viniliecaffe • ${new Date().toLocaleString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}`,
+    });
+}
+
+function buildSponsorTicketEmbed(config, guildedRoleMention) {
+  const { EmbedBuilder } = require("discord.js");
+  return new EmbedBuilder()
+    .setColor(SPONSOR_PANEL_COLOR)
+    .setTitle(`༄${config.emoji}︲${config.tagName}'s Ticket`)
+    .setDescription(
+      `Clicca sul menù per aprire un ticket e claimare il tuo ruolo ${guildedRoleMention} su questo server e su quello principale.`,
+    );
+}
+
+function buildSponsorTicketMenuRow() {
+  const { ActionRowBuilder, StringSelectMenuBuilder } = require("discord.js");
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId("ticket_open_menu")
+    .setPlaceholder("🎫 Seleziona una categoria...")
+    .addOptions({
+      label: "Prima categoria",
+      description: "Riscatto Ruolo",
+      value: "ticket_supporto",
+      emoji: { id: "1443651872258003005", name: "discordstaff" },
+    });
+  return new ActionRowBuilder().addComponents(menu);
+}
+
+async function sponsorFetchGuild(client, guildId) {
+  return client.guilds.cache.get(guildId) || client.guilds.fetch(guildId).catch(() => null);
+}
+
+async function sponsorEnsureChannelsFetched(guild) {
+  if (!guild?.channels?.fetch) return;
+  await guild.channels.fetch().catch(() => {});
+}
+
+async function sponsorFetchTextChannel(guild, channelId) {
+  if (!channelId) return null;
+  let ch = guild.channels.cache.get(channelId);
+  if (!ch) ch = await guild.channels.fetch(channelId).catch(() => null);
+  return ch?.isTextBased?.() ? ch : null;
+}
+
+async function sponsorResolveRoleMention(guild, roleId, fallback = "`Role`") {
+  if (!guild || !roleId) return fallback;
+  const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+  return role ? `<@&${role.id}>` : fallback;
+}
+
+async function sponsorFindFallbackTicketChannel(guild) {
+  const channel = guild.channels.cache.find((ch) => {
+    if (!ch?.isTextBased?.()) return false;
+    const name = String(ch.name || "").toLowerCase();
+    return name.includes("ticket") || name.includes("assistenza") || name.includes("support");
+  });
+  return channel || null;
+}
+
+async function sponsorGetOrCreatePanelDoc(guildId, channelId) {
+  const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
+  return PersonalityPanel.findOneAndUpdate(
+    { guildId, channelId },
+    { $setOnInsert: { guildId, channelId } },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
+
+function sponsorMaybeAttachment(filePath, fileName, logLabel) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    const { AttachmentBuilder } = require("discord.js");
+    return new AttachmentBuilder(filePath, { name: fileName });
+  } catch {
+    global.logger.warn(`[${logLabel}] Image not found, sending without image`);
+    return null;
+  }
+}
+
+async function runSponsorGuildTagPanels(client) {
+  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
+  const guildTagConfig = IDs.sponsorGuildTagConfig || {};
+  for (const [guildId, config] of Object.entries(guildTagConfig)) {
+    try {
+      const guild = await sponsorFetchGuild(client, guildId);
+      if (!guild) {
+        global.logger.warn("[SPONSOR GUILD TAG] Guild not found:", guildId);
+        continue;
+      }
+      const channel = await sponsorFetchTextChannel(guild, config.channelId);
+      if (!channel) {
+        global.logger.warn("[SPONSOR GUILD TAG] Channel not found:", guildId, config.channelId);
+        continue;
+      }
+      let boosterRoleMention = "`Server Booster`";
+      if (config.boosterRoleId) {
+        const role = await guild.roles.fetch(config.boosterRoleId).catch(() => null);
+        if (role) boosterRoleMention = `<@&${role.id}>`;
+      }
+      const embed = buildSponsorTagEmbed(config, boosterRoleMention);
+      const attachment = sponsorMaybeAttachment(TAG_IMAGE_PATH, TAG_IMAGE_NAME, "SPONSOR GUILD TAG");
+      if (attachment) embed.setImage(`attachment://${TAG_IMAGE_NAME}`);
+
+      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, config.channelId).catch((err) => {
+        global.logger.error("[SPONSOR GUILD TAG] Panel doc:", err);
+        return null;
+      });
+      if (!panelDoc) continue;
+
+      const messagePayload = {
+        messageId: panelDoc.infoMessageId1 || null,
+        embeds: [embed],
+        components: [],
+        ...(attachment ? { files: [attachment] } : {}),
+      };
+      const sentMessage = await upsertPanelMessage(channel, client, messagePayload);
+      if (sentMessage?.id) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: config.channelId },
+          { $set: { infoMessageId1: sentMessage.id } },
+        ).catch(() => {});
+      }
+    } catch (err) {
+      global.logger.error("[SPONSOR GUILD TAG] Error guild " + guildId, err);
+    }
+  }
+}
+
+async function runSponsorPanel(client) {
+  try {
+    await runSponsorGuildTagPanels(client);
+    return 1;
+  } catch (err) {
+    global.logger.error("[SPONSOR] runSponsorPanel (Guild-TAG):", err?.message || err);
+    return 0;
+  }
+}
+
+async function runSponsorVerifyPanels(client) {
+  const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
+  const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
+
+  let sponsorGuildIds = Array.isArray(client.config?.sponsorGuildIds) ? [...client.config.sponsorGuildIds] : [];
+  const verifyChannelIds = client.config?.sponsorVerifyChannelIds || {};
+  if (sponsorGuildIds.length === 0) sponsorGuildIds = Object.keys(verifyChannelIds);
+  if (sponsorGuildIds.length === 0) {
+    global.logger.warn("[SPONSOR] runSponsorVerifyPanels: nessuna guild in config.");
+    return 0;
+  }
+
+  let sent = 0;
+  for (const guildId of sponsorGuildIds) {
+    try {
+      const guild = await sponsorFetchGuild(client, guildId);
+      if (!guild) {
+        global.logger.warn("[SPONSOR] Verify panel: guild non trovata:", guildId);
+        continue;
+      }
+      await sponsorEnsureChannelsFetched(guild);
+      let channel = await sponsorFetchTextChannel(guild, verifyChannelIds[guildId]);
+      if (!channel) {
+        channel = guild.channels.cache.find((ch) => ch.name?.toLowerCase().includes("start")) || null;
+      }
+      if (!channel?.isTextBased?.()) {
+        global.logger.warn("[SPONSOR] Verify panel: canale non trovato in guild " + guild.name + " (" + guildId + ").");
+        continue;
+      }
+
+      const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
+      const verifyEmbed = new EmbedBuilder()
+        .setColor(color)
+        .setTitle("<:verification:1472989484059459758> **`Verification Required!`**")
+        .setDescription(
+          "<:space:1472990350795866265> <:alarm:1472990352968253511> **Per accedere a `" +
+            (guild.name || "this server") +
+            "` devi prima verificarti.**\n" +
+            "<:space:1472990350795866265><:space:1472990350795866265> <:rightSort:1472990348086087791> Clicca il pulsante **Verify** qui sotto per iniziare.",
+        );
+
+      const verifyRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("verify_start").setLabel("Verify").setStyle(ButtonStyle.Success),
+      );
+
+      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
+      if (!panelDoc) continue;
+
+      const panelMessage = await upsertPanelMessage(channel, client, {
+        messageId: panelDoc.verifyPanelMessageId || null,
+        embeds: [verifyEmbed],
+        components: [verifyRow],
+      });
+      if (!panelMessage?.id) continue;
+
+      await PersonalityPanel.updateOne(
+        { guildId, channelId: channel.id },
+        { $set: { verifyPanelMessageId: panelMessage.id } },
+      ).catch(() => {});
+      sent++;
+    } catch (err) {
+      global.logger.error("[SPONSOR] runSponsorVerifyPanels guild " + guildId + ":", err?.message || err);
+    }
+  }
+  return sent;
+}
+
+async function runSponsorTicketPanels(client) {
+  const { upsertPanelMessage, shouldEditMessage } = require("../Utils/Embeds/panelUpsert");
+  const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
+
+  const ticketConfig = IDs.sponsorTicketConfig || {};
+  for (const [guildId, config] of Object.entries(ticketConfig)) {
+    try {
+      const guild = await sponsorFetchGuild(client, guildId);
+      if (!guild) continue;
+      await sponsorEnsureChannelsFetched(guild);
+      const guildedRoleMention = await sponsorResolveRoleMention(guild, config.guildedRoleId, "`Guilded`");
+
+      let channel = await sponsorFetchTextChannel(guild, config.ticketChannelId);
+      if (!channel) channel = await sponsorFindFallbackTicketChannel(guild);
+      if (!channel?.isTextBased?.()) continue;
+
+      const attachment = sponsorMaybeAttachment(TICKET_IMAGE_PATH, TICKET_IMAGE_NAME, "SPONSOR TICKET");
+      const embed = buildSponsorTicketEmbed(config, guildedRoleMention);
+      const ticketRow = buildSponsorTicketMenuRow();
+
+      const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
+      const payload = {
+        embeds: [embed],
+        components: [ticketRow],
+        ...(attachment ? { files: [attachment], attachmentName: TICKET_IMAGE_NAME } : {}),
+      };
+
+      let message = null;
+      if (panelDoc?.sponsorTicketPanelMessageId) {
+        message = await channel.messages.fetch(panelDoc.sponsorTicketPanelMessageId).catch(() => null);
+      }
+      if (message) {
+        const needsEdit = await shouldEditMessage(message, payload);
+        if (needsEdit) {
+          await message.edit({
+            embeds: [embed],
+            components: [ticketRow],
+            ...(attachment ? { files: [attachment] } : {}),
+          }).catch(() => {});
+        }
+      } else {
+        message = await channel
+          .send({
+            embeds: [embed],
+            components: [ticketRow],
+            ...(attachment ? { files: [attachment] } : {}),
+          })
+          .catch(() => null);
+      }
+      if (message?.id) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: channel.id },
+          { $set: { sponsorTicketPanelMessageId: message.id } },
+        ).catch(() => {});
+      }
+    } catch (err) {
+      global.logger.error("[SPONSOR TICKET] Error guild " + guildId, err);
+    }
+  }
+}
+
 async function runSponsorPanelAuto(client) {
   const IDs = require("../Utils/Config/ids");
   const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, } = require("discord.js");
@@ -1439,6 +1748,24 @@ async function runEmbedWithButtonsSections(client) {
     runSponsorPanelAuto,
     client,
   );
+  await runPanelTask(
+    "runEmbedWithButtonsSections",
+    "runSponsorPanel",
+    runSponsorPanel,
+    client,
+  );
+  await runPanelTask(
+    "runEmbedWithButtonsSections",
+    "runSponsorVerifyPanels",
+    runSponsorVerifyPanels,
+    client,
+  );
+  await runPanelTask(
+    "runEmbedWithButtonsSections",
+    "runSponsorTicketPanels",
+    runSponsorTicketPanels,
+    client,
+  );
 }
 
 async function runEmbedOnlySections(client) {
@@ -1450,7 +1777,28 @@ async function runEmbedOnlySections(client) {
   );
 }
 
+const WARMUP_SPONSOR_DELAY_MS = 3000;
+const WARMUP_SPONSOR_BETWEEN_MS = 300;
+
+async function warmupSponsorGuilds(client) {
+  const sponsorIds = Array.isArray(client.config?.sponsorGuildIds)
+    ? client.config.sponsorGuildIds
+    : Object.keys(client.config?.sponsorVerifyChannelIds || {});
+  if (sponsorIds.length === 0) return;
+
+  await new Promise((r) => setTimeout(r, WARMUP_SPONSOR_DELAY_MS));
+  for (const guildId of sponsorIds) {
+    try {
+      await client.guilds.fetch(guildId).catch(() => null);
+      await new Promise((r) => setTimeout(r, WARMUP_SPONSOR_BETWEEN_MS));
+    } catch (err) {
+      global.logger.warn("[SPONSOR] Warmup guild " + guildId + ":", err?.message || err);
+    }
+  }
+}
+
 async function runAllClientReadyPanels(client) {
+  await warmupSponsorGuilds(client);
   await runMenuAndSelectSections(client);
   await runEmbedWithButtonsSections(client);
   await runEmbedOnlySections(client);

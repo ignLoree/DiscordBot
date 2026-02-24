@@ -42,6 +42,7 @@ function createBumpReminderService(options) {
     description,
     errorTag,
     logTag = errorTag,
+    suppressInfoLogs = false,
   } = options;
 
   const bumpTimers = new Map();
@@ -97,9 +98,11 @@ function createBumpReminderService(options) {
   }
 
   function scheduleReminder(client, guildId, lastBumpAt) {
-    global.logger?.info?.(
-      `${errorTag} scheduleReminder called guild=${guildId} lastBumpAt=${lastBumpAt}`,
-    );
+    if (!suppressInfoLogs) {
+      global.logger?.info?.(
+        `${errorTag} scheduleReminder called guild=${guildId} lastBumpAt=${lastBumpAt}`,
+      );
+    }
     const existing = bumpTimers.get(guildId);
     if (existing) clearTimeout(existing);
 
@@ -111,9 +114,11 @@ function createBumpReminderService(options) {
 
     if (remaining <= 0) {
       bumpTimers.delete(guildId);
-      global.logger?.info?.(
-        `${logTag} cooldown already passed, sending reminder now guild=${guildId}`,
-      );
+      if (!suppressInfoLogs) {
+        global.logger?.info?.(
+          `${logTag} cooldown already passed, sending reminder now guild=${guildId}`,
+        );
+      }
       sendReminder(client, guildId).catch((err) => {
         global.logger.error(`${errorTag} sendReminder failed:`, err);
       });
@@ -121,13 +126,17 @@ function createBumpReminderService(options) {
     }
 
     const remainingMinutes = Math.round(remaining / 60_000);
-    global.logger?.info?.(
-      `${logTag} reminder scheduled for guild=${guildId} in ${remainingMinutes} minutes`,
-    );
+    if (!suppressInfoLogs) {
+      global.logger?.info?.(
+        `${logTag} reminder scheduled for guild=${guildId} in ${remainingMinutes} minutes`,
+      );
+    }
 
     const timeout = setTimeout(async () => {
       try {
-        global.logger?.info?.(`${logTag} firing reminder for guild=${guildId}`);
+        if (!suppressInfoLogs) {
+          global.logger?.info?.(`${logTag} firing reminder for guild=${guildId}`);
+        }
         await sendReminder(client, guildId);
       } catch (error) {
         global.logger.error(errorTag, error);
@@ -172,7 +181,7 @@ function createBumpReminderService(options) {
       reminderSentAt: null,
       lastBumpAt: { $exists: true },
     });
-    if (docs.length > 0) {
+    if (docs.length > 0 && !suppressInfoLogs) {
       global.logger?.info?.(
         `${logTag} restoring ${docs.length} pending reminder(s)`,
       );
@@ -200,6 +209,7 @@ const disboardService = createBumpReminderService({
     "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",
   errorTag: "[DISBOARD REMINDER ERROR]",
   logTag: "[DISBOARD REMINDER]",
+  suppressInfoLogs: true,
 });
 
 const discadiaBumpService = createBumpReminderService({

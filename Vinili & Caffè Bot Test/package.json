@@ -1,7 +1,7 @@
 {
   "name": "vinili-caffe-test-bot",
   "version": "1.0.0",
-  "description": "Bot di test sponsor (ticket, verify, panel)",
+  "description": "Bot di test (ticket, verify, panel)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

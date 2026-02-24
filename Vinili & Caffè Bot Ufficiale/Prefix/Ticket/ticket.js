@@ -28,8 +28,17 @@ function isSponsorGuild(guildId) {
   return Boolean(guildId && SPONSOR_GUILD_IDS.includes(guildId));
 }
 
-function canClaimTicket(member, ticketType) {
+function hasSponsorStaffRole(member, guildId) {
+  if (!member || !guildId) return false;
+  const roleId = IDs?.roles?.sponsorStaffRoleIds?.[guildId];
+  return Boolean(roleId && member.roles?.cache?.has(roleId));
+}
+
+function canClaimTicket(member, ticketType, guildId = null) {
   if (!member) return false;
+  if (guildId && isSponsorGuild(guildId)) {
+    return (ticketType === "supporto" || ticketType === "sponsor_supporto") && hasSponsorStaffRole(member, guildId);
+  }
   const isSupport =
     ticketType === "supporto" && hasAnyRole(member, STAFF_ROLE_IDS);
   const isPartnership =
@@ -41,8 +50,11 @@ function canClaimTicket(member, ticketType) {
   return isSupport || isPartnership || isHigh;
 }
 
-function canCloseTicket(member, ticketType) {
+function canCloseTicket(member, ticketType, guildId = null) {
   if (!member) return false;
+  if (guildId && isSponsorGuild(guildId)) {
+    return (ticketType === "supporto" || ticketType === "sponsor_supporto") && hasSponsorStaffRole(member, guildId);
+  }
   const canCloseSupport =
     ticketType === "supporto" && hasAnyRole(member, STAFF_ROLE_IDS);
   const canClosePartnership =
@@ -480,10 +492,6 @@ module.exports = {
       return;
     }
 
-    if (isSponsorGuild(message.guild.id)) {
-      return;
-    }
-
     const defaultPrefix = "+";
     const rawContent = String(message.content || "").trim();
     const invokedToken = rawContent.startsWith(defaultPrefix)
@@ -549,9 +557,11 @@ module.exports = {
 
     const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
     const isTicketHighStaff = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+    const isSponsorStaffHere =
+      message.guild?.id && hasSponsorStaffRole(message.member, message.guild.id);
 
     if (subcommand === "reopen") {
-      if (!isTicketHighStaff) {
+      if (!isTicketHighStaff && !isSponsorStaffHere) {
         await safeMessageReply(message, {
           embeds: [
             makeErrorEmbed(
@@ -935,7 +945,7 @@ module.exports = {
         });
         return;
       }
-      if (!canCloseTicket(message.member, ticketDoc.ticketType)) {
+      if (!canCloseTicket(message.member, ticketDoc.ticketType, message.guild?.id)) {
         await safeMessageReply(message, {
           embeds: [
             new EmbedBuilder()
@@ -1005,7 +1015,7 @@ module.exports = {
       ).catch(() => {});
 
       const mainGuildId = IDs?.guilds?.main || null;
-      const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL_ID;
+      const centralTicketLogChannelId = IDs?.channels?.ticketLogs || "1442569290682208296";
 
       const mainGuild = mainGuildId
         ? client.guilds.cache.get(mainGuildId) ||
@@ -1013,12 +1023,10 @@ module.exports = {
         : null;
 
       const logChannel =
-        mainGuild?.channels?.cache?.get(mainLogChannelId) ||
+        mainGuild?.channels?.cache?.get(centralTicketLogChannelId) ||
         (mainGuild
-          ? await mainGuild.channels.fetch(mainLogChannelId).catch(() => null)
-          : null) ||
-        message.guild.channels.cache.get(LOG_CHANNEL_ID) ||
-        (await message.guild.channels.fetch(LOG_CHANNEL_ID).catch(() => null));
+          ? await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)
+          : null);
 
       const closeEmbed = buildTicketClosedEmbed({
         ...claimed.toObject(),
@@ -1114,7 +1122,7 @@ module.exports = {
         });
         return;
       }
-      if (!canClaimTicket(message.member, ticketDoc.ticketType)) {
+      if (!canClaimTicket(message.member, ticketDoc.ticketType, message.guild?.id)) {
         await safeMessageReply(message, {
           embeds: [
             new EmbedBuilder()

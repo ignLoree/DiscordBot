@@ -6,7 +6,7 @@ const IDs = require("../../Utils/Config/ids");
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
-const VERIFY_LOG_CHANNEL_ID = IDs.channels.modLogs;
+const CENTRAL_VERIFY_LOG_CHANNEL_ID = IDs.channels.verifyLogs || IDs.channels.modLogs || "1442569294796820541";
 const VERIFY_PING_CHANNEL_ID = IDs.channels.news;
 const VERIFY_CAPTCHA = {
   width: 300,
@@ -22,7 +22,33 @@ const VERIFY_CAPTCHA = {
   },
 };
 
-const MAIN_GUILD_ID = "1329080093599076474";
+const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
+
+function isSponsorGuildVerify(guildId) {
+  if (!guildId || guildId === MAIN_GUILD_ID) return false;
+  return Boolean(IDs.verificatoRoleIds?.[guildId]);
+}
+
+const MAIN_VERIFIED_ROLE_ID = IDs.roles?.Member || null;
+
+async function isUserInMainGuild(client, userId) {
+  if (!client || !userId) return false;
+  const guild = client.guilds.cache.get(MAIN_GUILD_ID) || (await client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
+  if (!guild) return false;
+  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  return Boolean(member);
+}
+
+/** Per avviare la verifica in uno server sponsor l'utente deve essere nel main E verificato (ruolo Member). */
+async function isUserVerifiedInMainGuild(client, userId) {
+  if (!client || !userId) return false;
+  const guild = client.guilds.cache.get(MAIN_GUILD_ID) || (await client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
+  if (!guild) return false;
+  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  if (!member?.roles?.cache) return false;
+  if (!MAIN_VERIFIED_ROLE_ID) return Boolean(member);
+  return member.roles.cache.has(MAIN_VERIFIED_ROLE_ID);
+}
 
 const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
 const {
@@ -303,7 +329,8 @@ async function resolveValidVerifyRoleIds(guild) {
       IDs.roles.separatore7,
     ].filter(Boolean);
   } else {
-    roleIds = [];
+    const sponsorRoleId = IDs.verificatoRoleIds?.[gid];
+    roleIds = sponsorRoleId ? [sponsorRoleId] : [];
   }
 
   const valid = [];
@@ -324,6 +351,8 @@ function isAlreadyVerifiedInThisGuild(member, guildId) {
     return ids.some((id) => member.roles.cache.has(id));
   }
 
+  const sponsorRoleId = IDs.verificatoRoleIds?.[guildId];
+  if (sponsorRoleId && member.roles.cache.has(sponsorRoleId)) return true;
   return false;
 }
 
@@ -400,20 +429,27 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] upsertVerifiedMember/applyTenureForMember:", err);
   }
 
+  const mainGuild =
+    interaction.client.guilds.cache.get(MAIN_GUILD_ID) ||
+    (await interaction.client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
   const logChannel =
-    guild?.channels?.cache?.get(VERIFY_LOG_CHANNEL_ID) ||
-    (await guild.channels.fetch(VERIFY_LOG_CHANNEL_ID).catch(() => null));
-  if (logChannel) {
+    mainGuild?.channels?.cache?.get(CENTRAL_VERIFY_LOG_CHANNEL_ID) ||
+    (mainGuild
+      ? await mainGuild.channels.fetch(CENTRAL_VERIFY_LOG_CHANNEL_ID).catch(() => null)
+      : null);
+  if (logChannel?.isTextBased?.()) {
     const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
     const createdAtText = `<t:${createdAtUnix}:F>`;
     const safeUsername = sanitizeEmbedText(interaction.user.username);
+    const serverName = guild?.name || "Unknown";
 
     const logEmbed = new EmbedBuilder()
       .setColor("#6f4e37")
-      .setTitle(`**${safeUsername}'s Verification Result:**`)
+      .setTitle(`**${safeUsername}'s Verification Result**`)
       .setDescription(
         `<:profile:1461732907508039834> **Member**: ${safeUsername} **[${interaction.user.id}]**\n` +
-          `<:creation:1461732905016492220> Creation: ${createdAtText}\n\n` +
+          `<:creation:1461732905016492220> Creation: ${createdAtText}\n` +
+          `**Server**: ${sanitizeEmbedText(serverName)}\n\n` +
           "Status:\n" +
           `<:space:1461733157840621608><:success:1461731530333229226> \`${safeUsername}\` has passed verification successfully.\n` +
           "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",
@@ -423,8 +459,8 @@ async function finalizeVerification(interaction, member) {
     await logChannel.send({ embeds: [logEmbed] }).catch((err) => {
       global.logger?.warn?.("[VERIFY] Failed to send verification log:", err);
     });
-  } else if (VERIFY_LOG_CHANNEL_ID) {
-    global.logger?.warn?.("[VERIFY] Log channel not found:", VERIFY_LOG_CHANNEL_ID);
+  } else if (CENTRAL_VERIFY_LOG_CHANNEL_ID) {
+    global.logger?.warn?.("[VERIFY] Central verify log channel not found:", CENTRAL_VERIFY_LOG_CHANNEL_ID);
   }
 
   const pingChannel =
@@ -467,6 +503,27 @@ async function handleVerifyInteraction(interaction) {
           flags: 1 << 6,
         });
         return true;
+      }
+
+      if (isSponsorGuildVerify(guildId)) {
+        const verifiedInMain = await isUserVerifiedInMainGuild(interaction.client, interaction.user.id);
+        if (!verifiedInMain) {
+          await safeReply(interaction, {
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Red")
+                .setTitle("<:alarm:1461725841451909183> Server principale richiesto")
+                .setDescription(
+                  "Per verificarti in questo server devi essere nel **server principale Vinili & Caffè** e aver completato la **verifica** lì.\n\n" +
+                    "<:rightSort:1461726104422453298> Unisciti qui: **https://discord.gg/viniliecaffe**\n" +
+                    "<:rightSort:1461726104422453298> Completa la verifica nel server principale (pulsante Verify)\n" +
+                    "Poi torna qui e clicca di nuovo **Verify**.",
+                ),
+            ],
+            flags: 1 << 6,
+          });
+          return true;
+        }
       }
 
       const existing = verifyState.get(interaction.user.id);

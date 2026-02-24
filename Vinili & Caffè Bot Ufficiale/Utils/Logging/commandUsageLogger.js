@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
+const IDs = require("../Config/ids");
 
 async function getChannelSafe(client, channelId) {
   if (!channelId) return null;
@@ -8,12 +9,27 @@ async function getChannelSafe(client, channelId) {
   );
 }
 
+/** Risolve il canale dal server principale per centralizzare i log in tutti i server. */
+async function getCentralChannel(client, channelId) {
+  if (!client || !channelId) return getChannelSafe(client, channelId);
+  const mainGuildId = IDs?.guilds?.main || null;
+  if (!mainGuildId) return getChannelSafe(client, channelId);
+  const guild =
+    client.guilds.cache.get(mainGuildId) ||
+    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  if (!guild) return getChannelSafe(client, channelId);
+  return (
+    guild.channels.cache.get(channelId) ||
+    (await guild.channels.fetch(channelId).catch(() => null))
+  );
+}
+
 async function logCommandUsage(
   client,
   { channelId, serverName, user, userId, content },
 ) {
   if (!channelId) return;
-  const channel = await getChannelSafe(client, channelId);
+  const channel = await getCentralChannel(client, channelId);
   if (!channel) return;
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
@@ -33,4 +49,4 @@ async function logCommandUsage(
   });
 }
 
-module.exports = { logCommandUsage, getChannelSafe };
+module.exports = { logCommandUsage, getChannelSafe, getCentralChannel };

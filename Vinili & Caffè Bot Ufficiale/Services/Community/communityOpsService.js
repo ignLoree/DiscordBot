@@ -1,5 +1,6 @@
 const { ChannelType, PermissionsBitField } = require("discord.js");
 const { VoteRole, VerificationTenure, } = require("../../Schemas/Community/communitySchemas");
+const SponsorMainLeave = require("../../Schemas/Tags/tagsSchema");
 const IDs = require("../../Utils/Config/ids");
 
 const VOTE_ROLE_ID = IDs.roles.Voter;
@@ -10,6 +11,7 @@ const ROLE_STAGE_2 = IDs.roles.Veterano;
 const ROLE_STAGE_3 = IDs.roles.OG;
 const VERIFIED_ROLE_ID = IDs.roles.Member || IDs.roles.Verificato;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SPONSOR_VERIFY_NICKNAME = ".gg/viniliecaffe";
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;
 
@@ -30,6 +32,11 @@ const guildTimers = new Map();
 let numberingLoopHandle = null;
 let voteCleanupLoopHandle = null;
 let verificationTenureLoopHandle = null;
+let sponsorKickLoopHandle = null;
+
+const SPONSOR_KICK_REASON =
+  "Non sei più nel server principale da 24 ore. Rientra nel server principale per accedere di nuovo agli server sponsor.";
+const SPONSOR_KICK_INTERVAL_MS = 15 * 60 * 1000;
 
 async function upsertVoteRole(guildId, userId, expiresAt) {
   if (!guildId || !userId || !expiresAt) return null;
@@ -82,6 +89,13 @@ async function upsertVerifiedMember(guildId, userId, verifiedAt = new Date()) {
 
 async function applyTenureForMember(member, record) {
   if (!member || !record) return;
+  const guildId = member.guild?.id;
+  const sponsorVerifyRoleId = IDs.verificatoRoleIds?.[guildId];
+  if (sponsorVerifyRoleId) {
+    await member.roles.add(sponsorVerifyRoleId).catch(() => {});
+    await member.setNickname(SPONSOR_VERIFY_NICKNAME).catch(() => {});
+    return;
+  }
   const now = new Date();
   const stage1At = new Date(
     record.verifiedAt.getTime() + STAGE_1_DAYS * DAY_MS,
@@ -290,6 +304,71 @@ function startCategoryNumberingLoop(client) {
   }, options.intervalMs);
 }
 
+async function runSponsorKickAfter24h(client) {
+  if (!client) return;
+  const mainGuildId = IDs.guilds?.main;
+  const sponsorGuildIds = Array.isArray(IDs.guilds?.sponsorGuildIds)
+    ? IDs.guilds.sponsorGuildIds
+    : [];
+  if (!mainGuildId || !sponsorGuildIds.length) return;
+
+  const now = new Date();
+  const toProcess = await SponsorMainLeave.find({ kickAt: { $lte: now } })
+    .lean()
+    .catch(() => []);
+  if (!toProcess.length) return;
+
+  const mainGuild =
+    client.guilds.cache.get(mainGuildId) ||
+    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  if (!mainGuild) return;
+
+  for (const doc of toProcess) {
+    const userId = doc?.userId;
+    if (!userId) {
+      await SponsorMainLeave.deleteOne({ _id: doc._id }).catch(() => {});
+      continue;
+    }
+    const inMain =
+      mainGuild.members.cache.has(userId) ||
+      (await mainGuild.members.fetch(userId).catch(() => null));
+    if (inMain) {
+      await SponsorMainLeave.deleteOne({ userId }).catch(() => {});
+      continue;
+    }
+    for (const guildId of sponsorGuildIds) {
+      const guild =
+        client.guilds.cache.get(guildId) ||
+        (await client.guilds.fetch(guildId).catch(() => null));
+      if (!guild) continue;
+      const member =
+        guild.members.cache.get(userId) ||
+        (await guild.members.fetch(userId).catch(() => null));
+      if (member && guild.members.me?.permissions?.has?.(PermissionsBitField.Flags.KickMembers)) {
+        await member.kick(SPONSOR_KICK_REASON).catch((err) => {
+          global.logger?.error?.("[SPONSOR KICK] kick failed", guildId, userId, err?.message || err);
+        });
+      }
+    }
+    await SponsorMainLeave.deleteOne({ userId }).catch(() => {});
+  }
+}
+
+function startSponsorKickLoop(client) {
+  if (!client) return;
+  if (sponsorKickLoopHandle) return sponsorKickLoopHandle;
+  sponsorKickLoopHandle = setInterval(
+    () => {
+      runSponsorKickAfter24h(client).catch((err) => {
+        global.logger.error("[SPONSOR KICK] loop failed:", err);
+      });
+    },
+    SPONSOR_KICK_INTERVAL_MS,
+  );
+  runSponsorKickAfter24h(client).catch(() => {});
+  return sponsorKickLoopHandle;
+}
+
 module.exports = {
   upsertVoteRole,
   removeExpiredVoteRoles,
@@ -301,4 +380,6 @@ module.exports = {
   queueCategoryRenumber,
   runAllGuilds,
   startCategoryNumberingLoop,
+  runSponsorKickAfter24h,
+  startSponsorKickLoop,
 };

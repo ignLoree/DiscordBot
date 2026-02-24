@@ -1,10 +1,11 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, ChannelType, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const fs = require("fs");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const {
   TICKETS_CATEGORY_NAME,
+  isTicketCategoryName,
 } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
@@ -82,6 +83,230 @@ function isSponsorGuild(guildId) {
   return getSponsorGuildIds().includes(guildId);
 }
 
+const TICKET_PERMISSIONS_SPONSOR = [
+  PermissionFlagsBits.ViewChannel,
+  PermissionFlagsBits.SendMessages,
+  PermissionFlagsBits.EmbedLinks,
+  PermissionFlagsBits.AttachFiles,
+  PermissionFlagsBits.ReadMessageHistory,
+  PermissionFlagsBits.AddReactions,
+];
+
+async function handleSponsorTicketOpen(interaction) {
+  const guild = interaction.guild;
+  const userId = interaction.user.id;
+  await interaction.deferReply({ ephemeral: true }).catch(() => null);
+
+  if (!interaction.client.ticketOpenLocks) {
+    interaction.client.ticketOpenLocks = new Set();
+  }
+  const ticketLockKey = `${guild.id}:${userId}`;
+  if (interaction.client.ticketOpenLocks.has(ticketLockKey)) {
+    await safeEditReplyHelper(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Attendi")
+          .setDescription(
+            "<:vegax:1443934876440068179> Stai già aprendo un ticket, attendi.",
+          )
+          .setColor("#6f4e37"),
+      ],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+  interaction.client.ticketOpenLocks.add(ticketLockKey);
+
+  try {
+  const existing = await Ticket.findOne({
+    guildId: guild.id,
+    userId,
+    open: true,
+  }).catch(() => null);
+  if (existing) {
+    await safeEditReplyHelper(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Ticket Aperto")
+          .setDescription(
+            `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`,
+          )
+          .setColor("#6f4e37"),
+      ],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+
+  await guild.channels.fetch().catch(() => null);
+  let category = guild.channels.cache.find(
+    (ch) => ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name),
+  );
+  if (!category) {
+    const categories = guild.channels.cache.filter(
+      (ch) => ch.type === ChannelType.GuildCategory,
+    );
+    const bottomPosition =
+      categories.size > 0
+        ? Math.max(...categories.map((ch) => ch.rawPosition ?? 0)) + 1
+        : 0;
+    category = await guild.channels
+      .create({
+        name: TICKETS_CATEGORY_NAME,
+        type: ChannelType.GuildCategory,
+        position: bottomPosition,
+        permissionOverwrites: [
+          { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+        ],
+      })
+      .catch(() => null);
+  }
+  if (!category) {
+    await safeEditReplyHelper(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Errore")
+          .setDescription(
+            "<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket.",
+          )
+          .setColor("#6f4e37"),
+      ],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+
+  const staffRoleId = IDs.roles?.sponsorStaffRoleIds?.[guild.id];
+  const config = IDs.sponsorTicketConfig?.[guild.id] || {};
+  const emoji = config.emoji || "🎫";
+  const tagName = config.tagName || "Supporto";
+
+  const ticketNumber = await getNextTicketId();
+  const overwrites = [
+    { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+    { id: userId, allow: TICKET_PERMISSIONS_SPONSOR },
+  ];
+  if (staffRoleId) {
+    overwrites.push({ id: staffRoleId, allow: TICKET_PERMISSIONS_SPONSOR });
+  }
+
+  const channel = await guild.channels
+    .create({
+      name: `༄${emoji}︲${tagName}᲼${interaction.user.username}`,
+      type: 0,
+      parent: category.id,
+      permissionOverwrites: overwrites,
+    })
+    .catch(() => null);
+
+  if (!channel) {
+    await safeEditReplyHelper(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Errore")
+          .setDescription(
+            "<:vegax:1443934876440068179> Impossibile creare il canale ticket.",
+          )
+          .setColor("#6f4e37"),
+      ],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+
+  const sponsorEmbed = new EmbedBuilder()
+    .setTitle("Ticket aperto – Riscatto ruolo")
+    .setDescription(
+      "Grazie per aver aperto il ticket. Uno **staff** assegnerà **manualmente** il ruolo (non tramite bot). Attendi in questo canale.",
+    )
+    .setColor("#6f4e37");
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("close_ticket")
+      .setLabel("🔒 Chiudi")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("close_ticket_motivo")
+      .setLabel("📝 Chiudi Con Motivo")
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId("claim_ticket")
+      .setLabel("✅ Claim")
+      .setStyle(ButtonStyle.Success),
+  );
+
+  const mainMsg = await channel
+    .send({ embeds: [sponsorEmbed], components: [row] })
+    .catch(() => null);
+
+  try {
+    await Ticket.create({
+      ticketNumber,
+      guildId: guild.id,
+      userId,
+      channelId: channel.id,
+      ticketType: "sponsor_supporto",
+      open: true,
+      messageId: mainMsg?.id || null,
+      descriptionPromptMessageId: null,
+      descriptionSubmitted: false,
+    });
+  } catch (err) {
+    const isDuplicate =
+      err?.code === 11000 ||
+      (err?.message && String(err.message).includes("E11000"));
+    if (isDuplicate) {
+      await channel.delete().catch(() => {});
+      const other = await Ticket.findOne({
+        guildId: guild.id,
+        userId,
+        open: true,
+      }).catch(() => null);
+      await safeEditReplyHelper(interaction, {
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Ticket Aperto")
+            .setDescription(
+              `<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
+            )
+            .setColor("#6f4e37"),
+        ],
+        flags: 1 << 6,
+      });
+      return true;
+    }
+    global.logger.error(err);
+    await channel.delete().catch(() => null);
+    await safeEditReplyHelper(interaction, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Errore")
+          .setDescription(
+            "<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.",
+          )
+          .setColor("#6f4e37"),
+      ],
+      flags: 1 << 6,
+    });
+    return true;
+  }
+
+  await safeEditReplyHelper(interaction, {
+    embeds: [
+      new EmbedBuilder()
+        .setTitle("<:vegacheckmark:1443666279058772028> Ticket Creato")
+        .setDescription(`Aperto un nuovo ticket: ${channel}`)
+        .setColor("#6f4e37"),
+    ],
+    flags: 1 << 6,
+  });
+  return true;
+  } finally {
+    interaction.client.ticketOpenLocks.delete(ticketLockKey);
+  }
+}
+
 async function handleTicketInteraction(interaction) {
   const selectedTicketAction = getSelectedTicketAction(interaction);
   const ticketActionId = selectedTicketAction || interaction.customId;
@@ -90,6 +315,13 @@ async function handleTicketInteraction(interaction) {
     isHandledTicketInteraction(interaction);
   if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
   if (interaction.guild && isSponsorGuild(interaction.guild.id)) {
+    if (
+      isTicketSelect &&
+      interaction.customId === "ticket_open_menu" &&
+      interaction.values?.[0] === "ticket_supporto"
+    ) {
+      return await handleSponsorTicketOpen(interaction);
+    }
     return false;
   }
   const LOG_CHANNEL = IDs.channels.ticketLogs;
@@ -2077,7 +2309,7 @@ async function pinFirstTicketMessage(channel, message) {
       ).catch(() => {});
 
       const mainGuildId = IDs?.guilds?.main || null;
-      const mainLogChannelId = IDs?.channels?.ticketLogs || LOG_CHANNEL;
+      const centralTicketLogChannelId = IDs?.channels?.ticketLogs || "1442569290682208296";
 
       const mainGuild = mainGuildId
         ? targetInteraction.client.guilds.cache.get(mainGuildId) ||
@@ -2087,14 +2319,10 @@ async function pinFirstTicketMessage(channel, message) {
         : null;
 
       const logChannel =
-        mainGuild?.channels?.cache?.get(mainLogChannelId) ||
+        mainGuild?.channels?.cache?.get(centralTicketLogChannelId) ||
         (mainGuild
-          ? await mainGuild.channels.fetch(mainLogChannelId).catch(() => null)
-          : null) ||
-        targetInteraction.guild?.channels?.cache?.get(LOG_CHANNEL) ||
-        (await targetInteraction.guild?.channels
-          ?.fetch(LOG_CHANNEL)
-          .catch(() => null));
+          ? await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)
+          : null);
 
       const closeEmbedData = {
         ...ticket.toObject(),

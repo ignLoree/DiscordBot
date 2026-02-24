@@ -1,4 +1,4 @@
-﻿const { InteractionType, EmbedBuilder } = require("discord.js");
+const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
@@ -7,7 +7,7 @@ const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server test e sui server sponsor configurati.";
+  "Questo bot è utilizzabile solo sul server test.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
 
 function markInteractionSeen(client, interactionId) {
@@ -178,11 +178,27 @@ async function logInteractionError(interaction, client, err) {
   }
 }
 
+const ALLOWED_GUILD_ID = IDs.guilds?.test || null;
+
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
     if (!interaction || interaction.replied || interaction.deferred) return;
     if (markInteractionSeen(client, interaction.id)) return;
+
+    if (ALLOWED_GUILD_ID && interaction.guildId && String(interaction.guildId) !== String(ALLOWED_GUILD_ID)) {
+      if (interaction.isRepliable?.() && !interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Orange")
+              .setDescription("Questo bot è utilizzabile solo sul **server test**."),
+          ],
+          flags: PRIVATE_FLAG,
+        }).catch(() => {});
+      }
+      return;
+    }
 
     let releaseButtonGuard = null;
 
@@ -199,11 +215,6 @@ module.exports = {
         }
         return;
       }
-
-      const { handleVerifyInteraction } = require("./interaction/verifyHandlers");
-      const { handleTicketInteraction } = require("./interaction/ticketHandlers");
-
-      if (await handleVerifyInteraction(interaction)) return;
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
         await interaction.respond([]).catch(() => {});
@@ -240,8 +251,6 @@ module.exports = {
 
       const allowedByGate = await runPermissionGate(interaction);
       if (!allowedByGate) return;
-
-      if (await handleTicketInteraction(interaction)) return;
     } catch (err) {
       global.logger.error("[Bot Test] interactionCreate", err);
       await logInteractionError(interaction, client, err);

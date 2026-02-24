@@ -113,6 +113,13 @@ async function refreshStaffList(
   if (!force && previousHash === content) return;
 
   const message = await resolveMessage(channel, client, guildId);
+  if (!force && !previousHash && message && message.content !== null && message.content !== undefined) {
+    if (String(message.content).trim() === String(content).trim()) {
+      state.contentHashByGuild.set(guildId, content);
+      return;
+    }
+  }
+
   if (message) {
     if (force || message.content !== content) {
       const edited = await message.edit(content).catch(() => null);

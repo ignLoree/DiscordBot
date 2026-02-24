@@ -1,25 +1,13 @@
-﻿const path = require("path");
+const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
-const sponsorPanels = require("../Triggers/embeds");
-const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
-const WARMUP_DELAY_MS = 3000;
-const WARMUP_BETWEEN_GUILDS_MS = 300;
-const RETRY_DELAY_MS = 5000;
 const RESTART_CLEANUP_DELAY_MS = 2000;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getSponsorIds(client) {
-  if (Array.isArray(client.config?.sponsorGuildIds)) {
-    return client.config.sponsorGuildIds;
-  }
-  return Object.keys(client.config?.sponsorVerifyChannelIds || {});
 }
 
 async function setPresence(client) {
@@ -54,100 +42,8 @@ async function connectMongo(client) {
       serverSelectionTimeoutMS: 15000,
       connectTimeoutMS: 15000,
     });
-    try {
-      startTicketAutoClosePromptLoop(client);
-      startTranscriptCleanupLoop();
-    } catch (err) {
-      global.logger.error(
-        "[Bot Test] Ticket maintenance loops:",
-        err?.message || err,
-      );
-    }
   } catch (err) {
     global.logger.error("[Bot Test] MongoDB:", err.message);
-  }
-}
-
-async function warmupGuilds(client, sponsorIds) {
-  await sleep(WARMUP_DELAY_MS);
-
-  for (const guildId of sponsorIds) {
-    try {
-      await client.guilds.fetch(guildId).catch((err) => {
-        global.logger.warn(
-          "[Bot Test] Fetch guild " + guildId + ": " + (err?.message || err),
-        );
-        return null;
-      });
-      await sleep(WARMUP_BETWEEN_GUILDS_MS);
-    } catch (err) {
-      global.logger.warn(
-        "[Bot Test] Warm-up guild " + guildId + ":",
-        err?.message || err,
-      );
-    }
-  }
-}
-
-async function runPanelsOnce(client) {
-  let verifySent = 0;
-  let ticketSent = 0;
-
-  try {
-    await sponsorPanels.runSponsorPanel(client);
-  } catch (err) {
-    global.logger.error("[Bot Test] runSponsorPanel:", err);
-  }
-
-  try {
-    verifySent = await sponsorPanels.runSponsorVerifyPanels(client);
-  } catch (err) {
-    global.logger.error("[Bot Test] runSponsorVerifyPanels:", err);
-  }
-
-  try {
-    ticketSent = await sponsorPanels.runSponsorTicketPanels(client);
-  } catch (err) {
-    global.logger.error("[Bot Test] runSponsorTicketPanels:", err);
-  }
-
-  return { verifySent, ticketSent };
-}
-
-function logPanelZeroWarnings(client, sponsorIds) {
-  global.logger.warn(
-    "[Bot Test] Dopo il retry: ancora 0 panel. Verifica che il bot sia invitato in ogni server sponsor (config.sponsorGuildIds), sponsorVerifyChannelIds per la verifica e sponsorTicketChannelIds per i ticket.",
-  );
-
-  if (sponsorIds.length === 0 || client.guilds.cache.size === 0) return;
-
-  const inSponsor = sponsorIds.filter((id) => client.guilds.cache.has(id));
-  if (inSponsor.length > 0) return;
-
-  global.logger.warn(
-    "[Bot Test] Questo bot (Application ID: " +
-      (client.application?.id || client.user?.id) +
-      ') non è in nessuno dei server sponsor. L\'API Discord restituisce "Unknown Guild": invita QUESTO bot (stesso token/DISCORD_TOKEN_TEST) nei server sponsor, non un altro bot.',
-  );
-}
-
-async function runPanelsWithRetry(client, sponsorIds) {
-  let result = await runPanelsOnce(client);
-
-  if (
-    result.verifySent === 0 &&
-    result.ticketSent === 0 &&
-    client.guilds.cache.size > 0
-  ) {
-    global.logger.warn(
-      "[Bot Test] Nessun panel verify/ticket inviato. Riprovo tra 5 secondi...",
-    );
-    await sleep(RETRY_DELAY_MS);
-    result = await runPanelsOnce(client);
-  }
-
-  if (result.verifySent === 0 && result.ticketSent === 0) {
-    logPanelZeroWarnings(client, sponsorIds);
   }
 }
 
@@ -219,10 +115,6 @@ module.exports = {
 
     await setPresence(activeClient);
     await connectMongo(activeClient);
-
-    const sponsorIds = getSponsorIds(activeClient);
-    await warmupGuilds(activeClient, sponsorIds);
-    await runPanelsWithRetry(activeClient, sponsorIds);
     await refreshLists(activeClient);
     await handleRestartNotification(activeClient);
   },

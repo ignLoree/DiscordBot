@@ -21,6 +21,7 @@ function buildErrorLogEmbed({
   userTag,
   error,
   title = "Log errori",
+  serverName = null,
 }) {
   const fullError = getFullErrorText(error);
   const errorInBlock =
@@ -31,24 +32,33 @@ function buildErrorLogEmbed({
   const safeUserTag = truncateFieldValue(userTag || "—", EMBED_FIELD_VALUE_MAX - 6);
   const safeLabel = truncateFieldValue(contextLabel ?? "", EMBED_FIELD_NAME_MAX - 30);
   const safeTitle = truncateFieldValue(title ?? "Log errori", EMBED_FIELD_NAME_MAX);
+  const safeServer = truncateFieldValue(serverName || "—", EMBED_FIELD_VALUE_MAX - 6);
+
+  const fields = [
+    {
+      name: `<:dot:1443660294596329582> ${safeLabel}`,
+      value: `\`\`\`${safeContext}\`\`\``,
+    },
+    {
+      name: "<:dot:1443660294596329582> Utente",
+      value: `\`\`\`${safeUserTag}\`\`\``,
+    },
+    {
+      name: "<:dot:1443660294596329582> Errore",
+      value: `\`\`\`${errorInBlock}\`\`\``,
+    },
+  ];
+  if (serverName) {
+    fields.splice(1, 0, {
+      name: "<:dot:1443660294596329582> Server",
+      value: `\`\`\`${safeServer}\`\`\``,
+    });
+  }
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(safeTitle)
-    .addFields(
-      {
-        name: `<:dot:1443660294596329582> ${safeLabel}`,
-        value: `\`\`\`${safeContext}\`\`\``,
-      },
-      {
-        name: "<:dot:1443660294596329582> Utente",
-        value: `\`\`\`${safeUserTag}\`\`\``,
-      },
-      {
-        name: "<:dot:1443660294596329582> Errore",
-        value: `\`\`\`${errorInBlock}\`\`\``,
-      },
-    )
+    .addFields(fields)
     .setTimestamp();
 }
 

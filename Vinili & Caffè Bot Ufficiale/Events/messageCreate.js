@@ -15,6 +15,7 @@ const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeni
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
 const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
+const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
 const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
@@ -1060,14 +1061,14 @@ module.exports = {
         const channelID =
           IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
         const errorChannel = channelID
-          ? resolvedClient.channels.cache.get(channelID) ||
-            (await resolvedClient.channels.fetch(channelID).catch(() => null))
+          ? await getCentralChannel(resolvedClient, channelID)
           : null;
         const errorEmbed = buildErrorLogEmbed({
           contextLabel: "Comando",
           contextValue: execCommand?.name || "unknown",
           userTag: execMessage.author?.tag || "unknown",
           error,
+          serverName: execMessage.guild?.name || null,
         });
         if (errorChannel?.isTextBased?.()) {
           const pendingBtn = new ButtonBuilder()

@@ -6,12 +6,19 @@ const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const PREFIXES = ["-"];
 const BOT_MENTION_REGEX = /<@!?\d+>/;
 const OFFICIAL_MAIN_GUILD_ID = IDs.guilds?.main || null;
+const TEST_GUILD_ID = IDs.guilds?.test || null;
 
 async function dispatchPrefixMessage(message, client) {
   if (!message?.guild || message.author?.bot) return false;
   if (
     OFFICIAL_MAIN_GUILD_ID &&
     String(message.guild.id || "") === String(OFFICIAL_MAIN_GUILD_ID)
+  ) {
+    return false;
+  }
+  if (
+    TEST_GUILD_ID &&
+    String(message.guild.id || "") !== String(TEST_GUILD_ID)
   ) {
     return false;
   }
@@ -91,12 +98,8 @@ async function dispatchPrefixMessage(message, client) {
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      "<:ticket:1472994083524837396> **Bot Test** gestisce solo **ticket** e **verifica** su questo server.\n" +
-        "I comandi (prefix e slash) principali sono sul **bot ufficiale**.\n" +
-        (availableCommands
-          ? `Comandi disponibili qui: ${availableCommands}\n`
-          : "") +
-        "Usa i **bottoni** e il **menu** nel canale ticket per aprire un ticket.",
+      "**Bot Test** – i comandi principali sono sul **bot ufficiale**.\n" +
+        (availableCommands ? `Comandi disponibili qui: ${availableCommands}` : ""),
     );
   await message.reply({ embeds: [embed] }).catch(() => {});
   return true;

@@ -30,6 +30,29 @@ function isMainGuild(guildId) {
   return Boolean(MAIN_GUILD_ID) && String(guildId || "") === String(MAIN_GUILD_ID);
 }
 
+function getSponsorGuildIds() {
+  return Array.isArray(IDs?.guilds?.sponsorGuildIds)
+    ? IDs.guilds.sponsorGuildIds.map(String)
+    : [];
+}
+function isSponsorGuild(guildId) {
+  return getSponsorGuildIds().includes(String(guildId || ""));
+}
+function hasSponsorStaffRole(member, guildId) {
+  if (!member || !guildId) return false;
+  const map = IDs?.roles?.sponsorStaffRoleIds || {};
+  const roleId = map[String(guildId)];
+  if (!roleId) return false;
+  return member?.roles?.cache?.has(roleId) === true;
+}
+function hasVerificatoRole(member, guildId) {
+  if (!member || !guildId) return false;
+  const map = IDs?.verificatoRoleIds || {};
+  const roleId = map[String(guildId)];
+  if (!roleId) return false;
+  return member?.roles?.cache?.has(roleId) === true;
+}
+
 const TICKET_BUTTON_IDS = new Set([
   "ticket_partnership",
   "ticket_highstaff",
@@ -750,6 +773,15 @@ async function checkPrefixPermission(
     return allowed;
   }
 
+  if (guildId && !onMainGuild && isSponsorGuild(guildId) && safeCommand === "ticket") {
+    if (message?.member && hasSponsorStaffRole(message.member, guildId)) {
+      if (options.returnDetails) {
+        return { allowed: true, reason: null, requiredRoles: null, channels: null };
+      }
+      return true;
+    }
+  }
+
   if (guildId && !onMainGuild) {
     const allowed = await hasAllPermissionsWithLiveFallback(message, [
       PermissionFlagsBits.Administrator,
@@ -861,6 +893,17 @@ async function checkButtonPermission(interaction) {
       requiredRoles: null,
       ownerId: null,
     };
+  }
+
+  if (isSponsorGuild(guildId) && TICKET_BUTTON_IDS.has(customId)) {
+    if (!hasSponsorStaffRole(interaction?.member, guildId)) {
+      return {
+        allowed: false,
+        reason: "missing_role",
+        requiredRoles: ["Staff"],
+        ownerId: null,
+      };
+    }
   }
 
   if (!customId) {
@@ -1028,6 +1071,16 @@ async function checkStringSelectPermission(interaction) {
       requiredRoles: null,
       ownerId: null,
     };
+  }
+  if (isSponsorGuild(guildId) && customId === "ticket_open_menu") {
+    if (!hasVerificatoRole(interaction?.member, guildId)) {
+      return {
+        allowed: false,
+        reason: "missing_role",
+        requiredRoles: ["Verificato"],
+        ownerId: null,
+      };
+    }
   }
   if (!customId) {
     return { allowed: true, reason: null, requiredRoles: null, ownerId: null };

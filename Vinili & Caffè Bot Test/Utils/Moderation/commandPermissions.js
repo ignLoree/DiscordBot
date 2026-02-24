@@ -12,12 +12,6 @@ const EMPTY_PERMISSIONS = {
 const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
 
-function getSponsorGuildIds() {
-  return Array.isArray(IDs?.guilds?.sponsorGuildIds)
-    ? IDs.guilds.sponsorGuildIds.map(String)
-    : [];
-}
-
 function isOfficialMainGuild(guildId) {
   return (
     Boolean(OFFICIAL_MAIN_GUILD_ID) &&
@@ -28,35 +22,7 @@ function isOfficialMainGuild(guildId) {
 function isTestMainScopeGuild(guildId) {
   const safeGuildId = String(guildId || "");
   if (!safeGuildId) return false;
-  if (TEST_MAIN_GUILD_ID && safeGuildId === String(TEST_MAIN_GUILD_ID)) return true;
-  return getSponsorGuildIds().includes(safeGuildId);
-}
-
-const TICKET_BUTTON_IDS = new Set([
-  "claim_ticket",
-  "unclaim",
-  "close_ticket",
-  "close_ticket_motivo",
-]);
-
-function isSponsorGuild(guildId) {
-  return getSponsorGuildIds().includes(String(guildId || ""));
-}
-
-function hasSponsorStaffRole(member, guildId) {
-  if (!member || !guildId) return false;
-  const map = IDs?.roles?.sponsorStaffRoleIds || {};
-  const roleId = map[guildId];
-  if (!roleId) return false;
-  return member?.roles?.cache?.has(roleId) === true;
-}
-
-function hasVerificatoRole(member, guildId) {
-  if (!member || !guildId) return false;
-  const map = IDs?.verificatoRoleIds || {};
-  const roleId = map[guildId];
-  if (!roleId) return false;
-  return member?.roles?.cache?.has(roleId) === true;
+  return TEST_MAIN_GUILD_ID && safeGuildId === String(TEST_MAIN_GUILD_ID);
 }
 
 function loadPermissions() {
@@ -264,17 +230,7 @@ async function checkSlashPermission(interaction) {
 
   if (isOfficialMainGuild(guildId)) return false;
 
-  if (!isTestMainScopeGuild(guildId)) {
-    const member = interaction?.member;
-    const memberAdmin = Boolean(
-      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
-    if (memberAdmin) return true;
-    const liveMember = await fetchLiveMember(interaction);
-    return Boolean(
-      liveMember?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
-  }
+  if (!isTestMainScopeGuild(guildId)) return false;
 
   if (interaction.commandName === "dmbroadcast") {
     const devIds = getDevIds(interaction?.client);
@@ -297,12 +253,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 
   if (isOfficialMainGuild(guildId)) return false;
 
-  if (!isTestMainScopeGuild(guildId)) {
-    const member = message?.member || (await fetchLiveMember(message));
-    return Boolean(
-      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
-  }
+  if (!isTestMainScopeGuild(guildId)) return false;
 
   if (commandName === "restart") {
     const devIds = getDevIds(message?.client);
@@ -383,17 +334,6 @@ async function checkButtonPermission(interaction) {
     };
   }
 
-  if (isSponsorGuild(guildId) && TICKET_BUTTON_IDS.has(customId)) {
-    if (!hasSponsorStaffRole(interaction?.member, guildId)) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: ["Staff"],
-        ownerId: null,
-      };
-    }
-  }
-
   const data = loadPermissions();
   const rawPolicy = resolveComponentPolicy(data?.buttons, customId);
   const policy = normalizeComponentPolicy(rawPolicy);
@@ -439,35 +379,12 @@ async function checkStringSelectPermission(interaction) {
     };
   }
   if (guildId && !isTestMainScopeGuild(guildId)) {
-    const member = interaction?.member || (await fetchLiveMember(interaction));
-    const allowed = Boolean(
-      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
-    if (allowed) {
-      return {
-        allowed: true,
-        reason: null,
-        requiredRoles: null,
-        ownerId: null,
-      };
-    }
     return {
       allowed: false,
-      reason: "missing_permission",
+      reason: "mono_guild",
       requiredRoles: null,
       ownerId: null,
     };
-  }
-
-  if (isSponsorGuild(guildId) && customId === "ticket_open_menu") {
-    if (!hasVerificatoRole(interaction?.member, guildId)) {
-      return {
-        allowed: false,
-        reason: "missing_role",
-        requiredRoles: ["Verificato"],
-        ownerId: null,
-      };
-    }
   }
 
   const data = loadPermissions();
@@ -517,21 +434,9 @@ async function checkModalPermission(interaction) {
     };
   }
   if (guildId && !isTestMainScopeGuild(guildId)) {
-    const member = interaction?.member || (await fetchLiveMember(interaction));
-    const allowed = Boolean(
-      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
-    if (allowed) {
-      return {
-        allowed: true,
-        reason: null,
-        requiredRoles: null,
-        ownerId: null,
-      };
-    }
     return {
       allowed: false,
-      reason: "missing_permission",
+      reason: "mono_guild",
       requiredRoles: null,
       ownerId: null,
     };
@@ -632,7 +537,5 @@ module.exports = {
   buildGlobalPermissionDeniedEmbed,
   buildGlobalNotYourControlEmbed,
   hasAnyRole,
-  isSponsorGuild,
-  hasSponsorStaffRole,
 };
 

@@ -2,13 +2,27 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require(
 const IDs = require("../../Utils/Config/ids");
 const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
 
-const VERIFY_ROLE_IDS = [
+const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
+
+const VERIFY_ROLE_IDS_MAIN = [
   IDs.roles.Member,
   IDs.roles.separatore6,
   IDs.roles.separatore8,
   IDs.roles.separatore5,
   IDs.roles.separatore7,
 ].filter(Boolean);
+
+function isSponsorGuild(guildId) {
+  if (!guildId || guildId === MAIN_GUILD_ID) return false;
+  return Boolean(IDs.verificatoRoleIds?.[guildId]);
+}
+
+function hasSponsorStaffRole(member, guildId) {
+  if (!member || !guildId) return false;
+  const roleId = IDs.roles?.sponsorStaffRoleIds?.[guildId];
+  if (!roleId) return false;
+  return member?.roles?.cache?.has(roleId) === true;
+}
 
 function formatUserList(list) {
   if (!Array.isArray(list) || list.length === 0) return "Nessuno";
@@ -26,8 +40,12 @@ function formatUserList(list) {
 
 async function resolveValidVerifyRoleIds(guild) {
   if (!guild) return [];
+  const guildId = guild.id;
+  const roleIds = guildId === MAIN_GUILD_ID
+    ? VERIFY_ROLE_IDS_MAIN
+    : (IDs.verificatoRoleIds?.[guildId] ? [IDs.verificatoRoleIds[guildId]] : []);
   const valid = [];
-  for (const roleId of VERIFY_ROLE_IDS) {
+  for (const roleId of roleIds) {
     if (!roleId) continue;
     const role =
       guild.roles.cache.get(roleId) ||
@@ -159,16 +177,41 @@ async function resolveTargetsFlexible(message, args) {
 }
 
 module.exports = {
-  name: "verify",  async execute(message, args) {
+  name: "verify",
+  async execute(message, args) {
     const { safeMessageReply } = require("../../Utils/Moderation/reply");
-    const mainGuildId = IDs.guilds?.main || null;
-    if (!message.guild || (mainGuildId && message.guild.id !== mainGuildId)) {
+    const guildId = message.guild?.id;
+    if (!message.guild) {
       return safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
             .setColor("Red")
             .setDescription(
-              "<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo nel **server principale** (main guild).",
+              "<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo in un server.",
+            ),
+        ],
+        allowedMentions: { repliedUser: false },
+      });
+    }
+    if (guildId !== MAIN_GUILD_ID && !isSponsorGuild(guildId)) {
+      return safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Il comando `+verify` è utilizzabile solo nel **server principale** o negli **server sponsor**.",
+            ),
+        ],
+        allowedMentions: { repliedUser: false },
+      });
+    }
+    if (isSponsorGuild(guildId) && !hasSponsorStaffRole(message.member, guildId)) {
+      return safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Solo lo **staff** di questo server può usare `+verify` qui.",
             ),
         ],
         allowedMentions: { repliedUser: false },

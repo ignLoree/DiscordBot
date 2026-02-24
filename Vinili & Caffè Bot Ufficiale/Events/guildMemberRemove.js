@@ -1,6 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AuditLogEvent, PermissionsBitField, } = require("discord.js");
 const Staff = require("../Schemas/Staff/staffSchema");
 const Ticket = require("../Schemas/Ticket/ticketSchema");
+const SponsorMainLeave = require("../Schemas/Tags/tagsSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../Utils/Ticket/transcriptUtils");
 const { InviteTrack, ExpUser, ActivityUser, LevelHistory, } = require("../Schemas/Community/communitySchemas");
 const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
@@ -33,6 +34,10 @@ const STAFF_TRACKED_ROLE_IDS = new Set([
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
+const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
+const SPONSOR_GUILD_IDS = IDs.guilds?.sponsorGuildIds || [];
+const OFFICIAL_INVITE_URL = "https://discord.gg/viniliecaffe";
+const REJOIN_DEADLINE_MS = 24 * 60 * 60 * 1000;
 const JOIN_GATE_KICK_REASON_PATTERNS = [
   "account is too young to be allowed",
   "account too young to be allowed",
@@ -46,6 +51,54 @@ const JOIN_GATE_KICK_REASON_PATTERNS = [
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
   return `${actor} \`${actor.id}\`${actor.bot ? " [BOT]" : ""}`;
+}
+
+function makeSponsorRejoinEmbed() {
+  return new EmbedBuilder()
+    .setColor("#ffb020")
+    .setTitle("Rientra nel server principale")
+    .setDescription(
+      "Hai lasciato il server principale **Vinili & Caffè**.\n\n" +
+        "Per mantenere l'accesso ai server TAGS devi rientrare entro **24 ore**.\n\n" +
+        "Clicca il bottone qui sotto per rientrare.",
+    )
+    .setFooter({
+      text: "Se non rientri entro 24h sarai rimosso dal server e perderai la TAG.",
+    });
+}
+
+function makeSponsorRejoinRow() {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setStyle(ButtonStyle.Link)
+      .setLabel("Rientra nel server principale")
+      .setURL(OFFICIAL_INVITE_URL),
+  );
+}
+
+async function isUserInAnySponsorGuild(client, userId) {
+  for (const guildId of SPONSOR_GUILD_IDS) {
+    const guild = client?.guilds?.cache?.get(guildId);
+    if (!guild) continue;
+    const member = await guild.members.fetch(userId).catch(() => null);
+    if (member) return true;
+  }
+  return false;
+}
+
+async function upsertSponsorLeaveRecord(userId, leftAt, kickAt) {
+  await SponsorMainLeave.updateOne(
+    { userId },
+    { $set: { userId, leftAt, kickAt, dmSent: false, dmFailed: false } },
+    { upsert: true },
+  ).catch(() => {});
+}
+
+async function markSponsorDmResult(userId, dmOk) {
+  await SponsorMainLeave.updateOne(
+    { userId },
+    { $set: dmOk ? { dmSent: true } : { dmFailed: true } },
+  ).catch(() => {});
 }
 
 function sleep(ms) {
@@ -94,16 +147,22 @@ async function markInviteInactive(member) {
 
 async function closeOpenTicketsForMember(member) {
   const guild = member.guild;
+  const client = member.client;
   const openTickets = await Ticket.find({
     userId: member.id,
     open: true,
   }).catch(() => []);
   if (!openTickets.length) return;
 
-  const ticketLogChannelId = IDs.channels.ticketLogs;
-  const logChannel = ticketLogChannelId
-    ? guild.channels.cache.get(ticketLogChannelId) ||
-      (await guild.channels.fetch(ticketLogChannelId).catch(() => null))
+  const centralTicketLogChannelId = IDs.channels.ticketLogs || "1442569290682208296";
+  const mainGuildId = IDs.guilds?.main || null;
+  const mainGuild = mainGuildId
+    ? client.guilds.cache.get(mainGuildId) ||
+      (await client.guilds.fetch(mainGuildId).catch(() => null))
+    : null;
+  const logChannel = mainGuild
+    ? mainGuild.channels.cache.get(centralTicketLogChannelId) ||
+      (await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null))
     : null;
 
   for (const ticket of openTickets) {
@@ -538,6 +597,32 @@ module.exports = {
       }
       if (member?.guild?.id === IDs.guilds.main) {
         if (client) scheduleStaffListRefresh(client, member.guild.id);
+      }
+
+      if (
+        member?.user &&
+        !member.user.bot &&
+        member?.guild?.id === MAIN_GUILD_ID &&
+        SPONSOR_GUILD_IDS.length > 0
+      ) {
+        const activeClient = client || member.client;
+        const inSponsorGuild = await isUserInAnySponsorGuild(
+          activeClient,
+          member.user.id,
+        );
+        if (inSponsorGuild) {
+          const leftAt = new Date();
+          const kickAt = new Date(Date.now() + REJOIN_DEADLINE_MS);
+          await upsertSponsorLeaveRecord(member.user.id, leftAt, kickAt);
+          const dmOk = await member.user
+            .send({
+              embeds: [makeSponsorRejoinEmbed()],
+              components: [makeSponsorRejoinRow()],
+            })
+            .then(() => true)
+            .catch(() => false);
+          await markSponsorDmResult(member.user.id, dmOk);
+        }
       }
 
       await sendLeaveLog(member);

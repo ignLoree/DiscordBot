@@ -14,7 +14,7 @@ const {
 const {
   startWeeklyDmReminderLoop,
 } = require("../Services/Community/weeklyDmReminderService");
-const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop, } = require("../Services/Community/communityOpsService");
+const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop, startSponsorKickLoop, } = require("../Services/Community/communityOpsService");
 const {
   startWeeklyActivityWinnersLoop,
 } = require("../Services/Community/weeklyActivityWinnersService");
@@ -274,6 +274,10 @@ function startPrimaryLoops(client, engagementTick) {
     [
       "[CATEGORY NUMBERING] Failed to start loop",
       () => startCategoryNumberingLoop(client),
+    ],
+    [
+      "[SPONSOR 24H KICK] Failed to start loop",
+      () => startSponsorKickLoop(client),
     ],
     [
       "[WEEKLY ACTIVITY] Failed to start loop",

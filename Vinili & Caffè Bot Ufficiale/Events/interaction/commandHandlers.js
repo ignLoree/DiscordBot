@@ -7,6 +7,7 @@ const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDenied
 const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../../Utils/Moderation/commandCooldown");
 const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
+const { getCentralChannel } = require("../../Utils/Logging/commandUsageLogger");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
@@ -305,13 +306,14 @@ async function handleSlashCommand(interaction, client) {
     const errorChannelId =
       IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
     const errorChannel = errorChannelId
-      ? client.channels.cache.get(errorChannelId)
+      ? await getCentralChannel(client, errorChannelId)
       : null;
     const staffEmbed = buildErrorLogEmbed({
       contextLabel: "Comando",
       contextValue: interaction.commandName || "unknown",
       userTag: interaction.user?.tag || interaction.user?.id || "-",
       error,
+      serverName: interaction.guild?.name || null,
     });
     const errorText =
       (error?.stack || error?.message || String(error))?.slice(0, 1000) ||
