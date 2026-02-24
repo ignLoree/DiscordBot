@@ -4,8 +4,11 @@ const zlib = require("zlib");
 const crypto = require("crypto");
 const { promisify } = require("util");
 
+const IDs = require("../../Utils/Config/ids");
 const gzipAsync = promisify(zlib.gzip);
 const gunzipAsync = promisify(zlib.gunzip);
+
+const SECURITY_SNAPSHOT_PREFIX = "SEC-";
 const FETCH_DELAY_MS = 250;
 const MAX_ASSET_BYTES = 10 * 1024 * 1024;
 const BACKUP_SCHEMA_VERSION = 2;
@@ -1192,6 +1195,129 @@ async function validateAndHealGuildBackups(guildId, { limit = 30 } = {}) {
 
   return { healed, failed };
 }
+
+function generateSecuritySnapshotId() {
+  const now = new Date();
+  const base = now.toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const rand = Math.floor(Math.random() * 9999)
+    .toString()
+    .padStart(4, "0");
+  return `${SECURITY_SNAPSHOT_PREFIX}${base}-${rand}`;
+}
+
+function getEffectiveGuildIdForSecurity(guildId) {
+  const raw = String(guildId || "").trim();
+  if (raw) return raw;
+  return IDs?.guilds?.main || "global";
+}
+
+async function writeSecuritySnapshot(guildId, payload, options = {}) {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  const snapshotId = generateSecuritySnapshotId();
+  const createdAt = Date.now();
+  const entry = {
+    id: snapshotId,
+    createdAt,
+    guildId: String(guildId || ""),
+    actorId: String(options.actorId || ""),
+    reason: String(options.reason || "manual"),
+    payload: payload && typeof payload === "object" ? payload : {},
+  };
+  const serialized = JSON.stringify(entry);
+  const compressed = await gzipAsync(serialized, {
+    level: zlib.constants.Z_BEST_COMPRESSION,
+  });
+  const payloadSha256 = sha256(Buffer.from(serialized, "utf8"));
+  const compressedSha256 = sha256(compressed);
+  const outputDir = getBackupFolder(effectiveGuildId);
+  await fs.mkdir(outputDir, { recursive: true });
+  const fileName = `${snapshotId}.json.gz`;
+  const absolutePath = path.join(outputDir, fileName);
+  const backupPath = path.join(outputDir, `${snapshotId}.json.gz.bak`);
+  await writeFileAtomic(absolutePath, compressed);
+  await fs.copyFile(absolutePath, backupPath).catch(() => null);
+  await writeBackupMetaFile(effectiveGuildId, snapshotId, {
+    type: "security",
+    snapshotId,
+    guildId: effectiveGuildId,
+    createdAt: new Date(createdAt).toISOString(),
+    actorId: entry.actorId,
+    reason: entry.reason,
+    checksum: {
+      algorithm: "sha256",
+      payload: payloadSha256,
+      compressed: compressedSha256,
+    },
+    file: {
+      primary: fileName,
+      backup: `${snapshotId}.json.gz.bak`,
+      sizeBytes: compressed.length,
+    },
+  });
+  return { ok: true, snapshotId, snapshot: entry };
+}
+
+async function listSecuritySnapshots(guildId, limit = 30) {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  const folder = getBackupFolder(effectiveGuildId);
+  const files = await fs.readdir(folder).catch(() => []);
+  const secFiles = files
+    .filter((name) => name.startsWith(SECURITY_SNAPSHOT_PREFIX) && name.toLowerCase().endsWith(".json.gz"))
+    .map((name) => name.slice(0, -8));
+  const withMeta = await Promise.all(
+    secFiles.map(async (snapshotId) => {
+      const meta = await readBackupMetaFile(effectiveGuildId, snapshotId).catch(() => null);
+      return {
+        id: snapshotId,
+        createdAt: meta?.createdAt ? new Date(meta.createdAt).getTime() : 0,
+        guildId: String(meta?.guildId ?? effectiveGuildId),
+        actorId: String(meta?.actorId ?? ""),
+        reason: String(meta?.reason ?? ""),
+      };
+    }),
+  );
+  withMeta.sort((a, b) => b.createdAt - a.createdAt);
+  const safeLimit = Math.max(1, Math.min(50, Number(limit || 30)));
+  return withMeta.slice(0, safeLimit);
+}
+
+async function readSecuritySnapshot(guildId, snapshotId) {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  const normalizedId = String(snapshotId || "").trim();
+  if (!normalizedId.startsWith(SECURITY_SNAPSHOT_PREFIX)) {
+    const err = new Error("Invalid security snapshot id");
+    err.code = "EBADSEC";
+    throw err;
+  }
+  const filePath = path.join(getBackupFolder(effectiveGuildId), `${normalizedId}.json.gz`);
+  const backupPath = path.join(getBackupFolder(effectiveGuildId), `${normalizedId}.json.gz.bak`);
+  const tryRead = async (targetPath) => {
+    const compressed = await fs.readFile(targetPath);
+    const uncompressed = await gunzipAsync(compressed);
+    const serialized = uncompressed.toString("utf8");
+    const entry = JSON.parse(serialized);
+    return entry;
+  };
+  try {
+    return await tryRead(filePath);
+  } catch (primaryErr) {
+    const fromBackup = await tryRead(backupPath).catch(() => null);
+    if (fromBackup) {
+      await fs.copyFile(backupPath, filePath).catch(() => null);
+      return fromBackup;
+    }
+    throw primaryErr;
+  }
+}
+
+async function deleteSecuritySnapshot(guildId, snapshotId) {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  await fs.unlink(path.join(getBackupFolder(effectiveGuildId), `${snapshotId}.json.gz`)).catch(() => null);
+  await fs.unlink(path.join(getBackupFolder(effectiveGuildId), `${snapshotId}.json.gz.bak`)).catch(() => null);
+  await fs.unlink(getBackupMetaPath(effectiveGuildId, snapshotId)).catch(() => null);
+  return { guildId: effectiveGuildId, snapshotId };
+}
+
 module.exports = {
   createGuildBackup,
   readGuildBackup,
@@ -1205,4 +1331,9 @@ module.exports = {
   verifyBackupByIdGlobal,
   pruneGuildBackups,
   validateAndHealGuildBackups,
+  writeSecuritySnapshot,
+  listSecuritySnapshots,
+  readSecuritySnapshot,
+  deleteSecuritySnapshot,
+  getEffectiveGuildIdForSecurity,
 };

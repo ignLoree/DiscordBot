@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 
 const {
@@ -17,17 +17,15 @@ const {
   getJoinRaidConfigSnapshot,
   setJoinRaidConfigSnapshot,
 } = require("./joinRaidService");
+const {
+  writeSecuritySnapshot,
+  listSecuritySnapshots: listSecuritySnapshotsFromBackup,
+  readSecuritySnapshot,
+  getEffectiveGuildIdForSecurity,
+} = require("../Backup/serverBackupService");
 
-const DATA_DIR = path.resolve(__dirname, "../../Data/Security");
-const SNAPSHOT_PATH = path.join(DATA_DIR, "securitySnapshots.json");
 const PERMISSIONS_PATH = path.resolve(__dirname, "../../permissions.json");
-const MAX_SNAPSHOTS = 30;
-
-function ensureDataDir() {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  } catch {}
-}
+const MAX_SNAPSHOTS_LIST = 30;
 
 function readJsonSafe(filePath, fallback) {
   try {
@@ -47,31 +45,7 @@ function writeJsonSafe(filePath, value) {
   }
 }
 
-function readSnapshotStore() {
-  ensureDataDir();
-  const raw = readJsonSafe(SNAPSHOT_PATH, { snapshots: [] });
-  const list = Array.isArray(raw?.snapshots) ? raw.snapshots : [];
-  return { snapshots: list };
-}
-
-function writeSnapshotStore(store) {
-  ensureDataDir();
-  const payload = {
-    snapshots: Array.isArray(store?.snapshots) ? store.snapshots.slice(0, MAX_SNAPSHOTS) : [],
-  };
-  return writeJsonSafe(SNAPSHOT_PATH, payload);
-}
-
-function makeSnapshotId() {
-  const now = new Date();
-  const base = now.toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
-  const rand = Math.floor(Math.random() * 9999)
-    .toString()
-    .padStart(4, "0");
-  return `sec-${base}-${rand}`;
-}
-
-function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" } = {}) {
+async function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" } = {}) {
   const permissionsRaw = fs.existsSync(PERMISSIONS_PATH)
     ? fs.readFileSync(PERMISSIONS_PATH, "utf8")
     : "{}\n";
@@ -80,47 +54,51 @@ function createSecuritySnapshot({ guildId = "", actorId = "", reason = "manual" 
   const joinGateConfig = getJoinGateConfigSnapshot();
   const joinRaidConfig = getJoinRaidConfigSnapshot();
 
-  const entry = {
-    id: makeSnapshotId(),
-    createdAt: Date.now(),
-    guildId: String(guildId || ""),
-    actorId: String(actorId || ""),
-    reason: String(reason || "manual"),
-    payload: {
-      permissionsRaw,
-      antiNukeConfig,
-      autoModConfig,
-      joinGateConfig,
-      joinRaidConfig,
-    },
+  const payload = {
+    permissionsRaw,
+    antiNukeConfig,
+    autoModConfig,
+    joinGateConfig,
+    joinRaidConfig,
   };
 
-  const store = readSnapshotStore();
-  store.snapshots.unshift(entry);
-  store.snapshots = store.snapshots.slice(0, MAX_SNAPSHOTS);
-  const saved = writeSnapshotStore(store);
-  return saved ? { ok: true, snapshot: entry } : { ok: false, reason: "save_failed" };
+  try {
+    const result = await writeSecuritySnapshot(guildId, payload, {
+      actorId: String(actorId || ""),
+      reason: String(reason || "manual"),
+    });
+    if (!result?.ok) return { ok: false, reason: "save_failed" };
+    return { ok: true, snapshot: result.snapshot };
+  } catch (err) {
+    return { ok: false, reason: "save_failed" };
+  }
 }
 
-function listSecuritySnapshots(limit = 10) {
-  const store = readSnapshotStore();
-  return store.snapshots
-    .slice(0, Math.max(1, Math.min(50, Number(limit || 10))))
-    .map((s) => ({
-      id: String(s.id || ""),
-      createdAt: Number(s.createdAt || 0),
-      guildId: String(s.guildId || ""),
-      actorId: String(s.actorId || ""),
-      reason: String(s.reason || ""),
-    }));
+async function listSecuritySnapshots(limit = 10, guildId = "") {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  const list = await listSecuritySnapshotsFromBackup(effectiveGuildId, Math.max(1, Math.min(50, Number(limit || 10))));
+  return list.map((s) => ({
+    id: String(s.id || ""),
+    createdAt: Number(s.createdAt || 0),
+    guildId: String(s.guildId || ""),
+    actorId: String(s.actorId || ""),
+    reason: String(s.reason || ""),
+  }));
 }
 
-function findSnapshot(idOrLast = "last") {
-  const store = readSnapshotStore();
-  if (!store.snapshots.length) return null;
+async function findSnapshot(idOrLast = "last", guildId = "") {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
   const key = String(idOrLast || "last").trim().toLowerCase();
-  if (!key || key === "last") return store.snapshots[0];
-  return store.snapshots.find((s) => String(s.id || "") === key) || null;
+  if (!key || key === "last") {
+    const list = await listSecuritySnapshotsFromBackup(effectiveGuildId, 1);
+    if (!list.length) return null;
+    const entry = await readSecuritySnapshot(effectiveGuildId, list[0].id).catch(() => null);
+    return entry;
+  }
+  const list = await listSecuritySnapshotsFromBackup(effectiveGuildId, MAX_SNAPSHOTS_LIST);
+  const found = list.find((s) => String(s.id || "").toLowerCase() === key);
+  if (!found) return null;
+  return readSecuritySnapshot(effectiveGuildId, found.id).catch(() => null);
 }
 
 function restoreAutoModConfigSnapshot(snapshotCfg) {
@@ -140,12 +118,27 @@ function restoreAutoModConfigSnapshot(snapshotCfg) {
   return { ok: true };
 }
 
-function restoreSecuritySnapshot(idOrLast = "last") {
-  const snapshot = findSnapshot(idOrLast);
+function readJsonSafeString(rawText, fallbackRaw = "{}\n") {
+  try {
+    const parsed = JSON.parse(String(rawText || "{}"));
+    return parsed;
+  } catch {
+    try {
+      return JSON.parse(String(fallbackRaw || "{}"));
+    } catch {
+      return {};
+    }
+  }
+}
+
+async function restoreSecuritySnapshot(idOrLast = "last", guildId = "") {
+  const effectiveGuildId = getEffectiveGuildIdForSecurity(guildId);
+  const snapshot = await findSnapshot(idOrLast, effectiveGuildId);
   if (!snapshot) return { ok: false, reason: "not_found" };
   const payload = snapshot.payload || {};
 
-  if (!writeJsonSafe(PERMISSIONS_PATH, readJsonSafeString(payload.permissionsRaw, "{}\n"))) {
+  const permissionsValue = readJsonSafeString(payload.permissionsRaw, "{}\n");
+  if (!writeJsonSafe(PERMISSIONS_PATH, permissionsValue)) {
     return { ok: false, reason: "permissions_restore_failed" };
   }
 
@@ -162,19 +155,6 @@ function restoreSecuritySnapshot(idOrLast = "last") {
   if (!joinRaidResult?.ok) return { ok: false, reason: "joinraid_restore_failed" };
 
   return { ok: true, snapshot };
-}
-
-function readJsonSafeString(rawText, fallbackRaw = "{}\n") {
-  try {
-    const parsed = JSON.parse(String(rawText || "{}"));
-    return parsed;
-  } catch {
-    try {
-      return JSON.parse(String(fallbackRaw || "{}"));
-    } catch {
-      return {};
-    }
-  }
 }
 
 module.exports = {

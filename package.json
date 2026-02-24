@@ -9,7 +9,7 @@
     "Vinili & Caff\u00e8 Bot Test"
   ],
   "scripts": {
-    "start": "node loader.js",
+    "start": "node --disable-warning=ExperimentalWarning loader.js",
     "start:official": "npm run start --workspace=\"Vinili & Caff\u00e8 Bot Ufficiale\"",
     "start:test": "npm run start --workspace=\"Vinili & Caff\u00e8 Bot Test\""
   },

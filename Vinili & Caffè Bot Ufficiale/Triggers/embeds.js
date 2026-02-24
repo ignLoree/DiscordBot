@@ -1325,13 +1325,13 @@ function buildSponsorTagEmbed(config, boosterRoleMention) {
         "**<a:VC_Arrow:1448672967721615452> Come mantenere la Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
         "<a:VC_Exclamation:1448687427836444854> Ti basta essere parte di https://discord.gg/viniliecaffe oppure",
-        `boostare questo server (<a:flyingnitroboost:1472995328956567754> ${boosterRoleMention})`,
+        `boostare questo server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,
         "",
         "",
         "**<a:VC_Arrow:1448672967721615452> How to keep the Guild-TAG <:PinkQuestionMark:1471892611026391306>**",
         "────────୨ৎ────────",
         "<a:VC_Exclamation:1448687427836444854> You just need to be in https://discord.gg/viniliecaffe or boost",
-        `this server (<a:flyingnitroboost:1472995328956567754> ${boosterRoleMention})`,
+        `this server (<a:flyingnitroboost:1443652205705170986> ${boosterRoleMention})`,
         "",
         "",
         "<:VC_PepeComfy:1331591439599272004> Keep up! Nuovi aggiornamenti in arrivo...",
@@ -1452,13 +1452,18 @@ async function runSponsorGuildTagPanels(client) {
         messageId: panelDoc.infoMessageId1 || null,
         embeds: [embed],
         components: [],
-        ...(attachment ? { files: [attachment] } : {}),
+        ...(attachment ? { files: [attachment], attachmentName: TAG_IMAGE_NAME } : {}),
       };
       const sentMessage = await upsertPanelMessage(channel, client, messagePayload);
       if (sentMessage?.id) {
         await PersonalityPanel.updateOne(
           { guildId, channelId: config.channelId },
           { $set: { infoMessageId1: sentMessage.id } },
+        ).catch(() => {});
+      } else if (messagePayload.messageId) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: config.channelId },
+          { $set: { infoMessageId1: null } },
         ).catch(() => {});
       }
     } catch (err) {
@@ -1511,12 +1516,12 @@ async function runSponsorVerifyPanels(client) {
       const color = client.config?.embedVerify || SPONSOR_PANEL_COLOR;
       const verifyEmbed = new EmbedBuilder()
         .setColor(color)
-        .setTitle("<:verification:1472989484059459758> **`Verification Required!`**")
+        .setTitle("<:verification:1461725843125571758> **`Verification Required!`**")
         .setDescription(
-          "<:space:1472990350795866265> <:alarm:1472990352968253511> **Per accedere a `" +
+          "<:space:1461733157840621608> <:alarm:1461725841451909183> **Per accedere a `" +
             (guild.name || "this server") +
             "` devi prima verificarti.**\n" +
-            "<:space:1472990350795866265><:space:1472990350795866265> <:rightSort:1472990348086087791> Clicca il pulsante **Verify** qui sotto per iniziare.",
+            "<:space:1461733157840621608><:space:1461733157840621608> <:rightSort:1461726104422453298> Clicca il pulsante **Verify** qui sotto per iniziare.",
         );
 
       const verifyRow = new ActionRowBuilder().addComponents(
@@ -1526,17 +1531,24 @@ async function runSponsorVerifyPanels(client) {
       const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
       if (!panelDoc) continue;
 
-      const panelMessage = await upsertPanelMessage(channel, client, {
+      const verifyPayload = {
         messageId: panelDoc.verifyPanelMessageId || null,
         embeds: [verifyEmbed],
         components: [verifyRow],
-      });
+      };
+      const panelMessage = await upsertPanelMessage(channel, client, verifyPayload);
+      if (panelMessage?.id) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: channel.id },
+          { $set: { verifyPanelMessageId: panelMessage.id } },
+        ).catch(() => {});
+      } else if (verifyPayload.messageId) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: channel.id },
+          { $set: { verifyPanelMessageId: null } },
+        ).catch(() => {});
+      }
       if (!panelMessage?.id) continue;
-
-      await PersonalityPanel.updateOne(
-        { guildId, channelId: channel.id },
-        { $set: { verifyPanelMessageId: panelMessage.id } },
-      ).catch(() => {});
       sent++;
     } catch (err) {
       global.logger.error("[SPONSOR] runSponsorVerifyPanels guild " + guildId + ":", err?.message || err);
@@ -1546,7 +1558,7 @@ async function runSponsorVerifyPanels(client) {
 }
 
 async function runSponsorTicketPanels(client) {
-  const { upsertPanelMessage, shouldEditMessage } = require("../Utils/Embeds/panelUpsert");
+  const { upsertPanelMessage } = require("../Utils/Embeds/panelUpsert");
   const { PersonalityPanel } = require("../Schemas/Community/communitySchemas");
 
   const ticketConfig = IDs.sponsorTicketConfig || {};
@@ -1566,38 +1578,22 @@ async function runSponsorTicketPanels(client) {
       const ticketRow = buildSponsorTicketMenuRow();
 
       const panelDoc = await sponsorGetOrCreatePanelDoc(guildId, channel.id).catch(() => null);
-      const payload = {
+      const ticketPayload = {
+        messageId: panelDoc?.sponsorTicketPanelMessageId || null,
         embeds: [embed],
         components: [ticketRow],
         ...(attachment ? { files: [attachment], attachmentName: TICKET_IMAGE_NAME } : {}),
       };
-
-      let message = null;
-      if (panelDoc?.sponsorTicketPanelMessageId) {
-        message = await channel.messages.fetch(panelDoc.sponsorTicketPanelMessageId).catch(() => null);
-      }
-      if (message) {
-        const needsEdit = await shouldEditMessage(message, payload);
-        if (needsEdit) {
-          await message.edit({
-            embeds: [embed],
-            components: [ticketRow],
-            ...(attachment ? { files: [attachment] } : {}),
-          }).catch(() => {});
-        }
-      } else {
-        message = await channel
-          .send({
-            embeds: [embed],
-            components: [ticketRow],
-            ...(attachment ? { files: [attachment] } : {}),
-          })
-          .catch(() => null);
-      }
-      if (message?.id) {
+      const sentMessage = await upsertPanelMessage(channel, client, ticketPayload);
+      if (sentMessage?.id) {
         await PersonalityPanel.updateOne(
           { guildId, channelId: channel.id },
-          { $set: { sponsorTicketPanelMessageId: message.id } },
+          { $set: { sponsorTicketPanelMessageId: sentMessage.id } },
+        ).catch(() => {});
+      } else if (ticketPayload.messageId) {
+        await PersonalityPanel.updateOne(
+          { guildId, channelId: channel.id },
+          { $set: { sponsorTicketPanelMessageId: null } },
         ).catch(() => {});
       }
     } catch (err) {

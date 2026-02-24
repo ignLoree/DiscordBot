@@ -4,7 +4,7 @@
   "description": "Bot di test (ticket, verify, panel)",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node --disable-warning=ExperimentalWarning index.js",
     "check:mojibake": "node scripts/check-mojibake.js",
     "fix:mojibake": "node scripts/check-mojibake.js --fix"
   },

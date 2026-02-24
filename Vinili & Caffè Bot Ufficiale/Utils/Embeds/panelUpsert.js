@@ -319,18 +319,26 @@ async function upsertPanelMessage(channel, client, payload) {
       const needsEdit = await shouldEditMessage(direct, editPayload);
       if (needsEdit) {
         const edited = await direct.edit(editPayload).catch((error) => {
-          global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
+          const isOtherAuthor = error?.code === 50005;
+          if (isOtherAuthor) {
+            global.logger?.warn?.(
+              "[panelUpsert] message authored by another user (50005), sending new message:",
+              messageId,
+            );
+          } else {
+            global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
+          }
           return null;
         });
         if (!edited) {
           const sent = await channel.send(editPayload).catch((error) => {
             global.logger?.error?.(
-              "[panelUpsert] send fallback after edit-by-id failure failed:",
+              "[panelUpsert] send fallback after edit failure failed:",
               error,
             );
             return null;
           });
-          return sent || direct;
+          return sent || null;
         }
       }
       return direct;
