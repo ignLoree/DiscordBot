@@ -3778,6 +3778,17 @@ async function startGuessPlayerGame(client, cfg) {
   if (!info) info = await fetchPlayerFromRandomLetter(cfg);
   if (!info) return false;
 
+  if (cfg?.translateApiToItalian !== false) {
+    const [name, team, nationality] = await Promise.all([
+      translateToItalian(info.name, cfg),
+      translateToItalian(info.team, cfg),
+      translateToItalian(info.nationality, cfg),
+    ]);
+    if (name) info = { ...info, name };
+    if (team) info = { ...info, team };
+    if (nationality) info = { ...info, nationality };
+  }
+
   const roleId = cfg.roleId;
   if (roleId) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
@@ -4832,54 +4843,66 @@ async function startDrivingQuizGame(client, cfg) {
     if (row) fromApi = true;
   }
   if (!row) {
-    const roll = Math.random();
-    if (roll < 0.4) {
-      const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS);
-      if (
-        signPick?.statement &&
-        signPick?.signType &&
-        Array.isArray(signPick?.options) &&
-        signPick.options.length >= 2 &&
-        typeof signPick?.correctIndex === "number" &&
-        signPick.correctIndex >= 0 &&
-        signPick.correctIndex < signPick.options.length
-      ) {
-        row = {
-          questionType: "multiple",
-          signType: String(signPick.signType),
-          statement: String(signPick.statement),
-          options: signPick.options.map((o) => String(o)),
-          correctIndex: signPick.correctIndex,
-        };
-      }
+    const fallbackSources = [
+      () => {
+        const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS);
+        if (
+          signPick?.statement &&
+          signPick?.signType &&
+          Array.isArray(signPick?.options) &&
+          signPick.options.length >= 2 &&
+          typeof signPick?.correctIndex === "number" &&
+          signPick.correctIndex >= 0 &&
+          signPick.correctIndex < signPick.options.length
+        ) {
+          return {
+            questionType: "multiple",
+            signType: String(signPick.signType),
+            statement: String(signPick.statement),
+            options: signPick.options.map((o) => String(o)),
+            correctIndex: signPick.correctIndex,
+          };
+        }
+        return null;
+      },
+      () => {
+        const localPick = pickRandomItem(DRIVING_MULTIPLE_CHOICE_BANK);
+        if (
+          localPick?.statement &&
+          Array.isArray(localPick?.options) &&
+          localPick.options.length >= 2 &&
+          typeof localPick?.correctIndex === "number" &&
+          localPick.correctIndex >= 0 &&
+          localPick.correctIndex < localPick.options.length
+        ) {
+          return {
+            questionType: "multiple",
+            statement: String(localPick.statement),
+            options: localPick.options.map((o) => String(o)),
+            correctIndex: localPick.correctIndex,
+          };
+        }
+        return null;
+      },
+      () => {
+        const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
+        if (localPick?.statement != null && typeof localPick?.answer === "boolean") {
+          return {
+            questionType: "trueFalse",
+            statement: String(localPick.statement),
+            answer: Boolean(localPick.answer),
+          };
+        }
+        return null;
+      },
+    ];
+    for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
     }
-    if (!row && roll < 0.7) {
-      const localPick = pickRandomItem(DRIVING_MULTIPLE_CHOICE_BANK);
-      if (
-        localPick?.statement &&
-        Array.isArray(localPick?.options) &&
-        localPick.options.length >= 2 &&
-        typeof localPick?.correctIndex === "number" &&
-        localPick.correctIndex >= 0 &&
-        localPick.correctIndex < localPick.options.length
-      ) {
-        row = {
-          questionType: "multiple",
-          statement: String(localPick.statement),
-          options: localPick.options.map((o) => String(o)),
-          correctIndex: localPick.correctIndex,
-        };
-      }
-    }
-    if (!row) {
-      const localPick = pickRandomItem(DRIVING_TRUE_FALSE_BANK);
-      if (localPick?.statement != null && typeof localPick?.answer === "boolean") {
-        row = {
-          questionType: "trueFalse",
-          statement: String(localPick.statement),
-          answer: Boolean(localPick.answer),
-        };
-      }
+    for (const getFallback of fallbackSources) {
+      row = getFallback();
+      if (row) break;
     }
   }
   if (!row) return false;
