@@ -1,6 +1,5 @@
-﻿const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { resolveTarget, extractUserId, } = require("../../Utils/Moderation/prefixModeration");
-const { getModConfig, createModCase, logModCase, } = require("../../Utils/Moderation/moderation");
 
 const DISCORD_BULK_DELETE_MAX = 100;
 const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -73,8 +72,6 @@ module.exports = {
       args,
       userArgIndex >= 0 ? userArgIndex : 0,
     );
-    const config = await getModConfig(message.guild.id);
-
     const deleteLater = (msg) =>
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     const replyTemp = async (payload) => {
@@ -184,19 +181,6 @@ module.exports = {
       if (ok) deletedCount += 1;
       await sleep(400);
     }
-
-    const { doc } = await createModCase({
-      guildId: message.guild.id,
-      action: "PURGE",
-      userId: user ? user.id : `CHANNEL:${message.channel.id}`,
-      modId: message.author.id,
-      reason: user
-        ? `Purge ${deletedCount} messaggi di ${user.tag}`
-        : `Purge ${deletedCount} messaggi in #${message.channel.name}`,
-      context: { channelId: message.channel.id },
-    });
-
-    await logModCase({ client, guild: message.guild, modCase: doc, config });
 
     const summary = new EmbedBuilder()
       .setColor(client.config?.embedModLight || "#6f4e37")

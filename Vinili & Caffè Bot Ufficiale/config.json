@@ -35,6 +35,7 @@
   },
   "minigames": {
     "enabled": true,
+    "translateApiToItalian": true,
     "intervalMs": 1800000,
     "activityWindowMs": 1800000,
     "minMessages": 3,
@@ -132,7 +133,9 @@
     },
     "italianGK": {
       "durationMs": 180000,
-      "rewardExp": 150
+      "rewardExp": 150,
+      "apiUrl": "https://opentdb.com/api.php?amount=5",
+      "requireItalian": false
     },
     "drivingQuiz": {
       "durationMs": 180000,

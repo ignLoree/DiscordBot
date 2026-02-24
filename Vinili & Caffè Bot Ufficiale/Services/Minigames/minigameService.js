@@ -3365,7 +3365,7 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.guessSinger) types.push("guessSinger");
   if (cfg?.guessAlbum) types.push("guessAlbum");
   if (cfg?.hangman !== false) types.push("hangman");
-  if (cfg?.italianGK?.apiUrl) types.push("italianGK");
+  if (cfg?.italianGK !== false) types.push("italianGK");
   if (cfg?.drivingQuiz !== false) types.push("drivingQuiz");
   if (cfg?.mathExpression !== false) types.push("mathExpression");
   return types;
@@ -4613,6 +4613,12 @@ async function startItalianGkGame(client, cfg) {
         break;
       } catch {}
     }
+  }
+  if (questionRow && apiUrls.length && cfg?.translateApiToItalian !== false) {
+    const q = await translateToItalian(questionRow.question, cfg);
+    const a = await translateToItalian(String(questionRow.answers?.[0] || ""), cfg);
+    if (q) questionRow = { ...questionRow, question: q };
+    if (a) questionRow = { ...questionRow, answers: buildAliases([a]) };
   }
   if (!questionRow) {
     const localPick = pickRandomItem(ITALIAN_GK_BANK);
