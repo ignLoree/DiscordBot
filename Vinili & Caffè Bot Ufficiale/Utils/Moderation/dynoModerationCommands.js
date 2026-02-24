@@ -1041,58 +1041,48 @@ async function runNamed(name, message, args, client) {
     const query = { guildId: message.guild.id };
     if (target.userId) query.userId = target.userId;
     if (cmd === "moderations") {
-      if (!target.userId) {
-        return message.channel
-          .send({
-            embeds: [
-              new EmbedBuilder()
-                .setColor("#3498DB")
-                .setDescription(
-                  [
-                    "**Comando: +moderations**",
-                    "",
-                    "**Descrizione:** Mostra moderazioni temporanee attive e tempo rimanente.",
-                    "**Uso:**",
-                    "+moderations [utente] (pagina)",
-                    "**Esempio:**",
-                    "+moderations @LoreeXO",
-                  ].join("\n"),
-                ),
-            ],
-          })
-          .catch(() => null);
-      }
       query.active = true;
       query.expiresAt = { $gt: new Date() };
       query.action = { $in: ["MUTE", "BAN"] };
+      const limit = target.userId ? 10 : 25;
       const rows = await ModCase.find(query)
         .sort({ expiresAt: 1 })
-        .limit(10)
+        .limit(limit)
         .lean()
         .catch(() => []);
       if (!rows.length) {
+        const msg = target.userId
+          ? "<:cancel:1461730653677551691> Nessuna moderazione attiva trovata per quell'utente."
+          : "<:cancel:1461730653677551691> Nessuna moderazione attiva al momento.";
         return message.channel
-          .send({
-            embeds: [
-              new EmbedBuilder()
-                .setColor("#ED4245")
-                .setDescription("<:cancel:1461730653677551691> Nessuna moderazione attiva trovata per quell'utente."),
-            ],
-          })
+          .send({ embeds: [new EmbedBuilder().setColor("#ED4245").setDescription(msg)] })
           .catch(() => null);
       }
-      const targetUser = await message.client.users.fetch(target.userId).catch(() => null);
-      const username = (targetUser?.username || target.userId).toLowerCase();
       const now = Date.now();
-      const lines = rows.map((row, index) => {
+      const singleUserId = target.userId ? String(target.userId).trim() : null;
+      const singleUsername = singleUserId
+        ? (message.client.users.cache.get(singleUserId) || (await message.client.users.fetch(singleUserId).catch(() => null)))?.username?.toLowerCase() || singleUserId
+        : null;
+      const lines = [];
+      for (let i = 0; i < rows.length; i += 1) {
+        const row = rows[i];
         const type = String(row.action || "").toUpperCase() === "MUTE" ? "Mute" : "Ban";
         const expiresAt = new Date(row.expiresAt || Date.now()).getTime();
         const remaining = formatRemainingWords(expiresAt - now);
-        return `${index + 1}. ${username}\n${type} | Tempo rimanente: ${remaining}`;
-      });
+        let username = singleUsername;
+        if (username == null) {
+          const uid = String(row.userId || "").trim();
+          const u = uid ? (message.client.users.cache.get(uid) || (await message.client.users.fetch(uid).catch(() => null))) : null;
+          username = u?.username?.toLowerCase() ?? uid ?? "sconosciuto";
+        }
+        lines.push(`${i + 1}. **${username}**\n${type} | Tempo rimanente: ${remaining}`);
+      }
+      const title = singleUserId
+        ? `Moderazioni attive per ${singleUsername || singleUserId}`
+        : "Moderazioni attive";
       const activeEmbed = new EmbedBuilder()
         .setColor("#3498DB")
-        .setTitle(`Moderazioni attive per ${username}`)
+        .setTitle(title)
         .setDescription(lines.join("\n\n"))
         .setFooter({
           text: rows.length === 1 ? "1 moderazione attiva" : `${rows.length} moderazioni attive`,

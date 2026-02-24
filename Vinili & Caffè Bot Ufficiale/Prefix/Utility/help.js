@@ -121,7 +121,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   reason: "Aggiorna il motivo di una case.",
   duration: "Aggiorna la durata di una case temporanea.",
   modlogs: "Mostra gli ultimi log moderazione di un utente.",
-  moderations: "Mostra le moderazioni temporanee attive.",
+  moderations: "Mostra tutte le moderazioni temporanee attive (mute/ban). Senza utente: elenco globale; con utente: solo le sue.",
   modstats: "Mostra statistiche moderazione per staffer.",
   lock: "Blocca un canale.",
   unlock: "Sblocca un canale.",
