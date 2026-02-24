@@ -319,13 +319,7 @@ async function upsertPanelMessage(channel, client, payload) {
       const needsEdit = await shouldEditMessage(direct, editPayload);
       if (needsEdit) {
         const edited = await direct.edit(editPayload).catch((error) => {
-          const isOtherAuthor = error?.code === 50005;
-          if (isOtherAuthor) {
-            global.logger?.warn?.(
-              "[panelUpsert] message authored by another user (50005), sending new message:",
-              messageId,
-            );
-          } else {
+          if (error?.code !== 50005) {
             global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
           }
           return null;

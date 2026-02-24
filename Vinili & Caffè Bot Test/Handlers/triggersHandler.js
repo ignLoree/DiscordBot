@@ -97,17 +97,18 @@ module.exports = (client) => {
       }
     }
 
-    const table = new ascii().setHeading("Folder", "File", "Status");
-    for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0]),
-    )) {
-      const folder = path.dirname(rel).replace(/\\/g, "/");
-      const file = path.basename(rel);
-      const folderLabel = folder === "." ? "Triggers" : `Triggers/${folder}`;
-      table.addRow(folderLabel, file, status);
+    if (statusMap.size > 0) {
+      const table = new ascii().setHeading("Folder", "File", "Status");
+      for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      )) {
+        const folder = path.dirname(rel).replace(/\\/g, "/");
+        const file = path.basename(rel);
+        const folderLabel = folder === "." ? "Triggers" : `Triggers/${folder}`;
+        table.addRow(folderLabel, file, status);
+      }
+      global.logger.info(table.toString());
     }
-
-    global.logger.info(table.toString());
     global.logger.info(`[TRIGGERS] Loaded ${loaded} triggers.`);
   };
 };
