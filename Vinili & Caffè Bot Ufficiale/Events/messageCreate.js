@@ -1660,9 +1660,7 @@ async function handleDiscadiaBump(message, client) {
     bumpMention;
 
   // Persist bump even if the thank-you reply fails (e.g. missing send perms).
-  // Reply to the command message (user's ::bump) when Discadia replied to it; else the bot's message.
-  const replyToId = message.reference?.messageId || message.id;
-  await recordDiscadiaBump(client, message.guild.id, bumpUserId || null, replyToId);
+  await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
   global.logger?.info?.(
     `[DISCADIA BUMP] Recorded bump for guild=${message.guild.id} user=${bumpUserId || "unknown"} msg=${message.id}`,
   );
