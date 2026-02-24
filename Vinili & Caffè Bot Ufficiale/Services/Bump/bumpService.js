@@ -43,6 +43,7 @@ function createBumpReminderService(options) {
     errorTag,
     logTag = errorTag,
     suppressInfoLogs = false,
+    storeBumpMessageId = false,
   } = options;
 
   const bumpTimers = new Map();
@@ -76,7 +77,7 @@ function createBumpReminderService(options) {
     }
 
     const embedColor = client?.config?.embedInfo || "#6f4e37";
-    await channel.send({
+    const payload = {
       content: mentionContent,
       embeds: [
         new EmbedBuilder()
@@ -85,7 +86,14 @@ function createBumpReminderService(options) {
           .setURL(url)
           .setDescription(description),
       ],
-    });
+    };
+    if (storeBumpMessageId) {
+      const doc = await model.findOne({ guildId }).lean().catch(() => null);
+      if (doc?.lastBumpMessageId) {
+        payload.reply = { messageReference: doc.lastBumpMessageId, failIfNotExists: false };
+      }
+    }
+    await channel.send(payload);
 
     await model
       .updateOne({ guildId }, { $set: { reminderSentAt: new Date() } })
@@ -148,20 +156,20 @@ function createBumpReminderService(options) {
     bumpTimers.set(guildId, timeout);
   }
 
-  async function setBumpAt(client, guildId, bumpAt, userId) {
+  async function setBumpAt(client, guildId, bumpAt, userId, bumpMessageId) {
     const bumpDate = bumpAt instanceof Date ? bumpAt : new Date(bumpAt);
     let lastBumpAt = bumpDate;
     let doc = null;
+    const setPayload = {
+      lastBumpAt: bumpDate,
+      lastBumpUserId: userId || null,
+      reminderSentAt: null,
+      ...(storeBumpMessageId && bumpMessageId != null && { lastBumpMessageId: String(bumpMessageId) }),
+    };
     try {
       doc = await model.findOneAndUpdate(
         { guildId },
-        {
-          $set: {
-            lastBumpAt: bumpDate,
-            lastBumpUserId: userId || null,
-            reminderSentAt: null,
-          },
-        },
+        { $set: setPayload },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
       if (doc?.lastBumpAt) lastBumpAt = new Date(doc.lastBumpAt);
@@ -172,8 +180,8 @@ function createBumpReminderService(options) {
     return doc;
   }
 
-  async function recordBump(client, guildId, userId) {
-    return setBumpAt(client, guildId, new Date(), userId);
+  async function recordBump(client, guildId, userId, bumpMessageId) {
+    return setBumpAt(client, guildId, new Date(), userId, bumpMessageId);
   }
 
   async function restorePendingReminders(client) {
@@ -216,6 +224,7 @@ const discadiaBumpService = createBumpReminderService({
   model: DiscadiaBump,
   configKey: "discadia",
   defaultCooldownMinutes: 1440,
+  storeBumpMessageId: true,
   mentionContent: "<@&1442569013074071644>",
   title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**",
   url: "https://discadia.com/server/viniliecaffe/",

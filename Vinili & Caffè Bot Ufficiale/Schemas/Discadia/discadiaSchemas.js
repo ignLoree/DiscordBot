@@ -5,6 +5,7 @@ const discadiaBumpSchema = new Schema({
   guildId: { type: String, required: true, unique: true },
   lastBumpAt: { type: Date, required: true },
   lastBumpUserId: { type: String, default: null },
+  lastBumpMessageId: { type: String, default: null },
   reminderSentAt: { type: Date, default: null },
 });
 

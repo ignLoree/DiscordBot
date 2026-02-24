@@ -1533,13 +1533,23 @@ async function handleDisboardBump(message, client) {
 
   // Persist bump even if the thank-you reply fails (e.g. missing send perms).
   await recordBump(client, message.guild.id, bumpUserId || null);
-  try {
-    await message.channel.send({ content: thanksMessage.trim() });
-  } catch (error) {
-    global.logger?.warn?.(
-      "[DISBOARD BUMP] Thanks message send failed, bump recorded anyway:",
-      error?.message || error,
-    );
+  const channel = message.channel ?? (await message.guild.channels.fetch(message.channelId).catch(() => null));
+  if (channel?.isTextBased?.()) {
+    try {
+      await channel.send({
+        content: thanksMessage.trim(),
+        reply: { messageReference: message.id, failIfNotExists: false },
+      });
+    } catch (err) {
+      try {
+        await channel.send({ content: thanksMessage.trim() });
+      } catch (err2) {
+        global.logger?.warn?.(
+          "[DISBOARD BUMP] Thanks message send failed, bump recorded anyway:",
+          err2?.message || err2,
+        );
+      }
+    }
   }
   return true;
 }
@@ -1650,26 +1660,31 @@ async function handleDiscadiaBump(message, client) {
     bumpMention;
 
   // Persist bump even if the thank-you reply fails (e.g. missing send perms).
-  await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
+  // Reply to the command message (user's ::bump) when Discadia replied to it; else the bot's message.
+  const replyToId = message.reference?.messageId || message.id;
+  await recordDiscadiaBump(client, message.guild.id, bumpUserId || null, replyToId);
   global.logger?.info?.(
     `[DISCADIA BUMP] Recorded bump for guild=${message.guild.id} user=${bumpUserId || "unknown"} msg=${message.id}`,
   );
-  const payload = { content: thanksMessage.trim() };
   const channel =
     message.channel ??
     (message.channelId
       ? await message.guild.channels.fetch(message.channelId).catch(() => null)
       : null);
   if (channel?.isTextBased?.()) {
+    const payload = {
+      content: thanksMessage.trim(),
+      reply: { messageReference: message.id, failIfNotExists: false },
+    };
     try {
-      await message.reply(payload);
-    } catch {
+      await channel.send(payload);
+    } catch (err) {
       try {
-        await channel.send(payload);
-      } catch (err) {
+        await channel.send({ content: thanksMessage.trim() });
+      } catch (err2) {
         global.logger?.warn?.(
           "[DISCADIA BUMP] Thanks message send failed, bump recorded anyway:",
-          err?.message || err,
+          err?.message || err2?.message || err2,
         );
       }
     }
