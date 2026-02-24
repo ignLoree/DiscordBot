@@ -648,7 +648,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       });
   } else if (normalizedAction === "ban" && canBan) {
     punished = await member.guild.members
-      .ban(member.id, { deleteMessageSeconds: 0, reason })
+      .ban(member.id, { deleteMessageSeconds: 604800, reason })
       .then(() => true)
       .catch((err) => {
         global.logger?.warn?.("[JoinGate] ban failed:", member.guild.id, member.id, err?.message || err);

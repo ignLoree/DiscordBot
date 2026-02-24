@@ -1791,7 +1791,7 @@ async function quarantineExecutor(guild, executorId, reason) {
     const banReason = `AntiNuke panic: ${String(reason || "malicious executor")}`;
     const banned = await guild.members
       .ban(userId, {
-        deleteMessageSeconds: 0,
+        deleteMessageSeconds: 604800,
         reason: banReason,
       })
       .then(() => true)

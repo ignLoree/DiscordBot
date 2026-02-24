@@ -895,7 +895,7 @@ async function applyPunishment(member, reasons) {
       );
       punished = await guild.members
         .ban(member.id, {
-          deleteMessageSeconds: 0,
+          deleteMessageSeconds: 604800,
           reason: buildJoinRaidBanReason(marker),
         })
         .then(() => true)

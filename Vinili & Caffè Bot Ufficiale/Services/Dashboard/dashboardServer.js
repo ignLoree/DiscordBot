@@ -470,7 +470,7 @@ async function runUserAction(client, payload = {}) {
     return { ok: true, message: "Utente espulso." };
   }
   if (action === "ban") {
-    await guild.members.ban(userId, { reason, deleteMessageSeconds: 0 });
+    await guild.members.ban(userId, { reason, deleteMessageSeconds: 604800 });
     try {
       const config = await getModConfig(guild.id);
       const { doc } = await createModCase({

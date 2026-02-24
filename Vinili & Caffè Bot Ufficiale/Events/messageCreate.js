@@ -289,6 +289,8 @@ async function maybeSendWrongPrefixHint(message, resolvedClient) {
   if (attempt.usedPrefix === "+") return false;
   const command = resolvePrefixCommandByToken(resolvedClient, attempt.token);
   if (!command) return false;
+  const cmdName = String(command.name || "").toLowerCase();
+  if (cmdName === "help") return false;
   if (!shouldSendWrongPrefixHint(message, attempt.usedPrefix, command.name)) {
     return true;
   }

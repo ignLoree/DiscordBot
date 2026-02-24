@@ -493,7 +493,7 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
     punished = await newMember.kick(reason).then(() => true).catch(() => false);
   } else if (action === "ban" && canBan) {
     punished = await newMember.guild.members
-      .ban(newMember.id, { deleteMessageSeconds: 0, reason })
+      .ban(newMember.id, { deleteMessageSeconds: 604800, reason })
       .then(() => true)
       .catch(() => false);
   } else if (action === "timeout" && canTimeout) {

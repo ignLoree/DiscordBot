@@ -117,6 +117,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   warn: "Warna un utente.",
   warnings: "Mostra i warn attivi di un utente.",
   delwarn: "Rimuove un warn attivo da un utente.",
+  clearwarn: "Rimuove tutti i warning attivi da un utente.",
   case: "Mostra una singola case moderazione.",
   reason: "Aggiorna il motivo di una case.",
   duration: "Aggiorna la durata di una case temporanea.",

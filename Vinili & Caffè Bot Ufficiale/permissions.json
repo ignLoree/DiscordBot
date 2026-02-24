@@ -880,7 +880,17 @@
         },
         "delwarn": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569262689554444",
+                "1442569288161558528",
+                "1442569245878648924"
+            ]
+        },
+        "clearwarn": {
+            "roles": [
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -890,7 +900,7 @@
         },
         "duration": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -910,7 +920,7 @@
         },
         "lock": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -960,7 +970,7 @@
         },
         "reason": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -970,7 +980,7 @@
         },
         "unban": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -980,7 +990,7 @@
         },
         "unlock": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
@@ -990,7 +1000,7 @@
         },
         "unmute": {
             "roles": [
-                "roles.Staff"
+                "roles.HighStaff"
             ],
             "channels": [
                 "1442569262689554444",
