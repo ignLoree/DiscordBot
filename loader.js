@@ -28,6 +28,14 @@ const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
 
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
+function resolveNodeExecutable() {
+    const fromExecPath = String(process.execPath || '').trim();
+    if (fromExecPath && fs.existsSync(fromExecPath)) {
+        return fromExecPath;
+    }
+    return process.env.NODE_BINARY || 'node';
+}
+
 function splitStartPath(startPath) {
     const normalized = String(startPath).replace(/\\/g, '/');
     const parts = normalized.split('/');
@@ -180,7 +188,8 @@ function ensureDependencies(workingDir, useWorkspaces) {
 function spawnBotProcess(bot, workingDir, file, resolve) {
     console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
 
-    const proc = child_process.spawn(process.execPath, [file], {
+    const nodeBin = resolveNodeExecutable();
+    const proc = child_process.spawn(nodeBin, [file], {
         cwd: workingDir,
         stdio: 'inherit',
         env: silencedEnv
@@ -188,6 +197,13 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
 
     processRefs[bot.key] = proc;
     writePid(bot.key, proc.pid);
+
+    proc.on('error', (err) => {
+        try { fs.unlinkSync(pidFile(bot.key)); } catch { }
+        processRefs[bot.key] = null;
+        console.log(`[Loader] Errore avvio ${bot.label}: ${err?.message || err}`);
+        resolve();
+    });
 
     proc.on('exit', (code) => {
         try { fs.unlinkSync(pidFile(bot.key)); } catch { }

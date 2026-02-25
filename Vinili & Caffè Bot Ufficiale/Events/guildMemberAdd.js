@@ -1014,7 +1014,10 @@ module.exports = {
           joinGateConfig?.newAccounts?.enabled &&
           isTooYoungAccount(member, joinGateConfig?.newAccounts?.minAgeDays)
         ) {
-          joinGateMatch = { rule: "tooYoung", action: "kick" };
+          joinGateMatch = {
+            rule: "tooYoung",
+            action: joinGateConfig?.newAccounts?.action || "kick",
+          };
         }
         if (!joinGateMatch && joinGateConfig?.enabled && joinGateConfig?.noAvatar?.enabled && hasNoAvatar(member)) {
           joinGateMatch = {

@@ -1365,6 +1365,21 @@ function setCachedBadUser(userId, value, ttlMs = 60_000) {
   });
 }
 
+function isBadUserProfileStale(profile, at = nowMs()) {
+  const lastActionAt = profile?.lastActionAt
+    ? new Date(profile.lastActionAt).getTime()
+    : 0;
+  if (!Number.isFinite(lastActionAt) || lastActionAt <= 0) return false;
+  return at - lastActionAt > AUTO_TIMEOUT_PROFILE_RESET_MS;
+}
+
+function isBadUserSuspicious(profile, at = nowMs()) {
+  if (!profile) return false;
+  if (isBadUserProfileStale(profile, at)) return false;
+  const activeStrikes = Math.max(0, Number(profile?.activeStrikes || 0));
+  return activeStrikes >= 3;
+}
+
 async function getBadUserProfile(userId) {
   const cached = getCachedBadUser(userId);
   if (cached !== undefined) return cached;
@@ -1385,8 +1400,36 @@ async function getBadUserProfile(userId) {
         lastAction: 1,
       },
     ).lean();
-    setCachedBadUser(userId, row || null, row ? 60_000 : 15_000);
-    return row || null;
+    if (!row) {
+      setCachedBadUser(userId, null, 15_000);
+      return null;
+    }
+
+    const at = nowMs();
+    const stale = isBadUserProfileStale(row, at);
+    const normalized = {
+      ...row,
+      warnPoints: stale ? 0 : Math.max(0, Number(row.warnPoints || 0)),
+      activeStrikes: stale ? 0 : Math.max(0, Number(row.activeStrikes || 0)),
+      activeStrikeReasons: stale ? [] : (Array.isArray(row.activeStrikeReasons) ? row.activeStrikeReasons : []),
+    };
+    normalized.suspicious = isBadUserSuspicious(normalized, at);
+
+    if (stale && (Number(row.warnPoints || 0) > 0 || Number(row.activeStrikes || 0) > 0)) {
+      AutoModBadUser.updateOne(
+        { userId: String(userId) },
+        {
+          $set: {
+            warnPoints: 0,
+            activeStrikes: 0,
+            activeStrikeReasons: [],
+          },
+        },
+      ).catch(() => {});
+    }
+
+    setCachedBadUser(userId, normalized, 60_000);
+    return normalized;
   } catch {
     return null;
   }
@@ -2057,8 +2100,7 @@ async function getAutoModMemberSnapshot(member) {
   let strikeReasons = [];
   try {
     const profile = await getBadUserProfile(userId);
-    const total = Number(profile?.totalTriggers || 0);
-    suspicious = total >= 5;
+    suspicious = Boolean(profile?.suspicious);
     warnPoints = Math.max(0, Number(profile?.warnPoints || 0));
     activeStrikes = Math.max(0, Number(profile?.activeStrikes || 0));
     strikeReasons = Array.isArray(profile?.activeStrikeReasons)
@@ -2134,9 +2176,7 @@ async function detectViolations(message, state, profile) {
   let suspiciousMessageAuthor = false;
   try {
     const badProfile = await getBadUserProfile(message.author?.id);
-    const totalTriggers = Number(badProfile?.totalTriggers || 0);
-    const activeStrikes = Number(badProfile?.activeStrikes || 0);
-    suspiciousMessageAuthor = totalTriggers >= 5 || activeStrikes >= 3;
+    suspiciousMessageAuthor = Boolean(badProfile?.suspicious);
   } catch {
     suspiciousMessageAuthor = false;
   }
@@ -3014,10 +3054,10 @@ async function runAutoModMessage(message) {
     let dbBoost = 0;
     if (PANIC_MODE.useGlobalBadUsersDb) {
       const profile = await getBadUserProfile(message.author.id);
-      const total = Number(profile?.totalTriggers || 0);
-      const lastTs = profile?.lastTriggerAt ? new Date(profile.lastTriggerAt).getTime() : 0;
-      const recentEnough = lastTs > 0 && at - lastTs <= 30 * 24 * 60 * 60_000;
-      if (total >= 5 && recentEnough) dbBoost = 1;
+      const lastActionTs = profile?.lastActionAt ? new Date(profile.lastActionAt).getTime() : 0;
+      const recentEnough = lastActionTs > 0 && at - lastActionTs <= AUTO_TIMEOUT_PROFILE_RESET_MS;
+      const activeStrikes = Number(profile?.activeStrikes || 0);
+      if (recentEnough && activeStrikes >= 2) dbBoost = 1;
     }
     const signal = registerGuildInstantSignal(message, at);
     let raidBoost = 0;

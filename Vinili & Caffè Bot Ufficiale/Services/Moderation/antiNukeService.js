@@ -606,12 +606,6 @@ ANTINUKE_CONFIG.autoQuarantine.strictMode = true;
 enforceCriticalAntiNukeGuards();
 ANTINUKE_CONFIG.autoQuarantine.monitorChannelPermissions = true;
 ANTINUKE_CONFIG.autoQuarantine.strictMemberRoleAddition = true;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.enabled = false;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.restoreDeletedRoles = true;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.restoreDeletedChannels = true;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewRoles = true;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewChannels = true;
-ANTINUKE_CONFIG.panicMode.autoBackupSync.deleteNewWebhooks = true;
 
 function hasAllPerms(member, flags) {
   return flags.every((flag) => member?.permissions?.has?.(flag));
