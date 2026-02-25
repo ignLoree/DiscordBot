@@ -1756,36 +1756,36 @@ function buildFastTypePromptImage(phrase) {
 
 function buildDrivingQuizPromptImage(row) {
   try {
-    const width = 1200;
-    const padding = 48;
-    const radius = 20;
+    const width = 1400;
+    const height = 780;
+    const padding = 42;
+    const radius = 22;
     const cardW = width - padding * 2;
-    const height = 520;
+    const cardH = height - padding * 2;
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
     const hasSign = Boolean(row?.signType);
-    const signAreaW = hasSign ? 320 : 0;
-    const textAreaW = cardW - signAreaW - (hasSign ? 24 : 0);
-    const usableWidth = textAreaW - 40;
+    const signAreaW = hasSign ? 420 : 0;
+    const textAreaW = cardW - signAreaW - (hasSign ? 42 : 0);
+    const usableWidth = textAreaW - 70;
 
     const isMultiple =
       (row?.questionType === "multiple" || hasSign) &&
       Array.isArray(row?.options) &&
       row.options.length >= 2;
     const statement = String(row?.statement ?? "").trim() || "Domanda";
-    ctx.font = "bold 38px Sans";
+    ctx.font = "bold 58px Sans";
     const statementLines = wrapPromptText(ctx, statement, usableWidth);
     let optionsLines = [];
     if (isMultiple) {
-      ctx.font = "bold 32px Sans";
+      ctx.font = "bold 42px Sans";
       for (let i = 0; i < row.options.length; i++) {
         const opt = String(row.options[i] ?? "").trim();
         const letter = ["A", "B", "C", "D"][i] ?? String(i + 1);
-        optionsLines.push(...wrapPromptText(ctx, `${letter}) ${opt}`, usableWidth - 50));
+        optionsLines.push(...wrapPromptText(ctx, `${letter}) ${opt}`, usableWidth - 36));
       }
     }
-    const cardH = height - padding * 2;
 
     const bgGrad = ctx.createLinearGradient(0, 0, width, height);
     bgGrad.addColorStop(0, "#2c2419");
@@ -1808,36 +1808,50 @@ function buildDrivingQuizPromptImage(row) {
       textStartX = cardX + signAreaW + 24;
       const signCx = cardX + signAreaW / 2;
       const signCy = cardY + cardH / 2;
-      drawRoadSign(ctx, row.signType, signCx, signCy, 200);
+      drawRoadSign(ctx, row.signType, signCx, signCy, 260);
     }
 
     const textCenterX = hasSign ? textStartX + textAreaW / 2 : width / 2;
+    const titleHeight = 54;
+    const titleGap = 24;
+    const statementLineHeight = 68;
+    const optionsGap = 20;
+    const optionLineHeight = 52;
+    const boolHintHeight = 50;
+    const boolGap = 16;
+
+    const statementHeight = statementLines.length * statementLineHeight;
+    const optionsHeight = isMultiple
+      ? optionsGap + optionsLines.length * optionLineHeight
+      : boolGap + boolHintHeight;
+    const totalContentHeight = titleHeight + titleGap + statementHeight + optionsHeight;
+    let y = cardY + (cardH - totalContentHeight) / 2;
 
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = "#8b7355";
-    ctx.font = "600 26px Sans";
-    ctx.fillText("Quiz patente", hasSign ? textCenterX : width / 2, cardY + 36);
+    ctx.font = "700 56px Sans";
+    ctx.fillText("Quiz patente", textCenterX, y);
+    y += titleHeight + titleGap;
 
-    let y = cardY + 88;
     ctx.fillStyle = "#2c2419";
-    ctx.font = "bold 38px Sans";
+    ctx.font = "bold 58px Sans";
     for (const line of statementLines) {
       ctx.fillText(line, textCenterX, y, usableWidth);
-      y += 46;
+      y += statementLineHeight;
     }
 
     if (isMultiple) {
-      y += 14;
-      ctx.font = "bold 32px Sans";
+      y += optionsGap;
+      ctx.font = "bold 42px Sans";
       for (const line of optionsLines) {
         ctx.fillText(line, textCenterX, y, usableWidth);
-        y += 40;
+        y += optionLineHeight;
       }
     } else {
-      y += 12;
+      y += boolGap;
       ctx.fillStyle = "#6f4e37";
-      ctx.font = "600 28px Sans";
+      ctx.font = "700 46px Sans";
       ctx.fillText("Rispondi: Vero o Falso", textCenterX, y);
     }
 
