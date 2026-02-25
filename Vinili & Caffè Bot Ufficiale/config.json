@@ -57,7 +57,6 @@
     "apiThemeCategories": ["all"],
     "sources": [
       "local",
-      "country_capital",
       "opentdb"
     ],
     "minOptions": 2,

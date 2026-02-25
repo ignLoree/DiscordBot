@@ -12,7 +12,7 @@ const DEFAULT_WINDOW_START_HOUR = 19;
 const DEFAULT_WINDOW_START_MINUTE = 0;
 const DEFAULT_WINDOW_END_HOUR = 21;
 const DEFAULT_WINDOW_END_MINUTE = 59;
-const DEFAULT_SOURCES = ["local", "country_capital", "opentdb"];
+const DEFAULT_SOURCES = ["local", "opentdb"];
 const OPENTDB_CATEGORY_CATALOG = [
   { id: 9, key: "general_knowledge" },
   { id: 10, key: "books" },
@@ -42,63 +42,63 @@ const OPENTDB_CATEGORY_CATALOG = [
 const DEFAULT_OPENTDB_CATEGORY_IDS = OPENTDB_CATEGORY_CATALOG.map((c) => c.id);
 const LOCAL_THEME_POLLS = [
   {
-    question: "Quale tema vuoi vedere più spesso nei prossimi eventi community?",
+    question: "Che tema ti va di vedere più spesso?",
     answers: ["Musica", "Cinema/Serie TV", "Gaming", "Sport", "Arte", "Tecnologia", "Attualità", "Meme/Intrattenimento"],
   },
   {
-    question: "Su quale area dovremmo puntare per migliorare il server questo mese?",
+    question: "Su cosa dovremmo puntare questo mese?",
     answers: ["Nuovi format in chat", "Più eventi vocali", "Migliore organizzazione canali", "Nuovi perks", "Più moderazione live", "Più attività partner", "Più minigiochi", "Più feedback staff"],
   },
   {
-    question: "Quale fascia oraria preferisci per eventi o attività speciali?",
+    question: "Quando preferisci gli eventi?",
     answers: ["15:00 - 17:00", "17:00 - 19:00", "19:00 - 21:00", "21:00 - 23:00", "Weekend pomeriggio", "Weekend sera"],
   },
   {
-    question: "Quale team/ambito sportivo vuoi vedere più spesso nei topic dedicati?",
+    question: "Che ambito sportivo ti interessa di più?",
     answers: ["Serie A", "Champions League", "NBA", "F1/MotoGP", "Tennis", "E-sports", "MMA/Boxe", "Altro sport"],
   },
   {
-    question: "Quale tipo di contenuto musicale preferisci nel canale dedicato?",
+    question: "Che tipo di contenuto musicale preferisci?",
     answers: ["Nuove uscite", "Classici intramontabili", "Playlist tematiche", "Album review", "Battle tra artisti", "Live session", "Top settimanali", "Consigli della community"],
   },
   {
-    question: "Quale argomento di attualità vorresti discutere più spesso in community?",
+    question: "Di che attualità ti va parlare più spesso?",
     answers: ["Tecnologia/IA", "Economia", "Ambiente", "Scuola/Università", "Lavoro", "Sport", "Cultura", "Politica internazionale"],
   },
   {
-    question: "Nel mondo del lavoro, quale skill ritieni più importante oggi?",
+    question: "Nel lavoro di oggi, che skill conta di più?",
     answers: ["Comunicazione", "Problem solving", "Lingue", "Competenze digitali", "Leadership", "Teamwork", "Organizzazione", "Creatività"],
   },
   {
-    question: "Che tipo di discussioni musicali ti piacciono di più?",
+    question: "Che discussioni musicali ti piacciono di più?",
     answers: ["Analisi testi", "Confronto artisti", "Generi emergenti", "Top album del mese", "Classifiche storiche", "Live e concerti", "Produzione musicale", "Nuovi talenti"],
   },
   {
-    question: "Quale formato preferisci per i topic sportivi?",
+    question: "Come preferisci i topic sportivi?",
     answers: ["Pre-partita", "Post-partita", "Pronostici", "Top/Flop giornata", "Mercato", "Storie e aneddoti", "Statistiche", "Quiz sportivi"],
   },
   {
-    question: "Quale campionato/calcio segui con più interesse?",
+    question: "Che calcio segui di più?",
     answers: ["Serie A", "Premier League", "LaLiga", "Bundesliga", "Ligue 1", "Champions League", "Europa League", "Nazionale"],
   },
   {
-    question: "Su quali temi lavoro/studio vuoi più supporto in chat?",
+    question: "Su cosa vuoi più supporto tra lavoro/studio?",
     answers: ["CV e colloqui", "Produttività", "Orientamento carriera", "Freelance", "Remote work", "Gestione stress", "Formazione online", "Networking"],
   },
   {
-    question: "Quale tema generale vorresti vedere più spesso nei poll?",
+    question: "Che tema vuoi vedere più spesso nei poll?",
     answers: ["Attualità", "Musica", "Lavoro", "Sport", "Calcio", "Cinema/Serie", "Gaming", "Tech/IA", "Benessere", "Community feedback"],
   },
   {
-    question: "Che tipo di news rapide preferisci nel server?",
+    question: "Che tipo di news rapide preferisci?",
     answers: ["Flash quotidiani", "Recap settimanale", "Solo top notizie", "Approfondimenti", "Sondaggi su news", "Fact-checking", "Trend social", "Niente news"],
   },
   {
-    question: "Per i topic calcio, quale contenuto è più utile?",
+    question: "Nei topic calcio, cosa ti è più utile?",
     answers: ["Analisi tattica", "Statistiche giocatori", "Situazione classifica", "Mercato e rumors", "Formazioni probabili", "Highlights", "Giovani talenti", "Confronto squadre"],
   },
   {
-    question: "Quale area ti interessa di più per crescere professionalmente?",
+    question: "Per crescere nel lavoro, cosa ti interessa di più?",
     answers: ["Marketing", "Programmazione", "Design", "Data analysis", "Project management", "Vendite", "Risorse umane", "Imprenditoria"],
   },
 ];
@@ -386,6 +386,30 @@ async function translatePollPayloadToItalian(payload) {
   return { question: questionIt, answers: uniqueAnswers.slice(0, 10) };
 }
 
+function buildSurveyFromApiTopic(payload, cfg = {}, forcedTargetOptions = null) {
+  const topic = normalizeText(String(payload?.question || ""));
+  if (!topic) return null;
+  const baseTopic = topic.replace(/[.!?]+$/g, "").trim();
+  const shortTopic = baseTopic.length > 110 ? `${baseTopic.slice(0, 107)}...` : baseTopic;
+  const question = `Qual è la tua opinione su "${shortTopic}"?`;
+  const surveyBase = {
+    question,
+    answers: [
+      "Moltissimo",
+      "Abbastanza",
+      "Neutrale",
+      "Poco",
+      "Per niente",
+      "Dipende da come viene trattato",
+      "Solo in alcuni orari",
+      "Sì, ma in formato breve",
+      "Sì, con approfondimenti",
+      "Solo se legato all'attualità",
+    ],
+  };
+  return applyOptionCount(surveyBase, cfg, forcedTargetOptions);
+}
+
 async function fetchPollFromApi(apiUrl) {
   const res = await axios.get(apiUrl || DEFAULT_API_URL, { timeout: 15000 });
   const normalized = normalizeApiPollPayload(res?.data);
@@ -394,39 +418,6 @@ async function fetchPollFromApi(apiUrl) {
     question: normalized.question,
     answers: shuffle(normalized.answers).slice(0, 10),
   };
-}
-
-async function fetchCountryCapitalPoll(cfg = {}) {
-  const res = await axios.get(
-    "https://restcountries.com/v3.1/all?fields=name,translations,capital",
-    { timeout: 15000 },
-  );
-  const rows = (Array.isArray(res?.data) ? res.data : [])
-    .map((row) => {
-      const country =
-        normalizeText(String(row?.translations?.ita?.common || row?.name?.common || ""));
-      const capital = normalizeText(String(Array.isArray(row?.capital) ? row.capital[0] : ""));
-      return { country, capital };
-    })
-    .filter((row) => row.country && row.capital && row.capital.length >= 2);
-  if (rows.length < 12) return null;
-
-  const target = pickRandom(rows);
-  if (!target) return null;
-  const decoys = shuffle(
-    rows
-      .filter((row) => row.country.toLowerCase() !== target.country.toLowerCase())
-      .map((row) => row.capital),
-  );
-  const desired = clampOptionCount(cfg.maxOptions, 8);
-  const options = shuffle([target.capital, ...decoys.slice(0, Math.max(1, desired - 1))]);
-  return applyOptionCount(
-    {
-      question: `Qual è la capitale di ${target.country}?`,
-      answers: options,
-    },
-    cfg,
-  );
 }
 
 async function hasManualPollToday(guildId) {
@@ -546,15 +537,12 @@ async function runAutoPoll(client) {
     if (source === "local") {
       candidate = buildLocalThemePoll(cfg);
       candidate = applyOptionCount(candidate, cfg, optionTarget);
-    } else if (source === "country_capital") {
-      candidate = await fetchCountryCapitalPoll(cfg).catch(() => null);
-      candidate = applyOptionCount(candidate, cfg, optionTarget);
     } else {
       const themedApiUrl = buildThemedApiUrl(apiUrlBase, cfg);
       const fetched = await fetchPollFromApi(themedApiUrl).catch(() => null);
       if (fetched) {
         const italian = await translatePollPayloadToItalian(fetched).catch(() => null);
-        candidate = applyOptionCount(italian, cfg, optionTarget);
+        candidate = buildSurveyFromApiTopic(italian, cfg, optionTarget);
       }
     }
 
