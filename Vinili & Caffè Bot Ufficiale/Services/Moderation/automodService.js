@@ -1407,7 +1407,6 @@ async function markBadUserTrigger(message, violations, heatValue) {
           lastHeat: Number(heatValue || 0),
           reasons,
         },
-        $inc: { totalTriggers: 1 },
       },
       { upsert: true },
     );
@@ -1422,7 +1421,7 @@ async function markBadUserAction(message, action, violations = []) {
   const userId = String(message?.author?.id || "");
   if (!userId) return;
   const normalizedAction = String(action || "").trim().toLowerCase();
-  const inc = { activeStrikes: 0, warnPoints: 0 };
+  const inc = { totalTriggers: 1, activeStrikes: 0, warnPoints: 0 };
   if (normalizedAction === "warn") inc.warnPoints = 1;
   if (
     normalizedAction === "timeout" ||
@@ -2782,7 +2781,6 @@ async function warnUser(message, state, violations) {
   const deleted = await message.delete().then(() => true).catch(() => false);
   if (!canActNow(message)) return deleted;
   await markBadUserAction(message, "warn", violations);
-  await registerAutoModCase(message, "warn", violations);
   await sendAutomodActionInChannel(message, "warn", violations);
   await sendAutomodLog(message, "warn", violations, state.heat);
   recordAutomodMetric(message, "warn", violations);

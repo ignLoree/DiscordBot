@@ -358,7 +358,8 @@ async function sendPerksLevelMessage(guild, member, level) {
   await sendLevelUpPayload(channel, member, payload);
 }
 
-function buildPerkNearDmEmbed(member, targetLevel, roleId, missingExp) {
+function buildPerkNearDmEmbed(member, targetLevel, roleLabel, missingExp) {
+  const safeRoleLabel = String(roleLabel || "ruolo sconosciuto").trim();
   return {
     embeds: [
       {
@@ -369,7 +370,7 @@ function buildPerkNearDmEmbed(member, targetLevel, roleId, missingExp) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> ${member}, ci sei quasi!`,
-          `Sei vicino al ruolo <@&${roleId}> (livello \`${targetLevel}\`).`,
+          `Sei vicino al ruolo **${safeRoleLabel}** (livello \`${targetLevel}\`).`,
           `Ti mancano **${Math.max(0, Number(missingExp || 0))} EXP**.`,
           PERKS_CHANNEL_ID
             ? `Info perks: <#${PERKS_CHANNEL_ID}>`
@@ -405,10 +406,14 @@ async function maybeSendPerkNearReminder(guild, member, result) {
 
   const targetExp = getTotalExpForLevel(nextPerkLevel);
   const missingExp = Math.max(0, targetExp - Number(result.afterExp || 0));
+  const role =
+    guild.roles.cache.get(roleId) ||
+    (await guild.roles.fetch(roleId).catch(() => null));
+  const roleLabel = role?.name || `ID ${roleId}`;
   const payload = buildPerkNearDmEmbed(
     member,
     nextPerkLevel,
-    roleId,
+    roleLabel,
     missingExp,
   );
 
