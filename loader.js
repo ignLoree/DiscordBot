@@ -29,11 +29,35 @@ const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
 function resolveNodeExecutable() {
+    const fromEnv = String(process.env.NODE_BINARY || '').trim();
+    if (fromEnv && fs.existsSync(fromEnv)) {
+        return fromEnv;
+    }
+
+    // Hosted panels often unpack a newer Node runtime under tmp.
+    // Prefer it over the loader's own (possibly old) execPath.
+    const tmpDir = path.join(os.tmpdir(), '');
+    try {
+        const entries = fs.readdirSync(tmpDir, { withFileTypes: true });
+        const candidates = entries
+            .filter((entry) => entry.isDirectory() && /^node-v\d+\.\d+\.\d+/.test(entry.name))
+            .map((entry) => ({
+                name: entry.name,
+                fullPath: path.join(tmpDir, entry.name, 'bin', 'node')
+            }))
+            .filter((entry) => fs.existsSync(entry.fullPath))
+            .sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
+        if (candidates.length > 0) {
+            return candidates[0].fullPath;
+        }
+    } catch {
+    }
+
     const fromExecPath = String(process.execPath || '').trim();
     if (fromExecPath && fs.existsSync(fromExecPath)) {
         return fromExecPath;
     }
-    return process.env.NODE_BINARY || 'node';
+    return 'node';
 }
 
 function splitStartPath(startPath) {
