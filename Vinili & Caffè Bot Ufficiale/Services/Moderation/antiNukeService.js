@@ -1684,14 +1684,6 @@ async function enableAntiNukePanic(guild, reason, addedHeat = 0) {
   }
 
   if (!wasActive) {
-    try {
-      const { activateJoinRaidWindow } = require("./joinRaidService");
-      await activateJoinRaidWindow(
-        guild,
-        "AntiNuke panic escalation",
-        baseDuration,
-      );
-    } catch {}
     await sendAntiNukeLog(
       guild,
       "AntiNuke Panic Mode Enabled",

@@ -4,8 +4,6 @@ const path = require("path");
 const mongoose = require("mongoose");
 const IDs = require("../../Utils/Config/ids");
 const JoinRaidState = require("../../Schemas/Moderation/joinRaidStateSchema");
-const { triggerAntiNukePanicExternal } = require("./antiNukeService");
-const { triggerAutoModPanicExternal } = require("./automodService");
 const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
@@ -1113,15 +1111,6 @@ async function processJoinRaidForMember(member, options = {}) {
         ),
       ).slice(-8);
       const untilTs = Math.floor(state.raidUntil / 1000);
-      // Join Gate feeds only Join Raid: when joinGateFeedOnly is true do NOT trigger AutoMod or AntiNuke panic.
-      if (!joinGateFeedOnly) {
-        triggerAutoModPanicExternal(
-          member.guild.id,
-          member.id,
-          { raidBoost: 1, activityBoost: 0 },
-          at,
-        );
-      }
       const initialFlags = buildInitialFlagRows(member.guild, state, 8);
       const actionVerb =
         JOIN_RAID_CONFIG.triggerAction === "ban"
@@ -1171,15 +1160,6 @@ async function processJoinRaidForMember(member, options = {}) {
       matchJoinRaidAccountType(member, reasons) &&
       (highRisk || strongEvidence || String(JOIN_RAID_CONFIG.accountType || "any") !== "id_flag");
     if (active && punishableDuringRaid) {
-      // Join Gate feed: do not trigger AutoMod panic when punishing during raid.
-      if (!joinGateFeedOnly) {
-        triggerAutoModPanicExternal(
-          member.guild.id,
-          member.id,
-          { raidBoost: 0 },
-          at,
-        );
-      }
       if (joinGateFeedOnly) {
         state.raidCaughtUserIds.push(String(member.id));
         state.raidCaughtUserIds = Array.from(
@@ -1282,19 +1262,9 @@ async function activateJoinRaidWindow(
 
 async function registerJoinRaidSecuritySignal(member, options = {}) {
   if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
-  const at = nowMs();
-  const enableAntiNuke = Boolean(options.enableAntiNuke);
-  const enableAutoMod = options.enableAutoMod === true;
-  // antiNukeHeat in percentuale (0–100); il servizio anti-nuke converte in heat effettivo
-  const heat = Math.max(0, Math.min(100, Number(options.antiNukeHeat || 0)));
-  const reason = String(options.reason || "Join Gate security signal");
-  const raidBoost = Math.max(0, Math.min(2, Math.floor(Number(options.raidBoost || 0))));
-  if (enableAntiNuke && heat > 0) {
-    await triggerAntiNukePanicExternal(member.guild, reason, heat).catch(() => null);
-  }
-  if (!enableAutoMod) return { ok: true, panic: { activated: false, active: false, count: 0 } };
-  const panic = triggerAutoModPanicExternal(member.guild.id, member.id, { raidBoost, activityBoost: 0 }, at);
-  return { ok: true, panic };
+  void options;
+  // JoinRaid remains isolated from AutoMod/AntiNuke escalations.
+  return { ok: true, panic: { activated: false, active: false, count: 0 } };
 }
 
 function applyJoinRaidPreset(name = "balanced") {

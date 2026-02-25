@@ -62,6 +62,17 @@ const PANIC_MODE = {
   raidUserThreshold: 6,
   raidYoungThreshold: 4,
 };
+const PANIC_TRIGGER_KEYS = new Set([
+  "invite",
+  "scam_pattern",
+  "nsfw_link",
+  "word_blacklist",
+  "link_blacklist",
+  "mention_everyone",
+  "mentions_lockdown",
+  "mention_hour_cap",
+  "unwhitelisted_webhook",
+]);
 const MENTION_RULES = {
   enabled: true,
   timeoutMs: 45 * 60_000,
@@ -2862,6 +2873,10 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
   const channel = await resolveLogChannel(message.guild);
   if (!channel?.isTextBased?.()) return;
   const when = Math.floor(activeUntil / 1000);
+  const state = getPanicState(message.guildId);
+  const triggerAccountIds = Array.from(state?.triggerAccounts?.keys?.() || [])
+    .filter(Boolean)
+    .slice(-10);
   const embed = new EmbedBuilder()
     .setColor(event === "panic_enabled" ? "#ED4245" : "#5865F2")
     .setTitle(
@@ -2876,6 +2891,9 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
         `<:VC_right_arrow:1473441155055096081> **Member:** ${message.author} [\`${message.author.id}\`]`,
         `<:VC_right_arrow:1473441155055096081> **Event:** ${event}`,
         `<:VC_right_arrow:1473441155055096081> **Trigger Accounts:** ${count}/${PANIC_MODE.triggerCount}`,
+        triggerAccountIds.length
+          ? `<:VC_right_arrow:1473441155055096081> **Trigger IDs:** ${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
+          : null,
         `<:VC_right_arrow:1473441155055096081> **Duration:** ${Math.round(PANIC_MODE.durationMs / 60_000)} minutes`,
         `<:VC_right_arrow:1473441155055096081> **Active Until:** <t:${when}:F>`,
       ].join("\n"),
@@ -3111,7 +3129,9 @@ async function runAutoModMessage(message) {
   if (!violations.length) return { blocked: false };
 
   const at = nowMs();
-  const shouldCountForPanic = violations.length > 0;
+  const shouldCountForPanic = violations.some((v) =>
+    PANIC_TRIGGER_KEYS.has(String(v?.key || "")),
+  );
   if (shouldCountForPanic) {
     state.automodHits.push(at);
     trimWindow(state.automodHits, PANIC_MODE.triggerWindowMs, at);
@@ -3148,22 +3168,7 @@ async function runAutoModMessage(message) {
 
     if (panic.activated) {
       const activeUntil = getPanicState(message.guildId).activeUntil;
-      try {
-        const { triggerAntiNukePanicExternal } = require("./antiNukeService");
-        await triggerAntiNukePanicExternal(
-          message.guild,
-          "AutoMod panic escalation",
-          500,
-        );
-      } catch {}
-      try {
-        const { activateJoinRaidWindow } = require("./joinRaidService");
-        await activateJoinRaidWindow(
-          message.guild,
-          "AutoMod panic escalation",
-          PANIC_MODE.durationMs,
-        );
-      } catch {}
+      // Intentionally isolated: AutoMod panic must not escalate AntiNuke/JoinRaid.
       await sendPanicModeLog(
         message,
         "panic_enabled",
