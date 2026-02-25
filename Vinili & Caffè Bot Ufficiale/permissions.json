@@ -249,6 +249,12 @@
                 ],
                 "weekly": [
                     "roles.Member"
+                ],
+                "cs": [
+                    "roles.Member"
+                ],
+                "classificasettimanale": [
+                    "roles.Member"
                 ]
             }
         },
@@ -273,6 +279,18 @@
                     "roles.CoFounder"
                 ],
                 "raid": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "joinraid": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "join-raid": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "jr": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
@@ -501,6 +519,39 @@
                 ],
                 "config": [
                     "roles.HighStaff"
+                ],
+                "levelset": [
+                    "roles.HighStaff"
+                ],
+                "leveladdexp": [
+                    "roles.HighStaff"
+                ],
+                "levelremoveexp": [
+                    "roles.HighStaff"
+                ],
+                "levelreset": [
+                    "roles.HighStaff"
+                ],
+                "levellock": [
+                    "roles.HighStaff"
+                ],
+                "levelunlock": [
+                    "roles.HighStaff"
+                ],
+                "levelmultiplier": [
+                    "roles.HighStaff"
+                ],
+                "levelignore": [
+                    "roles.HighStaff"
+                ],
+                "levelunignore": [
+                    "roles.HighStaff"
+                ],
+                "levelconfig": [
+                    "roles.HighStaff"
+                ],
+                "levelgmulti": [
+                    "roles.HighStaff"
                 ]
             }
         },
@@ -555,6 +606,18 @@
                 ],
                 "clear": [
                     "roles.HighStaff"
+                ],
+                "permgrant": [
+                    "roles.HighStaff"
+                ],
+                "permrevoke": [
+                    "roles.HighStaff"
+                ],
+                "permlist": [
+                    "roles.HighStaff"
+                ],
+                "permclear": [
+                    "roles.HighStaff"
                 ]
             }
         },
@@ -601,6 +664,21 @@
                     "roles.HighStaff"
                 ],
                 "auto": [
+                    "roles.HighStaff"
+                ],
+                "mentions": [
+                    "roles.HighStaff"
+                ],
+                "me": [
+                    "roles.HighStaff"
+                ],
+                "mine": [
+                    "roles.HighStaff"
+                ],
+                "autoresponder": [
+                    "roles.HighStaff"
+                ],
+                "ar": [
                     "roles.HighStaff"
                 ]
             }
@@ -701,6 +779,46 @@
                 ],
                 "reopen": [
                     "roles.HighStaff"
+                ],
+                "ticketswitchpanel": [
+                    "roles.HighStaff"
+                ],
+                "ticketrename": [
+                    "roles.HighStaff"
+                ],
+                "ticketreopen": [
+                    "roles.HighStaff"
+                ],
+                "trename": [
+                    "roles.HighStaff"
+                ],
+                "ticketclose": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "ticketclaim": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "ticketunclaim": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "tadd": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "tremove": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "ticketadd": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
+                ],
+                "ticketremove": [
+                    "roles.Staff",
+                    "roles.PartnerManager"
                 ]
             }
         },

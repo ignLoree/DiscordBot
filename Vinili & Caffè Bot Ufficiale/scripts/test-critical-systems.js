@@ -3,9 +3,23 @@ const path = require("path");
 
 const root = path.resolve(__dirname, "..");
 const permissionsPath = path.join(root, "permissions.json");
+const prefixRoot = path.join(root, "Prefix");
 
 function assert(cond, message) {
   if (!cond) throw new Error(message);
+}
+
+function walkJsFiles(dir, out = []) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkJsFiles(full, out);
+      continue;
+    }
+    if (entry.isFile() && entry.name.endsWith(".js")) out.push(full);
+  }
+  return out;
 }
 
 (function main() {
@@ -42,6 +56,54 @@ function assert(cond, message) {
   assert(Array.isArray(securityCmd.subcommands), "security.subcommands mancante");
   assert(securityCmd.subcommands.includes("antinuke"), "security subcommand antinuke mancante");
   assert(securityCmd.subcommands.includes("raid"), "security subcommand raid mancante");
+  const securityAliases = securityCmd?.subcommandAliases || {};
+  const raidAliasKeys = ["joinraid", "join-raid", "jr"];
+  for (const alias of raidAliasKeys) {
+    assert(
+      securityAliases[alias] === "raid",
+      `security alias ${alias} non mappa a raid`,
+    );
+    assert(
+      Array.isArray(securityPerms[alias]),
+      `permissions.security.${alias} mancante`,
+    );
+  }
+
+  const prefixFiles = walkJsFiles(prefixRoot);
+  const missingAliasPermissions = [];
+  for (const file of prefixFiles) {
+    let mod = null;
+    try {
+      mod = require(file);
+    } catch {
+      continue;
+    }
+    if (!mod || typeof mod !== "object") continue;
+    const commandName = String(mod.name || "").toLowerCase();
+    if (!commandName) continue;
+    const aliasMap =
+      mod.subcommandAliases && typeof mod.subcommandAliases === "object"
+        ? mod.subcommandAliases
+        : null;
+    if (!aliasMap) continue;
+    const commandPerm = prefix?.[commandName];
+    const subcommands = commandPerm?.subcommands;
+    if (!subcommands || typeof subcommands !== "object") continue;
+    for (const [alias, target] of Object.entries(aliasMap)) {
+      const aliasKey = String(alias || "").trim();
+      const targetKey = String(target || "").trim();
+      if (!aliasKey || !targetKey) continue;
+      if (Object.prototype.hasOwnProperty.call(subcommands, aliasKey)) continue;
+      if (!Object.prototype.hasOwnProperty.call(subcommands, targetKey)) {
+        continue;
+      }
+      missingAliasPermissions.push(`${commandName}.${aliasKey}->${targetKey}`);
+    }
+  }
+  assert(
+    missingAliasPermissions.length === 0,
+    `alias permissions mancanti: ${missingAliasPermissions.join(", ")}`,
+  );
 
   const joinRaidService = require(path.join(root, "Services", "Moderation", "joinRaidService.js"));
   const joinRaidCfg = joinRaidService.getJoinRaidConfigSnapshot?.();

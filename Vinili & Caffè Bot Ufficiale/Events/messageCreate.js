@@ -758,15 +758,27 @@ module.exports = {
       if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);
       return;
     }
-    const prefixSubcommandFromArgs = args[0]
+    const rawPrefixSubcommandArg = args[0]
       ? String(args[0]).toLowerCase()
       : null;
+    const prefixSubcommandFromArgs =
+      rawPrefixSubcommandArg && command?.subcommandAliases
+        ? command.subcommandAliases[rawPrefixSubcommandArg] ||
+          rawPrefixSubcommandArg
+        : rawPrefixSubcommandArg;
     const prefixSubcommandFromAlias =
-      !prefixSubcommandFromArgs && command?.subcommandAliases
+      !rawPrefixSubcommandArg && command?.subcommandAliases
         ? command.subcommandAliases[cmd] || null
         : null;
     const prefixSubcommand =
       prefixSubcommandFromArgs || prefixSubcommandFromAlias || null;
+    if (
+      rawPrefixSubcommandArg &&
+      prefixSubcommandFromArgs &&
+      rawPrefixSubcommandArg !== prefixSubcommandFromArgs
+    ) {
+      args[0] = prefixSubcommandFromArgs;
+    }
     if (!prefixSubcommandFromArgs && prefixSubcommandFromAlias) {
       args.unshift(prefixSubcommandFromAlias);
     }

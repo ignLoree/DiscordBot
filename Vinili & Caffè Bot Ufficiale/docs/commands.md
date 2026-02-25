@@ -528,11 +528,13 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 ## +security
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+security <joingate|raid|panic|antinuke|join-gate|jg|status|set>`
-- Subcommand: `joingate`, `raid`, `panic`, `antinuke`, `join-gate`, `jg`, `status`, `set`, `joinraid`, `join-raid`, `jr`
+- Uso: `+security <joingate|raid|panic|antinuke|join-gate|jg|joinraid|join-raid|jr>`
+- Subcommand: `joingate`, `raid`, `panic`, `antinuke`, `join-gate`, `jg`, `joinraid`, `join-raid`, `jr`
 - Esempi:
 - `+security joingate`
-- `+security raid`
+- `+security antinuke raid status`
+- `+security antinuke raid preset strict`
+- `+security antinuke raid set lockCommands true`
 
 ## +server
 - Categoria: `Stats`
@@ -699,4 +701,3 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Subcommand: -
 - Esempi:
 - `+weather`
-
