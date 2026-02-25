@@ -124,6 +124,16 @@
                 ]
             }
         },
+        "role": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "subcommands": {
+                "all": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
         "say": {
             "roles": [
                 "roles.Founder"
