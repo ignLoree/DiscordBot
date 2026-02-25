@@ -22,6 +22,7 @@ const {
   JOIN_RAID_PRESETS,
   applyJoinRaidPreset,
   getJoinRaidStatusSnapshot,
+  setJoinRaidConfigSnapshot,
 } = require("../../Services/Moderation/joinRaidService");
 const {
   VALID_ACTIONS: JOIN_GATE_VALID_ACTIONS,
@@ -211,7 +212,7 @@ function usageEmbed() {
     .setDescription(
       [
         "`+security joingate <status|set>`",
-        "`+security raid <status|preset>` (alias: joinraid, jr)",
+        "`+security raid <status|preset|set>` (alias: joinraid, jr)",
         "`+security panic ...`",
         "`+security antinuke <status|preset|panic|raid>`",
       ].join("\n"),
@@ -238,6 +239,7 @@ function antiNukeUsageEmbed() {
         "`+security antinuke restore`",
         "`+security antinuke raid status`",
         "`+security antinuke raid preset <safe|balanced|strict>`",
+        "`+security antinuke raid set lockCommands <true|false>`",
       ].join("\n"),
     );
 }
@@ -647,6 +649,7 @@ async function handleAntiNuke(message, args = []) {
       const idFlag = raid?.config?.idFlag || {};
       const ageFlag = raid?.config?.ageFlag || {};
       const noPfpFlag = raid?.config?.noPfpFlag || {};
+      const raidLockCommands = Boolean(raid?.config?.lockCommands);
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Join Raid")
@@ -656,6 +659,7 @@ async function handleAntiNuke(message, args = []) {
             `\u25b8 \`${raid.enabled ? "Enabled" : "Disabled"}\`        \u25b8 \`${formatActionLabel(raid?.config?.triggerAction, "ban")}\`        \u25b8 ${warnedRoles}`,
             "",
             "[4] Details:",
+            `\u25b8 [X] Lock Commands While Raid: \`${raidLockCommands ? "Enabled" : "Disabled"}\``,
             `\u25b8 [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount || 10)} accounts\``,
             `\u25b8 [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
             `\u25b8 [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs || 0)}\``,
@@ -683,6 +687,47 @@ async function handleAntiNuke(message, args = []) {
         );
       await safeMessageReply(message, {
         embeds: [embed],
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
+    if (action === "set") {
+      const key = String(args[2] || "").toLowerCase();
+      const rawValue = String(args[3] || "").toLowerCase();
+      if (key !== "lockcommands") {
+        await safeMessageReply(message, {
+          content:
+            "<:vegax:1443934876440068179> Usa: `+security antinuke raid set lockCommands <true|false>`",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      if (!["true", "false", "on", "off", "1", "0", "yes", "no"].includes(rawValue)) {
+        await safeMessageReply(message, {
+          content: "<:vegax:1443934876440068179> Valore non valido. Usa `true` o `false`.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const value = ["true", "on", "1", "yes"].includes(rawValue);
+      const raid = await getJoinRaidStatusSnapshot(message.guild.id);
+      const nextConfig = {
+        ...(raid?.config || {}),
+        lockCommands: value,
+      };
+      const updated = setJoinRaidConfigSnapshot(nextConfig);
+      if (updated?.ok) {
+        await sendSecurityAuditLog(message.guild, {
+          actorId: message.author.id,
+          action: "raid.set",
+          details: [`lockCommands: \`${value}\``],
+          color: "#57F287",
+        });
+      }
+      await safeMessageReply(message, {
+        content: updated?.ok
+          ? `[OK] JoinRaid lockCommands impostato a \`${value}\`.`
+          : "<:vegax:1443934876440068179> Aggiornamento raid config fallito.",
         allowedMentions: { repliedUser: false },
       });
       return;
@@ -1481,6 +1526,8 @@ async function buildHealthEmbed(guild, client) {
         `Guild in cache: **${guildCount}**`,
         `Security lock join: **${sec.joinLockActive ? "ON" : "OFF"}**`,
         `Security lock comandi: **${sec.commandLockActive ? "ON" : "OFF"}**`,
+        `Explain lock: **${sec.commandLockActive ? (sec.commandSources?.join(", ") || "N/A") : "none"}**`,
+        `JoinRaid lockCommands: **${sec?.details?.joinRaidLockCommands ? "ON" : "OFF"}**`,
         `AntiNuke panic: **${anti.panicActive ? "ON" : "OFF"}**`,
         `AutoMod panic: **${automod.active ? "ON" : "OFF"}**`,
         `Birthday scheduler: **${birthday.active ? "ON" : "OFF"}** (running: ${birthday.tickRunning ? "yes" : "no"})`,

@@ -43,5 +43,50 @@ function assert(cond, message) {
   assert(securityCmd.subcommands.includes("antinuke"), "security subcommand antinuke mancante");
   assert(securityCmd.subcommands.includes("raid"), "security subcommand raid mancante");
 
+  const joinRaidService = require(path.join(root, "Services", "Moderation", "joinRaidService.js"));
+  const joinRaidCfg = joinRaidService.getJoinRaidConfigSnapshot?.();
+  assert(joinRaidCfg && typeof joinRaidCfg.lockCommands === "boolean", "joinRaid.lockCommands mancante");
+
+  const orchestrator = require(path.join(root, "Services", "Moderation", "securityOrchestratorService.js"));
+  const lockDecisionA = orchestrator.buildSecurityLockDecision?.({
+    antiNukePanic: false,
+    autoModPanic: false,
+    joinRaid: true,
+    lockAllCommands: true,
+    joinRaidLockCommands: false,
+  });
+  assert(lockDecisionA && lockDecisionA.joinLockActive === true, "security decision A join lock errato");
+  assert(lockDecisionA.commandLockActive === false, "security decision A command lock errato");
+  const lockDecisionB = orchestrator.buildSecurityLockDecision?.({
+    antiNukePanic: false,
+    autoModPanic: false,
+    joinRaid: true,
+    lockAllCommands: true,
+    joinRaidLockCommands: true,
+  });
+  assert(lockDecisionB && lockDecisionB.commandLockActive === true, "security decision B command lock errato");
+
+  const automodService = require(path.join(root, "Services", "Moderation", "automodService.js"));
+  const detectCmd = automodService?.__test?.isLikelyCommandMessage;
+  assert(typeof detectCmd === "function", "automod __test isLikelyCommandMessage mancante");
+  assert(
+    detectCmd({ content: "+help", client: { config: { prefix: "+" } } }) === true,
+    "automod command detection '+' errata",
+  );
+  assert(
+    detectCmd({ content: "!raid", client: { config: { prefix: "+" } } }) === false,
+    "automod command detection '!' non deve bypassare",
+  );
+  const explainDecision = automodService?.__test?.buildAutoModDecisionExplain;
+  assert(typeof explainDecision === "function", "automod __test buildAutoModDecisionExplain mancante");
+  const explainText = explainDecision("timeout", 120, [
+    { key: "link_blacklist", heat: 100 },
+    { key: "attachment_image", heat: 20 },
+  ]);
+  assert(
+    typeof explainText === "string" && explainText.includes("timeout") && explainText.includes("top_rules="),
+    "automod decision explain non valido",
+  );
+
   console.log("CRITICAL_SYSTEMS_TEST_OK");
 })();

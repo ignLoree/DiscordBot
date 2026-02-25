@@ -727,11 +727,14 @@ module.exports = {
       !isAntiNukeRecoveryCommand &&
       securityLockState.commandLockActive
     ) {
+      const lockSources = Array.isArray(securityLockState.commandSources)
+        ? securityLockState.commandSources
+        : securityLockState.sources;
       await deleteCommandMessage();
       const msg = await message.channel
         .send({
           content:
-            `<:VC_right_arrow:1473441155055096081> Server in lockdown di sicurezza: comandi temporaneamente bloccati.${securityLockState.sources.length ? ` (${securityLockState.sources.join(", ")})` : ""}`,
+            `<:VC_right_arrow:1473441155055096081> Server in lockdown di sicurezza: comandi temporaneamente bloccati.${lockSources?.length ? ` (${lockSources.join(", ")})` : ""}`,
         })
         .catch(() => null);
       if (msg) setTimeout(() => msg.delete().catch(() => {}), 5000);

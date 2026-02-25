@@ -2170,6 +2170,7 @@ async function detectViolations(message, state, profile) {
   const attachmentsEnabled = profile?.attachmentsEnabled !== false;
   const inviteLinksEnabled = profile?.inviteLinksEnabled !== false;
   const autoLockdownEnabled = automodRuntimeConfig?.autoLockdown?.enabled !== false;
+  const hasMeaningfulTextPayload = String(moderationContent || "").trim().length >= 8;
   const profileHeat = (value, factorKey = "regularMessage") =>
     applyProfileHeat(applyHeatFactor(factorKey, value), profile);
   const legitConversation = looksLikeLegitConversation(moderationContent || content);
@@ -2184,7 +2185,8 @@ async function detectViolations(message, state, profile) {
   if (
     !spamWhitelisted &&
     TEXT_RULES.suspiciousAccount.enabled &&
-    suspiciousMessageAuthor
+    suspiciousMessageAuthor &&
+    hasMeaningfulTextPayload
   ) {
     violations.push({
       key: "suspicious_account",
@@ -2481,6 +2483,15 @@ async function detectViolations(message, state, profile) {
     const imageCount = attachmentList.filter((att) => isImageAttachment(att)).length;
     const fileCount = Math.max(0, attachmentList.length - imageCount);
     const linkCount = extractedUrls.length;
+    const isLightMediaOnlyMessage =
+      hasMeaningfulTextPayload === false &&
+      embedCount === 0 &&
+      stickerCount === 0 &&
+      fileCount === 0 &&
+      linkCount === 0 &&
+      imageCount > 0 &&
+      imageCount <= 2;
+    const imageHeatMultiplier = isLightMediaOnlyMessage ? 0.6 : 1;
 
     if (ATTACHMENT_RULES.embeds.enabled && embedCount > 0) {
       violations.push({
@@ -2496,7 +2507,9 @@ async function detectViolations(message, state, profile) {
       violations.push({
         key: "attachment_image",
         heat: profileHeat(
-          imageCount * percentToHeat(ATTACHMENT_RULES.images.heat),
+          imageCount *
+            percentToHeat(ATTACHMENT_RULES.images.heat) *
+            imageHeatMultiplier,
           "attachments",
         ),
         info: `${imageCount} image`,
@@ -2544,8 +2557,23 @@ function getCooldownKey(message) {
 function isLikelyCommandMessage(message) {
   const content = String(message?.content || "").trim();
   if (!content) return false;
-  const prefixes = ["+", "/", "-", "?", "!"];
-  return prefixes.some((prefix) => content.startsWith(prefix));
+  const dynamicPrefixes = [];
+  const cfgPrefix = message?.client?.config?.prefix;
+  if (Array.isArray(cfgPrefix)) {
+    for (const entry of cfgPrefix) {
+      const value = String(entry || "").trim();
+      if (value) dynamicPrefixes.push(value);
+    }
+  } else if (typeof cfgPrefix === "string" && cfgPrefix.trim()) {
+    dynamicPrefixes.push(cfgPrefix.trim());
+  }
+  if (!dynamicPrefixes.length) {
+    dynamicPrefixes.push("+");
+  }
+  return dynamicPrefixes.some((prefix) => {
+    if (!content.startsWith(prefix)) return false;
+    return content.length > prefix.length;
+  });
 }
 
 function canActNow(message) {
@@ -2606,6 +2634,34 @@ function formatDurationShort(ms) {
   const totalMinutes = Math.max(1, Math.round(Number(ms || 0) / 60_000));
   if (totalMinutes % 60 === 0) return `${totalMinutes / 60}h`;
   return `${totalMinutes}m`;
+}
+
+function buildAutoModDecisionExplain(action, heatValue, violations = [], context = {}) {
+  const normalizedAction = String(action || "").toLowerCase();
+  const heat = Number(heatValue || 0);
+  const topRules = (Array.isArray(violations) ? violations : [])
+    .map((v) => ({
+      key: String(v?.key || "unknown"),
+      heat: Number(v?.heat || 0),
+    }))
+    .sort((a, b) => b.heat - a.heat)
+    .slice(0, 3)
+    .map((v) =>
+      Number.isFinite(v.heat) && v.heat > 0
+        ? `${v.key}:${v.heat.toFixed(1)}`
+        : v.key,
+    );
+  const topRulesText = topRules.length ? topRules.join(" | ") : "n/a";
+  const thresholds = getThresholdsForProfile(context?.profile || null);
+  const reason =
+    normalizedAction === "timeout"
+      ? `heat >= timeout (${heat.toFixed(1)} >= ${Number(thresholds.timeout || 0).toFixed(1)})`
+      : normalizedAction === "delete" || normalizedAction === "delete_webhook"
+        ? `heat >= delete (${heat.toFixed(1)} >= ${Number(thresholds.delete || 0).toFixed(1)})`
+        : normalizedAction === "warn"
+          ? `heat >= warn (${heat.toFixed(1)} >= ${Number(thresholds.warn || 0).toFixed(1)})`
+          : `action=${normalizedAction || "unknown"} heat=${heat.toFixed(1)}`;
+  return `${reason}; top_rules=${topRulesText}`;
 }
 
 function buildAutoModCaseReason(action, violations = [], context = {}) {
@@ -2775,6 +2831,12 @@ async function sendAutomodLog(
               context.timeoutMs,
             )}`
           : null,
+        `<:VC_right_arrow:1473441155055096081> **Decision:** ${buildAutoModDecisionExplain(
+          action,
+          heatValue,
+          violations,
+          context,
+        )}`,
         violations?.length
           ? `<:VC_right_arrow:1473441155055096081> **Rules:** ${violations
               .map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`)
@@ -2866,6 +2928,7 @@ async function timeoutMember(message, state, violations, options = {}) {
     .then(() => true)
     .catch(() => false);
   if (!timedOut) return false;
+  const heatBeforeReset = Number(state.heat || 0);
   await registerAutoModTimeoutStrike(message);
   if (canLogNow) {
     await markBadUserAction(message, "timeout", violations);
@@ -2884,7 +2947,7 @@ async function timeoutMember(message, state, violations, options = {}) {
     await sendAutomodActionInChannel(message, "timeout", violations, {
       timeoutMs: durationMs,
     });
-    await sendAutomodLog(message, "timeout", violations, state.heat, {
+    await sendAutomodLog(message, "timeout", violations, heatBeforeReset, {
       timeoutMs: durationMs,
     });
     recordAutomodMetric(message, "timeout", violations);
@@ -3416,4 +3479,8 @@ module.exports = {
   isPanicModeActiveForGuild: isPanicModeActive,
   getAutoModPanicSnapshot,
   triggerAutoModPanicExternal,
+  __test: {
+    isLikelyCommandMessage,
+    buildAutoModDecisionExplain,
+  },
 };

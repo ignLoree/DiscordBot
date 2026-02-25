@@ -223,6 +223,7 @@ const discadiaBumpService = createBumpReminderService({
     "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",
   errorTag: "[DISCADIA REMINDER ERROR]",
   logTag: "[DISCADIA REMINDER]",
+  suppressInfoLogs: true,
 });
 let discadiaVoteReminderLoopHandle = null;
 

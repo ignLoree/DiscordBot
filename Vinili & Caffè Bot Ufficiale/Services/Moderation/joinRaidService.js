@@ -29,6 +29,7 @@ const VERIFIED_BOT_IDS = new Set(
 
 const JOIN_RAID_CONFIG = {
   enabled: true,
+  lockCommands: false,
   triggerAction: "kick", // ban | kick | timeout | log
   triggerType: "unique", // unique | events
   accountType: "any", // any | young | no_pfp | young_or_no_pfp | id_flag
@@ -67,6 +68,7 @@ const JOIN_RAID_CONFIG = {
 
 const JOIN_RAID_PRESETS = {
   safe: {
+    lockCommands: false,
     triggerAction: "kick",
     triggerType: "unique",
     accountType: "young_or_no_pfp",
@@ -82,6 +84,7 @@ const JOIN_RAID_PRESETS = {
     ageFlag: { minimumAgeMs: 2 * 24 * 60 * 60_000 },
   },
   balanced: {
+    lockCommands: false,
     triggerAction: "kick",
     triggerType: "unique",
     accountType: "any",
@@ -97,6 +100,7 @@ const JOIN_RAID_PRESETS = {
     ageFlag: { minimumAgeMs: 3 * 24 * 60 * 60_000 },
   },
   strict: {
+    lockCommands: true,
     triggerAction: "ban",
     triggerType: "events",
     accountType: "any",
@@ -160,6 +164,9 @@ function applyPersistentJoinRaidConfig(raw) {
   };
   if (typeof raw.enabled === "boolean") {
     JOIN_RAID_CONFIG.enabled = raw.enabled;
+  }
+  if (typeof raw.lockCommands === "boolean") {
+    JOIN_RAID_CONFIG.lockCommands = raw.lockCommands;
   }
   if (typeof raw.triggerAction === "string") {
     const action = String(raw.triggerAction || "").toLowerCase();
@@ -267,6 +274,7 @@ function applyPersistentJoinRaidConfig(raw) {
 function saveJoinRaidPersistentConfig() {
   return writeJsonSafe(JOIN_RAID_CONFIG_PATH, {
     enabled: Boolean(JOIN_RAID_CONFIG.enabled),
+    lockCommands: Boolean(JOIN_RAID_CONFIG.lockCommands),
     triggerAction: String(JOIN_RAID_CONFIG.triggerAction || "log"),
     triggerType: String(JOIN_RAID_CONFIG.triggerType || "unique"),
     accountType: String(JOIN_RAID_CONFIG.accountType || "any"),
@@ -285,6 +293,7 @@ function getJoinRaidConfigSnapshot() {
   return JSON.parse(
     JSON.stringify({
       enabled: Boolean(JOIN_RAID_CONFIG.enabled),
+      lockCommands: Boolean(JOIN_RAID_CONFIG.lockCommands),
       triggerAction: String(JOIN_RAID_CONFIG.triggerAction || "log"),
       triggerType: String(JOIN_RAID_CONFIG.triggerType || "unique"),
       accountType: String(JOIN_RAID_CONFIG.accountType || "any"),
@@ -1285,6 +1294,10 @@ function applyJoinRaidPreset(name = "balanced") {
   JOIN_RAID_CONFIG.triggerAction = String(
     preset.triggerAction || JOIN_RAID_CONFIG.triggerAction,
   );
+  JOIN_RAID_CONFIG.lockCommands =
+    typeof preset.lockCommands === "boolean"
+      ? preset.lockCommands
+      : JOIN_RAID_CONFIG.lockCommands;
   JOIN_RAID_CONFIG.triggerType = String(
     preset.triggerType || JOIN_RAID_CONFIG.triggerType,
   );
@@ -1329,6 +1342,7 @@ async function getJoinRaidStatusSnapshot(guildId) {
   pruneState(state, at);
   return {
     enabled: Boolean(JOIN_RAID_CONFIG.enabled),
+    lockCommands: Boolean(JOIN_RAID_CONFIG.lockCommands),
     raidActive: Number(state.raidUntil || 0) > at,
     raidUntil: Number(state.raidUntil || 0),
     raidRemainingMs: Math.max(0, Number(state.raidUntil || 0) - at),
@@ -1347,6 +1361,7 @@ async function getJoinRaidStatusSnapshot(guildId) {
         .filter(Boolean),
     ).size,
     config: {
+      lockCommands: Boolean(JOIN_RAID_CONFIG.lockCommands),
       triggerAction: JOIN_RAID_CONFIG.triggerAction,
       triggerType: JOIN_RAID_CONFIG.triggerType,
       accountType: JOIN_RAID_CONFIG.accountType,
@@ -1381,7 +1396,11 @@ function clearGuildState(guildId) {
     clearTimeout(saveTimer);
     SAVE_TIMERS.delete(key);
   }
-  RAID_REPORT_TIMERS.delete(key);
+  const reportTimer = RAID_REPORT_TIMERS.get(key);
+  if (reportTimer) {
+    clearTimeout(reportTimer);
+    RAID_REPORT_TIMERS.delete(key);
+  }
   LOAD_GUILD_PROMISES.delete(key);
   GUILD_LOCKS.delete(key);
   LAST_RESTORE_AT.delete(key);

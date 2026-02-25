@@ -1,6 +1,51 @@
-const { getAntiNukeStatusSnapshot } = require("./antiNukeService");
+const {
+  getAntiNukeStatusSnapshot,
+  shouldBlockAllCommands,
+} = require("./antiNukeService");
 const { getAutoModPanicSnapshot } = require("./automodService");
 const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
+
+function buildSecurityLockDecision({
+  antiNukePanic = false,
+  autoModPanic = false,
+  joinRaid = false,
+  lockAllCommands = false,
+  joinRaidLockCommands = false,
+} = {}) {
+  const joinLockActive = Boolean(antiNukePanic || autoModPanic || joinRaid);
+  const commandLockByPanic = Boolean(
+    lockAllCommands && (antiNukePanic || autoModPanic),
+  );
+  const commandLockByJoinRaid = Boolean(joinRaid && joinRaidLockCommands);
+  const commandLockActive = Boolean(commandLockByPanic || commandLockByJoinRaid);
+  const sources = [];
+  if (antiNukePanic) sources.push("AntiNuke panic");
+  if (autoModPanic) sources.push("AutoMod panic");
+  if (joinRaid) sources.push("Join Raid");
+  const commandSources = [];
+  if (commandLockByPanic) {
+    if (antiNukePanic) commandSources.push("AntiNuke panic");
+    if (autoModPanic) commandSources.push("AutoMod panic");
+  }
+  if (commandLockByJoinRaid) commandSources.push("Join Raid");
+
+  return {
+    active: joinLockActive || commandLockActive,
+    joinLockActive,
+    commandLockActive,
+    sources,
+    commandSources: Array.from(new Set(commandSources)),
+    details: {
+      antiNukePanic: Boolean(antiNukePanic),
+      autoModPanic: Boolean(autoModPanic),
+      joinRaid: Boolean(joinRaid),
+      lockAllCommands: Boolean(lockAllCommands),
+      joinRaidLockCommands: Boolean(joinRaidLockCommands),
+      commandLockByPanic,
+      commandLockByJoinRaid,
+    },
+  };
+}
 
 async function getSecurityLockState(guild) {
   if (!guild?.id) {
@@ -13,6 +58,10 @@ async function getSecurityLockState(guild) {
         antiNukePanic: false,
         autoModPanic: false,
         joinRaid: false,
+        lockAllCommands: false,
+        joinRaidLockCommands: false,
+        commandLockByPanic: false,
+        commandLockByJoinRaid: false,
       },
     };
   }
@@ -23,28 +72,24 @@ async function getSecurityLockState(guild) {
   const autoModPanic = Boolean(getAutoModPanicSnapshot(guildId)?.active);
   const joinRaidSnapshot = await getJoinRaidStatusSnapshot(guildId).catch(() => null);
   const joinRaid = Boolean(joinRaidSnapshot?.raidActive);
+  const joinRaidLockCommands = Boolean(joinRaidSnapshot?.config?.lockCommands);
   const lockAllCommands = Boolean(
     antiNuke?.config?.panicMode?.lockdown?.lockAllCommands,
   );
-  const commandLockActive = Boolean(
-    joinRaid || (lockAllCommands && (antiNukePanic || autoModPanic)),
+  const decision = buildSecurityLockDecision({
+    antiNukePanic,
+    autoModPanic,
+    joinRaid,
+    lockAllCommands,
+    joinRaidLockCommands,
+  });
+  const commandLockActive = await shouldBlockAllCommands(guild).catch(
+    () => decision.commandLockActive,
   );
-  const joinLockActive = antiNukePanic || autoModPanic || joinRaid;
-  const sources = [];
-  if (antiNukePanic) sources.push("AntiNuke panic");
-  if (autoModPanic) sources.push("AutoMod panic");
-  if (joinRaid) sources.push("Join Raid");
-
   return {
-    active: joinLockActive || commandLockActive,
-    joinLockActive,
-    commandLockActive,
-    sources,
-    details: {
-      antiNukePanic,
-      autoModPanic,
-      joinRaid,
-    },
+    ...decision,
+    commandLockActive: Boolean(commandLockActive),
+    active: Boolean(decision.joinLockActive || commandLockActive),
   };
 }
 
@@ -53,6 +98,7 @@ async function shouldBlockIncomingJoins(guild) {
 }
 
 module.exports = {
+  buildSecurityLockDecision,
   getSecurityLockState,
   shouldBlockIncomingJoins,
 };

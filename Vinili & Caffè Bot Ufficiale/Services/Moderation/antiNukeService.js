@@ -3443,6 +3443,11 @@ async function stopAntiNukePanic(guild, reason = "manual stop", stoppedById = ""
     clearTimeout(state.unlockTimer);
     state.unlockTimer = null;
   }
+  if (state.restoreRetryTimer) {
+    clearTimeout(state.restoreRetryTimer);
+    state.restoreRetryTimer = null;
+  }
+  state.restoreRetryCount = 0;
   const roleResult = await unlockDangerousRolesAfterPanic(guild, state);
   const channelResult = await unlockGuildChannelsAfterPanic(guild, state);
   const backupSummary = await runAutoBackupSyncAfterPanic(guild, state);
@@ -3569,7 +3574,8 @@ async function shouldBlockAllCommands(guild) {
     try {
       const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
       const raid = await getJoinRaidStatusSnapshot(guild.id);
-      if (raid?.raidActive) blocked = true;
+      const raidLocksCommands = Boolean(raid?.config?.lockCommands);
+      if (raid?.raidActive && raidLocksCommands) blocked = true;
     } catch {}
   }
   COMMAND_LOCK_CACHE.set(cacheKey, { value: blocked, ts: now });
