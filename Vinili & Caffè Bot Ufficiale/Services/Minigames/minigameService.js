@@ -2067,7 +2067,118 @@ function drawRoadSign(ctx, signType, cx, cy, size) {
   ctx.restore();
 }
 
+function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
+  try {
+    const width = 900;
+    const height = 520;
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+
+    const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+    bgGrad.addColorStop(0, "#1a1510");
+    bgGrad.addColorStop(0.5, "#2d2420");
+    bgGrad.addColorStop(1, "#1f1814");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const innerGrad = ctx.createLinearGradient(0, 0, width, 0);
+    innerGrad.addColorStop(0, "#3d2e26");
+    innerGrad.addColorStop(0.5, "#5c4538");
+    innerGrad.addColorStop(1, "#3d2e26");
+    ctx.fillStyle = innerGrad;
+    ctx.strokeStyle = "#8b6914";
+    ctx.lineWidth = 3;
+    roundRect(ctx, 32, 32, width - 64, height - 64, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    const m = Math.min(7, Math.max(0, Number(misses) || 0));
+    const max = Math.max(1, Number(maxMisses) || 7);
+    const ox = 220;
+    const oy = 180;
+    ctx.strokeStyle = "#c4a574";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.lineTo(ox + 120, oy);
+    ctx.lineTo(ox + 120, oy - 180);
+    ctx.lineTo(ox + 120 + 80, oy - 180);
+    ctx.stroke();
+    if (m >= 1) {
+      ctx.beginPath();
+      ctx.arc(ox + 120 + 40, oy - 180 + 28, 22, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    if (m >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40, oy - 180 + 50);
+      ctx.lineTo(ox + 120 + 40, oy - 180 + 95);
+      ctx.stroke();
+    }
+    if (m >= 3) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40, oy - 180 + 65);
+      ctx.lineTo(ox + 120 + 40 - 28, oy - 180 + 88);
+      ctx.stroke();
+    }
+    if (m >= 4) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40, oy - 180 + 65);
+      ctx.lineTo(ox + 120 + 40 + 28, oy - 180 + 88);
+      ctx.stroke();
+    }
+    if (m >= 5) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40, oy - 180 + 95);
+      ctx.lineTo(ox + 120 + 40 - 22, oy - 180 + 130);
+      ctx.stroke();
+    }
+    if (m >= 6) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40, oy - 180 + 95);
+      ctx.lineTo(ox + 120 + 40 + 22, oy - 180 + 130);
+      ctx.stroke();
+    }
+    if (m >= 7) {
+      ctx.beginPath();
+      ctx.moveTo(ox + 120 + 40 - 8, oy - 180 + 28);
+      ctx.lineTo(ox + 120 + 40 + 8, oy - 180 + 45);
+      ctx.moveTo(ox + 120 + 40 + 8, oy - 180 + 28);
+      ctx.lineTo(ox + 120 + 40 - 8, oy - 180 + 45);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#e8e0d5";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 42px Sans";
+    ctx.fillText("Impiccato", width / 2, 72);
+
+    const wordStr = String(maskedWord || "").trim() || "_";
+    ctx.font = "bold 48px Sans";
+    ctx.fillText(wordStr, width / 2, 280, width - 100);
+
+    ctx.fillStyle = "#b8a99a";
+    ctx.font = "bold 28px Sans";
+    ctx.fillText(`Errori: ${m}/${max}`, width / 2, height - 56);
+
+    return new AttachmentBuilder(canvas.toBuffer("image/png"), { name: "hangman.png" });
+  } catch {
+    return null;
+  }
+}
+
 function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame") {
+  if (fileBaseName === "hangman" && Array.isArray(lines) && lines.length >= 2) {
+    const masked = String(lines[0] || "").trim();
+    const errMatch = String(lines[1] || "").match(/Errori:\s*(\d+)\/(\d+)/);
+    const misses = errMatch ? parseInt(errMatch[1], 10) : 0;
+    const maxMisses = errMatch ? parseInt(errMatch[2], 10) : 7;
+    const out = buildHangmanImageAttachment(masked, misses, maxMisses);
+    if (out) return out;
+  }
   if (fileBaseName === "fast_type" && Array.isArray(lines) && lines.length > 0) {
     const out = buildFastTypePromptImage(lines[0]);
     if (out) return out;
@@ -4610,34 +4721,34 @@ async function startItalianGkGame(client, cfg) {
   const channelId = cfg.channelId;
   if (!channelId || activeGames.has(channelId)) return false;
 
-  const apiUrls = buildItalianGkApiUrls(cfg);
   let questionRow = null;
-  const requireItalian = cfg?.italianGK?.requireItalian !== false;
-  if (apiUrls.length) {
-    for (const apiUrl of apiUrls) {
-      try {
-        const res = await axios.get(apiUrl, { timeout: 15000 });
-        const parsed = parseItalianGkQuestionFromPayload(res?.data);
-        if (!parsed?.question || !parsed?.answers?.length) continue;
-        if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
-        questionRow = parsed;
-        break;
-      } catch {}
-    }
-  }
-  if (questionRow && apiUrls.length && cfg?.translateApiToItalian !== false) {
-    const q = await translateToItalian(questionRow.question, cfg);
-    const a = await translateToItalian(String(questionRow.answers?.[0] || ""), cfg);
-    if (q) questionRow = { ...questionRow, question: q };
-    if (a) questionRow = { ...questionRow, answers: buildAliases([a]) };
+  const localPick = pickRandomItem(ITALIAN_GK_BANK);
+  if (localPick?.question && Array.isArray(localPick?.answers)) {
+    questionRow = {
+      question: String(localPick.question),
+      answers: buildAliases(localPick.answers),
+    };
   }
   if (!questionRow) {
-    const localPick = pickRandomItem(ITALIAN_GK_BANK);
-    if (localPick?.question && Array.isArray(localPick?.answers)) {
-      questionRow = {
-        question: String(localPick.question),
-        answers: buildAliases(localPick.answers),
-      };
+    const apiUrls = buildItalianGkApiUrls(cfg);
+    const requireItalian = cfg?.italianGK?.requireItalian !== false;
+    if (apiUrls.length) {
+      for (const apiUrl of apiUrls) {
+        try {
+          const res = await axios.get(apiUrl, { timeout: 15000 });
+          const parsed = parseItalianGkQuestionFromPayload(res?.data);
+          if (!parsed?.question || !parsed?.answers?.length) continue;
+          if (requireItalian && !isLikelyItalianText(parsed.question)) continue;
+          questionRow = parsed;
+          break;
+        } catch {}
+      }
+    }
+    if (questionRow && apiUrls.length && cfg?.translateApiToItalian !== false) {
+      const q = await translateToItalian(questionRow.question, cfg);
+      const a = await translateToItalian(String(questionRow.answers?.[0] || ""), cfg);
+      if (q) questionRow = { ...questionRow, question: q };
+      if (a) questionRow = { ...questionRow, answers: buildAliases([a]) };
     }
   }
   if (!questionRow) return false;
@@ -4833,17 +4944,8 @@ async function startDrivingQuizGame(client, cfg) {
 
   let row = null;
   let fromApi = false;
-  const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
-  if (customApiUrl) {
-    row = await fetchDrivingQuizFromApi(customApiUrl);
-    if (row) fromApi = true;
-  }
-  if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
-    row = await fetchDrivingQuizFromApi(DEFAULT_DRIVING_QUIZ_API_URL);
-    if (row) fromApi = true;
-  }
-  if (!row) {
-    const fallbackSources = [
+
+  const fallbackSources = [
       () => {
         const signPick = pickRandomItem(DRIVING_SIGN_QUESTIONS);
         if (
@@ -4895,14 +4997,25 @@ async function startDrivingQuizGame(client, cfg) {
         }
         return null;
       },
-    ];
-    for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
+  ];
+  for (let i = fallbackSources.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fallbackSources[i], fallbackSources[j]] = [fallbackSources[j], fallbackSources[i]];
+  }
+  for (const getFallback of fallbackSources) {
+    row = getFallback();
+    if (row) break;
+  }
+
+  if (!row) {
+    const customApiUrl = cfg?.drivingQuiz?.apiUrl || null;
+    if (customApiUrl) {
+      row = await fetchDrivingQuizFromApi(customApiUrl);
+      if (row) fromApi = true;
     }
-    for (const getFallback of fallbackSources) {
-      row = getFallback();
-      if (row) break;
+    if (!row && (cfg?.drivingQuiz?.useDefaultApi !== false)) {
+      row = await fetchDrivingQuizFromApi(DEFAULT_DRIVING_QUIZ_API_URL);
+      if (row) fromApi = true;
     }
   }
   if (!row) return false;
@@ -5811,6 +5924,22 @@ async function handleMinigameMessage(message, client) {
       return true;
     }
 
+    await saveActiveGame(client, cfg, {
+      type: "hangman",
+      target: JSON.stringify({
+        word: game.word,
+        guessedLetters: game.guessedLetters,
+        misses: Number(game.misses || 0),
+        maxMisses: Number(game.maxMisses || 7),
+      }),
+      rewardExp: Number(game.rewardExp || 0),
+      startedAt: new Date(game.startedAt || Date.now()),
+      endsAt: new Date(game.endsAt || Date.now()),
+      gameMessageId: game.gameMessageId || null,
+    });
+
+    if (!isCorrectLetter) return true;
+
     const maskedWord = maskHangmanWord(game.word, guessed);
     const hangmanUpdateAttachment = buildPromptImageAttachment(
       "Impiccato",
@@ -5830,25 +5959,19 @@ async function handleMinigameMessage(message, client) {
     if (hangmanUpdateAttachment) {
       hangmanUpdateEmbed.setImage(`attachment://${hangmanUpdateAttachment.name}`);
     }
-    await message.channel
-      .send({
-        embeds: [hangmanUpdateEmbed],
-        files: hangmanUpdateAttachment ? [hangmanUpdateAttachment] : [],
-      })
-      .catch(() => {});
-    await saveActiveGame(client, cfg, {
-      type: "hangman",
-      target: JSON.stringify({
-        word: game.word,
-        guessedLetters: game.guessedLetters,
-        misses: Number(game.misses || 0),
-        maxMisses: Number(game.maxMisses || 7),
-      }),
-      rewardExp: Number(game.rewardExp || 0),
-      startedAt: new Date(game.startedAt || Date.now()),
-      endsAt: new Date(game.endsAt || Date.now()),
-      gameMessageId: game.gameMessageId || null,
-    });
+    const channel = message.channel;
+    const gameMsg =
+      game.gameMessageId && channel
+        ? await channel.messages.fetch(game.gameMessageId).catch(() => null)
+        : null;
+    if (gameMsg) {
+      await gameMsg
+        .edit({
+          embeds: [hangmanUpdateEmbed],
+          files: hangmanUpdateAttachment ? [hangmanUpdateAttachment] : [],
+        })
+        .catch(() => {});
+    }
     return true;
   }
 
