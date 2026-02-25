@@ -49,7 +49,7 @@ function acquireSingleInstanceLock(lockName) {
   try {
     writeLock();
   } catch (error) {
-    if (error?.code !== "EEXIST") throw error;
+    if (!error || error.code !== "EEXIST") throw error;
 
     let existingPid = null;
     try {
@@ -57,9 +57,11 @@ function acquireSingleInstanceLock(lockName) {
     } catch {}
 
     if (isPidAlive(existingPid)) {
-      global.logger?.error?.(
-        `[LOGIN] Another instance is already running (PID: ${existingPid}). Exiting.`,
-      );
+      if (global.logger && typeof global.logger.error === "function") {
+        global.logger.error(
+          `[LOGIN] Another instance is already running (PID: ${existingPid}). Exiting.`,
+        );
+      }
       process.exit(1);
     }
 
@@ -253,6 +255,8 @@ client.snipes = new Map();
       );
     });
   } catch (err) {
-    global.logger?.error?.("[STARTUP]", err);
+    if (global.logger && typeof global.logger.error === "function") {
+      global.logger.error("[STARTUP]", err);
+    }
   }
 })();
