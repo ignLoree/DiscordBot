@@ -22,6 +22,9 @@ const {
 const {
   handleResocontoActionInteraction,
 } = require("./interaction/resocontoHandlers");
+const {
+  handleMinigameButton,
+} = require("../Services/Minigames/minigameService");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
@@ -322,6 +325,7 @@ module.exports = {
       if (await handlePauseButton(interaction)) return;
       if (await handleCustomRoleInteraction(interaction)) return;
       if (await handleResocontoActionInteraction(interaction)) return;
+      if (await handleMinigameButton(interaction, resolvedClient)) return;
       if (await handleButtonInteraction(interaction, resolvedClient)) return;
     } catch (err) {
       await logInteractionError(interaction, resolvedClient, err);
