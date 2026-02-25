@@ -3,6 +3,62 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 
 const PRIVATE_FLAG = 1 << 6;
 
+async function runMassRoleUpdate(interaction, { targets, role, action, total, skipped, progressEmbed }) {
+  let success = 0;
+  let failed = 0;
+  let processed = 0;
+
+  for (const member of targets.values()) {
+    try {
+      if (action === "add") {
+        await member.roles.add(role, `Mass role add by ${interaction.user.tag}`);
+      } else {
+        await member.roles.remove(
+          role,
+          `Mass role remove by ${interaction.user.tag}`,
+        );
+      }
+      success += 1;
+    } catch {
+      failed += 1;
+    }
+    processed += 1;
+
+    if (processed % 20 === 0 || processed === total) {
+      await safeEditReply(interaction, {
+        embeds: [
+          progressEmbed({
+            title: "Aggiornamento ruoli in corso...",
+            processed,
+            total,
+            success,
+            failed,
+            skipped,
+          }),
+        ],
+        flags: PRIVATE_FLAG,
+      }).catch(() => {});
+    }
+  }
+
+  await safeEditReply(interaction, {
+    embeds: [
+      progressEmbed({
+        title:
+          action === "add"
+            ? "Aggiunta ruolo completata"
+            : "Rimozione ruolo completata",
+        processed: total,
+        total,
+        success,
+        failed,
+        skipped,
+      }),
+    ],
+    flags: PRIVATE_FLAG,
+  }).catch(() => {});
+}
+
 module.exports = {
   helpDescription:
     "Gestisce ruoli in massa su tutti gli utenti non bot: aggiunta o rimozione.",
@@ -94,9 +150,6 @@ module.exports = {
         )
         .setTimestamp();
 
-    let success = 0;
-    let failed = 0;
-    let processed = 0;
     const total = targets.size;
     const skipped = members.size - total;
 
@@ -114,54 +167,24 @@ module.exports = {
       flags: PRIVATE_FLAG,
     });
 
-    for (const member of targets.values()) {
-      try {
-        if (action === "add") {
-          await member.roles.add(role, `Mass role add by ${interaction.user.tag}`);
-        } else {
-          await member.roles.remove(
-            role,
-            `Mass role remove by ${interaction.user.tag}`,
-          );
-        }
-        success += 1;
-      } catch {
-        failed += 1;
-      }
-      processed += 1;
-
-      if (processed % 20 === 0 || processed === total) {
+    setImmediate(() => {
+      runMassRoleUpdate(interaction, {
+        targets,
+        role,
+        action,
+        total,
+        skipped,
+        progressEmbed,
+      }).catch(async (error) => {
+        global.logger?.error?.("[role all] mass update failed:", error);
         await safeEditReply(interaction, {
-          embeds: [
-            progressEmbed({
-              title: "Aggiornamento ruoli in corso...",
-              processed,
-              total,
-              success,
-              failed,
-              skipped,
-            }),
-          ],
+          content:
+            "<:vegax:1443934876440068179> Errore durante l'aggiornamento massivo dei ruoli.",
           flags: PRIVATE_FLAG,
-        });
-      }
-    }
-
-    return safeEditReply(interaction, {
-      embeds: [
-        progressEmbed({
-          title:
-            action === "add"
-              ? "Aggiunta ruolo completata"
-              : "Rimozione ruolo completata",
-          processed: total,
-          total,
-          success,
-          failed,
-          skipped,
-        }),
-      ],
-      flags: PRIVATE_FLAG,
+        }).catch(() => {});
+      });
     });
+
+    return;
   },
 };
