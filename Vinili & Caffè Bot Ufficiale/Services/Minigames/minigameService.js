@@ -6010,18 +6010,36 @@ async function handleMinigameButton(interaction, client) {
   if (!interaction?.isButton?.()) return false;
   const cfg = getConfig(client);
   if (!cfg?.enabled) return false;
-  const game = activeGames.get(cfg.channelId);
+
   if (interaction.customId.startsWith("minigame_song_preview:")) {
-    if (
-      !game ||
-      game.type !== "guessSong" ||
-      interaction.customId !== game.previewCustomId
-    ) {
+    const clickedCustomId = String(interaction.customId || "");
+    const clickedMessageId = String(interaction.message?.id || "");
+    const clickedChannelId = String(interaction.channelId || "");
+
+    let game = null;
+    for (const [channelId, state] of activeGames.entries()) {
+      if (!state || state.type !== "guessSong") continue;
+      if (String(state.previewCustomId || "") === clickedCustomId) {
+        game = state;
+        break;
+      }
+      if (
+        clickedMessageId &&
+        clickedChannelId &&
+        String(channelId || "") === clickedChannelId &&
+        String(state.gameMessageId || "") === clickedMessageId
+      ) {
+        game = state;
+      }
+    }
+
+    if (!game) {
       await interaction
         .reply({ content: "Anteprima non disponibile.", flags: 1 << 6 })
         .catch(() => {});
       return true;
     }
+
     await interaction.deferReply({ flags: 1 << 6 }).catch(() => {});
     if (!game.previewUrl) {
       await interaction
@@ -6029,15 +6047,18 @@ async function handleMinigameButton(interaction, client) {
         .catch(() => {});
       return true;
     }
+
     const audio = await fetchAudioAttachment(game.previewUrl);
     if (!audio) {
       await interaction
         .editReply({
-          content: `Non riesco ad allegare il file, ascoltala qui:\n${game.previewUrl}`,
+          content: `Non riesco ad allegare il file, ascoltala qui:
+${game.previewUrl}`,
         })
         .catch(() => {});
       return true;
     }
+
     await interaction
       .editReply({
         files: [new AttachmentBuilder(audio, { name: "anteprima.m4a" })],
@@ -6045,6 +6066,8 @@ async function handleMinigameButton(interaction, client) {
       .catch(() => {});
     return true;
   }
+
+  const game = activeGames.get(cfg.channelId);
   if (!game || game.type !== "findBot") return false;
   if (interaction.customId !== game.customId) return false;
 

@@ -613,7 +613,10 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
       ].join("\n"),
     );
   try {
-    await member.send({ embeds: [embed] });
+    const dmChannel =
+      member.user.dmChannel || (await member.user.createDM().catch(() => null));
+    if (!dmChannel) return false;
+    await dmChannel.send({ embeds: [embed], allowedMentions: { parse: [] } });
     return true;
   } catch {
     return false;
@@ -636,6 +639,17 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   const canTimeout =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
     Boolean(member?.moderatable);
+  const joinGateCfg = getJoinGateConfigSnapshot();
+  const dmPunishedMembers =
+    typeof joinGateCfg?.dmPunishedMembers === "boolean"
+      ? joinGateCfg.dmPunishedMembers
+      : true;
+  let dmSent = false;
+  if (normalizedAction !== "log" && dmPunishedMembers) {
+    // Try DM while we still share a guild with the user.
+    dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
+  }
+
   let punished = false;
   let appliedAction = normalizedAction;
   if (normalizedAction === "kick" && canKick) {
@@ -685,13 +699,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   if (!punished && normalizedAction !== "log") {
     appliedAction = "log";
   }
-  let dmSent = false;
-  const joinGateCfg = getJoinGateConfigSnapshot();
-  const dmPunishedMembers =
-    typeof joinGateCfg?.dmPunishedMembers === "boolean"
-      ? joinGateCfg.dmPunishedMembers
-      : true;
-  if (appliedAction !== "log" && punished && dmPunishedMembers) {
+  if (!dmSent && appliedAction !== "log" && punished && dmPunishedMembers) {
     dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   }
   const blocked = appliedAction === "log" ? false : punished;

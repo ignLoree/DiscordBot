@@ -742,7 +742,10 @@ async function sendPunishDm(member, action, reasons) {
       ].join("\n"),
     );
   try {
-    await member.send({ embeds: [embed] });
+    const dmChannel =
+      member.user.dmChannel || (await member.user.createDM().catch(() => null));
+    if (!dmChannel) return false;
+    await dmChannel.send({ embeds: [embed], allowedMentions: { parse: [] } });
     return true;
   } catch {
     return false;
@@ -892,6 +895,11 @@ async function applyPunishment(member, reasons) {
   const canTimeout =
     Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
     Boolean(member?.moderatable);
+  let dmSent = false;
+  if (action !== "log") {
+    // Try DM while we still share a guild with the user.
+    dmSent = await sendPunishDm(member, action, reasons);
+  }
 
   let punished = false;
   let appliedAction = action;
@@ -994,10 +1002,9 @@ async function applyPunishment(member, reasons) {
     }
   }
 
-  const dmSent =
-    punished && appliedAction !== "log"
-      ? await sendPunishDm(member, appliedAction, reasons)
-      : false;
+  if (!dmSent && punished && appliedAction !== "log") {
+    dmSent = await sendPunishDm(member, appliedAction, reasons);
+  }
   const actionWord =
     appliedAction === "ban"
       ? "banned"
