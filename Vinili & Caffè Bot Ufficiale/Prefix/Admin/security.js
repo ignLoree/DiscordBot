@@ -197,6 +197,10 @@ function hasPanicControlAccess(member, guild) {
   return hasAnyRole(member, PANIC_CONTROL_ROLE_IDS);
 }
 
+function hasSystemDisableAccess(member, guild) {
+  return hasPanicControlAccess(member, guild);
+}
+
 function parseUserId(input, message) {
   const mention = message?.mentions?.users?.first?.();
   if (mention?.id) return String(mention.id);
