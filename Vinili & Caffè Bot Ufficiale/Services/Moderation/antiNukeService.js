@@ -1069,7 +1069,7 @@ async function sendPanicModeDetailedReport(
     `**Webhooks**`,
     `${ARROW} Deleted: ${Number(report.webhooks.deleted || 0)}`,
     `**Settings**`,
-    `${ARROW} Server: ${report.settings.server ? "ON" : "OFF"} | Wick: ${report.settings.wick ? "ON" : "OFF"}`,
+    `${ARROW} Server: ${report.settings.server ? "ON" : "OFF"} | Bot: ${report.settings.wick ? "ON" : "OFF"}`,
   ];
 
   await sendAntiNukeLog(guild, "AntiNuke Panic Mode Report", lines, "#57F287");

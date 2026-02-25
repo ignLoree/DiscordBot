@@ -694,10 +694,10 @@ async function handleAntiNuke(message, args = []) {
     if (action === "set") {
       const key = String(args[2] || "").toLowerCase();
       const rawValue = String(args[3] || "").toLowerCase();
-      if (key !== "lockcommands") {
+      if (!["lockcommands", "enabled"].includes(key)) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+security antinuke raid set lockCommands <true|false>`",
+            "<:vegax:1443934876440068179> Usa: `+security antinuke raid set <lockCommands|enabled> <true|false>`",
           allowedMentions: { repliedUser: false },
         });
         return;
@@ -710,23 +710,35 @@ async function handleAntiNuke(message, args = []) {
         return;
       }
       const value = ["true", "on", "1", "yes"].includes(rawValue);
+      if (
+        key === "enabled" &&
+        value === false &&
+        !hasSystemDisableAccess(message.member, message.guild)
+      ) {
+        await safeMessageReply(message, {
+          content:
+            "<:vegax:1443934876440068179> Solo Founder e Co Founder possono disattivare i sistemi di sicurezza.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
       const raid = await getJoinRaidStatusSnapshot(message.guild.id);
       const nextConfig = {
         ...(raid?.config || {}),
-        lockCommands: value,
+        [key === "lockcommands" ? "lockCommands" : "enabled"]: value,
       };
       const updated = setJoinRaidConfigSnapshot(nextConfig);
       if (updated?.ok) {
         await sendSecurityAuditLog(message.guild, {
           actorId: message.author.id,
           action: "raid.set",
-          details: [`lockCommands: \`${value}\``],
+          details: [`${key === "lockcommands" ? "lockCommands" : "enabled"}: \`${value}\``],
           color: "#57F287",
         });
       }
       await safeMessageReply(message, {
         content: updated?.ok
-          ? `[OK] JoinRaid lockCommands impostato a \`${value}\`.`
+          ? `[OK] JoinRaid ${key === "lockcommands" ? "lockCommands" : "enabled"} impostato a \`${value}\`.`
           : "<:vegax:1443934876440068179> Aggiornamento raid config fallito.",
         allowedMentions: { repliedUser: false },
       });
