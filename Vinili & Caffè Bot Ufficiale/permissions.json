@@ -1469,9 +1469,9 @@
             "ownerFromMessageMention": true,
             "ownerOrRole": true
         },
-        "torna_indietro": {
-            "ownerFromMessageMention": true
-        },
+        "torna_indietro": [
+            "roles.Member"
+        ],
         "unclaim": [
             "roles.Staff",
             "roles.HighStaff",
