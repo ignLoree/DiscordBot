@@ -27,11 +27,16 @@ function successEmbed(description) {
 }
 
 async function getPollChannel(interaction) {
+  return getPollChannelFromGuild(interaction?.guild);
+}
+
+async function getPollChannelFromGuild(guild) {
+  if (!guild) return null;
   const channelId = IDs.channels?.polls;
   if (!channelId) return null;
   const channel =
-    interaction.guild.channels.cache.get(channelId) ||
-    (await interaction.guild.channels.fetch(channelId).catch(() => null));
+    guild.channels.cache.get(channelId) ||
+    (await guild.channels.fetch(channelId).catch(() => null));
   if (!channel || !channel.isTextBased?.()) return null;
   return channel;
 }
@@ -131,33 +136,39 @@ async function findLastPoll(guildId) {
   });
 }
 
-async function handleCreate(interaction) {
-  const guildId = interaction.guild.id;
-  const channel = await getPollChannel(interaction);
+function normalizeCreateAnswers(rawAnswers) {
+  const answers = Array.isArray(rawAnswers)
+    ? rawAnswers.map((value) =>
+      value == null ? null : String(value).trim(),
+    )
+    : [];
+  while (answers.length < 10) answers.push(null);
+  return answers.slice(0, 10);
+}
+
+async function createPollForGuild(guild, payload = {}) {
+  const guildId = String(guild?.id || "");
+  if (!guildId) {
+    return { ok: false, error: "Guild non valida." };
+  }
+  const channel = await getPollChannelFromGuild(guild);
   if (!channel) {
-    return safeEditReply(interaction, {
-      embeds: [
-        errorEmbed(
-          "<:vegax:1443934876440068179> Canale poll non trovato o non valido.",
-        ),
-      ],
-      flags: EPHEMERAL_FLAG,
-    });
+    return { ok: false, error: "Canale poll non trovato o non valido." };
   }
 
-  const question = interaction.options.getString("domanda");
-  const answers = collectCreateAnswers(interaction);
+  const question = String(payload.question || "").trim();
+  const source = String(payload.source || "manual").trim().toLowerCase() || "manual";
+  if (!question) {
+    return { ok: false, error: "Domanda non valida." };
+  }
+  const answers = normalizeCreateAnswers(payload.answers);
 
   const gapPosition = hasAnswerGap(answers);
   if (gapPosition) {
-    return safeEditReply(interaction, {
-      embeds: [
-        errorEmbed(
-          `<:vegax:1443934876440068179> Non puoi inserire la risposta **${gapPosition}** senza aver riempito le precedenti!`,
-        ),
-      ],
-      flags: EPHEMERAL_FLAG,
-    });
+    return {
+      ok: false,
+      error: `Non puoi inserire la risposta ${gapPosition} senza aver riempito le precedenti.`,
+    };
   }
 
   const { text: answersText, validEmojis } = buildAnswersSection(answers);
@@ -176,10 +187,10 @@ async function handleCreate(interaction) {
     content: buildPollMessageContent(pollNumber, question, answersText),
   }).catch(() => null);
   if (!pollMessage) {
-    return safeEditReply(interaction, {
-      embeds: [errorEmbed("<:vegax:1443934876440068179> Impossibile inviare il poll nel canale (permessi o canale non valido).")],
-      flags: EPHEMERAL_FLAG,
-    });
+    return {
+      ok: false,
+      error: "Impossibile inviare il poll nel canale (permessi o canale non valido).",
+    };
   }
 
   await applyPollReactions(pollMessage, validEmojis);
@@ -199,15 +210,40 @@ async function handleCreate(interaction) {
     risposta9: answers[8] || null,
     risposta10: answers[9] || null,
     messageId: pollMessage.id,
+    source,
   });
 
-  return safeEditReply(interaction, {
+  return { ok: true, pollNumber, messageId: pollMessage.id };
+}
+
+async function handleCreate(interaction) {
+  const question = interaction.options.getString("domanda");
+  const answers = collectCreateAnswers(interaction);
+  const result = await createPollForGuild(interaction.guild, {
+    question,
+    answers,
+    source: "manual",
+  });
+  if (!result?.ok) {
+    const msg = String(result?.error || "");
+    return safeEditReply(interaction, {
+      embeds: [
+        errorEmbed(
+          `<:vegax:1443934876440068179> ${msg || "Errore durante la creazione del poll."}`,
+        ),
+      ],
+      flags: EPHEMERAL_FLAG,
+    });
+  }
+
+  await safeEditReply(interaction, {
     embeds: [
       successEmbed(
         `<:vegacheckmark:1443666279058772028> Poll inviato correttamente in <#${IDs.channels?.polls || ""}>!`,
       ),
     ],
   });
+  return undefined;
 }
 
 async function handleRemove(interaction) {
@@ -495,4 +531,5 @@ module.exports = {
       });
     }
   },
+  createPollForGuild,
 };

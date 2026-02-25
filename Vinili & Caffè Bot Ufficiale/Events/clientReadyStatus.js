@@ -6,6 +6,7 @@ const {
   checkAndInstallPackages,
 } = require("../Utils/Moderation/checkPackages");
 const { getChannelSafe } = require("../Utils/Logging/commandUsageLogger");
+const { startAutoPollLoop } = require("../Services/Community/autoPollService");
 
 const POLL_REMINDER_ROLE_ID = IDs.roles.HighStaff;
 const POLL_REMINDER_CHANNEL_ID = "1442569285909217301";
@@ -147,6 +148,7 @@ module.exports = {
       setPresence(client);
       maybeCheckPackages(client);
       schedulePollReminder(client);
+      startAutoPollLoop(client);
       await handleRestartNotification(client);
     } catch (error) {
       logError(client, "[STATUS] Error while loading bot status.", error);

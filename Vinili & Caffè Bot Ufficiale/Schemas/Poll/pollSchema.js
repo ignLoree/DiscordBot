@@ -18,7 +18,9 @@ let pollschema = new Schema({
   risposta9: String,
   risposta10: String,
   messageId: { type: String, default: null },
-});
+  source: { type: String, default: "manual" },
+}, { timestamps: true });
 pollschema.index({ guildId: 1, domanda: 1 });
 pollschema.index({ guildId: 1, pollcount: 1 });
+pollschema.index({ guildId: 1, source: 1, createdAt: -1 });
 module.exports = mongoose.models.pollschema || model("pollschema", pollschema);

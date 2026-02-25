@@ -25,6 +25,48 @@
     "checkIntervalMinutes": 30,
     "message": "Ciao! Sono passate 24 ore, puoi votare di nuovo su Discadia: https://discadia.com/server/viniliecaffe/ Grazie per il supporto!"
   },
+  "autoPoll": {
+    "enabled": true,
+    "apiUrl": "https://opentdb.com/api.php?amount=1&type=multiple&encode=url3986",
+    "apiThemeCatalog": [
+      { "id": 9, "key": "general_knowledge", "label": "General Knowledge" },
+      { "id": 10, "key": "books", "label": "Books" },
+      { "id": 11, "key": "film", "label": "Film" },
+      { "id": 12, "key": "music", "label": "Music" },
+      { "id": 13, "key": "musicals_theatres", "label": "Musicals & Theatres" },
+      { "id": 14, "key": "television", "label": "Television" },
+      { "id": 15, "key": "video_games", "label": "Video Games" },
+      { "id": 16, "key": "board_games", "label": "Board Games" },
+      { "id": 17, "key": "science_nature", "label": "Science & Nature" },
+      { "id": 18, "key": "computers", "label": "Computers" },
+      { "id": 19, "key": "mathematics", "label": "Mathematics" },
+      { "id": 20, "key": "mythology", "label": "Mythology" },
+      { "id": 21, "key": "sports", "label": "Sports" },
+      { "id": 22, "key": "geography", "label": "Geography" },
+      { "id": 23, "key": "history", "label": "History" },
+      { "id": 24, "key": "politics", "label": "Politics" },
+      { "id": 25, "key": "art", "label": "Art" },
+      { "id": 26, "key": "celebrities", "label": "Celebrities" },
+      { "id": 27, "key": "animals", "label": "Animals" },
+      { "id": 28, "key": "vehicles", "label": "Vehicles" },
+      { "id": 29, "key": "comics", "label": "Comics" },
+      { "id": 30, "key": "gadgets", "label": "Gadgets" },
+      { "id": 31, "key": "anime_manga", "label": "Anime & Manga" },
+      { "id": 32, "key": "cartoon_animations", "label": "Cartoon & Animations" }
+    ],
+    "apiThemeCategories": ["all"],
+    "sources": [
+      "local",
+      "country_capital",
+      "opentdb"
+    ],
+    "minOptions": 2,
+    "maxOptions": 10,
+    "windowStartHour": 19,
+    "windowStartMinute": 0,
+    "windowEndHour": 21,
+    "windowEndMinute": 59
+  },
   "tts": {
     "enabled": true,
     "lang": "it",
