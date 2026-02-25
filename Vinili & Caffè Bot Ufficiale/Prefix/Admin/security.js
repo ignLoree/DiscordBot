@@ -1733,7 +1733,7 @@ module.exports = {
     }
 
     if (sub === "automod" || sub === "am") {
-      await handleAutoModSecuritySubcommand(message, args.slice(1));
+      await handleAutoMod(message, args.slice(1));
       return;
     }
 
