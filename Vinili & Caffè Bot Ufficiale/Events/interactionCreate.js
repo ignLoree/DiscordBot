@@ -19,6 +19,9 @@ const {
 const {
   handleCandidatureApplicationInteraction,
 } = require("./interaction/candidatureApplicationHandlers");
+const {
+  handleResocontoActionInteraction,
+} = require("./interaction/resocontoHandlers");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
@@ -318,6 +321,7 @@ module.exports = {
       if (await handleSuggestionVote(interaction)) return;
       if (await handlePauseButton(interaction)) return;
       if (await handleCustomRoleInteraction(interaction)) return;
+      if (await handleResocontoActionInteraction(interaction)) return;
       if (await handleButtonInteraction(interaction, resolvedClient)) return;
     } catch (err) {
       await logInteractionError(interaction, resolvedClient, err);

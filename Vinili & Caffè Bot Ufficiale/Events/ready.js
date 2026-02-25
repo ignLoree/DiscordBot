@@ -29,6 +29,9 @@ const {
 const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
+const {
+  startWeeklyStaffResocontoLoop,
+} = require("../Services/Staff/weeklyStaffResocontoService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
@@ -303,6 +306,10 @@ function startPrimaryLoops(client, engagementTick) {
     [
       "[TRANSCRIPT CLEANUP] Failed to start loop",
       () => startTranscriptCleanupLoop(),
+    ],
+    [
+      "[WEEKLY STAFF RESOCONTO] Failed to start loop",
+      () => startWeeklyStaffResocontoLoop(client),
     ],
     [
       "[JOIN RAID RESTORE] Failed to start loop",

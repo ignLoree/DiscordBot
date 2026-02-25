@@ -17,6 +17,9 @@ const APPLY_START_PREFIX = "apply_start";
 const APPLY_BACK_PREFIX = "apply_back";
 const APPLY_PAGE_PREFIX = "apply_page";
 const MODAL_PREFIX = "apply_form";
+const APPLY_PEX_PREFIX = "apply_pex";
+const APPLY_PEX_MODAL_PREFIX = "apply_pex_modal";
+const APPLY_PEX_REASON_INPUT_ID = "apply_pex_reason";
 const STATE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const APPLICATION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
@@ -371,6 +374,14 @@ function hasNoModuliRole(interaction) {
   return hasAnyRole(interaction, [NOMODULI_ROLE_ID]);
 }
 
+function hasHighStaffRole(interaction) {
+  const highStaffRoleId = IDs?.roles?.HighStaff
+    ? String(IDs.roles.HighStaff)
+    : null;
+  if (!highStaffRoleId) return false;
+  return Boolean(interaction?.member?.roles?.cache?.has(highStaffRoleId));
+}
+
 function getCooldownUntil(userId) {
   const safeId = String(userId || "");
   const ts = Number(cooldownByUser.get(safeId) || 0);
@@ -460,6 +471,15 @@ function buildFinalThanksEmbed(untilTs) {
         "Non aprire ticket e non pingare lo staff per chiedere l'esito, altrimenti la candidatura verrà automaticamente scartata.",
       ].join("\n"),
     );
+}
+
+function buildCandidatePexRow(type, userId) {
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId(`${APPLY_PEX_PREFIX}:${type}:${userId}`)
+      .setEmoji("<:vegacheckmark:1443666279058772028>")
+      .setStyle(ButtonStyle.Success),
+  );
 }
 
 function getTargetRoleIdByType(type) {
@@ -691,6 +711,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   const sent = await channel.send({
     content: mention || undefined,
     embeds: [embed],
+    components: [buildCandidatePexRow(type, user.id)],
   }).catch(() => null);
   if (!sent) return null;
 
@@ -730,6 +751,126 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
     flags: 1 << 6,
   }).catch(() => null);
   return true;
+}
+
+async function getOrCreateStaffDoc(guildId, userId) {
+  const StaffModel = require("../../Schemas/Staff/staffSchema");
+  let doc = await StaffModel.findOne({ guildId, userId });
+  if (!doc) doc = new StaffModel({ guildId, userId });
+  return doc;
+}
+
+async function sendPartnerManagerWelcome(pmChannel, user) {
+  if (!pmChannel?.isTextBased?.()) return;
+  await pmChannel.send({
+    content: `
+${user}
+# Benvenutx nei Partner Manager <:partneredserverowner:1443651871125409812>
+> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
+<:dot:1443660294596329582> <#1442569199229730836>
+__Per qualsiasi cosa l'High Staff e disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+  }).catch(() => null);
+}
+
+async function sendHelperWelcome(staffChannel, user) {
+  if (!staffChannel?.isTextBased?.()) return;
+  await staffChannel.send({
+    content: `
+${user}
+# Benvenutx nello staff <:discordstaff:1443651872258003005>
+> **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
+<:dot:1443660294596329582> <#1442569237142044773>
+<:dot:1443660294596329582> <#1442569239063167139>
+<:dot:1443660294596329582> <#1442569243626307634>
+__Per qualsiasi cosa l'High Staff e disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+  }).catch(() => null);
+}
+
+async function deleteThreadForStarterMessage(guild, starterMessage) {
+  const starterId = String(starterMessage?.id || "");
+  if (!/^\d{16,20}$/.test(starterId)) return;
+  const thread =
+    guild.channels.cache.get(starterId) ||
+    (await guild.channels.fetch(starterId).catch(() => null));
+  if (thread?.isThread?.()) {
+    await thread.delete().catch(() => null);
+  }
+}
+
+async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessage) {
+  const targetRoleId = type === "partnermanager" ? PARTNER_MANAGER_ROLE_ID : HELPER_ROLE_ID;
+  if (!targetRoleId) return "Ruolo target non configurato.";
+
+  const member =
+    guild.members.cache.get(String(userId)) ||
+    (await guild.members.fetch(String(userId)).catch(() => null));
+  if (!member) return "Utente non trovato nel server.";
+  if (member.roles.cache.has(String(targetRoleId))) return "Utente già pexato su quel ruolo.";
+
+  await member.roles.add(String(targetRoleId)).catch(() => null);
+  if (String(targetRoleId) === String(HELPER_ROLE_ID)) {
+    await member.roles.add(String(IDs.roles.Staff)).catch(() => null);
+    const staffChat =
+      guild.channels.cache.get(IDs.channels.staffChat) ||
+      (await guild.channels.fetch(IDs.channels.staffChat).catch(() => null));
+    await sendHelperWelcome(staffChat, member.user);
+  }
+  if (String(targetRoleId) === String(PARTNER_MANAGER_ROLE_ID)) {
+    const pmChannel =
+      guild.channels.cache.get(IDs.channels.partnersChat) ||
+      (await guild.channels.fetch(IDs.channels.partnersChat).catch(() => null));
+    await sendPartnerManagerWelcome(pmChannel, member.user);
+  }
+
+  const roleBeforeId = String(IDs.roles.Member || member.roles.highest?.id || "");
+  const staffDoc = await getOrCreateStaffDoc(guild.id, member.id);
+  if (!Array.isArray(staffDoc.rolesHistory)) staffDoc.rolesHistory = [];
+  staffDoc.rolesHistory.push({
+    oldRole: roleBeforeId,
+    newRole: String(targetRoleId),
+    reason: String(reason || "").trim(),
+    date: new Date(),
+  });
+  await staffDoc.save();
+
+  const pexDepexChannel =
+    guild.channels.cache.get(IDs.channels.pexDepex) ||
+    (await guild.channels.fetch(IDs.channels.pexDepex).catch(() => null));
+  if (pexDepexChannel?.isTextBased?.()) {
+    const oldRole = guild.roles.cache.get(roleBeforeId);
+    const newRole = guild.roles.cache.get(String(targetRoleId));
+    await pexDepexChannel.send({
+      content: `**<a:everythingisstable:1444006799643508778> PEX** <@${member.id}>
+<:member_role_icon:1330530086792728618> \`${oldRole?.name || roleBeforeId || "N/A"}\` <a:vegarightarrow:1443673039156936837> \`${newRole?.name || targetRoleId}\`
+<:discordstaff:1443651872258003005> __${reason}__`,
+    }).catch(() => null);
+  }
+
+  if (sourceMessage) {
+    await sourceMessage.edit({ components: [] }).catch(() => null);
+    await deleteThreadForStarterMessage(guild, sourceMessage);
+  }
+
+  return `Pex completato per <@${member.id}>.`;
+}
+
+function parseCandidatePexCustomId(customId) {
+  const raw = String(customId || "");
+  if (!raw.startsWith(`${APPLY_PEX_PREFIX}:`)) return null;
+  const [, type, userId] = raw.split(":");
+  if (!["helper", "partnermanager"].includes(String(type || ""))) return null;
+  if (!/^\d{16,20}$/.test(String(userId || ""))) return null;
+  return { type: String(type), userId: String(userId) };
+}
+
+function parseCandidatePexModalId(customId) {
+  const raw = String(customId || "");
+  if (!raw.startsWith(`${APPLY_PEX_MODAL_PREFIX}:`)) return null;
+  const [, type, userId, messageId] = raw.split(":");
+  if (!["helper", "partnermanager"].includes(String(type || ""))) return null;
+  if (!/^\d{16,20}$/.test(String(userId || ""))) return null;
+  if (!/^\d{16,20}$/.test(String(messageId || ""))) return null;
+  return { type: String(type), userId: String(userId), messageId: String(messageId) };
 }
 
 async function handleModalSubmit(interaction, type, stepRaw) {
@@ -841,6 +982,31 @@ async function handleModalSubmit(interaction, type, stepRaw) {
 
 async function handleCandidatureApplicationInteraction(interaction) {
   if (interaction.isButton?.()) {
+    if (String(interaction.customId || "").startsWith(`${APPLY_PEX_PREFIX}:`)) {
+      const parsed = parseCandidatePexCustomId(interaction.customId);
+      if (!parsed) return false;
+      if (!hasHighStaffRole(interaction)) {
+        await interaction.reply({
+          content: "<:vegax:1443934876440068179> Questo bottone è riservato all'High Staff.",
+          flags: 1 << 6,
+        }).catch(() => null);
+        return true;
+      }
+      const modal = new ModalBuilder()
+        .setCustomId(`${APPLY_PEX_MODAL_PREFIX}:${parsed.type}:${parsed.userId}:${interaction.message.id}`)
+        .setTitle("Motivo Pex Candidatura");
+      const reasonInput = new TextInputBuilder()
+        .setCustomId(APPLY_PEX_REASON_INPUT_ID)
+        .setLabel("Motivo")
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setMinLength(3)
+        .setMaxLength(500);
+      modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
+      await interaction.showModal(modal).catch(() => null);
+      return true;
+    }
+
     if (interaction.customId === APPLY_HELPER_BUTTON) {
       const ok = await enforceEligibility(interaction, "helper");
       if (!ok) return true;
@@ -909,6 +1075,44 @@ async function handleCandidatureApplicationInteraction(interaction) {
   }
 
   if (!interaction.isModalSubmit?.()) return false;
+  if (String(interaction.customId || "").startsWith(`${APPLY_PEX_MODAL_PREFIX}:`)) {
+    const parsed = parseCandidatePexModalId(interaction.customId);
+    if (!parsed) return false;
+    if (!hasHighStaffRole(interaction)) {
+      await interaction.reply({
+        content: "<:vegax:1443934876440068179> Questo modulo è riservato all'High Staff.",
+        flags: 1 << 6,
+      }).catch(() => null);
+      return true;
+    }
+    const reason = String(
+      interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID) || "",
+    ).trim();
+    if (!reason) {
+      await interaction.reply({
+        content: "<:vegax:1443934876440068179> Devi inserire un motivo valido.",
+        flags: 1 << 6,
+      }).catch(() => null);
+      return true;
+    }
+    const srcMessage = await interaction.channel?.messages
+      ?.fetch(parsed.messageId)
+      .catch(() => null);
+    const status = await applyCandidatePex(
+      interaction.guild,
+      interaction.user,
+      parsed.type,
+      parsed.userId,
+      reason,
+      srcMessage,
+    );
+    await interaction.reply({
+      content: status,
+      flags: 1 << 6,
+    }).catch(() => null);
+    return true;
+  }
+
   const raw = String(interaction.customId || "");
   if (!raw.startsWith(`${MODAL_PREFIX}:`)) return false;
   const modalParts = raw.split(":");

@@ -57,6 +57,13 @@ function isSuggestionClosed(message) {
   return !(ids.includes("upv") && ids.includes("downv"));
 }
 
+async function deleteThreadForMessage(guild, messageId) {
+  const thread = await guild.channels.fetch(String(messageId || "")).catch(() => null);
+  if (thread?.isThread?.()) {
+    await thread.delete().catch(() => null);
+  }
+}
+
 async function handleSuggestionVote(interaction) {
   if (!interaction?.guild) return false;
 
@@ -446,6 +453,7 @@ async function handleSuggestionVote(interaction) {
     await suggestionMessage
       .edit({ embeds: [resultEmbed], components: [] })
       .catch(() => {});
+    await deleteThreadForMessage(interaction.guild, suggestionMessage.id);
 
     if (isAccept) {
       const guildId = interaction.guild.id;

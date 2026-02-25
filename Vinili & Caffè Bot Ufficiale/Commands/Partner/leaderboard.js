@@ -4,10 +4,118 @@ const PartnershipCount = require("../../Schemas/Staff/staffSchema");
 
 const PARTNERS_PER_PAGE = 10;
 const EPHEMERAL_FLAG = 1 << 6;
+const TIME_ZONE = "Europe/Rome";
 
-function isActionInLastWeek(action, weekAgo) {
+function getRomeDateParts(date) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(date);
+  const out = {};
+  for (const part of parts) {
+    if (part.type !== "literal") out[part.type] = part.value;
+  }
+  return {
+    year: Number(out.year),
+    month: Number(out.month),
+    day: Number(out.day),
+  };
+}
+
+function getRomeOffsetMs(utcDate) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+  });
+  const timeZoneName = formatter
+    .formatToParts(utcDate)
+    .find((part) => part.type === "timeZoneName")?.value;
+
+  const match = String(timeZoneName || "GMT+0").match(
+    /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,
+  );
+  if (!match) return 0;
+
+  const sign = match[1] === "-" ? -1 : 1;
+  const hours = Number(match[2] || 0);
+  const minutes = Number(match[3] || 0);
+  return sign * (hours * 60 + minutes) * 60 * 1000;
+}
+
+function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
+  const baseUtcMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const firstOffsetMs = getRomeOffsetMs(new Date(baseUtcMs));
+  let utcMs = baseUtcMs - firstOffsetMs;
+  const secondOffsetMs = getRomeOffsetMs(new Date(utcMs));
+  if (secondOffsetMs !== firstOffsetMs) {
+    utcMs = baseUtcMs - secondOffsetMs;
+  }
+  return new Date(utcMs);
+}
+
+function getCurrentWeekWindow(now = new Date()) {
+  const romeToday = getRomeDateParts(now);
+  const romeTodayNoonUtc = new Date(
+    Date.UTC(romeToday.year, romeToday.month - 1, romeToday.day, 12, 0, 0),
+  );
+  const dayFromMonday = (romeTodayNoonUtc.getUTCDay() + 6) % 7;
+
+  const mondayNoonUtc = new Date(
+    romeTodayNoonUtc.getTime() - dayFromMonday * 24 * 60 * 60 * 1000,
+  );
+  const mondayY = mondayNoonUtc.getUTCFullYear();
+  const mondayM = mondayNoonUtc.getUTCMonth() + 1;
+  const mondayD = mondayNoonUtc.getUTCDate();
+
+  const sundayNoonUtc = new Date(
+    mondayNoonUtc.getTime() + 6 * 24 * 60 * 60 * 1000,
+  );
+  const sundayY = sundayNoonUtc.getUTCFullYear();
+  const sundayM = sundayNoonUtc.getUTCMonth() + 1;
+  const sundayD = sundayNoonUtc.getUTCDate();
+
+  const weekStart = createUtcFromRomeLocal(
+    mondayY,
+    mondayM,
+    mondayD,
+    0,
+    0,
+    0,
+  );
+  const scheduledWeekEnd = createUtcFromRomeLocal(
+    sundayY,
+    sundayM,
+    sundayD,
+    23,
+    59,
+    59,
+  );
+  const weekEnd = now.getTime() < scheduledWeekEnd.getTime() ? now : scheduledWeekEnd;
+
+  return { weekStart, weekEnd };
+}
+
+function isActionInWeeklyWindow(action, weekStart, weekEnd) {
   if (!action || action.action !== "create" || !action.date) return false;
-  return new Date(action.date) >= weekAgo;
+  if (Array.isArray(action?.auditPenaltyDates) && action.auditPenaltyDates.length > 0)
+    return false;
+  const when = new Date(action.date);
+  if (Number.isNaN(when.getTime())) return false;
+  return when >= weekStart && when <= weekEnd;
+}
+
+function countValidAllTimePartners(actions) {
+  if (!Array.isArray(actions)) return 0;
+  return actions.reduce((total, action) => {
+    if (String(action?.action || "").toLowerCase() !== "create") return total;
+    if (Array.isArray(action?.auditPenaltyDates) && action.auditPenaltyDates.length > 0)
+      return total;
+    return total + 1;
+  }, 0);
 }
 
 function buildNoDataEmbed(isWeekly) {
@@ -15,7 +123,7 @@ function buildNoDataEmbed(isWeekly) {
     .setColor("#6f4e37")
     .setDescription(
       isWeekly
-        ? "<:attentionfromvega:1443651874032062505> Nessuno ha effettuato partner negli ultimi 7 giorni!"
+        ? "<:attentionfromvega:1443651874032062505> Nessuno ha effettuato partner in questa settimana!"
         : "<:attentionfromvega:1443651874032062505> Nessuno ha ancora effettuato partner!",
     );
 }
@@ -90,7 +198,7 @@ module.exports = {
 
     const tipo = interaction.options.getString("tipo") || "totale";
     const isWeekly = tipo === "settimanale";
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const weekWindow = getCurrentWeekWindow(new Date());
 
     const allStaff = await PartnershipCount.find({
       guildId: interaction.guild.id,
@@ -98,7 +206,10 @@ module.exports = {
     const partners = allStaff
       .map((staff) => {
         if (!isWeekly) {
-          return { userId: staff.userId, score: staff.partnerCount || 0 };
+          const actions = Array.isArray(staff.partnerActions)
+            ? staff.partnerActions
+            : [];
+          return { userId: staff.userId, score: countValidAllTimePartners(actions) };
         }
 
         const actions = Array.isArray(staff.partnerActions)
@@ -106,7 +217,13 @@ module.exports = {
           : [];
         const weeklyCount = actions.reduce(
           (total, action) =>
-            isActionInLastWeek(action, weekAgo) ? total + 1 : total,
+            isActionInWeeklyWindow(
+              action,
+              weekWindow.weekStart,
+              weekWindow.weekEnd,
+            )
+              ? total + 1
+              : total,
           0,
         );
         return { userId: staff.userId, score: weeklyCount };

@@ -251,6 +251,26 @@ function buildAcceptedButtonsRow(userId, pauseId, options = {}) {
   return new ActionRowBuilder().addComponents(components);
 }
 
+function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
+  const end = parseItalianDate(pauseEndRaw);
+  if (!end || !guild || !channelId || !messageId) return;
+  const removalAtMs = end.getTime() + MS_PER_DAY;
+  const delayMs = removalAtMs - Date.now();
+  if (delayMs <= 0) return;
+
+  setTimeout(async () => {
+    try {
+      const channel =
+        guild.channels.cache.get(String(channelId)) ||
+        (await guild.channels.fetch(String(channelId)).catch(() => null));
+      if (!channel?.isTextBased?.()) return;
+      const msg = await channel.messages.fetch(String(messageId)).catch(() => null);
+      if (!msg) return;
+      await msg.edit({ components: [] }).catch(() => null);
+    } catch {}
+  }, delayMs);
+}
+
 async function handlePauseButton(interaction) {
   if (!interaction.isButton()) return false;
   if (
@@ -477,9 +497,7 @@ async function handlePauseButton(interaction) {
     if (end && todayForExpiry > end) {
       await interaction
         .update({
-          components: [
-            buildAcceptedButtonsRow(userId, pauseId, { hideCancel: true }),
-          ],
+          components: [],
         })
         .catch(() => {});
       await interaction
@@ -638,9 +656,9 @@ async function handlePauseButton(interaction) {
   );
   const channel = interaction.guild.channels.cache.get(IDs.channels.pause);
   if (channel) {
-    await channel
+    const pauseMessage = await channel
       .send({
-        content: `<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>** ${pauseTimingText}.\n<:Clock:1330530065133338685> Dal **\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo`,
+        content: `<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>** ${pauseTimingText}.\n<:Clock:1330530065133338685> Dal **\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo\n> I pulsanti verranno rimossi automaticamente alla scadenza della pausa.`,
         components: [
           buildAcceptedButtonsRow(userId, pauseId, {
             hideCancel: hideCancelOnCreate,
@@ -648,6 +666,14 @@ async function handlePauseButton(interaction) {
         ],
       })
       .catch(() => {});
+    if (pauseMessage && pauseEnd) {
+      schedulePauseButtonsRemoval(
+        interaction.guild,
+        channel.id,
+        pauseMessage.id,
+        targetPause.dataRitorno,
+      );
+    }
   }
 
   await interaction.deferUpdate().catch(() => {});

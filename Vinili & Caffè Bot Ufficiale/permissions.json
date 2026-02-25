@@ -149,14 +149,10 @@
                     "roles.HighStaff"
                 ],
                 "resoconto.staffer": [
-                    "roles.HighStaff",
-                    "roles.Coordinator",
-                    "roles.Supervisor"
+                    "roles.HighStaff"
                 ],
                 "resoconto.pm": [
-                    "roles.HighStaff",
-                    "roles.Coordinator",
-                    "roles.Supervisor"
+                    "roles.HighStaff"
                 ]
             }
         },
@@ -1349,7 +1345,8 @@
                 "roles.PartnerManager",
                 "roles.HighStaff"
             ],
-            "ownerSegment": 1
+            "ownerSegment": 1,
+            "ownerOrRole": true
         },
         "pause_reject:*": [
             "roles.HighStaff"
@@ -1366,6 +1363,12 @@
         ],
         "regolamento": [
             "roles.Staff"
+        ],
+        "resoconto_apply:*": [
+            "roles.HighStaff"
+        ],
+        "resoconto_reject:*": [
+            "roles.HighStaff"
         ],
         "rifiuta": {
             "ownerFromMessageMention": true
@@ -1497,6 +1500,9 @@
             ],
             "ownerSegment": 2
         },
+        "apply_pex:*": [
+            "roles.HighStaff"
+        ],
         "verify_start": null,
         "vocalimoderazione": [
             "roles.Staff"
@@ -1596,6 +1602,9 @@
         "suggestion_staff_modal:*": {
             "ownerSegment": 1
         },
+        "resoconto_reason:*": [
+            "roles.HighStaff"
+        ],
         "verify_code:*": {
             "ownerSegment": 1
         },
@@ -1603,6 +1612,9 @@
             "roles": [
                 "roles.Member"
             ]
-        }
+        },
+        "apply_pex_modal:*": [
+            "roles.HighStaff"
+        ]
     }
 }

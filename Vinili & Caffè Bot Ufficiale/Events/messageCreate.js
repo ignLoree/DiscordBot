@@ -243,21 +243,24 @@ function resolvePrefixCommandByToken(client, token) {
   );
 }
 
-function parseWrongPrefixAttempt(content) {
+function parseWrongPrefixAttempt(content, validPrefix = "+") {
   const text = String(content || "").trim();
-  if (!text || text.startsWith("+")) return null;
-  const direct = text.match(/^([?!./-])\s*([a-z0-9][\w-]*)/i);
+  const safePrefix = String(validPrefix || "+");
+  if (!text || text.startsWith(safePrefix)) return null;
+  const direct = text.match(/^((?:[a-z]{1,3})?[?!./-])\s*([a-z0-9][\w-]*)/i);
   if (direct) {
     return {
       usedPrefix: String(direct[1] || ""),
       token: String(direct[2] || "").toLowerCase(),
     };
   }
-  const nearMiss = text.match(/^(?:[a-z]{1,2})\s*([?!./-])\s*([a-z0-9][\w-]*)/i);
+  const nearMiss = text.match(
+    /^([a-z]{1,3})\s*([?!./-])\s*([a-z0-9][\w-]*)/i,
+  );
   if (nearMiss) {
     return {
-      usedPrefix: String(nearMiss[1] || ""),
-      token: String(nearMiss[2] || "").toLowerCase(),
+      usedPrefix: `${String(nearMiss[1] || "")}${String(nearMiss[2] || "")}`,
+      token: String(nearMiss[3] || "").toLowerCase(),
     };
   }
   return null;
@@ -283,10 +286,11 @@ function shouldSendWrongPrefixHint(message, usedPrefix, commandName) {
   return true;
 }
 
-async function maybeSendWrongPrefixHint(message, resolvedClient) {
-  const attempt = parseWrongPrefixAttempt(message?.content || "");
+async function maybeSendWrongPrefixHint(message, resolvedClient, validPrefix = "+") {
+  const safePrefix = String(validPrefix || "+");
+  const attempt = parseWrongPrefixAttempt(message?.content || "", safePrefix);
   if (!attempt?.token || !attempt?.usedPrefix) return false;
-  if (attempt.usedPrefix === "+") return false;
+  if (attempt.usedPrefix === safePrefix) return false;
   const command = resolvePrefixCommandByToken(resolvedClient, attempt.token);
   if (!command) return false;
   const cmdName = String(command.name || "").toLowerCase();
@@ -296,7 +300,7 @@ async function maybeSendWrongPrefixHint(message, resolvedClient) {
   }
   const hint = await message.channel
     .send({
-      content: `\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`+${command.name}\`.`,
+      content: `\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`,
     })
     .catch(() => null);
   if (hint) setTimeout(() => hint.delete().catch(() => {}), 6000);
@@ -513,7 +517,7 @@ module.exports = {
     const isOwnBotMessage =
       String(message.author?.id || "") === String(resolvedClient.user?.id || "");
     const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
-    const defaultPrefix = "+";
+    const defaultPrefix = String(resolvedClient?.config?.prefix || "+");
     let automodProcessed = false;
     const runAutomodOnce = async () => {
       if (automodProcessed) return { blocked: false, skipped: true };
@@ -675,7 +679,7 @@ module.exports = {
       await message.delete().catch(() => { });
     };
     if (!startsWithDefault) {
-      await maybeSendWrongPrefixHint(message, resolvedClient);
+      await maybeSendWrongPrefixHint(message, resolvedClient, defaultPrefix);
       return;
     }
 

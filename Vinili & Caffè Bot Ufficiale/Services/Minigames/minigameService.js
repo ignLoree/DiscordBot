@@ -2095,7 +2095,11 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
     const m = Math.min(7, Math.max(0, Number(misses) || 0));
     const max = Math.max(1, Number(maxMisses) || 7);
     const ox = 220;
-    const oy = 180;
+    const oy = 220;
+    const topY = oy - 150;
+    const beamEndX = ox + 120 + 80;
+    const headCx = ox + 120 + 40;
+    const headCy = topY + 28;
     ctx.strokeStyle = "#c4a574";
     ctx.lineWidth = 4;
     ctx.lineCap = "round";
@@ -2103,50 +2107,50 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
     ctx.beginPath();
     ctx.moveTo(ox, oy);
     ctx.lineTo(ox + 120, oy);
-    ctx.lineTo(ox + 120, oy - 180);
-    ctx.lineTo(ox + 120 + 80, oy - 180);
+    ctx.lineTo(ox + 120, topY);
+    ctx.lineTo(beamEndX, topY);
     ctx.stroke();
     if (m >= 1) {
       ctx.beginPath();
-      ctx.arc(ox + 120 + 40, oy - 180 + 28, 22, 0, Math.PI * 2);
+      ctx.arc(headCx, headCy, 22, 0, Math.PI * 2);
       ctx.stroke();
     }
     if (m >= 2) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40, oy - 180 + 50);
-      ctx.lineTo(ox + 120 + 40, oy - 180 + 95);
+      ctx.moveTo(headCx, topY + 50);
+      ctx.lineTo(headCx, topY + 95);
       ctx.stroke();
     }
     if (m >= 3) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40, oy - 180 + 65);
-      ctx.lineTo(ox + 120 + 40 - 28, oy - 180 + 88);
+      ctx.moveTo(headCx, topY + 65);
+      ctx.lineTo(headCx - 28, topY + 88);
       ctx.stroke();
     }
     if (m >= 4) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40, oy - 180 + 65);
-      ctx.lineTo(ox + 120 + 40 + 28, oy - 180 + 88);
+      ctx.moveTo(headCx, topY + 65);
+      ctx.lineTo(headCx + 28, topY + 88);
       ctx.stroke();
     }
     if (m >= 5) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40, oy - 180 + 95);
-      ctx.lineTo(ox + 120 + 40 - 22, oy - 180 + 130);
+      ctx.moveTo(headCx, topY + 95);
+      ctx.lineTo(headCx - 22, topY + 130);
       ctx.stroke();
     }
     if (m >= 6) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40, oy - 180 + 95);
-      ctx.lineTo(ox + 120 + 40 + 22, oy - 180 + 130);
+      ctx.moveTo(headCx, topY + 95);
+      ctx.lineTo(headCx + 22, topY + 130);
       ctx.stroke();
     }
     if (m >= 7) {
       ctx.beginPath();
-      ctx.moveTo(ox + 120 + 40 - 8, oy - 180 + 28);
-      ctx.lineTo(ox + 120 + 40 + 8, oy - 180 + 45);
-      ctx.moveTo(ox + 120 + 40 + 8, oy - 180 + 28);
-      ctx.lineTo(ox + 120 + 40 - 8, oy - 180 + 45);
+      ctx.moveTo(headCx - 8, headCy);
+      ctx.lineTo(headCx + 8, headCy + 17);
+      ctx.moveTo(headCx + 8, headCy);
+      ctx.lineTo(headCx - 8, headCy + 17);
       ctx.stroke();
     }
 
@@ -2154,7 +2158,7 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = "bold 42px Sans";
-    ctx.fillText("Impiccato", width / 2, 72);
+    ctx.fillText("Impiccato", width / 2, 54);
 
     const wordStr = String(maskedWord || "").trim() || "_";
     ctx.font = "bold 48px Sans";
@@ -5869,8 +5873,11 @@ async function handleMinigameMessage(message, client) {
   if (game.type === "hangman") {
     const normalized = normalizeCountryName(normalizeUserAnswerText(content));
     if (!normalized) return false;
+    const guessParts = normalized.split(" ").filter(Boolean);
+    if (guessParts.length !== 1) return false;
+    const guessText = guessParts[0];
 
-    if (normalized === game.word) {
+    if (guessText === game.word) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
@@ -5879,8 +5886,8 @@ async function handleMinigameMessage(message, client) {
     }
 
     if (
-      normalized.length > 1 &&
-      isNearTextGuess(normalized, [game.word], {
+      guessText.length > 1 &&
+      isNearTextGuess(guessText, [game.word], {
         maxDistance: 2,
         maxRatio: 0.28,
         minGuessLength: 4,
@@ -5889,20 +5896,29 @@ async function handleMinigameMessage(message, client) {
       await message.react("<a:VC_Flame:1473106990493335665>").catch(() => {});
     }
 
-    const letter = normalized.length === 1 ? normalized : null;
-    if (!letter || !/^[a-z0-9]$/.test(letter)) return false;
     const guessed = new Set(
       Array.isArray(game.guessedLetters) ? game.guessedLetters : [],
     );
-    if (guessed.has(letter)) return false;
-    guessed.add(letter);
-    game.guessedLetters = Array.from(guessed.values());
-    const isCorrectLetter = game.word.includes(letter);
-    if (!isCorrectLetter) {
+    let guessHandled = false;
+    if (guessText.length === 1 && /^[a-z0-9]$/.test(guessText)) {
+      const letter = guessText;
+      guessHandled = true;
+      if (guessed.has(letter)) return true;
+      guessed.add(letter);
+      game.guessedLetters = Array.from(guessed.values());
+      const isCorrectLetter = game.word.includes(letter);
+      if (!isCorrectLetter) {
+        game.misses = Number(game.misses || 0) + 1;
+        await message.react("<:vegax:1443934876440068179>").catch(() => {});
+      } else {
+        await message.react(MINIGAME_CORRECT_FALLBACK_EMOJI).catch(() => {});
+      }
+    } else if (guessText.length > 1) {
+      guessHandled = true;
       game.misses = Number(game.misses || 0) + 1;
-    } else {
-      await message.react(MINIGAME_CORRECT_FALLBACK_EMOJI).catch(() => {});
+      await message.react("<:vegax:1443934876440068179>").catch(() => {});
     }
+    if (!guessHandled) return false;
 
     const solved = game.word.split("").every((ch) => guessed.has(ch));
     if (solved) {
@@ -5937,8 +5953,6 @@ async function handleMinigameMessage(message, client) {
       endsAt: new Date(game.endsAt || Date.now()),
       gameMessageId: game.gameMessageId || null,
     });
-
-    if (!isCorrectLetter) return true;
 
     const maskedWord = maskHangmanWord(game.word, guessed);
     const hangmanUpdateAttachment = buildPromptImageAttachment(
