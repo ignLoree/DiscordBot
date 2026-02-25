@@ -9,6 +9,7 @@ const {
 } = require("./securityProfilesService");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
+const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const HIGH_STAFF_MENTION = IDs.roles?.HighStaff
   ? `<@&${IDs.roles.HighStaff}>`
   : null;
