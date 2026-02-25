@@ -209,6 +209,40 @@ function parseUserId(input, message) {
   return "";
 }
 
+function parseScalar(raw) {
+  const value = String(raw ?? "").trim();
+  if (!value.length) return "";
+  const lower = value.toLowerCase();
+  if (["true", "on", "yes"].includes(lower)) return true;
+  if (["false", "off", "no"].includes(lower)) return false;
+  if (lower === "null") return null;
+  if (lower === "undefined") return undefined;
+  if (/^-?\d+(\.\d+)?$/.test(value)) return Number(value);
+  if (
+    (value.startsWith("{") && value.endsWith("}")) ||
+    (value.startsWith("[") && value.endsWith("]"))
+  ) {
+    try {
+      return JSON.parse(value);
+    } catch (_) {
+      return value;
+    }
+  }
+  return value;
+}
+
+function isDisableSystemOperation(pathArg, nextValue) {
+  if (nextValue !== false) return false;
+  const normalized = String(pathArg || "").trim().toLowerCase();
+  return [
+    "enabled",
+    "status.enabled",
+    "panic.enabled",
+    "autolockdown.enabled",
+    "autotimeouts.enabled",
+  ].includes(normalized);
+}
+
 function usageEmbed() {
   return new EmbedBuilder()
     .setColor("#6f4e37")
