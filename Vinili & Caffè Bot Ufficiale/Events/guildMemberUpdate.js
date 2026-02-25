@@ -533,7 +533,7 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
     const caseReason = `JoinGate post-join: ${reason}`;
     try {
       const config = await getModConfig(newMember.guild.id);
-      const { doc } = await createModCase({
+      const { doc, created } = await createModCase({
         guildId: newMember.guild.id,
         action: modAction,
         userId: newMember.id,
@@ -541,8 +541,11 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
         reason: caseReason,
         durationMs,
         context: {},
+        dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
       });
-      await logModCase({ client: newMember.client, guild: newMember.guild, modCase: doc, config });
+      if (created) {
+        await logModCase({ client: newMember.client, guild: newMember.guild, modCase: doc, config });
+      }
     } catch (e) {
       global.logger?.warn?.("[JoinGate post-join] ModCase creation failed:", newMember.guild.id, newMember.id, e?.message || e);
     }

@@ -1795,7 +1795,7 @@ async function quarantineExecutor(guild, executorId, reason) {
       if (guild?.client) {
         try {
           const config = await getModConfig(guild.id);
-          const { doc } = await createModCase({
+          const { doc, created } = await createModCase({
             guildId: guild.id,
             action: "BAN",
             userId,
@@ -1803,8 +1803,11 @@ async function quarantineExecutor(guild, executorId, reason) {
             reason: banReason,
             durationMs: null,
             context: {},
+            dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
           });
-          await logModCase({ client: guild.client, guild, modCase: doc, config });
+          if (created) {
+            await logModCase({ client: guild.client, guild, modCase: doc, config });
+          }
         } catch (e) {
           global.logger?.warn?.("[antiNuke] ModCase creation (ban) failed:", guild.id, userId, e?.message || e);
         }
@@ -1857,7 +1860,7 @@ async function quarantineExecutor(guild, executorId, reason) {
     if (guild?.client && quarantineTimeoutMs > 0) {
       try {
         const config = await getModConfig(guild.id);
-        const { doc } = await createModCase({
+        const { doc, created } = await createModCase({
           guildId: guild.id,
           action: "MUTE",
           userId,
@@ -1865,8 +1868,11 @@ async function quarantineExecutor(guild, executorId, reason) {
           reason: String(reason || "AntiNuke quarantine"),
           durationMs: quarantineTimeoutMs,
           context: {},
+          dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
         });
-        await logModCase({ client: guild.client, guild, modCase: doc, config });
+        if (created) {
+          await logModCase({ client: guild.client, guild, modCase: doc, config });
+        }
       } catch (e) {
         global.logger?.warn?.("[antiNuke] ModCase creation (timeout) failed:", guild.id, userId, e?.message || e);
       }

@@ -11,6 +11,8 @@
     "fix:mojibake": "node scripts/check-mojibake.js --fix",
     "automod:sync-words": "node scripts/sync-automod-wordlists.js",
     "moderation:import-dyno": "node scripts/import-dyno-cases.js",
+    "moderation:dedupe-cases": "node scripts/dedupe-mod-cases.js",
+    "moderation:reindex-cases": "node scripts/reindex-mod-cases.js",
     "test:critical": "node scripts/test-critical-systems.js",
     "test:prefix-metadata": "node scripts/test-prefix-metadata.js",
     "docs:commands": "node scripts/generate-prefix-docs.js"

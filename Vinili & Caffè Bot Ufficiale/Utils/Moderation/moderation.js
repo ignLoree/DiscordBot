@@ -71,29 +71,87 @@ async function createModCase({
   reason,
   durationMs,
   context,
+  dedupe,
 }) {
+  const normalizedAction = normalizeAction(action);
+  const normalizedReason = reason || "Nessun motivo fornito";
+  const normalizedDurationMs = durationMs || null;
+  const normalizedContext = {
+    channelId: context?.channelId || null,
+    messageId: context?.messageId || null,
+  };
+  const dedupeEnabled = Boolean(dedupe?.enabled);
+  if (dedupeEnabled) {
+    const byMessageId = dedupe?.byMessageId !== false;
+    const messageId = String(normalizedContext.messageId || "").trim();
+    if (byMessageId && messageId) {
+      const existingByMessage = await ModCase.findOne({
+        guildId,
+        action: normalizedAction,
+        userId,
+        modId,
+        "context.messageId": messageId,
+      })
+        .sort({ createdAt: -1 })
+        .catch(() => null);
+      if (existingByMessage) {
+        const cfgExisting = await getModConfig(guildId);
+        return {
+          doc: existingByMessage,
+          config: cfgExisting,
+          created: false,
+          isDuplicate: true,
+        };
+      }
+    }
+
+    const rawWindowMs = Number(dedupe?.windowMs);
+    const windowMs = Number.isFinite(rawWindowMs) && rawWindowMs > 0 ? rawWindowMs : 15_000;
+    const createdAtFrom = new Date(Date.now() - windowMs);
+    const matchReason = dedupe?.matchReason !== false;
+    const fallbackQuery = {
+      guildId,
+      action: normalizedAction,
+      userId,
+      modId,
+      createdAt: { $gte: createdAtFrom },
+    };
+    if (matchReason) fallbackQuery.reason = normalizedReason;
+    if (normalizedDurationMs == null) fallbackQuery.durationMs = null;
+    else fallbackQuery.durationMs = Number(normalizedDurationMs);
+    const existingRecent = await ModCase.findOne(fallbackQuery)
+      .sort({ createdAt: -1 })
+      .catch(() => null);
+    if (existingRecent) {
+      const cfgExisting = await getModConfig(guildId);
+      return {
+        doc: existingRecent,
+        config: cfgExisting,
+        created: false,
+        isDuplicate: true,
+      };
+    }
+  }
+
   const cfg = await ModConfig.findOneAndUpdate(
     { guildId },
     { $inc: { caseCounter: 1 }, $setOnInsert: { guildId } },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   );
   const caseId = cfg.caseCounter;
-  const expiresAt = durationMs ? new Date(Date.now() + durationMs) : null;
+  const expiresAt = normalizedDurationMs ? new Date(Date.now() + normalizedDurationMs) : null;
   const doc = await ModCase.create({
     guildId,
     caseId,
-    action: normalizeAction(action),
+    action: normalizedAction,
     userId,
     modId,
-    reason: reason || "Nessun motivo fornito",
-    durationMs: durationMs || null,
+    reason: normalizedReason,
+    durationMs: normalizedDurationMs,
     expiresAt,
-    context: {
-      channelId: context?.channelId || null,
-      messageId: context?.messageId || null,
-    },
+    context: normalizedContext,
   });
-  return { doc, config: cfg };
+  return { doc, config: cfg, created: true, isDuplicate: false };
 }
 
 function normalizeEditValue(value) {

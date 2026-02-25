@@ -180,7 +180,30 @@ async function sendModerationDm({
   }
 
   const embed = new EmbedBuilder().setColor("#ED4245").setDescription(baseText);
-  const sent = await sendDm(user, { embeds: [embed] }, { guildId, bypassNoDm: true });
+  let components = undefined;
+  if (actionKey === "unban") {
+    const rawInvite = String(IDs?.links?.invite || "").trim();
+    const inviteUrl = /^https?:\/\//i.test(rawInvite)
+      ? rawInvite
+      : rawInvite
+        ? `https://${rawInvite.replace(/^\/+/, "")}`
+        : "";
+    if (inviteUrl) {
+      components = [
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setStyle(ButtonStyle.Link)
+            .setLabel("Rientra nel server")
+            .setURL(inviteUrl),
+        ),
+      ];
+    }
+  }
+  const sent = await sendDm(
+    user,
+    { embeds: [embed], components },
+    { guildId, bypassNoDm: true },
+  );
   return Boolean(sent);
 }
 
@@ -1226,7 +1249,7 @@ async function runNamed(name, message, args, client) {
     const safePage = Math.min(requestedPage, totalPages);
     const skip = (safePage - 1) * perPage;
     const rows = await ModCase.find(query)
-      .sort({ caseId: -1 })
+      .sort({ createdAt: -1, caseId: -1 })
       .skip(skip)
       .limit(perPage)
       .lean()
@@ -1528,4 +1551,3 @@ async function executeDynoModerationCommand(commandName, message, args, client) 
 }
 
 module.exports = { executeDynoModerationCommand };
-

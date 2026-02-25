@@ -976,7 +976,7 @@ async function applyPunishment(member, reasons) {
       appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
     try {
       const config = await getModConfig(guild.id);
-      const { doc } = await createModCase({
+      const { doc, created } = await createModCase({
         guildId: guild.id,
         action: modAction,
         userId: member.id,
@@ -984,8 +984,11 @@ async function applyPunishment(member, reasons) {
         reason: caseReason,
         durationMs: caseDurationMs,
         context: {},
+        dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
       });
-      await logModCase({ client: guild.client, guild, modCase: doc, config });
+      if (created) {
+        await logModCase({ client: guild.client, guild, modCase: doc, config });
+      }
     } catch (e) {
       global.logger?.warn?.("[joinRaid] ModCase creation failed:", guild.id, member.id, e?.message || e);
     }

@@ -124,11 +124,18 @@ function fieldByName(embeds, names) {
 }
 
 function extractCaseIdFromText(text) {
+  const caseOnly = String(text || "").match(/\bcase\s*#?\s*(\d{1,12})\b/i);
+  if (caseOnly) {
+    const n = Number.parseInt(caseOnly[1], 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+
+  // Fallback storico: manteniamo solo pattern espliciti legati a "case".
+  // Evitiamo pattern generici "ID:" per non confondere user/message snowflake con caseId.
   const patterns = [
     /case\s*#?\s*(\d{1,12})/i,
     /caseid\s*[:#]?\s*(\d{1,12})/i,
     /modlog\s*id\s*[:#]?\s*(\d{1,12})/i,
-    /\bid\s*[:#]\s*(\d{1,12})/i,
   ];
   for (const re of patterns) {
     const match = text.match(re);
@@ -143,6 +150,12 @@ function extractFirstUserId(text) {
   if (!text) return null;
   const matches = String(text).match(USER_ID_REGEX) || [];
   return matches[0] || null;
+}
+
+function extractUserIdFromDynoFooter(text) {
+  if (!text) return null;
+  const match = String(text).match(/\bID\s*:\s*(\d{17,20})\b/i);
+  return match?.[1] || null;
 }
 
 function extractReason(embeds, fullText) {
@@ -254,10 +267,16 @@ function parseMessageCase(message, opts) {
   const fullText = [message.content || "", ...embedLines].join("\n");
   if (!fullText.trim()) return { ok: false, reason: "empty" };
 
-  const action = extractAction(fullText);
+  const primaryTitle =
+    String(embeds?.[0]?.title || "").trim() ||
+    String(embeds?.[0]?.data?.title || "").trim();
+  const titleCaseId = extractCaseIdFromText(primaryTitle);
+
+  const action = extractAction(`${primaryTitle}\n${fullText}`);
   if (!action) return { ok: false, reason: "unknown_action" };
 
   let caseId =
+    titleCaseId ||
     extractCaseIdFromText(fieldByName(embeds, ["case", "case id", "modlog id"])) ||
     extractCaseIdFromText(fullText);
   if (!Number.isFinite(caseId) || caseId <= 0) caseId = null;
@@ -273,6 +292,10 @@ function parseMessageCase(message, opts) {
       /\b(user|member|target|offender)\b\s*[:\-]?\s*(?:<@!?(\d{17,20})>|[^\n]*?(\d{17,20}))/i,
     );
     userId = direct?.[2] || direct?.[3] || null;
+  }
+  if (!userId) {
+    const footerText = [fieldByName(embeds, ["id"]), fieldByName(embeds, ["footer"])].join("\n");
+    userId = extractUserIdFromDynoFooter(`${footerText}\n${fullText}`);
   }
   if (!modId) {
     const direct = fullText.match(

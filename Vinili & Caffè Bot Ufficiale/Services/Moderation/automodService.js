@@ -2702,7 +2702,7 @@ async function registerAutoModCase(message, action, violations = [], context = {
       content: message?.content || "",
     });
     const config = await getModConfig(guild.id);
-    const { doc } = await createModCase({
+    const { doc, created } = await createModCase({
       guildId: guild.id,
       action: mappedAction,
       userId,
@@ -2713,13 +2713,21 @@ async function registerAutoModCase(message, action, violations = [], context = {
         channelId: String(message?.channelId || message?.channel?.id || ""),
         messageId: String(message?.id || ""),
       },
+      dedupe: {
+        enabled: true,
+        byMessageId: true,
+        windowMs: 90_000,
+        matchReason: true,
+      },
     });
-    await logModCase({
-      client: message.client,
-      guild,
-      modCase: doc,
-      config,
-    });
+    if (created) {
+      await logModCase({
+        client: message.client,
+        guild,
+        modCase: doc,
+        config,
+      });
+    }
     return doc;
   } catch {
     return null;

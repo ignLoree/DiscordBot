@@ -714,7 +714,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
       const durationMs = appliedAction === "timeout" ? 6 * 60 * 60_000 : null;
       try {
         const config = await getModConfig(member.guild.id);
-        const { doc } = await createModCase({
+        const { doc, created } = await createModCase({
           guildId: member.guild.id,
           action: modAction,
           userId: member.id,
@@ -722,8 +722,11 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
           reason: `JoinGate: ${reason}`,
           durationMs,
           context: {},
+          dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
         });
-        await logModCase({ client: member.client, guild: member.guild, modCase: doc, config });
+        if (created) {
+          await logModCase({ client: member.client, guild: member.guild, modCase: doc, config });
+        }
       } catch (e) {
         global.logger?.warn?.("[JoinGate] ModCase creation failed:", member.guild.id, member.id, e?.message || e);
       }

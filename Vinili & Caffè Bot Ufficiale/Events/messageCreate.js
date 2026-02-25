@@ -1575,15 +1575,27 @@ async function handleDiscadiaBump(message, client) {
   const discadia = client?.config?.discadia;
   if (!discadia) return false;
   if (!message.guild) return false;
-  const isAutomatedSource = Boolean(
-    message.author?.bot || message.applicationId || message.webhookId,
-  );
-  if (!isAutomatedSource) return false;
-
-  const knownBotIds = getVoteManagerBotIds(client);
   const authorName = String(
     message.author?.globalName || message.author?.username || "",
   );
+  const sourceName = String(
+    [
+      message.author?.globalName || "",
+      message.author?.username || "",
+      message.author?.tag || "",
+      message.author?.id || "",
+      message.applicationId || "",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+  const isDiscadiaNamedSource = /\bdiscadia\b/i.test(sourceName);
+  const isAutomatedSource = Boolean(
+    message.author?.bot || message.applicationId || message.webhookId,
+  );
+  if (!isAutomatedSource && !isDiscadiaNamedSource) return false;
+
+  const knownBotIds = getVoteManagerBotIds(client);
   const isDiscadiaNamedBot =
     Boolean(message.author?.bot) && /(discadia|disboard)/i.test(authorName);
   const isDisboardNamedBot =
@@ -1623,7 +1635,7 @@ async function handleDiscadiaBump(message, client) {
 
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
   const hasSuccessWord =
-    /(server has been bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(
+    /(server has been bumped|has been successfully bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(
       joined,
     );
   const hasBumpWord = /\bbump(?:ed)?\b/i.test(joined);
@@ -1651,6 +1663,7 @@ async function handleDiscadiaBump(message, client) {
   const fromDiscadiaBot =
     isDiscadiaAuthor ||
     isDiscadiaApp ||
+    isDiscadiaNamedSource ||
     (isDiscadiaNamedBot && !isDisboardNamedBot) ||
     hasDiscadiaWord ||
     hasDiscadiaDomain ||
