@@ -217,6 +217,7 @@ function usageEmbed() {
       [
         "`+security joingate <status|set>`",
         "`+security raid <status|preset|set>` (alias: joinraid, jr)",
+        "`+security automod <status|tune|preset|stats|top>`",
         "`+security panic ...`",
         "`+security antinuke <status|preset|panic|raid>`",
       ].join("\n"),
@@ -1557,6 +1558,7 @@ module.exports = {
   subcommands: [
     "joingate",
     "raid",
+    "automod",
     "panic",
     "antinuke",
   ],
@@ -1568,6 +1570,8 @@ module.exports = {
     "join-raid": "raid",
     jr: "raid",
     raid: "raid",
+    automod: "automod",
+    am: "automod",
     panic: "panic",
     antinuke: "antinuke",
   },
@@ -1725,6 +1729,11 @@ module.exports = {
 
     if (sub === "antinuke") {
       await handleAntiNuke(message, args.slice(1));
+      return;
+    }
+
+    if (sub === "automod" || sub === "am") {
+      await handleAutoModSecuritySubcommand(message, args.slice(1));
       return;
     }
 
