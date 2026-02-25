@@ -43,11 +43,20 @@ function resolveNodeExecutable() {
             .filter((entry) => entry.isDirectory() && /^node-v\d+\.\d+\.\d+/.test(entry.name))
             .map((entry) => ({
                 name: entry.name,
+                major: Number((String(entry.name).match(/^node-v(\d+)\./) || [])[1] || 0),
                 fullPath: path.join(tmpDir, entry.name, 'bin', 'node')
             }))
             .filter((entry) => fs.existsSync(entry.fullPath))
             .sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
         if (candidates.length > 0) {
+            // Prefer LTS-like majors to avoid npm ExperimentalWarning noise on Node 23+.
+            const preferredMajors = [22, 20, 18];
+            for (const major of preferredMajors) {
+                const hit = candidates.find((c) => c.major === major);
+                if (hit) return hit.fullPath;
+            }
+            const nonExperimental = candidates.find((c) => c.major > 0 && c.major < 23);
+            if (nonExperimental) return nonExperimental.fullPath;
             return candidates[0].fullPath;
         }
     } catch {
