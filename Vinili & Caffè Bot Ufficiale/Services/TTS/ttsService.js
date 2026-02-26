@@ -360,6 +360,7 @@ function enqueue(state, item) {
 }
 async function handleTtsMessage(message, client, prefix) {
   const config = client?.config;
+  if (message?.author?.bot) return;
   if (!shouldHandleMessage(message, config, prefix)) return;
   if (!message.member && message.guild?.members?.fetch) {
     try {
