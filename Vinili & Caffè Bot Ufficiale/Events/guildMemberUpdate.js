@@ -558,24 +558,50 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
     : null;
   if (!logChannel?.isTextBased?.()) return;
 
-  const nowTs = Math.floor(Date.now() / 1000);
   const embed = new EmbedBuilder()
-    .setColor(punished ? "#ED4245" : "#F59E0B")
-    .setTitle("JoinGate Post-Join Username Filter")
+    .setColor(punished ? "#A97142" : "#F59E0B")
+    .setTitle(
+      punished
+        ? `${newMember.user.username} has been ${String(appliedAction || "kick").toLowerCase() === "timeout" ? "timed out" : String(appliedAction || "kick").toLowerCase() === "ban" ? "banned" : "kicked"}!!`
+        : `${newMember.user.username} has triggered the joingate!`,
+    )
     .setDescription(
-      [
-        `${ARROW} **Target:** ${newMember.user} [\`${newMember.user.id}\`]`,
-        `${ARROW} **Action:** ${String(appliedAction || "log").toUpperCase()}`,
-        `${ARROW} **Rule:** Username Filter (Post Join)`,
-        `${ARROW} **Match Type:** ${match.type}`,
-        `${ARROW} **Match:** ${match.value}`,
-        `${ARROW} **Old Name:** ${oldCandidate || "N/A"}`,
-        `${ARROW} **New Name:** ${newCandidate || "N/A"}`,
-        `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-        `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
-        `${ARROW} <t:${nowTs}:F>`,
-      ].join("\n"),
+      punished
+        ? [
+            `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,
+            `${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
+            `${ARROW} **Rule:** Username Filter (Post Join)`,
+            `${ARROW} **Action:** ${String(appliedAction || "log").toUpperCase()}`,
+            `${ARROW} **Match Type:** ${match.type}`,
+            `${ARROW} **Match:** ${match.value}`,
+            `${ARROW} **Old Name:** ${oldCandidate || "N/A"}`,
+            `${ARROW} **New Name:** ${newCandidate || "N/A"}`,
+            "",
+            "**More Details:**",
+            `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
+            `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
+          ].join("\n")
+        : [
+            `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,
+            `${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
+            `${ARROW} **Rule:** Username Filter (Post Join)`,
+            `${ARROW} **Action:** ${String(appliedAction || "log").toUpperCase()}`,
+            `${ARROW} **Match Type:** ${match.type}`,
+            `${ARROW} **Match:** ${match.value}`,
+            `${ARROW} **Old Name:** ${oldCandidate || "N/A"}`,
+            `${ARROW} **New Name:** ${newCandidate || "N/A"}`,
+            `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
+            `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
+          ].join("\n"),
+    )
+    .setThumbnail(
+      punished
+        ? newMember.client.user.displayAvatarURL({ size: 256 })
+        : newMember.user.displayAvatarURL({ size: 256 }),
     );
+  if (punished) {
+    embed.setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." });
+  }
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }

@@ -833,24 +833,45 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
         (await member.guild.channels.fetch(modLogId).catch(() => null)))
     : null;
   if (logChannel?.isTextBased?.()) {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const embed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setTitle("JoinGate Action")
-      .setDescription(
-        [
-          `${ARROW} **Target:** ${member.user} [\`${member.user.id}\`]`,
-          `${ARROW} **Action:** ${appliedAction.toUpperCase()}`,
-          `${ARROW} **Reason:** ${reason}`,
-          ...extraLines.filter(Boolean),
-          `${ARROW} **Can Ban:** ${canBan ? "Yes" : "No"}`,
-          `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
-          `${ARROW} **Can Timeout:** ${canTimeout ? "Yes" : "No"}`,
-          `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-          `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
-          `${ARROW} <t:${nowTs}:F>`,
-        ].join("\n"),
-      );
+    const actionLabel =
+      appliedAction === "ban"
+        ? "banned"
+        : appliedAction === "timeout"
+          ? "timed out"
+          : appliedAction === "kick"
+            ? "kicked"
+            : "flagged";
+    const embed = punished
+      ? new EmbedBuilder()
+          .setColor("#A97142")
+          .setTitle(`${member.user.username} has been ${actionLabel}!!`)
+          .setDescription(
+            [
+              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
+              ...extraLines.filter(Boolean),
+              "",
+              "**More Details:**",
+              `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
+              `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
+            ].join("\n"),
+          )
+          .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
+          .setThumbnail(member.client.user.displayAvatarURL({ size: 256 }))
+      : new EmbedBuilder()
+          .setColor("#F59E0B")
+          .setTitle(`${member.user.username} has triggered the joingate!`)
+          .setDescription(
+            [
+              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
+              `${ARROW} **Action:** ${appliedAction.toUpperCase()}`,
+              ...extraLines.filter(Boolean),
+              `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
+              `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
+            ].join("\n"),
+          )
+          .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
     await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
   return {
@@ -907,7 +928,6 @@ async function sendSuspiciousAccountLog(member, reason) {
         (await member.guild.channels.fetch(modLogId).catch(() => null)))
     : null;
   if (!logChannel?.isTextBased?.()) return;
-  const nowTs = Math.floor(Date.now() / 1000);
   const embed = new EmbedBuilder()
     .setColor("#F59E0B")
     .setTitle(`${member.user.username} has triggered the joingate!`)
@@ -916,9 +936,9 @@ async function sendSuspiciousAccountLog(member, reason) {
         `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
         `${ARROW} **Reason:** ${reason}`,
         `${ARROW} **Rule:** Suspicious Account`,
-        `${ARROW} <t:${nowTs}:F>`,
       ].join("\n"),
-    );
+    )
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 

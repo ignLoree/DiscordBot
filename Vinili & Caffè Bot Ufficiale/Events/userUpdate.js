@@ -125,22 +125,40 @@ async function punishUsernameMatch(member, match) {
         (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null))
       : null;
   if (logChannel?.isTextBased?.()) {
-    const nowTs = Math.floor(Date.now() / 1000);
-    const logEmbed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setTitle("JoinGate Action")
-      .setDescription(
-        [
-          `${ARROW} **Target:** ${member.user} [\`${member.user.id}\`]`,
-          `${ARROW} **Rule:** Username Filter (post-join)`,
-          `${ARROW} **Match Type:** ${match.type}`,
-          `${ARROW} **Match:** ${match.value}`,
-          `${ARROW} **Can Kick:** ${canKick ? "Yes" : "No"}`,
-          `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-          `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
-          `${ARROW} <t:${nowTs}:F>`,
-        ].join("\n"),
-      );
+    const logEmbed = punished
+      ? new EmbedBuilder()
+          .setColor("#A97142")
+          .setTitle(`${member.user.username} has been kicked!!`)
+          .setDescription(
+            [
+              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
+              `${ARROW} **Rule:** Username Filter (post-join)`,
+              `${ARROW} **Match Type:** ${match.type}`,
+              `${ARROW} **Match:** ${match.value}`,
+              "",
+              "**More Details:**",
+              `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
+              `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
+            ].join("\n"),
+          )
+          .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
+          .setThumbnail(member.client.user.displayAvatarURL({ size: 256 }))
+      : new EmbedBuilder()
+          .setColor("#F59E0B")
+          .setTitle(`${member.user.username} has triggered the joingate!`)
+          .setDescription(
+            [
+              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+              `${ARROW} **Reason:** ${reason}`,
+              `${ARROW} **Rule:** Username Filter (post-join)`,
+              `${ARROW} **Match Type:** ${match.type}`,
+              `${ARROW} **Match:** ${match.value}`,
+              `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
+              `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
+            ].join("\n"),
+          )
+          .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
     await logChannel.send({ embeds: [logEmbed] }).catch((error) => {
       global.logger?.error?.("[userUpdate] punish log send failed:", error);
     });
