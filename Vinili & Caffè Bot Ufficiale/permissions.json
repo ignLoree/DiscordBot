@@ -426,7 +426,7 @@
         },
         "info": {
             "roles": [
-                "roles.HighStaff"
+                "roles.Staff"
             ],
             "channels": [
                 "1442569288161558528"
