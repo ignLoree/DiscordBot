@@ -47,6 +47,8 @@ const CORE_EXEMPT_USER_IDS = new Set([
 ]);
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
+const SUSPICIOUS_JOIN_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const recentJoinSignalsByGuild = new Map();
 
 function isConfiguredExempt(guild, userId, member = null) {
   const uid = String(userId || "");
@@ -539,6 +541,99 @@ function hasMixedScripts(input) {
   return hasLatin && nonLatinScripts > 0;
 }
 
+function normalizeCompact(input) {
+  return normalizeText(input).replace(/\s+/g, "");
+}
+
+function countVowels(input) {
+  return (String(input || "").match(/[aeiou]/gi) || []).length;
+}
+
+function looksRandomName(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return false;
+
+  const compact = normalizeCompact(raw);
+  if (compact.length < 6 || compact.length > 18) return false;
+  if (!/^[a-z0-9._-]+$/i.test(raw)) return false;
+
+  const alnum = compact.replace(/[^a-z0-9]/g, "");
+  const letterOnly = alnum.replace(/\d/g, "");
+  const vowelCount = countVowels(letterOnly);
+  const vowelRatio = letterOnly.length > 0 ? vowelCount / letterOnly.length : 0;
+  const digitCount = (alnum.match(/\d/g) || []).length;
+  const uniqueRatio = alnum.length > 0 ? new Set(alnum.split("")).size / alnum.length : 0;
+  const longConsonantRun = /[bcdfghjklmnpqrstvwxyz]{4,}/i.test(letterOnly);
+
+  return (
+    (digitCount >= 2 && vowelRatio <= 0.25 && uniqueRatio >= 0.68) ||
+    (longConsonantRun && vowelRatio <= 0.3) ||
+    (vowelCount === 0 && letterOnly.length >= 6)
+  );
+}
+
+function pruneJoinSignals(records) {
+  const now = Date.now();
+  return records.filter((item) => now - Number(item?.joinedAt || 0) <= SUSPICIOUS_JOIN_WINDOW_MS);
+}
+
+function trackRecentJoinSignal(member) {
+  const guildId = String(member?.guild?.id || "");
+  const userId = String(member?.user?.id || "");
+  if (!guildId || !userId) return;
+
+  const avatarHash = String(member?.user?.avatar || "");
+  const nameSkeleton = toAccountNameSkeleton(
+    `${member?.user?.username || ""} ${member?.user?.globalName || ""}`.trim(),
+  );
+  const existing = pruneJoinSignals(recentJoinSignalsByGuild.get(guildId) || []);
+  existing.push({
+    userId,
+    joinedAt: Date.now(),
+    avatarHash: avatarHash || null,
+    nameSkeleton: nameSkeleton || null,
+  });
+  if (existing.length > 2500) {
+    existing.splice(0, existing.length - 2500);
+  }
+  recentJoinSignalsByGuild.set(guildId, existing);
+}
+
+function getJoinSignalStats(member) {
+  const guildId = String(member?.guild?.id || "");
+  const userId = String(member?.user?.id || "");
+  const avatarHash = String(member?.user?.avatar || "");
+  if (!guildId || !userId) {
+    return { reusedAvatarCount: 0, similarNameCount: 0 };
+  }
+
+  const records = pruneJoinSignals(recentJoinSignalsByGuild.get(guildId) || []);
+  recentJoinSignalsByGuild.set(guildId, records);
+  const normalizedName = toAccountNameSkeleton(
+    `${member?.user?.username || ""} ${member?.user?.globalName || ""}`.trim(),
+  );
+
+  const reusedAvatarCount = avatarHash
+    ? records.filter(
+        (item) =>
+          item?.userId !== userId &&
+          item?.avatarHash &&
+          String(item.avatarHash) === avatarHash,
+      ).length
+    : 0;
+
+  const similarNameCount = normalizedName
+    ? records.filter(
+        (item) =>
+          item?.userId !== userId &&
+          item?.nameSkeleton &&
+          String(item.nameSkeleton) === normalizedName,
+      ).length
+    : 0;
+
+  return { reusedAvatarCount, similarNameCount };
+}
+
 function detectSuspiciousAccount(member) {
   const usernameRaw = String(member?.user?.username || "");
   const globalNameRaw = String(member?.user?.globalName || "");
@@ -606,6 +701,12 @@ function detectSuspiciousAccount(member) {
     signalLabels.push("mixed-scripts");
   }
 
+  if (looksRandomName(usernameRaw) || looksRandomName(globalNameRaw)) {
+    score += 24;
+    strongSignals += 1;
+    signalLabels.push("random-name");
+  }
+
   if (ageHours <= 24) {
     score += 32;
     signalLabels.push("age<=24h");
@@ -615,11 +716,28 @@ function detectSuspiciousAccount(member) {
   } else if (ageDays <= 7) {
     score += 12;
     signalLabels.push("age<=7d");
+  } else if (ageDays <= 30) {
+    score += 6;
+    signalLabels.push("age<=30d");
   }
 
-  if (hasNoAvatar(member) && ageDays <= 7) {
-    score += 15;
+  if (hasNoAvatar(member) && ageDays <= 30) {
+    score += 24;
     signalLabels.push("no-avatar+young");
+  }
+
+  const { reusedAvatarCount, similarNameCount } = getJoinSignalStats(member);
+  if (reusedAvatarCount >= 2) {
+    score += 36;
+    strongSignals += 1;
+    signalLabels.push(`avatar-reused:${reusedAvatarCount + 1}`);
+  } else if (reusedAvatarCount === 1) {
+    score += 16;
+    signalLabels.push("avatar-reused:2");
+  }
+  if (similarNameCount >= 2) {
+    score += 18;
+    signalLabels.push(`name-clone:${similarNameCount + 1}`);
   }
 
   const suspicious =
@@ -1126,6 +1244,7 @@ module.exports = {
 
       // Come Wick: Join Raid gira per ogni join (regardless of Join Gate). Se Join Gate fa match si passa joinGateFeedOnly per non doppia escalation.
       if (!isCoreExempt) {
+        trackRecentJoinSignal(member);
         let joinGateMatch = null;
         if (
           joinGateConfig?.enabled &&
