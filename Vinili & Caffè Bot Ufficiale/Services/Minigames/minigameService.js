@@ -1,4 +1,4 @@
-const axios = require("axios");
+﻿const axios = require("axios");
 const { createCanvas } = require("canvas");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
@@ -18,7 +18,7 @@ const recentQuestionKeysByChannel = new Map();
 
 const REWARD_CHANNEL_ID = IDs.channels.commands;
 const MINIGAME_WIN_EMOJI = "<a:VC_Verified:1448687631109197978>";
-const MINIGAME_CORRECT_FALLBACK_EMOJI = "✅";
+const MINIGAME_CORRECT_FALLBACK_EMOJI = "âœ…";
 const MINIGAMES_ITALIAN_ONLY = true;
 const EXP_REWARDS = [
   { exp: 100, roleId: IDs.roles.Initiate },
@@ -83,7 +83,7 @@ const CAPITAL_QUIZ_BANK = [
   { country: "Stati Uniti", answers: ["Washington", "Washington DC"] },
   { country: "Canada", answers: ["Ottawa"] },
   { country: "Giappone", answers: ["Tokyo"] },
-  { country: "Brasile", answers: ["Brasilia", "Brasìlia"] },
+  { country: "Brasile", answers: ["Brasilia", "BrasÃ¬lia"] },
 ];
 
 const ITALIAN_REGION_CAPITAL_BANK = [
@@ -293,9 +293,9 @@ const ALBUM_BANK = [
 ];
 
 const ITALIAN_GK_BANK = [
-  { question: "Qual è il fiume più lungo d Italia?", answers: ["Po"] },
+  { question: "Qual è il fiume più lungo d'Italia?", answers: ["Po"] },
   {
-    question: "In che anno è stata proclamata l unità d Italia?",
+    question: "In che anno è stata proclamata l'unità d'Italia?",
     answers: ["1861"],
   },
   {
@@ -308,16 +308,15 @@ const ITALIAN_GK_BANK = [
     answers: ["Dante Alighieri", "Dante"],
   },
   {
-    question: "Qual è la montagna più alta d Italia?",
+    question: "Qual è la montagna più alta d'Italia?",
     answers: ["Monte Bianco", "Mont Blanc"],
   },
   {
-    question: "Qual è il mare a est dell Italia?",
+    question: "Qual è il mare a est dell'Italia?",
     answers: ["Adriatico", "Mar Adriatico"],
   },
   {
-    question:
-      "Qual è il simbolo della Repubblica Italiana in cucina più famoso nel mondo?",
+    question: "Qual è il simbolo della cucina italiana più famoso nel mondo?",
     answers: ["Pizza"],
   },
 ];
@@ -325,7 +324,7 @@ const ITALIAN_GK_BANK = [
 const DRIVING_TRUE_FALSE_BANK = [
   {
     statement:
-      "In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.",
+      "In autostrada, salvo diversa segnalazione, il limite per le auto Ã¨ 130 km/h.",
     answer: true,
   },
   {
@@ -333,12 +332,12 @@ const DRIVING_TRUE_FALSE_BANK = [
     answer: false,
   },
   {
-    statement: "È obbligatorio usare le cinture anche nei sedili posteriori.",
+    statement: "Ãˆ obbligatorio usare le cinture anche nei sedili posteriori.",
     answer: true,
   },
   {
     statement:
-      "Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.",
+      "Si puÃ² usare il telefono alla guida senza vivavoce se la chiamata Ã¨ breve.",
     answer: false,
   },
   {
@@ -352,47 +351,47 @@ const DRIVING_TRUE_FALSE_BANK = [
   },
   {
     statement:
-      "È consentito sorpassare in prossimità delle curve sempre e comunque.",
+      "Ãˆ consentito sorpassare in prossimitÃ  delle curve sempre e comunque.",
     answer: false,
   },
   {
-    statement: "Con pioggia intensa bisogna ridurre la velocità.",
+    statement: "Con pioggia intensa bisogna ridurre la velocitÃ .",
     answer: true,
   },
   { statement: "I segnali triangolari con bordo rosso indicano un pericolo.", answer: true },
   { statement: "I segnali di divieto sono di forma circolare.", answer: true },
-  { statement: "Il segnale di obbligo è di forma circolare con sfondo blu.", answer: true },
-  { statement: "Fuori dai centri abitati il limite per le auto è 90 km/h salvo diversa segnalazione.", answer: true },
-  { statement: "È vietato sorpassare a destra salvo che il veicolo sorpassato stia svoltando a sinistra.", answer: true },
-  { statement: "In autostrada è vietato usare la corsia di emergenza per marciare.", answer: true },
-  { statement: "Il conducente deve avere con sé la patente e il libretto di circolazione.", answer: true },
-  { statement: "L'assicurazione RC auto è obbligatoria per legge.", answer: true },
-  { statement: "In caso di nebbia è obbligatorio tenere accesi i fendinebbia o le luci antinebbia.", answer: true },
-  { statement: "Il semaforo giallo obbliga a fermarsi se ci si può fermare in sicurezza.", answer: true },
-  { statement: "La sosta è vietata in corrispondenza dei passaggi pedonali.", answer: true },
-  { statement: "È vietato fermarsi sulle strisce pedonali.", answer: true },
-  { statement: "In una rotatoria ha precedenza chi sta già circolando nella rotatoria.", answer: true },
+  { statement: "Il segnale di obbligo Ã¨ di forma circolare con sfondo blu.", answer: true },
+  { statement: "Fuori dai centri abitati il limite per le auto Ã¨ 90 km/h salvo diversa segnalazione.", answer: true },
+  { statement: "Ãˆ vietato sorpassare a destra salvo che il veicolo sorpassato stia svoltando a sinistra.", answer: true },
+  { statement: "In autostrada Ã¨ vietato usare la corsia di emergenza per marciare.", answer: true },
+  { statement: "Il conducente deve avere con sÃ© la patente e il libretto di circolazione.", answer: true },
+  { statement: "L'assicurazione RC auto Ã¨ obbligatoria per legge.", answer: true },
+  { statement: "In caso di nebbia Ã¨ obbligatorio tenere accesi i fendinebbia o le luci antinebbia.", answer: true },
+  { statement: "Il semaforo giallo obbliga a fermarsi se ci si puÃ² fermare in sicurezza.", answer: true },
+  { statement: "La sosta Ã¨ vietata in corrispondenza dei passaggi pedonali.", answer: true },
+  { statement: "Ãˆ vietato fermarsi sulle strisce pedonali.", answer: true },
+  { statement: "In una rotatoria ha precedenza chi sta giÃ  circolando nella rotatoria.", answer: true },
   { statement: "Le catene da neve vanno montate sulle ruote motrici.", answer: true },
-  { statement: "È vietato circolare con il veicolo in condizioni di scarsa visibilità senza luci accese.", answer: true },
+  { statement: "Ãˆ vietato circolare con il veicolo in condizioni di scarsa visibilitÃ  senza luci accese.", answer: true },
   { statement: "Il segnale STOP obbliga a fermarsi e dare la precedenza.", answer: true },
-  { statement: "La doppia striscia continua non può essere oltrepassata.", answer: true },
+  { statement: "La doppia striscia continua non puÃ² essere oltrepassata.", answer: true },
   { statement: "In caso di incidente con feriti bisogna prestare assistenza e chiamare i soccorsi.", answer: true },
-  { statement: "È consentito sorpassare in corrispondenza degli attraversamenti pedonali se non ci sono pedoni.", answer: false },
-  { statement: "Si può parcheggiare in doppia fila se si lascia il motore acceso.", answer: false },
-  { statement: "In autostrada si può fare retromarcia per recuperare un uscita persa.", answer: false },
-  { statement: "I segnali luminosi del semaforo valgono più dei segnali verticali.", answer: false },
-  { statement: "È consentito superare i 130 km/h in autostrada per sorpassare.", answer: false },
+  { statement: "Ãˆ consentito sorpassare in corrispondenza degli attraversamenti pedonali se non ci sono pedoni.", answer: false },
+  { statement: "Si puÃ² parcheggiare in doppia fila se si lascia il motore acceso.", answer: false },
+  { statement: "In autostrada si puÃ² fare retromarcia per recuperare un uscita persa.", answer: false },
+  { statement: "I segnali luminosi del semaforo valgono piÃ¹ dei segnali verticali.", answer: false },
+  { statement: "Ãˆ consentito superare i 130 km/h in autostrada per sorpassare.", answer: false },
   { statement: "La patente si rinnova solo dopo i 50 anni.", answer: false },
-  { statement: "In galleria è obbligatorio tenere accesi solo gli anabbaglianti.", answer: true },
-  { statement: "Il casco è obbligatorio per i conducenti di ciclomotori e motocicli.", answer: true },
+  { statement: "In galleria Ã¨ obbligatorio tenere accesi solo gli anabbaglianti.", answer: true },
+  { statement: "Il casco Ã¨ obbligatorio per i conducenti di ciclomotori e motocicli.", answer: true },
   { statement: "Il segnale di divieto di sosta vieta di fermarsi anche momentaneamente.", answer: false },
-  { statement: "In caso di frenata di emergenza è consigliato azionare ripetutamente il freno (pompaggio).", answer: true },
+  { statement: "In caso di frenata di emergenza Ã¨ consigliato azionare ripetutamente il freno (pompaggio).", answer: true },
 ];
 
 const DRIVING_MULTIPLE_CHOICE_BANK = [
   {
     statement: "In un incrocio senza segnaletica, chi ha la precedenza?",
-    options: ["Chi proviene da destra", "Chi proviene da sinistra", "I veicoli più veloci", "I veicoli più pesanti"],
+    options: ["Chi proviene da destra", "Chi proviene da sinistra", "I veicoli piÃ¹ veloci", "I veicoli piÃ¹ pesanti"],
     correctIndex: 0,
   },
   {
@@ -406,12 +405,12 @@ const DRIVING_MULTIPLE_CHOICE_BANK = [
     correctIndex: 0,
   },
   {
-    statement: "Il limite di velocità nei centri abitati è di default:",
+    statement: "Il limite di velocitÃ  nei centri abitati Ã¨ di default:",
     options: ["50 km/h", "30 km/h", "70 km/h", "90 km/h"],
     correctIndex: 0,
   },
   {
-    statement: "In caso di nebbia fitta, è obbligatorio:",
+    statement: "In caso di nebbia fitta, Ã¨ obbligatorio:",
     options: ["Accendere le luci anabbaglianti e i fendinebbia", "Solo i fari abbaglianti", "Nessuna luce obbligatoria", "Solo le luci di posizione"],
     correctIndex: 0,
   },
@@ -421,13 +420,13 @@ const DRIVING_MULTIPLE_CHOICE_BANK = [
     correctIndex: 0,
   },
   {
-    statement: "In una strada a senso unico, dove si può normalmente sostare?",
-    options: ["Sul lato destro o sinistro", "Solo sul lato destro", "Solo in aree attrezzate", "È vietata la sosta"],
+    statement: "In una strada a senso unico, dove si puÃ² normalmente sostare?",
+    options: ["Sul lato destro o sinistro", "Solo sul lato destro", "Solo in aree attrezzate", "Ãˆ vietata la sosta"],
     correctIndex: 0,
   },
   {
-    statement: "Quale documento deve avere con sé il conducente?",
-    options: ["Patente e libretto di circolazione", "Solo la patente", "Solo il libretto", "Nessuno se il veicolo è assicurato"],
+    statement: "Quale documento deve avere con sÃ© il conducente?",
+    options: ["Patente e libretto di circolazione", "Solo la patente", "Solo il libretto", "Nessuno se il veicolo Ã¨ assicurato"],
     correctIndex: 0,
   },
   {
@@ -436,7 +435,7 @@ const DRIVING_MULTIPLE_CHOICE_BANK = [
     correctIndex: 0,
   },
   {
-    statement: "In autostrada, qual è il limite minimo di velocità?",
+    statement: "In autostrada, qual Ã¨ il limite minimo di velocitÃ ?",
     options: ["Non esiste un limite minimo obbligatorio", "60 km/h", "80 km/h", "90 km/h"],
     correctIndex: 0,
   },
@@ -446,13 +445,13 @@ const DRIVING_MULTIPLE_CHOICE_BANK = [
     correctIndex: 0,
   },
   {
-    statement: "Quando è obbligatorio usare i proiettori anabbaglianti?",
-    options: ["Di giorno in galleria e in caso di scarsa visibilità", "Solo di notte", "Solo in autostrada", "Mai, sono facoltativi"],
+    statement: "Quando Ã¨ obbligatorio usare i proiettori anabbaglianti?",
+    options: ["Di giorno in galleria e in caso di scarsa visibilitÃ ", "Solo di notte", "Solo in autostrada", "Mai, sono facoltativi"],
     correctIndex: 0,
   },
   {
     statement: "Cosa indica la striscia bianca continua sulla carreggiata?",
-    options: ["Non si può oltrepassare", "Si può sorpassare con prudenza", "Corsia riservata ai bus", "Limite di parcheggio"],
+    options: ["Non si puÃ² oltrepassare", "Si puÃ² sorpassare con prudenza", "Corsia riservata ai bus", "Limite di parcheggio"],
     correctIndex: 0,
   },
   {
@@ -466,28 +465,28 @@ const DRIVING_MULTIPLE_CHOICE_BANK = [
     correctIndex: 0,
   },
   {
-    statement: "Su strada extraurbana secondaria il limite per le auto è in genere:",
+    statement: "Su strada extraurbana secondaria il limite per le auto Ã¨ in genere:",
     options: ["90 km/h", "50 km/h", "110 km/h", "70 km/h"],
     correctIndex: 0,
   },
   {
     statement: "La segnaletica orizzontale gialla:",
-    options: ["Prevale su quella bianca quando sono entrambe presenti", "È solo indicativa", "Indica un divieto assoluto", "Si trova solo in autostrada"],
+    options: ["Prevale su quella bianca quando sono entrambe presenti", "Ãˆ solo indicativa", "Indica un divieto assoluto", "Si trova solo in autostrada"],
     correctIndex: 0,
   },
   {
-    statement: "In caso di strada sdrucciolevole è opportuno:",
-    options: ["Ridurre la velocità e manovrare con delicatezza", "Frenare a fondo", "Accelerare per uscire dalla zona", "Sterzare bruscamente"],
+    statement: "In caso di strada sdrucciolevole Ã¨ opportuno:",
+    options: ["Ridurre la velocitÃ  e manovrare con delicatezza", "Frenare a fondo", "Accelerare per uscire dalla zona", "Sterzare bruscamente"],
     correctIndex: 0,
   },
   {
     statement: "Il pannello integrativo con tre barre nere oblique sotto un segnale indica:",
-    options: ["Distanza di pericolo (150-250-350 m)", "Limite di velocità 30 km/h", "Divieto di sorpasso per 3 km", "Altezza massima 3 m"],
+    options: ["Distanza di pericolo (150-250-350 m)", "Limite di velocitÃ  30 km/h", "Divieto di sorpasso per 3 km", "Altezza massima 3 m"],
     correctIndex: 0,
   },
   {
     statement: "Chi guida un veicolo deve:",
-    options: ["Avere capacità psico-fisiche adeguate", "Essere maggiorenne per qualsiasi veicolo", "Avere solo la patente", "Non aver assunto farmaci negli ultimi 24 ore"],
+    options: ["Avere capacitÃ  psico-fisiche adeguate", "Essere maggiorenne per qualsiasi veicolo", "Avere solo la patente", "Non aver assunto farmaci negli ultimi 24 ore"],
     correctIndex: 0,
   },
 ];
@@ -533,7 +532,7 @@ const DRIVING_SIGN_QUESTIONS = [
   {
     signType: "speed_50",
     statement: "Cosa indica questo segnale?",
-    options: ["Limite massimo di velocità 50 km/h", "Limite minimo 50 km/h", "Consigliato 50 km/h", "Fine limite 50 km/h"],
+    options: ["Limite massimo di velocitÃ  50 km/h", "Limite minimo 50 km/h", "Consigliato 50 km/h", "Fine limite 50 km/h"],
     correctIndex: 0,
   },
   {
@@ -575,7 +574,7 @@ const FAST_TYPING_PHRASES = [
   "oggi vinco io",
 ];
 
-/** API predefinita per frasi/citazioni (es. quotable.io). Usata se fastType.apiUrl non è impostata. */
+/** API predefinita per frasi/citazioni (es. quotable.io). Usata se fastType.apiUrl non Ã¨ impostata. */
 const DEFAULT_FAST_TYPE_API_URL = "https://api.quotable.io/random";
 
 /** Lunghezza massima frasi "scrivi la frase" (troncate a parola intera se superano). */
@@ -591,7 +590,7 @@ const MYMEMORY_BASE = "https://api.mymemory.translated.net/get";
 
 /**
  * Traduce un testo in italiano (en -> it) tramite MyMemory.
- * Se translateApiToItalian è false in config, non chiamare.
+ * Se translateApiToItalian Ã¨ false in config, non chiamare.
  * @param {string} text - Testo da tradurre (es. da API inglese)
  * @param {{ translateApiToItalian?: boolean }} [cfg] - Config (minigames); se translateApiToItalian === false ritorna il testo originale
  * @returns {Promise<string>} Testo tradotto o originale in caso di errore/disabled
@@ -825,9 +824,9 @@ function normalizeUserAnswerText(raw) {
   return String(raw || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\u00A0/g, " ")
-    .replace(/[`´‘’‚‛′]/g, "'")
-    .replace(/[“”„‟]/g, '"')
-    .replace(/[‐‑‒–—−]/g, "-")
+    .replace(/[`Â´â€˜â€™â€šâ€›â€²]/g, "'")
+    .replace(/[â€œâ€â€žâ€Ÿ]/g, '"')
+    .replace(/[â€â€‘â€’â€“â€”âˆ’]/g, "-")
     .trim();
 }
 
@@ -1041,6 +1040,17 @@ function isLikelyItalianText(value) {
   return itScore >= enScore;
 }
 
+function polishItalianQuestionText(value) {
+  const src = String(value || "").replace(/\s+/g, " ").trim();
+  if (!src) return "";
+  return src
+    .replace(/\bd\s+Italia\b/gi, "d'Italia")
+    .replace(/\bl\s+Italia\b/gi, "l'Italia")
+    .replace(/\bl\s+unità\b/gi, "l'unità")
+    .replace(/\bQual e\b/gi, "Qual è")
+    .replace(/\bpiu\b/gi, "più");
+}
+
 function buildItalianGkApiUrls(cfg) {
   const rawUrls = Array.isArray(cfg?.italianGK?.apiUrls)
     ? cfg.italianGK.apiUrls
@@ -1084,7 +1094,7 @@ function parseItalianGkQuestionFromPayload(payload) {
   const direct = payload && typeof payload === "object" ? payload : null;
   if (direct?.question && (direct?.answer || direct?.correct_answer)) {
     return {
-      question: decodeQuizText(direct.question),
+      question: polishItalianQuestionText(decodeQuizText(direct.question)),
       answers: buildAliases([
         decodeQuizText(direct.answer || direct.correct_answer),
       ]),
@@ -1109,7 +1119,7 @@ function parseItalianGkQuestionFromPayload(payload) {
   if (!question || !answer) return null;
 
   return {
-    question: decodeQuizText(question),
+    question: polishItalianQuestionText(decodeQuizText(question)),
     answers: buildAliases([decodeQuizText(answer)]),
   };
 }
@@ -1481,7 +1491,7 @@ function buildSongAnswerAliases(rawTitle) {
   );
 
   const dashParts = raw
-    .split(/\s[-–—]\s/)
+    .split(/\s[-â€“â€”]\s/)
     .map((p) => p.trim())
     .filter(Boolean);
   if (dashParts.length >= 2) {
@@ -1544,7 +1554,7 @@ function isSingerGuessCorrect(rawGuess, rawAnswers) {
 function normalizeTruthValue(raw) {
   const v = normalizeCountryName(raw);
   if (!v) return null;
-  if (["vero", "v", "true", "t", "si", "sì", "yes", "y"].includes(v)) return true;
+  if (["vero", "v", "true", "t", "si", "sÃ¬", "yes", "y"].includes(v)) return true;
   if (["falso", "f", "false", "no", "n"].includes(v)) return false;
   return null;
 }
@@ -1593,7 +1603,7 @@ function createMathQuestion() {
       const b = randomBetween(2, 12);
       const c = randomBetween(2, 6);
       return {
-        expression: `${a} × ${b} × ${c}`,
+        expression: `${a} Ã— ${b} Ã— ${c}`,
         answer: formatAnswer(a * b * c),
       };
     },
@@ -1602,7 +1612,7 @@ function createMathQuestion() {
       const result = randomBetween(2, 20);
       const dividend = divisor * result;
       return {
-        expression: `${dividend} ÷ ${divisor}`,
+        expression: `${dividend} Ã· ${divisor}`,
         answer: formatAnswer(result),
       };
     },
@@ -1610,7 +1620,7 @@ function createMathQuestion() {
       const root = randomBetween(2, 20);
       const n = root * root;
       return {
-        expression: `√${n}`,
+        expression: `âˆš${n}`,
         answer: formatAnswer(root),
       };
     },
@@ -1621,7 +1631,7 @@ function createMathQuestion() {
       const d = randomBetween(2, 14);
       const left = a * b;
       return {
-        expression: `(${a} × ${b}) + ${c} - ${d}`,
+        expression: `(${a} Ã— ${b}) + ${c} - ${d}`,
         answer: formatAnswer(left + c - d),
       };
     },
@@ -1631,7 +1641,7 @@ function createMathQuestion() {
       const a = randomBetween(2, 30);
       const b = randomBetween(2, 20);
       return {
-        expression: `√${n} + ${a} - ${b}`,
+        expression: `âˆš${n} + ${a} - ${b}`,
         answer: formatAnswer(root + a - b),
       };
     },
@@ -1645,8 +1655,8 @@ function parseMathGuess(raw) {
   const base = normalizeUserAnswerText(raw)
     .replace(/\s+/g, "")
     .replace(/,/g, ".")
-    .replace(/×/g, "*")
-    .replace(/÷/g, "/");
+    .replace(/Ã—/g, "*")
+    .replace(/Ã·/g, "/");
   if (!base) return null;
   if (/^-?\d+(\.\d+)?$/.test(base)) {
     const value = Number(base);
@@ -2108,8 +2118,8 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
 
     const m = Math.min(7, Math.max(0, Number(misses) || 0));
     const max = Math.max(1, Number(maxMisses) || 7);
-    const ox = 220;
-    const oy = 220;
+    const ox = 170;
+    const oy = 255;
     const topY = oy - 150;
     const beamEndX = ox + 120 + 80;
     const headCx = ox + 120 + 40;
@@ -2189,6 +2199,66 @@ function buildHangmanImageAttachment(maskedWord, misses = 0, maxMisses = 7) {
 }
 
 function buildPromptImageAttachment(title, lines = [], fileBaseName = "minigame") {
+  if (fileBaseName === "italian_gk" && Array.isArray(lines) && lines.length > 0) {
+    try {
+      const width = 1400;
+      const height = 780;
+      const canvas = createCanvas(width, height);
+      const ctx = canvas.getContext("2d");
+
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, "#151c2a");
+      bgGrad.addColorStop(1, "#2a2018");
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      const cardX = 42;
+      const cardY = 42;
+      const cardW = width - 84;
+      const cardH = height - 84;
+      ctx.fillStyle = "rgba(247, 241, 232, 0.96)";
+      roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(111, 78, 55, 0.45)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = "#6f4e37";
+      ctx.font = "800 76px Sans";
+      ctx.fillText("Cultura generale", width / 2, cardY + 52);
+
+      const question = polishItalianQuestionText(String(lines[0] || "").trim() || "Domanda");
+      const usableWidth = cardW - 150;
+      let questionFont = 64;
+      let questionLines = [];
+      for (; questionFont >= 42; questionFont -= 2) {
+        ctx.font = `700 ${questionFont}px Sans`;
+        questionLines = wrapPromptText(ctx, question, usableWidth);
+        if (questionLines.length <= 5) break;
+      }
+
+      const lineHeight = Math.round(questionFont * 1.22);
+      const totalH = questionLines.length * lineHeight;
+      let y = Math.round(cardY + 180 + Math.max(0, (cardH - 280 - totalH) / 2));
+
+      ctx.fillStyle = "#2c2419";
+      ctx.font = `700 ${questionFont}px Sans`;
+      for (const line of questionLines) {
+        ctx.fillText(line, width / 2, y, usableWidth);
+        y += lineHeight;
+      }
+
+      return new AttachmentBuilder(canvas.toBuffer("image/png"), {
+        name: "italian_gk.png",
+      });
+    } catch {
+      return null;
+    }
+  }
+
   if (fileBaseName === "hangman" && Array.isArray(lines) && lines.length >= 2) {
     const masked = String(lines[0] || "").trim();
     const errMatch = String(lines[1] || "").match(/Errori:\s*(\d+)\/(\d+)/);
@@ -2408,7 +2478,7 @@ function isLooseAliasGuessCorrect(
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || "").toLowerCase();
   const tokens = lower
-    .split(/[^a-zà-öø-ÿ]+/i)
+    .split(/[^a-zÃ -Ã¶Ã¸-Ã¿]+/i)
     .map((t) => t.trim())
     .filter(Boolean)
     .filter((t) => t.length >= 5 && t.length <= 6);
@@ -2502,7 +2572,7 @@ async function fetchPlayerInfo(cfg, name) {
     return {
       name: player.strPlayer,
       team: player.strTeam || "Squadra sconosciuta",
-      nationality: player.strNationality || "Nazionalità sconosciuta",
+      nationality: player.strNationality || "NazionalitÃ  sconosciuta",
       image: player.strThumb || player.strCutout || null,
       aliases: buildPlayerAliases(player),
     };
@@ -2533,7 +2603,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
       return {
         name: player.strPlayer,
         team: player.strTeam || "Squadra sconosciuta",
-        nationality: player.strNationality || "Nazionalità sconosciuta",
+        nationality: player.strNationality || "NazionalitÃ  sconosciuta",
         image: player.strThumb || player.strCutout || null,
         aliases: buildPlayerAliases(player),
       };
@@ -2631,7 +2701,7 @@ async function fetchRandomSong(cfg) {
         album: song.collectionName || "Album sconosciuto",
         artwork,
         genre,
-        artistCountry: artistCountry || "Nazionalità sconosciuta",
+        artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
         previewUrl: song.previewUrl || null,
       };
     } catch {}
@@ -2742,7 +2812,7 @@ async function fetchPopularSong(cfg) {
       album: pick.album || "Album sconosciuto",
       artwork: pick.artwork || null,
       genre: pick.genre || "Genere sconosciuto",
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
       previewUrl: pick.previewUrl || null,
     };
   }
@@ -2762,7 +2832,7 @@ async function fetchPopularSong(cfg) {
         ? item.artworkUrl100.replace("100x100bb", "600x600bb")
         : pick.artwork,
       genre,
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃ  sconosciuta",
       previewUrl: item?.previewUrl || null,
     };
   } catch {
@@ -2892,10 +2962,10 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il numero .ᐟ ✧")
+    .setTitle("Indovina il numero .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚.ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** Ëš.áŸ`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2906,10 +2976,10 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la parola .ᐟ ✧")
+    .setTitle("Indovina la parola .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚.ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** Ëš.áŸ`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2920,10 +2990,10 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la bandiera .ᐟ ✧")
+    .setTitle("Indovina la bandiera .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚.ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** Ëš.áŸ`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2935,10 +3005,10 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il calciatore .ᐟ ✧")
+    .setTitle("Indovina il calciatore .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp} exp** ˚.ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina il calciatore piÃ¹ famoso per ottenere **${rewardExp} exp** Ëš.áŸ`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2953,10 +3023,10 @@ function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la canzone .ᐟ ✧")
+    .setTitle("Indovina la canzone .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**˚.ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**Ëš.áŸ`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2974,10 +3044,10 @@ function buildGuessCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la capitale .ᐟ ✧")
+    .setTitle("Indovina la capitale .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Qual è la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
+        `<a:VC_Beer:1448687940560490547> Qual Ã¨ la capitale di **${country}**? Ricompensa **${rewardExp} exp**.`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
@@ -2995,10 +3065,10 @@ function buildGuessRegionCapitalEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il capoluogo .ᐟ ✧")
+    .setTitle("Indovina il capoluogo .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Qual è il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
+        `<a:VC_Beer:1448687940560490547> Qual Ã¨ il capoluogo della regione **${region}**? Ricompensa **${rewardExp} exp**.`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
@@ -3011,7 +3081,7 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi per primo la frase .ᐟ ✧")
+    .setTitle("Scrivi per primo la frase .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
@@ -3025,7 +3095,7 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la squadra di calcio .ᐟ ✧")
+    .setTitle("Indovina la squadra di calcio .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
@@ -3040,7 +3110,7 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il cantante .ᐟ ✧")
+    .setTitle("Indovina il cantante .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
@@ -3055,7 +3125,7 @@ function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina l'album .ᐟ ✧")
+    .setTitle("Indovina l'album .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp} exp**.`,
@@ -3077,7 +3147,7 @@ function buildHangmanEmbed(
   const letters = countHangmanLetters(maskedWord);
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato .ᐟ ✧")
+    .setTitle("Impiccato .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
@@ -3123,7 +3193,7 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale .ᐟ ✧")
+    .setTitle("Cultura generale .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
@@ -3160,7 +3230,7 @@ function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   );
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente .ᐟ ✧")
+    .setTitle("Quiz patente .áŸ âœ§")
     .setDescription(lines.join("\n"));
 }
 
@@ -3173,7 +3243,7 @@ function buildMathExpressionEmbed(
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Espressione matematica .ᐟ ✧")
+    .setTitle("Espressione matematica .áŸ âœ§")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
@@ -3189,7 +3259,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Trova il bot .ᐟ ✧")
+    .setTitle("Trova il bot .áŸ âœ§")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!",
@@ -3203,7 +3273,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Sei vicino al bot .ᐟ ✧")
+    .setTitle("Sei vicino al bot .áŸ âœ§")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!",
@@ -3216,22 +3286,22 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âž¢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âž¢ <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildGenericHintEmbed(text) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> ${text}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>âºIndizio")
+    .setDescription(`âž¢ <a:VC_Arrow:1448672967721615452> ${text}`);
 }
 
 function buildMaskedTextHint(value) {
@@ -3249,7 +3319,7 @@ function buildNumberNearHint(target, min, max) {
   const band = Math.max(2, Math.round(range * 0.18));
   const from = Math.max(low, Number(target) - band);
   const to = Math.min(high, Number(target) + band);
-  return `Il numero è tra **${from}** e **${to}**.`;
+  return `Il numero Ã¨ tra **${from}** e **${to}**.`;
 }
 
 function buildHintEmbed(isHigher) {
@@ -3257,25 +3327,25 @@ function buildHintEmbed(isHigher) {
     .setColor("#6f4e37")
     .setDescription(
       isHigher
-        ? "📈 <a:VC_Arrow:1448672967721615452> Più alto!"
-        : "📉 <a:VC_Arrow:1448672967721615452> Più basso!",
+        ? "ðŸ“ˆ <a:VC_Arrow:1448672967721615452> PiÃ¹ alto!"
+        : "ðŸ“‰ <a:VC_Arrow:1448672967721615452> PiÃ¹ basso!",
     );
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .ᐟ ✧")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto .áŸ âœ§")
     .setDescription(
       [
-        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.ᐟ ✧`,
+        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**.áŸ âœ§`,
         "",
-        "📊 **Le tue statistiche:**",
+        "ðŸ“Š **Le tue statistiche:**",
         `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
       ].join("\n"),
     )
     .setFooter({
-      text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi',
+      text: 'â‡¢ digita il comando "+mstats" per vedere i tuoi progressi',
     });
 }
 
@@ -3378,7 +3448,7 @@ function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`,
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** â€” ${artist}.`,
     );
 }
 
@@ -3483,6 +3553,7 @@ function buildTimeoutMathEmbed(answer) {
 
 function getAvailableGameTypes(cfg) {
   const types = [];
+  if (cfg?.guessNumber !== false) types.push("guessNumber");
   if (cfg?.guessWord?.apiUrl) types.push("guessWord");
   if (cfg?.guessFlag?.apiUrl) types.push("guessFlag");
   if (cfg?.guessPlayer?.apiUrl) types.push("guessPlayer");
@@ -3497,6 +3568,7 @@ function getAvailableGameTypes(cfg) {
   if (cfg?.italianGK !== false) types.push("italianGK");
   if (cfg?.drivingQuiz !== false) types.push("drivingQuiz");
   if (cfg?.mathExpression !== false) types.push("mathExpression");
+  if (cfg?.findBot !== false) types.push("findBot");
   return types;
 }
 
@@ -3960,7 +4032,7 @@ async function startGuessPlayerGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.team} • ${info.nationality} • ${buildMaskedTextHint(info.name)}`,
+    `${info.team} â€¢ ${info.nationality} â€¢ ${buildMaskedTextHint(info.name)}`,
   );
 
   activeGames.set(channelId, {
@@ -4054,7 +4126,7 @@ async function startGuessSongGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `${info.artistCountry} • ${info.genre} • ${buildMaskedTextHint(info.title)}`,
+    `${info.artistCountry} â€¢ ${info.genre} â€¢ ${buildMaskedTextHint(info.title)}`,
   );
 
   activeGames.set(channelId, {
@@ -4591,7 +4663,7 @@ async function startGuessAlbumGame(client, cfg) {
     client,
     channelId,
     durationMs,
-    `Artista: **${pick.artist}** • Album: ${buildMaskedTextHint(pick.album)}`,
+    `Artista: **${pick.artist}** â€¢ Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
   activeGames.set(channelId, {
@@ -4743,7 +4815,7 @@ async function startItalianGkGame(client, cfg) {
   const localPick = pickRandomItem(ITALIAN_GK_BANK);
   if (localPick?.question && Array.isArray(localPick?.answers)) {
     questionRow = {
-      question: String(localPick.question),
+      question: polishItalianQuestionText(String(localPick.question)),
       answers: buildAliases(localPick.answers),
     };
   }
@@ -4765,12 +4837,16 @@ async function startItalianGkGame(client, cfg) {
     if (questionRow && apiUrls.length && cfg?.translateApiToItalian !== false) {
       const q = await translateToItalian(questionRow.question, cfg);
       const a = await translateToItalian(String(questionRow.answers?.[0] || ""), cfg);
-      if (q) questionRow = { ...questionRow, question: q };
+      if (q) questionRow = { ...questionRow, question: polishItalianQuestionText(q) };
       if (a) questionRow = { ...questionRow, answers: buildAliases([a]) };
     }
   }
   if (!questionRow) return false;
   if (!questionRow.answers.length) return false;
+  questionRow = {
+    ...questionRow,
+    question: polishItalianQuestionText(questionRow.question),
+  };
 
   const rewardExp = Number(cfg?.italianGK?.rewardExp || 140);
   const durationMs = Math.max(
@@ -5091,7 +5167,7 @@ async function startDrivingQuizGame(client, cfg) {
       client,
       channelId,
       durationMs,
-      `La risposta corretta è la **${letter}**.`,
+      `La risposta corretta Ã¨ la **${letter}**.`,
     );
   }
 
@@ -5185,8 +5261,8 @@ async function startMathExpressionGame(client, cfg) {
   }, durationMs);
   const answerNum = Number(row.answer);
   const hintRangeText = Number.isFinite(answerNum)
-    ? `Il risultato è compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
-    : "Il risultato è un numero intero.";
+    ? `Il risultato Ã¨ compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
+    : "Il risultato Ã¨ un numero intero.";
   const hintTimeout = await scheduleGenericHint(
     client,
     channelId,
@@ -6401,7 +6477,7 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const name = parsed?.name || "il calciatore";
     const team = parsed?.team || "Squadra sconosciuta";
-    const nationality = parsed?.nationality || "Nazionalità sconosciuta";
+    const nationality = parsed?.nationality || "NazionalitÃ  sconosciuta";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
       if (!game) return;
@@ -6416,7 +6492,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${team} • ${nationality} • ${buildMaskedTextHint(name)}`,
+      `${team} â€¢ ${nationality} â€¢ ${buildMaskedTextHint(name)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessPlayer",
@@ -6436,7 +6512,7 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const title = parsed?.title || "la canzone";
     const artist = parsed?.artist || "";
-    const artistCountry = parsed?.artistCountry || "Nazionalità sconosciuta";
+    const artistCountry = parsed?.artistCountry || "NazionalitÃ  sconosciuta";
     const genre = parsed?.genre || "Genere sconosciuto";
     const timeout = setTimeout(async () => {
       const game = activeGames.get(cfg.channelId);
@@ -6452,7 +6528,7 @@ async function restoreActiveGames(client) {
       client,
       cfg.channelId,
       remainingMs,
-      `${artistCountry} • ${genre} • ${buildMaskedTextHint(title)}`,
+      `${artistCountry} â€¢ ${genre} â€¢ ${buildMaskedTextHint(title)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessSong",
@@ -6833,3 +6909,4 @@ module.exports = {
   handleMinigameButton,
   clearGameForChannel,
 };
+

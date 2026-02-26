@@ -1,1 +1,18 @@
-{"developers":["295500038401163264"],"mainGuildId":"1329080093599076474","channels":{"ticketLogs":"1442569290682208296"},"status":"invisible"}
+{
+  "developers": [
+    "295500038401163264"
+  ],
+  "mainGuildId": "1329080093599076474",
+  "channels": {
+    "ticketLogs": "1442569290682208296"
+  },
+  "status": "invisible",
+  "tts": {
+    "enabled": true,
+    "lang": "it",
+    "maxChars": 300,
+    "autojoin": true,
+    "includeUsername": true,
+    "stayConnected": false
+  }
+}

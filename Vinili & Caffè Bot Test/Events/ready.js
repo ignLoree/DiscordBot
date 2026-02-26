@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
+const { restoreTtsConnections } = require("../Services/TTS/ttsService");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
@@ -49,6 +50,10 @@ async function connectMongo(client) {
 
 async function refreshLists(client) {
   return client;
+}
+
+async function restoreTtsState(client) {
+  await restoreTtsConnections(client);
 }
 
 async function cleanupMessage(channel, messageId) {
@@ -116,6 +121,7 @@ module.exports = {
     await setPresence(activeClient);
     await connectMongo(activeClient);
     await refreshLists(activeClient);
+    await restoreTtsState(activeClient);
     await handleRestartNotification(activeClient);
   },
 };

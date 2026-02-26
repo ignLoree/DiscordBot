@@ -55,7 +55,9 @@ const FORCE_DELETE_CHANNEL_IDS = new Set(
 const MEDIA_BLOCK_ROLE_IDS = [IDs.roles.PicPerms].filter(Boolean);
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
 const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set(
-  [IDs.channels.media].filter(Boolean).map((id) => String(id)),
+  [IDs.channels.media, IDs.channels.musicCommands]
+    .filter(Boolean)
+    .map((id) => String(id)),
 );
 const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set(
   [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
