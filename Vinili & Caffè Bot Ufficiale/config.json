@@ -70,7 +70,7 @@
     "enabled": true,
     "lang": "it",
     "maxChars": 1000,
-    "autojoin": true,
+    "autojoin": false,
     "includeUsername": false,
     "stayConnected": false
   },
