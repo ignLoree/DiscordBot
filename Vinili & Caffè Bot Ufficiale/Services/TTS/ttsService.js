@@ -29,6 +29,21 @@ try {
   );
 }
 
+function booleanFromConfig(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const raw = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (["true", "1", "on", "yes", "si", "enabled", "attivo"].includes(raw))
+    return true;
+  if (
+    ["false", "0", "off", "no", "disabled", "disattivo"].includes(raw)
+  )
+    return false;
+  return fallback;
+}
+
 function shouldHandleMessage(message, config, prefix) {
   if (!config?.tts?.enabled) return false;
   if (!message?.channel) return false;
@@ -393,7 +408,7 @@ async function handleTtsMessage(message, client, prefix) {
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {
     return;
   }
-  const autojoin = config?.tts?.autojoin !== false;
+  const autojoin = booleanFromConfig(config?.tts?.autojoin, false);
   if (!autojoin && !lockedChannelId) {
     return;
   }
@@ -403,7 +418,10 @@ async function handleTtsMessage(message, client, prefix) {
   );
   if (!connection) return;
   const maxChars = config?.tts?.maxChars || 200;
-  const includeUsername = config?.tts?.includeUsername !== false;
+  const includeUsername = booleanFromConfig(
+    config?.tts?.includeUsername,
+    false,
+  );
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const rawMessageText = message.cleanContent ?? message.content ?? "";
   const baseText = sanitizeText(
@@ -531,6 +549,14 @@ async function clearVoiceState(guildId) {
 
 async function restoreTtsConnections(client) {
   try {
+    const autojoinEnabled = booleanFromConfig(
+      client?.config?.tts?.autojoin,
+      false,
+    );
+    if (!autojoinEnabled) {
+      await VoiceState.deleteMany({}).catch(() => null);
+      return;
+    }
     const states = await VoiceState.find({});
     for (const entry of states) {
       const channel = await client.channels

@@ -1,13 +1,21 @@
+const fs = require("fs");
+const path = require("path");
 const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
 
 const EMPTY_PERMISSIONS = {
   slash: {},
   prefix: {},
+  channels: {},
   buttons: {},
   selectMenus: {},
   modals: {},
 };
+const PERMISSIONS_CANDIDATES = [
+  path.join(process.cwd(), "permissions.json"),
+  path.resolve(__dirname, "../../permissions.json"),
+];
+let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS };
 
 const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
@@ -18,7 +26,10 @@ const TEST_BOT_ALLOWED_GUILDS = new Set(
 );
 
 function isOfficialMainGuild(guildId) {
-  return false;
+  return (
+    Boolean(OFFICIAL_MAIN_GUILD_ID) &&
+    String(guildId || "") === String(OFFICIAL_MAIN_GUILD_ID)
+  );
 }
 
 function isTestMainScopeGuild(guildId) {
@@ -28,7 +39,33 @@ function isTestMainScopeGuild(guildId) {
 }
 
 function loadPermissions() {
-  return EMPTY_PERMISSIONS;
+  try {
+    const permissionsPath =
+      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
+    if (!permissionsPath) return EMPTY_PERMISSIONS;
+    const stat = fs.statSync(permissionsPath);
+    if (
+      cache.data &&
+      cache.filePath === permissionsPath &&
+      cache.mtimeMs === stat.mtimeMs
+    ) {
+      return cache.data;
+    }
+    const raw = fs.readFileSync(permissionsPath, "utf-8");
+    const parsed = JSON.parse(raw) || {};
+    const normalized = {
+      slash: parsed.slash || {},
+      prefix: parsed.prefix || {},
+      channels: parsed.channels || {},
+      buttons: parsed.buttons || {},
+      selectMenus: parsed.selectMenus || {},
+      modals: parsed.modals || {},
+    };
+    cache = { filePath: permissionsPath, mtimeMs: stat.mtimeMs, data: normalized };
+    return cache.data;
+  } catch {
+    return EMPTY_PERMISSIONS;
+  }
 }
 
 function resolveRoleReference(value) {
@@ -48,6 +85,64 @@ function resolveRoleReference(value) {
 function normalizeRoleList(roleIds) {
   if (!Array.isArray(roleIds)) return roleIds;
   return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
+}
+
+function resolveChannelReference(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{16,20}$/.test(raw)) return raw;
+
+  let key = raw;
+  if (key.startsWith("ids.channels.")) key = key.slice("ids.channels.".length);
+  else if (key.startsWith("channels.")) key = key.slice("channels.".length);
+
+  const resolved = IDs?.channels?.[key];
+  return resolved ? String(resolved) : null;
+}
+
+function normalizeChannelList(channelIds) {
+  if (!Array.isArray(channelIds)) return channelIds;
+  return channelIds
+    .map((value) => resolveChannelReference(value))
+    .filter(Boolean);
+}
+
+function resolveCommandChannelPolicy(data, keys) {
+  const map = data?.channels;
+  if (!map || typeof map !== "object") return null;
+  for (const key of keys || []) {
+    if (!Object.prototype.hasOwnProperty.call(map, key)) continue;
+    const normalized = normalizeChannelList(map[key]);
+    if (Array.isArray(normalized)) return normalized;
+  }
+  return null;
+}
+
+function buildSlashLookupKeys(commandName, groupName, subcommandName) {
+  const command = String(commandName || "").trim().toLowerCase();
+  const group = String(groupName || "").trim().toLowerCase();
+  const sub = String(subcommandName || "").trim().toLowerCase();
+  const out = [];
+  if (!command) return out;
+  if (group && sub) {
+    out.push(`${command}.${group}.${sub}`);
+    out.push(`${command}.${group}_${sub}`);
+    out.push(`${command}.${group}-${sub}`);
+  }
+  if (sub) out.push(`${command}.${sub}`);
+  out.push(command);
+  return out;
+}
+
+function buildPrefixLookupKeys(commandName, subcommandName) {
+  const command = String(commandName || "").trim().toLowerCase();
+  const sub = String(subcommandName || "").trim().toLowerCase();
+  const out = [];
+  if (!command) return out;
+  if (sub) out.push(`${command}.${sub}`);
+  out.push(command);
+  return out;
 }
 
 function collectMemberRoleIds(member) {
@@ -97,6 +192,15 @@ async function hasAnyRoleWithLiveFallback(entity, roleIds) {
   const freshMember = await fetchLiveMember(entity);
   if (!freshMember) return false;
   return hasAnyRole(freshMember, roleIds);
+}
+
+async function hasAdminPermissionWithFallback(entity) {
+  const member = entity?.member;
+  if (member?.permissions?.has?.(PermissionFlagsBits.Administrator)) return true;
+  const freshMember = await fetchLiveMember(entity);
+  return Boolean(
+    freshMember?.permissions?.has?.(PermissionFlagsBits.Administrator),
+  );
 }
 
 function resolveSlashRoles(data, commandName, groupName, subcommandName) {
@@ -234,6 +338,10 @@ async function checkSlashPermission(interaction) {
 
   if (!isTestMainScopeGuild(guildId)) return false;
 
+  if (String(guildId) === String(TEST_MAIN_GUILD_ID || "")) {
+    return hasAdminPermissionWithFallback(interaction);
+  }
+
   if (interaction.commandName === "dmbroadcast") {
     const devIds = getDevIds(interaction?.client);
     return devIds.includes(String(userId || ""));
@@ -242,6 +350,14 @@ async function checkSlashPermission(interaction) {
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
+  const channelPolicy = resolveCommandChannelPolicy(
+    data,
+    buildSlashLookupKeys(interaction.commandName, group, sub),
+  );
+  if (isOfficialMainGuild(guildId) && Array.isArray(channelPolicy)) {
+    const channelId = interaction?.channelId || interaction?.channel?.id || null;
+    if (!channelId || !channelPolicy.includes(String(channelId))) return false;
+  }
   const roles = resolveSlashRoles(data, interaction.commandName, group, sub);
   if (!Array.isArray(roles)) return true;
   if (!interaction.inGuild?.()) return false;
@@ -257,12 +373,24 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
 
   if (!isTestMainScopeGuild(guildId)) return false;
 
+  if (String(guildId) === String(TEST_MAIN_GUILD_ID || "")) {
+    return hasAdminPermissionWithFallback(message);
+  }
+
   if (commandName === "restart") {
     const devIds = getDevIds(message?.client);
     return devIds.includes(String(userId || ""));
   }
 
   const data = loadPermissions();
+  const channelPolicy = resolveCommandChannelPolicy(
+    data,
+    buildPrefixLookupKeys(commandName, subcommandName),
+  );
+  if (isOfficialMainGuild(guildId) && Array.isArray(channelPolicy)) {
+    const channelId = message?.channelId || message?.channel?.id || null;
+    if (!channelId || !channelPolicy.includes(String(channelId))) return false;
+  }
   const roles = resolvePrefixRoles(data, commandName, subcommandName);
   if (!Array.isArray(roles)) return true;
   if (!message.guild) return false;

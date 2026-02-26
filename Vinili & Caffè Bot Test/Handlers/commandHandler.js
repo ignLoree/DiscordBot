@@ -2,6 +2,7 @@ const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
 const fs = require("fs");
 const path = require("path");
+const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
 
 function toArrayUnique(values = []) {
@@ -10,8 +11,20 @@ function toArrayUnique(values = []) {
 
 module.exports = (client) => {
   client.handleCommands = async (commandFolders = [], basePath) => {
+    const statusMap = new Map();
     client.commandArray = [];
     client.commands.clear();
+
+    const parseCommandMeta = (command) => {
+      const commandJson =
+        typeof command?.data?.toJSON === "function"
+          ? command.data.toJSON()
+          : null;
+      const name =
+        command?.data?.name || commandJson?.name || command?.name || null;
+      const type = command?.data?.type ?? commandJson?.type ?? 1;
+      return { name, type, json: commandJson };
+    };
 
     for (const folder of commandFolders) {
       const folderPath = path.join(basePath, folder);
@@ -22,27 +35,55 @@ module.exports = (client) => {
 
       for (const file of commandFiles) {
         const fullPath = path.join(folderPath, file);
+        const key = `${folder}/${file}`;
         try {
           delete require.cache[require.resolve(fullPath)];
           const command = require(fullPath);
-          const dataJson =
-            typeof command?.data?.toJSON === "function"
-              ? command.data.toJSON()
-              : null;
-          const name = command?.data?.name || dataJson?.name || command?.name;
-          const type = command?.data?.type ?? dataJson?.type ?? 1;
-          if (!name || !dataJson) continue;
+          const meta = parseCommandMeta(command);
+          if (!meta.name) {
+            statusMap.set(key, "Invalid");
+            continue;
+          }
 
-          client.commands.set(`${name}:${type}`, command);
-          if (!command.skipDeploy) client.commandArray.push(dataJson);
+          if (typeof command.category === "undefined") {
+            command.category = folder;
+          }
+          if (!String(command.helpDescription || "").trim()) {
+            command.helpDescription = String(command.description || "").trim();
+          }
+
+          client.commands.set(`${meta.name}:${meta.type}`, command);
+
+          if (command.skipDeploy) {
+            statusMap.set(key, "Skipped");
+            continue;
+          }
+
+          const deployJson = meta.json || command.data.toJSON();
+          command._helpDataJson = deployJson;
+          client.commandArray.push(deployJson);
+          statusMap.set(key, "Loaded");
         } catch (error) {
+          statusMap.set(key, "Error loading");
           global.logger?.error?.(
-            `[Bot Test][COMMANDS] Failed to load ${folder}/${file}:`,
+            `[Bot Test][COMMANDS] Failed to load ${key}:`,
             error,
           );
         }
       }
     }
+
+    const table = new ascii().setHeading("Folder", "File", "Status");
+    for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
+      a[0].localeCompare(b[0]),
+    )) {
+      const [folder, file] = key.split("/");
+      table.addRow(folder, file, status);
+    }
+    global.logger?.info?.(table.toString());
+    global.logger?.info?.(
+      `[Bot Test][COMMANDS] Loaded ${client.commands.size} slash command(s).`,
+    );
 
     const token = process.env.DISCORD_TOKEN_TEST || client?.config?.token;
     let clientId =
@@ -64,8 +105,8 @@ module.exports = (client) => {
       }
     }
     if (!clientId) return;
-    const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
 
+    const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
     for (const guildId of allowedGuildIds) {
       try {
         // eslint-disable-next-line no-await-in-loop
@@ -79,9 +120,5 @@ module.exports = (client) => {
         );
       }
     }
-
-    global.logger?.info?.(
-      `[Bot Test][COMMANDS] Loaded ${client.commands.size} slash command(s).`,
-    );
   };
 };

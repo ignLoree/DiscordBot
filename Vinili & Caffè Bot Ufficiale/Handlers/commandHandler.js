@@ -20,109 +20,6 @@ module.exports = (client) => {
       return { name, type, json: commandJson };
     };
 
-    const humanize = (value) =>
-      String(value || "")
-        .replace(/[._-]+/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-
-    const autoSlashDescription = (commandName, folder) => {
-      const readable = humanize(commandName);
-      const domain = String(folder || "").toLowerCase();
-      if (domain === "moderation") return `Comando moderazione: ${readable}.`;
-      if (domain === "utility") return `Comando utility: ${readable}.`;
-      if (domain === "partner") return `Comando partner: ${readable}.`;
-      if (domain === "community") return `Comando community: ${readable}.`;
-      return `Comando slash: ${readable}.`;
-    };
-
-    const autoSubDescription = (commandName, subPath) => {
-      const readableCommand = humanize(commandName);
-      const parts = String(subPath || "")
-        .toLowerCase()
-        .split(".")
-        .filter(Boolean);
-      const leaf = parts[parts.length - 1] || "";
-      const verbDescriptions = {
-        add: "Aggiunge un elemento o un valore.",
-        remove: "Rimuove un elemento o un valore.",
-        list: "Mostra la lista degli elementi disponibili.",
-        clear: "Pulisce o resetta i dati della sezione.",
-        set: "Imposta un valore specifico.",
-        get: "Recupera e mostra i dati richiesti.",
-        create: "Crea una nuova configurazione o risorsa.",
-        delete: "Elimina una risorsa esistente.",
-        edit: "Modifica una configurazione esistente.",
-        update: "Aggiorna lo stato o i dati correnti.",
-        enable: "Attiva la funzionalita richiesta.",
-        disable: "Disattiva la funzionalita richiesta.",
-        lock: "Blocca la funzione indicata.",
-        unlock: "Sblocca la funzione indicata.",
-        claim: "Assegna a te la gestione dell'elemento.",
-        unclaim: "Rilascia la gestione dell'elemento.",
-        close: "Chiude l'elemento corrente.",
-        rename: "Rinomina l'elemento corrente.",
-        grant: "Assegna permessi o risorse.",
-        revoke: "Revoca permessi o risorse.",
-      };
-      return (
-        verbDescriptions[leaf] ||
-        `Gestisce ${humanize(subPath)} per il comando ${readableCommand}.`
-      );
-    };
-
-    const autoOptionDescription = (optionName) => {
-      return `Parametro ${humanize(optionName)}.`;
-    };
-
-    const ensureSlashDescriptions = (commandName, folder, json) => {
-      if (!json || Number(json.type || 1) !== 1) return json;
-      const out = { ...json };
-      if (!String(out.description || "").trim()) {
-        out.description = autoSlashDescription(commandName, folder);
-      }
-      const normalizeOptions = (options = [], parentPath = "") =>
-        options.map((opt) => {
-          if (!opt || typeof opt !== "object") return opt;
-          const fixed = { ...opt };
-          const optionType = Number(fixed.type || 0);
-          const pathKey = parentPath
-            ? `${parentPath}.${String(fixed.name || "").trim()}`
-            : String(fixed.name || "").trim();
-
-          if (optionType === 1) {
-            if (!String(fixed.description || "").trim()) {
-              fixed.description = autoSubDescription(commandName, pathKey);
-            }
-          } else if (optionType === 2) {
-            if (!String(fixed.description || "").trim()) {
-              fixed.description = `Gruppo ${humanize(fixed.name)} di ${humanize(commandName)}.`;
-            }
-          } else if (optionType >= 3 && optionType <= 11) {
-            if (!String(fixed.description || "").trim()) {
-              fixed.description = autoOptionDescription(fixed.name);
-            }
-          }
-
-          if (Array.isArray(fixed.options) && fixed.options.length) {
-            fixed.options = normalizeOptions(fixed.options, pathKey);
-          }
-          return fixed;
-        });
-
-      if (Array.isArray(out.options) && out.options.length) {
-        out.options = normalizeOptions(out.options, "");
-      }
-      return out;
-    };
-
-    const autoContextDescription = (commandName, type) => {
-      const readable = humanize(commandName);
-      if (Number(type) === 2) return `Context menu utente: ${readable}.`;
-      if (Number(type) === 3) return `Context menu messaggio: ${readable}.`;
-      return `Context menu: ${readable}.`;
-    };
-
     for (const folder of commandFolders) {
       const commandFiles = fs
         .readdirSync(`${basePath}/${folder}`)
@@ -154,24 +51,7 @@ module.exports = (client) => {
             continue;
           }
 
-          let deployJson = meta.json || command.data.toJSON();
-          deployJson = ensureSlashDescriptions(meta.name, folder, deployJson);
-          if (
-            Number(deployJson?.type || meta.type || 1) === 1 &&
-            !String(command.helpDescription || "").trim()
-          ) {
-            command.helpDescription = String(deployJson.description || "").trim();
-          }
-          if (
-            (Number(deployJson?.type || meta.type || 1) === 2 ||
-              Number(deployJson?.type || meta.type || 1) === 3) &&
-            !String(command.helpDescription || "").trim()
-          ) {
-            command.helpDescription = autoContextDescription(
-              meta.name,
-              Number(deployJson?.type || meta.type || 1),
-            );
-          }
+          const deployJson = meta.json || command.data.toJSON();
           command._helpDataJson = deployJson;
           client.commandArray.push(deployJson);
           statusMap.set(key, "Loaded");

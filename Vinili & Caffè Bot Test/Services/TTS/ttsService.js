@@ -408,7 +408,7 @@ async function handleTtsMessage(message, client, prefix) {
   if (lockedChannelId && lockedChannelId !== voiceChannel.id) {
     return;
   }
-  const autojoin = booleanFromConfig(config?.tts?.autojoin, true);
+  const autojoin = booleanFromConfig(config?.tts?.autojoin, false);
   if (!autojoin && !lockedChannelId) {
     return;
   }
@@ -418,7 +418,10 @@ async function handleTtsMessage(message, client, prefix) {
   );
   if (!connection) return;
   const maxChars = config?.tts?.maxChars || 200;
-  const includeUsername = booleanFromConfig(config?.tts?.includeUsername, true);
+  const includeUsername = booleanFromConfig(
+    config?.tts?.includeUsername,
+    false,
+  );
   const lang = getUserTtsLang(message.author?.id) || config?.tts?.lang || "it";
   const rawMessageText = message.cleanContent ?? message.content ?? "";
   const baseText = sanitizeText(
@@ -546,6 +549,14 @@ async function clearVoiceState(guildId) {
 
 async function restoreTtsConnections(client) {
   try {
+    const autojoinEnabled = booleanFromConfig(
+      client?.config?.tts?.autojoin,
+      false,
+    );
+    if (!autojoinEnabled) {
+      await VoiceState.deleteMany({}).catch(() => null);
+      return;
+    }
     const states = await VoiceState.find({});
     for (const entry of states) {
       const channel = await client.channels

@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const IDs = require("../Config/ids");
+const { buildErrorLogEmbed } = require("../Logging/errorLogEmbed");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, } = require("../Moderation/commandPermissions");
 const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 
@@ -11,6 +12,30 @@ const ALLOWED_GUILD_IDS = new Set(
     .filter(Boolean)
     .map((id) => String(id)),
 );
+
+async function logPrefixErrorToChannel(message, client, commandName, error) {
+  try {
+    const channelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
+    if (!channelId) return;
+    const errorChannel =
+      client.channels?.cache?.get(channelId) ||
+      (await client.channels?.fetch?.(channelId).catch(() => null));
+    if (!errorChannel?.isTextBased?.()) return;
+
+    const embed = buildErrorLogEmbed({
+      contextLabel: "Comando",
+      contextValue: String(commandName || "unknown"),
+      userTag: message?.author?.tag || "unknown",
+      error,
+      serverName: message?.guild
+        ? `${message.guild.name} [${message.guild.id}]`
+        : null,
+    });
+    await errorChannel.send({ embeds: [embed] }).catch(() => null);
+  } catch (nestedError) {
+    global.logger?.error?.("[Bot Test] Prefix error log failed:", nestedError);
+  }
+}
 
 async function dispatchPrefixMessage(message, client) {
   if (!message?.guild || message.author?.bot) return false;
@@ -85,6 +110,12 @@ async function dispatchPrefixMessage(message, client) {
       if (result !== false) return true;
     } catch (err) {
       global.logger?.error?.("[Bot Test] Prefix dispatcher error:", err);
+      await logPrefixErrorToChannel(
+        message,
+        client,
+        command?.name || invokedName,
+        err,
+      );
       return true;
     }
   }
