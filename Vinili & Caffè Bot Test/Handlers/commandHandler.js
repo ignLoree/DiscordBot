@@ -114,6 +114,12 @@ module.exports = (client) => {
           body: client.commandArray,
         });
       } catch (error) {
+        if (Number(error?.code) === 50001 || Number(error?.status) === 403) {
+          global.logger?.warn?.(
+            `[Bot Test][COMMANDS] Skip deploy guild ${guildId}: Missing Access (bot non presente o senza scope applications.commands).`,
+          );
+          continue;
+        }
         global.logger?.error?.(
           `[Bot Test][COMMANDS] Failed to deploy to guild ${guildId}:`,
           error,
