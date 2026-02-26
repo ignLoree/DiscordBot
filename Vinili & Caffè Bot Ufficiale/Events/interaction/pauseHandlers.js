@@ -658,7 +658,7 @@ async function handlePauseButton(interaction) {
   if (channel) {
     const pauseMessage = await channel
       .send({
-        content: `<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>** ${pauseTimingText}.\n<:Clock:1330530065133338685> Dal **\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo\n> I pulsanti verranno rimossi automaticamente alla scadenza della pausa.`,
+        content: `<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>** ${pauseTimingText}.\n<:Clock:1330530065133338685> Dal **\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo`,
         components: [
           buildAcceptedButtonsRow(userId, pauseId, {
             hideCancel: hideCancelOnCreate,
