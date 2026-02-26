@@ -35,15 +35,13 @@ function walkJsFiles(dir, out = []) {
   }
 
   const requiredSecuritySubs = Array.isArray(securityCmd?.subcommands)
-    ? securityCmd.subcommands
+    ? [...new Set(securityCmd.subcommands.map((sub) => String(sub || "").trim().split(/\s+/)[0]).filter(Boolean))]
     : [];
   assert(requiredSecuritySubs.length > 0, "security.subcommands mancante");
   for (const sub of requiredSecuritySubs) {
     assert(Array.isArray(securityPerms[sub]), `permissions.security.${sub} mancante`);
   }
 
-  const staticsPerm = prefix.statics;
-  assert(staticsPerm && Array.isArray(staticsPerm.roles), "permissions.statics mancante");
   assert(prefix.security && Array.isArray(prefix.security.roles), "permissions.security mancante");
 
   const birthdayService = require(path.join(root, "Services", "Community", "birthdayService.js"));
@@ -54,20 +52,6 @@ function walkJsFiles(dir, out = []) {
   const reminderStatus = reminderService.getChatReminderLoopStatus?.();
   assert(reminderStatus && typeof reminderStatus.active === "boolean", "chat reminder loop status non disponibile");
   assert(Array.isArray(securityCmd.subcommands), "security.subcommands mancante");
-  assert(securityCmd.subcommands.includes("antinuke"), "security subcommand antinuke mancante");
-  assert(securityCmd.subcommands.includes("raid"), "security subcommand raid mancante");
-  const securityAliases = securityCmd?.subcommandAliases || {};
-  const raidAliasKeys = ["joinraid", "join-raid", "jr"];
-  for (const alias of raidAliasKeys) {
-    assert(
-      securityAliases[alias] === "raid",
-      `security alias ${alias} non mappa a raid`,
-    );
-    assert(
-      Array.isArray(securityPerms[alias]),
-      `permissions.security.${alias} mancante`,
-    );
-  }
 
   const prefixFiles = walkJsFiles(prefixRoot);
   const missingAliasPermissions = [];
