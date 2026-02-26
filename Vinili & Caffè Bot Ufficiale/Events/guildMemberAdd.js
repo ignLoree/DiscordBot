@@ -18,6 +18,9 @@ const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const { applyRolePersistForMember } = require("../Services/Moderation/rolePersistService");
 const { createModCase, getModConfig, logModCase } = require("../Utils/Moderation/moderation");
 const {
+  markJoinGateSuspiciousAccount,
+} = require("../Services/Moderation/suspiciousAccountService");
+const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
 } = require("../Services/Moderation/securityProfilesService");
@@ -515,30 +518,114 @@ function matchUsernameFilters(candidate, rules) {
   return null;
 }
 
+function toAccountNameSkeleton(input) {
+  return normalizeText(input)
+    .replace(/[0@]/g, "o")
+    .replace(/[1!|]/g, "i")
+    .replace(/[3]/g, "e")
+    .replace(/[4]/g, "a")
+    .replace(/[5$]/g, "s")
+    .replace(/[7]/g, "t")
+    .replace(/[8]/g, "b");
+}
+
+function hasMixedScripts(input) {
+  const value = String(input || "");
+  if (!value) return false;
+  const hasLatin = /[A-Za-z]/.test(value);
+  const hasCyrillic = /[\u0400-\u04FF]/.test(value);
+  const hasGreek = /[\u0370-\u03FF]/.test(value);
+  const nonLatinScripts = Number(hasCyrillic) + Number(hasGreek);
+  return hasLatin && nonLatinScripts > 0;
+}
+
 function detectSuspiciousAccount(member) {
-  const username = normalizeText(member?.user?.username);
-  const globalName = normalizeText(member?.user?.globalName);
-  const combined = `${username} ${globalName}`.trim();
+  const usernameRaw = String(member?.user?.username || "");
+  const globalNameRaw = String(member?.user?.globalName || "");
+  const displayNameRaw = String(member?.displayName || "");
+  const combinedRaw = `${usernameRaw} ${globalNameRaw} ${displayNameRaw}`.trim();
+  const combinedSkeleton = toAccountNameSkeleton(combinedRaw);
   const accountAgeMs = Date.now() - new Date(member.user.createdAt).getTime();
   const ageHours = accountAgeMs / (60 * 60 * 1000);
+  const ageDays = ageHours / 24;
 
   const suspiciousKeywords = [
     "support",
     "moderator",
     "admin",
+    "staff",
+    "official",
     "nitro",
     "airdrop",
     "crypto",
     "steam",
     "gift",
     "discord",
+    "giveaway",
   ];
-  const hasKeyword = suspiciousKeywords.some((kw) => combined.includes(kw));
-  const heavyDigits = (combined.match(/\d/g) || []).length >= 6;
-  const manySeparators = (combined.match(/[._-]/g) || []).length >= 4;
-  const veryYoung = ageHours <= 24;
-  if (veryYoung && (hasKeyword || heavyDigits || manySeparators)) {
-    return `Pattern sospetto nel nome (${hasKeyword ? "keyword scam" : "pattern"}), account molto recente.`;
+
+  const signalLabels = [];
+  let score = 0;
+  let strongSignals = 0;
+
+  if (inviteLikeInName(combinedRaw)) {
+    score += 80;
+    strongSignals += 1;
+    signalLabels.push("invite-link");
+  }
+
+  const keywordHits = suspiciousKeywords.filter((kw) =>
+    combinedSkeleton.includes(kw),
+  );
+  if (keywordHits.length > 0) {
+    const keywordScore = Math.min(45, 18 + keywordHits.length * 9);
+    score += keywordScore;
+    if (keywordHits.some((kw) => ["nitro", "airdrop", "crypto", "gift", "giveaway"].includes(kw))) {
+      strongSignals += 1;
+    }
+    signalLabels.push(`keywords:${keywordHits.slice(0, 3).join(",")}`);
+  }
+
+  const digitCount = (combinedRaw.match(/\d/g) || []).length;
+  const separatorCount = (combinedRaw.match(/[._-]/g) || []).length;
+  if (digitCount >= 6) {
+    score += 20;
+    signalLabels.push(`digits:${digitCount}`);
+  }
+  if (separatorCount >= 4) {
+    score += 12;
+    signalLabels.push(`separators:${separatorCount}`);
+  }
+  if (/(.)\1{4,}/i.test(combinedRaw)) {
+    score += 10;
+    signalLabels.push("repeated-chars");
+  }
+  if (hasMixedScripts(combinedRaw)) {
+    score += 30;
+    strongSignals += 1;
+    signalLabels.push("mixed-scripts");
+  }
+
+  if (ageHours <= 24) {
+    score += 32;
+    signalLabels.push("age<=24h");
+  } else if (ageHours <= 72) {
+    score += 24;
+    signalLabels.push("age<=72h");
+  } else if (ageDays <= 7) {
+    score += 12;
+    signalLabels.push("age<=7d");
+  }
+
+  if (hasNoAvatar(member) && ageDays <= 7) {
+    score += 15;
+    signalLabels.push("no-avatar+young");
+  }
+
+  const suspicious =
+    score >= 75 || (strongSignals >= 2 && score >= 58);
+  if (suspicious) {
+    return `score ${Math.min(100, score)}/100 | segnali: ${signalLabels.slice(0, 5).join(" | ")}`;
   }
   return null;
 }
@@ -1072,23 +1159,26 @@ module.exports = {
             action: joinGateConfig?.usernameFilter?.action || "kick",
           };
         }
-        if (
-          !joinGateMatch &&
-          joinGateConfig?.enabled &&
-          joinGateConfig?.suspiciousAccount?.enabled
-        ) {
-          const suspiciousReason = detectSuspiciousAccount(member);
-          if (suspiciousReason) {
-            joinGateMatch = {
-              rule: "suspicious",
-              reason: `Suspicious account: ${suspiciousReason}`,
-              extraLines: [
-                `${ARROW} **Rule:** Suspicious Account`,
-                `${ARROW} **Reason:** ${suspiciousReason}`,
-              ],
-              action: joinGateConfig?.suspiciousAccount?.action || "log",
-            };
-          }
+        const suspiciousReason =
+          joinGateConfig?.enabled && joinGateConfig?.suspiciousAccount?.enabled
+            ? detectSuspiciousAccount(member)
+            : null;
+        if (suspiciousReason) {
+          await markJoinGateSuspiciousAccount(member.guild.id, member.id, {
+            source: "joingate",
+            reason: suspiciousReason,
+          }).catch(() => null);
+        }
+        if (!joinGateMatch && suspiciousReason) {
+          joinGateMatch = {
+            rule: "suspicious",
+            reason: `Suspicious account: ${suspiciousReason}`,
+            extraLines: [
+              `${ARROW} **Rule:** Suspicious Account`,
+              `${ARROW} **Reason:** ${suspiciousReason}`,
+            ],
+            action: joinGateConfig?.suspiciousAccount?.action || "log",
+          };
         }
         await processJoinRaidForMember(member, { joinGateFeedOnly: !!joinGateMatch }).catch((err) => {
           global.logger?.warn?.("[guildMemberAdd] Join Raid failed:", member.guild.id, member.id, err?.message || err);

@@ -12,20 +12,16 @@ function buildSecurityLockDecision({
   lockAllCommands = false,
   joinRaidLockCommands = false,
 } = {}) {
-  const joinLockActive = Boolean(antiNukePanic || autoModPanic || joinRaid);
-  const commandLockByPanic = Boolean(
-    lockAllCommands && (antiNukePanic || autoModPanic),
-  );
+  const joinLockActive = Boolean(antiNukePanic || joinRaid);
+  const commandLockByPanic = Boolean(lockAllCommands && antiNukePanic);
   const commandLockByJoinRaid = Boolean(joinRaid && joinRaidLockCommands);
   const commandLockActive = Boolean(commandLockByPanic || commandLockByJoinRaid);
   const sources = [];
   if (antiNukePanic) sources.push("AntiNuke panic");
-  if (autoModPanic) sources.push("AutoMod panic");
   if (joinRaid) sources.push("Join Raid");
   const commandSources = [];
   if (commandLockByPanic) {
     if (antiNukePanic) commandSources.push("AntiNuke panic");
-    if (autoModPanic) commandSources.push("AutoMod panic");
   }
   if (commandLockByJoinRaid) commandSources.push("Join Raid");
 

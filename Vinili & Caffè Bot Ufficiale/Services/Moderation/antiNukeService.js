@@ -7,6 +7,9 @@ const {
   hasAdminsProfileCapability,
   getSecurityStaticsSnapshot,
 } = require("./securityProfilesService");
+const {
+  isJoinGateSuspiciousAccount,
+} = require("./suspiciousAccountService");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -1738,12 +1741,17 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
 }
 
 function quarantineOutcomeLabel(outcome) {
+  const suspiciousSuffix = outcome?.joinGateSuspicious
+    ? " | JoinGate suspicious: YES"
+    : "";
   if (!outcome?.applied) return "Quarantine not applied";
-  if (outcome.method === "ban") return "Banned";
-  if (outcome.method === "already_role") return "Quarantine active (existing role)";
-  if (outcome.method === "role") return "Quarantined via role";
-  if (outcome.method === "timeout") return "Quarantined via timeout";
-  return "Quarantined";
+  if (outcome.method === "ban") return `Banned${suspiciousSuffix}`;
+  if (outcome.method === "already_role") {
+    return `Quarantine active (existing role)${suspiciousSuffix}`;
+  }
+  if (outcome.method === "role") return `Quarantined via role${suspiciousSuffix}`;
+  if (outcome.method === "timeout") return `Quarantined via timeout${suspiciousSuffix}`;
+  return `Quarantined${suspiciousSuffix}`;
 }
 
 async function quarantineExecutor(guild, executorId, reason) {
@@ -1755,6 +1763,9 @@ async function quarantineExecutor(guild, executorId, reason) {
     return { applied: false, method: "missing_executor_audit" };
   }
   if (!userId) return { applied: false, method: "missing_user" };
+  const joinGateSuspicious = await isJoinGateSuspiciousAccount(guild?.id, userId).catch(
+    () => false,
+  );
   if (await isWhitelistedExecutorAsync(guild, userId)) {
     return { applied: false, method: "whitelisted" };
   }
@@ -1805,7 +1816,7 @@ async function quarantineExecutor(guild, executorId, reason) {
           global.logger?.warn?.("[antiNuke] ModCase creation (ban) failed:", guild.id, userId, e?.message || e);
         }
       }
-      return { applied: true, method: "ban" };
+      return { applied: true, method: "ban", joinGateSuspicious };
     }
   }
 
@@ -1823,7 +1834,7 @@ async function quarantineExecutor(guild, executorId, reason) {
       (await guild.roles.fetch(quarantineRoleId).catch(() => null));
     if (role && role.position < me.roles.highest.position) {
       if (member.roles.cache.has(role.id)) {
-        return { applied: true, method: "already_role" };
+        return { applied: true, method: "already_role", joinGateSuspicious };
       }
       const roleApplied = await member.roles
         .add(role, reason)
@@ -1837,7 +1848,7 @@ async function quarantineExecutor(guild, executorId, reason) {
           role.id,
           ANTINUKE_CONFIG.autoQuarantine.quarantineTimeoutMs,
         );
-        return { applied: true, method: "role" };
+        return { applied: true, method: "role", joinGateSuspicious };
       }
     }
   }
@@ -1870,7 +1881,7 @@ async function quarantineExecutor(guild, executorId, reason) {
         global.logger?.warn?.("[antiNuke] ModCase creation (timeout) failed:", guild.id, userId, e?.message || e);
       }
     }
-    return { applied: true, method: "timeout" };
+    return { applied: true, method: "timeout", joinGateSuspicious };
   }
   return { applied: false, method: "timeout_failed" };
 }
@@ -3511,15 +3522,7 @@ async function shouldBlockModerationCommands(guild, userId) {
   if (!ANTINUKE_CONFIG.panicMode.enabled) return false;
   if (!ANTINUKE_CONFIG.panicMode.lockdown.lockModerationCommands) return false;
   if (!guild?.id || !userId) return false;
-  let panicActive = isAntiNukePanicActive(guild.id);
-  if (!panicActive) {
-    try {
-      const { isAutoModPanicActiveForGuild } = require("./automodService");
-      panicActive = Boolean(isAutoModPanicActiveForGuild?.(guild.id));
-    } catch {
-      panicActive = false;
-    }
-  }
+  const panicActive = isAntiNukePanicActive(guild.id);
   if (!panicActive) return false;
   if (String(guild.ownerId || "") === String(userId)) return false;
   const member =
@@ -3562,12 +3565,6 @@ async function shouldBlockAllCommands(guild) {
     if (isAntiNukePanicActive(guild.id)) {
       blocked = true;
     }
-    try {
-      const { isAutoModPanicActiveForGuild } = require("./automodService");
-      if (Boolean(isAutoModPanicActiveForGuild?.(guild.id))) {
-        blocked = true;
-      }
-    } catch {}
   }
   if (!blocked) {
     try {

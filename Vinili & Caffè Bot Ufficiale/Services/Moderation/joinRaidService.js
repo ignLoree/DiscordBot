@@ -8,6 +8,9 @@ const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
 } = require("./securityProfilesService");
+const {
+  isJoinGateSuspiciousAccount,
+} = require("./suspiciousAccountService");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -626,7 +629,7 @@ async function isVerifiedBotUser(user) {
   return verified;
 }
 
-function getFlagReasons(state, member, at = nowMs()) {
+async function getFlagReasons(state, member, at = nowMs()) {
   const reasons = [];
   if (JOIN_RAID_CONFIG.idFlag.enabled) {
     const matches = countIdMatches(state, member, at);
@@ -653,12 +656,24 @@ function getFlagReasons(state, member, at = nowMs()) {
       detail: "Account too young",
     });
   }
+  const joinGateSuspicious = await isJoinGateSuspiciousAccount(
+    member?.guild?.id,
+    member?.id,
+  ).catch(() => false);
+  if (joinGateSuspicious) {
+    reasons.push({
+      key: "join_gate_suspicious",
+      label: "JoinGate Suspicious",
+      detail: "User flagged by JoinGate suspicious-account filter",
+    });
+  }
   return reasons;
 }
 
 function matchJoinRaidAccountType(member, reasons = []) {
   const accountType = String(JOIN_RAID_CONFIG.accountType || "any").toLowerCase();
   const keys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
+  if (keys.has("join_gate_suspicious")) return true;
   if (accountType === "any") return keys.size > 0;
   if (accountType === "young") return keys.has("age_flag");
   if (accountType === "no_pfp") return keys.has("no_pfp");
@@ -672,9 +687,9 @@ function matchJoinRaidAccountType(member, reasons = []) {
 function isHighRiskJoinRaidReasons(reasons = []) {
   const keys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
   if (!keys.size) return false;
-  // Treat only adaptive ID correlation as high-risk.
+  // Treat adaptive ID correlation and JoinGate suspicious marks as high-risk.
   // "young account" and "no pfp" alone are too noisy and can trigger false positives.
-  return keys.has("id_flag");
+  return keys.has("id_flag") || keys.has("join_gate_suspicious");
 }
 
 async function resolveModLogChannel(guild) {
@@ -1074,7 +1089,7 @@ async function processJoinRaidForMember(member, options = {}) {
       ),
     };
 
-    const reasons = getFlagReasons(state, member, at);
+    const reasons = await getFlagReasons(state, member, at);
     state.samples.push(sample);
 
     const highRisk = isHighRiskJoinRaidReasons(reasons);

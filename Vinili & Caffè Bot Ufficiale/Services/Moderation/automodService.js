@@ -10,6 +10,9 @@ const {
   hasModeratorsProfileCapability,
   getSecurityStaticsSnapshot,
 } = require("./securityProfilesService");
+const {
+  isJoinGateSuspiciousAccount,
+} = require("./suspiciousAccountService");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
@@ -1391,10 +1394,44 @@ function isBadUserSuspicious(profile, at = nowMs()) {
   return activeStrikes >= 3;
 }
 
-async function getBadUserProfile(userId) {
+async function getBadUserProfile(userId, guildId = "") {
   const cached = getCachedBadUser(userId);
-  if (cached !== undefined) return cached;
-  if (!isDbReady()) return null;
+  if (cached !== undefined) {
+    const joinGateSuspicious = guildId
+      ? await isJoinGateSuspiciousAccount(guildId, userId)
+      : false;
+    if (!cached) {
+      return joinGateSuspicious
+        ? {
+            suspicious: true,
+            warnPoints: 0,
+            activeStrikes: 0,
+            activeStrikeReasons: [],
+            timeoutActions: 0,
+            totalTriggers: 0,
+          }
+        : null;
+    }
+    return {
+      ...cached,
+      suspicious: Boolean(joinGateSuspicious),
+    };
+  }
+  if (!isDbReady()) {
+    const joinGateSuspicious = guildId
+      ? await isJoinGateSuspiciousAccount(guildId, userId)
+      : false;
+    return joinGateSuspicious
+      ? {
+          suspicious: true,
+          warnPoints: 0,
+          activeStrikes: 0,
+          activeStrikeReasons: [],
+          timeoutActions: 0,
+          totalTriggers: 0,
+        }
+      : null;
+  }
   try {
     const row = await AutoModBadUser.findOne(
       { userId: String(userId) },
@@ -1413,7 +1450,19 @@ async function getBadUserProfile(userId) {
     ).lean();
     if (!row) {
       setCachedBadUser(userId, null, 15_000);
-      return null;
+      const joinGateSuspicious = guildId
+        ? await isJoinGateSuspiciousAccount(guildId, userId)
+        : false;
+      return joinGateSuspicious
+        ? {
+            suspicious: true,
+            warnPoints: 0,
+            activeStrikes: 0,
+            activeStrikeReasons: [],
+            timeoutActions: 0,
+            totalTriggers: 0,
+          }
+        : null;
     }
 
     const at = nowMs();
@@ -1424,7 +1473,6 @@ async function getBadUserProfile(userId) {
       activeStrikes: stale ? 0 : Math.max(0, Number(row.activeStrikes || 0)),
       activeStrikeReasons: stale ? [] : (Array.isArray(row.activeStrikeReasons) ? row.activeStrikeReasons : []),
     };
-    normalized.suspicious = isBadUserSuspicious(normalized, at);
 
     if (stale && (Number(row.warnPoints || 0) > 0 || Number(row.activeStrikes || 0) > 0)) {
       AutoModBadUser.updateOne(
@@ -1440,7 +1488,13 @@ async function getBadUserProfile(userId) {
     }
 
     setCachedBadUser(userId, normalized, 60_000);
-    return normalized;
+    const joinGateSuspicious = guildId
+      ? await isJoinGateSuspiciousAccount(guildId, userId)
+      : false;
+    return {
+      ...normalized,
+      suspicious: Boolean(joinGateSuspicious),
+    };
   } catch {
     return null;
   }
@@ -2110,7 +2164,7 @@ async function getAutoModMemberSnapshot(member) {
   let activeStrikes = 0;
   let strikeReasons = [];
   try {
-    const profile = await getBadUserProfile(userId);
+    const profile = await getBadUserProfile(userId, guild.id);
     suspicious = Boolean(profile?.suspicious);
     warnPoints = Math.max(0, Number(profile?.warnPoints || 0));
     activeStrikes = Math.max(0, Number(profile?.activeStrikes || 0));
@@ -2187,7 +2241,7 @@ async function detectViolations(message, state, profile) {
   const legitConversation = looksLikeLegitConversation(moderationContent || content);
   let suspiciousMessageAuthor = false;
   try {
-    const badProfile = await getBadUserProfile(message.author?.id);
+    const badProfile = await getBadUserProfile(message.author?.id, message.guildId);
     suspiciousMessageAuthor = Boolean(badProfile?.suspicious);
   } catch {
     suspiciousMessageAuthor = false;
@@ -3144,7 +3198,7 @@ async function runAutoModMessage(message) {
 
     let dbBoost = 0;
     if (PANIC_MODE.useGlobalBadUsersDb) {
-      const profile = await getBadUserProfile(message.author.id);
+      const profile = await getBadUserProfile(message.author.id, message.guildId);
       const lastActionTs = profile?.lastActionAt ? new Date(profile.lastActionAt).getTime() : 0;
       const recentEnough = lastActionTs > 0 && at - lastActionTs <= AUTO_TIMEOUT_PROFILE_RESET_MS;
       const activeStrikes = Number(profile?.activeStrikes || 0);

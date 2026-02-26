@@ -304,6 +304,14 @@
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
+                "automod": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "am": [
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
                 "antinuke": [
                     "roles.Founder",
                     "roles.CoFounder"

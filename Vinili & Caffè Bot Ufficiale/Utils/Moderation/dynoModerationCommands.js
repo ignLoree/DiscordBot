@@ -34,9 +34,11 @@ async function reply(message, client, title, description, color = null) {
 }
 
 function successText(subject, verb, reason) {
-  const left = `<:success:1461731530333229226> **_${subject}_** ${verb}.`;
+  const safeSubject = String(subject || "unknown").trim();
+  const safeVerb = String(verb || "was updated").trim();
+  const left = `✅ ***${safeSubject} ${safeVerb}.***`;
   if (!reason) return left;
-  return `${left} Motivo: ${reason}`;
+  return `${left} | ${String(reason).trim()}`;
 }
 
 function formatTargetLabel(target) {
@@ -438,7 +440,7 @@ function successTemprole(message, text) {
       embeds: [
         new EmbedBuilder()
           .setColor("#57F287")
-          .setDescription(`<:success:1461731530333229226> ${text}`),
+          .setDescription(`✅ ***${String(text || "").trim()}***`),
       ],
     })
     .catch(() => null);
@@ -513,7 +515,7 @@ async function runNamed(name, message, args, client) {
       reason,
     });
     await makeCase(client, message, "BAN", userId, reason, duration);
-    return successReply(message, formatTargetLabel(user || { id: userId }), "è stato bannato", reason);
+    return successReply(message, formatTargetLabel(user || { id: userId }), "was banned", reason);
   }
 
   if (cmd === "kick") {
@@ -551,7 +553,7 @@ async function runNamed(name, message, args, client) {
       reason,
     });
     await makeCase(client, message, "KICK", userId, reason);
-    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato espulso", reason);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "was kicked", reason);
   }
 
   if (cmd === "mute") {
@@ -620,7 +622,7 @@ async function runNamed(name, message, args, client) {
       durationText: formatDuration(duration),
     });
     await makeCase(client, message, "MUTE", userId, reason, duration);
-    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato silenziato", reason);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "was muted", reason);
   }
 
   if (cmd === "unmute") {
@@ -649,7 +651,7 @@ async function runNamed(name, message, args, client) {
       await item.save().catch(() => null);
     }
     await makeCase(client, message, "UNMUTE", userId, reason);
-    return successReply(message, formatTargetLabel(member.user || { id: userId }), "è stato smutato", reason);
+    return successReply(message, formatTargetLabel(member.user || { id: userId }), "was unmuted", reason);
   }
 
   if (cmd === "unban") {
@@ -707,15 +709,7 @@ async function runNamed(name, message, args, client) {
     }
     await makeCase(client, message, "UNBAN", id, reason);
     const subject = formatTargetLabel(banInfo?.user || { id });
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> **_${subject}_** è stato sbannato.`),
-        ],
-      })
-      .catch(() => null);
+    return successReply(message, subject, "was unbanned");
   }
 
   if (cmd === "warn") {
@@ -744,7 +738,7 @@ async function runNamed(name, message, args, client) {
     });
     const targetUser = await message.client.users.fetch(userId).catch(() => null);
     const label = formatTargetLabel(targetUser || { id: userId });
-    return successReply(message, label, "ha ricevuto un warn", reasonContent);
+    return successReply(message, label, "was warned", reasonContent);
   }
 
   if (cmd === "warnings") {
@@ -866,17 +860,12 @@ async function runNamed(name, message, args, client) {
         .setTimestamp();
       await modLogChannel.send({ embeds: [warnRemovedEmbed] }).catch(() => null);
     }
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(
-              `<:success:1461731530333229226> Avviso \`${warningText}\` rimosso per ${targetUser?.username || target.userId}.`,
-            ),
-        ],
-      })
-      .catch(() => null);
+    return successReply(
+      message,
+      formatTargetLabel(targetUser || { id: target.userId }),
+      "had 1 warning removed",
+      warningText,
+    );
   }
 
   if (cmd === "clearwarn") {
@@ -952,17 +941,11 @@ async function runNamed(name, message, args, client) {
         .setTimestamp();
       await modLogChannel.send({ embeds: [clearWarnEmbed] }).catch(() => null);
     }
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(
-              `<:success:1461731530333229226> **${rows.length}** ${rows.length === 1 ? "avviso rimosso" : "avvisi rimossi"} per ${targetUser?.username || target.userId}.`,
-            ),
-        ],
-      })
-      .catch(() => null);
+    return successReply(
+      message,
+      formatTargetLabel(targetUser || { id: target.userId }),
+      rows.length === 1 ? "had 1 warning removed" : `had ${rows.length} warnings removed`,
+    );
   }
 
   if (cmd === "case" || cmd === "reason" || cmd === "duration") {
@@ -1075,15 +1058,7 @@ async function runNamed(name, message, args, client) {
         moderatorId: message.author.id,
         reasonOverride: nextReason,
       }).catch(() => null);
-      return message.channel
-        .send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("#57F287")
-              .setDescription(`<:success:1461731530333229226> Motivo aggiornato per il caso #${caseId}.`),
-          ],
-        })
-        .catch(() => null);
+      return successReply(message, `case #${caseId}`, "reason was updated");
     }
     if (!String(args[1] || "").trim()) {
       const helpEmbed = new EmbedBuilder()
@@ -1149,15 +1124,7 @@ async function runNamed(name, message, args, client) {
         await member.timeout(duration, `Caso #${caseId} aggiornato`).catch(() => null);
       }
     }
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(`<:success:1461731530333229226> Caso #${caseId} aggiornato.`),
-        ],
-      })
-      .catch(() => null);
+    return successReply(message, `case #${caseId}`, "duration was updated");
   }
 
   if (cmd === "modlogs" || cmd === "moderations") {
@@ -1453,17 +1420,11 @@ async function runNamed(name, message, args, client) {
     }
 
     await makeCase(client, message, cmd.toUpperCase(), `CHANNEL:${channel.id}`, reason, duration || null);
-    return message.channel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#57F287")
-            .setDescription(
-              `<:success:1461731530333229226> Canale <#${channel.id}> ${cmd === "lock" ? "bloccato" : "sbloccato"}.`,
-            ),
-        ],
-      })
-      .catch(() => null);
+    return successReply(
+      message,
+      `<#${channel.id}>`,
+      cmd === "lock" ? "was locked" : "was unlocked",
+    );
   }
 
   if (cmd === "temprole") {
