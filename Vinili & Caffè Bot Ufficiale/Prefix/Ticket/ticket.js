@@ -469,17 +469,6 @@ module.exports = {
     switchpanel: "switchpanel",
     rename: "rename",
     reopen: "reopen",
-    ticketswitchpanel: "switchpanel",
-    ticketrename: "rename",
-    ticketreopen: "reopen",
-    trename: "rename",
-    ticketclose: "close",
-    ticketclaim: "claim",
-    ticketunclaim: "unclaim",
-    tadd: "add",
-    tremove: "remove",
-    ticketadd: "add",
-    ticketremove: "remove",
   },
 
   async execute(message, args = [], client) {

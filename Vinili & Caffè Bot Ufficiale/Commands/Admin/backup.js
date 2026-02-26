@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const { safeEditReply } = require("../../Utils/Moderation/reply");
-const { createGuildBackup, readBackupByIdGlobal, listAllBackupMetas, verifyBackupByIdGlobal, } = require("../../Services/Backup/serverBackupService");
-const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildBackupLoadStatus, cancelGuildBackupLoad, runBackupDryRun, buildDryRunEmbed, } = require("../../Services/Backup/backupLoadService");
+const { createGuildBackup, readBackupByIdGlobal, listAllBackupMetas, } = require("../../Services/Backup/serverBackupService");
+const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildBackupLoadStatus, cancelGuildBackupLoad, } = require("../../Services/Backup/backupLoadService");
 const { renderList } = require("../../Services/Backup/backupListService");
 
 const EPHEMERAL_FLAG = 1 << 6;
@@ -417,21 +417,9 @@ module.exports = {
       subcommand
         .setName("cancel")
         .setDescription("Annulla il backup load attualmente in corso"),
-    )
-    .addSubcommand((subcommand) =>
-      subcommand
-        .setName("dryrun")
-        .setDescription("Simula il restore e mostra differenze senza modificare nulla")
-        .addStringOption((option) =>
-          option
-            .setName("backup_id")
-            .setDescription("ID del backup da simulare")
-            .setAutocomplete(true)
-            .setRequired(true),
-        ),
     ),
 
-  helpDescrizione: "Gestisce backup completi del server (create, info, load, list, delete, status, cancel, dryrun).",
+  helpDescrizione: "Gestisce backup completi del server (create, info, load, list, delete, status, cancel).",
 
   async autocomplete(interaction) {
     try {
@@ -628,46 +616,6 @@ module.exports = {
       return;
     }
 
-    if (sub === "dryrun") {
-      const backupRef = String(interaction.options.getString("backup_id") || "").trim();
-      if (!backupRef) {
-        await safeEditReply(interaction, {
-          embeds: [buildErrorEmbed("backup_id non valido.", "Backup dryrun")],
-          flags: EPHEMERAL_FLAG,
-        });
-        return;
-      }
-
-      try {
-        const [dryRun, verify] = await Promise.all([
-          runBackupDryRun(interaction.guild, backupRef),
-          verifyBackupByIdGlobal(backupRef),
-        ]);
-        const embed = buildDryRunEmbed(dryRun);
-        if (verify?.checksum) {
-          embed.addFields({
-            name: "Checksum",
-            value: [
-              `Payload: \`${String(verify.checksum.payload || "").slice(0, 16)}...\``,
-              `Compressed: \`${String(verify.checksum.compressed || "").slice(0, 16)}...\``,
-            ].join("\n"),
-            inline: false,
-          });
-        }
-
-        await safeEditReply(interaction, {
-          embeds: [embed],
-          flags: EPHEMERAL_FLAG,
-        });
-      } catch (error) {
-        global.logger?.error?.("[backup.dryrun] failed:", error);
-        await safeEditReply(interaction, {
-          embeds: [buildErrorEmbed(error, "Backup dryrun non riuscito")],
-          flags: EPHEMERAL_FLAG,
-        });
-      }
-      return;
-    }
     if (sub === "status") {
       try {
         const status = getGuildBackupLoadStatus(interaction.guild.id);

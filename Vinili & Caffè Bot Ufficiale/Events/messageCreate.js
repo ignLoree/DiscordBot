@@ -7,6 +7,7 @@ const AFK = require("../Schemas/Afk/afkSchema");
 const { handleTtsMessage } = require("../Services/TTS/ttsService");
 const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../Services/Bump/bumpService");
 const { handleMinigameMessage } = require("../Services/Minigames/minigameService");
+const { handlePoketwoHelperMessage } = require("../Services/Minigames/poketwoHelperService");
 const { recordReminderActivity } = require("../Services/Community/chatReminderService");
 const { recordMessageActivity } = require("../Services/Community/activityService");
 const { addExpWithLevel, shouldIgnoreExpForMember, } = require("../Services/Community/expService");
@@ -527,6 +528,7 @@ module.exports = {
     };
     if (!isEditedPrefixExecution && message?.guild) {
       try {
+        await handlePoketwoHelperMessage(message);
         if (message.author?.id !== resolvedClient?.user?.id) {
           const handledVote = await handleVoteManagerMessage(message, resolvedClient);
           if (handledVote) return;
