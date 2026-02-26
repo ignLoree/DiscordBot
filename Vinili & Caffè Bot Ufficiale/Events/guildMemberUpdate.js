@@ -46,6 +46,19 @@ const CORE_EXEMPT_USER_IDS = new Set([
   "1329118940110127204",
 ]);
 
+function buildJoinGateTriggeredEmbed(member, reason) {
+  return new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle(`${member.user.username} has triggered the joingate!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+      ].join("\n"),
+    )
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+}
+
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return "<t:0:F>";
@@ -558,16 +571,14 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
     : null;
   if (!logChannel?.isTextBased?.()) return;
 
-  const embed = new EmbedBuilder()
-    .setColor(punished ? "#A97142" : "#F59E0B")
-    .setTitle(
-      punished
-        ? `${newMember.user.username} has been ${String(appliedAction || "kick").toLowerCase() === "timeout" ? "timed out" : String(appliedAction || "kick").toLowerCase() === "ban" ? "banned" : "kicked"}!!`
-        : `${newMember.user.username} has triggered the joingate!`,
-    )
-    .setDescription(
-      punished
-        ? [
+  const embed = punished
+    ? new EmbedBuilder()
+        .setColor("#A97142")
+        .setTitle(
+          `${newMember.user.username} has been ${String(appliedAction || "kick").toLowerCase() === "timeout" ? "timed out" : String(appliedAction || "kick").toLowerCase() === "ban" ? "banned" : "kicked"}!!`,
+        )
+        .setDescription(
+          [
             `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,
             `${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
             `${ARROW} **Rule:** Username Filter (Post Join)`,
@@ -580,28 +591,14 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
             "**More Details:**",
             `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
             `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
-          ].join("\n")
-        : [
-            `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,
-            `${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
-            `${ARROW} **Rule:** Username Filter (Post Join)`,
-            `${ARROW} **Action:** ${String(appliedAction || "log").toUpperCase()}`,
-            `${ARROW} **Match Type:** ${match.type}`,
-            `${ARROW} **Match:** ${match.value}`,
-            `${ARROW} **Old Name:** ${oldCandidate || "N/A"}`,
-            `${ARROW} **New Name:** ${newCandidate || "N/A"}`,
-            `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-            `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
           ].join("\n"),
-    )
-    .setThumbnail(
-      punished
-        ? newMember.client.user.displayAvatarURL({ size: 256 })
-        : newMember.user.displayAvatarURL({ size: 256 }),
-    );
-  if (punished) {
-    embed.setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." });
-  }
+        )
+        .setThumbnail(newMember.client.user.displayAvatarURL({ size: 256 }))
+        .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
+    : buildJoinGateTriggeredEmbed(
+        newMember,
+        "Username matches blocked pattern (post-join filter).",
+      );
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
@@ -736,3 +733,4 @@ module.exports = {
     }
   },
 };
+

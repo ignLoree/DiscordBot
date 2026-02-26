@@ -80,6 +80,19 @@ function firstUsernameMatch(newUser) {
   return null;
 }
 
+function buildJoinGateTriggeredEmbed(member, reason) {
+  return new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle(`${member.user.username} has triggered the joingate!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+      ].join("\n"),
+    )
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+}
+
 async function punishUsernameMatch(member, match) {
   const reason = "Username matches blocked pattern (post-join filter).";
   const dmEmbed = new EmbedBuilder()
@@ -144,21 +157,7 @@ async function punishUsernameMatch(member, match) {
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
           .setThumbnail(member.client.user.displayAvatarURL({ size: 256 }))
-      : new EmbedBuilder()
-          .setColor("#F59E0B")
-          .setTitle(`${member.user.username} has triggered the joingate!`)
-          .setDescription(
-            [
-              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
-              `${ARROW} **Reason:** ${reason}`,
-              `${ARROW} **Rule:** Username Filter (post-join)`,
-              `${ARROW} **Match Type:** ${match.type}`,
-              `${ARROW} **Match:** ${match.value}`,
-              `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-              `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
-            ].join("\n"),
-          )
-          .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+      : buildJoinGateTriggeredEmbed(member, reason);
     await logChannel.send({ embeds: [logEmbed] }).catch((error) => {
       global.logger?.error?.("[userUpdate] punish log send failed:", error);
     });
@@ -206,3 +205,4 @@ module.exports = {
     }
   },
 };
+

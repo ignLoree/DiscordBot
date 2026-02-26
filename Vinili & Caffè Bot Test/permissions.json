@@ -1,32 +1,5 @@
 {
-    "slash": {
-        "set": {
-            "roles": [
-                "roles.Member"
-            ],
-            "subcommands": {
-                "autojoin": [
-                    "roles.HighStaff"
-                ],
-                "voice": {
-                    "roles": [
-                        "roles.Member"
-                    ],
-                    "channels": [
-                        "1442569187376763010"
-                    ]
-                }
-            }
-        },
-        "voices": {
-            "roles": [
-                "roles.Member"
-            ],
-            "channels": [
-                "1442569187376763010"
-            ]
-        }
-    },
+    "slash": {},
     "prefix": {
         "join": {
             "roles": [
@@ -46,7 +19,30 @@
         },
         "restart": [
             "roles.Founder"
-        ]
+        ],
+        "set": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "voice": [
+                    "roles.Member"
+                ],
+                "autojoin": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "voices": {
+            "roles": [
+                "roles.Member"
+            ]
+        },
+        "help": {
+            "roles": [
+                "roles.Member"
+            ]
+        }
     },
     "buttons": {},
     "selectMenus": {

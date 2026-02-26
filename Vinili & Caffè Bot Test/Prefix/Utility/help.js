@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
@@ -17,194 +17,33 @@ const PAGE_ROLE_IDS = [
 ].filter(Boolean);
 const PAGE_TITLES = {
   [IDs.roles.Member]: "Comandi Utente",
-  [IDs.roles.Staff]: "Comandi Staff",
-  [IDs.roles.HighStaff]: "Comandi High Staff",
   [IDs.roles.Founder]: "Comandi Dev",
   all: "Comandi Disponibili",
 };
 const CATEGORY_LABELS = {
   utility: "Utility",
   tts: "TTS",
-  level: "Level",
-  minigames: "Minigames",
-  stats: "Stats",
-  partner: "Partner",
-  ticket: "Ticket",
-  moderation: "Moderation",
-  admin: "Admin",
-  staff: "Staff",
-  vip: "VIP",
   dev: "Dev",
 };
 const CATEGORY_ORDER = [
   "utility",
   "tts",
-  "level",
-  "minigames",
-  "stats",
-  "vip",
-  "partner",
-  "ticket",
-  "moderation",
-  "admin",
-  "staff",
   "dev",
 ];
 const HELP_PAGE_SIZE = 18;
 const MAX_HELP_TEXT_LENGTH = 3900;
+const HELP_PREFIX_ONLY = true;
 const PREFIX_HELP_DESCRIPTIONS = {
   help: "Mostra tutti i comandi disponibili con il bot.",
-  afk: "Imposta il tuo stato AFK con un messaggio personalizzato.",
-  avatar: "Mostra l'avatar di un utenteo l'icona del server.",
-  banner: "Mostra il banner di un utente o del server.",
-  block: "Blocca privacy contenuti: avatar, banner, quotes.",
-  invites: "Mostra le statistiche inviti di un utente.",
-  voices: "Mostra le voci TTS disponibili.",
-  membercount: "Mostra il numero totale di membri del server.",
-  "no-dm": "Disattiva i DM del bot.",
-  "dm-enable": "Riattiva i DM del bot.",
-  ping: "Mostra latenza bot, database e informazioni di uptime.",
-  set: "Impostazioni TTS: autojoin e voce personale.",
-  ship: "Calcola la compatibilità tra due utenti.",
-  adorable: "Genera un avatar stile fun partendo da un seed o testo.",
-  birb: "Invia un'immagine casuale di un uccellino.",
-  cat: "Invia un'immagine casuale di un gatto.",
-  catfacts: "Mostra una curiosità casuale sui gatti.",
-  chucknorris: "Mostra una battuta casuale su Chuck Norris.",
-  country: "Mostra informazioni su un paese.",
-  dadjoke: "Mostra una battuta spiritosa casuale.",
-  define: "Cerca la definizione di una parola.",
-  dog: "Invia un'immagine casuale di un cane.",
-  dogfacts: "Mostra una curiosità casuale sui cani.",
-  flip: "Lancia una moneta.",
-  github: "Cerca un repository GitHub per nome o keyword.",
-  itunes: "Cerca una traccia musicale su iTunes.",
-  joke: "Mostra una battuta casuale.",
-  math: "Calcola espressioni matematiche o mostra curiosità sui numeri.",
-  movie: "Cerca informazioni su un film.",
-  pokemon: "Mostra info e stats base di un Pokémon.",
-  pug: "Invia un'immagine casuale di un pug.",
-  quotes: "Mostra una citazione casuale testuale.",
-  roll: "Tira uno o più dadi.",
-  rps: "Gioca a sasso, carta, forbici contro il bot.",
-  slots: "Gioca alle slot machine.",
-  space: "Mostra posizione ISS e persone nello spazio.",
-  steamstatus: "Mostra lo stato dei servizi Steam.",
-  weather: "Mostra il meteo per una località.",
-  snipe: "Recupera l'ultimo messaggio eliminato nel canale.",
   join: "Fa entrare il bot nel tuo canale vocale.",
   leave: "Fa uscire il bot dal canale vocale.",
-  unblock: "Sblocca privacy contenuti: avatar, banner, quotes.",
-  classifica: "Mostra la classifica livelli.",
-  mstats: "Mostra statistiche minigiochi di un utente.",
-  me: "Mostra le tue statistiche attività.",
-  user: "Mostra le statistiche attività di un utente specifico.",
-  server: "Mostra statistiche attività del server.",
-  top: "Mostra la top completa utenti/canali.",
-  rank: "Mostra livello, exp e posizione in classifica di un utente.",
-  birthday: "Imposta o modifica la tua data di compleanno, età e privacy.",
-  "dm-disable": "Disattiva i DM automatici del bot.",
-  embed: "Apre il builder embed interattivo per creare e inviare embed personalizzati.",
-  info: "Mostra una scheda completa di un utente: account, ruoli, permessi, strike e stato sicurezza.",
-  reaction: "Configura le reaction quando sei menzionato e le regole di risposta automatica a parole o frasi.",
-  description: "Invia nel ticket la descrizione ufficiale del server.",
-  "no-dm-list": "Mostra la lista utenti con blocco DM attivo.",
-  purge: "Elimina messaggi da un canale.",
-  ban: "Banna un utente.",
-  unban: "Rimuove il ban di un utente.",
-  kick: "Kicka un utente dal server.",
-  mute: "Applica timeout ad un utente.",
-  unmute: "Rimuove il timeout da un utente.",
-  warn: "Warna un utente.",
-  warnings: "Mostra i warn attivi di un utente.",
-  delwarn: "Rimuove un warn attivo da un utente.",
-  clearwarn: "Rimuove tutti i warning attivi da un utente.",
-  case: "Mostra una singola case moderazione.",
-  reason: "Aggiorna il motivo di una case.",
-  duration: "Aggiorna la durata di una case temporanea.",
-  modlogs: "Mostra gli ultimi log moderazione di un utente.",
-  moderations: "Mostra tutte le moderazioni temporanee attive (mute/ban). Senza utente: elenco globale; con utente: solo le sue.",
-  modstats: "Mostra statistiche moderazione per staffer.",
-  lock: "Blocca un canale.",
-  unlock: "Sblocca un canale.",
-  recensione: "Premia una recensione assegnando livelli.",
-  ticket: "Gestisce i ticket.",
-  verify: "Verifica manualmente un utente.",
+  voices: "Mostra le voci TTS disponibili.",
+  set: "Impostazioni TTS: autojoin e voce personale.",
   restart: "Riavvia il bot o ricarica moduli specifici.",
-  perms: "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
-  temprole: "Assegna o rimuove ruoli temporanei agli utenti.",
-  security: "Hub sicurezza: status globale e gestione panic.",
-  level: "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
-  customrole: "Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",
-  customvoc: "Crea e gestisce la tua vocale privata.",
-  quote: "Genera una quote da un messaggio.",
 };
 const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
-  "level.set": "Imposta EXP o livello a un valore preciso per un utente.",
-  "level.add": "Aggiunge EXP a un utente.",
-  "level.remove": "Rimuove EXP da un utente.",
-  "level.reset": "Azzera EXP e livello di un utente.",
-  "level.lock": "Blocca il guadagno EXP in un canale.",
-  "level.unlock": "Sblocca il guadagno EXP in un canale.",
-  "level.multiplier": "Imposta un moltiplicatore EXP temporaneo.",
-  "level.gmulti": "Imposta il moltiplicatore globale EXP del server.",
-  "level.config": "Mostra la configurazione EXP corrente del server.",
-  "level.ignore": "Esclude un ruolo dal guadagno EXP.",
-  "level.unignore": "Riabilita un ruolo al guadagno EXP.",
-  "security.status": "Mostra un pannello paginato con lo stato dei sistemi sicurezza.",
-  "security.enable": "Riattiva completamente i moduli sicurezza selezionati.",
-  "security.disable": "Disabilita completamente i moduli sicurezza selezionati.",
-  "security.panic": "Gestisce Panic Mode centralizzata.",
-  "security.statics": "Configura ruoli, canali e utenti statici per la sicurezza.",
-  "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
-  "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
-  "ticket.closerequest": "Invia richiesta di chiusura ticket.",
-  "ticket.close": "Chiude il ticket corrente.",
-  "ticket.claim": "Claima un ticket.",
-  "ticket.unclaim": "Unclaim un ticket.",
-  "ticket.switchpanel": "Sposta il ticket a un pannello differente.",
-  "ticket.rename": "Rinomina il canale ticket.",
-  "ticket.reopen": "Riapre un ticket già chiuso.",
-  "birthday.set": "Imposta la tua data di compleanno.",
-  "birthday.edit": "Modifica la tua data di compleanno.",
-  "birthday.remove": "Rimuove il tuo profilo compleanno.",
-  "avatar.server": "Mostra l'avatar di un utente impostato per questo server.",
-  "avatar.user": "Mostra l'avatar di un utente.",
-  "avatar.guild": "Mostra l'icona del server.",
-  "banner.user": "Mostra il banner di un utente.",
-  "banner.server": "Mostra il banner di un utente impostato per questo server.",
-  "banner.guild": "Mostra il banner del server.",
-  "block.avatar": "Blocca la visualizzazione del tuo avatar.",
-  "block.banner": "Blocca la visualizzazione del tuo banner.",
-  "block.quotes": "Blocca la creazione di quote dei tuoi messaggi.",
-  "unblock.avatar": "Sblocca la visualizzazione del tuo avatar.",
-  "unblock.banner": "Sblocca la visualizzazione del tuo banner.",
-  "unblock.quotes": "Sblocca la creazione di quote dei tuoi messaggi.",
-  "classifica.alltime": "Mostra la classifica alltime.",
-  "classifica.weekly": "Mostra la classifica settimanale.",
   "set.autojoin": "Attiva o disattiva autojoin TTS.",
   "set.voice": "Imposta la lingua TTS personale.",
-  "embed.create": "Avvia il builder interattivo dell'embed con anteprima e invio finale.",
-  "perms.grant": "Assegna permessi a un utente su comandi.",
-  "perms.revoke": "Revoca permessi specifici a un utente.",
-  "perms.list": "Mostra i permessi attivi di un utente.",
-  "perms.clear": "Rimuove tutti i permessi temporanei di un utente.",
-  "reaction.mention": "Mostra o imposta le reaction che il bot aggiunge quando qualcuno ti menziona.",
-  "reaction.auto": "Crea o modifica regole di risposta automatica a parole/frasi con risposta e reaction opzionali.",
-  "restart.full": "Riavvia il bot; con `both` riavvia anche il bot Test.",
-  "restart.all": "Esegue il reload completo di tutte le scope ricaricabili.",
-  "temprole.add": "Assegna un ruolo temporaneo a un utente.",
-  "temprole.remove": "Rimuove un ruolo temporaneo da un utente.",
-  "customrole.create": "Crea o aggiorna il tuo ruolo personalizzato.",
-  "customrole.modify": "Apre il pannello di modifica del tuo ruolo personalizzato.",
-  "customrole.add": "Aggiunge un utente al tuo ruolo personalizzato.",
-  "customrole.remove": "Rimuove un utente dal tuo ruolo personalizzato.",
-};
-const CONTEXT_HELP_DESCRIPTIONS = {
-  Partnership: "Esegui una partnership direttamente dal messaggio.",
-};
-const CONTEXT_CATEGORY_OVERRIDES = {
-  partnership: "partner",
 };
 
 function buildMiniHelpNotFoundEmbed(query) {
@@ -287,15 +126,6 @@ function getPrefixDescription(command) {
   return "Descrizione non disponibile.";
 }
 
-function prettifySubcommandName(name) {
-  const raw = String(name || "").trim();
-  if (!raw) return "subcommand";
-  return raw
-    .replace(/[._-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function getPrefixSubcommandDescription(command, subcommandName) {
   const commandName = String(command?.name || "").toLowerCase();
   const key = `${String(commandName || "").toLowerCase()}.${String(subcommandName || "").toLowerCase()}`;
@@ -320,23 +150,7 @@ function getPrefixSubcommandDescription(command, subcommandName) {
 
 function getPrefixBase(command) {
   void command;
-  return "+";
-}
-
-function normalizeCategoryKey(value) {
-  const key = String(value || "misc").toLowerCase();
-  if (key === "utiliy") return "utility";
-  return key;
-}
-
-function resolveContextCategory(command, dataJson) {
-  const contextName = String(dataJson?.name || "")
-    .trim()
-    .toLowerCase();
-  if (contextName && CONTEXT_CATEGORY_OVERRIDES[contextName]) {
-    return normalizeCategoryKey(CONTEXT_CATEGORY_OVERRIDES[contextName]);
-  }
-  return normalizeCategoryKey(command?.category || "contextmenubuilder");
+  return "-";
 }
 
 function extractPrefixSubcommands(command) {
@@ -565,71 +379,46 @@ function buildEntries(client, permissions) {
     }
   }
 
-  const seenSlash = new Set();
-  for (const command of client.commands.values()) {
-    const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
-    if (!dataJson?.name) continue;
-    const commandType = dataJson.type || ApplicationCommandType.ChatInput;
-    if (commandType !== ApplicationCommandType.ChatInput) continue;
+  if (!HELP_PREFIX_ONLY) {
+    const seenSlash = new Set();
+    for (const command of client.commands.values()) {
+      const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
+      if (!dataJson?.name) continue;
+      const commandType = dataJson.type || ApplicationCommandType.ChatInput;
+      if (commandType !== ApplicationCommandType.ChatInput) continue;
 
-    const uniqueKey = `${dataJson.name}:${commandType}`;
-    if (seenSlash.has(uniqueKey)) continue;
-    seenSlash.add(uniqueKey);
+      const uniqueKey = `${dataJson.name}:${commandType}`;
+      if (seenSlash.has(uniqueKey)) continue;
+      seenSlash.add(uniqueKey);
 
-    const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
-    const category = normalizeCategoryKey(command?.category || "misc");
-    const hasSubcommands =
-      Array.isArray(dataJson.options) &&
-      dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
+      const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
+      const category = normalizeCategoryKey(command?.category || "misc");
+      const hasSubcommands =
+        Array.isArray(dataJson.options) &&
+        dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
 
-    const roles = normalizePermissionRoles(perm);
-    if (hasSubcommands) {
-      entries.push(
-        ...getSubcommandEntries(
-          dataJson.name,
-          dataJson,
-          perm,
-          commandType,
-          category,
-        ),
-      );
-      continue;
+      const roles = normalizePermissionRoles(perm);
+      if (hasSubcommands) {
+        entries.push(
+          ...getSubcommandEntries(
+            dataJson.name,
+            dataJson,
+            perm,
+            commandType,
+            category,
+          ),
+        );
+        continue;
+      }
+
+      entries.push({
+        invoke: `/${dataJson.name}`,
+        type: "slash",
+        description: getSlashTopLevelDescription(dataJson),
+        category,
+        roles,
+      });
     }
-
-    entries.push({
-      invoke: `/${dataJson.name}`,
-      type: "slash",
-      description: getSlashTopLevelDescription(dataJson),
-      category,
-      roles,
-    });
-  }
-
-  for (const command of client.commands.values()) {
-    const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
-    if (!dataJson?.name) continue;
-    const commandType = dataJson.type || ApplicationCommandType.ChatInput;
-    if (
-      commandType !== ApplicationCommandType.User &&
-      commandType !== ApplicationCommandType.Message
-    )
-      continue;
-
-    const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
-    const roles = normalizePermissionRoles(perm);
-
-    entries.push({
-      invoke: `${dataJson.name}`,
-      type: "context",
-      description: normalizeDescription(
-        command?.helpDescription ||
-        command?.description ||
-        CONTEXT_HELP_DESCRIPTIONS[dataJson.name] ||
-        `Comando context (${commandType === ApplicationCommandType.User ? "utente" : "messaggio"}).`,
-      ),
-      category: resolveContextCategory(command, dataJson),
-      roles,
-    });
   }
 
   const dedupe = new Map();
@@ -691,28 +480,6 @@ function entryBelongsToPage(entry, pageRoleId) {
   return getEntryDisplayTier(entry) === pageRoleId;
 }
 
-function memberCanSeeEntry(entry, memberRoles, pageRoleId) {
-  if (pageRoleId === "utente") {
-    if (!Array.isArray(entry.roles) || !entry.roles.length) return true;
-    if (entry.roles.some((r) => STAFF_TIER_ROLES.includes(r))) return false;
-    const entryOnlyVip =
-      entry.roles.length > 0 &&
-      entry.roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
-    const memberHasMemberRole = IDs.roles.Member && memberRoles?.has(IDs.roles.Member);
-    if (entryOnlyVip && memberHasMemberRole) return true;
-    return hasAnyRole(memberRoles, entry.roles);
-  }
-  return hasAnyRole(memberRoles, entry.roles);
-}
-
-function filterByPage(entries, pageRoleId, memberRoles) {
-  return entries.filter(
-    (entry) =>
-      entryBelongsToPage(entry, pageRoleId) &&
-      memberCanSeeEntry(entry, memberRoles, pageRoleId),
-  );
-}
-
 function canMemberSeeEntry(entry, memberRoles) {
   const roles = entry?.roles;
   if (!Array.isArray(roles) || roles.length === 0) return true;
@@ -723,14 +490,6 @@ function canMemberSeeEntry(entry, memberRoles) {
     roles.every((r) => String(r) === String(IDs.roles.VIP || ""));
   if (memberHasMemberRole && entryOnlyVip) return true;
   return false;
-}
-
-function chunkEntries(entries, size) {
-  const chunks = [];
-  for (let i = 0; i < entries.length; i += size) {
-    chunks.push(entries.slice(i, i + size));
-  }
-  return chunks.length ? chunks : [[]];
 }
 
 function chunkEntriesByCategory(entries, maxPerPage) {
@@ -1351,6 +1110,7 @@ function buildSlashExampleLine(
 }
 
 function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
+  if (HELP_PREFIX_ONLY) return null;
   const normalized = normalizeInvokeLookup(query);
   const tokens = normalized.split(" ").filter(Boolean);
   const queryToken = tokens[0] || "";
@@ -1669,58 +1429,60 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
     }
   }
 
-  const seen = new Set();
-  const slashCommands = [];
-  for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
-    const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
-    if (!dataJson?.name) continue;
-    const type = dataJson.type || ApplicationCommandType.ChatInput;
-    if (type !== ApplicationCommandType.ChatInput) continue;
-    const key = `${dataJson.name}:${type}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    slashCommands.push({ cmd, dataJson });
-  }
-  const slashHit = slashCommands.find(
-    ({ dataJson }) =>
-      String(dataJson?.name || "")
+  if (!HELP_PREFIX_ONLY) {
+    const seen = new Set();
+    const slashCommands = [];
+    for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
+      const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
+      if (!dataJson?.name) continue;
+      const type = dataJson.type || ApplicationCommandType.ChatInput;
+      if (type !== ApplicationCommandType.ChatInput) continue;
+      const key = `${dataJson.name}:${type}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      slashCommands.push({ cmd, dataJson });
+    }
+    const slashHit = slashCommands.find(
+      ({ dataJson }) =>
+        String(dataJson?.name || "")
+          .trim()
+          .toLowerCase() === queryToken,
+    );
+    if (slashHit) {
+      const commandName = String(slashHit.dataJson.name || "")
         .trim()
-        .toLowerCase() === queryToken,
-  );
-  if (slashHit) {
-    const commandName = String(slashHit.dataJson.name || "")
-      .trim()
-      .toLowerCase();
-    const options = Array.isArray(slashHit.dataJson.options)
-      ? slashHit.dataJson.options
-      : [];
-    const subLines = [];
-    for (const opt of options) {
-      if (opt?.type === 1 && opt?.name) {
-        const invoke = `/${commandName} ${opt.name}`;
-        const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-        const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-        subLines.push(
-          `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
-        );
-      }
-      if (opt?.type === 2 && Array.isArray(opt.options)) {
-        for (const sub of opt.options) {
-          if (sub?.type !== 1 || !sub?.name) continue;
-          const invoke = `/${commandName} ${opt.name} ${sub.name}`;
+        .toLowerCase();
+      const options = Array.isArray(slashHit.dataJson.options)
+        ? slashHit.dataJson.options
+        : [];
+      const subLines = [];
+      for (const opt of options) {
+        if (opt?.type === 1 && opt?.name) {
+          const invoke = `/${commandName} ${opt.name}`;
           const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
           const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
           subLines.push(
-            `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
+            `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
           );
         }
+        if (opt?.type === 2 && Array.isArray(opt.options)) {
+          for (const sub of opt.options) {
+            if (sub?.type !== 1 || !sub?.name) continue;
+            const invoke = `/${commandName} ${opt.name} ${sub.name}`;
+            const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
+            const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
+            subLines.push(
+              `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
+            );
+          }
+        }
       }
-    }
-    if (subLines.length) {
-      return new EmbedBuilder()
-        .setColor(HELP_EMBED_COLOR)
-        .setTitle(`Subcommands: /${commandName}`)
-        .setDescription(subLines.join("\n"));
+      if (subLines.length) {
+        return new EmbedBuilder()
+          .setColor(HELP_EMBED_COLOR)
+          .setTitle(`Subcommands: /${commandName}`)
+          .setDescription(subLines.join("\n"));
+      }
     }
   }
 
@@ -1927,3 +1689,4 @@ module.exports = {
     });
   },
 };
+

@@ -828,6 +828,19 @@ async function sendJoinGatePunishDm(member, reason, extraLines = []) {
   }
 }
 
+function buildJoinGateTriggeredEmbed(member, reason) {
+  return new EmbedBuilder()
+    .setColor("#F59E0B")
+    .setTitle(`${member.user.username} has triggered the joingate!`)
+    .setDescription(
+      [
+        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
+        `${ARROW} **Reason:** ${reason}`,
+      ].join("\n"),
+    )
+    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+}
+
 async function kickForJoinGate(member, reason, extraLines = [], action = "kick") {
   const me = member.guild.members.me;
   const normalizedAction = ["kick", "ban", "timeout", "log"].includes(
@@ -976,20 +989,7 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
           .setThumbnail(member.client.user.displayAvatarURL({ size: 256 }))
-      : new EmbedBuilder()
-          .setColor("#F59E0B")
-          .setTitle(`${member.user.username} has triggered the joingate!`)
-          .setDescription(
-            [
-              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
-              `${ARROW} **Reason:** ${reason}`,
-              `${ARROW} **Action:** ${appliedAction.toUpperCase()}`,
-              ...extraLines.filter(Boolean),
-              `${ARROW} **DM Sent:** ${dmSent ? "Yes" : "No"}`,
-              `${ARROW} **Punished:** ${punished ? "Yes" : "No"}`,
-            ].join("\n"),
-          )
-          .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+      : buildJoinGateTriggeredEmbed(member, reason);
     await logChannel.send({ embeds: [embed] }).catch(() => {});
   }
   return {
@@ -1024,16 +1024,7 @@ async function sendJoinGateNoAvatarLog(member) {
     : null;
   if (!logChannel?.isTextBased?.()) return;
 
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle(`${member.user.username} has triggered the joingate!`)
-    .setDescription(
-      [
-        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
-        `${ARROW} **Reason:** Account has no avatar.`,
-      ].join("\n"),
-    )
-    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+  const embed = buildJoinGateTriggeredEmbed(member, "Account has no avatar.");
 
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
@@ -1046,17 +1037,7 @@ async function sendSuspiciousAccountLog(member, reason) {
         (await member.guild.channels.fetch(modLogId).catch(() => null)))
     : null;
   if (!logChannel?.isTextBased?.()) return;
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle(`${member.user.username} has triggered the joingate!`)
-    .setDescription(
-      [
-        `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
-        `${ARROW} **Reason:** ${reason}`,
-        `${ARROW} **Rule:** Suspicious Account`,
-      ].join("\n"),
-    )
-    .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+  const embed = buildJoinGateTriggeredEmbed(member, reason);
   await logChannel.send({ embeds: [embed] }).catch(() => {});
 }
 

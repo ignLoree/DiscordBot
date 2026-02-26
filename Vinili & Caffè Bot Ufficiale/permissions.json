@@ -139,32 +139,6 @@
                 "roles.Founder"
             ]
         },
-        "set": {
-            "roles": [
-                "roles.Member"
-            ],
-            "subcommands": {
-                "autojoin": [
-                    "roles.HighStaff"
-                ],
-                "voice": {
-                    "roles": [
-                        "roles.Member"
-                    ],
-                    "channels": [
-                        "1442569187376763010"
-                    ]
-                }
-            }
-        },
-        "voices": {
-            "roles": [
-                "roles.Member"
-            ],
-            "channels": [
-                "1442569187376763010"
-            ]
-        },
         "staff": {
             "roles": [
                 "roles.HighStaff"
@@ -726,79 +700,136 @@
         },
         "ticket": {
             "roles": [
-                "roles.Staff"
+                "roles.Founder",
+                "roles.CoFounder",
+                "roles.HighStaff",
+                "roles.Staff",
+                "roles.PartnerManager"
             ],
             "subcommands": {
                 "add": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "remove": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "closerequest": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "close": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "claim": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "unclaim": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "switchpanel": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "rename": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "reopen": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "ticketswitchpanel": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "ticketrename": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "ticketreopen": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "trename": [
+                    "roles.Founder",
+                    "roles.CoFounder",
                     "roles.HighStaff"
                 ],
                 "ticketclose": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "ticketclaim": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "ticketunclaim": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "tadd": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "tremove": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "ticketadd": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ],
                 "ticketremove": [
+                    "roles.Founder",
+                    "roles.CoFounder",
+                    "roles.HighStaff",
                     "roles.Staff",
                     "roles.PartnerManager"
                 ]
@@ -1126,6 +1157,24 @@
                 "1442569262689554444",
                 "1442569288161558528",
                 "1442569245878648924"
+            ]
+        },
+        "set": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "voice": [
+                    "roles.Member"
+                ],
+                "autojoin": [
+                    "roles.HighStaff"
+                ]
+            }
+        },
+        "voices": {
+            "roles": [
+                "roles.Member"
             ]
         }
     },
