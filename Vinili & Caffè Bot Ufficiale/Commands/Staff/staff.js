@@ -211,6 +211,18 @@ async function ensureStaffRole(interaction, member) {
   return false;
 }
 
+async function ensureNotFounderOrCoFounder(interaction, member) {
+  const isFounder = Boolean(member?.roles?.cache?.has(ROLE_OWNER));
+  const isCoFounder = Boolean(member?.roles?.cache?.has(ROLE_CO_OWNER));
+  if (!isFounder && !isCoFounder) return true;
+
+  await replyError(
+    interaction,
+    "<:vegax:1443934876440068179> Founder e CoFounder sono esclusi dai resoconti.",
+  );
+  return false;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("staff")
@@ -611,6 +623,7 @@ module.exports = {
         const stafferMember = await fetchMember(interaction.guild, staffer.id);
 
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
+        if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;
         if (!(await ensureNotSelf(interaction, staffer))) return;
 
         if (resocontoChannel) {
@@ -645,6 +658,7 @@ module.exports = {
         const stafferMember = await fetchMember(interaction.guild, staffer.id);
 
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
+        if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;
         if (!(await ensureNotSelf(interaction, staffer))) return;
 
         if (resocontoChannel) {

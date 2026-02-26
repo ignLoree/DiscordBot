@@ -14,7 +14,7 @@ const STICKY_CONFIG = Object.fromEntries(
     ],
     [
       IDs.channels.ship,
-      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1469686181884072022)__**",
+      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1476550416656498930)__**",
     ],
   ].filter(([channelId, text]) => Boolean(channelId && text)),
 );
