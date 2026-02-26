@@ -55,6 +55,25 @@ function toTs(ms, style = "R") {
   return `<t:${Math.floor(n / 1000)}:${style}>`;
 }
 
+function toCompactDuration(ms) {
+  const n = Math.max(0, Number(ms || 0));
+  if (!Number.isFinite(n)) return "0m";
+  const totalSec = Math.round(n / 1000);
+  if (totalSec < 60) return `${totalSec}s`;
+  const totalMin = Math.round(totalSec / 60);
+  if (totalMin < 60) return `${totalMin}m`;
+  const totalHr = Math.round(totalMin / 60);
+  if (totalHr < 24) return `${totalHr}h`;
+  const totalDays = Math.round(totalHr / 24);
+  return `${totalDays}d`;
+}
+
+function formatActionLabel(action, fallback = "log") {
+  const raw = String(action || fallback || "log").trim().toLowerCase();
+  if (!raw) return "Log";
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 function hasAnyRole(member, roleIds) {
   return roleIds.some((id) => member?.roles?.cache?.has?.(id));
 }
@@ -79,6 +98,8 @@ function usageEmbed() {
     .setDescription(
       [
         "`+security status`",
+        "`+security enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
+        "`+security disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
         "`+security panic status`",
         "`+security panic enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
         "`+security panic disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
@@ -218,66 +239,161 @@ async function buildStatusEmbeds(guild) {
   const autoRules = getAutoModRulesSnapshot();
   const autoPanic = getAutoModPanicSnapshot(guildId);
   const sec = await getSecurityLockState(guild);
+  const antiCfg = anti?.config || {};
+  const panicCfg = antiCfg?.panicMode || {};
+  const quarantine = antiCfg?.autoQuarantine || {};
+  const backup = panicCfg?.autoBackupSync || {};
+  const warnedRoleIds = Array.isArray(panicCfg.warnedRoleIds)
+    ? panicCfg.warnedRoleIds.filter(Boolean)
+    : [];
+  const warnedRoles = warnedRoleIds.length
+    ? warnedRoleIds.map((id) => `<@&${id}>`).join(", ")
+    : "`No record found.`";
+
+  const raidWarnedRoleIds = Array.isArray(raid?.config?.warnedRoleIds)
+    ? raid.config.warnedRoleIds.filter(Boolean)
+    : [];
+  const raidWarnedRoles = raidWarnedRoleIds.length
+    ? raidWarnedRoleIds.map((id) => `<@&${id}>`).join(", ")
+    : "❌";
+  const idFlag = raid?.config?.idFlag || {};
+  const ageFlag = raid?.config?.ageFlag || {};
+  const noPfpFlag = raid?.config?.noPfpFlag || {};
+
+  const hs = autoCfg?.heatSystem || {};
+  const at = autoCfg?.autoTimeouts || {};
+  const panic = autoCfg?.panic || {};
+  const lock = autoCfg?.autoLockdown || {};
+  const minAgeDays = Number(joinGate?.newAccounts?.minAgeDays || 3);
 
   const page1 = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Security Status - Overview (1/3)")
+    .setTitle("Global Anti-Nuke Panel")
     .setDescription(
       [
-        `AntiNuke enabled: **${anti?.enabled ? "ON" : "OFF"}**`,
-        `AntiNuke panic active: **${anti?.panicActive ? "ON" : "OFF"}**`,
-        `JoinRaid enabled: **${raid?.enabled ? "ON" : "OFF"}**`,
-        `JoinRaid active: **${raid?.raidActive ? "ON" : "OFF"}**`,
-        `JoinGate enabled: **${joinGate?.enabled ? "ON" : "OFF"}**`,
-        `AutoMod enabled: **${autoRules?.status?.enabled ? "ON" : "OFF"}**`,
-        `AutoMod panic active: **${autoPanic?.active ? "ON" : "OFF"}**`,
+        "[1] Status:",
+        `- \`${anti?.enabled ? "Enabled" : "Disabled"}\``,
         "",
-        `Global join lock: **${sec?.joinLockActive ? "ON" : "OFF"}**`,
-        `Global command lock: **${sec?.commandLockActive ? "ON" : "OFF"}**`,
+        "[2] Panic Mode:",
+        `- \`+security panic status\``,
+        "",
+        "[3] Backups:",
+        `- [A] Status: \`${backup.enabled ? "Enabled" : "Disabled"}\``,
+        "- [B] Max immagini: `10`",
+        "- [C] Intervallo: `Ogni 3h`",
+        "",
+        "[4] Prune Detection:",
+        `- \`${antiCfg?.detectPrune ? "Enabled" : "Disabled"}\``,
+        "",
+        "[5] Quarantine Hold:",
+        `- [A] Status: \`${quarantine.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Strict Mode: \`${quarantine.strictMode ? "Enabled" : "Disabled"}\``,
+        `- [C] Monitor Public Roles: \`${quarantine.monitorPublicRoles ? "Enabled" : "Disabled"}\``,
+        `- [D] Vanity Protection: \`${antiCfg?.vanityGuard ? "Enabled" : "Disabled"}\``,
+        `- [E] Strict Member Role Addition: \`${quarantine.strictMemberRoleAddition ? "Enabled" : "Disabled"}\``,
+        "",
+        "[6] Runtime:",
+        `- Panic **${anti?.panicActive ? "ON" : "OFF"}**, JoinRaid **${raid?.raidActive ? "ON" : "OFF"}**, AutoMod Panic **${autoPanic.active ? "ON" : "OFF"}**`,
+        `- JoinLock **${sec.joinLockActive ? "ON" : "OFF"}**, CmdLock **${sec.commandLockActive ? "ON" : "OFF"}**`,
+        `- Warned roles: ${warnedRoles}`,
       ].join("\n"),
     );
 
   const page2 = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Security Status - Join Systems (2/3)")
+    .setTitle("Join Raid")
     .setDescription(
       [
-        "[JoinGate]",
-        `Status: **${joinGate?.enabled ? "ON" : "OFF"}**`,
-        `NoAvatar: **${joinGate?.noAvatar?.enabled ? "ON" : "OFF"}** (${String(joinGate?.noAvatar?.action || "log").toUpperCase()})`,
-        `NewAccounts: **${joinGate?.newAccounts?.enabled ? "ON" : "OFF"}** (${String(joinGate?.newAccounts?.action || "kick").toUpperCase()})`,
-        `MinAgeDays: **${Number(joinGate?.newAccounts?.minAgeDays || 0)}**`,
-        `Suspicious: **${joinGate?.suspiciousAccount?.enabled ? "ON" : "OFF"}** (${String(joinGate?.suspiciousAccount?.action || "log").toUpperCase()})`,
+        "[1] Status:        [2] Action:        [3] Warned Roles:",
+        `- \`${raid?.enabled ? "Enabled" : "Disabled"}\`        - \`${formatActionLabel(raid?.config?.triggerAction, "ban")}\`        - ${raidWarnedRoles}`,
         "",
-        "[JoinRaid]",
-        `Status: **${raid?.enabled ? "ON" : "OFF"}**`,
-        `Active: **${raid?.raidActive ? "ON" : "OFF"}** ${raid?.raidActive ? `(until ${toTs(raid?.raidUntil, "F")})` : ""}`,
-        `LockCommands: **${raid?.config?.lockCommands ? "ON" : "OFF"}**`,
-        `TriggerCount: **${Number(raid?.config?.triggerCount || 0)}**`,
+        "[4] Details:",
+        `- [X] Lock Commands While Raid: \`${raid?.config?.lockCommands ? "Enabled" : "Disabled"}\``,
+        `- [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount || 10)} accounts\``,
+        `- [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
+        `- [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs || 0)}\``,
+        "",
+        "[5] Age Flag:",
+        `- [A] Status: \`${ageFlag.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Minimum: \`${toCompactDuration(ageFlag.minimumAgeMs || 0)}\``,
+        "",
+        "[6] NoPFP Flag:",
+        `- \`${noPfpFlag.enabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[7] ID Flag:",
+        `- [A] Status: \`${idFlag.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Granularity: \`${String(idFlag.categorization || "adaptive")}\``,
+        `- [C] Margin: \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
+        `- [D] Minimum Matches: \`${Number(idFlag.minimumMatches || 4)}\``,
       ].join("\n"),
     );
 
   const page3 = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Security Status - AntiNuke / AutoMod (3/3)")
+    .setTitle("Heat System Panel")
     .setDescription(
       [
-        "[AntiNuke]",
-        `Enabled: **${anti?.enabled ? "ON" : "OFF"}**`,
-        `PanicMode enabled: **${anti?.panicModeEnabled ? "ON" : "OFF"}**`,
-        `Panic active: **${anti?.panicActive ? "ON" : "OFF"}** ${anti?.panicActive ? `(until ${toTs(anti?.panicActiveUntil, "F")})` : ""}`,
-        `Lock moderation commands: **${anti?.config?.panicMode?.lockdown?.lockModerationCommands ? "ON" : "OFF"}**`,
-        `Lock all commands: **${anti?.config?.panicMode?.lockdown?.lockAllCommands ? "ON" : "OFF"}**`,
+        "[1] Status:",
+        `- \`${autoRules?.status?.enabled ? "Enabled" : "Disabled"}\``,
         "",
-        "[AutoMod]",
-        `Enabled: **${autoRules?.status?.enabled ? "ON" : "OFF"}**`,
-        `Panic enabled: **${autoCfg?.panic?.enabled ? "ON" : "OFF"}**`,
-        `Panic active: **${autoPanic?.active ? "ON" : "OFF"}** ${autoPanic?.active ? `(until ${toTs(autoPanic?.activeUntil, "F")})` : ""}`,
-        `AutoLockdown: **${autoCfg?.autoLockdown?.enabled ? "ON" : "OFF"}**`,
+        "[2] Spam Filters:",
+        `- \`${autoRules?.status?.antiSpamEnabled ? "Enabled" : "Disabled"}\``,
+        "",
+        "[3] Max Heat Percentage:",
+        `- \`${Number(hs.maxHeat || 100)}%\``,
+        "",
+        "[4] Heat Degradation:",
+        `- \`${Number(hs.decayPerSec || 0)}% per second\``,
+        "",
+        "[5] Strikes CAP:",
+        `- \`${Number(at.capStrike || 3)}\``,
+        "",
+        "[6] Auto Timeouts:",
+        `- [A] Status: \`${at.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Regular Strike Duration: \`${toCompactDuration(at.regularStrikeDurationMs)}\``,
+        `- [C] CAP Strike Duration: \`${toCompactDuration(at.capStrikeDurationMs)}\``,
+        "",
+        "[7] Heat Panic Mode:",
+        `- [A] Status: \`${panic.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Trigger: \`${Number(panic.triggerCount || 3)} Raiders\``,
+        `- [C] Panic Duration: \`${toCompactDuration(panic.durationMs)}\``,
+        "",
+        "[8] Auto Server Lockdown:",
+        `- [A] Status: \`${lock.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Mentions: \`${Number(lock.mentionTrigger || 50)}\``,
+        `- [C] Under: \`${toCompactDuration(lock.mentionWindowMs)}\``,
       ].join("\n"),
     );
 
-  return [page1, page2, page3];
+  const page4 = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("JoinGate Panel")
+    .setDescription(
+      [
+        "[1] General:",
+        `- [A] Status: \`${joinGate?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] DM Members: \`${joinGate?.dmPunishedMembers ? "Enabled" : "Disabled"}\``,
+        "",
+        "[2] No Avatar Filter:",
+        `- [A] Status: \`${joinGate?.noAvatar?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.noAvatar?.action, "log")}\``,
+        "",
+        "[3] Account Age Filter:",
+        `- [A] Status: \`${joinGate?.newAccounts?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.newAccounts?.action, "kick")}\``,
+        `- [C] Minimum Age: \`${minAgeDays} days\``,
+        "",
+        "[4] Bot Addition Filter:",
+        `- [A] Status: \`${joinGate?.botAdditions?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.botAdditions?.action, "kick")}\``,
+        "",
+        "[5] Suspicious Account Filter:",
+        `- [A] Status: \`${joinGate?.suspiciousAccount?.enabled ? "Enabled" : "Disabled"}\``,
+        `- [B] Action: \`${formatActionLabel(joinGate?.suspiciousAccount?.action, "log")}\``,
+      ].join("\n"),
+    );
+
+  return [page1, page2, page3, page4];
 }
 
 async function buildPanicStatusEmbeds(guild) {
@@ -287,38 +403,69 @@ async function buildPanicStatusEmbeds(guild) {
   const auto = getAutoModPanicSnapshot(guildId);
   const sec = await getSecurityLockState(guild);
 
+  const panicCfg = anti?.config?.panicMode || {};
+  const lockdown = panicCfg?.lockdown || {};
+  const warnedRoleIds = Array.isArray(panicCfg?.warnedRoleIds)
+    ? panicCfg.warnedRoleIds.filter(Boolean)
+    : [];
+  const whitelistCategoryIds = Array.isArray(panicCfg?.whitelistCategoryIds)
+    ? panicCfg.whitelistCategoryIds.filter(Boolean)
+    : [];
+  const warnedRows = warnedRoleIds.length
+    ? warnedRoleIds.slice(0, 3).map((id) => `<@&${id}>`).join(", ")
+    : "`No record found.`";
+  const whitelistRows = whitelistCategoryIds.length
+    ? whitelistCategoryIds.slice(0, 3).map((id) => `<#${id}>`).join(", ")
+    : "`No record found.`";
+
   const page1 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Security Panic Status (1/2)")
+    .setColor(panicCfg.enabled ? "#6f4e37" : "#57F287")
+    .setTitle("Anti-Nuke Panic Mode")
     .setDescription(
       [
-        "[AntiNuke Panic]",
-        `Enabled: **${anti?.panicModeEnabled ? "ON" : "OFF"}**`,
-        `Active: **${anti?.panicActive ? "ON" : "OFF"}**`,
-        `Until: ${anti?.panicActive ? toTs(anti?.panicActiveUntil, "F") : "N/A"}`,
+        "[1] Status:",
+        `- *${panicCfg.enabled ? "Enabled" : "Disabled"}*`,
         "",
-        "[AutoMod Panic]",
-        `Enabled: **${auto?.enabled ? "ON" : "OFF"}**`,
-        `Active: **${auto?.active ? "ON" : "OFF"}**`,
-        `Until: ${auto?.active ? toTs(auto?.activeUntil, "F") : "N/A"}`,
-        `Tracked Accounts: **${Number(auto?.trackedAccounts || 0)}**`,
+        "[2] Heat Algorithm:",
+        `- *${panicCfg.useHeatAlgorithm ? "Enabled" : "Disabled"}*`,
+        "",
+        "[3] Lockdown Server on trigger:",
+        `- *${lockdown.dangerousRoles || lockdown.channelLockdown || lockdown.lockAllCommands ? "Enabled" : "Disabled"}*`,
+        "",
+        "[4] Unlock Server when ending:",
+        `- *${lockdown.unlockDangerousRolesOnFinish ? "Enabled" : "Disabled"}*`,
+        "",
+        `[5] Warned Roles (${Math.min(warnedRoleIds.length, 3)}/3):`,
+        warnedRows,
+        "",
+        `[6] Whitelisted Categories (${Math.min(whitelistCategoryIds.length, 3)}/3):`,
+        whitelistRows,
+        "",
+        "[7] Lock Mod Cmds on trigger:",
+        `- *${lockdown.lockModerationCommands ? "Enabled" : "Disabled"}*`,
+        "",
+        `Panic attiva ora: **${anti?.panicActive ? "SI" : "NO"}**${anti?.panicActive ? ` (fino a ${toTs(anti?.panicActiveUntil, "F")})` : ""}`,
       ].join("\n"),
     );
 
   const page2 = new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Security Panic Status (2/2)")
+    .setTitle("Panic Runtime Overview")
     .setDescription(
       [
-        "[JoinRaid Runtime]",
-        `Enabled: **${raid?.enabled ? "ON" : "OFF"}**`,
-        `Active: **${raid?.raidActive ? "ON" : "OFF"}**`,
-        `Until: ${raid?.raidActive ? toTs(raid?.raidUntil, "F") : "N/A"}`,
-        `LockCommands: **${raid?.config?.lockCommands ? "ON" : "OFF"}**`,
+        "[1] AutoMod Panic:",
+        `- Enabled: **${auto?.enabled ? "ON" : "OFF"}**`,
+        `- Active: **${auto?.active ? "ON" : "OFF"}**${auto?.active ? ` (fino a ${toTs(auto?.activeUntil, "F")})` : ""}`,
+        `- Tracked Accounts: **${Number(auto?.trackedAccounts || 0)}**`,
         "",
-        "[Global Locks]",
-        `Join lock active: **${sec?.joinLockActive ? "ON" : "OFF"}**`,
-        `Command lock active: **${sec?.commandLockActive ? "ON" : "OFF"}**`,
+        "[2] JoinRaid Runtime:",
+        `- Enabled: **${raid?.enabled ? "ON" : "OFF"}**`,
+        `- Active: **${raid?.raidActive ? "ON" : "OFF"}**${raid?.raidActive ? ` (fino a ${toTs(raid?.raidUntil, "F")})` : ""}`,
+        `- LockCommands: **${raid?.config?.lockCommands ? "ON" : "OFF"}**`,
+        "",
+        "[3] Global Locks:",
+        `- Join lock active: **${sec?.joinLockActive ? "ON" : "OFF"}**`,
+        `- Command lock active: **${sec?.commandLockActive ? "ON" : "OFF"}**`,
       ].join("\n"),
     );
 
@@ -558,12 +705,73 @@ async function enableLockCommands(guildId) {
   };
 }
 
+async function runSecurityAction(action, target, guild, actorId) {
+  const guildId = String(guild?.id || "");
+  const results = [];
+
+  if (action === "disable") {
+    if (target === "antinuke" || target === "all") {
+      results.push({ system: "AntiNuke", ...(await disableAntiNuke(guild, actorId)) });
+    }
+    if (target === "automod" || target === "all") {
+      results.push({ system: "AutoMod", ...(await disableAutoMod(guildId)) });
+    }
+    if (target === "joingate" || target === "all") {
+      results.push({ system: "JoinGate", ...(await disableJoinGate()) });
+    }
+    if (target === "joinraid" || target === "all") {
+      results.push({ system: "JoinRaid", ...(await disableJoinRaid(guildId)) });
+    }
+    if (target === "lockcommands" || target === "all") {
+      results.push({ system: "LockCommands", ...(await disableLockCommands(guildId)) });
+    }
+    return results;
+  }
+
+  if (target === "antinuke" || target === "all") {
+    results.push({ system: "AntiNuke", ...(await enableAntiNuke(guild, actorId)) });
+  }
+  if (target === "automod" || target === "all") {
+    results.push({ system: "AutoMod", ...(await enableAutoMod(guildId, actorId)) });
+  }
+  if (target === "joingate" || target === "all") {
+    results.push({ system: "JoinGate", ...(await enableJoinGate()) });
+  }
+  if (target === "joinraid" || target === "all") {
+    results.push({ system: "JoinRaid", ...(await enableJoinRaid(guildId)) });
+  }
+  if (target === "lockcommands" || target === "all") {
+    results.push({ system: "LockCommands", ...(await enableLockCommands(guildId)) });
+  }
+  return results;
+}
+
 module.exports = {
   name: "security",
-  subcommands: ["status", "panic"],
+  subcommands: ["status", "enable", "disable", "panic", "panic status", "panic enable", "panic disable"],
   subcommandAliases: {
     status: "status",
+    enable: "enable",
+    disable: "disable",
     panic: "panic",
+  },
+  subcommandsDescriptions: {
+    status: "Pannello paginato con stato completo dei sistemi di sicurezza.",
+    enable: "Riattiva completamente uno o più moduli sicurezza.",
+    disable: "Disabilita completamente uno o più moduli sicurezza.",
+    panic: "Gestione panic mode: status, enable, disable.",
+    "panic status": "Mostra il pannello paginato con tutte le panic mode.",
+    "panic enable": "Abilita manualmente i sistemi in panic mode (o lockCommands).",
+    "panic disable": "Disabilita manualmente i sistemi in panic mode (o lockCommands).",
+  },
+  subcommandsUsages: {
+    status: "`+security status`",
+    enable: "`+security enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
+    disable: "`+security disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
+    panic: "`+security panic <status|enable|disable> ...`",
+    "panic status": "`+security panic status`",
+    "panic enable": "`+security panic enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
+    "panic disable": "`+security panic disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
   },
   allowEmptyArgs: true,
 
@@ -582,6 +790,106 @@ module.exports = {
     if (sub === "status") {
       const pages = await buildStatusEmbeds(message.guild);
       await sendPagedEmbeds(message, pages, "security-status");
+      return;
+    }
+
+    if (sub === "enable") {
+      if (!hasPanicControlAccess(message.member, message.guild)) {
+        await safeMessageReply(message, {
+          content: "<:vegax:1443934876440068179> Solo Founder/CoFounder possono usare security enable.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const target = parsePanicTarget(args[1]);
+      if (!target) {
+        await safeMessageReply(message, {
+          embeds: [usageEmbed()],
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const results = await runSecurityAction("enable", target, message.guild, message.author.id);
+      const okCount = results.filter((r) => r.ok).length;
+      const changedCount = results.filter((r) => r.changed).length;
+      const lines = results.map((r) => {
+        const status = r.ok ? "OK" : "ERR";
+        const changed = r.changed ? "changed" : "no-change";
+        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
+      });
+
+      await sendSecurityAuditLog(message.guild, {
+        actorId: message.author.id,
+        action: "security.enable",
+        details: [`Target: \`${target}\``, `Results: ${okCount}/${results.length} ok, changed ${changedCount}`],
+        color: okCount === results.length ? "#57F287" : "#FEE75C",
+      }).catch(() => null);
+
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor(okCount === results.length ? "#57F287" : "#FEE75C")
+            .setTitle("Security Enable")
+            .setDescription([
+              `Target: **${target}**`,
+              `Success: **${okCount}/${results.length}**`,
+              `Changed: **${changedCount}**`,
+              "",
+              ...lines,
+            ].join("\n")),
+        ],
+        allowedMentions: { repliedUser: false },
+      });
+      return;
+    }
+
+    if (sub === "disable") {
+      if (!hasPanicControlAccess(message.member, message.guild)) {
+        await safeMessageReply(message, {
+          content: "<:vegax:1443934876440068179> Solo Founder/CoFounder possono usare security disable.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const target = parsePanicTarget(args[1]);
+      if (!target) {
+        await safeMessageReply(message, {
+          embeds: [usageEmbed()],
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      const results = await runSecurityAction("disable", target, message.guild, message.author.id);
+      const okCount = results.filter((r) => r.ok).length;
+      const changedCount = results.filter((r) => r.changed).length;
+      const lines = results.map((r) => {
+        const status = r.ok ? "OK" : "ERR";
+        const changed = r.changed ? "changed" : "no-change";
+        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
+      });
+
+      await sendSecurityAuditLog(message.guild, {
+        actorId: message.author.id,
+        action: "security.disable",
+        details: [`Target: \`${target}\``, `Results: ${okCount}/${results.length} ok, changed ${changedCount}`],
+        color: okCount === results.length ? "#57F287" : "#FEE75C",
+      }).catch(() => null);
+
+      await safeMessageReply(message, {
+        embeds: [
+          new EmbedBuilder()
+            .setColor(okCount === results.length ? "#57F287" : "#FEE75C")
+            .setTitle("Security Disable")
+            .setDescription([
+              `Target: **${target}**`,
+              `Success: **${okCount}/${results.length}**`,
+              `Changed: **${changedCount}**`,
+              "",
+              ...lines,
+            ].join("\n")),
+        ],
+        allowedMentions: { repliedUser: false },
+      });
       return;
     }
 
@@ -625,42 +933,7 @@ module.exports = {
       return;
     }
 
-    const guildId = String(message.guild.id || "");
-    const results = [];
-
-    if (action === "disable") {
-      if (target === "antinuke" || target === "all") {
-        results.push({ system: "AntiNuke", ...(await disableAntiNuke(message.guild, message.author.id)) });
-      }
-      if (target === "automod" || target === "all") {
-        results.push({ system: "AutoMod", ...(await disableAutoMod(guildId)) });
-      }
-      if (target === "joingate" || target === "all") {
-        results.push({ system: "JoinGate", ...(await disableJoinGate()) });
-      }
-      if (target === "joinraid" || target === "all") {
-        results.push({ system: "JoinRaid", ...(await disableJoinRaid(guildId)) });
-      }
-      if (target === "lockcommands" || target === "all") {
-        results.push({ system: "LockCommands", ...(await disableLockCommands(guildId)) });
-      }
-    } else {
-      if (target === "antinuke" || target === "all") {
-        results.push({ system: "AntiNuke", ...(await enableAntiNuke(message.guild, message.author.id)) });
-      }
-      if (target === "automod" || target === "all") {
-        results.push({ system: "AutoMod", ...(await enableAutoMod(guildId, message.author.id)) });
-      }
-      if (target === "joingate" || target === "all") {
-        results.push({ system: "JoinGate", ...(await enableJoinGate()) });
-      }
-      if (target === "joinraid" || target === "all") {
-        results.push({ system: "JoinRaid", ...(await enableJoinRaid(guildId)) });
-      }
-      if (target === "lockcommands" || target === "all") {
-        results.push({ system: "LockCommands", ...(await enableLockCommands(guildId)) });
-      }
-    }
+    const results = await runSecurityAction(action, target, message.guild, message.author.id);
 
     const okCount = results.filter((r) => r.ok).length;
     const changedCount = results.filter((r) => r.changed).length;
@@ -694,3 +967,4 @@ module.exports = {
     });
   },
 };
+

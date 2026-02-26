@@ -132,7 +132,7 @@ const PREFIX_HELP_DESCRIPTIONS = {
   restart: "Riavvia il bot o ricarica moduli specifici.",
   perms: "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
   temprole: "Assegna o rimuove ruoli temporanei agli utenti.",
-  security: "Hub sicurezza: joingate, joinraid, raid, panic, antinuke.",
+  security: "Hub sicurezza: status globale e gestione panic.",
   statics: "Configura ruoli, canali e utenti “statici” per la sicurezza.",
   level: "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
   customrole: "Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",
@@ -151,11 +151,10 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "level.config": "Mostra la configurazione EXP corrente del server.",
   "level.ignore": "Esclude un ruolo dal guadagno EXP.",
   "level.unignore": "Riabilita un ruolo al guadagno EXP.",
-  "security.joingate": "Mostra le impostazioni del modulo Join Gate.",
-  "security.raid": "Mostra le impostazioni del modulo Join Raid.",
-  "security.panic": "Mostra le impostazioni del modulo Panic Mode.",
-  "security.antinuke": "Mostra le impostazioni del modulo Anti Nuke.",
-  "security.joinraid": "Mostra le impostazioni del modulo Join Raid.",
+  "security.status": "Mostra un pannello paginato con lo stato dei sistemi sicurezza.",
+  "security.enable": "Riattiva completamente i moduli sicurezza selezionati.",
+  "security.disable": "Disabilita completamente i moduli sicurezza selezionati.",
+  "security.panic": "Gestisce Panic Mode centralizzata.",
   "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
   "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
   "ticket.closerequest": "Invia richiesta di chiusura ticket.",
@@ -1550,7 +1549,7 @@ function resolvePrefixCommandByToken(client, token) {
 }
 
 function listPrefixSubcommandsForCommand(command, commandName, permissions) {
-  const subcommands = Array.from(
+  const baseSubcommands = Array.from(
     new Set([
       ...extractPrefixSubcommands(command),
       ...(Array.isArray(command?.subcommands)
@@ -1564,6 +1563,10 @@ function listPrefixSubcommandsForCommand(command, commandName, permissions) {
         : []),
     ]),
   );
+  if (String(commandName || "").toLowerCase() === "security") {
+    baseSubcommands.push("panic status", "panic enable", "panic disable");
+  }
+  const subcommands = Array.from(new Set(baseSubcommands));
   return subcommands.sort((a, b) => a.localeCompare(b, "it"));
 }
 

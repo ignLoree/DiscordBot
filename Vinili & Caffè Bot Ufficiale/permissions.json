@@ -272,47 +272,18 @@
                 "1442569288161558528"
             ],
             "subcommands": {
-                "joingate": [
+                "status": [
+                    "roles.HighStaff"
+                ],
+                "enable": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
-                "join-gate": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "jg": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "raid": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "joinraid": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "join-raid": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "jr": [
+                "disable": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ],
                 "panic": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "automod": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "am": [
-                    "roles.Founder",
-                    "roles.CoFounder"
-                ],
-                "antinuke": [
                     "roles.Founder",
                     "roles.CoFounder"
                 ]
