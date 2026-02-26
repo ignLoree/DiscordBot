@@ -601,6 +601,10 @@ async function enableAntiNuke(guild, actorId) {
     panicMode: {
       ...(cfg.panicMode || {}),
       enabled: true,
+      autoBackupSync: {
+        ...(cfg.panicMode?.autoBackupSync || {}),
+        enabled: true,
+      },
     },
   });
   if (!setResult?.ok) return { ok: false, changed: false, note: "Errore riabilitazione AntiNuke." };
@@ -761,14 +765,14 @@ module.exports = {
     disable: "Disabilita completamente uno o più moduli sicurezza.",
     panic: "Gestione panic mode: status, enable, disable.",
     "panic status": "Mostra il pannello paginato con tutte le panic mode.",
-    "panic enable": "Abilita manualmente i sistemi in panic mode (o lockCommands).",
-    "panic disable": "Disabilita manualmente i sistemi in panic mode (o lockCommands).",
+    "panic enable": "Abilita manualmente i sistemi in panic mode.",
+    "panic disable": "Disabilita manualmente i sistemi in panic mode.",
   },
   subcommandsUsages: {
     status: "`+security status`",
     enable: "`+security enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
     disable: "`+security disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
-    panic: "`+security panic <status|enable|disable> ...`",
+    panic: "`+security panic <status|enable|disable>`",
     "panic status": "`+security panic status`",
     "panic enable": "`+security panic enable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
     "panic disable": "`+security panic disable <antinuke|automod|joingate|joinraid|lockcommands|all>`",
