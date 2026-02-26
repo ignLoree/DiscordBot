@@ -139,6 +139,32 @@
                 "roles.Founder"
             ]
         },
+        "set": {
+            "roles": [
+                "roles.Member"
+            ],
+            "subcommands": {
+                "autojoin": [
+                    "roles.HighStaff"
+                ],
+                "voice": {
+                    "roles": [
+                        "roles.Member"
+                    ],
+                    "channels": [
+                        "1442569187376763010"
+                    ]
+                }
+            }
+        },
+        "voices": {
+            "roles": [
+                "roles.Member"
+            ],
+            "channels": [
+                "1442569187376763010"
+            ]
+        },
         "staff": {
             "roles": [
                 "roles.HighStaff"
@@ -445,14 +471,6 @@
                 "1442569187376763010"
             ]
         },
-        "languages": {
-            "roles": [
-                "roles.Member"
-            ],
-            "channels": [
-                "1442569187376763010"
-            ]
-        },
         "leave": {
             "roles": [
                 "roles.Member"
@@ -678,24 +696,6 @@
             "channels": [
                 "1442569138114662490"
             ]
-        },
-        "set": {
-            "roles": [
-                "roles.Member"
-            ],
-            "subcommands": {
-                "autojoin": [
-                    "roles.HighStaff"
-                ],
-                "voice": {
-                    "roles": [
-                        "roles.Member"
-                    ],
-                    "channels": [
-                        "1442569187376763010"
-                    ]
-                }
-            }
         },
         "ship": {
             "roles": [

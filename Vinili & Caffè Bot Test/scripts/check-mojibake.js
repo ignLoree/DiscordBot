@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -83,7 +83,15 @@ const ITALIAN_WORD_FIXES = [
   [/\be'\b/g, "\u00E8"],
   [/\bE'\b/g, "\u00C8"],
   [/\bverra\b/g, "verr\u00E0"],
-  [/\bVerra\b/g, "Verr\u00E0"]
+  [/\bVerra\b/g, "Verr\u00E0"],
+  [/\bcomportera\b/g, "comporter\u00E0"],
+  [/\bComportera\b/g, "Comporter\u00E0"],
+  [/\bcosi\b/g, "cos\u00EC"],
+  [/\bCosi\b/g, "Cos\u00EC"],
+  [/\bperchè\b/g, "perch\u00E9"],
+  [/\bPerchè\b/g, "Perch\u00E9"],
+  [/\u00C9(?=\s+__vietato__)/g, "\u00C8"],
+  [/\u00C9(?=\s+vietato)/g, "\u00C8"]
 ];
 
 function shouldScanFile(filePath) {

@@ -1,6 +1,7 @@
 const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
+const IDs = require("../Utils/Config/ids");
 const {
   inferGuildIdFromEventArgs,
   isEventExecutionAllowed,
@@ -9,6 +10,7 @@ const {
 
 const LEGACY_READY_EVENT = "ready";
 const READY_EVENT_ALIAS = "clientReady";
+const BLOCKED_TEST_GUILD_ID = String(IDs?.guilds?.test || "");
 
 function listJsFiles(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -88,6 +90,12 @@ module.exports = (client) => {
         const eventName = normalizeEventName(event.name);
         const handler = async (...args) => {
           const guildId = inferGuildIdFromEventArgs(args);
+          if (
+            BLOCKED_TEST_GUILD_ID &&
+            String(guildId || "") === BLOCKED_TEST_GUILD_ID
+          ) {
+            return;
+          }
           const gate = isEventExecutionAllowed({ eventName, guildId });
           await maybeMirrorEventToRoute({
             guild: findGuildFromArgs(args, guildId),

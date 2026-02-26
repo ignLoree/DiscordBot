@@ -11,18 +11,20 @@ const EMPTY_PERMISSIONS = {
 
 const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
+const TEST_BOT_ALLOWED_GUILDS = new Set(
+  [OFFICIAL_MAIN_GUILD_ID, TEST_MAIN_GUILD_ID]
+    .filter(Boolean)
+    .map((id) => String(id)),
+);
 
 function isOfficialMainGuild(guildId) {
-  return (
-    Boolean(OFFICIAL_MAIN_GUILD_ID) &&
-    String(guildId || "") === String(OFFICIAL_MAIN_GUILD_ID)
-  );
+  return false;
 }
 
 function isTestMainScopeGuild(guildId) {
   const safeGuildId = String(guildId || "");
   if (!safeGuildId) return false;
-  return TEST_MAIN_GUILD_ID && safeGuildId === String(TEST_MAIN_GUILD_ID);
+  return TEST_BOT_ALLOWED_GUILDS.has(safeGuildId);
 }
 
 function loadPermissions() {
@@ -538,4 +540,3 @@ module.exports = {
   buildGlobalNotYourControlEmbed,
   hasAnyRole,
 };
-

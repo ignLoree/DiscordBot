@@ -17,4 +17,3 @@ suspiciousAccountSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 
 module.exports =
   models.SuspiciousAccount || model("SuspiciousAccount", suspiciousAccountSchema);
-

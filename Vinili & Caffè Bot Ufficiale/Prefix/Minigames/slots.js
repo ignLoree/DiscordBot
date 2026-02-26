@@ -15,4 +15,3 @@ module.exports = {
     return replyInfo(message, "| " + spin.join(" | ") + " |\n**" + result + "**", "Slot machine");
   },
 };
-

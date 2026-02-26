@@ -32,7 +32,7 @@ module.exports = {
     ) {
       return replyError(
         message,
-        "Uso: +roll <dado> [quantita] oppure +roll <quantita>d<dado> (max 20d1000)",
+        "Uso: +roll <dado> [quantità] oppure +roll <quantità>d<dado> (max 20d1000)",
       );
     }
 
@@ -46,4 +46,3 @@ module.exports = {
     );
   },
 };
-

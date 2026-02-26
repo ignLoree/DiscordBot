@@ -9,4 +9,3 @@ module.exports = {
     return replyInfo(message, "🪙 Risultato: **" + side + "**", "Lancio Moneta");
   },
 };
-

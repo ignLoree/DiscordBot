@@ -1,14 +1,23 @@
 const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const { checkButtonPermission, checkStringSelectPermission, checkModalPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
+const {
+  checkButtonPermission,
+  checkStringSelectPermission,
+  checkModalPermission,
+  checkSlashPermission,
+  buildGlobalPermissionDeniedEmbed,
+  buildGlobalNotYourControlEmbed,
+} = require("../Utils/Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
-const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server test.";
+const MONO_GUILD_DENIED = "Questo bot e utilizzabile solo nei server autorizzati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
+const ALLOWED_GUILD_IDS = new Set(
+  [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map((id) => String(id)),
+);
 
 function markInteractionSeen(client, interactionId) {
   if (!interactionId) return false;
@@ -38,9 +47,7 @@ function getButtonSpamState(client) {
 function pruneExpiredMap(map, nowTs) {
   if (!map || map.size === 0) return;
   for (const [key, expiresAt] of map.entries()) {
-    if (!Number.isFinite(expiresAt) || expiresAt <= nowTs) {
-      map.delete(key);
-    }
+    if (!Number.isFinite(expiresAt) || expiresAt <= nowTs) map.delete(key);
   }
 }
 
@@ -48,10 +55,7 @@ function acquireButtonSpamGuard(interaction, client) {
   const isButton = Boolean(interaction?.isButton?.());
   const isSelect = Boolean(interaction?.isStringSelectMenu?.());
   if (!isButton && !isSelect) {
-    return {
-      blocked: false,
-      release: () => {},
-    };
+    return { blocked: false, release: () => {} };
   }
 
   const state = getButtonSpamState(client);
@@ -71,10 +75,7 @@ function acquireButtonSpamGuard(interaction, client) {
   const inFlightUntil = Number(state.inFlightByAction.get(actionKey) || 0);
 
   if (userCooldownUntil > nowTs || inFlightUntil > nowTs) {
-    return {
-      blocked: true,
-      release: () => {},
-    };
+    return { blocked: true, release: () => {} };
   }
 
   state.cooldownByUser.set(userKey, nowTs + BUTTON_SPAM_COOLDOWN_MS);
@@ -82,9 +83,7 @@ function acquireButtonSpamGuard(interaction, client) {
 
   return {
     blocked: false,
-    release: () => {
-      state.inFlightByAction.delete(actionKey);
-    },
+    release: () => state.inFlightByAction.delete(actionKey),
   };
 }
 
@@ -144,16 +143,14 @@ async function runPermissionGate(interaction) {
 
 async function logInteractionError(interaction, client, err) {
   try {
-    const errorChannelId =
-      IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
+    const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
     const errorChannel = errorChannelId
       ? client.channels.cache.get(errorChannelId) ||
         (await client.channels.fetch(errorChannelId).catch(() => null))
       : null;
 
     if (errorChannel?.isTextBased?.()) {
-      const contextValue =
-        interaction?.commandName || interaction?.customId || "unknown";
+      const contextValue = interaction?.commandName || interaction?.customId || "unknown";
       const embed = buildErrorLogEmbed({
         contextLabel: "Contesto",
         contextValue,
@@ -178,24 +175,28 @@ async function logInteractionError(interaction, client, err) {
   }
 }
 
-const ALLOWED_GUILD_ID = IDs.guilds?.test || null;
-
 module.exports = {
   name: "interactionCreate",
   async execute(interaction, client) {
     if (!interaction || interaction.replied || interaction.deferred) return;
     if (markInteractionSeen(client, interaction.id)) return;
 
-    if (ALLOWED_GUILD_ID && interaction.guildId && String(interaction.guildId) !== String(ALLOWED_GUILD_ID)) {
+    if (
+      interaction.guildId &&
+      ALLOWED_GUILD_IDS.size &&
+      !ALLOWED_GUILD_IDS.has(String(interaction.guildId))
+    ) {
       if (interaction.isRepliable?.() && !interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          embeds: [
-            new EmbedBuilder()
-              .setColor("Orange")
-              .setDescription("Questo bot è utilizzabile solo sul **server test**."),
-          ],
-          flags: PRIVATE_FLAG,
-        }).catch(() => {});
+        await interaction
+          .reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Orange")
+                .setDescription("Questo bot e utilizzabile solo nei server autorizzati."),
+            ],
+            flags: PRIVATE_FLAG,
+          })
+          .catch(() => {});
       }
       return;
     }
@@ -217,35 +218,35 @@ module.exports = {
       }
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-        await interaction.respond([]).catch(() => {});
-        return;
-      }
-
-      if (interaction.isMessageContextMenuCommand?.()) {
-        await interaction
-          .reply({
-            embeds: [
-              new EmbedBuilder()
-                .setColor("Orange")
-                .setDescription("I comandi slash sono disattivati su questo bot test."),
-            ],
-            flags: PRIVATE_FLAG,
-          })
-          .catch(() => {});
+        const cmd = client.commands.get(
+          `${interaction.commandName}:${interaction.commandType || 1}`,
+        );
+        if (cmd?.autocomplete) {
+          await cmd.autocomplete(interaction, client);
+        } else {
+          await interaction.respond([]).catch(() => {});
+        }
         return;
       }
 
       if (interaction.isChatInputCommand?.()) {
-        await interaction
-          .reply({
-            embeds: [
-              new EmbedBuilder()
-                .setColor("Orange")
-                .setDescription("I comandi slash sono disattivati su questo bot test."),
-            ],
-            flags: PRIVATE_FLAG,
-          })
-          .catch(() => {});
+        const command = client.commands.get(
+          `${interaction.commandName}:${interaction.commandType || 1}`,
+        );
+        if (!command) return;
+
+        const allowed = await checkSlashPermission(interaction);
+        if (!allowed) {
+          await interaction
+            .reply({
+              embeds: [buildGlobalPermissionDeniedEmbed([], "comando")],
+              flags: PRIVATE_FLAG,
+            })
+            .catch(() => {});
+          return;
+        }
+
+        await command.execute(interaction, client);
         return;
       }
 
@@ -255,9 +256,7 @@ module.exports = {
       global.logger.error("[Bot Test] interactionCreate", err);
       await logInteractionError(interaction, client, err);
     } finally {
-      if (typeof releaseButtonGuard === "function") {
-        releaseButtonGuard();
-      }
+      if (typeof releaseButtonGuard === "function") releaseButtonGuard();
     }
   },
 };

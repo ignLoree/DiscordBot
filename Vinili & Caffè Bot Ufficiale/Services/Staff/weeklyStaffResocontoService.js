@@ -396,7 +396,7 @@ async function runWeeklyStaffResoconti(client) {
 <:dot:1443660294596329582> **Ruolo:** __<@&${staffRoleId}>__
 <:dot:1443660294596329582> **Messaggi in una settimana:** __${weeklyMessages}__
 <:dot:1443660294596329582> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__
-<:dot:1443660294596329582> **Attivita:** __${activityGrade}__
+<:dot:1443660294596329582> **Attività:** __${activityGrade}__
 <:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
 <:dot:1443660294596329582> **Azione:** __${action}__
 <:staff:1443651912179388548> **Resoconto fatto da** __<@${client.user.id}>__`,

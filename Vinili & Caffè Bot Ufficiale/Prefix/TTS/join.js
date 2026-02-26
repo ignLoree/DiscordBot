@@ -1,4 +1,4 @@
-﻿const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { joinTtsChannel } = require("../../Services/TTS/ttsService");
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
         message,
         "<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",
       );
-      if (warn?.delete) setTimeout(() => warn.delete().catch(() => { }), 5000);
+      if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
       return;
     }
 
@@ -25,10 +25,7 @@ module.exports = {
     }
 
     const result = await joinTtsChannel(voiceChannel);
-
-    if (!result.ok && result.reason === "locked") {
-      return;
-    }
+    if (!result.ok && result.reason === "locked") return;
 
     return safeMessageReply(
       message,

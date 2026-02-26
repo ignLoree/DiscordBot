@@ -265,7 +265,7 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
   if (payload.actionKey === "px") {
     const roleAfterId = ROLE_UP[roleBeforeId] || null;
     if (!roleAfterId) return "Pex non applicato: nessun ruolo successivo configurato.";
-    if (member.roles.cache.has(roleAfterId)) return "Pex non applicato: utente ha gia il ruolo successivo.";
+    if (member.roles.cache.has(roleAfterId)) return "Pex non applicato: utente ha già il ruolo successivo.";
 
     await member.roles.add(roleAfterId).catch(() => null);
     await applyPexSideEffects(member, roleAfterId);

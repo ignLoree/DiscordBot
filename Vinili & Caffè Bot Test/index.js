@@ -148,6 +148,7 @@ for (const file of handlerFiles) {
 }
 
 const prefixFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
+const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
 
 (async () => {
@@ -161,6 +162,14 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
 
   if (typeof client.handleEvents === "function") {
     client.handleEvents(path.join(APP_ROOT, "Events"));
+  }
+
+  if (typeof client.handleCommands === "function") {
+    await client
+      .handleCommands(commandFolders, path.join(APP_ROOT, "Commands"))
+      .catch((err) => {
+        global.logger.error("[Bot Test] handleCommands:", err);
+      });
   }
 
   if (typeof client.handleTriggers === "function") {

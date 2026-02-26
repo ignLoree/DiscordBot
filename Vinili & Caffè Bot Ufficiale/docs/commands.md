@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-02-25T10:22:22.063Z.
+Generato automaticamente il 2026-02-26T14:26:55.587Z.
 
 ## +adorable
 - Categoria: `Minigames`
@@ -105,8 +105,8 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 ## +classifica
 - Categoria: `Level`
 - Alias: `c`, `cs`, `classificasettimanale`
-- Uso: `+classifica [alltime|weekly|settimanale|week|w|all|totale|general]`
-- Subcommand: `alltime`, `weekly`, `settimanale`, `week`, `w`, `all`, `totale`, `general`, `generale`, `a`
+- Uso: `+classifica [alltime|weekly|cs|classificasettimanale|settimanale|week|w|all]`
+- Subcommand: `alltime`, `weekly`, `cs`, `classificasettimanale`, `settimanale`, `week`, `w`, `all`, `totale`, `general`, `generale`, `a`
 - Esempi:
 - `+classifica alltime`
 - `+classifica weekly`
@@ -251,7 +251,7 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - `+help`
 
 ## +info
-- Categoria: `Utility`
+- Categoria: `Moderation`
 - Alias: `whois`
 - Uso: `+info`
 - Subcommand: -
@@ -298,14 +298,6 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Esempi:
 - `+kick`
 
-## +languages
-- Categoria: `TTS`
-- Alias: `langs`
-- Uso: `+languages`
-- Subcommand: -
-- Esempi:
-- `+languages`
-
 ## +leave
 - Categoria: `TTS`
 - Alias: -
@@ -318,7 +310,7 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Categoria: `Admin`
 - Alias: `gmulti`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`
 - Uso: `+level <gmulti|set|add|remove|reset|lock|unlock|multiplier>`
-- Subcommand: `gmulti`, `set`, `add`, `remove`, `reset`, `lock`, `unlock`, `multiplier`, `ignore`, `unignore`, `config`, `exp`, `level`
+- Subcommand: `gmulti`, `set`, `add`, `remove`, `reset`, `lock`, `unlock`, `multiplier`, `ignore`, `unignore`, `config`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`, `exp`, `level`
 - Esempi:
 - `+level gmulti`
 - `+level set`
@@ -414,8 +406,8 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 ## +perms
 - Categoria: `Admin`
 - Alias: `perm`
-- Uso: `+perms <grant|revoke|list|clear>`
-- Subcommand: `grant`, `revoke`, `list`, `clear`
+- Uso: `+perms <grant|revoke|list|clear|permgrant|permrevoke|permlist|permclear>`
+- Subcommand: `grant`, `revoke`, `list`, `clear`, `permgrant`, `permrevoke`, `permlist`, `permclear`
 - Esempi:
 - `+perms grant`
 - `+perms revoke`
@@ -479,8 +471,8 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 ## +reaction
 - Categoria: `Admin`
 - Alias: `autoreaction`, `autoresponder`
-- Uso: `+reaction <mention|auto|autoresponder|ar|mentions|me|mine>`
-- Subcommand: `mention`, `auto`, `autoresponder`, `ar`, `mentions`, `me`, `mine`
+- Uso: `+reaction <mention|auto|mentions|me|mine|autoresponder|ar>`
+- Subcommand: `mention`, `auto`, `mentions`, `me`, `mine`, `autoresponder`, `ar`
 - Esempi:
 - `+reaction mention`
 - `+reaction auto`
@@ -528,13 +520,11 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 ## +security
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+security <joingate|raid|panic|antinuke|join-gate|jg|joinraid|join-raid|jr>`
-- Subcommand: `joingate`, `raid`, `panic`, `antinuke`, `join-gate`, `jg`, `joinraid`, `join-raid`, `jr`
+- Uso: `+security [status|statics|enable|disable|panic|panic status|panic enable|panic disable]`
+- Subcommand: `status`, `statics`, `enable`, `disable`, `panic`, `panic status`, `panic enable`, `panic disable`
 - Esempi:
-- `+security joingate`
-- `+security antinuke raid status`
-- `+security antinuke raid preset strict`
-- `+security antinuke raid set lockCommands true`
+- `+security status`
+- `+security statics`
 
 ## +server
 - Categoria: `Stats`
@@ -543,15 +533,6 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Subcommand: -
 - Esempi:
 - `+server`
-
-## +set
-- Categoria: `TTS`
-- Alias: -
-- Uso: `+set <autojoin|voice>`
-- Subcommand: `autojoin`, `voice`
-- Esempi:
-- `+set autojoin`
-- `+set voice`
 
 ## +ship
 - Categoria: `Minigames`
@@ -585,15 +566,6 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Esempi:
 - `+space`
 
-## +statics
-- Categoria: `Admin`
-- Alias: -
-- Uso: `+statics [add|set|remove|del]`
-- Subcommand: `add`, `set`, `remove`, `del`
-- Esempi:
-- `+statics add`
-- `+statics set`
-
 ## +steamstatus
 - Categoria: `Minigames`
 - Alias: `steam`
@@ -615,7 +587,7 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Categoria: `Ticket`
 - Alias: -
 - Uso: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename>`
-- Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `partnership`, `supporto`, `high`
+- Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `tadd`, `tremove`, `ticketadd`, `ticketremove`, `partnership`, `supporto`, `high`
 - Esempi:
 - `+ticket add`
 - `+ticket remove`
@@ -701,3 +673,4 @@ Generato automaticamente il 2026-02-25T10:22:22.063Z.
 - Subcommand: -
 - Esempi:
 - `+weather`
+

@@ -294,4 +294,3 @@ async function handlePoketwoHelperMessage(message) {
 module.exports = {
   handlePoketwoHelperMessage,
 };
-

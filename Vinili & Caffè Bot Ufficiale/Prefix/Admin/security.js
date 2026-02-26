@@ -972,7 +972,7 @@ async function disableAntiNuke(guild, actorId) {
   const guildId = String(guild?.id || "");
   const snap = getAntiNukeStatusSnapshot(guildId);
   const wasActive = Boolean(snap?.panicActive || snap?.enabled || snap?.panicModeEnabled);
-  if (!wasActive) return { ok: true, changed: false, note: "AntiNuke gia spento/inattivo." };
+  if (!wasActive) return { ok: true, changed: false, note: "AntiNuke già spento/inattivo." };
 
   let panicStopped = false;
   if (snap?.panicActive) {
@@ -1007,7 +1007,7 @@ async function disableAutoMod(guildId) {
   const panic = getAutoModPanicSnapshot(guildId);
   const rules = getAutoModRulesSnapshot();
   const wasActive = Boolean(rules?.status?.enabled || cfg?.panic?.enabled || panic?.active);
-  if (!wasActive) return { ok: true, changed: false, note: "AutoMod gia spento/inattivo." };
+  if (!wasActive) return { ok: true, changed: false, note: "AutoMod già spento/inattivo." };
 
   const r1 = updateAutoModConfig("enabled", false);
   const r2 = updateAutoModConfig("panic.enabled", false);
@@ -1023,7 +1023,7 @@ async function disableAutoMod(guildId) {
 async function disableJoinGate() {
   const cfg = getJoinGateConfigSnapshot();
   const wasActive = Boolean(cfg?.enabled);
-  if (!wasActive) return { ok: true, changed: false, note: "JoinGate gia spento." };
+  if (!wasActive) return { ok: true, changed: false, note: "JoinGate già spento." };
 
   const updated = updateJoinGateConfig("enabled", "false");
   return {
@@ -1036,7 +1036,7 @@ async function disableJoinGate() {
 async function disableJoinRaid(guildId) {
   const raid = await getJoinRaidStatusSnapshot(guildId);
   const wasActive = Boolean(raid?.enabled || raid?.raidActive || raid?.config?.lockCommands);
-  if (!wasActive) return { ok: true, changed: false, note: "JoinRaid gia spento/inattivo." };
+  if (!wasActive) return { ok: true, changed: false, note: "JoinRaid già spento/inattivo." };
 
   const next = {
     ...(raid?.config || {}),
@@ -1058,7 +1058,7 @@ async function disableLockCommands(guildId) {
   const antiLockAll = Boolean(anti?.config?.panicMode?.lockdown?.lockAllCommands);
   const raidLock = Boolean(raid?.config?.lockCommands);
   const wasActive = antiLockMod || antiLockAll || raidLock;
-  if (!wasActive) return { ok: true, changed: false, note: "LockCommands gia disattivati." };
+  if (!wasActive) return { ok: true, changed: false, note: "LockCommands già disattivati." };
 
   const antiCfg = anti?.config || {};
   const antiUpdated = setAntiNukeConfigSnapshot({
@@ -1125,7 +1125,7 @@ async function enableAutoMod(guildId, actorId) {
   const rules = getAutoModRulesSnapshot();
   const panic = getAutoModPanicSnapshot(guildId);
   const wasActive = Boolean(rules?.status?.enabled && cfg?.panic?.enabled && panic?.active);
-  if (wasActive) return { ok: true, changed: false, note: "AutoMod panic gia attiva." };
+  if (wasActive) return { ok: true, changed: false, note: "AutoMod panic già attiva." };
 
   const r1 = updateAutoModConfig("enabled", true);
   const r2 = updateAutoModConfig("panic.enabled", true);
@@ -1148,7 +1148,7 @@ async function enableAutoMod(guildId, actorId) {
 
 async function enableJoinGate() {
   const cfg = getJoinGateConfigSnapshot();
-  if (cfg?.enabled) return { ok: true, changed: false, note: "JoinGate gia attivo." };
+  if (cfg?.enabled) return { ok: true, changed: false, note: "JoinGate già attivo." };
   const updated = updateJoinGateConfig("enabled", "true");
   return {
     ok: Boolean(updated?.ok),
@@ -1159,7 +1159,7 @@ async function enableJoinGate() {
 
 async function enableJoinRaid(guildId) {
   const raid = await getJoinRaidStatusSnapshot(guildId);
-  if (raid?.enabled) return { ok: true, changed: false, note: "JoinRaid gia attivo." };
+  if (raid?.enabled) return { ok: true, changed: false, note: "JoinRaid già attivo." };
   const updated = setJoinRaidConfigSnapshot({
     ...(raid?.config || {}),
     enabled: true,
@@ -1178,7 +1178,7 @@ async function enableLockCommands(guildId) {
   const antiLockAll = Boolean(anti?.config?.panicMode?.lockdown?.lockAllCommands);
   const raidLock = Boolean(raid?.config?.lockCommands);
   if (antiLockMod && antiLockAll && raidLock) {
-    return { ok: true, changed: false, note: "LockCommands gia attivi." };
+    return { ok: true, changed: false, note: "LockCommands già attivi." };
   }
 
   const antiCfg = anti?.config || {};

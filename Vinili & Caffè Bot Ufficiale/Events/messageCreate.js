@@ -1682,9 +1682,12 @@ async function handleDiscadiaBump(message, client) {
     (isAutomatedSource && !isDisboardSource && hasBumpSuccessText);
 
   const isBump =
-    fromDiscadiaBot &&
     !hasFailureWord &&
-    (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord));
+    (
+      (fromDiscadiaBot &&
+        (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord))) ||
+      (isBumpInteraction && (hasPattern || hasSuccessWord || hasBumpWord))
+    );
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
@@ -1725,6 +1728,19 @@ async function handleDiscadiaBump(message, client) {
           "[DISCADIA BUMP] Thanks message send failed, bump recorded anyway:",
           err?.message || err2?.message || err2,
         );
+        const fallbackChannelId = IDs.channels.commands || null;
+        if (fallbackChannelId) {
+          const fallbackChannel =
+            message.guild.channels.cache.get(fallbackChannelId) ||
+            (await message.guild.channels
+              .fetch(fallbackChannelId)
+              .catch(() => null));
+          if (fallbackChannel?.isTextBased?.()) {
+            await fallbackChannel
+              .send({ content: thanksMessage.trim() })
+              .catch(() => {});
+          }
+        }
       }
     }
   } else {
