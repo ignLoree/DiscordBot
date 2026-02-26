@@ -10,9 +10,9 @@
   "tts": {
     "enabled": true,
     "lang": "it",
-    "maxChars": 300,
-    "autojoin": true,
-    "includeUsername": true,
+    "maxChars": 1000,
+    "autojoin": false,
+    "includeUsername": false,
     "stayConnected": false
   }
 }
