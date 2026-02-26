@@ -13,7 +13,7 @@ const { addExpWithLevel, shouldIgnoreExpForMember, } = require("../Services/Comm
 const { applyDefaultFooterToEmbeds } = require("../Utils/Embeds/defaultFooter");
 const { checkPrefixPermission, getPrefixRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed } = require("../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown } = require("../Utils/Moderation/commandCooldown");
-const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
+const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildMissingArgumentsErrorEmbed, buildInternalCommandErrorEmbed } = require("../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
@@ -1072,13 +1072,6 @@ module.exports = {
         );
       } catch (error) {
         const isTimeout = error?.code === "COMMAND_TIMEOUT";
-        if (isTimeout) {
-          await execMessage
-            .reply({
-              embeds: [buildCommandTimeoutErrorEmbed()],
-            })
-            .catch(() => { });
-        }
         const channelID =
           IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
         const errorChannel = channelID
@@ -1089,7 +1082,9 @@ module.exports = {
           contextValue: execCommand?.name || "unknown",
           userTag: execMessage.author?.tag || "unknown",
           error,
-          serverName: execMessage.guild?.name || null,
+          serverName: execMessage.guild
+            ? `${execMessage.guild.name} [${execMessage.guild.id}]`
+            : null,
         });
         if (errorChannel?.isTextBased?.()) {
           const pendingBtn = new ButtonBuilder()

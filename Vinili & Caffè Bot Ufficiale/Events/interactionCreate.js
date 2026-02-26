@@ -254,7 +254,9 @@ async function logInteractionError(interaction, client, err) {
         contextValue,
         userTag: interaction?.user?.tag || "unknown",
         error: err,
-        serverName: interaction?.guild?.name || null,
+        serverName: interaction?.guild
+          ? `${interaction.guild.name} [${interaction.guild.id}]`
+          : null,
       });
       await errorChannel.send({ embeds: [staffEmbed] }).catch(() => null);
     }

@@ -40,6 +40,10 @@ function buildErrorLogEmbed({
       value: `\`\`\`${safeContext}\`\`\``,
     },
     {
+      name: "<:dot:1443660294596329582> Server",
+      value: `\`\`\`${safeServer}\`\`\``,
+    },
+    {
       name: "<:dot:1443660294596329582> Utente",
       value: `\`\`\`${safeUserTag}\`\`\``,
     },
@@ -48,13 +52,6 @@ function buildErrorLogEmbed({
       value: `\`\`\`${errorInBlock}\`\`\``,
     },
   ];
-  if (serverName) {
-    fields.splice(1, 0, {
-      name: "<:dot:1443660294596329582> Server",
-      value: `\`\`\`${safeServer}\`\`\``,
-    });
-  }
-
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setTitle(safeTitle)

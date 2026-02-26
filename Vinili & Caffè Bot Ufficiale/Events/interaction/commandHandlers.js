@@ -5,7 +5,7 @@ const {
 } = require("../../Utils/Embeds/defaultFooter");
 const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed, } = require("../../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../../Utils/Moderation/commandCooldown");
-const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildCommandTimeoutErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
+const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
 const { buildErrorLogEmbed } = require("../../Utils/Logging/errorLogEmbed");
 const { getCentralChannel } = require("../../Utils/Logging/commandUsageLogger");
 const IDs = require("../../Utils/Config/ids");
@@ -313,7 +313,9 @@ async function handleSlashCommand(interaction, client) {
       contextValue: interaction.commandName || "unknown",
       userTag: interaction.user?.tag || interaction.user?.id || "-",
       error,
-      serverName: interaction.guild?.name || null,
+      serverName: interaction.guild
+        ? `${interaction.guild.name} [${interaction.guild.id}]`
+        : null,
     });
     const errorText =
       (error?.stack || error?.message || String(error))?.slice(0, 1000) ||
@@ -382,10 +384,7 @@ async function handleSlashCommand(interaction, client) {
         } catch {}
       });
     }
-    const userEmbed =
-      error?.code === "COMMAND_TIMEOUT"
-        ? buildCommandTimeoutErrorEmbed()
-        : buildInternalCommandErrorEmbed(errorText);
+    const userEmbed = buildInternalCommandErrorEmbed(errorText);
     await safeReply({
       embeds: [userEmbed],
       flags: 1 << 6,

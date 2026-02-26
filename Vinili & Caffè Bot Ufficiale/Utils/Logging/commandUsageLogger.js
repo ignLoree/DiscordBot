@@ -18,10 +18,12 @@ async function getCentralChannel(client, channelId) {
     client.guilds.cache.get(mainGuildId) ||
     (await client.guilds.fetch(mainGuildId).catch(() => null));
   if (!guild) return getChannelSafe(client, channelId);
-  return (
+  const centralChannel = (
     guild.channels.cache.get(channelId) ||
     (await guild.channels.fetch(channelId).catch(() => null))
   );
+  if (centralChannel) return centralChannel;
+  return getChannelSafe(client, channelId);
 }
 
 async function logCommandUsage(
