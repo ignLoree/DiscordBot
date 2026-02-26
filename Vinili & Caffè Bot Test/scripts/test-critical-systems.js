@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
@@ -24,50 +24,21 @@ function walkJsFiles(dir, out = []) {
 
 (function main() {
   const permissions = JSON.parse(fs.readFileSync(permissionsPath, "utf8"));
-  const prefix = permissions?.prefix || {};
+  const prefixPerms = permissions?.prefix || {};
 
-  const securityPerms = prefix.security?.subcommands || {};
-  let securityCmd = null;
-  try {
-    securityCmd = require(path.join(root, "Prefix", "Admin", "security.js"));
-  } catch {
-    securityCmd = require(path.join(root, "Prefix", "Staff", "security.js"));
+  const requiredPrefixCommands = ["help", "join", "leave", "set", "voices", "restart"];
+  for (const cmd of requiredPrefixCommands) {
+    assert(prefixPerms[cmd], `permissions.prefix.${cmd} mancante`);
   }
 
-  const requiredSecuritySubs = Array.isArray(securityCmd?.subcommands)
-    ? securityCmd.subcommands
-    : [];
-  assert(requiredSecuritySubs.length > 0, "security.subcommands mancante");
-  for (const sub of requiredSecuritySubs) {
-    assert(Array.isArray(securityPerms[sub]), `permissions.security.${sub} mancante`);
-  }
+  const setPerms = prefixPerms.set?.subcommands || {};
+  assert(Array.isArray(setPerms.voice), "permissions.prefix.set.subcommands.voice mancante");
+  assert(Array.isArray(setPerms.autojoin), "permissions.prefix.set.subcommands.autojoin mancante");
 
-  const staticsPerm = prefix.statics;
-  assert(staticsPerm && Array.isArray(staticsPerm.roles), "permissions.statics mancante");
-  assert(prefix.security && Array.isArray(prefix.security.roles), "permissions.security mancante");
-
-  const birthdayService = require(path.join(root, "Services", "Community", "birthdayService.js"));
-  const birthdayStatus = birthdayService.getBirthdayLoopStatus?.();
-  assert(birthdayStatus && typeof birthdayStatus.active === "boolean", "birthday loop status non disponibile");
-
-  const reminderService = require(path.join(root, "Services", "Community", "chatReminderService.js"));
-  const reminderStatus = reminderService.getChatReminderLoopStatus?.();
-  assert(reminderStatus && typeof reminderStatus.active === "boolean", "chat reminder loop status non disponibile");
-  assert(Array.isArray(securityCmd.subcommands), "security.subcommands mancante");
-  assert(securityCmd.subcommands.includes("antinuke"), "security subcommand antinuke mancante");
-  assert(securityCmd.subcommands.includes("raid"), "security subcommand raid mancante");
-  const securityAliases = securityCmd?.subcommandAliases || {};
-  const raidAliasKeys = ["joinraid", "join-raid", "jr"];
-  for (const alias of raidAliasKeys) {
-    assert(
-      securityAliases[alias] === "raid",
-      `security alias ${alias} non mappa a raid`,
-    );
-    assert(
-      Array.isArray(securityPerms[alias]),
-      `permissions.security.${alias} mancante`,
-    );
-  }
+  const setCmd = require(path.join(root, "Prefix", "TTS", "set.js"));
+  assert(Array.isArray(setCmd.subcommands), "set.subcommands mancante");
+  assert(setCmd.subcommands.includes("voice"), "set subcommand voice mancante");
+  assert(setCmd.subcommands.includes("autojoin"), "set subcommand autojoin mancante");
 
   const prefixFiles = walkJsFiles(prefixRoot);
   const missingAliasPermissions = [];
@@ -86,7 +57,7 @@ function walkJsFiles(dir, out = []) {
         ? mod.subcommandAliases
         : null;
     if (!aliasMap) continue;
-    const commandPerm = prefix?.[commandName];
+    const commandPerm = prefixPerms?.[commandName];
     const subcommands = commandPerm?.subcommands;
     if (!subcommands || typeof subcommands !== "object") continue;
     for (const [alias, target] of Object.entries(aliasMap)) {
@@ -94,9 +65,7 @@ function walkJsFiles(dir, out = []) {
       const targetKey = String(target || "").trim();
       if (!aliasKey || !targetKey) continue;
       if (Object.prototype.hasOwnProperty.call(subcommands, aliasKey)) continue;
-      if (!Object.prototype.hasOwnProperty.call(subcommands, targetKey)) {
-        continue;
-      }
+      if (!Object.prototype.hasOwnProperty.call(subcommands, targetKey)) continue;
       missingAliasPermissions.push(`${commandName}.${aliasKey}->${targetKey}`);
     }
   }
@@ -105,50 +74,10 @@ function walkJsFiles(dir, out = []) {
     `alias permissions mancanti: ${missingAliasPermissions.join(", ")}`,
   );
 
-  const joinRaidService = require(path.join(root, "Services", "Moderation", "joinRaidService.js"));
-  const joinRaidCfg = joinRaidService.getJoinRaidConfigSnapshot?.();
-  assert(joinRaidCfg && typeof joinRaidCfg.lockCommands === "boolean", "joinRaid.lockCommands mancante");
-
-  const orchestrator = require(path.join(root, "Services", "Moderation", "securityOrchestratorService.js"));
-  const lockDecisionA = orchestrator.buildSecurityLockDecision?.({
-    antiNukePanic: false,
-    autoModPanic: false,
-    joinRaid: true,
-    lockAllCommands: true,
-    joinRaidLockCommands: false,
-  });
-  assert(lockDecisionA && lockDecisionA.joinLockActive === true, "security decision A join lock errato");
-  assert(lockDecisionA.commandLockActive === false, "security decision A command lock errato");
-  const lockDecisionB = orchestrator.buildSecurityLockDecision?.({
-    antiNukePanic: false,
-    autoModPanic: false,
-    joinRaid: true,
-    lockAllCommands: true,
-    joinRaidLockCommands: true,
-  });
-  assert(lockDecisionB && lockDecisionB.commandLockActive === true, "security decision B command lock errato");
-
-  const automodService = require(path.join(root, "Services", "Moderation", "automodService.js"));
-  const detectCmd = automodService?.__test?.isLikelyCommandMessage;
-  assert(typeof detectCmd === "function", "automod __test isLikelyCommandMessage mancante");
-  assert(
-    detectCmd({ content: "+help", client: { config: { prefix: "+" } } }) === true,
-    "automod command detection '+' errata",
-  );
-  assert(
-    detectCmd({ content: "!raid", client: { config: { prefix: "+" } } }) === false,
-    "automod command detection '!' non deve bypassare",
-  );
-  const explainDecision = automodService?.__test?.buildAutoModDecisionExplain;
-  assert(typeof explainDecision === "function", "automod __test buildAutoModDecisionExplain mancante");
-  const explainText = explainDecision("timeout", 120, [
-    { key: "link_blacklist", heat: 100 },
-    { key: "attachment_image", heat: 20 },
-  ]);
-  assert(
-    typeof explainText === "string" && explainText.includes("timeout") && explainText.includes("top_rules="),
-    "automod decision explain non valido",
-  );
+  const ttsService = require(path.join(root, "Services", "TTS", "ttsService.js"));
+  assert(typeof ttsService.handleTtsMessage === "function", "ttsService.handleTtsMessage mancante");
+  assert(typeof ttsService.joinTtsChannel === "function", "ttsService.joinTtsChannel mancante");
+  assert(typeof ttsService.leaveTtsGuild === "function", "ttsService.leaveTtsGuild mancante");
 
   console.log("CRITICAL_SYSTEMS_TEST_OK");
 })();

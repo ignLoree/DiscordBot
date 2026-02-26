@@ -32,7 +32,6 @@ const CATEGORY_ORDER = [
 ];
 const HELP_PAGE_SIZE = 18;
 const MAX_HELP_TEXT_LENGTH = 3900;
-const HELP_PREFIX_ONLY = true;
 const PREFIX_HELP_DESCRIPTIONS = {
   help: "Mostra tutti i comandi disponibili con il bot.",
   join: "Fa entrare il bot nel tuo canale vocale.",
@@ -375,48 +374,6 @@ function buildEntries(client, permissions) {
       entries.push({
         ...base,
         invoke: `${prefixBase}${command.name}`,
-      });
-    }
-  }
-
-  if (!HELP_PREFIX_ONLY) {
-    const seenSlash = new Set();
-    for (const command of client.commands.values()) {
-      const dataJson = command?._helpDataJson || command?.data?.toJSON?.();
-      if (!dataJson?.name) continue;
-      const commandType = dataJson.type || ApplicationCommandType.ChatInput;
-      if (commandType !== ApplicationCommandType.ChatInput) continue;
-
-      const uniqueKey = `${dataJson.name}:${commandType}`;
-      if (seenSlash.has(uniqueKey)) continue;
-      seenSlash.add(uniqueKey);
-
-      const perm = getCommandPermissionNode(permissions.slash, dataJson.name);
-      const category = normalizeCategoryKey(command?.category || "misc");
-      const hasSubcommands =
-        Array.isArray(dataJson.options) &&
-        dataJson.options.some((opt) => opt?.type === 1 || opt?.type === 2);
-
-      const roles = normalizePermissionRoles(perm);
-      if (hasSubcommands) {
-        entries.push(
-          ...getSubcommandEntries(
-            dataJson.name,
-            dataJson,
-            perm,
-            commandType,
-            category,
-          ),
-        );
-        continue;
-      }
-
-      entries.push({
-        invoke: `/${dataJson.name}`,
-        type: "slash",
-        description: getSlashTopLevelDescription(dataJson),
-        category,
-        roles,
       });
     }
   }
@@ -1110,222 +1067,10 @@ function buildSlashExampleLine(
 }
 
 function buildSlashDetailedHelpEmbed(query, entries, context = {}) {
-  if (HELP_PREFIX_ONLY) return null;
-  const normalized = normalizeInvokeLookup(query);
-  const tokens = normalized.split(" ").filter(Boolean);
-  const queryToken = tokens[0] || "";
-  if (!queryToken) return null;
-
-  const seen = new Set();
-  const slashCommands = [];
-  for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
-    const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
-    if (!dataJson?.name) continue;
-    const type = dataJson.type || ApplicationCommandType.ChatInput;
-    if (type !== ApplicationCommandType.ChatInput) continue;
-    const key = `${dataJson.name}:${type}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    slashCommands.push({ cmd, dataJson });
-  }
-  if (!slashCommands.length) return null;
-
-  const hit = slashCommands.find(
-    ({ dataJson }) =>
-      String(dataJson.name || "")
-        .trim()
-        .toLowerCase() === queryToken,
-  );
-  if (!hit) return null;
-
-  const commandName = String(hit.dataJson.name || "")
-    .trim()
-    .toLowerCase();
-  const visibleForCommand = entries.filter(
-    (entry) =>
-      entry.type === "slash" &&
-      normalizeInvokeLookup(entry.invoke).split(" ")[0] === commandName,
-  );
-  if (!visibleForCommand.length) return null;
-
-  const options = Array.isArray(hit.dataJson.options)
-    ? hit.dataJson.options
-    : [];
-  const hasSub = options.some((opt) => opt?.type === 1 || opt?.type === 2);
-  const requestedSub = tokens[1] || null;
-
-  const syntaxLines = [];
-  const optionLines = [];
-  const exampleLines = [];
-
-  if (!hasSub) {
-    const placeholders = options
-      .filter((opt) => opt?.type >= 3 && opt?.type <= 11)
-      .map((opt) => formatSlashOptionPlaceholder(opt))
-      .filter(Boolean);
-    syntaxLines.push(
-      `\`/${commandName}${placeholders.length ? ` ${placeholders.join(" ")}` : ""}\``,
-    );
-    exampleLines.push(buildSlashExampleLine(commandName, null, null, options));
-    for (const opt of options) {
-      if (!opt?.name || opt?.type < 3 || opt?.type > 11) continue;
-      const required = opt.required ? "obbligatoria" : "opzionale";
-      const choices =
-        Array.isArray(opt.choices) && opt.choices.length
-          ? ` | scelte: ${opt.choices.map((c) => `\`${c.name}\``).join(", ")}`
-          : "";
-      optionLines.push(
-        `- \`${opt.name}\` (${getOptionTypeLabel(opt.type)}, ${required}) - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${choices}`,
-      );
-    }
-  } else {
-    for (const opt of options) {
-      if (opt?.type === 1) {
-        const subName = String(opt.name || "")
-          .trim()
-          .toLowerCase();
-        if (requestedSub && requestedSub !== subName) continue;
-        const subPlaceholders = (Array.isArray(opt.options) ? opt.options : [])
-          .filter((child) => child?.type >= 3 && child?.type <= 11)
-          .map((child) => formatSlashOptionPlaceholder(child))
-          .filter(Boolean);
-        syntaxLines.push(
-          `\`/${commandName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(" ")}` : ""}\``,
-        );
-        exampleLines.push(
-          buildSlashExampleLine(
-            commandName,
-            null,
-            subName,
-            Array.isArray(opt.options) ? opt.options : [],
-          ),
-        );
-        optionLines.push(
-          `- \`${subName}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}`,
-        );
-        for (const child of Array.isArray(opt.options) ? opt.options : []) {
-          if (!child?.name || child?.type < 3 || child?.type > 11) continue;
-          const required = child.required ? "obbligatoria" : "opzionale";
-          const choices =
-            Array.isArray(child.choices) && child.choices.length
-              ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
-              : "";
-          optionLines.push(
-            `  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`,
-          );
-        }
-      }
-      if (opt?.type === 2 && Array.isArray(opt.options)) {
-        const groupName = String(opt.name || "")
-          .trim()
-          .toLowerCase();
-        for (const sub of opt.options) {
-          if (sub?.type !== 1 || !sub?.name) continue;
-          const subName = String(sub.name || "")
-            .trim()
-            .toLowerCase();
-          if (
-            requestedSub &&
-            requestedSub !== groupName &&
-            requestedSub !== subName
-          )
-            continue;
-          const subPlaceholders = (
-            Array.isArray(sub.options) ? sub.options : []
-          )
-            .filter((child) => child?.type >= 3 && child?.type <= 11)
-            .map((child) => formatSlashOptionPlaceholder(child))
-            .filter(Boolean);
-          syntaxLines.push(
-            `\`/${commandName} ${groupName} ${subName}${subPlaceholders.length ? ` ${subPlaceholders.join(" ")}` : ""}\``,
-          );
-          exampleLines.push(
-            buildSlashExampleLine(
-              commandName,
-              groupName,
-              subName,
-              Array.isArray(sub.options) ? sub.options : [],
-            ),
-          );
-          optionLines.push(
-            `- \`${groupName} ${subName}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}`,
-          );
-          for (const child of Array.isArray(sub.options) ? sub.options : []) {
-            if (!child?.name || child?.type < 3 || child?.type > 11) continue;
-            const required = child.required ? "obbligatoria" : "opzionale";
-            const choices =
-              Array.isArray(child.choices) && child.choices.length
-                ? ` | scelte: ${child.choices.map((c) => `\`${c.name}\``).join(", ")}`
-                : "";
-            optionLines.push(
-              `  - \`${child.name}\` (${getOptionTypeLabel(child.type)}, ${required})${choices}`,
-            );
-          }
-        }
-      }
-    }
-  }
-
-  const perm = context?.permissions?.slash?.[commandName];
-  const roleIds = Array.isArray(perm)
-    ? perm
-    : Array.isArray(perm?.roles)
-      ? perm.roles
-      : null;
-  const effectiveSyntax = syntaxLines.length
-    ? syntaxLines
-    : [`\`/${commandName}\``];
-
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle(`Guida comando: /${commandName}`)
-    .setDescription(
-      normalizeDescription(hit.dataJson.description, "Comando slash."),
-    );
-
-  const fields = [];
-  pushChunkedField(fields, "Sintassi", effectiveSyntax);
-  pushChunkedField(fields, "Permessi", [
-    `Ruoli richiesti: ${formatRoleMentions(roleIds)}`,
-  ]);
-  if (optionLines.length) {
-    pushChunkedField(fields, "Opzioni", optionLines);
-  }
-  if (requestedSub && !optionLines.length) {
-    const visibleInvokeSet = getVisibleInvokeSet(visibleForCommand);
-    const fallbackSubLines = [];
-    for (const opt of options) {
-      if (opt?.type === 1 && opt?.name) {
-        const invoke = `/${commandName} ${opt.name}`;
-        const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-        const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-        fallbackSubLines.push(
-          `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
-        );
-      }
-      if (opt?.type === 2 && Array.isArray(opt.options)) {
-        for (const sub of opt.options) {
-          if (sub?.type !== 1 || !sub?.name) continue;
-          const invoke = `/${commandName} ${opt.name} ${sub.name}`;
-          const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-          const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-          fallbackSubLines.push(
-            `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
-          );
-        }
-      }
-    }
-    if (fallbackSubLines.length) {
-      pushChunkedField(fields, "Subcommands disponibili", fallbackSubLines);
-    }
-  }
-  pushChunkedField(
-    fields,
-    "Esempi di uso",
-    exampleLines.length ? exampleLines : [`- \`/${commandName}\``],
-  );
-  if (fields.length) embed.addFields(fields);
-  return embed;
+  void query;
+  void entries;
+  void context;
+  return null;
 }
 
 function buildDetailedHelpEmbed(query, entries, context = {}) {
@@ -1426,63 +1171,6 @@ function buildSubcommandFallbackEmbed(query, visibleEntries, context = {}) {
         .setColor(HELP_EMBED_COLOR)
         .setTitle(`Subcommands: ${prefixBase}${commandName}`)
         .setDescription(lines.join("\n"));
-    }
-  }
-
-  if (!HELP_PREFIX_ONLY) {
-    const seen = new Set();
-    const slashCommands = [];
-    for (const cmd of Array.from(context?.client?.commands?.values?.() || [])) {
-      const dataJson = cmd?._helpDataJson || cmd?.data?.toJSON?.();
-      if (!dataJson?.name) continue;
-      const type = dataJson.type || ApplicationCommandType.ChatInput;
-      if (type !== ApplicationCommandType.ChatInput) continue;
-      const key = `${dataJson.name}:${type}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      slashCommands.push({ cmd, dataJson });
-    }
-    const slashHit = slashCommands.find(
-      ({ dataJson }) =>
-        String(dataJson?.name || "")
-          .trim()
-          .toLowerCase() === queryToken,
-    );
-    if (slashHit) {
-      const commandName = String(slashHit.dataJson.name || "")
-        .trim()
-        .toLowerCase();
-      const options = Array.isArray(slashHit.dataJson.options)
-        ? slashHit.dataJson.options
-        : [];
-      const subLines = [];
-      for (const opt of options) {
-        if (opt?.type === 1 && opt?.name) {
-          const invoke = `/${commandName} ${opt.name}`;
-          const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-          const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-          subLines.push(
-            `- \`${invoke}\` - ${normalizeDescription(opt.description, "Nessuna descrizione.")}${lock}`,
-          );
-        }
-        if (opt?.type === 2 && Array.isArray(opt.options)) {
-          for (const sub of opt.options) {
-            if (sub?.type !== 1 || !sub?.name) continue;
-            const invoke = `/${commandName} ${opt.name} ${sub.name}`;
-            const isVisible = visibleInvokeSet.has(normalizeInvokeLookup(invoke));
-            const lock = isVisible ? "" : " *(non accessibile con i tuoi ruoli)*";
-            subLines.push(
-              `- \`${invoke}\` - ${normalizeDescription(sub.description, "Nessuna descrizione.")}${lock}`,
-            );
-          }
-        }
-      }
-      if (subLines.length) {
-        return new EmbedBuilder()
-          .setColor(HELP_EMBED_COLOR)
-          .setTitle(`Subcommands: /${commandName}`)
-          .setDescription(subLines.join("\n"));
-      }
     }
   }
 
@@ -1689,4 +1377,5 @@ module.exports = {
     });
   },
 };
+
 
