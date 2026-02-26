@@ -3357,6 +3357,31 @@ function getAntiNukeStatusSnapshot(guildId = "") {
     maintenanceEntries,
     trackerSizes,
     config: {
+      enabled: Boolean(ANTINUKE_CONFIG.enabled),
+      detectPrune: Boolean(ANTINUKE_CONFIG.detectPrune),
+      vanityGuard: Boolean(ANTINUKE_CONFIG.vanityGuard),
+      autoQuarantine: {
+        enabled: Boolean(ANTINUKE_CONFIG.autoQuarantine?.enabled),
+        strictMode: Boolean(ANTINUKE_CONFIG.autoQuarantine?.strictMode),
+        strictMemberRoleAddition: Boolean(
+          ANTINUKE_CONFIG.autoQuarantine?.strictMemberRoleAddition,
+        ),
+        monitorPublicRoles: Boolean(
+          ANTINUKE_CONFIG.autoQuarantine?.monitorPublicRoles,
+        ),
+        monitorChannelPermissions: Boolean(
+          ANTINUKE_CONFIG.autoQuarantine?.monitorChannelPermissions,
+        ),
+        quarantineRoleId: String(
+          ANTINUKE_CONFIG.autoQuarantine?.quarantineRoleId || "",
+        ),
+        quarantineTimeoutMs: Number(
+          ANTINUKE_CONFIG.autoQuarantine?.quarantineTimeoutMs || 0,
+        ),
+        whitelistUserIds: Array.from(
+          ANTINUKE_CONFIG.autoQuarantine?.whitelistUserIds || [],
+        ),
+      },
       kickBanFilter: { ...ANTINUKE_CONFIG.kickBanFilter },
       roleCreationFilter: { ...ANTINUKE_CONFIG.roleCreationFilter },
       roleDeletionFilter: { ...ANTINUKE_CONFIG.roleDeletionFilter },
