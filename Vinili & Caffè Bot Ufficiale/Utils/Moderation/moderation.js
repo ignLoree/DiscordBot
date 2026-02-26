@@ -2,6 +2,13 @@ const { EmbedBuilder } = require("discord.js");
 const { ModConfig } = require("../../Schemas/Moderation/moderationSchemas");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { sendStaffActionToModLogs } = require("../Logging/modAuditLogUtils");
+const IDs = require("../Config/ids");
+
+const BOT_MODERATOR_IDS = new Set(
+  Object.values(IDs?.bots || {})
+    .filter(Boolean)
+    .map((id) => String(id)),
+);
 
 function normalizeAction(action) {
   return String(action || "UNKNOWN").trim().toUpperCase();
@@ -73,6 +80,18 @@ async function createModCase({
   context,
   dedupe,
 }) {
+  if (modId != null && BOT_MODERATOR_IDS.has(String(modId))) {
+    const cfg = await getModConfig(guildId).catch(() => null);
+    return {
+      doc: null,
+      config: cfg,
+      created: false,
+      isDuplicate: false,
+      skipped: true,
+      skipReason: "bot_moderator",
+    };
+  }
+
   const normalizedAction = normalizeAction(action);
   const normalizedReason = reason || "Nessun motivo fornito";
   const normalizedDurationMs = durationMs || null;
@@ -194,16 +213,18 @@ async function logModCase({ client, guild, modCase, config }) {
     : String(modCase.userId);
   const embed = new EmbedBuilder()
     .setColor(client?.config?.embedModLight || "#6f4e37")
-    .setTitle(`Case #${modCase.caseId} - ${modCase.action}`)
-    .addFields(
-      { name: "Utente", value: userLabel, inline: true },
-      { name: "Moderatore", value: `<@${modCase.modId}>`, inline: true },
-      { name: "Motivo", value: modCase.reason || "Nessun motivo fornito" },
-    )
-    .setTimestamp();
+    .setTitle(`Case #${modCase.caseId} - ${modCase.action}`);
+  const fields = [
+    { name: "Utente", value: userLabel, inline: true },
+    { name: "Moderatore", value: `<@${modCase.modId}>`, inline: true },
+  ];
   if (duration) {
-    embed.addFields({ name: "Durata", value: duration, inline: true });
+    fields.push({ name: "Durata", value: duration, inline: true });
+    fields.push({ name: "Motivo", value: modCase.reason || "Nessun motivo fornito", inline: false });
+  } else {
+    fields.push({ name: "Motivo", value: modCase.reason || "Nessun motivo fornito", inline: true });
   }
+  embed.addFields(...fields).setTimestamp();
   if (modCase.context?.channelId) {
     embed.addFields({
       name: "Canale",

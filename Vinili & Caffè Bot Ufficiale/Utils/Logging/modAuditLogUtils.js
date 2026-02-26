@@ -101,12 +101,23 @@ function buildStaffActionModLogEmbed(modCase, options = {}) {
     .setColor("#57F287")
     .setTitle(
       `Case ${modCase.caseId} | ${actionLabel} | ${options.targetUsername != null ? options.targetUsername : modCase.userId}`,
-    )
-    .addFields(
-      { name: "User", value: `<@${modCase.userId}>`, inline: true },
-      { name: "Moderator", value: `<@${moderatorId}>`, inline: true },
-      { name: "Reason", value: reasonText, inline: false },
-    )
+    );
+  const hasDuration = Number.isFinite(modCase.durationMs) && modCase.durationMs > 0;
+  const fields = [
+    { name: "User", value: `<@${modCase.userId}>`, inline: true },
+    { name: "Moderator", value: `<@${moderatorId}>`, inline: true },
+  ];
+  if (hasDuration) {
+    fields.push({
+      name: "Duration",
+      value: formatDurationForModLog(modCase.durationMs),
+      inline: true,
+    });
+    fields.push({ name: "Reason", value: reasonText, inline: false });
+  } else {
+    fields.push({ name: "Reason", value: reasonText, inline: true });
+  }
+  embed.addFields(...fields);
   const sanctionDate = modCase.createdAt ? new Date(modCase.createdAt) : new Date();
   embed.setTimestamp(sanctionDate.getTime());
   const footerTs = sanctionDate.toLocaleString("it-IT", {
@@ -118,13 +129,6 @@ function buildStaffActionModLogEmbed(modCase, options = {}) {
     hour12: false,
   });
   embed.setFooter({ text: `ID: ${modCase.userId} • ${footerTs}` });
-  if (Number.isFinite(modCase.durationMs) && modCase.durationMs > 0) {
-    embed.addFields({
-      name: "Duration",
-      value: formatDurationForModLog(modCase.durationMs),
-      inline: true,
-    });
-  }
   if (Array.isArray(options.extraFields) && options.extraFields.length) {
     options.extraFields.forEach((f) => embed.addFields(f));
   }
