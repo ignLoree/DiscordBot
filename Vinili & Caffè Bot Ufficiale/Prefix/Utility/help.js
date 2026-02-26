@@ -51,6 +51,7 @@ const CATEGORY_ORDER = [
   "dev",
 ];
 const HELP_PAGE_SIZE = 18;
+const MAX_HELP_TEXT_LENGTH = 3900;
 const PREFIX_HELP_DESCRIPTIONS = {
   help: "Mostra tutti i comandi disponibili con il bot.",
   afk: "Imposta il tuo stato AFK con un messaggio personalizzato.",
@@ -133,7 +134,6 @@ const PREFIX_HELP_DESCRIPTIONS = {
   perms: "Assegna o revoca permessi temporanei su comandi e imposta quali canali possono usare un comando.",
   temprole: "Assegna o rimuove ruoli temporanei agli utenti.",
   security: "Hub sicurezza: status globale e gestione panic.",
-  statics: "Configura ruoli, canali e utenti “statici” per la sicurezza.",
   level: "Configura il sistema EXP/livelli: imposta o modifica exp, blocca canali, moltiplicatori, ruoli ignorati.",
   customrole: "Crea o modifica il tuo ruolo personalizzato e gestisci chi può usarlo.",
   customvoc: "Crea e gestisce la tua vocale privata.",
@@ -155,6 +155,7 @@ const PREFIX_SUBCOMMAND_HELP_DESCRIPTIONS = {
   "security.enable": "Riattiva completamente i moduli sicurezza selezionati.",
   "security.disable": "Disabilita completamente i moduli sicurezza selezionati.",
   "security.panic": "Gestisce Panic Mode centralizzata.",
+  "security.statics": "Configura ruoli, canali e utenti statici per la sicurezza.",
   "ticket.add": "Aggiunge uno o più utenti al ticket corrente.",
   "ticket.remove": "Rimuove uno o più utenti dal ticket corrente.",
   "ticket.closerequest": "Invia richiesta di chiusura ticket.",
@@ -837,7 +838,6 @@ function renderPageText(page) {
     sections.push(`**${categoryLabel}**\n${rows.join("\n")}`);
   }
 
-  const MAX_DISPLAY_LENGTH = 3900;
   const raw = page.items.length
     ? [
       "## Comandi Disponibili",
@@ -849,13 +849,73 @@ function renderPageText(page) {
       "Mini-help rapido: `+help <comando>`.",
       "",
       sections.join("\n\n"),
-      "",
-      `**Pagina ${page.indexLabel}**`,
     ].join("\n")
     : "<:vegax:1443934876440068179> Nessun comando disponibile in questa pagina.";
-  return raw.length > MAX_DISPLAY_LENGTH
-    ? raw.slice(0, MAX_DISPLAY_LENGTH - 20) + "\n\n...(testo troncato)"
-    : raw;
+  return raw;
+}
+
+function splitHelpTextByLength(text, maxLen = MAX_HELP_TEXT_LENGTH) {
+  const input = String(text || "");
+  if (!input.length) return [""];
+  if (input.length <= maxLen) return [input];
+
+  const lines = input.split("\n");
+  const chunks = [];
+  let current = "";
+
+  const pushCurrent = () => {
+    if (!current.length) return;
+    chunks.push(current);
+    current = "";
+  };
+
+  for (const line of lines) {
+    const piece = current.length ? `\n${line}` : line;
+    if ((current + piece).length <= maxLen) {
+      current += piece;
+      continue;
+    }
+
+    if (current.length) pushCurrent();
+
+    if (line.length <= maxLen) {
+      current = line;
+      continue;
+    }
+
+    let rest = line;
+    while (rest.length > maxLen) {
+      chunks.push(rest.slice(0, maxLen));
+      rest = rest.slice(maxLen);
+    }
+    current = rest;
+  }
+
+  pushCurrent();
+  return chunks.length ? chunks : [input.slice(0, maxLen)];
+}
+
+function expandHelpDisplayPages(basePages) {
+  const expanded = [];
+
+  for (const page of basePages) {
+    const fullText = renderPageText(page);
+    const chunks = splitHelpTextByLength(fullText, MAX_HELP_TEXT_LENGTH - 28);
+    for (const chunk of chunks) {
+      expanded.push({
+        ...page,
+        renderedText: chunk,
+      });
+    }
+  }
+
+  const total = expanded.length;
+  expanded.forEach((page, idx) => {
+    page.indexLabel = `${idx + 1}/${total}`;
+    page.renderedText = `${String(page.renderedText || "").trimEnd()}\n\n**Pagina ${page.indexLabel}**`;
+  });
+
+  return expanded;
 }
 
 function buildNavigationRow(state) {
@@ -877,7 +937,7 @@ function buildHelpV2Container(page, navState) {
   const components = [
     {
       type: ComponentType.TextDisplay,
-      content: renderPageText(page),
+      content: page?.renderedText || renderPageText(page),
     },
   ];
   if (navState.total > 1) {
@@ -1798,12 +1858,9 @@ module.exports = {
       indexLabel: "",
       groupLabel: PAGE_TITLES.all || "Comandi Disponibili",
     }));
-    const totalPages = groupedPages.length;
-    groupedPages.forEach((page, idx) => {
-      page.indexLabel = `${idx + 1}/${totalPages}`;
-    });
+    const displayPages = expandHelpDisplayPages(groupedPages);
 
-    if (!groupedPages.length) {
+    if (!displayPages.length) {
       return safeMessageReply(message, {
         embeds: [buildNoAvailableCommandsEmbed()],
         allowedMentions: NO_REPLY_MENTIONS,
@@ -1815,13 +1872,13 @@ module.exports = {
     const uniqueToken = `${message.id}_${Date.now()}`;
     const navState = {
       currentIndex: initialPageIndex,
-      total: groupedPages.length,
+      total: displayPages.length,
       prevId: `help_prev_${uniqueToken}`,
       nextId: `help_next_${uniqueToken}`,
     };
 
     const sent = await safeMessageReply(message, {
-      components: [buildHelpV2Container(groupedPages[navState.currentIndex], navState)],
+      components: [buildHelpV2Container(displayPages[navState.currentIndex], navState)],
       flags: MessageFlags.IsComponentsV2,
       allowedMentions: NO_REPLY_MENTIONS,
     });
@@ -1857,7 +1914,7 @@ module.exports = {
         navState.currentIndex += 1;
       }
 
-      const page = groupedPages[navState.currentIndex];
+      const page = displayPages[navState.currentIndex];
       const updated = await interaction
         .update({
           components: [buildHelpV2Container(page, navState)],

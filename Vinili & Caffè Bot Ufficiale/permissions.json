@@ -266,14 +266,20 @@
         },
         "security": {
             "roles": [
-                "roles.HighStaff"
+                "roles.Founder",
+                "roles.CoFounder"
             ],
             "channels": [
                 "1442569288161558528"
             ],
             "subcommands": {
                 "status": [
-                    "roles.HighStaff"
+                    "roles.Founder",
+                    "roles.CoFounder"
+                ],
+                "statics": [
+                    "roles.Founder",
+                    "roles.CoFounder"
                 ],
                 "enable": [
                     "roles.Founder",
@@ -288,15 +294,6 @@
                     "roles.CoFounder"
                 ]
             }
-        },
-        "statics": {
-            "roles": [
-                "roles.Founder",
-                "roles.CoFounder"
-            ],
-            "channels": [
-                "1442569288161558528"
-            ]
         },
         "customrole": {
             "roles": [
