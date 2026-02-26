@@ -593,7 +593,7 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
             `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
           ].join("\n"),
         )
-        .setThumbnail(newMember.client.user.displayAvatarURL({ size: 256 }))
+        .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))
         .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
     : buildJoinGateTriggeredEmbed(
         newMember,

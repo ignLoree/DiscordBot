@@ -156,7 +156,7 @@ async function punishUsernameMatch(member, match) {
             ].join("\n"),
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
-          .setThumbnail(member.client.user.displayAvatarURL({ size: 256 }))
+          .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
       : buildJoinGateTriggeredEmbed(member, reason);
     await logChannel.send({ embeds: [logEmbed] }).catch((error) => {
       global.logger?.error?.("[userUpdate] punish log send failed:", error);
