@@ -174,8 +174,8 @@ function getPauseTimingText(startRaw, endRaw) {
   const end = parseItalianDate(endRaw);
   const today = getTodayUtc();
   if (!start || !end) return "è in pausa";
-  if (today < start) return "sarà in pausa";
-  if (today > end) return "è stato in pausa";
+  if (today < start) return "è stato in pausa";
+  if (today > end) return "era in pausa";
   return "è in pausa";
 }
 
@@ -266,7 +266,11 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
       if (!channel?.isTextBased?.()) return;
       const msg = await channel.messages.fetch(String(messageId)).catch(() => null);
       if (!msg) return;
-      await msg.edit({ components: [] }).catch(() => null);
+      const currentContent = String(msg.content || "");
+      const nextContent = currentContent
+        .replace(" è in pausa.", " è stato in pausa.")
+        .replace(" sarà in pausa.", " è stato in pausa.");
+      await msg.edit({ content: nextContent, components: [] }).catch(() => null);
     } catch {}
   }, delayMs);
 }
