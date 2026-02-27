@@ -384,8 +384,17 @@ function isPodcastLikeTrack(track) {
   return /\b(podcast|episodio|episode|puntata|show|intervista integrale|audiolibro|audiobook)\b/.test(haystack);
 }
 
+function isLikelyPreviewTrack(track) {
+  const source = sourceKeyFromTrack(track);
+  const durationMs = Number(track?.durationMS || 0);
+  if (source === "soundcloud" && durationMs > 0 && durationMs <= 31_000) {
+    return true;
+  }
+  return false;
+}
+
 function filterPlayableTracks(tracks = []) {
-  return tracks.filter((track) => !isPodcastLikeTrack(track));
+  return tracks.filter((track) => !isPodcastLikeTrack(track) && !isLikelyPreviewTrack(track));
 }
 
 function scoreTrackCandidate(track, query, searchSource) {
@@ -588,8 +597,32 @@ async function runSearch(player, resolved, requestedBy) {
     requestedBy,
     searchEngine: resolved.engine,
   });
+  const originalTracks = Array.isArray(result?.tracks) ? result.tracks : [];
   if (Array.isArray(result?.tracks)) {
     result.tracks = filterPlayableTracks(result.tracks);
+  }
+  if ((!result?.tracks || result.tracks.length === 0) && originalTracks.length > 0) {
+    const previewTrack = originalTracks.find((track) => isLikelyPreviewTrack(track));
+    if (previewTrack) {
+      const fallbackQuery = `${previewTrack?.title || ""} ${previewTrack?.author || ""}`.trim();
+      if (fallbackQuery) {
+        logMusic("search_preview_fallback", {
+          originalQuery: resolved?.query,
+          fallbackQuery,
+          preview: getTrackDebugMeta(previewTrack),
+        });
+        const fallbackResult = await searchBestMatches(player, fallbackQuery, requestedBy, {
+          avoidSources: ["soundcloud"],
+        });
+        if (Array.isArray(fallbackResult?.tracks) && fallbackResult.tracks.length > 0) {
+          logMusic("search_preview_fallback_hit", {
+            originalQuery: resolved?.query,
+            chosen: getTrackDebugMeta(fallbackResult.tracks[0]),
+          });
+          return fallbackResult;
+        }
+      }
+    }
   }
   logMusic("search_result", {
     query: resolved?.query,
@@ -888,6 +921,16 @@ async function getPlayer(client) {
         const now = Date.now();
         const lastStartAt = guildId ? Number(lastPlayerStartAtByGuild.get(guildId) || 0) : 0;
         const lastPlayerErrorAt = guildId ? Number(lastPlayerErrorAtByGuild.get(guildId) || 0) : 0;
+        const session = lastTrackSessionByGuild.get(guildId) || null;
+        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
+        logMusic("empty_queue", {
+          guildId,
+          elapsed,
+          pendingTracks: Number(queue?.tracks?.size || 0),
+          currentTrack: getTrackDebugMeta(queue?.currentTrack || session?.track || null),
+          lastStartDelta: lastStartAt ? now - lastStartAt : null,
+          lastPlayerErrorDelta: lastPlayerErrorAt ? now - lastPlayerErrorAt : null,
+        });
         if ((lastStartAt && now - lastStartAt < 15_000) || (lastPlayerErrorAt && now - lastPlayerErrorAt < 15_000)) return;
       });
       player.events.on("emptyChannel", (queue) => {
