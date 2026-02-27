@@ -108,6 +108,12 @@ module.exports = {
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
     if (!search?.ok) {
+      if (search?.reason === "youtube_not_supported") {
+        const unsupportedYoutubeEmbed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setDescription("YouTube videos are not supported");
+        return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
+      }
       if (search?.reason === "not_found") {
         const noResultsEmbed = new EmbedBuilder()
           .setColor("#ED4245")
@@ -153,6 +159,12 @@ module.exports = {
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
     if (!result?.ok) {
+      if (result?.reason === "youtube_not_supported") {
+        const unsupportedYoutubeEmbed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setDescription("YouTube videos are not supported");
+        return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
+      }
       if (result?.reason === "not_found") {
         const noResultsEmbed = new EmbedBuilder()
           .setColor("#ED4245")
