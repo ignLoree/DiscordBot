@@ -78,6 +78,7 @@ const lastPlayerStartAtByGuild = new Map();
 const lastPlayerErrorAtByGuild = new Map();
 const lastTrackSessionByGuild = new Map();
 const finishRetryCountByGuild = new Map();
+const recoveryInFlightByGuild = new Map();
 const manualLeaveAtByGuild = new Map();
 const inactivityTimersByGuild = new Map();
 const emptyVoiceTimersByGuild = new Map();
@@ -126,6 +127,7 @@ function clearEmptyVoiceTimer(guildId) {
 
 async function notifyQueueEnded(queue) {
   const guildId = String(queue?.guild?.id || "");
+  if (guildId && recoveryInFlightByGuild.get(guildId)) return;
   const now = Date.now();
   const lastNoticeAt = guildId ? Number(lastQueueNoticeAtByGuild.get(guildId) || 0) : 0;
   if (lastNoticeAt && now - lastNoticeAt < 10_000) return;
@@ -501,33 +503,42 @@ async function runSearch(player, resolved, requestedBy) {
 }
 
 async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
-  const playerRef = queue?.player || client.musicPlayer;
-  const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
-    ? finishedTrack.metadata
-    : {};
-  const failedSources = [
-    ...(Array.isArray(metadata.failedSources) ? metadata.failedSources : []),
-    String(avoidSource || sourceKeyFromTrack(finishedTrack) || "").trim(),
-  ].filter(Boolean);
-  const recoveryQuery = String(
-    metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
-  ).trim();
-  if (!recoveryQuery) throw new Error("missing recovery query");
+  const guildId = String(queue?.guild?.id || "");
+  if (guildId && recoveryInFlightByGuild.get(guildId)) {
+    throw new Error("recovery already in progress");
+  }
+  if (guildId) recoveryInFlightByGuild.set(guildId, true);
+  try {
+    const playerRef = queue?.player || client.musicPlayer;
+    const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
+      ? finishedTrack.metadata
+      : {};
+    const failedSources = [
+      ...(Array.isArray(metadata.failedSources) ? metadata.failedSources : []),
+      String(avoidSource || sourceKeyFromTrack(finishedTrack) || "").trim(),
+    ].filter(Boolean);
+    const recoveryQuery = String(
+      metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
+    ).trim();
+    if (!recoveryQuery) throw new Error("missing recovery query");
 
-  const recoveredResult = await runSearch(playerRef, {
-    query: recoveryQuery,
-    engine: QueryType.AUTO_SEARCH,
-    translated: true,
-    youtubeConvertible: false,
-    avoidSources: failedSources,
-  }, queue?.guild?.members?.me || null);
-  const recoveredTrack = Array.isArray(recoveredResult?.tracks)
-    ? recoveredResult.tracks[0]
-    : null;
-  if (!recoveredTrack) throw new Error("no recovered track");
-  stampTrackMetadata(recoveredTrack, null, { recoveryQuery, failedSources });
-  await queue.node.play(recoveredTrack);
-  return recoveredTrack;
+    const recoveredResult = await runSearch(playerRef, {
+      query: recoveryQuery,
+      engine: QueryType.AUTO_SEARCH,
+      translated: true,
+      youtubeConvertible: false,
+      avoidSources: failedSources,
+    }, queue?.guild?.members?.me || null);
+    const recoveredTrack = Array.isArray(recoveredResult?.tracks)
+      ? recoveredResult.tracks[0]
+      : null;
+    if (!recoveredTrack) throw new Error("no recovered track");
+    stampTrackMetadata(recoveredTrack, null, { recoveryQuery, failedSources });
+    await queue.node.play(recoveredTrack);
+    return recoveredTrack;
+  } finally {
+    if (guildId) recoveryInFlightByGuild.delete(guildId);
+  }
 }
 
 function parseDeezerTrackId(url) {
@@ -632,7 +643,7 @@ async function getPlayer(client) {
           error?.message || error,
         );
         const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
-        if (!guildId || !track || retryCount >= 2) return;
+        if (!guildId || !track || retryCount >= 2 || recoveryInFlightByGuild.get(guildId)) return;
         try {
           finishRetryCountByGuild.set(guildId, retryCount + 1);
           await recoverTrackPlayback(queue, track, client, sourceKeyFromTrack(track));
@@ -644,6 +655,8 @@ async function getPlayer(client) {
         queue?.node?.setVolume?.(DEFAULT_MUSIC_VOLUME);
         const guildId = String(queue?.guild?.id || "");
         if (guildId) lastPlayerStartAtByGuild.set(guildId, Date.now());
+        if (guildId) recoveryInFlightByGuild.delete(guildId);
+        if (guildId) finishRetryCountByGuild.delete(guildId);
         if (guildId && queue?.currentTrack) {
           lastTrackSessionByGuild.set(guildId, {
             track: queue.currentTrack,
@@ -655,6 +668,7 @@ async function getPlayer(client) {
       });
       player.events.on("playerFinish", async (queue, track) => {
         const guildId = String(queue?.guild?.id || "");
+        if (guildId && recoveryInFlightByGuild.get(guildId)) return;
         const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
         const finishedTrack = track || session?.track || queue?.currentTrack || null;
         if (guildId && finishedTrack && shouldTreatAsEarlyFinish(finishedTrack, session?.startedAt)) {
@@ -688,6 +702,7 @@ async function getPlayer(client) {
       });
       player.events.on("emptyQueue", async (queue) => {
         const guildId = String(queue?.guild?.id || "");
+        if (guildId && recoveryInFlightByGuild.get(guildId)) return;
         const now = Date.now();
         const lastStartAt = guildId ? Number(lastPlayerStartAtByGuild.get(guildId) || 0) : 0;
         const lastPlayerErrorAt = guildId ? Number(lastPlayerErrorAtByGuild.get(guildId) || 0) : 0;
@@ -708,6 +723,7 @@ async function getPlayer(client) {
         clearInactivityTimer(guildId);
         clearEmptyVoiceTimer(guildId);
         clearVoiceSession(guildId);
+        recoveryInFlightByGuild.delete(guildId);
         lastTrackSessionByGuild.delete(guildId);
         finishRetryCountByGuild.delete(guildId);
         const now = Date.now();
