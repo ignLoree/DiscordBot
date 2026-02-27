@@ -79,6 +79,7 @@ const lastPlayerErrorAtByGuild = new Map();
 const lastTrackSessionByGuild = new Map();
 const finishRetryCountByGuild = new Map();
 const recoveryInFlightByGuild = new Map();
+const playbackWatchdogsByGuild = new Map();
 const manualLeaveAtByGuild = new Map();
 const inactivityTimersByGuild = new Map();
 const emptyVoiceTimersByGuild = new Map();
@@ -123,6 +124,14 @@ function clearEmptyVoiceTimer(guildId) {
   const timer = emptyVoiceTimersByGuild.get(key);
   if (timer) clearTimeout(timer);
   emptyVoiceTimersByGuild.delete(key);
+}
+
+function clearPlaybackWatchdog(guildId) {
+  const key = String(guildId || "");
+  if (!key) return;
+  const timer = playbackWatchdogsByGuild.get(key);
+  if (timer) clearInterval(timer);
+  playbackWatchdogsByGuild.delete(key);
 }
 
 async function notifyQueueEnded(queue) {
@@ -541,6 +550,41 @@ async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
   }
 }
 
+function schedulePlaybackWatchdog(queue, client) {
+  const guildId = String(queue?.guild?.id || "");
+  if (!guildId) return;
+  clearPlaybackWatchdog(guildId);
+
+  const timer = setInterval(async () => {
+    try {
+      if (!queue || queue.deleted) {
+        clearPlaybackWatchdog(guildId);
+        return;
+      }
+      if (recoveryInFlightByGuild.get(guildId)) return;
+      if (queue.isPlaying?.()) return;
+      if (queue.node?.isPaused?.()) return;
+
+      const currentTrack = queue.currentTrack || lastTrackSessionByGuild.get(guildId)?.track || null;
+      const startedAt = Number(lastTrackSessionByGuild.get(guildId)?.startedAt || 0);
+      if (!currentTrack || !startedAt) return;
+
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < 15_000) return;
+
+      global.logger?.warn?.("[MUSIC] Watchdog detected stalled playback, attempting recovery:", guildId, currentTrack?.title || "unknown");
+      const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
+      if (retryCount >= 2) return;
+      finishRetryCountByGuild.set(guildId, retryCount + 1);
+      await recoverTrackPlayback(queue, currentTrack, client, sourceKeyFromTrack(currentTrack));
+    } catch (error) {
+      global.logger?.warn?.("[MUSIC] Watchdog recovery failed:", guildId, error?.message || error);
+    }
+  }, 5000);
+
+  playbackWatchdogsByGuild.set(guildId, timer);
+}
+
 function parseDeezerTrackId(url) {
   const match = String(url || "").match(/deezer\.com\/(?:[a-z]{2}\/)?track\/(\d+)/i);
   return match ? String(match[1]) : null;
@@ -665,6 +709,7 @@ async function getPlayer(client) {
         }
         clearInactivityTimer(queue?.guild?.id);
         clearEmptyVoiceTimer(queue?.guild?.id);
+        schedulePlaybackWatchdog(queue, client);
       });
       player.events.on("playerFinish", async (queue, track) => {
         const guildId = String(queue?.guild?.id || "");
@@ -688,6 +733,7 @@ async function getPlayer(client) {
           finishRetryCountByGuild.delete(guildId);
           lastTrackSessionByGuild.delete(guildId);
         }
+        clearPlaybackWatchdog(guildId);
         const pendingTracks = Number(queue?.tracks?.size || 0);
         if (pendingTracks > 0) return;
         await notifyQueueEnded(queue);
@@ -722,6 +768,7 @@ async function getPlayer(client) {
         const guildId = String(queue?.guild?.id || "");
         clearInactivityTimer(guildId);
         clearEmptyVoiceTimer(guildId);
+        clearPlaybackWatchdog(guildId);
         clearVoiceSession(guildId);
         recoveryInFlightByGuild.delete(guildId);
         lastTrackSessionByGuild.delete(guildId);
