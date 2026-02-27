@@ -943,6 +943,45 @@ async function runSearch(player, resolved, requestedBy) {
   return result;
 }
 
+async function resolvePlayableTrackFromCandidate(player, candidate, requestedBy) {
+  if (!candidate) return null;
+  if (typeof candidate.setMetadata === "function") return candidate;
+
+  const attempts = [
+    String(candidate?.resolverInput || "").trim(),
+    String(candidate?.url || "").trim(),
+    `${String(candidate?.title || "").trim()} ${String(candidate?.author || "").trim()}`.trim(),
+  ].filter(Boolean);
+
+  for (const attempt of attempts) {
+    const result = await player.search(attempt, {
+      requestedBy,
+      searchEngine: /^https?:\/\//i.test(attempt) ? QueryType.AUTO : QueryType.AUTO_SEARCH,
+    }).catch(() => null);
+    const firstTrack = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks : [])[0] || null;
+    if (firstTrack) return firstTrack;
+  }
+
+  return null;
+}
+
+async function resolvePlayableSearchResult(player, searchResult, requestedBy) {
+  if (!searchResult || !Array.isArray(searchResult.tracks) || searchResult.tracks.length === 0) {
+    return searchResult;
+  }
+
+  const resolvedTracks = [];
+  for (const track of searchResult.tracks) {
+    const playable = await resolvePlayableTrackFromCandidate(player, track, requestedBy);
+    if (playable) resolvedTracks.push(playable);
+  }
+
+  return {
+    ...searchResult,
+    tracks: resolvedTracks,
+  };
+}
+
 async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
   const guildId = String(queue?.guild?.id || "");
   if (guildId && recoveryInFlightByGuild.get(guildId)) {
@@ -1417,7 +1456,8 @@ async function playRequest({
   if (!resolved.query) {
     return { ok: false, reason: "empty_query" };
   }
-  const searchResult = preSearchResult || await runSearch(player, resolved, requestedBy);
+  const rawSearchResult = preSearchResult || await runSearch(player, resolved, requestedBy);
+  const searchResult = await resolvePlayableSearchResult(player, rawSearchResult, requestedBy);
 
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
     if (resolved?.youtubeConvertible) {
