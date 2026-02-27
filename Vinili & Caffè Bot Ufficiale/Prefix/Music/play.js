@@ -15,6 +15,22 @@ const SOURCE_EMOJIS = {
   deezer: "<:VC_Deezer:1476933250835288167>",
 };
 
+function getTrackSourceKey(track) {
+  const source = String(track?.source || track?.queryType || track?.extractor?.identifier || "").toLowerCase();
+  const url = String(track?.url || track?.raw?.url || "").toLowerCase();
+
+  if (source.includes("spotify") || /spotify\.com/.test(url)) return "spotify";
+  if (source.includes("apple") || /music\.apple\.com|itunes\.apple\.com/.test(url)) return "apple";
+  if (source.includes("deezer") || /deezer\.com/.test(url)) return "deezer";
+  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) return "soundcloud";
+  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) return "youtube";
+  return "unknown";
+}
+
+function isSupportedPickerTrack(track) {
+  return ["spotify", "apple", "deezer"].includes(getTrackSourceKey(track));
+}
+
 function formatDurationMs(ms) {
   const total = Math.max(0, Math.floor(Number(ms || 0) / 1000));
   const hours = Math.floor(total / 3600);
@@ -134,8 +150,14 @@ module.exports = {
     }
 
     const searchTracks = Array.isArray(search.searchResult?.tracks)
-      ? search.searchResult.tracks
+      ? search.searchResult.tracks.filter(isSupportedPickerTrack)
       : [];
+    if (!search.searchResult?.playlist && searchTracks.length === 0) {
+      const noResultsEmbed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setDescription("No results ⛔");
+      return safeMessageReply(message, { embeds: [noResultsEmbed] });
+    }
     if (!search.searchResult?.playlist && searchTracks.length > 1) {
       const picked = await pickFromPagedMenu({
         message,
@@ -150,9 +172,7 @@ module.exports = {
         }),
       });
       if (!picked) return;
-      finalInput = String(
-        picked?.url || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
-      );
+      finalInput = `${picked?.title || ""} ${picked?.author || ""}`.trim();
     }
 
     const result = await playRequest({
