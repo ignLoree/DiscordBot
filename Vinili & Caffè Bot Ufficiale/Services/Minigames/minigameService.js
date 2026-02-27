@@ -1652,8 +1652,11 @@ function createMathQuestion() {
 }
 
 function parseMathGuess(raw) {
-  const base = normalizeUserAnswerText(raw)
-    .replace(/\s+/g, "")
+  const compact = normalizeUserAnswerText(raw).replace(/\s+/g, "");
+  if (!compact) return null;
+  if (/[\p{L}]/u.test(compact)) return null;
+  const base = compact
+    .replace(/[^0-9+\-*/().,×÷]/g, "")
     .replace(/,/g, ".")
     .replace(/×/g, "*")
     .replace(/÷/g, "/");

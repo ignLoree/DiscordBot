@@ -1,5 +1,7 @@
+const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { joinTtsChannel } = require("../../Services/TTS/ttsService");
+const { getPlayer } = require("../../Services/Music/musicService");
 
 module.exports = {
   name: "join",
@@ -9,27 +11,53 @@ module.exports = {
     const voiceChannel = message.member?.voice?.channel;
 
     if (!voiceChannel) {
+      const warnEmbed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setDescription("Devi essere in un canale vocale.");
       const warn = await safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",
+        { embeds: [warnEmbed] },
       );
       if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
       return;
     }
 
     if (!voiceChannel.joinable) {
+      const noPermEmbed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setDescription("Non ho i permessi per entrare in quel canale vocale.");
       return safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Non ho i permessi per entrare in quel canale vocale.",
+        { embeds: [noPermEmbed] },
       );
     }
 
-    const result = await joinTtsChannel(voiceChannel);
-    if (!result.ok && result.reason === "locked") return;
+    const ttsResult = await joinTtsChannel(voiceChannel);
+    if (!ttsResult.ok && ttsResult.reason === "locked") return;
 
+    const player = await getPlayer(message.client).catch(() => null);
+    if (player) {
+      const queue = player.nodes.create(message.guild, {
+        metadata: { channel: message.channel },
+        leaveOnEmpty: false,
+        leaveOnEmptyCooldown: 0,
+        leaveOnEnd: false,
+        leaveOnEndCooldown: 0,
+        selfDeaf: true,
+        volume: 80,
+      });
+      queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
+      if (!queue.connection) {
+        await queue.connect(voiceChannel).catch(() => null);
+      }
+    }
+
+    const okEmbed = new EmbedBuilder()
+      .setColor("#57F287")
+      .setDescription("Connesso al canale vocale.");
     return safeMessageReply(
       message,
-      `<:vegacheckmark:1443666279058772028> TTS attivo in ${voiceChannel}.`,
+      { embeds: [okEmbed] },
     );
   },
 };

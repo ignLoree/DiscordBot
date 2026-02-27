@@ -420,7 +420,7 @@ async function sendRejoinDm(member) {
       components: [row],
     })
     .catch((error) => {
-      if (error?.code !== 50007) {
+      if (![50007, 50278].includes(error?.code)) {
         global.logger.error(error);
       }
     });

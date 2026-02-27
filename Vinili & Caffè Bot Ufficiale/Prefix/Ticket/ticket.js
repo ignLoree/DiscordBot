@@ -1092,7 +1092,9 @@ module.exports = {
             dmActionRows,
           );
         } catch (err) {
-          if (err?.code !== 50007) global.logger.error("[DM ERROR]", err);
+          if (![50007, 50278].includes(err?.code)) {
+            global.logger.error("[DM ERROR]", err);
+          }
         }
       }
 

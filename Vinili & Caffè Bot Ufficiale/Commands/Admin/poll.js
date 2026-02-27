@@ -136,6 +136,28 @@ async function findLastPoll(guildId) {
   });
 }
 
+async function syncPollCounter(guildId) {
+  const lastPoll = await Poll.findOne({
+    guildId,
+    domanda: { $ne: COUNTER_FILTER_QUESTION },
+  }).sort({ pollcount: -1 });
+  const highestPollCount = Number(lastPoll?.pollcount || 0);
+
+  await Poll.findOneAndUpdate(
+    { guildId, domanda: COUNTER_FILTER_QUESTION },
+    {
+      $set: {
+        guildId,
+        domanda: COUNTER_FILTER_QUESTION,
+        pollcount: highestPollCount,
+      },
+    },
+    { upsert: true, setDefaultsOnInsert: true },
+  );
+
+  return highestPollCount;
+}
+
 function normalizeCreateAnswers(rawAnswers) {
   const answers = Array.isArray(rawAnswers)
     ? rawAnswers.map((value) =>
@@ -278,6 +300,7 @@ async function handleRemove(interaction) {
   } catch {}
 
   await lastPoll.deleteOne();
+  await syncPollCounter(guildId);
 
   return safeEditReply(interaction, {
     embeds: [

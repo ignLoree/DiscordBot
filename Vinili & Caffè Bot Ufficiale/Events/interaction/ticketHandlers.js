@@ -2374,7 +2374,7 @@ async function pinFirstTicketMessage(channel, message) {
             { guildId: targetInteraction.guild.id, bypassNoDm: true },
           );
         } catch (err) {
-          if (err.code !== 50007) {
+          if (![50007, 50278].includes(err?.code)) {
             global.logger.error(err);
           }
         }

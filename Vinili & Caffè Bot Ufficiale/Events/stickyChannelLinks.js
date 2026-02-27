@@ -26,6 +26,14 @@ const STICKY_STATE_PATH = path.resolve(
   __dirname,
   "../Data/stickyMessageState.json",
 );
+const STICKY_SETTINGS_PATH = path.resolve(
+  __dirname,
+  "../Data/stickyMessageSettings.json",
+);
+const DEFAULT_STICKY_SETTINGS = {
+  enabled: false,
+};
+let stickySettingsCache = { mtimeMs: -1, data: DEFAULT_STICKY_SETTINGS };
 
 function logError(...args) {
   global.logger?.error?.("[stickyChannelLinks]", ...args);
@@ -44,6 +52,32 @@ function loadStickyState() {
   } catch (error) {
     logError("load state failed:", error);
   }
+}
+
+function loadStickySettings() {
+  try {
+    if (!fs.existsSync(STICKY_SETTINGS_PATH)) {
+      return DEFAULT_STICKY_SETTINGS;
+    }
+    const stat = fs.statSync(STICKY_SETTINGS_PATH);
+    if (stickySettingsCache.mtimeMs === stat.mtimeMs) {
+      return stickySettingsCache.data;
+    }
+    const raw = fs.readFileSync(STICKY_SETTINGS_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    const data = {
+      enabled: parsed?.enabled === true,
+    };
+    stickySettingsCache = { mtimeMs: stat.mtimeMs, data };
+    return data;
+  } catch (error) {
+    logError("load settings failed:", error);
+    return DEFAULT_STICKY_SETTINGS;
+  }
+}
+
+function isStickyEnabled() {
+  return loadStickySettings().enabled === true;
 }
 
 function saveStickyState() {
@@ -172,6 +206,7 @@ module.exports = {
   name: "messageCreate",
   async execute(message, client) {
     if (!message?.guild || !message.channelId) return;
+    if (!isStickyEnabled()) return;
     const resolvedClient = client || message.client;
     const clientUserId = String(resolvedClient?.user?.id || "");
     if (!clientUserId) return;

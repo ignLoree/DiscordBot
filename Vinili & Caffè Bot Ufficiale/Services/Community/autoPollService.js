@@ -3,128 +3,220 @@ const axios = require("axios");
 const Poll = require("../../Schemas/Poll/pollSchema");
 const IDs = require("../../Utils/Config/ids");
 const { createPollForGuild } = require("../../Commands/Admin/poll");
-const { translateToItalian } = require("../../Utils/Minigames/dynoFunUtils");
 
 const TIMEZONE = "Europe/Rome";
-const DEFAULT_API_URL = "https://opentdb.com/api.php?amount=1&type=multiple&encode=url3986";
 const COUNTER_FILTER_QUESTION = "__counter__";
 const DEFAULT_WINDOW_START_HOUR = 19;
 const DEFAULT_WINDOW_START_MINUTE = 0;
 const DEFAULT_WINDOW_END_HOUR = 21;
 const DEFAULT_WINDOW_END_MINUTE = 59;
-const DEFAULT_SOURCES = ["local", "opentdb"];
-const OPENTDB_CATEGORY_CATALOG = [
-  { id: 9, key: "general_knowledge" },
-  { id: 10, key: "books" },
-  { id: 11, key: "film" },
-  { id: 12, key: "music" },
-  { id: 13, key: "musicals_theatres" },
-  { id: 14, key: "television" },
-  { id: 15, key: "video_games" },
-  { id: 16, key: "board_games" },
-  { id: 17, key: "science_nature" },
-  { id: 18, key: "computers" },
-  { id: 19, key: "mathematics" },
-  { id: 20, key: "mythology" },
-  { id: 21, key: "sports" },
-  { id: 22, key: "geography" },
-  { id: 23, key: "history" },
-  { id: 24, key: "politics" },
-  { id: 25, key: "art" },
-  { id: 26, key: "celebrities" },
-  { id: 27, key: "animals" },
-  { id: 28, key: "vehicles" },
-  { id: 29, key: "comics" },
-  { id: 30, key: "gadgets" },
-  { id: 31, key: "anime_manga" },
-  { id: 32, key: "cartoon_animations" },
+const DEFAULT_SOURCES = ["openrouter", "local"];
+const DEFAULT_OPENROUTER_MODELS = [
+  "google/gemma-3-12b-it:free",
+  "google/gemma-3-27b-it:free",
+  "openrouter/free",
 ];
-const DEFAULT_OPENTDB_CATEGORY_IDS = OPENTDB_CATEGORY_CATALOG.map((c) => c.id);
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_MAX_ROUNDS = 4;
+const OPENROUTER_RETRY_DELAY_MS = 1500;
+
 const LOCAL_THEME_POLLS = [
   {
-    question: "Che tema ti va di vedere più spesso?",
-    answers: ["Musica", "Cinema/Serie TV", "Gaming", "Sport", "Arte", "Tecnologia", "Attualità", "Meme/Intrattenimento"],
+    question: "Qual è il momento migliore della giornata?",
+    answers: ["Mattina presto", "Tarda mattinata", "Pomeriggio", "Prima serata", "Notte"],
   },
   {
-    question: "Su cosa dovremmo puntare questo mese?",
-    answers: ["Nuovi format in chat", "Più eventi vocali", "Migliore organizzazione canali", "Nuovi perks", "Più moderazione live", "Più attività partner", "Più minigiochi", "Più feedback staff"],
+    question: "Quale stagione ti rappresenta di più?",
+    answers: ["Primavera", "Estate", "Autunno", "Inverno"],
   },
   {
-    question: "Quando preferisci gli eventi?",
-    answers: ["15:00 - 17:00", "17:00 - 19:00", "19:00 - 21:00", "21:00 - 23:00", "Weekend pomeriggio", "Weekend sera"],
+    question: "Come preferisci iniziare la giornata?",
+    answers: ["Con calma", "Con una colazione abbondante", "Allenandomi", "Con musica o podcast", "Di corsa ma produttivo"],
   },
   {
-    question: "Che ambito sportivo ti interessa di più?",
-    answers: ["Serie A", "Champions League", "NBA", "F1/MotoGP", "Tennis", "E-sports", "MMA/Boxe", "Altro sport"],
+    question: "Quale tipo di vacanza sceglieresti?",
+    answers: ["Mare", "Montagna", "Città d'arte", "Road trip", "Relax totale"],
   },
   {
-    question: "Che tipo di contenuto musicale preferisci?",
-    answers: ["Nuove uscite", "Classici intramontabili", "Playlist tematiche", "Album review", "Battle tra artisti", "Live session", "Top settimanali", "Consigli della community"],
+    question: "Cosa conta di più in un film?",
+    answers: ["Trama", "Personaggi", "Colonna sonora", "Finale", "Fotografia"],
   },
   {
-    question: "Di che attualità ti va parlare più spesso?",
-    answers: ["Tecnologia/IA", "Economia", "Ambiente", "Scuola/Università", "Lavoro", "Sport", "Cultura", "Politica internazionale"],
+    question: "Quale pasto preferisci in assoluto?",
+    answers: ["Colazione", "Pranzo", "Cena", "Spuntino"],
   },
   {
-    question: "Nel lavoro di oggi, che skill conta di più?",
-    answers: ["Comunicazione", "Problem solving", "Lingue", "Competenze digitali", "Leadership", "Teamwork", "Organizzazione", "Creatività"],
+    question: "Che rapporto hai con il freddo?",
+    answers: ["Lo adoro", "Mi piace solo se sono coperto bene", "Lo tollero", "Lo odio"],
   },
   {
-    question: "Che discussioni musicali ti piacciono di più?",
-    answers: ["Analisi testi", "Confronto artisti", "Generi emergenti", "Top album del mese", "Classifiche storiche", "Live e concerti", "Produzione musicale", "Nuovi talenti"],
+    question: "Se potessi vivere in un'altra epoca, quale sceglieresti?",
+    answers: ["Anni 80", "Anni 90", "Primi 2000", "Futuro", "Resto nel presente"],
   },
   {
-    question: "Come preferisci i topic sportivi?",
-    answers: ["Pre-partita", "Post-partita", "Pronostici", "Top/Flop giornata", "Mercato", "Storie e aneddoti", "Statistiche", "Quiz sportivi"],
+    question: "Quale qualità apprezzi di più in una persona?",
+    answers: ["Sincerità", "Ironia", "Intelligenza", "Gentilezza", "Determinazione"],
   },
   {
-    question: "Che calcio segui di più?",
-    answers: ["Serie A", "Premier League", "LaLiga", "Bundesliga", "Ligue 1", "Champions League", "Europa League", "Nazionale"],
+    question: "Come scegli di solito cosa guardare la sera?",
+    answers: ["Consigli degli amici", "Trending", "Vado a caso", "Riguardo qualcosa che conosco", "Recensioni online"],
   },
   {
-    question: "Su cosa vuoi più supporto tra lavoro/studio?",
-    answers: ["CV e colloqui", "Produttività", "Orientamento carriera", "Freelance", "Remote work", "Gestione stress", "Formazione online", "Networking"],
+    question: "Qual è il tuo comfort food ideale?",
+    answers: ["Pizza", "Pasta", "Dolci", "Panino o fast food", "Cibo fatto in casa"],
   },
   {
-    question: "Che tema vuoi vedere più spesso nei poll?",
-    answers: ["Attualità", "Musica", "Lavoro", "Sport", "Calcio", "Cinema/Serie", "Gaming", "Tech/IA", "Benessere", "Community feedback"],
+    question: "Che tipo di weekend preferisci?",
+    answers: ["Pieno di impegni", "Fuori casa", "Chill totale", "Tra amici", "Improvvisato"],
   },
   {
-    question: "Che tipo di news rapide preferisci?",
-    answers: ["Flash quotidiani", "Recap settimanale", "Solo top notizie", "Approfondimenti", "Sondaggi su news", "Fact-checking", "Trend social", "Niente news"],
+    question: "Quale mezzo di trasporto sopporti meglio?",
+    answers: ["Auto", "Treno", "Aereo", "Moto", "A piedi"],
   },
   {
-    question: "Nei topic calcio, cosa ti è più utile?",
-    answers: ["Analisi tattica", "Statistiche giocatori", "Situazione classifica", "Mercato e rumors", "Formazioni probabili", "Highlights", "Giovani talenti", "Confronto squadre"],
+    question: "Quale app usi più spesso in una giornata normale?",
+    answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Spotify"],
   },
   {
-    question: "Per crescere nel lavoro, cosa ti interessa di più?",
-    answers: ["Marketing", "Programmazione", "Design", "Data analysis", "Project management", "Vendite", "Risorse umane", "Imprenditoria"],
+    question: "Che tipo di meteo ti mette più di buon umore?",
+    answers: ["Sole pieno", "Pioggia leggera", "Temporale", "Freddo secco", "Cielo coperto"],
+  },
+  {
+    question: "Se dovessi scegliere un superpotere, quale prenderesti?",
+    answers: ["Teletrasporto", "Leggere nel pensiero", "Invisibilità", "Volare", "Fermare il tempo"],
+  },
+  {
+    question: "Che tipo di contenuto ti intrattiene di più?",
+    answers: ["Video brevi", "Film", "Serie TV", "Podcast", "Streaming live"],
+  },
+  {
+    question: "Quando sei stanco, cosa ti recupera prima?",
+    answers: ["Dormire", "Mangiare", "Uscire", "Musica", "Stare da solo"],
+  },
+  {
+    question: "Quale snack vince sempre?",
+    answers: ["Patatine", "Cioccolato", "Popcorn", "Gelato", "Frutta"],
+  },
+  {
+    question: "Che tipo di persona sei nelle chat di gruppo?",
+    answers: ["Quello che legge e basta", "Quello che manda meme", "Quello che risponde a tutti", "Quello che sparisce", "Quello che organizza"],
+  },
+  {
+    question: "Qual è il miglior modo per passare il tempo da solo?",
+    answers: ["Guardare qualcosa", "Giocare", "Ascoltare musica", "Dormire", "Fare una passeggiata"],
+  },
+  {
+    question: "Cosa non dovrebbe mai mancare in una casa ideale?",
+    answers: ["Spazio", "Silenzio", "Luce naturale", "Una cucina grande", "Una postazione relax"],
+  },
+  {
+    question: "Quale sapore scegli più spesso?",
+    answers: ["Dolce", "Salato", "Piccante", "Amaro", "Aspro"],
+  },
+  {
+    question: "Come reagisci di solito agli imprevisti?",
+    answers: ["Mi adatto subito", "Mi innervosisco", "Cerco un piano B", "Aspetto e vedo", "Dipende dalla situazione"],
+  },
+  {
+    question: "Qual è il miglior periodo dell'anno?",
+    answers: ["Gennaio-Marzo", "Aprile-Giugno", "Luglio-Settembre", "Ottobre-Dicembre"],
+  },
+  {
+    question: "Che tipo di musica metti più spesso in cuffia?",
+    answers: ["Per caricarmi", "Per rilassarmi", "Per concentrarmi", "Per nostalgia", "Dipende dal mood"],
+  },
+  {
+    question: "Sei più tipo da piano o improvvisazione?",
+    answers: ["Programmo tutto", "Organizzo il minimo", "Vado d'istinto", "Cambio idea spesso"],
+  },
+  {
+    question: "Quale posto scegli per rilassarti davvero?",
+    answers: ["Casa", "Mare", "Montagna", "Città", "Ovunque purché in pace"],
+  },
+  {
+    question: "Quanto conta per te il primo impatto?",
+    answers: ["Tantissimo", "Abbastanza", "Il giusto", "Poco"],
   },
 ];
-
-function decodeHtml(value) {
-  return String(value || "")
-    .replace(/&quot;/g, "\"")
-    .replace(/&#039;/g, "'")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&uuml;/g, "u");
-}
-
-function decodeUrl3986(value) {
-  try {
-    return decodeURIComponent(String(value || ""));
-  } catch {
-    return String(value || "");
-  }
-}
 
 function normalizeText(value) {
   return String(value || "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function shuffle(list) {
+  const arr = Array.isArray(list) ? [...list] : [];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function pickRandom(list) {
+  const arr = Array.isArray(list) ? list : [];
+  if (!arr.length) return null;
+  return arr[Math.floor(Math.random() * arr.length)] || null;
+}
+
+function clampOptionCount(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(2, Math.min(10, Math.floor(n)));
+}
+
+function pickRandomFromRange(min, max) {
+  const a = Math.min(min, max);
+  const b = Math.max(min, max);
+  return a + Math.floor(Math.random() * (b - a + 1));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pickNextOptionTarget(client, cfg = {}) {
+  const minOptions = clampOptionCount(cfg.minOptions, 4);
+  const maxOptions = Math.max(minOptions, clampOptionCount(cfg.maxOptions, 5));
+  const lowMax = Math.min(maxOptions, Math.max(minOptions, 4));
+  const midMin = Math.max(minOptions, 5);
+  const midMax = Math.min(maxOptions, 6);
+  const highMin = Math.max(minOptions, 7);
+
+  const pools = [];
+  if (minOptions <= lowMax) pools.push({ key: "low", min: minOptions, max: lowMax });
+  if (midMin <= midMax) pools.push({ key: "mid", min: midMin, max: midMax });
+  if (highMin <= maxOptions) pools.push({ key: "high", min: highMin, max: maxOptions });
+  if (!pools.length) return minOptions;
+
+  const lastBand = String(client?._autoPollLastBand || "");
+  let candidates = pools.filter((band) => band.key !== lastBand);
+  if (!candidates.length) candidates = pools;
+  const chosenBand = candidates[Math.floor(Math.random() * candidates.length)];
+  const target = pickRandomFromRange(chosenBand.min, chosenBand.max);
+  if (client) {
+    client._autoPollLastBand = chosenBand.key;
+    client._autoPollLastOptionCount = target;
+  }
+  return target;
+}
+
+function applyOptionCount(payload, cfg = {}, forcedTargetOptions = null) {
+  if (!payload) return null;
+  const minOptions = clampOptionCount(cfg.minOptions, 4);
+  const maxOptions = Math.max(minOptions, clampOptionCount(cfg.maxOptions, 6));
+  const targetOptions = Number.isFinite(Number(forcedTargetOptions))
+    ? Math.max(minOptions, Math.min(maxOptions, Math.floor(Number(forcedTargetOptions))))
+    : maxOptions;
+  const answers = Array.isArray(payload.answers)
+    ? payload.answers.map((x) => normalizeText(String(x || ""))).filter(Boolean)
+    : [];
+  if (answers.length < minOptions) return null;
+  return {
+    question: normalizeText(String(payload.question || "")),
+    answers: shuffle(answers).slice(0, targetOptions),
+  };
 }
 
 function getRomeDayBounds(now = new Date()) {
@@ -214,140 +306,7 @@ function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
   return new Date(utcMs);
 }
 
-function normalizeApiPollPayload(data) {
-  if (!data) return null;
-  if (typeof data?.question === "string" && Array.isArray(data?.answers)) {
-    const question = normalizeText(decodeHtml(decodeUrl3986(data.question)));
-    const answers = data.answers
-      .map((v) => normalizeText(decodeHtml(decodeUrl3986(v))))
-      .filter(Boolean);
-    if (question && answers.length >= 2) return { question, answers };
-  }
-
-  const item = Array.isArray(data) ? data[0] : data?.results?.[0];
-  if (item && typeof item.question === "string") {
-    const question = normalizeText(decodeHtml(decodeUrl3986(item.question)));
-    const wrong = Array.isArray(item.incorrect_answers) ? item.incorrect_answers : [];
-    const correct = item.correct_answer ? [item.correct_answer] : [];
-    const answers = [...correct, ...wrong]
-      .map((v) => normalizeText(decodeHtml(decodeUrl3986(v))))
-      .filter(Boolean);
-    if (question && answers.length >= 2) return { question, answers };
-  }
-  return null;
-}
-
-function shuffle(list) {
-  const arr = Array.isArray(list) ? [...list] : [];
-  for (let i = arr.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-function buildThemedApiUrl(baseUrl, cfg = {}) {
-  const rawBase = String(baseUrl || DEFAULT_API_URL).trim();
-  if (!rawBase) return DEFAULT_API_URL;
-  const catalogEntries = Array.isArray(cfg?.apiThemeCatalog) && cfg.apiThemeCatalog.length
-    ? cfg.apiThemeCatalog
-    : OPENTDB_CATEGORY_CATALOG;
-  const catalogByKey = new Map(
-    catalogEntries.map((entry) => [
-      String(entry?.key || "").trim().toLowerCase(),
-      Number(entry?.id || 0),
-    ]),
-  );
-  const rawCategories = Array.isArray(cfg?.apiThemeCategories)
-    ? cfg.apiThemeCategories
-    : DEFAULT_OPENTDB_CATEGORY_IDS;
-  const hasAllToken = rawCategories.some(
-    (entry) => String(entry || "").trim().toLowerCase() === "all",
-  );
-  const categoryIds = hasAllToken
-    ? catalogEntries
-      .map((entry) => Number(entry?.id || 0))
-      .filter((id) => Number.isFinite(id) && id > 0)
-    : rawCategories
-      .map((entry) => {
-        const asNum = Number(entry);
-        if (Number.isFinite(asNum) && asNum > 0) return asNum;
-        const key = String(entry || "").trim().toLowerCase();
-        return Number(catalogByKey.get(key) || 0);
-      })
-      .filter((id) => Number.isFinite(id) && id > 0);
-  const safeCategoryIds = categoryIds.length ? categoryIds : DEFAULT_OPENTDB_CATEGORY_IDS;
-  const category = pickRandom(safeCategoryIds);
-  if (!category) return rawBase;
-
-  // If caller already forced category, keep it.
-  if (/[?&]category=\d+/i.test(rawBase)) return rawBase;
-  const separator = rawBase.includes("?") ? "&" : "?";
-  return `${rawBase}${separator}category=${category}`;
-}
-
-function pickRandom(list) {
-  const arr = Array.isArray(list) ? list : [];
-  if (!arr.length) return null;
-  return arr[Math.floor(Math.random() * arr.length)] || null;
-}
-
-function clampOptionCount(value, fallback) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(2, Math.min(10, Math.floor(n)));
-}
-
-function pickRandomFromRange(min, max) {
-  const a = Math.min(min, max);
-  const b = Math.max(min, max);
-  return a + Math.floor(Math.random() * (b - a + 1));
-}
-
-function pickNextOptionTarget(client, cfg = {}) {
-  const minOptions = clampOptionCount(cfg.minOptions, 2);
-  const maxOptions = Math.max(minOptions, clampOptionCount(cfg.maxOptions, 10));
-  const lowMax = Math.min(maxOptions, Math.max(minOptions, 4));
-  const midMin = Math.max(minOptions, 5);
-  const midMax = Math.min(maxOptions, 7);
-  const highMin = Math.max(minOptions, 8);
-
-  const pools = [];
-  if (minOptions <= lowMax) pools.push({ key: "low", min: minOptions, max: lowMax });
-  if (midMin <= midMax) pools.push({ key: "mid", min: midMin, max: midMax });
-  if (highMin <= maxOptions) pools.push({ key: "high", min: highMin, max: maxOptions });
-  if (!pools.length) return minOptions;
-
-  const lastBand = String(client?._autoPollLastBand || "");
-  let candidates = pools.filter((band) => band.key !== lastBand);
-  if (!candidates.length) candidates = pools;
-  const chosenBand = candidates[Math.floor(Math.random() * candidates.length)];
-  const target = pickRandomFromRange(chosenBand.min, chosenBand.max);
-  if (client) {
-    client._autoPollLastBand = chosenBand.key;
-    client._autoPollLastOptionCount = target;
-  }
-  return target;
-}
-
-function applyOptionCount(payload, cfg = {}, forcedTargetOptions = null) {
-  if (!payload) return null;
-  const minOptions = clampOptionCount(cfg.minOptions, 2);
-  const maxOptions = Math.max(minOptions, clampOptionCount(cfg.maxOptions, 10));
-  const targetOptions = Number.isFinite(Number(forcedTargetOptions))
-    ? Math.max(minOptions, Math.min(maxOptions, Math.floor(Number(forcedTargetOptions))))
-    : maxOptions;
-  const answers = Array.isArray(payload.answers)
-    ? payload.answers.map((x) => normalizeText(String(x || ""))).filter(Boolean)
-    : [];
-  if (answers.length < minOptions) return null;
-  return {
-    question: normalizeText(String(payload.question || "")),
-    answers: shuffle(answers).slice(0, targetOptions),
-  };
-}
-
-function buildLocalThemePoll(cfg = {}) {
+function buildLocalThemePoll(cfg = {}, forcedTargetOptions = null) {
   const picked = pickRandom(LOCAL_THEME_POLLS);
   if (!picked) return null;
   return applyOptionCount(
@@ -356,68 +315,17 @@ function buildLocalThemePoll(cfg = {}) {
       answers: picked.answers,
     },
     cfg,
+    forcedTargetOptions,
   );
 }
 
-async function translatePollPayloadToItalian(payload) {
-  const questionRaw = normalizeText(String(payload?.question || ""));
-  const answersRaw = Array.isArray(payload?.answers) ? payload.answers : [];
-  if (!questionRaw || answersRaw.length < 2) return null;
-
-  const questionIt = normalizeText(await translateToItalian(questionRaw, { maxLength: 900 }));
-  const answersIt = (
-    await Promise.all(
-      answersRaw.map((entry) => translateToItalian(normalizeText(String(entry || "")), { maxLength: 280 })),
-    )
-  )
-    .map((entry) => normalizeText(String(entry || "")))
-    .filter(Boolean);
-
-  const uniqueAnswers = [];
-  const seen = new Set();
-  for (const ans of answersIt) {
-    const key = ans.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    uniqueAnswers.push(ans);
-  }
-
-  if (!questionIt || uniqueAnswers.length < 2) return null;
-  return { question: questionIt, answers: uniqueAnswers.slice(0, 10) };
-}
-
-function buildSurveyFromApiTopic(payload, cfg = {}, forcedTargetOptions = null) {
-  const topic = normalizeText(String(payload?.question || ""));
-  if (!topic) return null;
-  const baseTopic = topic.replace(/[.!?]+$/g, "").trim();
-  const shortTopic = baseTopic.length > 110 ? `${baseTopic.slice(0, 107)}...` : baseTopic;
-  const question = `Qual è la tua opinione su "${shortTopic}"?`;
-  const surveyBase = {
-    question,
-    answers: [
-      "Moltissimo",
-      "Abbastanza",
-      "Neutrale",
-      "Poco",
-      "Per niente",
-      "Dipende da come viene trattato",
-      "Solo in alcuni orari",
-      "Sì, ma in formato breve",
-      "Sì, con approfondimenti",
-      "Solo se legato all'attualità",
-    ],
-  };
-  return applyOptionCount(surveyBase, cfg, forcedTargetOptions);
-}
-
-async function fetchPollFromApi(apiUrl) {
-  const res = await axios.get(apiUrl || DEFAULT_API_URL, { timeout: 15000 });
-  const normalized = normalizeApiPollPayload(res?.data);
-  if (!normalized) return null;
-  return {
-    question: normalized.question,
-    answers: shuffle(normalized.answers).slice(0, 10),
-  };
+function buildPollSignature(question, answers = []) {
+  const q = normalizeText(String(question || "")).toLowerCase();
+  const opts = Array.isArray(answers)
+    ? answers.map((a) => normalizeText(String(a || "")).toLowerCase()).filter(Boolean)
+    : [];
+  const uniq = Array.from(new Set(opts)).sort();
+  return `${q}||${uniq.join("|")}`;
 }
 
 async function hasManualPollToday(guildId) {
@@ -445,21 +353,13 @@ async function hasAutoPollToday(guildId) {
 async function isDuplicateQuestion(guildId, question) {
   const normalized = normalizeText(question).toLowerCase();
   if (!normalized) return true;
+  const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const existing = await Poll.findOne({
     guildId: String(guildId),
-    domanda: { $regex: new RegExp(`^${normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    domanda: { $regex: new RegExp(`^${escaped}$`, "i") },
     $or: [{ source: { $in: ["manual", "auto"] } }, { source: { $exists: false } }],
   }).lean().catch(() => null);
   return Boolean(existing);
-}
-
-function buildPollSignature(question, answers = []) {
-  const q = normalizeText(String(question || "")).toLowerCase();
-  const opts = Array.isArray(answers)
-    ? answers.map((a) => normalizeText(String(a || "")).toLowerCase()).filter(Boolean)
-    : [];
-  const uniq = Array.from(new Set(opts)).sort();
-  return `${q}||${uniq.join("|")}`;
 }
 
 async function isDuplicatePollContent(guildId, payload) {
@@ -489,6 +389,7 @@ async function isDuplicatePollContent(guildId, payload) {
     .limit(400)
     .lean()
     .catch(() => []);
+
   for (const row of rows) {
     const rowAnswers = [
       row?.risposta1,
@@ -502,10 +403,244 @@ async function isDuplicatePollContent(guildId, payload) {
       row?.risposta9,
       row?.risposta10,
     ];
-    const rowSig = buildPollSignature(row?.domanda, rowAnswers);
-    if (rowSig === signature) return true;
+    if (buildPollSignature(row?.domanda, rowAnswers) === signature) return true;
   }
   return false;
+}
+
+function extractStructuredText(responseData) {
+  if (responseData && typeof responseData.output_text === "string") {
+    return responseData.output_text;
+  }
+  const output = Array.isArray(responseData?.output) ? responseData.output : [];
+  for (const item of output) {
+    const content = Array.isArray(item?.content) ? item.content : [];
+    for (const entry of content) {
+      if (typeof entry?.text === "string" && entry.text.trim()) return entry.text;
+    }
+  }
+  return "";
+}
+
+function unwrapJsonTextBlock(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const fencedMatch = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fencedMatch?.[1]) return fencedMatch[1].trim();
+  return text;
+}
+
+function validateGeneratedPollPayload(payload, cfg = {}, forcedTargetOptions = null) {
+  const question = normalizeText(payload?.question);
+  const rawAnswers = Array.isArray(payload?.answers) ? payload.answers : [];
+  const answers = [];
+  const seen = new Set();
+
+  for (const entry of rawAnswers) {
+    const answer = normalizeText(entry);
+    const key = answer.toLowerCase();
+    if (!answer || seen.has(key)) continue;
+    seen.add(key);
+    answers.push(answer);
+  }
+
+  if (!question || question.length < 12 || question.length > 120) return null;
+  if (!/\?$/.test(question)) return null;
+  if (/qual e la tua opinione su/i.test(question)) return null;
+  if (/quale museo nazionale/i.test(question)) return null;
+  if (answers.length < 4) return null;
+  if (answers.some((answer) => answer.length < 2 || answer.length > 55)) return null;
+
+  return applyOptionCount({ question, answers }, cfg, forcedTargetOptions);
+}
+
+async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
+  const apiKey = String(process.env.OPENROUTER_API_KEY || "").trim();
+  if (!apiKey) return null;
+
+  const configuredModels = Array.isArray(cfg.openrouterModels)
+    ? cfg.openrouterModels
+    : String(process.env.OPENROUTER_MODEL || cfg.openrouterModel || "")
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  const models = (
+    configuredModels.length ? configuredModels : DEFAULT_OPENROUTER_MODELS
+  ).map((entry) => String(entry || "").trim()).filter(Boolean);
+  if (!models.length) return null;
+  const optionCount = Math.max(4, Math.min(6, Number(forcedTargetOptions || 5)));
+  let lastError = null;
+
+  for (const model of models) {
+    const isGemmaFree = model.startsWith("google/gemma-3-");
+    const payload = {
+      model,
+      messages: isGemmaFree
+        ? [
+          {
+            role: "user",
+            content:
+              "Genera sondaggi generali per utenti italiani. " +
+              "Scrivi solo in italiano naturale. " +
+              "Le domande devono sembrare sondaggi generali, leggeri e coinvolgenti, non interni a un server o community. " +
+              "Evita trivia, domande da enciclopedia. " +
+              "Le risposte devono essere coerenti tra loro, tutte plausibili, corte e senza duplicati. " +
+              "Non usare risposte meta come 'dipende', 'altro', 'non so' salvo se davvero sensate. " +
+              "Non usare mai riferimenti a Discord, community, server, staff, eventi del server o chat di gruppo. " +
+              "Non usare mai il formato 'Qual è la tua opinione su ...'. " +
+              `Genera un poll con ${optionCount} risposte. ` +
+              "Target: pubblico italiano generalista. " +
+              "La domanda deve essere breve, chiara, coinvolgente e adatta a ricevere risposte reali da chiunque. " +
+              "I temi giusti sono abitudini, gusti, preferenze quotidiane, intrattenimento, lifestyle, stagioni, cibo, carattere, tempo libero, gaming, sesso, politica, musica, religione, cronaca. " +
+              "Restituisci solo JSON valido con {question, answers}.",
+          },
+        ]
+        : [
+          {
+            role: "system",
+            content:
+              "Genera sondaggi generali per utenti italiani. " +
+              "Scrivi solo in italiano naturale. " +
+              "Le domande devono sembrare sondaggi generali, leggeri e coinvolgenti, non interni a un server o community. " +
+              "Evita trivia, domande da enciclopedia. " +
+              "Le risposte devono essere coerenti tra loro, tutte plausibili, corte e senza duplicati. " +
+              "Non usare risposte meta come 'dipende', 'altro', 'non so' salvo se davvero sensate. " +
+              "Non usare mai riferimenti a Discord, community, server, staff, eventi del server o chat di gruppo. " +
+              "Non usare mai il formato 'Qual è la tua opinione su ...'.",
+          },
+          {
+            role: "user",
+            content:
+              `Genera un poll con ${optionCount} risposte.` +
+              " Target: pubblico italiano generalista." +
+              " La domanda deve essere breve, chiara, coinvolgente e adatta a ricevere risposte reali da chiunque." +
+              "I temi giusti sono abitudini, gusti, preferenze quotidiane, intrattenimento, lifestyle, stagioni, cibo, carattere, tempo libero, gaming, sesso, politica, musica, religione, cronaca. " +
+              " Restituisci solo JSON valido con {question, answers}.",
+          },
+        ],
+      max_tokens: 220,
+      temperature: 0.7,
+      reasoning: {
+        effort: "none",
+        exclude: true,
+      },
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "discord_poll",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              question: { type: "string" },
+              answers: {
+                type: "array",
+                minItems: optionCount,
+                maxItems: 6,
+                items: { type: "string" },
+              },
+            },
+            required: ["question", "answers"],
+            additionalProperties: false,
+          },
+        },
+      },
+    };
+
+    try {
+      const response = await axios.post(OPENROUTER_API_URL, payload, {
+        timeout: 20000,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://viniliecaffe.local",
+          "X-Title": "Vinili e Caffe Bot",
+        },
+      });
+
+      const choice = response?.data?.choices?.[0] || null;
+      const finishReason = String(choice?.finish_reason || "");
+      const content =
+        choice?.message?.content ||
+        extractStructuredText(response?.data);
+      if (!String(content || "").trim()) {
+        lastError = new Error(`Empty OpenRouter content for model ${model} (${finishReason || "no_finish_reason"})`);
+        continue;
+      }
+
+      const parsed = JSON.parse(unwrapJsonTextBlock(content) || "{}");
+      const validated = validateGeneratedPollPayload(parsed, cfg, forcedTargetOptions);
+      if (validated) return validated;
+
+      lastError = new Error(`Invalid OpenRouter payload for model ${model}`);
+    } catch (error) {
+      const status = Number(error?.response?.status || 0);
+      if ([404, 429, 500, 502, 503, 504].includes(status)) {
+        lastError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  if (lastError) {
+    global.logger?.warn?.("[poll.auto] all OpenRouter model attempts failed:", lastError?.message || lastError);
+  }
+  return null;
+}
+
+async function fetchPollFromOpenRouterWithRetry(cfg = {}, forcedTargetOptions = null) {
+  const maxRounds = Math.max(
+    1,
+    Math.min(10, Math.floor(Number(cfg.openrouterRetryRounds || OPENROUTER_MAX_ROUNDS))),
+  );
+  const retryDelayMs = Math.max(
+    0,
+    Math.min(10000, Math.floor(Number(cfg.openrouterRetryDelayMs || OPENROUTER_RETRY_DELAY_MS))),
+  );
+
+  for (let round = 0; round < maxRounds; round += 1) {
+    const payload = await fetchPollFromOpenRouter(cfg, forcedTargetOptions).catch((error) => {
+      global.logger?.warn?.("[poll.auto] OpenRouter round failed:", error?.message || error);
+      return null;
+    });
+    if (payload?.question && Array.isArray(payload?.answers) && payload.answers.length >= 4) {
+      return payload;
+    }
+    if (round < maxRounds - 1 && retryDelayMs > 0) {
+      await sleep(retryDelayMs);
+    }
+  }
+
+  global.logger?.warn?.("[poll.auto] OpenRouter retries exhausted, falling back to local.");
+  return null;
+}
+
+async function pickPollCandidate(cfg = {}, forcedTargetOptions = null) {
+  const configuredSources = Array.isArray(cfg.sources) && cfg.sources.length
+    ? cfg.sources.map((v) => String(v || "").trim().toLowerCase()).filter(Boolean)
+    : DEFAULT_SOURCES;
+  const sources = configuredSources.length ? configuredSources : DEFAULT_SOURCES;
+
+  for (let i = 0; i < 8; i += 1) {
+    const source = pickRandom(sources);
+    let candidate = null;
+
+    if (source === "openrouter") {
+      candidate = await fetchPollFromOpenRouterWithRetry(cfg, forcedTargetOptions).catch((error) => {
+        global.logger?.warn?.("[poll.auto] openrouter generation failed:", error?.message || error);
+        return null;
+      });
+    }
+
+    if (!candidate && source === "local") {
+      candidate = buildLocalThemePoll(cfg, forcedTargetOptions);
+    }
+
+    if (candidate?.question && Array.isArray(candidate?.answers)) return candidate;
+  }
+
+  return buildLocalThemePoll(cfg, forcedTargetOptions);
 }
 
 async function runAutoPoll(client) {
@@ -518,44 +653,23 @@ async function runAutoPoll(client) {
   if (await hasAutoPollToday(guild.id)) return;
 
   const cfg = client?.config?.autoPoll || {};
-  const enabled = cfg.enabled !== false;
-  if (!enabled) return;
+  if (cfg.enabled === false) return;
   if (!isWithinAutoPollWindow(new Date(), cfg)) return;
-  const optionTarget = pickNextOptionTarget(client, cfg);
 
+  const optionTarget = pickNextOptionTarget(client, cfg);
   let payload = null;
-  const apiUrlBase = String(cfg.apiUrl || DEFAULT_API_URL).trim();
-  const configuredSources = Array.isArray(cfg.sources) && cfg.sources.length
-    ? cfg.sources.map((v) => String(v || "").trim().toLowerCase()).filter(Boolean)
-    : DEFAULT_SOURCES;
-  const sources = configuredSources.length ? configuredSources : DEFAULT_SOURCES;
 
   for (let i = 0; i < 8; i += 1) {
-    const source = pickRandom(sources);
-    let candidate = null;
-
-    if (source === "local") {
-      candidate = buildLocalThemePoll(cfg);
-      candidate = applyOptionCount(candidate, cfg, optionTarget);
-    } else {
-      const themedApiUrl = buildThemedApiUrl(apiUrlBase, cfg);
-      const fetched = await fetchPollFromApi(themedApiUrl).catch(() => null);
-      if (fetched) {
-        const italian = await translatePollPayloadToItalian(fetched).catch(() => null);
-        candidate = buildSurveyFromApiTopic(italian, cfg, optionTarget);
-      }
+    const candidate = await pickPollCandidate(cfg, optionTarget);
+    if (!candidate?.question || !Array.isArray(candidate.answers) || candidate.answers.length < 4) {
+      continue;
     }
-
-    if (!candidate || !candidate.question || !Array.isArray(candidate.answers)) continue;
-    if (candidate.answers.length < 2) continue;
-
-    const duplicateQuestion = await isDuplicateQuestion(guild.id, candidate.question);
-    if (duplicateQuestion) continue;
-    const duplicateContent = await isDuplicatePollContent(guild.id, candidate);
-    if (duplicateContent) continue;
+    if (await isDuplicateQuestion(guild.id, candidate.question)) continue;
+    if (await isDuplicatePollContent(guild.id, candidate)) continue;
     payload = candidate;
     break;
   }
+
   if (!payload) return;
 
   const result = await createPollForGuild(guild, {
@@ -563,6 +677,7 @@ async function runAutoPoll(client) {
     answers: payload.answers,
     source: "auto",
   });
+
   if (result?.ok) {
     global.logger?.info?.(`[poll.auto] created #${result.pollNumber} for guild ${guild.id}`);
   }
