@@ -70,7 +70,7 @@ async function pickFromPagedMenu({
     const lines = page.map((item, i) => lineBuilder(item, start + i));
     const embed = new EmbedBuilder()
       .setColor(color)
-      .setDescription(`Page ${index + 1}/${pages.length}\n\n${lines.join("\n")}\n\ncancel`);
+      .setDescription(`Page ${index + 1}/${pages.length}\n\n${lines.join("\n")}`);
     if (title) embed.setTitle(String(title));
     return embed;
   };
@@ -232,4 +232,3 @@ async function pickFromPagedMenu({
 module.exports = {
   pickFromPagedMenu,
 };
-

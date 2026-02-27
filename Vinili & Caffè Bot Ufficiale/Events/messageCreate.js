@@ -1681,12 +1681,16 @@ async function handleDiscadiaBump(message, client) {
     (isAutomatedSource && isBumpInteraction && isLikelyCommandChannel) ||
     (isAutomatedSource && !isDisboardSource && hasBumpSuccessText);
 
+  const isSuccessInCommandChannel =
+    isLikelyCommandChannel && !hasFailureWord && (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord));
+
   const isBump =
     !hasFailureWord &&
     (
       (fromDiscadiaBot &&
         (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord))) ||
-      (isBumpInteraction && (hasPattern || hasSuccessWord || hasBumpWord))
+      (isBumpInteraction && (hasPattern || hasSuccessWord || hasBumpWord)) ||
+      isSuccessInCommandChannel
     );
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
@@ -1714,12 +1718,11 @@ async function handleDiscadiaBump(message, client) {
       ? await message.guild.channels.fetch(message.channelId).catch(() => null)
       : null);
   if (channel?.isTextBased?.()) {
-    const payload = {
-      content: thanksMessage.trim(),
-      reply: { messageReference: message.id, failIfNotExists: false },
-    };
     try {
-      await channel.send(payload);
+      await channel.send({
+        content: thanksMessage.trim(),
+        reply: { messageReference: message.id, failIfNotExists: false },
+      });
     } catch (err) {
       try {
         await channel.send({ content: thanksMessage.trim() });

@@ -7,6 +7,14 @@ const {
 } = require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 
+const SOURCE_EMOJIS = {
+  spotify: "<:VC_Spotify:1462941253803970571>",
+  apple: "<:VC_AppleMusic:1466061111781752872>",
+  youtube: "<:VC_YouTube:1476933074301485259>",
+  soundcloud: "<:VC_SoundCloud:1476933157906419866>",
+  deezer: "<:VC_Deezer:1476933250835288167>",
+};
+
 function formatDurationMs(ms) {
   const total = Math.max(0, Math.floor(Number(ms || 0) / 1000));
   const hours = Math.floor(total / 3600);
@@ -16,6 +24,29 @@ function formatDurationMs(ms) {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function getTrackSourceEmoji(track) {
+  const source = String(track?.source || track?.queryType || "").toLowerCase();
+  const url = String(track?.url || "").toLowerCase();
+
+  if (source.includes("spotify") || /spotify\.com/.test(url)) {
+    return SOURCE_EMOJIS.spotify;
+  }
+  if (source.includes("apple") || /music\.apple\.com|itunes\.apple\.com/.test(url)) {
+    return SOURCE_EMOJIS.apple;
+  }
+  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) {
+    return SOURCE_EMOJIS.soundcloud;
+  }
+  if (source.includes("deezer") || /deezer\.com/.test(url)) {
+    return SOURCE_EMOJIS.deezer;
+  }
+  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) {
+    return SOURCE_EMOJIS.youtube;
+  }
+
+  return "";
 }
 
 function buildSessionInUseEmbed(channel) {
@@ -203,9 +234,10 @@ module.exports = {
       ? `\nPlaylist: **${result.playlist.title}** (${result.playlist.tracks.length} tracce)`
       : "";
     const via = result.translated ? "\nFonte link convertita in ricerca compatibile." : "";
+    const sourceEmoji = getTrackSourceEmoji(track);
     const embed = new EmbedBuilder()
       .setColor("#1f2328")
-      .setDescription(`Started playing ${songLine} by **${artist}**${suffix}${via}`);
+      .setDescription(`${sourceEmoji ? `${sourceEmoji} ` : ""}Started playing ${songLine} by **${artist}**${suffix}${via}`);
 
     return safeMessageReply(message, { embeds: [embed] });
   },

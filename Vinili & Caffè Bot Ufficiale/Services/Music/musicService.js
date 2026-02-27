@@ -2,6 +2,7 @@ const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
+const { YoutubeiExtractor } = require("discord-player-youtubei");
 const { leaveTtsGuild } = require("../TTS/ttsService");
 const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
 
@@ -18,6 +19,14 @@ const emptyVoiceTimersByGuild = new Map();
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
 const DEFAULT_MUSIC_VOLUME = 5;
+const SEARCH_SOURCE_ENGINES = [
+  { engine: QueryType.YOUTUBE_SEARCH, key: "youtube", bias: 20 },
+  { engine: QueryType.SPOTIFY_SEARCH, key: "spotify", bias: 16 },
+  { engine: QueryType.APPLE_MUSIC_SEARCH, key: "apple", bias: 14 },
+  { engine: QueryType.SOUNDCLOUD_SEARCH, key: "soundcloud", bias: 10 },
+];
+const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
+const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "soundcloud", "deezer"]);
 
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
@@ -170,6 +179,241 @@ function cleanQuery(raw) {
     .replace(/^<|>$/g, "");
 }
 
+function isYouTubeVideoUrl(value) {
+  const input = String(value || "");
+  if (!/^https?:\/\//i.test(input)) return false;
+  if (!/youtu\.be|youtube\.com/i.test(input)) return false;
+  if (/[?&]list=/i.test(input) || /\/playlist/i.test(input)) return false;
+  return /(?:watch\?v=|youtu\.be\/|\/shorts\/)/i.test(input);
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeText(value) {
+  return normalizeText(value)
+    .split(" ")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function cleanYouTubeTrackTitle(title) {
+  return String(title || "")
+    .replace(/\[[^\]]*(official|video|audio|lyrics?|lyric|hd|4k|mv)[^\]]*\]/gi, " ")
+    .replace(/\([^\)]*(official|video|audio|lyrics?|lyric|hd|4k|mv)[^\)]*\)/gi, " ")
+    .replace(/\b(official video|official audio|official lyric video|lyric video|lyrics video|visualizer|audio ufficiale|video ufficiale)\b/gi, " ")
+    .replace(/\b(prod\.?\s+by\b.*)$/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sourceKeyFromTrack(track) {
+  const source = String(track?.source || track?.queryType || "").toLowerCase();
+  const url = String(track?.url || "").toLowerCase();
+
+  if (source.includes("spotify") || /spotify\.com/.test(url)) return "spotify";
+  if (source.includes("apple") || /music\.apple\.com|itunes\.apple\.com/.test(url)) return "apple";
+  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) return "soundcloud";
+  if (source.includes("deezer") || /deezer\.com/.test(url)) return "deezer";
+  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) return "youtube";
+  return "unknown";
+}
+
+function buildTrackIdentity(track) {
+  const normalizedUrl = String(track?.url || "").trim().toLowerCase();
+  if (normalizedUrl) return `url:${normalizedUrl}`;
+  return [
+    "meta",
+    normalizeText(track?.title),
+    normalizeText(track?.author),
+    String(Math.round(Number(track?.durationMS || 0) / 1000) || 0),
+  ].join("|");
+}
+
+function scoreTrackCandidate(track, query, searchSource) {
+  const normalizedQuery = normalizeText(query);
+  const queryTokens = tokenizeText(query);
+  const title = normalizeText(track?.title);
+  const author = normalizeText(track?.author);
+  const combined = [title, author].filter(Boolean).join(" ");
+  const source = sourceKeyFromTrack(track);
+  let score = Number(searchSource?.bias || 0);
+
+  if (!normalizedQuery) return score;
+  if (combined === normalizedQuery) score += 140;
+  if (title === normalizedQuery) score += 120;
+  if (author === normalizedQuery) score += 45;
+  if (combined.includes(normalizedQuery)) score += 55;
+  if (title.includes(normalizedQuery)) score += 40;
+  if (author && normalizedQuery.includes(author)) score += 18;
+
+  let titleMatches = 0;
+  let authorMatches = 0;
+  for (const token of queryTokens) {
+    if (title.includes(token)) titleMatches += 1;
+    if (author.includes(token)) authorMatches += 1;
+  }
+
+  score += titleMatches * 12;
+  score += authorMatches * 7;
+
+  if (queryTokens.length > 0 && titleMatches === queryTokens.length) score += 25;
+  if (queryTokens.length > 1 && titleMatches + authorMatches === queryTokens.length) score += 20;
+
+  const penalizedTerms = ["live", "remix", "sped up", "nightcore", "slowed", "karaoke", "instrumental"];
+  for (const term of penalizedTerms) {
+    if (combined.includes(term) && !normalizedQuery.includes(term)) score -= 10;
+  }
+
+  if (source === "youtube" && /official audio|official video|topic/.test(combined)) score += 6;
+  if (source === "soundcloud" && /remix|bootleg|flip/.test(combined) && !/remix|bootleg|flip/.test(normalizedQuery)) score -= 8;
+
+  return score;
+}
+
+function shouldAggregateSearch(resolved) {
+  const query = String(resolved?.query || "");
+  if (!query) return false;
+  if (/^https?:\/\//i.test(query)) return false;
+  return resolved?.engine === QueryType.AUTO_SEARCH;
+}
+
+async function searchBestMatches(player, query, requestedBy, options = {}) {
+  const allowYoutube = options.allowYoutube !== false;
+  const primarySources = allowYoutube
+    ? SEARCH_SOURCE_ENGINES
+    : SEARCH_SOURCE_ENGINES.filter((item) => item.key !== "youtube");
+  const settled = await Promise.allSettled([
+    ...primarySources.map(async (source) => {
+      const result = await player.search(query, {
+        requestedBy,
+        searchEngine: source.engine,
+      });
+      const tracks = Array.isArray(result?.tracks) ? result.tracks.slice(0, 8) : [];
+      return { source, tracks };
+    }),
+    (async () => {
+      const response = await axios.get("https://api.deezer.com/search", {
+        params: { q: query, limit: 5 },
+        timeout: 12000,
+      });
+      const deezerRows = Array.isArray(response?.data?.data) ? response.data.data : [];
+      const deezerSettled = await Promise.allSettled(
+        deezerRows.map(async (row) => {
+          const deezerUrl = String(row?.link || "").trim();
+          if (!deezerUrl) return null;
+          const playable = await player.search(deezerUrl, {
+            requestedBy,
+            searchEngine: QueryType.AUTO,
+          });
+          const firstTrack = Array.isArray(playable?.tracks) ? playable.tracks[0] : null;
+          return firstTrack || null;
+        }),
+      );
+      const tracks = deezerSettled
+        .filter((item) => item.status === "fulfilled" && item.value)
+        .map((item) => item.value)
+        .slice(0, 5);
+      return { source: DEEZER_SEARCH_SOURCE, tracks };
+    })(),
+  ]);
+
+  const seen = new Set();
+  const ranked = [];
+
+  for (const item of settled) {
+    if (item.status !== "fulfilled") continue;
+    const { source, tracks } = item.value || {};
+    for (const track of tracks || []) {
+      const identity = buildTrackIdentity(track);
+      if (seen.has(identity)) continue;
+      seen.add(identity);
+      ranked.push({
+        track,
+        score: scoreTrackCandidate(track, query, source),
+        sourceKey: source?.key || "unknown",
+      });
+    }
+  }
+
+  ranked.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const durationDiff = Number(b.track?.durationMS || 0) - Number(a.track?.durationMS || 0);
+    if (durationDiff !== 0) return durationDiff;
+    return String(a.track?.title || "").localeCompare(String(b.track?.title || ""));
+  });
+
+  return {
+    tracks: ranked.map((item) => item.track),
+    playlist: null,
+  };
+}
+
+async function tryConvertYoutubeVideo(player, query, requestedBy) {
+  if (!isYouTubeVideoUrl(query)) return null;
+
+  const rawResult = await player.search(query, {
+    requestedBy,
+    searchEngine: QueryType.YOUTUBE_VIDEO,
+  }).catch(() => null);
+  const youtubeTrack = Array.isArray(rawResult?.tracks) ? rawResult.tracks[0] : null;
+  if (!youtubeTrack) return null;
+
+  const cleanTitle = cleanYouTubeTrackTitle(youtubeTrack.title);
+  const author = String(youtubeTrack.author || "").replace(/\s*-\s*topic$/i, "").trim();
+  const convertedQuery = [cleanTitle, author].filter(Boolean).join(" ").trim();
+  if (!convertedQuery) return null;
+
+  const converted = await searchBestMatches(player, convertedQuery, requestedBy, {
+    allowYoutube: false,
+  }).catch(() => null);
+  const convertedTracks = Array.isArray(converted?.tracks) ? converted.tracks : [];
+  const bestTrack = convertedTracks.find((track) => NON_YOUTUBE_SOURCE_KEYS.has(sourceKeyFromTrack(track)));
+
+  if (!bestTrack) {
+    return {
+      query: convertedQuery,
+      searchResult: rawResult,
+      converted: false,
+    };
+  }
+
+  return {
+    query: convertedQuery,
+    searchResult: {
+      tracks: [bestTrack],
+      playlist: null,
+    },
+    converted: true,
+  };
+}
+
+async function runSearch(player, resolved, requestedBy) {
+  if (resolved?.youtubeConvertible) {
+    const converted = await tryConvertYoutubeVideo(player, resolved.query, requestedBy);
+    if (converted?.searchResult?.tracks?.length) {
+      return converted.searchResult;
+    }
+  }
+
+  if (shouldAggregateSearch(resolved)) {
+    const aggregated = await searchBestMatches(player, resolved.query, requestedBy);
+    if (Array.isArray(aggregated?.tracks) && aggregated.tracks.length) return aggregated;
+  }
+
+  return player.search(resolved.query, {
+    requestedBy,
+    searchEngine: resolved.engine,
+  });
+}
+
 function parseDeezerTrackId(url) {
   const match = String(url || "").match(/deezer\.com\/(?:[a-z]{2}\/)?track\/(\d+)/i);
   return match ? String(match[1]) : null;
@@ -216,19 +460,24 @@ async function appleMusicToSearchQuery(url) {
 
 async function resolveSearchInput(input) {
   const query = cleanQuery(input);
-  if (!query) return { query: "", engine: QueryType.AUTO_SEARCH, translated: false };
+  if (!query) return {
+    query: "",
+    engine: QueryType.AUTO_SEARCH,
+    translated: false,
+    youtubeConvertible: false,
+  };
 
   if (/deezer\.com\/(?:[a-z]{2}\/)?track\/\d+/i.test(query)) {
     const mapped = await deezerToSearchQuery(query);
     if (mapped) {
-      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true };
+      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true, youtubeConvertible: false };
     }
   }
 
   if (/music\.apple\.com\//i.test(query)) {
     const mapped = await appleMusicToSearchQuery(query);
     if (mapped) {
-      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true };
+      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true, youtubeConvertible: false };
     }
   }
 
@@ -236,6 +485,7 @@ async function resolveSearchInput(input) {
     query,
     engine: /^https?:\/\//i.test(query) ? QueryType.AUTO : QueryType.AUTO_SEARCH,
     translated: false,
+    youtubeConvertible: isYouTubeVideoUrl(query),
   };
 }
 
@@ -247,6 +497,7 @@ async function getPlayer(client) {
       const player = new Player(client, {
         skipFFmpeg: false,
       });
+      await player.extractors.register(YoutubeiExtractor, {});
       await player.extractors.loadMulti(DefaultExtractors);
 
       player.events.on("error", (queue, error) => {
@@ -369,10 +620,7 @@ async function playRequest({
     return { ok: false, reason: "empty_query" };
   }
 
-  const searchResult = await player.search(resolved.query, {
-    requestedBy,
-    searchEngine: resolved.engine,
-  });
+  const searchResult = await runSearch(player, resolved, requestedBy);
 
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
     return { ok: false, reason: "not_found" };
@@ -497,10 +745,7 @@ async function searchPlayable({
   const player = await getPlayer(client);
   const resolved = await resolveSearchInput(input);
   if (!resolved.query) return { ok: false, reason: "empty_query" };
-  const searchResult = await player.search(resolved.query, {
-    requestedBy,
-    searchEngine: resolved.engine,
-  });
+  const searchResult = await runSearch(player, resolved, requestedBy);
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
     return { ok: false, reason: "not_found" };
   }
