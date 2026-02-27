@@ -33,6 +33,7 @@
     "mongoose": "8.9.5",
     "node-cron": "4.2.1",
     "node-emoji": "^2.2.0",
+    "opusscript": "^0.0.8",
     "pureimage": "0.4.18"
   },
   "overrides": {
