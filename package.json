@@ -18,5 +18,8 @@
   },
   "overrides": {
     "opusscript": "0.0.8"
-  }
+  },
+  "nodeVersion": "24.7.0",
+  "file": "loader.js",
+  "author": "lXo"
 }
