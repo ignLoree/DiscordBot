@@ -1408,15 +1408,16 @@ async function playRequest({
   voiceChannel,
   requestedBy,
   input,
+  preResolved = null,
+  preSearchResult = null,
 }) {
   const player = await getPlayer(client);
-  const resolved = await resolveSearchInput(input);
+  const resolved = preResolved || await resolveSearchInput(input);
 
   if (!resolved.query) {
     return { ok: false, reason: "empty_query" };
   }
-
-  const searchResult = await runSearch(player, resolved, requestedBy);
+  const searchResult = preSearchResult || await runSearch(player, resolved, requestedBy);
 
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
     if (resolved?.youtubeConvertible) {

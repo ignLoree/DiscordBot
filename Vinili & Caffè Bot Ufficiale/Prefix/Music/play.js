@@ -117,6 +117,7 @@ module.exports = {
     }
 
     let finalInput = input;
+    let finalSearchResult = null;
     const search = await searchPlayable({
       client: message.client,
       input,
@@ -175,11 +176,17 @@ module.exports = {
       finalInput = String(
         picked?.resolverInput || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
       );
+      finalSearchResult = { tracks: [picked], playlist: null };
     } else if (!search.searchResult?.playlist && search.catalogOnly && searchTracks.length === 1) {
       const onlyTrack = searchTracks[0];
       finalInput = String(
         onlyTrack?.resolverInput || `${onlyTrack?.title || ""} ${onlyTrack?.author || ""}`.trim(),
       );
+      finalSearchResult = { tracks: [onlyTrack], playlist: null };
+    } else if (!search.searchResult?.playlist && searchTracks.length === 1) {
+      finalSearchResult = { tracks: [searchTracks[0]], playlist: null };
+    } else if (search.searchResult?.playlist) {
+      finalSearchResult = search.searchResult;
     }
 
     const result = await playRequest({
@@ -189,6 +196,8 @@ module.exports = {
       voiceChannel,
       requestedBy: message.member,
       input: finalInput,
+      preResolved: search.resolved,
+      preSearchResult: finalSearchResult,
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
     if (!result?.ok) {
