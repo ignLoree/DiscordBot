@@ -16,7 +16,6 @@ const {
   inferModuleKeyFromSlashCommand,
 } = require("../../Services/Dashboard/controlCenterService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
-const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 const STAFF_BYPASS_PERMISSIONS = [
   PermissionFlagsBits.Administrator,
   PermissionFlagsBits.ManageGuild,
@@ -29,22 +28,6 @@ const STAFF_BYPASS_PERMISSIONS = [
 ];
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
-
-function runWithTimeout(taskPromise, timeoutMs, label = "command") {
-  let timeoutHandle = null;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      const err = new Error(
-        `${label} execution timed out after ${timeoutMs}ms`,
-      );
-      err.code = "COMMAND_TIMEOUT";
-      reject(err);
-    }, timeoutMs);
-  });
-  return Promise.race([taskPromise, timeoutPromise]).finally(() => {
-    if (timeoutHandle) clearTimeout(timeoutHandle);
-  });
-}
 
 function sanitizeEditPayload(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload))
@@ -296,11 +279,7 @@ async function handleSlashCommand(interaction, client) {
         }
       }, 1500);
     }
-    await runWithTimeout(
-      Promise.resolve(command.execute(wrappedInteraction, client)),
-      COMMAND_EXECUTION_TIMEOUT_MS,
-      `app:${interaction.commandName || "unknown"}`,
-    );
+    await Promise.resolve(command.execute(wrappedInteraction, client));
   } catch (error) {
     commandFailed = true;
     const errorChannelId =

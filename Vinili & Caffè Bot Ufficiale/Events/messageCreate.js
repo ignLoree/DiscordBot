@@ -32,7 +32,6 @@ const IDs = require("../Utils/Config/ids");
 const SuggestionCount = require("../Schemas/Suggestion/suggestionSchema");
 
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
-const COMMAND_EXECUTION_TIMEOUT_MS = 60 * 1000;
 const STAFF_BYPASS_PERMISSIONS = [
   PermissionFlagsBits.Administrator,
   PermissionFlagsBits.ManageGuild,
@@ -109,22 +108,6 @@ function getRandomExp() {
   const step = 5;
   const count = Math.floor((max - min) / step) + 1;
   return min + Math.floor(Math.random() * count) * step;
-}
-
-function runWithTimeout(taskPromise, timeoutMs, label = "command") {
-  let timeoutHandle = null;
-  const timeoutPromise = new Promise((_, reject) => {
-    timeoutHandle = setTimeout(() => {
-      const err = new Error(
-        `${label} execution timed out after ${timeoutMs}ms`,
-      );
-      err.code = "COMMAND_TIMEOUT";
-      reject(err);
-    }, timeoutMs);
-  });
-  return Promise.race([taskPromise, timeoutPromise]).finally(() => {
-    if (timeoutHandle) clearTimeout(timeoutHandle);
-  });
 }
 
 function extractVoteCountFromText(text) {
@@ -1075,15 +1058,10 @@ module.exports = {
         commandMessage.channel = commandChannel;
       }
       try {
-        await runWithTimeout(
-          Promise.resolve(
-            execCommand.execute(commandMessage, execArgs, resolvedClient),
-          ),
-          COMMAND_EXECUTION_TIMEOUT_MS,
-          `prefix:${execCommand?.name || "unknown"}`,
+        await Promise.resolve(
+          execCommand.execute(commandMessage, execArgs, resolvedClient),
         );
       } catch (error) {
-        const isTimeout = error?.code === "COMMAND_TIMEOUT";
         const channelID =
           IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
         const errorChannel = channelID
