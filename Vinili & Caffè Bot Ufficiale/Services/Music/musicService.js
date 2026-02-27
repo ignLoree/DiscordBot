@@ -103,6 +103,7 @@ const SEARCH_SOURCE_ENGINES = [
 ];
 const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
 const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
+const SUPPORTED_PLAYBACK_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
 
 function logMusic(event, payload = {}) {
   const logger = global.logger;
@@ -464,8 +465,18 @@ function isLikelyPreviewTrack(track) {
   return false;
 }
 
+function isSupportedPlaybackTrack(track) {
+  const source = sourceKeyFromTrack(track);
+  return SUPPORTED_PLAYBACK_SOURCE_KEYS.has(source);
+}
+
 function filterPlayableTracks(tracks = []) {
-  return tracks.filter((track) => !isPodcastLikeTrack(track) && !isLikelyPreviewTrack(track));
+  return tracks.filter(
+    (track) =>
+      isSupportedPlaybackTrack(track) &&
+      !isPodcastLikeTrack(track) &&
+      !isLikelyPreviewTrack(track),
+  );
 }
 
 function scoreTrackCandidate(track, query, searchSource) {
