@@ -35,41 +35,49 @@ try {
 
 try {
   const opusModule = require("@discord-player/opus");
-  const originalEncode = opusModule.OpusEncoder?.prototype?._encode;
-  const originalDecode = opusModule.OpusDecoder?.prototype?._decode;
-  const resolveFrameSize = (ctx, buffer) => {
-    const configured = Number(ctx?._options?.frameSize || 0);
-    if (configured > 0) return configured;
-    const channels = Math.max(1, Number(ctx?._options?.channels || 2));
-    const pcmLength = Math.max(0, Number(buffer?.length || 0));
-    return Math.max(1, Math.floor(pcmLength / (channels * 2)));
-  };
+  const PatchedOpusScript = require("opusscript");
+  class SafeOpusEncoder {
+    constructor(rate, channels, application) {
+      this.rate = rate;
+      this.channels = channels;
+      this.application = application;
+      this.encoder = new PatchedOpusScript(rate, channels, application, { wasm: false });
+    }
 
-  if (typeof originalEncode === "function") {
-    opusModule.OpusEncoder.prototype._encode = function patchedEncode(buffer) {
-      if (this?.encoder?.encode && this?.encoder?.decode && this?._options) {
-        const frameSize = resolveFrameSize(this, buffer);
-        if (this._options.frameSize !== frameSize) this._options.frameSize = frameSize;
+    encode(buffer) {
+      const safeChannels = Math.max(1, Number(this.channels || 2));
+      const frameSize = Math.max(
+        1,
+        Math.floor(Math.max(0, Number(buffer?.length || 0)) / (safeChannels * 2)),
+      );
+      return this.encoder.encode(buffer, frameSize);
+    }
+
+    decode(buffer) {
+      return this.encoder.decode(buffer, 960);
+    }
+
+    applyEncoderCTL(ctl, value) {
+      if (typeof this.encoder?.encoderCTL === "function") {
+        this.encoder.encoderCTL(ctl, value);
       }
-      return originalEncode.call(this, buffer);
-    };
+    }
+
+    delete() {
+      if (typeof this.encoder?.delete === "function") {
+        this.encoder.delete();
+      }
+      this.encoder = null;
+    }
   }
 
-  if (typeof originalDecode === "function") {
-    opusModule.OpusDecoder.prototype._decode = function patchedDecode(buffer) {
-      if (this?.encoder?.decode && this?._options) {
-        const frameSize = resolveFrameSize(this, buffer);
-        if (this._options.frameSize !== frameSize) this._options.frameSize = frameSize;
-      }
-      return originalDecode.call(this, buffer);
-    };
-  }
+  opusModule.setLibopusProvider(SafeOpusEncoder, "safe-opusscript");
 } catch {}
 
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const { leaveTtsGuild } = require("../TTS/ttsService");
-const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
+const { getVoiceSession, setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
 
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
@@ -94,6 +102,27 @@ const SEARCH_SOURCE_ENGINES = [
 ];
 const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
 const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "soundcloud", "deezer"]);
+
+function logMusic(event, payload = {}) {
+  const logger = global.logger;
+  if (!logger?.warn && !logger?.info && !logger?.error) return;
+  const entries = Object.entries(payload)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`);
+  const line = `[MUSIC][${event}]${entries.length ? ` ${entries.join(" | ")}` : ""}`;
+  if (logger.info) logger.info(line);
+  else if (logger.warn) logger.warn(line);
+}
+
+function getTrackDebugMeta(track) {
+  return {
+    title: String(track?.title || "unknown"),
+    author: String(track?.author || "unknown"),
+    source: sourceKeyFromTrack(track),
+    durationMs: Number(track?.durationMS || 0),
+    url: String(track?.url || ""),
+  };
+}
 
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
@@ -144,6 +173,11 @@ async function notifyQueueEnded(queue) {
     lastEmptyQueueAtByGuild.set(guildId, now);
     lastQueueNoticeAtByGuild.set(guildId, now);
   }
+  logMusic("queue_end", {
+    guildId,
+    currentTrack: queue?.currentTrack?.title,
+    pendingTracks: Number(queue?.tracks?.size || 0),
+  });
   await sendQueueNotice(queue, "There are no more tracks");
   scheduleInactivityLeave(queue);
 }
@@ -335,6 +369,25 @@ function buildTrackIdentity(track) {
   ].join("|");
 }
 
+function isPodcastLikeTrack(track) {
+  const haystack = [
+    track?.title,
+    track?.author,
+    track?.description,
+    track?.url,
+  ]
+    .map((value) => normalizeText(value))
+    .filter(Boolean)
+    .join(" ");
+
+  if (!haystack) return false;
+  return /\b(podcast|episodio|episode|puntata|show|intervista integrale|audiolibro|audiobook)\b/.test(haystack);
+}
+
+function filterPlayableTracks(tracks = []) {
+  return tracks.filter((track) => !isPodcastLikeTrack(track));
+}
+
 function scoreTrackCandidate(track, query, searchSource) {
   const normalizedQuery = normalizeText(query);
   const queryTokens = tokenizeText(query);
@@ -399,7 +452,7 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
         requestedBy,
         searchEngine: source.engine,
       });
-      const tracks = Array.isArray(result?.tracks) ? result.tracks.slice(0, 8) : [];
+      const tracks = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks.slice(0, 8) : []);
       return { source, tracks };
     }),
     (async () => {
@@ -420,10 +473,10 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
           return firstTrack || null;
         }),
       );
-      const tracks = deezerSettled
+      const tracks = filterPlayableTracks(deezerSettled
         .filter((item) => item.status === "fulfilled" && item.value)
         .map((item) => item.value)
-        .slice(0, 5);
+        .slice(0, 5));
       return { source: DEEZER_SEARCH_SOURCE, tracks };
     })(),
   ]);
@@ -453,6 +506,19 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
     const durationDiff = Number(b.track?.durationMS || 0) - Number(a.track?.durationMS || 0);
     if (durationDiff !== 0) return durationDiff;
     return String(a.track?.title || "").localeCompare(String(b.track?.title || ""));
+  });
+
+  logMusic("search_ranked", {
+    query,
+    requestedBy: requestedBy?.id || requestedBy?.user?.id || "",
+    avoidSources: Array.from(avoidSources),
+    count: ranked.length,
+    top: ranked.slice(0, 5).map((item) => ({
+      title: item.track?.title || "unknown",
+      author: item.track?.author || "unknown",
+      source: item.sourceKey,
+      score: item.score,
+    })),
   });
 
   return {
@@ -491,9 +557,22 @@ async function tryConvertYoutubeVideo(player, query, requestedBy) {
 }
 
 async function runSearch(player, resolved, requestedBy) {
+  logMusic("search_begin", {
+    query: resolved?.query,
+    engine: resolved?.engine,
+    translated: Boolean(resolved?.translated),
+    youtubeConvertible: Boolean(resolved?.youtubeConvertible),
+    avoidSources: resolved?.avoidSources || [],
+    requestedBy: requestedBy?.id || requestedBy?.user?.id || "",
+  });
   if (resolved?.youtubeConvertible) {
     const converted = await tryConvertYoutubeVideo(player, resolved.query, requestedBy);
     if (converted?.searchResult?.tracks?.length) {
+      logMusic("search_youtube_converted", {
+        originalQuery: resolved.query,
+        convertedQuery: converted.query,
+        chosen: getTrackDebugMeta(converted.searchResult.tracks[0]),
+      });
       return converted.searchResult;
     }
   }
@@ -505,10 +584,20 @@ async function runSearch(player, resolved, requestedBy) {
     if (Array.isArray(aggregated?.tracks) && aggregated.tracks.length) return aggregated;
   }
 
-  return player.search(resolved.query, {
+  const result = await player.search(resolved.query, {
     requestedBy,
     searchEngine: resolved.engine,
   });
+  if (Array.isArray(result?.tracks)) {
+    result.tracks = filterPlayableTracks(result.tracks);
+  }
+  logMusic("search_result", {
+    query: resolved?.query,
+    count: Array.isArray(result?.tracks) ? result.tracks.length : 0,
+    playlist: Boolean(result?.playlist),
+    first: Array.isArray(result?.tracks) && result.tracks[0] ? getTrackDebugMeta(result.tracks[0]) : null,
+  });
+  return result;
 }
 
 async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
@@ -530,6 +619,12 @@ async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
       metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
     ).trim();
     if (!recoveryQuery) throw new Error("missing recovery query");
+    logMusic("recovery_begin", {
+      guildId,
+      recoveryQuery,
+      failedSources,
+      from: getTrackDebugMeta(finishedTrack),
+    });
 
     const recoveredResult = await runSearch(playerRef, {
       query: recoveryQuery,
@@ -544,6 +639,11 @@ async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
     if (!recoveredTrack) throw new Error("no recovered track");
     stampTrackMetadata(recoveredTrack, null, { recoveryQuery, failedSources });
     await queue.node.play(recoveredTrack);
+    logMusic("recovery_success", {
+      guildId,
+      chosen: getTrackDebugMeta(recoveredTrack),
+      failedSources,
+    });
     return recoveredTrack;
   } finally {
     if (guildId) recoveryInFlightByGuild.delete(guildId);
@@ -572,7 +672,13 @@ function schedulePlaybackWatchdog(queue, client) {
       const elapsed = Date.now() - startedAt;
       if (elapsed < 15_000) return;
 
-      global.logger?.warn?.("[MUSIC] Watchdog detected stalled playback, attempting recovery:", guildId, currentTrack?.title || "unknown");
+      logMusic("watchdog_stall", {
+        guildId,
+        elapsed,
+        track: getTrackDebugMeta(currentTrack),
+        pendingTracks: Number(queue?.tracks?.size || 0),
+        playing: Boolean(queue.isPlaying?.()),
+      });
       const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
       if (retryCount >= 2) return;
       finishRetryCountByGuild.set(guildId, retryCount + 1);
@@ -680,12 +786,22 @@ async function getPlayer(client) {
       player.events.on("playerError", async (queue, error, track) => {
         const guildId = String(queue?.guild?.id || "");
         if (guildId) lastPlayerErrorAtByGuild.set(guildId, Date.now());
+        const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
+        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
         global.logger?.error?.(
           "[MUSIC] player error:",
           queue?.guild?.id || "unknown",
           track?.title || "unknown",
           error?.message || error,
         );
+        logMusic("player_error", {
+          guildId,
+          elapsed,
+          retryCount: Number(finishRetryCountByGuild.get(guildId) || 0),
+          track: getTrackDebugMeta(track),
+          message: error?.message || String(error || ""),
+          pendingTracks: Number(queue?.tracks?.size || 0),
+        });
         const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
         if (!guildId || !track || retryCount >= 2 || recoveryInFlightByGuild.get(guildId)) return;
         try {
@@ -707,6 +823,12 @@ async function getPlayer(client) {
             startedAt: Date.now(),
           });
         }
+        logMusic("player_start", {
+          guildId,
+          volume: DEFAULT_MUSIC_VOLUME,
+          pendingTracks: Number(queue?.tracks?.size || 0),
+          track: getTrackDebugMeta(queue?.currentTrack),
+        });
         clearInactivityTimer(queue?.guild?.id);
         clearEmptyVoiceTimer(queue?.guild?.id);
         schedulePlaybackWatchdog(queue, client);
@@ -716,11 +838,24 @@ async function getPlayer(client) {
         if (guildId && recoveryInFlightByGuild.get(guildId)) return;
         const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
         const finishedTrack = track || session?.track || queue?.currentTrack || null;
+        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
+        logMusic("player_finish", {
+          guildId,
+          elapsed,
+          pendingTracks: Number(queue?.tracks?.size || 0),
+          track: getTrackDebugMeta(finishedTrack),
+        });
         if (guildId && finishedTrack && shouldTreatAsEarlyFinish(finishedTrack, session?.startedAt)) {
           const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
           if (retryCount < 2) {
             finishRetryCountByGuild.set(guildId, retryCount + 1);
             global.logger?.warn?.("[MUSIC] Early finish detected, trying fresh recovery once:", guildId, finishedTrack?.title || "unknown");
+            logMusic("player_finish_early", {
+              guildId,
+              elapsed,
+              retryCount,
+              track: getTrackDebugMeta(finishedTrack),
+            });
             try {
               await recoverTrackPlayback(queue, finishedTrack, client, sourceKeyFromTrack(finishedTrack));
               return;
@@ -748,15 +883,12 @@ async function getPlayer(client) {
       });
       player.events.on("emptyQueue", async (queue) => {
         const guildId = String(queue?.guild?.id || "");
+        if (!guildId) return;
         if (guildId && recoveryInFlightByGuild.get(guildId)) return;
         const now = Date.now();
         const lastStartAt = guildId ? Number(lastPlayerStartAtByGuild.get(guildId) || 0) : 0;
         const lastPlayerErrorAt = guildId ? Number(lastPlayerErrorAtByGuild.get(guildId) || 0) : 0;
-        if ((lastStartAt && now - lastStartAt < 15_000) || (lastPlayerErrorAt && now - lastPlayerErrorAt < 15_000)) {
-          global.logger?.warn?.("[MUSIC] emptyQueue ignored shortly after start/error:", guildId);
-          return;
-        }
-        global.logger?.warn?.("[MUSIC] emptyQueue fallback ignored for notices:", guildId);
+        if ((lastStartAt && now - lastStartAt < 15_000) || (lastPlayerErrorAt && now - lastPlayerErrorAt < 15_000)) return;
       });
       player.events.on("emptyChannel", (queue) => {
         scheduleEmptyVoiceLeave(queue);
@@ -825,7 +957,13 @@ async function playRequest({
   queue.metadata = { ...(queue.metadata || {}), channel };
   queue.node.setVolume(DEFAULT_MUSIC_VOLUME);
 
-  await leaveTtsGuild(guild?.id, client).catch(() => null);
+  const currentSession = getVoiceSession(guild?.id);
+  const shouldLeaveTts =
+    currentSession?.mode === "tts" ||
+    (!currentSession?.mode && !queue.connection);
+  if (shouldLeaveTts) {
+    await leaveTtsGuild(guild?.id, client).catch(() => null);
+  }
   setVoiceSession(guild?.id, {
     mode: "music",
     channelId: voiceChannel?.id,
@@ -834,6 +972,19 @@ async function playRequest({
   if (!queue.connection) {
     await queue.connect(voiceChannel);
   }
+
+  logMusic("play_request", {
+    guildId: guild?.id,
+    channelId: channel?.id,
+    voiceChannelId: voiceChannel?.id,
+    query: input,
+    resolvedQuery: resolved?.query,
+    translated: Boolean(resolved?.translated),
+    searchCount: searchResult?.tracks?.length || 0,
+    first: searchResult?.tracks?.[0] ? getTrackDebugMeta(searchResult.tracks[0]) : null,
+    hadConnection: Boolean(queue.connection),
+    wasPlaying: Boolean(queue.isPlaying()),
+  });
 
   clearInactivityTimer(guild?.id);
 
