@@ -73,14 +73,16 @@ module.exports = (client) => {
       }
     }
 
-    const table = new ascii().setHeading("Folder", "File", "Status");
-    for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0]),
-    )) {
-      const [folder, file] = key.split("/");
-      table.addRow(folder, file, status);
+    if (statusMap.size > 0) {
+      const table = new ascii().setHeading("Folder", "File", "Status");
+      for (const [key, status] of Array.from(statusMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0]),
+      )) {
+        const [folder, file] = key.split("/");
+        table.addRow(folder, file, status);
+      }
+      global.logger?.info?.(table.toString());
     }
-    global.logger?.info?.(table.toString());
     global.logger?.info?.(
       `[Bot Test][COMMANDS] Loaded ${client.commands.size} slash command(s).`,
     );
