@@ -10,7 +10,7 @@ const { QueryType } = require("discord-player");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getPlayer, touchMusicOutputChannel } = require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
-const { setVoiceSession } = require("../../Services/Voice/voiceSessionService");
+const { getVoiceSession, setVoiceSession } = require("../../Services/Voice/voiceSessionService");
 const { leaveTtsGuild } = require("../../Services/TTS/ttsService");
 
 const PAGE_SIZE = 10;
@@ -24,8 +24,8 @@ function buildSessionInUseEmbed(channel) {
 }
 
 function renderStationLabel(station, index) {
-  const city = station.city ? `, ${station.city}` : "";
-  return `${index}. ${station.name}${city}`;
+  const location = [station.state, station.city].filter(Boolean).join(" - ");
+  return `${index}. ${station.name}${location ? ` (${location})` : ""}`;
 }
 
 function toPages(items, size = PAGE_SIZE) {
@@ -61,7 +61,7 @@ function buildRadioSelect(pages, pageIndex, customId) {
     .addOptions(
       page.map((station, i) => ({
         label: `${startIndex + i + 1}. ${station.name}`.slice(0, 100),
-        description: (station.city || station.codec || "Radio italiana").slice(0, 100),
+        description: ([station.state, station.city, station.codec].filter(Boolean).join(" • ") || "Radio italiana").slice(0, 100),
         value: String(startIndex + i),
       })),
     );
@@ -265,7 +265,13 @@ module.exports = {
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
       queue.node.setVolume(5);
 
-      await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
+      const currentSession = getVoiceSession(message.guild.id);
+      const shouldLeaveTts =
+        currentSession?.mode === "tts" ||
+        (!currentSession?.mode && !queue.connection);
+      if (shouldLeaveTts) {
+        await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
+      }
       setVoiceSession(message.guild.id, {
         mode: "music",
         channelId: voiceChannel.id,
@@ -289,14 +295,21 @@ module.exports = {
       const track = result?.tracks?.[0] || null;
       if (!track) {
         await interaction.reply({
-          content: "Non riesco a riprodurre questa stazione.",
+          content: "Non riesco a riprodurre questa stazione. Prova un'altra emittente.",
           ephemeral: true,
         }).catch(() => {});
         return;
       }
 
       queue.clear();
-      await queue.node.play(track).catch(() => null);
+      const played = await queue.node.play(track).then(() => true).catch(() => false);
+      if (!played) {
+        await interaction.reply({
+          content: "Questa stazione non ha risposto correttamente allo stream. Prova un'altra emittente.",
+          ephemeral: true,
+        }).catch(() => {});
+        return;
+      }
 
       collector.stop("selected");
       selectCollector.stop("selected");
