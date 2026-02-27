@@ -10,12 +10,14 @@ const lastEmptyQueueAtByGuild = new Map();
 const lastQueueNoticeAtByGuild = new Map();
 const lastPlayerStartAtByGuild = new Map();
 const lastPlayerErrorAtByGuild = new Map();
+const lastTrackSessionByGuild = new Map();
+const finishRetryCountByGuild = new Map();
 const manualLeaveAtByGuild = new Map();
 const inactivityTimersByGuild = new Map();
 const emptyVoiceTimersByGuild = new Map();
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
-const DEFAULT_MUSIC_VOLUME = 10;
+const DEFAULT_MUSIC_VOLUME = 5;
 
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
@@ -59,6 +61,14 @@ async function notifyQueueEnded(queue) {
   }
   await sendQueueNotice(queue, "There are no more tracks");
   scheduleInactivityLeave(queue);
+}
+
+function shouldTreatAsEarlyFinish(track, startedAt) {
+  const durationMs = Math.max(0, Number(track?.durationMS || 0));
+  if (durationMs < 30_000) return false;
+  const elapsed = Math.max(0, Date.now() - Number(startedAt || 0));
+  const minExpected = Math.max(15_000, Math.floor(durationMs * 0.35));
+  return elapsed > 0 && elapsed < minExpected;
 }
 
 function queueTracksToArray(queue) {
@@ -260,10 +270,36 @@ async function getPlayer(client) {
         queue?.node?.setVolume?.(DEFAULT_MUSIC_VOLUME);
         const guildId = String(queue?.guild?.id || "");
         if (guildId) lastPlayerStartAtByGuild.set(guildId, Date.now());
+        if (guildId && queue?.currentTrack) {
+          lastTrackSessionByGuild.set(guildId, {
+            track: queue.currentTrack,
+            startedAt: Date.now(),
+          });
+        }
         clearInactivityTimer(queue?.guild?.id);
         clearEmptyVoiceTimer(queue?.guild?.id);
       });
-      player.events.on("playerFinish", async (queue) => {
+      player.events.on("playerFinish", async (queue, track) => {
+        const guildId = String(queue?.guild?.id || "");
+        const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
+        const finishedTrack = track || session?.track || queue?.currentTrack || null;
+        if (guildId && finishedTrack && shouldTreatAsEarlyFinish(finishedTrack, session?.startedAt)) {
+          const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
+          if (retryCount < 1) {
+            finishRetryCountByGuild.set(guildId, retryCount + 1);
+            global.logger?.warn?.("[MUSIC] Early finish detected, retrying track once:", guildId, finishedTrack?.title || "unknown");
+            try {
+              await queue.node.play(finishedTrack);
+              return;
+            } catch (error) {
+              global.logger?.warn?.("[MUSIC] Early finish retry failed:", guildId, error?.message || error);
+            }
+          }
+        }
+        if (guildId) {
+          finishRetryCountByGuild.delete(guildId);
+          lastTrackSessionByGuild.delete(guildId);
+        }
         const pendingTracks = Number(queue?.tracks?.size || 0);
         if (pendingTracks > 0) return;
         await notifyQueueEnded(queue);
@@ -298,6 +334,8 @@ async function getPlayer(client) {
         clearInactivityTimer(guildId);
         clearEmptyVoiceTimer(guildId);
         clearVoiceSession(guildId);
+        lastTrackSessionByGuild.delete(guildId);
+        finishRetryCountByGuild.delete(guildId);
         const now = Date.now();
         const manualLeaveAt = guildId ? Number(manualLeaveAtByGuild.get(guildId) || 0) : 0;
         if (manualLeaveAt && now - manualLeaveAt < 15_000) return;

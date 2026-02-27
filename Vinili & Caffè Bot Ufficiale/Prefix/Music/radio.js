@@ -258,12 +258,12 @@ module.exports = {
         leaveOnEnd: false,
         leaveOnEndCooldown: 0,
         selfDeaf: true,
-        volume: 25,
+        volume: 5,
         bufferingTimeout: 7_000,
         connectionTimeout: 20_000,
       });
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
-      queue.node.setVolume(10);
+      queue.node.setVolume(5);
 
       await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
       setVoiceSession(message.guild.id, {
