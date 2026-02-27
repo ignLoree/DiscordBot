@@ -263,7 +263,7 @@ module.exports = {
         connectionTimeout: 20_000,
       });
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
-      queue.node.setVolume(25);
+      queue.node.setVolume(10);
 
       await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
       setVoiceSession(message.guild.id, {

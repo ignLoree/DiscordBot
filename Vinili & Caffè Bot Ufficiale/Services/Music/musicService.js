@@ -7,6 +7,7 @@ const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionSer
 
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
+const lastQueueNoticeAtByGuild = new Map();
 const lastPlayerStartAtByGuild = new Map();
 const lastPlayerErrorAtByGuild = new Map();
 const manualLeaveAtByGuild = new Map();
@@ -14,7 +15,7 @@ const inactivityTimersByGuild = new Map();
 const emptyVoiceTimersByGuild = new Map();
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
-const DEFAULT_MUSIC_VOLUME = 25;
+const DEFAULT_MUSIC_VOLUME = 10;
 
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
@@ -45,6 +46,19 @@ function clearEmptyVoiceTimer(guildId) {
   const timer = emptyVoiceTimersByGuild.get(key);
   if (timer) clearTimeout(timer);
   emptyVoiceTimersByGuild.delete(key);
+}
+
+async function notifyQueueEnded(queue) {
+  const guildId = String(queue?.guild?.id || "");
+  const now = Date.now();
+  const lastNoticeAt = guildId ? Number(lastQueueNoticeAtByGuild.get(guildId) || 0) : 0;
+  if (lastNoticeAt && now - lastNoticeAt < 10_000) return;
+  if (guildId) {
+    lastEmptyQueueAtByGuild.set(guildId, now);
+    lastQueueNoticeAtByGuild.set(guildId, now);
+  }
+  await sendQueueNotice(queue, "There are no more tracks");
+  scheduleInactivityLeave(queue);
 }
 
 function queueTracksToArray(queue) {
@@ -243,10 +257,16 @@ async function getPlayer(client) {
         );
       });
       player.events.on("playerStart", (queue) => {
+        queue?.node?.setVolume?.(DEFAULT_MUSIC_VOLUME);
         const guildId = String(queue?.guild?.id || "");
         if (guildId) lastPlayerStartAtByGuild.set(guildId, Date.now());
         clearInactivityTimer(queue?.guild?.id);
         clearEmptyVoiceTimer(queue?.guild?.id);
+      });
+      player.events.on("playerFinish", async (queue) => {
+        const pendingTracks = Number(queue?.tracks?.size || 0);
+        if (pendingTracks > 0) return;
+        await notifyQueueEnded(queue);
       });
       player.events.on("audioTrackAdd", (queue) => {
         clearInactivityTimer(queue?.guild?.id);
@@ -265,9 +285,7 @@ async function getPlayer(client) {
           global.logger?.warn?.("[MUSIC] emptyQueue ignored shortly after start/error:", guildId);
           return;
         }
-        if (guildId) lastEmptyQueueAtByGuild.set(guildId, Date.now());
-        await sendQueueNotice(queue, "There are no more tracks");
-        scheduleInactivityLeave(queue);
+        global.logger?.warn?.("[MUSIC] emptyQueue fallback ignored for notices:", guildId);
       });
       player.events.on("emptyChannel", (queue) => {
         scheduleEmptyVoiceLeave(queue);
