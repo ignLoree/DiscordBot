@@ -121,7 +121,7 @@ try {
   client.config = require("./config.json");
 } catch (err) {
   global.logger.error(
-    "[Bot Test] config.json mancante o non valido:",
+    " config.json mancante o non valido:",
     err && err.message ? err.message : err,
   );
   process.exit(1);
@@ -133,7 +133,7 @@ client.config.mongoURL =
 
 if (!client.config.token) {
   global.logger.error(
-    "[Bot Test] Manca DISCORD_TOKEN_TEST nel .env. Aggiungi DISCORD_TOKEN_TEST=<token del Bot Test> nel file .env (nella cartella principale del progetto). Non usare il token del bot ufficiale.",
+    " Manca DISCORD_TOKEN_TEST nel .env. Aggiungi DISCORD_TOKEN_TEST=<token del Bot Test> nel file .env (nella cartella principale del progetto). Non usare il token del bot ufficiale.",
   );
   process.exit(1);
 }
@@ -158,7 +158,7 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
     await client
       .prefixCommands(prefixFolders, path.join(APP_ROOT, "Prefix"))
       .catch((err) => {
-        global.logger.error("[Bot Test] prefixCommands:", err);
+        global.logger.error(" prefixCommands:", err);
       });
   }
 
@@ -170,13 +170,13 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
     await client
       .handleCommands(commandFolders, path.join(APP_ROOT, "Commands"))
       .catch((err) => {
-        global.logger.error("[Bot Test] handleCommands:", err);
+        global.logger.error(" handleCommands:", err);
       });
   }
 
   if (typeof client.handleTriggers === "function") {
     await client.handleTriggers(triggerFiles, APP_ROOT).catch((err) => {
-      global.logger.error("[Bot Test] handleTriggers:", err);
+      global.logger.error(" handleTriggers:", err);
     });
   }
 

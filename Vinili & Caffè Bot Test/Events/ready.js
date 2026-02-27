@@ -34,7 +34,7 @@ async function setPresence(client) {
 async function connectMongo(client) {
   const mongodbURL = process.env.MONGO_URL || client.config.mongoURL;
   if (!mongodbURL) {
-    global.logger.warn("[Bot Test] MONGO_URL non impostato.");
+    global.logger.warn(" MONGO_URL non impostato.");
     return;
   }
 
@@ -44,7 +44,7 @@ async function connectMongo(client) {
       connectTimeoutMS: 15000,
     });
   } catch (err) {
-    global.logger.error("[Bot Test] MongoDB:", err.message);
+    global.logger.error(" MongoDB:", err.message);
   }
 }
 
@@ -105,7 +105,7 @@ async function handleRestartNotification(client) {
     fs.unlinkSync(restartNotifyPath);
   } catch (err) {
     global.logger.error(
-      "[Bot Test] Errore post-restart (restart_notify.json):",
+      " Errore post-restart (restart_notify.json):",
       err?.message || err,
     );
   }

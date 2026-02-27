@@ -162,7 +162,7 @@ module.exports = (client) => {
           }
         } catch (err) {
           statusMap.set(key, "Error loading");
-          global.logger?.error?.(`[Bot Test][PREFIX] Failed to load ${key}:`, err);
+          global.logger?.error?.(`[PREFIX] Failed to load ${key}:`, err);
         }
       }
     }
@@ -181,7 +181,7 @@ module.exports = (client) => {
     }
     global.logger?.info?.(table.toString());
     global.logger?.info?.(
-      `[Bot Test][PREFIX] Loaded ${client.pcommands.size} prefix command(s).`,
+      `[PREFIX] Loaded ${client.pcommands.size} prefix command(s).`,
     );
     client.logs?.success?.("[FUNCTION] Successfully reloaded prefix commands.");
   };

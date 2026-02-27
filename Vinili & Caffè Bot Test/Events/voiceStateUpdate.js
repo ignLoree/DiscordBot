@@ -24,7 +24,7 @@ module.exports = {
     ) {
       await leaveTtsGuild(guild.id, client).catch((err) => {
         global.logger?.warn?.(
-          "[Bot Test][voiceStateUpdate] leaveTtsGuild failed:",
+          "[voiceStateUpdate] leaveTtsGuild failed:",
           err?.message || err,
         );
       });
@@ -39,7 +39,7 @@ module.exports = {
     if (humans.size === 0) {
       await leaveTtsGuild(guild.id, client).catch((err) => {
         global.logger?.warn?.(
-          "[Bot Test][voiceStateUpdate] leaveTtsGuild failed:",
+          "[voiceStateUpdate] leaveTtsGuild failed:",
           err?.message || err,
         );
       });

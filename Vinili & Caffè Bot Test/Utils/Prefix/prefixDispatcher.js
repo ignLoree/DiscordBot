@@ -33,7 +33,7 @@ async function logPrefixErrorToChannel(message, client, commandName, error) {
     });
     await errorChannel.send({ embeds: [embed] }).catch(() => null);
   } catch (nestedError) {
-    global.logger?.error?.("[Bot Test] Prefix error log failed:", nestedError);
+    global.logger?.error?.(" Prefix error log failed:", nestedError);
   }
 }
 
@@ -109,7 +109,7 @@ async function dispatchPrefixMessage(message, client) {
       });
       if (result !== false) return true;
     } catch (err) {
-      global.logger?.error?.("[Bot Test] Prefix dispatcher error:", err);
+      global.logger?.error?.(" Prefix dispatcher error:", err);
       await logPrefixErrorToChannel(
         message,
         client,

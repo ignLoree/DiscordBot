@@ -20,7 +20,7 @@ module.exports = {
       const safePrefix = String(client?.config?.prefix || "-").trim() || "-";
       await handleTtsMessage(message, client, safePrefix);
     } catch (error) {
-      global.logger?.error?.("[Bot Test][TTS ERROR]", error);
+      global.logger?.error?.("[TTS ERROR]", error);
     }
     await dispatchPrefixMessage(message, client);
   },

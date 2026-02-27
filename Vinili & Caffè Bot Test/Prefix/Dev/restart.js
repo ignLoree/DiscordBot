@@ -102,7 +102,7 @@ module.exports = {
       writeRestartFiles(message, notifyMessage, requestedAt);
       setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
     } catch (err) {
-      global.logger?.error?.("[Bot Test] -rs write flag:", err);
+      global.logger?.error?.(" -rs write flag:", err);
       await message
         .reply({
           embeds: [

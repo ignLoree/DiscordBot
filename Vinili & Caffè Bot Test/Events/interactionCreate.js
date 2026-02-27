@@ -174,7 +174,7 @@ async function logInteractionError(interaction, client, err) {
       flags: PRIVATE_FLAG,
     });
   } catch (nestedErr) {
-    global.logger.error("[Bot Test] interactionCreate error-log", nestedErr);
+    global.logger.error(" interactionCreate error-log", nestedErr);
   }
 }
 
@@ -256,7 +256,7 @@ module.exports = {
       const allowedByGate = await runPermissionGate(interaction);
       if (!allowedByGate) return;
     } catch (err) {
-      global.logger.error("[Bot Test] interactionCreate", err);
+      global.logger.error(" interactionCreate", err);
       await logInteractionError(interaction, client, err);
     } finally {
       if (typeof releaseButtonGuard === "function") releaseButtonGuard();

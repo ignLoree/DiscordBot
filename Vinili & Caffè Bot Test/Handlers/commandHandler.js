@@ -66,7 +66,7 @@ module.exports = (client) => {
         } catch (error) {
           statusMap.set(key, "Error loading");
           global.logger?.error?.(
-            `[Bot Test][COMMANDS] Failed to load ${key}:`,
+            `[COMMANDS] Failed to load ${key}:`,
             error,
           );
         }
@@ -84,7 +84,7 @@ module.exports = (client) => {
       global.logger?.info?.(table.toString());
     }
     global.logger?.info?.(
-      `[Bot Test][COMMANDS] Loaded ${client.commands.size} slash command(s).`,
+      `[COMMANDS] Loaded ${client.commands.size} slash command(s).`,
     );
 
     const token = process.env.DISCORD_TOKEN_TEST || client?.config?.token;
@@ -101,7 +101,7 @@ module.exports = (client) => {
         clientId = app?.id || null;
       } catch (error) {
         global.logger?.error?.(
-          "[Bot Test][COMMANDS] Unable to resolve application id from token:",
+          "[COMMANDS] Unable to resolve application id from token:",
           error,
         );
       }
@@ -118,12 +118,12 @@ module.exports = (client) => {
       } catch (error) {
         if (Number(error?.code) === 50001 || Number(error?.status) === 403) {
           global.logger?.warn?.(
-            `[Bot Test][COMMANDS] Skip deploy guild ${guildId}: Missing Access (bot non presente o senza scope applications.commands).`,
+            `[COMMANDS] Skip deploy guild ${guildId}: Missing Access (bot non presente o senza scope applications.commands).`,
           );
           continue;
         }
         global.logger?.error?.(
-          `[Bot Test][COMMANDS] Failed to deploy to guild ${guildId}:`,
+          `[COMMANDS] Failed to deploy to guild ${guildId}:`,
           error,
         );
       }
