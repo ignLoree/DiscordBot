@@ -438,6 +438,20 @@ function scoreTrackCandidate(track, query, searchSource) {
   return score;
 }
 
+function isStrictTitleMatch(track, query) {
+  const normalizedQuery = normalizeText(query);
+  const normalizedTitle = normalizeText(track?.title);
+  if (!normalizedQuery || !normalizedTitle) return false;
+  return normalizedTitle === normalizedQuery;
+}
+
+function isNearTitleMatch(track, query) {
+  const normalizedQuery = normalizeText(query);
+  const normalizedTitle = normalizeText(track?.title);
+  if (!normalizedQuery || !normalizedTitle) return false;
+  return normalizedTitle.startsWith(`${normalizedQuery} `) || normalizedTitle.includes(` ${normalizedQuery}`);
+}
+
 function shouldAggregateSearch(resolved) {
   const query = String(resolved?.query || "");
   if (!query) return false;
@@ -461,7 +475,7 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
         requestedBy,
         searchEngine: source.engine,
       });
-      const tracks = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks.slice(0, 8) : []);
+      const tracks = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks.slice(0, 20) : []);
       return { source, tracks };
     }),
     (async () => {
@@ -516,6 +530,50 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
     if (durationDiff !== 0) return durationDiff;
     return String(a.track?.title || "").localeCompare(String(b.track?.title || ""));
   });
+
+  const strictMatches = ranked.filter((item) => isStrictTitleMatch(item.track, query));
+  if (strictMatches.length > 0) {
+    strictMatches.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(a.track?.author || "").localeCompare(String(b.track?.author || ""));
+    });
+    logMusic("search_strict_title_match", {
+      query,
+      count: strictMatches.length,
+      top: strictMatches.slice(0, 5).map((item) => ({
+        title: item.track?.title || "unknown",
+        author: item.track?.author || "unknown",
+        source: item.sourceKey,
+        score: item.score,
+      })),
+    });
+    return {
+      tracks: strictMatches.map((item) => item.track),
+      playlist: null,
+    };
+  }
+
+  const nearMatches = ranked.filter((item) => isNearTitleMatch(item.track, query));
+  if (nearMatches.length > 0) {
+    nearMatches.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(a.track?.author || "").localeCompare(String(b.track?.author || ""));
+    });
+    logMusic("search_near_title_match", {
+      query,
+      count: nearMatches.length,
+      top: nearMatches.slice(0, 5).map((item) => ({
+        title: item.track?.title || "unknown",
+        author: item.track?.author || "unknown",
+        source: item.sourceKey,
+        score: item.score,
+      })),
+    });
+    return {
+      tracks: nearMatches.map((item) => item.track),
+      playlist: null,
+    };
+  }
 
   logMusic("search_ranked", {
     query,
