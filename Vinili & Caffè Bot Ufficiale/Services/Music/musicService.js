@@ -15,6 +15,39 @@ try {
   require.cache[opusscriptPath].exports = PatchedOpusScript;
 } catch {}
 
+try {
+  const opusModule = require("@discord-player/opus");
+  const originalEncode = opusModule.OpusEncoder?.prototype?._encode;
+  const originalDecode = opusModule.OpusDecoder?.prototype?._decode;
+  const resolveFrameSize = (ctx, buffer) => {
+    const configured = Number(ctx?._options?.frameSize || 0);
+    if (configured > 0) return configured;
+    const channels = Math.max(1, Number(ctx?._options?.channels || 2));
+    const pcmLength = Math.max(0, Number(buffer?.length || 0));
+    return Math.max(1, Math.floor(pcmLength / (channels * 2)));
+  };
+
+  if (typeof originalEncode === "function") {
+    opusModule.OpusEncoder.prototype._encode = function patchedEncode(buffer) {
+      if (this?.encoder?.encode && this?.encoder?.decode && this?._options) {
+        const frameSize = resolveFrameSize(this, buffer);
+        if (this._options.frameSize !== frameSize) this._options.frameSize = frameSize;
+      }
+      return originalEncode.call(this, buffer);
+    };
+  }
+
+  if (typeof originalDecode === "function") {
+    opusModule.OpusDecoder.prototype._decode = function patchedDecode(buffer) {
+      if (this?.encoder?.decode && this?._options) {
+        const frameSize = resolveFrameSize(this, buffer);
+        if (this._options.frameSize !== frameSize) this._options.frameSize = frameSize;
+      }
+      return originalDecode.call(this, buffer);
+    };
+  }
+} catch {}
+
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const { leaveTtsGuild } = require("../TTS/ttsService");
