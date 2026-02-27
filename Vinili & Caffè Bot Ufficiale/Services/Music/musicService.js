@@ -119,6 +119,11 @@ function stampTrackMetadata(track, requestedBy, extra = {}) {
     requestedAt: Date.now(),
     requestedById: String(requestedBy?.id || ""),
     recoveryQuery: String(extra.recoveryQuery || existing.recoveryQuery || "").trim(),
+    failedSources: Array.isArray(extra.failedSources)
+      ? [...new Set(extra.failedSources.map((item) => String(item || "").trim()).filter(Boolean))]
+      : Array.isArray(existing.failedSources)
+        ? existing.failedSources
+        : [],
   });
 }
 
@@ -303,6 +308,11 @@ function shouldAggregateSearch(resolved) {
 
 async function searchBestMatches(player, query, requestedBy, options = {}) {
   const allowYoutube = options.allowYoutube !== false;
+  const avoidSources = new Set(
+    Array.isArray(options.avoidSources)
+      ? options.avoidSources.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
+      : [],
+  );
   const primarySources = allowYoutube
     ? SEARCH_SOURCE_ENGINES
     : SEARCH_SOURCE_ENGINES.filter((item) => item.key !== "youtube");
@@ -348,13 +358,15 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
     if (item.status !== "fulfilled") continue;
     const { source, tracks } = item.value || {};
     for (const track of tracks || []) {
+      const trackSource = sourceKeyFromTrack(track);
+      if (avoidSources.has(trackSource)) continue;
       const identity = buildTrackIdentity(track);
       if (seen.has(identity)) continue;
       seen.add(identity);
       ranked.push({
         track,
         score: scoreTrackCandidate(track, query, source),
-        sourceKey: source?.key || "unknown",
+        sourceKey: trackSource || source?.key || "unknown",
       });
     }
   }
@@ -410,7 +422,9 @@ async function runSearch(player, resolved, requestedBy) {
   }
 
   if (shouldAggregateSearch(resolved)) {
-    const aggregated = await searchBestMatches(player, resolved.query, requestedBy);
+    const aggregated = await searchBestMatches(player, resolved.query, requestedBy, {
+      avoidSources: resolved?.avoidSources,
+    });
     if (Array.isArray(aggregated?.tracks) && aggregated.tracks.length) return aggregated;
   }
 
@@ -418,6 +432,36 @@ async function runSearch(player, resolved, requestedBy) {
     requestedBy,
     searchEngine: resolved.engine,
   });
+}
+
+async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
+  const playerRef = queue?.player || client.musicPlayer;
+  const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
+    ? finishedTrack.metadata
+    : {};
+  const failedSources = [
+    ...(Array.isArray(metadata.failedSources) ? metadata.failedSources : []),
+    String(avoidSource || sourceKeyFromTrack(finishedTrack) || "").trim(),
+  ].filter(Boolean);
+  const recoveryQuery = String(
+    metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
+  ).trim();
+  if (!recoveryQuery) throw new Error("missing recovery query");
+
+  const recoveredResult = await runSearch(playerRef, {
+    query: recoveryQuery,
+    engine: QueryType.AUTO_SEARCH,
+    translated: true,
+    youtubeConvertible: false,
+    avoidSources: failedSources,
+  }, queue?.guild?.members?.me || null);
+  const recoveredTrack = Array.isArray(recoveredResult?.tracks)
+    ? recoveredResult.tracks[0]
+    : null;
+  if (!recoveredTrack) throw new Error("no recovered track");
+  stampTrackMetadata(recoveredTrack, null, { recoveryQuery, failedSources });
+  await queue.node.play(recoveredTrack);
+  return recoveredTrack;
 }
 
 function parseDeezerTrackId(url) {
@@ -512,7 +556,7 @@ async function getPlayer(client) {
           error?.message || error,
         );
       });
-      player.events.on("playerError", (queue, error, track) => {
+      player.events.on("playerError", async (queue, error, track) => {
         const guildId = String(queue?.guild?.id || "");
         if (guildId) lastPlayerErrorAtByGuild.set(guildId, Date.now());
         global.logger?.error?.(
@@ -521,6 +565,14 @@ async function getPlayer(client) {
           track?.title || "unknown",
           error?.message || error,
         );
+        const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
+        if (!guildId || !track || retryCount >= 2) return;
+        try {
+          finishRetryCountByGuild.set(guildId, retryCount + 1);
+          await recoverTrackPlayback(queue, track, client, sourceKeyFromTrack(track));
+        } catch (recoveryError) {
+          global.logger?.warn?.("[MUSIC] player error recovery failed:", guildId, recoveryError?.message || recoveryError);
+        }
       });
       player.events.on("playerStart", (queue) => {
         queue?.node?.setVolume?.(DEFAULT_MUSIC_VOLUME);
@@ -541,30 +593,11 @@ async function getPlayer(client) {
         const finishedTrack = track || session?.track || queue?.currentTrack || null;
         if (guildId && finishedTrack && shouldTreatAsEarlyFinish(finishedTrack, session?.startedAt)) {
           const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
-          if (retryCount < 1) {
+          if (retryCount < 2) {
             finishRetryCountByGuild.set(guildId, retryCount + 1);
             global.logger?.warn?.("[MUSIC] Early finish detected, trying fresh recovery once:", guildId, finishedTrack?.title || "unknown");
             try {
-              const playerRef = queue?.player || client.musicPlayer;
-              const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
-                ? finishedTrack.metadata
-                : {};
-              const recoveryQuery = String(
-                metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
-              ).trim();
-              if (!recoveryQuery) throw new Error("missing recovery query");
-              const recoveredResult = await runSearch(playerRef, {
-                query: recoveryQuery,
-                engine: QueryType.AUTO_SEARCH,
-                translated: true,
-                youtubeConvertible: false,
-              }, queue?.guild?.members?.me || null);
-              const recoveredTrack = Array.isArray(recoveredResult?.tracks)
-                ? recoveredResult.tracks[0]
-                : null;
-              if (!recoveredTrack) throw new Error("no recovered track");
-              stampTrackMetadata(recoveredTrack, null, { recoveryQuery });
-              await queue.node.play(recoveredTrack);
+              await recoverTrackPlayback(queue, finishedTrack, client, sourceKeyFromTrack(finishedTrack));
               return;
             } catch (error) {
               global.logger?.warn?.("[MUSIC] Early finish recovery failed:", guildId, error?.message || error);
