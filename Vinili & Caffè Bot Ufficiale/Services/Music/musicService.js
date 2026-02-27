@@ -104,6 +104,7 @@ const SEARCH_SOURCE_ENGINES = [
 const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
 const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
 const SUPPORTED_PLAYBACK_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
+let spotifyApiTokenCache = null;
 
 function logMusic(event, payload = {}) {
   const logger = global.logger;
@@ -223,6 +224,43 @@ async function fetchSoundCloudOEmbed(url) {
     title: String(data.title || "").trim(),
     author: String(data.author_name || "").trim(),
   };
+}
+
+async function getSpotifyApiToken() {
+  const clientId = String(process.env.SPOTIFY_CLIENT_ID || "").trim();
+  const clientSecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
+  if (!clientId || !clientSecret) return null;
+
+  const now = Date.now();
+  if (
+    spotifyApiTokenCache?.accessToken &&
+    Number(spotifyApiTokenCache.expiresAt || 0) - now > 60_000
+  ) {
+    return spotifyApiTokenCache.accessToken;
+  }
+
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const response = await axios.post(
+    "https://accounts.spotify.com/api/token",
+    "grant_type=client_credentials",
+    {
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      timeout: 12000,
+    },
+  ).catch(() => null);
+
+  const token = String(response?.data?.access_token || "").trim();
+  const expiresIn = Math.max(0, Number(response?.data?.expires_in || 0));
+  if (!token || !expiresIn) return null;
+
+  spotifyApiTokenCache = {
+    accessToken: token,
+    expiresAt: now + expiresIn * 1000,
+  };
+  return token;
 }
 
 function shouldTreatAsEarlyFinish(track, startedAt) {
@@ -1046,6 +1084,110 @@ async function appleMusicToSearchQuery(url) {
   return [song.trackName, song.artistName].filter(Boolean).join(" ");
 }
 
+async function searchPublicCatalogCandidates(query) {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery || /^https?:\/\//i.test(String(query || ""))) return [];
+
+  const spotifyToken = await getSpotifyApiToken().catch(() => null);
+  const settled = await Promise.allSettled([
+    axios.get("https://api.deezer.com/search", {
+      params: { q: query, limit: 10 },
+      timeout: 12000,
+    }),
+    axios.get("https://itunes.apple.com/search", {
+      params: {
+        term: query,
+        entity: "song",
+        limit: 10,
+      },
+      timeout: 12000,
+    }),
+    spotifyToken
+      ? axios.get("https://api.spotify.com/v1/search", {
+          params: {
+            q: query,
+            type: "track",
+            limit: 10,
+            market: "IT",
+          },
+          headers: {
+            Authorization: `Bearer ${spotifyToken}`,
+          },
+          timeout: 12000,
+        })
+      : Promise.resolve(null),
+  ]);
+
+  const deezerRows = settled[0]?.status === "fulfilled" && Array.isArray(settled[0]?.value?.data?.data)
+    ? settled[0].value.data.data
+    : [];
+  const appleRows = settled[1]?.status === "fulfilled" && Array.isArray(settled[1]?.value?.data?.results)
+    ? settled[1].value.data.results
+    : [];
+  const spotifyRows =
+    settled[2]?.status === "fulfilled" && Array.isArray(settled[2]?.value?.data?.tracks?.items)
+      ? settled[2].value.data.tracks.items
+      : [];
+
+  const catalog = [
+    ...deezerRows.map((row) => ({
+      title: String(row?.title || "").trim(),
+      author: String(row?.artist?.name || "").trim(),
+      url: String(row?.link || "").trim(),
+      source: "deezer",
+      resolverInput: String(row?.link || "").trim(),
+      durationMS: Math.max(0, Number(row?.duration || 0) * 1000),
+      thumbnail: String(row?.album?.cover_medium || row?.album?.cover || "").trim(),
+    })),
+    ...appleRows.map((row) => ({
+      title: String(row?.trackName || "").trim(),
+      author: String(row?.artistName || "").trim(),
+      url: String(row?.trackViewUrl || "").trim(),
+      source: "apple",
+      resolverInput: `${String(row?.trackName || "").trim()} ${String(row?.artistName || "").trim()}`.trim(),
+      durationMS: Math.max(0, Number(row?.trackTimeMillis || 0)),
+      thumbnail: String(row?.artworkUrl100 || "").trim(),
+    })),
+    ...spotifyRows.map((row) => ({
+      title: String(row?.name || "").trim(),
+      author: Array.isArray(row?.artists)
+        ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(", ")
+        : "",
+      url: String(row?.external_urls?.spotify || "").trim(),
+      source: "spotify",
+      resolverInput: String(row?.external_urls?.spotify || "").trim() ||
+        `${String(row?.name || "").trim()} ${
+          Array.isArray(row?.artists)
+            ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(" ")
+            : ""
+        }`.trim(),
+      durationMS: Math.max(0, Number(row?.duration_ms || 0)),
+      thumbnail: Array.isArray(row?.album?.images) && row.album.images[0]?.url
+        ? String(row.album.images[0].url).trim()
+        : "",
+    })),
+  ]
+    .filter((item) => item.title && item.author)
+    .filter((item) => !isPodcastLikeTrack(item))
+    .map((item) => ({
+      ...item,
+      catalogOnly: true,
+      score: scoreTrackCandidate(item, query, { key: item.source, bias: item.source === "deezer" ? 22 : 18 }),
+    }))
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(a.author || "").localeCompare(String(b.author || ""));
+    });
+
+  const seen = new Set();
+  return catalog.filter((item) => {
+    const identity = `${item.source}:${normalizeText(item.title)}:${normalizeText(item.author)}`;
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
+}
+
 async function resolveSearchInput(input) {
   const query = cleanQuery(input);
   if (!query) return {
@@ -1056,10 +1198,7 @@ async function resolveSearchInput(input) {
   };
 
   if (/deezer\.com\/(?:[a-z]{2}\/)?track\/\d+/i.test(query)) {
-    const mapped = await deezerToSearchQuery(query);
-    if (mapped) {
-      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true, youtubeConvertible: false };
-    }
+    return { query, engine: QueryType.AUTO, translated: false, youtubeConvertible: false };
   }
 
   if (/music\.apple\.com\//i.test(query)) {
@@ -1439,6 +1578,31 @@ async function searchPlayable({
   if (!resolved.query) return { ok: false, reason: "empty_query" };
   const searchResult = await runSearch(player, resolved, requestedBy);
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
+    if (resolved?.engine === QueryType.AUTO_SEARCH && !resolved?.youtubeConvertible) {
+      const catalogCandidates = await searchPublicCatalogCandidates(resolved.query).catch(() => []);
+      if (catalogCandidates.length > 0) {
+        logMusic("search_catalog_fallback", {
+          query: resolved.query,
+          count: catalogCandidates.length,
+          top: catalogCandidates.slice(0, 5).map((item) => ({
+            title: item.title,
+            author: item.author,
+            source: item.source,
+            resolverInput: item.resolverInput,
+          })),
+        });
+        return {
+          ok: true,
+          player,
+          resolved,
+          searchResult: {
+            tracks: catalogCandidates,
+            playlist: null,
+          },
+          catalogOnly: true,
+        };
+      }
+    }
     if (resolved?.youtubeConvertible) {
       return { ok: false, reason: "youtube_not_supported" };
     }

@@ -172,7 +172,14 @@ module.exports = {
         }),
       });
       if (!picked) return;
-      finalInput = `${picked?.title || ""} ${picked?.author || ""}`.trim();
+      finalInput = String(
+        picked?.resolverInput || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
+      );
+    } else if (!search.searchResult?.playlist && search.catalogOnly && searchTracks.length === 1) {
+      const onlyTrack = searchTracks[0];
+      finalInput = String(
+        onlyTrack?.resolverInput || `${onlyTrack?.title || ""} ${onlyTrack?.author || ""}`.trim(),
+      );
     }
 
     const result = await playRequest({
