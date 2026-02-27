@@ -11,9 +11,6 @@
     "test:prefix-metadata": "node scripts/test-prefix-metadata.js",
     "docs:commands": "node scripts/generate-prefix-docs.js"
   },
-  "engines": {
-    "node": ">=20 <23"
-  },
   "dependencies": {
     "@discordjs/rest": "^2.6.0",
     "@discordjs/voice": "^0.19.0",
