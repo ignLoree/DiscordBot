@@ -376,6 +376,8 @@ function enqueue(state, item) {
 async function handleTtsMessage(message, client, prefix) {
   const config = client?.config;
   if (message?.author?.bot) return;
+  const musicQueue = client?.musicPlayer?.nodes?.get?.(message.guild?.id);
+  if (musicQueue?.connection) return;
   if (!shouldHandleMessage(message, config, prefix)) return;
   if (!message.member && message.guild?.members?.fetch) {
     try {
@@ -445,6 +447,14 @@ async function joinTtsChannel(voiceChannel) {
   const state = getState(voiceChannel);
   const connection = await ensureConnection(state, voiceChannel);
   if (!connection) return { ok: false, reason: "locked" };
+  return { ok: true };
+}
+
+async function armTtsChannel(voiceChannel) {
+  if (!voiceChannel) return { ok: false, reason: "no_voice_channel" };
+  if (!voiceChannel.joinable) return { ok: false, reason: "not_joinable" };
+  setLockedChannel(voiceChannel.guild.id, voiceChannel.id);
+  await saveVoiceState(voiceChannel.guild.id, voiceChannel.id);
   return { ok: true };
 }
 function findLockedChannelIdByGuild(guildId) {
@@ -572,6 +582,7 @@ async function restoreTtsConnections(client) {
 
 module.exports = {
   handleTtsMessage,
+  armTtsChannel,
   joinTtsChannel,
   leaveTtsGuild,
   setUserTtsLang,

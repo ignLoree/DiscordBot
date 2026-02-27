@@ -256,9 +256,12 @@ module.exports = {
         leaveOnEnd: false,
         leaveOnEndCooldown: 0,
         selfDeaf: true,
-        volume: 80,
+        volume: 25,
+        bufferingTimeout: 7_000,
+        connectionTimeout: 20_000,
       });
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
+      queue.node.setVolume(25);
 
       if (!queue.connection) {
         const connected = await queue.connect(voiceChannel).catch(() => null);

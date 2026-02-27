@@ -5,11 +5,14 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
+const lastPlayerStartAtByGuild = new Map();
+const lastPlayerErrorAtByGuild = new Map();
 const manualLeaveAtByGuild = new Map();
 const inactivityTimersByGuild = new Map();
 const emptyVoiceTimersByGuild = new Map();
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
+const DEFAULT_MUSIC_VOLUME = 25;
 
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
@@ -229,6 +232,8 @@ async function getPlayer(client) {
         );
       });
       player.events.on("playerError", (queue, error, track) => {
+        const guildId = String(queue?.guild?.id || "");
+        if (guildId) lastPlayerErrorAtByGuild.set(guildId, Date.now());
         global.logger?.error?.(
           "[MUSIC] player error:",
           queue?.guild?.id || "unknown",
@@ -237,6 +242,8 @@ async function getPlayer(client) {
         );
       });
       player.events.on("playerStart", (queue) => {
+        const guildId = String(queue?.guild?.id || "");
+        if (guildId) lastPlayerStartAtByGuild.set(guildId, Date.now());
         clearInactivityTimer(queue?.guild?.id);
         clearEmptyVoiceTimer(queue?.guild?.id);
       });
@@ -250,6 +257,13 @@ async function getPlayer(client) {
       });
       player.events.on("emptyQueue", async (queue) => {
         const guildId = String(queue?.guild?.id || "");
+        const now = Date.now();
+        const lastStartAt = guildId ? Number(lastPlayerStartAtByGuild.get(guildId) || 0) : 0;
+        const lastPlayerErrorAt = guildId ? Number(lastPlayerErrorAtByGuild.get(guildId) || 0) : 0;
+        if ((lastStartAt && now - lastStartAt < 15_000) || (lastPlayerErrorAt && now - lastPlayerErrorAt < 15_000)) {
+          global.logger?.warn?.("[MUSIC] emptyQueue ignored shortly after start/error:", guildId);
+          return;
+        }
         if (guildId) lastEmptyQueueAtByGuild.set(guildId, Date.now());
         await sendQueueNotice(queue, "There are no more tracks");
         scheduleInactivityLeave(queue);
@@ -313,12 +327,48 @@ async function playRequest({
     leaveOnEnd: false,
     leaveOnEndCooldown: 0,
     selfDeaf: true,
-    volume: 80,
+    volume: DEFAULT_MUSIC_VOLUME,
+    connectionTimeout: 20_000,
   });
   queue.metadata = { ...(queue.metadata || {}), channel };
+  queue.node.setVolume(DEFAULT_MUSIC_VOLUME);
 
   if (!queue.connection) {
     await queue.connect(voiceChannel);
+  }
+
+  clearInactivityTimer(guild?.id);
+
+  const wasPlaying = queue.isPlaying();
+  if (!wasPlaying) {
+    if (searchResult.playlist) {
+      const [firstTrack, ...restTracks] = searchResult.tracks;
+      if (!firstTrack) return { ok: false, reason: "empty_queue" };
+      stampTrackMetadata(firstTrack, requestedBy);
+      for (const track of restTracks) {
+        stampTrackMetadata(track, requestedBy);
+      }
+      if (restTracks.length) queue.addTrack(restTracks);
+      await queue.node.play(firstTrack);
+      return {
+        ok: true,
+        mode: "started",
+        track: firstTrack,
+        playlist: searchResult.playlist || null,
+        translated: resolved.translated,
+      };
+    }
+    const firstTrack = searchResult.tracks[0];
+    if (!firstTrack) return { ok: false, reason: "empty_queue" };
+    stampTrackMetadata(firstTrack, requestedBy);
+    await queue.node.play(firstTrack);
+    return {
+      ok: true,
+      mode: "started",
+      track: firstTrack,
+      playlist: searchResult.playlist || null,
+      translated: resolved.translated,
+    };
   }
 
   if (searchResult.playlist) {
@@ -330,23 +380,6 @@ async function playRequest({
     const single = searchResult.tracks[0];
     stampTrackMetadata(single, requestedBy);
     queue.addTrack(single);
-  }
-  clearInactivityTimer(guild?.id);
-
-  const wasPlaying = queue.isPlaying();
-  if (!wasPlaying) {
-    const nextTrack = queue.tracks.at(0);
-    if (!nextTrack) {
-      return { ok: false, reason: "empty_queue" };
-    }
-    await queue.node.play(nextTrack);
-    return {
-      ok: true,
-      mode: "started",
-      track: nextTrack,
-      playlist: searchResult.playlist || null,
-      translated: resolved.translated,
-    };
   }
 
   return {

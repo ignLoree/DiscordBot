@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { joinTtsChannel } = require("../../Services/TTS/ttsService");
+const { armTtsChannel } = require("../../Services/TTS/ttsService");
 const { getPlayer } = require("../../Services/Music/musicService");
 
 module.exports = {
@@ -32,7 +32,7 @@ module.exports = {
       );
     }
 
-    const ttsResult = await joinTtsChannel(voiceChannel);
+    const ttsResult = await armTtsChannel(voiceChannel);
     if (!ttsResult.ok && ttsResult.reason === "locked") return;
 
     const player = await getPlayer(message.client).catch(() => null);
@@ -44,7 +44,7 @@ module.exports = {
         leaveOnEnd: false,
         leaveOnEndCooldown: 0,
         selfDeaf: true,
-        volume: 80,
+        volume: 50,
       });
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
       if (!queue.connection) {
