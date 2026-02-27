@@ -31,6 +31,52 @@ function isSupportedPickerTrack(track) {
   return ["spotify", "apple", "deezer"].includes(getTrackSourceKey(track));
 }
 
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function chooseStrongDirectMatch(input, tracks = []) {
+  const normalizedInput = normalizeText(input);
+  if (!normalizedInput || /^https?:\/\//i.test(String(input || ""))) return null;
+
+  const inputTokens = normalizedInput.split(" ").filter(Boolean);
+  if (inputTokens.length < 2) return null;
+
+  const scored = tracks.map((track) => {
+    const title = normalizeText(track?.title);
+    const author = normalizeText(track?.author);
+    const combined = [title, author].filter(Boolean).join(" ");
+    let score = 0;
+
+    if (combined === normalizedInput) score += 220;
+    if (`${title} ${author}`.trim() === normalizedInput) score += 180;
+    if (title && normalizedInput.includes(title)) score += 80;
+    if (author && normalizedInput.includes(author)) score += 65;
+    if (combined.includes(normalizedInput)) score += 50;
+
+    let tokenMatches = 0;
+    for (const token of inputTokens) {
+      if (title.includes(token) || author.includes(token)) tokenMatches += 1;
+    }
+    score += tokenMatches * 15;
+
+    return { track, score };
+  }).sort((a, b) => b.score - a.score);
+
+  if (!scored.length) return null;
+  const best = scored[0];
+  const second = scored[1] || null;
+  if (best.score < 120) return null;
+  if (second && best.score - second.score < 25) return null;
+  return best.track;
+}
+
 function formatDurationMs(ms) {
   const total = Math.max(0, Math.floor(Number(ms || 0) / 1000));
   const hours = Math.floor(total / 3600);
@@ -118,6 +164,7 @@ module.exports = {
 
     let finalInput = input;
     let finalSearchResult = null;
+    let finalResolved = null;
     const search = await searchPlayable({
       client: message.client,
       input,
@@ -159,7 +206,16 @@ module.exports = {
         .setDescription("No results ⛔");
       return safeMessageReply(message, { embeds: [noResultsEmbed] });
     }
-    if (!search.searchResult?.playlist && searchTracks.length > 1) {
+    const strongDirectMatch = !search.searchResult?.playlist
+      ? chooseStrongDirectMatch(input, searchTracks)
+      : null;
+    if (strongDirectMatch) {
+      finalInput = String(
+        strongDirectMatch?.resolverInput || `${strongDirectMatch?.title || ""} ${strongDirectMatch?.author || ""}`.trim(),
+      );
+      finalSearchResult = null;
+      finalResolved = null;
+    } else if (!search.searchResult?.playlist && searchTracks.length > 1) {
       const picked = await pickFromPagedMenu({
         message,
         items: searchTracks.slice(0, 100),
@@ -176,17 +232,21 @@ module.exports = {
       finalInput = String(
         picked?.resolverInput || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
       );
-      finalSearchResult = { tracks: [picked], playlist: null };
+      finalSearchResult = null;
+      finalResolved = null;
     } else if (!search.searchResult?.playlist && search.catalogOnly && searchTracks.length === 1) {
       const onlyTrack = searchTracks[0];
       finalInput = String(
         onlyTrack?.resolverInput || `${onlyTrack?.title || ""} ${onlyTrack?.author || ""}`.trim(),
       );
-      finalSearchResult = { tracks: [onlyTrack], playlist: null };
+      finalSearchResult = null;
+      finalResolved = null;
     } else if (!search.searchResult?.playlist && searchTracks.length === 1) {
       finalSearchResult = { tracks: [searchTracks[0]], playlist: null };
+      finalResolved = search.resolved;
     } else if (search.searchResult?.playlist) {
       finalSearchResult = search.searchResult;
+      finalResolved = search.resolved;
     }
 
     const result = await playRequest({
@@ -196,7 +256,7 @@ module.exports = {
       voiceChannel,
       requestedBy: message.member,
       input: finalInput,
-      preResolved: search.resolved,
+      preResolved: finalResolved,
       preSearchResult: finalSearchResult,
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 

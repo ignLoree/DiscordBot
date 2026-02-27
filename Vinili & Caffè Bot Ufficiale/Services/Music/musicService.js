@@ -105,6 +105,11 @@ const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 }
 const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
 const SUPPORTED_PLAYBACK_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
 let spotifyApiTokenCache = null;
+const CATALOG_SOURCE_PRIORITY = {
+  spotify: 3,
+  apple: 2,
+  deezer: 1,
+};
 
 function logMusic(event, payload = {}) {
   const logger = global.logger;
@@ -386,6 +391,18 @@ function isYouTubeVideoUrl(value) {
 
 function isSoundCloudUrl(value) {
   return /soundcloud\.com/i.test(String(value || ""));
+}
+
+function isSpotifyUrl(value) {
+  return /spotify\.com/i.test(String(value || ""));
+}
+
+function isAppleMusicUrl(value) {
+  return /music\.apple\.com|itunes\.apple\.com/i.test(String(value || ""));
+}
+
+function isDeezerUrl(value) {
+  return /deezer\.com/i.test(String(value || ""));
 }
 
 function normalizeText(value) {
@@ -947,10 +964,24 @@ async function resolvePlayableTrackFromCandidate(player, candidate, requestedBy)
   if (!candidate) return null;
   if (typeof candidate.setMetadata === "function") return candidate;
 
+  const fallbackQuery = `${String(candidate?.title || "").trim()} ${String(candidate?.author || "").trim()}`.trim();
+  if (fallbackQuery) {
+    const publicMatches = await searchPublicCatalogCandidates(fallbackQuery).catch(() => []);
+    const deezerPreferred = publicMatches.find((item) => item?.source === "deezer") || null;
+    if (deezerPreferred?.resolverInput) {
+      const deezerResult = await player.search(deezerPreferred.resolverInput, {
+        requestedBy,
+        searchEngine: QueryType.AUTO,
+      }).catch(() => null);
+      const deezerTrack = filterPlayableTracks(Array.isArray(deezerResult?.tracks) ? deezerResult.tracks : [])[0] || null;
+      if (deezerTrack) return deezerTrack;
+    }
+  }
+
   const attempts = [
     String(candidate?.resolverInput || "").trim(),
     String(candidate?.url || "").trim(),
-    `${String(candidate?.title || "").trim()} ${String(candidate?.author || "").trim()}`.trim(),
+    fallbackQuery,
   ].filter(Boolean);
 
   for (const attempt of attempts) {
@@ -1391,8 +1422,28 @@ async function searchPublicCatalogCandidates(query) {
     });
 
   const seen = new Set();
-  return catalog.filter((item) => {
-    const identity = `${item.source}:${normalizeText(item.title)}:${normalizeText(item.author)}`;
+  const unique = [];
+  for (const item of catalog) {
+    const identity = `${normalizeText(item.title)}:${normalizeText(item.author)}`;
+    const existingIndex = unique.findIndex(
+      (entry) => `${normalizeText(entry.title)}:${normalizeText(entry.author)}` === identity,
+    );
+    if (existingIndex === -1) {
+      unique.push(item);
+      continue;
+    }
+    const existing = unique[existingIndex];
+    const currentPriority = Number(CATALOG_SOURCE_PRIORITY[item.source] || 0);
+    const existingPriority = Number(CATALOG_SOURCE_PRIORITY[existing.source] || 0);
+    if (
+      currentPriority > existingPriority ||
+      (currentPriority === existingPriority && Number(item.score || 0) > Number(existing.score || 0))
+    ) {
+      unique[existingIndex] = item;
+    }
+  }
+  return unique.filter((item) => {
+    const identity = `${normalizeText(item.title)}:${normalizeText(item.author)}`;
     if (seen.has(identity)) return false;
     seen.add(identity);
     return true;
@@ -1813,6 +1864,26 @@ async function searchPlayable({
   requestedBy,
 }) {
   const player = await getPlayer(client);
+  const rawInput = cleanQuery(input);
+  if (rawInput && /^https?:\/\//i.test(rawInput) && (isSpotifyUrl(rawInput) || isAppleMusicUrl(rawInput) || isDeezerUrl(rawInput))) {
+    const directResult = await player.search(rawInput, {
+      requestedBy,
+      searchEngine: QueryType.AUTO,
+    }).catch(() => null);
+    if (directResult && Array.isArray(directResult.tracks) && directResult.tracks.length > 0) {
+      return {
+        ok: true,
+        player,
+        resolved: {
+          query: rawInput,
+          engine: QueryType.AUTO,
+          translated: false,
+          youtubeConvertible: false,
+        },
+        searchResult: directResult,
+      };
+    }
+  }
   const resolved = await resolveSearchInput(input);
   if (!resolved.query) return { ok: false, reason: "empty_query" };
   if (resolved?.directCatalogResult?.tracks?.length) {
