@@ -5,13 +5,6 @@ const { DefaultExtractors } = require("@discord-player/extractor");
 const { leaveTtsGuild } = require("../TTS/ttsService");
 const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
 
-let YoutubeiExtractor = null;
-try {
-  ({ YoutubeiExtractor } = require("discord-player-youtubei"));
-} catch (error) {
-  YoutubeiExtractor = null;
-}
-
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
 const lastQueueNoticeAtByGuild = new Map();
@@ -26,10 +19,10 @@ const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
 const DEFAULT_MUSIC_VOLUME = 5;
 const SEARCH_SOURCE_ENGINES = [
-  { engine: QueryType.YOUTUBE_SEARCH, key: "youtube", bias: 20 },
   { engine: QueryType.SPOTIFY_SEARCH, key: "spotify", bias: 16 },
   { engine: QueryType.APPLE_MUSIC_SEARCH, key: "apple", bias: 14 },
   { engine: QueryType.SOUNDCLOUD_SEARCH, key: "soundcloud", bias: 10 },
+  { engine: QueryType.YOUTUBE_SEARCH, key: "youtube", bias: 8 },
 ];
 const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
 const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "soundcloud", "deezer"]);
@@ -78,6 +71,22 @@ async function notifyQueueEnded(queue) {
   scheduleInactivityLeave(queue);
 }
 
+async function fetchYouTubeOEmbed(url) {
+  const response = await axios.get("https://www.youtube.com/oembed", {
+    params: {
+      url,
+      format: "json",
+    },
+    timeout: 12000,
+  }).catch(() => null);
+  const data = response?.data;
+  if (!data?.title) return null;
+  return {
+    title: String(data.title || "").trim(),
+    author: String(data.author_name || "").trim(),
+  };
+}
+
 function shouldTreatAsEarlyFinish(track, startedAt) {
   const durationMs = Math.max(0, Number(track?.durationMS || 0));
   if (durationMs < 30_000) return false;
@@ -100,7 +109,7 @@ function queueTracksToArray(queue) {
   return [];
 }
 
-function stampTrackMetadata(track, requestedBy) {
+function stampTrackMetadata(track, requestedBy, extra = {}) {
   if (!track || typeof track.setMetadata !== "function") return;
   const existing = track.metadata && typeof track.metadata === "object"
     ? track.metadata
@@ -109,6 +118,7 @@ function stampTrackMetadata(track, requestedBy) {
     ...existing,
     requestedAt: Date.now(),
     requestedById: String(requestedBy?.id || ""),
+    recoveryQuery: String(extra.recoveryQuery || existing.recoveryQuery || "").trim(),
   });
 }
 
@@ -365,15 +375,11 @@ async function searchBestMatches(player, query, requestedBy, options = {}) {
 async function tryConvertYoutubeVideo(player, query, requestedBy) {
   if (!isYouTubeVideoUrl(query)) return null;
 
-  const rawResult = await player.search(query, {
-    requestedBy,
-    searchEngine: QueryType.YOUTUBE_VIDEO,
-  }).catch(() => null);
-  const youtubeTrack = Array.isArray(rawResult?.tracks) ? rawResult.tracks[0] : null;
-  if (!youtubeTrack) return null;
+  const metadata = await fetchYouTubeOEmbed(query).catch(() => null);
+  if (!metadata?.title) return null;
 
-  const cleanTitle = cleanYouTubeTrackTitle(youtubeTrack.title);
-  const author = String(youtubeTrack.author || "").replace(/\s*-\s*topic$/i, "").trim();
+  const cleanTitle = cleanYouTubeTrackTitle(metadata.title);
+  const author = String(metadata.author || "").replace(/\s*-\s*topic$/i, "").trim();
   const convertedQuery = [cleanTitle, author].filter(Boolean).join(" ").trim();
   if (!convertedQuery) return null;
 
@@ -383,13 +389,7 @@ async function tryConvertYoutubeVideo(player, query, requestedBy) {
   const convertedTracks = Array.isArray(converted?.tracks) ? converted.tracks : [];
   const bestTrack = convertedTracks.find((track) => NON_YOUTUBE_SOURCE_KEYS.has(sourceKeyFromTrack(track)));
 
-  if (!bestTrack) {
-    return {
-      query: convertedQuery,
-      searchResult: rawResult,
-      converted: false,
-    };
-  }
+  if (!bestTrack) return null;
 
   return {
     query: convertedQuery,
@@ -503,11 +503,6 @@ async function getPlayer(client) {
       const player = new Player(client, {
         skipFFmpeg: false,
       });
-      if (YoutubeiExtractor) {
-        await player.extractors.register(YoutubeiExtractor, {});
-      } else {
-        global.logger?.warn?.("[MUSIC] discord-player-youtubei not installed, using default extractors only.");
-      }
       await player.extractors.loadMulti(DefaultExtractors);
 
       player.events.on("error", (queue, error) => {
@@ -548,12 +543,31 @@ async function getPlayer(client) {
           const retryCount = Number(finishRetryCountByGuild.get(guildId) || 0);
           if (retryCount < 1) {
             finishRetryCountByGuild.set(guildId, retryCount + 1);
-            global.logger?.warn?.("[MUSIC] Early finish detected, retrying track once:", guildId, finishedTrack?.title || "unknown");
+            global.logger?.warn?.("[MUSIC] Early finish detected, trying fresh recovery once:", guildId, finishedTrack?.title || "unknown");
             try {
-              await queue.node.play(finishedTrack);
+              const playerRef = queue?.player || client.musicPlayer;
+              const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
+                ? finishedTrack.metadata
+                : {};
+              const recoveryQuery = String(
+                metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
+              ).trim();
+              if (!recoveryQuery) throw new Error("missing recovery query");
+              const recoveredResult = await runSearch(playerRef, {
+                query: recoveryQuery,
+                engine: QueryType.AUTO_SEARCH,
+                translated: true,
+                youtubeConvertible: false,
+              }, queue?.guild?.members?.me || null);
+              const recoveredTrack = Array.isArray(recoveredResult?.tracks)
+                ? recoveredResult.tracks[0]
+                : null;
+              if (!recoveredTrack) throw new Error("no recovered track");
+              stampTrackMetadata(recoveredTrack, null, { recoveryQuery });
+              await queue.node.play(recoveredTrack);
               return;
             } catch (error) {
-              global.logger?.warn?.("[MUSIC] Early finish retry failed:", guildId, error?.message || error);
+              global.logger?.warn?.("[MUSIC] Early finish recovery failed:", guildId, error?.message || error);
             }
           }
         }
@@ -666,9 +680,13 @@ async function playRequest({
     if (searchResult.playlist) {
       const [firstTrack, ...restTracks] = searchResult.tracks;
       if (!firstTrack) return { ok: false, reason: "empty_queue" };
-      stampTrackMetadata(firstTrack, requestedBy);
+      stampTrackMetadata(firstTrack, requestedBy, {
+        recoveryQuery: resolved.query,
+      });
       for (const track of restTracks) {
-        stampTrackMetadata(track, requestedBy);
+        stampTrackMetadata(track, requestedBy, {
+          recoveryQuery: `${track?.title || ""} ${track?.author || ""}`.trim(),
+        });
       }
       if (restTracks.length) queue.addTrack(restTracks);
       await queue.node.play(firstTrack);
@@ -682,7 +700,9 @@ async function playRequest({
     }
     const firstTrack = searchResult.tracks[0];
     if (!firstTrack) return { ok: false, reason: "empty_queue" };
-    stampTrackMetadata(firstTrack, requestedBy);
+    stampTrackMetadata(firstTrack, requestedBy, {
+      recoveryQuery: resolved.query,
+    });
     await queue.node.play(firstTrack);
     return {
       ok: true,
@@ -695,12 +715,16 @@ async function playRequest({
 
   if (searchResult.playlist) {
     for (const track of searchResult.tracks) {
-      stampTrackMetadata(track, requestedBy);
+      stampTrackMetadata(track, requestedBy, {
+        recoveryQuery: `${track?.title || ""} ${track?.author || ""}`.trim(),
+      });
     }
     queue.addTrack(searchResult.tracks);
   } else {
     const single = searchResult.tracks[0];
-    stampTrackMetadata(single, requestedBy);
+    stampTrackMetadata(single, requestedBy, {
+      recoveryQuery: resolved.query,
+    });
     queue.addTrack(single);
   }
 
