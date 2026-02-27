@@ -82,6 +82,28 @@ function pidFile(botKey) {
     return path.resolve(baseDir, `.shard_${botKey}.pid`);
 }
 
+function readPidFile(botKey) {
+    const file = pidFile(botKey);
+    if (!fs.existsSync(file)) return null;
+
+    try {
+        const pid = Number(fs.readFileSync(file, 'utf8').trim());
+        return Number.isNaN(pid) ? null : pid;
+    } catch {
+        return null;
+    }
+}
+
+function isPidRunning(pid) {
+    if (!pid || Number.isNaN(pid)) return false;
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function runNpmInstall(installDir, extraArgs = []) {
     return new Promise((resolveInstall) => {
         const args = [
@@ -123,12 +145,7 @@ function cleanupStalePid(botKey) {
     const file = pidFile(botKey);
     if (!fs.existsSync(file)) return;
 
-    let pid = null;
-    try {
-        pid = Number(fs.readFileSync(file, 'utf8').trim());
-    } catch {
-        pid = null;
-    }
+    const pid = readPidFile(botKey);
 
     if (processRefs[botKey] && pid && processRefs[botKey].pid === pid) return;
     if (pid && !Number.isNaN(pid)) killPidTree(pid);
@@ -290,6 +307,14 @@ function restartBot(botKey, options = {}) {
     restarting[botKey] = true;
 
     const proc = processRefs[botKey];
+    const pidFromFile = readPidFile(botKey);
+
+    const startReplacement = () => {
+        if (!restarting[botKey]) return;
+        restarting[botKey] = false;
+        runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
+    };
+
     if (proc && !proc.killed) {
         console.log(`[Loader] Restart ${bot.label}...`);
 
@@ -299,21 +324,43 @@ function restartBot(botKey, options = {}) {
 
         proc.once('exit', () => {
             clearTimeout(forceTimer);
-            restarting[botKey] = false;
-            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
+            startReplacement();
         });
 
         try {
             proc.kill();
         } catch {
-            restarting[botKey] = false;
-            runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
+            startReplacement();
         }
         return;
     }
 
-    restarting[botKey] = false;
-    runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
+    if (pidFromFile && isPidRunning(pidFromFile)) {
+        console.log(`[Loader] Restart ${bot.label}: killing stale PID ${pidFromFile}...`);
+        try { killPidTree(pidFromFile); } catch { }
+
+        const startedAt = Date.now();
+        const waitForExit = () => {
+            if (!isPidRunning(pidFromFile)) {
+                try { fs.unlinkSync(pidFile(botKey)); } catch { }
+                startReplacement();
+                return;
+            }
+
+            if (Date.now() - startedAt >= FORCE_KILL_DELAY_MS) {
+                console.log(`[Loader] ${bot.label}: PID ${pidFromFile} still alive after timeout, starting replacement anyway.`);
+                startReplacement();
+                return;
+            }
+
+            setTimeout(waitForExit, 250);
+        };
+
+        waitForExit();
+        return;
+    }
+
+    startReplacement();
 }
 
 function readRestartPayload() {

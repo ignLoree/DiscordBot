@@ -48,7 +48,7 @@ function acquireSingleInstanceLock(lockName) {
   try {
     writeLock();
   } catch (error) {
-    if (error?.code !== "EEXIST") throw error;
+    if (!error || error.code !== "EEXIST") throw error;
 
     let existingPid = null;
     try {
@@ -56,9 +56,11 @@ function acquireSingleInstanceLock(lockName) {
     } catch {}
 
     if (isPidAlive(existingPid)) {
-      global.logger?.error?.(
-        `[LOGIN] Another instance is already running (PID: ${existingPid}). Exiting.`,
-      );
+      if (global.logger && typeof global.logger.error === "function") {
+        global.logger.error(
+          `[LOGIN] Another instance is already running (PID: ${existingPid}). Exiting.`,
+        );
+      }
       process.exit(1);
     }
 
@@ -120,7 +122,7 @@ try {
 } catch (err) {
   global.logger.error(
     "[Bot Test] config.json mancante o non valido:",
-    err?.message || err,
+    err && err.message ? err.message : err,
   );
   process.exit(1);
 }
