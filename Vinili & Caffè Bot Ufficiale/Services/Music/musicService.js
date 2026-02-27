@@ -2,9 +2,15 @@ const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
-const { YoutubeiExtractor } = require("discord-player-youtubei");
 const { leaveTtsGuild } = require("../TTS/ttsService");
 const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
+
+let YoutubeiExtractor = null;
+try {
+  ({ YoutubeiExtractor } = require("discord-player-youtubei"));
+} catch (error) {
+  YoutubeiExtractor = null;
+}
 
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
@@ -497,7 +503,11 @@ async function getPlayer(client) {
       const player = new Player(client, {
         skipFFmpeg: false,
       });
-      await player.extractors.register(YoutubeiExtractor, {});
+      if (YoutubeiExtractor) {
+        await player.extractors.register(YoutubeiExtractor, {});
+      } else {
+        global.logger?.warn?.("[MUSIC] discord-player-youtubei not installed, using default extractors only.");
+      }
       await player.extractors.loadMulti(DefaultExtractors);
 
       player.events.on("error", (queue, error) => {
