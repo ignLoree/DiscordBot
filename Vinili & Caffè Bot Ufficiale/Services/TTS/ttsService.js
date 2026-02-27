@@ -6,6 +6,7 @@ const os = require("os");
 const axios = require("axios");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
+const { getVoiceSession } = require("../Voice/voiceSessionService");
 const ttsStates = new Map();
 const guildLocks = new Map();
 const lastSavedChannels = new Map();
@@ -376,6 +377,8 @@ function enqueue(state, item) {
 async function handleTtsMessage(message, client, prefix) {
   const config = client?.config;
   if (message?.author?.bot) return;
+  const voiceSession = getVoiceSession(message.guild?.id);
+  if (voiceSession?.mode === "music") return;
   const musicQueue = client?.musicPlayer?.nodes?.get?.(message.guild?.id);
   if (musicQueue?.connection) return;
   if (!shouldHandleMessage(message, config, prefix)) return;

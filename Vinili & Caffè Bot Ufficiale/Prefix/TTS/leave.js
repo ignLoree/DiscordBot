@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { leaveTtsGuild } = require("../../Services/TTS/ttsService");
 const { getPlayer } = require("../../Services/Music/musicService");
+const { clearVoiceSession } = require("../../Services/Voice/voiceSessionService");
 
 module.exports = {
   name: "leave",
@@ -19,6 +20,7 @@ module.exports = {
     }
 
     const ttsResult = await leaveTtsGuild(message.guild.id, message.client);
+    clearVoiceSession(message.guild.id);
 
     if (!ttsResult.ok && ttsResult.reason === "not_connected" && !musicDisconnected) {
       const notConnectedEmbed = new EmbedBuilder()

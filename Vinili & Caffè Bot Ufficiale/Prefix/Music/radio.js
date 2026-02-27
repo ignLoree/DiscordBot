@@ -10,6 +10,8 @@ const { QueryType } = require("discord-player");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getPlayer, touchMusicOutputChannel } = require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
+const { setVoiceSession } = require("../../Services/Voice/voiceSessionService");
+const { leaveTtsGuild } = require("../../Services/TTS/ttsService");
 
 const PAGE_SIZE = 10;
 
@@ -262,6 +264,12 @@ module.exports = {
       });
       queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
       queue.node.setVolume(25);
+
+      await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
+      setVoiceSession(message.guild.id, {
+        mode: "music",
+        channelId: voiceChannel.id,
+      });
 
       if (!queue.connection) {
         const connected = await queue.connect(voiceChannel).catch(() => null);

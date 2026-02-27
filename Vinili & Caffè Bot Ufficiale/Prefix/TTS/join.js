@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { armTtsChannel } = require("../../Services/TTS/ttsService");
-const { getPlayer } = require("../../Services/Music/musicService");
+const { joinTtsChannel } = require("../../Services/TTS/ttsService");
+const { setVoiceSession, getVoiceSession } = require("../../Services/Voice/voiceSessionService");
 
 module.exports = {
   name: "join",
@@ -32,25 +32,27 @@ module.exports = {
       );
     }
 
-    const ttsResult = await armTtsChannel(voiceChannel);
-    if (!ttsResult.ok && ttsResult.reason === "locked") return;
-
-    const player = await getPlayer(message.client).catch(() => null);
-    if (player) {
-      const queue = player.nodes.create(message.guild, {
-        metadata: { channel: message.channel },
-        leaveOnEmpty: false,
-        leaveOnEmptyCooldown: 0,
-        leaveOnEnd: false,
-        leaveOnEndCooldown: 0,
-        selfDeaf: true,
-        volume: 50,
-      });
-      queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
-      if (!queue.connection) {
-        await queue.connect(voiceChannel).catch(() => null);
-      }
+    const activeSession = getVoiceSession(message.guild?.id);
+    const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
+    if (
+      activeSession?.mode === "music" &&
+      botVoiceChannel &&
+      botVoiceChannel.id !== voiceChannel.id
+    ) {
+      const inUseEmbed = new EmbedBuilder()
+        .setColor("#ED4245")
+        .setDescription(
+          `You already own a session in ${botVoiceChannel}, use the join command if you want it here instead!`,
+        );
+      return safeMessageReply(message, { embeds: [inUseEmbed] });
     }
+
+    const ttsResult = await joinTtsChannel(voiceChannel);
+    if (!ttsResult.ok && ttsResult.reason === "locked") return;
+    setVoiceSession(message.guild?.id, {
+      mode: "tts",
+      channelId: voiceChannel.id,
+    });
 
     const okEmbed = new EmbedBuilder()
       .setColor("#57F287")

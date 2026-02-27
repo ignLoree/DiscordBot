@@ -2,6 +2,8 @@ const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
+const { leaveTtsGuild } = require("../TTS/ttsService");
+const { setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
 
 let playerInitPromise = null;
 const lastEmptyQueueAtByGuild = new Map();
@@ -17,13 +19,16 @@ const DEFAULT_MUSIC_VOLUME = 25;
 async function sendQueueNotice(queue, content) {
   const textChannel = queue?.metadata?.channel;
   if (!textChannel?.isTextBased?.()) return;
-  await textChannel.send({ content: String(content || "") }).catch(() => {});
+  const embed = new EmbedBuilder()
+    .setColor("#ED4245")
+    .setDescription(String(content || ""));
+  await textChannel.send({ embeds: [embed] }).catch(() => { });
 }
 
 async function sendQueueEmbed(queue, embed) {
   const textChannel = queue?.metadata?.channel;
   if (!textChannel?.isTextBased?.()) return;
-  await textChannel.send({ embeds: [embed] }).catch(() => {});
+  await textChannel.send({ embeds: [embed] }).catch(() => { });
 }
 
 function clearInactivityTimer(guildId) {
@@ -84,8 +89,6 @@ function scheduleInactivityLeave(queue) {
         .setDescription(
           [
             "No tracks have been playing for the past 3 minutes, leaving 👋",
-            "",
-            "This can be disabled by using the **premium** command `24/7`, for more information check out the `perks` command!",
           ].join("\n"),
         );
       await sendQueueEmbed(queue, embed);
@@ -122,8 +125,6 @@ function scheduleEmptyVoiceLeave(queue) {
         .setDescription(
           [
             "No one has been listening for the past 3 minutes, leaving 👋",
-            "",
-            "This can be disabled by using the **premium** command `24/7`, for more information check out the `perks` command!",
           ].join("\n"),
         );
       await sendQueueEmbed(queue, embed);
@@ -278,6 +279,7 @@ async function getPlayer(client) {
         const guildId = String(queue?.guild?.id || "");
         clearInactivityTimer(guildId);
         clearEmptyVoiceTimer(guildId);
+        clearVoiceSession(guildId);
         const now = Date.now();
         const manualLeaveAt = guildId ? Number(manualLeaveAtByGuild.get(guildId) || 0) : 0;
         if (manualLeaveAt && now - manualLeaveAt < 15_000) return;
@@ -332,6 +334,12 @@ async function playRequest({
   });
   queue.metadata = { ...(queue.metadata || {}), channel };
   queue.node.setVolume(DEFAULT_MUSIC_VOLUME);
+
+  await leaveTtsGuild(guild?.id, client).catch(() => null);
+  setVoiceSession(guild?.id, {
+    mode: "music",
+    channelId: voiceChannel?.id,
+  });
 
   if (!queue.connection) {
     await queue.connect(voiceChannel);
@@ -410,10 +418,10 @@ async function playRequest({
       const currentRemaining =
         queue?.currentTrack
           ? Math.max(
-              0,
-              Number(currentTs?.total?.value || queue.currentTrack.durationMS || 0) -
-                Number(currentTs?.current?.value || 0),
-            )
+            0,
+            Number(currentTs?.total?.value || queue.currentTrack.durationMS || 0) -
+            Number(currentTs?.current?.value || 0),
+          )
           : 0;
       let wait = currentRemaining;
       for (let i = 0; i < pos; i += 1) {
