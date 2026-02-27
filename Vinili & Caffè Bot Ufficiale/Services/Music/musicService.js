@@ -1,5 +1,20 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
+
+try {
+  const opusscriptPath = require.resolve("opusscript");
+  const BaseOpusScript = require(opusscriptPath);
+  function PatchedOpusScript(samplingRate, channels, application, options) {
+    const safeOptions = {
+      ...(options && typeof options === "object" ? options : {}),
+      wasm: false,
+    };
+    return new BaseOpusScript(samplingRate, channels, application, safeOptions);
+  }
+  Object.assign(PatchedOpusScript, BaseOpusScript);
+  require.cache[opusscriptPath].exports = PatchedOpusScript;
+} catch {}
+
 const { Player, QueryType } = require("discord-player");
 const { DefaultExtractors } = require("@discord-player/extractor");
 const { leaveTtsGuild } = require("../TTS/ttsService");
