@@ -208,6 +208,22 @@ async function fetchYouTubeOEmbed(url) {
   };
 }
 
+async function fetchSoundCloudOEmbed(url) {
+  const response = await axios.get("https://soundcloud.com/oembed", {
+    params: {
+      url,
+      format: "json",
+    },
+    timeout: 12000,
+  }).catch(() => null);
+  const data = response?.data;
+  if (!data?.title) return null;
+  return {
+    title: String(data.title || "").trim(),
+    author: String(data.author_name || "").trim(),
+  };
+}
+
 function shouldTreatAsEarlyFinish(track, startedAt) {
   const durationMs = Math.max(0, Number(track?.durationMS || 0));
   if (durationMs < 30_000) return false;
@@ -760,6 +776,35 @@ async function tryConvertYoutubeVideo(player, query, requestedBy) {
   };
 }
 
+async function tryConvertSoundCloudTrack(player, query, requestedBy) {
+  if (!isSoundCloudUrl(query)) return null;
+
+  const metadata = await fetchSoundCloudOEmbed(query).catch(() => null);
+  if (!metadata?.title) return null;
+
+  const cleanTitle = cleanYouTubeTrackTitle(metadata.title);
+  const author = String(metadata.author || "").replace(/\s*-\s*topic$/i, "").trim();
+  const convertedQuery = [cleanTitle, author].filter(Boolean).join(" ").trim();
+  if (!convertedQuery) return null;
+
+  const converted = await searchBestMatches(player, convertedQuery, requestedBy, {
+    allowYoutube: false,
+    avoidSources: ["soundcloud"],
+  }).catch(() => null);
+  const convertedTracks = Array.isArray(converted?.tracks) ? converted.tracks : [];
+  const bestTrack = convertedTracks.find((track) => NON_YOUTUBE_SOURCE_KEYS.has(sourceKeyFromTrack(track)));
+  if (!bestTrack) return null;
+
+  return {
+    query: convertedQuery,
+    searchResult: {
+      tracks: [bestTrack],
+      playlist: null,
+    },
+    converted: true,
+  };
+}
+
 async function runSearch(player, resolved, requestedBy) {
   logMusic("search_begin", {
     query: resolved?.query,
@@ -786,6 +831,15 @@ async function runSearch(player, resolved, requestedBy) {
   }
 
   if (resolved?.blockedSource === "soundcloud") {
+    const converted = await tryConvertSoundCloudTrack(player, resolved.query, requestedBy);
+    if (converted?.searchResult?.tracks?.length) {
+      logMusic("search_soundcloud_converted", {
+        originalQuery: resolved.query,
+        convertedQuery: converted.query,
+        chosen: getTrackDebugMeta(converted.searchResult.tracks[0]),
+      });
+      return converted.searchResult;
+    }
     logMusic("search_blocked_source", {
       query: resolved?.query,
       blockedSource: "soundcloud",
@@ -1218,6 +1272,9 @@ async function playRequest({
     if (resolved?.youtubeConvertible) {
       return { ok: false, reason: "youtube_not_supported" };
     }
+    if (resolved?.blockedSource === "soundcloud") {
+      return { ok: false, reason: "blocked_source", source: "soundcloud" };
+    }
     return { ok: false, reason: "not_found" };
   }
 
@@ -1373,6 +1430,9 @@ async function searchPlayable({
   if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
     if (resolved?.youtubeConvertible) {
       return { ok: false, reason: "youtube_not_supported" };
+    }
+    if (resolved?.blockedSource === "soundcloud") {
+      return { ok: false, reason: "blocked_source", source: "soundcloud" };
     }
     return { ok: false, reason: "not_found" };
   }

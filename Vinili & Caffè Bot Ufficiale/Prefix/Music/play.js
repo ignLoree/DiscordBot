@@ -108,6 +108,12 @@ module.exports = {
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
     if (!search?.ok) {
+      if (search?.reason === "blocked_source" && search?.source === "soundcloud") {
+        const blockedSourceEmbed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setDescription("SoundCloud tracks are not supported");
+        return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
+      }
       if (search?.reason === "youtube_not_supported") {
         const unsupportedYoutubeEmbed = new EmbedBuilder()
           .setColor("#ED4245")
@@ -159,6 +165,12 @@ module.exports = {
     }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
     if (!result?.ok) {
+      if (result?.reason === "blocked_source" && result?.source === "soundcloud") {
+        const blockedSourceEmbed = new EmbedBuilder()
+          .setColor("#ED4245")
+          .setDescription("SoundCloud tracks are not supported");
+        return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
+      }
       if (result?.reason === "youtube_not_supported") {
         const unsupportedYoutubeEmbed = new EmbedBuilder()
           .setColor("#ED4245")
