@@ -4,6 +4,24 @@ const { EmbedBuilder } = require("discord.js");
 try {
   const opusscriptPath = require.resolve("opusscript");
   const BaseOpusScript = require(opusscriptPath);
+  const originalEncode = BaseOpusScript.prototype?.encode;
+  const originalDecode = BaseOpusScript.prototype?.decode;
+  if (typeof originalEncode === "function") {
+    BaseOpusScript.prototype.encode = function patchedOpusScriptEncode(buffer, frameSize) {
+      const safeChannels = Math.max(1, Number(this?.channels || 2));
+      const fallbackFrameSize = Math.max(
+        1,
+        Math.floor(Math.max(0, Number(buffer?.length || 0)) / (safeChannels * 2)),
+      );
+      return originalEncode.call(this, buffer, Number(frameSize || 0) > 0 ? frameSize : fallbackFrameSize);
+    };
+  }
+  if (typeof originalDecode === "function") {
+    BaseOpusScript.prototype.decode = function patchedOpusScriptDecode(buffer, frameSize) {
+      const safeFrameSize = Number(frameSize || 0) > 0 ? frameSize : 960;
+      return originalDecode.call(this, buffer, safeFrameSize);
+    };
+  }
   function PatchedOpusScript(samplingRate, channels, application, options) {
     const safeOptions = {
       ...(options && typeof options === "object" ? options : {}),
