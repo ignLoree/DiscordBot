@@ -594,7 +594,7 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
           ].join("\n"),
         )
         .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))
-        .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
+        .setFooter({ text: "Â© 2025 Vinili & CaffÃ¨. Tutti i diritti riservati." })
     : buildJoinGateTriggeredEmbed(
         newMember,
         "Username matches blocked pattern (post-join filter).",
@@ -733,3 +733,4 @@ module.exports = {
     }
   },
 };
+

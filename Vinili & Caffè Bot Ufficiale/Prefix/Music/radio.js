@@ -59,7 +59,7 @@ function buildRadioSelect(pages, pageIndex, customId) {
     .addOptions(
       page.map((station, i) => ({
         label: `${startIndex + i + 1}. ${station.name}`.slice(0, 100),
-        description: ([station.state, station.city, station.codec].filter(Boolean).join("  ") || "Radio italiana").slice(0, 100),
+        description: ([station.state, station.city, station.codec].filter(Boolean).join(" • ") || "Radio italiana").slice(0, 100),
         value: String(startIndex + i),
       })),
     );
