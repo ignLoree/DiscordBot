@@ -1,3 +1,4 @@
+cat >/etc/systemd/system/lavalink.service <<'EOF'
 [Unit]
 Description=Lavalink Audio Server
 After=network.target
@@ -9,9 +10,10 @@ ExecStart=/usr/bin/java -jar /opt/lavalink/Lavalink.jar
 Restart=always
 RestartSec=5
 User=root
-Environment=LAVALINK_SERVER_PASSWORD=youshallnotpass
-Environment=SPOTIFY_CLIENT_ID=
-Environment=SPOTIFY_CLIENT_SECRET=
+Environment="LAVALINK_SERVER_PASSWORD=youshallnotpass"
+Environment="SPOTIFY_CLIENT_ID=8f1e8af3ab9d4151966fd7428404bcc2"
+Environment="SPOTIFY_CLIENT_SECRET=1d7fb467026f43a6ad08af44eb254148"
 
 [Install]
 WantedBy=multi-user.target
+EOF
