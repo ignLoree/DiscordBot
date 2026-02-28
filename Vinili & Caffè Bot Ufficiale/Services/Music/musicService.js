@@ -372,17 +372,45 @@ async function fetchAppleTracksForQuery(query) {
 async function resolveExternalCandidates(manager, candidates, requestedBy, originalQuery) {
   const resolved = [];
   for (const candidate of candidates.slice(0, 12)) {
-    const result = await resolveIdentifier(manager, candidate.url).catch(() => null);
-    const parsed = tracksFromLavalinkResponse(result, requestedBy, {
-      resolverInput: candidate.url,
-      originalQuery,
-      source: candidate.source,
-      url: candidate.url,
-    }).tracks;
-    const track = parsed.find((item) => PLAYABLE_SOURCE_KEYS.has(item.source) && !isLikelyPodcast(item));
-    if (!track) continue;
-    track.score = scoreTrackCandidate(track, originalQuery) + scoreTrackCandidate(candidate, originalQuery);
-    resolved.push(track);
+    const exactQuery = `${candidate.title || ""} ${candidate.author || ""}`.trim();
+    const identifiers = [];
+    if (candidate.source === "deezer") {
+      identifiers.push(`dzsearch:${exactQuery}`, candidate.url, `spsearch:${exactQuery}`, `amsearch:${exactQuery}`);
+    } else if (candidate.source === "spotify") {
+      identifiers.push(`spsearch:${exactQuery}`, candidate.url, `dzsearch:${exactQuery}`, `amsearch:${exactQuery}`);
+    } else if (candidate.source === "apple") {
+      identifiers.push(`amsearch:${exactQuery}`, candidate.url, `dzsearch:${exactQuery}`, `spsearch:${exactQuery}`);
+    } else {
+      identifiers.push(candidate.url, `dzsearch:${exactQuery}`, `spsearch:${exactQuery}`, `amsearch:${exactQuery}`);
+    }
+
+    let bestTrack = null;
+    let bestScore = -Infinity;
+    for (const identifier of identifiers.filter(Boolean)) {
+      const result = await resolveIdentifier(manager, identifier).catch(() => null);
+      const parsed = tracksFromLavalinkResponse(result, requestedBy, {
+        resolverInput: identifier,
+        originalQuery,
+        source: candidate.source,
+        url: candidate.url,
+      }).tracks;
+      for (const track of parsed) {
+        if (!PLAYABLE_SOURCE_KEYS.has(track.source) || isLikelyPodcast(track)) continue;
+        const score =
+          scoreTrackCandidate(track, originalQuery) +
+          scoreTrackCandidate(track, exactQuery) +
+          scoreTrackCandidate(candidate, originalQuery);
+        if (score > bestScore) {
+          bestScore = score;
+          bestTrack = track;
+        }
+      }
+      if (bestTrack) break;
+    }
+
+    if (!bestTrack) continue;
+    bestTrack.score = bestScore;
+    resolved.push(bestTrack);
   }
   return dedupeTracks(resolved).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
 }
