@@ -112,8 +112,10 @@ function isErrorEmbed(data) {
 }
 
 function installEmbedFooterPatch() {
+  if (!EmbedBuilder || typeof EmbedBuilder !== "function") return;
   if (EmbedBuilder.prototype.__defaultFooterPatched) return;
   const originalToJSON = EmbedBuilder.prototype.toJSON;
+  if (typeof originalToJSON !== "function") return;
   EmbedBuilder.prototype.toJSON = function toJSONWithDefaultFooter(...args) {
     const data = originalToJSON.apply(this, args);
     if (isErrorEmbed(data)) return data;
