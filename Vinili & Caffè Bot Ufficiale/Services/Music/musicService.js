@@ -233,6 +233,186 @@ function cleanExternalTitle(title) {
     .trim();
 }
 
+let spotifyTokenCache = { accessToken: "", expiresAt: 0 };
+
+function extractAppleSongId(url) {
+  const match = String(url || "").match(/\/song\/[^/]+\/(\d+)/i);
+  return match?.[1] || "";
+}
+
+function extractSpotifyUrlParts(url) {
+  const match = String(url || "").match(/spotify\.com\/(track|album|playlist)\/([A-Za-z0-9]+)/i);
+  return match ? { type: String(match[1]).toLowerCase(), id: String(match[2]) } : null;
+}
+
+async function getSpotifyAccessToken() {
+  const now = Date.now();
+  if (spotifyTokenCache.accessToken && spotifyTokenCache.expiresAt > now + 15_000) {
+    return spotifyTokenCache.accessToken;
+  }
+  const clientId = String(process.env.SPOTIFY_CLIENT_ID || "").trim();
+  const clientSecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
+  if (!clientId || !clientSecret) return "";
+  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const response = await axios.post(
+    "https://accounts.spotify.com/api/token",
+    new URLSearchParams({ grant_type: "client_credentials" }).toString(),
+    {
+      timeout: 12_000,
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    },
+  ).catch(() => null);
+  const accessToken = String(response?.data?.access_token || "").trim();
+  const expiresIn = Number(response?.data?.expires_in || 3600);
+  if (!accessToken) return "";
+  spotifyTokenCache = {
+    accessToken,
+    expiresAt: now + Math.max(60, expiresIn - 30) * 1000,
+  };
+  return accessToken;
+}
+
+async function fetchSpotifyTracksForQuery(query) {
+  const accessToken = await getSpotifyAccessToken();
+  if (!accessToken) return [];
+  const response = await axios.get("https://api.spotify.com/v1/search", {
+    timeout: 12_000,
+    params: { q: query, type: "track", limit: 10, market: "IT" },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch(() => null);
+  const items = Array.isArray(response?.data?.tracks?.items) ? response.data.tracks.items : [];
+  return items.map((item) => ({
+    title: String(item?.name || "").trim(),
+    author: String(item?.artists?.[0]?.name || "").trim(),
+    url: String(item?.external_urls?.spotify || "").trim(),
+    thumbnail: item?.album?.images?.[0]?.url || null,
+    durationMS: Number(item?.duration_ms || 0),
+    source: "spotify",
+  })).filter((item) => item.title && item.url);
+}
+
+async function fetchSpotifyMetadataFromUrl(url) {
+  const accessToken = await getSpotifyAccessToken();
+  const parts = extractSpotifyUrlParts(url);
+  if (!accessToken || !parts?.id || !parts?.type) return null;
+  const response = await axios.get(`https://api.spotify.com/v1/${parts.type}s/${parts.id}`, {
+    timeout: 12_000,
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }).catch(() => null);
+  const data = response?.data;
+  if (!data) return null;
+  if (parts.type === "track") {
+    return {
+      query: `${data?.name || ""} ${data?.artists?.[0]?.name || ""}`.trim(),
+      source: "spotify",
+    };
+  }
+  const firstTrack = Array.isArray(data?.tracks?.items)
+    ? data.tracks.items.find((item) => item?.track?.name || item?.name)
+    : null;
+  const track = firstTrack?.track || firstTrack;
+  if (!track?.name) return null;
+  return {
+    query: `${track?.name || ""} ${track?.artists?.[0]?.name || ""}`.trim(),
+    source: "spotify",
+  };
+}
+
+async function fetchAppleMetadataFromUrl(url) {
+  const songId = extractAppleSongId(url);
+  if (!songId) return null;
+  const response = await axios.get("https://itunes.apple.com/lookup", {
+    timeout: 12_000,
+    params: { id: songId, entity: "song", country: "IT" },
+  }).catch(() => null);
+  const item = Array.isArray(response?.data?.results) ? response.data.results.find((row) => row?.wrapperType === "track") : null;
+  if (!item?.trackName) return null;
+  return {
+    query: `${item.trackName || ""} ${item.artistName || ""}`.trim(),
+    source: "apple",
+  };
+}
+
+async function fetchDeezerCatalogSearch(query) {
+  const response = await axios.get("https://api.deezer.com/search", {
+    timeout: 12_000,
+    params: { q: query, limit: 10 },
+  }).catch(() => null);
+  const items = Array.isArray(response?.data?.data) ? response.data.data : [];
+  return items.map((item) => ({
+    title: String(item?.title || "").trim(),
+    author: String(item?.artist?.name || "").trim(),
+    url: String(item?.link || "").trim(),
+    thumbnail: item?.album?.cover_xl || item?.album?.cover_big || item?.album?.cover_medium || null,
+    durationMS: Number(item?.duration || 0) * 1000,
+    source: "deezer",
+  })).filter((item) => item.title && item.url);
+}
+
+async function fetchAppleTracksForQuery(query) {
+  const response = await axios.get("https://itunes.apple.com/search", {
+    timeout: 12_000,
+    params: { term: query, entity: "song", country: "IT", limit: 10 },
+  }).catch(() => null);
+  const items = Array.isArray(response?.data?.results) ? response.data.results : [];
+  return items.map((item) => ({
+    title: String(item?.trackName || "").trim(),
+    author: String(item?.artistName || "").trim(),
+    url: String(item?.trackViewUrl || item?.collectionViewUrl || "").trim(),
+    thumbnail: item?.artworkUrl100 || item?.artworkUrl60 || null,
+    durationMS: Number(item?.trackTimeMillis || 0),
+    source: "apple",
+  })).filter((item) => item.title && item.url);
+}
+
+async function resolveExternalCandidates(manager, candidates, requestedBy, originalQuery) {
+  const resolved = [];
+  for (const candidate of candidates.slice(0, 12)) {
+    const result = await resolveIdentifier(manager, candidate.url).catch(() => null);
+    const parsed = tracksFromLavalinkResponse(result, requestedBy, {
+      resolverInput: candidate.url,
+      originalQuery,
+      source: candidate.source,
+      url: candidate.url,
+    }).tracks;
+    const track = parsed.find((item) => PLAYABLE_SOURCE_KEYS.has(item.source) && !isLikelyPodcast(item));
+    if (!track) continue;
+    track.score = scoreTrackCandidate(track, originalQuery) + scoreTrackCandidate(candidate, originalQuery);
+    resolved.push(track);
+  }
+  return dedupeTracks(resolved).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+}
+
+async function runExternalCatalogSearch(manager, query, requestedBy) {
+  const [deezerTracks, appleTracks, spotifyTracks] = await Promise.all([
+    fetchDeezerCatalogSearch(query),
+    fetchAppleTracksForQuery(query),
+    fetchSpotifyTracksForQuery(query),
+  ]);
+  const candidates = dedupeTracks(
+    [...deezerTracks, ...appleTracks, ...spotifyTracks]
+      .filter((track) => !isLikelyPodcast(track))
+      .map((track) => ({ ...track, score: scoreTrackCandidate(track, query) })),
+  ).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  if (!candidates.length) return [];
+  const resolved = await resolveExternalCandidates(manager, candidates, requestedBy, query);
+  logMusic("search_external_catalog", {
+    query,
+    candidateCount: candidates.length,
+    resolvedCount: resolved.length,
+    top: resolved.slice(0, 5).map((item) => ({
+      title: item.title,
+      author: item.author,
+      source: item.source,
+      score: item.score,
+    })),
+  });
+  return resolved;
+}
+
 async function resolveIdentifier(manager, identifier) {
   const node = getConnectedNode(manager);
   if (!node) throw new Error("No Lavalink node available");
@@ -644,10 +824,29 @@ async function searchPlayable({ client, input, requestedBy }) {
         searchResult: { tracks: playableTracks, playlist: parsed.playlist },
       };
     }
+    const directFallbackMeta = isSpotifyUrl(query)
+      ? await fetchSpotifyMetadataFromUrl(query)
+      : isAppleMusicUrl(query)
+        ? await fetchAppleMetadataFromUrl(query)
+        : null;
+    if (directFallbackMeta?.query) {
+      const fallbackTracks = await runExternalCatalogSearch(manager, directFallbackMeta.query, requestedBy);
+      if (fallbackTracks.length > 0) {
+        return {
+          ok: true,
+          player,
+          resolved: { query: directFallbackMeta.query, translated: true, youtubeConvertible: false },
+          searchResult: { tracks: fallbackTracks, playlist: null },
+        };
+      }
+    }
     return { ok: false, reason: "not_found" };
   }
 
-  const tracks = await runCatalogSearch(manager, query, requestedBy);
+  let tracks = await runCatalogSearch(manager, query, requestedBy);
+  if (!tracks.length) {
+    tracks = await runExternalCatalogSearch(manager, query, requestedBy);
+  }
   if (!tracks.length) return { ok: false, reason: "not_found" };
   return {
     ok: true,
