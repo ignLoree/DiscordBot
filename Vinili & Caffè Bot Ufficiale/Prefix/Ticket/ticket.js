@@ -533,7 +533,9 @@ module.exports = {
         })()
       : [];
     const inTicketCategory = Boolean(message.channel && isChannelInTicketCategory(message.channel));
-    const effectiveChannelId = message.channel?.parentId || message.channel?.id;
+    const effectiveChannelId = message.channel?.isThread?.()
+      ? message.channel?.parentId || message.channel?.id
+      : message.channel?.id;
     const activeTicketInChannel = effectiveChannelId
       ? await Ticket.findOne({ channelId: effectiveChannelId, open: true }).catch(() => null)
       : null;
