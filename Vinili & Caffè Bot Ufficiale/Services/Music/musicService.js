@@ -1,6 +1,7 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
 const { leaveTtsGuild } = require("../TTS/ttsService");
+const { resolvePlayableRadioUrl } = require("./radioService");
 const {
   getVoiceSession,
   setVoiceSession,
@@ -928,12 +929,15 @@ async function touchMusicOutputChannel(client, guildId, channel) {
 async function playRadioStation({ client, guild, channel, voiceChannel, station }) {
   const player = await getPlayer(client);
   const manager = player.manager;
-  const result = await resolveIdentifier(manager, station.streamUrl).catch(() => null);
+  const playableUrl = await resolvePlayableRadioUrl(station.streamUrl).catch(() => "");
+  const targetUrl = playableUrl || String(station.streamUrl || "").trim();
+  const result = await resolveIdentifier(manager, targetUrl).catch(() => null);
   const parsed = tracksFromLavalinkResponse(result, null, {
-    resolverInput: station.streamUrl,
+    resolverInput: targetUrl,
     originalQuery: station.name,
     source: "radio",
     station,
+    url: targetUrl,
   });
   const track = parsed.tracks[0] || null;
   if (!track) return { ok: false, reason: "not_found" };
