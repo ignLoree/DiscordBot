@@ -673,4 +673,3 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Subcommand: -
 - Esempi:
 - `+weather`
-
