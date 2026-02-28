@@ -1,4 +1,4 @@
-﻿const child_process = require('child_process');
+const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -229,11 +229,13 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
     console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
 
     const nodeBin = resolveNodeExecutable();
+    const scriptPath = path.resolve(workingDir, file);
     console.log(`[Loader] Runtime ${bot.label}: ${nodeBin} (loader execPath: ${process.execPath})`);
-    const proc = child_process.spawn(nodeBin, [file], {
+    const proc = child_process.spawn(nodeBin, [scriptPath], {
         cwd: workingDir,
         stdio: 'inherit',
-        env: silencedEnv
+        env: silencedEnv,
+        shell: false
     });
 
     processRefs[bot.key] = proc;

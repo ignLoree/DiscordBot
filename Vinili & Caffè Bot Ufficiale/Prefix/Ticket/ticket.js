@@ -3,7 +3,7 @@ const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
-const { TICKETS_CATEGORY_NAME } = require("../../Utils/Ticket/ticketCategoryUtils");
+const { TICKETS_CATEGORY_NAME, isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const IDs = require("../../Utils/Config/ids");
 const LOG_CHANNEL_ID = IDs.channels.ticketLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
@@ -532,17 +532,11 @@ module.exports = {
           return rest;
         })()
       : [];
-    const parentChannel = message.channel?.parent || null;
-    const inTicketCategory = Boolean(
-      parentChannel &&
-      String(parentChannel.name || "")
-        .toLowerCase()
-        .includes("tickets"),
-    );
-    const activeTicketInChannel = await Ticket.findOne({
-      channelId: message.channel.id,
-      open: true,
-    }).catch(() => null);
+    const inTicketCategory = Boolean(message.channel && isChannelInTicketCategory(message.channel));
+    const effectiveChannelId = message.channel?.parentId || message.channel?.id;
+    const activeTicketInChannel = effectiveChannelId
+      ? await Ticket.findOne({ channelId: effectiveChannelId, open: true }).catch(() => null)
+      : null;
 
     if (!subcommand) {
       await safeMessageReply(message, {
@@ -867,7 +861,7 @@ module.exports = {
 
     if (subcommand === "closerequest") {
       const reason = normalizedRest.join(" ").trim();
-      const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -897,7 +891,7 @@ module.exports = {
       }
 
       await Ticket.updateOne(
-        { channelId: message.channel.id },
+        { channelId: effectiveChannelId },
         {
           $set: {
             closeReason: reason || null,
@@ -935,7 +929,7 @@ module.exports = {
     }
 
     if (subcommand === "close") {
-      const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -976,7 +970,7 @@ module.exports = {
       }
 
       const claimed = await Ticket.findOneAndUpdate(
-        { channelId: message.channel.id, open: true },
+        { channelId: effectiveChannelId, open: true },
         {
           $set: {
             open: false,
@@ -1015,7 +1009,7 @@ module.exports = {
           )
         : null;
       await Ticket.updateOne(
-        { channelId: message.channel.id },
+        { channelId: effectiveChannelId },
         {
           $set: {
             ticketNumber,
@@ -1127,7 +1121,7 @@ module.exports = {
     }
 
     if (subcommand === "claim") {
-      const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [
@@ -1245,7 +1239,7 @@ module.exports = {
     }
 
     if (subcommand === "unclaim") {
-      const ticketDoc = await Ticket.findOne({ channelId: message.channel.id });
+      const ticketDoc = await Ticket.findOne({ channelId: effectiveChannelId });
       if (!ticketDoc) {
         await safeMessageReply(message, {
           embeds: [

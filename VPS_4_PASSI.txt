@@ -1,0 +1,69 @@
+═══════════════════════════════════════════════════════════════
+  VPS – 4 PASSI (dopo che MongoDB è già attivo)
+═══════════════════════════════════════════════════════════════
+
+PASSO 1 – Carica la cartella del bot sulla VPS
+───────────────────────────────────────────────
+• Sul PC: apri WinSCP o FileZilla (gratis).
+• Connessione: protocollo SFTP, host = IP della VPS, porta 22,
+  utente e password come per SSH.
+• Carica l’intera cartella "DiscordBot-1" (quella dove c’è questo file)
+  nella home della VPS (es. /home/tuousername/DiscordBot-1).
+
+
+PASSO 2 – Connettiti con SSH e vai nella cartella
+───────────────────────────────────────────────
+• Apri PowerShell o CMD e scrivi:
+    ssh root@IP_DELLA_TUA_VPS
+  (sostituisci IP_DELLA_TUA_VPS con l’IP vero)
+• Dopo il login vai nella cartella del bot (es. si chiama "bot" e sta in /opt):
+    cd /opt/bot
+  (se fosse in /root/opt/bot usa: cd /root/opt/bot)
+
+
+PASSO 3 – Lancia lo script
+───────────────────────────────────────────────
+    chmod +x vps-setup.sh
+
+  Se vedi "bad interpreter" o "/bin/bash^M", prima correggi le righe Windows:
+    sed -i 's/\r$//' vps-setup.sh
+
+  Poi esegui:
+    ./vps-setup.sh
+
+  Lo script installa Node, PM2 e le dipendenze. Aspetta che finisca.
+
+
+PASSO 4 – .env e avvio
+───────────────────────────────────────────────
+• Il file .env devi averlo già nella cartella (l’hai caricato con il progetto)
+  oppure crealo:
+    nano .env
+  e incolla le stesse righe che hai sul PC (token, MONGO_URL, ecc.).
+
+• Se usi MongoDB SULLA VPS (locale), nel .env metti:
+    MONGO_URL=mongodb://127.0.0.1:27017/vinili
+
+• Avvia entrambi i bot (Ufficiale + Test) con il loader:
+    pm2 start loader.js --name vinili-bot --node-args="--disable-warning=ExperimentalWarning"
+    pm2 save
+    pm2 startup
+
+  Esegui il comando che ti stampa pm2 startup (quello con sudo env ...).
+
+
+FATTO. Il bot è online. Per vedere i log: pm2 logs vinili-bot
+
+
+─────────────────────────────────────────────────────────────────
+  Se nei log vedi ancora "Caffè: command not found"
+─────────────────────────────────────────────────────────────────
+• Sono quasi sempre errori vecchi. Pulisci i log e riavvia:
+    pm2 flush
+    pm2 restart vinili-bot
+  Poi controlla di nuovo: pm2 logs vinili-bot --lines 20
+• Verifica di avere un solo processo per il bot:
+    pm2 list
+  Se c’è un altro processo (es. "Vinili & Caffè" o simile) eliminarlo:
+    pm2 delete NOME_APP
+  e usare solo: pm2 start loader.js --name vinili-bot --node-args="..."
