@@ -1,4 +1,7 @@
-const { Client, GatewayIntentBits, Collection, Partials, } = require("discord.js");
+const discord = require("discord.js");
+const { Client, Collection, IntentsBitField } = discord;
+const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
+const Partials = discord.Partials || {};
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -99,7 +102,9 @@ function installHandlers(client) {
 
 loadEnvFiles();
 global.logger = require("./Utils/Moderation/logger");
-acquireSingleInstanceLock("vinili-caffe-official-bot");
+if (process.env.RUN_UNDER_LOADER !== "1") {
+  acquireSingleInstanceLock("vinili-caffe-official-bot");
+}
 
 const { installEmbedFooterPatch } = require("./Utils/Embeds/defaultFooter");
 

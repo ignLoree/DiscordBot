@@ -1,4 +1,7 @@
-﻿const { Client, GatewayIntentBits, Partials, Collection, } = require("discord.js");
+const discord = require("discord.js");
+const { Client, Collection, IntentsBitField } = discord;
+const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
+const Partials = discord.Partials || {};
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
@@ -91,7 +94,9 @@ function acquireSingleInstanceLock(lockName) {
 
 loadEnvFiles();
 global.logger = require("./Utils/Moderation/logger");
-acquireSingleInstanceLock("vinili-caffe-test-bot");
+if (process.env.RUN_UNDER_LOADER !== "1") {
+  acquireSingleInstanceLock("vinili-caffe-test-bot");
+}
 
 const installProcessHandlers = require("./Handlers/processHandler");
 installProcessHandlers();
@@ -189,3 +194,5 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
     process.exit(1);
   });
 })();
+
+

@@ -9,8 +9,8 @@ const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = false;
 
 const BOTS = [
-    { key: 'official', label: 'Ufficiale', start: './Vinili & CaffÃ¨ Bot Ufficiale/index.js', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', start: './Vinili & CaffÃ¨ Bot Test/index.js', startupDelayMs: 7000 }
+    { key: 'official', label: 'Ufficiale', start: './Vinili & Caffè Bot Ufficiale/index.js', startupDelayMs: 0 },
+    { key: 'test', label: 'Bot Test', start: './Vinili & Caffè Bot Test/index.js', startupDelayMs: 7000 }
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
@@ -234,7 +234,7 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
     const proc = child_process.spawn(nodeBin, [scriptPath], {
         cwd: workingDir,
         stdio: 'inherit',
-        env: silencedEnv,
+        env: { ...silencedEnv, RUN_UNDER_LOADER: '1' },
         shell: false
     });
 
@@ -384,3 +384,5 @@ setInterval(() => {
         restartBot(targetBot, { respectDelay });
     }
 }, POLL_INTERVAL_MS);
+
+
