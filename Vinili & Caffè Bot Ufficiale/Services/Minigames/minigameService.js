@@ -3732,19 +3732,10 @@ async function startGuessNumberGame(client, cfg) {
   if (roleId) {
     await channel.send({ content: `<@&${roleId}>` }).catch(() => {});
   }
-  const numberAttachment = buildPromptImageAttachment(
-    "Indovina il numero",
-    [`${min} - ${max}`],
-    "guess_number",
-  );
   const numberEmbed = buildGuessNumberEmbed(min, max, rewardExp, durationMs);
-  if (numberAttachment) {
-    numberEmbed.setImage(`attachment://${numberAttachment.name}`);
-  }
   const gameMessage = await channel
     .send({
       embeds: [numberEmbed],
-      files: numberAttachment ? [numberAttachment] : [],
     })
     .catch(() => null);
 
@@ -5646,7 +5637,6 @@ async function handleMinigameMessage(message, client) {
       clearTimeout(game.timeout);
       if (game.hintTimeout) clearTimeout(game.hintTimeout);
       activeGames.delete(cfg.channelId);
-      await message.react("<a:VC_Events:1448688007438667796>").catch(() => {});
       await awardWinAndReply(message, game.rewardExp);
       return true;
     }

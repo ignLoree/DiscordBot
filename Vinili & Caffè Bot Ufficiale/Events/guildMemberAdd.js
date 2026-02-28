@@ -27,10 +27,24 @@ const {
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
-const INVITE_REWARD_ROLE_ID = IDs.roles.Promoter;
-const INVITE_EXTRA_ROLE_ID = IDs.roles.PicPerms || "1468938195348754515";
 const INFO_PERKS_CHANNEL_ID = IDs.channels.info;
-const INVITE_REWARD_TARGET = 5;
+const INVITE_REWARD_TIERS = [
+  {
+    target: 5,
+    roleIds: [
+      IDs.roles.Promoter,
+      IDs.roles.PicPerms || "1468938195348754515",
+    ].filter(Boolean),
+  },
+  {
+    target: 25,
+    roleIds: [IDs.roles.Propulsor].filter(Boolean),
+  },
+  {
+    target: 100,
+    roleIds: [IDs.roles.Catalyst].filter(Boolean),
+  },
+];
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const JOIN_GATE_WHITELIST_ROLE_IDS = new Set(
@@ -184,49 +198,49 @@ async function trackInviteJoin(member, inviterId) {
 
 async function tryAwardInviteRole(member, inviteInfo) {
   if (!inviteInfo || inviteInfo.isVanity || !inviteInfo.inviterId) {
-    return { awarded: false, roleIds: [] };
+    return { awarded: false, roleIds: [], targets: [] };
   }
-  if ((inviteInfo.totalInvites || 0) < 5) return { awarded: false, roleIds: [] };
+  const totalInvites = Number(inviteInfo.totalInvites || 0);
+  if (!Number.isFinite(totalInvites) || totalInvites < INVITE_REWARD_TIERS[0].target) {
+    return { awarded: false, roleIds: [], targets: [] };
+  }
 
   const guild = member.guild;
   const inviterMember =
     guild.members.cache.get(inviteInfo.inviterId) ||
-    (await guild.members.fetch(inviteInfo.inviterId).catch(() => null));
-  if (!inviterMember || inviterMember.user?.bot) return { awarded: false, roleIds: [] };
-
-  const rewardRole = INVITE_REWARD_ROLE_ID
-    ? guild.roles.cache.get(INVITE_REWARD_ROLE_ID) ||
-      (await guild.roles.fetch(INVITE_REWARD_ROLE_ID).catch(() => null))
-    : null;
-  const extraRole = INVITE_EXTRA_ROLE_ID
-    ? guild.roles.cache.get(INVITE_EXTRA_ROLE_ID) ||
-      (await guild.roles.fetch(INVITE_EXTRA_ROLE_ID).catch(() => null))
-    : null;
-  if (!rewardRole && !extraRole) return { awarded: false, roleIds: [] };
+      (await guild.members.fetch(inviteInfo.inviterId).catch(() => null));
+  if (!inviterMember || inviterMember.user?.bot) return { awarded: false, roleIds: [], targets: [] };
 
   const me = guild.members.me;
   if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageRoles))
-    return { awarded: false, roleIds: [] };
+    return { awarded: false, roleIds: [], targets: [] };
 
   const rolesToAdd = [];
-  if (
-    rewardRole &&
-    !inviterMember.roles.cache.has(rewardRole.id) &&
-    rewardRole.position < me.roles.highest.position
-  ) {
-    rolesToAdd.push(rewardRole.id);
+  const reachedTargets = [];
+  for (const tier of INVITE_REWARD_TIERS) {
+    if (totalInvites < Number(tier.target || 0)) continue;
+    reachedTargets.push(Number(tier.target || 0));
+    for (const roleId of Array.isArray(tier.roleIds) ? tier.roleIds : []) {
+      const role =
+        guild.roles.cache.get(roleId) ||
+        (await guild.roles.fetch(roleId).catch(() => null));
+      if (!role) continue;
+      if (inviterMember.roles.cache.has(role.id)) continue;
+      if (role.position >= me.roles.highest.position) continue;
+      rolesToAdd.push(role.id);
+    }
   }
-  if (
-    extraRole &&
-    !inviterMember.roles.cache.has(extraRole.id) &&
-    extraRole.position < me.roles.highest.position
-  ) {
-    rolesToAdd.push(extraRole.id);
+  if (!rolesToAdd.length) {
+    return { awarded: false, roleIds: [], targets: reachedTargets };
   }
-  if (!rolesToAdd.length) return { awarded: false, roleIds: [] };
 
   await inviterMember.roles.add(rolesToAdd).catch(() => {});
-  return { awarded: true, roleIds: rolesToAdd };
+  return { awarded: true, roleIds: rolesToAdd, targets: reachedTargets };
+}
+
+function getNextInviteRewardTier(totalInvites) {
+  const safeInvites = Math.max(0, Number(totalInvites || 0));
+  return INVITE_REWARD_TIERS.find((tier) => safeInvites < Number(tier.target || 0)) || null;
 }
 
 async function addBotRoles(member) {
@@ -1129,7 +1143,7 @@ async function maybeSendInviteReward(member, info) {
     .setColor("#6f4e37")
     .setTitle("<a:ThankYou:1329504268369002507> Grazie per gli inviti!")
     .setDescription(
-      `<@${info.inviterId}> hai fatto entrare almeno **5 persone** e hai ottenuto ${rewardedRolesText || "nuovi ruoli"}` +
+      `<@${info.inviterId}> hai raggiunto **${Math.max(...(rewardResult.targets || [0]))} inviti** e hai ottenuto ${rewardedRolesText || "nuovi ruoli"}` +
         `<a:Boost_Cycle:1329504283007385642> Controlla <#${INFO_PERKS_CHANNEL_ID}> per i nuovi vantaggi.`,
     );
   await inviteChannel.send({ embeds: [rewardEmbed] }).catch(() => {});
@@ -1138,8 +1152,9 @@ async function maybeSendInviteReward(member, info) {
 async function maybeSendInviteNearRewardReminder(member, info) {
   if (!member?.guild || !info || info.isVanity || !info.inviterId) return;
   const totalInvites = Number(info.totalInvites || 0);
-  if (totalInvites >= INVITE_REWARD_TARGET) return;
-  if (INVITE_REWARD_TARGET - totalInvites !== 1) return;
+  const nextTier = getNextInviteRewardTier(totalInvites);
+  if (!nextTier) return;
+  if (Number(nextTier.target || 0) - totalInvites !== 1) return;
 
   const inviterId = String(info.inviterId);
   const guild = member.guild;
@@ -1158,11 +1173,12 @@ async function maybeSendInviteNearRewardReminder(member, info) {
   const sentTargets = Array.isArray(state?.inviteNearTargets)
     ? state.inviteNearTargets.map((x) => Number(x)).filter(Number.isFinite)
     : [];
-  if (sentTargets.includes(INVITE_REWARD_TARGET)) return;
+  if (sentTargets.includes(Number(nextTier.target || 0))) return;
 
-  const rewardRoleText = INVITE_REWARD_ROLE_ID
-    ? `<@&${INVITE_REWARD_ROLE_ID}>`
-    : "ruolo reward inviti";
+  const rewardRoleText = (Array.isArray(nextTier.roleIds) ? nextTier.roleIds : [])
+    .filter(Boolean)
+    .map((id) => `<@&${id}>`)
+    .join(", ") || "ruolo reward inviti";
   const payload = {
     embeds: [
       new EmbedBuilder()
@@ -1170,7 +1186,7 @@ async function maybeSendInviteNearRewardReminder(member, info) {
         .setTitle("Ci sei quasi con gli inviti!")
         .setDescription(
           [
-            `<a:VC_PandaClap:1331620157398712330> Ti manca solo **1 invito** per arrivare a **${INVITE_REWARD_TARGET}**.`,
+            `<a:VC_PandaClap:1331620157398712330> Ti manca solo **1 invito** per arrivare a **${nextTier.target}**.`,
             `Quando raggiungi la soglia, ricevi ${rewardRoleText}.`,
             INFO_PERKS_CHANNEL_ID
               ? `Controlla i perks in <#${INFO_PERKS_CHANNEL_ID}>.`
@@ -1185,7 +1201,7 @@ async function maybeSendInviteNearRewardReminder(member, info) {
 
   await InviteReminderState.updateOne(
     { guildId: guild.id, userId: inviterId },
-    { $addToSet: { inviteNearTargets: INVITE_REWARD_TARGET } },
+    { $addToSet: { inviteNearTargets: Number(nextTier.target || 0) } },
     { upsert: true },
   ).catch(() => null);
 }

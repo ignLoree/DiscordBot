@@ -31,6 +31,10 @@ function isSupportedPickerTrack(track) {
   return ["spotify", "apple", "deezer"].includes(getTrackSourceKey(track));
 }
 
+function isConcretePlayableTrack(track) {
+  return Boolean(track && typeof track.setMetadata === "function");
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -213,8 +217,10 @@ module.exports = {
       finalInput = String(
         strongDirectMatch?.resolverInput || `${strongDirectMatch?.title || ""} ${strongDirectMatch?.author || ""}`.trim(),
       );
-      finalSearchResult = null;
-      finalResolved = null;
+      finalSearchResult = isConcretePlayableTrack(strongDirectMatch)
+        ? { tracks: [strongDirectMatch], playlist: null }
+        : null;
+      finalResolved = finalSearchResult ? search.resolved : null;
     } else if (!search.searchResult?.playlist && searchTracks.length > 1) {
       const picked = await pickFromPagedMenu({
         message,
@@ -232,8 +238,10 @@ module.exports = {
       finalInput = String(
         picked?.resolverInput || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
       );
-      finalSearchResult = null;
-      finalResolved = null;
+      finalSearchResult = isConcretePlayableTrack(picked)
+        ? { tracks: [picked], playlist: null }
+        : null;
+      finalResolved = finalSearchResult ? search.resolved : null;
     } else if (!search.searchResult?.playlist && search.catalogOnly && searchTracks.length === 1) {
       const onlyTrack = searchTracks[0];
       finalInput = String(

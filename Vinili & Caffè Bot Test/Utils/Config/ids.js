@@ -20,6 +20,9 @@ const IDs = {
     verifyPing: config.channels?.verifyPing || null,
     errorLogChannel: config.channels?.errorLogChannel || "1466489404867481802",
     serverBotLogs: config.channels?.serverBotLogs || "1472733599496409292",
+    commands: config.channels?.commands || null,
+    staffCmds: config.channels?.staffCmds || null,
+    highCmds: config.channels?.highCmds || null,
   },
   roles: {},
 };

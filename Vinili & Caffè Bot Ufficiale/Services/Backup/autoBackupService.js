@@ -125,11 +125,7 @@ function startAutoBackupLoop(client) {
       try {
         await validateAndHealGuildBackups(guild.id, { limit: 20 }).catch(() => null);
         const result = await runGuildAutoBackup(guild);
-        if (result) {
-          global.logger?.info?.(
-            `[backup.auto] ${guild.id} -> ${result.backupId}`,
-          );
-        }
+        void result;
       } catch (error) {
         global.logger?.error?.("[backup.auto] failed:", error);
       }

@@ -678,9 +678,7 @@ async function runAutoPoll(client) {
     source: "auto",
   });
 
-  if (result?.ok) {
-    global.logger?.info?.(`[poll.auto] created #${result.pollNumber} for guild ${guild.id}`);
-  }
+  void result;
 }
 
 function startAutoPollLoop(client) {

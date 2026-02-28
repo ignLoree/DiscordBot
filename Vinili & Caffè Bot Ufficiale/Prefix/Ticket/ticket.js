@@ -447,6 +447,7 @@ async function ensureTicketsCategory(guild) {
 
 module.exports = {
   name: "ticket",
+  allowEmptyArgs: true,
   aliases: [
     "ticketadd",
     "ticketremove",

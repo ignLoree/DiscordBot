@@ -413,9 +413,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
     }
   }
 
-  global.logger?.info?.(
-    `[PARTNER AUDIT] checked=${totalChecked} removed=${totalRemoved} date=${targetDateKey}`,
-  );
 }
 
 function startDailyPartnerAuditLoop(client) {

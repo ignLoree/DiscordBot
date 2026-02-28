@@ -4,12 +4,6 @@ const { DiscadiaBump, DiscadiaVoter, } = require("../../Schemas/Discadia/discadi
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const discadiaVoteTimers = new Map();
-const VOTE_MILESTONE_ROLES = new Map([
-  [25, "1474357579143577610"],
-  [100, "1474361806956007425"],
-]);
-const VOTE_MILESTONE_NEAR_DISTANCE = 1;
-
 const STAFF_BYPASS_ROLE_IDS = new Set(
   [
     IDs.roles.Staff,
@@ -263,117 +257,6 @@ function buildVoteReminderEmbed(client) {
 const lastVoteFallbackSentAt = new Map();
 const VOTE_FALLBACK_COOLDOWN_MS = 60 * 60 * 1000;
 
-function buildVoteMilestoneReachedEmbed(count, roleId) {
-  return new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Nuovo traguardo voti raggiunto!")
-    .setDescription(
-      [
-        `<a:VC_PandaClap:1331620157398712330> Hai raggiunto **${count} voti** su Discadia.`,
-        `Ti è stato assegnato il ruolo <@&${roleId}>.`,
-      ].join("\n"),
-    );
-}
-
-function buildVoteMilestoneNearEmbed(currentCount, targetCount, roleId) {
-  const remaining = Math.max(0, targetCount - currentCount);
-  return new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Ci sei quasi con i voti!")
-    .setDescription(
-      [
-        `<a:VC_PandaClap:1331620157398712330> Ti manca **${remaining} voto** per arrivare a **${targetCount}**.`,
-        `Al traguardo ricevi il ruolo <@&${roleId}>.`,
-      ].join("\n"),
-    );
-}
-
-async function processVoteMilestones(client, guildId, userId, voteCount, doc = null) {
-  if (!client || !guildId || !userId) return;
-
-  const safeCount = Math.max(0, Number(voteCount || 0));
-  const sourceDoc = doc || (await DiscadiaVoter.findOne({ guildId, userId }).lean().catch(() => null));
-  const granted = new Set(
-    Array.isArray(sourceDoc?.voteMilestoneGranted)
-      ? sourceDoc.voteMilestoneGranted.map((n) => Number(n)).filter(Number.isFinite)
-      : [],
-  );
-  const nearReminded = new Set(
-    Array.isArray(sourceDoc?.voteMilestoneNearReminded)
-      ? sourceDoc.voteMilestoneNearReminded.map((n) => Number(n)).filter(Number.isFinite)
-      : [],
-  );
-
-  const guild =
-    client.guilds.cache.get(guildId) ||
-    (await client.guilds.fetch(guildId).catch(() => null));
-  const member =
-    guild?.members?.cache?.get(userId) ||
-    (await guild?.members?.fetch?.(userId).catch(() => null));
-  const user =
-    client.users.cache.get(userId) ||
-    (await client.users.fetch(userId).catch(() => null));
-
-  const noDmBlocked = await shouldSkipVoteDmByNoDm(client, guildId, userId);
-  const me = guild?.members?.me || null;
-  const canManageRoles = Boolean(
-    me?.permissions?.has?.("ManageRoles"),
-  );
-
-  let changed = false;
-  for (const [target, roleId] of VOTE_MILESTONE_ROLES.entries()) {
-    const threshold = Number(target);
-    const role = guild?.roles?.cache?.get(roleId) || (await guild?.roles?.fetch?.(roleId).catch(() => null));
-
-    if (safeCount >= threshold) {
-      if (!granted.has(threshold)) {
-        if (
-          role &&
-          member &&
-          canManageRoles &&
-          role.position < me.roles.highest.position &&
-          !member.roles.cache.has(role.id)
-        ) {
-          await member.roles.add(role.id).catch(() => {});
-        }
-        if (!noDmBlocked && user) {
-          await user.send({ embeds: [buildVoteMilestoneReachedEmbed(threshold, roleId)] }).catch(() => {});
-        }
-        granted.add(threshold);
-        changed = true;
-      }
-      if (nearReminded.delete(threshold)) changed = true;
-      continue;
-    }
-
-    const remaining = threshold - safeCount;
-    if (
-      remaining > 0 &&
-      remaining <= VOTE_MILESTONE_NEAR_DISTANCE &&
-      !nearReminded.has(threshold)
-    ) {
-      if (!noDmBlocked && user) {
-        await user
-          .send({ embeds: [buildVoteMilestoneNearEmbed(safeCount, threshold, roleId)] })
-          .catch(() => {});
-      }
-      nearReminded.add(threshold);
-      changed = true;
-    }
-  }
-
-  if (!changed) return;
-  await DiscadiaVoter.updateOne(
-    { guildId, userId },
-    {
-      $set: {
-        voteMilestoneGranted: Array.from(granted).sort((a, b) => a - b),
-        voteMilestoneNearReminded: Array.from(nearReminded).sort((a, b) => a - b),
-      },
-    },
-  ).catch(() => {});
-}
-
 async function isStaffNoDmBypassUser(client, guildId, userId) {
   if (!client || !userId || !STAFF_BYPASS_ROLE_IDS.size) return false;
 
@@ -443,13 +326,6 @@ async function recordDiscadiaVote(client, guildId, userId) {
   );
 
   scheduleDiscadiaVoteReminder(client, mainGuildId, userId, now);
-  await processVoteMilestones(
-    client,
-    mainGuildId,
-    userId,
-    Number(doc?.voteCount || 0),
-    doc,
-  ).catch(() => {});
   return doc?.voteCount || 1;
 }
 

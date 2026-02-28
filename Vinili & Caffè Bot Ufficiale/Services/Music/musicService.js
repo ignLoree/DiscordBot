@@ -405,6 +405,13 @@ function isDeezerUrl(value) {
   return /deezer\.com/i.test(String(value || ""));
 }
 
+function getExpectedSourceFromUrl(value) {
+  if (isSpotifyUrl(value)) return "spotify";
+  if (isAppleMusicUrl(value)) return "apple";
+  if (isDeezerUrl(value)) return "deezer";
+  return "";
+}
+
 function normalizeText(value) {
   return String(value || "")
     .toLowerCase()
@@ -1866,11 +1873,15 @@ async function searchPlayable({
   const player = await getPlayer(client);
   const rawInput = cleanQuery(input);
   if (rawInput && /^https?:\/\//i.test(rawInput) && (isSpotifyUrl(rawInput) || isAppleMusicUrl(rawInput) || isDeezerUrl(rawInput))) {
+    const expectedSource = getExpectedSourceFromUrl(rawInput);
     const directResult = await player.search(rawInput, {
       requestedBy,
       searchEngine: QueryType.AUTO,
     }).catch(() => null);
-    if (directResult && Array.isArray(directResult.tracks) && directResult.tracks.length > 0) {
+    const directTracks = Array.isArray(directResult?.tracks)
+      ? directResult.tracks.filter((track) => sourceKeyFromTrack(track) === expectedSource)
+      : [];
+    if (directResult && directTracks.length > 0) {
       return {
         ok: true,
         player,
@@ -1880,9 +1891,13 @@ async function searchPlayable({
           translated: false,
           youtubeConvertible: false,
         },
-        searchResult: directResult,
+        searchResult: {
+          ...directResult,
+          tracks: directTracks,
+        },
       };
     }
+    return { ok: false, reason: "not_found" };
   }
   const resolved = await resolveSearchInput(input);
   if (!resolved.query) return { ok: false, reason: "empty_query" };
