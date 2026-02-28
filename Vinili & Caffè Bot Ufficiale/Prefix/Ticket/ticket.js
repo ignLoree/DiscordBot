@@ -103,7 +103,7 @@ async function sendTranscriptWithBrowserLink(
       .setStyle(ButtonStyle.Link)
       .setURL(attachment.url)
       .setLabel("View Transcript")
-      .setEmoji("ðŸ“");
+      .setEmoji("📁");
     const row = new ActionRowBuilder().addComponents(transcriptButton);
     await sent
       .edit({
@@ -138,7 +138,7 @@ function buildTicketRatingRows(ticketId) {
         .setCustomId(`ticket_rate:${ticketId}:${score}`)
         .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
         .setLabel(String(score))
-        .setEmoji("â­"),
+        .setEmoji("⭐"),
     ),
   );
   return [row];
@@ -165,28 +165,28 @@ function buildTicketClosedEmbed(data) {
     .setColor("#6f4e37")
     .addFields(
       {
-        name: "ðŸ†” Ticket ID",
+        name: "🆔 Ticket ID",
         value: String(data?.ticketNumber || "N/A"),
         inline: true,
       },
       {
-        name: "âœ… Opened By",
+        name: "✅ Opened By",
         value: data?.userId ? `<@${data.userId}>` : "Sconosciuto",
         inline: true,
       },
       {
-        name: "ðŸ›‘ Closed By",
+        name: "🛑 Closed By",
         value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto",
         inline: true,
       },
-      { name: "ðŸ•’ Open Time", value: openedAt, inline: true },
+      { name: "🕒 Open Time", value: openedAt, inline: true },
       {
-        name: "ðŸ™‹ Claimed By",
+        name: "🙋 Claimed By",
         value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
         inline: true,
       },
-      { name: "â¹ï¸ Close Time", value: closedAt, inline: true },
-      { name: "â„¹ï¸ Reason", value: reasonText, inline: false },
+      { name: "⏹️ Close Time", value: closedAt, inline: true },
+      { name: "ℹ️ Reason", value: reasonText, inline: false },
     );
 
   const reordered = [
@@ -202,7 +202,7 @@ function buildTicketClosedEmbed(data) {
 
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
     embed.addFields({
-      name: "â­ Rating",
+      name: "⭐ Rating",
       value: `${data.ratingScore}/5${data?.ratingBy ? ` - da <@${data.ratingBy}>` : ""}`,
       inline: false,
     });
@@ -255,41 +255,41 @@ function getTicketPanelConfig(raw) {
   const configs = {
     supporto: {
       type: "supporto",
-      emoji: "â­",
+      emoji: "⭐",
       name: "supporto",
       label: "Supporto",
       embed: new EmbedBuilder()
-        .setTitle("<:vsl_ticket:1329520261053022208> â€¢ **__TICKET SUPPORTO__**")
+        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
         .setDescription(
-          `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
         )
         .setColor("#6f4e37"),
     },
     partnership: {
       type: "partnership",
-      emoji: "ðŸ¤",
+      emoji: "🤝",
       name: "partnership",
       label: "Partnership",
       embed: new EmbedBuilder()
         .setTitle(
-          "<:vsl_ticket:1329520261053022208> â€¢ **__TICKET PARTNERSHIP__**",
+          "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
         )
         .setDescription(
-          `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,
         )
         .setColor("#6f4e37"),
     },
     highstaff: {
       type: "high",
-      emoji: "âœ¨",
+      emoji: "✨",
       name: "highstaff",
       label: "High Staff",
       embed: new EmbedBuilder()
         .setTitle(
-          "<:vsl_ticket:1329520261053022208> â€¢ **__TICKET HIGH STAFF__**",
+          "<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",
         )
         .setDescription(
-          `<a:ThankYou:1329504268369002507> â€¢ __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ðŸ † Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> âž¥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
+          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
         )
         .setColor("#6f4e37"),
     },
@@ -511,7 +511,7 @@ module.exports = {
     if (!message.inGuild?.() || !message.guild || !message.member) {
       await safeMessageReply(message, {
         content:
-          "<:vegax:1443934876440068179> Questo comando puÃ² essere usato solo in un server.",
+          "<:vegax:1443934876440068179> Questo comando può essere usato solo in un server.",
         allowedMentions: NO_REPLY_MENTIONS,
       });
       return;
@@ -587,7 +587,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Solo l'**High Staff** puÃ² riaprire ticket.",
+              "<:vegax:1443934876440068179> Solo l'**High Staff** può riaprire ticket.",
             ),
           ],
           allowedMentions: NO_REPLY_MENTIONS,
@@ -632,7 +632,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Info",
-              `<:attentionfromvega:1443651874032062505> Ticket #${ticketNumber} Ã¨ giÃ  aperto: <#${ticketDoc.channelId}>`,
+              `<:attentionfromvega:1443651874032062505> Ticket #${ticketNumber} è già aperto: <#${ticketDoc.channelId}>`,
             ),
           ],
           allowedMentions: NO_REPLY_MENTIONS,
@@ -651,7 +651,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              `<:vegax:1443934876440068179> L'utente ha giÃ  un ticket aperto: <#${existingOpen.channelId}>`,
+              `<:vegax:1443934876440068179> L'utente ha già un ticket aperto: <#${existingOpen.channelId}>`,
             ),
           ],
           allowedMentions: NO_REPLY_MENTIONS,
@@ -735,15 +735,15 @@ module.exports = {
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("close_ticket")
-          .setLabel("ðŸ”’ Chiudi")
+          .setLabel("🔒 Chiudi")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("close_ticket_motivo")
-          .setLabel("ðŸ“ Chiudi Con Motivo")
+          .setLabel("📝 Chiudi Con Motivo")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("claim_ticket")
-          .setLabel("âœ… Claim")
+          .setLabel("✅ Claim")
           .setStyle(ButtonStyle.Success),
       );
 
@@ -827,7 +827,7 @@ module.exports = {
           new EmbedBuilder()
             .setTitle("Aggiungi")
             .setDescription(
-              `<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato aggiunto a ${message.channel}`,
+              `<:vegacheckmark:1443666279058772028> ${user} è stato aggiunto a ${message.channel}`,
             )
             .setColor("#6f4e37"),
         ],
@@ -861,7 +861,7 @@ module.exports = {
           new EmbedBuilder()
             .setTitle("Rimuovi")
             .setDescription(
-              `<:vegacheckmark:1443666279058772028> ${user} Ã¨ stato rimosso da ${message.channel}`,
+              `<:vegacheckmark:1443666279058772028> ${user} è stato rimosso da ${message.channel}`,
             )
             .setColor("#6f4e37"),
         ],
@@ -878,7 +878,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket",
+              "<:vegax:1443934876440068179> Questo non è un canale ticket",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -893,7 +893,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor("Red")
               .setDescription(
-                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket puÃ² inviare la richiesta di chiusura.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può inviare la richiesta di chiusura.",
               ),
           ],
           allowedMentions: { repliedUser: false },
@@ -946,7 +946,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket",
+              "<:vegax:1443934876440068179> Questo non è un canale ticket",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -983,7 +983,7 @@ module.exports = {
       await safeMessageReply(message, {
         embeds: [
           new EmbedBuilder()
-            .setDescription("ðŸ”’ Chiusura ticket in corso...")
+            .setDescription("🔒 Chiusura ticket in corso...")
             .setColor("#6f4e37"),
         ],
         allowedMentions: { repliedUser: false },
@@ -1006,7 +1006,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor("Orange")
               .setDescription(
-                "<:attentionfromvega:1443651874032062505> Ticket giÃ  chiuso o chiusura giÃ  in corso.",
+                "<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.",
               ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1075,7 +1075,7 @@ module.exports = {
                 .setCustomId(`ticket_transcript:${claimed._id}`)
                 .setLabel("View Transcript")
                 .setStyle(ButtonStyle.Secondary)
-                .setEmoji("ðŸ“"),
+                .setEmoji("📁"),
             ),
           ]
         : [];
@@ -1139,7 +1139,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket",
+              "<:vegax:1443934876440068179> Questo non è un canale ticket",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1152,7 +1152,7 @@ module.exports = {
             new EmbedBuilder()
               .setTitle("Errore")
               .setDescription(
-                "<:vegax:1443934876440068179> Solo il personale autorizzato puÃ² claimare questo ticket.",
+                "<:vegax:1443934876440068179> Solo il personale autorizzato può claimare questo ticket.",
               )
               .setColor("Red"),
           ],
@@ -1167,7 +1167,7 @@ module.exports = {
             new EmbedBuilder()
               .setTitle("Errore")
               .setDescription(
-                `<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  stato claimato da <@${ticketDoc.claimedBy}>`,
+                `<:attentionfromvega:1443651874032062505> Questo ticket è già stato claimato da <@${ticketDoc.claimedBy}>`,
               )
               .setColor("Red"),
           ],
@@ -1223,15 +1223,15 @@ module.exports = {
       const updatedButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("close_ticket")
-          .setLabel("ðŸ”’Chiudi")
+          .setLabel("🔒Chiudi")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("close_ticket_motivo")
-          .setLabel("ðŸ“ Chiudi con motivo")
+          .setLabel("📝 Chiudi con motivo")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("unclaim")
-          .setLabel("ðŸ”“ Unclaim")
+          .setLabel("🗕 Unclaim")
           .setStyle(ButtonStyle.Secondary),
       );
 
@@ -1241,7 +1241,7 @@ module.exports = {
           new EmbedBuilder()
             .setTitle("Ticket Claimato")
             .setDescription(
-              `Il ticket Ã¨ stato preso in carico da <@${ticketDoc.claimedBy}>`,
+              `Il ticket è stato preso in carico da <@${ticketDoc.claimedBy}>`,
             )
             .setColor("#6f4e37"),
         ],
@@ -1257,7 +1257,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Questo non Ã¨ un canale ticket",
+              "<:vegax:1443934876440068179> Questo non è un canale ticket",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1271,7 +1271,7 @@ module.exports = {
             new EmbedBuilder()
               .setTitle("Errore")
               .setDescription(
-                "<:vegax:1443934876440068179> Questo ticket non Ã¨ claimato.",
+                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
               )
               .setColor("Red"),
           ],
@@ -1287,7 +1287,7 @@ module.exports = {
             new EmbedBuilder()
               .setTitle("Errore")
               .setDescription(
-                "<:vegax:1443934876440068179> Solo chi ha claimato puÃ² unclaimare il ticket.",
+                "<:vegax:1443934876440068179> Solo chi ha claimato può unclaimare il ticket.",
               )
               .setColor("Red"),
           ],
@@ -1327,15 +1327,15 @@ module.exports = {
       const originalButtons = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId("close_ticket")
-          .setLabel("ðŸ”’ Chiudi")
+          .setLabel("🔒 Chiudi")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("close_ticket_motivo")
-          .setLabel("ðŸ“ Chiudi Con Motivo")
+          .setLabel("📝 Chiudi Con Motivo")
           .setStyle(ButtonStyle.Danger),
         new ButtonBuilder()
           .setCustomId("claim_ticket")
-          .setLabel("âœ… Claim")
+          .setLabel("✅ Claim")
           .setStyle(ButtonStyle.Success),
       );
 
@@ -1347,7 +1347,7 @@ module.exports = {
         embeds: [
           new EmbedBuilder()
             .setTitle("Ticket Unclaimato")
-            .setDescription(`<@${oldClaimer}> non gestisce piÃ¹ il ticket`)
+            .setDescription(`<@${oldClaimer}> non gestisce più il ticket`)
             .setColor("#6f4e37"),
         ],
         allowedMentions: { repliedUser: false },
@@ -1361,7 +1361,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor("Red")
               .setDescription(
-                "<:vegax:1443934876440068179> Solo l'**High Staff** puÃ² usare `switchpanel`.",
+                "<:vegax:1443934876440068179> Solo l'**High Staff** può usare `switchpanel`.",
               ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1413,7 +1413,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Attendi",
-              "<:attentionfromvega:1443651874032062505> C'Ã¨ giÃ  uno switchpanel in esecuzione su questo ticket.",
+              "<:attentionfromvega:1443651874032062505> C'è già uno switchpanel in esecuzione su questo ticket.",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1442,7 +1442,7 @@ module.exports = {
             embeds: [
               makeErrorEmbed(
                 "Errore",
-                "<:vegax:1443934876440068179> Nel canale indicato non c'Ã¨ un ticket aperto.",
+                "<:vegax:1443934876440068179> Nel canale indicato non c'è un ticket aperto.",
               ),
             ],
             allowedMentions: { repliedUser: false },
@@ -1456,7 +1456,7 @@ module.exports = {
             embeds: [
               makeErrorEmbed(
                 "Info",
-                `<:attentionfromvega:1443651874032062505> Questo ticket Ã¨ giÃ  impostato su **${panelConfig.label}**.`,
+                `<:attentionfromvega:1443651874032062505> Questo ticket è già impostato su **${panelConfig.label}**.`,
               ),
             ],
             allowedMentions: { repliedUser: false },
@@ -1472,7 +1472,7 @@ module.exports = {
           String(openerName)
             .replace(/[^\w.-]/g, "")
             .slice(0, 20) || "utente";
-        const newChannelName = `à¼„${panelConfig.emoji}ï¸²${panelConfig.name}á²¼${safeOpenerName}`;
+        const newChannelName = `ticket-${panelConfig.name}-${safeOpenerName}`;
         if (targetChannel.name !== newChannelName) {
           await targetChannel.setName(newChannelName).catch(() => {});
         }
@@ -1604,20 +1604,20 @@ module.exports = {
           const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
               .setCustomId("close_ticket")
-              .setLabel("ðŸ”’ Chiudi")
+              .setLabel("🔒 Chiudi")
               .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
               .setCustomId("close_ticket_motivo")
-              .setLabel("ðŸ“ Chiudi Con Motivo")
+              .setLabel("📝 Chiudi Con Motivo")
               .setStyle(ButtonStyle.Danger),
             ticketDoc.claimedBy
               ? new ButtonBuilder()
                   .setCustomId("unclaim")
-                  .setLabel("ðŸ”“ Unclaim")
+                  .setLabel("🗕 Unclaim")
                   .setStyle(ButtonStyle.Secondary)
               : new ButtonBuilder()
                   .setCustomId("claim_ticket")
-                  .setLabel("âœ… Claim")
+                  .setLabel("✅ Claim")
                   .setStyle(ButtonStyle.Success),
           );
           await msg
@@ -1650,7 +1650,7 @@ module.exports = {
             new EmbedBuilder()
               .setColor("Red")
               .setDescription(
-                "<:vegax:1443934876440068179> Solo l'**High Staff** puÃ² usare `rename`.",
+                "<:vegax:1443934876440068179> Solo l'**High Staff** può usare `rename`.",
               ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1674,13 +1674,13 @@ module.exports = {
       }
 
       const currentName = String(message.channel.name || "");
-      const firstSeparatorIndex = currentName.indexOf("ï¸²");
+      const firstSeparatorIndex = currentName.indexOf("-");
       if (firstSeparatorIndex === -1) {
         await safeMessageReply(message, {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Nome canale ticket non valido: manca il separatore `ï¸²`.",
+              "<:vegax:1443934876440068179> Nome canale ticket non valido: manca il separatore `-`.",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1701,7 +1701,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Il nuovo nome non Ã¨ valido.",
+              "<:vegax:1443934876440068179> Il nuovo nome non è valido.",
             ),
           ],
           allowedMentions: { repliedUser: false },
@@ -1715,7 +1715,7 @@ module.exports = {
           embeds: [
             makeErrorEmbed(
               "Info",
-              "<:attentionfromvega:1443651874032062505> Il canale ha giÃ  questo nome.",
+              "<:attentionfromvega:1443651874032062505> Il canale ha già questo nome.",
             ),
           ],
           allowedMentions: { repliedUser: false },

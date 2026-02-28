@@ -366,4 +366,3 @@ module.exports = {
     return safeMessageReply(message, { embeds: [embed] });
   },
 };
-

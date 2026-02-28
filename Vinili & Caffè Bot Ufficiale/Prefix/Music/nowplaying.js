@@ -89,7 +89,7 @@ module.exports = {
         },
       )
       .setFooter({
-        text: `Requested by ${requestedByUser} • ${requestedAt}`,
+        text: `Requested by ${requestedByUser}  ${requestedAt}`,
       });
 
     return safeMessageReply(message, { embeds: [embed] });
