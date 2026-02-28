@@ -1472,7 +1472,7 @@ module.exports = {
           String(openerName)
             .replace(/[^\w.-]/g, "")
             .slice(0, 20) || "utente";
-        const newChannelName = `ticket-${panelConfig.name}-${safeOpenerName}`;
+        const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;
         if (targetChannel.name !== newChannelName) {
           await targetChannel.setName(newChannelName).catch(() => {});
         }
