@@ -5,7 +5,7 @@ const RADIO_API =
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const SUPPORTED_CODECS = new Set(["mp3", "aac", "aac+", "ogg", "opus", "flac", "mpeg"]);
 const PLAYLIST_MIME_RE = /(mpegurl|x-mpegurl|scpls|pls|playlist|mpegurl)/i;
-const AUDIO_MIME_RE = /^audio\//i;
+const AUDIO_MIME_RE = /^(audio\/|application\/(ogg|octet-stream)|video\/mp2t)/i;
 
 let cache = {
   at: 0,
@@ -149,6 +149,10 @@ async function resolvePlayableRadioUrl(url, depth = 0) {
   }
 
   if (finalUrl && /\.(mp3|aac|ogg|opus|flac)(?:$|\?)/i.test(finalUrl)) {
+    return finalUrl;
+  }
+
+  if (finalUrl && !/text\/html/i.test(contentType) && !contentType.includes("json")) {
     return finalUrl;
   }
 

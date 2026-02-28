@@ -959,7 +959,18 @@ async function playRadioStation({ client, guild, channel, voiceChannel, station 
   const manager = player.manager;
   const playableUrl = await resolvePlayableRadioUrl(station.streamUrl).catch(() => "");
   const targetUrl = playableUrl || String(station.streamUrl || "").trim();
+  logMusic("radio_resolve", {
+    station: station?.name,
+    originalUrl: station?.streamUrl,
+    playableUrl,
+    targetUrl,
+  });
   const result = await resolveIdentifier(manager, targetUrl).catch(() => null);
+  logMusic("radio_result", {
+    station: station?.name,
+    targetUrl,
+    loadType: result?.loadType || "none",
+  });
   const parsed = tracksFromLavalinkResponse(result, null, {
     resolverInput: targetUrl,
     originalQuery: station.name,
