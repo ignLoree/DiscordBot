@@ -9,8 +9,8 @@ const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = false;
 
 const BOTS = [
-    { key: 'official', label: 'Ufficiale', start: './Vinili & Caff� Bot Ufficiale/index.js', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', start: './Vinili & Caff� Bot Test/index.js', startupDelayMs: 7000 }
+    { key: 'official', label: 'Ufficiale', folderSuffix: 'Bot Ufficiale', startupDelayMs: 0 },
+    { key: 'test', label: 'Bot Test', folderSuffix: 'Bot Test', startupDelayMs: 7000 }
 ];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
@@ -28,6 +28,51 @@ const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
 
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
+function normalizeComparableName(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\p{L}\p{N}\s&-]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
+function resolveBotWorkingDir(bot) {
+    const suffix = normalizeComparableName(bot?.folderSuffix || '');
+    const exactCandidates = [
+        `Vinili & CaffÃƒÂ¨ ${bot.folderSuffix}`,
+        `Vinili & Caffe ${bot.folderSuffix}`,
+        `Vinili & CaffÃƒÆ’Ã‚Â¨ ${bot.folderSuffix}`,
+        `Vinili & CaffÃ¯Â¿Â½ ${bot.folderSuffix}`
+    ];
+
+    for (const folderName of exactCandidates) {
+        const fullPath = path.join(baseDir, folderName);
+        if (fs.existsSync(path.join(fullPath, 'index.js'))) {
+            return fullPath;
+        }
+    }
+
+    const entries = fs.readdirSync(baseDir, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+    const match = entries.find((name) => {
+        const normalized = normalizeComparableName(name);
+        return normalized.includes('vinili') && normalized.includes('caff') && normalized.includes(suffix);
+    });
+    if (!match) {
+        throw new Error(`Bot directory not found for ${bot.label}`);
+    }
+    return path.join(baseDir, match);
+}
+
+function splitStartPath(bot) {
+    return {
+        workingDir: resolveBotWorkingDir(bot),
+        file: 'index.js'
+    };
+}
 function resolveNodeExecutable() {
     const fromEnv = String(process.env.NODE_BINARY || '').trim();
     if (fromEnv && fs.existsSync(fromEnv)) {
@@ -59,14 +104,6 @@ function resolveNodeExecutable() {
     return 'node';
 }
 
-function splitStartPath(startPath) {
-    const normalized = String(startPath).replace(/\\/g, '/');
-    const parts = normalized.split('/');
-    return {
-        workingDir: path.resolve(baseDir, parts.slice(0, -1).join('/')),
-        file: parts.at(-1)
-    };
-}
 
 function pidFile(botKey) {
     return path.resolve(baseDir, `.shard_${botKey}.pid`);
@@ -219,14 +256,14 @@ function ensureDependencies(workingDir, useWorkspaces) {
             npmInstallInProgress = null;
         });
     } else {
-        console.log('[Loader] npm install già in corso, attendo completamento...');
+        console.log('[Loader] npm install giÃƒÆ’Ã‚Â  in corso, attendo completamento...');
     }
 
     return npmInstallInProgress;
 }
 
 function spawnBotProcess(bot, workingDir, file, resolve) {
-    console.log(`[Loader] Avvio ${bot.label}: ${bot.start}`);
+    console.log(`[Loader] Avvio ${bot.label}: ${bot.folderSuffix}`);
 
     const nodeBin = resolveNodeExecutable();
     const scriptPath = path.resolve(workingDir, file);
@@ -258,7 +295,7 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
 
 function runfile(bot, options = {}) {
     return new Promise((resolve) => {
-        const { workingDir, file } = splitStartPath(bot.start);
+        const { workingDir, file } = splitStartPath(bot);
         // Force-disable git pull on runtime to avoid merge conflicts on hosted panels.
         const skipGitPull = true;
         const bypassDelay = Boolean(options.bypassDelay);
@@ -384,5 +421,6 @@ setInterval(() => {
         restartBot(targetBot, { respectDelay });
     }
 }, POLL_INTERVAL_MS);
+
 
 
