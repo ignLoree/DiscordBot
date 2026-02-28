@@ -1,9 +1,19 @@
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, } = require("@discordjs/voice");
+const {
+  joinVoiceChannel,
+  createAudioPlayer,
+  createAudioResource,
+  AudioPlayerStatus,
+  entersState,
+  VoiceConnectionStatus,
+  StreamType,
+} = require("@discordjs/voice");
 const { Readable } = require("stream");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const axios = require("axios");
+const prism = require("prism-media");
+const ffmpegStatic = require("ffmpeg-static");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
 const { getVoiceSession } = require("../Voice/voiceSessionService");
@@ -355,7 +365,29 @@ async function playNext(state) {
     const buffer = await createTtsBuffer(item.text, item.lang);
     if (!buffer || buffer.length === 0) throw new Error("TTS buffer vuoto");
     fs.writeFileSync(tmpPath, buffer);
-    const resource = createAudioResource(tmpPath);
+    const ffmpegArgs = [
+      "-analyzeduration",
+      "0",
+      "-loglevel",
+      "0",
+      "-i",
+      tmpPath,
+      "-f",
+      "s16le",
+      "-ar",
+      "48000",
+      "-ac",
+      "2",
+    ];
+    const transcoder = new prism.FFmpeg({
+      args: ffmpegArgs,
+      shell: false,
+      command: ffmpegStatic || "ffmpeg",
+    });
+    const resource = createAudioResource(transcoder, {
+      inputType: StreamType.Raw,
+      inlineVolume: false,
+    });
     state.player.play(resource);
   } catch (err) {
     global.logger.error("[TTS PLAY ERROR]", err?.message || err);
