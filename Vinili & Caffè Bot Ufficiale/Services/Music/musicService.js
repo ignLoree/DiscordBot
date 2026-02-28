@@ -1,396 +1,84 @@
 const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
-
-try {
-  const opusscriptPath = require.resolve("opusscript");
-  const BaseOpusScript = require(opusscriptPath);
-  const originalEncode = BaseOpusScript.prototype?.encode;
-  const originalDecode = BaseOpusScript.prototype?.decode;
-  if (typeof originalEncode === "function") {
-    BaseOpusScript.prototype.encode = function patchedOpusScriptEncode(buffer, frameSize) {
-      const safeChannels = Math.max(1, Number(this?.channels || 2));
-      const fallbackFrameSize = Math.max(
-        1,
-        Math.floor(Math.max(0, Number(buffer?.length || 0)) / (safeChannels * 2)),
-      );
-      return originalEncode.call(this, buffer, Number(frameSize || 0) > 0 ? frameSize : fallbackFrameSize);
-    };
-  }
-  if (typeof originalDecode === "function") {
-    BaseOpusScript.prototype.decode = function patchedOpusScriptDecode(buffer, frameSize) {
-      const safeFrameSize = Number(frameSize || 0) > 0 ? frameSize : 960;
-      return originalDecode.call(this, buffer, safeFrameSize);
-    };
-  }
-  function PatchedOpusScript(samplingRate, channels, application, options) {
-    const safeOptions = {
-      ...(options && typeof options === "object" ? options : {}),
-      wasm: false,
-    };
-    return new BaseOpusScript(samplingRate, channels, application, safeOptions);
-  }
-  Object.assign(PatchedOpusScript, BaseOpusScript);
-  require.cache[opusscriptPath].exports = PatchedOpusScript;
-} catch {}
-
-try {
-  const opusModule = require("@discord-player/opus");
-  const PatchedOpusScript = require("opusscript");
-  class SafeOpusEncoder {
-    constructor(rate, channels, application) {
-      this.rate = rate;
-      this.channels = channels;
-      this.application = application;
-      this.encoder = new PatchedOpusScript(rate, channels, application, { wasm: false });
-    }
-
-    encode(buffer) {
-      const safeChannels = Math.max(1, Number(this.channels || 2));
-      const frameSize = Math.max(
-        1,
-        Math.floor(Math.max(0, Number(buffer?.length || 0)) / (safeChannels * 2)),
-      );
-      return this.encoder.encode(buffer, frameSize);
-    }
-
-    decode(buffer) {
-      return this.encoder.decode(buffer, 960);
-    }
-
-    applyEncoderCTL(ctl, value) {
-      if (typeof this.encoder?.encoderCTL === "function") {
-        this.encoder.encoderCTL(ctl, value);
-      }
-    }
-
-    delete() {
-      if (typeof this.encoder?.delete === "function") {
-        this.encoder.delete();
-      }
-      this.encoder = null;
-    }
-  }
-
-  opusModule.setLibopusProvider(SafeOpusEncoder, "safe-opusscript");
-} catch {}
-
-const { Player, QueryType } = require("discord-player");
-const { DefaultExtractors } = require("@discord-player/extractor");
 const { leaveTtsGuild } = require("../TTS/ttsService");
-const { getVoiceSession, setVoiceSession, clearVoiceSession } = require("../Voice/voiceSessionService");
+const {
+  getVoiceSession,
+  setVoiceSession,
+  clearVoiceSession,
+} = require("../Voice/voiceSessionService");
 
-let playerInitPromise = null;
-const lastEmptyQueueAtByGuild = new Map();
-const lastQueueNoticeAtByGuild = new Map();
-const lastPlayerStartAtByGuild = new Map();
-const lastPlayerErrorAtByGuild = new Map();
-const lastTrackSessionByGuild = new Map();
-const finishRetryCountByGuild = new Map();
-const recoveryInFlightByGuild = new Map();
-const recoveryAttemptsByGuild = new Map();
-const playbackWatchdogsByGuild = new Map();
-const noisyLogTimestamps = new Map();
-const manualLeaveAtByGuild = new Map();
-const inactivityTimersByGuild = new Map();
-const emptyVoiceTimersByGuild = new Map();
+let Shoukaku = null;
+let Connectors = null;
+let LoadType = null;
+let Constants = { State: { CONNECTED: "CONNECTED" } };
+try {
+  ({ Shoukaku, Connectors, LoadType, Constants } = require("shoukaku"));
+} catch (_) {}
+
+const queues = new Map();
+const inactivityTimers = new Map();
+const emptyVoiceTimers = new Map();
+const DEFAULT_VOLUME = 5;
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
-const DEFAULT_MUSIC_VOLUME = 5;
-const MAX_TRACK_RECOVERY_ATTEMPTS = 2;
-const SEARCH_SOURCE_ENGINES = [
-  { engine: QueryType.SPOTIFY_SEARCH, key: "spotify", bias: 16 },
-  { engine: QueryType.APPLE_MUSIC_SEARCH, key: "apple", bias: 14 },
+const SEARCH_PREFIXES = [
+  { prefix: "spsearch:", source: "spotify", bias: 16 },
+  { prefix: "amsearch:", source: "apple", bias: 14 },
+  { prefix: "dzsearch:", source: "deezer", bias: 15 },
 ];
-const DEEZER_SEARCH_SOURCE = { engine: QueryType.AUTO, key: "deezer", bias: 15 };
-const NON_YOUTUBE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
-const SUPPORTED_PLAYBACK_SOURCE_KEYS = new Set(["spotify", "apple", "deezer"]);
-let spotifyApiTokenCache = null;
-const CATALOG_SOURCE_PRIORITY = {
-  spotify: 3,
-  apple: 2,
-  deezer: 1,
-};
+const PLAYABLE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer", "radio"]);
+const DIRECT_URL_SOURCE_BY_MATCHER = [
+  { fn: isSpotifyUrl, source: "spotify" },
+  { fn: isAppleMusicUrl, source: "apple" },
+  { fn: isDeezerUrl, source: "deezer" },
+];
 
 function logMusic(event, payload = {}) {
   const logger = global.logger;
-  if (!logger?.warn && !logger?.info && !logger?.error) return;
-  const entries = Object.entries(payload)
+  if (!logger?.info && !logger?.warn && !logger?.error) return;
+  const parts = Object.entries(payload)
     .filter(([, value]) => value !== undefined && value !== null && value !== "")
     .map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`);
-  const line = `[MUSIC][${event}]${entries.length ? ` ${entries.join(" | ")}` : ""}`;
+  const line = `[MUSIC][${event}]${parts.length ? ` ${parts.join(" | ")}` : ""}`;
   if (logger.info) logger.info(line);
   else if (logger.warn) logger.warn(line);
 }
 
-function logMusicThrottled(event, guildId, payload = {}, windowMs = 15_000) {
-  const key = `${String(guildId || "global")}:${String(event || "")}`;
-  const now = Date.now();
-  const lastAt = Number(noisyLogTimestamps.get(key) || 0);
-  if (lastAt && now - lastAt < windowMs) return;
-  noisyLogTimestamps.set(key, now);
-  logMusic(event, payload);
+function cleanQuery(value) {
+  return String(value || "").trim().replace(/^<|>$/g, "");
 }
 
-function getTrackDebugMeta(track) {
-  return {
-    title: String(track?.title || "unknown"),
-    author: String(track?.author || "unknown"),
-    source: sourceKeyFromTrack(track),
-    durationMs: Number(track?.durationMS || 0),
-    url: String(track?.url || ""),
-  };
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-async function sendQueueNotice(queue, content) {
-  const textChannel = queue?.metadata?.channel;
-  if (!textChannel?.isTextBased?.()) return;
-  const embed = new EmbedBuilder()
-    .setColor("#ED4245")
-    .setDescription(String(content || ""));
-  await textChannel.send({ embeds: [embed] }).catch(() => { });
-}
-
-async function sendQueueEmbed(queue, embed) {
-  const textChannel = queue?.metadata?.channel;
-  if (!textChannel?.isTextBased?.()) return;
-  await textChannel.send({ embeds: [embed] }).catch(() => { });
-}
-
-function clearInactivityTimer(guildId) {
-  const key = String(guildId || "");
-  if (!key) return;
-  const timer = inactivityTimersByGuild.get(key);
-  if (timer) clearTimeout(timer);
-  inactivityTimersByGuild.delete(key);
-}
-
-function clearEmptyVoiceTimer(guildId) {
-  const key = String(guildId || "");
-  if (!key) return;
-  const timer = emptyVoiceTimersByGuild.get(key);
-  if (timer) clearTimeout(timer);
-  emptyVoiceTimersByGuild.delete(key);
-}
-
-function clearPlaybackWatchdog(guildId) {
-  const key = String(guildId || "");
-  if (!key) return;
-  const timer = playbackWatchdogsByGuild.get(key);
-  if (timer) clearInterval(timer);
-  playbackWatchdogsByGuild.delete(key);
-}
-
-async function notifyQueueEnded(queue) {
-  const guildId = String(queue?.guild?.id || "");
-  if (guildId && recoveryInFlightByGuild.get(guildId)) return;
-  const now = Date.now();
-  const lastNoticeAt = guildId ? Number(lastQueueNoticeAtByGuild.get(guildId) || 0) : 0;
-  if (lastNoticeAt && now - lastNoticeAt < 10_000) return;
-  if (guildId) {
-    lastEmptyQueueAtByGuild.set(guildId, now);
-    lastQueueNoticeAtByGuild.set(guildId, now);
+function formatDurationMs(ms) {
+  const total = Math.max(0, Math.floor(Number(ms || 0) / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
-  logMusic("queue_end", {
-    guildId,
-    currentTrack: queue?.currentTrack?.title,
-    pendingTracks: Number(queue?.tracks?.size || 0),
-  });
-  await sendQueueNotice(queue, "There are no more tracks");
-  scheduleInactivityLeave(queue);
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-async function fetchYouTubeOEmbed(url) {
-  const response = await axios.get("https://www.youtube.com/oembed", {
-    params: {
-      url,
-      format: "json",
-    },
-    timeout: 12000,
-  }).catch(() => null);
-  const data = response?.data;
-  if (!data?.title) return null;
-  return {
-    title: String(data.title || "").trim(),
-    author: String(data.author_name || "").trim(),
-  };
-}
-
-async function fetchSoundCloudOEmbed(url) {
-  const response = await axios.get("https://soundcloud.com/oembed", {
-    params: {
-      url,
-      format: "json",
-    },
-    timeout: 12000,
-  }).catch(() => null);
-  const data = response?.data;
-  if (!data?.title) return null;
-  return {
-    title: String(data.title || "").trim(),
-    author: String(data.author_name || "").trim(),
-  };
-}
-
-async function getSpotifyApiToken() {
-  const clientId = String(process.env.SPOTIFY_CLIENT_ID || "").trim();
-  const clientSecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
-  if (!clientId || !clientSecret) return null;
-
-  const now = Date.now();
-  if (
-    spotifyApiTokenCache?.accessToken &&
-    Number(spotifyApiTokenCache.expiresAt || 0) - now > 60_000
-  ) {
-    return spotifyApiTokenCache.accessToken;
-  }
-
-  const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-  const response = await axios.post(
-    "https://accounts.spotify.com/api/token",
-    "grant_type=client_credentials",
-    {
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      timeout: 12000,
-    },
-  ).catch(() => null);
-
-  const token = String(response?.data?.access_token || "").trim();
-  const expiresIn = Math.max(0, Number(response?.data?.expires_in || 0));
-  if (!token || !expiresIn) return null;
-
-  spotifyApiTokenCache = {
-    accessToken: token,
-    expiresAt: now + expiresIn * 1000,
-  };
-  return token;
-}
-
-function shouldTreatAsEarlyFinish(track, startedAt) {
-  const durationMs = Math.max(0, Number(track?.durationMS || 0));
-  if (durationMs < 30_000) return false;
-  const elapsed = Math.max(0, Date.now() - Number(startedAt || 0));
-  const minExpected = Math.max(15_000, Math.floor(durationMs * 0.35));
-  return elapsed > 0 && elapsed < minExpected;
-}
-
-function queueTracksToArray(queue) {
-  if (!queue?.tracks) return [];
-  if (typeof queue.tracks.toArray === "function") {
-    try {
-      return queue.tracks.toArray();
-    } catch {
-      return [];
-    }
-  }
-  if (Array.isArray(queue.tracks)) return queue.tracks;
-  if (Array.isArray(queue.tracks.data)) return queue.tracks.data;
-  return [];
-}
-
-function stampTrackMetadata(track, requestedBy, extra = {}) {
-  if (!track || typeof track.setMetadata !== "function") return;
-  const existing = track.metadata && typeof track.metadata === "object"
-    ? track.metadata
-    : {};
-  track.setMetadata({
-    ...existing,
-    requestedAt: Date.now(),
-    requestedById: String(requestedBy?.id || ""),
-    recoveryQuery: String(extra.recoveryQuery || existing.recoveryQuery || "").trim(),
-    failedSources: Array.isArray(extra.failedSources)
-      ? [...new Set(extra.failedSources.map((item) => String(item || "").trim()).filter(Boolean))]
-      : Array.isArray(existing.failedSources)
-        ? existing.failedSources
-        : [],
-  });
-}
-
-function scheduleInactivityLeave(queue) {
-  const guildId = String(queue?.guild?.id || "");
-  if (!guildId) return;
-  clearInactivityTimer(guildId);
-
-  const timer = setTimeout(async () => {
-    try {
-      if (queue.deleted) return;
-      if (queue.isPlaying()) return;
-      if (Number(queue?.tracks?.size || 0) > 0) return;
-
-      const embed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription(
-          [
-            "No tracks have been playing for the past 3 minutes, leaving 👋",
-          ].join("\n"),
-        );
-      await sendQueueEmbed(queue, embed);
-      manualLeaveAtByGuild.set(guildId, Date.now());
-      queue.delete();
-    } catch (error) {
-      global.logger?.error?.("[MUSIC] inactivity leave failed:", error?.message || error);
-    } finally {
-      inactivityTimersByGuild.delete(guildId);
-    }
-  }, INACTIVITY_MS);
-
-  inactivityTimersByGuild.set(guildId, timer);
-}
-
-function scheduleEmptyVoiceLeave(queue) {
-  const guildId = String(queue?.guild?.id || "");
-  if (!guildId) return;
-  clearEmptyVoiceTimer(guildId);
-
-  const timer = setTimeout(async () => {
-    try {
-      if (queue.deleted) return;
-      const voiceChannel = queue.channel;
-      if (!voiceChannel?.members?.size) return;
-
-      const listeners = Array.from(voiceChannel.members.values()).filter(
-        (m) => !m.user?.bot,
-      );
-      if (listeners.length > 0) return;
-
-      const embed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription(
-          [
-            "No one has been listening for the past 3 minutes, leaving 👋",
-          ].join("\n"),
-        );
-      await sendQueueEmbed(queue, embed);
-      manualLeaveAtByGuild.set(guildId, Date.now());
-      queue.delete();
-    } catch (error) {
-      global.logger?.error?.("[MUSIC] empty-voice leave failed:", error?.message || error);
-    } finally {
-      emptyVoiceTimersByGuild.delete(guildId);
-    }
-  }, EMPTY_VOICE_MS);
-
-  emptyVoiceTimersByGuild.set(guildId, timer);
-}
-
-function cleanQuery(raw) {
-  return String(raw || "")
-    .trim()
-    .replace(/^<|>$/g, "");
-}
-
-function isYouTubeVideoUrl(value) {
-  const input = String(value || "");
-  if (!/^https?:\/\//i.test(input)) return false;
-  if (!/youtu\.be|youtube\.com/i.test(input)) return false;
-  if (/[?&]list=/i.test(input) || /\/playlist/i.test(input)) return false;
-  return /(?:watch\?v=|youtu\.be\/|\/shorts\/)/i.test(input);
-}
-
-function isSoundCloudUrl(value) {
-  return /soundcloud\.com/i.test(String(value || ""));
+function normalizeSourceName(sourceName, uri = "") {
+  const source = String(sourceName || "").toLowerCase();
+  const url = String(uri || "").toLowerCase();
+  if (source.includes("spotify") || /spotify\.com/.test(url)) return "spotify";
+  if (source.includes("apple") || source.includes("applemusic") || /music\.apple\.com|itunes\.apple\.com/.test(url)) return "apple";
+  if (source.includes("deezer") || /deezer\.com/.test(url)) return "deezer";
+  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) return "youtube";
+  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) return "soundcloud";
+  if (source.includes("http") || source.includes("local") || /^https?:\/\//i.test(url)) return "radio";
+  return source || "unknown";
 }
 
 function isSpotifyUrl(value) {
@@ -405,1295 +93,568 @@ function isDeezerUrl(value) {
   return /deezer\.com/i.test(String(value || ""));
 }
 
-function getExpectedSourceFromUrl(value) {
-  if (isSpotifyUrl(value)) return "spotify";
-  if (isAppleMusicUrl(value)) return "apple";
-  if (isDeezerUrl(value)) return "deezer";
-  return "";
+function isSoundCloudUrl(value) {
+  return /soundcloud\.com/i.test(String(value || ""));
 }
 
-function normalizeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+function isYouTubeVideoUrl(value) {
+  const input = String(value || "");
+  if (!/^https?:\/\//i.test(input)) return false;
+  if (!/youtu\.be|youtube\.com/i.test(input)) return false;
+  if (/[?&]list=/i.test(input) || /\/playlist/i.test(input)) return false;
+  return /(?:watch\?v=|youtu\.be\/|\/shorts\/)/i.test(input);
 }
 
-function tokenizeText(value) {
-  return normalizeText(value)
-    .split(" ")
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-function cleanYouTubeTrackTitle(title) {
-  return String(title || "")
-    .replace(/\[[^\]]*(official|video|audio|lyrics?|lyric|hd|4k|mv)[^\]]*\]/gi, " ")
-    .replace(/\([^\)]*(official|video|audio|lyrics?|lyric|hd|4k|mv)[^\)]*\)/gi, " ")
-    .replace(/\b(official video|official audio|official lyric video|lyric video|lyrics video|visualizer|audio ufficiale|video ufficiale)\b/gi, " ")
-    .replace(/\b(prod\.?\s+by\b.*)$/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function sourceKeyFromTrack(track) {
-  const source = String(track?.source || track?.queryType || "").toLowerCase();
-  const url = String(track?.url || "").toLowerCase();
-
-  if (source.includes("spotify") || /spotify\.com/.test(url)) return "spotify";
-  if (source.includes("apple") || /music\.apple\.com|itunes\.apple\.com/.test(url)) return "apple";
-  if (source.includes("soundcloud") || /soundcloud\.com/.test(url)) return "soundcloud";
-  if (source.includes("deezer") || /deezer\.com/.test(url)) return "deezer";
-  if (source.includes("youtube") || /youtu\.be|youtube\.com/.test(url)) return "youtube";
-  return "unknown";
-}
-
-function buildTrackIdentity(track) {
-  const normalizedUrl = String(track?.url || "").trim().toLowerCase();
-  if (normalizedUrl) return `url:${normalizedUrl}`;
-  return [
-    "meta",
-    normalizeText(track?.title),
-    normalizeText(track?.author),
-    String(Math.round(Number(track?.durationMS || 0) / 1000) || 0),
-  ].join("|");
-}
-
-function getTrackRecoveryKey(track) {
-  if (!track) return "";
-  const metadata = track?.metadata && typeof track.metadata === "object"
-    ? track.metadata
-    : {};
-  const recoveryQuery = normalizeText(metadata?.recoveryQuery);
-  if (recoveryQuery) return `rq:${recoveryQuery}`;
-  return buildTrackIdentity(track);
-}
-
-function getGuildRecoveryAttempts(guildId) {
-  const key = String(guildId || "");
-  if (!key) return null;
-  if (!recoveryAttemptsByGuild.has(key)) {
-    recoveryAttemptsByGuild.set(key, new Map());
-  }
-  return recoveryAttemptsByGuild.get(key);
-}
-
-function getTrackRecoveryAttempts(guildId, track) {
-  const bucket = getGuildRecoveryAttempts(guildId);
-  const recoveryKey = getTrackRecoveryKey(track);
-  if (!bucket || !recoveryKey) return 0;
-  return Number(bucket.get(recoveryKey) || 0);
-}
-
-function incrementTrackRecoveryAttempts(guildId, track) {
-  const bucket = getGuildRecoveryAttempts(guildId);
-  const recoveryKey = getTrackRecoveryKey(track);
-  if (!bucket || !recoveryKey) return 0;
-  const next = Number(bucket.get(recoveryKey) || 0) + 1;
-  bucket.set(recoveryKey, next);
-  return next;
-}
-
-function clearGuildRecoveryAttempts(guildId) {
-  const key = String(guildId || "");
-  if (!key) return;
-  recoveryAttemptsByGuild.delete(key);
-}
-
-function isPodcastLikeTrack(track) {
-  const haystack = [
-    track?.title,
-    track?.author,
-    track?.description,
-    track?.url,
-  ]
-    .map((value) => normalizeText(value))
+function isLikelyPodcast(track) {
+  const haystack = [track?.title, track?.author, track?.url]
+    .map((item) => normalizeText(item))
     .filter(Boolean)
     .join(" ");
-
-  if (!haystack) return false;
-  return /\b(podcast|episodio|episode|puntata|show|intervista integrale|audiolibro|audiobook)\b/.test(haystack);
+  return /\b(podcast|episodio|episode|puntata|show|audiobook|audiolibro)\b/.test(haystack);
 }
 
-function isLikelyPreviewTrack(track) {
-  const source = sourceKeyFromTrack(track);
-  const durationMs = Number(track?.durationMS || 0);
-  if (source === "soundcloud" && durationMs > 0 && durationMs <= 31_000) {
-    return true;
-  }
-  return false;
+function toTrack(raw, requestedBy = null, extra = {}) {
+  const info = raw?.info || {};
+  const url = String(info.uri || extra.url || "");
+  const source = extra.source || normalizeSourceName(info.sourceName, url);
+  return {
+    encoded: String(raw?.encoded || ""),
+    identifier: String(info.identifier || ""),
+    title: String(info.title || "Sconosciuto"),
+    author: String(info.author || "Unknown"),
+    url,
+    thumbnail: info.artworkUrl || null,
+    durationMS: Number(info.length || 0),
+    duration: formatDurationMs(info.length || 0),
+    isStream: Boolean(info.isStream),
+    source,
+    requestedBy: requestedBy?.user || requestedBy || null,
+    metadata: {
+      requestedAt: Date.now(),
+      requestedById: String(requestedBy?.id || requestedBy?.user?.id || ""),
+      resolverInput: String(extra.resolverInput || url || "").trim(),
+      originalQuery: String(extra.originalQuery || "").trim(),
+      station: extra.station || null,
+    },
+    resolverInput: String(extra.resolverInput || url || `${info.title || ""} ${info.author || ""}`.trim()).trim(),
+  };
 }
 
-function isSupportedPlaybackTrack(track) {
-  const source = sourceKeyFromTrack(track);
-  return SUPPORTED_PLAYBACK_SOURCE_KEYS.has(source);
-}
-
-function filterPlayableTracks(tracks = []) {
-  return tracks.filter(
-    (track) =>
-      isSupportedPlaybackTrack(track) &&
-      !isPodcastLikeTrack(track) &&
-      !isLikelyPreviewTrack(track),
-  );
-}
-
-function scoreTrackCandidate(track, query, searchSource) {
+function scoreTrackCandidate(track, query) {
   const normalizedQuery = normalizeText(query);
-  const queryTokens = tokenizeText(query);
   const title = normalizeText(track?.title);
   const author = normalizeText(track?.author);
-  const combined = [title, author].filter(Boolean).join(" ");
-  const source = sourceKeyFromTrack(track);
-  let score = Number(searchSource?.bias || 0);
+  const combined = `${title} ${author}`.trim();
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+  let score = 0;
 
-  if (!normalizedQuery) return score;
-  if (combined === normalizedQuery) score += 140;
-  if (title === normalizedQuery) score += 120;
-  if (author === normalizedQuery) score += 45;
+  if (title === normalizedQuery) score += 140;
+  if (combined === normalizedQuery) score += 180;
   if (combined.includes(normalizedQuery)) score += 55;
   if (title.includes(normalizedQuery)) score += 40;
-  if (author && normalizedQuery.includes(author)) score += 18;
+  if (author && normalizedQuery.includes(author)) score += 25;
 
   let titleMatches = 0;
   let authorMatches = 0;
-  for (const token of queryTokens) {
+  for (const token of tokens) {
     if (title.includes(token)) titleMatches += 1;
     if (author.includes(token)) authorMatches += 1;
   }
+  score += titleMatches * 14;
+  score += authorMatches * 8;
+  if (tokens.length > 1 && titleMatches + authorMatches === tokens.length) score += 25;
 
-  score += titleMatches * 12;
-  score += authorMatches * 7;
-
-  if (queryTokens.length > 0 && titleMatches === queryTokens.length) score += 25;
-  if (queryTokens.length > 1 && titleMatches + authorMatches === queryTokens.length) score += 20;
-
-  const penalizedTerms = ["live", "remix", "sped up", "nightcore", "slowed", "karaoke", "instrumental"];
-  for (const term of penalizedTerms) {
-    if (combined.includes(term) && !normalizedQuery.includes(term)) score -= 10;
+  if (isLikelyPodcast(track)) score -= 100;
+  if (["remix", "live", "karaoke", "sped up", "nightcore"].some((term) => combined.includes(term) && !normalizedQuery.includes(term))) {
+    score -= 15;
   }
 
-  if (source === "youtube" && /official audio|official video|topic/.test(combined)) score += 6;
-  if (source === "soundcloud" && /remix|bootleg|flip/.test(combined) && !/remix|bootleg|flip/.test(normalizedQuery)) score -= 8;
-
+  if (track.source === "spotify") score += 12;
+  if (track.source === "apple") score += 10;
+  if (track.source === "deezer") score += 11;
   return score;
 }
 
-function isStrictTitleMatch(track, query) {
-  const normalizedQuery = normalizeText(query);
-  const normalizedTitle = normalizeText(track?.title);
-  if (!normalizedQuery || !normalizedTitle) return false;
-  return normalizedTitle === normalizedQuery;
+function dedupeTracks(tracks = []) {
+  const seen = new Map();
+  for (const track of tracks) {
+    const key = `${normalizeText(track?.title)}:${normalizeText(track?.author)}`;
+    const current = seen.get(key);
+    if (!current || Number(track.score || 0) > Number(current.score || 0)) {
+      seen.set(key, track);
+    }
+  }
+  return Array.from(seen.values());
 }
 
-function isNearTitleMatch(track, query) {
-  const normalizedQuery = normalizeText(query);
-  const normalizedTitle = normalizeText(track?.title);
-  if (!normalizedQuery || !normalizedTitle) return false;
-  return normalizedTitle.startsWith(`${normalizedQuery} `) || normalizedTitle.includes(` ${normalizedQuery}`);
+function buildDirectUrlExpectedSource(input) {
+  for (const entry of DIRECT_URL_SOURCE_BY_MATCHER) {
+    if (entry.fn(input)) return entry.source;
+  }
+  return null;
 }
 
-async function searchExactTitleCandidates(player, query, requestedBy) {
-  const normalizedQuery = normalizeText(query);
+function getConnectedNode(manager) {
+  if (!manager?.nodes?.size) return null;
+  return Array.from(manager.nodes.values()).find((node) => node.state === Constants.State.CONNECTED) || Array.from(manager.nodes.values())[0] || null;
+}
+
+async function fetchYouTubeOEmbed(url) {
+  const response = await axios.get("https://www.youtube.com/oembed", {
+    params: { url, format: "json" },
+    timeout: 12000,
+  }).catch(() => null);
+  const data = response?.data;
+  if (!data?.title) return null;
+  return {
+    title: String(data.title || "").trim(),
+    author: String(data.author_name || "").trim(),
+  };
+}
+
+async function fetchSoundCloudOEmbed(url) {
+  const response = await axios.get("https://soundcloud.com/oembed", {
+    params: { url, format: "json" },
+    timeout: 12000,
+  }).catch(() => null);
+  const data = response?.data;
+  if (!data?.title) return null;
+  return {
+    title: String(data.title || "").trim(),
+    author: String(data.author_name || "").trim(),
+  };
+}
+
+function cleanExternalTitle(title) {
+  return String(title || "")
+    .replace(/\[[^\]]*(official|video|audio|lyrics?|visualizer)[^\]]*\]/gi, " ")
+    .replace(/\([^)]*(official|video|audio|lyrics?|visualizer)[^)]*\)/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function resolveIdentifier(manager, identifier) {
+  const node = getConnectedNode(manager);
+  if (!node) throw new Error("No Lavalink node available");
+  return node.rest.resolve(identifier);
+}
+
+function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
+  if (!result) return { tracks: [], playlist: null };
+  if (result.loadType === LoadType.TRACK && result.data) {
+    return { tracks: [toTrack(result.data, requestedBy, extra)], playlist: null };
+  }
+  if (result.loadType === LoadType.PLAYLIST && result.data) {
+    return {
+      tracks: Array.isArray(result.data.tracks)
+        ? result.data.tracks.map((item) => toTrack(item, requestedBy, extra))
+        : [],
+      playlist: {
+        title: String(result.data.info?.name || "Playlist"),
+        tracks: Array.isArray(result.data.tracks) ? result.data.tracks : [],
+      },
+    };
+  }
+  if (result.loadType === LoadType.SEARCH && Array.isArray(result.data)) {
+    return {
+      tracks: result.data.map((item) => toTrack(item, requestedBy, extra)),
+      playlist: null,
+    };
+  }
+  return { tracks: [], playlist: null };
+}
+
+async function convertUnsupportedUrlToQuery(input) {
+  if (isYouTubeVideoUrl(input)) {
+    const meta = await fetchYouTubeOEmbed(input);
+    if (!meta?.title) return null;
+    return {
+      convertedQuery: cleanExternalTitle(`${meta.title} ${meta.author || ""}`),
+      source: "youtube",
+    };
+  }
+  if (isSoundCloudUrl(input)) {
+    const meta = await fetchSoundCloudOEmbed(input);
+    if (!meta?.title) return null;
+    return {
+      convertedQuery: cleanExternalTitle(`${meta.title} ${meta.author || ""}`),
+      source: "soundcloud",
+    };
+  }
+  return null;
+}
+
+async function runCatalogSearch(manager, query, requestedBy) {
+  const candidates = [];
+  for (const entry of SEARCH_PREFIXES) {
+    const result = await resolveIdentifier(manager, `${entry.prefix}${query}`).catch(() => null);
+    const tracks = tracksFromLavalinkResponse(result, requestedBy, {
+      resolverInput: `${entry.prefix}${query}`,
+      originalQuery: query,
+    }).tracks;
+    for (const track of tracks) {
+      if (!PLAYABLE_SOURCE_KEYS.has(track.source)) continue;
+      if (isLikelyPodcast(track)) continue;
+      track.score = scoreTrackCandidate(track, query) + Number(entry.bias || 0);
+      candidates.push(track);
+    }
+  }
+  return dedupeTracks(candidates).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+}
+
+function parseLyricsPayload(item) {
+  const plainLyrics = String(
+    item?.plainLyrics || item?.syncedLyrics || item?.lyrics || "",
+  ).trim();
+  if (!plainLyrics) return null;
+  return {
+    trackName: String(item?.trackName || item?.name || "Unknown"),
+    artistName: String(item?.artistName || item?.artist || "Unknown"),
+    plainLyrics,
+  };
+}
+
+async function searchLyrics(query) {
+  const normalizedQuery = cleanQuery(query);
   if (!normalizedQuery) return [];
+  const response = await axios.get("https://lrclib.net/api/search", {
+    timeout: 12_000,
+    params: { q: normalizedQuery },
+    headers: { "User-Agent": "ViniliCaffeBot/1.0" },
+  }).catch(() => null);
+  const rows = Array.isArray(response?.data) ? response.data : [];
+  return rows.map(parseLyricsPayload).filter(Boolean).slice(0, 50);
+}
 
-  const settled = await Promise.allSettled([
-    axios.get("https://api.deezer.com/search", {
-      params: { q: `track:"${query}"`, limit: 10 },
-      timeout: 12000,
-    }),
-    axios.get("https://itunes.apple.com/search", {
-      params: {
-        term: query,
-        entity: "song",
-        attribute: "songTerm",
-        limit: 10,
+function buildManagerFacade(client, manager) {
+  return {
+    manager,
+    nodes: {
+      get(guildId) {
+        return queues.get(String(guildId || "")) || null;
       },
-      timeout: 12000,
-    }),
-    player.search(query, {
-      requestedBy,
-      searchEngine: QueryType.SPOTIFY_SEARCH,
-    }),
-  ]);
-
-  const deezerRows = settled[0]?.status === "fulfilled" && Array.isArray(settled[0]?.value?.data?.data)
-    ? settled[0].value.data.data
-    : [];
-  const itunesRows = settled[1]?.status === "fulfilled" && Array.isArray(settled[1]?.value?.data?.results)
-    ? settled[1].value.data.results
-    : [];
-  const spotifyRows = settled[2]?.status === "fulfilled" && Array.isArray(settled[2]?.value?.tracks)
-    ? settled[2].value.tracks
-    : [];
-
-  const candidateRequests = [
-    ...deezerRows.map((row) => ({
-      type: "deezer",
-      query: String(row?.link || "").trim(),
-    })),
-    ...itunesRows.map((row) => ({
-      type: "apple",
-      query: `${String(row?.trackName || "").trim()} ${String(row?.artistName || "").trim()}`.trim(),
-    })),
-    ...spotifyRows
-      .filter((track) => isStrictTitleMatch(track, query))
-      .map((track) => ({
-        type: "spotify-track",
-        track,
-      })),
-  ].filter((item) => item.query || item.track);
-
-  const resolved = await Promise.allSettled(
-    candidateRequests.map(async (item) => {
-      if (item.type === "spotify-track" && item.track) {
-        return item.track;
-      }
-      const result = await player.search(item.query, {
-        requestedBy,
-        searchEngine: item.type === "apple" ? QueryType.APPLE_MUSIC_SEARCH : QueryType.AUTO,
-      });
-      const firstTrack = Array.isArray(result?.tracks) ? result.tracks[0] : null;
-      return firstTrack || null;
-    }),
-  );
-
-  return filterPlayableTracks(
-    resolved
-      .filter((item) => item.status === "fulfilled" && item.value)
-      .map((item) => item.value),
-  ).filter((track) => isStrictTitleMatch(track, query));
-}
-
-function shouldAggregateSearch(resolved) {
-  const query = String(resolved?.query || "");
-  if (!query) return false;
-  if (/^https?:\/\//i.test(query)) return false;
-  return resolved?.engine === QueryType.AUTO_SEARCH;
-}
-
-async function searchBestMatches(player, query, requestedBy, options = {}) {
-  const allowYoutube = options.allowYoutube !== false;
-  const avoidSources = new Set(
-    Array.isArray(options.avoidSources)
-      ? options.avoidSources.map((item) => String(item || "").trim().toLowerCase()).filter(Boolean)
-      : [],
-  );
-  const primarySources = allowYoutube
-    ? SEARCH_SOURCE_ENGINES
-    : SEARCH_SOURCE_ENGINES.filter((item) => item.key !== "youtube");
-  const settled = await Promise.allSettled([
-    ...primarySources.map(async (source) => {
-      const result = await player.search(query, {
-        requestedBy,
-        searchEngine: source.engine,
-      });
-      const tracks = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks.slice(0, 20) : []);
-      return { source, tracks };
-    }),
-    (async () => {
-      const response = await axios.get("https://api.deezer.com/search", {
-        params: { q: query, limit: 5 },
-        timeout: 12000,
-      });
-      const deezerRows = Array.isArray(response?.data?.data) ? response.data.data : [];
-      const deezerSettled = await Promise.allSettled(
-        deezerRows.map(async (row) => {
-          const deezerUrl = String(row?.link || "").trim();
-          if (!deezerUrl) return null;
-          const playable = await player.search(deezerUrl, {
-            requestedBy,
-            searchEngine: QueryType.AUTO,
-          });
-          const firstTrack = Array.isArray(playable?.tracks) ? playable.tracks[0] : null;
-          return firstTrack || null;
-        }),
-      );
-      const tracks = filterPlayableTracks(deezerSettled
-        .filter((item) => item.status === "fulfilled" && item.value)
-        .map((item) => item.value)
-        .slice(0, 5));
-      return { source: DEEZER_SEARCH_SOURCE, tracks };
-    })(),
-  ]);
-
-  const seen = new Set();
-  const ranked = [];
-
-  for (const item of settled) {
-    if (item.status !== "fulfilled") continue;
-    const { source, tracks } = item.value || {};
-    for (const track of tracks || []) {
-      const trackSource = sourceKeyFromTrack(track);
-      if (avoidSources.has(trackSource)) continue;
-      const identity = buildTrackIdentity(track);
-      if (seen.has(identity)) continue;
-      seen.add(identity);
-      ranked.push({
-        track,
-        score: scoreTrackCandidate(track, query, source),
-        sourceKey: trackSource || source?.key || "unknown",
-      });
-    }
-  }
-
-  ranked.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    const durationDiff = Number(b.track?.durationMS || 0) - Number(a.track?.durationMS || 0);
-    if (durationDiff !== 0) return durationDiff;
-    return String(a.track?.title || "").localeCompare(String(b.track?.title || ""));
-  });
-
-  let strictMatches = ranked.filter((item) => isStrictTitleMatch(item.track, query));
-  if (strictMatches.length === 0) {
-    const exactCandidates = await searchExactTitleCandidates(player, query, requestedBy).catch(() => []);
-    if (exactCandidates.length > 0) {
-      strictMatches = exactCandidates.map((track) => ({
-        track,
-        score: scoreTrackCandidate(track, query, { key: sourceKeyFromTrack(track), bias: 18 }),
-        sourceKey: sourceKeyFromTrack(track),
-      }));
-    }
-  }
-  if (strictMatches.length > 0) {
-    strictMatches.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return String(a.track?.author || "").localeCompare(String(b.track?.author || ""));
-    });
-    logMusic("search_strict_title_match", {
-      query,
-      count: strictMatches.length,
-      top: strictMatches.slice(0, 5).map((item) => ({
-        title: item.track?.title || "unknown",
-        author: item.track?.author || "unknown",
-        source: item.sourceKey,
-        score: item.score,
-      })),
-    });
-    return {
-      tracks: strictMatches.map((item) => item.track),
-      playlist: null,
-    };
-  }
-
-  const nearMatches = ranked.filter((item) => isNearTitleMatch(item.track, query));
-  if (nearMatches.length > 0) {
-    nearMatches.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return String(a.track?.author || "").localeCompare(String(b.track?.author || ""));
-    });
-    logMusic("search_near_title_match", {
-      query,
-      count: nearMatches.length,
-      top: nearMatches.slice(0, 5).map((item) => ({
-        title: item.track?.title || "unknown",
-        author: item.track?.author || "unknown",
-        source: item.sourceKey,
-        score: item.score,
-      })),
-    });
-    return {
-      tracks: nearMatches.map((item) => item.track),
-      playlist: null,
-    };
-  }
-
-  logMusic("search_ranked", {
-    query,
-    requestedBy: requestedBy?.id || requestedBy?.user?.id || "",
-    avoidSources: Array.from(avoidSources),
-    count: ranked.length,
-    top: ranked.slice(0, 5).map((item) => ({
-      title: item.track?.title || "unknown",
-      author: item.track?.author || "unknown",
-      source: item.sourceKey,
-      score: item.score,
-    })),
-  });
-
-  return {
-    tracks: ranked.map((item) => item.track),
-    playlist: null,
-  };
-}
-
-async function tryConvertYoutubeVideo(player, query, requestedBy) {
-  if (!isYouTubeVideoUrl(query)) return null;
-
-  const metadata = await fetchYouTubeOEmbed(query).catch(() => null);
-  if (!metadata?.title) return null;
-
-  const cleanTitle = cleanYouTubeTrackTitle(metadata.title);
-  const author = String(metadata.author || "").replace(/\s*-\s*topic$/i, "").trim();
-  const convertedQuery = [cleanTitle, author].filter(Boolean).join(" ").trim();
-  if (!convertedQuery) return null;
-
-  const converted = await searchBestMatches(player, convertedQuery, requestedBy, {
-    allowYoutube: false,
-  }).catch(() => null);
-  const convertedTracks = Array.isArray(converted?.tracks) ? converted.tracks : [];
-  const bestTrack = convertedTracks.find((track) => NON_YOUTUBE_SOURCE_KEYS.has(sourceKeyFromTrack(track)));
-
-  if (!bestTrack) return null;
-
-  return {
-    query: convertedQuery,
-    searchResult: {
-      tracks: [bestTrack],
-      playlist: null,
     },
-    converted: true,
-  };
-}
-
-async function tryConvertSoundCloudTrack(player, query, requestedBy) {
-  if (!isSoundCloudUrl(query)) return null;
-
-  const metadata = await fetchSoundCloudOEmbed(query).catch(() => null);
-  if (!metadata?.title) return null;
-
-  const cleanTitle = cleanYouTubeTrackTitle(metadata.title);
-  const author = String(metadata.author || "").replace(/\s*-\s*topic$/i, "").trim();
-  const convertedQuery = [cleanTitle, author].filter(Boolean).join(" ").trim();
-  if (!convertedQuery) return null;
-
-  const converted = await searchBestMatches(player, convertedQuery, requestedBy, {
-    allowYoutube: false,
-    avoidSources: ["soundcloud"],
-  }).catch(() => null);
-  const convertedTracks = Array.isArray(converted?.tracks) ? converted.tracks : [];
-  const bestTrack = convertedTracks.find((track) => NON_YOUTUBE_SOURCE_KEYS.has(sourceKeyFromTrack(track)));
-  if (!bestTrack) return null;
-
-  return {
-    query: convertedQuery,
-    searchResult: {
-      tracks: [bestTrack],
-      playlist: null,
+    lyrics: {
+      async search(payload = {}) {
+        return searchLyrics(payload?.q || "");
+      },
     },
-    converted: true,
   };
 }
 
-async function runSearch(player, resolved, requestedBy) {
-  logMusic("search_begin", {
-    query: resolved?.query,
-    engine: resolved?.engine,
-    translated: Boolean(resolved?.translated),
-    youtubeConvertible: Boolean(resolved?.youtubeConvertible),
-    avoidSources: resolved?.avoidSources || [],
-    requestedBy: requestedBy?.id || requestedBy?.user?.id || "",
-  });
-  if (resolved?.youtubeConvertible) {
-    const converted = await tryConvertYoutubeVideo(player, resolved.query, requestedBy);
-    if (converted?.searchResult?.tracks?.length) {
-      logMusic("search_youtube_converted", {
-        originalQuery: resolved.query,
-        convertedQuery: converted.query,
-        chosen: getTrackDebugMeta(converted.searchResult.tracks[0]),
-      });
-      return converted.searchResult;
-    }
-    logMusic("search_youtube_converter_miss", {
-      originalQuery: resolved.query,
-    });
-    return { tracks: [], playlist: null };
-  }
-
-  if (resolved?.blockedSource === "soundcloud") {
-    const converted = await tryConvertSoundCloudTrack(player, resolved.query, requestedBy);
-    if (converted?.searchResult?.tracks?.length) {
-      logMusic("search_soundcloud_converted", {
-        originalQuery: resolved.query,
-        convertedQuery: converted.query,
-        chosen: getTrackDebugMeta(converted.searchResult.tracks[0]),
-      });
-      return converted.searchResult;
-    }
-    logMusic("search_blocked_source", {
-      query: resolved?.query,
-      blockedSource: "soundcloud",
-    });
-    return { tracks: [], playlist: null };
-  }
-
-  if (shouldAggregateSearch(resolved)) {
-    const aggregated = await searchBestMatches(player, resolved.query, requestedBy, {
-      avoidSources: resolved?.avoidSources,
-    });
-    if (Array.isArray(aggregated?.tracks) && aggregated.tracks.length) return aggregated;
-  }
-
-  const result = await player.search(resolved.query, {
-    requestedBy,
-    searchEngine: resolved.engine,
-  });
-  const originalTracks = Array.isArray(result?.tracks) ? result.tracks : [];
-  if (Array.isArray(result?.tracks)) {
-    result.tracks = filterPlayableTracks(result.tracks);
-  }
-  if ((!result?.tracks || result.tracks.length === 0) && originalTracks.length > 0) {
-    const previewTrack = originalTracks.find((track) => isLikelyPreviewTrack(track));
-    if (previewTrack) {
-      const fallbackQuery = `${previewTrack?.title || ""} ${previewTrack?.author || ""}`.trim();
-      if (fallbackQuery) {
-        logMusic("search_preview_fallback", {
-          originalQuery: resolved?.query,
-          fallbackQuery,
-          preview: getTrackDebugMeta(previewTrack),
-        });
-        const fallbackResult = await searchBestMatches(player, fallbackQuery, requestedBy, {
-          avoidSources: ["soundcloud"],
-        });
-        if (Array.isArray(fallbackResult?.tracks) && fallbackResult.tracks.length > 0) {
-          logMusic("search_preview_fallback_hit", {
-            originalQuery: resolved?.query,
-            chosen: getTrackDebugMeta(fallbackResult.tracks[0]),
-          });
-          return fallbackResult;
-        }
-      }
-    }
-  }
-  logMusic("search_result", {
-    query: resolved?.query,
-    count: Array.isArray(result?.tracks) ? result.tracks.length : 0,
-    playlist: Boolean(result?.playlist),
-    first: Array.isArray(result?.tracks) && result.tracks[0] ? getTrackDebugMeta(result.tracks[0]) : null,
-  });
-  return result;
+function clearTimer(map, guildId) {
+  const key = String(guildId || "");
+  const timer = map.get(key);
+  if (timer) clearTimeout(timer);
+  map.delete(key);
 }
 
-async function resolvePlayableTrackFromCandidate(player, candidate, requestedBy) {
-  if (!candidate) return null;
-  if (typeof candidate.setMetadata === "function") return candidate;
-
-  const fallbackQuery = `${String(candidate?.title || "").trim()} ${String(candidate?.author || "").trim()}`.trim();
-  if (fallbackQuery) {
-    const publicMatches = await searchPublicCatalogCandidates(fallbackQuery).catch(() => []);
-    const deezerPreferred = publicMatches.find((item) => item?.source === "deezer") || null;
-    if (deezerPreferred?.resolverInput) {
-      const deezerResult = await player.search(deezerPreferred.resolverInput, {
-        requestedBy,
-        searchEngine: QueryType.AUTO,
-      }).catch(() => null);
-      const deezerTrack = filterPlayableTracks(Array.isArray(deezerResult?.tracks) ? deezerResult.tracks : [])[0] || null;
-      if (deezerTrack) return deezerTrack;
-    }
-  }
-
-  const attempts = [
-    String(candidate?.resolverInput || "").trim(),
-    String(candidate?.url || "").trim(),
-    fallbackQuery,
-  ].filter(Boolean);
-
-  for (const attempt of attempts) {
-    const result = await player.search(attempt, {
-      requestedBy,
-      searchEngine: /^https?:\/\//i.test(attempt) ? QueryType.AUTO : QueryType.AUTO_SEARCH,
-    }).catch(() => null);
-    const firstTrack = filterPlayableTracks(Array.isArray(result?.tracks) ? result.tracks : [])[0] || null;
-    if (firstTrack) return firstTrack;
-  }
-
-  return null;
+async function sendQueueNotice(queue, content) {
+  const channel = queue?.metadata?.channel;
+  if (!channel?.isTextBased?.()) return;
+  const embed = new EmbedBuilder().setColor("#ED4245").setDescription(String(content || ""));
+  await channel.send({ embeds: [embed] }).catch(() => {});
 }
 
-async function resolvePlayableSearchResult(player, searchResult, requestedBy) {
-  if (!searchResult || !Array.isArray(searchResult.tracks) || searchResult.tracks.length === 0) {
-    return searchResult;
-  }
-
-  const resolvedTracks = [];
-  for (const track of searchResult.tracks) {
-    const playable = await resolvePlayableTrackFromCandidate(player, track, requestedBy);
-    if (playable) resolvedTracks.push(playable);
-  }
-
-  return {
-    ...searchResult,
-    tracks: resolvedTracks,
-  };
-}
-
-async function recoverTrackPlayback(queue, finishedTrack, client, avoidSource) {
-  const guildId = String(queue?.guild?.id || "");
-  if (guildId && recoveryInFlightByGuild.get(guildId)) {
-    throw new Error("recovery already in progress");
-  }
-  if (guildId) recoveryInFlightByGuild.set(guildId, true);
-  try {
-    const playerRef = queue?.player || client.musicPlayer;
-    const metadata = finishedTrack?.metadata && typeof finishedTrack.metadata === "object"
-      ? finishedTrack.metadata
-      : {};
-    const failedSources = [
-      ...(Array.isArray(metadata.failedSources) ? metadata.failedSources : []),
-      String(avoidSource || sourceKeyFromTrack(finishedTrack) || "").trim(),
-    ].filter(Boolean);
-    const recoveryQuery = String(
-      metadata.recoveryQuery || `${finishedTrack?.title || ""} ${finishedTrack?.author || ""}`,
-    ).trim();
-    if (!recoveryQuery) throw new Error("missing recovery query");
-    logMusicThrottled("recovery_begin", guildId, {
-      guildId,
-      recoveryQuery,
-      failedSources,
-      from: getTrackDebugMeta(finishedTrack),
-      attempt: getTrackRecoveryAttempts(guildId, finishedTrack),
-    }, 5000);
-
-    const recoveredResult = await runSearch(playerRef, {
-      query: recoveryQuery,
-      engine: QueryType.AUTO_SEARCH,
-      translated: true,
-      youtubeConvertible: false,
-      avoidSources: failedSources,
-    }, queue?.guild?.members?.me || null);
-    const recoveredTrack = Array.isArray(recoveredResult?.tracks)
-      ? recoveredResult.tracks[0]
-      : null;
-    if (!recoveredTrack) throw new Error("no recovered track");
-    stampTrackMetadata(recoveredTrack, null, { recoveryQuery, failedSources });
-    await queue.node.play(recoveredTrack);
-    logMusic("recovery_success", {
-      guildId,
-      chosen: getTrackDebugMeta(recoveredTrack),
-      failedSources,
-      attempt: getTrackRecoveryAttempts(guildId, finishedTrack),
-    });
-    return recoveredTrack;
-  } finally {
-    if (guildId) recoveryInFlightByGuild.delete(guildId);
-  }
-}
-
-function schedulePlaybackWatchdog(queue, client) {
-  const guildId = String(queue?.guild?.id || "");
+async function scheduleInactivityLeave(queue) {
+  const guildId = String(queue?.guildId || "");
   if (!guildId) return;
-  clearPlaybackWatchdog(guildId);
+  clearTimer(inactivityTimers, guildId);
+  const timer = setTimeout(async () => {
+    const current = queues.get(guildId);
+    if (!current) return;
+    if (current.currentTrack) return;
+    if (current.tracks.length > 0) return;
+    const embed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setDescription("No tracks have been playing for the past 3 minutes, leaving \uD83D\uDC4B");
+    const channel = current.metadata?.channel;
+    if (channel?.isTextBased?.()) await channel.send({ embeds: [embed] }).catch(() => {});
+    await destroyQueue(guildId, { manual: true });
+  }, INACTIVITY_MS);
+  inactivityTimers.set(guildId, timer);
+}
 
-  const timer = setInterval(async () => {
-    try {
-      if (!queue || queue.deleted) {
-        clearPlaybackWatchdog(guildId);
-        return;
-      }
-      if (recoveryInFlightByGuild.get(guildId)) return;
-      if (queue.isPlaying?.()) return;
-      if (queue.node?.isPaused?.()) return;
-
-      const currentTrack = queue.currentTrack || lastTrackSessionByGuild.get(guildId)?.track || null;
-      const startedAt = Number(lastTrackSessionByGuild.get(guildId)?.startedAt || 0);
-      if (!currentTrack || !startedAt) return;
-
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < 15_000) return;
-
-      const retryCount = getTrackRecoveryAttempts(guildId, currentTrack);
-      logMusicThrottled("watchdog_stall", guildId, {
-        guildId,
-        elapsed,
-        track: getTrackDebugMeta(currentTrack),
-        pendingTracks: Number(queue?.tracks?.size || 0),
-        playing: Boolean(queue.isPlaying?.()),
-        retryCount,
-      }, 15_000);
-      if (retryCount >= MAX_TRACK_RECOVERY_ATTEMPTS) {
-        clearPlaybackWatchdog(guildId);
-        return;
-      }
-      incrementTrackRecoveryAttempts(guildId, currentTrack);
-      await recoverTrackPlayback(queue, currentTrack, client, sourceKeyFromTrack(currentTrack));
-    } catch (error) {
-      global.logger?.warn?.("[MUSIC] Watchdog recovery failed:", guildId, error?.message || error);
+async function scheduleEmptyVoiceLeave(queue) {
+  const guildId = String(queue?.guildId || "");
+  if (!guildId) return;
+  clearTimer(emptyVoiceTimers, guildId);
+  const timer = setTimeout(async () => {
+    const current = queues.get(guildId);
+    if (!current) return;
+    const guild = current.guild;
+    const channel = guild?.channels?.cache?.get(current.voiceChannelId) || (current.voiceChannelId ? await guild?.channels?.fetch?.(current.voiceChannelId).catch(() => null) : null);
+    const humans = channel?.members ? Array.from(channel.members.values()).filter((m) => !m.user?.bot) : [];
+    if (humans.length > 0) return;
+    const embed = new EmbedBuilder()
+      .setColor("#ED4245")
+      .setDescription("No one has been listening for the past 3 minutes, leaving \uD83D\uDC4B");
+    if (current.metadata?.channel?.isTextBased?.()) {
+      await current.metadata.channel.send({ embeds: [embed] }).catch(() => {});
     }
-  }, 5000);
-
-  playbackWatchdogsByGuild.set(guildId, timer);
+    await destroyQueue(guildId, { manual: true });
+  }, EMPTY_VOICE_MS);
+  emptyVoiceTimers.set(guildId, timer);
 }
 
-function parseDeezerTrackId(url) {
-  const match = String(url || "").match(/deezer\.com\/(?:[a-z]{2}\/)?track\/(\d+)/i);
-  return match ? String(match[1]) : null;
-}
-
-function parseAppleTrackId(url) {
-  const raw = String(url || "");
-  const idMatch = raw.match(/\/song\/[^/]+\/(\d+)/i);
-  if (idMatch) return String(idMatch[1]);
-  const iMatch = raw.match(/[?&]i=(\d+)/i);
-  if (iMatch) return String(iMatch[1]);
-  return null;
-}
-
-function parseSpotifyUrl(url) {
-  const raw = String(url || "").trim();
-  const match = raw.match(/spotify\.com\/(track|playlist|album)\/([A-Za-z0-9]+)(?:\?|$)/i);
-  if (!match) return null;
+function buildNodeFacade(queue) {
   return {
-    type: String(match[1] || "").toLowerCase(),
-    id: String(match[2] || "").trim(),
+    isPlaying: () => Boolean(queue.currentTrack && !queue.paused),
+    getTimestamp: () => {
+      const current = Math.max(0, Number(queue.positionMs || 0));
+      const total = Math.max(0, Number(queue.currentTrack?.durationMS || 0));
+      return {
+        current: { value: current, label: formatDurationMs(current) },
+        total: { value: total, label: formatDurationMs(total) },
+      };
+    },
+    setVolume: async (value) => {
+      queue.volume = Math.max(0, Math.min(1000, Number(value || DEFAULT_VOLUME)));
+      if (queue.player) await queue.player.setGlobalVolume(queue.volume).catch(() => {});
+    },
+    play: async (track) => playTrack(queue, track),
+    streamTime: Number(queue.positionMs || 0),
   };
 }
 
-function makeCatalogTrackCandidate(payload = {}) {
-  return {
-    title: String(payload.title || "").trim(),
-    author: String(payload.author || "").trim(),
-    url: String(payload.url || "").trim(),
-    source: String(payload.source || "").trim(),
-    resolverInput: String(payload.resolverInput || payload.url || "").trim(),
-    durationMS: Math.max(0, Number(payload.durationMS || 0)),
-    thumbnail: String(payload.thumbnail || "").trim(),
-    catalogOnly: true,
-  };
+async function playTrack(queue, track) {
+  clearTimer(inactivityTimers, queue.guildId);
+  clearTimer(emptyVoiceTimers, queue.guildId);
+  queue.currentTrack = track;
+  queue.positionMs = 0;
+  queue.startedAt = Date.now();
+  queue.paused = false;
+  await queue.player.setGlobalVolume(queue.volume).catch(() => {});
+  await queue.player.playTrack({
+    track: {
+      encoded: track.encoded,
+      userData: {
+        title: track.title,
+        author: track.author,
+        url: track.url,
+        source: track.source,
+      },
+    },
+  }, false);
 }
 
-async function deezerToSearchQuery(url) {
-  const trackId = parseDeezerTrackId(url);
-  if (!trackId) return null;
-  const response = await axios
-    .get(`https://api.deezer.com/track/${encodeURIComponent(trackId)}`, {
-      timeout: 12000,
-    })
-    .catch(() => null);
-  const track = response?.data;
-  if (!track?.title) return null;
-  const artist = String(track?.artist?.name || "").trim();
-  return [track.title, artist].filter(Boolean).join(" ");
+async function playNext(queue) {
+  if (!queue) return;
+  if (queue.tracks.length > 0) {
+    const next = queue.tracks.shift();
+    await playTrack(queue, next);
+    return;
+  }
+  queue.currentTrack = null;
+  queue.positionMs = 0;
+  await sendQueueNotice(queue, "There are no more tracks");
+  await scheduleInactivityLeave(queue);
 }
 
-async function appleMusicToSearchQuery(url) {
-  const trackId = parseAppleTrackId(url);
-  if (!trackId) return null;
-  const response = await axios
-    .get("https://itunes.apple.com/lookup", {
-      params: { id: trackId, entity: "song" },
-      timeout: 12000,
-    })
-    .catch(() => null);
-  const song = Array.isArray(response?.data?.results)
-    ? response.data.results.find((item) => item?.kind === "song")
-    : null;
-  if (!song?.trackName) return null;
-  return [song.trackName, song.artistName].filter(Boolean).join(" ");
-}
-
-async function appleMusicTrackToCatalog(url) {
-  const trackId = parseAppleTrackId(url);
-  if (!trackId) return null;
-  const response = await axios
-    .get("https://itunes.apple.com/lookup", {
-      params: { id: trackId, entity: "song" },
-      timeout: 12000,
-    })
-    .catch(() => null);
-  const song = Array.isArray(response?.data?.results)
-    ? response.data.results.find((item) => item?.kind === "song")
-    : null;
-  if (!song?.trackName || !song?.artistName) return null;
-  return makeCatalogTrackCandidate({
-    title: song.trackName,
-    author: song.artistName,
-    url: song.trackViewUrl || url,
-    source: "apple",
-    resolverInput: `${String(song.trackName || "").trim()} ${String(song.artistName || "").trim()}`.trim(),
-    durationMS: Number(song.trackTimeMillis || 0),
-    thumbnail: String(song.artworkUrl100 || "").trim(),
+function attachPlayerEvents(queue) {
+  if (queue.eventsAttached) return;
+  queue.eventsAttached = true;
+  queue.player.on("start", () => {
+    queue.startedAt = Date.now();
+    queue.positionMs = 0;
+    queue.paused = false;
+    clearTimer(inactivityTimers, queue.guildId);
+    clearTimer(emptyVoiceTimers, queue.guildId);
+    logMusic("player_start", { guildId: queue.guildId, track: queue.currentTrack?.title, source: queue.currentTrack?.source });
   });
-}
-
-async function spotifyUrlToCatalog(url) {
-  const parsed = parseSpotifyUrl(url);
-  if (!parsed?.id || !parsed?.type) return null;
-  const token = await getSpotifyApiToken().catch(() => null);
-  if (!token) return null;
-
-  const headers = { Authorization: `Bearer ${token}` };
-  if (parsed.type === "track") {
-    const response = await axios
-      .get(`https://api.spotify.com/v1/tracks/${encodeURIComponent(parsed.id)}`, {
-        headers,
-        params: { market: "IT" },
-        timeout: 12000,
-      })
-      .catch(() => null);
-    const row = response?.data;
-    if (!row?.name) return null;
-    return {
-      tracks: [
-        makeCatalogTrackCandidate({
-          title: row.name,
-          author: Array.isArray(row.artists)
-            ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(", ")
-            : "",
-          url: row?.external_urls?.spotify || url,
-          source: "spotify",
-          resolverInput: row?.external_urls?.spotify || url,
-          durationMS: Number(row?.duration_ms || 0),
-          thumbnail: Array.isArray(row?.album?.images) && row.album.images[0]?.url
-            ? String(row.album.images[0].url).trim()
-            : "",
-        }),
-      ],
-      playlist: null,
-    };
-  }
-
-  if (parsed.type === "playlist") {
-    const response = await axios
-      .get(`https://api.spotify.com/v1/playlists/${encodeURIComponent(parsed.id)}`, {
-        headers,
-        params: {
-          market: "IT",
-          fields: "name,external_urls,images,tracks.items(track(name,duration_ms,external_urls,artists(name),album(images)))",
-        },
-        timeout: 15000,
-      })
-      .catch(() => null);
-    const playlist = response?.data;
-    const items = Array.isArray(playlist?.tracks?.items) ? playlist.tracks.items : [];
-    const tracks = items
-      .map((item) => item?.track)
-      .filter((row) => row?.name)
-      .map((row) =>
-        makeCatalogTrackCandidate({
-          title: row.name,
-          author: Array.isArray(row.artists)
-            ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(", ")
-            : "",
-          url: row?.external_urls?.spotify || "",
-          source: "spotify",
-          resolverInput: row?.external_urls?.spotify || "",
-          durationMS: Number(row?.duration_ms || 0),
-          thumbnail: Array.isArray(row?.album?.images) && row.album.images[0]?.url
-            ? String(row.album.images[0].url).trim()
-            : "",
-        }),
-      )
-      .filter((track) => track.title && track.author);
-    if (!tracks.length) return null;
-    return {
-      tracks,
-      playlist: {
-        title: String(playlist?.name || "Spotify Playlist").trim(),
-        url: String(playlist?.external_urls?.spotify || url).trim(),
-        tracks,
-      },
-    };
-  }
-
-  if (parsed.type === "album") {
-    const response = await axios
-      .get(`https://api.spotify.com/v1/albums/${encodeURIComponent(parsed.id)}`, {
-        headers,
-        params: { market: "IT" },
-        timeout: 15000,
-      })
-      .catch(() => null);
-    const album = response?.data;
-    const items = Array.isArray(album?.tracks?.items) ? album.tracks.items : [];
-    const tracks = items
-      .map((row) =>
-        makeCatalogTrackCandidate({
-          title: row?.name,
-          author: Array.isArray(row?.artists)
-            ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(", ")
-            : "",
-          url: row?.external_urls?.spotify || "",
-          source: "spotify",
-          resolverInput: row?.external_urls?.spotify || `${String(row?.name || "").trim()} ${
-            Array.isArray(row?.artists)
-              ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(" ")
-              : ""
-          }`.trim(),
-          durationMS: Number(row?.duration_ms || 0),
-          thumbnail: Array.isArray(album?.images) && album.images[0]?.url
-            ? String(album.images[0].url).trim()
-            : "",
-        }),
-      )
-      .filter((track) => track.title && track.author);
-    if (!tracks.length) return null;
-    return {
-      tracks,
-      playlist: {
-        title: String(album?.name || "Spotify Album").trim(),
-        url: String(album?.external_urls?.spotify || url).trim(),
-        tracks,
-      },
-    };
-  }
-
-  return null;
-}
-
-async function searchPublicCatalogCandidates(query) {
-  const normalizedQuery = normalizeText(query);
-  if (!normalizedQuery || /^https?:\/\//i.test(String(query || ""))) return [];
-
-  const spotifyToken = await getSpotifyApiToken().catch(() => null);
-  const settled = await Promise.allSettled([
-    axios.get("https://api.deezer.com/search", {
-      params: { q: query, limit: 10 },
-      timeout: 12000,
-    }),
-    axios.get("https://itunes.apple.com/search", {
-      params: {
-        term: query,
-        entity: "song",
-        limit: 10,
-      },
-      timeout: 12000,
-    }),
-    spotifyToken
-      ? axios.get("https://api.spotify.com/v1/search", {
-          params: {
-            q: query,
-            type: "track",
-            limit: 10,
-            market: "IT",
-          },
-          headers: {
-            Authorization: `Bearer ${spotifyToken}`,
-          },
-          timeout: 12000,
-        })
-      : Promise.resolve(null),
-  ]);
-
-  const deezerRows = settled[0]?.status === "fulfilled" && Array.isArray(settled[0]?.value?.data?.data)
-    ? settled[0].value.data.data
-    : [];
-  const appleRows = settled[1]?.status === "fulfilled" && Array.isArray(settled[1]?.value?.data?.results)
-    ? settled[1].value.data.results
-    : [];
-  const spotifyRows =
-    settled[2]?.status === "fulfilled" && Array.isArray(settled[2]?.value?.data?.tracks?.items)
-      ? settled[2].value.data.tracks.items
-      : [];
-
-  const catalog = [
-    ...deezerRows.map((row) => ({
-      title: String(row?.title || "").trim(),
-      author: String(row?.artist?.name || "").trim(),
-      url: String(row?.link || "").trim(),
-      source: "deezer",
-      resolverInput: String(row?.link || "").trim(),
-      durationMS: Math.max(0, Number(row?.duration || 0) * 1000),
-      thumbnail: String(row?.album?.cover_medium || row?.album?.cover || "").trim(),
-    })),
-    ...appleRows.map((row) => ({
-      title: String(row?.trackName || "").trim(),
-      author: String(row?.artistName || "").trim(),
-      url: String(row?.trackViewUrl || "").trim(),
-      source: "apple",
-      resolverInput: `${String(row?.trackName || "").trim()} ${String(row?.artistName || "").trim()}`.trim(),
-      durationMS: Math.max(0, Number(row?.trackTimeMillis || 0)),
-      thumbnail: String(row?.artworkUrl100 || "").trim(),
-    })),
-    ...spotifyRows.map((row) => ({
-      title: String(row?.name || "").trim(),
-      author: Array.isArray(row?.artists)
-        ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(", ")
-        : "",
-      url: String(row?.external_urls?.spotify || "").trim(),
-      source: "spotify",
-      resolverInput: String(row?.external_urls?.spotify || "").trim() ||
-        `${String(row?.name || "").trim()} ${
-          Array.isArray(row?.artists)
-            ? row.artists.map((artist) => String(artist?.name || "").trim()).filter(Boolean).join(" ")
-            : ""
-        }`.trim(),
-      durationMS: Math.max(0, Number(row?.duration_ms || 0)),
-      thumbnail: Array.isArray(row?.album?.images) && row.album.images[0]?.url
-        ? String(row.album.images[0].url).trim()
-        : "",
-    })),
-  ]
-    .filter((item) => item.title && item.author)
-    .filter((item) => !isPodcastLikeTrack(item))
-    .map((item) => ({
-      ...item,
-      catalogOnly: true,
-      score: scoreTrackCandidate(item, query, { key: item.source, bias: item.source === "deezer" ? 22 : 18 }),
-    }))
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return String(a.author || "").localeCompare(String(b.author || ""));
+  queue.player.on("update", (data) => {
+    queue.positionMs = Number(data?.state?.position || 0);
+  });
+  queue.player.on("end", async (data) => {
+    const reason = String(data?.reason || "");
+    logMusic("player_end", { guildId: queue.guildId, reason, track: queue.currentTrack?.title });
+    if (reason === "replaced") return;
+    if (reason === "stopped" && queue.manualDisconnect) return;
+    await playNext(queue).catch((error) => {
+      global.logger?.error?.("[MUSIC] playNext failed:", error?.message || error);
     });
-
-  const seen = new Set();
-  const unique = [];
-  for (const item of catalog) {
-    const identity = `${normalizeText(item.title)}:${normalizeText(item.author)}`;
-    const existingIndex = unique.findIndex(
-      (entry) => `${normalizeText(entry.title)}:${normalizeText(entry.author)}` === identity,
-    );
-    if (existingIndex === -1) {
-      unique.push(item);
-      continue;
+  });
+  queue.player.on("exception", async (data) => {
+    global.logger?.error?.("[MUSIC] player exception:", queue.guildId, data?.exception?.message || data);
+    await playNext(queue).catch(() => {});
+  });
+  queue.player.on("stuck", async () => {
+    global.logger?.warn?.("[MUSIC] player stuck:", queue.guildId, queue.currentTrack?.title || "unknown");
+    await playNext(queue).catch(() => {});
+  });
+  queue.player.on("closed", async () => {
+    const guildId = String(queue.guildId || "");
+    const current = queues.get(guildId);
+    if (!current) return;
+    queues.delete(guildId);
+    clearTimer(inactivityTimers, guildId);
+    clearTimer(emptyVoiceTimers, guildId);
+    clearVoiceSession(guildId);
+    if (!current.manualDisconnect) {
+      await sendQueueNotice(current, "I have been kicked from the voice channel \u2639\uFE0F");
     }
-    const existing = unique[existingIndex];
-    const currentPriority = Number(CATALOG_SOURCE_PRIORITY[item.source] || 0);
-    const existingPriority = Number(CATALOG_SOURCE_PRIORITY[existing.source] || 0);
-    if (
-      currentPriority > existingPriority ||
-      (currentPriority === existingPriority && Number(item.score || 0) > Number(existing.score || 0))
-    ) {
-      unique[existingIndex] = item;
-    }
-  }
-  return unique.filter((item) => {
-    const identity = `${normalizeText(item.title)}:${normalizeText(item.author)}`;
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-    return true;
   });
 }
 
-async function resolveSearchInput(input) {
-  const query = cleanQuery(input);
-  if (!query) return {
-    query: "",
-    engine: QueryType.AUTO_SEARCH,
-    translated: false,
-    youtubeConvertible: false,
-  };
-
-  if (/spotify\.com\//i.test(query)) {
-    const directSpotify = await spotifyUrlToCatalog(query);
-    if (directSpotify?.tracks?.length) {
-      return {
-        query,
-        engine: QueryType.AUTO,
-        translated: false,
-        youtubeConvertible: false,
-        directCatalogResult: directSpotify,
-      };
-    }
-  }
-
-  if (/deezer\.com\/(?:[a-z]{2}\/)?track\/\d+/i.test(query)) {
-    return { query, engine: QueryType.AUTO, translated: false, youtubeConvertible: false };
-  }
-
-  if (/music\.apple\.com\//i.test(query)) {
-    const directApple = await appleMusicTrackToCatalog(query);
-    if (directApple) {
-      return {
-        query,
-        engine: QueryType.AUTO_SEARCH,
-        translated: true,
-        youtubeConvertible: false,
-        directCatalogResult: {
-          tracks: [directApple],
-          playlist: null,
-        },
-      };
-    }
-    const mapped = await appleMusicToSearchQuery(query);
-    if (mapped) {
-      return { query: mapped, engine: QueryType.AUTO_SEARCH, translated: true, youtubeConvertible: false };
-    }
-  }
-
-  if (isSoundCloudUrl(query)) {
-    return {
-      query,
-      engine: QueryType.AUTO,
-      translated: false,
-      youtubeConvertible: false,
-      blockedSource: "soundcloud",
+async function ensureQueue(client, guild, channel, voiceChannel) {
+  const guildId = String(guild?.id || "");
+  let queue = queues.get(guildId) || null;
+  const manager = client.musicPlayer?.manager || (await getPlayer(client)).manager;
+  if (!queue) {
+    const player = await manager.joinVoiceChannel({
+      guildId,
+      channelId: String(voiceChannel.id),
+      shardId: Number(guild?.shardId || 0),
+      deaf: true,
+      mute: false,
+    });
+    queue = {
+      guildId,
+      guild,
+      player,
+      metadata: { channel },
+      voiceChannelId: String(voiceChannel.id),
+      tracks: [],
+      currentTrack: null,
+      startedAt: 0,
+      positionMs: 0,
+      paused: false,
+      volume: DEFAULT_VOLUME,
+      manualDisconnect: false,
+      eventsAttached: false,
     };
+    queue.node = buildNodeFacade(queue);
+    queue.clear = () => {
+      queue.tracks = [];
+    };
+    queue.delete = () => destroyQueue(guildId, { manual: true });
+    queue.connection = { channelId: queue.voiceChannelId };
+    queues.set(guildId, queue);
+    attachPlayerEvents(queue);
   }
+  queue.guild = guild;
+  queue.metadata = { ...(queue.metadata || {}), channel };
+  queue.voiceChannelId = String(voiceChannel.id);
+  queue.connection = { channelId: queue.voiceChannelId };
+  return queue;
+}
 
-  return {
-    query,
-    engine: /^https?:\/\//i.test(query) ? QueryType.AUTO : QueryType.AUTO_SEARCH,
-    translated: false,
-    youtubeConvertible: isYouTubeVideoUrl(query),
-  };
+async function destroyQueue(guildId, { manual = false } = {}) {
+  const key = String(guildId || "");
+  const queue = queues.get(key);
+  clearTimer(inactivityTimers, key);
+  clearTimer(emptyVoiceTimers, key);
+  clearVoiceSession(key);
+  if (!queue) return false;
+  queues.delete(key);
+  queue.manualDisconnect = Boolean(manual);
+  queue.tracks = [];
+  queue.currentTrack = null;
+  await queue.player.destroy().catch(() => {});
+  return true;
 }
 
 async function getPlayer(client) {
-  if (client.musicPlayer) return client.musicPlayer;
-
-  if (!playerInitPromise) {
-    playerInitPromise = (async () => {
-      const player = new Player(client, {
-        skipFFmpeg: false,
-      });
-      await player.extractors.loadMulti(DefaultExtractors);
-
-      player.events.on("error", (queue, error) => {
-        global.logger?.error?.(
-          "[MUSIC] queue error:",
-          queue?.guild?.id || "unknown",
-          error?.message || error,
-        );
-      });
-      player.events.on("playerError", async (queue, error, track) => {
-        const guildId = String(queue?.guild?.id || "");
-        if (guildId) lastPlayerErrorAtByGuild.set(guildId, Date.now());
-        const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
-        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
-        global.logger?.error?.(
-          "[MUSIC] player error:",
-          queue?.guild?.id || "unknown",
-          track?.title || "unknown",
-          error?.message || error,
-        );
-        logMusic("player_error", {
-          guildId,
-          elapsed,
-          retryCount: getTrackRecoveryAttempts(guildId, track),
-          track: getTrackDebugMeta(track),
-          message: error?.message || String(error || ""),
-          pendingTracks: Number(queue?.tracks?.size || 0),
-        });
-        const retryCount = getTrackRecoveryAttempts(guildId, track);
-        if (!guildId || !track || retryCount >= MAX_TRACK_RECOVERY_ATTEMPTS || recoveryInFlightByGuild.get(guildId)) return;
-        try {
-          incrementTrackRecoveryAttempts(guildId, track);
-          await recoverTrackPlayback(queue, track, client, sourceKeyFromTrack(track));
-        } catch (recoveryError) {
-          global.logger?.warn?.("[MUSIC] player error recovery failed:", guildId, recoveryError?.message || recoveryError);
-        }
-      });
-      player.events.on("playerStart", (queue) => {
-        queue?.node?.setVolume?.(DEFAULT_MUSIC_VOLUME);
-        const guildId = String(queue?.guild?.id || "");
-        const previousTrack = guildId ? lastTrackSessionByGuild.get(guildId)?.track : null;
-        const previousRecoveryKey = getTrackRecoveryKey(previousTrack);
-        const currentRecoveryKey = getTrackRecoveryKey(queue?.currentTrack);
-        if (guildId) lastPlayerStartAtByGuild.set(guildId, Date.now());
-        if (guildId) recoveryInFlightByGuild.delete(guildId);
-        if (guildId && currentRecoveryKey && previousRecoveryKey && currentRecoveryKey !== previousRecoveryKey) {
-          finishRetryCountByGuild.delete(guildId);
-          clearGuildRecoveryAttempts(guildId);
-        }
-        if (guildId && queue?.currentTrack) {
-          lastTrackSessionByGuild.set(guildId, {
-            track: queue.currentTrack,
-            startedAt: Date.now(),
-          });
-        }
-        logMusic("player_start", {
-          guildId,
-          volume: DEFAULT_MUSIC_VOLUME,
-          pendingTracks: Number(queue?.tracks?.size || 0),
-          track: getTrackDebugMeta(queue?.currentTrack),
-        });
-        clearInactivityTimer(queue?.guild?.id);
-        clearEmptyVoiceTimer(queue?.guild?.id);
-        schedulePlaybackWatchdog(queue, client);
-      });
-      player.events.on("playerFinish", async (queue, track) => {
-        const guildId = String(queue?.guild?.id || "");
-        if (guildId && recoveryInFlightByGuild.get(guildId)) return;
-        const session = guildId ? lastTrackSessionByGuild.get(guildId) : null;
-        const finishedTrack = track || session?.track || queue?.currentTrack || null;
-        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
-        logMusic("player_finish", {
-          guildId,
-          elapsed,
-          pendingTracks: Number(queue?.tracks?.size || 0),
-          track: getTrackDebugMeta(finishedTrack),
-        });
-        if (guildId && finishedTrack && shouldTreatAsEarlyFinish(finishedTrack, session?.startedAt)) {
-          const retryCount = getTrackRecoveryAttempts(guildId, finishedTrack);
-          if (retryCount < MAX_TRACK_RECOVERY_ATTEMPTS) {
-            incrementTrackRecoveryAttempts(guildId, finishedTrack);
-            global.logger?.warn?.("[MUSIC] Early finish detected, trying fresh recovery once:", guildId, finishedTrack?.title || "unknown");
-            logMusicThrottled("player_finish_early", guildId, {
-              guildId,
-              elapsed,
-              retryCount,
-              track: getTrackDebugMeta(finishedTrack),
-            }, 10_000);
-            try {
-              await recoverTrackPlayback(queue, finishedTrack, client, sourceKeyFromTrack(finishedTrack));
-              return;
-            } catch (error) {
-              global.logger?.warn?.("[MUSIC] Early finish recovery failed:", guildId, error?.message || error);
-            }
-          }
-        }
-        if (guildId) {
-          finishRetryCountByGuild.delete(guildId);
-          lastTrackSessionByGuild.delete(guildId);
-          clearGuildRecoveryAttempts(guildId);
-        }
-        clearPlaybackWatchdog(guildId);
-        const pendingTracks = Number(queue?.tracks?.size || 0);
-        if (pendingTracks > 0) return;
-        await notifyQueueEnded(queue);
-      });
-      player.events.on("audioTrackAdd", (queue) => {
-        clearInactivityTimer(queue?.guild?.id);
-        clearEmptyVoiceTimer(queue?.guild?.id);
-      });
-      player.events.on("audioTracksAdd", (queue) => {
-        clearInactivityTimer(queue?.guild?.id);
-        clearEmptyVoiceTimer(queue?.guild?.id);
-      });
-      player.events.on("emptyQueue", async (queue) => {
-        const guildId = String(queue?.guild?.id || "");
-        if (!guildId) return;
-        if (guildId && recoveryInFlightByGuild.get(guildId)) return;
-        const now = Date.now();
-        const lastStartAt = guildId ? Number(lastPlayerStartAtByGuild.get(guildId) || 0) : 0;
-        const lastPlayerErrorAt = guildId ? Number(lastPlayerErrorAtByGuild.get(guildId) || 0) : 0;
-        const session = lastTrackSessionByGuild.get(guildId) || null;
-        const elapsed = Math.max(0, Date.now() - Number(session?.startedAt || 0));
-        logMusicThrottled("empty_queue", guildId, {
-          guildId,
-          elapsed,
-          pendingTracks: Number(queue?.tracks?.size || 0),
-          currentTrack: getTrackDebugMeta(queue?.currentTrack || session?.track || null),
-          lastStartDelta: lastStartAt ? now - lastStartAt : null,
-          lastPlayerErrorDelta: lastPlayerErrorAt ? now - lastPlayerErrorAt : null,
-        }, 15_000);
-        if ((lastStartAt && now - lastStartAt < 15_000) || (lastPlayerErrorAt && now - lastPlayerErrorAt < 15_000)) return;
-      });
-      player.events.on("emptyChannel", (queue) => {
-        scheduleEmptyVoiceLeave(queue);
-      });
-      player.events.on("channelPopulate", (queue) => {
-        clearEmptyVoiceTimer(queue?.guild?.id);
-      });
-      player.events.on("disconnect", async (queue) => {
-        const guildId = String(queue?.guild?.id || "");
-        clearInactivityTimer(guildId);
-        clearEmptyVoiceTimer(guildId);
-        clearPlaybackWatchdog(guildId);
-        clearVoiceSession(guildId);
-        recoveryInFlightByGuild.delete(guildId);
-        lastTrackSessionByGuild.delete(guildId);
-        finishRetryCountByGuild.delete(guildId);
-        clearGuildRecoveryAttempts(guildId);
-        const now = Date.now();
-        const manualLeaveAt = guildId ? Number(manualLeaveAtByGuild.get(guildId) || 0) : 0;
-        if (manualLeaveAt && now - manualLeaveAt < 15_000) return;
-        const lastEmptyAt = guildId ? Number(lastEmptyQueueAtByGuild.get(guildId) || 0) : 0;
-        if (lastEmptyAt && now - lastEmptyAt < 8000) return;
-        await sendQueueNotice(queue, "I have been kicked from the voice channel ☹️");
-      });
-
-      client.musicPlayer = player;
-      return player;
-    })().finally(() => {
-      playerInitPromise = null;
-    });
+  if (client.musicPlayer?.manager) return client.musicPlayer;
+  if (!Shoukaku || !Connectors || !LoadType) {
+    throw new Error("Shoukaku is not installed");
   }
 
-  return playerInitPromise;
+  const host = String(process.env.LAVALINK_HOST || "127.0.0.1:2333").trim();
+  const auth = String(process.env.LAVALINK_PASSWORD || "youshallnotpass").trim();
+  const secure = ["1", "true", "yes", "on"].includes(String(process.env.LAVALINK_SECURE || "").toLowerCase());
+  const name = String(process.env.LAVALINK_NAME || "main").trim() || "main";
+  const manager = new Shoukaku(
+    new Connectors.DiscordJS(client),
+    [{ name, url: host, auth, secure }],
+    {
+      resume: true,
+      resumeTimeout: 30,
+      reconnectTries: 5,
+      reconnectInterval: 5,
+      restTimeout: 60,
+      voiceConnectionTimeout: 15,
+    },
+  );
+
+  manager.on("ready", (nodeName) => {
+    logMusic("node_ready", { node: nodeName, host });
+  });
+  manager.on("error", (nodeName, error) => {
+    global.logger?.error?.("[MUSIC] lavalink node error:", nodeName, error?.message || error);
+  });
+  manager.on("close", (nodeName, code, reason) => {
+    global.logger?.warn?.("[MUSIC] lavalink node close:", nodeName, code, reason);
+  });
+
+  client.musicPlayer = buildManagerFacade(client, manager);
+  return client.musicPlayer;
+}
+
+async function searchPlayable({ client, input, requestedBy }) {
+  const player = await getPlayer(client);
+  const manager = player.manager;
+  let query = cleanQuery(input);
+  if (!query) return { ok: false, reason: "empty_query" };
+
+  if (isYouTubeVideoUrl(query) || isSoundCloudUrl(query)) {
+    const converted = await convertUnsupportedUrlToQuery(query);
+    if (!converted?.convertedQuery) {
+      return {
+        ok: false,
+        reason: isSoundCloudUrl(query) ? "blocked_source" : "youtube_not_supported",
+        source: isSoundCloudUrl(query) ? "soundcloud" : "youtube",
+      };
+    }
+    query = converted.convertedQuery;
+    const tracks = await runCatalogSearch(manager, query, requestedBy);
+    if (!tracks.length) {
+      return {
+        ok: false,
+        reason: converted.source === "soundcloud" ? "blocked_source" : "youtube_not_supported",
+        source: converted.source,
+      };
+    }
+    return {
+      ok: true,
+      player,
+      resolved: { query, translated: true, youtubeConvertible: converted.source === "youtube" },
+      searchResult: { tracks, playlist: null },
+    };
+  }
+
+  if (isSpotifyUrl(query) || isAppleMusicUrl(query) || isDeezerUrl(query) || /^https?:\/\//i.test(query)) {
+    const direct = await resolveIdentifier(manager, query).catch(() => null);
+    const parsed = tracksFromLavalinkResponse(direct, requestedBy, {
+      resolverInput: query,
+      originalQuery: input,
+    });
+    const filtered = parsed.playlist
+      ? parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio")
+      : parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio");
+    const expectedSource = buildDirectUrlExpectedSource(query);
+    const playableTracks = expectedSource
+      ? filtered.filter((track) => track.source === expectedSource)
+      : filtered;
+    if (playableTracks.length > 0) {
+      return {
+        ok: true,
+        player,
+        resolved: { query, translated: false, youtubeConvertible: false },
+        searchResult: { tracks: playableTracks, playlist: parsed.playlist },
+      };
+    }
+    return { ok: false, reason: "not_found" };
+  }
+
+  const tracks = await runCatalogSearch(manager, query, requestedBy);
+  if (!tracks.length) return { ok: false, reason: "not_found" };
+  return {
+    ok: true,
+    player,
+    resolved: { query, translated: false, youtubeConvertible: false },
+    searchResult: { tracks, playlist: null },
+  };
 }
 
 async function playRequest({
@@ -1706,296 +667,118 @@ async function playRequest({
   preResolved = null,
   preSearchResult = null,
 }) {
-  const player = await getPlayer(client);
-  const resolved = preResolved || await resolveSearchInput(input);
-
-  if (!resolved.query) {
-    return { ok: false, reason: "empty_query" };
-  }
-  const rawSearchResult = preSearchResult || await runSearch(player, resolved, requestedBy);
-  const searchResult = await resolvePlayableSearchResult(player, rawSearchResult, requestedBy);
-
-  if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
-    if (resolved?.youtubeConvertible) {
-      return { ok: false, reason: "youtube_not_supported" };
-    }
-    if (resolved?.blockedSource === "soundcloud") {
-      return { ok: false, reason: "blocked_source", source: "soundcloud" };
-    }
-    return { ok: false, reason: "not_found" };
-  }
-
-  const queue = player.nodes.create(guild, {
-    metadata: { channel },
-    leaveOnEmpty: false,
-    leaveOnEmptyCooldown: 0,
-    leaveOnEnd: false,
-    leaveOnEndCooldown: 0,
-    selfDeaf: true,
-    volume: DEFAULT_MUSIC_VOLUME,
-    connectionTimeout: 20_000,
-  });
-  queue.metadata = { ...(queue.metadata || {}), channel };
-  queue.node.setVolume(DEFAULT_MUSIC_VOLUME);
+  const searchResult = preSearchResult || (await searchPlayable({ client, input, requestedBy })).searchResult;
+  if (!searchResult?.tracks?.length) return { ok: false, reason: "not_found" };
 
   const currentSession = getVoiceSession(guild?.id);
-  const shouldLeaveTts =
-    currentSession?.mode === "tts" ||
-    (!currentSession?.mode && !queue.connection);
-  if (shouldLeaveTts) {
+  if (currentSession?.mode === "tts") {
     await leaveTtsGuild(guild?.id, client).catch(() => null);
   }
-  setVoiceSession(guild?.id, {
-    mode: "music",
-    channelId: voiceChannel?.id,
-  });
 
-  if (!queue.connection) {
-    await queue.connect(voiceChannel);
-  }
+  const queue = await ensureQueue(client, guild, channel, voiceChannel);
+  setVoiceSession(guild?.id, { mode: "music", channelId: voiceChannel?.id });
+  queue.manualDisconnect = false;
 
-  logMusic("play_request", {
-    guildId: guild?.id,
-    channelId: channel?.id,
-    voiceChannelId: voiceChannel?.id,
-    query: input,
-    resolvedQuery: resolved?.query,
-    translated: Boolean(resolved?.translated),
-    searchCount: searchResult?.tracks?.length || 0,
-    first: searchResult?.tracks?.[0] ? getTrackDebugMeta(searchResult.tracks[0]) : null,
-    hadConnection: Boolean(queue.connection),
-    wasPlaying: Boolean(queue.isPlaying()),
-  });
+  const firstTrack = searchResult.tracks[0] || null;
+  if (!firstTrack) return { ok: false, reason: "not_found" };
 
-  clearInactivityTimer(guild?.id);
-
-  const wasPlaying = queue.isPlaying();
-  if (!wasPlaying) {
-    if (searchResult.playlist) {
-      const [firstTrack, ...restTracks] = searchResult.tracks;
-      if (!firstTrack) return { ok: false, reason: "empty_queue" };
-      stampTrackMetadata(firstTrack, requestedBy, {
-        recoveryQuery: resolved.query,
-      });
-      for (const track of restTracks) {
-        stampTrackMetadata(track, requestedBy, {
-          recoveryQuery: `${track?.title || ""} ${track?.author || ""}`.trim(),
-        });
-      }
-      if (restTracks.length) queue.addTrack(restTracks);
-      await queue.node.play(firstTrack);
-      return {
-        ok: true,
-        mode: "started",
-        track: firstTrack,
-        playlist: searchResult.playlist || null,
-        translated: resolved.translated,
-      };
+  if (!queue.currentTrack) {
+    if (searchResult.playlist && searchResult.tracks.length > 1) {
+      queue.tracks.push(...searchResult.tracks.slice(1));
     }
-    const firstTrack = searchResult.tracks[0];
-    if (!firstTrack) return { ok: false, reason: "empty_queue" };
-    stampTrackMetadata(firstTrack, requestedBy, {
-      recoveryQuery: resolved.query,
-    });
-    await queue.node.play(firstTrack);
+    await playTrack(queue, firstTrack);
     return {
       ok: true,
       mode: "started",
       track: firstTrack,
-      playlist: searchResult.playlist || null,
-      translated: resolved.translated,
+      playlist: searchResult.playlist,
+      translated: Boolean(preResolved?.translated),
     };
   }
 
   if (searchResult.playlist) {
-    for (const track of searchResult.tracks) {
-      stampTrackMetadata(track, requestedBy, {
-        recoveryQuery: `${track?.title || ""} ${track?.author || ""}`.trim(),
-      });
-    }
-    queue.addTrack(searchResult.tracks);
+    queue.tracks.push(...searchResult.tracks);
   } else {
-    const single = searchResult.tracks[0];
-    stampTrackMetadata(single, requestedBy, {
-      recoveryQuery: resolved.query,
-    });
-    queue.addTrack(single);
+    queue.tracks.push(firstTrack);
   }
 
+  const queuePosition = Math.max(1, queue.tracks.length);
+  const currentRemaining = Math.max(0, Number(queue.currentTrack?.durationMS || 0) - Number(queue.positionMs || 0));
+  const etaMs = currentRemaining + queue.tracks.slice(0, queuePosition - 1).reduce((sum, item) => sum + Number(item?.durationMS || 0), 0);
   return {
     ok: true,
     mode: "queued",
-    track: searchResult.tracks[0],
-    playlist: searchResult.playlist || null,
-    translated: resolved.translated,
+    track: firstTrack,
+    playlist: searchResult.playlist,
+    translated: Boolean(preResolved?.translated),
     queue,
-    queueTrackCount: Number(queue?.tracks?.size || 0),
-    queueTotalCount:
-      Number(queue?.tracks?.size || 0) + (queue?.currentTrack ? 1 : 0),
-    queuePosition:
-      Number(
-        typeof queue?.node?.getTrackPosition === "function"
-          ? queue.node.getTrackPosition(searchResult.tracks[0])
-          : -1,
-      ) + 1,
-    etaMs: (() => {
-      const list = queueTracksToArray(queue);
-      const pos =
-        Number(
-          typeof queue?.node?.getTrackPosition === "function"
-            ? queue.node.getTrackPosition(searchResult.tracks[0])
-            : -1,
-        ) || 0;
-      const currentTs = queue?.node?.getTimestamp?.();
-      const currentRemaining =
-        queue?.currentTrack
-          ? Math.max(
-            0,
-            Number(currentTs?.total?.value || queue.currentTrack.durationMS || 0) -
-            Number(currentTs?.current?.value || 0),
-          )
-          : 0;
-      let wait = currentRemaining;
-      for (let i = 0; i < pos; i += 1) {
-        const item = list[i];
-        wait += Math.max(0, Number(item?.durationMS || 0));
-      }
-      return wait;
-    })(),
+    queueTrackCount: queue.tracks.length,
+    queueTotalCount: queue.tracks.length + (queue.currentTrack ? 1 : 0),
+    queuePosition,
+    etaMs,
   };
 }
 
-async function searchPlayable({
-  client,
-  input,
-  requestedBy,
-}) {
-  const player = await getPlayer(client);
-  const rawInput = cleanQuery(input);
-  if (rawInput && /^https?:\/\//i.test(rawInput) && (isSpotifyUrl(rawInput) || isAppleMusicUrl(rawInput) || isDeezerUrl(rawInput))) {
-    const expectedSource = getExpectedSourceFromUrl(rawInput);
-    const directResult = await player.search(rawInput, {
-      requestedBy,
-      searchEngine: QueryType.AUTO,
-    }).catch(() => null);
-    const directTracks = Array.isArray(directResult?.tracks)
-      ? directResult.tracks.filter((track) => sourceKeyFromTrack(track) === expectedSource)
-      : [];
-    if (directResult && directTracks.length > 0) {
-      return {
-        ok: true,
-        player,
-        resolved: {
-          query: rawInput,
-          engine: QueryType.AUTO,
-          translated: false,
-          youtubeConvertible: false,
-        },
-        searchResult: {
-          ...directResult,
-          tracks: directTracks,
-        },
-      };
-    }
-    return { ok: false, reason: "not_found" };
-  }
-  const resolved = await resolveSearchInput(input);
-  if (!resolved.query) return { ok: false, reason: "empty_query" };
-  if (resolved?.directCatalogResult?.tracks?.length) {
-    logMusic("search_catalog_direct", {
-      query: resolved.query,
-      count: resolved.directCatalogResult.tracks.length,
-      playlist: Boolean(resolved.directCatalogResult.playlist),
-      top: resolved.directCatalogResult.tracks.slice(0, 5).map((item) => ({
-        title: item.title,
-        author: item.author,
-        source: item.source,
-        resolverInput: item.resolverInput,
-      })),
-    });
-    return {
-      ok: true,
-      player,
-      resolved,
-      searchResult: resolved.directCatalogResult,
-      catalogOnly: true,
-    };
-  }
-  if (!resolved?.youtubeConvertible && (resolved?.engine === QueryType.AUTO_SEARCH || resolved?.translated)) {
-    const catalogCandidates = await searchPublicCatalogCandidates(resolved.query).catch(() => []);
-    if (catalogCandidates.length > 0) {
-      logMusic("search_catalog_primary", {
-        query: resolved.query,
-        count: catalogCandidates.length,
-        top: catalogCandidates.slice(0, 5).map((item) => ({
-          title: item.title,
-          author: item.author,
-          source: item.source,
-          resolverInput: item.resolverInput,
-        })),
-      });
-      return {
-        ok: true,
-        player,
-        resolved,
-        searchResult: {
-          tracks: catalogCandidates,
-          playlist: null,
-        },
-        catalogOnly: true,
-      };
-    }
-  }
-  const searchResult = await runSearch(player, resolved, requestedBy);
-  if (!searchResult || !Array.isArray(searchResult.tracks) || !searchResult.tracks.length) {
-    if (resolved?.engine === QueryType.AUTO_SEARCH && !resolved?.youtubeConvertible) {
-      const catalogCandidates = await searchPublicCatalogCandidates(resolved.query).catch(() => []);
-      if (catalogCandidates.length > 0) {
-        logMusic("search_catalog_fallback", {
-          query: resolved.query,
-          count: catalogCandidates.length,
-          top: catalogCandidates.slice(0, 5).map((item) => ({
-            title: item.title,
-            author: item.author,
-            source: item.source,
-            resolverInput: item.resolverInput,
-          })),
-        });
-        return {
-          ok: true,
-          player,
-          resolved,
-          searchResult: {
-            tracks: catalogCandidates,
-            playlist: null,
-          },
-          catalogOnly: true,
-        };
-      }
-    }
-    if (resolved?.youtubeConvertible) {
-      return { ok: false, reason: "youtube_not_supported" };
-    }
-    if (resolved?.blockedSource === "soundcloud") {
-      return { ok: false, reason: "blocked_source", source: "soundcloud" };
-    }
-    return { ok: false, reason: "not_found" };
-  }
-  return { ok: true, player, resolved, searchResult };
-}
-
 async function touchMusicOutputChannel(client, guildId, channel) {
-  const safeGuildId = String(guildId || "");
-  if (!client?.musicPlayer || !safeGuildId || !channel) return false;
-  const queue = client.musicPlayer.nodes.get(safeGuildId);
-  if (!queue) return false;
+  const queue = queues.get(String(guildId || ""));
+  if (!queue || !channel) return false;
   queue.metadata = { ...(queue.metadata || {}), channel };
   return true;
 }
 
+async function playRadioStation({ client, guild, channel, voiceChannel, station }) {
+  const player = await getPlayer(client);
+  const manager = player.manager;
+  const result = await resolveIdentifier(manager, station.streamUrl).catch(() => null);
+  const parsed = tracksFromLavalinkResponse(result, null, {
+    resolverInput: station.streamUrl,
+    originalQuery: station.name,
+    source: "radio",
+    station,
+  });
+  const track = parsed.tracks[0] || null;
+  if (!track) return { ok: false, reason: "not_found" };
+
+  const currentSession = getVoiceSession(guild?.id);
+  if (currentSession?.mode === "tts") {
+    await leaveTtsGuild(guild?.id, client).catch(() => null);
+  }
+
+  const queue = await ensureQueue(client, guild, channel, voiceChannel);
+  queue.tracks = [];
+  setVoiceSession(guild?.id, { mode: "music", channelId: voiceChannel?.id });
+  await playTrack(queue, track);
+  return { ok: true, track, queue };
+}
+
+function getQueue(guildId) {
+  return queues.get(String(guildId || "")) || null;
+}
+
+async function handleMusicVoiceStateUpdate(oldState, newState, client) {
+  const guild = newState?.guild || oldState?.guild;
+  if (!guild?.id || !client?.user?.id) return;
+  const queue = queues.get(String(guild.id));
+  if (!queue) return;
+  const botMember = guild.members?.me || guild.members?.cache?.get(client.user.id);
+  const botChannel = botMember?.voice?.channel;
+  if (!botChannel || String(botChannel.id) !== String(queue.voiceChannelId)) return;
+  const humans = Array.from(botChannel.members.values()).filter((member) => !member.user?.bot);
+  if (humans.length === 0) {
+    await scheduleEmptyVoiceLeave(queue);
+  } else {
+    clearTimer(emptyVoiceTimers, guild.id);
+  }
+}
+
 module.exports = {
   getPlayer,
+  getQueue,
   searchPlayable,
-  touchMusicOutputChannel,
+  searchLyrics,
   playRequest,
+  playRadioStation,
+  touchMusicOutputChannel,
+  destroyQueue,
+  handleMusicVoiceStateUpdate,
 };

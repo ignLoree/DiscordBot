@@ -32,7 +32,7 @@ function isSupportedPickerTrack(track) {
 }
 
 function isConcretePlayableTrack(track) {
-  return Boolean(track && typeof track.setMetadata === "function");
+  return Boolean(track && typeof track === "object" && track.encoded && track.resolverInput);
 }
 
 function normalizeText(value) {
@@ -191,7 +191,7 @@ module.exports = {
       if (search?.reason === "not_found") {
         const noResultsEmbed = new EmbedBuilder()
           .setColor("#ED4245")
-          .setDescription("No results ⛔");
+          .setDescription("No results \u26D4");
         return safeMessageReply(message, { embeds: [noResultsEmbed] });
       }
       global.logger?.error?.("[MUSIC] play search failed:", search?.error || search?.reason);
@@ -207,7 +207,7 @@ module.exports = {
     if (!search.searchResult?.playlist && searchTracks.length === 0) {
       const noResultsEmbed = new EmbedBuilder()
         .setColor("#ED4245")
-        .setDescription("No results ⛔");
+        .setDescription("No results \u26D4");
       return safeMessageReply(message, { embeds: [noResultsEmbed] });
     }
     const strongDirectMatch = !search.searchResult?.playlist
@@ -217,10 +217,8 @@ module.exports = {
       finalInput = String(
         strongDirectMatch?.resolverInput || `${strongDirectMatch?.title || ""} ${strongDirectMatch?.author || ""}`.trim(),
       );
-      finalSearchResult = isConcretePlayableTrack(strongDirectMatch)
-        ? { tracks: [strongDirectMatch], playlist: null }
-        : null;
-      finalResolved = finalSearchResult ? search.resolved : null;
+      finalSearchResult = { tracks: [strongDirectMatch], playlist: null };
+      finalResolved = search.resolved;
     } else if (!search.searchResult?.playlist && searchTracks.length > 1) {
       const picked = await pickFromPagedMenu({
         message,
@@ -238,10 +236,8 @@ module.exports = {
       finalInput = String(
         picked?.resolverInput || `${picked?.title || ""} ${picked?.author || ""}`.trim(),
       );
-      finalSearchResult = isConcretePlayableTrack(picked)
-        ? { tracks: [picked], playlist: null }
-        : null;
-      finalResolved = finalSearchResult ? search.resolved : null;
+      finalSearchResult = { tracks: [picked], playlist: null };
+      finalResolved = search.resolved;
     } else if (!search.searchResult?.playlist && search.catalogOnly && searchTracks.length === 1) {
       const onlyTrack = searchTracks[0];
       finalInput = String(
@@ -284,7 +280,7 @@ module.exports = {
       if (result?.reason === "not_found") {
         const noResultsEmbed = new EmbedBuilder()
           .setColor("#ED4245")
-          .setDescription("No results ⛔");
+          .setDescription("No results \u26D4");
         return safeMessageReply(message, { embeds: [noResultsEmbed] });
       }
       global.logger?.error?.("[MUSIC] play failed:", result?.error || result?.reason);
@@ -319,7 +315,7 @@ module.exports = {
 
       const queuedEmbed = new EmbedBuilder()
         .setColor("#1f2328")
-        .setTitle("🌈 Added Track")
+        .setTitle("\uD83C\uDF08 Added Track")
         .setDescription(
           [
             "**Track**",
@@ -370,3 +366,4 @@ module.exports = {
     return safeMessageReply(message, { embeds: [embed] });
   },
 };
+

@@ -1,0 +1,72 @@
+server:
+  port: 2333
+  address: 0.0.0.0
+
+lavalink:
+  server:
+    password: youshallnotpass
+    sources:
+      youtube: false
+      soundcloud: false
+      bandcamp: false
+      twitch: false
+      vimeo: false
+      http: true
+      local: false
+    bufferDurationMs: 400
+    frameBufferDurationMs: 5000
+    opusEncodingQuality: 10
+    resamplingQuality: HIGH
+    trackStuckThresholdMs: 10000
+    useSeekGhosting: true
+    ytSearchEnabled: false
+    soundcloudSearchEnabled: false
+    gc-warnings: true
+  plugins:
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.7.0"
+      snapshot: false
+      repository: "https://maven.lavalink.dev/releases"
+
+plugins:
+  lavasrc:
+    providers:
+      - "dzisrc:%QUERY%"
+      - "ytsearch:\"%ISRC%\""
+      - "ytsearch:%QUERY%"
+    sources:
+      spotify: true
+      applemusic: true
+      deezer: true
+      yandexmusic: false
+      flowerytts: false
+      youtube: false
+      vkmusic: false
+      tidal: false
+      qobuz: false
+      joox: false
+    spotify:
+      clientId: "${SPOTIFY_CLIENT_ID}"
+      clientSecret: "${SPOTIFY_CLIENT_SECRET}"
+      countryCode: "IT"
+      playlistLoadLimit: 100
+      albumLoadLimit: 100
+    applemusic:
+      countryCode: "IT"
+      mediaAPIToken: ""
+    deezer:
+      arl: ""
+
+metrics:
+  prometheus:
+    enabled: false
+
+sentry:
+  dsn: ""
+
+logging:
+  level:
+    root: INFO
+    lavalink: INFO
+    com.github.topi314.lavasrc: INFO
+  file:
+    path: ./logs/

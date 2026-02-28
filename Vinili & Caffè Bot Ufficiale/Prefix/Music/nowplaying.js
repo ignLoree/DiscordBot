@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { touchMusicOutputChannel } = require("../../Services/Music/musicService");
+const { getQueue, touchMusicOutputChannel } = require("../../Services/Music/musicService");
 
 function formatDateTime(value) {
   const date = new Date(Number(value || Date.now()));
@@ -19,7 +19,7 @@ function renderProgressBar(currentMs, totalMs, size = 16) {
   const knob = Math.max(0, Math.min(size - 1, Math.round(ratio * (size - 1))));
   let out = "";
   for (let i = 0; i < size; i += 1) {
-    out += i === knob ? "◉" : "─";
+    out += i === knob ? "\u25C9" : "\u2500";
   }
   return out;
 }
@@ -34,10 +34,8 @@ module.exports = {
     await message.channel.sendTyping();
     await touchMusicOutputChannel(message.client, message.guild?.id, message.channel).catch(() => {});
 
-    const player = message.client?.musicPlayer || null;
-    const queue = player?.nodes?.get?.(message.guild?.id) || null;
+    const queue = getQueue(message.guild?.id);
     const current = queue?.currentTrack || null;
-
     if (!queue || !current || !queue?.node?.isPlaying?.()) {
       return safeMessageReply(
         message,
@@ -46,7 +44,7 @@ module.exports = {
     }
 
     const timestamp = queue.node.getTimestamp?.() || null;
-    const currentMs = Number(timestamp?.current?.value || queue.node?.streamTime || 0);
+    const currentMs = Number(timestamp?.current?.value || queue?.positionMs || 0);
     const totalMs = Number(timestamp?.total?.value || current.durationMS || 0);
     const currentLabel = String(timestamp?.current?.label || "00:00");
     const totalLabel = String(timestamp?.total?.label || current.duration || "00:00");
@@ -60,7 +58,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor("#1f2328")
-      .setTitle("🌈 Now Playing ♪")
+      .setTitle("\uD83C\uDF08 Now Playing \u266A")
       .setDescription(
         [
           "**Playing**",
@@ -91,7 +89,7 @@ module.exports = {
         },
       )
       .setFooter({
-        text: `Requested by ${requestedByUser} • ${requestedAt}`,
+        text: `Requested by ${requestedByUser} � ${requestedAt}`,
       });
 
     return safeMessageReply(message, { embeds: [embed] });

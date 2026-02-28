@@ -6,7 +6,11 @@ const {
   ComponentType,
 } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { getPlayer, touchMusicOutputChannel } = require("../../Services/Music/musicService");
+const {
+  getQueue,
+  searchLyrics,
+  touchMusicOutputChannel,
+} = require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 
 const MAX_LYRICS_PAGE = 3200;
@@ -54,20 +58,9 @@ module.exports = {
     await message.channel.sendTyping();
     await touchMusicOutputChannel(message.client, message.guild?.id, message.channel).catch(() => {});
 
-    const player = await getPlayer(message.client).catch(() => null);
-    if (!player) {
-      return safeMessageReply(
-        message,
-        "<:vegax:1443934876440068179> Servizio lyrics non disponibile ora.",
-      );
-    }
-
     const queryFromArgs = String(args.join(" ") || "").trim();
-    const queue = player.nodes.get(message.guild.id);
-    const currentTrack = queue?.currentTrack || null;
-    const query =
-      queryFromArgs ||
-      (currentTrack ? `${currentTrack.title} ${currentTrack.author || ""}`.trim() : "");
+    const currentTrack = getQueue(message.guild?.id)?.currentTrack || null;
+    const query = queryFromArgs || (currentTrack ? `${currentTrack.title} ${currentTrack.author || ""}`.trim() : "");
 
     if (!query) {
       return safeMessageReply(
@@ -76,7 +69,7 @@ module.exports = {
       );
     }
 
-    const results = await player.lyrics.search({ q: query }).catch(() => []);
+    const results = await searchLyrics(query).catch(() => []);
     if (!Array.isArray(results) || !results.length) {
       const noLyricsEmbed = new EmbedBuilder()
         .setColor("#ED4245")
@@ -103,8 +96,7 @@ module.exports = {
     }
 
     const plainLyrics = String(first?.plainLyrics || "").trim();
-
-    if (!first || !plainLyrics) {
+    if (!plainLyrics) {
       const noLyricsEmbed = new EmbedBuilder()
         .setColor("#ED4245")
         .setDescription("Lyrics not found.");
@@ -132,12 +124,12 @@ module.exports = {
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(prevId)
-          .setLabel("◀")
+          .setLabel("\u25C0")
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(index <= 0),
         new ButtonBuilder()
           .setCustomId(nextId)
-          .setLabel("▶")
+          .setLabel("\u25B6")
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(index >= pages.length - 1),
       );
@@ -162,7 +154,7 @@ module.exports = {
     collector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
         await interaction.reply({
-          content: "Solo chi ha richiesto i lyrics può cambiare pagina.",
+          content: "Solo chi ha richiesto i lyrics puo cambiare pagina.",
           ephemeral: true,
         }).catch(() => {});
         return;
@@ -171,20 +163,16 @@ module.exports = {
       if (interaction.customId === prevId && pageIndex > 0) pageIndex -= 1;
       if (interaction.customId === nextId && pageIndex < pages.length - 1) pageIndex += 1;
 
-      await interaction
-        .update({
-          embeds: [buildEmbed(pageIndex)],
-          components: [buildRow(pageIndex)],
-        })
-        .catch(() => {});
+      await interaction.update({
+        embeds: [buildEmbed(pageIndex)],
+        components: [buildRow(pageIndex)],
+      }).catch(() => {});
     });
 
     collector.on("end", async () => {
-      await sent
-        .edit({
-          components: [buildDisabledRow(pageIndex)],
-        })
-        .catch(() => {});
+      await sent.edit({
+        components: [buildDisabledRow(pageIndex)],
+      }).catch(() => {});
     });
   },
 };

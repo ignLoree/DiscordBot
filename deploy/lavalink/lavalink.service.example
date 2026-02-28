@@ -1,0 +1,17 @@
+[Unit]
+Description=Lavalink Audio Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/lavalink
+ExecStart=/usr/bin/java -jar /opt/lavalink/Lavalink.jar
+Restart=always
+RestartSec=5
+User=root
+Environment=LAVALINK_SERVER_PASSWORD=youshallnotpass
+Environment=SPOTIFY_CLIENT_ID=
+Environment=SPOTIFY_CLIENT_SECRET=
+
+[Install]
+WantedBy=multi-user.target

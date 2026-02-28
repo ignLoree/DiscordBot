@@ -35,7 +35,8 @@
     "node-cron": "4.2.1",
     "node-emoji": "^2.2.0",
     "opusscript": "^0.0.8",
-    "pureimage": "0.4.18"
+    "pureimage": "0.4.18",
+    "shoukaku": "^4.1.1"
   },
   "overrides": {
     "axios": "^1.12.2",

@@ -6,12 +6,12 @@ const {
   ButtonStyle,
   ComponentType,
 } = require("discord.js");
-const { QueryType } = require("discord-player");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { getPlayer, touchMusicOutputChannel } = require("../../Services/Music/musicService");
+const {
+  playRadioStation,
+  touchMusicOutputChannel,
+} = require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
-const { getVoiceSession, setVoiceSession } = require("../../Services/Voice/voiceSessionService");
-const { leaveTtsGuild } = require("../../Services/TTS/ttsService");
 
 const PAGE_SIZE = 10;
 
@@ -30,9 +30,7 @@ function renderStationLabel(station, index) {
 
 function toPages(items, size = PAGE_SIZE) {
   const out = [];
-  for (let i = 0; i < items.length; i += size) {
-    out.push(items.slice(i, i + size));
-  }
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out.length ? out : [[]];
 }
 
@@ -61,7 +59,7 @@ function buildRadioSelect(pages, pageIndex, customId) {
     .addOptions(
       page.map((station, i) => ({
         label: `${startIndex + i + 1}. ${station.name}`.slice(0, 100),
-        description: ([station.state, station.city, station.codec].filter(Boolean).join(" • ") || "Radio italiana").slice(0, 100),
+        description: ([station.state, station.city, station.codec].filter(Boolean).join(" � ") || "Radio italiana").slice(0, 100),
         value: String(startIndex + i),
       })),
     );
@@ -70,34 +68,13 @@ function buildRadioSelect(pages, pageIndex, customId) {
 function buildRows(pages, pageIndex, ids) {
   const { selectId, firstId, prevId, nextId, lastId, cancelId } = ids;
   const nav = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(firstId)
-      .setLabel("<<")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(pageIndex <= 0),
-    new ButtonBuilder()
-      .setCustomId(prevId)
-      .setLabel("<")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(pageIndex <= 0),
-    new ButtonBuilder()
-      .setCustomId(nextId)
-      .setLabel(">")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(pageIndex >= pages.length - 1),
-    new ButtonBuilder()
-      .setCustomId(lastId)
-      .setLabel(">>")
-      .setStyle(ButtonStyle.Secondary)
-      .setDisabled(pageIndex >= pages.length - 1),
-    new ButtonBuilder()
-      .setCustomId(cancelId)
-      .setLabel("X")
-      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId(firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
+    new ButtonBuilder().setCustomId(prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
+    new ButtonBuilder().setCustomId(nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
+    new ButtonBuilder().setCustomId(lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
+    new ButtonBuilder().setCustomId(cancelId).setLabel("X").setStyle(ButtonStyle.Danger),
   );
-  const select = new ActionRowBuilder().addComponents(
-    buildRadioSelect(pages, pageIndex, selectId),
-  );
+  const select = new ActionRowBuilder().addComponents(buildRadioSelect(pages, pageIndex, selectId));
   return [select, nav];
 }
 
@@ -125,17 +102,15 @@ module.exports = {
 
     const voiceChannel = message.member?.voice?.channel;
     if (!voiceChannel) {
-      const noVoiceEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("You are not in a voice channel");
+      const noVoiceEmbed = new EmbedBuilder().setColor("#ED4245").setDescription("You are not in a voice channel");
       return safeMessageReply(message, { embeds: [noVoiceEmbed] });
     }
+
     const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
     if (botVoiceChannel && botVoiceChannel.id !== voiceChannel.id) {
-      return safeMessageReply(message, {
-        embeds: [buildSessionInUseEmbed(botVoiceChannel)],
-      });
+      return safeMessageReply(message, { embeds: [buildSessionInUseEmbed(botVoiceChannel)] });
     }
+
     if (!voiceChannel.joinable || !voiceChannel.speakable) {
       const noPermEmbed = new EmbedBuilder()
         .setColor("#ED4245")
@@ -170,40 +145,27 @@ module.exports = {
     });
     if (!sent || typeof sent.createMessageComponentCollector !== "function") return;
 
-    const collector = sent.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      time: 180_000,
-    });
-    const selectCollector = sent.createMessageComponentCollector({
-      componentType: ComponentType.StringSelect,
-      time: 180_000,
-    });
+    const buttonCollector = sent.createMessageComponentCollector({ componentType: ComponentType.Button, time: 180_000 });
+    const selectCollector = sent.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 180_000 });
 
     const refreshPanel = async (interaction) => {
       rows = buildRows(pages, pageIndex, ids);
-      await interaction.update({
-        embeds: [buildRadioEmbed(pages, pageIndex)],
-        components: rows,
-      });
+      await interaction.update({ embeds: [buildRadioEmbed(pages, pageIndex)], components: rows });
     };
 
-    collector.on("collect", async (interaction) => {
+    buttonCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({
-          content: "Solo chi ha avviato il comando può usare il pannello.",
-          ephemeral: true,
-        }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando puo usare il pannello.", ephemeral: true }).catch(() => {});
         return;
       }
+
       if (interaction.customId === ids.cancelId) {
-        collector.stop("cancel");
+        buttonCollector.stop("cancel");
         selectCollector.stop("cancel");
-        await interaction.update({
-          embeds: [buildRadioEmbed(pages, pageIndex)],
-          components: disableRows(rows),
-        }).catch(() => {});
+        await interaction.update({ embeds: [buildRadioEmbed(pages, pageIndex)], components: disableRows(rows) }).catch(() => {});
         return;
       }
+
       if (interaction.customId === ids.firstId) pageIndex = 0;
       if (interaction.customId === ids.prevId) pageIndex -= 1;
       if (interaction.customId === ids.nextId) pageIndex += 1;
@@ -214,96 +176,32 @@ module.exports = {
 
     selectCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
-        await interaction.reply({
-          content: "Solo chi ha avviato il comando può usare il pannello.",
-          ephemeral: true,
-        }).catch(() => {});
+        await interaction.reply({ content: "Solo chi ha avviato il comando puo usare il pannello.", ephemeral: true }).catch(() => {});
         return;
       }
 
       const pickedIndex = Number(interaction.values?.[0] || -1);
       const station = Number.isFinite(pickedIndex) ? stations[pickedIndex] : null;
       if (!station) {
-        await interaction.reply({
-          content: "Stazione non valida.",
-          ephemeral: true,
-        }).catch(() => {});
+        await interaction.reply({ content: "Stazione non valida.", ephemeral: true }).catch(() => {});
         return;
       }
 
-      const botVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
-      if (botVoiceChannel && botVoiceChannel.id !== voiceChannel.id) {
-        await interaction.reply({
-          embeds: [
-            buildSessionInUseEmbed(botVoiceChannel),
-          ],
-          ephemeral: true,
-        }).catch(() => {});
+      const currentBotVoiceChannel = message.guild?.members?.me?.voice?.channel || null;
+      if (currentBotVoiceChannel && currentBotVoiceChannel.id !== voiceChannel.id) {
+        await interaction.reply({ embeds: [buildSessionInUseEmbed(currentBotVoiceChannel)], ephemeral: true }).catch(() => {});
         return;
       }
 
-      const player = await getPlayer(message.client).catch(() => null);
-      if (!player) {
-        await interaction.reply({
-          content: "Player non disponibile ora.",
-          ephemeral: true,
-        }).catch(() => {});
-        return;
-      }
+      const result = await playRadioStation({
+        client: message.client,
+        guild: message.guild,
+        channel: message.channel,
+        voiceChannel,
+        station,
+      }).catch((error) => ({ ok: false, reason: "internal_error", error }));
 
-      const queue = player.nodes.create(message.guild, {
-        metadata: { channel: message.channel },
-        leaveOnEmpty: false,
-        leaveOnEmptyCooldown: 0,
-        leaveOnEnd: false,
-        leaveOnEndCooldown: 0,
-        selfDeaf: true,
-        volume: 5,
-        bufferingTimeout: 7_000,
-        connectionTimeout: 20_000,
-      });
-      queue.metadata = { ...(queue.metadata || {}), channel: message.channel };
-      queue.node.setVolume(5);
-
-      const currentSession = getVoiceSession(message.guild.id);
-      const shouldLeaveTts =
-        currentSession?.mode === "tts" ||
-        (!currentSession?.mode && !queue.connection);
-      if (shouldLeaveTts) {
-        await leaveTtsGuild(message.guild.id, message.client).catch(() => null);
-      }
-      setVoiceSession(message.guild.id, {
-        mode: "music",
-        channelId: voiceChannel.id,
-      });
-
-      if (!queue.connection) {
-        const connected = await queue.connect(voiceChannel).catch(() => null);
-        if (!connected) {
-          await interaction.reply({
-            content: "Non riesco a connettermi al canale vocale.",
-            ephemeral: true,
-          }).catch(() => {});
-          return;
-        }
-      }
-
-      const result = await player.search(station.streamUrl, {
-        requestedBy: message.member,
-        searchEngine: QueryType.ARBITRARY,
-      }).catch(() => null);
-      const track = result?.tracks?.[0] || null;
-      if (!track) {
-        await interaction.reply({
-          content: "Non riesco a riprodurre questa stazione. Prova un'altra emittente.",
-          ephemeral: true,
-        }).catch(() => {});
-        return;
-      }
-
-      queue.clear();
-      const played = await queue.node.play(track).then(() => true).catch(() => false);
-      if (!played) {
+      if (!result?.ok) {
         await interaction.reply({
           content: "Questa stazione non ha risposto correttamente allo stream. Prova un'altra emittente.",
           ephemeral: true,
@@ -311,7 +209,7 @@ module.exports = {
         return;
       }
 
-      collector.stop("selected");
+      buttonCollector.stop("selected");
       selectCollector.stop("selected");
       await interaction.message.delete().catch(() => {});
 
@@ -325,7 +223,8 @@ module.exports = {
       rows = disableRows(rows);
       await sent.edit({ components: rows }).catch(() => {});
     };
-    collector.on("end", async (_, reason) => {
+
+    buttonCollector.on("end", async (_, reason) => {
       if (reason === "selected" || reason === "cancel") return;
       await endAll();
     });
