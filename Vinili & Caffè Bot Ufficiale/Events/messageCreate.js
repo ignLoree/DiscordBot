@@ -1578,20 +1578,9 @@ async function handleDiscadiaBump(message, client) {
       .filter(Boolean)
       .join(" "),
   );
-  const isDiscadiaNamedSource = /\bdiscadia\b/i.test(sourceName);
   const isAutomatedSource = Boolean(
     message.author?.bot || message.applicationId || message.webhookId,
   );
-  if (!isAutomatedSource && !isDiscadiaNamedSource) return false;
-
-  const knownBotIds = getVoteManagerBotIds(client);
-  const isDiscadiaNamedBot =
-    Boolean(message.author?.bot) && /(discadia|disboard)/i.test(authorName);
-  const isDisboardNamedBot =
-    Boolean(message.author?.bot) && /disboard/i.test(authorName);
-  const isDiscadiaAuthor = knownBotIds.has(String(message.author?.id || ""));
-  const isDiscadiaApp = knownBotIds.has(String(message.applicationId || ""));
-  const isFallbackSource = isDiscadiaAuthor || isDiscadiaApp;
   const patterns = Array.isArray(discadia.bumpSuccessPatterns)
     ? discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
     : [
@@ -1642,33 +1631,21 @@ async function handleDiscadiaBump(message, client) {
   const isBumpInteraction = interactionCommandName === "bump";
   const isLikelyCommandChannel =
     String(message.channelId || "") === String(IDs.channels.commands || "");
-
-  const sourceNameForDisboard = `${authorName} ${String(message.applicationId || "")}`.toLowerCase();
-  const isDisboardSource =
-    message.author?.id === IDs.bots.DISBOARD ||
-    (Boolean(message.author?.bot) && /disboard/i.test(authorName)) ||
-    /disboard/i.test(sourceNameForDisboard);
+  const sourceFingerprint = `${authorName} ${sourceName}`.toLowerCase();
+  const looksLikeDiscadiaSource =
+    /\bdiscadia\b/i.test(sourceFingerprint) || hasDiscadiaWord || hasDiscadiaDomain;
+  const looksLikeDisboardSource = /\bdisboard\b/i.test(sourceFingerprint);
   const hasBumpSuccessText = hasPattern || hasSuccessWord;
-  const fromDiscadiaBot =
-    isDiscadiaAuthor ||
-    isDiscadiaApp ||
-    isDiscadiaNamedSource ||
-    (isDiscadiaNamedBot && !isDisboardNamedBot) ||
-    hasDiscadiaWord ||
-    hasDiscadiaDomain ||
-    (isAutomatedSource && isBumpInteraction && isLikelyCommandChannel) ||
-    (isAutomatedSource && !isDisboardSource && hasBumpSuccessText);
-
   const isSuccessInCommandChannel =
-    isLikelyCommandChannel && !hasFailureWord && (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord));
-
+    isLikelyCommandChannel &&
+    !hasFailureWord &&
+    (hasBumpSuccessText || (isBumpInteraction && hasBumpWord));
   const isBump =
     !hasFailureWord &&
     (
-      (fromDiscadiaBot &&
-        (hasPattern || hasSuccessWord || (isBumpInteraction && hasBumpWord))) ||
-      (isBumpInteraction && (hasPattern || hasSuccessWord || hasBumpWord)) ||
-      isSuccessInCommandChannel
+      isSuccessInCommandChannel ||
+      (looksLikeDiscadiaSource && (hasBumpSuccessText || (isBumpInteraction && hasBumpWord))) ||
+      (isAutomatedSource && !looksLikeDisboardSource && hasBumpSuccessText)
     );
   if (!isBump) return false;
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
