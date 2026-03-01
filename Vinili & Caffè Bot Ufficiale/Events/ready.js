@@ -222,7 +222,7 @@ async function runPrimaryHeavyTasks(client, engagementTick) {
 
   const heavyTasks = [
     mainGuild
-      ? retroSyncGuildLevels(mainGuild, { syncRoles: true })
+      ? retroSyncGuildLevels(mainGuild, { syncRoles: false })
       : Promise.resolve(),
     engagementTick(),
     restoreActiveGames(client),
