@@ -17,6 +17,26 @@ const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set(
     .filter(Boolean)
     .map((id) => String(id)),
 );
+const TEMPORARY_NOTICE_LIFETIME_MS = 6000;
+
+function deleteMessageLater(message, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {
+  if (!message || typeof message.delete !== "function") return;
+  setTimeout(() => message.delete().catch(() => {}), delayMs);
+}
+
+async function sendTemporaryReply(message, payload, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {
+  if (!message) return null;
+  const sent = await message.reply(payload).catch(() => null);
+  if (sent) deleteMessageLater(sent, delayMs);
+  return sent;
+}
+
+async function sendTemporaryChannelNotice(channel, payload, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {
+  if (!channel || typeof channel.send !== "function") return null;
+  const sent = await channel.send(payload).catch(() => null);
+  if (sent) deleteMessageLater(sent, delayMs);
+  return sent;
+}
 
 function resolvePrefixCommandByToken(client, token) {
   const safe = String(token || "").trim().toLowerCase();
@@ -87,12 +107,9 @@ async function maybeSendWrongPrefixHint(message, client, validPrefix = "-") {
   if (!shouldSendWrongPrefixHint(message, attempt.usedPrefix, commandName)) {
     return true;
   }
-  const hint = await message.channel
-    .send({
-      content: `\`${attempt.usedPrefix}${attempt.token}\` non e valido. Usa \`${safePrefix}${commandName}\`.`,
-    })
-    .catch(() => null);
-  if (hint) setTimeout(() => hint.delete().catch(() => {}), 6000);
+  await sendTemporaryChannelNotice(message.channel, {
+    content: "`" + attempt.usedPrefix + attempt.token + "` non \u00E8 valido. Usa `" + safePrefix + commandName + "`." ,
+  });
   return true;
 }
 
@@ -180,11 +197,9 @@ async function dispatchPrefixMessage(message, client) {
         String(command.name || invokedName).toLowerCase(),
         subcommandName,
       );
-      await message
-        .reply({
-          embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
-        })
-        .catch(() => {});
+      await sendTemporaryReply(message, {
+        embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
+      });
       return true;
     }
 
@@ -213,10 +228,10 @@ async function dispatchPrefixMessage(message, client) {
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      "**Bot Test** – i comandi principali sono sul **bot ufficiale**.\n" +
+      "**Bot Test** \u2013 i comandi principali sono sul **bot ufficiale**.\n" +
         (availableCommands ? `Comandi disponibili qui: ${availableCommands}` : ""),
     );
-  await message.reply({ embeds: [embed] }).catch(() => {});
+  await sendTemporaryReply(message, { embeds: [embed] });
   return true;
 }
 

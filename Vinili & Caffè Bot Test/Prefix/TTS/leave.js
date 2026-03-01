@@ -11,7 +11,7 @@ module.exports = {
     if (!result.ok && result.reason === "not_connected") {
       return safeMessageReply(
         message,
-        "<:vegax:1443934876440068179> Il bot non e connesso a nessun canale vocale.",
+        "<:vegax:1443934876440068179> Il bot non è connesso a nessun canale vocale.",
       );
     }
     return safeMessageReply(

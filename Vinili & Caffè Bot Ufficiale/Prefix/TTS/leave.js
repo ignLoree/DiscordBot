@@ -21,7 +21,7 @@ module.exports = {
     if (!ttsResult.ok && ttsResult.reason === "not_connected" && !musicDisconnected) {
       const notConnectedEmbed = new EmbedBuilder()
         .setColor("#ED4245")
-        .setDescription("Il bot non e connesso a nessun canale vocale.");
+        .setDescription("Il bot non è connesso a nessun canale vocale.");
       return safeMessageReply(message, { embeds: [notConnectedEmbed] });
     }
 

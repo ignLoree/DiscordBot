@@ -357,7 +357,7 @@ function scheduleMonthlyGif(client) {
     client._monthlyGifTask = cron.schedule(
       "0 0 1 * *",
       async () => {
-        const channelId = IDs.channels.joinLeaveLogs;
+        const channelId = IDs.channels.chat;
         const channel = await getChannelSafe(client, channelId);
         if (!channel?.isTextBased?.()) return;
 

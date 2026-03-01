@@ -4,6 +4,10 @@ const IDs = require("../../Utils/Config/ids");
 
 let dailyPartnerAuditTask = null;
 const DUPLICATE_PARTNERSHIP_WINDOW_MS = 12 * 60 * 60 * 1000;
+const SAME_DAY_DUPLICATE_REASON =
+  "Stessa partnership fatta pi\u00F9 di una volta nello stesso giorno";
+const SAME_MANAGER_SAME_DAY_REASON =
+  "Non fare partnership con se stessi pi\u00F9 di una volta al giorno";
 
 function getRomeDateKey(date) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -201,7 +205,7 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
       content: `<:Discord_Mention:1329524304790028328> <@${staffUserId}>
 <:discordchannelwhite:1443308552536985810> ${reason}
 <:partneredserverowner:1443651871125409812> Messaggio: ${msgRef}
-🔗 Invite (DB): ${inviteDb}`,
+Invite (DB): ${inviteDb}`,
     })
     .catch(() => {});
 }
@@ -289,9 +293,19 @@ async function runDailyPartnerAudit(client, opts = {}) {
     await Promise.all(rowsFor12hCheck.map((row) => enrichInviteCodes(row)));
 
     const seenInviteCodesSameDay = new Set();
+    const firstInviteIndexSameDay = new Map();
+    const firstManagerIndexSameDay = new Map();
     const managerDailyCounter = new Map();
     const invalidIndices = new Set();
     const invalidReasonsByIndex = new Map();
+    const addInvalidReason = (index, reason) => {
+      if (!reason) return;
+      if (!invalidReasonsByIndex.has(index)) {
+        invalidReasonsByIndex.set(index, []);
+      }
+      const current = invalidReasonsByIndex.get(index);
+      if (!current.includes(reason)) current.push(reason);
+    };
 
     for (const item of dayCreates) {
       const { index } = item;
@@ -310,11 +324,16 @@ async function runDailyPartnerAudit(client, opts = {}) {
         reasons.push("Manager mancante");
       }
       for (const managerId of managerMentions) {
+        if (!firstManagerIndexSameDay.has(managerId)) {
+          firstManagerIndexSameDay.set(managerId, index);
+        } else {
+          reasons.push(SAME_MANAGER_SAME_DAY_REASON);
+        }
         const used = Number(managerDailyCounter.get(managerId) || 0) + 1;
         managerDailyCounter.set(managerId, used);
         if (used > 5) {
           reasons.push(
-            "più di 5 partner con lo stesso manager nello stesso giorno",
+            "pi\u00F9 di 5 partner con lo stesso manager nello stesso giorno",
           );
         }
       }
@@ -330,9 +349,12 @@ async function runDailyPartnerAudit(client, opts = {}) {
         reasons.push("Link invito Discord assente");
       } else {
         for (const inviteCode of inviteCodes) {
+          if (!firstInviteIndexSameDay.has(inviteCode)) {
+            firstInviteIndexSameDay.set(inviteCode, index);
+          }
           if (seenInviteCodesSameDay.has(inviteCode)) {
             reasons.push(
-              "Stessa partnership fatta più di una volta nello stesso giorno",
+              "Stessa partnership fatta pi\u00F9 di una volta nello stesso giorno",
             );
             break;
           }
@@ -367,7 +389,43 @@ async function runDailyPartnerAudit(client, opts = {}) {
 
       if (reasons.length) {
         invalidIndices.add(index);
-        invalidReasonsByIndex.set(index, reasons.join(" | "));
+        for (const reason of reasons) {
+          addInvalidReason(index, reason);
+        }
+      }
+    }
+
+    for (const keepIndex of firstInviteIndexSameDay.values()) {
+      const reasons = invalidReasonsByIndex.get(keepIndex);
+      if (!Array.isArray(reasons) || !reasons.length) continue;
+
+      const filteredReasons = reasons.filter(
+        (reason) => reason !== SAME_DAY_DUPLICATE_REASON,
+      );
+
+      if (filteredReasons.length) {
+        invalidReasonsByIndex.set(keepIndex, filteredReasons);
+        invalidIndices.add(keepIndex);
+      } else {
+        invalidReasonsByIndex.delete(keepIndex);
+        invalidIndices.delete(keepIndex);
+      }
+    }
+
+    for (const keepIndex of firstManagerIndexSameDay.values()) {
+      const reasons = invalidReasonsByIndex.get(keepIndex);
+      if (!Array.isArray(reasons) || !reasons.length) continue;
+
+      const filteredReasons = reasons.filter(
+        (reason) => reason !== SAME_MANAGER_SAME_DAY_REASON,
+      );
+
+      if (filteredReasons.length) {
+        invalidReasonsByIndex.set(keepIndex, filteredReasons);
+        invalidIndices.add(keepIndex);
+      } else {
+        invalidReasonsByIndex.delete(keepIndex);
+        invalidIndices.delete(keepIndex);
       }
     }
 
@@ -385,7 +443,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
       await logPointRemoval(
         guild,
         doc.userId,
-        `${invalidReasonsByIndex.get(index)}`,
+        invalidReasonsByIndex.get(index).join(" | "),
         action,
       );
       action.auditPenaltyDates = Array.isArray(action.auditPenaltyDates)
