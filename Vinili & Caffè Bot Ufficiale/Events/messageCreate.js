@@ -1,5 +1,4 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, PermissionFlagsBits } = require("discord.js");
-const math = require("mathjs");
 const { inspect } = require("node:util");
 const { MentionReaction, AutoResponder } = require("../Schemas/Community/autoInteractionSchemas");
 const countschema = require("../Schemas/Counting/countingSchema");
@@ -628,36 +627,34 @@ module.exports = {
       } catch (error) {
         logEventError(resolvedClient, "REMINDER ACTIVITY ERROR", error);
       }
-      try {
-        await recordMessageActivity(message);
-      } catch (error) {
-        logEventError(resolvedClient, "ACTIVITY MESSAGE ERROR", error);
-      }
-      try {
-        await handleMinigameMessage(message, resolvedClient);
-      } catch (error) {
-        logEventError(resolvedClient, "MINIGAME ERROR", error);
-      }
-      try {
-        await handleAfk(message);
-      } catch (error) {
-        logEventError(resolvedClient, "AFK ERROR", error);
-      }
-      try {
-        await handleMentionAutoReactions(message);
-      } catch (error) {
-        logEventError(resolvedClient, "MENTION REACTION ERROR", error);
-      }
-      try {
-        await handleAutoResponders(message);
-      } catch (error) {
-        logEventError(resolvedClient, "AUTORESPONDER ERROR", error);
-      }
-      try {
-        await handleCounting(message, resolvedClient);
-      } catch (error) {
-        logEventError(resolvedClient, "COUNTING ERROR", error);
-      }
+      setImmediate(() => {
+        recordMessageActivity(message).catch((err) =>
+          logEventError(resolvedClient, "ACTIVITY MESSAGE ERROR", err),
+        );
+      });
+      const [
+        minigameResult,
+        afkResult,
+        mentionsResult,
+        autoRespondersResult,
+        countingResult,
+      ] = await Promise.allSettled([
+        handleMinigameMessage(message, resolvedClient),
+        handleAfk(message),
+        handleMentionAutoReactions(message),
+        handleAutoResponders(message),
+        handleCounting(message, resolvedClient),
+      ]);
+      if (minigameResult.status === "rejected")
+        logEventError(resolvedClient, "MINIGAME ERROR", minigameResult.reason);
+      if (afkResult.status === "rejected")
+        logEventError(resolvedClient, "AFK ERROR", afkResult.reason);
+      if (mentionsResult.status === "rejected")
+        logEventError(resolvedClient, "MENTION REACTION ERROR", mentionsResult.reason);
+      if (autoRespondersResult.status === "rejected")
+        logEventError(resolvedClient, "AUTORESPONDER ERROR", autoRespondersResult.reason);
+      if (countingResult.status === "rejected")
+        logEventError(resolvedClient, "COUNTING ERROR", countingResult.reason);
     }
     let overrideCommand = null;
     if (!isEditedPrefixExecution) {
@@ -1425,6 +1422,7 @@ async function handleCounting(message, client) {
   }
   let messageValue;
   try {
+    const math = require("mathjs");
     const expression = message.content
       .replace(/\s+/g, "")
       .replace(/x/g, "*")
@@ -1492,11 +1490,13 @@ function logEventError(client, label, error) {
   };
 
   const payload = `[${label}] ${normalizeErrorText(error)}`;
-  if (client?.logs?.error) {
-    client.logs.error(payload);
-    return;
-  }
-  global.logger?.error?.(payload);
+  setImmediate(() => {
+    if (client?.logs?.error) {
+      client.logs.error(payload);
+      return;
+    }
+    global.logger?.error?.(payload);
+  });
 }
 
 async function handleDisboardBump(message, client) {

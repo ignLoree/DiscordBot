@@ -1,5 +1,5 @@
 const discord = require("discord.js");
-const { Client, Collection, IntentsBitField } = discord;
+const { Client, Collection, IntentsBitField, Options } = discord;
 const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
 const Partials = discord.Partials || {};
 const fs = require("fs");
@@ -120,6 +120,27 @@ const client = new Client({
     Partials.GuildMember,
   ],
   presence: { status: "invisible" },
+  rest: {
+    timeout: 12_000,
+    offset: 50,
+    retries: 2,
+  },
+  ...(typeof Options?.cacheWithLimits === "function" && {
+    makeCache: Options.cacheWithLimits({
+      ...(Options.DefaultMakeCacheSettings || {}),
+      MessageManager: 100,
+      GuildMemberManager: 200,
+      PresenceManager: 0,
+      ReactionManager: 50,
+    }),
+  }),
+  ...(typeof Options?.DefaultSweeperSettings === "object" && {
+    sweepers: {
+      ...(Options.DefaultSweeperSettings || {}),
+      messages: { interval: 300, lifetime: 600 },
+      reactions: { interval: 300, lifetime: 300 },
+    },
+  }),
 });
 
 try {

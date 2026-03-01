@@ -68,9 +68,14 @@ function resolveBotWorkingDir(bot) {
 }
 
 function splitStartPath(bot) {
+    const workingDir = resolveBotWorkingDir(bot);
+    const useSharded =
+        bot.key === 'official' &&
+        process.env.ENABLE_SHARDING === '1' &&
+        fs.existsSync(path.join(workingDir, 'run-sharded.js'));
     return {
-        workingDir: resolveBotWorkingDir(bot),
-        file: 'index.js'
+        workingDir,
+        file: useSharded ? 'run-sharded.js' : 'index.js'
     };
 }
 function resolveNodeExecutable() {
@@ -263,15 +268,17 @@ function ensureDependencies(workingDir, useWorkspaces) {
 }
 
 function spawnBotProcess(bot, workingDir, file, resolve) {
-    console.log(`[Loader] Avvio ${bot.label}: ${bot.folderSuffix}`);
+    console.log(`[Loader] Avvio ${bot.label}: ${bot.folderSuffix} (${file})`);
 
     const nodeBin = resolveNodeExecutable();
     const scriptPath = path.resolve(workingDir, file);
+    const shardEnv = file === 'run-sharded.js' ? { ENABLE_SHARDING: '1' } : {};
     console.log(`[Loader] Runtime ${bot.label}: ${nodeBin} (loader execPath: ${process.execPath})`);
-    const proc = child_process.spawn(nodeBin, [scriptPath], {
+    const nodeArgs = process.env.SHOW_NODE_WARNINGS === '1' ? [scriptPath] : ['--disable-warning=ExperimentalWarning', scriptPath];
+    const proc = child_process.spawn(nodeBin, nodeArgs, {
         cwd: workingDir,
         stdio: 'inherit',
-        env: { ...silencedEnv, RUN_UNDER_LOADER: '1' },
+        env: { ...silencedEnv, RUN_UNDER_LOADER: '1', ...shardEnv },
         shell: false
     });
 

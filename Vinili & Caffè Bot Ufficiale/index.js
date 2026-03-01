@@ -1,5 +1,5 @@
 const discord = require("discord.js");
-const { Client, Collection, IntentsBitField } = discord;
+const { Client, Collection, IntentsBitField, Options } = discord;
 const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
 const Partials = discord.Partials || {};
 const fs = require("fs");
@@ -116,38 +116,64 @@ let client;
 try {
   installEmbedFooterPatch();
 
+  const disableScheduledEventsIntent =
+    process.env.DISABLE_SCHEDULED_EVENTS_INTENT === "1";
+  const baseIntents = [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessageTyping,
+    GatewayIntentBits.GuildEmojisAndStickers,
+    GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildIntegrations,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.DirectMessageReactions,
+    GatewayIntentBits.GuildBans,
+    GatewayIntentBits.GuildInvites,
+    GatewayIntentBits.GuildMessageTyping,
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildWebhooks,
+    GatewayIntentBits.AutoModerationExecution,
+    GatewayIntentBits.AutoModerationConfiguration,
+  ];
+  if (!disableScheduledEventsIntent) baseIntents.push(GatewayIntentBits.GuildScheduledEvents);
+  const basePartials = [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction,
+    Partials.User,
+    Partials.GuildMember,
+    Partials.ThreadMember,
+  ];
+  if (!disableScheduledEventsIntent) basePartials.push(Partials.GuildScheduledEvent);
+
   client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-      GatewayIntentBits.GuildMembers,
-      GatewayIntentBits.DirectMessageTyping,
-      GatewayIntentBits.GuildEmojisAndStickers,
-      GatewayIntentBits.GuildScheduledEvents,
-      GatewayIntentBits.DirectMessages,
-      GatewayIntentBits.GuildIntegrations,
-      GatewayIntentBits.GuildMessageReactions,
-      GatewayIntentBits.GuildModeration,
-      GatewayIntentBits.GuildVoiceStates,
-      GatewayIntentBits.DirectMessageReactions,
-      GatewayIntentBits.GuildBans,
-      GatewayIntentBits.GuildInvites,
-      GatewayIntentBits.GuildMessageTyping,
-      GatewayIntentBits.GuildPresences,
-      GatewayIntentBits.GuildWebhooks,
-      GatewayIntentBits.AutoModerationExecution,
-      GatewayIntentBits.AutoModerationConfiguration,
-    ],
-    partials: [
-      Partials.Message,
-      Partials.Channel,
-      Partials.Reaction,
-      Partials.User,
-      Partials.GuildMember,
-      Partials.GuildScheduledEvent,
-      Partials.ThreadMember,
-    ],
+    intents: baseIntents,
+    partials: basePartials,
+    rest: {
+      timeout: 12_000,
+      offset: 50,
+      retries: 2,
+    },
+    ...(typeof Options?.cacheWithLimits === "function" && {
+      makeCache: Options.cacheWithLimits({
+        ...(Options.DefaultMakeCacheSettings || {}),
+        MessageManager: 100,
+        GuildMemberManager: 200,
+        PresenceManager: 0,
+        ReactionManager: 50,
+      }),
+    }),
+    ...(typeof Options?.DefaultSweeperSettings === "object" && {
+      sweepers: {
+        ...(Options.DefaultSweeperSettings || {}),
+        messages: { interval: 300, lifetime: 600 },
+        reactions: { interval: 300, lifetime: 300 },
+      },
+    }),
   });
 } catch (error) {
   global.logger.error("[ERROR] Error while creating the client.", error);

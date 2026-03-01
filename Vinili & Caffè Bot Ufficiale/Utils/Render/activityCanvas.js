@@ -1,5 +1,9 @@
-const canvasModule = require("canvas");
-const { createCanvas, loadImage } = canvasModule; const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack, } = require("./canvasFonts");
+let _canvasModule = null;
+function getCanvasModule() {
+  if (!_canvasModule) _canvasModule = require("canvas");
+  return _canvasModule;
+}
+const { registerCanvasFonts, drawTextWithSpecialFallback, fontStack, } = require("./canvasFonts");
 const emojiImageCache = new Map();
 const CUSTOM_EMOJI_START_RE = /^<(a)?:([a-zA-Z0-9_~]+):(\d{16,22})>/;
 const ROME_TIME_ZONE = "Europe/Rome";
@@ -232,7 +236,7 @@ async function getEmojiImage(token) {
     typeof token === "string"
       ? emojiToTwemojiUrl(token)
       : customEmojiUrl(token.id, false);
-  const promise = loadImage(sourceUrl).catch(() => null);
+  const promise = getCanvasModule().loadImage(sourceUrl).catch(() => null);
   emojiImageCache.set(key, promise);
   return promise;
 }
@@ -339,7 +343,7 @@ function drawBackground(ctx, width, height) {
 
 async function drawAvatarCircle(ctx, avatarUrl, x, y, size) {
   if (!avatarUrl) return;
-  const image = await loadImage(avatarUrl).catch(() => null);
+  const image = await getCanvasModule().loadImage(avatarUrl).catch(() => null);
   if (!image) return;
 
   ctx.save();
@@ -644,7 +648,7 @@ async function renderUserActivityCanvas({
   topChannelsVoice,
   chart,
 }) {
-  registerCanvasFonts(canvasModule);
+  registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
@@ -653,7 +657,7 @@ async function renderUserActivityCanvas({
 
   const width = 1280;
   const height = 700;
-  const canvas = createCanvas(width, height);
+  const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   drawBackground(ctx, width, height);
@@ -770,7 +774,7 @@ async function renderServerActivityCanvas({
   topChannelsVoice,
   chart,
 }) {
-  registerCanvasFonts(canvasModule);
+  registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
@@ -779,7 +783,7 @@ async function renderServerActivityCanvas({
 
   const width = 1280;
   const height = 910;
-  const canvas = createCanvas(width, height);
+  const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   drawBackground(ctx, width, height);
@@ -928,14 +932,14 @@ async function renderTopStatisticsCanvas({
   topUsersVoice = [],
   topChannelsVoice = [],
 }) {
-  registerCanvasFonts(canvasModule);
+  registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
 
   const width = 1280;
   const height = 860;
-  const canvas = createCanvas(width, height);
+  const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   drawBackground(ctx, width, height);
@@ -1049,14 +1053,14 @@ async function renderTopStatisticsSingleCanvas({
   unit = "msg",
   mode = "messages",
 }) {
-  registerCanvasFonts(canvasModule);
+  registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
 
   const width = 1280;
   const height = 860;
-  const canvas = createCanvas(width, height);
+  const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   drawBackground(ctx, width, height);
@@ -1192,7 +1196,7 @@ async function renderTopLeaderboardPageCanvas({
   unit = "msg",
   mode = "messages",
 }) {
-  registerCanvasFonts(canvasModule);
+  registerCanvasFonts(getCanvasModule());
   const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
     ? Number(lookbackDays)
     : 14;
@@ -1223,7 +1227,7 @@ async function renderTopLeaderboardPageCanvas({
 
   const width = 1280;
   const height = 860;
-  const canvas = createCanvas(width, height);
+  const canvas = getCanvasModule().createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
   drawBackground(ctx, width, height);

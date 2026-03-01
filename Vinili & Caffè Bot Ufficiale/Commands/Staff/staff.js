@@ -635,8 +635,7 @@ module.exports = {
 <:dot:1443660294596329582> **Ore in una settimana:** __${voiceHours}__
 <:dot:1443660294596329582> **Attività:** __${activityGrade}__
 <:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
-<:dot:1443660294596329582> **Azione:** __${action}__
-<:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`,
+<:dot:1443660294596329582> **Azione:** __${action}__`,
           }).catch(() => null);
         }
 
@@ -665,8 +664,7 @@ module.exports = {
           await resocontoChannel.send({
             content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${staffer.id}>__
 <:dot:1443660294596329582> **Partner:** __${partners}__
-<:dot:1443660294596329582> **Azione:** __${action}__
-<:staff:1443651912179388548> **Resoconto fatto da** __<@${interaction.user.id}>__`,
+<:dot:1443660294596329582> **Azione:** __${action}__`,
           }).catch(() => null);
         }
 

@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-02-26T14:26:55.587Z.
+Generato automaticamente il 2026-03-01T14:51:48.629Z.
 
 ## +adorable
 - Categoria: `Minigames`
@@ -277,9 +277,10 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 ## +join
 - Categoria: `TTS`
 - Alias: -
-- Uso: `+join`
-- Subcommand: -
+- Uso: `+join [music]`
+- Subcommand: `music`
 - Esempi:
+- `+join music`
 - `+join`
 
 ## +joke
@@ -322,6 +323,15 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Subcommand: -
 - Esempi:
 - `+lock`
+
+## +lyrics
+- Categoria: `Music`
+- Alias: `ly`
+- Uso: `+lyrics [nome canzone]`
+- Subcommand: -
+- Esempi:
+- `+lyrics`
+- `+lyrics POLIETILENE TonyPitony`
 
 ## +math
 - Categoria: `Minigames`
@@ -403,6 +413,14 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Esempi:
 - `+no-dm-list`
 
+## +nowplaying
+- Categoria: `Music`
+- Alias: `np`
+- Uso: `+nowplaying`
+- Subcommand: -
+- Esempi:
+- `+np`
+
 ## +perms
 - Categoria: `Admin`
 - Alias: `perm`
@@ -419,6 +437,15 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Subcommand: -
 - Esempi:
 - `+ping`
+
+## +play
+- Categoria: `Music`
+- Alias: `p`
+- Uso: `+play <link o ricerca>`
+- Subcommand: `queued`
+- Esempi:
+- `+play Tanti auguri a te`
+- `+play https://open.spotify.com/track/...`
 
 ## +pokemon
 - Categoria: `Minigames`
@@ -459,6 +486,14 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Subcommand: -
 - Esempi:
 - `+quotes`
+
+## +radio
+- Categoria: `Music`
+- Alias: -
+- Uso: `+radio`
+- Subcommand: -
+- Esempi:
+- `+radio`
 
 ## +rank
 - Categoria: `Level`
@@ -534,6 +569,15 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Esempi:
 - `+server`
 
+## +set
+- Categoria: `TTS`
+- Alias: -
+- Uso: `+set <voice|autojoin> <valore>`
+- Subcommand: `voice`, `autojoin`, `reset`, `default`, `off`, `none`
+- Esempi:
+- `+set voice`
+- `+set autojoin`
+
 ## +ship
 - Categoria: `Minigames`
 - Alias: -
@@ -585,9 +629,9 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 
 ## +ticket
 - Categoria: `Ticket`
-- Alias: -
-- Uso: `+ticket <add|remove|closerequest|close|claim|unclaim|switchpanel|rename>`
-- Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `tadd`, `tremove`, `ticketadd`, `ticketremove`, `partnership`, `supporto`, `high`
+- Alias: `add`, `remove`, `claim`, `unclaim`, `close`, `closerequest`, `switchpanel`, `rename`, `reopen`, `ticketadd`, `ticketremove`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `ticketreopen`, `ticketrename`, `ticketswitchpanel`, `ticketcloserequest`, `tadd`, `tremove`, `trename`
+- Uso: `+ticket [add|remove|closerequest|close|claim|unclaim|switchpanel|rename]`
+- Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `tadd`, `tremove`, `ticketadd`, `ticketremove`, `ticketcloserequest`, `partnership`, `supporto`, `high`
 - Esempi:
 - `+ticket add`
 - `+ticket remove`
@@ -650,6 +694,14 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Esempi:
 - `+verify`
 
+## +voices
+- Categoria: `TTS`
+- Alias: -
+- Uso: `+voices`
+- Subcommand: -
+- Esempi:
+- `+voices`
+
 ## +warn
 - Categoria: `Moderation`
 - Alias: -
@@ -673,3 +725,4 @@ Generato automaticamente il 2026-02-26T14:26:55.587Z.
 - Subcommand: -
 - Esempi:
 - `+weather`
+

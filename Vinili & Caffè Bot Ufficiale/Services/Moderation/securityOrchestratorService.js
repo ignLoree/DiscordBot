@@ -5,6 +5,9 @@ const {
 const { getAutoModPanicSnapshot } = require("./automodService");
 const { getJoinRaidStatusSnapshot } = require("./joinRaidService");
 
+const SECURITY_LOCK_CACHE_TTL_MS = 3000;
+const securityLockCache = new Map();
+
 function buildSecurityLockDecision({
   antiNukePanic = false,
   autoModPanic = false,
@@ -63,6 +66,10 @@ async function getSecurityLockState(guild) {
   }
 
   const guildId = String(guild.id);
+  const now = Date.now();
+  const cached = securityLockCache.get(guildId);
+  if (cached && cached.expiresAt > now) return cached.result;
+
   const antiNuke = getAntiNukeStatusSnapshot(guildId);
   const antiNukePanic = Boolean(antiNuke?.panicActive);
   const autoModPanic = Boolean(getAutoModPanicSnapshot(guildId)?.active);
@@ -82,11 +89,16 @@ async function getSecurityLockState(guild) {
   const commandLockActive = await shouldBlockAllCommands(guild).catch(
     () => decision.commandLockActive,
   );
-  return {
+  const result = {
     ...decision,
     commandLockActive: Boolean(commandLockActive),
     active: Boolean(decision.joinLockActive || commandLockActive),
   };
+  securityLockCache.set(guildId, {
+    result,
+    expiresAt: now + SECURITY_LOCK_CACHE_TTL_MS,
+  });
+  return result;
 }
 
 async function shouldBlockIncomingJoins(guild) {

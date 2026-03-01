@@ -7,11 +7,11 @@ const {
 } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
-const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
 const {
   RESOCONTO_APPLY_PREFIX,
   RESOCONTO_REJECT_PREFIX,
 } = require("../../Events/interaction/resocontoHandlers");
+const { getUserOverviewStats } = require("../Community/activityService");
 
 const TIME_ZONE = "Europe/Rome";
 const STAFF_ACTIVITY_LIMITS = {
@@ -340,13 +340,9 @@ async function runWeeklyStaffResoconti(client) {
   if (!candidateMembers.length) return;
 
   const userIds = candidateMembers.map((member) => String(member.id));
-  const [staffDocs, activityDocs] = await Promise.all([
-    StaffModel.find({ guildId, userId: { $in: userIds } }).lean().catch(() => []),
-    ActivityUser.find({ guildId, userId: { $in: userIds } })
-      .select("userId messages.weekly voice.weeklySeconds")
-      .lean()
-      .catch(() => []),
-  ]);
+  const staffDocs = await StaffModel.find({ guildId, userId: { $in: userIds } })
+    .lean()
+    .catch(() => []);
 
   const staffMap = new Map(
     (Array.isArray(staffDocs) ? staffDocs : []).map((row) => [
@@ -354,27 +350,32 @@ async function runWeeklyStaffResoconti(client) {
       row,
     ]),
   );
-  const activityMap = new Map(
-    (Array.isArray(activityDocs) ? activityDocs : []).map((row) => [
-      String(row.userId),
-      row,
-    ]),
+
+  const staffUserIds = candidateMembers
+    .filter((m) => resolveStaffRole(m))
+    .map((m) => String(m.id));
+  const overviewResults = await Promise.all(
+    staffUserIds.map((uid) => getUserOverviewStats(guildId, uid, 7)),
+  );
+  const overviewMap = new Map(
+    staffUserIds.map((id, i) => [id, overviewResults[i] || null]),
   );
 
   for (const member of candidateMembers) {
     const userId = String(member.id);
     const staffDoc = staffMap.get(userId) || null;
-    const activityDoc = activityMap.get(userId) || null;
 
     const staffRoleId = resolveStaffRole(member);
     if (staffRoleId) {
+      const overview = overviewMap.get(userId);
+      const d7 = overview?.windows?.d7;
       const weeklyMessages = Math.max(
         0,
-        Math.floor(toSafeNumber(activityDoc?.messages?.weekly)),
+        Math.floor(toSafeNumber(d7?.text ?? 0)),
       );
       const weeklyVoiceSeconds = Math.max(
         0,
-        Math.floor(toSafeNumber(activityDoc?.voice?.weeklySeconds)),
+        Math.floor(toSafeNumber(d7?.voiceSeconds ?? 0)),
       );
       const weeklyVoiceHours = weeklyVoiceSeconds / 3600;
       const activityGrade = computeActivityGrade(
@@ -398,8 +399,7 @@ async function runWeeklyStaffResoconti(client) {
 <:dot:1443660294596329582> **Ore in una settimana:** __${formatHoursFromSeconds(weeklyVoiceSeconds)}__
 <:dot:1443660294596329582> **Attività:** __${activityGrade}__
 <:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
-<:dot:1443660294596329582> **Azione:** __${action}__
-<:staff:1443651912179388548> **Resoconto fatto da** __<@${client.user.id}>__`,
+<:dot:1443660294596329582> **Azione:** __${action}__`,
           components: [
             buildResocontoButtons(
               "s",
@@ -426,8 +426,7 @@ async function runWeeklyStaffResoconti(client) {
         .send({
           content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${userId}>__
 <:dot:1443660294596329582> **Partner:** __${weeklyPartners}__
-<:dot:1443660294596329582> **Azione:** __${action}__
-<:staff:1443651912179388548> **Resoconto fatto da** __<@${client.user.id}>__`,
+<:dot:1443660294596329582> **Azione:** __${action}__`,
           components: [buildResocontoButtons("p", userId, pmActionToKey(action))],
         })
         .then((msg) => createResocontoThread(msg, userId, member.user?.username))

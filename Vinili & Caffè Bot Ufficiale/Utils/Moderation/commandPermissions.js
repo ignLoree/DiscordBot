@@ -16,7 +16,8 @@ const EMPTY_PERMISSIONS = {
   selectMenus: {},
   modals: {},
 };
-let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS };
+const PERMISSIONS_CACHE_TTL_MS = 3000;
+let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS, expiresAt: 0 };
 let idsFallbackCache = null;
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
@@ -132,6 +133,8 @@ function getIdsConfig() {
 }
 
 function loadPermissions() {
+  const now = Date.now();
+  if (cache.data && cache.expiresAt > now) return cache.data;
   try {
     const permissionsPath =
       PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
@@ -142,6 +145,7 @@ function loadPermissions() {
       cache.filePath === permissionsPath &&
       cache.mtimeMs === stat.mtimeMs
     ) {
+      cache.expiresAt = now + PERMISSIONS_CACHE_TTL_MS;
       return cache.data;
     }
     const raw = fs.readFileSync(permissionsPath, "utf-8");
@@ -154,7 +158,12 @@ function loadPermissions() {
       selectMenus: parsed.selectMenus || {},
       modals: parsed.modals || {},
     };
-    cache = { filePath: permissionsPath, mtimeMs: stat.mtimeMs, data: normalized };
+    cache = {
+      filePath: permissionsPath,
+      mtimeMs: stat.mtimeMs,
+      data: normalized,
+      expiresAt: now + PERMISSIONS_CACHE_TTL_MS,
+    };
     return cache.data;
   } catch {
     return EMPTY_PERMISSIONS;

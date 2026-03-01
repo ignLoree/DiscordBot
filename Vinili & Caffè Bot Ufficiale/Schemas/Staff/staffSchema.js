@@ -47,4 +47,5 @@ const StaffSchema = new Schema({
     },
   ],
 });
+StaffSchema.index({ guildId: 1, userId: 1 }, { unique: true });
 module.exports = mongoose.models.Staff || model("Staff", StaffSchema);

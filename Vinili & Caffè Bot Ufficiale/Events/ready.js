@@ -104,11 +104,12 @@ async function connectMongo(client) {
 
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(mongoUrl, {
-        serverSelectionTimeoutMS: 3000,
-        connectTimeoutMS: 3000,
-        socketTimeoutMS: 15000,
-        maxPoolSize: 20,
-        minPoolSize: 1,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 20000,
+        maxPoolSize: 25,
+        minPoolSize: 2,
+        maxIdleTimeMS: 60_000,
       });
     }
 
@@ -127,20 +128,30 @@ function isPrimaryScheduler(client) {
   return !client.shard || client.shard.ids?.[0] === 0;
 }
 
+const INVITE_CACHE_CONCURRENCY = 6;
+
 async function primeInviteCache(client) {
   client.inviteCache = new Map();
-  for (const guild of client.guilds.cache.values()) {
-    const invites = await guild.invites.fetch().catch(() => null);
-    if (!invites) continue;
-
-    const inviteMap = new Map();
-    for (const invite of invites.values()) {
-      inviteMap.set(invite.code, {
-        uses: invite.uses || 0,
-        inviterId: invite.inviter?.id || null,
-      });
+  const guilds = [...client.guilds.cache.values()];
+  for (let i = 0; i < guilds.length; i += INVITE_CACHE_CONCURRENCY) {
+    const batch = guilds.slice(i, i + INVITE_CACHE_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async (guild) => {
+        const invites = await guild.invites.fetch().catch(() => null);
+        if (!invites) return { guildId: guild.id, inviteMap: null };
+        const inviteMap = new Map();
+        for (const invite of invites.values()) {
+          inviteMap.set(invite.code, {
+            uses: invite.uses || 0,
+            inviterId: invite.inviter?.id || null,
+          });
+        }
+        return { guildId: guild.id, inviteMap };
+      }),
+    );
+    for (const { guildId, inviteMap } of results) {
+      if (inviteMap) client.inviteCache.set(guildId, inviteMap);
     }
-    client.inviteCache.set(guild.id, inviteMap);
   }
 }
 

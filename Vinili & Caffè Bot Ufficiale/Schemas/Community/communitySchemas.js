@@ -74,6 +74,7 @@ activityHourlySchema.index(
   { guildId: 1, hourKey: 1, userId: 1 },
   { unique: true },
 );
+activityHourlySchema.index({ guildId: 1, userId: 1, hourKey: 1 });
 
 const levelHistorySchema = new Schema(
   {
