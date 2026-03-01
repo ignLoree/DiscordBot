@@ -138,7 +138,6 @@ const client = new Client({
     sweepers: {
       ...(Options.DefaultSweeperSettings || {}),
       messages: { interval: 300, lifetime: 600 },
-      reactions: { interval: 300, lifetime: 300 },
     },
   }),
 });
