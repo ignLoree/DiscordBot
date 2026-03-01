@@ -548,6 +548,9 @@
                 ],
                 "classifica": [
                     "roles.Member"
+                ],
+                "staff": [
+                    "roles.HighStaff"
                 ]
             }
         },
