@@ -11,6 +11,11 @@ const {
 const {
   handleBackupListInteraction,
 } = require("../../Services/Backup/backupListService");
+const {
+  EVENTO_CLASSIFICA_PREFIX,
+  buildEventoClassificaPayload,
+} = require("../../Services/Community/eventoClassificaService");
+const { getGuildExpSettings } = require("../../Services/Community/expService");
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
 const SNOWFLAKE_RE = /^\d{16,20}$/;
@@ -498,6 +503,33 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[TOP CHANNEL PAGE BUTTON] Failed:", error);
+      }
+      return true;
+    }
+
+    if (String(interaction.customId || "").startsWith(EVENTO_CLASSIFICA_PREFIX)) {
+      const weekNum = Number(interaction.customId.replace(EVENTO_CLASSIFICA_PREFIX, "")) || 1;
+      try {
+        await interaction.deferUpdate();
+        const guildId = interaction.guild?.id;
+        const settings = guildId ? await getGuildExpSettings(guildId) : null;
+        if (!settings?.eventExpiresAt || !interaction.guild) {
+          await interaction.message.edit({
+            content: "Evento non attivo.",
+            embeds: [],
+            components: [],
+          }).catch(() => null);
+          return true;
+        }
+        const payload = await buildEventoClassificaPayload(
+          interaction.guild,
+          interaction.client,
+          settings,
+          weekNum,
+        );
+        await interaction.message.edit(payload).catch(() => null);
+      } catch (error) {
+        global.logger?.error?.("[EVENTO CLASSIFICA BUTTON] Failed:", error);
       }
       return true;
     }

@@ -99,6 +99,17 @@ const globalSettingsSchema = new Schema(
     expMultiplier: { type: Number, default: 2 },
     expEventMultiplier: { type: Number, default: 1 },
     expEventMultiplierExpiresAt: { type: Date, default: null },
+    /** Durante evento: { roleId: moltiplicatore } (sostituisce ROLE_MULTIPLIERS). */
+    expEventRoleOverrides: { type: Schema.Types.Mixed, default: null },
+    /** Ruoli che durante l'evento applicano un moltiplicatore extra (es. x2 Veterano). */
+    expEventExtraMultiplierRoleIds: { type: [String], default: [] },
+    /** Data/ora di avvio evento (per premi settimanali e fine evento allo stesso orario). */
+    expEventStartedAt: { type: Date, default: null },
+    /** Se impostato, l'annuncio di fine evento in #news è già stato inviato per l'evento scaduto a questa data. */
+    expEventEndAnnouncementSentForExpiresAt: { type: Date, default: null },
+    /** Evento staff parallelo: scadenza (stessa dell'activity event). */
+    staffEventExpiresAt: { type: Date, default: null },
+    staffEventStartedAt: { type: Date, default: null },
     expLockedChannelIds: { type: [String], default: [] },
     expIgnoredRoleIds: { type: [String], default: [] },
   },
@@ -181,6 +192,71 @@ const inviteReminderStateSchema = new Schema(
   { timestamps: true },
 );
 inviteReminderStateSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+
+const activityEventRewardSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    rewardType: { type: String, required: true, index: true },
+    tier: { type: Number, default: null },
+  },
+  { timestamps: true },
+);
+activityEventRewardSchema.index(
+  { guildId: 1, userId: 1, rewardType: 1, tier: 1 },
+  { unique: true },
+);
+
+const eventUserExpSnapshotSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    totalExpAtStart: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+eventUserExpSnapshotSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+
+/** Vincitori settimana evento 2 o 3: permesso ad personam permanente (equivalente Level50/Level70) senza ruolo. Nessuna scadenza: i vincitori mantengono per sempre l’accesso a +customrole, +customvoc, ecc. */
+const eventWeekWinnerSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    week: { type: Number, required: true }, // 2 = permesso tipo Level50, 3 = permesso tipo Level70 (permanenti)
+  },
+  { timestamps: true },
+);
+eventWeekWinnerSchema.index({ guildId: 1, userId: 1, week: 1 }, { unique: true });
+
+const staffEventPointsSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    points: { type: Number, default: 0 },
+  },
+  { timestamps: true },
+);
+staffEventPointsSchema.index({ guildId: 1, userId: 1 }, { unique: true });
+
+const staffEventWeeklyRewardSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    week: { type: Number, required: true },
+  },
+  { timestamps: true },
+);
+staffEventWeeklyRewardSchema.index({ guildId: 1, userId: 1, week: 1 }, { unique: true });
+
+const staffEventRewardGivenSchema = new Schema(
+  {
+    guildId: { type: String, required: true, index: true },
+    userId: { type: String, required: true, index: true },
+    rewardType: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+staffEventRewardGivenSchema.index({ guildId: 1, userId: 1, rewardType: 1 }, { unique: true });
 
 const customRoleSchema = new Schema(
   {
@@ -302,6 +378,20 @@ const QuotePrivacy =
   models.QuotePrivacy || model("QuotePrivacy", quotePrivacySchema);
 const ChannelSnapshot =
   models.ChannelSnapshot || model("ChannelSnapshot", channelSnapshotSchema);
+const ActivityEventReward =
+  models.ActivityEventReward ||
+  model("ActivityEventReward", activityEventRewardSchema);
+const EventUserExpSnapshot =
+  models.EventUserExpSnapshot ||
+  model("EventUserExpSnapshot", eventUserExpSnapshotSchema);
+const EventWeekWinner =
+  models.EventWeekWinner || model("EventWeekWinner", eventWeekWinnerSchema);
+const StaffEventPoints =
+  models.StaffEventPoints || model("StaffEventPoints", staffEventPointsSchema);
+const StaffEventWeeklyReward =
+  models.StaffEventWeeklyReward || model("StaffEventWeeklyReward", staffEventWeeklyRewardSchema);
+const StaffEventRewardGiven =
+  models.StaffEventRewardGiven || model("StaffEventRewardGiven", staffEventRewardGivenSchema);
 
 module.exports = {
   ActivityUser,
@@ -317,6 +407,12 @@ module.exports = {
   PersonalityPanel,
   InviteTrack,
   InviteReminderState,
+  ActivityEventReward,
+  EventUserExpSnapshot,
+  EventWeekWinner,
+  StaffEventPoints,
+  StaffEventWeeklyReward,
+  StaffEventRewardGiven,
   CustomRole,
   ChatReminderSchedule,
   ChatReminderRotation,

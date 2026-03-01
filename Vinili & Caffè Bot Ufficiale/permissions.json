@@ -529,6 +529,28 @@
                 ]
             }
         },
+        "evento": {
+            "roles": [
+                "roles.HighStaff"
+            ],
+            "channels": [
+                "1442569288161558528"
+            ],
+            "subcommands": {
+                "start": [
+                    "roles.HighStaff"
+                ],
+                "stop": [
+                    "roles.HighStaff"
+                ],
+                "info": [
+                    "roles.HighStaff"
+                ],
+                "classifica": [
+                    "roles.Member"
+                ]
+            }
+        },
         "me": {
             "roles": [
                 "roles.Member"

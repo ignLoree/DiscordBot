@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-03-01T14:57:45.259Z.
+Generato automaticamente il 2026-03-01T21:45:42.442Z.
 
 ## +adorable
 - Categoria: `Minigames`
@@ -225,6 +225,15 @@ Generato automaticamente il 2026-03-01T14:57:45.259Z.
 - Esempi:
 - `+embed create`
 - `+embed`
+
+## +evento
+- Categoria: `Admin`
+- Alias: -
+- Uso: `+evento <start|stop|info|classifica|staff|addpoints>`
+- Subcommand: `start`, `stop`, `info`, `classifica`, `staff`, `addpoints`
+- Esempi:
+- `+evento start`
+- `+evento stop`
 
 ## +flip
 - Categoria: `Minigames`

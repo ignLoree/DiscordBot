@@ -354,11 +354,26 @@ async function fetchLiveMember(entity) {
   return guild.members.fetch(userId).catch(() => null);
 }
 
+async function hasAnyRoleWithEventGrants(member, roleIds, guildId, userId) {
+  const normalized = normalizeRoleList(roleIds);
+  if (!Array.isArray(normalized) || normalized.length === 0) return false;
+  const gid = guildId || member?.guild?.id;
+  const uid = userId || member?.id;
+  if (!gid || !uid) return false;
+  const { hasEventWeekWinnerGrant } = require("../../Services/Community/activityEventRewardsService");
+  for (const roleId of normalized) {
+    if (roleId === IDs.roles.Level50 && (await hasEventWeekWinnerGrant(gid, uid, 2))) return true;
+    if (roleId === IDs.roles.Level70 && (await hasEventWeekWinnerGrant(gid, uid, 3))) return true;
+  }
+  return false;
+}
+
 async function hasAnyRoleWithLiveFallback(entity, roleIds) {
   if (hasAnyRole(entity?.member, roleIds)) return true;
   const freshMember = await fetchLiveMember(entity);
   if (!freshMember) return false;
-  return hasAnyRole(freshMember, roleIds);
+  if (hasAnyRole(freshMember, roleIds)) return true;
+  return hasAnyRoleWithEventGrants(freshMember, roleIds, freshMember.guild?.id, freshMember.id);
 }
 
 async function hasAllPermissionsWithLiveFallback(entity, permissionFlags) {

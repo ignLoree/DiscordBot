@@ -24,6 +24,12 @@ const {
   isSecurityProfileImmune,
   hasAdminsProfileCapability,
 } = require("../Services/Moderation/securityProfilesService");
+const { grantEventRewardOnce } = require("../Services/Community/activityEventRewardsService");
+const {
+  isStaffEventActive,
+  isStaffButNotHighStaff,
+  addStaffEventPoints,
+} = require("../Services/Community/staffEventService");
 
 const INVITE_LOG_CHANNEL_ID = IDs.channels.chat;
 const THANKS_CHANNEL_ID = IDs.channels.supporters;
@@ -1132,8 +1138,22 @@ async function maybeSendInviteReward(member, info) {
   const rewardResult = await tryAwardInviteRole(member, info).catch(() => ({
     awarded: false,
     roleIds: [],
+    targets: [],
   }));
   if (!inviteChannel || !rewardResult?.awarded || !info?.inviterId) return;
+
+  const inviterMember = await member.guild.members.fetch(info.inviterId).catch(() => null);
+  const levelsByTier = { 5: 5, 25: 10, 100: 25 };
+  for (const tier of rewardResult.targets || []) {
+    const levels = levelsByTier[tier];
+    if (levels) {
+      grantEventRewardOnce(member.guild.id, info.inviterId, "invite", {
+        levels,
+        tier,
+        member: inviterMember,
+      }).catch(() => {});
+    }
+  }
 
   const rewardedRolesText = (rewardResult.roleIds || [])
     .map((id) => `<@&${id}>`)
@@ -1372,6 +1392,14 @@ module.exports = {
       const info = await resolveInviteInfo(member).catch(() => null);
       if (info && !info.isVanity && info.inviterId) {
         await trackInviteJoin(member, info.inviterId).catch(() => {});
+        if (await isStaffEventActive(member.guild.id)) {
+          const inviterMember =
+            member.guild.members.cache.get(info.inviterId) ||
+            (await member.guild.members.fetch(info.inviterId).catch(() => null));
+          if (inviterMember && isStaffButNotHighStaff(inviterMember)) {
+            await addStaffEventPoints(member.guild.id, info.inviterId, 1, "invite").catch(() => null);
+          }
+        }
       }
       await maybeSendInviteNearRewardReminder(member, info);
       await maybeSendInviteReward(member, info);

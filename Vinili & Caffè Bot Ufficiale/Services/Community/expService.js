@@ -1,4 +1,4 @@
-const { ExpUser, GlobalSettings, LevelHistory, } = require("../../Schemas/Community/communitySchemas");
+const { ExpUser, GlobalSettings, LevelHistory, EventUserExpSnapshot, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const EXP_EXCLUDED_CATEGORY_IDS = new Set(
@@ -29,6 +29,24 @@ const ROLE_MULTIPLIERS = new Map([
   [IDs.roles.VIP, 4],
   [IDs.roles.ServerBooster, 2],
 ]);
+
+/** Ruoli staff: esclusi da reward evento (premi settimanali top 3) e classifica evento; ricevono comunque il moltiplicatore evento (3x) e i boost ruoli come gli altri. */
+const EVENT_STAFF_ROLE_IDS = new Set(
+  [
+    IDs.roles.Staff,
+    IDs.roles.PartnerManager,
+    IDs.roles.Mod,
+    IDs.roles.Admin,
+    IDs.roles.HighStaff,
+  ]
+    .filter(Boolean)
+    .map((id) => String(id)),
+);
+
+function isEventStaffMember(member) {
+  if (!member?.roles?.cache) return false;
+  return Array.from(EVENT_STAFF_ROLE_IDS).some((id) => member.roles.cache.has(id));
+}
 
 function pad2(value) {
   return String(value).padStart(2, "0");
@@ -143,6 +161,17 @@ function normalizeSettingsDoc(doc) {
   const eventMultiplier = eventActive
     ? Number(doc?.expEventMultiplier || 1)
     : 1;
+  const eventRoleOverrides =
+    eventActive &&
+    doc?.expEventRoleOverrides &&
+    typeof doc.expEventRoleOverrides === "object"
+      ? doc.expEventRoleOverrides
+      : null;
+  const eventExtraMultiplierRoleIds = Array.isArray(
+    doc?.expEventExtraMultiplierRoleIds,
+  )
+    ? doc.expEventExtraMultiplierRoleIds.filter(Boolean)
+    : [];
   return {
     baseMultiplier:
       Number.isFinite(baseMultiplier) && baseMultiplier > 0
@@ -153,6 +182,12 @@ function normalizeSettingsDoc(doc) {
         ? eventMultiplier
         : 1,
     eventExpiresAt: eventActive ? new Date(expiresAtValue) : null,
+    eventStartedAt:
+      eventActive && doc?.expEventStartedAt
+        ? new Date(doc.expEventStartedAt)
+        : null,
+    eventRoleOverrides: eventActive ? eventRoleOverrides : null,
+    eventExtraMultiplierRoleIds: eventActive ? eventExtraMultiplierRoleIds : [],
     lockedChannelIds: Array.isArray(doc?.expLockedChannelIds)
       ? doc.expLockedChannelIds.filter(Boolean)
       : [],
@@ -181,6 +216,9 @@ async function getGuildExpSettings(guildId) {
       eventMultiplier: 1,
       effectiveMultiplier: DEFAULT_MULTIPLIER,
       eventExpiresAt: null,
+      eventStartedAt: null,
+      eventRoleOverrides: null,
+      eventExtraMultiplierRoleIds: [],
       lockedChannelIds: [],
       ignoredRoleIds: [],
     };
@@ -214,7 +252,7 @@ async function getGuildExpSettings(guildId) {
     try {
       doc = await GlobalSettings.findOneAndUpdate(
         { guildId },
-        { $set: { expEventMultiplier: 1, expEventMultiplierExpiresAt: null } },
+        { $set: { expEventMultiplier: 1 } },
         { new: true },
       );
     } catch {}
@@ -227,6 +265,144 @@ async function getGuildExpSettings(guildId) {
   };
   settingsCache.set(guildId, { value, at: now });
   return value;
+}
+
+/** Configura l'evento Activity EXP (date, multi globale, override ruoli, extra Veterano). */
+async function setActivityEvent(guildId, options = {}) {
+  if (!guildId) return null;
+  const start = options.startDate
+    ? new Date(options.startDate).getTime()
+    : Date.now();
+  const end = options.endDate
+    ? new Date(options.endDate).getTime()
+    : start + 31 * 24 * 60 * 60 * 1000;
+  if (!Number.isFinite(end) || end <= start) return null;
+  const globalMulti = Number(options.globalMultiplier);
+  const eventMultiplier = Number.isFinite(globalMulti) && globalMulti > 0
+    ? globalMulti
+    : 3;
+  const roleOverrides =
+    options.roleOverrides && typeof options.roleOverrides === "object"
+      ? options.roleOverrides
+      : null;
+  const extraRoleIds = Array.isArray(options.extraMultiplierRoleIds)
+    ? options.extraMultiplierRoleIds.filter(Boolean)
+    : [];
+  const startedAt = options.startedAt ? new Date(options.startedAt) : new Date();
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    {
+      $set: {
+        expEventMultiplier: eventMultiplier,
+        expEventMultiplierExpiresAt: new Date(end),
+        expEventRoleOverrides: roleOverrides,
+        expEventExtraMultiplierRoleIds: extraRoleIds,
+        expEventStartedAt: startedAt,
+        expEventEndAnnouncementSentForExpiresAt: null,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+  setImmediate(() => {
+    snapshotExpForEvent(guildId).catch((err) => {
+      global.logger?.error?.("[expService] snapshotExpForEvent failed:", err);
+    });
+  });
+  return {
+    startDate: new Date(start),
+    endDate: new Date(end),
+    startedAt,
+    eventMultiplier,
+    roleOverrides,
+    extraMultiplierRoleIds: extraRoleIds,
+  };
+}
+
+/** Snapshot totalExp di tutti gli utenti per la classifica EXP durante evento. */
+async function snapshotExpForEvent(guildId) {
+  if (!guildId) return;
+  const users = await ExpUser.find({ guildId })
+    .select("userId totalExp")
+    .lean()
+    .catch(() => []);
+  if (!users.length) return;
+  await EventUserExpSnapshot.deleteMany({ guildId }).catch(() => null);
+  const ops = users.map((doc) => ({
+    insertOne: {
+      document: {
+        guildId,
+        userId: String(doc?.userId || ""),
+        totalExpAtStart: Math.max(0, Number(doc?.totalExp || 0)),
+      },
+    },
+  }));
+  if (ops.length) {
+    await EventUserExpSnapshot.bulkWrite(ops, { ordered: false }).catch(() => null);
+  }
+}
+
+/** Disattiva l'evento Activity EXP e ripristina i moltiplicatori. L'evento staff è indipendente e non viene toccato. */
+async function clearActivityEvent(guildId) {
+  if (!guildId) return;
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    {
+      $set: {
+        expEventMultiplier: 1,
+        expEventMultiplierExpiresAt: null,
+        expEventRoleOverrides: null,
+        expEventExtraMultiplierRoleIds: [],
+        expEventStartedAt: null,
+      },
+    },
+    { upsert: true, new: true },
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+}
+
+/** Disattiva l'evento staff (date e stato). */
+async function clearStaffEvent(guildId) {
+  if (!guildId) return;
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    { $set: { staffEventExpiresAt: null, staffEventStartedAt: null } },
+    { upsert: true, new: true },
+  ).catch(() => null);
+  invalidateSettingsCache(guildId);
+}
+
+/** Attiva l'evento staff (stessa durata dell'activity event). */
+async function setStaffEvent(guildId, options = {}) {
+  if (!guildId) return null;
+  const end = options.endDate ? new Date(options.endDate).getTime() : null;
+  const startedAt = options.startedAt ? new Date(options.startedAt) : new Date();
+  if (!Number.isFinite(end)) return null;
+  await GlobalSettings.findOneAndUpdate(
+    { guildId },
+    {
+      $set: {
+        staffEventExpiresAt: new Date(end),
+        staffEventStartedAt: startedAt,
+      },
+    },
+    { upsert: true, new: true },
+  ).catch(() => null);
+  return { expiresAt: new Date(end), startedAt };
+}
+
+/** Restituisce stato evento staff (active, expiresAt, startedAt). expiresAt è sempre valorizzato se l'evento è stato impostato. */
+async function getStaffEventSettings(guildId) {
+  if (!guildId) return { active: false, expiresAt: null, startedAt: null };
+  const doc = await GlobalSettings.findOne({ guildId }).select("staffEventExpiresAt staffEventStartedAt").lean().catch(() => null);
+  const expiresAt = doc?.staffEventExpiresAt ? new Date(doc.staffEventExpiresAt) : null;
+  const now = Date.now();
+  const active = expiresAt && expiresAt.getTime() > now;
+  return {
+    active: Boolean(active),
+    expiresAt: expiresAt || null,
+    startedAt: doc?.staffEventStartedAt ? new Date(doc.staffEventStartedAt) : null,
+  };
 }
 
 async function recordLevelHistory({
@@ -292,12 +468,25 @@ async function addExp(
   };
 }
 
-function getRoleMultiplier(member) {
+function getRoleMultiplier(member, settings = null) {
   if (!member?.roles?.cache) return 1;
+  const useOverrides =
+    settings?.eventExpiresAt &&
+    settings?.eventRoleOverrides &&
+    typeof settings.eventRoleOverrides === "object";
+  const overrides = useOverrides ? settings.eventRoleOverrides : null;
   let multi = 1;
-  for (const [roleId, value] of ROLE_MULTIPLIERS.entries()) {
-    if (member.roles.cache.has(roleId)) {
-      multi = Math.max(multi, Number(value) || 1);
+  if (overrides) {
+    for (const [roleId, value] of Object.entries(overrides)) {
+      if (member.roles.cache.has(roleId)) {
+        multi = Math.max(multi, Number(value) || 1);
+      }
+    }
+  } else {
+    for (const [roleId, value] of ROLE_MULTIPLIERS.entries()) {
+      if (member.roles.cache.has(roleId)) {
+        multi = Math.max(multi, Number(value) || 1);
+      }
     }
   }
   return multi;
@@ -515,11 +704,21 @@ async function addExpWithLevel(
   let effectiveAmount = amount;
   if (applyMultiplier) {
     const member = await fetchGuildMember(guild, userId);
-    const globalMulti = await getGlobalMultiplier(guild.id);
-    const roleMulti = getRoleMultiplier(member);
+    const settings = await getGuildExpSettings(guild.id);
+    const globalMulti = settings.effectiveMultiplier;
+    const roleMulti = getRoleMultiplier(member, settings);
+    const roleBonus = Math.max(0, Number(roleMulti || 1) - 1);
+    const extraBonus =
+      settings?.eventExpiresAt &&
+      Array.isArray(settings.eventExtraMultiplierRoleIds) &&
+      settings.eventExtraMultiplierRoleIds.some((id) =>
+        member?.roles?.cache?.has(id),
+      )
+        ? 1
+        : 0;
     const combined = Math.min(
       MAX_COMBINED_MULTIPLIER,
-      Math.max(1, Number(globalMulti || 1) * Number(roleMulti || 1)),
+      Math.max(1, Number(globalMulti || 1) + roleBonus + extraBonus),
     );
     effectiveAmount = Number(amount || 0) * combined;
   }
@@ -868,6 +1067,11 @@ module.exports = {
   getGlobalMultiplier,
   setGlobalMultiplier,
   setTemporaryEventMultiplier,
+  setActivityEvent,
+  clearActivityEvent,
+  clearStaffEvent,
+  setStaffEvent,
+  getStaffEventSettings,
   getGuildExpSettings,
   setLevelChannelLocked,
   setRoleIgnored,
@@ -880,4 +1084,5 @@ module.exports = {
   getRoleMultiplier,
   getCurrentWeekKey,
   ROLE_MULTIPLIERS,
+  isEventStaffMember,
 };

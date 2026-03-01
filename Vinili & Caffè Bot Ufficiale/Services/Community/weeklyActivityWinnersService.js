@@ -1,11 +1,16 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 const cron = require("node-cron");
-const { ActivityUser, ActivityDaily, ExpUser, } = require("../../Schemas/Community/communitySchemas");
-const { VOICE_EXP_PER_MINUTE } = require("./expService");
+const { ActivityUser, ActivityDaily, ExpUser, GlobalSettings, } = require("../../Schemas/Community/communitySchemas");
+const { VOICE_EXP_PER_MINUTE, getGuildExpSettings } = require("./expService");
+const { getEventWeekNumber, grantEventLevels, addEventWeekWinner, getTop3ExpDuringEventExcludingStaff } = require("./activityEventRewardsService");
+const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("./staffEventService");
+const { isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 
 const TIME_ZONE = "Europe/Rome";
 const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
+const NEWS_CHANNEL_ID = IDs.channels.news;
+const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
 const INFO_CHANNEL_ID = IDs.channels.info;
 const TROPHY_LABELS = [
   "<:VC_Podio1:1469659449974329598>",
@@ -97,6 +102,92 @@ function getDateKeysForWeekKey(weekKey) {
     out.push(`${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`);
   }
   return out;
+}
+
+/** Date keys (YYYY-MM-DD Rome) per la settimana N dell'evento (1-based). */
+function getEventWeekDateKeys(eventStartedAt, weekNum) {
+  const start = new Date(eventStartedAt).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(weekNum) || weekNum < 1)
+    return [];
+  const dayMs = 24 * 60 * 60 * 1000;
+  const out = [];
+  for (let i = 0; i < 7; i += 1) {
+    const date = new Date(start + ((weekNum - 1) * 7 + i) * dayMs);
+    const parts = getTimeParts(date);
+    out.push(`${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`);
+  }
+  return out;
+}
+
+/** Come loadWeeklyRowsFromDaily ma con dateKeys arbitrari. Restituisce messageCount e voiceSeconds (non voiceExp). */
+async function loadActivityRowsFromDateKeys(guild, dateKeys) {
+  if (!dateKeys?.length) return [];
+  const eligible = await getEligibleChannelSets(guild);
+  if (!eligible.text.size && !eligible.voice.size) return [];
+  const perUser = new Map();
+  const cursor = ActivityDaily.find({
+    guildId: guild.id,
+    dateKey: { $in: dateKeys },
+  })
+    .select("userId textChannels voiceChannels")
+    .lean()
+    .cursor();
+  for await (const row of cursor) {
+    const userId = String(row?.userId || "");
+    if (!userId) continue;
+    let messageCount = 0;
+    let voiceSeconds = 0;
+    for (const [channelId, value] of extractMapEntries(row?.textChannels)) {
+      if (!eligible.text.has(String(channelId))) continue;
+      messageCount += Math.max(0, Number(value || 0));
+    }
+    for (const [channelId, value] of extractMapEntries(row?.voiceChannels)) {
+      if (!eligible.voice.has(String(channelId))) continue;
+      voiceSeconds += Math.max(0, Number(value || 0));
+    }
+    if (messageCount <= 0 && voiceSeconds <= 0) continue;
+    const current = perUser.get(userId) || { userId, messageCount: 0, voiceSeconds: 0 };
+    current.messageCount += messageCount;
+    current.voiceSeconds += voiceSeconds;
+    perUser.set(userId, current);
+  }
+  return Array.from(perUser.values()).map((row) => ({
+    userId: row.userId,
+    messageCount: Math.max(0, Math.floor(row.messageCount)),
+    voiceSeconds: Math.max(0, Math.floor(row.voiceSeconds)),
+  }));
+}
+
+/** Top 3 testuale e vocale per la settimana N dell'evento (stessi dati di +evento classifica). Esclude staff. */
+async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
+  if (!guild?.id || !Number.isFinite(eventWeekNum) || eventWeekNum < 1 || eventWeekNum > 4)
+    return { topMessages: [], topVoice: [] };
+  const settings = await getGuildExpSettings(guild.id).catch(() => null);
+  if (!settings?.eventStartedAt) return { topMessages: [], topVoice: [] };
+  const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
+  if (!dateKeys.length) return { topMessages: [], topVoice: [] };
+  const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
+  const sortedMessages = [...rows]
+    .filter((r) => Number(r?.messageCount || 0) > 0)
+    .sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+  const sortedVoice = [...rows]
+    .filter((r) => Number(r?.voiceSeconds || 0) > 0)
+    .sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
+  const topMessages = [];
+  const topVoice = [];
+  for (const row of sortedMessages) {
+    if (topMessages.length >= 3) break;
+    const member = await guild.members.fetch(row.userId).catch(() => null);
+    if (member && !isEventStaffMember(member))
+      topMessages.push({ userId: row.userId, messageCount: row.messageCount });
+  }
+  for (const row of sortedVoice) {
+    if (topVoice.length >= 3) break;
+    const member = await guild.members.fetch(row.userId).catch(() => null);
+    if (member && !isEventStaffMember(member))
+      topVoice.push({ userId: row.userId, voiceSeconds: row.voiceSeconds });
+  }
+  return { topMessages, topVoice };
 }
 
 function buildEmptyLine(kind) {
@@ -224,7 +315,10 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
   return out;
 }
 
+/** Rimuove il ruolo da tutti i membri che lo hanno. Prima fa fetch dei membri così role.members è completo. */
 async function removeRoleFromAllMembers(guild, roleId) {
+  if (!roleId) return;
+  await guild.members.fetch().catch(() => null);
   const role =
     guild.roles.cache.get(roleId) ||
     (await guild.roles.fetch(roleId).catch(() => null));
@@ -254,11 +348,10 @@ function pickFirstAvailable(ranking, excludedUserIds = new Set()) {
   return null;
 }
 
+/** Rimuove TopWeeklyText e TopWeeklyVoc da tutti, poi assegna ciascun ruolo solo al vincitore della settimana (1° testuale, 1° vocale). */
 async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
-  await Promise.all([
-    removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID),
-    removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID),
-  ]);
+  await removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID);
+  await removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID);
 
   const chosenUserIds = new Set();
   const messageWinner = pickFirstAvailable(topMessages, chosenUserIds);
@@ -273,6 +366,141 @@ async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
   ]);
 
   return { messageWinner, voiceWinner };
+}
+
+function formatVoiceDuration(seconds) {
+  const s = Math.max(0, Math.floor(Number(seconds || 0)));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMessages, topVoice) {
+  const newsChannel =
+    client.channels.cache.get(NEWS_CHANNEL_ID) ||
+    (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+  if (!newsChannel?.guild) return;
+  const msgLines = topMessages.length
+    ? topMessages.map((item, i) => {
+        const medal = TROPHY_LABELS[i] || "";
+        return `${medal} <@${item.userId}> — **${item.messageCount}** messaggi`;
+      })
+    : [" - Nessun dato per la classifica testuale."];
+  const voiceLines = topVoice.length
+    ? topVoice.map((item, i) => {
+        const medal = TROPHY_LABELS[i] || "";
+        return `${medal} <@${item.userId}> — **${formatVoiceDuration(item.voiceSeconds)}**`;
+      })
+    : [" - Nessun dato per la classifica vocale."];
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
+    .setDescription(
+      [
+        "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale** (settimana evento):",
+        ...msgLines,
+        "",
+        "<a:VC_HeartsBlue:1468686100045369404> **Top 3 vocale** (settimana evento):",
+        ...voiceLines,
+      ].join("\n"),
+    )
+    .setThumbnail(guild.iconURL({ size: 256 }) || null)
+    .setFooter({ text: `Settimana ${eventWeek} dell'evento • Premi assegnati ai vincitori` })
+    .setTimestamp();
+  await newsChannel.send({ embeds: [embed] }).catch((err) => {
+    global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement to news failed:", err);
+  });
+}
+
+/** Messaggio di chiusura evento (stile come +evento start): testo + embed top 3 EXP totale. */
+const EVENT_END_ANNOUNCEMENT_MESSAGE = [
+  "<:VC_Calendar:1448670320180592724> **L'evento Activity EXP è terminato.**",
+  "",
+  "> <a:VC_HeartsPink:1468685897389052008> Grazie a tutti per aver partecipato! Di seguito la **top 3 per EXP totale** guadagnata durante l'evento.",
+  "",
+].join("\n");
+
+async function trySendEventEndAnnouncementToNews(client) {
+  const mainGuildId = IDs.guilds?.main;
+  if (!mainGuildId || !NEWS_CHANNEL_ID) return;
+  const guild =
+    client.guilds.cache.get(mainGuildId) ||
+    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  if (!guild) return;
+  const doc = await GlobalSettings.findOne({ guildId: mainGuildId }).lean().catch(() => null);
+  if (!doc?.expEventMultiplierExpiresAt) return;
+  const expiresAt = new Date(doc.expEventMultiplierExpiresAt).getTime();
+  if (expiresAt > Date.now()) return;
+  const sentFor = doc.expEventEndAnnouncementSentForExpiresAt
+    ? new Date(doc.expEventEndAnnouncementSentForExpiresAt).getTime()
+    : null;
+  if (sentFor !== null && sentFor === expiresAt) return;
+  const top3 = await getTop3ExpDuringEventExcludingStaff(guild);
+  const lines = top3.length
+    ? top3.map((item, i) => {
+        const medal = TROPHY_LABELS[i] || "";
+        return `${medal} <@${item.userId}> — **${item.expDuringEvent.toLocaleString("it-IT")}** EXP`;
+      })
+    : [" - Nessun dato."];
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP")
+    .setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n"))
+    .setThumbnail(guild.iconURL({ size: 256 }) || null)
+    .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
+    .setTimestamp();
+  const newsChannel =
+    client.channels.cache.get(NEWS_CHANNEL_ID) ||
+    (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+  if (!newsChannel?.guild) return;
+  await newsChannel.send({
+    content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲@everyone`,
+    embeds: [embed],
+    allowedMentions: { parse: ["everyone"] },
+  }).catch((err) => {
+    global.logger?.error?.("[WEEKLY ACTIVITY] Event end announcement to news failed:", err);
+    return;
+  });
+  await GlobalSettings.findOneAndUpdate(
+    { guildId: mainGuildId },
+    { $set: { expEventEndAnnouncementSentForExpiresAt: doc.expEventMultiplierExpiresAt } },
+  ).catch(() => null);
+
+  if (doc.staffEventExpiresAt && new Date(doc.staffEventExpiresAt).getTime() <= Date.now()) {
+    const leaderboard = await getStaffEventLeaderboard(mainGuildId);
+    await guild.members.fetch().catch(() => null);
+    const staffIds = new Set();
+    for (const [, member] of guild.members.cache) {
+      if (isStaffButNotHighStaff(member)) staffIds.add(member.id);
+    }
+    const filtered = leaderboard.filter((r) => staffIds.has(r.userId));
+    const first = filtered[0];
+    const last = filtered.length > 1 ? filtered[filtered.length - 1] : null;
+    const staffEndLines = [];
+    if (first) staffEndLines.push(`<:VC_Podio1:1469659449974329598> **Miglior punteggio:** <@${first.userId}> — **${first.points}** punti`);
+    if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> — **${last.points}** punti`);
+    const staffEndContent = [
+      "## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**",
+      "",
+      "<:VC_Attention:1443933073438675016> Risultati evento staff (pex/depex da assegnare manualmente dallo staff):",
+      ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]),
+      "",
+      `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
+    ].join("\n");
+    const newsStaffChannel =
+      NEWS_STAFF_CHANNEL_ID &&
+      (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) ||
+        (await client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null)));
+    if (newsStaffChannel?.guild) {
+      await newsStaffChannel.send({
+        content: staffEndContent,
+        allowedMentions: { parse: ["roles"] },
+      }).catch((err) => {
+        global.logger?.error?.("[WEEKLY ACTIVITY] Staff event end announcement to newsstaff failed:", err);
+      });
+    }
+  }
 }
 
 async function publishWeeklyActivityWinners(client, options = {}) {
@@ -324,6 +552,58 @@ async function publishWeeklyActivityWinners(client, options = {}) {
     : [buildEmptyLine("exp vocale")];
 
   const awarded = await updateWeeklyWinnerRoles(guild, topMessages, topVoice);
+
+  const settings = await getGuildExpSettings(guild.id).catch(() => null);
+  const eventWeek = settings ? getEventWeekNumber(settings) : 0;
+  let eventTopMessages = [];
+  let eventTopVoice = [];
+  if (eventWeek >= 1 && eventWeek <= 4) {
+    const eventTop = await getEventWeekTopThreeTextAndVoice(guild, eventWeek);
+    eventTopMessages = eventTop.topMessages || [];
+    eventTopVoice = eventTop.topVoice || [];
+  }
+  const topSixUserIds = new Set();
+  for (const item of eventTopMessages) {
+    if (item?.userId) topSixUserIds.add(item.userId);
+  }
+  for (const item of eventTopVoice) {
+    if (item?.userId) topSixUserIds.add(item.userId);
+  }
+  if (eventWeek >= 1 && eventWeek <= 4 && topSixUserIds.size > 0) {
+    const VIP_ID = IDs.roles.VIP;
+    const me = guild.members.me;
+    for (const userId of topSixUserIds) {
+      try {
+        const member = await guild.members.fetch(userId).catch(() => null);
+        if (member && isEventStaffMember(member)) continue;
+        if (eventWeek === 1) {
+          await grantEventLevels(
+            guild.id,
+            userId,
+            10,
+            "Evento settimanale: top 3 testuale/vocale",
+            member,
+          );
+        } else if (eventWeek === 2) {
+          await addEventWeekWinner(guild.id, userId, 2);
+        } else if (eventWeek === 3) {
+          await addEventWeekWinner(guild.id, userId, 3);
+        } else if (eventWeek === 4 && VIP_ID && me?.permissions?.has("ManageRoles")) {
+          await assignRoleToUser(guild, userId, VIP_ID);
+        }
+      } catch (err) {
+        global.logger?.error?.("[WEEKLY ACTIVITY] Event reward for user", userId, err);
+      }
+    }
+  }
+  if (eventWeek >= 1 && eventWeek <= 4 && NEWS_CHANNEL_ID) {
+    await sendEventWeekAnnouncementToNews(client, guild, eventWeek, eventTopMessages, eventTopVoice);
+  }
+  if (eventWeek >= 1 && eventWeek <= 4 && settings) {
+    await giveWeekly20PointsIfEligible(guild, eventWeek, settings).catch((err) => {
+      global.logger?.error?.("[WEEKLY ACTIVITY] Staff event weekly 20 pts failed:", err);
+    });
+  }
 
   const embed = new EmbedBuilder()
     .setColor("#6f4e37")
@@ -432,6 +712,20 @@ function startWeeklyActivityWinnersLoop(client) {
     },
     { timezone: TIME_ZONE },
   );
+  cron.schedule(
+    "0 21 * * *",
+    async () => {
+      try {
+        await trySendEventEndAnnouncementToNews(client);
+      } catch (error) {
+        global.logger.error(
+          "[WEEKLY ACTIVITY] Event end announcement failed:",
+          error,
+        );
+      }
+    },
+    { timezone: TIME_ZONE },
+  );
 
   const runRecoveryIfNeeded = async () => {
     const now = new Date();
@@ -471,4 +765,6 @@ module.exports = {
   startWeeklyActivityWinnersLoop,
   publishWeeklyActivityWinners,
   resetWeeklyActivityCounters,
+  getEventWeekDateKeys,
+  loadActivityRowsFromDateKeys,
 };

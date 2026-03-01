@@ -457,9 +457,16 @@ module.exports = {
           });
         }
         if (menuId === "personality_colors_plus") {
+          const hasEventWeek2 =
+            interaction.guildId &&
+            interaction.user?.id &&
+            (await require("../Services/Community/activityEventRewardsService")
+              .hasEventWeekWinnerGrant(interaction.guildId, interaction.user.id, 2)
+              .catch(() => false));
           const allowed =
             member.roles.cache.has(IDs.roles.ServerBooster) ||
-            member.roles.cache.has(IDs.roles.Level50);
+            member.roles.cache.has(IDs.roles.Level50) ||
+            hasEventWeek2;
           if (!allowed) {
             return interaction.reply({
               content:

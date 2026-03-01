@@ -51,7 +51,16 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
       level = 0;
     }
   }
-  return computeCooldownSeconds(member, level);
+  let seconds = computeCooldownSeconds(member, level);
+  if (seconds > 5 && guildId && userId) {
+    try {
+      const { hasEventWeekWinnerGrant } = require("../../Services/Community/activityEventRewardsService");
+      if (await hasEventWeekWinnerGrant(guildId, userId, 2)) seconds = 5;
+    } catch {
+      // ignore
+    }
+  }
+  return seconds;
 }
 
 function consumeUserCooldown({ client, guildId, userId, cooldownSeconds }) {

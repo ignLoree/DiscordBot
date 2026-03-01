@@ -19,6 +19,7 @@ const { getCentralChannel } = require("../Utils/Logging/commandUsageLogger");
 const { getGuildAutoResponderCache, setGuildAutoResponderCache } = require("../Utils/Community/autoResponderCache");
 const { safeMessageReply } = require("../Utils/Moderation/reply");
 const { upsertVoteRole } = require("../Services/Community/communityOpsService");
+const { grantEventLevels } = require("../Services/Community/activityEventRewardsService");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const { shouldBlockModerationCommands } = require("../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
@@ -439,6 +440,7 @@ async function handleVoteManagerMessage(message, client) {
       if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
         await member.roles.add(VOTE_ROLE_ID).catch(() => { });
       }
+      grantEventLevels(message.guild.id, user.id, 1, "Evento: voto Discadia", member || undefined).catch(() => {});
     } catch { }
   }
   const DIVIDER_URL =

@@ -1,7 +1,8 @@
-﻿const { EmbedBuilder, PermissionsBitField, ActivityType, } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, ActivityType, } = require("discord.js");
 const mongoose = require("mongoose");
 const SupporterStatus = require("../Schemas/Supporter/supporterStatusSchema");
 const IDs = require("../Utils/Config/ids");
+const { grantEventRewardOnce } = require("../Services/Community/activityEventRewardsService");
 
 const ROLE_ID = IDs.roles.Supporter;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
@@ -109,6 +110,12 @@ async function addRoleIfPossible(member) {
   if (member.roles.cache.has(ROLE_ID)) return false;
 
   await member.roles.add(role);
+  setImmediate(() => {
+    grantEventRewardOnce(member.guild.id, member.id, "supporter", {
+      levels: 5,
+      member,
+    }).catch(() => {});
+  });
   return true;
 }
 
