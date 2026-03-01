@@ -195,6 +195,18 @@ function buildDirectUrlExpectedSource(input) {
   return null;
 }
 
+function normalizeLoadTypeValue(loadType) {
+  const raw = String(loadType || "").trim();
+  if (!raw) return "";
+  const compact = raw.toLowerCase().replace(/[\s_-]/g, "");
+  if (compact === "track" || compact === "trackloaded") return "track";
+  if (compact === "playlist" || compact === "playlistloaded") return "playlist";
+  if (compact === "search" || compact === "searchresult" || compact === "searchresults") return "search";
+  if (compact === "empty" || compact === "nomatches") return "empty";
+  if (compact === "error" || compact === "loadfailed") return "error";
+  return compact;
+}
+
 function getConnectedNode(manager) {
   if (!manager?.nodes?.size) return null;
   return Array.from(manager.nodes.values()).find((node) => node.state === Constants.State.CONNECTED) || Array.from(manager.nodes.values())[0] || null;
@@ -450,10 +462,17 @@ async function resolveIdentifier(manager, identifier) {
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
   if (!result) return { tracks: [], playlist: null };
-  if (result.loadType === LoadType.TRACK && result.data) {
+  const loadType = normalizeLoadTypeValue(
+    result.loadType ||
+      result.load_type ||
+      result.type ||
+      result.resultType,
+  );
+
+  if (loadType === "track" && result.data) {
     return { tracks: [toTrack(result.data, requestedBy, extra)], playlist: null };
   }
-  if (result.loadType === LoadType.PLAYLIST && result.data) {
+  if (loadType === "playlist" && result.data) {
     return {
       tracks: Array.isArray(result.data.tracks)
         ? result.data.tracks.map((item) => toTrack(item, requestedBy, extra))
@@ -464,7 +483,7 @@ function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
       },
     };
   }
-  if (result.loadType === LoadType.SEARCH && Array.isArray(result.data)) {
+  if (loadType === "search" && Array.isArray(result.data)) {
     return {
       tracks: result.data.map((item) => toTrack(item, requestedBy, extra)),
       playlist: null,
