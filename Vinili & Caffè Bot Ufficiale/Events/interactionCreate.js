@@ -51,6 +51,12 @@ function isAckError(error) {
   );
 }
 
+/** Errore HTTP transiente Discord (503, 502, 504, 5xx): non rilanciare e non loggare come failure. */
+function isTransientDiscordError(error) {
+  const status = error?.status ?? error?.statusCode;
+  return Number(status) >= 500 && Number(status) < 600;
+}
+
 function getButtonSpamState(client) {
   if (!client) {
     return {
@@ -162,7 +168,7 @@ async function sendPrivateInteractionResponse(interaction, payload) {
 
     await interaction.followUp(payload);
   } catch (error) {
-    if (isAckError(error)) return;
+    if (isAckError(error) || isTransientDiscordError(error)) return;
     throw error;
   }
 }
@@ -268,6 +274,12 @@ async function logInteractionError(interaction, client, err) {
     });
   } catch (nestedErr) {
     if (isAckError(nestedErr)) return;
+    if (isTransientDiscordError(nestedErr)) {
+      global.logger?.warn?.(
+        "[interactionCreate] Impossibile inviare risposta errore all'utente (Discord API non disponibile, es. 503).",
+      );
+      return;
+    }
     global.logger?.error?.(
       "[interactionCreate] nested error handling failed",
       nestedErr,

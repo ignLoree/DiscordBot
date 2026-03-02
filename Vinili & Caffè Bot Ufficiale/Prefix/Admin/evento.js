@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent, clearStaffEvent, getStaffEventSettings, invalidateSettingsCache } = require("../../Services/Community/expService");
-const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote } = require("../../Services/Community/activityEventRewardsService");
+const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote, clearActivityEventRewardsForGuild } = require("../../Services/Community/activityEventRewardsService");
 const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEventPoints, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("../../Services/Community/staffEventService");
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
 const IDs = require("../../Utils/Config/ids");
@@ -150,7 +150,7 @@ module.exports = {
     const guildId = message.guild?.id;
     if (!guildId) return;
 
-    if (!sub || !["start", "stop", "info", "assegna-ruoli", "classifica", "staff"].includes(sub)) {
+    if (!sub || !["start", "stop", "info", "assegna-ruoli", "reset-premi", "classifica", "staff"].includes(sub)) {
       const usage = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Comando evento")
@@ -160,6 +160,7 @@ module.exports = {
             "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.",
             "`+evento info` – Mostra stato e configurazione evento.",
             "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded (evento attivo).",
+            "`+evento reset-premi` – Cancella i premi già registrati e riassegna a tutti (senza annuncio).",
             "`+evento classifica` – Classifica per settimana.",
             "`+evento classifica staff` – Classifica punti evento staff.",
             "`+evento staff start|stop|addpoints` – Gestione evento staff.",
@@ -191,6 +192,30 @@ module.exports = {
       });
       await message.channel.send({
         content: "<:vegacheckmark:1443666279058772028> Fatto. Assegnati i livelli a chi ha già Supporter, Verificato/Verificata o Guilded (solo chi non li aveva già ricevuti per questo evento).",
+      }).catch(() => {});
+      return;
+    }
+
+    if (sub === "reset-premi") {
+      const settings = await getGuildExpSettings(guildId);
+      if (!settings?.eventExpiresAt) {
+        await safeMessageReply(message, {
+          content: "<:vegax:1443934876440068179> Nessun evento attivo. Usa `+evento start` prima.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      await safeMessageReply(message, {
+        content: "<:VC_EXP:1468714279673925883> Reset premi in corso: cancellazione registri e riassegnazione a tutti i membri...",
+        allowedMentions: { repliedUser: false },
+      }).catch(() => {});
+      const { deleted } = await clearActivityEventRewardsForGuild(guildId);
+      invalidateSettingsCache(guildId);
+      await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
+        global.logger?.error?.("[evento reset-premi] grantEventRewardsForExistingRoleMembers failed:", err);
+      });
+      await message.channel.send({
+        content: `<:vegacheckmark:1443666279058772028> Fatto. Cancellati ${deleted} premi registrati e riassegnati i livelli a chi ha Supporter, Verificato/Verificata o Guilded (senza invio annuncio).`,
       }).catch(() => {});
       return;
     }

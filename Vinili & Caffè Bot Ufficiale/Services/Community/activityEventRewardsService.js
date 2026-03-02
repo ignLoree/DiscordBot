@@ -197,12 +197,18 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   if (!guild?.id) return;
   const active = await isEventActive(guild.id);
   if (!active) return;
-  await guild.members.fetch().catch(() => null);
+  const fetched = await guild.members.fetch().catch(() => null);
+  const membersToIterate = fetched && typeof fetched.forEach === "function" ? fetched : guild.members.cache;
+  if (!fetched || fetched.size < 2) {
+    global.logger?.warn?.(
+      "[activityEventRewards] grantEventRewardsForExistingRoleMembers: fetch membri fallito o cache piccola. Abilita l'intent Guild Members per processare tutti gli utenti.",
+    );
+  }
   const supporterId = IDs.roles.Supporter;
   const verificatoId = IDs.roles.Verificato;
   const verificataId = IDs.roles.Verificata;
   const guildedId = IDs.roles.Guilded;
-  for (const [, member] of guild.members.cache) {
+  for (const [, member] of membersToIterate) {
     if (!member?.user?.id) continue;
     if (supporterId && member.roles.cache.has(supporterId)) {
       await grantEventRewardOnce(guild.id, member.id, "supporter", { levels: 5, member, clientOrGuild: guild }).catch(() => null);
@@ -234,10 +240,11 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
     .select("userId")
     .lean()
     .catch(() => []);
+  const membersCache = await guild.members.fetch().catch(() => null) || guild.members.cache;
   for (const doc of voteDocs) {
     const userId = String(doc?.userId || "");
     if (!userId) continue;
-    const member = guild.members.cache.get(userId) || null;
+    const member = membersCache.get?.(userId) ?? guild.members.cache.get(userId) ?? null;
     await grantEventLevels(
       guild.id,
       userId,
@@ -297,12 +304,20 @@ async function getTop3ExpDuringEventExcludingStaff(guild) {
   return out;
 }
 
+/** Cancella tutti i premi evento registrati per la guild (Supporter/Verificato/Guilded/voto/inviti). Dopo averla chiamata, riassegnare con grantEventRewardsForExistingRoleMembers. */
+async function clearActivityEventRewardsForGuild(guildId) {
+  if (!guildId) return { deleted: 0 };
+  const result = await ActivityEventReward.deleteMany({ guildId: String(guildId) }).catch(() => null);
+  return { deleted: result?.deletedCount ?? 0 };
+}
+
 module.exports = {
   isEventActive,
   grantEventLevels,
   grantEventRewardOnce,
   grantEventRewardsForExistingRoleMembers,
   grantEventRewardsForSameDayReviewAndVote,
+  clearActivityEventRewardsForGuild,
   addEventWeekWinner,
   hasEventWeekWinnerGrant,
   getTop3ExpDuringEventExcludingStaff,
