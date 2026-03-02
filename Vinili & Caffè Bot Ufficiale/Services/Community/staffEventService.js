@@ -1,18 +1,9 @@
-"use strict";
-
-const {
-  StaffEventPoints,
-  StaffEventWeeklyReward,
-  StaffEventRewardGiven,
-  InviteTrack,
-} = require("../../Schemas/Community/communitySchemas");
+const { StaffEventPoints, StaffEventWeeklyReward,StaffEventRewardGiven, InviteTrack } = require("../../Schemas/Community/communitySchemas");
 const { getStaffEventSettings } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
-
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGH_STAFF_ROLE_ID = IDs.roles.HighStaff;
 const PARTNER_MANAGER_ROLE_ID = IDs.roles.PartnerManager;
-/** Limiti settimanali per ruolo (come in Triggers/buttons.js e resoconti). Per i 20 pt evento staff serve superarli di almeno 150 msg e 1h30. */
 const STAFF_ACTIVITY_LIMITS = {
   [String(IDs.roles.Helper)]: { messages: 400, hours: 3.5 },
   [String(IDs.roles.Mod)]: { messages: 500, hours: 5 },
@@ -48,7 +39,6 @@ async function isStaffEventActive(guildId) {
   return settings.active;
 }
 
-/** Aggiunge punti a un partecipante evento staff. */
 async function addStaffEventPoints(guildId, userId, points, note = null) {
   if (!guildId || !userId || !Number.isFinite(points) || points <= 0) return null;
   const active = await isStaffEventActive(guildId);
@@ -61,7 +51,6 @@ async function addStaffEventPoints(guildId, userId, points, note = null) {
   return true;
 }
 
-/** Classifica evento staff (tutti i userId con punti). Ordinata per punti decrescente. */
 async function getStaffEventLeaderboard(guildId) {
   if (!guildId) return [];
   const list = await StaffEventPoints.find({ guildId })
@@ -72,7 +61,6 @@ async function getStaffEventLeaderboard(guildId) {
   return list.map((d) => ({ userId: String(d.userId), points: Number(d.points || 0) }));
 }
 
-/** All'avvio evento staff: assegna 1 punto per ogni invito già presente in InviteTrack a ogni staff (non HighStaff). Una tantum per utente (rewardType existing_invites). */
 async function giveExistingInvitesPointsAtStart(guild) {
   if (!guild?.id) return;
   const active = await isStaffEventActive(guild.id);
@@ -112,7 +100,6 @@ async function giveExistingInvitesPointsAtStart(guild) {
   }
 }
 
-/** Assegna 15 punti una tantum a chi ha sia PartnerManager che Staff (escluso HighStaff). Da chiamare all'avvio evento. */
 async function givePmStaff15PointsAtStart(guild) {
   if (!guild?.id) return;
   const active = await isStaffEventActive(guild.id);
@@ -144,7 +131,6 @@ function resolveStaffRoleForLimits(member) {
   return null;
 }
 
-/** Per la settimana evento weekNum (1-4), assegna 20 punti a ogni staff (non HighStaff) che ha **superato** i limiti settimanali del proprio ruolo di almeno 150 msg e 1h30 (stessi criteri "Discreto" dei resoconti). Usa getUserOverviewStats(last 7 days) come i resoconti. Una tantum per settimana. */
 async function giveWeekly20PointsIfEligible(guild, eventWeekNum, _settings) {
   if (!guild?.id || eventWeekNum < 1 || eventWeekNum > 4) return;
   const active = await isStaffEventActive(guild.id);

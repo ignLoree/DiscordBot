@@ -8,7 +8,6 @@ const IDs = require("../../Utils/Config/ids");
 const TIME_ZONE = "Europe/Rome";
 const EVENT_DURATION_DAYS = 31;
 
-/** Ultimo giorno dell'evento alle 21:00 Rome. Per "01/03–31/03" (31 giorni) passare 30 così l'ultimo giorno è start + 30. */
 function getEndDateAt21Rome(now, giorniDaOggi = 30) {
   const endDay = new Date(now.getTime() + giorniDaOggi * 24 * 60 * 60 * 1000);
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -71,10 +70,9 @@ const EVENT_ANNOUNCEMENT_MESSAGE = [
   "<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.",
   "",   
   "<a:VC_Calendar:1448670320180592724> __La durata dell'evento è da `Oggi` al `01/04/2026` alle 21:00__",
-  "<a:VC_Ping:1448670620412809298>︲@everyone"
+  "<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>"
 ].join("\n");
 
-/** Messaggio annuncio evento staff (stessa durata dell'activity event). Le date vengono sostituite a runtime. */
 function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
   return [
     "## <a:VC_Announce:1448687280381235443>  **EVENTO STAFF**",
@@ -96,7 +94,7 @@ function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
     "",
     "<:VC_Attention:1443933073438675016> **Alla fine dell'evento verranno comunicati lo staffer con più punti (candidato al pex) e quello con meno punti (candidato al depex); pex e depex saranno assegnati manualmente dallo staff.**",
     "",
-    `<a:VC_pixeltime:1470796283320209600> __Durata evento dal \`${startDateStr}\` al \`${endDateStr}\`__`,
+    `<a:VC_pixeltime:1470796283320209600> __La durata dell'evento è da \`Oggi\` al \`01/04/2026\` alle 21:00__`,
     "",
     "<:VC_Mention:1443994358201323681>︲<@&1442568910070349985>",
   ].join("\n");
@@ -145,12 +143,12 @@ module.exports = {
         .setTitle("Comando evento")
         .setDescription(
           [
-            "`+evento start` – Avvia l’evento Activity EXP (01/03–31/03, multi x3, boost ruoli).",
+            "`+evento start` – Avvia l’evento Activity EXP.",
             "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.",
             "`+evento info` – Mostra stato e configurazione evento.",
-            "`+evento classifica` – Classifica per settimana (top 10 messaggi, vocale, EXP).",
+            "`+evento classifica` – Classifica per settimana.",
             "`+evento classifica staff` – Classifica punti evento staff.",
-            "`+evento staff start|stop|addpoints` – Gestione evento staff (separato).",
+            "`+evento staff start|stop|addpoints` – Gestione evento staff.",
           ].join("\n"),
         );
       await safeMessageReply(message, {
@@ -218,8 +216,8 @@ module.exports = {
       if (!["start", "stop", "addpoints"].includes(staffSub)) {
         await safeMessageReply(message, {
           content: [
-            "**Evento staff** (indipendente dall'activity event):",
-            "`+evento staff start` – Avvia evento staff (date proprie, annuncio in #newsstaff).",
+            "**Evento staff**:",
+            "`+evento staff start` – Avvia evento staff.",
             "`+evento staff stop` – Termina evento staff.",
             "`+evento staff addpoints <@user|id> <punti>` – Aggiunge punti manualmente a uno staffer.",
           ].join("\n"),
@@ -391,7 +389,7 @@ module.exports = {
           [
             `<:VC_EXP:1468714279673925883> **ACTIVITY EXP EVENT**`,
             ``,
-            `- Dal **${fmtDate(result.startDate)}** al **${fmtDateWithTime(result.endDate)}** (classifiche e premi ogni domenica alle 21:00)`,
+            `- Dal **${fmtDate(result.startDate)}** al **${fmtDateWithTime(result.endDate)}**`,
             `- Moltiplicatore globale: **x${result.eventMultiplier}**`,
             `- Override ruoli: Server Booster x3, Donator x4, VIP x5`,
             `- Boost extra x2: <@&${IDs.roles.Veterano}>`,

@@ -158,7 +158,6 @@ async function loadActivityRowsFromDateKeys(guild, dateKeys) {
   }));
 }
 
-/** Top 3 testuale e vocale per la settimana N dell'evento (stessi dati di +evento classifica). Esclude staff. */
 async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
   if (!guild?.id || !Number.isFinite(eventWeekNum) || eventWeekNum < 1 || eventWeekNum > 4)
     return { topMessages: [], topVoice: [] };
@@ -315,7 +314,6 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
   return out;
 }
 
-/** Rimuove il ruolo da tutti i membri che lo hanno. Prima fa fetch dei membri così role.members è completo. */
 async function removeRoleFromAllMembers(guild, roleId) {
   if (!roleId) return;
   await guild.members.fetch().catch(() => null);
@@ -348,7 +346,6 @@ function pickFirstAvailable(ranking, excludedUserIds = new Set()) {
   return null;
 }
 
-/** Rimuove TopWeeklyText e TopWeeklyVoc da tutti, poi assegna ciascun ruolo solo al vincitore della settimana (1° testuale, 1° vocale). */
 async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
   await removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID);
   await removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID);
@@ -413,7 +410,6 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
   });
 }
 
-/** Messaggio di chiusura evento (stile come +evento start): testo + embed top 3 EXP totale. */
 const EVENT_END_ANNOUNCEMENT_MESSAGE = [
   "<:VC_Calendar:1448670320180592724> **L'evento Activity EXP è terminato.**",
   "",
@@ -483,7 +479,7 @@ async function trySendEventEndAnnouncementToNews(client) {
     const staffEndContent = [
       "## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**",
       "",
-      "<:VC_Attention:1443933073438675016> Risultati evento staff (pex/depex da assegnare manualmente dallo staff):",
+      "<:VC_Attention:1443933073438675016> Risultati evento staff:",
       ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]),
       "",
       `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
