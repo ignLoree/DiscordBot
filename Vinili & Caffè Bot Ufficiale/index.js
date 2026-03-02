@@ -115,9 +115,6 @@ const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 let client;
 try {
   installEmbedFooterPatch();
-
-  const disableScheduledEventsIntent =
-    process.env.DISABLE_SCHEDULED_EVENTS_INTENT === "1";
   const baseIntents = [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -139,7 +136,6 @@ try {
     GatewayIntentBits.AutoModerationExecution,
     GatewayIntentBits.AutoModerationConfiguration,
   ];
-  if (!disableScheduledEventsIntent) baseIntents.push(GatewayIntentBits.GuildScheduledEvents);
   const basePartials = [
     Partials.Message,
     Partials.Channel,
@@ -148,31 +144,10 @@ try {
     Partials.GuildMember,
     Partials.ThreadMember,
   ];
-  if (!disableScheduledEventsIntent) basePartials.push(Partials.GuildScheduledEvent);
 
   client = new Client({
     intents: baseIntents,
     partials: basePartials,
-    rest: {
-      timeout: 12_000,
-      offset: 50,
-      retries: 2,
-    },
-    ...(typeof Options?.cacheWithLimits === "function" && {
-      makeCache: Options.cacheWithLimits({
-        ...(Options.DefaultMakeCacheSettings || {}),
-        MessageManager: 100,
-        GuildMemberManager: 200,
-        PresenceManager: 0,
-        ReactionManager: 50,
-      }),
-    }),
-    ...(typeof Options?.DefaultSweeperSettings === "object" && {
-      sweepers: {
-        ...(Options.DefaultSweeperSettings || {}),
-        messages: { interval: 300, lifetime: 600 },
-      },
-    }),
   });
 } catch (error) {
   global.logger.error("[ERROR] Error while creating the client.", error);

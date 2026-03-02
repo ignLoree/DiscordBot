@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-03-02T12:29:09.391Z.
+Generato automaticamente il 2026-03-02T18:20:38.224Z.
 
 ## +adorable
 - Categoria: `Minigames`
@@ -229,8 +229,8 @@ Generato automaticamente il 2026-03-02T12:29:09.391Z.
 ## +evento
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+evento <start|stop|info|classifica|staff|assegna-ruoli|addpoints>`
-- Subcommand: `start`, `stop`, `info`, `classifica`, `staff`, `assegna-ruoli`, `addpoints`
+- Uso: `+evento <start|stop|info|classifica|staff|assegna-ruoli|reset-premi|addpoints>`
+- Subcommand: `start`, `stop`, `info`, `classifica`, `staff`, `assegna-ruoli`, `reset-premi`, `addpoints`
 - Esempi:
 - `+evento start`
 - `+evento stop`
