@@ -1633,18 +1633,25 @@ async function handleDiscadiaBump(message, client) {
   const isBumpInteraction = interactionCommandName === "bump";
   const isLikelyCommandChannel =
     String(message.channelId || "") === String(IDs.channels.commands || "");
+  const isFromDiscadiaBot = String(message.author?.id) === String(IDs.bots?.Discadia || "");
   const sourceFingerprint = `${authorName} ${sourceName}`.toLowerCase();
   const looksLikeDiscadiaSource =
-    /\bdiscadia\b/i.test(sourceFingerprint) || hasDiscadiaWord || hasDiscadiaDomain;
+    isFromDiscadiaBot ||
+    /\bdiscadia\b/i.test(sourceFingerprint) ||
+    hasDiscadiaWord ||
+    hasDiscadiaDomain;
   const looksLikeDisboardSource = /\bdisboard\b/i.test(sourceFingerprint);
   const hasBumpSuccessText = hasPattern || hasSuccessWord;
   const isSuccessInCommandChannel =
     isLikelyCommandChannel &&
     !hasFailureWord &&
     (hasBumpSuccessText || (isBumpInteraction && hasBumpWord));
+  const isBumpFromDiscadiaInCommands =
+    isFromDiscadiaBot && isLikelyCommandChannel && (isBumpInteraction || hasBumpWord) && !hasFailureWord;
   const isBump =
     !hasFailureWord &&
     (
+      isBumpFromDiscadiaInCommands ||
       isSuccessInCommandChannel ||
       (looksLikeDiscadiaSource && (hasBumpSuccessText || (isBumpInteraction && hasBumpWord))) ||
       (isAutomatedSource && !looksLikeDisboardSource && hasBumpSuccessText)
