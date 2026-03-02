@@ -28,7 +28,7 @@ function getEndDateAt21Rome(now, giorniDaOggi = 30) {
     minute: "2-digit",
     hour12: false,
   });
-  return fmt.format(hour21CET) === "21:00" ? hour21CET : hour21CEST;
+  return fmt.format(hour21CET) === "alle 21:00" ? hour21CET : hour21CEST;
 }
 const EVENT_GLOBAL_MULTI = 3;
 const EVENT_ROLE_OVERRIDES = {
@@ -53,6 +53,8 @@ const EVENT_ANNOUNCEMENT_MESSAGES = [
     "<:VC_DoubleReply:1468713981152727120> <@&1468266342682722679> <a:VC_Arrow:1448672967721615452> __Votando ogni giorno su [Discadia](<https://discadia.com/vote/viniliecaffe/>) ricevete 1 livello__",
     "<:VC_DoubleReply:1468713981152727120> <@&1469758545263198442> / <@&1474357579143577610> / <@&1474361806956007425> <a:VC_Arrow:1448672967721615452> __Per ogni soglia di inviti fatti col vostro [custom link](<https://imgur.com/a/3wpDOVj>) raggiunta riceverete rispettivamente 5 livelli, 10 livelli e 25 livelli.__",
     "<:VC_Reply:1468262952934314131> <@&1471955147692179497> <a:VC_Arrow:1448672967721615452> __Mettendo una nostra <#1475223034057982184> riceverete 10 livelli__",
+  ].join("\n"),
+  [
     "",
     "<:VC_EXP:1468714279673925883> Inoltre ci sarà un __multi globale__ di **x3** per tutti. Alcuni ruoli avranno anche dei boost **maggiorati** per tutta la durata dell'evento:",
     "<:VC_DoubleReply:1468713981152727120> <@&1329497467481493607> <a:VC_Arrow:1448672967721615452> __`x3` invece di `x2`__",
