@@ -28,7 +28,7 @@ function getEndDateAt21Rome(now, giorniDaOggi = 30) {
     minute: "2-digit",
     hour12: false,
   });
-  return fmt.format(hour21CET) === "alle 21:00" ? hour21CET : hour21CEST;
+  return fmt.format(hour21CET) === "21:00" ? hour21CET : hour21CEST;
 }
 const EVENT_GLOBAL_MULTI = 3;
 const EVENT_ROLE_OVERRIDES = {
