@@ -74,6 +74,9 @@ function splitStartPath(bot) {
         bot.key === 'official' &&
         process.env.ENABLE_SHARDING === '1' &&
         fs.existsSync(path.join(workingDir, 'run-sharded.js'));
+    console.log(
+        `[Loader] ${bot.label} ENABLE_SHARDING=${String(process.env.ENABLE_SHARDING || '')} -> ${useSharded ? 'run-sharded.js' : 'index.js'}`
+    );
     return {
         workingDir,
         file: useSharded ? 'run-sharded.js' : 'index.js'
