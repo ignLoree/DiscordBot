@@ -69,7 +69,7 @@ const EVENT_ANNOUNCEMENT_MESSAGE = [
   "",
   "<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.",
   "",   
-  "<a:VC_Calendar:1448670320180592724> __La durata dell'evento è da `Oggi` al `01/04/2026` alle 21:00__",
+  "<a:VC_Calendar:1448670320180592724> __La durata dell'evento è dal `02/03/2026` al `01/04/2026` alle 21:00__",
   "<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>"
 ].join("\n");
 
@@ -94,7 +94,7 @@ function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
     "",
     "<:VC_Attention:1443933073438675016> **Alla fine dell'evento verranno comunicati lo staffer con più punti (candidato al pex) e quello con meno punti (candidato al depex); pex e depex saranno assegnati manualmente dallo staff.**",
     "",
-    `<a:VC_pixeltime:1470796283320209600> __La durata dell'evento è da \`Oggi\` al \`01/04/2026\` alle 21:00__`,
+    `<a:VC_pixeltime:1470796283320209600> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`,
     "",
     "<:VC_Mention:1443994358201323681>︲<@&1442568910070349985>",
   ].join("\n");
