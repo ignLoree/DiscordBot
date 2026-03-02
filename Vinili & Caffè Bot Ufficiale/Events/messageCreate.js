@@ -65,6 +65,30 @@ const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set(
 );
 
 const processedBumpMessages = new Map();
+const COUNTING_CACHE_TTL_MS = 60_000;
+const countingConfigCache = new Map();
+
+async function getCountingConfig(guildId) {
+  const key = String(guildId || "");
+  if (!key) return null;
+  const now = Date.now();
+  const cached = countingConfigCache.get(key);
+  if (cached?.value && now < Number(cached.expiresAt || 0)) {
+    return cached.value;
+  }
+  const doc = await countschema.findOne({ Guild: key }).catch(() => null);
+  countingConfigCache.set(key, {
+    value: doc || null,
+    expiresAt: now + COUNTING_CACHE_TTL_MS,
+  });
+  return doc || null;
+}
+
+function invalidateCountingConfig(guildId) {
+  const key = String(guildId || "");
+  if (!key) return;
+  countingConfigCache.delete(key);
+}
 
 function hasMediaPermission(member) {
   return MEDIA_BLOCK_ROLE_IDS.some((roleId) =>
@@ -137,6 +161,12 @@ function shouldSkipProcessedBump(key, ttlMs = 5 * 60 * 1000) {
     if (now - ts > ttlMs) processedBumpMessages.delete(k);
   }
   return false;
+}
+
+async function getCachedOrFetchMember(guild, userId) {
+  if (!guild || !userId) return null;
+  return guild.members.cache.get(userId) ||
+    (await guild.members.fetch(userId).catch(() => null));
 }
 
 function extractNameFromText(text) {
@@ -413,9 +443,7 @@ async function handleVoteManagerMessage(message, client) {
       }
     } catch { }
     try {
-      const targetMember =
-        message.guild.members.cache.get(user.id) ||
-        (await message.guild.members.fetch(user.id).catch(() => null));
+      const targetMember = await getCachedOrFetchMember(message.guild, user.id);
       const ignored = await shouldIgnoreExpForMember({
         guildId: message.guild.id,
         member: targetMember,
@@ -434,9 +462,7 @@ async function handleVoteManagerMessage(message, client) {
     try {
       const expiresAt = new Date(Date.now() + VOTE_ROLE_DURATION_MS);
       await upsertVoteRole(message.guild.id, user.id, expiresAt);
-      const member =
-        message.guild.members.cache.get(user.id) ||
-        (await message.guild.members.fetch(user.id).catch(() => null));
+      const member = await getCachedOrFetchMember(message.guild, user.id);
       if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
         await member.roles.add(VOTE_ROLE_ID).catch(() => { });
       }
@@ -1206,7 +1232,7 @@ async function handleAfk(message) {
   const guildId = message.guild?.id;
   if (!guildId) return;
   const userId = message.author.id;
-  const afkData = await AFK.findOne({ guildId, userId: userId });
+  const afkData = await AFK.findOne({ guildId, userId: userId }).lean();
   if (afkData) {
     const member = message.guild.members.cache.get(userId);
     if (member && afkData.originalName) {
@@ -1224,9 +1250,31 @@ async function handleAfk(message) {
     }
   }
   const mentionedUsers = message.mentions.users;
+  const mentionedIds = Array.from(
+    new Set(
+      mentionedUsers
+        .filter((user) => !user.bot)
+        .map((user) => String(user.id)),
+    ),
+  );
+  if (!mentionedIds.length) return;
+
+  const afkRows = await AFK.find({
+    guildId,
+    userId: { $in: mentionedIds },
+  })
+    .lean()
+    .catch(() => []);
+  const afkByUserId = new Map(
+    (Array.isArray(afkRows) ? afkRows : []).map((row) => [
+      String(row.userId),
+      row,
+    ]),
+  );
+
   for (const user of mentionedUsers.values()) {
     if (user.bot) continue;
-    const data = await AFK.findOne({ guildId, userId: user.id });
+    const data = afkByUserId.get(String(user.id));
     if (!data) continue;
     const now = Date.now();
     const diff = Math.floor((now - data.timestamp) / 1000);
@@ -1405,7 +1453,7 @@ async function handleMentionAutoReactions(message) {
   }
 }
 async function handleCounting(message, client) {
-  const countdata = await countschema.findOne({ Guild: message.guild.id });
+  const countdata = await getCountingConfig(message.guild.id);
   if (!countdata) return;
   const member = message.member;
   if (!member) return;
@@ -1475,6 +1523,7 @@ async function handleCounting(message, client) {
       .catch((err) => logEventError(client, "COUNTING", err));
   }
   await countdata.save();
+  invalidateCountingConfig(message.guild.id);
 }
 
 function logEventError(client, label, error) {

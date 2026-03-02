@@ -28,9 +28,6 @@ async function resolveReplyUser(message) {
 
 async function resolveRandomGuildUser(guild, excludedIds = []) {
   if (!guild) return null;
-  if (guild.members.cache.size < 2) {
-    await guild.members.fetch().catch(() => null);
-  }
   const excluded = new Set(excludedIds.filter(Boolean));
   const pool = guild.members.cache.filter(
     (m) => !m.user?.bot && !excluded.has(m.user.id),

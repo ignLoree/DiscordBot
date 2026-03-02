@@ -323,11 +323,27 @@ async function runWeeklyStaffResoconti(client) {
   const channel = await resolveChannel(client, channelId);
   if (!channel?.isTextBased?.()) return;
 
-  await guild.members.fetch().catch(() => null);
   const weekStart = getWeekStartDate(new Date());
+  const staffDocs = await StaffModel.find({ guildId }, { userId: 1, positiveCount: 1, negativeCount: 1, rolesHistory: 1, partnerActions: 1 })
+    .lean()
+    .catch(() => []);
+
+  const knownStaffUserIds = Array.from(
+    new Set(
+      (Array.isArray(staffDocs) ? staffDocs : [])
+        .map((row) => String(row?.userId || ""))
+        .filter(Boolean),
+    ),
+  );
+  if (!knownStaffUserIds.length) return;
+
+  const fetchedMembers = await Promise.all(
+    knownStaffUserIds.map((userId) => guild.members.fetch(userId).catch(() => null)),
+  );
 
   const candidateMembers = [];
-  for (const member of guild.members.cache.values()) {
+  for (const member of fetchedMembers) {
+    if (!member) continue;
     if (member.user?.bot) continue;
     if (member.roles.cache.has(String(IDs.roles.HighStaff))) continue;
 
@@ -338,11 +354,6 @@ async function runWeeklyStaffResoconti(client) {
     candidateMembers.push(member);
   }
   if (!candidateMembers.length) return;
-
-  const userIds = candidateMembers.map((member) => String(member.id));
-  const staffDocs = await StaffModel.find({ guildId, userId: { $in: userIds } })
-    .lean()
-    .catch(() => []);
 
   const staffMap = new Map(
     (Array.isArray(staffDocs) ? staffDocs : []).map((row) => [

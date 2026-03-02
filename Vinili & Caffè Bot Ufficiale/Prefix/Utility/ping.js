@@ -9,14 +9,27 @@ function formatUptime(uptime) {
   return `${days}d ${hours}h ${minutes}m`;
 }
 
+function getShardLabel(client) {
+  const shardIds = Array.isArray(client?.shard?.ids)
+    ? client.shard.ids
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id >= 0)
+    : [];
+  if (!shardIds.length) return "single";
+  const totalShards = Number(client?.shard?.count || 0);
+  const current = shardIds.join(", ");
+  return totalShards > 0 ? `${current}/${totalShards}` : current;
+}
+
 module.exports = {
   name: "ping",
   allowEmptyArgs: true,
   async execute(message) {
     await message.channel.sendTyping();
     try {
-      const ws = message.client.ws.ping;
-      const msgEdit = Date.now() - message.createdTimestamp;
+      const gatewayPing = Number(message.client.ws.ping || 0);
+      const commandRoundtrip = Date.now() - message.createdTimestamp;
+      const shardLabel = getShardLabel(message.client);
       const uptime = process.uptime();
       const uptimeString = formatUptime(uptime);
       const getDatabasePing = async () => {
@@ -29,7 +42,7 @@ module.exports = {
       const pingEmbed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setDescription(
-          `<a:VC_GreenDot:1454118116392042711> Il ping del bot è **\`${ws}ms\`**`,
+          `<a:VC_GreenDot:1454118116392042711> Ping: **\`${gatewayPing}ms\`**`,
         )
         .addFields(
           {
@@ -38,7 +51,7 @@ module.exports = {
             inline: true,
           },
           {
-            name: `<a:VC_Loading:1448687876018540695> **API:** \`${msgEdit}ms\``,
+            name: `<a:VC_Loading:1448687876018540695> **API:** \`${commandRoundtrip}ms\``,
             value: empty,
             inline: true,
           },
@@ -49,7 +62,7 @@ module.exports = {
             inline: true,
           },
           {
-            name: `<a:VC_Calendar:1448670320180592724> **Processo:** \`single\``,
+            name: `<a:VC_Calendar:1448670320180592724> **Shard:** \`${shardLabel}\``,
             value: empty,
             inline: true,
           },

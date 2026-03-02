@@ -108,7 +108,9 @@ async function handleDmBroadcastModal(interaction, client) {
 
   const staffRoleIds = getStaffRoleIds(client);
   const noDmSet = await getNoDmSet(interaction.guild.id);
-  await interaction.guild.members.fetch().catch(() => {});
+  if (!targetId) {
+    await interaction.guild.members.fetch().catch(() => {});
+  }
 
   const skippedNoDm = [];
   const targetIds = new Set();

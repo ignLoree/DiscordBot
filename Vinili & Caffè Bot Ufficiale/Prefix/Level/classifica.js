@@ -44,14 +44,18 @@ async function fetchMembers(guild, userIds) {
   const unique = Array.from(new Set(userIds));
   const out = new Map();
   if (!guild || unique.length === 0) return out;
+  const missingIds = [];
   for (const id of unique) {
     const cached = guild.members.cache.get(id);
-    if (cached) {
-      out.set(id, cached);
-      continue;
-    }
-    const fetched = await guild.members.fetch(id).catch(() => null);
-    if (fetched) out.set(id, fetched);
+    if (cached) out.set(id, cached);
+    else missingIds.push(id);
+  }
+  const fetchedMembers = await Promise.all(
+    missingIds.map((id) => guild.members.fetch(id).catch(() => null)),
+  );
+  for (let index = 0; index < missingIds.length; index += 1) {
+    const member = fetchedMembers[index];
+    if (member) out.set(missingIds[index], member);
   }
   return out;
 }
