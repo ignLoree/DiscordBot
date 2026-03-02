@@ -544,6 +544,12 @@
                 "info": [
                     "roles.Founder"
                 ],
+                "assegna-ruoli": [
+                    "roles.Founder"
+                ],
+                "reset-premi": [
+                    "roles.Founder"
+                ],
                 "classifica": [
                     "roles.Member"
                 ],

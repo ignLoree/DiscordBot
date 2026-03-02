@@ -114,31 +114,37 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
   const tier = options.tier != null ? Number(options.tier) : null;
   if (!Number.isFinite(levels) || levels <= 0) return null;
 
+  const rewardTypeStr = String(rewardType);
   const tierVal = tier != null ? tier : null;
-  const existing = await ActivityEventReward.findOne({
-    guildId,
-    userId,
-    rewardType: String(rewardType),
-    tier: tierVal,
-  }).lean();
-  if (existing) {
-    if (options.clientOrGuild) {
-      const client = options.clientOrGuild?.client ?? options.clientOrGuild;
-      const labelMap = {
-        supporter: "Ruolo Supporter",
-        verificato: "Ruolo Verificato/Verificata",
-        guilded: "Ruolo Guilded",
-        invite: "Inviti (soglia raggiunta)",
-        voter: "Voto Discadia",
-        recensione: "Recensione DISBOARD",
-      };
-      sendEventRewardSkippedLog(client, {
-        userId,
-        guildId,
-        label: labelMap[rewardType] || rewardType,
-      }).catch(() => {});
+  const labelMap = {
+    supporter: "Ruolo Supporter",
+    verificato: "Ruolo Verificato/Verificata",
+    guilded: "Ruolo Guilded",
+    invite: "Inviti (soglia raggiunta)",
+    voter: "Voto Discadia",
+    recensione: "Recensione DISBOARD",
+  };
+
+  try {
+    await ActivityEventReward.create({
+      guildId,
+      userId,
+      rewardType: rewardTypeStr,
+      tier: tierVal,
+    });
+  } catch (err) {
+    if (err?.code === 11000) {
+      if (options.clientOrGuild) {
+        const client = options.clientOrGuild?.client ?? options.clientOrGuild;
+        sendEventRewardSkippedLog(client, {
+          userId,
+          guildId,
+          label: labelMap[rewardType] || rewardType,
+        }).catch(() => {});
+      }
+      return null;
     }
-    return null;
+    throw err;
   }
 
   const result = await grantEventLevels(
@@ -149,25 +155,18 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     options.member,
     options.clientOrGuild ?? null,
   );
-  if (!result) return null;
-
-  await ActivityEventReward.create({
-    guildId,
-    userId,
-    rewardType: String(rewardType),
-    tier: tier != null ? tier : null,
-  }).catch(() => null);
+  if (!result) {
+    await ActivityEventReward.deleteOne({
+      guildId,
+      userId,
+      rewardType: rewardTypeStr,
+      tier: tierVal,
+    }).catch(() => {});
+    return null;
+  }
 
   if (options.clientOrGuild) {
     const client = options.clientOrGuild?.client ?? options.clientOrGuild;
-    const labelMap = {
-      supporter: "Ruolo Supporter",
-      verificato: "Ruolo Verificato/Verificata",
-      guilded: "Ruolo Guilded",
-      invite: "Inviti (soglia raggiunta)",
-      voter: "Voto Discadia",
-      recensione: "Recensione DISBOARD",
-    };
     const label = labelMap[rewardType] || rewardType;
     sendEventRewardLog(client, {
       userId,
@@ -286,6 +285,7 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
   }
 }
 
+/** Restituisce 1-4 = settimana evento (1 = primi 7 giorni dall'avvio, 4 = ultima). 0 = evento non attivo o fuori range. */
 function getEventWeekNumber(settings) {
   if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return 0;
   const now = Date.now();
@@ -293,9 +293,9 @@ function getEventWeekNumber(settings) {
   const end = new Date(settings.eventExpiresAt).getTime();
   if (now < start || now > end) return 0;
   const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const week = Math.floor((now - start) / weekMs);
-  if (week < 1) return 0;
-  return Math.min(4, week);
+  const weekIndex = Math.floor((now - start) / weekMs); // 0 = giorni 0-6, 1 = giorni 7-13, ...
+  if (weekIndex < 0) return 0;
+  return Math.min(4, weekIndex + 1); // settimana 1 = primi 7 giorni, 2 = secondi 7, ...
 }
 
 async function getTop10ExpDuringEvent(guildId, limit = 10) {
