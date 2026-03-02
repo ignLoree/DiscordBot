@@ -2,14 +2,14 @@ const { ChannelType, PermissionsBitField } = require("discord.js");
 const { VoteRole, VerificationTenure, } = require("../../Schemas/Community/communitySchemas");
 const SponsorMainLeave = require("../../Schemas/Tags/tagsSchema");
 const IDs = require("../../Utils/Config/ids");
-
 const VOTE_ROLE_ID = IDs.roles.Voter;
 const CHECK_INTERVAL_MS = 60 * 1000;
-
 const ROLE_STAGE_1 = IDs.roles.NuovoUtente;
 const ROLE_STAGE_2 = IDs.roles.Veterano;
 const ROLE_STAGE_3 = IDs.roles.OG;
-const VERIFIED_ROLE_ID = IDs.roles.Member || IDs.roles.Verificato;
+const VERIFIED_ROLE_IDS = [
+  IDs.roles.Member,
+].filter(Boolean);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SPONSOR_VERIFY_NICKNAME = ".gg/viniliecaffe";
 const STAGE_1_DAYS = 30;
@@ -91,9 +91,27 @@ async function applyTenureForMember(member, record) {
   if (!member || !record) return;
   const guildId = member.guild?.id;
   const sponsorVerifyRoleId = IDs.verificatoRoleIds?.[guildId];
+  const me =
+    member.guild?.members?.me ||
+    (await member.guild?.members?.fetchMe?.().catch(() => null));
+  const canManageRoles = Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles));
   if (sponsorVerifyRoleId) {
-    await member.roles.add(sponsorVerifyRoleId).catch(() => {});
-    await member.setNickname(SPONSOR_VERIFY_NICKNAME).catch(() => {});
+    const sponsorVerifyRole =
+      member.guild.roles.cache.get(sponsorVerifyRoleId) ||
+      (await member.guild.roles.fetch(sponsorVerifyRoleId).catch(() => null));
+    const canReachSponsorRole = Boolean(
+      sponsorVerifyRole && me && sponsorVerifyRole.position < me.roles.highest.position,
+    );
+    if (
+      canManageRoles &&
+      canReachSponsorRole &&
+      !member.roles.cache.has(sponsorVerifyRoleId)
+    ) {
+      await member.roles.add(sponsorVerifyRoleId).catch(() => {});
+    }
+    if (member.manageable && member.nickname !== SPONSOR_VERIFY_NICKNAME) {
+      await member.setNickname(SPONSOR_VERIFY_NICKNAME).catch(() => {});
+    }
     return;
   }
   const now = new Date();
@@ -110,8 +128,10 @@ async function applyTenureForMember(member, record) {
 
   if (now >= stage2At) {
     if (!has3 || has1 || has2) {
-      await member.roles.remove([ROLE_STAGE_1, ROLE_STAGE_2]).catch(() => {});
-      await member.roles.add(ROLE_STAGE_3).catch(() => {});
+      if (canManageRoles) {
+        await member.roles.remove([ROLE_STAGE_1, ROLE_STAGE_2].filter(Boolean)).catch(() => {});
+        if (ROLE_STAGE_3) await member.roles.add(ROLE_STAGE_3).catch(() => {});
+      }
     }
     if (record.stage !== 3) {
       await VerificationTenure.updateOne(
@@ -124,8 +144,10 @@ async function applyTenureForMember(member, record) {
 
   if (now >= stage1At) {
     if (!has2 || has1) {
-      await member.roles.remove([ROLE_STAGE_1]).catch(() => {});
-      await member.roles.add(ROLE_STAGE_2).catch(() => {});
+      if (canManageRoles) {
+        await member.roles.remove([ROLE_STAGE_1].filter(Boolean)).catch(() => {});
+        if (ROLE_STAGE_2) await member.roles.add(ROLE_STAGE_2).catch(() => {});
+      }
     }
     if (record.stage !== 2) {
       await VerificationTenure.updateOne(
@@ -137,7 +159,9 @@ async function applyTenureForMember(member, record) {
   }
 
   if (!has1) {
-    await member.roles.add(ROLE_STAGE_1).catch(() => {});
+    if (canManageRoles && ROLE_STAGE_1) {
+      await member.roles.add(ROLE_STAGE_1).catch(() => {});
+    }
   }
 }
 
@@ -175,14 +199,14 @@ function startVerificationTenureLoop(client) {
 async function backfillVerificationTenure(client) {
   const guilds = Array.from(client.guilds.cache.values());
   for (const guild of guilds) {
-    const verifiedRole =
-      guild.roles.cache.get(VERIFIED_ROLE_ID) ||
-      (await guild.roles.fetch(VERIFIED_ROLE_ID).catch(() => null));
-    if (!verifiedRole) continue;
+    const verifiedRoleIds = VERIFIED_ROLE_IDS.filter(Boolean);
+    if (!verifiedRoleIds.length) continue;
 
     await guild.members.fetch().catch(() => null);
     const verifiedMembers = guild.members.cache.filter(
-      (m) => !m.user?.bot && m.roles.cache.has(VERIFIED_ROLE_ID),
+      (m) =>
+        !m.user?.bot &&
+        verifiedRoleIds.some((roleId) => m.roles.cache.has(roleId)),
     );
 
     for (const member of verifiedMembers.values()) {

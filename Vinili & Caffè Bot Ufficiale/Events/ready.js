@@ -44,6 +44,12 @@ const STARTUP_PANELS_RETRY_MS = 15000;
 const ENGAGEMENT_INTERVAL_MS = 60 * 1000;
 const JOIN_RAID_RESTORE_INTERVAL_MS = 5 * 60 * 1000;
 
+function shouldRunVerificationTenureBackfill(client) {
+  const envValue = String(process.env.VERIFICATION_TENURE_BACKFILL_ON_STARTUP || "").trim().toLowerCase();
+  if (envValue) return ["1", "true", "yes", "on"].includes(envValue);
+  return Boolean(client?.config?.verificationTenureBackfillOnStartup);
+}
+
 function logError(client, ...args) {
   if (client?.logs?.error) {
     client.logs.error(...args);
@@ -226,7 +232,9 @@ async function runPrimaryHeavyTasks(client, engagementTick) {
       : Promise.resolve(),
     engagementTick(),
     restoreActiveGames(client),
-    backfillVerificationTenure(client),
+    shouldRunVerificationTenureBackfill(client)
+      ? backfillVerificationTenure(client)
+      : Promise.resolve(),
     renumberAllCategories(client),
     removeExpiredTemporaryRoles(client),
     runExpiredCustomRolesSweep(client),
