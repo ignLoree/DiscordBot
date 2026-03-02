@@ -97,17 +97,27 @@ async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
     .setFooter({ text: "Aggiornata in tempo reale • Cambia settimana con i pulsanti" })
     .setTimestamp();
 
-  const row = new ActionRowBuilder();
-  for (let w = 1; w <= MAX_WEEKS; w++) {
-    row.addComponents(
-      new ButtonBuilder()
-        .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)
-        .setLabel(`Sett. ${w}`)
-        .setStyle(w === week ? ButtonStyle.Primary : ButtonStyle.Secondary),
-    );
+  const currentEventWeek = settings ? getEventWeekNumber(settings) : 0;
+  const hasWeekButtons = currentEventWeek >= 2;
+  if (!hasWeekButtons) {
+    embed.setFooter({ text: "Aggiornata in tempo reale" });
+  }
+  const components = [];
+  if (hasWeekButtons) {
+    const row = new ActionRowBuilder();
+    const maxUnlocked = Math.min(currentEventWeek, MAX_WEEKS);
+    for (let w = 1; w <= maxUnlocked; w++) {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`${EVENTO_CLASSIFICA_PREFIX}${w}`)
+          .setLabel(`Sett. ${w}`)
+          .setStyle(w === week ? ButtonStyle.Primary : ButtonStyle.Secondary),
+      );
+    }
+    components.push(row);
   }
 
-  return { embeds: [embed], components: [row] };
+  return { embeds: [embed], components };
 }
 
 module.exports = {
