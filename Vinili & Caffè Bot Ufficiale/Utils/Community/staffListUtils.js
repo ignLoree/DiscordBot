@@ -130,12 +130,6 @@ async function fetchMembersForStaffList(guild) {
     await new Promise((resolve) => setTimeout(resolve, 350));
   }
 
-  if (all.size > 0) {
-    global.logger?.info?.(
-      `[STAFF LIST] Popolata staff list con fetch paginato (${all.size} membri).`,
-    );
-  }
-
   return all;
 }
 
@@ -158,12 +152,6 @@ async function refreshStaffList(
 
   const membersSource = await fetchMembersForStaffList(guild);
   const approxStaffCount = countStaffMembers(membersSource);
-  if (approxStaffCount === 0) {
-    global.logger?.warn?.(
-      "[STAFF LIST] Nessuno staff trovato nel fetch membri; evito di aggiornare la staff list per non svuotarla.",
-    );
-    return;
-  }
 
   const content = buildContent(guild, membersSource);
   const previousHash = state.contentHashByGuild.get(guildId);
