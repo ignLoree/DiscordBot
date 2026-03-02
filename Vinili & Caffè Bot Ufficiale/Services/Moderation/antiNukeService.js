@@ -3120,7 +3120,15 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.strictMemberRoleAddition) return;
   if (!guild || !targetMember || !Array.isArray(addedRoles) || !addedRoles.length) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
+  if (isUnknownExecutorId(actorId)) {
+    global.logger?.warn?.(
+      "[AntiNuke] Skipping dangerous member role rollback because audit executor is missing:",
+      guild.id,
+      targetMember.id,
+      addedRoles.map((role) => String(role?.id || "")).filter(Boolean),
+    );
+    return;
+  }
   const dangerousRoles = addedRoles.filter((role) =>
     containsDangerousBits(role?.permissions?.bitfield || 0n, DANGEROUS_PERMS),
   );

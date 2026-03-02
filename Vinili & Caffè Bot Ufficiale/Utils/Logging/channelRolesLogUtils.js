@@ -165,47 +165,56 @@ async function resolveResponsible(guild, actionType, matcher) {
     return { executor: null, reason: null, entry: null };
   }
 
-  const logs = await guild
-    .fetchAuditLogs({ type: actionType, limit: 20 })
-    .catch(() => null);
-  if (!logs?.entries?.size) {
-    return { executor: null, reason: null, entry: null };
-  }
-
-  const now = Date.now();
-  const candidates = [];
-  logs.entries.forEach((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    if (!created || now - created > 120 * 1000) return;
-
-    let score = 1;
-    if (typeof matcher === "function") {
-      const result = matcher(item);
-      if (!result) return;
-      if (typeof result === "number" && Number.isFinite(result)) {
-        score += result;
-      } else {
-        score += 3;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const logs = await guild
+      .fetchAuditLogs({ type: actionType, limit: 20 })
+      .catch(() => null);
+    if (!logs?.entries?.size) {
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
       }
+      continue;
     }
 
-    // Prefer newest entry when score ties.
-    score += Math.max(0, 120000 - (now - created)) / 120000;
-    candidates.push({ item, score, created });
-  });
+    const now = Date.now();
+    const candidates = [];
+    logs.entries.forEach((item) => {
+      const created = Number(item?.createdTimestamp || 0);
+      if (!created || now - created > 120 * 1000) return;
 
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.created - a.created;
-  });
+      let score = 1;
+      if (typeof matcher === "function") {
+        const result = matcher(item);
+        if (!result) return;
+        if (typeof result === "number" && Number.isFinite(result)) {
+          score += result;
+        } else {
+          score += 3;
+        }
+      }
 
-  const entry = candidates[0]?.item || null;
+      score += Math.max(0, 120000 - (now - created)) / 120000;
+      candidates.push({ item, score, created });
+    });
 
-  return {
-    executor: entry?.executor || null,
-    reason: entry?.reason || null,
-    entry,
-  };
+    candidates.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.created - a.created;
+    });
+
+    const entry = candidates[0]?.item || null;
+    if (entry || attempt === 2) {
+      return {
+        executor: entry?.executor || null,
+        reason: entry?.reason || null,
+        entry,
+      };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 700));
+  }
+
+  return { executor: null, reason: null, entry: null };
 }
 
 module.exports = {
