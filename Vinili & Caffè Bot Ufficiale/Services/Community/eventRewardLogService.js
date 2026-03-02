@@ -1,7 +1,5 @@
-"use strict";
-
 const { EmbedBuilder } = require("discord.js");
-
+const { sendDm } = require("../../Utils/noDmList");
 const EVENT_REWARD_LOG_CHANNEL_ID = "1477994178230095903";
 
 /**
@@ -53,7 +51,53 @@ async function sendEventRewardLog(client, data) {
   await channel.send({ embeds: [embed] }).catch(() => {});
 }
 
+/**
+ * Invia in DM all'utente un messaggio per il premio evento ricevuto.
+ * Non rispetta +dm-disable (bypassNoDm: true) perché sono comunicazioni importanti sui premi.
+ * @param {import("discord.js").Client} client
+ * @param {string} userId
+ * @param {string} guildId
+ * @param {Object} data - label, detail?, levels?, roleId?, week?
+ */
+async function sendEventRewardDm(client, userId, guildId, data) {
+  if (!client?.users || !userId || !guildId) return;
+  const user =
+    client.users.cache.get(userId) ||
+    (await client.users.fetch(userId).catch(() => null));
+  if (!user?.send) return;
+
+  const label = String(data?.label || "Premio evento");
+  const levels = data?.levels != null && Number.isFinite(Number(data.levels)) ? Number(data.levels) : null;
+  const roleId = data?.roleId ? String(data.roleId) : null;
+  const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
+
+  const eventName = "**Activity EXP Event**";
+  const lines = [
+    `<:VC_EXP:1468714279673925883> Per **${label}** nell'${eventName} ti è stato assegnato:`,
+    "",
+  ];
+  if (levels != null && levels > 0) {
+    lines.push(`📈 **+${levels} livelli** al tuo contatore EXP.`, "");
+  }
+  if (roleId) {
+    lines.push(`🎭 Ruolo <@&${roleId}>.`, "");
+  }
+  if (week != null) {
+    lines.push(`📅 Premio della **settimana ${week}** dell'evento.`, "");
+  }
+  lines.push("Grazie per aver partecipato! <a:VC_HeartsPink:1468685897389052008>");
+
+  const embed = new EmbedBuilder()
+    .setColor("#6f4e37")
+    .setTitle("Premio Activity EXP Event")
+    .setDescription(lines.join("\n"))
+    .setTimestamp();
+
+  await sendDm(user, { embeds: [embed] }, { guildId, bypassNoDm: true });
+}
+
 module.exports = {
   sendEventRewardLog,
+  sendEventRewardDm,
   EVENT_REWARD_LOG_CHANNEL_ID,
 };

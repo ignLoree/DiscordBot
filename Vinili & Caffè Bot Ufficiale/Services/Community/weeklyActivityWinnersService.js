@@ -4,7 +4,7 @@ const { ActivityUser, ActivityDaily, ExpUser, GlobalSettings, } = require("../..
 const { VOICE_EXP_PER_MINUTE, getGuildExpSettings } = require("./expService");
 const { getEventWeekNumber, grantEventLevels, addEventWeekWinner, getTop3ExpDuringEventExcludingStaff } = require("./activityEventRewardsService");
 const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("./staffEventService");
-const { sendEventRewardLog } = require("./eventRewardLogService");
+const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
 const { isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 const TIME_ZONE = "Europe/Rome";
@@ -585,6 +585,10 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             detail: "Premio settimanale evento: vincitore top testuale/vocale",
             week: 2,
           }).catch(() => {});
+          await sendEventRewardDm(client, userId, guild.id, {
+            label: "Top settimana 2 — colore gradiente a scelta",
+            week: 2,
+          }).catch(() => {});
         } else if (eventWeek === 3) {
           await addEventWeekWinner(guild.id, userId, 3);
           await sendEventRewardLog(client, {
@@ -592,6 +596,10 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             guildId: guild.id,
             label: "Top settimana 3 — ruolo custom e vocale privata",
             detail: "Premio settimanale evento: vincitore top testuale/vocale",
+            week: 3,
+          }).catch(() => {});
+          await sendEventRewardDm(client, userId, guild.id, {
+            label: "Top settimana 3 — ruolo custom e vocale privata permanente",
             week: 3,
           }).catch(() => {});
         } else if (eventWeek === 4 && VIP_ID && me?.permissions?.has("ManageRoles")) {
@@ -602,6 +610,11 @@ async function publishWeeklyActivityWinners(client, options = {}) {
             label: "Top settimana 4 — ruolo VIP permanente",
             roleId: VIP_ID,
             detail: "Premio settimanale evento: vincitore top testuale/vocale",
+            week: 4,
+          }).catch(() => {});
+          await sendEventRewardDm(client, userId, guild.id, {
+            label: "Top settimana 4 — ruolo VIP permanente",
+            roleId: VIP_ID,
             week: 4,
           }).catch(() => {});
         }

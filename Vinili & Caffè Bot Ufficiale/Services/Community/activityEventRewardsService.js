@@ -1,7 +1,7 @@
 const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
 const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
-const { sendEventRewardLog } = require("./eventRewardLogService");
+const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
 const TIME_ZONE_ROME = "Europe/Rome";
 
 function getRomeOffsetMs(utcDate) {
@@ -88,13 +88,15 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   });
   if (clientOrGuild) {
     const client = clientOrGuild?.client ?? clientOrGuild;
+    const label = note && note.length <= 100 ? note : `+${levels} livelli`;
     sendEventRewardLog(client, {
       userId,
       guildId,
-      label: note && note.length <= 100 ? note : `+${levels} livelli`,
+      label,
       detail: note && note.length > 100 ? note : undefined,
       levels,
     }).catch(() => {});
+    sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => {});
   }
   return result;
 }
@@ -144,13 +146,15 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
       voter: "Voto Discadia",
       recensione: "Recensione DISBOARD",
     };
+    const label = labelMap[rewardType] || rewardType;
     sendEventRewardLog(client, {
       userId,
       guildId,
-      label: labelMap[rewardType] || rewardType,
+      label,
       detail: `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
       levels,
     }).catch(() => {});
+    sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => {});
   }
   return result;
 }
