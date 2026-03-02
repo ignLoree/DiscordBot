@@ -25,10 +25,8 @@ module.exports = {
   name: "ping",
   allowEmptyArgs: true,
   async execute(message) {
-    await message.channel.sendTyping();
     try {
       const gatewayPing = Number(message.client.ws.ping || 0);
-      const commandRoundtrip = Date.now() - message.createdTimestamp;
       const shardLabel = getShardLabel(message.client);
       const uptime = process.uptime();
       const uptimeString = formatUptime(uptime);
@@ -51,7 +49,7 @@ module.exports = {
             inline: true,
           },
           {
-            name: `<a:VC_Loading:1448687876018540695> **API:** \`${commandRoundtrip}ms\``,
+            name: `<a:VC_Loading:1448687876018540695> **API:** \`...\``,
             value: empty,
             inline: true,
           },
@@ -68,10 +66,25 @@ module.exports = {
           },
           { name: empty, value: empty, inline: true },
         );
-      await safeMessageReply(message, {
+      const sent = await safeMessageReply(message, {
         embeds: [pingEmbed],
         allowedMentions: { repliedUser: false },
       });
+      if (sent?.editable) {
+        const commandRoundtrip = Math.max(
+          0,
+          Date.now() - Number(message.createdTimestamp || Date.now()),
+        );
+        const updatedEmbed = EmbedBuilder.from(pingEmbed).spliceFields(1, 1, {
+          name: `<a:VC_Loading:1448687876018540695> **API:** \`${commandRoundtrip}ms\``,
+          value: empty,
+          inline: true,
+        });
+        await sent.edit({
+          embeds: [updatedEmbed],
+          allowedMentions: { repliedUser: false },
+        }).catch(() => null);
+      }
     } catch (error) {
       global.logger.error(error);
     }
