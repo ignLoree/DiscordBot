@@ -632,6 +632,13 @@ function formatExecutorLine(executorId) {
   return `<:VC_right_arrow:1473441155055096081> **Executor:** <@${actorId}> \`${actorId}\``;
 }
 
+function formatAuditStatusLine(executorId) {
+  if (isUnknownExecutorId(executorId)) {
+    return `${ARROW} **Audit Status:** Missing audit entry from Discord`;
+  }
+  return `${ARROW} **Audit Status:** Audit entry resolved`;
+}
+
 function hasDangerousGuildPerms(member) {
   return hasAllPerms(member, [PermissionsBitField.Flags.Administrator]) ||
     DANGEROUS_PERMS.some((flag) => member?.permissions?.has?.(flag));
@@ -3127,6 +3134,19 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
       targetMember.id,
       addedRoles.map((role) => String(role?.id || "")).filter(Boolean),
     );
+    await sendAntiNukeLog(
+      guild,
+      "AntiNuke: Member Role Quarantine",
+      [
+        formatExecutorLine(actorId),
+        formatAuditStatusLine(actorId),
+        `<:VC_right_arrow:1473441155055096081> **Target:** ${targetMember.user} \`${targetMember.id}\``,
+        `<:VC_right_arrow:1473441155055096081> **Action:** Dangerous granted role(s) detected`,
+        `${ARROW} **Technical Reason:** Audit log entry not available in time, automatic rollback skipped to avoid false positives`,
+        `${ARROW} **Result:** No rollback performed`,
+      ],
+      "#FEE75C",
+    );
     return;
   }
   const dangerousRoles = addedRoles.filter((role) =>
@@ -3152,6 +3172,7 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
     "AntiNuke: Member Role Quarantine",
     [
       formatExecutorLine(actorId),
+      formatAuditStatusLine(actorId),
       `<:VC_right_arrow:1473441155055096081> **Target:** ${targetMember.user} \`${targetMember.id}\``,
       `<:VC_right_arrow:1473441155055096081> **Action:** Dangerous granted role(s) removed`,
       `<:VC_right_arrow:1473441155055096081> **Result:** ${quarantineOutcomeLabel(quarantine)}`,
