@@ -617,6 +617,37 @@ async function getLevelUpChannel(guild) {
   );
 }
 
+const EVENT_LEVEL_UP_DEBOUNCE_MS = 1800;
+const eventLevelUpPending = new Map();
+
+function scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, level) {
+  if (!guildId || !userId || !Number.isFinite(level) || level < 1) return;
+  const client = clientOrGuild?.client ?? clientOrGuild;
+  if (!client) return;
+  const key = `${String(guildId)}:${String(userId)}`;
+  const existing = eventLevelUpPending.get(key);
+  if (existing) {
+    clearTimeout(existing.timeoutId);
+  }
+  const timeoutId = setTimeout(async () => {
+    eventLevelUpPending.delete(key);
+    try {
+      const guild =
+        client.guilds.cache.get(guildId) ||
+        (await client.guilds.fetch(guildId).catch(() => null));
+      if (!guild) return;
+      const member =
+        guild.members.cache.get(userId) ||
+        (await guild.members.fetch(userId).catch(() => null));
+      if (!member) return;
+      await sendLevelUpMessage(guild, member, level);
+    } catch (err) {
+      global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err);
+    }
+  }, EVENT_LEVEL_UP_DEBOUNCE_MS);
+  eventLevelUpPending.set(key, { timeoutId, level, guildId, client });
+}
+
 async function sendLevelUpPayload(channel, member, payload) {
   if (!channel || !member || !payload) return;
   await channel
@@ -1077,4 +1108,5 @@ module.exports = {
   getCurrentWeekKey,
   ROLE_MULTIPLIERS,
   isEventStaffMember,
+  scheduleEventLevelUpMessage,
 };

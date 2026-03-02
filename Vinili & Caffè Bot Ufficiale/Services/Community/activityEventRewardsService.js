@@ -1,5 +1,5 @@
 const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
-const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember } = require("./expService");
+const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember, scheduleEventLevelUpMessage } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
 const { sendEventRewardLog, sendEventRewardSkippedLog, sendEventRewardDm } = require("./eventRewardLogService");
 const TIME_ZONE_ROME = "Europe/Rome";
@@ -98,6 +98,10 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
     }).catch(() => {});
     sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => {});
   }
+  if (result && clientOrGuild) {
+    const newLevel = getLevelInfo(result.afterExp).level;
+    if (newLevel >= 1) scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, newLevel);
+  }
   return result;
 }
 
@@ -143,7 +147,7 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     levels,
     `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
     options.member,
-    null,
+    options.clientOrGuild ?? null,
   );
   if (!result) return null;
 
@@ -197,13 +201,39 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   if (!guild?.id) return;
   const active = await isEventActive(guild.id);
   if (!active) return;
-  const fetched = await guild.members.fetch().catch(() => null);
-  const membersToIterate = fetched && typeof fetched.forEach === "function" ? fetched : guild.members.cache;
-  if (!fetched || fetched.size < 2) {
-    global.logger?.warn?.(
-      "[activityEventRewards] grantEventRewardsForExistingRoleMembers: fetch membri fallito o cache piccola. Abilita l'intent Guild Members per processare tutti gli utenti.",
-    );
+
+  let membersToIterate;
+  const full = await guild.members.fetch().catch(() => null);
+  if (full && full.size >= 2) {
+    membersToIterate = full;
+  } else {
+    // Fallback senza Server Members Intent: fetch a blocchi da 100 via REST
+    const all = new Map();
+    let after = null;
+    let chunk;
+    do {
+      chunk = await guild.members
+        .fetch({ limit: 100, after: after ?? undefined })
+        .catch(() => null);
+      if (!chunk || chunk.size === 0) break;
+      for (const [id, m] of chunk) all.set(id, m);
+      const last = chunk.last?.();
+      after = last?.id ?? null;
+      if (chunk.size < 100) break;
+      await new Promise((r) => setTimeout(r, 350));
+    } while (true);
+    membersToIterate = all.size > 0 ? all : guild.members.cache;
+    if (all.size === 0) {
+      global.logger?.warn?.(
+        "[activityEventRewards] grantEventRewardsForExistingRoleMembers: nessun membro ottenuto. Abilita Server Members Intent nel Developer Portal (Bot → Privileged Gateway Intents).",
+      );
+    } else {
+      global.logger?.info?.(
+        `[activityEventRewards] grantEventRewardsForExistingRoleMembers: usato fetch paginato (${all.size} membri). Per tutti i membri abilita Server Members Intent.`,
+      );
+    }
   }
+
   const supporterId = IDs.roles.Supporter;
   const verificatoId = IDs.roles.Verificato;
   const verificataId = IDs.roles.Verificata;

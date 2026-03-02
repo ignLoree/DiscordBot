@@ -77,8 +77,8 @@ module.exports = {
         .setDescription(
           [
             "`+level set <@utente|id> <exp|level> <valore>`",
-            "`+level add <@utente|id> <exp>`",
-            "`+level remove <@utente|id> <exp>`",
+            "`+level add <@utente|id> <livelli>`",
+            "`+level remove <@utente|id> <livelli>`",
             "`+level reset <@utente|id>`",
             "`+level lock <#canale|id>`",
             "`+level unlock <#canale|id>`",
@@ -274,23 +274,24 @@ module.exports = {
       if (!Number.isFinite(delta) || delta <= 0) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level add <@utente|id> <exp>`",
+            "<:vegax:1443934876440068179> Usa: `+level add <@utente|id> <livelli>`",
           allowedMentions: { repliedUser: false },
         });
         return;
       }
-      afterExp = beforeExp + delta;
+      afterExp = getTotalExpForLevel(beforeLevel + delta);
     } else if (sub === "remove") {
       const delta = asInt(args[2]);
       if (!Number.isFinite(delta) || delta <= 0) {
         await safeMessageReply(message, {
           content:
-            "<:vegax:1443934876440068179> Usa: `+level remove <@utente|id> <exp>`",
+            "<:vegax:1443934876440068179> Usa: `+level remove <@utente|id> <livelli>`",
           allowedMentions: { repliedUser: false },
         });
         return;
       }
-      afterExp = Math.max(0, beforeExp - delta);
+      const afterLevel = Math.max(0, beforeLevel - delta);
+      afterExp = getTotalExpForLevel(afterLevel);
     } else if (sub === "reset") {
       afterExp = 0;
     } else {
@@ -315,17 +316,16 @@ module.exports = {
       note: `Comando +level ${sub}`,
     });
 
+    const lines = [
+      `- Utente: <@${target.id}>`,
+      `- Azione: **${sub}**`,
+      `- Livello: **${beforeLevel} -> ${doc.level}**`,
+      `- EXP: **${beforeExp} -> ${doc.totalExp}**`,
+    ];
     const embed = new EmbedBuilder()
       .setColor("#6f4e37")
       .setTitle("Aggiornamento Level")
-      .setDescription(
-        [
-          `- Utente: <@${target.id}>`,
-          `- Azione: **${sub}**`,
-          `- Livello: **${beforeLevel} -> ${doc.level}**`,
-          `- EXP: **${beforeExp} -> ${doc.totalExp}**`,
-        ].join("\n"),
-      );
+      .setDescription(lines.join("\n"));
     await safeMessageReply(message, {
       embeds: [embed],
       allowedMentions: { repliedUser: false },
