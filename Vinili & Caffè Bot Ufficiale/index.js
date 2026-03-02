@@ -14,7 +14,7 @@ const {
   loadEnvFiles,
 } = require("../shared/runtime/fsRuntime");
 
-loadEnvFiles();
+loadEnvFiles(APP_ROOT);
 global.logger = require("./Utils/Moderation/logger");
 if (process.env.RUN_UNDER_LOADER !== "1") {
   acquireSingleInstanceLock("vinili-caffe-official-bot");

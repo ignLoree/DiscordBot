@@ -3,11 +3,15 @@ const os = require("os");
 const path = require("path");
 const dotenv = require("dotenv");
 
-function loadEnvFiles(appRoot) {
+function loadEnvFiles(appRoot = process.cwd()) {
+  const safeAppRoot =
+    typeof appRoot === "string" && appRoot.trim().length > 0
+      ? appRoot
+      : process.cwd();
   const envCandidates = [
-    path.join(appRoot, "..", ".env"),
+    path.join(safeAppRoot, "..", ".env"),
     path.join(process.cwd(), ".env"),
-    path.join(appRoot, ".env"),
+    path.join(safeAppRoot, ".env"),
   ];
 
   for (const envPath of envCandidates) {
