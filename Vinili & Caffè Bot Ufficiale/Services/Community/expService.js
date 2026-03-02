@@ -1064,6 +1064,7 @@ module.exports = {
   setStaffEvent,
   getStaffEventSettings,
   getGuildExpSettings,
+  invalidateSettingsCache,
   setLevelChannelLocked,
   setRoleIgnored,
   shouldIgnoreExpForMember,

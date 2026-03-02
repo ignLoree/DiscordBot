@@ -52,6 +52,30 @@ async function sendEventRewardLog(client, data) {
 }
 
 /**
+ * Log nel canale premi evento: utente saltato perché aveva già ricevuto questo premio per l'evento.
+ */
+async function sendEventRewardSkippedLog(client, data) {
+  if (!client?.channels) return;
+  const channel =
+    client.channels.cache.get(EVENT_REWARD_LOG_CHANNEL_ID) ||
+    (await client.channels.fetch(EVENT_REWARD_LOG_CHANNEL_ID).catch(() => null));
+  if (!channel) return;
+
+  const userId = String(data?.userId || "");
+  const label = String(data?.label || "Premio evento");
+
+  const embed = new EmbedBuilder()
+    .setColor("#99aab5")
+    .setTitle("⏭ Premio già assegnato (skip)")
+    .setDescription(`**Utente:** <@${userId}>`)
+    .addFields({ name: "Tipo", value: label, inline: true })
+    .addFields({ name: "Motivo", value: "Già ricevuto per questo evento", inline: true })
+    .setTimestamp();
+
+  await channel.send({ embeds: [embed] }).catch(() => {});
+}
+
+/**
  * Invia in DM all'utente un messaggio per il premio evento ricevuto.
  * Non rispetta +dm-disable (bypassNoDm: true) perché sono comunicazioni importanti sui premi.
  * @param {import("discord.js").Client} client
@@ -98,6 +122,7 @@ async function sendEventRewardDm(client, userId, guildId, data) {
 
 module.exports = {
   sendEventRewardLog,
+  sendEventRewardSkippedLog,
   sendEventRewardDm,
   EVENT_REWARD_LOG_CHANNEL_ID,
 };

@@ -1,6 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent, clearStaffEvent, getStaffEventSettings } = require("../../Services/Community/expService");
+const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent, clearStaffEvent, getStaffEventSettings, invalidateSettingsCache } = require("../../Services/Community/expService");
 const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote } = require("../../Services/Community/activityEventRewardsService");
 const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEventPoints, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("../../Services/Community/staffEventService");
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
@@ -150,7 +150,7 @@ module.exports = {
     const guildId = message.guild?.id;
     if (!guildId) return;
 
-    if (!sub || !["start", "stop", "info", "classifica", "staff"].includes(sub)) {
+    if (!sub || !["start", "stop", "info", "assegna-ruoli", "classifica", "staff"].includes(sub)) {
       const usage = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Comando evento")
@@ -159,6 +159,7 @@ module.exports = {
             "`+evento start` – Avvia l’evento Activity EXP.",
             "`+evento stop` – Termina l’evento e ripristina i moltiplicatori.",
             "`+evento info` – Mostra stato e configurazione evento.",
+            "`+evento assegna-ruoli` – Assegna i livelli a chi ha già Supporter/Verificato/Guilded (evento attivo).",
             "`+evento classifica` – Classifica per settimana.",
             "`+evento classifica staff` – Classifica punti evento staff.",
             "`+evento staff start|stop|addpoints` – Gestione evento staff.",
@@ -168,6 +169,29 @@ module.exports = {
         embeds: [usage],
         allowedMentions: { repliedUser: false },
       });
+      return;
+    }
+
+    if (sub === "assegna-ruoli") {
+      const settings = await getGuildExpSettings(guildId);
+      if (!settings?.eventExpiresAt) {
+        await safeMessageReply(message, {
+          content: "<:vegax:1443934876440068179> Nessun evento attivo. Usa `+evento start` prima.",
+          allowedMentions: { repliedUser: false },
+        });
+        return;
+      }
+      await safeMessageReply(message, {
+        content: "<:VC_EXP:1468714279673925883> Assegnazione livelli a chi ha già i ruoli in corso...",
+        allowedMentions: { repliedUser: false },
+      }).catch(() => {});
+      invalidateSettingsCache(guildId);
+      await grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
+        global.logger?.error?.("[evento assegna-ruoli] grantEventRewardsForExistingRoleMembers failed:", err);
+      });
+      await message.channel.send({
+        content: "<:vegacheckmark:1443666279058772028> Fatto. Assegnati i livelli a chi ha già Supporter, Verificato/Verificata o Guilded (solo chi non li aveva già ricevuti per questo evento).",
+      }).catch(() => {});
       return;
     }
 
@@ -393,14 +417,16 @@ module.exports = {
         return;
       }
       const nowForStart = new Date();
-      setImmediate(() => {
-        grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
+      const guildForRewards = message.guild;
+      setTimeout(() => {
+        invalidateSettingsCache(guildId);
+        grantEventRewardsForExistingRoleMembers(guildForRewards).catch((err) => {
           global.logger?.error?.("[evento start] grantEventRewardsForExistingRoleMembers failed:", err);
         });
-        grantEventRewardsForSameDayReviewAndVote(message.guild, nowForStart).catch((err) => {
+        grantEventRewardsForSameDayReviewAndVote(guildForRewards, nowForStart).catch((err) => {
           global.logger?.error?.("[evento start] grantEventRewardsForSameDayReviewAndVote failed:", err);
         });
-      });
+      }, 800);
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")
         .setTitle("Evento Activity EXP avviato")

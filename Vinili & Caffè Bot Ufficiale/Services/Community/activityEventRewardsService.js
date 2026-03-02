@@ -1,7 +1,7 @@
 const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
 const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
-const { sendEventRewardLog, sendEventRewardDm } = require("./eventRewardLogService");
+const { sendEventRewardLog, sendEventRewardSkippedLog, sendEventRewardDm } = require("./eventRewardLogService");
 const TIME_ZONE_ROME = "Europe/Rome";
 
 function getRomeOffsetMs(utcDate) {
@@ -117,7 +117,25 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     rewardType: String(rewardType),
     tier: tierVal,
   }).lean();
-  if (existing) return null;
+  if (existing) {
+    if (options.clientOrGuild) {
+      const client = options.clientOrGuild?.client ?? options.clientOrGuild;
+      const labelMap = {
+        supporter: "Ruolo Supporter",
+        verificato: "Ruolo Verificato/Verificata",
+        guilded: "Ruolo Guilded",
+        invite: "Inviti (soglia raggiunta)",
+        voter: "Voto Discadia",
+        recensione: "Recensione DISBOARD",
+      };
+      sendEventRewardSkippedLog(client, {
+        userId,
+        guildId,
+        label: labelMap[rewardType] || rewardType,
+      }).catch(() => {});
+    }
+    return null;
+  }
 
   const result = await grantEventLevels(
     guildId,

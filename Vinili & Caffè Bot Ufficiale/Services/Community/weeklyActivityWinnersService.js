@@ -505,6 +505,16 @@ async function publishWeeklyActivityWinners(client, options = {}) {
   const currentWeekKey =
     options.weekKey != null ? options.weekKey : getWeekKey(now);
 
+  const settings = await getGuildExpSettings(guild.id).catch(() => null);
+  const eventWeek = settings ? getEventWeekNumber(settings) : 0;
+  let eventTopMessages = [];
+  let eventTopVoice = [];
+  if (eventWeek >= 1 && eventWeek <= 4) {
+    const eventTop = await getEventWeekTopThreeTextAndVoice(guild, eventWeek);
+    eventTopMessages = eventTop.topMessages || [];
+    eventTopVoice = eventTop.topVoice || [];
+  }
+
   const weeklyRows = await loadWeeklyRowsFromDaily(guild, currentWeekKey);
 
   const messageDocs = weeklyRows
@@ -530,29 +540,30 @@ async function publishWeeklyActivityWinners(client, options = {}) {
     (doc) => Number(doc?.voiceExp || 0),
   );
 
-  const messageRows = topMessages.length
-    ? topMessages.map((item, index) =>
+  const useEventTop = eventWeek >= 1 && eventWeek <= 4;
+  const displayTopMessages = useEventTop
+    ? eventTopMessages.map((item) => ({ userId: item.userId, value: Number(item.messageCount || 0) }))
+    : topMessages;
+  const displayTopVoice = useEventTop
+    ? eventTopVoice.map((item) => ({
+        userId: item.userId,
+        value: Math.floor((Math.max(0, Number(item.voiceSeconds || 0)) / 60) * VOICE_EXP_PER_MINUTE),
+      }))
+    : topVoice;
+
+  const messageRows = displayTopMessages.length
+    ? displayTopMessages.map((item, index) =>
         formatRankLine(index, `<@${item.userId}>`, item.value, "messaggi"),
       )
     : [buildEmptyLine("messaggi")];
 
-  const voiceRows = topVoice.length
-    ? topVoice.map((item, index) =>
+  const voiceRows = displayTopVoice.length
+    ? displayTopVoice.map((item, index) =>
         formatRankLine(index, `<@${item.userId}>`, item.value, "exp"),
       )
     : [buildEmptyLine("exp vocale")];
 
-  const awarded = await updateWeeklyWinnerRoles(guild, topMessages, topVoice);
-
-  const settings = await getGuildExpSettings(guild.id).catch(() => null);
-  const eventWeek = settings ? getEventWeekNumber(settings) : 0;
-  let eventTopMessages = [];
-  let eventTopVoice = [];
-  if (eventWeek >= 1 && eventWeek <= 4) {
-    const eventTop = await getEventWeekTopThreeTextAndVoice(guild, eventWeek);
-    eventTopMessages = eventTop.topMessages || [];
-    eventTopVoice = eventTop.topVoice || [];
-  }
+  const awarded = await updateWeeklyWinnerRoles(guild, displayTopMessages, displayTopVoice);
   const topSixUserIds = new Set();
   for (const item of eventTopMessages) {
     if (item?.userId) topSixUserIds.add(item.userId);
