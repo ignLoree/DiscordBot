@@ -2,6 +2,7 @@ const child_process = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
 
 const baseDir = __dirname;
 
