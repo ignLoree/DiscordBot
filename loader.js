@@ -70,12 +70,14 @@ function resolveBotWorkingDir(bot) {
 
 function splitStartPath(bot) {
     const workingDir = resolveBotWorkingDir(bot);
+    const shardingFlag = String(process.env.ENABLE_SHARDING || process.env.SHARDING || '').trim().toLowerCase();
     const useSharded =
         bot.key === 'official' &&
-        process.env.ENABLE_SHARDING === '1' &&
+        shardingFlag !== '0' &&
+        shardingFlag !== 'false' &&
         fs.existsSync(path.join(workingDir, 'run-sharded.js'));
     console.log(
-        `[Loader] ${bot.label} ENABLE_SHARDING=${String(process.env.ENABLE_SHARDING || '')} -> ${useSharded ? 'run-sharded.js' : 'index.js'}`
+        `[Loader] ${bot.label} ENABLE_SHARDING=${String(process.env.ENABLE_SHARDING || process.env.SHARDING || '')} -> ${useSharded ? 'run-sharded.js' : 'index.js'}`
     );
     return {
         workingDir,
