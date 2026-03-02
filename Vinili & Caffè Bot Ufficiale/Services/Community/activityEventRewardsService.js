@@ -1,6 +1,7 @@
 const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
 const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
+const { sendEventRewardLog } = require("./eventRewardLogService");
 const TIME_ZONE_ROME = "Europe/Rome";
 
 function getRomeOffsetMs(utcDate) {
@@ -56,7 +57,7 @@ async function isEventActive(guildId) {
   return Boolean(settings?.eventExpiresAt);
 }
 
-async function grantEventLevels(guildId, userId, levels, note = null, member = null) {
+async function grantEventLevels(guildId, userId, levels, note = null, member = null, clientOrGuild = null) {
   if (!guildId || !userId || !Number.isFinite(levels) || levels <= 0)
     return null;
   const active = await isEventActive(guildId);
@@ -85,6 +86,16 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
     afterExp: result.afterExp,
     note: note || `Evento: +${levels} livelli`,
   });
+  if (clientOrGuild) {
+    const client = clientOrGuild?.client ?? clientOrGuild;
+    sendEventRewardLog(client, {
+      userId,
+      guildId,
+      label: note && note.length <= 100 ? note : `+${levels} livelli`,
+      detail: note && note.length > 100 ? note : undefined,
+      levels,
+    }).catch(() => {});
+  }
   return result;
 }
 
@@ -112,6 +123,7 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     levels,
     `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
     options.member,
+    null,
   );
   if (!result) return null;
 
@@ -122,6 +134,24 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     tier: tier != null ? tier : null,
   }).catch(() => null);
 
+  if (options.clientOrGuild) {
+    const client = options.clientOrGuild?.client ?? options.clientOrGuild;
+    const labelMap = {
+      supporter: "Ruolo Supporter",
+      verificato: "Ruolo Verificato/Verificata",
+      guilded: "Ruolo Guilded",
+      invite: "Inviti (soglia raggiunta)",
+      voter: "Voto Discadia",
+      recensione: "Recensione DISBOARD",
+    };
+    sendEventRewardLog(client, {
+      userId,
+      guildId,
+      label: labelMap[rewardType] || rewardType,
+      detail: `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
+      levels,
+    }).catch(() => {});
+  }
   return result;
 }
 
@@ -153,16 +183,16 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   for (const [, member] of guild.members.cache) {
     if (!member?.user?.id) continue;
     if (supporterId && member.roles.cache.has(supporterId)) {
-      await grantEventRewardOnce(guild.id, member.id, "supporter", { levels: 5, member }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "supporter", { levels: 5, member, clientOrGuild: guild }).catch(() => null);
     }
     if (
       (verificatoId && member.roles.cache.has(verificatoId)) ||
       (verificataId && member.roles.cache.has(verificataId))
     ) {
-      await grantEventRewardOnce(guild.id, member.id, "verificato", { levels: 5, member }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "verificato", { levels: 5, member, clientOrGuild: guild }).catch(() => null);
     }
     if (guildedId && member.roles.cache.has(guildedId)) {
-      await grantEventRewardOnce(guild.id, member.id, "guilded", { levels: 10, member }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "guilded", { levels: 10, member, clientOrGuild: guild }).catch(() => null);
     }
   }
 }
@@ -192,6 +222,7 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
       1,
       "Evento: voto Discadia (giorno avvio)",
       member || undefined,
+      guild,
     ).catch(() => null);
   }
 }

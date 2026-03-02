@@ -114,6 +114,7 @@ async function addRoleIfPossible(member) {
     grantEventRewardOnce(member.guild.id, member.id, "supporter", {
       levels: 5,
       member,
+      clientOrGuild: member.guild,
     }).catch(() => {});
   });
   return true;

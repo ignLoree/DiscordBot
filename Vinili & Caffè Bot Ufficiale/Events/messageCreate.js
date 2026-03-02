@@ -440,7 +440,7 @@ async function handleVoteManagerMessage(message, client) {
       if (member && !member.roles.cache.has(VOTE_ROLE_ID)) {
         await member.roles.add(VOTE_ROLE_ID).catch(() => { });
       }
-      grantEventLevels(message.guild.id, user.id, 1, "Evento: voto Discadia", member || undefined).catch(() => {});
+      grantEventLevels(message.guild.id, user.id, 1, "Evento: voto Discadia", member || undefined, message.client).catch(() => {});
     } catch { }
   }
   const DIVIDER_URL =

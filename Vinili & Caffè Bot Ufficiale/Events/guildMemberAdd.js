@@ -1151,6 +1151,7 @@ async function maybeSendInviteReward(member, info) {
         levels,
         tier,
         member: inviterMember,
+        clientOrGuild: member.guild,
       }).catch(() => {});
     }
   }

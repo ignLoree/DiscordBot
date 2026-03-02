@@ -73,13 +73,16 @@ const EVENT_ANNOUNCEMENT_MESSAGES = [
       "",
       "<a:VC_Boost:1448670271115497617> Alla fine dell'evento verrà stilata una classifica globale in base all'**EXP** (__non ai livelli__) ottenuta durante la durata dell'evento e i primi 3 otterranno un **__NITRO BOOST__**.",
       "",
+      "> **NB: Tutti i premi vengono assegnati automaticamente dal bot, anche quelli settimanali (naturalmente non i Nitro Boost), aprite un <#1442569095068254219> solo se siete sicuri di non aver ricevuto la vostra ricompensa. Tutti i ticket inutili verranno sanzionati.**",
+      "",
       `<a:VC_Calendar:1448670320180592724> __La durata dell'evento è dal \`${startDateStr}\` al \`${endDateStr}\`__`,
+      "",
       "<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>",
     ].join("\n"),
 ];
 
-function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
-  return [
+function buildStaffEventAnnouncementMessages(startDateStr, endDateStr) {
+  const part1 = [
     "## <a:VC_Announce:1448687280381235443>  **EVENTO STAFF**",
     "",
     "> <a:VC_Cross:1448671102355116052> __Lo <@&1442568910070349985> non può partecipare all'activity event__",
@@ -96,6 +99,8 @@ function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
     "<:VC_Reply:1468262952934314131> **Ogni utente che compra il <@&1442568950805430312> o il <@&1442568916114346096> grazie a voi** <a:VC_Arrow:1448672967721615452> __50 punti__",
     "> <a:VC_Alert:1448670089670037675> __NB: L'utente che si candiderà dovrà essere pexato al fine del conteggio dei punti. Per le prove dovrete aprire un <#1442569095068254219> `terza categoria`.__",
     "> <:VC_BlackPin:1448687216871084266> __L'<@&1442568894349840435> è escluso dall'evento__",
+  ].join("\n");
+  const part2 = [
     "",
     "<:VC_Attention:1443933073438675016> **Alla fine dell'evento verranno comunicati lo staffer con più punti (candidato al pex) e quello con meno punti (candidato al depex); pex e depex saranno assegnati manualmente dallo staff.**",
     "",
@@ -103,6 +108,7 @@ function buildStaffEventAnnouncementMessage(startDateStr, endDateStr) {
     "",
     "<:VC_Mention:1443994358201323681>︲<@&1442568910070349985>",
   ].join("\n");
+  return [part1, part2];
 }
 
 function fmtDate(dateValue) {
@@ -261,16 +267,18 @@ module.exports = {
             message.client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) ||
             (await message.client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null));
           if (newsStaffChannel) {
-            const staffMessage = buildStaffEventAnnouncementMessage(
+            const staffMessages = buildStaffEventAnnouncementMessages(
               fmtDate(now),
               fmtDateWithTime(endDate.getTime()),
             );
-            await newsStaffChannel.send({
-              content: staffMessage,
-              allowedMentions: { parse: ["roles"] },
-            }).catch((err) => {
-              global.logger?.error?.("[evento staff start] Annuncio #newsstaff fallito:", err);
-            });
+            for (const content of staffMessages) {
+              await newsStaffChannel.send({
+                content,
+                allowedMentions: { parse: ["roles"] },
+              }).catch((err) => {
+                global.logger?.error?.("[evento staff start] Annuncio #newsstaff fallito:", err);
+              });
+            }
           }
         }
         return;

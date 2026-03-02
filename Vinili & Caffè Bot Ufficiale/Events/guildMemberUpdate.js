@@ -306,9 +306,9 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
     for (const role of additions) {
       const rid = role?.id;
       if (rid === IDs.roles.Verificato || rid === IDs.roles.Verificata) {
-        grantEventRewardOnce(guildId, userId, "verificato", { levels: 5, member: newMember }).catch(() => {});
+        grantEventRewardOnce(guildId, userId, "verificato", { levels: 5, member: newMember, clientOrGuild: newMember.guild }).catch(() => {});
       } else if (rid === IDs.roles.Guilded) {
-        grantEventRewardOnce(guildId, userId, "guilded", { levels: 10, member: newMember }).catch(() => {});
+        grantEventRewardOnce(guildId, userId, "guilded", { levels: 10, member: newMember, clientOrGuild: newMember.guild }).catch(() => {});
       }
     }
   }
