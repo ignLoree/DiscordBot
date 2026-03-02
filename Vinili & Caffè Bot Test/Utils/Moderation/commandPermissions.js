@@ -334,11 +334,12 @@ async function checkSlashPermission(interaction) {
   const userId = interaction?.user?.id || null;
   if (!guildId) return false;
 
-  if (isOfficialMainGuild(guildId)) return false;
-
   if (!isTestMainScopeGuild(guildId)) return false;
 
-  if (String(guildId) === String(TEST_MAIN_GUILD_ID || "")) {
+  if (
+    String(guildId) === String(TEST_MAIN_GUILD_ID || "") ||
+    isOfficialMainGuild(guildId)
+  ) {
     return hasAdminPermissionWithFallback(interaction);
   }
 
@@ -369,11 +370,12 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   const userId = message?.author?.id || null;
   if (!guildId) return false;
 
-  if (isOfficialMainGuild(guildId)) return false;
-
   if (!isTestMainScopeGuild(guildId)) return false;
 
-  if (String(guildId) === String(TEST_MAIN_GUILD_ID || "")) {
+  if (
+    String(guildId) === String(TEST_MAIN_GUILD_ID || "") ||
+    isOfficialMainGuild(guildId)
+  ) {
     return hasAdminPermissionWithFallback(message);
   }
 

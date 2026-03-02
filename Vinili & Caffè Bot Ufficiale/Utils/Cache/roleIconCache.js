@@ -78,7 +78,15 @@ function cleanOldIcons(maxAgeMs = 30 * 24 * 60 * 60 * 1000) {
   }
 }
 
-setInterval(() => cleanOldIcons(), 24 * 60 * 60 * 1000);
+if (!global.__vcRoleIconCacheCleanupInterval) {
+  global.__vcRoleIconCacheCleanupInterval = setInterval(
+    () => cleanOldIcons(),
+    24 * 60 * 60 * 1000,
+  );
+  if (typeof global.__vcRoleIconCacheCleanupInterval.unref === "function") {
+    global.__vcRoleIconCacheCleanupInterval.unref();
+  }
+}
 
 module.exports = {
   cacheRoleIcon,

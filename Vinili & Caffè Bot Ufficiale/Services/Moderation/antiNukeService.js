@@ -639,6 +639,21 @@ function formatAuditStatusLine(executorId) {
   return `${ARROW} **Audit Status:** Audit entry resolved`;
 }
 
+async function logAuditMissingSkip(guild, title, lines = []) {
+  await sendAntiNukeLog(
+    guild,
+    title,
+    [
+      formatExecutorLine(UNKNOWN_EXECUTOR_ID),
+      formatAuditStatusLine(UNKNOWN_EXECUTOR_ID),
+      ...lines,
+      `${ARROW} **Technical Reason:** Audit log entry not available in time, automatic enforcement skipped`,
+      `${ARROW} **Result:** No enforcement performed`,
+    ].filter(Boolean),
+    "#FEE75C",
+  );
+}
+
 function hasDangerousGuildPerms(member) {
   return hasAllPerms(member, [PermissionsBitField.Flags.Administrator]) ||
     DANGEROUS_PERMS.some((flag) => member?.permissions?.has?.(flag));
@@ -3091,13 +3106,19 @@ async function handleRoleUpdate({ oldRole, newRole, executorId }) {
   const monitoredRoleIds = getMainRoleIds(guild);
   if (!monitoredRoleIds.has(String(newRole?.id || oldRole?.id || ""))) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   const addedDanger = dangerousAddedBits(
     oldRole?.permissions?.bitfield || 0n,
     newRole?.permissions?.bitfield || 0n,
     DANGEROUS_PERMS,
   );
   if (!addedDanger.length) return;
+  if (isUnknownExecutorId(actorId)) {
+    await logAuditMissingSkip(guild, "AntiNuke: Role Quarantine", [
+      `<:VC_right_arrow:1473441155055096081> **Role:** ${newRole} \`${newRole.id}\``,
+      `<:VC_right_arrow:1473441155055096081> **Action:** Dangerous permissions detected`,
+    ]);
+    return;
+  }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Dangerous role permission update", 100);
 
@@ -3191,7 +3212,6 @@ async function handleChannelOverwrite({
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.autoQuarantine.monitorChannelPermissions) return;
   if (!guild || !channel || !overwrite) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   if (Number(overwrite.type) !== OverwriteType.Role) return;
 
   const mainRoleIds = getMainRoleIds(guild);
@@ -3199,6 +3219,14 @@ async function handleChannelOverwrite({
 
   const addedDanger = dangerousAddedBits(beforeAllow, afterAllow, DANGEROUS_CHANNEL_PERMS);
   if (!addedDanger.length) return;
+  if (isUnknownExecutorId(actorId)) {
+    await logAuditMissingSkip(guild, "AntiNuke: Channel Overwrite Quarantine", [
+      `<:VC_right_arrow:1473441155055096081> **Channel:** ${channel} \`${channel.id}\``,
+      `<:VC_right_arrow:1473441155055096081> **Overwrite Role:** <@&${overwrite.id}> \`${overwrite.id}\``,
+      `<:VC_right_arrow:1473441155055096081> **Action:** Dangerous channel perms detected`,
+    ]);
+    return;
+  }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Dangerous channel overwrite", 100);
 
@@ -3234,10 +3262,17 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   const guild = newGuild || oldGuild;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   const oldVanity = String(oldGuild?.vanityURLCode || "");
   const newVanity = String(newGuild?.vanityURLCode || "");
   if (oldVanity === newVanity) return;
+  if (isUnknownExecutorId(actorId)) {
+    await logAuditMissingSkip(guild, "AntiNuke: Vanity Guard", [
+      oldVanity
+        ? `<:VC_right_arrow:1473441155055096081> **Action:** Unauthorized vanity change detected for \`${oldVanity}\``
+        : `<:VC_right_arrow:1473441155055096081> **Action:** Unauthorized vanity set detected`,
+    ]);
+    return;
+  }
   if (!newGuild?.setVanityCode) return;
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Vanity URL unauthorized update", 100);
@@ -3270,7 +3305,13 @@ async function handlePruneAction({ guild, executorId, removedCount = 0 }) {
   if (!ANTINUKE_CONFIG.enabled || !ANTINUKE_CONFIG.detectPrune) return;
   if (!guild) return;
   const actorId = normalizeExecutorId(executorId);
-  if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
+  if (isUnknownExecutorId(actorId)) {
+    await logAuditMissingSkip(guild, "AntiNuke: Member Prune", [
+      `<:VC_right_arrow:1473441155055096081> **Action:** Member prune detected`,
+      `<:VC_right_arrow:1473441155055096081> **Rimossi:** ${Number(removedCount || 0)}`,
+    ]);
+    return;
+  }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   await enableAntiNukePanic(guild, "Member prune detected", 100);
   const quarantine = await quarantineExecutor(

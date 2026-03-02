@@ -378,6 +378,7 @@ function buildMassiveReminderPool() {
 const MASSIVE_REMINDER_POOL = buildMassiveReminderPool();
 let loopHandle = null;
 let state = null;
+let tickInFlight = null;
 
 function readJson(filePath, fallback) {
   try {
@@ -1333,9 +1334,17 @@ async function weeklyTick(client) {
 
 function startWeeklyDmReminderLoop(client) {
   if (loopHandle) return;
-  weeklyTick(client).catch(() => {});
+  const runTick = () => {
+    if (tickInFlight) return tickInFlight;
+    tickInFlight = weeklyTick(client).finally(() => {
+      tickInFlight = null;
+    });
+    return tickInFlight;
+  };
+
+  runTick().catch(() => {});
   loopHandle = setInterval(() => {
-    weeklyTick(client).catch(() => {});
+    runTick().catch(() => {});
   }, TICK_EVERY_MS);
   if (typeof loopHandle.unref === "function") loopHandle.unref();
 }

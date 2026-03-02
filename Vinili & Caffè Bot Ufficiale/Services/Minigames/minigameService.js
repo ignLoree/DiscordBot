@@ -8,6 +8,7 @@ const IDs = require("../../Utils/Config/ids");
 const activeGames = new Map();
 const pendingGames = new Map();
 const loopState = new WeakSet();
+const loopIntervals = new WeakMap();
 let rotationDate = null;
 let rotationQueue = [];
 const recentMessages = new Map();
@@ -5545,7 +5546,9 @@ function startMinigameLoop(client) {
     Number(cfg?.intervalMs || 15 * 60 * 1000),
   );
   tick();
-  setInterval(tick, intervalMs);
+  const timer = setInterval(tick, intervalMs);
+  if (typeof timer.unref === "function") timer.unref();
+  loopIntervals.set(client, timer);
 }
 
 async function forceStartMinigame(client) {

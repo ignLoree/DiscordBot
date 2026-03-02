@@ -1,4 +1,4 @@
-const { EmbedBuilder, PermissionsBitField, ActivityType, } = require("discord.js");
+const { EmbedBuilder, PermissionsBitField, ActivityType } = require("discord.js");
 const mongoose = require("mongoose");
 const SupporterStatus = require("../Schemas/Supporter/supporterStatusSchema");
 const IDs = require("../Utils/Config/ids");
@@ -20,9 +20,12 @@ const LINK_WARMUP_MS = 2 * 60 * 1000;
 const REMOVE_CONFIRM_MS = 2 * 60 * 1000;
 const ANNOUNCE_COOLDOWN_MS = 30 * 60 * 1000;
 
-let cleanupInterval = null;
 let bootstrapRan = false;
 const cleanupIntervalsByGuild = new Map();
+
+function makeStateKey(guildId, userId) {
+  return `${String(guildId || "")}:${String(userId || "")}`;
+}
 
 function isDbReady() {
   return mongoose.connection?.readyState === 1;
@@ -73,6 +76,54 @@ function withDefaultState(prev = {}) {
   };
 }
 
+function getCachedState(guildId, userId) {
+  return statusCache.get(makeStateKey(guildId, userId));
+}
+
+function setCachedState(guildId, userId, state) {
+  statusCache.set(makeStateKey(guildId, userId), state);
+}
+
+function deleteCachedState(guildId, userId) {
+  statusCache.delete(makeStateKey(guildId, userId));
+}
+
+function getPendingState(guildId, userId) {
+  return pendingChecks.get(makeStateKey(guildId, userId));
+}
+
+function setPendingState(guildId, userId, state) {
+  pendingChecks.set(makeStateKey(guildId, userId), state);
+}
+
+function deletePendingState(guildId, userId) {
+  pendingChecks.delete(makeStateKey(guildId, userId));
+}
+
+function hasPendingState(guildId, userId) {
+  return pendingChecks.has(makeStateKey(guildId, userId));
+}
+
+function getRemovalState(guildId, userId) {
+  return removalChecks.get(makeStateKey(guildId, userId));
+}
+
+function setRemovalState(guildId, userId, state) {
+  removalChecks.set(makeStateKey(guildId, userId), state);
+}
+
+function deleteRemovalState(guildId, userId) {
+  removalChecks.delete(makeStateKey(guildId, userId));
+}
+
+function hasRemovalState(guildId, userId) {
+  return removalChecks.has(makeStateKey(guildId, userId));
+}
+
+function getBootstrapKey(guildId, userId) {
+  return makeStateKey(guildId, userId);
+}
+
 function canManageRoles(member) {
   const me = member.guild.members.me;
   if (!me) return false;
@@ -83,13 +134,13 @@ async function addRoleIfPossible(member) {
   if (!ROLE_ID) return false;
   const me = member.guild.members.me;
   if (!me) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Bot member not cached; cannot add supporter role.",
     );
     return false;
   }
   if (!canManageRoles(member)) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Missing Manage Roles permission; cannot add supporter role.",
     );
     return false;
@@ -97,11 +148,11 @@ async function addRoleIfPossible(member) {
 
   const role = member.guild.roles.cache.get(ROLE_ID);
   if (!role) {
-    global.logger.warn("[presenceUpdate] Supporter role not found:", ROLE_ID);
+    global.logger?.warn?.("[presenceUpdate] Supporter role not found:", ROLE_ID);
     return false;
   }
   if (role.position >= me.roles.highest.position) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Bot role hierarchy prevents adding supporter role:",
       ROLE_ID,
     );
@@ -131,7 +182,7 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return false;
   if (member.roles.cache.has(PERK_ROLE_ID)) return false;
 
-  await member.roles.add(role).catch(() => { });
+  await member.roles.add(role).catch(() => {});
   return true;
 }
 
@@ -139,13 +190,13 @@ async function removeRoleIfPossible(member) {
   if (!ROLE_ID) return false;
   const me = member.guild.members.me;
   if (!me) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Bot member not cached; cannot remove supporter role.",
     );
     return false;
   }
   if (!canManageRoles(member)) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Missing Manage Roles permission; cannot remove supporter role.",
     );
     return false;
@@ -153,11 +204,11 @@ async function removeRoleIfPossible(member) {
 
   const role = member.guild.roles.cache.get(ROLE_ID);
   if (!role) {
-    global.logger.warn("[presenceUpdate] Supporter role not found:", ROLE_ID);
+    global.logger?.warn?.("[presenceUpdate] Supporter role not found:", ROLE_ID);
     return false;
   }
   if (role.position >= me.roles.highest.position) {
-    global.logger.warn(
+    global.logger?.warn?.(
       "[presenceUpdate] Bot role hierarchy prevents removing supporter role:",
       ROLE_ID,
     );
@@ -184,15 +235,15 @@ async function hasSupporterRole(member) {
   return fresh?.roles?.cache?.has(ROLE_ID) || false;
 }
 
-async function clearPending(userId, channel) {
-  const pending = pendingChecks.get(userId);
+async function clearPending(guildId, userId, channel) {
+  const pending = getPendingState(guildId, userId);
   if (!pending) return;
 
   if (pending.timeout) clearTimeout(pending.timeout);
   if (pending.messageId && channel?.isTextBased?.()) {
-    await channel.messages.delete(pending.messageId).catch(() => { });
+    await channel.messages.delete(pending.messageId).catch(() => {});
   }
-  pendingChecks.delete(userId);
+  deletePendingState(guildId, userId);
 }
 
 async function resolveSupportersChannel(guild) {
@@ -205,18 +256,16 @@ async function resolveSupportersChannel(guild) {
 
 async function refreshMember(guild, userId) {
   if (!guild || !userId) return null;
-  return (
-    guild.members.cache.get(userId) ||
-    (await guild.members.fetch(userId).catch(() => null))
-  );
+  return guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
 }
 
 function scheduleRemovalConfirm(member, channel) {
+  const guildId = member.guild.id;
   const userId = member.id;
-  if (removalChecks.has(userId)) return;
+  if (hasRemovalState(guildId, userId)) return;
 
   const timeout = setTimeout(async () => {
-    removalChecks.delete(userId);
+    deleteRemovalState(guildId, userId);
 
     const freshMember = await refreshMember(member.guild, userId);
     if (!freshMember) return;
@@ -232,23 +281,23 @@ function scheduleRemovalConfirm(member, channel) {
       await freshMember.send(
         "Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",
       );
-    } catch { }
+    } catch {}
 
-    const info = statusCache.get(userId);
+    const info = getCachedState(guildId, userId);
     if (info?.lastMessageId && liveChannel?.isTextBased?.()) {
-      await liveChannel.messages.delete(info.lastMessageId).catch(() => { });
+      await liveChannel.messages.delete(info.lastMessageId).catch(() => {});
     }
 
-    statusCache.set(userId, {
+    setCachedState(guildId, userId, {
       hasLink: false,
       lastAnnounced: info?.lastAnnounced || 0,
       lastMessageId: null,
       lastSeenOnlineAt: info?.lastSeenOnlineAt || 0,
     });
-    await clearPersistedStatus(freshMember.guild.id, userId);
+    await clearPersistedStatus(guildId, userId);
   }, REMOVE_CONFIRM_MS);
 
-  removalChecks.set(userId, { timeout });
+  setRemovalState(guildId, userId, { timeout });
 }
 
 async function persistStatus(guildId, userId, payload) {
@@ -302,7 +351,7 @@ function buildPendingEmbed(member) {
         "<a:VC_Infinity:1448687797266288832> - Inviare **media** in __ogni chat__",
         "<a:VC_HeartWhite:1448673535253024860> - Mandare **adesivi** __esterni__ in **qualsiasi chat**",
         "",
-        "<a:VC_Arrow:1448672967721615452> Metti \`.gg/viniliecaffe\` o \`discord.gg/viniliecaffe\` nel tuo status .",
+        "<a:VC_Arrow:1448672967721615452> Metti `.gg/viniliecaffe` o `discord.gg/viniliecaffe` nel tuo status .",
       ].join("\n"),
     )
     .setFooter({ text: "Grazie per il tuo supporto!" })
@@ -310,68 +359,74 @@ function buildPendingEmbed(member) {
 }
 
 async function startPendingFlow(member, channel) {
-  if (pendingChecks.has(member.id)) return;
+  const guildId = member.guild.id;
+  const userId = member.id;
+  if (hasPendingState(guildId, userId)) return;
 
-  const existing = statusCache.get(member.id);
+  const existing = getCachedState(guildId, userId);
   if (existing?.lastMessageId && channel?.isTextBased?.()) {
-    await channel.messages.delete(existing.lastMessageId).catch(() => { });
+    await channel.messages.delete(existing.lastMessageId).catch(() => {});
   }
 
-  pendingChecks.set(member.id, {
+  setPendingState(guildId, userId, {
     timeout: null,
     messageId: null,
     inFlight: true,
   });
+
   const sent = await channel
     .send({
-      content: `<@${member.id}>`,
+      content: `<@${userId}>`,
       embeds: [buildPendingEmbed(member)],
     })
     .catch(() => null);
 
   if (sent) {
     const timeout = setTimeout(async () => {
-      const freshMember = await refreshMember(member.guild, member.id);
+      const freshMember = await refreshMember(member.guild, userId);
       if (!freshMember) {
-        pendingChecks.delete(member.id);
+        deletePendingState(guildId, userId);
         return;
       }
+
       const liveChannel = await resolveSupportersChannel(member.guild);
       const stillHasInvite = hasInviteNow(freshMember);
       if (stillHasInvite === false) {
         if (liveChannel?.isTextBased?.()) {
-          await liveChannel.messages.delete(sent.id).catch(() => { });
+          await liveChannel.messages.delete(sent.id).catch(() => {});
         }
-        pendingChecks.delete(member.id);
-        statusCache.set(member.id, {
+        deletePendingState(guildId, userId);
+        const current = getCachedState(guildId, userId);
+        setCachedState(guildId, userId, {
           hasLink: false,
-          lastAnnounced: statusCache.get(member.id)?.lastAnnounced || 0,
+          lastAnnounced: current?.lastAnnounced || 0,
           lastMessageId: null,
-          lastSeenOnlineAt: statusCache.get(member.id)?.lastSeenOnlineAt || 0,
+          lastSeenOnlineAt: current?.lastSeenOnlineAt || 0,
         });
         return;
       }
 
       await addRoleIfPossible(freshMember);
-      pendingChecks.delete(member.id);
+      deletePendingState(guildId, userId);
     }, PENDING_MS);
 
-    pendingChecks.set(member.id, {
+    setPendingState(guildId, userId, {
       timeout,
       messageId: sent.id,
       inFlight: false,
     });
   } else {
-    pendingChecks.delete(member.id);
+    deletePendingState(guildId, userId);
   }
 
-  statusCache.set(member.id, {
+  const current = getCachedState(guildId, userId);
+  setCachedState(guildId, userId, {
     hasLink: true,
     lastAnnounced: Date.now(),
     lastMessageId: sent?.id || null,
-    lastSeenOnlineAt: statusCache.get(member.id)?.lastSeenOnlineAt || Date.now(),
+    lastSeenOnlineAt: current?.lastSeenOnlineAt || Date.now(),
   });
-  await persistStatus(member.guild.id, member.id, {
+  await persistStatus(guildId, userId, {
     hasLink: true,
     lastMessageId: sent?.id || null,
     lastSentAt: new Date(),
@@ -383,13 +438,14 @@ async function bootstrapSupporter(client) {
   bootstrapRan = true;
 
   for (const guild of client.guilds.cache.values()) {
+    const guildId = guild.id;
     const channel = await resolveSupportersChannel(guild);
     if (!channel) continue;
 
     let persisted = [];
     if (isDbReady()) {
       try {
-        persisted = await SupporterStatus.find({ guildId: guild.id }).lean();
+        persisted = await SupporterStatus.find({ guildId }).lean();
       } catch {
         persisted = [];
       }
@@ -397,8 +453,9 @@ async function bootstrapSupporter(client) {
 
     for (const doc of persisted) {
       if (!doc?.userId) continue;
-      bootstrappedUsers.add(doc.userId);
-      statusCache.set(doc.userId, {
+      const userId = String(doc.userId);
+      bootstrappedUsers.add(getBootstrapKey(guildId, userId));
+      setCachedState(guildId, userId, {
         hasLink: Boolean(doc.hasLink),
         lastAnnounced: doc.lastSentAt ? new Date(doc.lastSentAt).getTime() : 0,
         lastMessageId: doc.lastMessageId || null,
@@ -412,11 +469,11 @@ async function bootstrapSupporter(client) {
       if (isOfflinePresence(member.presence)) continue;
       if (!hasInvite(member.presence)) continue;
       if (member.roles.cache.has(ROLE_ID)) continue;
-      if (pendingChecks.has(member.id)) continue;
+      if (hasPendingState(guildId, member.id)) continue;
 
-      const existing = statusCache.get(member.id);
+      const existing = getCachedState(guildId, member.id);
       if (existing?.lastMessageId) continue;
-      if (bootstrappedUsers.has(member.id)) continue;
+      if (bootstrappedUsers.has(getBootstrapKey(guildId, member.id))) continue;
 
       await startPendingFlow(member, channel);
     }
@@ -432,40 +489,43 @@ function startCleanupClock(client, guildId) {
     if (!guild) return;
     const channel = await resolveSupportersChannel(guild);
 
-    for (const [userId, info] of statusCache.entries()) {
+    for (const [stateKey, info] of statusCache.entries()) {
+      if (!stateKey.startsWith(`${guildId}:`)) continue;
+      const [, userId] = stateKey.split(":");
       const shouldCheck = info?.hasLink || info?.lastMessageId;
       if (!shouldCheck) continue;
 
-      const member =
-        guild.members.cache.get(userId) ||
-        (await guild.members.fetch(userId).catch(() => null));
+      const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
       if (!member) continue;
       if (isOfflinePresence(member.presence)) continue;
-      if (pendingChecks.has(userId)) continue;
+      if (hasPendingState(guildId, userId)) continue;
 
       const hasLink = hasInviteNow(member);
       if (hasLink === false) {
         if (recentlyOnline(info)) continue;
-        await clearPending(userId, channel);
+        await clearPending(guildId, userId, channel);
         scheduleRemovalConfirm(member, channel);
       }
     }
   }, CLEANUP_MS);
+
+  if (typeof interval.unref === "function") interval.unref();
   cleanupIntervalsByGuild.set(guildId, interval);
 }
 
 async function applyOnlineState(member, userId, prev, prevHas) {
+  const guildId = member.guild.id;
   const newHas = resolveInviteState(member.presence, prevHas);
   const lastSeenOnlineAt = Date.now();
 
   if (newHas && member.roles.cache.has(ROLE_ID)) {
-    statusCache.set(userId, {
+    setCachedState(guildId, userId, {
       hasLink: true,
       lastAnnounced: prev?.lastAnnounced || 0,
       lastMessageId: prev?.lastMessageId || null,
       lastSeenOnlineAt,
     });
-    await persistStatus(member.guild.id, userId, {
+    await persistStatus(guildId, userId, {
       hasLink: true,
       lastMessageId: prev?.lastMessageId || null,
     });
@@ -474,13 +534,13 @@ async function applyOnlineState(member, userId, prev, prevHas) {
   }
 
   if (newHas && (await hasSupporterRole(member))) {
-    statusCache.set(userId, {
+    setCachedState(guildId, userId, {
       hasLink: true,
       lastAnnounced: prev?.lastAnnounced || 0,
       lastMessageId: prev?.lastMessageId || null,
       lastSeenOnlineAt,
     });
-    await persistStatus(member.guild.id, userId, {
+    await persistStatus(guildId, userId, {
       hasLink: true,
       lastMessageId: prev?.lastMessageId || null,
     });
@@ -489,26 +549,28 @@ async function applyOnlineState(member, userId, prev, prevHas) {
   }
 
   if (!prevHas && newHas) {
-    if (pendingChecks.has(userId)) return;
+    if (hasPendingState(guildId, userId)) return;
     if (prev?.lastMessageId) return;
-    if (
-      prev?.lastAnnounced &&
-      Date.now() - prev.lastAnnounced < ANNOUNCE_COOLDOWN_MS
-    )
+    if (prev?.lastAnnounced && Date.now() - prev.lastAnnounced < ANNOUNCE_COOLDOWN_MS) {
       return;
+    }
 
     if (await hasSupporterRole(member)) {
-      statusCache.set(userId, {
+      setCachedState(guildId, userId, {
         hasLink: true,
         lastAnnounced: prev?.lastAnnounced || 0,
+        lastMessageId: prev?.lastMessageId || null,
         lastSeenOnlineAt,
       });
-      await persistStatus(member.guild.id, userId, { hasLink: true });
+      await persistStatus(guildId, userId, {
+        hasLink: true,
+        lastMessageId: prev?.lastMessageId || null,
+      });
       await addPerkRoleIfPossible(member);
       return;
     }
 
-    statusCache.set(userId, {
+    setCachedState(guildId, userId, {
       hasLink: true,
       lastAnnounced: Date.now(),
       lastMessageId: prev?.lastMessageId || null,
@@ -524,15 +586,15 @@ async function applyOnlineState(member, userId, prev, prevHas) {
 
   if (prevHas && !newHas) {
     const channel = await resolveSupportersChannel(member.guild);
-    await clearPending(userId, channel);
+    await clearPending(guildId, userId, channel);
 
-    statusCache.set(userId, {
+    setCachedState(guildId, userId, {
       hasLink: false,
       lastAnnounced: prev?.lastAnnounced || 0,
       lastMessageId: prev?.lastMessageId || null,
       lastSeenOnlineAt,
     });
-    await persistStatus(member.guild.id, userId, {
+    await persistStatus(guildId, userId, {
       hasLink: false,
       lastMessageId: prev?.lastMessageId || null,
     });
@@ -540,13 +602,13 @@ async function applyOnlineState(member, userId, prev, prevHas) {
     return;
   }
 
-  statusCache.set(userId, {
+  setCachedState(guildId, userId, {
     hasLink: newHas,
     lastAnnounced: prev?.lastAnnounced || 0,
     lastMessageId: prev?.lastMessageId || null,
     lastSeenOnlineAt,
   });
-  await persistStatus(member.guild.id, userId, {
+  await persistStatus(guildId, userId, {
     hasLink: newHas,
     lastMessageId: prev?.lastMessageId || null,
   });
@@ -561,10 +623,11 @@ module.exports = {
 
       startCleanupClock(member.client, member.guild.id);
 
+      const guildId = member.guild.id;
       const userId = member.id;
-      let prev = statusCache.get(userId);
+      let prev = getCachedState(guildId, userId);
       if (!prev) {
-        const persisted = await getPersistedStatus(member.guild.id, userId);
+        const persisted = await getPersistedStatus(guildId, userId);
         if (persisted) {
           prev = {
             hasLink: Boolean(persisted.hasLink),
@@ -574,7 +637,7 @@ module.exports = {
             lastMessageId: persisted.lastMessageId || null,
             lastSeenOnlineAt: 0,
           };
-          statusCache.set(userId, prev);
+          setCachedState(guildId, userId, prev);
         }
       }
 
@@ -584,8 +647,9 @@ module.exports = {
           : resolveInviteState(oldPresence, false);
 
       if (isOfflinePresence(newPresence)) {
-        if (!statusCache.has(userId)) {
-          statusCache.set(
+        if (!getCachedState(guildId, userId)) {
+          setCachedState(
+            guildId,
             userId,
             withDefaultState({
               hasLink: prevHas,

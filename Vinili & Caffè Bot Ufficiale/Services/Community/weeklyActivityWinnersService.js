@@ -309,7 +309,7 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
   return out;
 }
 
-async function removeRoleFromAllMembers(guild, roleId) {
+async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
   if (!roleId) return;
   await guild.members.fetch().catch(() => null);
   const role =
@@ -318,6 +318,7 @@ async function removeRoleFromAllMembers(guild, roleId) {
   if (!role) return;
 
   for (const member of role.members.values()) {
+    if (keepUserId && String(member.id) === String(keepUserId)) continue;
     await member.roles.remove(roleId).catch(() => {});
   }
 }
@@ -342,9 +343,6 @@ function pickFirstAvailable(ranking, excludedUserIds = new Set()) {
 }
 
 async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
-  await removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID);
-  await removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID);
-
   const chosenUserIds = new Set();
   const messageWinner = pickFirstAvailable(topMessages, chosenUserIds);
   if (messageWinner) chosenUserIds.add(messageWinner.userId);
@@ -355,6 +353,11 @@ async function updateWeeklyWinnerRoles(guild, topMessages, topVoice) {
   await Promise.all([
     assignRoleToUser(guild, messageWinner?.userId, MESSAGE_WINNER_ROLE_ID),
     assignRoleToUser(guild, voiceWinner?.userId, VOICE_WINNER_ROLE_ID),
+  ]);
+
+  await Promise.all([
+    removeRoleFromAllMembers(guild, MESSAGE_WINNER_ROLE_ID, messageWinner?.userId),
+    removeRoleFromAllMembers(guild, VOICE_WINNER_ROLE_ID, voiceWinner?.userId),
   ]);
 
   return { messageWinner, voiceWinner };

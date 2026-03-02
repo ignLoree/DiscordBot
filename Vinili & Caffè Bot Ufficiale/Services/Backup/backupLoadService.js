@@ -1153,9 +1153,7 @@ async function applyBackupToGuild(
         .filter(Boolean)
         .filter((id) => id !== guild.id && guild.roles.cache.has(id));
 
-      if (targetRoles.length > 0) {
-        await member.roles.set(targetRoles, `Backup load ${backupId}`).catch(() => null);
-      }
+      await member.roles.set(targetRoles, `Backup load ${backupId}`).catch(() => null);
       if (typeof memberData.nickname === "string") {
         await member.setNickname(memberData.nickname || null, `Backup load ${backupId}`).catch(() => null);
       }

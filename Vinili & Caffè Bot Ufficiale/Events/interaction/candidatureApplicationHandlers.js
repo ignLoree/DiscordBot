@@ -328,8 +328,12 @@ function pruneOldStates() {
   if (draftChanged) persistDraftMap();
 }
 
-const cleanupTimer = setInterval(pruneOldStates, 5 * 60 * 1000);
-if (typeof cleanupTimer.unref === "function") cleanupTimer.unref();
+if (!global.__vcCandidatureCleanupTimer) {
+  global.__vcCandidatureCleanupTimer = setInterval(pruneOldStates, 5 * 60 * 1000);
+  if (typeof global.__vcCandidatureCleanupTimer.unref === "function") {
+    global.__vcCandidatureCleanupTimer.unref();
+  }
+}
 
 function splitQuestions(questions, chunkSize = 4) {
   const chunks = [];

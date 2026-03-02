@@ -23,10 +23,12 @@ const {
 let dashboardServer = null;
 const SESSION_TTL_HOURS = Math.max(1, Number(process.env.DASHBOARD_SESSION_TTL_HOURS || 24 * 30));
 const SESSION_TTL_MS = SESSION_TTL_HOURS * 60 * 60_000;
+const USERS_CACHE_TTL_MS = Math.max(5_000, Number(process.env.DASHBOARD_USERS_CACHE_TTL_MS || 30_000));
 const DASHBOARD_DATA_DIR = path.resolve(__dirname, "../../Data/Dashboard");
 const SESSION_STORE_PATH = path.join(DASHBOARD_DATA_DIR, "sessions.json");
 const sessions = new Map();
 const oauthStates = new Map();
+const guildUsersCache = new Map();
 let sessionsPersistTimer = null;
 
 function readStatic(filePath, fallback = "") {
@@ -369,10 +371,34 @@ function getGuildRoleOptions(guild) {
     .map((role) => ({ id: role.id, name: role.name }));
 }
 
+async function fetchFreshGuildMembers(guild) {
+  const cacheKey = String(guild?.id || "");
+  const now = Date.now();
+  const cached = guildUsersCache.get(cacheKey);
+  if (cached?.inFlight) {
+    await cached.inFlight.catch(() => {});
+    return;
+  }
+  if (cached && now - Number(cached.fetchedAt || 0) < USERS_CACHE_TTL_MS) {
+    return;
+  }
+
+  const inFlight = guild.members.fetch().catch(() => null);
+  guildUsersCache.set(cacheKey, {
+    fetchedAt: Number(cached?.fetchedAt || 0),
+    inFlight,
+  });
+  await inFlight;
+  guildUsersCache.set(cacheKey, {
+    fetchedAt: Date.now(),
+    inFlight: null,
+  });
+}
+
 async function getGuildUsersPage(client, guildId, query = "") {
   const guild = client?.guilds?.cache?.get(guildId) || null;
   if (!guild) return { ok: false, reason: "guild_not_found" };
-  await guild.members.fetch().catch(() => {});
+  await fetchFreshGuildMembers(guild);
 
   const q = String(query || "").trim().toLowerCase();
   const users = guild.members.cache
