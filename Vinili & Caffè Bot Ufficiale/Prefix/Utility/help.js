@@ -3,6 +3,7 @@ const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const HELP_EMBED_COLOR = "#6f4e37";
@@ -206,6 +207,9 @@ const CONTEXT_HELP_DESCRIPTIONS = {
 const CONTEXT_CATEGORY_OVERRIDES = {
   partnership: "partner",
 };
+const PERMISSIONS_CACHE_TTL_MS = 30_000;
+let permissionsCache = null;
+let permissionsCacheAt = 0;
 
 function buildMiniHelpNotFoundEmbed(query) {
   return new EmbedBuilder()
@@ -253,16 +257,29 @@ function normalizePermissionTree(node) {
 }
 
 function loadPermissions() {
+  const now = Date.now();
+  if (permissionsCache && now - permissionsCacheAt < PERMISSIONS_CACHE_TTL_MS) {
+    return permissionsCache;
+  }
+
   try {
-    if (!fs.existsSync(PERMISSIONS_PATH)) return { slash: {}, prefix: {} };
+    if (!fs.existsSync(PERMISSIONS_PATH)) {
+      permissionsCache = { slash: {}, prefix: {} };
+      permissionsCacheAt = now;
+      return permissionsCache;
+    }
     const raw = fs.readFileSync(PERMISSIONS_PATH, "utf8");
     const parsed = JSON.parse(raw);
-    return {
+    permissionsCache = {
       slash: normalizePermissionTree(parsed?.slash || {}),
       prefix: normalizePermissionTree(parsed?.prefix || {}),
     };
+    permissionsCacheAt = now;
+    return permissionsCache;
   } catch {
-    return { slash: {}, prefix: {} };
+    permissionsCache = { slash: {}, prefix: {} };
+    permissionsCacheAt = now;
+    return permissionsCache;
   }
 }
 
@@ -1811,9 +1828,10 @@ module.exports = {
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
 
-    const freshMember = await message.guild.members
-      .fetch(message.author.id)
-      .catch(() => null);
+    const freshMember = await getGuildMemberCached(message.guild, message.author.id, {
+      ttlMs: 20_000,
+      preferFresh: true,
+    });
     const resolvedMember = freshMember || message.member;
     const memberRoles = resolvedMember?.roles?.cache || new Map();
     const rolePages = PAGE_ROLE_IDS.filter((roleId) =>

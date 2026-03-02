@@ -39,6 +39,11 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
   scheduleMemberCounterRefresh,
 } = require("../Utils/Community/memberCounterUtils");
+const {
+  formatDurationMs,
+  runTaskGroup,
+  runTaskSequence,
+} = require("../Utils/Startup/readyStartupRuntime");
 
 const STARTUP_PANELS_RETRY_MS = 15000;
 const ENGAGEMENT_INTERVAL_MS = 60 * 1000;
@@ -78,6 +83,95 @@ function resolveMaxListeners(client) {
   const raw = Number(client?.config?.eventListeners ?? config?.eventListeners ?? 50);
   if (!Number.isFinite(raw) || raw <= 0) return 50;
   return Math.max(10, Math.floor(raw));
+}
+
+function createStartupHooks(client) {
+  return {
+    onStart: (label) => {
+      logInfo(client, `[STARTUP] ${label} started.`);
+    },
+    onSuccess: (label, startedAt) => {
+      logInfo(
+        client,
+        `[STARTUP] ${label} completed in ${formatDurationMs(Date.now() - startedAt)}.`,
+      );
+    },
+    onError: (label, startedAt, reason) => {
+      logError(
+        client,
+        `[STARTUP] ${label} failed after ${formatDurationMs(Date.now() - startedAt)}:`,
+        reason,
+      );
+    },
+  };
+}
+
+function buildPrimaryHeavyTasks(client, mainGuild, engagementTick) {
+  return [
+    {
+      label: "heavy task: retro sync guild levels",
+      run: () =>
+        mainGuild
+          ? retroSyncGuildLevels(mainGuild, { syncRoles: false })
+          : Promise.resolve(),
+    },
+    {
+      label: "heavy task: engagement tick",
+      run: () => engagementTick(),
+    },
+    {
+      label: "heavy task: restore active games",
+      run: () => restoreActiveGames(client),
+    },
+    {
+      label: "heavy task: verification tenure backfill",
+      run: () =>
+        shouldRunVerificationTenureBackfill(client)
+          ? backfillVerificationTenure(client)
+          : Promise.resolve(),
+    },
+    {
+      label: "heavy task: renumber categories",
+      run: () => renumberAllCategories(client),
+    },
+    {
+      label: "heavy task: remove expired temporary roles",
+      run: () => removeExpiredTemporaryRoles(client),
+    },
+    {
+      label: "heavy task: custom role expiry sweep",
+      run: () => runExpiredCustomRolesSweep(client),
+    },
+    {
+      label: "heavy task: startup panels",
+      run: () => runStartupPanels(client, "startup"),
+    },
+  ];
+}
+
+function buildDeferredStartupTasks(client, primaryScheduler, engagementTick) {
+  return [
+    {
+      label: "restore bump reminders",
+      enabled: primaryScheduler,
+      run: () => restoreBumpReminders(client),
+    },
+    {
+      label: "restore core startup state",
+      enabled: true,
+      run: () => restoreCoreStartupState(client),
+    },
+    {
+      label: "primary heavy tasks",
+      enabled: primaryScheduler,
+      run: () => runPrimaryHeavyTasks(client, engagementTick),
+    },
+    {
+      label: "startup sync queue",
+      enabled: true,
+      run: () => queueStartupSync(client),
+    },
+  ];
 }
 
 const getChannelSafe = async (client, channelId) => {
@@ -223,40 +317,28 @@ async function runPrimaryHeavyTasks(client, engagementTick) {
   const mainGuildId = IDs.guilds.main || null;
   const mainGuild = mainGuildId
     ? client.guilds.cache.get(mainGuildId) ||
-      (await client.guilds.fetch(mainGuildId).catch(() => null))
+    (await client.guilds.fetch(mainGuildId).catch(() => null))
     : client.guilds.cache.first() || null;
 
-  const heavyTasks = [
-    mainGuild
-      ? retroSyncGuildLevels(mainGuild, { syncRoles: false })
-      : Promise.resolve(),
-    engagementTick(),
-    restoreActiveGames(client),
-    shouldRunVerificationTenureBackfill(client)
-      ? backfillVerificationTenure(client)
-      : Promise.resolve(),
-    renumberAllCategories(client),
-    removeExpiredTemporaryRoles(client),
-    runExpiredCustomRolesSweep(client),
-    runStartupPanels(client, "startup"),
-  ];
+  const heavyTasks = buildPrimaryHeavyTasks(client, mainGuild, engagementTick);
+  const hooks = createStartupHooks(client);
 
-  const results = await Promise.allSettled(heavyTasks);
-  const errLabels = [
-    "[LEVEL RETRO]",
-    "[ENGAGEMENT TICK]",
-    "[MINIGAMES RESTORE]",
-    "[VERIFY TENURE]",
-    "[CATEGORY NUMBERING]",
-    "[TEMP ROLE]",
-    "[CUSTOM ROLE EXPIRY]",
-    "[STARTUP PANELS]",
-  ];
-  results.forEach((result, index) => {
-    if (result.status === "rejected" && errLabels[index]) {
-      global.logger?.error?.(errLabels[index], result.reason);
-    }
-  });
+  const startedAt = Date.now();
+  const results = await runTaskGroup(heavyTasks, hooks);
+  const failed = results.filter((result) => result.status === "rejected").length;
+  logInfo(
+    client,
+    `[STARTUP] primary heavy tasks finished in ${formatDurationMs(Date.now() - startedAt)}. failed=${failed}/${heavyTasks.length}.`,
+  );
+}
+
+async function runDeferredStartup(client, primaryScheduler, engagementTick) {
+  const startupTasks = buildDeferredStartupTasks(
+    client,
+    primaryScheduler,
+    engagementTick,
+  );
+  await runTaskSequence(startupTasks, createStartupHooks(client));
 }
 
 function startPrimaryLoops(client, engagementTick) {
@@ -336,10 +418,10 @@ function startPrimaryLoops(client, engagementTick) {
         const tick = async () => {
           const guilds = [...client.guilds.cache.values()];
           for (const guild of guilds) {
-            await restoreTempBans(guild).catch(() => {});
+            await restoreTempBans(guild).catch(() => { });
           }
         };
-        tick().catch(() => {});
+        tick().catch(() => { });
         const timer = setInterval(tick, JOIN_RAID_RESTORE_INTERVAL_MS);
         if (typeof timer.unref === "function") timer.unref();
         client._joinRaidRestoreInterval = timer;
@@ -423,6 +505,7 @@ module.exports = {
   name: "clientReady",
   once: true,
   async execute(client) {
+    const readyStartedAt = Date.now();
     const maxListeners = resolveMaxListeners(client);
     client.setMaxListeners(maxListeners);
     require("events").EventEmitter.defaultMaxListeners = maxListeners;
@@ -431,7 +514,6 @@ module.exports = {
 
     const primaryScheduler = isPrimaryScheduler(client);
     if (primaryScheduler) {
-      await restoreBumpReminders(client);
       try {
         startDailyPartnerAuditLoop(client);
       } catch (err) {
@@ -439,7 +521,6 @@ module.exports = {
       }
     }
 
-    await restoreCoreStartupState(client);
     try {
       startAutoBackupLoop(client);
     } catch (err) {
@@ -460,8 +541,8 @@ module.exports = {
         }
       };
 
-      await runPrimaryHeavyTasks(client, engagementTick);
       startPrimaryLoops(client, engagementTick);
+      client._engagementTick = engagementTick;
     }
 
     if (client._startupPanelsRetryTimer) {
@@ -473,10 +554,20 @@ module.exports = {
       });
     }, STARTUP_PANELS_RETRY_MS);
 
-    await queueStartupSync(client);
     if (primaryScheduler) scheduleMonthlyGif(client);
     setClientPresence(client);
 
-    logLaunch(client, `[BOT] ${client.user?.username || "Bot"} has been launched!`);
+    logLaunch(
+      client,
+      `[BOT] ${client.user?.username || "Bot"} has been launched! Ready in ${formatDurationMs(Date.now() - readyStartedAt)}.`,
+    );
+
+    if (!client._deferredStartupRunning) {
+      client._deferredStartupRunning = true;
+      const engagementTick = client._engagementTick || (async () => { });
+      void runDeferredStartup(client, primaryScheduler, engagementTick).finally(() => {
+        client._deferredStartupRunning = false;
+      });
+    }
   },
 };

@@ -6,6 +6,11 @@ const os = require("os");
 const axios = require("axios");
 const VoiceState = require("../../Schemas/Voice/voiceStateSchema");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getClientChannelCached,
+  getClientGuildCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/entityCache");
 const ttsStates = new Map();
 const guildLocks = new Map();
 const lastSavedChannels = new Map();
@@ -380,9 +385,10 @@ async function handleTtsMessage(message, client, prefix) {
   if (!message.member && message.guild?.members?.fetch) {
     try {
       message.member =
-        (await message.guild.members
-          .fetch(message.author?.id)
-          .catch(() => null)) || message.member;
+        (await getGuildMemberCached(message.guild, message.author?.id, {
+          ttlMs: 20_000,
+          preferFresh: true,
+        })) || message.member;
     } catch (_) {}
   }
   let voiceChannel = null;
@@ -465,9 +471,7 @@ async function leaveTtsGuild(guildId, client) {
     if (lockedChannelId) setLockedChannel(guildId, lockedChannelId);
   }
   if (!lockedChannelId && client) {
-    const guild =
-      client.guilds?.cache?.get(guildId) ||
-      (await client.guilds?.fetch(guildId).catch(() => null));
+    const guild = await getClientGuildCached(client, guildId, { ttlMs: 30_000 });
     if (guild) {
       const me =
         guild.members?.me ??
@@ -476,8 +480,7 @@ async function leaveTtsGuild(guildId, client) {
       if (channelId) {
         try {
           const channel =
-            client.channels?.cache?.get(channelId) ||
-            (await client.channels?.fetch(channelId).catch(() => null));
+            (await getClientChannelCached(client, channelId, { ttlMs: 30_000 }));
           if (channel?.isVoiceBased?.()) {
             const conn = joinVoiceChannel({
               channelId: channel.id,
@@ -559,9 +562,9 @@ async function restoreTtsConnections(client) {
     }
     const states = await VoiceState.find({});
     for (const entry of states) {
-      const channel = await client.channels
-        .fetch(entry.channelId)
-        .catch(() => null);
+      const channel = await getClientChannelCached(client, entry.channelId, {
+        ttlMs: 30_000,
+      });
       if (!channel || !channel.isVoiceBased?.()) continue;
       await joinTtsChannel(channel);
     }

@@ -4,6 +4,10 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType,
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../Community/expService");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getClientChannelCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const activeGames = new Map();
 const pendingGames = new Map();
@@ -673,6 +677,11 @@ function getChannelSafe(client, channelId) {
   return client.channels.cache.get(channelId) || null;
 }
 
+async function getChannelCached(client, channelId) {
+  return getChannelSafe(client, channelId) ||
+    (await getClientChannelCached(client, channelId, { ttlMs: 30_000 }));
+}
+
 function getActivityWindowMs(cfg) {
   return Math.max(60 * 1000, Number(cfg?.activityWindowMs || 30 * 60 * 1000));
 }
@@ -740,8 +749,7 @@ async function saveActiveGame(client, cfg, payload) {
   let guildId = cfg?.guildId || null;
   if (!guildId) {
     const channel =
-      getChannelSafe(client, channelId) ||
-      (await client.channels.fetch(channelId).catch(() => null));
+      await getChannelCached(client, channelId);
     guildId = channel?.guild?.id || null;
   }
   if (!guildId) return;
@@ -758,8 +766,7 @@ async function clearActiveGame(client, cfg) {
   let guildId = cfg?.guildId || null;
   if (!guildId) {
     const channel =
-      getChannelSafe(client, channelId) ||
-      (await client.channels.fetch(channelId).catch(() => null));
+      await getChannelCached(client, channelId);
     guildId = channel?.guild?.id || null;
   }
   if (!guildId) return;
@@ -3405,8 +3412,7 @@ async function handleExpReward(client, member, totalExp) {
   await member.roles.add(reward.roleId).catch(() => {});
 
   const rewardChannel =
-    getChannelSafe(client, REWARD_CHANNEL_ID) ||
-    (await member.guild.channels.fetch(REWARD_CHANNEL_ID).catch(() => null));
+    await getChannelCached(client, REWARD_CHANNEL_ID);
   if (!rewardChannel) return;
   await rewardChannel
     .send({
@@ -3580,8 +3586,7 @@ async function loadRotationState(client, cfg) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   const dateKey = getRomeDateKey(new Date());
@@ -3606,8 +3611,7 @@ async function saveRotationState(client, cfg) {
   const channelId = cfg?.channelId;
   if (!channelId) return;
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   const dateKey = rotationDate || getRomeDateKey(new Date());
@@ -3671,8 +3675,7 @@ async function scheduleMinuteHint(
 ) {
   if (!hintChannelId || !durationMs || durationMs <= 60 * 1000) return null;
   const mainChannel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!mainChannel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
@@ -3685,8 +3688,7 @@ async function scheduleMinuteHint(
 async function scheduleFlagHint(client, channelId, durationMs, name) {
   if (!channelId || !durationMs || durationMs <= 60 * 1000) return null;
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
@@ -3698,8 +3700,7 @@ async function scheduleGenericHint(client, channelId, durationMs, hintText) {
   if (!channelId || !durationMs || durationMs <= 60 * 1000 || !hintText)
     return null;
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return null;
   const delay = durationMs - 60 * 1000;
   return setTimeout(async () => {
@@ -3723,8 +3724,7 @@ async function startGuessNumberGame(client, cfg) {
   );
 
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   const target = randomBetween(min, max);
@@ -3801,8 +3801,7 @@ async function startGuessWordGame(client, cfg) {
   );
 
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   const target = String(
@@ -3888,8 +3887,7 @@ async function startGuessFlagGame(client, cfg) {
   );
 
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   const target = countries[randomBetween(0, countries.length - 1)];
@@ -3966,8 +3964,7 @@ async function startGuessPlayerGame(client, cfg) {
   );
 
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   let info = await fetchFamousPlayer(cfg);
@@ -4074,8 +4071,7 @@ async function startGuessSongGame(client, cfg) {
   );
 
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   const onlyFamous = cfg?.guessSong?.onlyFamous !== false;
@@ -4181,8 +4177,7 @@ async function startGuessCapitalGame(client, cfg) {
     Number(cfg?.guessCapital?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4272,8 +4267,7 @@ async function startGuessRegionCapitalGame(client, cfg) {
     Number(cfg?.guessRegionCapital?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4418,8 +4412,7 @@ async function startFastTypeGame(client, cfg) {
     Number(cfg?.fastType?.durationMs || 120000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4492,8 +4485,7 @@ async function startGuessTeamGame(client, cfg) {
     Number(cfg?.guessTeam?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4563,8 +4555,7 @@ async function startGuessSingerGame(client, cfg) {
     Number(cfg?.guessSinger?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4634,8 +4625,7 @@ async function startGuessAlbumGame(client, cfg) {
     Number(cfg?.guessAlbum?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4728,8 +4718,7 @@ async function startHangmanGame(client, cfg) {
   );
   const maxMisses = Math.max(3, Number(cfg?.hangman?.maxMisses || 7));
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -4849,8 +4838,7 @@ async function startItalianGkGame(client, cfg) {
     Number(cfg?.italianGK?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -5126,8 +5114,7 @@ async function startDrivingQuizGame(client, cfg) {
     Number(cfg?.drivingQuiz?.durationMs || 180000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -5222,8 +5209,7 @@ async function startMathExpressionGame(client, cfg) {
     Number(cfg?.mathExpression?.durationMs || 150000),
   );
   const channel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!channel) return false;
 
   if (cfg.roleId)
@@ -5340,8 +5326,7 @@ async function startFindBotGame(client, cfg) {
   const requiredRoleId = cfg?.findBot?.requiredRoleId || null;
 
   const mainChannel =
-    getChannelSafe(client, channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null));
+    await getChannelCached(client, channelId);
   if (!mainChannel?.guild) return false;
 
   const targetChannel = await pickRandomFindBotChannel(
@@ -5492,8 +5477,7 @@ async function maybeStartRandomGame(client, force = false) {
     }
 
     const channel =
-      getChannelSafe(client, cfg.channelId) ||
-      (await client.channels.fetch(cfg.channelId).catch(() => null));
+      await getChannelCached(client, cfg.channelId);
     if (!channel) return;
 
     const available = getAvailableGameTypes(cfg);
@@ -5566,7 +5550,7 @@ async function awardWinAndReply(message, rewardExp) {
   let nextTotal = Number(rewardExp || 0);
   const member =
     message.member ||
-    (await message.guild.members.fetch(message.author.id).catch(() => null));
+      (await getGuildMemberCached(message.guild, message.author.id, { ttlMs: 20_000 }));
   const ignoreExp = await shouldIgnoreExpForMember({
     guildId: message.guild.id,
     member,
@@ -6173,8 +6157,7 @@ ${game.previewUrl}`,
 
   const winEmbed = buildWinEmbed(interaction.user.id, rewardExp, nextTotal);
   const mainChannel =
-    getChannelSafe(interaction.client, cfg.channelId) ||
-    (await interaction.client.channels.fetch(cfg.channelId).catch(() => null));
+    await getChannelCached(interaction.client, cfg.channelId);
   if (mainChannel) {
     await mainChannel.send({ embeds: [winEmbed] }).catch(() => {});
   }
@@ -6208,8 +6191,7 @@ async function restoreActiveGames(client) {
   const cfg = getConfig(client);
   if (!cfg?.enabled || !cfg.channelId) return;
   const channel =
-    getChannelSafe(client, cfg.channelId) ||
-    (await client.channels.fetch(cfg.channelId).catch(() => null));
+    await getChannelCached(client, cfg.channelId);
   const guildId = channel?.guild?.id || null;
   if (!guildId) return;
   await loadRotationState(client, cfg);

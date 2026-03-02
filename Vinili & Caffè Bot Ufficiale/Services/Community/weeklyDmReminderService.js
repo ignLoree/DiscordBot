@@ -5,6 +5,10 @@ const { EmbedBuilder } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
+const {
+  getClientGuildCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const STATE_PATH = path.join(
   __dirname,
@@ -379,6 +383,9 @@ const MASSIVE_REMINDER_POOL = buildMassiveReminderPool();
 let loopHandle = null;
 let state = null;
 let tickInFlight = null;
+let stateWriteTimer = null;
+const MEMBER_LIST_REFRESH_TTL_MS = 10 * 60 * 1000;
+const memberListRefreshedAt = new Map();
 
 function readJson(filePath, fallback) {
   try {
@@ -408,8 +415,31 @@ function ensureState() {
   return state;
 }
 
-function saveState() {
+function flushState() {
+  if (stateWriteTimer) {
+    clearTimeout(stateWriteTimer);
+    stateWriteTimer = null;
+  }
   writeJson(STATE_PATH, ensureState());
+}
+
+function saveState() {
+  if (stateWriteTimer) return;
+  stateWriteTimer = setTimeout(() => {
+    stateWriteTimer = null;
+    writeJson(STATE_PATH, ensureState());
+  }, 250);
+  if (typeof stateWriteTimer?.unref === "function") stateWriteTimer.unref();
+}
+
+async function refreshGuildMembersIfNeeded(guild, ttlMs = MEMBER_LIST_REFRESH_TTL_MS) {
+  const guildId = String(guild?.id || "");
+  if (!guildId) return;
+  const now = Date.now();
+  const last = Number(memberListRefreshedAt.get(guildId) || 0);
+  if (now - last < ttlMs) return;
+  await guild.members.fetch().catch(() => {});
+  memberListRefreshedAt.set(guildId, Date.now());
 }
 
 function getCfg(client) {
@@ -808,7 +838,7 @@ function hasRecentReminderForCooldown(historyEntry, cooldownDays) {
 }
 
 async function buildWeeklyJobs(client, guild) {
-  await guild.members.fetch().catch(() => {});
+  await refreshGuildMembersIfNeeded(guild);
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const cfg = getCfg(client);
   const timeZone = getTimeZone(client);
@@ -975,7 +1005,7 @@ async function runStartupBlastOnce(client, guild) {
   entry.startupBlastRunning = true;
   saveState();
   try {
-    await guild.members.fetch().catch(() => {});
+    await refreshGuildMembersIfNeeded(guild);
     const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
     const eligibleMembers = [];
     for (const member of guild.members.cache.values()) {
@@ -1071,7 +1101,7 @@ async function runExternalStartupBlastOnce(client, guild) {
   entry.externalStartupBlastRunning = true;
   saveState();
   try {
-    await guild.members.fetch().catch(() => {});
+    await refreshGuildMembersIfNeeded(guild);
     const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
     const dmIds = collectOpenDmRecipientIds(client);
     const outsideIds = [...dmIds].filter((id) => !guild.members.cache.has(id));
@@ -1084,9 +1114,7 @@ async function runExternalStartupBlastOnce(client, guild) {
       if (noDmSet.has(String(userId))) continue;
       const existing = entry.externalReminderHistory?.[String(userId)] || {};
       if (existing?.stopped || existing?.returnedOnce) continue;
-      const user =
-        client.users.cache.get(String(userId)) ||
-        (await client.users.fetch(String(userId)).catch(() => null));
+      const user = await getUserCached(client, String(userId), { ttlMs: 30_000 });
       if (!user || user.bot) continue;
 
       try {
@@ -1132,7 +1160,7 @@ async function runExternalStartupBlastOnce(client, guild) {
 async function sendExternalReturnReminders(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
-  await guild.members.fetch().catch(() => {});
+  await refreshGuildMembersIfNeeded(guild);
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
   const dmIds = collectOpenDmRecipientIds(client);
   const now = Date.now();
@@ -1197,9 +1225,7 @@ async function sendExternalReturnReminders(client, guild) {
 
     if (!shouldSend) continue;
 
-    const user =
-      client.users.cache.get(uid) ||
-      (await client.users.fetch(uid).catch(() => null));
+    const user = await getUserCached(client, uid, { ttlMs: 30_000 });
     if (!user || user.bot) continue;
 
     try {
@@ -1271,8 +1297,7 @@ async function sendDueJobs(client, guild) {
 
     const user =
       member.user ||
-      client.users.cache.get(userId) ||
-      (await client.users.fetch(userId).catch(() => null));
+      (await getUserCached(client, userId, { ttlMs: 30_000 }));
     if (!user || user.bot) {
       job.skipped = "user-unavailable";
       continue;
@@ -1313,9 +1338,7 @@ async function weeklyTick(client) {
   try {
     const guildId = getMainGuildId(client);
     if (!guildId) return;
-    const guild =
-      client.guilds.cache.get(guildId) ||
-      (await client.guilds.fetch(guildId).catch(() => null));
+    const guild = await getClientGuildCached(client, guildId, { ttlMs: 30_000 });
     if (!guild) return;
 
     if (isStartupBlastEnabled(client)) {
@@ -1350,5 +1373,6 @@ function startWeeklyDmReminderLoop(client) {
 }
 
 module.exports = {
+  flushState,
   startWeeklyDmReminderLoop,
 };

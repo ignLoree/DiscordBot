@@ -1,8 +1,15 @@
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v10");
 const fs = require("fs");
+const path = require("path");
 const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
+const {
+  isCommandDeployRequired,
+  markCommandDeployComplete,
+} = require("../../shared/runtime/commandDeployCache");
+
+const BOT_DEPLOY_CACHE_KEY = "official";
 
 module.exports = (client) => {
   client.handleCommands = async (commandFolders, basePath) => {
@@ -21,14 +28,15 @@ module.exports = (client) => {
     };
 
     for (const folder of commandFolders) {
-      const commandFiles = fs
-        .readdirSync(`${basePath}/${folder}`)
-        .filter((f) => f.endsWith(".js"));
+      const folderPath = path.join(basePath, folder);
+      if (!fs.existsSync(folderPath)) continue;
+      const commandFiles = fs.readdirSync(folderPath).filter((f) => f.endsWith(".js"));
 
       for (const file of commandFiles) {
-        const filePath = `../Commands/${folder}/${file}`;
+        const filePath = path.join(folderPath, file);
         const key = `${folder}/${file}`;
         try {
+          delete require.cache[require.resolve(filePath)];
           const command = require(filePath);
           const meta = parseCommandMeta(command);
           if (!meta.name) {
@@ -83,6 +91,16 @@ module.exports = (client) => {
       process.env.DISCORD_CLIENT_ID ||
       process.env.DISCORD_CLIENT_ID_OFFICIAL ||
       IDs.bots.ViniliCaffeBot;
+    const deployCheck = isCommandDeployRequired(
+      BOT_DEPLOY_CACHE_KEY,
+      { clientId },
+      client.commandArray,
+    );
+    if (!deployCheck.required) {
+      global.logger.info("[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato.");
+      return;
+    }
+
     const rest = new REST({ version: "10" }).setToken(token);
 
     try {
@@ -105,6 +123,11 @@ module.exports = (client) => {
       await rest.put(Routes.applicationCommands(clientId), {
         body: client.commandArray,
       });
+      markCommandDeployComplete(
+        BOT_DEPLOY_CACHE_KEY,
+        { clientId },
+        deployCheck.hash,
+      );
       client.logs.success(
         "[FUNCTION] Successfully reloaded application (/) commands.",
       );

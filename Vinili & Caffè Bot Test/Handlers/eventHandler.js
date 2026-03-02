@@ -1,28 +1,9 @@
 const ascii = require("ascii-table");
-const fs = require("fs");
 const path = require("path");
+const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
 
 const LEGACY_READY_EVENT = "ready";
 const READY_EVENT_ALIAS = "clientReady";
-
-function listJsFiles(dir) {
-  if (!fs.existsSync(dir)) return [];
-
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...listJsFiles(fullPath));
-      continue;
-    }
-    if (entry.isFile() && entry.name.endsWith(".js")) {
-      files.push(fullPath);
-    }
-  }
-
-  return files;
-}
 
 function normalizeEventName(eventName) {
   return eventName === LEGACY_READY_EVENT ? READY_EVENT_ALIAS : eventName;
@@ -52,7 +33,7 @@ module.exports = (client) => {
     const statusMap = new Map();
     let loaded = 0;
 
-    for (const file of listJsFiles(absBase)) {
+    for (const file of listJsFilesRecursive(absBase)) {
       const rel = path.relative(absBase, file).replace(/\\/g, "/");
       try {
         delete require.cache[require.resolve(file)];

@@ -16,9 +16,7 @@ async function runEmbedCandidaturePanelAuto(client) {
 
   const candidatureChannel =
     client.channels.cache.get(IDs.channels.candidatureStaff) ||
-    (await client.channels
-      .fetch(IDs.channels.candidatureStaff)
-      .catch(() => null));
+    (await client.channels.fetch(IDs.channels.candidatureStaff).catch(() => null));
   if (!candidatureChannel?.isTextBased?.()) {
     global.logger.warn(
       "[CLIENT READY] Candidature panel channel missing/unusable:",
@@ -214,9 +212,7 @@ async function runStaffEmbedAuto(client) {
 
   const moderationChannel =
     client.channels.cache.get(IDs.channels.moderazioneStaff) ||
-    (await client.channels
-      .fetch(IDs.channels.moderazioneStaff)
-      .catch(() => null));
+    (await client.channels.fetch(IDs.channels.moderazioneStaff).catch(() => null));
   const bestStaffChannel =
     client.channels.cache.get(IDs.channels.bestStaff) ||
     (await client.channels.fetch(IDs.channels.bestStaff).catch(() => null));
@@ -1807,3 +1803,4 @@ module.exports = {
     await runAllClientReadyPanels(client);
   },
 };
+  const { getClientGuildCached, getGuildChannelCached, getGuildRoleCached } = require("../Utils/Interaction/interactionEntityCache");

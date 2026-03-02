@@ -29,6 +29,10 @@ function ensureStaffDoc(staffDoc, guildId, userId) {
   });
 }
 
+async function getStaffDoc(guildId, userId) {
+  return Staff.findOne({ guildId, userId });
+}
+
 function makeLogEmbed(
   interaction,
   user,
@@ -228,8 +232,7 @@ async function handleNegativeRemove(
   });
 }
 
-async function handleMedia(interaction, guildId, staffUser) {
-  const doc = await Staff.findOne({ guildId, userId: staffUser.id });
+async function handleMedia(interaction, staffUser, doc) {
   if (!doc) {
     return safeEditReply(interaction, {
       embeds: [
@@ -385,12 +388,17 @@ module.exports = {
     await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
 
     try {
+      const existingStaffDoc =
+        sub === "media" ? await getStaffDoc(guildId, staffUser.id) : null;
       if (sub === "media") {
-        return handleMedia(interaction, guildId, staffUser);
+        return handleMedia(interaction, staffUser, existingStaffDoc);
       }
 
-      let staffDoc = await Staff.findOne({ guildId, userId: staffUser.id });
-      staffDoc = ensureStaffDoc(staffDoc, guildId, staffUser.id);
+      const staffDoc = ensureStaffDoc(
+        existingStaffDoc || (await getStaffDoc(guildId, staffUser.id)),
+        guildId,
+        staffUser.id,
+      );
 
       if (group === "positiva" && sub === "add") {
         return handlePositiveAdd(

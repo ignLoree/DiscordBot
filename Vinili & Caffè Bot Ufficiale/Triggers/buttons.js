@@ -3,6 +3,10 @@ const { decrementQuoteCount } = require("../Utils/Quote/quoteCounter");
 const { ROLE_MULTIPLIERS } = require("../Services/Community/expService");
 const { AvatarPrivacy, BannerPrivacy, } = require("../Schemas/Community/communitySchemas");
 const IDs = require("../Utils/Config/ids");
+const {
+  getGuildMemberCached,
+  getUserCached,
+} = require("../Utils/Interaction/interactionEntityCache");
 const { checkButtonPermission, checkStringSelectPermission, buildGlobalPermissionDeniedEmbed, buildGlobalNotYourControlEmbed, } = require("../Utils/Moderation/commandPermissions");
 const DIVIDER_URL =
   "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
@@ -280,12 +284,10 @@ async function enforceInteractionPermissions(interaction) {
 async function resolveMentionLabel(interaction, userId) {
   let label = `<@${userId}>`;
   try {
-    const member =
-      interaction.guild.members.cache.get(userId) ||
-      (await interaction.guild.members.fetch(userId).catch(() => null));
+    const member = await getGuildMemberCached(interaction.guild, userId);
     if (member) return `<@${member.user.id}>`;
 
-    const user = await interaction.client.users.fetch(userId).catch(() => null);
+    const user = await getUserCached(interaction.client, userId);
     if (user) label = `<@${user.id}>`;
   } catch { }
   return label;

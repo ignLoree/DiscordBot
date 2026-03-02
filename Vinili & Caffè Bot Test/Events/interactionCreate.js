@@ -9,6 +9,7 @@ const {
   buildGlobalPermissionDeniedEmbed,
   buildGlobalNotYourControlEmbed,
 } = require("../Utils/Moderation/commandPermissions");
+const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
@@ -145,8 +146,7 @@ async function logInteractionError(interaction, client, err) {
   try {
     const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
     const errorChannel = errorChannelId
-      ? client.channels.cache.get(errorChannelId) ||
-        (await client.channels.fetch(errorChannelId).catch(() => null))
+      ? await getClientChannelCached(client, errorChannelId, { ttlMs: 30_000 })
       : null;
 
     if (errorChannel?.isTextBased?.()) {

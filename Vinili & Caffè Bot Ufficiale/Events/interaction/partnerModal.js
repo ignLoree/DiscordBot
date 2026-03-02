@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const axios = require("axios");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 function extractInviteCode(text) {
   if (!text) return null;
@@ -23,6 +24,43 @@ function isValidServerName(name) {
   const trimmed = String(name).replace(/\s+/g, " ").trim();
   if (!trimmed) return false;
   return /[\p{L}\p{N}]/u.test(trimmed);
+}
+
+function stripLinksFromDescription(text) {
+  return String(text || "")
+    .replace(
+      /\bhttps?:\/\/(?!discord\.gg\/|discord(?:app)?\.com\/invite\/|discord\.com\/invite\/)\S+/gi,
+      "",
+    )
+    .replace(/\bwww\.[^\s<>()]+\.[a-z]{2,}(?:\/\S*)?/gi, "")
+    .replace(
+      /\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()]*)?/gi,
+      (match) =>
+        /^(?:discord\.gg\/|discord(?:app)?\.com\/invite\/|discord\.com\/invite\/)/i.test(
+          String(match || "").trim(),
+        )
+          ? match
+          : "",
+    )
+    .replace(/\s{2,}/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function getOrCreateStaffPartnerDoc(guildId, userId) {
+  let staffDoc = await Staff.findOne({ guildId, userId });
+  if (!staffDoc) {
+    staffDoc = new Staff({
+      guildId,
+      userId,
+      partnerCount: 0,
+      partnerActions: [],
+    });
+  }
+  if (!Array.isArray(staffDoc.partnerActions)) staffDoc.partnerActions = [];
+  if (typeof staffDoc.partnerCount !== "number") staffDoc.partnerCount = 0;
+  return staffDoc;
 }
 
 async function handlePartnerModal(interaction) {
@@ -65,11 +103,7 @@ async function handlePartnerModal(interaction) {
     return true;
   }
   let managerMember = null;
-  try {
-    managerMember = await interaction.guild.members.fetch(managerId);
-  } catch {
-    managerMember = null;
-  }
+  managerMember = await getGuildMemberCached(interaction.guild, managerId);
   if (!managerMember) {
     await interaction.editReply({
       embeds: [
@@ -175,12 +209,9 @@ async function handlePartnerModal(interaction) {
     .replace(/<#\d+>/g, "")
     .replace(/@everyone/g, "")
     .replace(/@here/g, "")
-    .replace(
-      /https?:\/\/(?!discord(?:app)?\.com\/invite\/|discord\.gg\/)\S+/gi,
-      "",
-    )
     .trim();
-  if (!filteredDescription) {
+  const sanitizedDescription = stripLinksFromDescription(filteredDescription);
+  if (!sanitizedDescription) {
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
@@ -194,18 +225,11 @@ async function handlePartnerModal(interaction) {
   }
 
   try {
-    let staffDoc = await Staff.findOne({
-      guildId: interaction.guild.id,
-      userId: interaction.user.id,
-    });
-    if (!staffDoc) {
-      staffDoc = new Staff({
-        guildId: interaction.guild.id,
-        userId: interaction.user.id,
-        partnerCount: 0,
-        partnerActions: [],
-      });
-    }
+    const guildId = interaction.guild.id;
+    const staffDoc = await getOrCreateStaffPartnerDoc(
+      guildId,
+      interaction.user.id,
+    );
 
     staffDoc.partnerCount++;
     staffDoc.managerId = managerId;
@@ -247,7 +271,7 @@ async function handlePartnerModal(interaction) {
     if (partnershipChannel) {
       const sentMessageIds = [];
       const contentWithManager = normalizeManagerLine(
-        filteredDescription,
+        sanitizedDescription,
         managerId,
       );
       const parts = splitMessage(contentWithManager);

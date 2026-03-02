@@ -3,6 +3,10 @@ const suggestion = require("../../Schemas/Suggestion/suggestionSchema.js");
 const IDs = require("../../Utils/Config/ids");
 const { addExpWithLevel, getLevelInfo, getTotalExpForLevel, } = require("../../Services/Community/expService");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
+const {
+  getGuildChannelCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const STAFF_ACCEPT_BUTTON_ID = "suggestion_staff_accept";
 const STAFF_REJECT_BUTTON_ID = "suggestion_staff_reject";
@@ -58,7 +62,7 @@ function isSuggestionClosed(message) {
 }
 
 async function deleteThreadForMessage(guild, messageId) {
-  const thread = await guild.channels.fetch(String(messageId || "")).catch(() => null);
+  const thread = await getGuildChannelCached(guild, String(messageId || ""));
   if (thread?.isThread?.()) {
     await thread.delete().catch(() => null);
   }
@@ -388,11 +392,10 @@ async function handleSuggestionVote(interaction) {
       return true;
     }
 
-    const suggestionChannel =
-      interaction.guild.channels.cache.get(IDs.channels.suggestions) ||
-      (await interaction.guild.channels
-        .fetch(IDs.channels.suggestions)
-        .catch(() => null));
+    const suggestionChannel = await getGuildChannelCached(
+      interaction.guild,
+      IDs.channels.suggestions,
+    );
     const suggestionMessage = await suggestionChannel?.messages
       ?.fetch(suggestionData.Msg)
       .catch(() => null);
@@ -460,15 +463,9 @@ async function handleSuggestionVote(interaction) {
       const userId = suggestionData.AuthorID;
       let levelsAwarded = 0;
       try {
-        let expDoc = await ExpUser.findOne({ guildId, userId })
+        const expDoc = await ExpUser.findOne({ guildId, userId })
           .lean()
           .catch(() => null);
-        if (!expDoc) {
-          await ExpUser.create({ guildId, userId }).catch(() => {});
-          expDoc = await ExpUser.findOne({ guildId, userId })
-            .lean()
-            .catch(() => null);
-        }
 
         const currentExp = Number(expDoc?.totalExp || 0);
         const currentLevel = Number(getLevelInfo(currentExp).level || 0);
@@ -494,10 +491,7 @@ async function handleSuggestionVote(interaction) {
 
       const supportersChannelId = IDs?.channels?.supporters;
       const supportersChannel = supportersChannelId
-        ? interaction.guild.channels.cache.get(supportersChannelId) ||
-          (await interaction.guild.channels
-            .fetch(supportersChannelId)
-            .catch(() => null))
+        ? await getGuildChannelCached(interaction.guild, supportersChannelId)
         : null;
       if (supportersChannel) {
         const thanksText =
@@ -508,9 +502,10 @@ async function handleSuggestionVote(interaction) {
       }
     }
 
-    const suggestionAuthor = await interaction.client.users
-      .fetch(suggestionData.AuthorID)
-      .catch(() => null);
+    const suggestionAuthor = await getUserCached(
+      interaction.client,
+      suggestionData.AuthorID,
+    );
     if (suggestionAuthor) {
       await suggestionAuthor
         .send({

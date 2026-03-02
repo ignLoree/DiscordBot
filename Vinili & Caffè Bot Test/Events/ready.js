@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const mongoose = require("mongoose");
 const { restoreTtsConnections } = require("../Services/TTS/ttsService");
+const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
@@ -76,9 +77,9 @@ async function handleRestartNotification(client) {
     const raw = fs.readFileSync(restartNotifyPath, "utf8");
     const data = JSON.parse(raw);
 
-    const channel =
-      client.channels.cache.get(data?.channelId) ||
-      (await client.channels.fetch(data?.channelId).catch(() => null));
+    const channel = await getClientChannelCached(client, data?.channelId, {
+      ttlMs: 30_000,
+    });
     if (channel) {
       const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
       const elapsed = Number.isFinite(elapsedMs)

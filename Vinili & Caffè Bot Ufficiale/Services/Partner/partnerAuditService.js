@@ -3,11 +3,12 @@ const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
 
 let dailyPartnerAuditTask = null;
-const DUPLICATE_PARTNERSHIP_WINDOW_MS = 12 * 60 * 60 * 1000;
 const SAME_DAY_DUPLICATE_REASON =
-  "Stessa partnership fatta pi\u00F9 di una volta nello stesso giorno";
-const SAME_MANAGER_SAME_DAY_REASON =
-  "Non fare partnership con se stessi pi\u00F9 di una volta al giorno";
+  "Non fare la stessa partnership più di una volta al giorno";
+const SELF_PARTNERSHIP_DAILY_REASON =
+  "Non fare partnership con se stessi più di una volta al giorno";
+const SAME_MANAGER_DAILY_CAP_REASON =
+  "Non mettere più di 5 partnership con lo stesso utente";
 
 function getRomeDateKey(date) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -69,6 +70,13 @@ function buildDescriptionFingerprint(rawText) {
   return text;
 }
 
+function normalizeFingerprint(rawText) {
+  return buildDescriptionFingerprint(rawText)
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function extractManagerMentions(sourceText) {
   const text = String(sourceText || "");
   const managerLineMatches = Array.from(
@@ -85,40 +93,6 @@ function extractManagerMentions(sourceText) {
     .filter(Boolean)
     .map((id) => String(id));
   return Array.from(new Set(genericMentions));
-}
-
-function containsExternalLinks(text) {
-  const source = String(text || "");
-  const urls = source.match(/(?:https?:\/\/|www\.)\S+/gi) || [];
-  const rawDiscord =
-    source.match(/\b(?:discord\.gg|discord(?:app)?\.com\/invite)\/\S+/gi) || [];
-  const all = [...urls, ...rawDiscord];
-  if (!all.length) return false;
-  return all.some(
-    (u) => !/(?:discord\.gg\/|discord(?:app)?\.com\/invite\/)/i.test(u),
-  );
-}
-
-function findLatestPreviousInviteOccurrence(
-  allCreates,
-  inviteCode,
-  dateMs,
-  currentIndex,
-) {
-  const safeCode = String(inviteCode || "").toLowerCase();
-  if (!safeCode || !Number.isFinite(dateMs)) return null;
-  let best = null;
-  for (const row of allCreates) {
-    if (!Array.isArray(row.inviteCodes) || !row.inviteCodes.includes(safeCode))
-      continue;
-    if (!Number.isFinite(row.dateMs) || row.dateMs <= 0) continue;
-    if (row.index === currentIndex) continue;
-    if (row.dateMs >= dateMs) continue;
-    if (!best || row.dateMs > best.dateMs) {
-      best = { dateMs: row.dateMs, index: row.index };
-    }
-  }
-  return best;
 }
 
 async function fetchPartnerActionText(guild, action) {
@@ -249,15 +223,10 @@ async function runDailyPartnerAudit(client, opts = {}) {
     if (!dayCreates.length) continue;
     totalChecked += dayCreates.length;
 
-    const previousDayKey = getPreviousRomeDateKey(
-      new Date(`${targetDateKey}T12:00:00.000Z`),
-    );
-    const rowsFor12hCheck = allCreates
+    const rowsForAudit = allCreates
       .filter((row) => {
-        const rowKey = getRomeDateKey(
-          new Date(row?.action?.date || Date.now()),
-        );
-        return rowKey === targetDateKey || rowKey === previousDayKey;
+        const rowKey = getRomeDateKey(new Date(row?.action?.date || Date.now()));
+        return rowKey === targetDateKey;
       })
       .sort((a, b) => a.dateMs - b.dateMs);
 
@@ -290,12 +259,11 @@ async function runDailyPartnerAudit(client, opts = {}) {
       return row.inviteCodes;
     };
 
-    await Promise.all(rowsFor12hCheck.map((row) => enrichInviteCodes(row)));
+    await Promise.all(rowsForAudit.map((row) => enrichInviteCodes(row)));
 
-    const seenInviteCodesSameDay = new Set();
-    const firstInviteIndexSameDay = new Map();
-    const firstManagerIndexSameDay = new Map();
+    const firstFingerprintIndexSameDay = new Map();
     const managerDailyCounter = new Map();
+    const selfDailyCounter = new Map();
     const invalidIndices = new Set();
     const invalidReasonsByIndex = new Map();
     const addInvalidReason = (index, reason) => {
@@ -311,80 +279,37 @@ async function runDailyPartnerAudit(client, opts = {}) {
       const { index } = item;
       const reasons = [];
       const actionText = await getActionTextCached(item);
-      const descriptionFingerprint = buildDescriptionFingerprint(actionText);
+      const descriptionFingerprint = normalizeFingerprint(actionText);
       let managerMentions = extractManagerMentions(descriptionFingerprint);
 
       if (!managerMentions.length && item.action?.managerId) {
         managerMentions = [String(item.action.managerId)];
       }
 
-      const inviteCodes = await enrichInviteCodes(item);
+      await enrichInviteCodes(item);
 
-      if (!managerMentions.length) {
-        reasons.push("Manager mancante");
-      }
-      for (const managerId of managerMentions) {
-        if (!firstManagerIndexSameDay.has(managerId)) {
-          firstManagerIndexSameDay.set(managerId, index);
+      if (descriptionFingerprint) {
+        if (!firstFingerprintIndexSameDay.has(descriptionFingerprint)) {
+          firstFingerprintIndexSameDay.set(descriptionFingerprint, index);
         } else {
-          reasons.push(SAME_MANAGER_SAME_DAY_REASON);
+          reasons.push(SAME_DAY_DUPLICATE_REASON);
         }
+      }
+
+      for (const managerId of managerMentions) {
         const used = Number(managerDailyCounter.get(managerId) || 0) + 1;
         managerDailyCounter.set(managerId, used);
         if (used > 5) {
-          reasons.push(
-            "pi\u00F9 di 5 partner con lo stesso manager nello stesso giorno",
-          );
+          reasons.push(SAME_MANAGER_DAILY_CAP_REASON);
         }
-      }
-      if (!managerMentions.length) {
-        reasons.push("Partner senza menzione del manager");
-      }
 
-      if (containsExternalLinks(descriptionFingerprint)) {
-        reasons.push("Contiene link esterni/immagini/gif non consentiti");
-      }
-
-      if (!inviteCodes.length) {
-        reasons.push("Link invito Discord assente");
-      } else {
-        for (const inviteCode of inviteCodes) {
-          if (!firstInviteIndexSameDay.has(inviteCode)) {
-            firstInviteIndexSameDay.set(inviteCode, index);
-          }
-          if (seenInviteCodesSameDay.has(inviteCode)) {
-            reasons.push(
-              "Stessa partnership fatta pi\u00F9 di una volta nello stesso giorno",
-            );
-            break;
+        if (String(managerId) === String(doc.userId)) {
+          const selfUsed = Number(selfDailyCounter.get(managerId) || 0) + 1;
+          selfDailyCounter.set(managerId, selfUsed);
+          if (selfUsed > 1) {
+            reasons.push(SELF_PARTNERSHIP_DAILY_REASON);
           }
         }
-        for (const inviteCode of inviteCodes) {
-          seenInviteCodesSameDay.add(inviteCode);
-        }
-
-        for (const inviteCode of inviteCodes) {
-          const previous = findLatestPreviousInviteOccurrence(
-            rowsFor12hCheck,
-            inviteCode,
-            item.dateMs,
-            index,
-          );
-          if (previous?.dateMs) {
-            const delta = Number(item.dateMs - previous.dateMs);
-            if (
-              Number.isFinite(delta) &&
-              delta >= 0 &&
-              delta < DUPLICATE_PARTNERSHIP_WINDOW_MS
-            ) {
-              reasons.push("Stessa partnership ripetuta prima di 12 ore");
-              break;
-            }
-          }
-        }
-
-        // Deliberately skip remote invite validity checks.
-        // We keep deterministic checks only (presence, duplicate/day, duplicate/12h, external links, manager rules).
       }
 
       if (reasons.length) {
@@ -395,29 +320,12 @@ async function runDailyPartnerAudit(client, opts = {}) {
       }
     }
 
-    for (const keepIndex of firstInviteIndexSameDay.values()) {
+    for (const keepIndex of firstFingerprintIndexSameDay.values()) {
       const reasons = invalidReasonsByIndex.get(keepIndex);
       if (!Array.isArray(reasons) || !reasons.length) continue;
 
       const filteredReasons = reasons.filter(
         (reason) => reason !== SAME_DAY_DUPLICATE_REASON,
-      );
-
-      if (filteredReasons.length) {
-        invalidReasonsByIndex.set(keepIndex, filteredReasons);
-        invalidIndices.add(keepIndex);
-      } else {
-        invalidReasonsByIndex.delete(keepIndex);
-        invalidIndices.delete(keepIndex);
-      }
-    }
-
-    for (const keepIndex of firstManagerIndexSameDay.values()) {
-      const reasons = invalidReasonsByIndex.get(keepIndex);
-      if (!Array.isArray(reasons) || !reasons.length) continue;
-
-      const filteredReasons = reasons.filter(
-        (reason) => reason !== SAME_MANAGER_SAME_DAY_REASON,
       );
 
       if (filteredReasons.length) {

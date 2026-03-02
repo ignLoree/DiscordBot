@@ -17,18 +17,48 @@ function buildResultEmbed(interaction, description) {
     .setTimestamp();
 }
 
-async function getOrCreateStaffData(guildId, userId) {
-  let staffData = await Staff.findOne({ guildId, userId });
+async function addPartnerPoints(guildId, userId, amount) {
+  return Staff.findOneAndUpdate(
+    { guildId, userId },
+    {
+      $inc: { partnerCount: amount },
+      $setOnInsert: { guildId, userId, partnerCount: 0 },
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    },
+  );
+}
 
-  if (!staffData) {
-    staffData = new Staff({ guildId, userId, partnerCount: 0 });
-  }
-
-  if (typeof staffData.partnerCount !== "number") {
-    staffData.partnerCount = 0;
-  }
-
-  return staffData;
+async function removePartnerPoints(guildId, userId, amount) {
+  return Staff.findOneAndUpdate(
+    { guildId, userId },
+    [
+      {
+        $set: {
+          guildId,
+          userId,
+          partnerCount: {
+            $max: [
+              0,
+              {
+                $subtract: [
+                  { $ifNull: ["$partnerCount", 0] },
+                  Number(amount || 0),
+                ],
+              },
+            ],
+          },
+        },
+      },
+    ],
+    {
+      new: true,
+      upsert: true,
+    },
+  );
 }
 
 module.exports = {
@@ -113,14 +143,10 @@ module.exports = {
       });
     }
 
-    const staffData = await getOrCreateStaffData(
-      interaction.guild.id,
-      targetUser.id,
-    );
+    const guildId = interaction.guild.id;
 
     if (sub === "add") {
-      staffData.partnerCount += amount;
-      await staffData.save();
+      const staffData = await addPartnerPoints(guildId, targetUser.id, amount);
 
       const embed = buildResultEmbed(
         interaction,
@@ -131,8 +157,7 @@ module.exports = {
     }
 
     if (sub === "remove") {
-      staffData.partnerCount = Math.max(0, staffData.partnerCount - amount);
-      await staffData.save();
+      const staffData = await removePartnerPoints(guildId, targetUser.id, amount);
 
       const embed = buildResultEmbed(
         interaction,

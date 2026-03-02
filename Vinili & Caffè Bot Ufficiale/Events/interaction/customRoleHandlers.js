@@ -3,6 +3,13 @@ const { CustomRole } = require("../../Schemas/Community/communitySchemas");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
 const { resolveCustomRoleState, buildExpiryText, } = require("../../Utils/Community/customRoleState");
+const {
+  getClientGuildCached,
+  getGuildChannelCached,
+  getGuildMemberCached,
+  getGuildRoleCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const pendingRoleGrants = new Map();
 const CUSTOM_VOICE_CATEGORY_ID = IDs?.categories?.categoryPrivate || null;
@@ -14,27 +21,15 @@ async function fetchFromGuildCacheOrApi(mapLike, fetchFn, id) {
 }
 
 async function fetchGuildChannel(guild, channelId) {
-  return fetchFromGuildCacheOrApi(
-    guild?.channels?.cache,
-    guild?.channels?.fetch?.bind(guild.channels),
-    channelId,
-  );
+  return getGuildChannelCached(guild, channelId);
 }
 
 async function fetchGuildMember(guild, userId) {
-  return fetchFromGuildCacheOrApi(
-    guild?.members?.cache,
-    guild?.members?.fetch?.bind(guild.members),
-    userId,
-  );
+  return getGuildMemberCached(guild, userId);
 }
 
 async function fetchGuildRole(guild, roleId) {
-  return fetchFromGuildCacheOrApi(
-    guild?.roles?.cache,
-    guild?.roles?.fetch?.bind(guild.roles),
-    roleId,
-  );
+  return getGuildRoleCached(guild, roleId);
 }
 
 async function replyEphemeral(interaction, payload) {
@@ -209,9 +204,7 @@ async function createCustomRoleGrantRequest({
   roleId,
   timeoutMs = 60_000,
 }) {
-  const guild =
-    client.guilds.cache.get(guildId) ||
-    (await client.guilds.fetch(guildId).catch(() => null));
+  const guild = await getClientGuildCached(client, guildId);
   const channel = await fetchGuildChannel(guild, channelId);
   const targetMember = await fetchGuildMember(guild, targetId);
   const requesterMember = await fetchGuildMember(guild, requesterId);
@@ -287,9 +280,7 @@ async function createCustomRoleGrantRequest({
       const req = pendingRoleGrants.get(token);
       if (!req) return;
       pendingRoleGrants.delete(token);
-      const g =
-        client.guilds.cache.get(req.guildId) ||
-        (await client.guilds.fetch(req.guildId).catch(() => null));
+      const g = await getClientGuildCached(client, req.guildId);
       const ch = await fetchGuildChannel(g, req.channelId);
       const msg =
         ch?.messages?.cache?.get(req.promptMessageId) ||
@@ -307,9 +298,7 @@ async function createCustomRoleGrantRequest({
           .catch(() => {});
       }
 
-      const user =
-        client.users.cache.get(req.targetId) ||
-        (await client.users.fetch(req.targetId).catch(() => null));
+      const user = await getUserCached(client, req.targetId);
       const dmChannel =
         user?.dmChannel || (await user?.createDM().catch(() => null));
       const dmMsg =
@@ -812,9 +801,7 @@ async function handleAddRemoveSelectMenus(interaction) {
         .catch(() => {});
       return true;
     }
-    const targetMember =
-      interaction.guild.members.cache.get(targetId) ||
-      (await interaction.guild.members.fetch(targetId).catch(() => null));
+    const targetMember = await getGuildMemberCached(interaction.guild, targetId);
     if (!targetMember) {
       await interaction
         .reply({
@@ -1108,9 +1095,7 @@ async function handleGrantButtons(interaction) {
     return true;
   }
 
-  const guild =
-    interaction.client.guilds.cache.get(request.guildId) ||
-    (await interaction.client.guilds.fetch(request.guildId).catch(() => null));
+  const guild = await getClientGuildCached(interaction.client, request.guildId);
   const channel = await fetchGuildChannel(guild, request.channelId);
   const role = await fetchGuildRole(guild, request.roleId);
   const requester = await fetchGuildMember(guild, request.requesterId);

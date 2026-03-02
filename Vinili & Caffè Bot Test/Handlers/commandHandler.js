@@ -4,10 +4,16 @@ const fs = require("fs");
 const path = require("path");
 const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
+const {
+  isCommandDeployRequired,
+  markCommandDeployComplete,
+} = require("../../shared/runtime/commandDeployCache");
 
 function toArrayUnique(values = []) {
   return Array.from(new Set(values.filter(Boolean).map((x) => String(x))));
 }
+
+const BOT_DEPLOY_CACHE_KEY = "test";
 
 module.exports = (client) => {
   client.handleCommands = async (commandFolders = [], basePath) => {
@@ -110,11 +116,27 @@ module.exports = (client) => {
 
     const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
     for (const guildId of allowedGuildIds) {
+      const deployCheck = isCommandDeployRequired(
+        BOT_DEPLOY_CACHE_KEY,
+        { clientId, guildId },
+        client.commandArray,
+      );
+      if (!deployCheck.required) {
+        global.logger?.info?.(
+          `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato.`,
+        );
+        continue;
+      }
       try {
         // eslint-disable-next-line no-await-in-loop
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
           body: client.commandArray,
         });
+        markCommandDeployComplete(
+          BOT_DEPLOY_CACHE_KEY,
+          { clientId, guildId },
+          deployCheck.hash,
+        );
       } catch (error) {
         if (Number(error?.code) === 50001 || Number(error?.status) === 403) {
           global.logger?.warn?.(

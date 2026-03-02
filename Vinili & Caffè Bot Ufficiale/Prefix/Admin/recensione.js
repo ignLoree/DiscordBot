@@ -4,6 +4,10 @@ const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const { ReviewReward } = require("../../Schemas/Community/communitySchemas");
 const { getLevelInfo, addExpWithLevel, } = require("../../Services/Community/expService");
+const {
+  getGuildChannelCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const REVIEW_CHANNEL_ID = IDs.channels.supporters;
 const LEVELS_TO_ADD = 5;
@@ -46,7 +50,7 @@ async function resolveTargetUser(message, raw) {
   if (fromMention) return fromMention;
   const id = String(raw || "").replace(/[<@!>]/g, "");
   if (!/^\d{16,20}$/.test(id)) return null;
-  return message.client.users.fetch(id).catch(() => null);
+  return getUserCached(message.client, id);
 }
 
 module.exports = {
@@ -136,7 +140,7 @@ module.exports = {
 
     const reviewChannel =
       message.guild.channels.cache.get(REVIEW_CHANNEL_ID) ||
-      (await message.guild.channels.fetch(REVIEW_CHANNEL_ID).catch(() => null));
+      (await getGuildChannelCached(message.guild, REVIEW_CHANNEL_ID));
     if (reviewChannel) {
       const reviewEmbed = new EmbedBuilder()
         .setColor("#6f4e37")

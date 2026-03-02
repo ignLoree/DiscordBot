@@ -1,326 +1,46 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, ChannelType, } = require("discord.js");
+﻿const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, PermissionFlagsBits, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
-const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require("../../Utils/Ticket/transcriptUtils");
 const fs = require("fs");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
-const {
-  TICKETS_CATEGORY_NAME,
-  isTicketCategoryName,
-} = require("../../Utils/Ticket/ticketCategoryUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
-const { sendDm } = require("../../Utils/noDmList");
-
-const HANDLED_TICKET_BUTTONS = new Set([
-  "ticket_partnership",
-  "ticket_highstaff",
-  "ticket_supporto",
-  "claim_ticket",
-  "close_ticket",
-  "close_ticket_motivo",
-  "accetta",
-  "rifiuta",
-  "ticket_autoclose_accept",
-  "ticket_autoclose_reject",
-  "unclaim",
-]);
-
-function isTicketRatingButton(customId) {
-  return String(customId || "").startsWith("ticket_rate:");
-}
-
-function isTicketTranscriptButton(customId) {
-  return String(customId || "").startsWith("ticket_transcript:");
-}
-
-const HANDLED_TICKET_SELECT_MENUS = new Set(["ticket_open_menu"]);
-
-function isHandledTicketModalId(id) {
-  return (
-    id === "modal_close_ticket" ||
-    id.startsWith("modal_close_ticket:")
-  );
-}
-
-function getSelectedTicketAction(interaction) {
-  if (!interaction.isStringSelectMenu || !interaction.isStringSelectMenu())
-    return null;
-  if (!HANDLED_TICKET_SELECT_MENUS.has(interaction.customId)) return null;
-  return interaction.values?.[0] || null;
-}
-
-function isHandledTicketInteraction(interaction) {
-  const isTicketButton =
-    interaction.isButton &&
-    interaction.isButton() &&
-    (HANDLED_TICKET_BUTTONS.has(interaction.customId) ||
-      isTicketRatingButton(interaction.customId) ||
-      isTicketTranscriptButton(interaction.customId));
-  const isTicketSelect =
-    interaction.isStringSelectMenu &&
-    interaction.isStringSelectMenu() &&
-    HANDLED_TICKET_SELECT_MENUS.has(interaction.customId);
-  const isTicketModal =
-    interaction.isModalSubmit &&
-    interaction.isModalSubmit() &&
-    isHandledTicketModalId(String(interaction.customId || ""));
-  return { isTicketButton, isTicketSelect, isTicketModal };
-}
-
-function getSponsorGuildIds() {
-  return [
-    IDs.guilds.luna,
-    IDs.guilds.cash,
-    IDs.guilds.porn,
-    IDs.guilds[69],
-    IDs.guilds.weed,
-    IDs.guilds.figa,
-  ].filter(Boolean);
-}
-
-function isSponsorGuild(guildId) {
-  if (!guildId) return false;
-  return getSponsorGuildIds().includes(guildId);
-}
-
-const TICKET_PERMISSIONS_SPONSOR = [
-  PermissionFlagsBits.ViewChannel,
-  PermissionFlagsBits.SendMessages,
-  PermissionFlagsBits.EmbedLinks,
-  PermissionFlagsBits.AttachFiles,
-  PermissionFlagsBits.ReadMessageHistory,
-  PermissionFlagsBits.AddReactions,
-];
-
-async function handleSponsorTicketOpen(interaction) {
-  const guild = interaction.guild;
-  const userId = interaction.user.id;
-  await interaction.deferReply({ ephemeral: true }).catch(() => null);
-
-  if (!interaction.client.ticketOpenLocks) {
-    interaction.client.ticketOpenLocks = new Set();
-  }
-  const ticketLockKey = `${guild.id}:${userId}`;
-  if (interaction.client.ticketOpenLocks.has(ticketLockKey)) {
-    await safeEditReplyHelper(interaction, {
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Attendi")
-          .setDescription(
-            "<:vegax:1443934876440068179> Stai già aprendo un ticket, attendi.",
-          )
-          .setColor("#6f4e37"),
-      ],
-      flags: 1 << 6,
-    });
-    return true;
-  }
-  interaction.client.ticketOpenLocks.add(ticketLockKey);
-
-  try {
-  const existing = await Ticket.findOne({
-    guildId: guild.id,
-    userId,
-    open: true,
-  }).catch(() => null);
-  if (existing) {
-    await safeEditReplyHelper(interaction, {
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Ticket Aperto")
-          .setDescription(
-            `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`,
-          )
-          .setColor("#6f4e37"),
-      ],
-      flags: 1 << 6,
-    });
-    return true;
-  }
-
-  await guild.channels.fetch().catch(() => null);
-  let category = guild.channels.cache.find(
-    (ch) => ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name),
-  );
-  if (!category) {
-    const categories = guild.channels.cache.filter(
-      (ch) => ch.type === ChannelType.GuildCategory,
-    );
-    const bottomPosition =
-      categories.size > 0
-        ? Math.max(...categories.map((ch) => ch.rawPosition ?? 0)) + 1
-        : 0;
-    category = await guild.channels
-      .create({
-        name: TICKETS_CATEGORY_NAME,
-        type: ChannelType.GuildCategory,
-        position: bottomPosition,
-        permissionOverwrites: [
-          { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-        ],
-      })
-      .catch(() => null);
-  }
-  if (!category) {
-    await safeEditReplyHelper(interaction, {
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Errore")
-          .setDescription(
-            "<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket.",
-          )
-          .setColor("#6f4e37"),
-      ],
-      flags: 1 << 6,
-    });
-    return true;
-  }
-
-  const staffRoleId = IDs.roles?.sponsorStaffRoleIds?.[guild.id];
-  const config = IDs.sponsorTicketConfig?.[guild.id] || {};
-  const emoji = config.emoji || "🎫";
-  const tagName = config.tagName || "Supporto";
-
-  const ticketNumber = await getNextTicketId();
-  const overwrites = [
-    { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-    { id: userId, allow: TICKET_PERMISSIONS_SPONSOR },
-  ];
-  if (staffRoleId) {
-    overwrites.push({ id: staffRoleId, allow: TICKET_PERMISSIONS_SPONSOR });
-  }
-
-  const channel = await guild.channels
-    .create({
-      name: `༄${emoji}︲${tagName}᲼${interaction.user.username}`,
-      type: 0,
-      parent: category.id,
-      permissionOverwrites: overwrites,
-    })
-    .catch(() => null);
-
-  if (!channel) {
-    await safeEditReplyHelper(interaction, {
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Errore")
-          .setDescription(
-            "<:vegax:1443934876440068179> Impossibile creare il canale ticket.",
-          )
-          .setColor("#6f4e37"),
-      ],
-      flags: 1 << 6,
-    });
-    return true;
-  }
-
-  const sponsorEmbed = new EmbedBuilder()
-    .setTitle("Ticket aperto – Riscatto ruolo")
-    .setDescription(
-      "Grazie per aver aperto il ticket. Uno **staff** assegnerà **manualmente** il ruolo (non tramite bot). Attendi in questo canale.",
-    )
-    .setColor("#6f4e37");
-
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("close_ticket")
-      .setLabel("🔒 Chiudi")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("close_ticket_motivo")
-      .setLabel("📝 Chiudi Con Motivo")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("claim_ticket")
-      .setLabel("✅ Claim")
-      .setStyle(ButtonStyle.Success),
-  );
-
-  const mainMsg = await channel
-    .send({ embeds: [sponsorEmbed], components: [row] })
-    .catch(() => null);
-
-  try {
-    await Ticket.create({
-      ticketNumber,
-      guildId: guild.id,
-      userId,
-      channelId: channel.id,
-      ticketType: "sponsor_supporto",
-      open: true,
-      messageId: mainMsg?.id || null,
-      descriptionPromptMessageId: null,
-      descriptionSubmitted: false,
-    });
-  } catch (err) {
-    const isDuplicate =
-      err?.code === 11000 ||
-      (err?.message && String(err.message).includes("E11000"));
-    if (isDuplicate) {
-      await channel.delete().catch(() => {});
-      const other = await Ticket.findOne({
-        guildId: guild.id,
-        userId,
-        open: true,
-      }).catch(() => null);
-      await safeEditReplyHelper(interaction, {
-        embeds: [
-          new EmbedBuilder()
-            .setTitle("Ticket Aperto")
-            .setDescription(
-              `<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? ": <#" + other.channelId + ">" : "."}`,
-            )
-            .setColor("#6f4e37"),
-        ],
-        flags: 1 << 6,
-      });
-      return true;
-    }
-    global.logger.error(err);
-    await channel.delete().catch(() => null);
-    await safeEditReplyHelper(interaction, {
-      embeds: [
-        new EmbedBuilder()
-          .setTitle("Errore")
-          .setDescription(
-            "<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.",
-          )
-          .setColor("#6f4e37"),
-      ],
-      flags: 1 << 6,
-    });
-    return true;
-  }
-
-  await safeEditReplyHelper(interaction, {
-    embeds: [
-      new EmbedBuilder()
-        .setTitle("<:vegacheckmark:1443666279058772028> Ticket Creato")
-        .setDescription(`Aperto un nuovo ticket: ${channel}`)
-        .setColor("#6f4e37"),
-    ],
-    flags: 1 << 6,
-  });
-  return true;
-  } finally {
-    interaction.client.ticketOpenLocks.delete(ticketLockKey);
-  }
-}
+const {
+  canUserHandleCloseRequest: runtimeCanUserHandleCloseRequest,
+  ensureClosableTicketOrReply: runtimeEnsureClosableTicketOrReply,
+  findOpenTicketByUser: runtimeFindOpenTicketByUser,
+  findTicketByChannel: runtimeFindTicketByChannel,
+  getGuildChannelCached: runtimeGetGuildChannelCached,
+  getSelectedTicketAction: runtimeGetSelectedTicketAction,
+  isHandledTicketInteraction: runtimeIsHandledTicketInteraction,
+  isSponsorGuild: runtimeIsSponsorGuild,
+  isTicketRatingButton: runtimeIsTicketRatingButton,
+  isTicketTranscriptButton: runtimeIsTicketTranscriptButton,
+  loadTicketForChannelOrReply: runtimeLoadTicketForChannelOrReply,
+} = require("../../Utils/Ticket/ticketInteractionRuntime");
+const {
+  buildTicketClosedEmbed: runtimeBuildTicketClosedEmbed,
+  buildTicketRatingRows: runtimeBuildTicketRatingRows,
+  closeTicket: runtimeCloseTicket,
+} = require("../../Utils/Ticket/ticketCloseRuntime");
+const {
+  createTicketsCategory: runtimeCreateTicketsCategory,
+  handleSponsorTicketOpen: runtimeHandleSponsorTicketOpen,
+} = require("../../Utils/Ticket/ticketOpenRuntime");
 
 async function handleTicketInteraction(interaction) {
-  const selectedTicketAction = getSelectedTicketAction(interaction);
+  const selectedTicketAction = runtimeGetSelectedTicketAction(interaction);
   const ticketActionId = selectedTicketAction || interaction.customId;
 
   const { isTicketButton, isTicketSelect, isTicketModal } =
-    isHandledTicketInteraction(interaction);
+    runtimeIsHandledTicketInteraction(interaction);
   if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
-  if (interaction.guild && isSponsorGuild(interaction.guild.id)) {
+  if (interaction.guild && runtimeIsSponsorGuild(interaction.guild.id)) {
     if (
       isTicketSelect &&
       interaction.customId === "ticket_open_menu" &&
       interaction.values?.[0] === "ticket_supporto"
     ) {
-      return await handleSponsorTicketOpen(interaction);
+      return await runtimeHandleSponsorTicketOpen(interaction);
     }
     return false;
   }
@@ -375,262 +95,6 @@ async function pinFirstTicketMessage(channel, message) {
     await pinSystem.delete().catch(() => {});
   }
 }
-
-  function buildTicketRatingRows(ticketId) {
-    const stylesByScore = {
-      1: ButtonStyle.Danger,
-      2: ButtonStyle.Danger,
-      3: ButtonStyle.Primary,
-      4: ButtonStyle.Success,
-      5: ButtonStyle.Success,
-    };
-    const row = new ActionRowBuilder().addComponents(
-      ...[1, 2, 3, 4, 5].map((score) =>
-        new ButtonBuilder()
-          .setCustomId(`ticket_rate:${ticketId}:${score}`)
-          .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
-          .setLabel(String(score))
-          .setEmoji("⭐"),
-      ),
-    );
-    return [row];
-  }
-
-  function buildTicketClosedEmbed(data) {
-    const openedAt = data?.createdAt
-      ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>`
-      : "Sconosciuto";
-    const closedAt = data?.closedAt
-      ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>`
-      : `<t:${Math.floor(Date.now() / 1000)}:F>`;
-    const reasonText =
-      data?.closeReason && String(data.closeReason).trim()
-        ? String(data.closeReason).trim()
-        : "No reason specified";
-
-    const embed = new EmbedBuilder()
-      .setAuthor({
-        name: data?.guildName || "Ticket System",
-        iconURL: data?.guildIconURL || undefined,
-      })
-      .setTitle("Ticket Closed")
-      .setColor("#6f4e37")
-      .addFields(
-        {
-          name: "🆔 Ticket ID",
-          value: String(data?.ticketNumber || "N/A"),
-          inline: true,
-        },
-        {
-          name: "✅ Opened By",
-          value: data?.userId ? `<@${data.userId}>` : "Sconosciuto",
-          inline: true,
-        },
-        {
-          name: "🛑 Closed By",
-          value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto",
-          inline: true,
-        },
-        { name: "🕒 Open Time", value: openedAt, inline: true },
-        {
-          name: "🙋 Claimed By",
-          value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed",
-          inline: true,
-        },
-        { name: "⏹️ Close Time", value: closedAt, inline: true },
-        { name: "ℹ️ Reason", value: reasonText, inline: false },
-      );
-
-    // Keep temporal fields grouped in the same row after actor fields.
-    const reordered = [
-      embed.data.fields?.[0], // Ticket ID
-      embed.data.fields?.[1], // Opened By
-      embed.data.fields?.[2], // Closed By
-      embed.data.fields?.[3], // Open Time
-      embed.data.fields?.[5], // Close Time
-      embed.data.fields?.[4], // Claimed By
-      embed.data.fields?.[6], // Reason
-    ].filter(Boolean);
-    embed.setFields(reordered);
-
-    if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
-      embed.addFields({
-        name: "⭐ Rating",
-        value: `${data.ratingScore}/5${data?.ratingBy ? ` - da <@${data.ratingBy}>` : ""}`,
-        inline: false,
-      });
-    }
-    return embed;
-  }
-
-  async function sendTranscriptWithBrowserLink(
-    target,
-    payload,
-    hasHtml,
-    extraRows = [],
-    options = {},
-  ) {
-    if (!target?.send) return null;
-    const { guildId, bypassNoDm } = options;
-    const isUserDm = Boolean(bypassNoDm && guildId && (target.user || target.id));
-    const sent = isUserDm
-      ? await sendDm(target.user || target, payload, { guildId, bypassNoDm: true })
-      : await target.send(payload).catch(() => null);
-    if (!sent) return sent;
-    const safeExtraRows = Array.isArray(extraRows)
-      ? extraRows.filter(Boolean)
-      : [];
-    if (!hasHtml) {
-      if (safeExtraRows.length > 0) {
-        const baseContent =
-          typeof payload?.content === "string" ? payload.content.trim() : "";
-        await sent
-          .edit({
-            content: baseContent || undefined,
-            components: safeExtraRows.slice(0, 5),
-          })
-          .catch(() => {});
-      }
-      return sent;
-    }
-    const attachment = sent.attachments?.find((att) => {
-      const name = String(att?.name || "").toLowerCase();
-      const url = String(att?.url || "").toLowerCase();
-      return name.endsWith(".html") || url.includes(".html");
-    });
-    if (attachment?.url) {
-      const baseContent =
-        typeof payload?.content === "string" ? payload.content.trim() : "";
-      const transcriptButton = new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setURL(attachment.url)
-        .setLabel("View Transcript")
-        .setEmoji("📁");
-      const row = new ActionRowBuilder().addComponents(transcriptButton);
-      await sent
-        .edit({
-          content: baseContent || undefined,
-          components: [row, ...safeExtraRows].slice(0, 5),
-        })
-        .catch(() => {});
-    } else if (safeExtraRows.length > 0) {
-      const baseContent =
-        typeof payload?.content === "string" ? payload.content.trim() : "";
-      await sent
-        .edit({
-          content: baseContent || undefined,
-          components: safeExtraRows.slice(0, 5),
-        })
-        .catch(() => {});
-    }
-    return sent;
-  }
-
-  function normalizeCategoryName(name) {
-    return String(name || "")
-      .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/[・`'".,;:!?\-_=+()[\]{}|/\\]/g, "");
-  }
-
-  function isTicketCategoryName(name) {
-    const normalized = normalizeCategoryName(name);
-    return normalized.includes("tickets");
-  }
-
-  async function createTicketsCategory(guild) {
-    if (!guild) return null;
-    if (!interaction.client.ticketCategoryCache) {
-      interaction.client.ticketCategoryCache = new Map();
-    }
-    const getTopCategoryPosition = () => 0;
-    const moveCategoryToTop = async (category) => {
-      if (!category || category.type !== 4) return;
-      const topPos = getTopCategoryPosition();
-      await category.setPosition(topPos).catch(() => {});
-    };
-    const getChildrenCount = (categoryId) =>
-      guild.channels.cache.filter((ch) => ch.parentId === categoryId).size;
-
-    const cachedCategoryId = interaction.client.ticketCategoryCache.get(
-      guild.id,
-    );
-    if (cachedCategoryId) {
-      const cachedCategory =
-        guild.channels.cache.get(cachedCategoryId) ||
-        (await guild.channels.fetch(cachedCategoryId).catch(() => null));
-      if (cachedCategory && cachedCategory.type === 4) {
-        if (isTicketCategoryName(cachedCategory.name)) {
-          const isFull = getChildrenCount(cachedCategory.id) >= 50;
-          if (!isFull) {
-            await moveCategoryToTop(cachedCategory);
-            return cachedCategory;
-          }
-        }
-      }
-    }
-
-    await guild.channels.fetch().catch(() => null);
-      const ticketCategories = guild.channels.cache
-      .filter((ch) => ch.type === 4 && isTicketCategoryName(ch.name))
-      .sort(
-        (a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id),
-      );
-
-    const exactCategory = ticketCategories.find(
-      (ch) => ch.name === TICKETS_CATEGORY_NAME,
-    );
-    if (exactCategory) {
-      if (getChildrenCount(exactCategory.id) < 50) {
-        await moveCategoryToTop(exactCategory);
-        interaction.client.ticketCategoryCache.set(guild.id, exactCategory.id);
-        return exactCategory;
-      }
-    } else if (ticketCategories.length > 0) {
-      const firstTicketCategory = ticketCategories[0];
-      if (getChildrenCount(firstTicketCategory.id) < 50) {
-        await moveCategoryToTop(firstTicketCategory);
-        interaction.client.ticketCategoryCache.set(
-          guild.id,
-          firstTicketCategory.id,
-        );
-        return firstTicketCategory;
-      }
-      return null;
-    }
-
-    const existingWithExactName = guild.channels.cache.find(
-      (ch) => ch.type === 4 && ch.name === TICKETS_CATEGORY_NAME,
-    );
-    if (
-      existingWithExactName &&
-      getChildrenCount(existingWithExactName.id) < 50
-    ) {
-      await moveCategoryToTop(existingWithExactName);
-      interaction.client.ticketCategoryCache.set(
-        guild.id,
-        existingWithExactName.id,
-      );
-      return existingWithExactName;
-    }
-    const category = await guild.channels
-      .create({
-        name: TICKETS_CATEGORY_NAME,
-        position: getTopCategoryPosition(),
-        type: 4,
-        permissionOverwrites: [
-          {
-            id: guild.roles.everyone.id,
-            deny: [PermissionFlagsBits.ViewChannel],
-          },
-        ],
-      })
-      .catch(() => null);
-    if (!category) return null;
-    await moveCategoryToTop(category);
-    interaction.client.ticketCategoryCache.set(guild.id, category.id);
-    return category;
-  }
 
   try {
     if (isTicketButton || isTicketSelect) {
@@ -748,7 +212,7 @@ async function pinFirstTicketMessage(channel, message) {
         },
         ticket_highstaff: {
           type: "high",
-          emoji: "✨",
+          emoji: "âœ¨",
           name: "highstaff",
           role: ROLE_HIGHSTAFF,
           requiredRoles: [ROLE_USER],
@@ -775,8 +239,8 @@ async function pinFirstTicketMessage(channel, message) {
           "ticket_autoclose_reject",
           "unclaim",
         ].includes(interaction.customId) &&
-        !isTicketTranscriptButton(interaction.customId) &&
-        !isTicketRatingButton(interaction.customId)
+        !runtimeIsTicketTranscriptButton(interaction.customId) &&
+        !runtimeIsTicketRatingButton(interaction.customId)
       ) {
         await safeReply(interaction, {
           embeds: [
@@ -853,11 +317,10 @@ async function pinFirstTicketMessage(channel, message) {
               return true;
             }
           }
-          const existing = await Ticket.findOne({
-            guildId: interaction.guild.id,
-            userId: interaction.user.id,
-            open: true,
-          });
+          const existing = await runtimeFindOpenTicketByUser(
+            interaction.guild.id,
+            interaction.user.id,
+          );
           if (existing) {
             await safeReply(interaction, {
               embeds: [
@@ -872,7 +335,8 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const ticketsCategory = await createTicketsCategory(
+          const ticketsCategory = await runtimeCreateTicketsCategory(
+            interaction,
             interaction.guild,
           );
           if (!ticketsCategory) {
@@ -887,28 +351,9 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const existingBeforeCreate = await Ticket.findOne({
-            guildId: interaction.guild.id,
-            userId: interaction.user.id,
-            open: true,
-          }).catch(() => null);
-          if (existingBeforeCreate) {
-            await safeEditReply(interaction, {
-              embeds: [
-                new EmbedBuilder()
-                  .setTitle("Ticket Aperto")
-                  .setDescription(
-                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingBeforeCreate.channelId}>`,
-                  )
-                  .setColor("#6f4e37"),
-              ],
-              flags: 1 << 6,
-            });
-            return true;
-          }
           const channel = await interaction.guild.channels
             .create({
-              name: `༄${config.emoji}︲${config.name}᲼${interaction.user.username}`,
+              name: `ticket-${config.emoji}-${config.name}-${interaction.user.username}`,
               type: 0,
               parent: ticketsCategory.id,
               permissionOverwrites: [
@@ -1002,7 +447,7 @@ async function pinFirstTicketMessage(channel, message) {
               .setStyle(ButtonStyle.Danger),
             new ButtonBuilder()
               .setCustomId("claim_ticket")
-              .setLabel("✅ Claim")
+              .setLabel("âœ… Claim")
               .setStyle(ButtonStyle.Success),
           );
           const mainMsg = await channel
@@ -1013,26 +458,6 @@ async function pinFirstTicketMessage(channel, message) {
             });
           if (mainMsg) {
             await pinFirstTicketMessage(channel, mainMsg);
-          }
-          const existingAgain = await Ticket.findOne({
-            guildId: interaction.guild.id,
-            userId: interaction.user.id,
-            open: true,
-          });
-          if (existingAgain) {
-            await channel.delete().catch(() => {});
-            await safeEditReply(interaction, {
-              embeds: [
-                new EmbedBuilder()
-                  .setTitle("Ticket Aperto")
-                  .setDescription(
-                    `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existingAgain.channelId}>`,
-                  )
-                  .setColor("#6f4e37"),
-              ],
-              flags: 1 << 6,
-            });
-            return true;
           }
           let ticketCreated = false;
           try {
@@ -1055,11 +480,10 @@ async function pinFirstTicketMessage(channel, message) {
               (err?.message && String(err.message).includes("E11000"));
             if (isDuplicate) {
               await channel.delete().catch(() => {});
-              const other = await Ticket.findOne({
-                guildId: interaction.guild.id,
-                userId: interaction.user.id,
-                open: true,
-              }).catch(() => null);
+              const other = await runtimeFindOpenTicketByUser(
+                interaction.guild.id,
+                interaction.user.id,
+              );
               await safeEditReply(interaction, {
                 embeds: [
                   new EmbedBuilder()
@@ -1114,7 +538,7 @@ async function pinFirstTicketMessage(channel, message) {
           interaction.client.ticketOpenLocks.delete(ticketLockKey);
         }
       }
-      if (isTicketRatingButton(interaction.customId)) {
+      if (runtimeIsTicketRatingButton(interaction.customId)) {
         const ratingParts = String(interaction.customId).split(":");
         if (ratingParts.length !== 3) {
           await safeReply(interaction, {
@@ -1181,15 +605,19 @@ async function pinFirstTicketMessage(channel, message) {
         }
 
         if (ratedTicket.closeLogChannelId && ratedTicket.closeLogMessageId) {
-          const logChannel = await interaction.client.channels
-            .fetch(ratedTicket.closeLogChannelId)
-            .catch(() => null);
+          const logChannel = await runtimeGetGuildChannelCached(
+            interaction.guild,
+            ratedTicket.closeLogChannelId,
+          ) || await runtimeGetGuildChannelCached(
+            interaction.client.guilds.cache.get(ratedTicket.guildId),
+            ratedTicket.closeLogChannelId,
+          );
           if (logChannel?.isTextBased?.()) {
             const logMessage = await logChannel.messages
               .fetch(ratedTicket.closeLogMessageId)
               .catch(() => null);
             if (logMessage) {
-              const updatedEmbed = buildTicketClosedEmbed({
+              const updatedEmbed = runtimeBuildTicketClosedEmbed({
                 ...ratedTicket.toObject(),
                 guildName:
                   interaction.guild?.name ||
@@ -1213,7 +641,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      if (isTicketTranscriptButton(interaction.customId)) {
+      if (runtimeIsTicketTranscriptButton(interaction.customId)) {
         const transcriptParts = String(interaction.customId).split(":");
         if (transcriptParts.length < 2) {
           await safeReply(interaction, {
@@ -1292,9 +720,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticket = await Ticket.findOne({
-          channelId: interaction.channel.id,
-        });
+        const ticket = await runtimeFindTicketByChannel(interaction.channel.id);
         if (!ticket) {
           await safeReply(interaction, {
             embeds: [
@@ -1370,9 +796,7 @@ async function pinFirstTicketMessage(channel, message) {
           { new: true },
         ).catch(() => null);
         if (!claimedTicket) {
-          claimedTicket = await Ticket.findOne({
-            channelId: interaction.channel.id,
-          }).catch(() => null);
+          claimedTicket = await runtimeFindTicketByChannel(interaction.channel.id);
           if (!claimedTicket) {
             await safeReply(interaction, {
               embeds: [
@@ -1401,34 +825,16 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const updated = await Ticket.updateOne(
-            isHighStaffActor()
-              ? { channelId: interaction.channel.id }
-              : {
-                  channelId: interaction.channel.id,
-                  $or: [
-                    { claimedBy: null },
-                    { claimedBy: "" },
-                    { claimedBy: { $exists: false } },
-                  ],
-                },
-            { $set: { claimedBy: interaction.user.id } },
-          ).catch(() => null);
-          if (!updated?.modifiedCount) {
-            await safeReply(interaction, {
-              embeds: [
-                makeErrorEmbed(
-                  "Errore",
-                  "<:vegax:1443934876440068179> Ticket già claimato.",
-                ),
-              ],
-              flags: 1 << 6,
-            });
-            return true;
-          }
-          claimedTicket = await Ticket.findOne({
-            channelId: interaction.channel.id,
-          }).catch(() => null);
+          await safeReply(interaction, {
+            embeds: [
+              makeErrorEmbed(
+                "Errore",
+                "<:vegax:1443934876440068179> Ticket già claimato.",
+              ),
+            ],
+            flags: 1 << 6,
+          });
+          return true;
         }
         if (interaction.channel) {
           try {
@@ -1592,12 +998,10 @@ async function pinFirstTicketMessage(channel, message) {
             .setStyle(ButtonStyle.Danger),
           new ButtonBuilder()
             .setCustomId("claim_ticket")
-            .setLabel("✅ Claim")
+            .setLabel("âœ… Claim")
             .setStyle(ButtonStyle.Success),
         );
-        const ticketDoc = await Ticket.findOne({
-          channelId: interaction.channel.id,
-        });
+        const ticketDoc = await runtimeFindTicketByChannel(interaction.channel.id);
         if (!ticketDoc) {
           await safeReply(interaction, {
             embeds: [
@@ -1726,61 +1130,22 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await Ticket.findOne({
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
           channelId: interaction.channel?.id,
+          missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
         });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Ticket non trovato",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (
-          ticketDoc &&
-          ticketDoc.userId === interaction.user.id &&
-          !isHighStaffActor()
-        ) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (!ticketDoc.claimedBy) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
+        if (!ticketDoc) return true;
+        const canClose = await runtimeEnsureClosableTicketOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
+          ticketDoc,
+          highStaff: isHighStaffActor(),
+        });
+        if (!canClose) return true;
         const modal = new ModalBuilder()
           .setCustomId(`modal_close_ticket:${interaction.user.id}`)
           .setTitle("Chiudi Ticket con Motivo");
@@ -1823,68 +1188,29 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await Ticket.findOne({
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
           channelId: interaction.channel?.id,
+          missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
         });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Ticket non trovato",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (
-          ticketDoc &&
-          ticketDoc.userId === interaction.user.id &&
-          !isHighStaffActor()
-        ) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (!ticketDoc.claimedBy) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Questo ticket non è claimato.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
+        if (!ticketDoc) return true;
+        const canClose = await runtimeEnsureClosableTicketOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
+          ticketDoc,
+          highStaff: isHighStaffActor(),
+        });
+        if (!canClose) return true;
         try {
           await interaction
             .deferReply({ flags: 1 << 6 })
             .catch(() => {})
             .catch(() => {});
         } catch {}
-        await closeTicket(interaction, null, {
+        await runtimeCloseTicket(interaction, null, {
           safeReply,
           safeEditReply,
           makeErrorEmbed,
@@ -1905,27 +1231,20 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await Ticket.findOne({
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
           channelId: interaction.channel.id,
+          missingDescription:
+            "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
         });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        const canHandleCloseRequest =
-          String(interaction.user.id || "").trim() ===
-            String(ticketDoc.userId || "").trim() ||
-          String(interaction.user.id || "").trim() ===
-            String(ticketDoc.claimedBy || "").trim() ||
-          isHighStaffActor();
+        if (!ticketDoc) return true;
+        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(
+          ticketDoc,
+          interaction.user.id,
+          isHighStaffActor(),
+        );
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -1945,7 +1264,7 @@ async function pinFirstTicketMessage(channel, message) {
             .catch(() => {});
         } catch {}
         const motivo = ticketDoc.closeReason || "Nessun motivo inserito";
-        await closeTicket(interaction, motivo, {
+        await runtimeCloseTicket(interaction, motivo, {
           safeReply,
           safeEditReply,
           makeErrorEmbed,
@@ -1967,27 +1286,20 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await Ticket.findOne({
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
           channelId: interaction.channel.id,
+          missingDescription:
+            "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
         });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        const canHandleCloseRequest =
-          String(interaction.user.id || "").trim() ===
-            String(ticketDoc.userId || "").trim() ||
-          String(interaction.user.id || "").trim() ===
-            String(ticketDoc.claimedBy || "").trim() ||
-          isHighStaffActor();
+        if (!ticketDoc) return true;
+        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(
+          ticketDoc,
+          interaction.user.id,
+          isHighStaffActor(),
+        );
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -2041,28 +1353,20 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await Ticket.findOne({
+        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+          interaction,
+          safeReply,
+          makeErrorEmbed,
           channelId: interaction.channel.id,
+          missingDescription:
+            "<:vegax:1443934876440068179> Non puoi gestire questo ticket",
         });
-        if (!ticketDoc) {
-          await safeReply(interaction, {
-            embeds: [
-              makeErrorEmbed(
-                "Errore",
-                "<:vegax:1443934876440068179> Non puoi gestire questo ticket",
-              ),
-            ],
-            flags: 1 << 6,
-          });
-          return true;
-        }
-        const openerId = String(ticketDoc.userId || "").trim();
-        const claimerId = String(ticketDoc.claimedBy || "").trim();
-        const actorId = String(interaction.user.id || "").trim();
-        const canHandleAutoClosePrompt =
-          actorId === openerId ||
-          actorId === claimerId ||
-          isHighStaffActor();
+        if (!ticketDoc) return true;
+        const canHandleAutoClosePrompt = runtimeCanUserHandleCloseRequest(
+          ticketDoc,
+          interaction.user.id,
+          isHighStaffActor(),
+        );
         if (!canHandleAutoClosePrompt) {
           await safeReply(interaction, {
             embeds: [
@@ -2085,7 +1389,7 @@ async function pinFirstTicketMessage(channel, message) {
           } catch {}
           const motivo =
             ticketDoc.closeReason || "Chiusura proposta automaticamente dopo 24h.";
-          await closeTicket(interaction, motivo, {
+          await runtimeCloseTicket(interaction, motivo, {
             safeReply,
             safeEditReply,
             makeErrorEmbed,
@@ -2131,57 +1435,22 @@ async function pinFirstTicketMessage(channel, message) {
           .catch(() => {})
           .catch(() => {});
       } catch {}
-      const ticketDoc = await Ticket.findOne({
+      const ticketDoc = await runtimeLoadTicketForChannelOrReply({
+        interaction,
+        safeReply,
+        makeErrorEmbed,
         channelId: interaction.channel?.id,
+        missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
       });
-      if (!ticketDoc) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Ticket non trovato",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      if (ticketDoc.userId === interaction.user.id && !isHighStaffActor()) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Non puoi chiudere da solo il ticket che hai aperto.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      if (!ticketDoc.claimedBy) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Questo ticket non è claimato.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
-      if (ticketDoc.claimedBy !== interaction.user.id && !isHighStaffActor()) {
-        await safeReply(interaction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Solo chi ha claimato il ticket può chiuderlo.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return true;
-      }
+      if (!ticketDoc) return true;
+      const canClose = await runtimeEnsureClosableTicketOrReply({
+        interaction,
+        safeReply,
+        makeErrorEmbed,
+        ticketDoc,
+        highStaff: isHighStaffActor(),
+      });
+      if (!canClose) return true;
       let motivo = null;
       try {
         motivo = interaction.fields.getTextInputValue("motivo")?.trim() || null;
@@ -2190,7 +1459,7 @@ async function pinFirstTicketMessage(channel, message) {
         const first = interaction.fields.fields.first();
         if (first?.value) motivo = String(first.value).trim() || null;
       }
-      await closeTicket(interaction, motivo, {
+      await runtimeCloseTicket(interaction, motivo, {
         safeReply,
         safeEditReply,
         makeErrorEmbed,
@@ -2215,207 +1484,6 @@ async function pinFirstTicketMessage(channel, message) {
     }
   }
   return true;
-  async function closeTicket(targetInteraction, motivo, helpers) {
-    const {
-      safeReply,
-      safeEditReply,
-      makeErrorEmbed,
-      LOG_CHANNEL,
-      closedById = null,
-    } = helpers;
-    const closedByUserId =
-      String(closedById || "").trim() || targetInteraction.user?.id || null;
-    const closeLockKey = `${targetInteraction?.guildId || "noguild"}:${targetInteraction?.channelId || targetInteraction?.channel?.id || "nochannel"}`;
-    if (targetInteraction.client.ticketCloseLocks.has(closeLockKey)) {
-      await safeReply(targetInteraction, {
-        embeds: [
-          makeErrorEmbed(
-            "Attendi",
-            "<:attentionfromvega:1443651874032062505> Chiusura ticket già in corso, attendi un attimo.",
-          ),
-        ],
-        flags: 1 << 6,
-      });
-      return;
-    }
-    targetInteraction.client.ticketCloseLocks.add(closeLockKey);
-    try {
-      if (!targetInteraction || !targetInteraction.channel) {
-        await safeReply(targetInteraction, {
-          embeds: [
-            makeErrorEmbed(
-              "Errore",
-              "<:vegax:1443934876440068179> Interazione non valida",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return;
-      }
-
-      const ticket = await Ticket.findOneAndUpdate(
-        { channelId: targetInteraction.channel.id, open: true },
-        {
-          $set: {
-            open: false,
-            closedAt: new Date(),
-            closedBy: closedByUserId,
-          },
-        },
-        { new: true },
-      );
-      if (!ticket) {
-        await safeReply(targetInteraction, {
-          embeds: [
-            makeErrorEmbed(
-              "Info",
-              "<:attentionfromvega:1443651874032062505> Ticket già chiuso o chiusura già in corso.",
-            ),
-          ],
-          flags: 1 << 6,
-        });
-        return;
-      }
-      const transcriptTXT = await createTranscript(
-        targetInteraction.channel,
-      ).catch(() => "");
-      const transcriptHTML = await createTranscriptHtml(
-        targetInteraction.channel,
-      ).catch(() => "");
-      const transcriptHtmlPath = transcriptHTML
-        ? await saveTranscriptHtml(
-            targetInteraction.channel,
-            transcriptHTML,
-          ).catch(() => null)
-        : null;
-      let ticketNumber = Number(ticket.ticketNumber || 0);
-      if (!ticketNumber) {
-        ticketNumber = await getNextTicketId();
-      }
-      await Ticket.updateOne(
-        { channelId: targetInteraction.channel.id },
-        {
-          $set: {
-            ticketNumber,
-            transcript: transcriptTXT,
-            transcriptHtmlPath: transcriptHtmlPath || null,
-            closeReason: motivo || null,
-            claimedBy: ticket.claimedBy || null,
-            closeRequestedBy: null,
-            closeRequestedAt: null,
-            closedBy: closedByUserId,
-          },
-        },
-      ).catch(() => {});
-
-      const mainGuildId = IDs?.guilds?.main || null;
-      const centralTicketLogChannelId = IDs?.channels?.ticketLogs || "1442569290682208296";
-
-      const mainGuild = mainGuildId
-        ? targetInteraction.client.guilds.cache.get(mainGuildId) ||
-          (await targetInteraction.client.guilds
-            .fetch(mainGuildId)
-            .catch(() => null))
-        : null;
-
-      const logChannel =
-        mainGuild?.channels?.cache?.get(centralTicketLogChannelId) ||
-        (mainGuild
-          ? await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)
-          : null);
-
-      const closeEmbedData = {
-        ...ticket.toObject(),
-        ticketNumber,
-        closeReason: motivo || null,
-        closedBy: closedByUserId,
-        closedAt: new Date(),
-        guildName: targetInteraction.guild?.name || "Ticket System",
-        guildIconURL: targetInteraction.guild?.iconURL?.({ size: 128 }) || null,
-      };
-      const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
-      const ratingRows = buildTicketRatingRows(String(ticket._id));
-      const transcriptRows = transcriptHtmlPath
-        ? [
-            new ActionRowBuilder().addComponents(
-              new ButtonBuilder()
-                .setCustomId(`ticket_transcript:${ticket._id}`)
-                .setLabel("View Transcript")
-                .setStyle(ButtonStyle.Secondary)
-                .setEmoji("📁"),
-            ),
-          ]
-        : [];
-
-      let logSentMessage = null;
-      if (logChannel?.isTextBased?.()) {
-        logSentMessage = await sendTranscriptWithBrowserLink(
-          logChannel,
-          {
-            embeds: [closeEmbed],
-          },
-          false,
-          transcriptRows,
-        );
-      }
-      const dmActionRows = [...transcriptRows, ...ratingRows];
-      const member = await targetInteraction.guild.members
-        .fetch(ticket.userId)
-        .catch(() => null);
-      if (member) {
-        try {
-          await sendTranscriptWithBrowserLink(
-            member,
-            {
-              embeds: [closeEmbed],
-            },
-            false,
-            dmActionRows,
-            { guildId: targetInteraction.guild.id, bypassNoDm: true },
-          );
-        } catch (err) {
-          if (![50007, 50278].includes(err?.code)) {
-            global.logger.error(err);
-          }
-        }
-      }
-      if (logSentMessage?.id && logChannel?.id) {
-        await Ticket.updateOne(
-          { _id: ticket._id },
-          {
-            $set: {
-              closeLogChannelId: logChannel.id,
-              closeLogMessageId: logSentMessage.id,
-            },
-          },
-        ).catch(() => {});
-      }
-      await safeEditReply(targetInteraction, {
-        embeds: [
-          new EmbedBuilder()
-            .setDescription("🔒 Il ticket verrà chiuso...")
-            .setColor("#6f4e37"),
-        ],
-      });
-      setTimeout(() => {
-        if (targetInteraction.channel)
-          targetInteraction.channel.delete().catch(() => {});
-      }, 2000);
-    } catch (err) {
-      global.logger.error(err);
-      await safeReply(targetInteraction, {
-        embeds: [
-          makeErrorEmbed(
-            "Errore",
-            "<:vegax:1443934876440068179> Errore durante la chiusura del ticket",
-          ),
-        ],
-        flags: 1 << 6,
-      }).catch(() => {});
-    } finally {
-      targetInteraction.client.ticketCloseLocks.delete(closeLockKey);
-    }
-  }
 }
 
 module.exports = { handleTicketInteraction };

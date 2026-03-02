@@ -5,6 +5,7 @@ const IDs = require("../../Utils/Config/ids");
 
 const EPHEMERAL_FLAG = 1 << 6;
 const COUNTER_FILTER_QUESTION = "__counter__";
+const POLL_CHANNEL_CACHE_TTL_MS = 30_000;
 const NUMBER_EMOJIS = [
   "<:1_:1444099163116535930>",
   "<:2_:1444099161673826368>",
@@ -17,6 +18,7 @@ const NUMBER_EMOJIS = [
   "<:9_:1444099151443919004>",
   "<:VC_10:1469357839066730627>",
 ];
+const pollChannelCache = new Map();
 
 function errorEmbed(description) {
   return new EmbedBuilder().setDescription(description).setColor("Red");
@@ -34,11 +36,38 @@ async function getPollChannelFromGuild(guild) {
   if (!guild) return null;
   const channelId = IDs.channels?.polls;
   if (!channelId) return null;
-  const channel =
+  const cacheKey = `${guild.id}:${channelId}`;
+  const now = Date.now();
+  const cached = pollChannelCache.get(cacheKey);
+  if (cached?.channel && now < Number(cached.expiresAt || 0)) {
+    return cached.channel;
+  }
+  if (cached?.promise) {
+    return cached.promise;
+  }
+  const fetchPromise = Promise.resolve(
     guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null));
+      guild.channels.fetch(channelId).catch(() => null),
+  ).then((channel) => {
+    pollChannelCache.set(cacheKey, {
+      channel,
+      expiresAt: Date.now() + POLL_CHANNEL_CACHE_TTL_MS,
+      promise: null,
+    });
+    return channel;
+  });
+  pollChannelCache.set(cacheKey, { channel: null, expiresAt: 0, promise: fetchPromise });
+  const channel = await fetchPromise;
   if (!channel || !channel.isTextBased?.()) return null;
   return channel;
+}
+
+function buildGuildPollFilter(guildId, extra = {}) {
+  return {
+    guildId,
+    domanda: { $ne: COUNTER_FILTER_QUESTION },
+    ...extra,
+  };
 }
 
 function collectCreateAnswers(interaction) {
@@ -113,11 +142,7 @@ async function applyPollReactions(pollMessage, reactionEmojis) {
 }
 
 async function findPollById(guildId, pollId) {
-  let pollData = await Poll.findOne({
-    guildId,
-    pollcount: pollId,
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-  });
+  let pollData = await Poll.findOne(buildGuildPollFilter(guildId, { pollcount: pollId }));
   if (pollData) return pollData;
   return Poll.findOne({
     pollcount: pollId,
@@ -126,22 +151,27 @@ async function findPollById(guildId, pollId) {
 }
 
 async function findLastPoll(guildId) {
-  let lastPoll = await Poll.findOne({
-    guildId,
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-  }).sort({ pollcount: -1 });
+  let lastPoll = await Poll.findOne(buildGuildPollFilter(guildId)).sort({
+    pollcount: -1,
+  });
   if (lastPoll) return lastPoll;
   return Poll.findOne({ domanda: { $ne: COUNTER_FILTER_QUESTION } }).sort({
     pollcount: -1,
   });
 }
 
-async function syncPollCounter(guildId) {
-  const lastPoll = await Poll.findOne({
-    guildId,
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-  }).sort({ pollcount: -1 });
-  const highestPollCount = Number(lastPoll?.pollcount || 0);
+async function syncPollCounter(guildId, highestPollCountOverride = null) {
+  const highestPollCount =
+    highestPollCountOverride !== null && highestPollCountOverride !== undefined
+      ? Number(highestPollCountOverride || 0)
+      : Number(
+        (
+          await Poll.findOne(buildGuildPollFilter(guildId))
+            .sort({ pollcount: -1 })
+            .select({ pollcount: 1 })
+            .lean()
+        )?.pollcount || 0,
+      );
 
   await Poll.findOneAndUpdate(
     { guildId, domanda: COUNTER_FILTER_QUESTION },
@@ -166,6 +196,23 @@ function normalizeCreateAnswers(rawAnswers) {
     : [];
   while (answers.length < 10) answers.push(null);
   return answers.slice(0, 10);
+}
+
+function buildPollAnswersUpdate(answers) {
+  const normalized = [...answers];
+  while (normalized.length < 10) normalized.push(null);
+  return {
+    risposta1: normalized[0] ?? null,
+    risposta2: normalized[1] ?? null,
+    risposta3: normalized[2] ?? null,
+    risposta4: normalized[3] ?? null,
+    risposta5: normalized[4] ?? null,
+    risposta6: normalized[5] ?? null,
+    risposta7: normalized[6] ?? null,
+    risposta8: normalized[7] ?? null,
+    risposta9: normalized[8] ?? null,
+    risposta10: normalized[9] ?? null,
+  };
 }
 
 async function createPollForGuild(guild, payload = {}) {
@@ -221,16 +268,7 @@ async function createPollForGuild(guild, payload = {}) {
     guildId,
     pollcount: pollNumber,
     domanda: question,
-    risposta1: answers[0] || null,
-    risposta2: answers[1] || null,
-    risposta3: answers[2] || null,
-    risposta4: answers[3] || null,
-    risposta5: answers[4] || null,
-    risposta6: answers[5] || null,
-    risposta7: answers[6] || null,
-    risposta8: answers[7] || null,
-    risposta9: answers[8] || null,
-    risposta10: answers[9] || null,
+    ...buildPollAnswersUpdate(answers),
     messageId: pollMessage.id,
     source,
   });
@@ -300,7 +338,11 @@ async function handleRemove(interaction) {
   } catch {}
 
   await lastPoll.deleteOne();
-  await syncPollCounter(guildId);
+  const replacementLastPoll = await Poll.findOne(buildGuildPollFilter(guildId))
+    .sort({ pollcount: -1 })
+    .select({ pollcount: 1 })
+    .lean();
+  await syncPollCounter(guildId, replacementLastPoll?.pollcount || 0);
 
   return safeEditReply(interaction, {
     embeds: [
@@ -380,23 +422,12 @@ async function handleEdit(interaction) {
   await pollMessage.reactions.removeAll().catch(() => {});
   await applyPollReactions(pollMessage, validEmojis);
 
-  const risposte = [...answers];
-  while (risposte.length < 10) risposte.push(null);
   await Poll.updateOne(
-    { guildId, pollcount: pollId },
+    { _id: pollData._id },
     {
       $set: {
         domanda: question,
-        risposta1: risposte[0] ?? null,
-        risposta2: risposte[1] ?? null,
-        risposta3: risposte[2] ?? null,
-        risposta4: risposte[3] ?? null,
-        risposta5: risposte[4] ?? null,
-        risposta6: risposte[5] ?? null,
-        risposta7: risposte[6] ?? null,
-        risposta8: risposte[7] ?? null,
-        risposta9: risposte[8] ?? null,
-        risposta10: risposte[9] ?? null,
+        ...buildPollAnswersUpdate(answers),
       },
     }
   ).catch(() => {});

@@ -1,6 +1,7 @@
 ﻿const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
+const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
 
 const LEGACY_READY_EVENT = "ready";
 const READY_EVENT_ALIAS = "clientReady";
@@ -9,23 +10,7 @@ function listTriggerFiles(root) {
   const triggersRoot = path.join(root, "Triggers");
   if (!fs.existsSync(triggersRoot)) return [];
 
-  const listJsFiles = (dir) => {
-    const entries = fs.readdirSync(dir, { withFileTypes: true });
-    const files = [];
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        files.push(...listJsFiles(fullPath));
-        continue;
-      }
-      if (entry.isFile() && entry.name.endsWith(".js")) {
-        files.push(fullPath);
-      }
-    }
-    return files;
-  };
-
-  return listJsFiles(triggersRoot).map((fullPath) =>
+  return listJsFilesRecursive(triggersRoot).map((fullPath) =>
     path.relative(triggersRoot, fullPath).replace(/\\/g, "/"),
   );
 }

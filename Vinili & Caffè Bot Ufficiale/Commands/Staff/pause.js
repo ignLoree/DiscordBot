@@ -322,6 +322,13 @@ function makeNeutralEmbed(description) {
   return new EmbedBuilder().setDescription(description).setColor("#6f4e37");
 }
 
+async function getOrCreateStaffDoc(guildId, userId) {
+  let stafferDoc = await Staff.findOne({ guildId, userId });
+  if (!stafferDoc) stafferDoc = new Staff({ guildId, userId });
+  if (!Array.isArray(stafferDoc.pauses)) stafferDoc.pauses = [];
+  return stafferDoc;
+}
+
 async function handlePauseRequest(interaction, guildId) {
   const userId = interaction.user.id;
   const rawStart = interaction.options.getString("data_richiesta");
@@ -338,8 +345,7 @@ async function handlePauseRequest(interaction, guildId) {
     });
   }
 
-  let stafferDoc = await Staff.findOne({ guildId, userId });
-  if (!stafferDoc) stafferDoc = new Staff({ guildId, userId });
+  const stafferDoc = await getOrCreateStaffDoc(guildId, userId);
 
   stafferDoc.pauses.push({
     dataRichiesta: normalized.dataRichiesta,
@@ -396,10 +402,13 @@ async function handlePauseList(interaction, guildId) {
     });
   }
 
-  const stafferRecord = await Staff.findOne({ guildId, userId: targetUser.id });
-  const pauses = Array.isArray(stafferRecord?.pauses)
-    ? stafferRecord.pauses
-    : [];
+  const stafferRecord = await Staff.findOne(
+    { guildId, userId: targetUser.id },
+    { pauses: 1 },
+  )
+    .lean()
+    .catch(() => null);
+  const pauses = Array.isArray(stafferRecord?.pauses) ? stafferRecord.pauses : [];
 
   const todayUtc = getTodayUtc();
   const { yearStart, yearEnd } = getCurrentYearBoundsUtc();

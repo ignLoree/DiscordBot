@@ -31,6 +31,11 @@ const {
   removeExtraOwner,
 } = require("../../Services/Moderation/securityProfilesService");
 const {
+  getGuildChannelCached,
+  getGuildRoleCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
+const {
   getJoinRaidStatusSnapshot,
   setJoinRaidConfigSnapshot,
 } = require("../../Services/Moderation/joinRaidService");
@@ -118,7 +123,7 @@ async function resolveStaticRole(message, rawToken) {
   if (mentioned) return mentioned;
   const id = String(rawToken || "").replace(/[<@&>]/g, "").trim();
   if (!/^\d{16,20}$/.test(id)) return null;
-  return message.guild.roles.cache.get(id) || (await message.guild.roles.fetch(id).catch(() => null));
+  return message.guild.roles.cache.get(id) || (await getGuildRoleCached(message.guild, id));
 }
 
 async function resolveStaticChannel(message, rawToken) {
@@ -126,7 +131,7 @@ async function resolveStaticChannel(message, rawToken) {
   if (mentioned) return mentioned;
   const id = String(rawToken || "").replace(/[<#>]/g, "").trim();
   if (!/^\d{16,20}$/.test(id)) return null;
-  return message.guild.channels.cache.get(id) || (await message.guild.channels.fetch(id).catch(() => null));
+  return message.guild.channels.cache.get(id) || (await getGuildChannelCached(message.guild, id));
 }
 
 async function resolveStaticUser(message, rawToken) {
@@ -134,7 +139,7 @@ async function resolveStaticUser(message, rawToken) {
   if (mentioned) return mentioned;
   const id = String(rawToken || "").replace(/[<@!>]/g, "").trim();
   if (!/^\d{16,20}$/.test(id)) return null;
-  return message.client.users.fetch(id).catch(() => null);
+  return getUserCached(message.client, id);
 }
 
 function parseStaticRequest(args = []) {

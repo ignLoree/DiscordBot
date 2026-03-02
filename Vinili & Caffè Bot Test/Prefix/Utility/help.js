@@ -1,9 +1,8 @@
-﻿const fs = require("fs");
-const path = require("path");
 const IDs = require("../../Utils/Config/ids");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ApplicationCommandType, ComponentType, MessageFlags, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const PERMISSIONS_PATH = path.join(__dirname, "..", "..", "permissions.json");
+const { getGuildMemberCached } = require("../../Utils/Interaction/entityCache");
+const { loadPermissions } = require("../../Utils/Moderation/permissionsStore");
 const MAX_HELP_COLLECTOR_MS = 24 * 60 * 60 * 1000;
 const HELP_EMBED_COLOR = "#6f4e37";
 const ERROR_EMBED_COLOR = "Red";
@@ -58,50 +57,6 @@ function buildNoAvailableCommandsEmbed() {
   return new EmbedBuilder()
     .setColor(ERROR_EMBED_COLOR)
     .setDescription("<:vegax:1443934876440068179> Nessun comando disponibile.");
-}
-
-function resolveRoleReference(value) {
-  if (value == null) return null;
-  const raw = String(value).trim();
-  if (!raw) return null;
-  if (/^\d{16,20}$/.test(raw)) return raw;
-
-  let key = raw;
-  if (key.startsWith("ids.roles.")) key = key.slice("ids.roles.".length);
-  else if (key.startsWith("roles.")) key = key.slice("roles.".length);
-
-  const resolved = IDs?.roles?.[key];
-  if (!resolved) return null;
-  return String(resolved);
-}
-
-function normalizeRoleList(roleIds) {
-  if (!Array.isArray(roleIds)) return roleIds;
-  return roleIds.map((value) => resolveRoleReference(value)).filter(Boolean);
-}
-
-function normalizePermissionTree(node) {
-  if (Array.isArray(node)) return normalizeRoleList(node);
-  if (!node || typeof node !== "object") return node;
-  const out = {};
-  for (const [key, value] of Object.entries(node)) {
-    out[key] = normalizePermissionTree(value);
-  }
-  return out;
-}
-
-function loadPermissions() {
-  try {
-    if (!fs.existsSync(PERMISSIONS_PATH)) return { slash: {}, prefix: {} };
-    const raw = fs.readFileSync(PERMISSIONS_PATH, "utf8");
-    const parsed = JSON.parse(raw);
-    return {
-      slash: normalizePermissionTree(parsed?.slash || {}),
-      prefix: normalizePermissionTree(parsed?.prefix || {}),
-    };
-  } catch {
-    return { slash: {}, prefix: {} };
-  }
 }
 
 function normalizeDescription(
@@ -1261,9 +1216,10 @@ module.exports = {
     const permissions = loadPermissions();
     const allEntries = buildEntries(client, permissions);
 
-    const freshMember = await message.guild.members
-      .fetch(message.author.id)
-      .catch(() => null);
+    const freshMember = await getGuildMemberCached(message.guild, message.author.id, {
+      ttlMs: 20_000,
+      preferFresh: true,
+    });
     const resolvedMember = freshMember || message.member;
     const memberRoles = resolvedMember?.roles?.cache || new Map();
     const rolePages = PAGE_ROLE_IDS.filter((roleId) =>
@@ -1377,5 +1333,3 @@ module.exports = {
     });
   },
 };
-
-

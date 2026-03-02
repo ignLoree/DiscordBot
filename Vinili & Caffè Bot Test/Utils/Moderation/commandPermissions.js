@@ -1,72 +1,7 @@
-const fs = require("fs");
-const path = require("path");
 const { EmbedBuilder, PermissionFlagsBits } = require("discord.js");
 const IDs = require("../Config/ids");
-
-const EMPTY_PERMISSIONS = {
-  slash: {},
-  prefix: {},
-  channels: {},
-  buttons: {},
-  selectMenus: {},
-  modals: {},
-};
-const PERMISSIONS_CANDIDATES = [
-  path.join(process.cwd(), "permissions.json"),
-  path.resolve(__dirname, "../../permissions.json"),
-];
-let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS };
-
-const OFFICIAL_MAIN_GUILD_ID = IDs?.guilds?.main || null;
-const TEST_MAIN_GUILD_ID = IDs?.guilds?.test || null;
-const TEST_BOT_ALLOWED_GUILDS = new Set(
-  [OFFICIAL_MAIN_GUILD_ID, TEST_MAIN_GUILD_ID]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
-
-function isOfficialMainGuild(guildId) {
-  return (
-    Boolean(OFFICIAL_MAIN_GUILD_ID) &&
-    String(guildId || "") === String(OFFICIAL_MAIN_GUILD_ID)
-  );
-}
-
-function isTestMainScopeGuild(guildId) {
-  const safeGuildId = String(guildId || "");
-  if (!safeGuildId) return false;
-  return TEST_BOT_ALLOWED_GUILDS.has(safeGuildId);
-}
-
-function loadPermissions() {
-  try {
-    const permissionsPath =
-      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
-    if (!permissionsPath) return EMPTY_PERMISSIONS;
-    const stat = fs.statSync(permissionsPath);
-    if (
-      cache.data &&
-      cache.filePath === permissionsPath &&
-      cache.mtimeMs === stat.mtimeMs
-    ) {
-      return cache.data;
-    }
-    const raw = fs.readFileSync(permissionsPath, "utf-8");
-    const parsed = JSON.parse(raw) || {};
-    const normalized = {
-      slash: parsed.slash || {},
-      prefix: parsed.prefix || {},
-      channels: parsed.channels || {},
-      buttons: parsed.buttons || {},
-      selectMenus: parsed.selectMenus || {},
-      modals: parsed.modals || {},
-    };
-    cache = { filePath: permissionsPath, mtimeMs: stat.mtimeMs, data: normalized };
-    return cache.data;
-  } catch {
-    return EMPTY_PERMISSIONS;
-  }
-}
+const { getGuildMemberCached } = require("../Interaction/entityCache");
+const { EMPTY_PERMISSIONS, loadPermissions } = require("./permissionsStore");
 
 function resolveRoleReference(value) {
   if (value == null) return null;
@@ -184,7 +119,10 @@ async function fetchLiveMember(entity) {
     entity?.member?.user?.id ||
     null;
   if (!guild || !userId || typeof guild.members?.fetch !== "function") return null;
-  return guild.members.fetch(userId).catch(() => null);
+  return getGuildMemberCached(guild, userId, {
+    ttlMs: 15_000,
+    preferFresh: true,
+  });
 }
 
 async function hasAnyRoleWithLiveFallback(entity, roleIds) {

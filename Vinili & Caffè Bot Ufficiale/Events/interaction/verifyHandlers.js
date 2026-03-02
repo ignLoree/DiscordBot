@@ -3,6 +3,12 @@ const PImage = require("pureimage");
 const { PassThrough } = require("stream");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getClientGuildCached,
+  getGuildChannelCached,
+  getGuildMemberCached,
+  getGuildRoleCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
@@ -23,7 +29,6 @@ const VERIFY_CAPTCHA = {
 };
 
 const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
-
 function isSponsorGuildVerify(guildId) {
   if (!guildId || guildId === MAIN_GUILD_ID) return false;
   return Boolean(IDs.verificatoRoleIds?.[guildId]);
@@ -31,20 +36,25 @@ function isSponsorGuildVerify(guildId) {
 
 const MAIN_VERIFIED_ROLE_ID = IDs.roles?.Member || null;
 
+async function getMainGuild(client) {
+  if (!client) return null;
+  return getClientGuildCached(client, MAIN_GUILD_ID);
+}
+
 async function isUserInMainGuild(client, userId) {
   if (!client || !userId) return false;
-  const guild = client.guilds.cache.get(MAIN_GUILD_ID) || (await client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
+  const guild = await getMainGuild(client);
   if (!guild) return false;
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, userId);
   return Boolean(member);
 }
 
 /** Per avviare la verifica in uno server sponsor l'utente deve essere nel main E verificato (ruolo Member). */
 async function isUserVerifiedInMainGuild(client, userId) {
   if (!client || !userId) return false;
-  const guild = client.guilds.cache.get(MAIN_GUILD_ID) || (await client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
+  const guild = await getMainGuild(client);
   if (!guild) return false;
-  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, userId);
   if (!member?.roles?.cache) return false;
   if (!MAIN_VERIFIED_ROLE_ID) return Boolean(member);
   return member.roles.cache.has(MAIN_VERIFIED_ROLE_ID);
@@ -335,9 +345,7 @@ async function resolveValidVerifyRoleIds(guild) {
 
   const valid = [];
   for (const roleId of roleIds) {
-    const role =
-      guild.roles.cache.get(roleId) ||
-      (await guild.roles.fetch(roleId).catch(() => null));
+    const role = await getGuildRoleCached(guild, roleId);
     if (role?.id) valid.push(role.id);
   }
   return Array.from(new Set(valid));
@@ -376,7 +384,7 @@ async function finalizeVerification(interaction, member) {
 
   const freshMember =
     member?.id &&
-    (await guild.members.fetch(member.id).catch(() => null));
+    (await getGuildMemberCached(guild, member.id, { preferFresh: true }));
   const targetMember = freshMember || member;
   if (!targetMember?.roles?.cache) {
     await safeReply(interaction, {
@@ -429,14 +437,10 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] upsertVerifiedMember/applyTenureForMember:", err);
   }
 
-  const mainGuild =
-    interaction.client.guilds.cache.get(MAIN_GUILD_ID) ||
-    (await interaction.client.guilds.fetch(MAIN_GUILD_ID).catch(() => null));
-  const logChannel =
-    mainGuild?.channels?.cache?.get(CENTRAL_VERIFY_LOG_CHANNEL_ID) ||
-    (mainGuild
-      ? await mainGuild.channels.fetch(CENTRAL_VERIFY_LOG_CHANNEL_ID).catch(() => null)
-      : null);
+  const mainGuild = await getMainGuild(interaction.client);
+  const logChannel = mainGuild
+    ? await getGuildChannelCached(mainGuild, CENTRAL_VERIFY_LOG_CHANNEL_ID)
+    : null;
   if (logChannel?.isTextBased?.()) {
     const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
     const createdAtText = `<t:${createdAtUnix}:F>`;
@@ -463,11 +467,9 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] Central verify log channel not found:", CENTRAL_VERIFY_LOG_CHANNEL_ID);
   }
 
-  const pingChannel =
-    guild?.channels?.cache?.get(VERIFY_PING_CHANNEL_ID) ||
-    (VERIFY_PING_CHANNEL_ID
-      ? await guild.channels.fetch(VERIFY_PING_CHANNEL_ID).catch(() => null)
-      : null);
+  const pingChannel = VERIFY_PING_CHANNEL_ID
+    ? await getGuildChannelCached(guild, VERIFY_PING_CHANNEL_ID)
+    : null;
   if (pingChannel) {
     const pingMsg = await pingChannel
       .send({ content: `<@${interaction.user.id}>` })

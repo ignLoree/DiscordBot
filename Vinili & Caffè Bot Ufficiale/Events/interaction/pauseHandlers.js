@@ -1,6 +1,10 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getGuildChannelCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const STAFF_ROLE_PRIORITY = [
@@ -15,7 +19,6 @@ const STAFF_ROLE_PRIORITY = [
   IDs.roles.Staff,
   IDs.roles.PartnerManager,
 ];
-
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
   const match = value.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -97,6 +100,10 @@ async function computeStaffersInPauseByRoleForRange(
   }
 
   return userIds.size;
+}
+
+async function getStaffPauseRecord(guildId, userId) {
+  return Staff.findOne({ guildId, userId });
 }
 
 function computeConsumedPauseDays(pauses) {
@@ -261,8 +268,7 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
   setTimeout(async () => {
     try {
       const channel =
-        guild.channels.cache.get(String(channelId)) ||
-        (await guild.channels.fetch(String(channelId)).catch(() => null));
+        await getGuildChannelCached(guild, String(channelId));
       if (!channel?.isTextBased?.()) return;
       const msg = await channel.messages.fetch(String(messageId)).catch(() => null);
       if (!msg) return;
@@ -348,7 +354,7 @@ async function handlePauseButton(interaction) {
   }
 
   const guildId = interaction.guildId;
-  const stafferRecord = await Staff.findOne({ guildId, userId });
+  const stafferRecord = await getStaffPauseRecord(guildId, userId);
   if (!stafferRecord) {
     await interaction
       .reply({
@@ -514,9 +520,7 @@ async function handlePauseButton(interaction) {
       return true;
     }
 
-    const member = await interaction.guild.members
-      .fetch(userId)
-      .catch(() => null);
+    const member = await getGuildMemberCached(interaction.guild, userId);
     if (!member) {
       await interaction
         .reply({
@@ -591,9 +595,7 @@ async function handlePauseButton(interaction) {
     return true;
   }
 
-  const member = await interaction.guild.members
-    .fetch(userId)
-    .catch(() => null);
+  const member = await getGuildMemberCached(interaction.guild, userId);
   if (!member) {
     await interaction
       .reply({
@@ -658,7 +660,7 @@ async function handlePauseButton(interaction) {
     targetPause.dataRichiesta,
     targetPause.dataRitorno,
   );
-  const channel = interaction.guild.channels.cache.get(IDs.channels.pause);
+  const channel = await getGuildChannelCached(interaction.guild, IDs.channels.pause);
   if (channel) {
     const pauseMessage = await channel
       .send({

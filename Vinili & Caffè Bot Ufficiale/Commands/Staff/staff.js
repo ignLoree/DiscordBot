@@ -49,11 +49,35 @@ async function replySuccess(interaction) {
 }
 
 async function fetchMember(guild, userId) {
-  return guild.members.fetch(userId).catch(() => null);
+  if (!guild || !userId) return null;
+  return guild.members.cache.get(userId) ||
+    guild.members.fetch(userId).catch(() => null);
 }
 
-async function ensureMember(interaction, user) {
-  const member = await fetchMember(interaction.guild, user.id);
+function createMemberResolver(guild) {
+  const pendingMembers = new Map();
+
+  return async (userId) => {
+    const key = String(userId || "");
+    if (!key) return null;
+
+    const cachedMember = guild?.members?.cache?.get(key);
+    if (cachedMember) return cachedMember;
+
+    if (pendingMembers.has(key)) {
+      return pendingMembers.get(key);
+    }
+
+    const fetchPromise = fetchMember(guild, key).finally(() => {
+      pendingMembers.delete(key);
+    });
+    pendingMembers.set(key, fetchPromise);
+    return fetchPromise;
+  };
+}
+
+async function ensureMember(interaction, user, resolveMember) {
+  const member = await resolveMember(user.id);
   if (!member) {
     await replyError(
       interaction,
@@ -459,6 +483,7 @@ module.exports = {
     const staffChat = interaction.guild.channels.cache.get(
       IDs.channels?.staffChat,
     );
+    const resolveMember = createMemberResolver(interaction.guild);
 
     if (sub === "pex") {
       try {
@@ -467,15 +492,15 @@ module.exports = {
         const roleBefore = interaction.options.getRole("ruolo_precedente");
         const roleAfter = interaction.options.getRole("ruolo_successivo");
 
-        const member = await ensureMember(interaction, targetUser);
+        const member = await ensureMember(interaction, targetUser, resolveMember);
         if (!member) return;
+
+        if (!(await ensureNotSelf(interaction, targetUser))) return;
 
         const staffDoc = await getOrCreateStaffDoc(
           interaction.guild.id,
           targetUser.id,
         );
-
-        if (!(await ensureNotSelf(interaction, targetUser))) return;
 
         if (member.roles.cache.has(roleAfter.id)) {
           return replyError(
@@ -521,10 +546,8 @@ module.exports = {
         const newRole = interaction.options.getRole("ruolo_successivo");
         const reason = interaction.options.getString("motivo");
 
-        const member = await ensureMember(interaction, targetUser);
+        const member = await ensureMember(interaction, targetUser, resolveMember);
         if (!member) return;
-
-        await getOrCreateStaffDoc(interaction.guild.id, targetUser.id);
 
         if (!(await ensureNotSelf(interaction, targetUser))) return;
 
@@ -620,7 +643,7 @@ module.exports = {
         const voiceHours = interaction.options.getString("ore");
         const activityGrade = interaction.options.getString("grado_attivita");
         const behaviorGrade = interaction.options.getString("grado_condotta");
-        const stafferMember = await fetchMember(interaction.guild, staffer.id);
+        const stafferMember = await resolveMember(staffer.id);
 
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
         if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;
@@ -654,7 +677,7 @@ module.exports = {
         const staffer = interaction.options.getUser("staffer");
         const action = interaction.options.getString("azione");
         const partners = interaction.options.getString("partner");
-        const stafferMember = await fetchMember(interaction.guild, staffer.id);
+        const stafferMember = await resolveMember(staffer.id);
 
         if (!(await ensureStaffRole(interaction, stafferMember))) return;
         if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;

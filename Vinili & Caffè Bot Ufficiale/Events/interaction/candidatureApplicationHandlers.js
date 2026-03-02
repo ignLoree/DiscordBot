@@ -10,6 +10,10 @@ const {
   ButtonStyle,
 } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getGuildChannelCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const APPLY_HELPER_BUTTON = "apply_helper";
 const APPLY_PM_BUTTON = "apply_partnermanager";
@@ -607,10 +611,7 @@ async function resolveSubmissionChannel(interaction) {
   if (!guild) return null;
   const targetId = IDs.channels?.visioneModuli;
   if (targetId) {
-    return (
-      guild.channels.cache.get(targetId) ||
-      (await guild.channels.fetch(targetId).catch(() => null))
-    );
+    return guild.channels.cache.get(targetId) || (await getGuildChannelCached(guild, targetId));
   }
   return guild.channels.cache.find((c) => String(c?.name || "") === "visioneModuli") || null;
 }
@@ -795,7 +796,7 @@ async function deleteThreadForStarterMessage(guild, starterMessage) {
   if (!/^\d{16,20}$/.test(starterId)) return;
   const thread =
     guild.channels.cache.get(starterId) ||
-    (await guild.channels.fetch(starterId).catch(() => null));
+    (await getGuildChannelCached(guild, starterId));
   if (thread?.isThread?.()) {
     await thread.delete().catch(() => null);
   }
@@ -807,7 +808,7 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
 
   const member =
     guild.members.cache.get(String(userId)) ||
-    (await guild.members.fetch(String(userId)).catch(() => null));
+    (await getGuildMemberCached(guild, String(userId)));
   if (!member) return "Utente non trovato nel server.";
   if (member.roles.cache.has(String(targetRoleId))) return "Utente già pexato su quel ruolo.";
 
@@ -816,13 +817,13 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
     await member.roles.add(String(IDs.roles.Staff)).catch(() => null);
     const staffChat =
       guild.channels.cache.get(IDs.channels.staffChat) ||
-      (await guild.channels.fetch(IDs.channels.staffChat).catch(() => null));
+      (await getGuildChannelCached(guild, IDs.channels.staffChat));
     await sendHelperWelcome(staffChat, member.user);
   }
   if (String(targetRoleId) === String(PARTNER_MANAGER_ROLE_ID)) {
     const pmChannel =
       guild.channels.cache.get(IDs.channels.partnersChat) ||
-      (await guild.channels.fetch(IDs.channels.partnersChat).catch(() => null));
+      (await getGuildChannelCached(guild, IDs.channels.partnersChat));
     await sendPartnerManagerWelcome(pmChannel, member.user);
   }
 
@@ -839,7 +840,7 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
 
   const pexDepexChannel =
     guild.channels.cache.get(IDs.channels.pexDepex) ||
-    (await guild.channels.fetch(IDs.channels.pexDepex).catch(() => null));
+    (await getGuildChannelCached(guild, IDs.channels.pexDepex));
   if (pexDepexChannel?.isTextBased?.()) {
     const oldRole = guild.roles.cache.get(roleBeforeId);
     const newRole = guild.roles.cache.get(String(targetRoleId));

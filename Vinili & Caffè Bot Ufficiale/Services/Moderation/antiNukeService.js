@@ -10,6 +10,11 @@ const {
 const {
   isJoinGateSuspiciousAccount,
 } = require("./suspiciousAccountService");
+const {
+  getGuildChannelCached,
+  getGuildMemberCached,
+  getGuildRoleCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 const { createModCase, getModConfig, logModCase } = require("../../Utils/Moderation/moderation");
 const UNKNOWN_EXECUTOR_ID = "__unknown_audit_executor__";
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -804,7 +809,7 @@ function isCategoryWhitelisted(channel) {
 async function resolveModLogChannel(guild) {
   const channelId = IDs.channels.modLogs || IDs.channels.activityLogs;
   if (!guild || !channelId) return null;
-  return guild.channels.cache.get(channelId) || (await guild.channels.fetch(channelId).catch(() => null));
+  return getGuildChannelCached(guild, channelId, { ttlMs: 30_000 });
 }
 
 function extractLineValue(lines, label) {
@@ -1153,7 +1158,7 @@ async function unlockDangerousRolesAfterPanic(guild, state) {
   }
 
   for (const [roleId, oldBitsStr] of state.lockedRoles.entries()) {
-    const role = guild.roles.cache.get(roleId) || (await guild.roles.fetch(roleId).catch(() => null));
+    const role = await getGuildRoleCached(guild, roleId, { ttlMs: 30_000 });
     if (!role) continue;
     if (role.position >= me.roles.highest.position) continue;
     const oldBits = BigInt(oldBitsStr || 0n);
@@ -1195,7 +1200,6 @@ async function lockGuildChannelsForPanic(guild, state) {
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) return;
   const targetIds = getLockdownTargetIds(guild);
   if (!targetIds.length) return;
-  await guild.channels.fetch().catch(() => null);
   const denyMask = getLockdownDenyMask();
   let ops = 0;
   for (const channel of guild.channels.cache.values()) {
@@ -1265,9 +1269,9 @@ async function unlockGuildChannelsAfterPanic(guild, state) {
 
   let ops = 0;
   for (const [channelId, snapshot] of state.lockedChannels.entries()) {
-    const channel =
-      guild.channels.cache.get(String(channelId)) ||
-      (await guild.channels.fetch(String(channelId)).catch(() => null));
+    const channel = await getGuildChannelCached(guild, String(channelId), {
+      ttlMs: 30_000,
+    });
     if (!channel?.permissionOverwrites) continue;
     const targetsSnapshot =
       snapshot?.targets && typeof snapshot.targets === "object"
@@ -1459,8 +1463,7 @@ async function restoreDeletedChannelSnapshots(guild, state) {
     }
     const parentId = String(snap.parentId || "").trim();
     const parentChannel = parentId
-      ? guild.channels.cache.get(parentId) ||
-        (await guild.channels.fetch(parentId).catch(() => null))
+      ? await getGuildChannelCached(guild, parentId, { ttlMs: 30_000 })
       : null;
     const overwritePayload = (Array.isArray(snap.permissionOverwrites) ? snap.permissionOverwrites : [])
       .map((ov) => ({
@@ -1535,8 +1538,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
   if (enabled && cfg.deleteNewChannels && me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     for (const channelId of state.createdChannelIds) {
       const channel =
-        guild.channels.cache.get(String(channelId)) ||
-        (await guild.channels.fetch(String(channelId)).catch(() => null));
+        await getGuildChannelCached(guild, String(channelId), { ttlMs: 30_000 });
       if (!channel) continue;
       const deleted = await channel
         .delete("AntiNuke panic cleanup: delete new channel")
@@ -1552,8 +1554,7 @@ async function runAutoBackupSyncAfterPanic(guild, state) {
   if (enabled && cfg.deleteNewRoles && me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)) {
     for (const roleId of state.createdRoleIds) {
       const role =
-        guild.roles.cache.get(String(roleId)) ||
-        (await guild.roles.fetch(String(roleId)).catch(() => null));
+        await getGuildRoleCached(guild, String(roleId), { ttlMs: 30_000 });
       if (!role) continue;
       if (role.managed) continue;
       if (role.position >= me.roles.highest.position) continue;
@@ -1747,8 +1748,7 @@ function scheduleQuarantineRoleRollback(guild, userId, roleId, durationMs) {
     QUARANTINE_ROLE_TIMERS.delete(key);
     try {
       const member =
-        guild.members.cache.get(String(userId)) ||
-        (await guild.members.fetch(String(userId)).catch(() => null));
+        await getGuildMemberCached(guild, String(userId), { ttlMs: 30_000 });
       if (!member) return;
       if (!member.roles.cache.has(String(roleId))) return;
       await member.roles
@@ -1791,7 +1791,7 @@ async function quarantineExecutor(guild, executorId, reason) {
   if (await isWhitelistedExecutorAsync(guild, userId)) {
     return { applied: false, method: "whitelisted" };
   }
-  const member = guild?.members?.cache?.get(userId) || (await guild?.members?.fetch(userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, userId, { ttlMs: 30_000 });
   if (!member) return { applied: false, method: "missing_member" };
   if (hasStaffProtection(member)) {
     return { applied: false, method: "staff_protected" };
@@ -1852,8 +1852,7 @@ async function quarantineExecutor(guild, executorId, reason) {
     me?.permissions?.has(PermissionsBitField.Flags.ManageRoles)
   ) {
     const role =
-      guild.roles.cache.get(quarantineRoleId) ||
-      (await guild.roles.fetch(quarantineRoleId).catch(() => null));
+      await getGuildRoleCached(guild, quarantineRoleId, { ttlMs: 30_000 });
     if (role && role.position < me.roles.highest.position) {
       if (member.roles.cache.has(role.id)) {
         return { applied: true, method: "already_role", joinGateSuspicious };
@@ -1916,9 +1915,9 @@ async function deleteWebhookById(guild, webhookId, preferredChannelId = "") {
 
   const preferredId = String(preferredChannelId || "");
   if (preferredId) {
-    const preferredChannel =
-      guild.channels.cache.get(preferredId) ||
-      (await guild.channels.fetch(preferredId).catch(() => null));
+    const preferredChannel = await getGuildChannelCached(guild, preferredId, {
+      ttlMs: 30_000,
+    });
     if (preferredChannel?.isTextBased?.()) {
       const wh = await preferredChannel.fetchWebhooks().catch(() => null);
       const target = wh?.get?.(id) || null;
@@ -2231,8 +2230,7 @@ async function handleRoleCreationAction({ guild, executorId, roleId = "" }) {
   if (panicActive && instantCfg?.enabled && instantCfg?.deleteCreatedRoles && roleId) {
     const me = guild.members?.me;
     const role =
-      guild.roles.cache.get(String(roleId)) ||
-      (await guild.roles.fetch(String(roleId)).catch(() => null));
+      await getGuildRoleCached(guild, String(roleId), { ttlMs: 30_000 });
     if (
       role &&
       !role.managed &&
@@ -2477,8 +2475,7 @@ async function handleChannelCreationAction({ guild, executorId, channelId = "", 
     const me = guild.members?.me;
     const targetChannel =
       channel ||
-      guild.channels.cache.get(String(channelId)) ||
-      (await guild.channels.fetch(String(channelId)).catch(() => null));
+      (await getGuildChannelCached(guild, String(channelId), { ttlMs: 30_000 }));
     const canDelete =
       targetChannel?.deletable &&
       me?.permissions?.has?.(PermissionsBitField.Flags.ManageChannels);
@@ -3622,7 +3619,7 @@ async function shouldBlockModerationCommands(guild, userId) {
   if (String(guild.ownerId || "") === String(userId)) return false;
   const member =
     guild.members.cache.get(String(userId)) ||
-    (await guild.members.fetch(String(userId)).catch(() => null));
+    (await getGuildMemberCached(guild, String(userId), { ttlMs: 30_000 }));
   const emergencyBypassRoleIds = new Set(
     [
       IDs.roles.Founder,

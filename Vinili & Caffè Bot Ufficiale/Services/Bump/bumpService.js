@@ -3,6 +3,11 @@ const DisboardBump = require("../../Schemas/Disboard/disboardBumpSchema");
 const { DiscadiaBump, DiscadiaVoter, } = require("../../Schemas/Discadia/discadiaSchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
+const {
+  getClientGuildCached,
+  getGuildMemberCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 const discadiaVoteTimers = new Map();
 const STAFF_BYPASS_ROLE_IDS = new Set(
   [
@@ -59,8 +64,7 @@ function createBumpReminderService(options) {
       );
       return;
     }
-    const channel =
-      client.channels.cache.get(reminderChannelId) ||
+    const channel = client.channels.cache.get(reminderChannelId) ||
       (await client.channels.fetch(reminderChannelId).catch(() => null));
     if (!channel) {
       global.logger?.warn?.(
@@ -261,14 +265,10 @@ async function isStaffNoDmBypassUser(client, guildId, userId) {
   if (!client || !userId || !STAFF_BYPASS_ROLE_IDS.size) return false;
 
   const resolvedGuildId = guildId || IDs.guilds.main;
-  const guild =
-    client.guilds.cache.get(resolvedGuildId) ||
-    (await client.guilds.fetch(resolvedGuildId).catch(() => null));
+  const guild = await getClientGuildCached(client, resolvedGuildId);
   if (!guild) return false;
 
-  const member =
-    guild.members.cache.get(userId) ||
-    (await guild.members.fetch(userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, userId);
   if (!member?.roles?.cache) return false;
 
   for (const roleId of STAFF_BYPASS_ROLE_IDS) {
@@ -355,9 +355,7 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
       )
         return;
       if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return;
-      const user =
-        client.users.cache.get(userId) ||
-        (await client.users.fetch(userId).catch(() => null));
+      const user = await getUserCached(client, userId);
       if (!user) return;
       const embed = buildVoteReminderEmbed(client);
       try {
@@ -412,9 +410,7 @@ function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
 
       if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return;
 
-      const user =
-        client.users.cache.get(userId) ||
-        (await client.users.fetch(userId).catch(() => null));
+      const user = await getUserCached(client, userId);
       if (!user) return;
 
       const embed = buildVoteReminderEmbed(client);

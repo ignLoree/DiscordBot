@@ -23,11 +23,11 @@ let openRouterCooldownUntil = 0;
 
 const LOCAL_THEME_POLLS = [
   {
-    question: "Qual Ã¨ il momento migliore della giornata?",
+    question: "Qual è il momento migliore della giornata?",
     answers: ["Mattina presto", "Tarda mattinata", "Pomeriggio", "Prima serata", "Notte"],
   },
   {
-    question: "Quale stagione ti rappresenta di piÃ¹?",
+    question: "Quale stagione ti rappresenta di più?",
     answers: ["Primavera", "Estate", "Autunno", "Inverno"],
   },
   {
@@ -36,10 +36,10 @@ const LOCAL_THEME_POLLS = [
   },
   {
     question: "Quale tipo di vacanza sceglieresti?",
-    answers: ["Mare", "Montagna", "CittÃ  d'arte", "Road trip", "Relax totale"],
+    answers: ["Mare", "Montagna", "Città d'arte", "Road trip", "Relax totale"],
   },
   {
-    question: "Cosa conta di piÃ¹ in un film?",
+    question: "Cosa conta di più in un film?",
     answers: ["Trama", "Personaggi", "Colonna sonora", "Finale", "Fotografia"],
   },
   {
@@ -55,15 +55,15 @@ const LOCAL_THEME_POLLS = [
     answers: ["Anni 80", "Anni 90", "Primi 2000", "Futuro", "Resto nel presente"],
   },
   {
-    question: "Quale qualitÃ  apprezzi di piÃ¹ in una persona?",
-    answers: ["SinceritÃ ", "Ironia", "Intelligenza", "Gentilezza", "Determinazione"],
+    question: "Quale qualità apprezzi di più in una persona?",
+    answers: ["Sincerità", "Ironia", "Intelligenza", "Gentilezza", "Determinazione"],
   },
   {
     question: "Come scegli di solito cosa guardare la sera?",
     answers: ["Consigli degli amici", "Trending", "Vado a caso", "Riguardo qualcosa che conosco", "Recensioni online"],
   },
   {
-    question: "Qual Ã¨ il tuo comfort food ideale?",
+    question: "Qual è il tuo comfort food ideale?",
     answers: ["Pizza", "Pasta", "Dolci", "Panino o fast food", "Cibo fatto in casa"],
   },
   {
@@ -75,19 +75,19 @@ const LOCAL_THEME_POLLS = [
     answers: ["Auto", "Treno", "Aereo", "Moto", "A piedi"],
   },
   {
-    question: "Quale app usi piÃ¹ spesso in una giornata normale?",
+    question: "Quale app usi più spesso in una giornata normale?",
     answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Spotify"],
   },
   {
-    question: "Che tipo di meteo ti mette piÃ¹ di buon umore?",
+    question: "Che tipo di meteo ti mette più di buon umore?",
     answers: ["Sole pieno", "Pioggia leggera", "Temporale", "Freddo secco", "Cielo coperto"],
   },
   {
     question: "Se dovessi scegliere un superpotere, quale prenderesti?",
-    answers: ["Teletrasporto", "Leggere nel pensiero", "InvisibilitÃ ", "Volare", "Fermare il tempo"],
+    answers: ["Teletrasporto", "Leggere nel pensiero", "Invisibilità", "Volare", "Fermare il tempo"],
   },
   {
-    question: "Che tipo di contenuto ti intrattiene di piÃ¹?",
+    question: "Che tipo di contenuto ti intrattiene di più?",
     answers: ["Video brevi", "Film", "Serie TV", "Podcast", "Streaming live"],
   },
   {
@@ -103,7 +103,7 @@ const LOCAL_THEME_POLLS = [
     answers: ["Quello che legge e basta", "Quello che manda meme", "Quello che risponde a tutti", "Quello che sparisce", "Quello che organizza"],
   },
   {
-    question: "Qual Ã¨ il miglior modo per passare il tempo da solo?",
+    question: "Qual è il miglior modo per passare il tempo da solo?",
     answers: ["Guardare qualcosa", "Giocare", "Ascoltare musica", "Dormire", "Fare una passeggiata"],
   },
   {
@@ -111,7 +111,7 @@ const LOCAL_THEME_POLLS = [
     answers: ["Spazio", "Silenzio", "Luce naturale", "Una cucina grande", "Una postazione relax"],
   },
   {
-    question: "Quale sapore scegli piÃ¹ spesso?",
+    question: "Quale sapore scegli più spesso?",
     answers: ["Dolce", "Salato", "Piccante", "Amaro", "Aspro"],
   },
   {
@@ -119,20 +119,20 @@ const LOCAL_THEME_POLLS = [
     answers: ["Mi adatto subito", "Mi innervosisco", "Cerco un piano B", "Aspetto e vedo", "Dipende dalla situazione"],
   },
   {
-    question: "Qual Ã¨ il miglior periodo dell'anno?",
+    question: "Qual è il miglior periodo dell'anno?",
     answers: ["Gennaio-Marzo", "Aprile-Giugno", "Luglio-Settembre", "Ottobre-Dicembre"],
   },
   {
-    question: "Che tipo di musica metti piÃ¹ spesso in cuffia?",
+    question: "Che tipo di musica metti più spesso in cuffia?",
     answers: ["Per caricarmi", "Per rilassarmi", "Per concentrarmi", "Per nostalgia", "Dipende dal mood"],
   },
   {
-    question: "Sei piÃ¹ tipo da piano o improvvisazione?",
+    question: "Sei più tipo da piano o improvvisazione?",
     answers: ["Programmo tutto", "Organizzo il minimo", "Vado d'istinto", "Cambio idea spesso"],
   },
   {
     question: "Quale posto scegli per rilassarti davvero?",
-    answers: ["Casa", "Mare", "Montagna", "CittÃ ", "Ovunque purchÃ© in pace"],
+    answers: ["Casa", "Mare", "Montagna", "Città", "Ovunque purché in pace"],
   },
   {
     question: "Quanto conta per te il primo impatto?",
@@ -671,4 +671,3 @@ module.exports = {
   startAutoPollLoop,
   runAutoPoll,
 };
-

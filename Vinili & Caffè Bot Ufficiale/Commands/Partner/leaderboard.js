@@ -5,6 +5,7 @@ const PartnershipCount = require("../../Schemas/Staff/staffSchema");
 const PARTNERS_PER_PAGE = 10;
 const EPHEMERAL_FLAG = 1 << 6;
 const TIME_ZONE = "Europe/Rome";
+const UNKNOWN_USERNAME = "Utente sconosciuto";
 
 function getRomeDateParts(date) {
   const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -129,11 +130,11 @@ function buildNoDataEmbed(isWeekly) {
 }
 
 async function buildLeaderboardEmbed(
-  interaction,
   partners,
   currentPage,
   totalPages,
   isWeekly,
+  resolveUsername,
 ) {
   const startIndex = (currentPage - 1) * PARTNERS_PER_PAGE;
   const currentPartners = partners.slice(
@@ -141,18 +142,13 @@ async function buildLeaderboardEmbed(
     startIndex + PARTNERS_PER_PAGE,
   );
 
-  const rows = [];
-  for (let i = 0; i < currentPartners.length; i += 1) {
-    const partner = currentPartners[i];
-    let username = "Utente sconosciuto";
-    try {
-      const user = await interaction.client.users.fetch(partner.userId);
-      username = user.username;
-    } catch {}
-    rows.push(
-      `**${startIndex + i + 1}.** ${username} - <:VC_Partner:1443933014835986473> ${partner.score} partnership`,
-    );
-  }
+  const usernames = await Promise.all(
+    currentPartners.map((partner) => resolveUsername(partner.userId)),
+  );
+  const rows = currentPartners.map(
+    (partner, index) =>
+      `**${startIndex + index + 1}.** ${usernames[index] || UNKNOWN_USERNAME} - <:VC_Partner:1443933014835986473> ${partner.score} partnership`,
+  );
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
@@ -162,6 +158,47 @@ async function buildLeaderboardEmbed(
     .setDescription(rows.join("\n"))
     .setFooter({ text: `Pagina ${currentPage} di ${totalPages}` })
     .setTimestamp();
+}
+
+function createUsernameResolver(client) {
+  const usernameCache = new Map();
+  const pendingFetches = new Map();
+
+  return async (userId) => {
+    const key = String(userId || "");
+    if (!key) return UNKNOWN_USERNAME;
+
+    if (usernameCache.has(key)) {
+      return usernameCache.get(key);
+    }
+
+    const cachedUser = client.users.cache.get(key);
+    if (cachedUser?.username) {
+      usernameCache.set(key, cachedUser.username);
+      return cachedUser.username;
+    }
+
+    if (pendingFetches.has(key)) {
+      return pendingFetches.get(key);
+    }
+
+    const fetchPromise = client.users
+      .fetch(key)
+      .then((user) => {
+        const username = user?.username || UNKNOWN_USERNAME;
+        usernameCache.set(key, username);
+        pendingFetches.delete(key);
+        return username;
+      })
+      .catch(() => {
+        pendingFetches.delete(key);
+        usernameCache.set(key, UNKNOWN_USERNAME);
+        return UNKNOWN_USERNAME;
+      });
+
+    pendingFetches.set(key, fetchPromise);
+    return fetchPromise;
+  };
 }
 
 function buildPaginationRow(currentPage, totalPages) {
@@ -240,13 +277,14 @@ module.exports = {
     const totalPages = Math.ceil(partners.length / PARTNERS_PER_PAGE);
     let currentPage = 1;
     let row = buildPaginationRow(currentPage, totalPages);
+    const resolveUsername = createUsernameResolver(interaction.client);
 
     const firstEmbed = await buildLeaderboardEmbed(
-      interaction,
       partners,
       currentPage,
       totalPages,
       isWeekly,
+      resolveUsername,
     );
     const message = await safeEditReply(interaction, {
       embeds: [firstEmbed],
@@ -275,11 +313,11 @@ module.exports = {
       }
 
       const embed = await buildLeaderboardEmbed(
-        interaction,
         partners,
         currentPage,
         totalPages,
         isWeekly,
+        resolveUsername,
       );
       row = buildPaginationRow(currentPage, totalPages);
       await buttonInteraction.update({ embeds: [embed], components: [row] });

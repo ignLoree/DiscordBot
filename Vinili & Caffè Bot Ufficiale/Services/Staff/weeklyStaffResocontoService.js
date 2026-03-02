@@ -12,6 +12,11 @@ const {
   RESOCONTO_REJECT_PREFIX,
 } = require("../../Events/interaction/resocontoHandlers");
 const { getUserOverviewStats } = require("../Community/activityService");
+const {
+  getClientGuildCached,
+  getGuildChannelCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const TIME_ZONE = "Europe/Rome";
 const STAFF_ACTIVITY_LIMITS = {
@@ -304,10 +309,9 @@ function countPmWeeklyPartners(staffDoc, weekStart, weekEnd) {
 
 async function resolveChannel(client, channelId) {
   if (!channelId) return null;
-  return (
-    client.channels.cache.get(channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null))
-  );
+  return client.channels.cache.get(channelId) ||
+    (await getGuildChannelCached(client.guilds.cache.get(String(IDs.guilds?.main || "")), channelId)) ||
+    (await client.channels.fetch(channelId).catch(() => null));
 }
 
 async function runWeeklyStaffResoconti(client) {
@@ -315,9 +319,7 @@ async function runWeeklyStaffResoconti(client) {
   const channelId = String(IDs.channels?.resocontiStaff || "");
   if (!guildId || !channelId) return;
 
-  const guild =
-    client.guilds.cache.get(guildId) ||
-    (await client.guilds.fetch(guildId).catch(() => null));
+  const guild = await getClientGuildCached(client, guildId);
   if (!guild) return;
 
   const channel = await resolveChannel(client, channelId);
@@ -338,7 +340,7 @@ async function runWeeklyStaffResoconti(client) {
   if (!knownStaffUserIds.length) return;
 
   const fetchedMembers = await Promise.all(
-    knownStaffUserIds.map((userId) => guild.members.fetch(userId).catch(() => null)),
+    knownStaffUserIds.map((userId) => getGuildMemberCached(guild, userId)),
   );
 
   const candidateMembers = [];

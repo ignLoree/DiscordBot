@@ -5,6 +5,11 @@ const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require(
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getClientGuildCached,
+  getGuildChannelCached,
+  getUserCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 const LOG_CHANNEL_ID = IDs.channels.ticketLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.HighStaff;
@@ -238,7 +243,7 @@ async function resolveUserFromArg(message, rawArg) {
     String(rawArg).match(/^<@!?(\d+)>$/)?.[1] ||
     (String(rawArg).match(/^\d{17,20}$/) ? String(rawArg) : null);
   if (!id) return null;
-  return message.client.users.fetch(id).catch(() => null);
+  return getUserCached(message.client, id);
 }
 
 async function fetchTicketMessage(channel, messageId) {
@@ -1048,14 +1053,13 @@ module.exports = {
       const centralTicketLogChannelId = IDs?.channels?.ticketLogs || "1442569290682208296";
 
       const mainGuild = mainGuildId
-        ? client.guilds.cache.get(mainGuildId) ||
-          (await client.guilds.fetch(mainGuildId).catch(() => null))
+        ? await getClientGuildCached(client, mainGuildId)
         : null;
 
       const logChannel =
         mainGuild?.channels?.cache?.get(centralTicketLogChannelId) ||
         (mainGuild
-          ? await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)
+          ? await getGuildChannelCached(mainGuild, centralTicketLogChannelId)
           : null);
 
       const closeEmbed = buildTicketClosedEmbed({

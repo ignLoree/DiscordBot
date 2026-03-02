@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
+const { getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 
 const getStaffRoleIds = (client) => {
   void client;
@@ -145,9 +146,7 @@ async function handleDmBroadcastModal(interaction, client) {
     const member = guildMembers.get(id) || null;
     let user = member?.user || null;
     if (!user) {
-      user =
-        client?.users?.cache?.get(id) ||
-        (await client?.users?.fetch?.(id).catch(() => null));
+      user = await getUserCached(client, id);
     }
     if (!user || user.bot) continue;
     if (

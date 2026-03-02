@@ -7,6 +7,10 @@ const {
 } = require("discord.js");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
+const {
+  getGuildChannelCached,
+  getGuildMemberCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
 const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
@@ -39,7 +43,6 @@ const ROLE_ADMIN = String(IDs.roles.Admin);
 const ROLE_MANAGER = String(IDs.roles.Manager);
 const ROLE_CO_OWNER = String(IDs.roles.CoFounder);
 const ROLE_OWNER = String(IDs.roles.Founder);
-
 function parseResocontoButtonCustomId(customId) {
   const raw = String(customId || "");
   const isApply = raw.startsWith(`${RESOCONTO_APPLY_PREFIX}:`);
@@ -116,9 +119,7 @@ async function getOrCreateStaffDoc(guildId, userId) {
 }
 
 async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positive) {
-  const channel =
-    guild.channels.cache.get(IDs.channels.valutazioniStaff) ||
-    (await guild.channels.fetch(IDs.channels.valutazioniStaff).catch(() => null));
+  const channel = await getGuildChannelCached(guild, IDs.channels.valutazioniStaff);
   if (!channel?.isTextBased?.()) return;
 
   const title = positive
@@ -184,9 +185,7 @@ async function applyDepexSideEffects(member, roleId) {
 }
 
 async function sendPexDepexLog(guild, type, targetUser, oldRoleId, newRoleId, reason) {
-  const channel =
-    guild.channels.cache.get(IDs.channels.pexDepex) ||
-    (await guild.channels.fetch(IDs.channels.pexDepex).catch(() => null));
+  const channel = await getGuildChannelCached(guild, IDs.channels.pexDepex);
   if (!channel?.isTextBased?.()) return;
   const oldRole = guild.roles.cache.get(String(oldRoleId || ""));
   const newRole = guild.roles.cache.get(String(newRoleId || ""));
@@ -203,16 +202,14 @@ async function sendPexDepexLog(guild, type, targetUser, oldRoleId, newRoleId, re
 }
 
 async function deleteThreadForMessage(guild, messageId) {
-  const thread = await guild.channels.fetch(String(messageId || "")).catch(() => null);
+  const thread = await getGuildChannelCached(guild, String(messageId || ""));
   if (thread?.isThread?.()) {
     await thread.delete().catch(() => null);
   }
 }
 
 async function appendOutcomeToMessage(guild, channelId, messageId, actorId, accepted, statusText) {
-  const channel =
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null));
+  const channel = await getGuildChannelCached(guild, channelId);
   if (!channel?.isTextBased?.()) return;
   const message = await channel.messages.fetch(messageId).catch(() => null);
   if (!message) return;
@@ -226,9 +223,7 @@ async function appendOutcomeToMessage(guild, channelId, messageId, actorId, acce
 }
 
 async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
-  const member =
-    guild.members.cache.get(payload.userId) ||
-    (await guild.members.fetch(payload.userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, payload.userId);
   if (!member) return "Utente non trovato nel server.";
 
   if (payload.actionKey === "nl") return "Nessuna azione applicata (Nulla).";
@@ -297,9 +292,7 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
 }
 
 async function applyPmAction(guild, payload) {
-  const member =
-    guild.members.cache.get(payload.userId) ||
-    (await guild.members.fetch(payload.userId).catch(() => null));
+  const member = await getGuildMemberCached(guild, payload.userId);
   if (!member) return "Utente non trovato nel server.";
 
   if (payload.actionKey === "nl") return "Nessuna azione applicata (Nulla).";

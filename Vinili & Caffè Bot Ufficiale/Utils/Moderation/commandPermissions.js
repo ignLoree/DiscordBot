@@ -19,6 +19,8 @@ const EMPTY_PERMISSIONS = {
 const PERMISSIONS_CACHE_TTL_MS = 3000;
 let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS, expiresAt: 0 };
 let idsFallbackCache = null;
+const LIVE_MEMBER_CACHE_TTL_MS = 15_000;
+const liveMemberCache = new Map();
 
 const MAIN_GUILD_ID = IDs?.guilds?.main || null;
 const ALLOWED_GUILD_IDS = new Set(
@@ -351,7 +353,28 @@ async function fetchLiveMember(entity) {
     null;
   if (!guild || !userId || typeof guild.members?.fetch !== "function")
     return null;
-  return guild.members.fetch(userId).catch(() => null);
+  const cacheKey = `${String(guild.id)}:${String(userId)}`;
+  const now = Date.now();
+  const cached = liveMemberCache.get(cacheKey);
+  if (cached?.member && now < Number(cached.expiresAt || 0)) {
+    return cached.member;
+  }
+  if (cached?.promise) {
+    return cached.promise;
+  }
+  const promise = guild.members.fetch(userId).catch(() => null);
+  liveMemberCache.set(cacheKey, {
+    member: null,
+    expiresAt: 0,
+    promise,
+  });
+  const member = await promise;
+  liveMemberCache.set(cacheKey, {
+    member,
+    expiresAt: Date.now() + LIVE_MEMBER_CACHE_TTL_MS,
+    promise: null,
+  });
+  return member;
 }
 
 async function hasAnyRoleWithEventGrants(member, roleIds, guildId, userId) {

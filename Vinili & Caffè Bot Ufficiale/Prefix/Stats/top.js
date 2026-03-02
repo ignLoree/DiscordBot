@@ -7,6 +7,11 @@ const {
 const { InviteTrack } = require("../../Schemas/Community/communitySchemas");
 const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas, } = require("../../Utils/Render/activityCanvas");
 const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap, } = require("../../Utils/Community/channelSnapshotUtils");
+const {
+  getGuildMemberCached,
+  getUserCached,
+  getGuildChannelCached,
+} = require("../../Utils/Interaction/interactionEntityCache");
 
 const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set(
   [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
@@ -87,11 +92,11 @@ function normalizeCanvasLabel(value, fallback) {
 async function resolveDisplayName(guild, userId) {
   const cachedMember = guild.members.cache.get(userId);
   if (cachedMember) return cachedMember.displayName;
-  const fetchedMember = await guild.members.fetch(userId).catch(() => null);
+  const fetchedMember = await getGuildMemberCached(guild, userId);
   if (fetchedMember) return fetchedMember.displayName;
   const cachedUser = guild.client.users.cache.get(userId);
   if (cachedUser) return cachedUser.username;
-  const fetchedUser = await guild.client.users.fetch(userId).catch(() => null);
+  const fetchedUser = await getUserCached(guild.client, userId);
   if (fetchedUser) return fetchedUser.username;
   return `utente_${String(userId).slice(-6)}`;
 }
@@ -142,13 +147,13 @@ async function isBotUser(guild, userId) {
   const memberCached = guild.members.cache.get(userId);
   if (memberCached) return Boolean(memberCached.user?.bot);
 
-  const memberFetched = await guild.members.fetch(userId).catch(() => null);
+  const memberFetched = await getGuildMemberCached(guild, userId);
   if (memberFetched) return Boolean(memberFetched.user?.bot);
 
   const userCached = guild.client.users.cache.get(userId);
   if (userCached) return Boolean(userCached.bot);
 
-  const userFetched = await guild.client.users.fetch(userId).catch(() => null);
+  const userFetched = await getUserCached(guild.client, userId);
   return Boolean(userFetched?.bot);
 }
 
