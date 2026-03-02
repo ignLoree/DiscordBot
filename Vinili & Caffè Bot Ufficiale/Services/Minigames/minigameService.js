@@ -1,4 +1,4 @@
-﻿const axios = require("axios");
+const axios = require("axios");
 const { createCanvas } = require("canvas");
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionsBitField, AttachmentBuilder, } = require("discord.js");
 const { MinigameUser, MinigameState, MinigameRotation, } = require("../../Schemas/Minigames/minigameSchema");
@@ -6128,8 +6128,12 @@ ${game.previewUrl}`,
       return true;
     }
 
+    const fallbackText =
+      "Se su telefono non si riproduce, apri questo link per ascoltare: " +
+      game.previewUrl;
     await interaction
       .editReply({
+        content: fallbackText,
         files: [new AttachmentBuilder(audio, { name: "anteprima.m4a" })],
       })
       .catch(() => {});

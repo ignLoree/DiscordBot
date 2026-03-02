@@ -530,27 +530,25 @@
             }
         },
         "evento": {
-            "roles": [
-                "roles.HighStaff"
-            ],
             "channels": [
-                "1442569288161558528"
+                "1442569288161558528",
+                "1442569138114662490"
             ],
             "subcommands": {
                 "start": [
-                    "roles.HighStaff"
+                    "roles.Founder"
                 ],
                 "stop": [
-                    "roles.HighStaff"
+                    "roles.Founder"
                 ],
                 "info": [
-                    "roles.HighStaff"
+                    "roles.Founder"
                 ],
                 "classifica": [
                     "roles.Member"
                 ],
                 "staff": [
-                    "roles.HighStaff"
+                    "roles.Founder"
                 ]
             }
         },

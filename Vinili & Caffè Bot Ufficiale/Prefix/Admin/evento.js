@@ -1,7 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { getGuildExpSettings, setActivityEvent, clearActivityEvent, setStaffEvent, clearStaffEvent, getStaffEventSettings } = require("../../Services/Community/expService");
-const { grantEventRewardsForExistingRoleMembers } = require("../../Services/Community/activityEventRewardsService");
+const { grantEventRewardsForExistingRoleMembers, grantEventRewardsForSameDayReviewAndVote } = require("../../Services/Community/activityEventRewardsService");
 const { givePmStaff15PointsAtStart, giveExistingInvitesPointsAtStart, addStaffEventPoints, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("../../Services/Community/staffEventService");
 const { buildEventoClassificaPayload } = require("../../Services/Community/eventoClassificaService");
 const IDs = require("../../Utils/Config/ids");
@@ -377,10 +377,14 @@ module.exports = {
         });
         return;
       }
+      const nowForStart = new Date();
       setImmediate(() => {
         grantEventRewardsForExistingRoleMembers(message.guild).catch((err) => {
           global.logger?.error?.("[evento start] grantEventRewardsForExistingRoleMembers failed:", err);
-       });
+        });
+        grantEventRewardsForSameDayReviewAndVote(message.guild, nowForStart).catch((err) => {
+          global.logger?.error?.("[evento start] grantEventRewardsForSameDayReviewAndVote failed:", err);
+        });
       });
       const embed = new EmbedBuilder()
         .setColor("#6f4e37")

@@ -6,7 +6,6 @@ const { getEventWeekNumber, grantEventLevels, addEventWeekWinner, getTop3ExpDuri
 const { giveWeekly20PointsIfEligible, getStaffEventLeaderboard, isStaffButNotHighStaff } = require("./staffEventService");
 const { isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
-
 const TIME_ZONE = "Europe/Rome";
 const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
 const NEWS_CHANNEL_ID = IDs.channels.news;
@@ -23,9 +22,6 @@ const REQUIRED_MEMBER_ROLE_ID = String(IDs.roles.Member || "");
 const EXCLUDED_ROLE_IDS = new Set(
   [
     IDs.roles.Staff,
-    IDs.roles.PartnerManager,
-    IDs.roles.Mod,
-    IDs.roles.Admin,
     IDs.roles.HighStaff,
   ]
     .filter(Boolean)
@@ -104,7 +100,6 @@ function getDateKeysForWeekKey(weekKey) {
   return out;
 }
 
-/** Date keys (YYYY-MM-DD Rome) per la settimana N dell'evento (1-based). */
 function getEventWeekDateKeys(eventStartedAt, weekNum) {
   const start = new Date(eventStartedAt).getTime();
   if (!Number.isFinite(start) || !Number.isFinite(weekNum) || weekNum < 1)
@@ -119,7 +114,6 @@ function getEventWeekDateKeys(eventStartedAt, weekNum) {
   return out;
 }
 
-/** Come loadWeeklyRowsFromDaily ma con dateKeys arbitrari. Restituisce messageCount e voiceSeconds (non voiceExp). */
 async function loadActivityRowsFromDateKeys(guild, dateKeys) {
   if (!dateKeys?.length) return [];
   const eligible = await getEligibleChannelSets(guild);
@@ -451,7 +445,7 @@ async function trySendEventEndAnnouncementToNews(client) {
     (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
   await newsChannel.send({
-    content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲@everyone`,
+    content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>`,
     embeds: [embed],
     allowedMentions: { parse: ["everyone"] },
   }).catch((err) => {

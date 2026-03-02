@@ -1,5 +1,3 @@
-"use strict";
-
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { getEventWeekDateKeys, loadActivityRowsFromDateKeys } = require("./weeklyActivityWinnersService");
 const { getGuildExpSettings, getEventWeekNumber, getTop10ExpDuringEvent } = require("./activityEventRewardsService");
@@ -25,7 +23,22 @@ async function resolveUserTag(client, userId) {
   return u ? `<@${userId}>` : `\`${userId}\``;
 }
 
-/** Costruisce embed + componenti per +evento classifica, settimana weekNum (1-4). Dati in tempo reale. */
+/** Filtra la lista escludendo chi ha Staff/HighStaff (isEventStaffMember). Chi è solo Partner Manager partecipa. Restituisce i primi `limit` elementi. */
+async function filterNonStaffTop(guild, list, limit = 10) {
+  if (!guild || !Array.isArray(list)) return [];
+  const cap = Math.max(0, Math.min(100, Number(limit) || 10));
+  const out = [];
+  for (const item of list) {
+    if (out.length >= cap) break;
+    const userId = String(item?.userId ?? item?.user ?? "");
+    if (!userId) continue;
+    const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
+    if (member && isEventStaffMember(member)) continue;
+    out.push(item);
+  }
+  return out;
+}
+
 async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
   const week = Math.max(1, Math.min(MAX_WEEKS, Number(weekNum) || 1));
   const eventStart = settings?.eventStartedAt ? new Date(settings.eventStartedAt) : null;

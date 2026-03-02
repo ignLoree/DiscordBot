@@ -1,6 +1,5 @@
 const { ActivityUser, ActivityDaily, ActivityHourly, } = require("../../Schemas/Community/communitySchemas");
 const { addExpWithLevel, MESSAGE_EXP, VOICE_EXP_PER_MINUTE, shouldIgnoreExpForMember, } = require("./expService");
-
 const TIME_ZONE = "Europe/Rome";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BACKFILL_HOUR_SUFFIX = "T12";

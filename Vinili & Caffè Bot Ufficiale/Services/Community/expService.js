@@ -30,13 +30,9 @@ const ROLE_MULTIPLIERS = new Map([
   [IDs.roles.ServerBooster, 2],
 ]);
 
-/** Ruoli staff: esclusi da reward evento (premi settimanali top 3) e classifica evento; ricevono comunque il moltiplicatore evento (3x) e i boost ruoli come gli altri. */
 const EVENT_STAFF_ROLE_IDS = new Set(
   [
     IDs.roles.Staff,
-    IDs.roles.PartnerManager,
-    IDs.roles.Mod,
-    IDs.roles.Admin,
     IDs.roles.HighStaff,
   ]
     .filter(Boolean)
@@ -267,7 +263,6 @@ async function getGuildExpSettings(guildId) {
   return value;
 }
 
-/** Configura l'evento Activity EXP (date, multi globale, override ruoli, extra Veterano). */
 async function setActivityEvent(guildId, options = {}) {
   if (!guildId) return null;
   const start = options.startDate
@@ -319,7 +314,6 @@ async function setActivityEvent(guildId, options = {}) {
   };
 }
 
-/** Snapshot totalExp di tutti gli utenti per la classifica EXP durante evento. */
 async function snapshotExpForEvent(guildId) {
   if (!guildId) return;
   const users = await ExpUser.find({ guildId })
@@ -361,7 +355,6 @@ async function clearActivityEvent(guildId) {
   invalidateSettingsCache(guildId);
 }
 
-/** Disattiva l'evento staff (date e stato). */
 async function clearStaffEvent(guildId) {
   if (!guildId) return;
   await GlobalSettings.findOneAndUpdate(
@@ -372,7 +365,6 @@ async function clearStaffEvent(guildId) {
   invalidateSettingsCache(guildId);
 }
 
-/** Attiva l'evento staff (stessa durata dell'activity event). */
 async function setStaffEvent(guildId, options = {}) {
   if (!guildId) return null;
   const end = options.endDate ? new Date(options.endDate).getTime() : null;
@@ -391,7 +383,6 @@ async function setStaffEvent(guildId, options = {}) {
   return { expiresAt: new Date(end), startedAt };
 }
 
-/** Restituisce stato evento staff (active, expiresAt, startedAt). expiresAt è sempre valorizzato se l'evento è stato impostato. */
 async function getStaffEventSettings(guildId) {
   if (!guildId) return { active: false, expiresAt: null, startedAt: null };
   const doc = await GlobalSettings.findOne({ guildId }).select("staffEventExpiresAt staffEventStartedAt").lean().catch(() => null);
@@ -503,7 +494,7 @@ function buildLevelUpEmbed(member, level) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il **livello** \`${level}\``,
+          `<:VC_LevelUp2:1443701876892762243> Hai appena __raggiunto__ il **livello** \`${level}\``,
           `<a:VC_HelloKittyGift:1329447876857958471> __Continua__ ad essere **attivo** in __chat__ e in __vocale__ per avanzare di _livello_!`,
         ].join("\n"),
       },
@@ -530,7 +521,7 @@ function buildPerksLevelEmbed(member, level, roleId) {
         },
         description: [
           `<a:VC_PandaClap:1331620157398712330> **Complimenti ${member}!**`,
-          `<:VC_LevelUp2:1443701876892762243>Hai appena __raggiunto__ il <@&${roleId}>`,
+          `<:VC_LevelUp2:1443701876892762243> Hai appena __raggiunto__ il <@&${roleId}>`,
           `<a:VC_HelloKittyGift:1329447876857958471> __Controlla__ <#${PERKS_CHANNEL_ID}> per sapere i nuovi **vantaggi** che hai _sbloccato_!`,
         ].join("\n"),
       },

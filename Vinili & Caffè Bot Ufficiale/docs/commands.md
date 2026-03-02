@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-03-01T21:45:42.442Z.
+Generato automaticamente il 2026-03-02T11:12:14.290Z.
 
 ## +adorable
 - Categoria: `Minigames`

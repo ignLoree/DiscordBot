@@ -1,20 +1,54 @@
-"use strict";
-
-const {
-  ActivityEventReward,
-  ExpUser,
-  EventUserExpSnapshot,
-  EventWeekWinner,
-} = require("../../Schemas/Community/communitySchemas");
-const {
-  getGuildExpSettings,
-  addExp,
-  getTotalExpForLevel,
-  getLevelInfo,
-  recordLevelHistory,
-  isEventStaffMember,
-} = require("./expService");
+const { ActivityEventReward, ExpUser, EventUserExpSnapshot, EventWeekWinner, VoteRole } = require("../../Schemas/Community/communitySchemas");
+const { getGuildExpSettings, addExp, getTotalExpForLevel, getLevelInfo, recordLevelHistory, isEventStaffMember } = require("./expService");
 const IDs = require("../../Utils/Config/ids");
+const TIME_ZONE_ROME = "Europe/Rome";
+
+function getRomeOffsetMs(utcDate) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE_ROME,
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+  });
+  const zoneName = formatter
+    .formatToParts(utcDate)
+    .find((part) => part.type === "timeZoneName")?.value;
+  const match = String(zoneName || "GMT+0").match(
+    /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,
+  );
+  if (!match) return 0;
+  const sign = match[1] === "-" ? -1 : 1;
+  const hours = Number(match[2] || 0);
+  const minutes = Number(match[3] || 0);
+  return sign * (hours * 60 + minutes) * 60 * 1000;
+}
+
+function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
+  const baseUtcMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  const firstOffsetMs = getRomeOffsetMs(new Date(baseUtcMs));
+  let utcMs = baseUtcMs - firstOffsetMs;
+  const secondOffsetMs = getRomeOffsetMs(new Date(utcMs));
+  if (secondOffsetMs !== firstOffsetMs) utcMs = baseUtcMs - secondOffsetMs;
+  return new Date(utcMs);
+}
+
+function getRomeDayBoundsForDate(date = new Date()) {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE_ROME,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(date).reduce((acc, part) => {
+    if (part.type !== "literal") acc[part.type] = part.value;
+    return acc;
+  }, {});
+  const year = Number(parts.year || 0);
+  const month = Number(parts.month || 1);
+  const day = Number(parts.day || 1);
+  const startRome = createUtcFromRomeLocal(year, month, day, 0, 0, 0);
+  const endRome = createUtcFromRomeLocal(year, month, day + 1, 0, 0, 0);
+  return { startRome, endRome };
+}
 
 async function isEventActive(guildId) {
   if (!guildId) return false;
@@ -22,7 +56,6 @@ async function isEventActive(guildId) {
   return Boolean(settings?.eventExpiresAt);
 }
 
-/** Concede N livelli sotto forma di EXP (solo se evento attivo). Non applica moltiplicatori. Lo staff riceve i premi ruoli (supporter, verificato, etc.); l'esclusione staff è solo per i premi settimanali top 3. */
 async function grantEventLevels(guildId, userId, levels, note = null, member = null) {
   if (!guildId || !userId || !Number.isFinite(levels) || levels <= 0)
     return null;
@@ -55,7 +88,6 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   return result;
 }
 
-/** Concede un reward una sola volta per (guildId, userId, rewardType, tier). Lo staff può ricevere i premi ruoli (supporter, verificato, guilded, invite, voter). */
 async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
   if (!guildId || !userId || !rewardType) return null;
   const active = await isEventActive(guildId);
@@ -93,7 +125,6 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
   return result;
 }
 
-/** Registra un vincitore settimana evento (week 2 = permesso tipo Level50, week 3 = tipo Level70). Permesso permanente: nessuna scadenza, stesso accesso a +customrole/+customvoc dei ruoli Level50/Level70. */
 async function addEventWeekWinner(guildId, userId, week) {
   if (!guildId || !userId || (week !== 2 && week !== 3)) return null;
   await EventWeekWinner.findOneAndUpdate(
@@ -104,14 +135,12 @@ async function addEventWeekWinner(guildId, userId, week) {
   return true;
 }
 
-/** True se l'utente ha il permesso evento permanente (2 = Level50-equivalente, 3 = Level70-equivalente). Usato per +customrole, +customvoc e altri comandi che richiedono Level50/Level70. */
 async function hasEventWeekWinnerGrant(guildId, userId, week) {
   if (!guildId || !userId || (week !== 2 && week !== 3)) return false;
   const doc = await EventWeekWinner.findOne({ guildId, userId, week }).lean().catch(() => null);
   return Boolean(doc);
 }
 
-/** All’avvio evento: assegna le ricompense una tantum a chi ha già i ruoli (Supporter, Verificato/Verificata, Guilded). Lo staff è escluso. */
 async function grantEventRewardsForExistingRoleMembers(guild) {
   if (!guild?.id) return;
   const active = await isEventActive(guild.id);
@@ -123,7 +152,6 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   const guildedId = IDs.roles.Guilded;
   for (const [, member] of guild.members.cache) {
     if (!member?.user?.id) continue;
-    if (isEventStaffMember(member)) continue;
     if (supporterId && member.roles.cache.has(supporterId)) {
       await grantEventRewardOnce(guild.id, member.id, "supporter", { levels: 5, member }).catch(() => null);
     }
@@ -138,8 +166,36 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
     }
   }
 }
+async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
+  if (!guild?.id || !eventStartDate) return;
+  const active = await isEventActive(guild.id);
+  if (!active) return;
+  const { startRome, endRome } = getRomeDayBoundsForDate(
+    eventStartDate instanceof Date ? eventStartDate : new Date(eventStartDate),
+  );
+  await guild.members.fetch().catch(() => null);
 
-/** Restituisce la settimana dell'evento (1–4) in base a expEventStartedAt. Alla fine della N-esima settimana (es. domenica 21:00) si assegnano i premi della settimana N. */
+  const voteDocs = await VoteRole.find({
+    guildId: guild.id,
+    createdAt: { $gte: startRome, $lt: endRome },
+  })
+    .select("userId")
+    .lean()
+    .catch(() => []);
+  for (const doc of voteDocs) {
+    const userId = String(doc?.userId || "");
+    if (!userId) continue;
+    const member = guild.members.cache.get(userId) || null;
+    await grantEventLevels(
+      guild.id,
+      userId,
+      1,
+      "Evento: voto Discadia (giorno avvio)",
+      member || undefined,
+    ).catch(() => null);
+  }
+}
+
 function getEventWeekNumber(settings) {
   if (!settings?.eventStartedAt || !settings?.eventExpiresAt) return 0;
   const now = Date.now();
@@ -152,7 +208,6 @@ function getEventWeekNumber(settings) {
   return Math.min(4, week);
 }
 
-/** Top N utenti per EXP guadagnata da inizio evento (totalExp - snapshot). limit default 10. */
 async function getTop10ExpDuringEvent(guildId, limit = 10) {
   if (!guildId) return [];
   const cap = Math.max(1, Math.min(100, Number(limit) || 10));
@@ -177,7 +232,6 @@ async function getTop10ExpDuringEvent(guildId, limit = 10) {
     .slice(0, cap);
 }
 
-/** Top 3 per EXP totale durante l'evento, escludendo lo staff. Per annuncio fine evento in #news. */
 async function getTop3ExpDuringEventExcludingStaff(guild) {
   if (!guild?.id) return [];
   const list = await getTop10ExpDuringEvent(guild.id, 15);
@@ -195,6 +249,7 @@ module.exports = {
   grantEventLevels,
   grantEventRewardOnce,
   grantEventRewardsForExistingRoleMembers,
+  grantEventRewardsForSameDayReviewAndVote,
   addEventWeekWinner,
   hasEventWeekWinnerGrant,
   getTop3ExpDuringEventExcludingStaff,
