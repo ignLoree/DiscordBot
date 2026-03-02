@@ -18,7 +18,7 @@ async function setPresence(client) {
       activities: [
         {
           type: PRESENCE_TYPE_CUSTOM,
-          name: "irrelevant",
+          name: "idle",
           state: PRESENCE_STATE,
         },
       ],
