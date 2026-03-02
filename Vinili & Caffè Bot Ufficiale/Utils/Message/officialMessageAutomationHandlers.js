@@ -428,7 +428,7 @@ async function handleDisboardBump(message, client) {
 
   await recordBump(client, message.guild.id, bumpUserId || null);
   const channel =
-    message.channel #
+    message.channel ||
     (await message.guild.channels.fetch(message.channelId).catch(() => null));
   if (channel?.isTextBased?.()) {
     try {
@@ -556,7 +556,7 @@ async function handleDiscadiaBump(message, client) {
 
   await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
   const channel =
-    message.channel #
+    message.channel ||
     (message.channelId
       ? await message.guild.channels.fetch(message.channelId).catch(() => null)
       : null);

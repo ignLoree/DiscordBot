@@ -1,6 +1,11 @@
+const mongoose = require("mongoose");
 const TemporaryCommandPermission = require("../../Schemas/Moderation/temporaryCommandPermissionSchema");
 
 const VALID_TYPES = new Set(["prefix", "slash", "any"]);
+
+function isDbReady() {
+  return mongoose.connection?.readyState === 1;
+}
 
 function normalizeToken(raw) {
   const input = String(raw || "")
@@ -98,6 +103,7 @@ function buildSlashLookupKeys(
 
 async function hasTemporaryCommandPermission({ guildId, userId, keys }) {
   if (!guildId || !userId || !Array.isArray(keys) || !keys.length) return false;
+  if (!isDbReady()) return false;
   const now = new Date();
   try {
     const row = await TemporaryCommandPermission.findOne({
@@ -133,6 +139,9 @@ async function grantTemporaryCommandPermissions({
     !commandKeys.length ||
     (!permanentGrant && (!Number.isFinite(safeDuration) || safeDuration <= 0))
   ) {
+    return { upserted: 0, modified: 0, expiresAt: null };
+  }
+  if (!isDbReady()) {
     return { upserted: 0, modified: 0, expiresAt: null };
   }
 
@@ -182,6 +191,7 @@ async function revokeTemporaryCommandPermissions({
 }) {
   if (!guildId || !userId || !Array.isArray(commandKeys) || !commandKeys.length)
     return 0;
+  if (!isDbReady()) return 0;
   try {
     const result = await TemporaryCommandPermission.deleteMany({
       guildId: String(guildId),
@@ -196,6 +206,7 @@ async function revokeTemporaryCommandPermissions({
 
 async function clearTemporaryCommandPermissionsForUser({ guildId, userId }) {
   if (!guildId || !userId) return 0;
+  if (!isDbReady()) return 0;
   try {
     const result = await TemporaryCommandPermission.deleteMany({
       guildId: String(guildId),
@@ -209,6 +220,7 @@ async function clearTemporaryCommandPermissionsForUser({ guildId, userId }) {
 
 async function listTemporaryCommandPermissionsForUser({ guildId, userId }) {
   if (!guildId || !userId) return [];
+  if (!isDbReady()) return [];
   const now = new Date();
   try {
     return TemporaryCommandPermission.find({

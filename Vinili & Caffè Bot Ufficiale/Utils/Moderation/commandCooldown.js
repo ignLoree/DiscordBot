@@ -1,9 +1,14 @@
+const mongoose = require("mongoose");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../Config/ids");
 
 const ROLE_COOLDOWN_BYPASS = IDs.roles.Staff;
 const ROLE_LEVEL_30 = IDs.roles.Level30;
 const ROLE_LEVEL_50 = IDs.roles.Level50;
+
+function isDbReady() {
+  return mongoose.connection?.readyState === 1;
+}
 
 function getBucket(client) {
   if (!client.commandCooldowns) {
@@ -41,7 +46,7 @@ function computeCooldownSeconds(member, level) {
 
 async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
   let level = 0;
-  if (guildId && userId) {
+  if (guildId && userId && isDbReady()) {
     try {
       const user = await ExpUser.findOne({ guildId, userId })
         .select("level")
@@ -52,7 +57,7 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
     }
   }
   let seconds = computeCooldownSeconds(member, level);
-  if (seconds > 5 && guildId && userId) {
+  if (seconds > 5 && guildId && userId && isDbReady()) {
     try {
       const { hasEventWeekWinnerGrant } = require("../../Services/Community/activityEventRewardsService");
       if (await hasEventWeekWinnerGrant(guildId, userId, 2)) seconds = 5;

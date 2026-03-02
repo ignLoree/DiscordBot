@@ -1,4 +1,5 @@
 ﻿const { EmbedBuilder } = require("discord.js");
+const mongoose = require("mongoose");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const ping = require("../../Schemas/Ping/pingSchema");
 
@@ -31,11 +32,16 @@ module.exports = {
       const uptime = process.uptime();
       const uptimeString = formatUptime(uptime);
       const getDatabasePing = async () => {
+        if (mongoose.connection?.readyState !== 1) return null;
         const Now = Date.now();
         await ping.findOne().select("_id").lean();
         return ~~(Date.now() - Now);
       };
       const databasePing = await getDatabasePing();
+      const databaseLabel =
+        Number.isFinite(databasePing) && databasePing >= 0
+          ? `\`${databasePing}ms\``
+          : "`offline`";
       const empty = "​";
       const pingEmbed = new EmbedBuilder()
         .setColor("#6f4e37")
@@ -55,7 +61,7 @@ module.exports = {
           },
           { name: empty, value: empty, inline: true },
           {
-            name: `<:DatabaseCheck:1330543470259212329> **Database:** \`${databasePing}ms\``,
+            name: `<:DatabaseCheck:1330543470259212329> **Database:** ${databaseLabel}`,
             value: empty,
             inline: true,
           },

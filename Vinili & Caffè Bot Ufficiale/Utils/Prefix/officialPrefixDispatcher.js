@@ -34,6 +34,7 @@ const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const IDs = require("../Config/ids");
 
 const PREFIX_COOLDOWN_BYPASS_ROLE_ID = IDs.roles.Staff;
+const PREFIX_PRECHECK_TIMEOUT_MS = 4000;
 
 function hasSendablePayload(data) {
   if (typeof data === "string") return data.trim().length > 0;
@@ -57,6 +58,23 @@ async function sendTemporaryMessage(channel, payload, ttlMs) {
   const sent = await channel.send(payload).catch(() => null);
   if (sent) setTimeout(() => sent.delete().catch(() => {}), ttlMs);
   return sent;
+}
+
+async function resolveWithTimeout(task, fallbackValue, label, timeoutMs = PREFIX_PRECHECK_TIMEOUT_MS) {
+  let timer = null;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(task),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(fallbackValue), timeoutMs);
+      }),
+    ]);
+  } catch (error) {
+    global.logger?.warn?.(`[PREFIX] ${label} failed:`, error);
+    return fallbackValue;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 function resolveSubcommandState(command, cmd, args) {
@@ -397,7 +415,17 @@ async function handleOfficialPrefixMessage({
   const isAntiNukeRecoveryCommand = ["antinuke", "security"].includes(
     String(command?.name || "").toLowerCase(),
   );
-  const securityLockState = await getSecurityLockState(message.guild);
+  const securityLockState = await resolveWithTimeout(
+    () => getSecurityLockState(message.guild),
+    {
+      active: false,
+      joinLockActive: false,
+      commandLockActive: false,
+      sources: [],
+      commandSources: [],
+    },
+    "security lock precheck",
+  );
   if (!isAntiNukeRecoveryCommand && securityLockState.commandLockActive) {
     const lockSources = Array.isArray(securityLockState.commandSources)
       ? securityLockState.commandSources
@@ -435,11 +463,13 @@ async function handleOfficialPrefixMessage({
   }
 
   const prefixSubcommand = resolveSubcommandState(command, cmd, args);
-  const permissionResult = await checkPrefixPermission(
-    message,
-    command.name,
-    prefixSubcommand,
-    { returnDetails: true },
+  const permissionResult = await resolveWithTimeout(
+    () =>
+      checkPrefixPermission(message, command.name, prefixSubcommand, {
+        returnDetails: true,
+      }),
+    { allowed: true, reason: null, requiredRoles: null, channels: null },
+    `permission precheck for ${command.name}`,
   );
   if (!permissionResult?.allowed) {
     if (
@@ -504,11 +534,16 @@ async function handleOfficialPrefixMessage({
   }
 
   if (!hasPrefixCooldownBypass) {
-    const cooldownSeconds = await getUserCommandCooldownSeconds({
-      guildId: message.guild.id,
-      userId: message.author.id,
-      member: message.member,
-    });
+    const cooldownSeconds = await resolveWithTimeout(
+      () =>
+        getUserCommandCooldownSeconds({
+          guildId: message.guild.id,
+          userId: message.author.id,
+          member: message.member,
+        }),
+      0,
+      `cooldown lookup for ${command.name}`,
+    );
     const cooldownResult = consumeUserCooldown({
       client: resolvedClient,
       guildId: message.guild.id,
