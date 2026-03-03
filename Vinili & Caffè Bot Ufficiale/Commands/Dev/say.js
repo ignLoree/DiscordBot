@@ -1,8 +1,7 @@
 const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder } = require("discord.js");
-
 const EPHEMERAL_FLAG = 1 << 6;
-const MESSAGE_LINK_REGEX=/https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d+)\/(\d+)\/(\d+)/;
+const MESSAGE_LINK_REGEX = /https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d+)\/(\d+)\/(\d+)/;
 
 function parseMessageLink(link) {
   if (!link) return null;
@@ -26,14 +25,14 @@ async function resolveReplyTarget(interaction, messageId, messageLink) {
       };
     }
 
-    const targetChannel=await interaction.guild.channels.fetch(linkData.channelId).catch(() => null);
+    const targetChannel = await interaction.guild.channels.fetch(linkData.channelId).catch(() => null);
     if (!targetChannel || !targetChannel.isTextBased()) {
       return {
         error: "<:vegax:1443934876440068179> Canale non valido per rispondere.",
       };
     }
 
-    const targetMessage=await targetChannel.messages.fetch(linkData.messageId).catch(() => null);
+    const targetMessage = await targetChannel.messages.fetch(linkData.messageId).catch(() => null);
     if (!targetMessage) {
       return { error: "<:vegax:1443934876440068179> Messaggio non trovato." };
     }
@@ -42,7 +41,7 @@ async function resolveReplyTarget(interaction, messageId, messageLink) {
   }
 
   if (messageId) {
-    const targetMessage=await interaction.channel.messages.fetch(messageId).catch(() => null);
+    const targetMessage = await interaction.channel.messages.fetch(messageId).catch(() => null);
     if (!targetMessage) {
       return {
         error:
@@ -80,14 +79,14 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => { });
 
     try {
       const messageText = interaction.options.getString("messaggio");
       const messageId = interaction.options.getString("message_id")?.trim();
       const messageLink = interaction.options.getString("message_link")?.trim();
 
-      const target=await resolveReplyTarget(interaction,messageId,messageLink,);
+      const target = await resolveReplyTarget(interaction, messageId, messageLink,);
       if (target.error) {
         return safeEditReply(interaction, {
           content: target.error,
@@ -96,7 +95,7 @@ module.exports = {
       }
 
       await safeEditReply(interaction, {
-        content: "Messaggio inviato",
+        content: "<:success:1461731530333229226> Messaggio inviato",
         flags: EPHEMERAL_FLAG,
       });
 

@@ -1,7 +1,6 @@
 const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { default: axios } = require("axios");
-
 const EPHEMERAL_FLAG = 1 << 6;
 
 function buildEmbed(color, description) {
@@ -28,7 +27,7 @@ async function resolveEmojiUrl(rawEmoji) {
   const emojiId = extractEmojiId(rawEmoji);
   if (!emojiId) return { ok: false, reason: "invalid_emoji" };
 
-  const ext=await axios.get(`https://cdn.discordapp.com/emojis/${emojiId}.gif`)
+  const ext = await axios.get(`https://cdn.discordapp.com/emojis/${emojiId}.gif`)
     .then(() => "gif")
     .catch(() => "png");
 
@@ -66,12 +65,12 @@ async function handleEmojiCopy(interaction) {
     return replyWithEmbed(
       interaction,
       "Red",
-      "<:vegax:1443934876440068179> Non puoi rubare le emoji predefinite!",
+      "<:vegax:1443934876440068179> Non puoi rubare le emoji predefinite.",
     );
   }
 
   try {
-    const newEmoji=await interaction.guild.emojis.create({attachment:emojiInput,name:emojiName,});
+    const newEmoji = await interaction.guild.emojis.create({ attachment: emojiInput, name: emojiName, });
 
     return replyWithEmbed(
       interaction,
@@ -101,7 +100,7 @@ async function handleStickerCopy(interaction) {
   });
 
   const filter = (message) => message.author.id === interaction.user.id;
-  const collector=interaction.channel.createMessageCollector({filter,time:15000,max:1,});
+  const collector = interaction.channel.createMessageCollector({ filter, time: 15000, max: 1, });
 
   collector.on("collect", async (message) => {
     const sticker = message.stickers.first();
@@ -122,7 +121,7 @@ async function handleStickerCopy(interaction) {
     }
 
     try {
-      const newSticker=await interaction.guild.stickers.create({name:sticker.name,description:sticker.description||"",tags:sticker.tags,file:sticker.url,});
+      const newSticker = await interaction.guild.stickers.create({ name: sticker.name, description: sticker.description || "", tags: sticker.tags, file: sticker.url, });
 
       await safeEditReply(interaction, {
         embeds: [
@@ -183,7 +182,7 @@ module.exports = {
 
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
-    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => { });
 
     try {
       if (subcommand === "emoji") {

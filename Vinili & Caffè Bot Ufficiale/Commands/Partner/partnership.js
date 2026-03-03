@@ -1,13 +1,12 @@
 ﻿const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, } = require("discord.js");
 const { safeReply } = require("../../Utils/Moderation/reply");
-
 const EPHEMERAL_FLAG = 1 << 6;
 
 module.exports = {
   expectsModal: true,
   data: new SlashCommandBuilder()
     .setName("partnership")
-    .setDescription("Invia una partnership per il tuo server.")
+    .setDescription("Invia una partnership.")
     .addUserOption((option) =>
       option
         .setName("manager")
@@ -25,10 +24,10 @@ module.exports = {
       return;
     }
 
-    const modal=new ModalBuilder().setCustomId(`partnershipModal_cmd_${interaction.user.id}_${manager.id}`)
+    const modal = new ModalBuilder().setCustomId(`partnershipModal_cmd_${interaction.user.id}_${manager.id}`)
       .setTitle("Invia Partnership");
 
-    const descriptionInput=new TextInputBuilder().setCustomId("serverDescription").setLabel("Descrizione del server").setStyle(TextInputStyle.Paragraph).setPlaceholder("Inserisci qui la descrizione del server...").setRequired(true);
+    const descriptionInput = new TextInputBuilder().setCustomId("serverDescription").setLabel("Descrizione del server").setStyle(TextInputStyle.Paragraph).setPlaceholder("Inserisci qui la descrizione del server...").setRequired(true);
 
     modal.addComponents(new ActionRowBuilder().addComponents(descriptionInput));
 

@@ -1,10 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { safeEditReply } = require("../../Utils/Moderation/reply");
-
 const PRIVATE_FLAG = 1 << 6;
 
 async function verifyRoleMutation(guild, memberId, roleId, shouldHaveRole) {
-  const refreshedMember=await guild?.members?.fetch?.(memberId).catch(() => null);
+  const refreshedMember = await guild?.members?.fetch?.(memberId).catch(() => null);
   if (!refreshedMember) return false;
   return shouldHaveRole ? refreshedMember.roles.cache.has(roleId) : !refreshedMember.roles.cache.has(roleId);
 }
@@ -24,7 +23,7 @@ async function runMassRoleUpdate(interaction, { targets, role, action, total, sk
           `Mass role remove by ${interaction.user.tag}`,
         );
       }
-      const mutationApplied=await verifyRoleMutation(interaction.guild, member.id, role.id, action === "add");
+      const mutationApplied = await verifyRoleMutation(interaction.guild, member.id, role.id, action === "add");
       if (mutationApplied) {
         success += 1;
       } else {
@@ -48,7 +47,7 @@ async function runMassRoleUpdate(interaction, { targets, role, action, total, sk
           }),
         ],
         flags: PRIVATE_FLAG,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   }
 
@@ -67,12 +66,10 @@ async function runMassRoleUpdate(interaction, { targets, role, action, total, sk
       }),
     ],
     flags: PRIVATE_FLAG,
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 module.exports = {
-  helpDescription:
-    "Gestisce ruoli in massa su tutti gli utenti non bot: aggiunta o rimozione.",
   data: new SlashCommandBuilder()
     .setName("role")
     .setDescription("Gestione ruoli in massa")
@@ -99,7 +96,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => { });
 
     const subcommand = interaction.options.getSubcommand(false);
     if (subcommand !== "all") {
@@ -130,7 +127,7 @@ module.exports = {
     if (role.managed || !role.editable) {
       return safeEditReply(interaction, {
         content:
-          "<:vegax:1443934876440068179> Non posso gestire questo ruolo (gerarchia o ruolo gestito).",
+          "<:vegax:1443934876440068179> Non posso gestire questo ruolo.",
         flags: PRIVATE_FLAG,
       });
     }
@@ -138,14 +135,20 @@ module.exports = {
     await guild.members.fetch().catch(() => null);
 
     const members = guild.members.cache.filter((member) => !member.user.bot);
-    const targets=members.filter((member) => action==="add"?!member.roles.cache.has(role.id):member.roles.cache.has(role.id),);
+    const targets = members.filter((member) => action === "add" ? !member.roles.cache.has(role.id) : member.roles.cache.has(role.id),);
 
-    const progressEmbed=({title,processed,total,success,failed,skipped}) => new EmbedBuilder().setColor("#6f4e37").setTitle(title).setDescription([`Ruolo: ${role}`,
-            `Azione:\`${action}\``,"",`Processati: **${processed}/${total}**`,
-            `Aggiornati:**${success}**`,
-            `Saltati:**${skipped}**`,
-            `Falliti:**${failed}**`,
-          ].join("\n"),
+    const progressEmbed = ({ title, processed, total, success, failed, skipped }) =>
+      new EmbedBuilder()
+        .setColor("#6f4e37")
+        .setTitle(title)
+        .setDescription([
+          `<:VC_Mention:1443994358201323681> Ruolo: ${role}`,
+          `<:VC_Info:1460670816214585481> Azione:\`${action}\``, "",
+          `<a:VC_Loading:1462504528774430962> Processati: **${processed}/${total}**`,
+          `<:success:1461731530333229226> Aggiornati:**${success}**`,
+          `<:VC_skip:1478521335629086812> Saltati:**${skipped}**`,
+          `<:cancel:1461730653677551691> Falliti:**${failed}**`,
+        ].join("\n"),
         )
         .setTimestamp();
 
@@ -155,7 +158,7 @@ module.exports = {
     await safeEditReply(interaction, {
       embeds: [
         progressEmbed({
-          title: "Aggiornamento ruoli in corso...",
+          title: "<a:VC_Loading:1448687876018540695> Aggiornamento ruoli in corso...",
           processed: 0,
           total,
           success: 0,
@@ -180,7 +183,7 @@ module.exports = {
           content:
             "<:vegax:1443934876440068179> Errore durante l'aggiornamento massivo dei ruoli.",
           flags: PRIVATE_FLAG,
-        }).catch(() => {});
+        }).catch(() => { });
       });
     });
 

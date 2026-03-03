@@ -2,7 +2,6 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
-
 const ROLE_PARTNER_MANAGER = IDs.roles.PartnerManager;
 const ROLE_STAFF = IDs.roles.Staff;
 const ROLE_HIGH_STAFF = IDs.roles.HighStaff;
@@ -14,7 +13,6 @@ const ROLE_ADMIN = IDs.roles.Admin;
 const ROLE_MANAGER = IDs.roles.Manager;
 const ROLE_CO_OWNER = IDs.roles.CoFounder;
 const ROLE_OWNER = IDs.roles.Founder;
-
 const ERROR_COLOR = "#E74C3C";
 const SUCCESS_COLOR = "#6f4e37";
 const PRIVATE_FLAG = 1 << 6;
@@ -49,22 +47,22 @@ async function replySuccess(interaction) {
 }
 
 async function refreshMemberRoles(member) {
-  const guild=member?.guild;
-  const memberId=member?.id;
+  const guild = member?.guild;
+  const memberId = member?.id;
   if (!guild || !memberId) return member;
   return guild.members.fetch(memberId).catch(() => member);
 }
 
 async function ensureRoleState(member, roleId, shouldHaveRole) {
-  const refreshedMember=await refreshMemberRoles(member);
-  const hasRole=Boolean(refreshedMember?.roles?.cache?.has(roleId));
+  const refreshedMember = await refreshMemberRoles(member);
+  const hasRole = Boolean(refreshedMember?.roles?.cache?.has(roleId));
   return { member: refreshedMember || member, ok: shouldHaveRole ? hasRole : !hasRole };
 }
 
 async function ensureMultipleRoleStates(member, checks) {
-  const refreshedMember=await refreshMemberRoles(member);
+  const refreshedMember = await refreshMemberRoles(member);
   const ok = (Array.isArray(checks) ? checks : []).every(({ roleId, shouldHaveRole }) => {
-    const hasRole=Boolean(refreshedMember?.roles?.cache?.has(roleId));
+    const hasRole = Boolean(refreshedMember?.roles?.cache?.has(roleId));
     return shouldHaveRole ? hasRole : !hasRole;
   });
   return { member: refreshedMember || member, ok };
@@ -90,7 +88,7 @@ function createMemberResolver(guild) {
       return pendingMembers.get(key);
     }
 
-    const fetchPromise=fetchMember(guild,key).finally(() => {pendingMembers.delete(key);});
+    const fetchPromise = fetchMember(guild, key).finally(() => { pendingMembers.delete(key); });
     pendingMembers.set(key, fetchPromise);
     return fetchPromise;
   };
@@ -166,7 +164,7 @@ async function applyPexSideEffects(
 
   if (roleId === ROLE_HELPER) {
     await member.roles.add(ROLE_STAFF);
-    const verification=await ensureRoleState(member, ROLE_STAFF, true);
+    const verification = await ensureRoleState(member, ROLE_STAFF, true);
     if (!verification.ok) throw new Error("Pex side effect failed: staff role missing after helper promotion.");
     await sendHelperWelcome(staffChannel, user);
     member = verification.member;
@@ -174,21 +172,21 @@ async function applyPexSideEffects(
 
   if (roleId === ROLE_MODERATOR) {
     await member.roles.remove(ROLE_HELPER);
-    const verification=await ensureRoleState(member, ROLE_HELPER, false);
+    const verification = await ensureRoleState(member, ROLE_HELPER, false);
     if (!verification.ok) throw new Error("Pex side effect failed: helper role still present after moderator promotion.");
     member = verification.member;
   }
 
   if (roleId === ROLE_COORDINATOR) {
     await member.roles.remove(ROLE_MODERATOR);
-    const verification=await ensureRoleState(member, ROLE_MODERATOR, false);
+    const verification = await ensureRoleState(member, ROLE_MODERATOR, false);
     if (!verification.ok) throw new Error("Pex side effect failed: moderator role still present after coordinator promotion.");
     member = verification.member;
   }
 
   if (roleId === ROLE_SUPERVISOR) {
     await member.roles.remove(ROLE_COORDINATOR);
-    const verification=await ensureRoleState(member, ROLE_COORDINATOR, false);
+    const verification = await ensureRoleState(member, ROLE_COORDINATOR, false);
     if (!verification.ok) throw new Error("Pex side effect failed: coordinator role still present after supervisor promotion.");
     member = verification.member;
   }
@@ -196,28 +194,28 @@ async function applyPexSideEffects(
   if (roleId === ROLE_ADMIN) {
     await member.roles.remove(ROLE_SUPERVISOR);
     await member.roles.add(ROLE_HIGH_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId: ROLE_SUPERVISOR, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: true }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId: ROLE_SUPERVISOR, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: true }]);
     if (!verification.ok) throw new Error("Pex side effect failed: admin side effects not applied.");
     member = verification.member;
   }
 
   if (roleId === ROLE_MANAGER) {
     await member.roles.remove(ROLE_ADMIN);
-    const verification=await ensureRoleState(member, ROLE_ADMIN, false);
+    const verification = await ensureRoleState(member, ROLE_ADMIN, false);
     if (!verification.ok) throw new Error("Pex side effect failed: admin role still present after manager promotion.");
     member = verification.member;
   }
 
   if (roleId === ROLE_CO_OWNER) {
     await member.roles.remove(ROLE_MANAGER);
-    const verification=await ensureRoleState(member, ROLE_MANAGER, false);
+    const verification = await ensureRoleState(member, ROLE_MANAGER, false);
     if (!verification.ok) throw new Error("Pex side effect failed: manager role still present after co-owner promotion.");
     member = verification.member;
   }
 
   if (roleId === ROLE_OWNER) {
     await member.roles.remove(ROLE_CO_OWNER);
-    const verification=await ensureRoleState(member, ROLE_CO_OWNER, false);
+    const verification = await ensureRoleState(member, ROLE_CO_OWNER, false);
     if (!verification.ok) throw new Error("Pex side effect failed: co-owner role still present after owner promotion.");
   }
 }
@@ -225,7 +223,7 @@ async function applyPexSideEffects(
 async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_PARTNER_MANAGER) {
     await member.roles.remove(roleId);
-    const verification=await ensureRoleState(member, roleId, false);
+    const verification = await ensureRoleState(member, roleId, false);
     if (!verification.ok) throw new Error("Depex side effect failed: partner manager role still present.");
     member = verification.member;
   }
@@ -233,7 +231,7 @@ async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_HELPER) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: helper/staff roles still present.");
     member = verification.member;
   }
@@ -241,7 +239,7 @@ async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_MODERATOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: moderator/staff roles still present.");
     member = verification.member;
   }
@@ -249,7 +247,7 @@ async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_COORDINATOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: coordinator/staff roles still present.");
     member = verification.member;
   }
@@ -257,7 +255,7 @@ async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_SUPERVISOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: supervisor/staff roles still present.");
     member = verification.member;
   }
@@ -266,7 +264,7 @@ async function applyDepexSideEffects(member, roleId) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: admin/high staff/staff roles still present.");
     member = verification.member;
   }
@@ -275,7 +273,7 @@ async function applyDepexSideEffects(member, roleId) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: manager/high staff/staff roles still present.");
     member = verification.member;
   }
@@ -284,33 +282,9 @@ async function applyDepexSideEffects(member, roleId) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
-    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    const verification = await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
     if (!verification.ok) throw new Error("Depex side effect failed: co-owner/high staff/staff roles still present.");
   }
-}
-
-async function ensureStaffRole(interaction, member) {
-  if (member?.roles?.cache?.has(ROLE_STAFF)) {
-    return true;
-  }
-
-  await replyError(
-    interaction,
-    "<:vegax:1443934876440068179> Puoi selezionare solo uno staffer con il ruolo specificato.",
-  );
-  return false;
-}
-
-async function ensureNotFounderOrCoFounder(interaction, member) {
-  const isFounder = Boolean(member?.roles?.cache?.has(ROLE_OWNER));
-  const isCoFounder = Boolean(member?.roles?.cache?.has(ROLE_CO_OWNER));
-  if (!isFounder && !isCoFounder) return true;
-
-  await replyError(
-    interaction,
-    "<:vegax:1443934876440068179> Founder e CoFounder sono esclusi dai resoconti.",
-  );
-  return false;
 }
 
 module.exports = {
@@ -391,158 +365,17 @@ module.exports = {
             .setDescription("Specifica il motivo del warn.")
             .setRequired(true),
         ),
-    )
-    .addSubcommandGroup((group) =>
-      group
-        .setName("resoconto")
-        .setDescription("Invia un resoconto")
-        .addSubcommand((command) =>
-          command
-            .setName("staffer")
-            .setDescription("Invia un resoconto di uno staffer.")
-            .addUserOption((option) =>
-              option
-                .setName("staffer")
-                .setDescription(
-                  "Seleziona lo staffer di cui fare il resoconto.",
-                )
-                .setRequired(true),
-            )
-            .addRoleOption((option) =>
-              option
-                .setName("ruolo")
-                .setDescription("Seleziona il ruolo dello staffer.")
-                .setRequired(true),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("messaggi")
-                .setDescription("Messaggi inviati in una settimana.")
-                .setRequired(true),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("ore")
-                .setDescription("Ore trascorse in vocale in una settimana.")
-                .setRequired(true),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("grado_attivita")
-                .setDescription(
-                  "Seleziona l'attività avuta durante la settimana.",
-                )
-                .setRequired(true)
-                .addChoices(
-                  { name: "Non classificato", value: "Limiti non rispettati" },
-                  {
-                    name: "Insufficiente",
-                    value: "Limiti non raggiunti di massimo 100msg e 1h",
-                  },
-                  { name: "Sufficiente", value: "Limiti rispettati" },
-                  {
-                    name: "Discreto",
-                    value: "Limiti superati di 150msg e 1h e 30min",
-                  },
-                  { name: "Buono", value: "Limiti superati del doppio" },
-                  {
-                    name: "Ottimo",
-                    value: "Doppio dei limiti superati di 300msg e 2h",
-                  },
-                  { name: "Eccellente", value: "Limiti superati del triplo" },
-                ),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("grado_condotta")
-                .setDescription(
-                  "Seleziona il comportamento avuto durante la settimana.",
-                )
-                .setRequired(true)
-                .addChoices(
-                  {
-                    name: "Non classificato",
-                    value: "Solo valutazioni negative e 0 positive",
-                  },
-                  {
-                    name: "Insufficiente",
-                    value: "Più valutazioni negative che positive",
-                  },
-                  {
-                    name: "Sufficiente",
-                    value: "Valutazioni equivalenti/Nessuna valutazione",
-                  },
-                  {
-                    name: "Discreto",
-                    value: "Più valutazioni positive che negative",
-                  },
-                  {
-                    name: "Ottimo",
-                    value: "Minimo 3 valutazioni positive e 0 negative",
-                  },
-                ),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("azione")
-                .setDescription("Seleziona l'azione da applicare allo staffer.")
-                .setRequired(true)
-                .addChoices(
-                  { name: "Pex", value: "Pex" },
-                  { name: "Depex", value: "Depex" },
-                  {
-                    name: "Valutazione Positiva",
-                    value: "Valutazione Positiva",
-                  },
-                  {
-                    name: "Valutazione Negativa",
-                    value: "Valutazione Negativa",
-                  },
-                  { name: "Nulla", value: "Nulla" },
-                ),
-            ),
-        )
-        .addSubcommand((command) =>
-          command
-            .setName("pm")
-            .setDescription("Invia il resoconti di un Partner Manager")
-            .addUserOption((option) =>
-              option
-                .setName("staffer")
-                .setDescription(
-                  "Seleziona lo staffer di cui fare il resoconto.",
-                )
-                .setRequired(true),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("partner")
-                .setDescription("Partner fatte in una settimana.")
-                .setRequired(true),
-            )
-            .addStringOption((option) =>
-              option
-                .setName("azione")
-                .setDescription("Seleziona l'azione da applicare allo staffer.")
-                .setRequired(true)
-                .addChoices(
-                  { name: "Depex", value: "Depex" },
-                  { name: "Richiamo", value: "Richiamo" },
-                  { name: "Nulla", value: "Nulla" },
-                ),
-            ),
-        ),
     ),
 
   async execute(interaction) {
     const group = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand();
 
-    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => { });
 
-    const pexDepexChannel=interaction.guild.channels.cache.get(IDs.channels?.pexDepex,);
-    const pmChannel=interaction.guild.channels.cache.get(IDs.channels?.partnersChat,);
-    const staffChat=interaction.guild.channels.cache.get(IDs.channels?.staffChat,);
+    const pexDepexChannel = interaction.guild.channels.cache.get(IDs.channels?.pexDepex,);
+    const pmChannel = interaction.guild.channels.cache.get(IDs.channels?.partnersChat,);
+    const staffChat = interaction.guild.channels.cache.get(IDs.channels?.staffChat,);
     const resolveMember = createMemberResolver(interaction.guild);
 
     if (sub === "pex") {
@@ -557,7 +390,7 @@ module.exports = {
 
         if (!(await ensureNotSelf(interaction, targetUser))) return;
 
-        const staffDoc=await getOrCreateStaffDoc(interaction.guild.id,targetUser.id,);
+        const staffDoc = await getOrCreateStaffDoc(interaction.guild.id, targetUser.id,);
 
         if (member.roles.cache.has(roleAfter.id)) {
           return replyError(
@@ -567,7 +400,7 @@ module.exports = {
         }
 
         await member.roles.add(roleAfter.id);
-        const baseRoleVerification=await ensureRoleState(member, roleAfter.id, true);
+        const baseRoleVerification = await ensureRoleState(member, roleAfter.id, true);
         if (!baseRoleVerification.ok) {
           throw new Error(`Pex failed: role ${roleAfter.id} not applied.`);
         }
@@ -620,7 +453,7 @@ module.exports = {
         }
 
         await member.roles.remove(oldRole.id);
-        const baseRoleVerification=await ensureRoleState(member, oldRole.id, false);
+        const baseRoleVerification = await ensureRoleState(member, oldRole.id, false);
         if (!baseRoleVerification.ok) {
           throw new Error(`Depex failed: role ${oldRole.id} still present.`);
         }
@@ -649,9 +482,9 @@ module.exports = {
       try {
         const targetUser = interaction.options.getUser("staffer");
         const reason = interaction.options.getString("motivo");
-        const warnChannel=interaction.guild.channels.cache.get(IDs.channels?.warnStaff,);
+        const warnChannel = interaction.guild.channels.cache.get(IDs.channels?.warnStaff,);
 
-        const staffDoc=await getOrCreateStaffDoc(interaction.guild.id,targetUser.id,);
+        const staffDoc = await getOrCreateStaffDoc(interaction.guild.id, targetUser.id,);
         if (!staffDoc.idCount) staffDoc.idCount = 0;
         if (!staffDoc.warnCount) staffDoc.warnCount = 0;
         if (!staffDoc.warnReasons) staffDoc.warnReasons = [];
@@ -661,9 +494,10 @@ module.exports = {
         staffDoc.warnReasons.push(reason);
         await staffDoc.save();
 
-        const warnEmbed=new EmbedBuilder().setAuthor({name:`Warn eseguito da ${interaction.user.username}`,
-            iconURL: interaction.user.displayAvatarURL(),
-          })
+        const warnEmbed = new EmbedBuilder().setAuthor({
+          name: `Warn eseguito da ${interaction.user.username}`,
+          iconURL: interaction.user.displayAvatarURL(),
+        })
           .setTitle(
             `<a:laydowntorest:1444006796661358673>•**__WARN STAFF__**\`#${staffDoc.warnCount}\``,).setThumbnail(targetUser.displayAvatarURL()).setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${targetUser}<:pinnednew:1443670849990430750>__${reason}__<a:loading:1443934440614264924>**ID Valutazione**__\`${staffDoc.idCount}\`__`,).setColor(SUCCESS_COLOR);
 
@@ -681,67 +515,5 @@ module.exports = {
       }
     }
 
-    if (group === "resoconto" && sub === "staffer") {
-      try {
-        const resocontoChannel=interaction.guild.channels.cache.get(IDs.channels?.resocontiStaff,);
-        const staffer = interaction.options.getUser("staffer");
-        const role = interaction.options.getRole("ruolo");
-        const action = interaction.options.getString("azione");
-        const messages = interaction.options.getString("messaggi");
-        const voiceHours = interaction.options.getString("ore");
-        const activityGrade = interaction.options.getString("grado_attivita");
-        const behaviorGrade = interaction.options.getString("grado_condotta");
-        const stafferMember = await resolveMember(staffer.id);
-
-        if (!(await ensureStaffRole(interaction, stafferMember))) return;
-        if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;
-        if (!(await ensureNotSelf(interaction, staffer))) return;
-
-        if (resocontoChannel) {
-          await resocontoChannel.send({
-            content: `
-<:discordstaff:1443651872258003005> **Staffer:** __**<@${staffer.id}>**__
-<:dot:1443660294596329582> **Ruolo:** __${role}__
-<:dot:1443660294596329582> **Messaggi in una settimana:** __${messages}__
-<:dot:1443660294596329582> **Ore in una settimana:** __${voiceHours}__
-<:dot:1443660294596329582> **Attività:** __${activityGrade}__
-<:dot:1443660294596329582> **Condotta:** __${behaviorGrade}__
-<:dot:1443660294596329582> **Azione:** __${action}__`,
-          }).catch(() => null);
-        }
-
-        return replySuccess(interaction);
-      } catch (err) {
-        global.logger.error(err);
-        return replyCommandError(interaction);
-      }
-    }
-
-    if (group === "resoconto" && sub === "pm") {
-      try {
-        const resocontoChannel=interaction.guild.channels.cache.get(IDs.channels?.resocontiStaff,);
-        const staffer = interaction.options.getUser("staffer");
-        const action = interaction.options.getString("azione");
-        const partners = interaction.options.getString("partner");
-        const stafferMember = await resolveMember(staffer.id);
-
-        if (!(await ensureStaffRole(interaction, stafferMember))) return;
-        if (!(await ensureNotFounderOrCoFounder(interaction, stafferMember))) return;
-        if (!(await ensureNotSelf(interaction, staffer))) return;
-
-        if (resocontoChannel) {
-          await resocontoChannel.send({
-            content: `<:partneredserverowner:1443651871125409812> **Partner Manager:** __<@${staffer.id}>__
-<:dot:1443660294596329582> **Partner:** __${partners}__
-<:dot:1443660294596329582> **Azione:** __${action}__`,
-          }).catch(() => null);
-        }
-
-        return replySuccess(interaction);
-      } catch (err) {
-        global.logger.error(err);
-        return replyCommandError(interaction);
-      }
-    }
   },
 };

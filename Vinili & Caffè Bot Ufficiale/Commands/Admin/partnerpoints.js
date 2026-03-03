@@ -2,7 +2,6 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
-
 const PRIVATE_FLAG = 1 << 6;
 const SUCCESS_COLOR = "#6f4e37";
 
@@ -15,6 +14,15 @@ function buildResultEmbed(interaction, description) {
       iconURL: interaction.guild.iconURL(),
     })
     .setTimestamp();
+}
+
+function formatPartnerPointsChange(action, amount) {
+  const safeAmount = Number(amount || 0);
+  const isSingular = Math.abs(safeAmount) === 1;
+  if (action === "add") {
+    return `${isSingular ? "Aggiunto" : "Aggiunti"} \`${safeAmount}\` ${isSingular ? "punto" : "punti"}`;
+  }
+  return `${isSingular ? "Rimosso" : "Rimossi"} \`${safeAmount}\` ${isSingular ? "punto" : "punti"}`;
 }
 
 async function addPartnerPoints(guildId, userId, amount) {
@@ -119,13 +127,13 @@ module.exports = {
 
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
-    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => {});
+    await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => { });
 
     const targetUser = interaction.options.getUser("user");
     const amount = interaction.options.getInteger("amount");
     const reason = interaction.options.getString("motivo");
     const messageLink = interaction.options.getString("linkmessaggio");
-    const removedPointsChannel=interaction.guild.channels.cache.get(IDs.channels?.puntiTolti,);
+    const removedPointsChannel = interaction.guild.channels.cache.get(IDs.channels?.puntiTolti,);
 
     if (amount < 0) {
       return safeEditReply(interaction, {
@@ -145,23 +153,23 @@ module.exports = {
 
     if (sub === "add") {
       const staffData = await addPartnerPoints(guildId, targetUser.id, amount);
-
-      const embed=buildResultEmbed(interaction,`<:vegacheckmark:1443666279058772028> **Successo**: Aggiunti \`${amount}\` punti a <@${targetUser.id}>.Totale Punti:\`${staffData.partnerCount}\``,);
+      const changeLabel = formatPartnerPointsChange("add", amount);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. Totale Punti:\`${staffData.partnerCount}\``,);
 
       return safeEditReply(interaction, { embeds: [embed] });
     }
 
     if (sub === "remove") {
       const staffData = await removePartnerPoints(guildId, targetUser.id, amount);
-
-      const embed=buildResultEmbed(interaction,`<:vegacheckmark:1443666279058772028> **Successo**: Rimossi \`${amount}\` punti a <@${targetUser.id}>.Totale Punti:\`${staffData.partnerCount}\``,);
+      const changeLabel = formatPartnerPointsChange("remove", amount);
+      const embed = buildResultEmbed(interaction, `<:vegacheckmark:1443666279058772028> **Successo**: ${changeLabel} a <@${targetUser.id}>. Totale Punti:\`${staffData.partnerCount}\``,);
 
       if (removedPointsChannel) {
         await removedPointsChannel.send({
           content: `
-<:Discord_Mention:1329524304790028328> ${targetUser}
-<:discordchannelwhite:1443308552536985810> ${reason}
-<:partneredserverowner:1443651871125409812> ${messageLink}`,
+<:partneredserverowner:1443651871125409812> ${targetUser}
+<:VC_reason:1478517122929004544> ${reason}
+<:link:1470064815899803668> ${messageLink}`,
         }).catch(() => null);
       }
 

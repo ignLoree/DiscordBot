@@ -3,6 +3,7 @@ const { recordDiscadiaBump, recordDiscadiaVote, recordBump } = require("../../Se
 const { addExpWithLevel, shouldIgnoreExpForMember } = require("../../Services/Community/expService");
 const { upsertVoteRole } = require("../../Services/Community/communityOpsService");
 const { grantEventLevels } = require("../../Services/Community/activityEventRewardsService");
+const { PAUSE_REQUEST_ROLE_IDS, createPauseRequest } = require("../Pause/pauseRequestRuntime");
 const IDs = require("../Config/ids");
 const SuggestionCount = require("../../Schemas/Suggestion/suggestionSchema");
 
@@ -487,11 +488,54 @@ async function handleSuggestionChannelMessage(message) {
   return true;
 }
 
+async function handlePauseChannelMessage(message) {
+  if (!message?.guild) return false;
+  if (message.author?.bot || message.webhookId || message.system) return false;
+
+  const pauseChannelId = String(IDs.channels.pause || "");
+  if (!pauseChannelId || String(message.channelId) !== pauseChannelId) return false;
+
+  const allowedRoleIds = new Set(PAUSE_REQUEST_ROLE_IDS.map(String));
+  const hasAllowedRole=Array.from(allowedRoleIds).some((roleId) => message.member?.roles?.cache?.has(roleId));
+  if (!hasAllowedRole) return false;
+
+  const raw = String(message.content || "").trim();
+  if (!raw) return false;
+  const match = raw.match(/^(.+?)\s-\s(.+?)\s-\s(.+)$/);
+  if (!match) {
+    const warning=await message.channel.send({content:`${message.author} formato non valido. Usa: \`<data richiesta> - <data ritorno> - <motivazione>\``}).catch(() => null);
+    await message.delete().catch(() => {});
+    if (warning) {
+      const timer = setTimeout(() => warning.delete().catch(() => {}), 8000);
+      timer.unref?.();
+    }
+    return true;
+  }
+
+  const rawStart = String(match[1] || "").trim();
+  const rawEnd = String(match[2] || "").trim();
+  const reason = String(match[3] || "").trim();
+  const result=await createPauseRequest({guild:message.guild,userId:message.author.id,requesterMention:String(message.author),rawStart,rawEnd,reason,});
+  if (!result.ok) {
+    const warning=await message.channel.send({content:`${message.author} <:vegax:1443934876440068179> ${result.error}`}).catch(() => null);
+    await message.delete().catch(() => {});
+    if (warning) {
+      const timer = setTimeout(() => warning.delete().catch(() => {}), 8000);
+      timer.unref?.();
+    }
+    return true;
+  }
+
+  await message.delete().catch(() => {});
+  return true;
+}
+
 module.exports = {
   channelAllowsMedia,
   getCachedOrFetchMember,
   handleDisboardBump,
   handleDiscadiaBump,
+  handlePauseChannelMessage,
   handleSuggestionChannelMessage,
   handleVoteManagerMessage,
   hasMediaPermission,
