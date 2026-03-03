@@ -42,9 +42,11 @@ function isCommandDeployRequired(botKey, scope, commands) {
   const state = getCommandDeployState(botKey);
   const scopeKey = getScopeKey(scope);
   const nextHash = hashPayload(commands);
+  const previousHash = state[scopeKey] || null;
   return {
     hash: nextHash,
-    required: state[scopeKey] !== nextHash,
+    previousHash,
+    required: previousHash !== nextHash,
     scopeKey,
   };
 }

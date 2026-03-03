@@ -8,6 +8,11 @@ const{isCommandDeployRequired,markCommandDeployComplete,}=require("../../shared/
 
 const BOT_DEPLOY_CACHE_KEY = "official";
 
+function shouldForceSlashDeploy() {
+  const value = String(process.env.FORCE_SLASH_DEPLOY || process.env.FORCE_COMMAND_DEPLOY || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}
+
 module.exports = (client) => {
   client.handleCommands = async (commandFolders, basePath) => {
     const statusMap = new Map();
@@ -72,10 +77,12 @@ module.exports = (client) => {
     const token=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL||client?.config?.token;
     const clientId=process.env.DISCORD_CLIENT_ID||process.env.DISCORD_CLIENT_ID_OFFICIAL||IDs.bots.ViniliCaffeBot;
     const deployCheck=isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId},client.commandArray,);
-    if (!deployCheck.required) {
-      global.logger.info("[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato.");
+    const forceDeploy = shouldForceSlashDeploy();
+    if (!deployCheck.required && !forceDeploy) {
+      global.logger.info(`[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`);
       return;
     }
+    global.logger.info(`[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`);
 
     const rest = new REST({ version: "10" }).setToken(token);
 

@@ -12,6 +12,11 @@ function toArrayUnique(values = []) {
 
 const BOT_DEPLOY_CACHE_KEY = "test";
 
+function shouldForceSlashDeploy() {
+  const value = String(process.env.FORCE_SLASH_DEPLOY || process.env.FORCE_COMMAND_DEPLOY || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}
+
 module.exports = (client) => {
   client.handleCommands = async (commandFolders = [], basePath) => {
     const statusMap = new Map();
@@ -101,12 +106,16 @@ module.exports = (client) => {
     const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
     for (const guildId of allowedGuildIds) {
       const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
-      if (!deployCheck.required) {
+      const forceDeploy = shouldForceSlashDeploy();
+      if (!deployCheck.required && !forceDeploy) {
         global.logger?.info?.(
-          `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato.`,
+          `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato. scope=${deployCheck.scopeKey} hash=${deployCheck.hash}`,
         );
         continue;
       }
+      global.logger?.info?.(
+        `[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`,
+      );
       try {
         // eslint-disable-next-line no-await-in-loop
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
