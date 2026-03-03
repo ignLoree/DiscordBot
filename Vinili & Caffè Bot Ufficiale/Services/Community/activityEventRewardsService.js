@@ -57,7 +57,7 @@ async function isEventActive(guildId) {
   return Boolean(settings?.eventExpiresAt);
 }
 
-async function grantEventLevels(guildId, userId, levels, note = null, member = null, clientOrGuild = null) {
+async function grantEventLevels(guildId, userId, levels, note = null, member = null, clientOrGuild = null, options = {}) {
   if (!guildId || !userId || !Number.isFinite(levels) || levels <= 0)
     return null;
   const active = await isEventActive(guildId);
@@ -86,7 +86,9 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
     afterExp: result.afterExp,
     note: note || `Evento: +${levels} livelli`,
   });
-  if (clientOrGuild) {
+  const suppressLog = Boolean(options?.suppressLog);
+  const suppressDm = Boolean(options?.suppressDm);
+  if (clientOrGuild && !suppressLog) {
     const client = clientOrGuild?.client ?? clientOrGuild;
     const label = note && note.length <= 100 ? note : `+${levels} livelli`;
     sendEventRewardLog(client, {
@@ -96,7 +98,9 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
       detail: note && note.length > 100 ? note : undefined,
       levels,
     }).catch(() => {});
-    sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => {});
+    if (!suppressDm) {
+      sendEventRewardDm(client, userId, guildId, { label, levels }).catch(() => {});
+    }
   }
   if (result && clientOrGuild) {
     const newLevel = getLevelInfo(result.afterExp).level;
@@ -134,7 +138,7 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     });
   } catch (err) {
     if (err?.code === 11000) {
-      if (options.clientOrGuild) {
+      if (options.clientOrGuild && !options.suppressSkipLog) {
         const client = options.clientOrGuild?.client ?? options.clientOrGuild;
         sendEventRewardSkippedLog(client, {
           userId,
@@ -154,6 +158,10 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
     options.member,
     options.clientOrGuild ?? null,
+    {
+      suppressLog: true,
+      suppressDm: true,
+    },
   );
   if (!result) {
     await ActivityEventReward.deleteOne({
@@ -240,16 +248,31 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   for (const [, member] of membersToIterate) {
     if (!member?.user?.id) continue;
     if (supporterId && member.roles.cache.has(supporterId)) {
-      await grantEventRewardOnce(guild.id, member.id, "supporter", { levels: 5, member, clientOrGuild: guild }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "supporter", {
+        levels: 5,
+        member,
+        clientOrGuild: guild,
+        suppressSkipLog: true,
+      }).catch(() => null);
     }
     if (
       (verificatoId && member.roles.cache.has(verificatoId)) ||
       (verificataId && member.roles.cache.has(verificataId))
     ) {
-      await grantEventRewardOnce(guild.id, member.id, "verificato", { levels: 5, member, clientOrGuild: guild }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "verificato", {
+        levels: 5,
+        member,
+        clientOrGuild: guild,
+        suppressSkipLog: true,
+      }).catch(() => null);
     }
     if (guildedId && member.roles.cache.has(guildedId)) {
-      await grantEventRewardOnce(guild.id, member.id, "guilded", { levels: 10, member, clientOrGuild: guild }).catch(() => null);
+      await grantEventRewardOnce(guild.id, member.id, "guilded", {
+        levels: 10,
+        member,
+        clientOrGuild: guild,
+        suppressSkipLog: true,
+      }).catch(() => null);
     }
   }
 }
