@@ -5,7 +5,7 @@ const { READY_EVENT_ALIAS, clearBoundHandlers, listRelativeJsFiles, normalizeLif
 module.exports = (client) => {
   if (!client._triggerHandlers) client._triggerHandlers = new Map();
 
-  client.handleTriggers = async (_triggerFilesArg, basePath) => {
+  client.handleTriggers = async (basePath) => {
     clearBoundHandlers(client, "_triggerHandlers");
 
     const root = basePath || process.cwd();

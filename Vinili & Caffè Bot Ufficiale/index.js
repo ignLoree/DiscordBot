@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const APP_ROOT = __dirname;
 const { startDashboardServer } = require("./Services/Dashboard/dashboardServer");
-const{acquireSingleInstanceLock,installHandlers,listFoldersIfExists,listJsFilesIfExists,loadEnvFiles,}=require("../shared/runtime/fsRuntime");
+const{acquireSingleInstanceLock,installHandlers,listFoldersIfExists,loadEnvFiles,}=require("../shared/runtime/fsRuntime");
 const { initializeCommandCollections } = require("../shared/runtime/clientRuntime");
 
 loadEnvFiles(APP_ROOT);
@@ -17,7 +17,6 @@ if (process.env.RUN_UNDER_LOADER !== "1") {
 
 const { installEmbedFooterPatch } = require("./Utils/Embeds/defaultFooter");
 
-const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
 const pcommandFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
 const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
 
@@ -86,7 +85,7 @@ client.reloadScope = async (scope) => {
 
   const reloadEvents=() => {clearCacheByDir("Events");client.handleEvents(path.join(APP_ROOT,"Events"));};
 
-  const reloadTriggers=() => {clearCacheByDir("Triggers");const files=listJsFilesIfExists(path.join(APP_ROOT,"Triggers"));client.handleTriggers(files,APP_ROOT);};
+  const reloadTriggers=() => {clearCacheByDir("Triggers");client.handleTriggers(APP_ROOT);};
 
   if (scope === "commands") return reloadCommands();
   if (scope === "prefix") return reloadPrefix();
@@ -122,7 +121,7 @@ initializeCommandCollections(client, { includeSnipes: true });
     installHandlers(APP_ROOT, client);
 
     client.handleEvents(path.join(APP_ROOT, "Events"));
-    client.handleTriggers(triggerFiles, APP_ROOT);
+    client.handleTriggers(APP_ROOT);
     await client.handleCommands(commandFolders, path.join(APP_ROOT, "Commands"));
     await client.prefixCommands(pcommandFolders, path.join(APP_ROOT, "Prefix"));
     if (shouldStartDashboard(client)) {

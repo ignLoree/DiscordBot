@@ -4,7 +4,7 @@ const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags ||
 const Partials = discord.Partials || {};
 const path = require("path");
 const APP_ROOT = __dirname;
-const {acquireSingleInstanceLock,installHandlers,listFoldersIfExists,listJsFilesIfExists,loadEnvFiles,}= require("../shared/runtime/fsRuntime");
+const {acquireSingleInstanceLock,installHandlers,listFoldersIfExists,loadEnvFiles,}= require("../shared/runtime/fsRuntime");
 const { initializeCommandCollections } = require("../shared/runtime/clientRuntime");
 
 loadEnvFiles(APP_ROOT);
@@ -46,7 +46,6 @@ installHandlers(APP_ROOT, client);
 
 const prefixFolders = listFoldersIfExists(path.join(APP_ROOT, "Prefix"));
 const commandFolders = listFoldersIfExists(path.join(APP_ROOT, "Commands"));
-const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
 
 (async () => {
   if (typeof client.prefixCommands === "function") {
@@ -70,7 +69,7 @@ const triggerFiles = listJsFilesIfExists(path.join(APP_ROOT, "Triggers"));
   }
 
   if (typeof client.handleTriggers === "function") {
-    await client.handleTriggers(triggerFiles, APP_ROOT).catch((err) => {
+    await client.handleTriggers(APP_ROOT).catch((err) => {
       global.logger.error(" handleTriggers:", err);
     });
   }

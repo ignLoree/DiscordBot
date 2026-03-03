@@ -1,21 +1,20 @@
-const {EmbedBuilder,ButtonBuilder,ActionRowBuilder,ButtonStyle,PermissionFlagsBits,ChannelType,}= require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, ChannelType, } = require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const { getNextTicketId } = require("./ticketIdUtils");
-const {TICKETS_CATEGORY_NAME,isTicketCategoryName,}= require("./ticketCategoryUtils");
+const { TICKETS_CATEGORY_NAME, isTicketCategoryName, } = require("./ticketCategoryUtils");
 const { safeEditReply: safeEditReplyHelper } = require("../Moderation/reply");
 const IDs = require("../Config/ids");
 const { findOpenTicketByUser, warmGuildChannels } = require("./ticketInteractionRuntime");
+const { buildTicketChannelName } = require("./ticketNamingRuntime");
 
-const TICKET_PERMISSIONS_SPONSOR =[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AddReactions,];
+const TICKET_PERMISSIONS_SPONSOR = [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.EmbedLinks, PermissionFlagsBits.AttachFiles, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AddReactions,];
 
 async function handleSponsorTicketOpen(interaction) {
   const guild = interaction.guild;
   const userId = interaction.user.id;
   await interaction.deferReply({ ephemeral: true }).catch(() => null);
 
-  if (!interaction.client.ticketOpenLocks) {
-    interaction.client.ticketOpenLocks = new Set();
-  }
+  if (!interaction.client.ticketOpenLocks) interaction.client.ticketOpenLocks = new Set();
 
   const ticketLockKey = `${guild.id}:${userId}`;
   if (interaction.client.ticketOpenLocks.has(ticketLockKey)) {
@@ -39,9 +38,7 @@ async function handleSponsorTicketOpen(interaction) {
         embeds: [
           new EmbedBuilder()
             .setTitle("Ticket Aperto")
-            .setDescription(
-              `<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`,
-            )
+            .setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto: <#${existing.channelId}>`)
             .setColor("#6f4e37"),
         ],
         flags: 1 << 6,
@@ -50,22 +47,18 @@ async function handleSponsorTicketOpen(interaction) {
     }
 
     await warmGuildChannels(guild);
-    let category = guild.channels.cache.find(
-      (ch) => ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name),
-    );
+    let category = guild.channels.cache.find((ch) => ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name));
     if (!category) {
-      const categories = guild.channels.cache.filter((ch)=>ch.type === ChannelType.GuildCategory,);
-      const bottomPosition = categories.size >0? Math.max(...categories.map((ch)=>ch.rawPosition ??0))+1:0;
-      category = await guild.channels
-        .create({
-          name: TICKETS_CATEGORY_NAME,
-          type: ChannelType.GuildCategory,
-          position: bottomPosition,
-          permissionOverwrites: [
-            { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-          ],
-        })
-        .catch(() => null);
+      const categories = guild.channels.cache.filter((ch) => ch.type === ChannelType.GuildCategory);
+      const bottomPosition = categories.size > 0 ? Math.max(...categories.map((ch) => ch.rawPosition ?? 0)) + 1 : 0;
+      category = await guild.channels.create({
+        name: TICKETS_CATEGORY_NAME,
+        type: ChannelType.GuildCategory,
+        position: bottomPosition,
+        permissionOverwrites: [
+          { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+        ],
+      }).catch(() => null);
     }
 
     if (!category) {
@@ -73,9 +66,7 @@ async function handleSponsorTicketOpen(interaction) {
         embeds: [
           new EmbedBuilder()
             .setTitle("Errore")
-            .setDescription(
-              "<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket.",
-            )
+            .setDescription("<:vegax:1443934876440068179> Impossibile creare o trovare la categoria ticket.")
             .setColor("#6f4e37"),
         ],
         flags: 1 << 6,
@@ -89,21 +80,22 @@ async function handleSponsorTicketOpen(interaction) {
     const tagName = config.tagName || "Supporto";
 
     const ticketNumber = await getNextTicketId();
-    const overwrites =[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel]},{id:userId,allow:TICKET_PERMISSIONS_SPONSOR},];
-    if (staffRoleId) {
-      overwrites.push({ id: staffRoleId, allow: TICKET_PERMISSIONS_SPONSOR });
-    }
+    const overwrites = [{ id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] }, { id: userId, allow: TICKET_PERMISSIONS_SPONSOR }];
+    if (staffRoleId) overwrites.push({ id: staffRoleId, allow: TICKET_PERMISSIONS_SPONSOR });
 
-    const channel = await guild.channels.create({name:`༄${emoji}︲${tagName}᲼${interaction.user.username}`,type:ChannelType.GuildText,parent:category.id,permissionOverwrites:overwrites,}).catch(()=>null);
+    const channel = await guild.channels.create({
+      name: buildTicketChannelName({ emoji, name: tagName }, interaction.user.username, interaction.user.id),
+      type: ChannelType.GuildText,
+      parent: category.id,
+      permissionOverwrites: overwrites,
+    }).catch(() => null);
 
     if (!channel) {
       await safeEditReplyHelper(interaction, {
         embeds: [
           new EmbedBuilder()
             .setTitle("Errore")
-            .setDescription(
-              "<:vegax:1443934876440068179> Impossibile creare il canale ticket.",
-            )
+            .setDescription("<:vegax:1443934876440068179> Impossibile creare il canale ticket.")
             .setColor("#6f4e37"),
         ],
         flags: 1 << 6,
@@ -111,9 +103,16 @@ async function handleSponsorTicketOpen(interaction) {
       return true;
     }
 
-    const sponsorEmbed = new EmbedBuilder().setTitle("Ticket aperto - Riscatto ruolo").setDescription("Grazie per aver aperto il ticket. Uno staff assegnerà manualmente il ruolo. Attendi in questo canale.",).setColor("#6f4e37");
+    const sponsorEmbed = new EmbedBuilder()
+      .setTitle("Ticket aperto - Riscatto ruolo")
+      .setDescription("Grazie per aver aperto il ticket. Uno staff assegnerà manualmente il ruolo. Attendi in questo canale.")
+      .setColor("#6f4e37");
 
-    const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),
+    );
 
     const mainMsg = await channel.send({ embeds: [sponsorEmbed], components: [row] }).catch(() => null);
 
@@ -130,7 +129,7 @@ async function handleSponsorTicketOpen(interaction) {
         descriptionSubmitted: false,
       });
     } catch (err) {
-      const isDuplicate = err ?. code ===11000||(err ?. message && String(err.message).includes("E11000"));
+      const isDuplicate = err?.code === 11000 || (err?.message && String(err.message).includes("E11000"));
       if (isDuplicate) {
         await channel.delete().catch(() => {});
         const other = await findOpenTicketByUser(guild.id, userId);
@@ -138,9 +137,7 @@ async function handleSponsorTicketOpen(interaction) {
           embeds: [
             new EmbedBuilder()
               .setTitle("Ticket Aperto")
-              .setDescription(
-                `<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? `: <#${other.channelId}>` : "."}`,
-              )
+              .setDescription(`<:vegax:1443934876440068179> Hai già un ticket aperto${other?.channelId ? `: <#${other.channelId}>` : "."}`)
               .setColor("#6f4e37"),
           ],
           flags: 1 << 6,
@@ -153,9 +150,7 @@ async function handleSponsorTicketOpen(interaction) {
         embeds: [
           new EmbedBuilder()
             .setTitle("Errore")
-            .setDescription(
-              "<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.",
-            )
+            .setDescription("<:vegax:1443934876440068179> Impossibile creare il ticket, riprova.")
             .setColor("#6f4e37"),
         ],
         flags: 1 << 6,
@@ -180,30 +175,28 @@ async function handleSponsorTicketOpen(interaction) {
 
 async function createTicketsCategory(interaction, guild) {
   if (!guild) return null;
-  if (!interaction.client.ticketCategoryCache) {
-    interaction.client.ticketCategoryCache = new Map();
-  }
+  if (!interaction.client.ticketCategoryCache) interaction.client.ticketCategoryCache = new Map();
 
   const getTopCategoryPosition = () => 0;
-  const moveCategoryToTop = async(category)=>{if(! category || category.type !== ChannelType.GuildCategory)return ;await category.setPosition(getTopCategoryPosition()).catch(()=>{});};
-  const getChildrenCount =(categoryId)=>guild.channels.cache.filter((ch)=>ch.parentId === categoryId).size;
+  const moveCategoryToTop = async (category) => {
+    if (!category || category.type !== ChannelType.GuildCategory) return;
+    await category.setPosition(getTopCategoryPosition()).catch(() => {});
+  };
+  const getChildrenCount = (categoryId) => guild.channels.cache.filter((ch) => ch.parentId === categoryId).size;
 
   const cachedCategoryId = interaction.client.ticketCategoryCache.get(guild.id);
   if (cachedCategoryId) {
-    const cachedCategory = guild.channels.cache.get(cachedCategoryId)||(await guild.channels.fetch(cachedCategoryId).catch(()=>null));
-    if (
-      cachedCategory &&
-      cachedCategory.type === ChannelType.GuildCategory &&
-      isTicketCategoryName(cachedCategory.name) &&
-      getChildrenCount(cachedCategory.id) < 50
-    ) {
+    const cachedCategory = guild.channels.cache.get(cachedCategoryId) || (await guild.channels.fetch(cachedCategoryId).catch(() => null));
+    if (cachedCategory && cachedCategory.type === ChannelType.GuildCategory && isTicketCategoryName(cachedCategory.name) && getChildrenCount(cachedCategory.id) < 50) {
       await moveCategoryToTop(cachedCategory);
       return cachedCategory;
     }
   }
 
   await warmGuildChannels(guild);
-  const ticketCategories = guild.channels.cache.filter((ch)=>ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name)).sort((a,b)=>a.rawPosition - b.rawPosition || a.id.localeCompare(b.id));
+  const ticketCategories = guild.channels.cache
+    .filter((ch) => ch.type === ChannelType.GuildCategory && isTicketCategoryName(ch.name))
+    .sort((a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id));
 
   const reusableCategory = ticketCategories.find((category) => getChildrenCount(category.id) < 50);
   if (reusableCategory) {
@@ -212,7 +205,14 @@ async function createTicketsCategory(interaction, guild) {
     return reusableCategory;
   }
 
-  const category = await guild.channels.create({name:TICKETS_CATEGORY_NAME,position:getTopCategoryPosition(),type:ChannelType.GuildCategory,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel],},],}).catch(()=>null);
+  const category = await guild.channels.create({
+    name: TICKETS_CATEGORY_NAME,
+    position: getTopCategoryPosition(),
+    type: ChannelType.GuildCategory,
+    permissionOverwrites: [
+      { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+    ],
+  }).catch(() => null);
   if (!category) return null;
 
   await moveCategoryToTop(category);

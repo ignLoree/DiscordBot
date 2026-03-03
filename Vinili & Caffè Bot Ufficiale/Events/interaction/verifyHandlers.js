@@ -3,6 +3,7 @@ const PImage = require("pureimage");
 const { PassThrough } = require("stream");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
+const { safeReply, safeEditReply, safeDeferReply } = require("../../Utils/Moderation/reply");
 const{getClientGuildCached,getGuildChannelCached,getGuildMemberCached,getGuildRoleCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
@@ -125,77 +126,11 @@ function isUnknownInteraction(error) {
   return error?.code === 10062;
 }
 
-function isAlreadyAcknowledged(error) {
-  const code = error?.code || error?.rawError?.code;
-  return code === 40060 || code === "InteractionAlreadyReplied";
-}
-
 function sanitizeEmbedText(value) {
   return String(value || "")
     .replace(/[\\`*_~|>]/g, "\\$&")
     .replace(/\n/g, " ")
     .trim();
-}
-
-async function safeReply(interaction, payload) {
-  try {
-    if (interaction.deferred || interaction.replied)
-      await interaction.followUp(payload);
-    else await interaction.reply(payload);
-  } catch (error) {
-    if (isUnknownInteraction(error)) return false;
-    if (isAlreadyAcknowledged(error)) {
-      try {
-        if (interaction.deferred && !interaction.replied)
-          await interaction.editReply(payload);
-        else await interaction.followUp(payload);
-      } catch (nestedError) {
-        if (isUnknownInteraction(nestedError) || isAlreadyAcknowledged(nestedError))
-          return false;
-        throw nestedError;
-      }
-      return true;
-    }
-    throw error;
-  }
-  return true;
-}
-
-async function safeDeferReply(interaction, payload) {
-  try {
-    if (!interaction.deferred && !interaction.replied)
-      await interaction.deferReply(payload);
-  } catch (error) {
-    if (isUnknownInteraction(error)) return false;
-    if (isAlreadyAcknowledged(error)) return true;
-    throw error;
-  }
-  return true;
-}
-
-async function safeEditReply(interaction, payload) {
-  try {
-    if (interaction.deferred)
-      await interaction.editReply(payload);
-    else if (interaction.replied) await interaction.followUp(payload);
-    else await interaction.reply(payload);
-  } catch (error) {
-    if (isUnknownInteraction(error)) return false;
-    if (isAlreadyAcknowledged(error)) {
-      try {
-        if (interaction.deferred && !interaction.replied)
-          await interaction.editReply(payload);
-        else await interaction.followUp(payload);
-      } catch (nestedError) {
-        if (isUnknownInteraction(nestedError) || isAlreadyAcknowledged(nestedError))
-          return false;
-        throw nestedError;
-      }
-      return true;
-    }
-    throw error;
-  }
-  return true;
 }
 
 function randomChar(set) {

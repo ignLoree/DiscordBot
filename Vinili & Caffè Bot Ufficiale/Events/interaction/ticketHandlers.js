@@ -4,6 +4,7 @@ const fs = require("fs");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
+const { buildTicketChannelName } = require("../../Utils/Ticket/ticketNamingRuntime");
 const{canUserHandleCloseRequest:runtimeCanUserHandleCloseRequest,ensureClosableTicketOrReply:runtimeEnsureClosableTicketOrReply,findOpenTicketByUser:runtimeFindOpenTicketByUser,findTicketByChannel:runtimeFindTicketByChannel,getClientGuildCached:runtimeGetClientGuildCached,getGuildChannelCached:runtimeGetGuildChannelCached,getSelectedTicketAction:runtimeGetSelectedTicketAction,isHandledTicketInteraction:runtimeIsHandledTicketInteraction,isSponsorGuild:runtimeIsSponsorGuild,isTicketRatingButton:runtimeIsTicketRatingButton,isTicketTranscriptButton:runtimeIsTicketTranscriptButton,loadTicketForChannelOrReply:runtimeLoadTicketForChannelOrReply,}=require("../../Utils/Ticket/ticketInteractionRuntime");
 const{buildTicketClosedEmbed:runtimeBuildTicketClosedEmbed,buildTicketRatingRows:runtimeBuildTicketRatingRows,closeTicket:runtimeCloseTicket,}=require("../../Utils/Ticket/ticketCloseRuntime");
 const{createTicketsCategory:runtimeCreateTicketsCategory,handleSponsorTicketOpen:runtimeHandleSponsorTicketOpen,}=require("../../Utils/Ticket/ticketOpenRuntime");
@@ -50,20 +51,6 @@ async function handleTicketInteraction(interaction) {
       .setTitle(title)
       .setDescription(description)
       .setColor("#6f4e37");
-  }
-
-  function sanitizeTicketChannelTail(rawValue, fallback = "utente", maxLength = 32) {
-    const safe=String(rawValue||fallback).trim().toLowerCase().replace(/\s+/g,"-").replace(/[\/\\#@:`*?"<>|]/g, "")
-      .replace(/-+/g, "-")
-      .replace(/^[.-]+|[.-]+$/g, "")
-      .replace(/[^\p{L}\p{N}._-]/gu, "")
-      .slice(0, maxLength);
-    return safe || fallback;
-  }
-
-  function buildTicketChannelName(config, user) {
-    const safeTail=sanitizeTicketChannelTail(user?.username,user?.id||"utente",);
-    return `༄${String(config?.emoji || "")}︲${String(config?.name || "supporto")}᲼${safeTail}`.slice(0, 100);
   }
 
   function isHighStaffActor() {
@@ -159,7 +146,7 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
       }
-      const ticketConfig={ticket_supporto:{type:"supporto",emoji:"⭐",name:"supporto",role:ROLE_STAFF,requiredRoles:ROLE_USER?[ROLE_USER]:[],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"),},ticket_partnership:{type:"partnership",emoji:"🤝",name:"partnership",role:ROLE_PARTNERMANAGER,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione `,).setColor("#6f4e37"),},ticket_highstaff:{type:"high",emoji:"âœ¨",name:"highstaff",role:ROLE_HIGHSTAFF,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,).setColor("#6f4e37"),},};
+      const ticketConfig={ticket_supporto:{type:"supporto",emoji:"⭐",name:"supporto",role:ROLE_STAFF,requiredRoles:ROLE_USER?[ROLE_USER]:[],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"),},ticket_partnership:{type:"partnership",emoji:"🤝",name:"partnership",role:ROLE_PARTNERMANAGER,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione `,).setColor("#6f4e37"),},ticket_highstaff:{type:"high",emoji:"✨",name:"highstaff",role:ROLE_HIGHSTAFF,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,).setColor("#6f4e37"),},};
       const config = ticketConfig[ticketActionId];
       if (
         !config &&
@@ -277,7 +264,7 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const channel=await interaction.guild.channels.create({name:buildTicketChannelName(config,interaction.user),type:0,parent:ticketsCategory.id,permissionOverwrites:[{id:interaction.guild.roles.everyone,deny:[PermissionFlagsBits.ViewChannel],},{id:interaction.user.id,allow:TICKET_PERMISSIONS,},...(config.type==="supporto"?[{id:ROLE_STAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="partnership"?[{id:ROLE_PARTNERMANAGER,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,],deny:[],},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="high"?[{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),],}).catch((err) => {global.logger.error(err);return null;});
+          const channel=await interaction.guild.channels.create({name:buildTicketChannelName(config,interaction.user?.username,interaction.user?.id||"utente"),type:0,parent:ticketsCategory.id,permissionOverwrites:[{id:interaction.guild.roles.everyone,deny:[PermissionFlagsBits.ViewChannel],},{id:interaction.user.id,allow:TICKET_PERMISSIONS,},...(config.type==="supporto"?[{id:ROLE_STAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="partnership"?[{id:ROLE_PARTNERMANAGER,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,],deny:[],},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="high"?[{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),],}).catch((err) => {global.logger.error(err);return null;});
           if (!channel) {
             await safeReply(interaction, {
               embeds: [
@@ -290,7 +277,7 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("âœ… Claim").setStyle(ButtonStyle.Success),);
+          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
           const mainMsg=await channel.send({embeds:[config.embed],components:[row]}).catch((err) => {global.logger.error(err);return null;});
           if (mainMsg) {
             await pinFirstTicketMessage(channel, mainMsg);
@@ -751,7 +738,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketButtonsOriginal=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("âœ… Claim").setStyle(ButtonStyle.Success),);
+        const ticketButtonsOriginal=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
         const ticketDoc = await runtimeFindTicketByChannel(interaction.channel.id);
         if (!ticketDoc) {
           await safeReply(interaction, {
