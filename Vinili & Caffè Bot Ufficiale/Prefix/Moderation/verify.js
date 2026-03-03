@@ -253,7 +253,7 @@ module.exports = {
             if (logChannel?.isTextBased?.() && resolvedMember?.user) {
               const user = resolvedMember.user;
               const createdAtUnix = Math.floor((user.createdTimestamp || 0) / 1000);
-              const createdAtText = createdAtUnix ? `<t:${createdAtUnix}:F>` : "—";
+              const createdAtText = createdAtUnix ? `<t:${createdAtUnix}:F>` : "-";
               const safeUsername = sanitizeEmbed(user.username);
               const resultEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle(`**${safeUsername}'s Verification Result:**`).setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${user.id}]**\n` +`<:creation:1461732905016492220>Creation:${createdAtText}\n\n` +
                     "Status:\n" +

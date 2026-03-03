@@ -20,7 +20,7 @@ const recentQuestionKeysByChannel = new Map();
 
 const REWARD_CHANNEL_ID = IDs.channels.commands;
 const MINIGAME_WIN_EMOJI = "<a:VC_Verified:1448687631109197978>";
-const MINIGAME_CORRECT_FALLBACK_EMOJI = "✅";
+const MINIGAME_CORRECT_FALLBACK_EMOJI = "Ãƒ¢Ã…“Ã¢â‚¬¦";
 const MINIGAMES_ITALIAN_ONLY = true;
 const EXP_REWARDS=[{exp:100,roleId:IDs.roles.Initiate},{exp:500,roleId:IDs.roles.Rookie},{exp:1000,roleId:IDs.roles.Scout},{exp:1500,roleId:IDs.roles.Explorer},{exp:2500,roleId:IDs.roles.Tracker},{exp:5000,roleId:IDs.roles.Achiever},{exp:10000,roleId:IDs.roles.Vanguard},{exp:50000,roleId:IDs.roles.Mentor},{exp:100000,roleId:IDs.roles.Strategist},];
 
@@ -55,7 +55,7 @@ let cachedAlbums = null;
 let cachedAlbumsAt = 0;
 const ALBUM_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
-const CAPITAL_QUIZ_BANK=[{country:"Italia",answers:["Roma"]},{country:"Francia",answers:["Parigi","Paris"]},{country:"Spagna",answers:["Madrid"]},{country:"Germania",answers:["Berlino","Berlin"]},{country:"Regno Unito",answers:["Londra","London"]},{country:"Portogallo",answers:["Lisbona","Lisbon"]},{country:"Paesi Bassi",answers:["Amsterdam"]},{country:"Belgio",answers:["Bruxelles","Brussels"]},{country:"Austria",answers:["Vienna","Wien"]},{country:"Grecia",answers:["Atene","Athens"]},{country:"Polonia",answers:["Varsavia","Warsaw"]},{country:"Irlanda",answers:["Dublino","Dublin"]},{country:"Svezia",answers:["Stoccolma","Stockholm"]},{country:"Norvegia",answers:["Oslo"]},{country:"Danimarca",answers:["Copenaghen","Copenhagen"]},{country:"Svizzera",answers:["Berna","Bern"]},{country:"Stati Uniti",answers:["Washington","Washington DC"]},{country:"Canada",answers:["Ottawa"]},{country:"Giappone",answers:["Tokyo"]},{country:"Brasile",answers:["Brasilia","Brasìlia"]},];
+const CAPITAL_QUIZ_BANK=[{country:"Italia",answers:["Roma"]},{country:"Francia",answers:["Parigi","Paris"]},{country:"Spagna",answers:["Madrid"]},{country:"Germania",answers:["Berlino","Berlin"]},{country:"Regno Unito",answers:["Londra","London"]},{country:"Portogallo",answers:["Lisbona","Lisbon"]},{country:"Paesi Bassi",answers:["Amsterdam"]},{country:"Belgio",answers:["Bruxelles","Brussels"]},{country:"Austria",answers:["Vienna","Wien"]},{country:"Grecia",answers:["Atene","Athens"]},{country:"Polonia",answers:["Varsavia","Warsaw"]},{country:"Irlanda",answers:["Dublino","Dublin"]},{country:"Svezia",answers:["Stoccolma","Stockholm"]},{country:"Norvegia",answers:["Oslo"]},{country:"Danimarca",answers:["Copenaghen","Copenhagen"]},{country:"Svizzera",answers:["Berna","Bern"]},{country:"Stati Uniti",answers:["Washington","Washington DC"]},{country:"Canada",answers:["Ottawa"]},{country:"Giappone",answers:["Tokyo"]},{country:"Brasile",answers:["Brasilia","BrasÃƒÆ’Ã‚¬lia"]},];
 
 const ITALIAN_REGION_CAPITAL_BANK=[{region:"Abruzzo",answers:["L Aquila","L'Aquila"]},{region:"Basilicata",answers:["Potenza"]},{region:"Calabria",answers:["Catanzaro"]},{region:"Campania",answers:["Napoli"]},{region:"Emilia Romagna",answers:["Bologna"]},{region:"Friuli Venezia Giulia",answers:["Trieste"]},{region:"Lazio",answers:["Roma"]},{region:"Liguria",answers:["Genova"]},{region:"Lombardia",answers:["Milano"]},{region:"Marche",answers:["Ancona"]},{region:"Molise",answers:["Campobasso"]},{region:"Piemonte",answers:["Torino"]},{region:"Puglia",answers:["Bari"]},{region:"Sardegna",answers:["Cagliari"]},{region:"Sicilia",answers:["Palermo"]},{region:"Toscana",answers:["Firenze"]},{region:"Trentino Alto Adige",answers:["Trento"]},{region:"Umbria",answers:["Perugia"]},{region:"Valle d'Aosta",answers:["Aosta"]},{region:"Veneto",answers:["Venezia"]},];
 
@@ -65,18 +65,18 @@ const SINGER_BANK=[{name:"Ultimo",answers:["Ultimo"],image:"https://upload.wikim
 
 const ALBUM_BANK=[{album:"Abbey Road",artist:"The Beatles",answers:["Abbey Road"],image:"https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg",},{album:"Thriller",artist:"Michael Jackson",answers:["Thriller"],image:"https://upload.wikimedia.org/wikipedia/en/5/55/Michael_Jackson_-_Thriller.png",},{album:"Back in Black",artist:"AC/DC",answers:["Back in Black"],image:"https://upload.wikimedia.org/wikipedia/commons/9/92/ACDC_Back_in_Black.png",},{album:"The Dark Side of the Moon",artist:"Pink Floyd",answers:["The Dark Side of the Moon","Dark Side of the Moon"],image:"https://upload.wikimedia.org/wikipedia/en/3/3b/Dark_Side_of_the_Moon.png",},{album:"Random Access Memories",artist:"Daft Punk",answers:["Random Access Memories"],image:"https://upload.wikimedia.org/wikipedia/en/a/a7/Random_Access_Memories.jpg",},{album:"Fuori dall hype",artist:"Pinguini Tattici Nucleari",answers:["Fuori dall hype","Fuori dall'hype"],image:"https://upload.wikimedia.org/wikipedia/en/4/4a/Fuori_dall%27hype.jpg",},{album:"Persona",artist:"Marracash",answers:["Persona"],image:"https://upload.wikimedia.org/wikipedia/en/0/02/Marracash_-_Persona.png",},{album:"Evolve",artist:"Imagine Dragons",answers:["Evolve"],image:"https://upload.wikimedia.org/wikipedia/en/b/b5/ImagineDragonsEvolve.jpg",},];
 
-const ITALIAN_GK_BANK=[{question:"Qual è il fiume più lungo d'Italia?",answers:["Po"]},{question:"In che anno è stata proclamata l'unità d'Italia?",answers:["1861"],},{question:"Qual è la regione italiana con più abitanti?",answers:["Lombardia"],},{question:"Qual è il capoluogo della Puglia?",answers:["Bari"]},{question:"Chi ha scritto la Divina Commedia?",answers:["Dante Alighieri","Dante"],},{question:"Qual è la montagna più alta d'Italia?",answers:["Monte Bianco","Mont Blanc"],},{question:"Qual è il mare a est dell'Italia?",answers:["Adriatico","Mar Adriatico"],},{question:"Qual è il simbolo della cucina italiana più famoso nel mondo?",answers:["Pizza"],},];
+const ITALIAN_GK_BANK=[{question:"Qual ÃƒÆ’Ã‚¨ il fiume piÃƒÆ’Ã‚¹ lungo d'Italia?",answers:["Po"]},{question:"In che anno ÃƒÆ’Ã‚¨ stata proclamata l'unitÃƒÆ’Ã‚  d'Italia?",answers:["1861"],},{question:"Qual ÃƒÆ’Ã‚¨ la regione italiana con piÃƒÆ’Ã‚¹ abitanti?",answers:["Lombardia"],},{question:"Qual ÃƒÆ’Ã‚¨ il capoluogo della Puglia?",answers:["Bari"]},{question:"Chi ha scritto la Divina Commedia?",answers:["Dante Alighieri","Dante"],},{question:"Qual ÃƒÆ’Ã‚¨ la montagna piÃƒÆ’Ã‚¹ alta d'Italia?",answers:["Monte Bianco","Mont Blanc"],},{question:"Qual ÃƒÆ’Ã‚¨ il mare a est dell'Italia?",answers:["Adriatico","Mar Adriatico"],},{question:"Qual ÃƒÆ’Ã‚¨ il simbolo della cucina italiana piÃƒÆ’Ã‚¹ famoso nel mondo?",answers:["Pizza"],},];
 
-const DRIVING_TRUE_FALSE_BANK=[{statement:"In autostrada, salvo diversa segnalazione, il limite per le auto è 130 km/h.",answer:true,},{statement:"Con semaforo rosso puoi passare se non arriva nessuno.",answer:false,},{statement:"È obbligatorio usare le cinture anche nei sedili posteriori.",answer:true,},{statement:"Si può usare il telefono alla guida senza vivavoce se la chiamata è breve.",answer:false,},{statement:"La distanza di sicurezza serve a evitare tamponamenti.",answer:true,},{statement:"Il triangolo va posizionato a circa 50 metri fuori dai centri abitati.",answer:true,},{statement:"È consentito sorpassare in prossimità delle curve sempre e comunque.",answer:false,},{statement:"Con pioggia intensa bisogna ridurre la velocità.",answer:true,},{statement:"I segnali triangolari con bordo rosso indicano un pericolo.",answer:true},{statement:"I segnali di divieto sono di forma circolare.",answer:true},{statement:"Il segnale di obbligo è di forma circolare con sfondo blu.",answer:true},{statement:"Fuori dai centri abitati il limite per le auto è 90 km/h salvo diversa segnalazione.",answer:true},{statement:"È vietato sorpassare a destra salvo che il veicolo sorpassato stia svoltando a sinistra.",answer:true},{statement:"In autostrada è vietato usare la corsia di emergenza per marciare.",answer:true},{statement:"Il conducente deve avere con sé la patente e il libretto di circolazione.",answer:true},{statement:"L'assicurazione RC auto è obbligatoria per legge.",answer:true},{statement:"In caso di nebbia è obbligatorio tenere accesi i fendinebbia o le luci antinebbia.",answer:true},{statement:"Il semaforo giallo obbliga a fermarsi se ci si può fermare in sicurezza.",answer:true},{statement:"La sosta è vietata in corrispondenza dei passaggi pedonali.",answer:true},{statement:"È vietato fermarsi sulle strisce pedonali.",answer:true},{statement:"In una rotatoria ha precedenza chi sta già circolando nella rotatoria.",answer:true},{statement:"Le catene da neve vanno montate sulle ruote motrici.",answer:true},{statement:"È vietato circolare con il veicolo in condizioni di scarsa visibilità senza luci accese.",answer:true},{statement:"Il segnale STOP obbliga a fermarsi e dare la precedenza.",answer:true},{statement:"La doppia striscia continua non può essere oltrepassata.",answer:true},{statement:"In caso di incidente con feriti bisogna prestare assistenza e chiamare i soccorsi.",answer:true},{statement:"È consentito sorpassare in corrispondenza degli attraversamenti pedonali se non ci sono pedoni.",answer:false},{statement:"Si può parcheggiare in doppia fila se si lascia il motore acceso.",answer:false},{statement:"In autostrada si può fare retromarcia per recuperare un uscita persa.",answer:false},{statement:"I segnali luminosi del semaforo valgono più dei segnali verticali.",answer:false},{statement:"È consentito superare i 130 km/h in autostrada per sorpassare.",answer:false},{statement:"La patente si rinnova solo dopo i 50 anni.",answer:false},{statement:"In galleria è obbligatorio tenere accesi solo gli anabbaglianti.",answer:true},{statement:"Il casco è obbligatorio per i conducenti di ciclomotori e motocicli.",answer:true},{statement:"Il segnale di divieto di sosta vieta di fermarsi anche momentaneamente.",answer:false},{statement:"In caso di frenata di emergenza è consigliato azionare ripetutamente il freno (pompaggio).",answer:true},];
+const DRIVING_TRUE_FALSE_BANK=[{statement:"In autostrada, salvo diversa segnalazione, il limite per le auto ÃƒÆ’Ã‚¨ 130 km/h.",answer:true,},{statement:"Con semaforo rosso puoi passare se non arriva nessuno.",answer:false,},{statement:"ÃƒÆ’Ã‹â€  obbligatorio usare le cinture anche nei sedili posteriori.",answer:true,},{statement:"Si puÃƒÆ’Ã‚² usare il telefono alla guida senza vivavoce se la chiamata ÃƒÆ’Ã‚¨ breve.",answer:false,},{statement:"La distanza di sicurezza serve a evitare tamponamenti.",answer:true,},{statement:"Il triangolo va posizionato a circa 50 metri fuori dai centri abitati.",answer:true,},{statement:"ÃƒÆ’Ã‹â€  consentito sorpassare in prossimitÃƒÆ’Ã‚  delle curve sempre e comunque.",answer:false,},{statement:"Con pioggia intensa bisogna ridurre la velocitÃƒÆ’Ã‚ .",answer:true,},{statement:"I segnali triangolari con bordo rosso indicano un pericolo.",answer:true},{statement:"I segnali di divieto sono di forma circolare.",answer:true},{statement:"Il segnale di obbligo ÃƒÆ’Ã‚¨ di forma circolare con sfondo blu.",answer:true},{statement:"Fuori dai centri abitati il limite per le auto ÃƒÆ’Ã‚¨ 90 km/h salvo diversa segnalazione.",answer:true},{statement:"ÃƒÆ’Ã‹â€  vietato sorpassare a destra salvo che il veicolo sorpassato stia svoltando a sinistra.",answer:true},{statement:"In autostrada ÃƒÆ’Ã‚¨ vietato usare la corsia di emergenza per marciare.",answer:true},{statement:"Il conducente deve avere con sÃƒÆ’Ã‚© la patente e il libretto di circolazione.",answer:true},{statement:"L'assicurazione RC auto ÃƒÆ’Ã‚¨ obbligatoria per legge.",answer:true},{statement:"In caso di nebbia ÃƒÆ’Ã‚¨ obbligatorio tenere accesi i fendinebbia o le luci antinebbia.",answer:true},{statement:"Il semaforo giallo obbliga a fermarsi se ci si puÃƒÆ’Ã‚² fermare in sicurezza.",answer:true},{statement:"La sosta ÃƒÆ’Ã‚¨ vietata in corrispondenza dei passaggi pedonali.",answer:true},{statement:"ÃƒÆ’Ã‹â€  vietato fermarsi sulle strisce pedonali.",answer:true},{statement:"In una rotatoria ha precedenza chi sta giÃƒÆ’Ã‚  circolando nella rotatoria.",answer:true},{statement:"Le catene da neve vanno montate sulle ruote motrici.",answer:true},{statement:"ÃƒÆ’Ã‹â€  vietato circolare con il veicolo in condizioni di scarsa visibilitÃƒÆ’Ã‚  senza luci accese.",answer:true},{statement:"Il segnale STOP obbliga a fermarsi e dare la precedenza.",answer:true},{statement:"La doppia striscia continua non puÃƒÆ’Ã‚² essere oltrepassata.",answer:true},{statement:"In caso di incidente con feriti bisogna prestare assistenza e chiamare i soccorsi.",answer:true},{statement:"ÃƒÆ’Ã‹â€  consentito sorpassare in corrispondenza degli attraversamenti pedonali se non ci sono pedoni.",answer:false},{statement:"Si puÃƒÆ’Ã‚² parcheggiare in doppia fila se si lascia il motore acceso.",answer:false},{statement:"In autostrada si puÃƒÆ’Ã‚² fare retromarcia per recuperare un uscita persa.",answer:false},{statement:"I segnali luminosi del semaforo valgono piÃƒÆ’Ã‚¹ dei segnali verticali.",answer:false},{statement:"ÃƒÆ’Ã‹â€  consentito superare i 130 km/h in autostrada per sorpassare.",answer:false},{statement:"La patente si rinnova solo dopo i 50 anni.",answer:false},{statement:"In galleria ÃƒÆ’Ã‚¨ obbligatorio tenere accesi solo gli anabbaglianti.",answer:true},{statement:"Il casco ÃƒÆ’Ã‚¨ obbligatorio per i conducenti di ciclomotori e motocicli.",answer:true},{statement:"Il segnale di divieto di sosta vieta di fermarsi anche momentaneamente.",answer:false},{statement:"In caso di frenata di emergenza ÃƒÆ’Ã‚¨ consigliato azionare ripetutamente il freno (pompaggio).",answer:true},];
 
-const DRIVING_MULTIPLE_CHOICE_BANK=[{statement:"In un incrocio senza segnaletica, chi ha la precedenza?",options:["Chi proviene da destra","Chi proviene da sinistra","I veicoli più veloci","I veicoli più pesanti"],correctIndex:0,},{statement:"Il segnale triangolare con bordo rosso indica:",options:["Pericolo","Divieto","Obbligo","Informazione"],correctIndex:0,},{statement:"A cosa serve la corsia di emergenza in autostrada?",options:["Solo a veicoli in panne o in emergenza","Anche al sorpasso","Alla sosta per riposo","Alla retromarcia"],correctIndex:0,},{statement:"Il limite di velocità nei centri abitati è di default:",options:["50 km/h","30 km/h","70 km/h","90 km/h"],correctIndex:0,},{statement:"In caso di nebbia fitta, è obbligatorio:",options:["Accendere le luci anabbaglianti e i fendinebbia","Solo i fari abbaglianti","Nessuna luce obbligatoria","Solo le luci di posizione"],correctIndex:0,},{statement:"Cosa indica un segnale circolare con bordo rosso e sfondo bianco?",options:["Divieto","Obbligo","Pericolo","Preavviso"],correctIndex:0,},{statement:"In una strada a senso unico, dove si può normalmente sostare?",options:["Sul lato destro o sinistro","Solo sul lato destro","Solo in aree attrezzate","È vietata la sosta"],correctIndex:0,},{statement:"Quale documento deve avere con sé il conducente?",options:["Patente e libretto di circolazione","Solo la patente","Solo il libretto","Nessuno se il veicolo è assicurato"],correctIndex:0,},{statement:"Cosa significa il segnale raffigurante un triangolo con un bambino?",options:["Attraversamento pedonale","Divieto di transito ai bambini","Zona scolastica","Parco giochi"],correctIndex:0,},{statement:"In autostrada, qual è il limite minimo di velocità?",options:["Non esiste un limite minimo obbligatorio","60 km/h","80 km/h","90 km/h"],correctIndex:0,},{statement:"Il segnale con freccia gialla lampeggiante nel semaforo indica:",options:["Attenzione, passaggio con prudenza","Via libera","Divieto di passaggio","Obbligo di svoltare"],correctIndex:0,},{statement:"Quando è obbligatorio usare i proiettori anabbaglianti?",options:["Di giorno in galleria e in caso di scarsa visibilità","Solo di notte","Solo in autostrada","Mai, sono facoltativi"],correctIndex:0,},{statement:"Cosa indica la striscia bianca continua sulla carreggiata?",options:["Non si può oltrepassare","Si può sorpassare con prudenza","Corsia riservata ai bus","Limite di parcheggio"],correctIndex:0,},{statement:"In caso di incidente, il conducente deve:",options:["Fermarsi e prestare assistenza agli eventuali feriti","Allontanarsi subito","Solo avvisare i soccorsi","Rimuovere subito i veicoli"],correctIndex:0,},{statement:"Il segnale ottagonale rosso con la scritta STOP obbliga a:",options:["Fermarsi e dare la precedenza","Rallentare solo","Fermarsi solo se arrivano altri veicoli","Accelerare per passare prima"],correctIndex:0,},{statement:"Su strada extraurbana secondaria il limite per le auto è in genere:",options:["90 km/h","50 km/h","110 km/h","70 km/h"],correctIndex:0,},{statement:"La segnaletica orizzontale gialla:",options:["Prevale su quella bianca quando sono entrambe presenti","È solo indicativa","Indica un divieto assoluto","Si trova solo in autostrada"],correctIndex:0,},{statement:"In caso di strada sdrucciolevole è opportuno:",options:["Ridurre la velocità e manovrare con delicatezza","Frenare a fondo","Accelerare per uscire dalla zona","Sterzare bruscamente"],correctIndex:0,},{statement:"Il pannello integrativo con tre barre nere oblique sotto un segnale indica:",options:["Distanza di pericolo (150-250-350 m)","Limite di velocità 30 km/h","Divieto di sorpasso per 3 km","Altezza massima 3 m"],correctIndex:0,},{statement:"Chi guida un veicolo deve:",options:["Avere capacità psico-fisiche adeguate","Essere maggiorenne per qualsiasi veicolo","Avere solo la patente","Non aver assunto farmaci negli ultimi 24 ore"],correctIndex:0,},];
+const DRIVING_MULTIPLE_CHOICE_BANK=[{statement:"In un incrocio senza segnaletica, chi ha la precedenza?",options:["Chi proviene da destra","Chi proviene da sinistra","I veicoli piÃƒÆ’Ã‚¹ veloci","I veicoli piÃƒÆ’Ã‚¹ pesanti"],correctIndex:0,},{statement:"Il segnale triangolare con bordo rosso indica:",options:["Pericolo","Divieto","Obbligo","Informazione"],correctIndex:0,},{statement:"A cosa serve la corsia di emergenza in autostrada?",options:["Solo a veicoli in panne o in emergenza","Anche al sorpasso","Alla sosta per riposo","Alla retromarcia"],correctIndex:0,},{statement:"Il limite di velocitÃƒÆ’Ã‚  nei centri abitati ÃƒÆ’Ã‚¨ di default:",options:["50 km/h","30 km/h","70 km/h","90 km/h"],correctIndex:0,},{statement:"In caso di nebbia fitta, ÃƒÆ’Ã‚¨ obbligatorio:",options:["Accendere le luci anabbaglianti e i fendinebbia","Solo i fari abbaglianti","Nessuna luce obbligatoria","Solo le luci di posizione"],correctIndex:0,},{statement:"Cosa indica un segnale circolare con bordo rosso e sfondo bianco?",options:["Divieto","Obbligo","Pericolo","Preavviso"],correctIndex:0,},{statement:"In una strada a senso unico, dove si puÃƒÆ’Ã‚² normalmente sostare?",options:["Sul lato destro o sinistro","Solo sul lato destro","Solo in aree attrezzate","ÃƒÆ’Ã‹â€  vietata la sosta"],correctIndex:0,},{statement:"Quale documento deve avere con sÃƒÆ’Ã‚© il conducente?",options:["Patente e libretto di circolazione","Solo la patente","Solo il libretto","Nessuno se il veicolo ÃƒÆ’Ã‚¨ assicurato"],correctIndex:0,},{statement:"Cosa significa il segnale raffigurante un triangolo con un bambino?",options:["Attraversamento pedonale","Divieto di transito ai bambini","Zona scolastica","Parco giochi"],correctIndex:0,},{statement:"In autostrada, qual ÃƒÆ’Ã‚¨ il limite minimo di velocitÃƒÆ’Ã‚ ?",options:["Non esiste un limite minimo obbligatorio","60 km/h","80 km/h","90 km/h"],correctIndex:0,},{statement:"Il segnale con freccia gialla lampeggiante nel semaforo indica:",options:["Attenzione, passaggio con prudenza","Via libera","Divieto di passaggio","Obbligo di svoltare"],correctIndex:0,},{statement:"Quando ÃƒÆ’Ã‚¨ obbligatorio usare i proiettori anabbaglianti?",options:["Di giorno in galleria e in caso di scarsa visibilitÃƒÆ’Ã‚ ","Solo di notte","Solo in autostrada","Mai, sono facoltativi"],correctIndex:0,},{statement:"Cosa indica la striscia bianca continua sulla carreggiata?",options:["Non si puÃƒÆ’Ã‚² oltrepassare","Si puÃƒÆ’Ã‚² sorpassare con prudenza","Corsia riservata ai bus","Limite di parcheggio"],correctIndex:0,},{statement:"In caso di incidente, il conducente deve:",options:["Fermarsi e prestare assistenza agli eventuali feriti","Allontanarsi subito","Solo avvisare i soccorsi","Rimuovere subito i veicoli"],correctIndex:0,},{statement:"Il segnale ottagonale rosso con la scritta STOP obbliga a:",options:["Fermarsi e dare la precedenza","Rallentare solo","Fermarsi solo se arrivano altri veicoli","Accelerare per passare prima"],correctIndex:0,},{statement:"Su strada extraurbana secondaria il limite per le auto ÃƒÆ’Ã‚¨ in genere:",options:["90 km/h","50 km/h","110 km/h","70 km/h"],correctIndex:0,},{statement:"La segnaletica orizzontale gialla:",options:["Prevale su quella bianca quando sono entrambe presenti","ÃƒÆ’Ã‹â€  solo indicativa","Indica un divieto assoluto","Si trova solo in autostrada"],correctIndex:0,},{statement:"In caso di strada sdrucciolevole ÃƒÆ’Ã‚¨ opportuno:",options:["Ridurre la velocitÃƒÆ’Ã‚  e manovrare con delicatezza","Frenare a fondo","Accelerare per uscire dalla zona","Sterzare bruscamente"],correctIndex:0,},{statement:"Il pannello integrativo con tre barre nere oblique sotto un segnale indica:",options:["Distanza di pericolo (150-250-350 m)","Limite di velocitÃƒÆ’Ã‚  30 km/h","Divieto di sorpasso per 3 km","Altezza massima 3 m"],correctIndex:0,},{statement:"Chi guida un veicolo deve:",options:["Avere capacitÃƒÆ’Ã‚  psico-fisiche adeguate","Essere maggiorenne per qualsiasi veicolo","Avere solo la patente","Non aver assunto farmaci negli ultimi 24 ore"],correctIndex:0,},];
 
 /** Domande quiz patente con immagine del segnale (signType = tipo da disegnare). */
-const DRIVING_SIGN_QUESTIONS=[{signType:"danger",statement:"Cosa indica questo segnale?",options:["Pericolo","Divieto","Obbligo","Fine divieto"],correctIndex:0,},{signType:"stop",statement:"Cosa indica questo segnale?",options:["Obbligo di fermarsi e dare precedenza","Dare precedenza","Passaggio obbligatorio","Strada con diritto di precedenza"],correctIndex:0,},{signType:"give_way",statement:"Cosa indica questo segnale?",options:["Dare la precedenza","Fermarsi","Strada con diritto di precedenza","Divieto di accesso"],correctIndex:0,},{signType:"no_entry",statement:"Cosa indica questo segnale?",options:["Divieto di accesso","Senso unico","Precedenza ai veicoli provenienti dal senso opposto","Strada chiusa"],correctIndex:0,},{signType:"parking",statement:"Cosa indica questo segnale?",options:["Parcheggio consentito","Divieto di sosta","Zona a sosta limitata","Parcheggio riservato"],correctIndex:0,},{signType:"no_parking",statement:"Cosa indica questo segnale?",options:["Divieto di sosta","Divieto di fermata","Sosta consentita solo a pagamento","Parcheggio a tempo limitato"],correctIndex:0,},{signType:"speed_50",statement:"Cosa indica questo segnale?",options:["Limite massimo di velocità 50 km/h","Limite minimo 50 km/h","Consigliato 50 km/h","Fine limite 50 km/h"],correctIndex:0,},{signType:"obligation_right",statement:"Cosa indica questo segnale?",options:["Obbligo di svoltare a destra","Preavviso di svolta a destra","Divieto di svoltare a destra","Senso unico a destra"],correctIndex:0,},{signType:"obligation_forward",statement:"Cosa indica questo segnale?",options:["Passaggio obbligatorio dritto","Obbligo di proseguire diritto","Divieto di svoltare","Senso unico"],correctIndex:0,},{signType:"pedestrian_crossing",statement:"Cosa indica questo segnale?",options:["Attraversamento pedonale","Zona pedonale","Divieto di transito ai pedoni","Passaggio obbligatorio per pedoni"],correctIndex:0,},{signType:"no_overtaking",statement:"Cosa indica questo segnale?",options:["Divieto di sorpasso","Sorpasso consentito","Fine divieto di sorpasso","Preavviso di divieto di sorpasso"],correctIndex:0,},{signType:"priority_road",statement:"Cosa indica questo segnale?",options:["Strada con diritto di precedenza","Dare la precedenza","Incrocio con strada prioritaria","Fine diritto di precedenza"],correctIndex:0,},];
+const DRIVING_SIGN_QUESTIONS=[{signType:"danger",statement:"Cosa indica questo segnale?",options:["Pericolo","Divieto","Obbligo","Fine divieto"],correctIndex:0,},{signType:"stop",statement:"Cosa indica questo segnale?",options:["Obbligo di fermarsi e dare precedenza","Dare precedenza","Passaggio obbligatorio","Strada con diritto di precedenza"],correctIndex:0,},{signType:"give_way",statement:"Cosa indica questo segnale?",options:["Dare la precedenza","Fermarsi","Strada con diritto di precedenza","Divieto di accesso"],correctIndex:0,},{signType:"no_entry",statement:"Cosa indica questo segnale?",options:["Divieto di accesso","Senso unico","Precedenza ai veicoli provenienti dal senso opposto","Strada chiusa"],correctIndex:0,},{signType:"parking",statement:"Cosa indica questo segnale?",options:["Parcheggio consentito","Divieto di sosta","Zona a sosta limitata","Parcheggio riservato"],correctIndex:0,},{signType:"no_parking",statement:"Cosa indica questo segnale?",options:["Divieto di sosta","Divieto di fermata","Sosta consentita solo a pagamento","Parcheggio a tempo limitato"],correctIndex:0,},{signType:"speed_50",statement:"Cosa indica questo segnale?",options:["Limite massimo di velocitÃƒÆ’Ã‚  50 km/h","Limite minimo 50 km/h","Consigliato 50 km/h","Fine limite 50 km/h"],correctIndex:0,},{signType:"obligation_right",statement:"Cosa indica questo segnale?",options:["Obbligo di svoltare a destra","Preavviso di svolta a destra","Divieto di svoltare a destra","Senso unico a destra"],correctIndex:0,},{signType:"obligation_forward",statement:"Cosa indica questo segnale?",options:["Passaggio obbligatorio dritto","Obbligo di proseguire diritto","Divieto di svoltare","Senso unico"],correctIndex:0,},{signType:"pedestrian_crossing",statement:"Cosa indica questo segnale?",options:["Attraversamento pedonale","Zona pedonale","Divieto di transito ai pedoni","Passaggio obbligatorio per pedoni"],correctIndex:0,},{signType:"no_overtaking",statement:"Cosa indica questo segnale?",options:["Divieto di sorpasso","Sorpasso consentito","Fine divieto di sorpasso","Preavviso di divieto di sorpasso"],correctIndex:0,},{signType:"priority_road",statement:"Cosa indica questo segnale?",options:["Strada con diritto di precedenza","Dare la precedenza","Incrocio con strada prioritaria","Fine diritto di precedenza"],correctIndex:0,},];
 
 const FAST_TYPING_PHRASES=["la costanza batte il talento","non mollare proprio adesso","la musica unisce le persone","oggi vinco io",];
 
-/** API predefinita per frasi/citazioni (es. quotable.io). Usata se fastType.apiUrl non è impostata. */
+/** API predefinita per frasi/citazioni (es. quotable.io). Usata se fastType.apiUrl non ÃƒÆ’Ã‚¨ impostata. */
 const DEFAULT_FAST_TYPE_API_URL = "https://api.quotable.io/random";
 
 /** Lunghezza massima frasi "scrivi la frase" (troncate a parola intera se superano). */
@@ -91,7 +91,7 @@ const MYMEMORY_BASE = "https://api.mymemory.translated.net/get";
 
 /**
  * Traduce un testo in italiano (en -> it) tramite MyMemory.
- * Se translateApiToItalian è false in config, non chiamare.
+ * Se translateApiToItalian ÃƒÆ’Ã‚¨ false in config, non chiamare.
  * @param {string} text - Testo da tradurre (es. da API inglese)
  * @param {{ translateApiToItalian?: boolean }} [cfg] - Config (minigames); se translateApiToItalian === false ritorna il testo originale
  * @returns {Promise<string>} Testo tradotto o originale in caso di errore/disabled
@@ -440,9 +440,9 @@ function polishItalianQuestionText(value) {
   return src
     .replace(/\bd\s+Italia\b/gi, "d'Italia")
     .replace(/\bl\s+Italia\b/gi, "l'Italia")
-    .replace(/\bl\s+unità\b/gi, "l'unità")
-    .replace(/\bQual e\b/gi, "Qual è")
-    .replace(/\bpiu\b/gi, "più");
+    .replace(/\bl\s+unitÃƒÆ’Ã‚ \b/gi, "l'unitÃƒÆ’Ã‚ ")
+    .replace(/\bQual e\b/gi, "Qual ÃƒÆ’Ã‚¨")
+    .replace(/\bpiu\b/gi, "piÃƒÆ’Ã‚¹");
 }
 
 function buildItalianGkApiUrls(cfg) {
@@ -769,7 +769,7 @@ function buildSongAnswerAliases(rawTitle) {
       .trim(),
   );
 
-  const dashParts=raw.split(/\s[-–—]\s/).map((p) => p.trim()).filter(Boolean);
+  const dashParts=raw.split(/\s[-Ãƒ¢Ã¢â€š¬Ã¢â‚¬Å“Ãƒ¢Ã¢â€š¬Ã¢â‚¬]\s/).map((p) => p.trim()).filter(Boolean);
   if (dashParts.length >= 2) {
     const left = dashParts[0];
     const right = dashParts.slice(1).join(" ");
@@ -828,7 +828,7 @@ function isSingerGuessCorrect(rawGuess, rawAnswers) {
 function normalizeTruthValue(raw) {
   const v = normalizeCountryName(raw);
   if (!v) return null;
-  if (["vero", "v", "true", "t", "si", "sì", "yes", "y"].includes(v)) return true;
+  if (["vero", "v", "true", "t", "si", "sÃƒÆ’Ã‚¬", "yes", "y"].includes(v)) return true;
   if (["falso", "f", "false", "no", "n"].includes(v)) return false;
   return null;
 }
@@ -866,7 +866,7 @@ function createMathQuestion() {
       const b = randomBetween(2, 12);
       const c = randomBetween(2, 6);
       return {
-        expression: `${a}×${b}×${c}`,
+        expression: `${a}ÃƒÆ’Ã¢â‚¬â€${b}ÃƒÆ’Ã¢â‚¬â€${c}`,
         answer: formatAnswer(a * b * c),
       };
     },
@@ -875,7 +875,7 @@ function createMathQuestion() {
       const result = randomBetween(2, 20);
       const dividend = divisor * result;
       return {
-        expression: `${dividend}÷${divisor}`,
+        expression: `${dividend}ÃƒÆ’Ã‚·${divisor}`,
         answer: formatAnswer(result),
       };
     },
@@ -883,7 +883,7 @@ function createMathQuestion() {
       const root = randomBetween(2, 20);
       const n = root * root;
       return {
-        expression: `√${n}`,
+        expression: `Ãƒ¢Ã‹â€ Ã…¡${n}`,
         answer: formatAnswer(root),
       };
     },
@@ -894,7 +894,7 @@ function createMathQuestion() {
       const d = randomBetween(2, 14);
       const left = a * b;
       return {
-        expression: `(${a}×${b})+${c}-${d}`,
+        expression: `(${a}ÃƒÆ’Ã¢â‚¬â€${b})+${c}-${d}`,
         answer: formatAnswer(left + c - d),
       };
     },
@@ -904,7 +904,7 @@ function createMathQuestion() {
       const a = randomBetween(2, 30);
       const b = randomBetween(2, 20);
       return {
-        expression: `√${n}+${a}-${b}`,
+        expression: `Ãƒ¢Ã‹â€ Ã…¡${n}+${a}-${b}`,
         answer: formatAnswer(root + a - b),
       };
     },
@@ -918,7 +918,7 @@ function parseMathGuess(raw) {
   const compact = normalizeUserAnswerText(raw).replace(/\s+/g, "");
   if (!compact) return null;
   if (/[\p{L}]/u.test(compact)) return null;
-  const base=compact.replace(/[^0-9+\-*/().,×÷]/g,"").replace(/,/g,".").replace(/×/g,"*").replace(/÷/g,"/");
+  const base=compact.replace(/[^0-9+\-*/().,ÃƒÆ’Ã¢â‚¬â€ÃƒÆ’Ã‚·]/g,"").replace(/,/g,".").replace(/ÃƒÆ’Ã¢â‚¬â€/g,"*").replace(/ÃƒÆ’Ã‚·/g,"/");
   if (!base) return null;
   if (/^-?\d+(\.\d+)?$/.test(base)) {
     const value = Number(base);
@@ -1724,7 +1724,7 @@ function isLooseAliasGuessCorrect(
 
 function extractWordGuessCandidates(raw) {
   const lower = String(raw || "").toLowerCase();
-  const tokens=lower.split(/[^a-zà-öø-ÿ]+/i).map((t) => t.trim()).filter(Boolean).filter((t) => t.length>=5&&t.length<=6);
+  const tokens=lower.split(/[^a-zÃƒÆ’Ã‚ -ÃƒÆ’Ã‚¶ÃƒÆ’Ã‚¸-ÃƒÆ’Ã‚¿]+/i).map((t) => t.trim()).filter(Boolean).filter((t) => t.length>=5&&t.length<=6);
   return Array.from(new Set(tokens));
 }
 
@@ -1776,7 +1776,7 @@ async function fetchPlayerInfo(cfg, name) {
     return {
       name: player.strPlayer,
       team: player.strTeam || "Squadra sconosciuta",
-      nationality: player.strNationality || "Nazionalità sconosciuta",
+      nationality: player.strNationality || "NazionalitÃƒÆ’Ã‚  sconosciuta",
       image: player.strThumb || player.strCutout || null,
       aliases: buildPlayerAliases(player),
     };
@@ -1807,7 +1807,7 @@ async function fetchPlayerFromRandomLetter(cfg) {
       return {
         name: player.strPlayer,
         team: player.strTeam || "Squadra sconosciuta",
-        nationality: player.strNationality || "Nazionalità sconosciuta",
+        nationality: player.strNationality || "NazionalitÃƒÆ’Ã‚  sconosciuta",
         image: player.strThumb || player.strCutout || null,
         aliases: buildPlayerAliases(player),
       };
@@ -1873,7 +1873,7 @@ async function fetchRandomSong(cfg) {
         album: song.collectionName || "Album sconosciuto",
         artwork,
         genre,
-        artistCountry: artistCountry || "Nazionalità sconosciuta",
+        artistCountry: artistCountry || "NazionalitÃƒÆ’Ã‚  sconosciuta",
         previewUrl: song.previewUrl || null,
       };
     } catch {}
@@ -1966,7 +1966,7 @@ async function fetchPopularSong(cfg) {
       album: pick.album || "Album sconosciuto",
       artwork: pick.artwork || null,
       genre: pick.genre || "Genere sconosciuto",
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃƒÆ’Ã‚  sconosciuta",
       previewUrl: pick.previewUrl || null,
     };
   }
@@ -1986,7 +1986,7 @@ async function fetchPopularSong(cfg) {
         ? item.artworkUrl100.replace("100x100bb", "600x600bb")
         : pick.artwork,
       genre,
-      artistCountry: artistCountry || "Nazionalità sconosciuta",
+      artistCountry: artistCountry || "NazionalitÃƒÆ’Ã‚  sconosciuta",
       previewUrl: item?.previewUrl || null,
     };
   } catch {
@@ -2086,10 +2086,10 @@ function buildGuessNumberEmbed(min, max, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina il numero . ᐟ ✧")
+    .setTitle("Indovina il numero . \u141F \u2727")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp}exp** ˚. ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina un numero tra **${min}** e **${max}** per ottenere **${rewardExp} exp**. \u141F`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2100,10 +2100,10 @@ function buildGuessWordEmbed(scrambled, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la parola . ᐟ ✧")
+    .setTitle("Indovina la parola . \u141F \u2727")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp** ˚. ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina la parola da queste lettere: **${scrambled}** per ottenere **${rewardExp} exp**. \u141F`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2114,10 +2114,10 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Indovina la bandiera . ᐟ ✧")
+    .setTitle("Indovina la bandiera . \u141F \u2727")
     .setDescription(
       [
-        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp** ˚. ᐟ`,
+        `<a:VC_Beer:1448687940560490547> Indovina la nazione da questa bandiera per ottenere **${rewardExp} exp**. \u141F`,
         `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
         `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,
       ].join("\n"),
@@ -2127,9 +2127,9 @@ function buildGuessFlagEmbed(flagUrl, rewardExp, durationMs) {
 
 function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il calciatore . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Indovina il calciatore più famoso per ottenere **${rewardExp}exp**˚.ᐟ`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**per indovinarlo!`,
-        `><:VC_Dot:1443932948599668746>Esegui il comando\`+mstats\` per vedere le tue statistiche dei minigiochi.`,].join("\n"),);
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il calciatore . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Indovina il calciatore pi\u00F9 famoso per ottenere **${rewardExp} exp**. \u141F`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarlo!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,].join("\n"),);
   if (imageUrl) {
     embed.setImage(imageUrl);
   }
@@ -2138,9 +2138,9 @@ function buildGuessPlayerEmbed(rewardExp, durationMs, imageUrl) {
 
 function buildGuessSongEmbed(rewardExp, durationMs, artworkUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la canzone . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp}exp**˚.ᐟ`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**per indovinarla!`,
-        `><:VC_Dot:1443932948599668746>Esegui il comando\`+mstats\` per vedere le tue statistiche dei minigiochi.`,].join("\n"),);
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la canzone . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Indovina la canzone per ottenere **${rewardExp} exp**. \u141F`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per indovinarla!`,
+        `> <:VC_Dot:1443932948599668746> Esegui il comando \`+mstats\` per vedere le tue statistiche dei minigiochi.`,].join("\n"),);
   if (artworkUrl) embed.setImage(artworkUrl);
   return embed;
 }
@@ -2152,8 +2152,8 @@ function buildGuessCapitalEmbed(
   imageUrl = null,
 ) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la capitale . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Qual è la capitale di **${country}**?Ricompensa**${rewardExp}exp**.`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**per rispondere!`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la capitale . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Qual \u00E8 la capitale di **${country}**? Ricompensa: **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2168,8 +2168,8 @@ function buildGuessRegionCapitalEmbed(
   imageName = null,
 ) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il capoluogo . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Qual è il capoluogo della regione **${region}**?Ricompensa**${rewardExp}exp**.`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**per rispondere!`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il capoluogo . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Qual \u00E8 il capoluogo della regione **${region}**? Ricompensa: **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti** per rispondere!`,
       ].join("\n"),
     );
   if (imageName) embed.setImage(`attachment://${imageName}`);
@@ -2181,7 +2181,7 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Scrivi per primo la frase . ᐟ ✧")
+    .setTitle("Scrivi per primo la frase . \u141F \u2727")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Il primo che scrive questa frase vince **${rewardExp} exp**:`,
@@ -2193,8 +2193,8 @@ function buildFastTypeEmbed(phrase, rewardExp, durationMs) {
 
 function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la squadra di calcio . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp}exp**.`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**.`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina la squadra di calcio . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Indovina la squadra di calcio dal logo e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2203,8 +2203,8 @@ function buildGuessTeamEmbed(rewardExp, durationMs, imageUrl) {
 
 function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il cantante . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp}exp**.`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**.`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina il cantante . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Indovina il cantante dalla foto e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2213,8 +2213,8 @@ function buildGuessSingerEmbed(rewardExp, durationMs, imageUrl) {
 
 function buildGuessAlbumEmbed(rewardExp, durationMs, imageUrl) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina l'album . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp}exp**.`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**.`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Indovina l'album . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Indovina l'album dalla copertina e vinci **${rewardExp} exp**.`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
   if (imageUrl) embed.setImage(imageUrl);
@@ -2232,7 +2232,7 @@ function buildHangmanEmbed(
   const letters = countHangmanLetters(maskedWord);
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Impiccato . ᐟ ✧")
+    .setTitle("Impiccato . \u141F \u2727")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> Scrivi una lettera o prova la parola intera.`,
@@ -2278,7 +2278,7 @@ function buildItalianGkEmbed(question, rewardExp, durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Cultura generale . ᐟ ✧")
+    .setTitle("Cultura generale . \u141F \u2727")
     .setDescription(
       [
         `<a:VC_Beer:1448687940560490547> **Domanda:** ${question}`,
@@ -2311,7 +2311,7 @@ function buildDrivingQuizEmbed(row, rewardExp, durationMs) {
   );
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Quiz patente . ᐟ ✧")
+    .setTitle("Quiz patente . \u141F \u2727")
     .setDescription(lines.join("\n"));
 }
 
@@ -2322,9 +2322,9 @@ function buildMathExpressionEmbed(
   imageName = null,
 ) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
-  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Espressione matematica . ᐟ ✧").setDescription([`<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
-        `Ricompensa:**${rewardExp}exp**`,
-        `><a:VC_Time:1468641957038526696>Hai**${minutes}minuti**.`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Espressione matematica . \u141F \u2727").setDescription([`<a:VC_Beer:1448687940560490547> Risolvi: **${expression}**`,
+        `Ricompensa: **${rewardExp} exp**`,
+        `> <a:VC_Time:1468641957038526696> Hai **${minutes} minuti**.`,
       ].join("\n"),
     );
   if (imageName) embed.setImage(`attachment://${imageName}`);
@@ -2335,7 +2335,7 @@ function buildFindBotEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Trova il bot . ᐟ ✧")
+    .setTitle("Trova il bot . \u141F \u2727")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Trova il messaggio del bot tra i canali del server, premi il bottone e vinci la ricompensa!",
@@ -2349,7 +2349,7 @@ function buildFindBotButtonEmbed(durationMs) {
   const minutes = Math.max(1, Math.round(durationMs / 60000));
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("Sei vicino al bot . ᐟ ✧")
+    .setTitle("Sei vicino al bot . \u141F \u2727")
     .setDescription(
       [
         "<a:VC_Beer:1448687940560490547> Hai trovato il messaggio nascosto: clicca il bottone per vincere subito la ricompensa!",
@@ -2362,22 +2362,22 @@ function buildFindBotButtonEmbed(durationMs) {
 function buildMinuteHintEmbed(channelId) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
+    .setTitle("<a:VC_Heart:1448672728822448141>\u207A Indizio")
+    .setDescription(`\u27A2 <a:VC_Arrow:1448672967721615452> <#${channelId}>`);
 }
 
 function buildFlagHintEmbed(name) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> ${name}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>\u207A Indizio")
+    .setDescription(`\u27A2 <a:VC_Arrow:1448672967721615452> ${name}`);
 }
 
 function buildGenericHintEmbed(text) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Heart:1448672728822448141>⁺Indizio")
-    .setDescription(`➢ <a:VC_Arrow:1448672967721615452> ${text}`);
+    .setTitle("<a:VC_Heart:1448672728822448141>\u207A Indizio")
+    .setDescription(`\u27A2 <a:VC_Arrow:1448672967721615452> ${text}`);
 }
 
 function buildMaskedTextHint(value) {
@@ -2395,7 +2395,7 @@ function buildNumberNearHint(target, min, max) {
   const band = Math.max(2, Math.round(range * 0.18));
   const from = Math.max(low, Number(target) - band);
   const to = Math.min(high, Number(target) + band);
-  return `Il numero è tra **${from}** e **${to}**.`;
+  return `Il numero \u00E8 tra **${from}** e **${to}**.`;
 }
 
 function buildHintEmbed(isHigher) {
@@ -2403,25 +2403,25 @@ function buildHintEmbed(isHigher) {
     .setColor("#6f4e37")
     .setDescription(
       isHigher
-        ? "📈 <a:VC_Arrow:1448672967721615452> Più alto!"
-        : "📉 <a:VC_Arrow:1448672967721615452> Più basso!",
+        ? "\u{1F4C8} <a:VC_Arrow:1448672967721615452> Pi\u00F9 alto!"
+        : "\u{1F4C9} <a:VC_Arrow:1448672967721615452> Pi\u00F9 basso!",
     );
 }
 
 function buildWinEmbed(winnerId, rewardExp, totalExp) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
-    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto. ᐟ ✧")
+    .setTitle("<a:VC_Events:1448688007438667796> Un utente ha vinto. \u141F \u2727")
     .setDescription(
       [
-        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp}exp**. ᐟ ✧`,
+        `<a:VC_Winner:1448687700235256009> Complimenti <@${winnerId}>, hai vinto e guadagnato **${rewardExp} exp**. \u141F \u2727`,
         "",
-        "📊 **Le tue statistiche:**",
+        "\u{1F4CA} **Le tue statistiche:**",
         `<a:VC_Arrow:1448672967721615452> Ora hai un totale di **${totalExp}exp**`,
       ].join("\n"),
     )
     .setFooter({
-      text: '⇢ digita il comando "+mstats" per vedere i tuoi progressi',
+      text: 'Ãƒ¢Ã¢â‚¬¡Ã‚¢ digita il comando "+mstats" per vedere i tuoi progressi',
     });
 }
 
@@ -2444,10 +2444,10 @@ function buildRewardEmbed(member, reward, totalExp) {
   const remaining=nextReward?Math.max(0,nextReward.exp-Number(totalExp||0)):0;
 
   const description=["<a:VC_Flower:1468685050966179841> Premio ricevuto <a:VC_Flower:1468685050966179841>","",`<a:VC_Events:1448688007438667796> **__<@${member.id}>__**`,
-    `hai ottenuto il ruolo<@&${reward.roleId}>per aver raggiunto**${reward.exp}**punti ai**Minigiochi**<a:VC_HeartsPink:1468685897389052008>`,
+    `hai ottenuto il ruolo <@&${reward.roleId}> per aver raggiunto **${reward.exp}** punti ai **Minigiochi** <a:VC_HeartsPink:1468685897389052008>`,
     "",
     nextReward
-      ? `<a:VC_HeartsBlue:1468686100045369404>/ti mancano**${remaining}**punti per la prossima ricompensa!`
+      ? `<a:VC_HeartsBlue:1468686100045369404>/ ti mancano **${remaining}** punti per la prossima ricompensa!`
       : "<a:VC_HeartsBlue:1468686100045369404> / hai raggiunto la ricompensa **massima**!",
   ].join("\n");
 
@@ -2517,7 +2517,7 @@ function buildTimeoutSongEmbed(title, artist) {
   return new EmbedBuilder()
     .setColor("#6f4e37")
     .setDescription(
-      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** — ${artist}.`,
+      `<a:VC_Timer:1462779065625739344> Tempo scaduto! Era **${title}** \u2014 ${artist}.`,
     );
 }
 
@@ -2849,7 +2849,7 @@ async function startGuessWordGame(client, cfg) {
   const gameMessage=await channel.send({embeds:[wordEmbed],files:wordAttachment?[wordAttachment]:[],}).catch(() => null);
 
   const timeout=setTimeout(async() => {const game=activeGames.get(channelId);if(!game)return;activeGames.delete(channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutWordEmbed(game.target)]}).catch(() => {});await clearActiveGame(client,cfg);},durationMs);timeout.unref?.();
-  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`Parola da **${target.length}**lettere.${buildMaskedTextHint(target)}`,
+  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`Parola da **${target.length}** lettere.${buildMaskedTextHint(target)}`,
   );
 
   activeGames.set(channelId, {
@@ -2972,7 +2972,7 @@ async function startGuessPlayerGame(client, cfg) {
 
   const timeout=setTimeout(async() => {const game=activeGames.get(channelId);if(!game)return;activeGames.delete(channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutPlayerEmbed(game.displayName)]}).catch(() => {});await clearActiveGame(client,cfg);},durationMs);timeout.unref?.();
 
-  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`${info.team}•${info.nationality}•${buildMaskedTextHint(info.name)}`,
+  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`${info.team} \u2022 ${info.nationality} \u2022 ${buildMaskedTextHint(info.name)}`,
   );
 
   activeGames.set(channelId, {
@@ -3036,7 +3036,7 @@ async function startGuessSongGame(client, cfg) {
 
   const timeout=setTimeout(async() => {const game=activeGames.get(channelId);if(!game)return;activeGames.delete(channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutSongEmbed(game.title,game.artist)]}).catch(() => {});await clearActiveGame(client,cfg);},durationMs);timeout.unref?.();
 
-  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`${info.artistCountry}•${info.genre}•${buildMaskedTextHint(info.title)}`,
+  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`${info.artistCountry} \u2022 ${info.genre} \u2022 ${buildMaskedTextHint(info.title)}`,
   );
 
   activeGames.set(channelId, {
@@ -3399,7 +3399,7 @@ async function startGuessAlbumGame(client, cfg) {
   const gameMessage=await channel.send({embeds:[buildGuessAlbumEmbed(rewardExp,durationMs,pick.image)]}).catch(() => null);
 
   const timeout=setTimeout(async() => {const game=activeGames.get(channelId);if(!game)return;activeGames.delete(channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutAlbumEmbed(game.album,game.artist)]}).catch(() => {});await clearActiveGame(client,cfg);},durationMs);timeout.unref?.();
-  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`Artista: **${pick.artist}**•Album:${buildMaskedTextHint(pick.album)}`,
+  const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,`Artista: **${pick.artist}** \u2022 Album: ${buildMaskedTextHint(pick.album)}`,
   );
 
   activeGames.set(channelId, {
@@ -3751,7 +3751,7 @@ async function startDrivingQuizGame(client, cfg) {
       client,
       channelId,
       durationMs,
-      `La risposta corretta è la **${letter}**.`,
+      `La risposta corretta ÃƒÆ’Ã‚¨ la **${letter}**.`,
     );
   }
 
@@ -3808,8 +3808,8 @@ async function startMathExpressionGame(client, cfg) {
 
   const timeout=setTimeout(async() => {const game=activeGames.get(channelId);if(!game)return;activeGames.delete(channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutMathEmbed(game.answer)]}).catch(() => {});await clearActiveGame(client,cfg);},durationMs);timeout.unref?.();
   const answerNum = Number(row.answer);
-  const hintRangeText=Number.isFinite(answerNum)?`Il risultato è compreso tra **${Math.floor(answerNum-2)}**e**${Math.ceil(answerNum+2)}**.`
-    : "Il risultato è un numero intero.";
+  const hintRangeText=Number.isFinite(answerNum)?`Il risultato ÃƒÆ’Ã‚¨ compreso tra **${Math.floor(answerNum - 2)}** e **${Math.ceil(answerNum + 2)}**.`
+    : "Il risultato ÃƒÆ’Ã‚¨ un numero intero.";
   const hintTimeout=await scheduleGenericHint(client,channelId,durationMs,hintRangeText,);
 
   activeGames.set(channelId, {
@@ -4849,9 +4849,9 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const name = parsed?.name || "il calciatore";
     const team = parsed?.team || "Squadra sconosciuta";
-    const nationality = parsed?.nationality || "Nazionalità sconosciuta";
+    const nationality = parsed?.nationality || "Nazionalit\u00E0 sconosciuta";
     const timeout=setTimeout(async() => {const game=activeGames.get(cfg.channelId);if(!game)return;activeGames.delete(cfg.channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutPlayerEmbed(game.displayName)]}).catch(() => {});await clearActiveGame(client,cfg);},remainingMs);timeout.unref?.();
-    const hintTimeout=await scheduleGenericHint(client,cfg.channelId,remainingMs,`${team}•${nationality}•${buildMaskedTextHint(name)}`,
+    const hintTimeout=await scheduleGenericHint(client,cfg.channelId,remainingMs,`${team} \u2022 ${nationality} \u2022 ${buildMaskedTextHint(name)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessPlayer",
@@ -4871,10 +4871,10 @@ async function restoreActiveGames(client) {
     const parsed = parseStateTarget(state.target);
     const title = parsed?.title || "la canzone";
     const artist = parsed?.artist || "";
-    const artistCountry = parsed?.artistCountry || "Nazionalità sconosciuta";
+    const artistCountry = parsed?.artistCountry || "Nazionalit\u00E0 sconosciuta";
     const genre = parsed?.genre || "Genere sconosciuto";
     const timeout=setTimeout(async() => {const game=activeGames.get(cfg.channelId);if(!game)return;activeGames.delete(cfg.channelId);if(game.hintTimeout)clearTimeout(game.hintTimeout);await channel.send({embeds:[buildTimeoutSongEmbed(game.title,game.artist)]}).catch(() => {});await clearActiveGame(client,cfg);},remainingMs);timeout.unref?.();
-    const hintTimeout=await scheduleGenericHint(client,cfg.channelId,remainingMs,`${artistCountry}•${genre}•${buildMaskedTextHint(title)}`,
+    const hintTimeout=await scheduleGenericHint(client,cfg.channelId,remainingMs,`${artistCountry} \u2022 ${genre} \u2022 ${buildMaskedTextHint(title)}`,
     );
     activeGames.set(cfg.channelId, {
       type: "guessSong",

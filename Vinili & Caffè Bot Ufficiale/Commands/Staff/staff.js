@@ -316,7 +316,7 @@ async function ensureNotFounderOrCoFounder(interaction, member) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("staff")
-    .setDescription("Gestisci lo staff di Vinili & Caffè ")
+    .setDescription("Gestisci lo staff di Vinili & Caffè")
     .addSubcommand((command) =>
       command
         .setName("pex")

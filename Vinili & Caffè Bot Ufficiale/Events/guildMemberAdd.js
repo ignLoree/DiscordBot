@@ -3,7 +3,7 @@ const { InviteTrack, InviteReminderState, } = require("../Schemas/Community/comm
 const IDs = require("../Utils/Config/ids");
 const { getNoDmSet } = require("../Utils/noDmList");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const{scheduleMemberCounterRefresh,}=require("../Utils/Community/memberCounterUtils");
+const{scheduleMemberCounterRefresh,updateMemberCounterNow,}=require("../Utils/Community/memberCounterUtils");
 const{processJoinRaidForMember,registerJoinRaidSecuritySignal,}=require("../Services/Moderation/joinRaidService");
 const{getJoinGateConfigSnapshot,}=require("../Services/Moderation/joinGateService");
 const { getSecurityLockState } = require("../Services/Moderation/securityOrchestratorService");
@@ -1159,6 +1159,7 @@ module.exports = {
       }
 
       if (isCoreExempt) {
+        await updateMemberCounterNow(member.guild).catch(() => {});
         scheduleMemberCounterRefresh(member.guild, {
           delayMs: 250,
           secondPassMs: 1800,
@@ -1173,6 +1174,7 @@ module.exports = {
         global.logger.info("[guildMemberAdd] Welcome channel not found.");
       }
 
+      await updateMemberCounterNow(member.guild).catch(() => {});
       scheduleMemberCounterRefresh(member.guild, {
         delayMs: 250,
         secondPassMs: 1800,

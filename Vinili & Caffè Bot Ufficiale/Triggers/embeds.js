@@ -353,7 +353,7 @@ async function runTicketPanelAuto(client) {
 
 <:attentionfromvega:1443651874032062505> Aprire un ticket **__inutile__** oppure **__non rispondere__** nell'arco di **\`24\` ore** comporterà un **warn**.`,).setFooter({text:`Non garantiamo risposta negli orari notturni, dalle 00:00 alle 10:00`,}).setImage(DIVIDER_URL);
 
-  const ticketMenu = new StringSelectMenuBuilder().setCustomId("ticket_open_menu").setPlaceholder("🎫 Seleziona una categoria...").addOptions({label:"Prima categoria",description:"Supporto generale • Segnalazioni • Problemi",value:"ticket_supporto",emoji:{id:"1443651872258003005",name:"discordstaff"},},{label:"Seconda categoria",description:"Partnership",value:"ticket_partnership",emoji:{id:"1443651871125409812",name:"partneredserverowner"},},{label:"Terza categoria",description:"Verifica Selfie • Donazioni • Sponsor • HighStaff",value:"ticket_highstaff",emoji:{id:"1443670575376765130",name:"reportmessage"},},);
+  const ticketMenu = new StringSelectMenuBuilder().setCustomId("ticket_open_menu").setPlaceholder("🎫 Seleziona una categoria...").addOptions({label:"Prima categoria",description:"Supporto generale • Segnalazioni • Problemi",value:"ticket_supporto",emoji:{id:"1443651872258003005",name:"discordstaff"},},{label:"Seconda categoria",description:"Partnership",value:"ticket_partnership",emoji:{id:"1443651871125409812",name:"partneredserverowner"},},{label:"Terza categoria",description:"Verifica Selfie • Donazioni • Sponsor • High Staff",value:"ticket_highstaff",emoji:{id:"1443670575376765130",name:"reportmessage"},},);
 
   const ticketSelectRow = new ActionRowBuilder().addComponents(ticketMenu);
 

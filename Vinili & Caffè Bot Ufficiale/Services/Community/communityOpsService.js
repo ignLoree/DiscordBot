@@ -4,11 +4,13 @@ const SponsorMainLeave = require("../../Schemas/Tags/tagsSchema");
 const IDs = require("../../Utils/Config/ids");
 const VOTE_ROLE_ID = IDs.roles.Voter;
 const CHECK_INTERVAL_MS = 60 * 1000;
+const MAIN_GUILD_ID = IDs.guilds.main;
 const ROLE_STAGE_1 = IDs.roles.NuovoUtente;
 const ROLE_STAGE_2 = IDs.roles.Veterano;
 const ROLE_STAGE_3 = IDs.roles.OG;
 const VERIFIED_ROLE_IDS=[IDs.roles.Member,].filter(Boolean);
 const DAY_MS = 24 * 60 * 60 * 1000;
+const VERIFICATION_TENURE_SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const SPONSOR_VERIFY_NICKNAME = ".gg/viniliecaffe";
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;
@@ -74,6 +76,7 @@ async function applyTenureForMember(member, record) {
   if (!member || !record) return;
   const guildId = member.guild?.id;
   const sponsorVerifyRoleId = IDs.verificatoRoleIds?.[guildId];
+  const hasVerifiedRole = VERIFIED_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId));
   const me=member.guild?.members?.me||(await member.guild?.members?.fetchMe?.().catch(() => null));
   const canManageRoles = Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles));
   if (sponsorVerifyRoleId) {
@@ -91,9 +94,15 @@ async function applyTenureForMember(member, record) {
     }
     return;
   }
+  if (!guildId || String(guildId) !== String(MAIN_GUILD_ID || "")) return;
+  if (!hasVerifiedRole) return;
   const now = new Date();
-  const stage1At=new Date(record.verifiedAt.getTime()+STAGE_1_DAYS*DAY_MS,);
-  const stage2At=new Date(record.verifiedAt.getTime()+STAGE_2_DAYS*DAY_MS,);
+  const baseJoinedAtMs = Number(member.joinedTimestamp || member.joinedAt?.getTime?.() || 0);
+  const baseVerifiedAtMs = Number(new Date(record.verifiedAt).getTime() || 0);
+  const baseTenureMs = baseJoinedAtMs > 0 ? baseJoinedAtMs : baseVerifiedAtMs;
+  if (!Number.isFinite(baseTenureMs) || baseTenureMs <= 0) return;
+  const stage1At=new Date(baseTenureMs+STAGE_1_DAYS*DAY_MS,);
+  const stage2At=new Date(baseTenureMs+STAGE_2_DAYS*DAY_MS,);
 
   const has1 = member.roles.cache.has(ROLE_STAGE_1);
   const has2 = member.roles.cache.has(ROLE_STAGE_2);
@@ -165,7 +174,7 @@ function startVerificationTenureLoop(client) {
         global.logger.error("[VERIFY TENURE] Sweep failed:", error);
       });
     },
-    60 * 60 * 1000,
+    VERIFICATION_TENURE_SWEEP_INTERVAL_MS,
   );
   verificationTenureLoopHandle.unref?.();
   return verificationTenureLoopHandle;
@@ -174,13 +183,12 @@ function startVerificationTenureLoop(client) {
 async function backfillVerificationTenure(client) {
   const guilds = Array.from(client.guilds.cache.values());
   for (const guild of guilds) {
-    const verifiedRoleIds = VERIFIED_ROLE_IDS.filter(Boolean);
-    if (!verifiedRoleIds.length) continue;
-
     await guild.members.fetch().catch(() => null);
-    const verifiedMembers=guild.members.cache.filter((m) => !m.user?.bot&&verifiedRoleIds.some((roleId) => m.roles.cache.has(roleId)),);
+    const targetMembers = String(guild.id) === String(MAIN_GUILD_ID || "")
+      ? guild.members.cache.filter((m) => !m.user?.bot && VERIFIED_ROLE_IDS.some((roleId) => m.roles.cache.has(roleId)))
+      : guild.members.cache.filter((m) => !m.user?.bot && VERIFIED_ROLE_IDS.some((roleId) => m.roles.cache.has(roleId)));
 
-    for (const member of verifiedMembers.values()) {
+    for (const member of targetMembers.values()) {
       const verifiedAt = member.joinedAt || new Date();
       const record=await VerificationTenure.findOneAndUpdate({guildId:guild.id,userId:member.id},{$setOnInsert:{verifiedAt,stage:1}},{upsert:true,new:true,setDefaultsOnInsert:true},).catch(() => null);
       if (!record) continue;

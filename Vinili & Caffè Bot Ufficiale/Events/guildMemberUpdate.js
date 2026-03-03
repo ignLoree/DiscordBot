@@ -260,20 +260,8 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   const additions = hasTrustedAuditDiff ? auditAdditions : cacheAdditions;
   const removals = hasTrustedAuditDiff ? auditRemovals : cacheRemovals;
   if (!additions.length && !removals.length) return;
-
   const unverifiedDiffSize = additions.length + removals.length;
-  if (usingFallbackDiff && unverifiedDiffSize > MAX_UNVERIFIED_ROLE_DIFF) {
-    global.logger?.warn?.(
-      "[guildMemberUpdate] skipped unverified bulk role diff:",
-      guild.id,
-      newMember.id,
-      {
-        additions: additions.map((role) => String(role?.id || "")),
-        removals: removals.map((role) => String(role?.id || "")),
-      },
-    );
-    return;
-  }
+  if (usingFallbackDiff && unverifiedDiffSize > MAX_UNVERIFIED_ROLE_DIFF) return;
 
   const responsible = formatAuditActor(audit.executor);
   const executorId = String(audit?.executor?.id || "");
@@ -582,8 +570,8 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
             `${ARROW}**New Name:**${newCandidate||"N/A"}`,
             "",
             "**More Details:**",
-            `${ARROW}**Member Direct Messaged?**${dmSent?"✅":"❌"}`,
-            `${ARROW}**Member Punished?**${punished?"✅":"❌"}`,
+            `${ARROW}**Member Direct Messaged?**${dmSent?"Yes":"No"}`,
+            `${ARROW}**Member Punished?**${punished?"Yes":"No"}`,
           ].join("\n"),
         )
         .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))

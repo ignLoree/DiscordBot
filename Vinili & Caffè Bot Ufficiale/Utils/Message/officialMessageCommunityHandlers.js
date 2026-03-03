@@ -45,7 +45,7 @@ async function handleAfk(message) {
       await member.setNickname(afkData.originalName).catch(() => {});
     }
     await AFK.deleteOne({ guildId, userId });
-    const msg=await safeMessageReply(message,`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>!Ho rimosso il tuo stato AFK.`,
+    const msg=await safeMessageReply(message,`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`,
     );
     if (msg) {
       const timer=setTimeout(() => {
@@ -64,7 +64,7 @@ async function handleAfk(message) {
     if (!targetAfk) continue;
 
     const reason = targetAfk.reason ? `\nMotivo: ${targetAfk.reason}` : "";
-    const msg=await safeMessageReply(message,`**${mentionedUser.username}**è AFK dal<t:${Math.floor(new Date(targetAfk.since||targetAfk.createdAt||Date.now()).getTime()/1000,)}:R>.${reason}`,
+    const msg=await safeMessageReply(message,`**${mentionedUser.username}** è AFK dal <t:${Math.floor(new Date(targetAfk.since||targetAfk.createdAt||Date.now()).getTime()/1000,)}:R>.${reason}`,
     );
     if (msg) {
       const timer=setTimeout(() => {
