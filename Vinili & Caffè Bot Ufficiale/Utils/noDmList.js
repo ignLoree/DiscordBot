@@ -2,16 +2,9 @@ const fs = require("fs/promises");
 const path = require("path");
 const mongoose = require("mongoose");
 const NoDmPreference = require("../Schemas/Community/noDmPreferenceSchema");
-
-/**
- * Invii DM per moderazione, ticket, verify, security e altre comunicazioni importanti
- * devono usare sendDm(..., { bypassNoDm: true }) e non devono essere filtrati dalla lista no-dm.
- */
-
 const DATA_PATH = path.join(__dirname, "..", "Data", "noDmList.json");
 const BACKUP_PATH = `${DATA_PATH}.bak`;
 const TMP_PATH = `${DATA_PATH}.tmp`;
-
 let cache = null;
 let writeQueue = Promise.resolve();
 let migrationPromise = null;
