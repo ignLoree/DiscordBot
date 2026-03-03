@@ -8,6 +8,7 @@ const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
 const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
+  memberHasStaffRole,
 } = require("../Utils/Community/staffListUtils");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const {
@@ -596,7 +597,9 @@ module.exports = {
         if (client) queueIdsCatalogSync(client, member.guild.id, "botLeave");
       }
       if (member?.guild?.id === IDs.guilds.main) {
-        if (client) scheduleStaffListRefresh(client, member.guild.id);
+        if (client && memberHasStaffRole(member)) {
+          scheduleStaffListRefresh(client, member.guild.id);
+        }
       }
 
       if (

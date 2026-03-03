@@ -2,6 +2,7 @@ const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.j
 const IDs = require("../Utils/Config/ids");
 const {
   scheduleStaffListRefresh,
+  didStaffMembershipChange,
 } = require("../Utils/Community/staffListUtils");
 const {
   getJoinGateConfigSnapshot,
@@ -17,6 +18,9 @@ const { grantEventRewardOnce } = require("../Services/Community/activityEventRew
 const { createModCase, getModConfig, logModCase } = require("../Utils/Moderation/moderation");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
+const MAX_UNVERIFIED_ROLE_DIFF = 4;
+const ROLE_UPDATE_LOG_DEDUPE = new Map();
+const ROLE_UPDATE_LOG_DEDUPE_TTL_MS = 5_000;
 
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const BOOST_FOLLOWUP_DELAY_MS = 5000;
@@ -75,6 +79,28 @@ function toRelativeDiscordTime(value) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function cleanupRoleUpdateLogDedupe(now = Date.now()) {
+  for (const [key, ts] of ROLE_UPDATE_LOG_DEDUPE.entries()) {
+    if (now - Number(ts || 0) > ROLE_UPDATE_LOG_DEDUPE_TTL_MS) {
+      ROLE_UPDATE_LOG_DEDUPE.delete(key);
+    }
+  }
+}
+
+function shouldSkipRoleUpdateLog(guildId, userId, additions = [], removals = []) {
+  const now = Date.now();
+  cleanupRoleUpdateLogDedupe(now);
+  const signature = [
+    String(guildId || ""),
+    String(userId || ""),
+    additions.map((role) => String(role?.id || "")).sort().join(","),
+    removals.map((role) => String(role?.id || "")).sort().join(","),
+  ].join(":");
+  const lastTs = Number(ROLE_UPDATE_LOG_DEDUPE.get(signature) || 0);
+  ROLE_UPDATE_LOG_DEDUPE.set(signature, now);
+  return now - lastTs <= ROLE_UPDATE_LOG_DEDUPE_TTL_MS;
 }
 
 async function resolveActivityLogChannel(guild) {
@@ -237,30 +263,115 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
   if (!guild) return;
   if (!rolesChanged(oldMember, newMember)) return;
 
+  const actionType = AuditLogEvent?.MemberRoleUpdate ?? AuditLogEvent?.MemberUpdate;
   const oldRoles = oldMember?.roles?.cache || new Map();
   const newRoles = newMember?.roles?.cache || new Map();
-
-  const additions = [];
-  const removals = [];
+  const cacheAdditions = [];
+  const cacheRemovals = [];
 
   for (const role of newRoles.values()) {
     if (role?.id === guild.id) continue;
-    if (!oldRoles.has(role.id)) additions.push(role);
+    if (!oldRoles.has(role.id)) cacheAdditions.push(role);
   }
   for (const role of oldRoles.values()) {
     if (role?.id === guild.id) continue;
-    if (!newRoles.has(role.id)) removals.push(role);
+    if (!newRoles.has(role.id)) cacheRemovals.push(role);
   }
-  if (!additions.length && !removals.length) return;
+  if (!cacheAdditions.length && !cacheRemovals.length) return;
 
-  const actionType = AuditLogEvent?.MemberRoleUpdate ?? AuditLogEvent?.MemberUpdate;
+  const expectedAddedIds = new Set(cacheAdditions.map((role) => String(role?.id || "")).filter(Boolean));
+  const expectedRemovedIds = new Set(cacheRemovals.map((role) => String(role?.id || "")).filter(Boolean));
   const audit = await resolveResponsible(
     guild,
     actionType,
-    (entry) => String(entry?.target?.id || "") === String(newMember?.id || ""),
+    (entry) => {
+      if (String(entry?.target?.id || "") !== String(newMember?.id || "")) return 0;
+      let score = 3;
+      const changes = Array.isArray(entry?.changes) ? entry.changes : [];
+      const auditAddedIds = new Set();
+      const auditRemovedIds = new Set();
+
+      for (const change of changes) {
+        const key = String(change?.key || "");
+        const raw = Array.isArray(change?.new)
+          ? change.new
+          : Array.isArray(change?.old)
+            ? change.old
+            : [];
+        if (key !== "$add" && key !== "$remove") continue;
+        for (const item of raw) {
+          const id = String(item?.id || item?.role_id || "").trim();
+          if (!id) continue;
+          if (key === "$add") auditAddedIds.add(id);
+          if (key === "$remove") auditRemovedIds.add(id);
+        }
+      }
+
+      if (!auditAddedIds.size && !auditRemovedIds.size) return score;
+      for (const id of auditAddedIds) {
+        if (expectedAddedIds.has(id)) score += 4;
+      }
+      for (const id of auditRemovedIds) {
+        if (expectedRemovedIds.has(id)) score += 4;
+      }
+      if (
+        auditAddedIds.size === expectedAddedIds.size &&
+        auditRemovedIds.size === expectedRemovedIds.size
+      ) {
+        score += 6;
+      }
+      return score;
+    },
   );
+
+  const auditAdditions = [];
+  const auditRemovals = [];
+  const auditChanges = Array.isArray(audit?.entry?.changes) ? audit.entry.changes : [];
+  for (const change of auditChanges) {
+    const key = String(change?.key || "");
+    const raw = Array.isArray(change?.new)
+      ? change.new
+      : Array.isArray(change?.old)
+        ? change.old
+        : [];
+    if (key !== "$add" && key !== "$remove") continue;
+
+    for (const item of raw) {
+      const roleId = String(item?.id || item?.role_id || "").trim();
+      if (!roleId || roleId === guild.id) continue;
+      const role = guild.roles.cache.get(roleId);
+      const fallback = {
+        id: roleId,
+        toString: () => `<@&${roleId}>`,
+      };
+      if (key === "$add") auditAdditions.push(role || fallback);
+      if (key === "$remove") auditRemovals.push(role || fallback);
+    }
+  }
+
+  const hasTrustedAuditDiff = auditAdditions.length > 0 || auditRemovals.length > 0;
+  const usingFallbackDiff = !hasTrustedAuditDiff;
+  const additions = hasTrustedAuditDiff ? auditAdditions : cacheAdditions;
+  const removals = hasTrustedAuditDiff ? auditRemovals : cacheRemovals;
+  if (!additions.length && !removals.length) return;
+
+  const unverifiedDiffSize = additions.length + removals.length;
+  if (usingFallbackDiff && unverifiedDiffSize > MAX_UNVERIFIED_ROLE_DIFF) {
+    global.logger?.warn?.(
+      "[guildMemberUpdate] skipped unverified bulk role diff:",
+      guild.id,
+      newMember.id,
+      {
+        additions: additions.map((role) => String(role?.id || "")),
+        removals: removals.map((role) => String(role?.id || "")),
+      },
+    );
+    return;
+  }
+
   const responsible = formatAuditActor(audit.executor);
   const executorId = String(audit?.executor?.id || "");
+  if (shouldSkipRoleUpdateLog(guild.id, newMember.id, additions, removals)) return;
 
   const logChannel = await resolveChannelRolesLogChannel(guild);
   if (logChannel?.isTextBased?.()) {
@@ -294,7 +405,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
     await logChannel.send({ embeds: [embed] }).catch(() => null);
   }
 
-  if (additions.length) {
+  if (additions.length && hasTrustedAuditDiff) {
     await antiNukeHandleMemberRoleAddition({
       guild,
       targetMember: newMember,
@@ -731,7 +842,7 @@ module.exports = {
 
       if (
         newMember?.guild?.id === IDs.guilds.main &&
-        rolesChanged(oldMember, newMember) &&
+        didStaffMembershipChange(oldMember, newMember) &&
         client
       ) {
         scheduleStaffListRefresh(client, newMember.guild.id);

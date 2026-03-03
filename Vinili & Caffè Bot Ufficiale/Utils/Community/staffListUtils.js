@@ -50,11 +50,19 @@ function iterMembers(membersSource) {
 function countStaffMembers(membersSource) {
   let count = 0;
   for (const member of iterMembers(membersSource)) {
-    if (STAFF_ROLE_IDS.some((roleId) => member?.roles?.cache?.has?.(roleId))) {
+    if (memberHasStaffRole(member)) {
       count += 1;
     }
   }
   return count;
+}
+
+function memberHasStaffRole(member) {
+  return STAFF_ROLE_IDS.some((roleId) => member?.roles?.cache?.has?.(roleId));
+}
+
+function didStaffMembershipChange(oldMember, newMember) {
+  return memberHasStaffRole(oldMember) !== memberHasStaffRole(newMember);
 }
 
 function buildContent(guild, membersSource = guild.members.cache) {
@@ -205,6 +213,8 @@ function scheduleStaffListRefresh(
 
 module.exports = {
   STAFF_ROLE_IDS,
+  memberHasStaffRole,
+  didStaffMembershipChange,
   refreshStaffList,
   scheduleStaffListRefresh,
 };
