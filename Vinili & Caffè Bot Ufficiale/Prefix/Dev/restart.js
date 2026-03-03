@@ -194,7 +194,8 @@ module.exports = {
           }).catch(() => {});
           return;
         }
-        setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
+        const exitTimer=setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
+        exitTimer.unref?.();
         return;
       }
 
@@ -209,18 +210,20 @@ module.exports = {
         allowedMentions: { repliedUser: false },
       });
 
-      setTimeout(() => {
+      const doneCleanupTimer=setTimeout(() => {
         message.delete().catch(() => {});
         doneMsg?.delete?.().catch(() => {});
       }, RESTART_CLEANUP_DELAY_MS);
+      doneCleanupTimer.unref?.();
     } catch (error) {
       global.logger.error(error);
       const failMsg=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Errore durante restart/reload.",),],allowedMentions:{repliedUser:false},});
 
-      setTimeout(() => {
+      const failCleanupTimer=setTimeout(() => {
         message.delete().catch(() => {});
         failMsg?.delete?.().catch(() => {});
       }, RESTART_CLEANUP_DELAY_MS);
+      failCleanupTimer.unref?.();
     }
   },
 };

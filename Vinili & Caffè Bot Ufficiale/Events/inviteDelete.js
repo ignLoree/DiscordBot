@@ -40,7 +40,10 @@ function normalizeCount(value, fallback = 0) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveLogChannel(guild) {

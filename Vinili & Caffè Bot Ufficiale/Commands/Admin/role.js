@@ -3,6 +3,12 @@ const { safeEditReply } = require("../../Utils/Moderation/reply");
 
 const PRIVATE_FLAG = 1 << 6;
 
+async function verifyRoleMutation(guild, memberId, roleId, shouldHaveRole) {
+  const refreshedMember=await guild?.members?.fetch?.(memberId).catch(() => null);
+  if (!refreshedMember) return false;
+  return shouldHaveRole ? refreshedMember.roles.cache.has(roleId) : !refreshedMember.roles.cache.has(roleId);
+}
+
 async function runMassRoleUpdate(interaction, { targets, role, action, total, skipped, progressEmbed }) {
   let success = 0;
   let failed = 0;
@@ -18,7 +24,12 @@ async function runMassRoleUpdate(interaction, { targets, role, action, total, sk
           `Mass role remove by ${interaction.user.tag}`,
         );
       }
-      success += 1;
+      const mutationApplied=await verifyRoleMutation(interaction.guild, member.id, role.id, action === "add");
+      if (mutationApplied) {
+        success += 1;
+      } else {
+        failed += 1;
+      }
     } catch {
       failed += 1;
     }

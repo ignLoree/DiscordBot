@@ -191,7 +191,14 @@ async function tryAwardInviteRole(member, inviteInfo) {
     return { awarded: false, roleIds: [], targets: reachedTargets };
   }
 
-  await inviterMember.roles.add(rolesToAdd).catch(() => {});
+  const roleGrantApplied = await inviterMember.roles.add(rolesToAdd).then(() => true).catch(() => false);
+  if (!roleGrantApplied) {
+    const refreshedInviter = await guild.members.fetch(inviterMember.id).catch(() => null);
+    const missingRoleIds = rolesToAdd.filter((roleId) => !refreshedInviter?.roles?.cache?.has(roleId));
+    if (missingRoleIds.length > 0) {
+      return { awarded: false, roleIds: [], targets: reachedTargets };
+    }
+  }
   return { awarded: true, roleIds: rolesToAdd, targets: reachedTargets };
 }
 
@@ -238,7 +245,16 @@ async function addBotRoles(member) {
     return;
   }
 
-  await member.roles.add(roles);
+  const added = await member.roles.add(roles).then(() => true).catch(() => false);
+  if (added) return;
+  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const unappliedRoleIds = roles.filter((role) => !refreshedMember?.roles?.cache?.has(role.id));
+  if (unappliedRoleIds.length) {
+    global.logger.warn(
+      "[guildMemberAdd] Failed to add bot roles:",
+      unappliedRoleIds.map((role) => role.id),
+    );
+  }
 }
 
 function buildWelcomeEmbed(member) {
@@ -668,7 +684,10 @@ async function fetchRecentBotAddEntry(guild, botId) {
       if (found) return found;
     }
     if (attempt < 2) {
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await new Promise((resolve) => {
+        const timer = setTimeout(resolve, 700);
+        timer.unref?.();
+      });
     }
   }
   return null;

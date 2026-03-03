@@ -348,7 +348,8 @@ async function handleTtsMessage(message, client, prefix) {
   }
   if (!voiceChannel) {
     const warn=await message.reply("<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",);
-    setTimeout(() => warn.delete().catch(() => {}), 5000);
+    const timer=setTimeout(() => warn.delete().catch(() => {}), 5000);
+    timer.unref?.();
     return;
   }
   if (!voiceChannel.joinable) return;

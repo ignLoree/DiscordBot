@@ -3,6 +3,13 @@ const IDs = require("../Config/ids");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 
+function wait(ms) {
+  return new Promise((resolve) => {
+    const timer=setTimeout(resolve, ms);
+    timer.unref?.();
+  });
+}
+
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
   if (!Number.isFinite(ms)) return "<t:0:F>";
@@ -163,7 +170,7 @@ async function resolveResponsible(guild, actionType, matcher) {
     const logs=await guild.fetchAuditLogs({type:actionType,limit:20}).catch(() => null);
     if (!logs?.entries?.size) {
       if (attempt < 2) {
-        await new Promise((resolve) => setTimeout(resolve, 700));
+        await wait(700);
       }
       continue;
     }
@@ -203,7 +210,7 @@ async function resolveResponsible(guild, actionType, matcher) {
       };
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await wait(700);
   }
 
   return { executor: null, reason: null, entry: null };

@@ -59,6 +59,10 @@ async function assignBirthdayRole(guild, userId) {
   if (!member) return;
   if (member.roles.cache.has(BIRTHDAY_ROLE_ID)) return;
   await member.roles.add(BIRTHDAY_ROLE_ID).catch(() => {});
+  const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+  if (!refreshedMember?.roles?.cache?.has(BIRTHDAY_ROLE_ID)) {
+    global.logger?.warn?.("[BIRTHDAY] role assign failed:", guild.id, userId, BIRTHDAY_ROLE_ID);
+  }
 }
 
 async function runBirthdayTick(client) {

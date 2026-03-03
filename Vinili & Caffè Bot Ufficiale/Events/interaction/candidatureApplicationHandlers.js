@@ -32,6 +32,7 @@ const APPLICATION_DRAFTS_PATH=path.join(BOT_ROOT,"Data","applicationDrafts.json"
 const pendingApplications = new Map();
 const cooldownByUser = new Map();
 const draftByStateKey = new Map();
+const candidatePexLocks = new Set();
 const applicationCounters={helper:0,partnermanager:0,};
 
 const APPLICATIONS={helper:{label:"Helper",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Copia e incolla il tuo ID di Discord",style:TextInputStyle.Short,},{id:"eta",text:"2. Età",modalLabel:"2. Età",placeholder:"Scrivi la tua età",style:TextInputStyle.Short,},{id:"staff_server",text:"3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi",modalLabel:"3. Esperienze staff",style:TextInputStyle.Paragraph,},{id:"motivo_candidatura",text:"4. Come mai ti sei voluto candidare su Vinili & Caffè?",modalLabel:"4. Motivo candidatura",style:TextInputStyle.Paragraph,},{id:"aiuto_economico",text:"5. Saresti disposto ad aiutare il server economicamente?",modalLabel:"5. Aiuto economico",placeholder:"Si / No",style:TextInputStyle.Paragraph,},{id:"flame_testuale",text:"6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)",modalLabel:"6. Gestione flame",style:TextInputStyle.Paragraph,},{id:"comandi_dyno",text:"7. Elenca i comandi di moderazioni più importanti di Dyno",modalLabel:"7. Comandi Dyno",style:TextInputStyle.Paragraph,},{id:"critica_staff",text:"8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?",modalLabel:"8. Gestione critica",style:TextInputStyle.Paragraph,},{id:"vocale",text:"9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?",modalLabel:"9. Disponibilità vocale",style:TextInputStyle.Paragraph,},{id:"definizione_flame",text:"10. Definizione di flame",modalLabel:"10. Definizione flame",style:TextInputStyle.Paragraph,},{id:"troll_pubblico",text:"11. Se due utenti iniziassero a trollare in pubblico, come agiresti?",modalLabel:"11. Gestione troll",style:TextInputStyle.Paragraph,},],},partnermanager:{label:"Partner Manager",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Scrivi il tuo ID di Discord",style:TextInputStyle.Short,},{id:"luminous_nova",text:"2. Conosci il bot Luminous Nova/SkyForce?",modalLabel:"2. Luminous Nova/SkyForce",placeholder:"Si / No",style:TextInputStyle.Short,},{id:"partner_giorno",text:"3. Quante partner fai al giorno?",modalLabel:"3. Partner al giorno",placeholder:"<15 / 15+",style:TextInputStyle.Short,},],},};
@@ -542,7 +543,14 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   const highStaffRoleId = IDs.roles.HighStaff;
   const mention = highStaffRoleId ? `<@&${highStaffRoleId}>` : null;
   const sent=await channel.send({content:mention||undefined,embeds:[embed],components:[buildCandidatePexRow(type,user.id)],}).catch(() => null);
-  if (!sent) return null;
+  if (!sent) {
+    await interaction.reply({
+      content:
+        "<:vegax:1443934876440068179> Non sono riuscito a inviare la candidatura. Riprova più tardi.",
+      flags: 1 << 6,
+    }).catch(() => null);
+    return true;
+  }
 
   if (typeof sent.startThread === "function") {
     const threadUserLabel=String(user.globalName||user.username||user.id).replace(/[\r\n#:@<>`]/g, " ")
@@ -557,9 +565,10 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
     if (thread?.isTextBased?.() && highStaffRoleId) {
       const pingMsg = await thread.send({ content: `<@&${highStaffRoleId}>` }).catch(() => null);
       if (pingMsg) {
-        setTimeout(() => {
+        const pingCleanupTimer = setTimeout(() => {
           pingMsg.delete().catch(() => {});
         }, 2500);
+        pingCleanupTimer.unref?.();
       }
     }
   }
@@ -629,9 +638,31 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
   if (!member) return "Utente non trovato nel server.";
   if (member.roles.cache.has(String(targetRoleId))) return "Utente già pexato su quel ruolo.";
 
-  await member.roles.add(String(targetRoleId)).catch(() => null);
+  const roleApplied = await member.roles
+    .add(String(targetRoleId))
+    .then(() => true)
+    .catch(() => false);
+  if (!roleApplied) {
+    const refreshedMember = await getGuildMemberCached(guild, String(userId), {
+      preferFresh: true,
+    }).catch(() => null);
+    if (!refreshedMember?.roles?.cache?.has(String(targetRoleId))) {
+      return "Impossibile assegnare il ruolo target.";
+    }
+  }
   if (String(targetRoleId) === String(HELPER_ROLE_ID)) {
-    await member.roles.add(String(IDs.roles.Staff)).catch(() => null);
+    const staffRoleApplied = await member.roles
+      .add(String(IDs.roles.Staff))
+      .then(() => true)
+      .catch(() => false);
+    if (!staffRoleApplied) {
+      const refreshedMember = await getGuildMemberCached(guild, String(userId), {
+        preferFresh: true,
+      }).catch(() => null);
+      if (!refreshedMember?.roles?.cache?.has(String(IDs.roles.Staff))) {
+        return "Ruolo Helper assegnato, ma non sono riuscito ad aggiungere il ruolo Staff.";
+      }
+    }
     const staffChat=guild.channels.cache.get(IDs.channels.staffChat)||(await getGuildChannelCached(guild,IDs.channels.staffChat));
     await sendHelperWelcome(staffChat, member.user);
   }
@@ -890,6 +921,17 @@ async function handleCandidatureApplicationInteraction(interaction) {
       }).catch(() => null);
       return true;
     }
+    const pexLockKey = `${String(interaction.guildId || "dm")}:${String(parsed.messageId)}`;
+    if (candidatePexLocks.has(pexLockKey)) {
+      await interaction.reply({
+        content:
+          "<:attentionfromvega:1443651874032062505> Questa candidatura è già in elaborazione.",
+        flags: 1 << 6,
+      }).catch(() => null);
+      return true;
+    }
+    candidatePexLocks.add(pexLockKey);
+    try {
     const reason=String(interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID)||"",).trim();
     if (!reason) {
       await interaction.reply({
@@ -905,6 +947,9 @@ async function handleCandidatureApplicationInteraction(interaction) {
       flags: 1 << 6,
     }).catch(() => null);
     return true;
+    } finally {
+      candidatePexLocks.delete(pexLockKey);
+    }
   }
 
   const raw = String(interaction.customId || "");

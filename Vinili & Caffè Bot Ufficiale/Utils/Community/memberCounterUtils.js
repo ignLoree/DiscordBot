@@ -67,7 +67,7 @@ function scheduleMemberCounterRefresh(guild, options = {}) {
 
   clearTimers(guildId);
 
-  const primary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});if(secondPassMs>0){const secondary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});secondaryTimers.delete(guildId);},secondPassMs);secondaryTimers.set(guildId,secondary);}primaryTimers.delete(guildId);},delayMs);primaryTimers.set(guildId, primary);
+  const primary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});if(secondPassMs>0){const secondary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});secondaryTimers.delete(guildId);},secondPassMs);secondary.unref?.();secondaryTimers.set(guildId,secondary);}primaryTimers.delete(guildId);},delayMs);primary.unref?.();primaryTimers.set(guildId, primary);
   return true;
 }
 

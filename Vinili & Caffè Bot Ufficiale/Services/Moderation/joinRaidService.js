@@ -266,7 +266,7 @@ function scheduleStateSave(guildId) {
   if (!LOAD_SUCCEEDED_GUILDS.has(key)) return;
   const old = SAVE_TIMERS.get(key);
   if (old) clearTimeout(old);
-  const timer=setTimeout(async() => {SAVE_TIMERS.delete(key);const state=getGuildState(key);pruneState(state,nowMs());try{await JoinRaidState.updateOne({guildId:key},{$set:{raidUntil:Number(state.raidUntil||0),samples:state.samples.slice(-300),flagged:state.flagged.slice(-300),tempBans:Array.isArray(state.tempBans)?state.tempBans.slice(-300):[],raidCaseCode:String(state.raidCaseCode||""),raidStartedAt:Number(state.raidStartedAt||0),raidInitialFlaggedUserIds:Array.isArray(state.raidInitialFlaggedUserIds)?state.raidInitialFlaggedUserIds.slice(-80):[],raidCaughtUserIds:Array.isArray(state.raidCaughtUserIds)?state.raidCaughtUserIds.slice(-300):[],},},{upsert:true},);}catch(err){global.logger?.warn?.("[joinRaid] scheduleStateSave failed:",key,err?.message||err);}},1_500);
+  const timer=setTimeout(async() => {SAVE_TIMERS.delete(key);const state=getGuildState(key);pruneState(state,nowMs());try{await JoinRaidState.updateOne({guildId:key},{$set:{raidUntil:Number(state.raidUntil||0),samples:state.samples.slice(-300),flagged:state.flagged.slice(-300),tempBans:Array.isArray(state.tempBans)?state.tempBans.slice(-300):[],raidCaseCode:String(state.raidCaseCode||""),raidStartedAt:Number(state.raidStartedAt||0),raidInitialFlaggedUserIds:Array.isArray(state.raidInitialFlaggedUserIds)?state.raidInitialFlaggedUserIds.slice(-80):[],raidCaughtUserIds:Array.isArray(state.raidCaughtUserIds)?state.raidCaughtUserIds.slice(-300):[],},},{upsert:true},);}catch(err){global.logger?.warn?.("[joinRaid] scheduleStateSave failed:",key,err?.message||err);}},1_500);timer.unref?.();
   SAVE_TIMERS.set(key, timer);
 }
 

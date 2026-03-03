@@ -236,15 +236,22 @@ module.exports = {
         try {
           if (rolesToAdd?.length > 0) {
             await targetMember.roles.add(rolesToAdd);
+            const refreshedMember=await guild.members.fetch(targetMember.id).catch(() => null);
+            const resolvedMember = refreshedMember || targetMember;
+            const refreshedCache = resolvedMember?.roles?.cache;
+            const missingRoleIds=rolesToAdd.filter((id) => !refreshedCache?.has?.(id));
+            if (missingRoleIds.length > 0) {
+              throw new Error(`Verify roles not applied: ${missingRoleIds.join(",")}`);
+            }
             success.push(displayName);
             try {
               const record=await upsertVerifiedMember(guildId,targetMember.id,new Date(),);
-              await applyTenureForMember(targetMember, record);
+              await applyTenureForMember(resolvedMember, record);
             } catch (dbErr) {
               global.logger?.warn?.("[+verify] upsertVerifiedMember/applyTenureForMember:", dbErr);
             }
-            if (logChannel?.isTextBased?.() && targetMember?.user) {
-              const user = targetMember.user;
+            if (logChannel?.isTextBased?.() && resolvedMember?.user) {
+              const user = resolvedMember.user;
               const createdAtUnix = Math.floor((user.createdTimestamp || 0) / 1000);
               const createdAtText = createdAtUnix ? `<t:${createdAtUnix}:F>` : "—";
               const safeUsername = sanitizeEmbed(user.username);
@@ -269,9 +276,10 @@ module.exports = {
       await promptMsg.delete().catch(() => {});
       await message.delete().catch(() => {});
       const resultMsg=await message.channel.send({embeds:[buildResultEmbed(message.author.id,message.guild?.ownerId,success,fail,),],allowedMentions:{users:[]},});
-      setTimeout(() => {
+      const timer=setTimeout(() => {
         resultMsg.delete().catch(() => {});
       }, 5000);
+      timer.unref?.();
     });
     collector.on("end", async (collected) => {
       if (collected.size > 0) return;

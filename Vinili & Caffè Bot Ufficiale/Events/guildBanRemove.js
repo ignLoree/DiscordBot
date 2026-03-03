@@ -3,7 +3,10 @@ const { ARROW, buildAuditExtraLines } = require("../Utils/Logging/channelRolesLo
 const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDiscordTs, } = require("../Utils/Logging/modAuditLogUtils");
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveUnbanAuditEntry(guild, targetUserId, retries = 3, delayMs = 700) {

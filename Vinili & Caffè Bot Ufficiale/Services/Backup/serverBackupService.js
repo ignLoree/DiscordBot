@@ -18,7 +18,10 @@ function sha256(input) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer=setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 function toIso(value) {

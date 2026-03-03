@@ -49,6 +49,17 @@ const{VerificationTenure,}=require("../../Schemas/Community/communitySchemas");
 
 const verifyState = new Map();
 
+function getVerifyStateKey(userId, guildId) {
+  return `${String(guildId || "dm")}:${String(userId || "")}`;
+}
+
+function clearVerifyState(stateKey) {
+  const safeKey = String(stateKey || "");
+  const state = verifyState.get(safeKey);
+  if (state?.timeoutId) clearTimeout(state.timeoutId);
+  verifyState.delete(safeKey);
+}
+
 const fontPath=path.join(__dirname,"..","..","UI","Fonts","Mojangles.ttf",);
 let captchaFontFamily = "captcha";
 
@@ -326,9 +337,26 @@ async function finalizeVerification(interaction, member) {
   await safeDeferReply(interaction, { flags: 1 << 6 });
 
   if (rolesToAdd.length > 0) {
-    await targetMember.roles.add(rolesToAdd).catch((err) => {
+    const rolesApplied = await targetMember.roles.add(rolesToAdd).then(() => true).catch((err) => {
       global.logger?.error?.("[VERIFY] Failed to add roles:", err);
+      return false;
     });
+    if (!rolesApplied) {
+      const refreshedMember = await getGuildMemberCached(guild, targetMember.id, { preferFresh: true }).catch(() => null);
+      const missingRoles = rolesToAdd.filter((roleId) => !refreshedMember?.roles?.cache?.has(roleId));
+      if (missingRoles.length > 0) {
+        await safeEditReply(interaction, {
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Red")
+              .setDescription(
+                "<:vegax:1443934876440068179> Non sono riuscito ad assegnare i ruoli automatici della verifica. Riprova o contatta lo staff.",
+              ),
+          ],
+        }).catch(() => {});
+        return true;
+      }
+    }
   }
 
   try {
@@ -362,7 +390,10 @@ async function finalizeVerification(interaction, member) {
   if (pingChannel) {
     const pingMsg=await pingChannel.send({content:`<@${interaction.user.id}>` })
       .catch(() => null);
-    if (pingMsg) setTimeout(() => pingMsg.delete().catch(() => {}), 1);
+    if (pingMsg) {
+      const pingCleanupTimer = setTimeout(() => pingMsg.delete().catch(() => {}), 1);
+      pingCleanupTimer.unref?.();
+    }
   }
 
   const serverName = guild?.name || "this server";
@@ -378,6 +409,7 @@ async function handleVerifyInteraction(interaction) {
   if (interaction.isButton()) {
     if (interaction.customId === "verify_start") {
       const guildId = interaction.guild?.id;
+      const stateKey = getVerifyStateKey(interaction.user?.id, guildId);
 
       if (interaction.guild?.ownerId === interaction.user.id) {
         await safeReply(interaction, {
@@ -416,8 +448,7 @@ async function handleVerifyInteraction(interaction) {
         }
       }
 
-      const existing = verifyState.get(interaction.user.id);
-      if (existing?.timeoutId) clearTimeout(existing.timeoutId);
+      clearVerifyState(stateKey);
 
       const deferred = await safeDeferReply(interaction, { flags: 1 << 6 });
       if (!deferred) return true;
@@ -426,10 +457,15 @@ async function handleVerifyInteraction(interaction) {
       const captchaPng = await makeCaptchaPng(code);
       const captchaFile=new AttachmentBuilder(captchaPng,{name:"captcha.png",});
 
-      verifyState.set(interaction.user.id, {
+      const timeoutId = setTimeout(() => {
+        clearVerifyState(stateKey);
+      }, VERIFY_CODE_TTL_MS);
+      if (typeof timeoutId?.unref === "function") timeoutId.unref();
+      verifyState.set(stateKey, {
         code,
         expiresAt: Date.now() + VERIFY_CODE_TTL_MS,
         attemptsLeft: VERIFY_MAX_ATTEMPTS,
+        timeoutId,
       });
 
       const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n`+"`Please type the captcha below to be able to access this server!`\n\n"+"**Additional Notes:**\n"+"<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n"+"<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n"+"<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n",).setFooter({text:"Verification Period: 5 minutes"}).setImage("attachment://captcha.png");
@@ -445,10 +481,10 @@ async function handleVerifyInteraction(interaction) {
       try {
         const replyMsg = await interaction.fetchReply();
         if (replyMsg) {
-          const state = verifyState.get(interaction.user.id);
+          const state = verifyState.get(stateKey);
           if (state) {
             state.promptMessage = replyMsg;
-            verifyState.set(interaction.user.id, state);
+            verifyState.set(stateKey, state);
           }
         }
       } catch {}
@@ -457,9 +493,10 @@ async function handleVerifyInteraction(interaction) {
     }
 
     if (interaction.customId === "verify_enter") {
-      const state = verifyState.get(interaction.user.id);
+      const stateKey = getVerifyStateKey(interaction.user?.id, interaction.guild?.id);
+      const state = verifyState.get(stateKey);
       if (!state || Date.now() > state.expiresAt) {
-        verifyState.delete(interaction.user.id);
+        clearVerifyState(stateKey);
         try {
           await interaction.deferUpdate();
           const retryRow = makeVerifyStartRow();
@@ -483,7 +520,7 @@ async function handleVerifyInteraction(interaction) {
       }
 
       state.promptMessage = interaction.message;
-      verifyState.set(interaction.user.id, state);
+      verifyState.set(stateKey, state);
 
       const modal=new ModalBuilder().setCustomId(`verify_code:${interaction.user.id}`)
         .setTitle("Captcha Answer");
@@ -505,9 +542,10 @@ async function handleVerifyInteraction(interaction) {
     interaction.isModalSubmit() &&
     String(interaction.customId || "").startsWith("verify_code:")
   ) {
-    const state = verifyState.get(interaction.user.id);
+    const stateKey = getVerifyStateKey(interaction.user?.id, interaction.guild?.id);
+    const state = verifyState.get(stateKey);
     if (!state || Date.now() > state.expiresAt) {
-      verifyState.delete(interaction.user.id);
+      clearVerifyState(stateKey);
       const retryRow = makeVerifyStartRow();
       if (state?.promptMessage) {
         await state.promptMessage
@@ -547,7 +585,7 @@ async function handleVerifyInteraction(interaction) {
     if (inputCode.toLowerCase() !== state.code.toLowerCase()) {
       state.attemptsLeft -= 1;
       if (state.attemptsLeft <= 0) {
-        verifyState.delete(interaction.user.id);
+        clearVerifyState(stateKey);
         const retryRow = makeVerifyStartRow();
         if (state?.promptMessage) {
           await state.promptMessage
@@ -565,7 +603,7 @@ async function handleVerifyInteraction(interaction) {
         });
         return true;
       }
-      verifyState.set(interaction.user.id, state);
+      verifyState.set(stateKey, state);
       await safeReply(interaction, {
         embeds: [makeWrongAnswerEmbed()],
         flags: 1 << 6,
@@ -573,7 +611,7 @@ async function handleVerifyInteraction(interaction) {
       return true;
     }
 
-    verifyState.delete(interaction.user.id);
+    clearVerifyState(stateKey);
 
     const member = interaction.member;
     if (!member || !member.roles) {
@@ -608,10 +646,18 @@ async function handleVerifyInteraction(interaction) {
 
 module.exports = { handleVerifyInteraction };
 
-module.exports.hasActiveVerifySession = function hasActiveVerifySession(userId) {
+module.exports.hasActiveVerifySession = function hasActiveVerifySession(userId, guildId = null) {
   if (!userId) return false;
-  const state = verifyState.get(String(userId));
-  if (!state) return false;
-  if (Date.now() > Number(state.expiresAt || 0)) return false;
-  return true;
+  if (guildId) {
+    const state = verifyState.get(getVerifyStateKey(userId, guildId));
+    if (!state) return false;
+    if (Date.now() > Number(state.expiresAt || 0)) return false;
+    return true;
+  }
+  for (const [key, state] of verifyState.entries()) {
+    if (!key.endsWith(`:${String(userId)}`)) continue;
+    if (Date.now() > Number(state?.expiresAt || 0)) continue;
+    return true;
+  }
+  return false;
 };

@@ -48,9 +48,10 @@ async function handleAfk(message) {
     const msg=await safeMessageReply(message,`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>!Ho rimosso il tuo stato AFK.`,
     );
     if (msg) {
-      setTimeout(() => {
+      const timer=setTimeout(() => {
         msg.delete().catch(() => {});
       }, 5000);
+      timer.unref?.();
     }
   }
 
@@ -66,9 +67,10 @@ async function handleAfk(message) {
     const msg=await safeMessageReply(message,`**${mentionedUser.username}**è AFK dal<t:${Math.floor(new Date(targetAfk.since||targetAfk.createdAt||Date.now()).getTime()/1000,)}:R>.${reason}`,
     );
     if (msg) {
-      setTimeout(() => {
+      const timer=setTimeout(() => {
         msg.delete().catch(() => {});
       }, 7000);
+      timer.unref?.();
     }
   }
 }

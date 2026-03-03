@@ -83,6 +83,7 @@ function startTicketAutoClosePromptLoop(client) {
   const tick=async() => {if(promptLoopRunning)return;promptLoopRunning=true;try{await processTickets(client);}catch(err){global.logger.error("[TICKET AUTO CLOSE PROMPT] Loop error",err);}finally{promptLoopRunning=false;}};
   tick();
   promptLoopHandle = setInterval(tick, 10 * 60 * 1000);
+  promptLoopHandle.unref?.();
   return promptLoopHandle;
 }
 
@@ -117,6 +118,7 @@ function startTranscriptCleanupLoop() {
   if (cleanupHandle) return cleanupHandle;
   cleanupOldTranscripts();
   cleanupHandle = setInterval(cleanupOldTranscripts, CLEANUP_INTERVAL_MS);
+  cleanupHandle.unref?.();
   return cleanupHandle;
 }
 

@@ -4,6 +4,7 @@ const path = require("path");
 const { collectGuildCatalog, writeCatalogFiles } = require("./buildIdsCatalog");
 
 const DEFAULT_DELAY_MS = 15000;
+const BOT_ROOT = path.resolve(__dirname, "..", "..");
 const timers = new Map();
 const pendingReasons = new Map();
 const runningGuilds = new Set();
@@ -59,7 +60,7 @@ async function runIdsCatalogSync(client, guildId) {
 
     const IDs = require("./ids");
     const payload = await collectGuildCatalog(guild, IDs);
-    const baseDir = path.resolve(process.cwd());
+    const baseDir = BOT_ROOT;
     const catalogPath = getCatalogPath(baseDir);
     const previous=fs.existsSync(catalogPath)?fs.readFileSync(catalogPath,"utf8"):"";
 
@@ -95,6 +96,7 @@ function queueIdsCatalogSync(client, guildId, reason = "event", options = {}) {
   if (existing) clearTimeout(existing);
 
   const timer=setTimeout(async() => {timers.delete(gid);await runIdsCatalogSync(client,gid);},delayMs);
+  timer.unref?.();
 
   timers.set(gid, timer);
 }

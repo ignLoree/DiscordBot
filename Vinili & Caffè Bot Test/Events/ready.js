@@ -9,6 +9,13 @@ const PRESENCE_TYPE_CUSTOM = 4;
 const RESTART_CLEANUP_DELAY_MS = 2000;
 const RESTART_NOTIFY_FILE = "restart_notify_test.json";
 
+function getRestartNotifyCandidatePaths() {
+  return [
+    path.resolve(process.cwd(), RESTART_NOTIFY_FILE),
+    path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE),
+  ];
+}
+
 async function setPresence(client) {
   try {
     client.user.setPresence({
@@ -54,13 +61,14 @@ async function cleanupMessage(channel, messageId) {
   if (!channel || !messageId) return;
   const msg = await channel.messages.fetch(messageId).catch(() => null);
   if (msg) {
-    setTimeout(() => msg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
+    const cleanupTimer = setTimeout(() => msg.delete().catch(() => {}), RESTART_CLEANUP_DELAY_MS);
+    cleanupTimer.unref?.();
   }
 }
 
 async function handleRestartNotification(client) {
-  const restartNotifyPath = path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE);
-  if (!fs.existsSync(restartNotifyPath)) return;
+  const restartNotifyPath = getRestartNotifyCandidatePaths().find((candidate) => fs.existsSync(candidate));
+  if (!restartNotifyPath) return;
 
   try {
     const raw = fs.readFileSync(restartNotifyPath, "utf8");
@@ -74,10 +82,11 @@ async function handleRestartNotification(client) {
       const restartMsg = await channel.send(`<:vegacheckmark:1472992042203349084> Bot Test riavviato con successo${elapsed}.`,).catch(()=>null);
 
       if (restartMsg) {
-        setTimeout(
+        const cleanupTimer = setTimeout(
           () => restartMsg.delete().catch(() => {}),
           RESTART_CLEANUP_DELAY_MS,
         );
+        cleanupTimer.unref?.();
       }
 
       await cleanupMessage(channel, data?.notifyMessageId);
@@ -98,7 +107,7 @@ module.exports = {
   once: true,
   async execute(_readyClient, client) {
     const activeClient = client || _readyClient;
-    global.logger.info(`[BOT] ${client.user.username} has been launched!`);
+    global.logger.info(`[BOT] ${activeClient.user.username} has been launched!`);
 
     await setPresence(activeClient);
     await connectMongo(activeClient);

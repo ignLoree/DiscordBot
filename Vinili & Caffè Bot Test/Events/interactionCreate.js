@@ -2,6 +2,7 @@ const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
 const {checkButtonPermission,checkStringSelectPermission,checkModalPermission,checkSlashPermission,buildGlobalPermissionDeniedEmbed,buildGlobalNotYourControlEmbed,}= require("../Utils/Moderation/commandPermissions");
+const { safeReply } = require("../Utils/Moderation/reply");
 const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 
 const PRIVATE_FLAG = 1 << 6;
@@ -89,11 +90,7 @@ function buildDeniedEmbed(gate, controlLabel) {
 
 async function sendPrivateInteractionResponse(interaction, payload) {
   if (!interaction?.isRepliable?.()) return;
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.reply(payload).catch(() => {});
-    return;
-  }
-  await interaction.followUp(payload).catch(() => {});
+  await safeReply(interaction, payload).catch(() => {});
 }
 
 async function runPermissionGate(interaction) {

@@ -32,7 +32,10 @@ function hasSendablePayload(data) {
 
 async function sendTemporaryMessage(channel, payload, ttlMs) {
   const sent = await channel.send(payload).catch(() => null);
-  if (sent) setTimeout(() => sent.delete().catch(() => {}), ttlMs);
+  if (sent) {
+    const timer=setTimeout(() => sent.delete().catch(() => {}), ttlMs);
+    timer.unref?.();
+  }
   return sent;
 }
 
@@ -43,6 +46,7 @@ async function resolveWithTimeout(task, fallbackValue, label, timeoutMs = PREFIX
       Promise.resolve().then(task),
       new Promise((resolve) => {
         timer = setTimeout(() => resolve(fallbackValue), timeoutMs);
+        timer.unref?.();
       }),
     ]);
   } catch (error) {
@@ -140,7 +144,9 @@ async function executePrefixCommandRuntime({
       typingPulseTimer = setInterval(() => {
         void sendTypingSafe();
       }, 8000);
+      typingPulseTimer.unref?.();
     }, 2500);
+    typingStartTimer.unref?.();
 
     commandChannel.sendTyping = async () => {
       await sendTypingSafe();
@@ -157,13 +163,14 @@ async function executePrefixCommandRuntime({
         execCommand.execute(commandMessage, execArgs, resolvedClient),
       ),
       new Promise((_, reject) => {
-        setTimeout(() => {
+        const timer=setTimeout(() => {
           reject(
             new Error(
               `Prefix command "${String(execCommand?.name || "unknown")}" timed out after ${PREFIX_EXECUTION_TIMEOUT_MS}ms`,
             ),
           );
         }, PREFIX_EXECUTION_TIMEOUT_MS);
+        timer.unref?.();
       }),
     ]);
   } catch (error) {

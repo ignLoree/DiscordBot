@@ -191,12 +191,13 @@ module.exports = {
 
       if (stickyPendingChannels.has(channelId)) {
         stickyPendingChannels.delete(channelId);
-        setTimeout(() => {
+        const retryTimer = setTimeout(() => {
           const fakeMessage={guild:message.guild,channelId,channel,author:{id:"sticky-retry"},client:resolvedClient,};
           module.exports.execute(fakeMessage, resolvedClient).catch((error) => {
             logError("deferred retry failed:", error);
           });
         }, 300);
+        retryTimer.unref?.();
       }
     } finally {
       stickyProcessingChannels.delete(channelId);

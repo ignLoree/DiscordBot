@@ -6,7 +6,10 @@ const { handleThreadCreationAction: antiNukeHandleThreadCreationAction } = requi
 const THREAD_CREATE_ACTION = AuditLogEvent?.ThreadCreate ?? 110;
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs = 700) {

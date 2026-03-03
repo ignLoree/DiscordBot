@@ -5,6 +5,13 @@ const ROLE_EMOJIS={[IDs.roles.PartnerManager]:{emoji:"<:partnermanager:144365191
 const ROLE_EXCLUSIONS={[IDs.roles.PartnerManager]:["1442568907801100419"],};
 const STAFF_ROLE_IDS = Object.keys(ROLE_EMOJIS);
 
+function wait(ms) {
+  return new Promise((resolve) => {
+    const timer=setTimeout(resolve, ms);
+    timer.unref?.();
+  });
+}
+
 function ensureState(client) {
   if (!client._staffListState) {
     client._staffListState = {
@@ -100,7 +107,7 @@ async function fetchMembersForStaffList(guild) {
     const last = chunk.last?.();
     after = last?.id ?? null;
     if (chunk.size < 100) break;
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    await wait(350);
   }
 
   return all;
@@ -163,6 +170,7 @@ function scheduleStaffListRefresh(
   if (existingTimer) clearTimeout(existingTimer);
 
   const timer=setTimeout(() => {state.timersByGuild.delete(guildId);refreshStaffList(client,guildId).catch((err) => {global.logger.error("[STAFF LIST] refresh failed:",err);});},delayMs);
+  timer.unref?.();
 
   state.timersByGuild.set(guildId, timer);
 }

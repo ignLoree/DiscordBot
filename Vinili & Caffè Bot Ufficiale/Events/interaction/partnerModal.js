@@ -65,6 +65,20 @@ async function handlePartnerModal(interaction) {
     !interaction.customId.startsWith("partnershipModal_")
   )
     return false;
+  const { openerId, managerId } = parsePartnershipModalId(interaction.customId);
+  if (openerId && String(openerId) !== String(interaction.user?.id || "")) {
+    await interaction.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setColor("Red")
+          .setDescription(
+            "<:vegax:1443934876440068179> Non puoi usare questo modulo.",
+          ),
+      ],
+      flags: 1 << 6,
+    }).catch(() => {});
+    return true;
+  }
   await interaction
     .deferReply()
     .catch(() => {})
@@ -83,7 +97,6 @@ async function handlePartnerModal(interaction) {
   }
   const rawDescription=interaction.fields.getTextInputValue("serverDescription");
   const description = stripOuterCodeBlock(String(rawDescription || "").trim());
-  const { managerId } = parsePartnershipModalId(interaction.customId);
   const PARTNER_BLACKLIST_ROLE = IDs.roles.blackilistPartner;
   if (!managerId) {
     await interaction.editReply({
@@ -205,6 +218,19 @@ async function handlePartnerModal(interaction) {
 
   try {
     const guildId = interaction.guild.id;
+    const partnershipChannel=interaction.guild.channels.cache.get(IDs.channels.partnerships,);
+    if (!partnershipChannel?.isTextBased?.()) {
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Canale partnership non configurato correttamente.",
+            ),
+        ],
+      });
+      return true;
+    }
     const staffDoc=await getOrCreateStaffPartnerDoc(guildId,interaction.user.id,);
 
     staffDoc.partnerCount++;
@@ -215,29 +241,47 @@ async function handlePartnerModal(interaction) {
 
     await staffDoc.save();
     const totalPartners = staffDoc.partnerCount;
-    const partnershipChannel=interaction.guild.channels.cache.get(IDs.channels.partnerships,);
 
     const embed=new EmbedBuilder().setAuthor({name:interaction.user.username,iconURL:interaction.user.displayAvatarURL(),}).setTitle(`**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,).setDescription(`<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
 <:mariolevelup:1443679595084910634> Ora sei a **\`${totalPartners}\`** partner!
 <:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442579412280410194>`,).setFooter({text:serverName,iconURL:serverIcon}).setColor("#6f4e37").setTimestamp().setThumbnail(interaction.guild.iconURL());
 
-    if (partnershipChannel) {
-      const sentMessageIds = [];
-      const contentWithManager=normalizeManagerLine(sanitizedDescription,managerId,);
-      const parts = splitMessage(contentWithManager);
-      for (const part of parts) {
-        const sent=await partnershipChannel.send({content:part}).catch(() => null);
-        if (sent?.id) sentMessageIds.push(sent.id);
+    const sentMessageIds = [];
+    const contentWithManager=normalizeManagerLine(sanitizedDescription,managerId,);
+    const parts = splitMessage(contentWithManager);
+    for (const part of parts) {
+      const sent=await partnershipChannel.send({content:part}).catch(() => null);
+      if (sent?.id) sentMessageIds.push(sent.id);
+    }
+    const thankYouMessage=await partnershipChannel.send({embeds:[embed]}).catch(() => null);
+    if (thankYouMessage?.id) sentMessageIds.push(thankYouMessage.id);
+    if (sentMessageIds.length === 0) {
+      if (Array.isArray(staffDoc.partnerActions) && staffDoc.partnerActions.length > actionIndex) {
+        staffDoc.partnerActions.splice(actionIndex, 1);
       }
-      const thankYouMessage=await partnershipChannel.send({embeds:[embed]}).catch(() => null);
-      if (thankYouMessage?.id) sentMessageIds.push(thankYouMessage.id);
+      staffDoc.partnerCount = Math.max(0, Number(staffDoc.partnerCount || 1) - 1);
+      if (staffDoc.managerId === managerId) {
+        const lastAction = Array.isArray(staffDoc.partnerActions) ? staffDoc.partnerActions[staffDoc.partnerActions.length - 1] : null;
+        staffDoc.managerId = lastAction?.managerId || null;
+      }
+      await staffDoc.save().catch(() => {});
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setDescription(
+              "<:vegax:1443934876440068179> Non sono riuscito a pubblicare la partner nel canale configurato.",
+            ),
+        ],
+      });
+      return true;
+    }
 
-      if (staffDoc.partnerActions?.[actionIndex]) {
-        staffDoc.partnerActions[actionIndex].partnershipChannelId =
-          partnershipChannel.id;
-        staffDoc.partnerActions[actionIndex].partnerMessageIds = sentMessageIds;
-        await staffDoc.save().catch(() => {});
-      }
+    if (staffDoc.partnerActions?.[actionIndex]) {
+      staffDoc.partnerActions[actionIndex].partnershipChannelId =
+        partnershipChannel.id;
+      staffDoc.partnerActions[actionIndex].partnerMessageIds = sentMessageIds;
+      await staffDoc.save().catch(() => {});
     }
 
     const doneEmbed=new EmbedBuilder().setDescription(`<:vegacheckmark:1443666279058772028> Partner inviata in ${partnershipChannel}`,

@@ -27,7 +27,10 @@ async function fetchGuildRole(guild, roleId) {
 }
 
 async function replyEphemeral(interaction, payload) {
-  if (interaction?.replied || interaction?.deferred) {
+  if (interaction?.deferred && !interaction?.replied) {
+    return interaction.editReply(payload).catch(() => {});
+  }
+  if (interaction?.replied) {
     return interaction.followUp(payload).catch(() => {});
   }
   return interaction.reply(payload).catch(() => {});
@@ -241,7 +244,7 @@ async function createCustomRoleGrantRequest({
     expiresAt: Date.now() + Math.max(15_000, Number(timeoutMs || 60_000)),
   });
 
-  setTimeout(
+  const expiryTimer = setTimeout(
     async () => {
       const req = pendingRoleGrants.get(token);
       if (!req) return;
@@ -283,6 +286,7 @@ async function createCustomRoleGrantRequest({
     },
     Math.max(15_000, Number(timeoutMs || 60_000)),
   );
+  if (typeof expiryTimer?.unref === "function") expiryTimer.unref();
 
   return { ok: true, promptMessageId: promptMsg.id };
 }
@@ -340,9 +344,20 @@ async function handleRoleActionButton(interaction) {
     }
 
     const roleName = role.name;
-    await role
+    const roleDeleted = await role
       .delete(`Custom role deleted by ${interaction.user.tag}`)
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
+    if (!roleDeleted) {
+      await interaction
+        .reply({
+          content:
+            "<:vegax:1443934876440068179> Non sono riuscito a eliminare il ruolo. Controlla gerarchia e permessi.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
     await CustomRole.deleteOne({
       guildId: interaction.guild.id,
       userId: ownerId,
@@ -474,6 +489,12 @@ async function handleRoleActionModal(interaction) {
 
   const value = interaction.fields.getTextInputValue("value")?.trim() || "";
 
+  async function confirmRoleState(checkFn) {
+    const refreshedRole = await fetchRole(interaction, roleId);
+    const roleToCheck = refreshedRole || role;
+    return Boolean(roleToCheck && checkFn(roleToCheck));
+  }
+
   if (action === "name") {
     const name = String(value).slice(0, 32).trim();
     if (!name) {
@@ -485,9 +506,20 @@ async function handleRoleActionModal(interaction) {
         .catch(() => {});
       return true;
     }
-    await role
+    const edited = await role
       .edit({ name }, `Custom role rename by ${interaction.user.tag}`)
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
+    const renameApplied = edited || await confirmRoleState((liveRole) => String(liveRole.name || "") === name);
+    if (!renameApplied) {
+      await interaction
+        .reply({
+          content: "<:vegax:1443934876440068179> Non sono riuscito ad aggiornare il nome del ruolo.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
     await updatePanelMessage(interaction, panelMessageId, role);
     await interaction
       .reply({
@@ -510,9 +542,21 @@ async function handleRoleActionModal(interaction) {
         .catch(() => {});
       return true;
     }
-    await role
+    const edited = await role
       .edit({ color: hex }, `Custom role color by ${interaction.user.tag}`)
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
+    const colorApplied = edited || await confirmRoleState((liveRole) => String(liveRole.hexColor || "").toUpperCase() === hex.toUpperCase());
+    if (!colorApplied) {
+      await interaction
+        .reply({
+          content:
+            "<:vegax:1443934876440068179> Non sono riuscito ad aggiornare il colore del ruolo.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
     await updatePanelMessage(interaction, panelMessageId, role);
     await interaction
       .reply({
@@ -525,12 +569,23 @@ async function handleRoleActionModal(interaction) {
 
   if (action === "emoji") {
     if (!value) {
-      await role
+      const cleared = await role
         .edit(
           { unicodeEmoji: null, icon: null },
           `Custom role icon cleared by ${interaction.user.tag}`,
         )
-        .catch(() => {});
+        .then(() => true)
+        .catch(() => false);
+      const clearApplied = cleared || await confirmRoleState((liveRole) => !liveRole.icon && !liveRole.unicodeEmoji);
+      if (!clearApplied) {
+        await interaction
+          .reply({
+            content: "<:vegax:1443934876440068179> Non sono riuscito a rimuovere emoji/icona del ruolo.",
+            flags: 1 << 6,
+          })
+          .catch(() => {});
+        return true;
+      }
       await updatePanelMessage(interaction, panelMessageId, role);
       await interaction
         .reply({
@@ -553,12 +608,24 @@ async function handleRoleActionModal(interaction) {
           .catch(() => {});
         return true;
       }
-      await role
+      const edited = await role
         .edit(
           { icon: iconBuffer, unicodeEmoji: null },
           `Custom role icon by ${interaction.user.tag}`,
         )
-        .catch(() => {});
+        .then(() => true)
+        .catch(() => false);
+      const iconApplied = edited || await confirmRoleState((liveRole) => Boolean(liveRole.icon));
+      if (!iconApplied) {
+        await interaction
+          .reply({
+            content:
+              "<:vegax:1443934876440068179> Non sono riuscito ad aggiornare l'icona del ruolo.",
+            flags: 1 << 6,
+          })
+          .catch(() => {});
+        return true;
+      }
       await updatePanelMessage(interaction, panelMessageId, role);
       await interaction
         .reply({
@@ -569,12 +636,23 @@ async function handleRoleActionModal(interaction) {
         .catch(() => {});
       return true;
     }
-    await role
+    const edited = await role
       .edit(
         { unicodeEmoji: value, icon: null },
         `Custom role emoji by ${interaction.user.tag}`,
       )
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
+    const emojiApplied = edited || await confirmRoleState((liveRole) => String(liveRole.unicodeEmoji || "") === value);
+    if (!emojiApplied) {
+      await interaction
+        .reply({
+          content: "<:vegax:1443934876440068179> Non sono riuscito ad aggiornare l'emoji del ruolo.",
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
     await updatePanelMessage(interaction, panelMessageId, role);
     await interaction
       .reply({
@@ -916,6 +994,16 @@ async function handleGrantButtons(interaction) {
   const grantParts = String(interaction.customId).split(":");
   if (grantParts.length !== 3) return false;
   const [, token, action] = grantParts;
+  if (action !== "yes" && action !== "no") {
+    await interaction
+      .reply({
+        content:
+          "<:vegax:1443934876440068179> Azione richiesta non valida.",
+        flags: 1 << 6,
+      })
+      .catch(() => {});
+    return true;
+  }
   const request = pendingRoleGrants.get(token);
   if (!request) {
     await interaction
@@ -1059,10 +1147,46 @@ async function handleGrantButtons(interaction) {
     return true;
   }
 
-  await targetMember.roles
+  const grantApplied = await targetMember.roles
     .add(role.id, `Custom role accepted from ${requester.user.tag}`)
-    .catch(() => {});
+    .then(() => true)
+    .catch(() => false);
   pendingRoleGrants.delete(token);
+  const refreshedTargetMember = grantApplied
+    ? await fetchGuildMember(guild, request.targetId).catch(() => null)
+    : null;
+  const rolePresentAfterGrant = Boolean(
+    refreshedTargetMember?.roles?.cache?.has(role.id) ||
+      targetMember.roles.cache.has(role.id),
+  );
+  if (!grantApplied || !rolePresentAfterGrant) {
+    if (promptMsg) {
+      await promptMsg
+        .edit({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Red")
+              .setTitle("Impossibile assegnare")
+              .setDescription(
+                "L'assegnazione del ruolo non è andata a buon fine.",
+              ),
+          ],
+        })
+        .catch(() => {});
+    }
+    await interaction
+      .update({
+        embeds: [
+          new EmbedBuilder()
+            .setColor("Red")
+            .setTitle("Errore")
+            .setDescription("Il bot non è riuscito ad assegnare questo ruolo."),
+        ],
+        components: [disabledRow],
+      })
+      .catch(() => {});
+    return true;
+  }
   if (promptMsg) {
     await promptMsg
       .edit({

@@ -8,7 +8,7 @@ module.exports = (client) => {
   client.handleTriggers = async (basePath) => {
     clearBoundHandlers(client, "_triggerHandlers");
 
-    const root = basePath || process.cwd();
+    const root = basePath || path.resolve(__dirname, "..");
     const triggersRoot = path.join(root, "Triggers");
     const files = listRelativeJsFiles(triggersRoot);
     const statusMap = new Map();

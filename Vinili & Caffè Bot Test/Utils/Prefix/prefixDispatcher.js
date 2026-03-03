@@ -13,7 +13,8 @@ const TEMPORARY_NOTICE_LIFETIME_MS = 6000;
 
 function deleteMessageLater(message, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {
   if (!message || typeof message.delete !== "function") return;
-  setTimeout(() => message.delete().catch(() => {}), delayMs);
+  const timer=setTimeout(() => message.delete().catch(() => {}), delayMs);
+  timer.unref?.();
 }
 
 async function sendTemporaryReply(message, payload, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {

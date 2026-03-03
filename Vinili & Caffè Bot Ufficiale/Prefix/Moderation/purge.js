@@ -5,7 +5,10 @@ const DISCORD_BULK_DELETE_MAX = 100;
 const BULK_DELETE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer=setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 function chunkArray(array, size) {
@@ -64,7 +67,7 @@ module.exports = {
 
     const userArgIndex=Array.isArray(args)?args.findIndex((arg) => Boolean(extractUserId(String(arg||""),message)),):-1;
     const{user}=await resolveTarget(message,args,userArgIndex>=0?userArgIndex:0,);
-    const deleteLater=(msg) => setTimeout(() => msg.delete().catch(() => {}),5000);
+    const deleteLater=(msg) => {const timer=setTimeout(() => msg.delete().catch(() => {}),5000);timer.unref?.();return timer;};
     const replyTemp=async(payload) => {const msg=await message.channel.send({...payload,allowedMentions:{repliedUser:false},});deleteLater(msg);return msg;};await message.delete().catch(() => {});
 
     const { token: amountToken, invalidToken } = pickAmountToken(args);

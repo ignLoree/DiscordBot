@@ -82,7 +82,10 @@ async function maybeSendWrongPrefixHint(message, resolvedClient, validPrefix = "
     return true;
   }
   const hint=await message.channel.send({content:`\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`,}).catch(() => null);
-  if (hint) setTimeout(() => hint.delete().catch(() => {}), 6000);
+  if (hint) {
+    const hintCleanupTimer = setTimeout(() => hint.delete().catch(() => {}), 6000);
+    hintCleanupTimer.unref?.();
+  }
   return true;
 }
 

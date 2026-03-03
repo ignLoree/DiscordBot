@@ -210,6 +210,7 @@ function schedulePersistSessions() {
     sessionsPersistTimer = null;
     persistSessionsNow();
   }, 400);
+  sessionsPersistTimer.unref?.();
 }
 
 async function fetchDiscordUser(accessToken) {
@@ -404,6 +405,8 @@ async function runUserAction(client, payload = {}) {
   if (action === "kick") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.kick(reason);
+    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    if (refreshedMember) return { ok: false, reason: "member_not_kicked" };
     try {
       const config = await getModConfig(guild.id);
       const{doc}=await createModCase({guildId:guild.id,action:"KICK",userId,modId:client.user?.id||guild.client?.user?.id,reason:`[Dashboard] ${reason}`,
@@ -418,6 +421,8 @@ async function runUserAction(client, payload = {}) {
   }
   if (action === "ban") {
     await guild.members.ban(userId, { reason, deleteMessageSeconds: 604800 });
+    const bannedUser=await guild.bans.fetch(userId).catch(() => null);
+    if (!bannedUser) return { ok: false, reason: "member_not_banned" };
     try {
       const config = await getModConfig(guild.id);
       const{doc}=await createModCase({guildId:guild.id,action:"BAN",userId,modId:client.user?.id||guild.client?.user?.id,reason:`[Dashboard] ${reason}`,
@@ -438,17 +443,23 @@ async function runUserAction(client, payload = {}) {
     if (!member) return { ok: false, reason: "member_not_found" };
     if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
     await member.roles.add(roleId, reason);
+    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    if (!refreshedMember?.roles?.cache?.has(roleId)) return { ok: false, reason: "role_not_applied" };
     return { ok: true, message: "Ruolo aggiunto." };
   }
   if (action === "remove_role") {
     if (!member) return { ok: false, reason: "member_not_found" };
     if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
     await member.roles.remove(roleId, reason);
+    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    if (refreshedMember?.roles?.cache?.has(roleId)) return { ok: false, reason: "role_not_removed" };
     return { ok: true, message: "Ruolo rimosso." };
   }
   if (action === "set_nickname") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.setNickname(nicknameRaw || null, reason);
+    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    if ((refreshedMember?.nickname || null) !== (nicknameRaw || null)) return { ok: false, reason: "nickname_not_applied" };
     return { ok: true, message: "Nickname aggiornato." };
   }
   return { ok: false, reason: "invalid_action" };
@@ -596,12 +607,14 @@ function createDashboardServer(client) {
       }
       if (action === "restart") {
         json(res, 200, { ok: true, message: "Riavvio avviato." });
-        setTimeout(() => process.exit(0), 600);
+        const timer=setTimeout(() => process.exit(0), 600);
+        timer.unref?.();
         return;
       }
       if (action === "stop") {
         json(res, 200, { ok: true, message: "Spegnimento avviato." });
-        setTimeout(() => process.exit(0), 600);
+        const timer=setTimeout(() => process.exit(0), 600);
+        timer.unref?.();
         return;
       }
       return json(res, 400, { ok: false, reason: "invalid_action" });

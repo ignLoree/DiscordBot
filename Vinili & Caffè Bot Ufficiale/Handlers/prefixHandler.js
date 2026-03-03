@@ -2,7 +2,7 @@ const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
 
-const PERMISSIONS_CANDIDATES=[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../permissions.json"),];
+const PERMISSIONS_CANDIDATES=[path.resolve(__dirname,"../permissions.json"),path.join(process.cwd(),"permissions.json"),];
 let prefixPermissionsCache = { filePath: null, mtimeMs: 0, data: {} };
 
 function loadPrefixPermissions() {
@@ -138,7 +138,7 @@ function ensurePrefixUsageMetadata(command) {
 
 module.exports = (client) => {
   client.prefixCommands = async (folders, basePath) => {
-    const prefixBase = basePath || path.join(process.cwd(), "Prefix");
+    const prefixBase = basePath || path.resolve(__dirname, "..", "Prefix");
     const newPcommands = new client.pcommands.constructor();
     const newAliases = new client.aliases.constructor();
     const statusMap = new Map();

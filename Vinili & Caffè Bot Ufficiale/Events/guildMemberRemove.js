@@ -79,7 +79,10 @@ async function markSponsorDmResult(userId, dmOk) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveGuildChannel(guild, channelId) {
@@ -219,7 +222,8 @@ async function closeOpenTicketsForMember(member) {
       }
     }
 
-    setTimeout(() => channel.delete().catch(() => { }), 1000);
+    const channelDeleteTimer = setTimeout(() => channel.delete().catch(() => { }), 1000);
+    channelDeleteTimer.unref?.();
   }
 }
 
@@ -325,7 +329,7 @@ async function sendRejoinDm(member) {
 
 function schedulePartnershipRollback(member, partnerships) {
   const guild = member.guild;
-  setTimeout(
+  const rollbackTimer = setTimeout(
     async () => {
       const stillInGuild=await guild.members.fetch(member.id).catch(() => null);
       if (stillInGuild) return;
@@ -358,6 +362,7 @@ function schedulePartnershipRollback(member, partnerships) {
     },
     5 * 60 * 1000,
   );
+  rollbackTimer.unref?.();
 }
 
 async function handlePartnershipOnLeave(member, client) {

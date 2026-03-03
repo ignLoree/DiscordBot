@@ -13,7 +13,10 @@ module.exports = {
     if (!voiceChannel) {
       const warnEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Devi essere in un canale vocale.");
       const warn=await safeMessageReply(message,{embeds:[warnEmbed]},);
-      if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
+      if (warn?.delete) {
+        const timer=setTimeout(() => warn.delete().catch(() => {}), 5000);
+        timer.unref?.();
+      }
       return;
     }
 

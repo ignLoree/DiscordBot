@@ -73,9 +73,10 @@ function schedulePollReminder(client) {
 
 function scheduleDelete(message) {
   if (!message) return;
-  setTimeout(() => {
+  const cleanupTimer = setTimeout(() => {
     message.delete().catch(() => {});
   }, RESTART_CLEANUP_DELAY_MS);
+  cleanupTimer.unref?.();
 }
 
 async function handleRestartNotification(client) {

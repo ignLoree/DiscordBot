@@ -79,7 +79,7 @@ function ensurePrefixUsageMetadata(command, prefix = "-") {
 
 module.exports = (client) => {
   client.prefixCommands = async (folders = [], basePath) => {
-    const prefixBase = basePath || path.join(process.cwd(), "Prefix");
+    const prefixBase = basePath || path.resolve(__dirname, "..", "Prefix");
     const runtimePrefix = String(client?.config?.prefix || "-");
     const newPcommands = new client.pcommands.constructor();
     const newAliases = new client.aliases.constructor();

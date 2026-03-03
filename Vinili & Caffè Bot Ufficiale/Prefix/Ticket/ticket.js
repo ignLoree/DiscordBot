@@ -568,7 +568,8 @@ module.exports = {
       const tagRole=config.type==="partnership"?PARTNERMANAGER_ROLE_ID:STAFF_ROLE_ID;
       const mentionMsg=await channel.send(`<@${ticketDoc.userId}>${tagRole?`<@&${tagRole}>` : ""}`).catch(() => null);
       if (mentionMsg) {
-        setTimeout(() => mentionMsg.delete().catch(() => {}), 150);
+        const timer=setTimeout(() => mentionMsg.delete().catch(() => {}), 150);
+        timer.unref?.();
       }
 
       await safeMessageReply(message, {
@@ -858,9 +859,10 @@ module.exports = {
       }
 
 
-      setTimeout(() => {
+      const timer=setTimeout(() => {
         if (message.channel) message.channel.delete().catch(() => {});
       }, 2000);
+      timer.unref?.();
       return;
     }
 

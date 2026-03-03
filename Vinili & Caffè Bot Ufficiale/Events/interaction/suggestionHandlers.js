@@ -10,6 +10,8 @@ const STAFF_REJECT_BUTTON_ID = "suggestion_staff_reject";
 const STAFF_MODAL_PREFIX = "suggestion_staff_modal";
 const STAFF_REASON_INPUT_ID = "staff_reason";
 const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+const suggestionVoteLocks = new Set();
+const suggestionDecisionLocks = new Set();
 
 function hasSuggestionStaffAccess(interaction) {
   const highStaffRoleId=IDs?.roles?.HighStaff?String(IDs.roles.HighStaff):null;
@@ -139,6 +141,24 @@ async function handleSuggestionVote(interaction) {
     }
 
     if (customId === "upv") {
+      const voteLockKey = `${String(interaction.guild.id)}:${String(message.id)}:${String(interaction.user.id)}:upv`;
+      if (suggestionVoteLocks.has(voteLockKey)) {
+        await interaction
+          .reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Yellow")
+                .setDescription(
+                  "<:attentionfromvega:1443651874032062505> Voto già in elaborazione.",
+                ),
+            ],
+            flags: 1 << 6,
+          })
+          .catch(() => {});
+        return true;
+      }
+      suggestionVoteLocks.add(voteLockKey);
+      try {
       if (isSuggestionClosed(message)) {
         await interaction
           .reply({
@@ -195,9 +215,30 @@ async function handleSuggestionVote(interaction) {
       data.upvotes += 1;
       await data.save().catch(() => {});
       return true;
+      } finally {
+        suggestionVoteLocks.delete(voteLockKey);
+      }
     }
 
     if (customId === "downv") {
+      const voteLockKey = `${String(interaction.guild.id)}:${String(message.id)}:${String(interaction.user.id)}:downv`;
+      if (suggestionVoteLocks.has(voteLockKey)) {
+        await interaction
+          .reply({
+            embeds: [
+              new EmbedBuilder()
+                .setColor("Yellow")
+                .setDescription(
+                  "<:attentionfromvega:1443651874032062505> Voto già in elaborazione.",
+                ),
+            ],
+            flags: 1 << 6,
+          })
+          .catch(() => {});
+        return true;
+      }
+      suggestionVoteLocks.add(voteLockKey);
+      try {
       if (isSuggestionClosed(message)) {
         await interaction
           .reply({
@@ -254,6 +295,9 @@ async function handleSuggestionVote(interaction) {
       data.downvotes += 1;
       await data.save().catch(() => {});
       return true;
+      } finally {
+        suggestionVoteLocks.delete(voteLockKey);
+      }
     }
 
     return false;
@@ -312,6 +356,24 @@ async function handleSuggestionVote(interaction) {
         .catch(() => {});
       return true;
     }
+    const decisionLockKey = `${String(interaction.guild.id)}:${String(messageId)}`;
+    if (suggestionDecisionLocks.has(decisionLockKey)) {
+      await interaction
+        .reply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Yellow")
+              .setDescription(
+                "<:attentionfromvega:1443651874032062505> Questo suggerimento è già in elaborazione.",
+              ),
+          ],
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
+    suggestionDecisionLocks.add(decisionLockKey);
+    try {
 
     const suggestionData=await suggestion.findOne({GuildID:interaction.guild.id,Msg:messageId,});
     if (!suggestionData) {
@@ -370,9 +432,25 @@ async function handleSuggestionVote(interaction) {
     const isAccept = action === "accept";
     const resultEmbed=new EmbedBuilder().setColor(isAccept?"Green":"Red").setTitle(isAccept?"<:pinnednew:1443670849990430750> Suggerimento Accettato!":"<:pinnednew:1443670849990430750> Suggerimento Rifiutato!",).setDescription(oldEmbed.description||null).setTimestamp().setFooter(oldEmbed.footer||null).setFields(Array.isArray(oldEmbed.fields)?oldEmbed.fields:[]).addFields({name:isAccept?"<:pinnednew:1443670849990430750> Motivo:":"<:attentionfromvega:1443651874032062505> Motivo del rifiuto:",value:reason,});
 
-    await suggestionMessage
+    const suggestionUpdated = await suggestionMessage
       .edit({ embeds: [resultEmbed], components: [] })
-      .catch(() => {});
+      .then(() => true)
+      .catch(() => false);
+    if (!suggestionUpdated) {
+      await interaction
+        .reply({
+          embeds: [
+            new EmbedBuilder()
+              .setColor("Red")
+              .setDescription(
+                "<:vegax:1443934876440068179> Non sono riuscito ad aggiornare il messaggio del suggerimento.",
+              ),
+          ],
+          flags: 1 << 6,
+        })
+        .catch(() => {});
+      return true;
+    }
     await deleteThreadForMessage(interaction.guild, suggestionMessage.id);
 
     if (isAccept) {
@@ -444,6 +522,9 @@ async function handleSuggestionVote(interaction) {
       .catch(() => {});
 
     return true;
+    } finally {
+      suggestionDecisionLocks.delete(decisionLockKey);
+    }
   }
 
   return false;

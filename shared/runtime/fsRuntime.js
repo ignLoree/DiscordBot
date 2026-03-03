@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 
 function loadEnvFiles(appRoot = process.cwd()) {
   const safeAppRoot=typeof appRoot==="string"&&appRoot.trim().length>0?appRoot:process.cwd();
-  const envCandidates=[path.join(safeAppRoot,"..",".env"),path.join(process.cwd(),".env"),path.join(safeAppRoot,".env"),];
+  const envCandidates=[path.join(safeAppRoot,".env"),path.join(safeAppRoot,"..",".env"),path.join(process.cwd(),".env"),];
 
   for (const envPath of envCandidates) {
     if (!fs.existsSync(envPath)) continue;

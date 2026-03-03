@@ -39,7 +39,10 @@ async function forceQuarantineOverwrite(channel) {
 }
 
 function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveCreateAuditWithRetry(guild, channelId) {

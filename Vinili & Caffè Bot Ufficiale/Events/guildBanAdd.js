@@ -5,7 +5,10 @@ const { resolveModLogChannel, fetchRecentAuditEntry, formatResponsible, nowDisco
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveBanAuditEntry(guild, targetUserId, retries = 3, delayMs = 700) {

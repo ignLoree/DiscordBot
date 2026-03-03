@@ -52,7 +52,10 @@ function toRelativeDiscordTime(value) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 function cleanupRoleUpdateLogDedupe(now = Date.now()) {
@@ -339,7 +342,12 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return;
   if (member.roles.cache.has(PERK_ROLE_ID)) return;
 
-  await member.roles.add(role).catch(() => { });
+  const added = await member.roles.add(role).then(() => true).catch(() => false);
+  if (added) return;
+  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  if (!refreshedMember?.roles?.cache?.has(PERK_ROLE_ID)) {
+    global.logger?.warn?.("[guildMemberUpdate] Failed to add perk role:", member.guild.id, member.id, PERK_ROLE_ID);
+  }
 }
 
 async function removePlusColorsIfNotEligible(member) {
@@ -356,7 +364,13 @@ async function removePlusColorsIfNotEligible(member) {
   const removableRoleIds=heldPlusRoles.filter((roleId) => {const role=member.guild.roles.cache.get(roleId);return role&&role.position<me.roles.highest.position;});
   if (!removableRoleIds.length) return;
 
-  await member.roles.remove(removableRoleIds).catch(() => { });
+  const removed = await member.roles.remove(removableRoleIds).then(() => true).catch(() => false);
+  if (removed) return;
+  const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
+  const stillHeldRoles = removableRoleIds.filter((roleId) => refreshedMember?.roles?.cache?.has(roleId));
+  if (stillHeldRoles.length) {
+    global.logger?.warn?.("[guildMemberUpdate] Failed to remove plus color roles:", member.guild.id, member.id, stillHeldRoles);
+  }
 }
 
 function buildBoostEmbed(member, boostCount) {
@@ -603,7 +617,7 @@ function scheduleBoostFollowup(
   if (boostFollowupLocks.get(boostKey)) return;
 
   boostFollowupLocks.set(boostKey, true);
-  setTimeout(async () => {
+  const boostFollowupTimer = setTimeout(async () => {
     try {
       const freshGuild = await newMember.guild.fetch().catch(() => null);
       const latestCount=Number(freshGuild?.premiumSubscriptionCount||newMember.guild.premiumSubscriptionCount||0,);
@@ -626,6 +640,7 @@ function scheduleBoostFollowup(
       boostFollowupLocks.delete(boostKey);
     }
   }, BOOST_FOLLOWUP_DELAY_MS);
+  boostFollowupTimer.unref?.();
 }
 
 async function handleBoostUpdate(oldMember, newMember) {

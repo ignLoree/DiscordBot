@@ -1172,6 +1172,7 @@ function startLiveVoiceExpLoop(client, intervalMs = 5000) {
   const runner=() => runLiveVoiceExpTick(client).catch((error) => {global.logger?.warn?.("[LIVE VOICE EXP] Tick failed:",error?.message||error,);});
   runner();
   client._liveVoiceExpInterval = setInterval(runner, safeInterval);
+  client._liveVoiceExpInterval.unref?.();
   return client._liveVoiceExpInterval;
 }
 

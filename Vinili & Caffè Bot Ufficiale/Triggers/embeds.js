@@ -799,11 +799,17 @@ async function warmupSponsorGuilds(client) {
   const sponsorIds = Array.isArray(client.config ?. sponsorGuildIds)? client.config.sponsorGuildIds:Object.keys(client.config ?. sponsorVerifyChannelIds ||{});
   if (sponsorIds.length === 0) return;
 
-  await new Promise((r) => setTimeout(r, WARMUP_SPONSOR_DELAY_MS));
+  await new Promise((r) => {
+    const timer=setTimeout(r, WARMUP_SPONSOR_DELAY_MS);
+    timer.unref?.();
+  });
   for (const guildId of sponsorIds) {
     try {
       await client.guilds.fetch(guildId).catch(() => null);
-      await new Promise((r) => setTimeout(r, WARMUP_SPONSOR_BETWEEN_MS));
+      await new Promise((r) => {
+        const timer=setTimeout(r, WARMUP_SPONSOR_BETWEEN_MS);
+        timer.unref?.();
+      });
     } catch (err) {
       global.logger.warn("[SPONSOR] Warmup guild " + guildId + ":", err?.message || err);
     }

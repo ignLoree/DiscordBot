@@ -158,7 +158,11 @@ async function addRoleIfPossible(member) {
   }
   if (member.roles.cache.has(ROLE_ID)) return false;
 
-  await member.roles.add(role);
+  const added = await member.roles.add(role).then(() => true).catch(() => false);
+  if (!added) {
+    const refreshedMember = await refreshMember(member.guild, member.id);
+    if (!refreshedMember?.roles?.cache?.has(ROLE_ID)) return false;
+  }
   setImmediate(() => {
     grantEventRewardOnce(member.guild.id, member.id, "supporter", {
       levels: 5,
@@ -180,8 +184,10 @@ async function addPerkRoleIfPossible(member) {
   if (role.position >= me.roles.highest.position) return false;
   if (member.roles.cache.has(PERK_ROLE_ID)) return false;
 
-  await member.roles.add(role).catch(() => {});
-  return true;
+  const added = await member.roles.add(role).then(() => true).catch(() => false);
+  if (added) return true;
+  const refreshedMember = await refreshMember(member.guild, member.id);
+  return Boolean(refreshedMember?.roles?.cache?.has(PERK_ROLE_ID));
 }
 
 async function removeRoleIfPossible(member) {
@@ -214,8 +220,10 @@ async function removeRoleIfPossible(member) {
   }
   if (!member.roles.cache.has(ROLE_ID)) return false;
 
-  await member.roles.remove(role);
-  return true;
+  const removed = await member.roles.remove(role).then(() => true).catch(() => false);
+  if (removed) return true;
+  const refreshedMember = await refreshMember(member.guild, member.id);
+  return !refreshedMember?.roles?.cache?.has(ROLE_ID);
 }
 
 function hasInviteNow(member) {
@@ -262,7 +270,7 @@ function scheduleRemovalConfirm(member, channel) {
   const userId = member.id;
   if (hasRemovalState(guildId, userId)) return;
 
-  const timeout=setTimeout(async() => {deleteRemovalState(guildId,userId);const freshMember=await refreshMember(member.guild,userId);if(!freshMember)return;const liveChannel=channel?.isTextBased?.()?channel:await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite!==false)return;await removeRoleIfPossible(freshMember);try{await freshMember.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",);}catch{}const info=getCachedState(guildId,userId);if(info?.lastMessageId&&liveChannel?.isTextBased?.()){await liveChannel.messages.delete(info.lastMessageId).catch(() => {});}setCachedState(guildId,userId,{hasLink:false,lastAnnounced:info?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:info?.lastSeenOnlineAt||0,});await clearPersistedStatus(guildId,userId);},REMOVE_CONFIRM_MS);setRemovalState(guildId, userId, { timeout });
+  const timeout=setTimeout(async() => {deleteRemovalState(guildId,userId);const freshMember=await refreshMember(member.guild,userId);if(!freshMember)return;const liveChannel=channel?.isTextBased?.()?channel:await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite!==false)return;await removeRoleIfPossible(freshMember);try{await freshMember.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",);}catch{}const info=getCachedState(guildId,userId);if(info?.lastMessageId&&liveChannel?.isTextBased?.()){await liveChannel.messages.delete(info.lastMessageId).catch(() => {});}setCachedState(guildId,userId,{hasLink:false,lastAnnounced:info?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:info?.lastSeenOnlineAt||0,});await clearPersistedStatus(guildId,userId);},REMOVE_CONFIRM_MS);timeout.unref?.();setRemovalState(guildId, userId, { timeout });
 }
 
 async function persistStatus(guildId, userId, payload) {
@@ -344,7 +352,7 @@ async function startPendingFlow(member, channel) {
     .catch(() => null);
 
   if (sent) {
-    const timeout=setTimeout(async() => {const freshMember=await refreshMember(member.guild,userId);if(!freshMember){deletePendingState(guildId,userId);return;}const liveChannel=await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite===false){if(liveChannel?.isTextBased?.()){await liveChannel.messages.delete(sent.id).catch(() => {});}deletePendingState(guildId,userId);const current=getCachedState(guildId,userId);setCachedState(guildId,userId,{hasLink:false,lastAnnounced:current?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:current?.lastSeenOnlineAt||0,});return;}await addRoleIfPossible(freshMember);deletePendingState(guildId,userId);},PENDING_MS);
+    const timeout=setTimeout(async() => {const freshMember=await refreshMember(member.guild,userId);if(!freshMember){deletePendingState(guildId,userId);return;}const liveChannel=await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite===false){if(liveChannel?.isTextBased?.()){await liveChannel.messages.delete(sent.id).catch(() => {});}deletePendingState(guildId,userId);const current=getCachedState(guildId,userId);setCachedState(guildId,userId,{hasLink:false,lastAnnounced:current?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:current?.lastSeenOnlineAt||0,});return;}await addRoleIfPossible(freshMember);deletePendingState(guildId,userId);},PENDING_MS);timeout.unref?.();
 
     setPendingState(guildId, userId, {
       timeout,

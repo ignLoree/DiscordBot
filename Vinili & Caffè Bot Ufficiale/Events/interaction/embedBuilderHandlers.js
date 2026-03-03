@@ -248,13 +248,23 @@ async function handleEmbedBuilderInteraction(interaction, client) {
         }
       }
 
-      await channel
+      const sentMessage = await channel
         .send({
           content: String(session?.content || "").trim() || undefined,
           embeds: [buildPreviewEmbed(session.embed)],
           components: [],
         })
         .catch(() => null);
+      if (!sentMessage) {
+        await interaction
+          .reply({
+            content:
+              "<:vegax:1443934876440068179> Non sono riuscito a inviare l'embed in quel canale.",
+            flags: 1 << 6,
+          })
+          .catch(() => {});
+        return true;
+      }
 
       await interaction
         .reply({ content: "✅ Embed inviato!", flags: 1 << 6 })

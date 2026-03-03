@@ -126,6 +126,7 @@ function startCustomRoleExpiryLoop(client) {
   expiryLoopHandle = setInterval(() => {
     runExpiredCustomRolesSweep(client).catch(() => {});
   }, CHECK_INTERVAL_MS);
+  expiryLoopHandle.unref?.();
   return expiryLoopHandle;
 }
 

@@ -166,6 +166,7 @@ function startTemporaryRoleCleanupLoop(client) {
   cleanupLoopHandle = setInterval(() => {
     removeExpiredTemporaryRoles(client).catch(() => {});
   }, CHECK_INTERVAL_MS);
+  cleanupLoopHandle.unref?.();
   return cleanupLoopHandle;
 }
 

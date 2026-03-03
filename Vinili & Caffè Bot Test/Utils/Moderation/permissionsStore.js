@@ -3,7 +3,7 @@ const path = require("path");
 const IDs = require("../Config/ids");
 
 const EMPTY_PERMISSIONS ={slash:{},prefix:{},channels:{},buttons:{},selectMenus:{},modals:{},};
-const PERMISSIONS_CANDIDATES =[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../../permissions.json"),];
+const PERMISSIONS_CANDIDATES =[path.resolve(__dirname,"../../permissions.json"),path.join(process.cwd(),"permissions.json"),];
 const PERMISSIONS_CACHE_TTL_MS = 30_000;
 
 let cache = {

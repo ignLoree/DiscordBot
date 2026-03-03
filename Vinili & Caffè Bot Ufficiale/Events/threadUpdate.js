@@ -4,7 +4,10 @@ const { ARROW, toDiscordTimestamp, yesNo, formatAuditActor, buildAuditExtraLines
 const THREAD_UPDATE_ACTION = AuditLogEvent?.ThreadUpdate ?? 111;
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 function normalizeTagList(value) {

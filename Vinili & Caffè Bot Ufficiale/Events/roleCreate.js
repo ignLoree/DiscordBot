@@ -6,7 +6,10 @@ const { handleRoleCreationAction: antiNukeHandleRoleCreationAction } = require("
 const ROLE_CREATE_ACTION = AuditLogEvent?.RoleCreate ?? 30;
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {

@@ -4,7 +4,7 @@ const { EmbedBuilder, PermissionsBitField, PermissionFlagsBits, } = require("dis
 const IDs = require("../Config/ids");
 const { hasAdminsProfileCapability } = require("../../Services/Moderation/securityProfilesService");
 const { buildPrefixLookupKeys, buildSlashLookupKeys, hasTemporaryCommandPermission, } = require("./temporaryCommandPermissions");
-const PERMISSIONS_CANDIDATES=[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../../permissions.json"),];
+const PERMISSIONS_CANDIDATES=[path.resolve(__dirname,"../../permissions.json"),path.join(process.cwd(),"permissions.json"),];
 const EMPTY_PERMISSIONS={slash:{},prefix:{},channels:{},buttons:{},selectMenus:{},modals:{},};
 const PERMISSIONS_CACHE_TTL_MS = 3000;
 let cache = { filePath: null, mtimeMs: 0, data: EMPTY_PERMISSIONS, expiresAt: 0 };
@@ -44,7 +44,7 @@ function hasVerificatoRole(member, guildId) {
   return member?.roles?.cache?.has(roleId) === true;
 }
 
-const TICKET_BUTTON_IDS=new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","unclaim","close_ticket","close_ticket_motivo",]);
+const SPONSOR_STAFF_TICKET_BUTTON_IDS=new Set(["claim_ticket","unclaim","close_ticket","close_ticket_motivo",]);
 
 const VERIFY_OR_TICKET_IDS=new Set(["verify_start","verify_enter","ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","unclaim","close_ticket","close_ticket_motivo","ticket_open_menu",]);
 function isBackupInteraction(customId) {
@@ -521,11 +521,11 @@ function getPendingCustomRoleGrant(token) {
   }
 }
 
-function hasActiveVerifySession(userId) {
+function hasActiveVerifySession(userId, guildId = null) {
   try {
     const mod = require("../../Events/interaction/verifyHandlers");
     if (typeof mod?.hasActiveVerifySession !== "function") return false;
-    return Boolean(mod.hasActiveVerifySession(userId));
+    return Boolean(mod.hasActiveVerifySession(userId, guildId));
   } catch {
     return false;
   }
@@ -814,7 +814,7 @@ async function checkButtonPermission(interaction) {
     };
   }
 
-  if (isSponsorGuild(guildId) && TICKET_BUTTON_IDS.has(customId)) {
+  if (isSponsorGuild(guildId) && SPONSOR_STAFF_TICKET_BUTTON_IDS.has(customId)) {
     if (!hasSponsorStaffRole(interaction?.member, guildId)) {
       return {
         allowed: false,
@@ -837,7 +837,7 @@ async function checkButtonPermission(interaction) {
   }
 
   if (policy.verifyStartRequired) {
-    const hasSession = hasActiveVerifySession(interaction?.user?.id || null);
+    const hasSession = hasActiveVerifySession(interaction?.user?.id || null, interaction?.guildId || null);
     if (!hasSession) {
       return {
         allowed: false,

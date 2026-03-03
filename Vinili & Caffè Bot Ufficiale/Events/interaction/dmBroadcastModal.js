@@ -61,6 +61,14 @@ async function handleDmBroadcastModal(interaction, client) {
     !interaction.customId.startsWith("dm_broadcast:")
   )
     return false;
+  if (!interaction.guild) {
+    await interaction.reply({
+      content:
+        "<:vegax:1443934876440068179> Questo modulo può essere usato solo in un server.",
+      flags: 1 << 6,
+    }).catch(() => {});
+    return true;
+  }
   const partsId = String(interaction.customId || "").split(":");
   if (partsId.length < 4) {
     await interaction.reply({
@@ -168,7 +176,7 @@ async function handleDmBroadcastModal(interaction, client) {
     embeds: [
       progressEmbed(`Invio DM in corso...\nUtenti target: **${total}**`),
     ],
-  });
+  }).catch(() => {});
 
   for (const target of targets) {
     processed += 1;
@@ -193,7 +201,7 @@ async function handleDmBroadcastModal(interaction, client) {
             `Invio DM in corso...\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
           ),
         ],
-      });
+      }).catch(() => {});
     }
     await new Promise((r) => setTimeout(r, 750));
   }
@@ -204,7 +212,7 @@ async function handleDmBroadcastModal(interaction, client) {
         `Invio completato.\nUtenti target: **${total}**\nInviati: **${sent}**\nFalliti: **${failed}**`,
       ),
     ],
-  });
+  }).catch(() => {});
 
   if (failedIds.length || skippedNoDm.length) {
     const lines = [];
@@ -223,7 +231,7 @@ async function handleDmBroadcastModal(interaction, client) {
     }
     const chunks = chunkLines(lines);
     for (const chunk of chunks) {
-      await interaction.followUp({ content: chunk, flags: 1 << 6 });
+      await interaction.followUp({ content: chunk, flags: 1 << 6 }).catch(() => {});
     }
   }
   return true;

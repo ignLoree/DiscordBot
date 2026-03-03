@@ -6,7 +6,10 @@ const { handleRoleDeletionAction: antiNukeHandleRoleDeletionAction } = require("
 const ROLE_DELETE_ACTION = AuditLogEvent?.RoleDelete ?? 32;
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    timer.unref?.();
+  });
 }
 
 async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {

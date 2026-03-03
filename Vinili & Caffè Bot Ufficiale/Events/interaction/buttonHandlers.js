@@ -11,6 +11,29 @@ const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
 const SNOWFLAKE_RE = /^\d{16,20}$/;
 
+async function denyIfNotOwner(interaction, ownerId) {
+  const safeOwnerId = String(ownerId || "");
+  if (!safeOwnerId) return false;
+  if (String(interaction?.user?.id || "") === safeOwnerId) return false;
+  await interaction.reply({
+    content: "<:vegax:1443934876440068179> Questo controllo non appartiene a te.",
+    flags: 1 << 6,
+  }).catch(() => {});
+  return true;
+}
+
+async function sendControlErrorFallback(interaction) {
+  const payload = {
+    content: "<:vegax:1443934876440068179> Errore durante l'aggiornamento del controllo.",
+    flags: 1 << 6,
+  };
+  if (interaction.deferred || interaction.replied) {
+    await interaction.followUp(payload).catch(() => {});
+    return;
+  }
+  await interaction.reply(payload).catch(() => {});
+}
+
 function parseServerRefreshCustomId(customId) {
   const raw = String(customId || "");
   if (
@@ -195,6 +218,7 @@ module.exports = {
     if (interaction.isStringSelectMenu?.()) {
       const parsedSelect = parseTopChannelViewSelectCustomId(interaction.customId);
       if (!parsedSelect) return false;
+      if (await denyIfNotOwner(interaction, parsedSelect.ownerId)) return true;
 
       try {
         await interaction.deferUpdate();
@@ -212,6 +236,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[TOP CHANNEL SELECT] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
 
       return true;
@@ -219,6 +244,7 @@ module.exports = {
 
     const parsedMe = parseMeCustomId(interaction.customId);
     if (parsedMe) {
+      if (await denyIfNotOwner(interaction, parsedMe.ownerId)) return true;
       try {
         await interaction.deferUpdate();
 
@@ -265,6 +291,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[ME BUTTON] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
 
       return true;
@@ -272,6 +299,7 @@ module.exports = {
 
     const parsedUser = parseUserCustomId(interaction.customId);
     if (parsedUser) {
+      if (await denyIfNotOwner(interaction, parsedUser.ownerId)) return true;
       try {
         await interaction.deferUpdate();
 
@@ -330,6 +358,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[USER BUTTON] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
 
       return true;
@@ -337,6 +366,7 @@ module.exports = {
 
     const parsedTopChannel = parseTopChannelCustomId(interaction.customId);
     if (parsedTopChannel) {
+      if (await denyIfNotOwner(interaction, parsedTopChannel.ownerId)) return true;
       try {
         await interaction.deferUpdate();
 
@@ -369,6 +399,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[TOP CHANNEL BUTTON] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
 
       return true;
@@ -376,6 +407,7 @@ module.exports = {
 
     const parsedTopChannelPage = parseTopChannelPageCustomId(interaction.customId);
     if (parsedTopChannelPage) {
+      if (await denyIfNotOwner(interaction, parsedTopChannelPage.ownerId)) return true;
       try {
         if (parsedTopChannelPage.action === "open_modal") {
           const modal=buildTopPageJumpModal(parsedTopChannelPage.ownerId||interaction.user?.id,parsedTopChannelPage.lookbackDays,parsedTopChannelPage.selectedView,parsedTopChannelPage.page,parsedTopChannelPage.totalPages,parsedTopChannelPage.controlsView,);
@@ -393,6 +425,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[TOP CHANNEL PAGE BUTTON] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
       return true;
     }
@@ -415,12 +448,14 @@ module.exports = {
         await interaction.message.edit(payload).catch(() => null);
       } catch (error) {
         global.logger?.error?.("[EVENTO CLASSIFICA BUTTON] Failed:", error);
+        await sendControlErrorFallback(interaction);
       }
       return true;
     }
 
     const parsed = parseServerRefreshCustomId(interaction.customId);
     if (!parsed) return false;
+    if (await denyIfNotOwner(interaction, parsed.ownerId)) return true;
 
     try {
       await interaction.deferUpdate();
@@ -432,6 +467,7 @@ module.exports = {
       });
     } catch (error) {
       global.logger?.error?.("[SERVER REFRESH BUTTON] Failed:", error);
+      await sendControlErrorFallback(interaction);
     }
 
     return true;

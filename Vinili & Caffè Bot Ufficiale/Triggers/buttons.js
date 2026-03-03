@@ -328,6 +328,14 @@ module.exports = {
       try {
         if (!values.length || values.includes("remove")) {
           await member.roles.remove(roleIds).catch(() => { });
+          const refreshedMember=await interaction.guild?.members?.fetch?.(interaction.user.id).catch(() => null);
+          const stillHasManagedRole=Array.isArray(roleIds)&&roleIds.some((roleId) => refreshedMember?.roles?.cache?.has?.(roleId));
+          if (stillHasManagedRole) {
+            return interaction.reply({
+              content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
+              flags: 1 << 6,
+            });
+          }
           return interaction.reply({
             content: "Ruoli rimossi correttamente.",
             flags: 1 << 6,
@@ -346,6 +354,14 @@ module.exports = {
         }
         await member.roles.remove(roleIds).catch(() => { });
         await member.roles.add(values).catch(() => { });
+        const refreshedMember=await interaction.guild?.members?.fetch?.(interaction.user.id).catch(() => null);
+        const appliedAll=values.every((roleId) => refreshedMember?.roles?.cache?.has?.(roleId));
+        if (!appliedAll) {
+          return interaction.reply({
+            content: "<:vegax:1443934876440068179> Impossibile aggiornare il ruolo.",
+            flags: 1 << 6,
+          });
+        }
         return interaction.reply({
           content: "Ruolo aggiornato correttamente.",
           flags: 1 << 6,

@@ -36,6 +36,16 @@ module.exports = {
 
     const parsed = parseTopPageModalCustomId(interaction.customId);
     if (!parsed) return false;
+    if (
+      parsed.ownerId &&
+      String(parsed.ownerId) !== String(interaction.user?.id || "")
+    ) {
+      await interaction.reply({
+        content: "<:vegax:1443934876440068179> Questo controllo non appartiene a te.",
+        flags: 1 << 6,
+      }).catch(() => {});
+      return true;
+    }
 
     try {
       const rawInput=interaction.fields?.getTextInputValue(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,);
@@ -60,7 +70,13 @@ module.exports = {
       });
     } catch (error) {
       global.logger?.error?.("[TOP CHANNEL PAGE MODAL] Failed:", error);
-      if (!interaction.replied && !interaction.deferred) {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.followUp({
+          content:
+            "<:vegax:1443934876440068179> Errore durante il cambio pagina.",
+          flags: 1 << 6,
+        }).catch(() => {});
+      } else {
         await interaction.reply({
           content:
             "<:vegax:1443934876440068179> Errore durante il cambio pagina.",

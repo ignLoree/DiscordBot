@@ -6,6 +6,18 @@ const RESTART_FLAG = "restart.json";
 const RESTART_NOTIFY_FILE = "restart_notify_test.json";
 const PROCESS_EXIT_DELAY_MS = 1200;
 
+function getRestartPathCandidates(filename) {
+  return [
+    path.resolve(process.cwd(), filename),
+    path.resolve(process.cwd(), "..", filename),
+  ];
+}
+
+function resolveWritableRestartPath(filename) {
+  const existing = getRestartPathCandidates(filename).find((candidate) => fs.existsSync(candidate));
+  return existing || getRestartPathCandidates(filename)[0];
+}
+
 function errorEmbed(description) {
   return new EmbedBuilder().setColor("Red").setDescription(description);
 }
@@ -47,8 +59,8 @@ async function sendStartNotice(message) {
 
 function writeRestartFiles(message, notifyMessage, requestedAt) {
   const channelId = message.channelId || message.channel?.id || null;
-  const notifyPath = path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE);
-  const flagPath = path.resolve(process.cwd(), "..", RESTART_FLAG);
+  const notifyPath = resolveWritableRestartPath(RESTART_NOTIFY_FILE);
+  const flagPath = resolveWritableRestartPath(RESTART_FLAG);
 
   fs.writeFileSync(
     notifyPath,
@@ -97,7 +109,8 @@ module.exports = {
     try {
       const notifyMessage = await sendStartNotice(message);
       writeRestartFiles(message, notifyMessage, requestedAt);
-      setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
+      const timer=setTimeout(() => process.exit(0), PROCESS_EXIT_DELAY_MS);
+      timer.unref?.();
     } catch (err) {
       global.logger?.error?.(" -rs write flag:", err);
       await message

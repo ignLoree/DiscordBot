@@ -288,6 +288,7 @@ function startPrimaryLoops(client, engagementTick) {
   client._primaryLoopsStarted = true;
 
   const interval = setInterval(engagementTick, ENGAGEMENT_INTERVAL_MS);
+  interval.unref?.();
   client._primaryEngagementInterval = interval;
 
   const startLoopSafely=(label,starter) => {try{starter();}catch(err){global.logger?.error?.(label,err);}};
@@ -403,6 +404,7 @@ module.exports = {
         global.logger?.error?.("[STARTUP PANELS] retry failed", err);
       });
     }, STARTUP_PANELS_RETRY_MS);
+    client._startupPanelsRetryTimer.unref?.();
 
     if (primaryScheduler) scheduleMonthlyGif(client);
     setClientPresence(client);

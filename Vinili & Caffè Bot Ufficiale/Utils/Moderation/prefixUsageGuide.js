@@ -4,7 +4,7 @@ const path = require("path");
 
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
-const PERMISSIONS_CANDIDATES=[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../../permissions.json"),];
+const PERMISSIONS_CANDIDATES=[path.resolve(__dirname,"../../permissions.json"),path.join(process.cwd(),"permissions.json"),];
 let permissionsCache = { filePath: null, mtimeMs: 0, data: {} };
 
 function loadPrefixPermissions() {

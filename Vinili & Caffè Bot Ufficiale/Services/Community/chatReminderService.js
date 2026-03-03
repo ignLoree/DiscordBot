@@ -285,7 +285,7 @@ async function sendReminder(client, scheduleId, kind = "first") {
       { $set: { fireAt: nextAt, kind } },
     ).catch(() => {});
     const delay = Math.max(1, nextAt.getTime() - Date.now());
-    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(scheduleId));sendReminder(client,scheduleId,kind).catch(() => {});},delay);
+    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(scheduleId));sendReminder(client,scheduleId,kind).catch(() => {});},delay);timeout.unref?.();
     attachScheduleTimeout(scheduleId, timeout);
     return;
   }
@@ -364,7 +364,7 @@ async function scheduleForHour(client, parts, guildId) {
         { $set: { fireAt: new Date(adjusted), kind: item.kind } },
       ).catch(() => {});
     }
-    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(doc._id));sendReminder(client,doc._id,item.kind).catch(() => {});},Math.max(1,adjusted-Date.now()),);
+    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(doc._id));sendReminder(client,doc._id,item.kind).catch(() => {});},Math.max(1,adjusted-Date.now()),);timeout.unref?.();
     attachScheduleTimeout(doc._id, timeout);
   }
 }
@@ -398,7 +398,7 @@ async function restoreSchedules(client) {
       ).catch(() => {});
     }
     const delay = Math.max(1, fireAt - Date.now());
-    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(item._id));sendReminder(client,item._id,item.kind||"first").catch(() => {});},delay);
+    const timeout=setTimeout(() => {scheduledTimeouts.delete(String(item._id));sendReminder(client,item._id,item.kind||"first").catch(() => {});},delay);timeout.unref?.();
     attachScheduleTimeout(item._id, timeout);
     lastTime = fireAt;
   }
@@ -410,6 +410,7 @@ function startHourlyReminderLoop(client) {
   restoreSchedules(client).catch(() => {});
   tick();
   hourlyLoopHandle = setInterval(tick, 60 * 1000);
+  hourlyLoopHandle.unref?.();
   return hourlyLoopHandle;
 }
 

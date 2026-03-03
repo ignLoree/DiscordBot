@@ -7,6 +7,8 @@ const{isSecurityProfileImmune,hasAdminsProfileCapability,}=require("../Services/
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
 const CORE_EXEMPT_USER_IDS=new Set(["1466495522474037463","1329118940110127204",]);
 const USERNAME_FILTER={enabled:true,postJoinEnabled:true,strictWords:["discord staff","discord support","nitro free","steam gift","free nitro","airdrop",],wildcardWords:["*discord*support*","*discord*staff*","*nitro*free*","*steam*gift*","*crypto*airdrop*",],};
+const USER_UPDATE_DEDUPE_MS = 15_000;
+const recentUserUpdateActions = new Map();
 
 function normalizeText(value) {
   return String(value || "")
@@ -62,6 +64,19 @@ function buildJoinGateTriggeredEmbed(member, reason) {
       ].join("\n"),
     )
     .setThumbnail(member.user.displayAvatarURL({ size: 256 }));
+}
+
+function makeUserUpdateDedupeKey(guildId, userId, match) {
+  return [String(guildId || ""), String(userId || ""), String(match?.type || ""), String(match?.value || "")].join(":");
+}
+
+function shouldSkipRecentUserUpdateAction(guildId, userId, match) {
+  const key = makeUserUpdateDedupeKey(guildId, userId, match);
+  const now = Date.now();
+  const lastAt = Number(recentUserUpdateActions.get(key) || 0);
+  if (now - lastAt < USER_UPDATE_DEDUPE_MS) return true;
+  recentUserUpdateActions.set(key, now);
+  return false;
 }
 
 async function punishUsernameMatch(member, match) {
@@ -147,6 +162,7 @@ module.exports = {
           const member=guild.members.cache.get(newUser.id)||(await guild.members.fetch(newUser.id).catch(() => null));
           if (!member || member.user?.bot) continue;
           if (hasAdminsProfileCapability(member, "fullImmunity")) continue;
+          if (shouldSkipRecentUserUpdateAction(guild.id, newUser.id, match)) continue;
           await punishUsernameMatch(member, match);
         }
         return;

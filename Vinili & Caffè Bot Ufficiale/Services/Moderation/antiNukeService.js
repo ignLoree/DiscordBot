@@ -643,7 +643,10 @@ function getDangerMask(flags = DANGEROUS_PERMS) {
 }
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms || 0))));
+  return new Promise((resolve) => {
+    const timer=setTimeout(resolve, Math.max(0, Number(ms || 0)));
+    timer.unref?.();
+  });
 }
 
 function getLockdownDenyMask() {
@@ -1427,6 +1430,10 @@ async function quarantineExecutor(guild, executorId, reason) {
       }
       const roleApplied=await member.roles.add(role,reason).then(() => true).catch(() => false);
       if (roleApplied) {
+        const refreshedMember=await getGuildMemberCached(guild,String(userId),{ttlMs:1});
+        if (!refreshedMember?.roles?.cache?.has?.(role.id)) {
+          return { applied: false, method: "role_add_not_persisted", joinGateSuspicious };
+        }
         ensurePanicReport(getPanicState(guild?.id)).quarantinedUserIds.add(String(userId));
         scheduleQuarantineRoleRollback(
           guild,
@@ -2594,6 +2601,8 @@ async function handleMemberRoleAddition({ guild, targetMember, addedRoles, execu
   const removable = dangerousRoles.filter((role) => role.position < myMember.roles.highest.position);
   if (!removable.length) return;
   await targetMember.roles.remove(removable, "AntiNuke: remove dangerous role grants").catch(() => {});
+  const refreshedTarget=await getGuildMemberCached(guild,String(targetMember.id),{ttlMs:1});
+  if (removable.some((role) => refreshedTarget?.roles?.cache?.has?.(role.id))) return;
   const quarantine=await quarantineExecutor(guild,actorId,"AntiNuke: dangerous role granted to member",);
   await sendAntiNukeLog(
     guild,

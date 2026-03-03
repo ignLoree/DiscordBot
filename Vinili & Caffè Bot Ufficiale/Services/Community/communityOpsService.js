@@ -58,6 +58,7 @@ function startVoteRoleCleanupLoop(client) {
   voteCleanupLoopHandle = setInterval(() => {
     removeExpiredVoteRoles(client).catch(() => {});
   }, CHECK_INTERVAL_MS);
+  voteCleanupLoopHandle.unref?.();
   return voteCleanupLoopHandle;
 }
 
@@ -97,12 +98,15 @@ async function applyTenureForMember(member, record) {
   const has1 = member.roles.cache.has(ROLE_STAGE_1);
   const has2 = member.roles.cache.has(ROLE_STAGE_2);
   const has3 = member.roles.cache.has(ROLE_STAGE_3);
+  const refreshRoles=async() => member.guild.members.fetch(member.id).catch(() => member);
 
   if (now >= stage2At) {
     if (!has3 || has1 || has2) {
       if (canManageRoles) {
         await member.roles.remove([ROLE_STAGE_1, ROLE_STAGE_2].filter(Boolean)).catch(() => {});
         if (ROLE_STAGE_3) await member.roles.add(ROLE_STAGE_3).catch(() => {});
+        const refreshedMember=await refreshRoles();
+        if ((ROLE_STAGE_1 && refreshedMember.roles.cache.has(ROLE_STAGE_1)) || (ROLE_STAGE_2 && refreshedMember.roles.cache.has(ROLE_STAGE_2)) || (ROLE_STAGE_3 && !refreshedMember.roles.cache.has(ROLE_STAGE_3))) return;
       }
     }
     if (record.stage !== 3) {
@@ -119,6 +123,8 @@ async function applyTenureForMember(member, record) {
       if (canManageRoles) {
         await member.roles.remove([ROLE_STAGE_1].filter(Boolean)).catch(() => {});
         if (ROLE_STAGE_2) await member.roles.add(ROLE_STAGE_2).catch(() => {});
+        const refreshedMember=await refreshRoles();
+        if ((ROLE_STAGE_1 && refreshedMember.roles.cache.has(ROLE_STAGE_1)) || (ROLE_STAGE_2 && !refreshedMember.roles.cache.has(ROLE_STAGE_2))) return;
       }
     }
     if (record.stage !== 2) {
@@ -133,6 +139,8 @@ async function applyTenureForMember(member, record) {
   if (!has1) {
     if (canManageRoles && ROLE_STAGE_1) {
       await member.roles.add(ROLE_STAGE_1).catch(() => {});
+      const refreshedMember=await refreshRoles();
+      if (!refreshedMember.roles.cache.has(ROLE_STAGE_1)) return;
     }
   }
 }
@@ -159,6 +167,7 @@ function startVerificationTenureLoop(client) {
     },
     60 * 60 * 1000,
   );
+  verificationTenureLoopHandle.unref?.();
   return verificationTenureLoopHandle;
 }
 
@@ -242,7 +251,7 @@ function queueCategoryRenumber(client, guildId, delayMs = null) {
   const pending = guildTimers.get(guildId);
   if (pending) clearTimeout(pending);
 
-  const timeout=setTimeout(async() => {guildTimers.delete(guildId);const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));if(!guild)return;await guild.channels.fetch().catch(() => {});await renumberGuildCategories(guild,options);},delayMs==null?options.debounceMs:delayMs,);guildTimers.set(guildId, timeout);
+  const timeout=setTimeout(async() => {guildTimers.delete(guildId);const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));if(!guild)return;await guild.channels.fetch().catch(() => {});await renumberGuildCategories(guild,options);},delayMs==null?options.debounceMs:delayMs,);timeout.unref?.();guildTimers.set(guildId, timeout);
 }
 
 async function runAllGuilds(client) {
@@ -262,6 +271,7 @@ function startCategoryNumberingLoop(client) {
   numberingLoopHandle = setInterval(() => {
     runAllGuilds(client).catch(() => {});
   }, options.intervalMs);
+  numberingLoopHandle.unref?.();
 }
 
 async function runSponsorKickAfter24h(client) {
@@ -313,6 +323,7 @@ function startSponsorKickLoop(client) {
     },
     SPONSOR_KICK_INTERVAL_MS,
   );
+  sponsorKickLoopHandle.unref?.();
   runSponsorKickAfter24h(client).catch(() => {});
   return sponsorKickLoopHandle;
 }

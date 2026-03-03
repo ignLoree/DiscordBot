@@ -2147,9 +2147,10 @@ async function sendAutomodActionInChannel(
 
   const sent = await message.channel.send({ embeds: [embed] }).catch(() => null);
   if (sent) {
-    setTimeout(() => {
+    const timer=setTimeout(() => {
       sent.delete().catch(() => {});
     }, ACTION_CHANNEL_NOTICE_DELETE_MS);
+    timer.unref?.();
   }
   return sent;
 }

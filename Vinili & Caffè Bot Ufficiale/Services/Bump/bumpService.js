@@ -106,6 +106,7 @@ function createBumpReminderService(options) {
       }
     }, remaining);
 
+    timeout.unref?.();
     bumpTimers.set(guildId, timeout);
   }
 
@@ -269,10 +270,9 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
     return;
   }
 
-  discadiaVoteTimers.set(
-    key,
-    setTimeout(() => run().catch(() => {}), delay),
-  );
+  const timer=setTimeout(() => run().catch(() => {}), delay);
+  timer.unref?.();
+  discadiaVoteTimers.set(key, timer);
 }
 
 function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
@@ -294,10 +294,9 @@ function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
     return;
   }
 
-  discadiaVoteTimers.set(
-    key,
-    setTimeout(() => run().catch(() => {}), delay),
-  );
+  const timer=setTimeout(() => run().catch(() => {}), delay);
+  timer.unref?.();
+  discadiaVoteTimers.set(key, timer);
 }
 
 async function restorePendingVoteReminders(client) {
@@ -391,6 +390,7 @@ function startDiscadiaVoteReminderLoop(client) {
       global.logger.error("[DISCADIA VOTE REMINDER ERROR]", error);
     });
   }, intervalMs);
+  discadiaVoteReminderLoopHandle.unref?.();
   return discadiaVoteReminderLoopHandle;
 }
 

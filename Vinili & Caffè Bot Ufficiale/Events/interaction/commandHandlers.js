@@ -200,6 +200,8 @@ async function handleSlashCommand(interaction, client) {
 
   let deferTimer;
   let commandFailed = false;
+  let userErrorResponseSent = false;
+  let executionTimeoutTimer;
   try {
     if (!expectsModal) {
       deferTimer = setTimeout(() => {
@@ -208,17 +210,21 @@ async function handleSlashCommand(interaction, client) {
           interaction.deferReply(deferPayload).catch(() => {});
         }
       }, 1500);
+      if (typeof deferTimer?.unref === "function") deferTimer.unref();
     }
     await Promise.race([
       Promise.resolve(command.execute(wrappedInteraction, client)),
       new Promise((_, reject) => {
-        setTimeout(() => {
+        executionTimeoutTimer = setTimeout(() => {
           reject(
             new Error(
               `Slash command "${String(command?.name || interaction.commandName || "unknown")}" timed out after ${SLASH_EXECUTION_TIMEOUT_MS}ms`,
             ),
           );
         }, SLASH_EXECUTION_TIMEOUT_MS);
+        if (typeof executionTimeoutTimer?.unref === "function") {
+          executionTimeoutTimer.unref();
+        }
       }),
     ]);
   } catch (error) {
@@ -282,9 +288,10 @@ async function handleSlashCommand(interaction, client) {
       embeds: [userEmbed],
       flags: 1 << 6,
     });
+    userErrorResponseSent = true;
   } finally {
     if (!expectsModal && interaction.deferred && !interaction.replied) {
-      if (commandFailed) {
+      if (commandFailed && !userErrorResponseSent) {
         await interaction
           .editReply({
             content:
@@ -296,6 +303,7 @@ async function handleSlashCommand(interaction, client) {
       }
     }
     if (deferTimer) clearTimeout(deferTimer);
+    if (executionTimeoutTimer) clearTimeout(executionTimeoutTimer);
     client.interactionCommandLocks.delete(interactionLockId);
   }
 }

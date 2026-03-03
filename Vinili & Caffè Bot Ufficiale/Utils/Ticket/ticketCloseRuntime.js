@@ -89,6 +89,9 @@ async function closeTicket(targetInteraction, motivo, helpers) {
   const {safeReply,safeEditReply,makeErrorEmbed,LOG_CHANNEL,closedById = null,}= helpers;
   const closedByUserId = String(closedById || "").trim()|| targetInteraction.user ?. id || null;
   const closeLockKey = `${targetInteraction?.guildId || "noguild"}:${targetInteraction?.channelId || targetInteraction?.channel?.id || "nochannel"}`;
+  if (!targetInteraction?.client?.ticketCloseLocks) {
+    targetInteraction.client.ticketCloseLocks = new Set();
+  }
 
   if (targetInteraction.client.ticketCloseLocks.has(closeLockKey)) {
     await safeReply(targetInteraction, {
@@ -213,11 +216,12 @@ async function closeTicket(targetInteraction, motivo, helpers) {
       ],
     });
 
-    setTimeout(() => {
+    const deleteChannelTimer = setTimeout(() => {
       if (targetInteraction.channel) {
         targetInteraction.channel.delete().catch(() => {});
       }
     }, 2000);
+    deleteChannelTimer.unref?.();
   } catch (err) {
     global.logger.error(err);
     await safeReply(targetInteraction, {

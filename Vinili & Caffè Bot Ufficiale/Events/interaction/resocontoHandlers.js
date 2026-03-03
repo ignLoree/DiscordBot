@@ -100,6 +100,27 @@ async function getOrCreateStaffDoc(guildId, userId) {
   return doc;
 }
 
+async function hasRoleAfterRefresh(guild, userId, roleId) {
+  if (!roleId) return false;
+  const freshMember = await getGuildMemberCached(guild, userId, { preferFresh: true }).catch(() => null);
+  return Boolean(freshMember?.roles?.cache?.has?.(String(roleId)));
+}
+
+async function ensureRoleAdded(guild, member, roleId) {
+  if (!roleId) return false;
+  const roleApplied = await member.roles.add(roleId).then(() => true).catch(() => false);
+  if (roleApplied) return true;
+  return await hasRoleAfterRefresh(guild, member.id, roleId);
+}
+
+async function ensureRoleRemoved(guild, member, roleId) {
+  if (!roleId) return true;
+  const roleRemoved = await member.roles.remove(roleId).then(() => true).catch(() => false);
+  if (roleRemoved) return true;
+  const stillHasRole = await hasRoleAfterRefresh(guild, member.id, roleId);
+  return !stillHasRole;
+}
+
 async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positive) {
   const channel = await getGuildChannelCached(guild, IDs.channels.valutazioniStaff);
   if (!channel?.isTextBased?.()) return;
@@ -118,48 +139,56 @@ async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positiv
   await channel.send({ content: `<@${targetUser.id}>`, embeds: [embed] }).catch(() => null);
 }
 
-async function applyPexSideEffects(member, roleId) {
+async function applyPexSideEffects(guild, member, roleId) {
   if (roleId === ROLE_HELPER) {
-    await member.roles.add(ROLE_STAFF).catch(() => null);
+    return ensureRoleAdded(guild, member, ROLE_STAFF);
   }
-  if (roleId === ROLE_MODERATOR) await member.roles.remove(ROLE_HELPER).catch(() => null);
-  if (roleId === ROLE_COORDINATOR) await member.roles.remove(ROLE_MODERATOR).catch(() => null);
-  if (roleId === ROLE_SUPERVISOR) await member.roles.remove(ROLE_COORDINATOR).catch(() => null);
+  if (roleId === ROLE_MODERATOR) return ensureRoleRemoved(guild, member, ROLE_HELPER);
+  if (roleId === ROLE_COORDINATOR) return ensureRoleRemoved(guild, member, ROLE_MODERATOR);
+  if (roleId === ROLE_SUPERVISOR) return ensureRoleRemoved(guild, member, ROLE_COORDINATOR);
   if (roleId === ROLE_ADMIN) {
-    await member.roles.remove(ROLE_SUPERVISOR).catch(() => null);
-    await member.roles.add(ROLE_HIGH_STAFF).catch(() => null);
+    const supervisorRemoved = await ensureRoleRemoved(guild, member, ROLE_SUPERVISOR);
+    const highStaffAdded = await ensureRoleAdded(guild, member, ROLE_HIGH_STAFF);
+    return supervisorRemoved && highStaffAdded;
   }
-  if (roleId === ROLE_MANAGER) await member.roles.remove(ROLE_ADMIN).catch(() => null);
-  if (roleId === ROLE_CO_OWNER) await member.roles.remove(ROLE_MANAGER).catch(() => null);
-  if (roleId === ROLE_OWNER) await member.roles.remove(ROLE_CO_OWNER).catch(() => null);
+  if (roleId === ROLE_MANAGER) return ensureRoleRemoved(guild, member, ROLE_ADMIN);
+  if (roleId === ROLE_CO_OWNER) return ensureRoleRemoved(guild, member, ROLE_MANAGER);
+  if (roleId === ROLE_OWNER) return ensureRoleRemoved(guild, member, ROLE_CO_OWNER);
+  return true;
 }
 
-async function applyDepexSideEffects(member, roleId) {
+async function applyDepexSideEffects(guild, member, roleId) {
   if (roleId === ROLE_PARTNER_MANAGER) {
-    await member.roles.remove(roleId).catch(() => null);
-    if (ROLE_MEMBER) await member.roles.add(ROLE_MEMBER).catch(() => null);
+    const roleRemoved = await ensureRoleRemoved(guild, member, roleId);
+    const memberAdded = ROLE_MEMBER ? await ensureRoleAdded(guild, member, ROLE_MEMBER) : true;
+    return roleRemoved && memberAdded;
   }
   if (roleId === ROLE_HELPER || roleId === ROLE_MODERATOR) {
-    await member.roles.remove(roleId).catch(() => null);
-    await member.roles.remove(ROLE_STAFF).catch(() => null);
-    if (ROLE_MEMBER) await member.roles.add(ROLE_MEMBER).catch(() => null);
+    const roleRemoved = await ensureRoleRemoved(guild, member, roleId);
+    const staffRemoved = await ensureRoleRemoved(guild, member, ROLE_STAFF);
+    const memberAdded = ROLE_MEMBER ? await ensureRoleAdded(guild, member, ROLE_MEMBER) : true;
+    return roleRemoved && staffRemoved && memberAdded;
   }
   if (roleId === ROLE_COORDINATOR) {
-    await member.roles.remove(ROLE_COORDINATOR).catch(() => null);
-    await member.roles.add(ROLE_MODERATOR).catch(() => null);
-    await member.roles.add(ROLE_STAFF).catch(() => null);
+    const coordinatorRemoved = await ensureRoleRemoved(guild, member, ROLE_COORDINATOR);
+    const moderatorAdded = await ensureRoleAdded(guild, member, ROLE_MODERATOR);
+    const staffAdded = await ensureRoleAdded(guild, member, ROLE_STAFF);
+    return coordinatorRemoved && moderatorAdded && staffAdded;
   }
   if (roleId === ROLE_SUPERVISOR) {
-    await member.roles.remove(ROLE_SUPERVISOR).catch(() => null);
-    await member.roles.add(ROLE_COORDINATOR).catch(() => null);
-    await member.roles.add(ROLE_STAFF).catch(() => null);
+    const supervisorRemoved = await ensureRoleRemoved(guild, member, ROLE_SUPERVISOR);
+    const coordinatorAdded = await ensureRoleAdded(guild, member, ROLE_COORDINATOR);
+    const staffAdded = await ensureRoleAdded(guild, member, ROLE_STAFF);
+    return supervisorRemoved && coordinatorAdded && staffAdded;
   }
   if (roleId === ROLE_ADMIN || roleId === ROLE_MANAGER || roleId === ROLE_CO_OWNER) {
-    await member.roles.remove(roleId).catch(() => null);
-    await member.roles.remove(ROLE_STAFF).catch(() => null);
-    await member.roles.remove(ROLE_HIGH_STAFF).catch(() => null);
-    if (ROLE_MEMBER) await member.roles.add(ROLE_MEMBER).catch(() => null);
+    const roleRemoved = await ensureRoleRemoved(guild, member, roleId);
+    const staffRemoved = await ensureRoleRemoved(guild, member, ROLE_STAFF);
+    const highStaffRemoved = await ensureRoleRemoved(guild, member, ROLE_HIGH_STAFF);
+    const memberAdded = ROLE_MEMBER ? await ensureRoleAdded(guild, member, ROLE_MEMBER) : true;
+    return roleRemoved && staffRemoved && highStaffRemoved && memberAdded;
   }
+  return true;
 }
 
 async function sendPexDepexLog(guild, type, targetUser, oldRoleId, newRoleId, reason) {
@@ -182,6 +211,16 @@ async function deleteThreadForMessage(guild, messageId) {
   if (thread?.isThread?.()) {
     await thread.delete().catch(() => null);
   }
+}
+
+async function fetchActiveResocontoMessage(guild, channelId, messageId) {
+  const channel = await getGuildChannelCached(guild, channelId);
+  if (!channel?.isTextBased?.()) return null;
+  const message = await channel.messages.fetch(messageId).catch(() => null);
+  if (!message) return null;
+  const rows = Array.isArray(message.components) ? message.components : [];
+  if (rows.length === 0) return null;
+  return message;
 }
 
 async function appendOutcomeToMessage(guild, channelId, messageId, actorId, accepted, statusText) {
@@ -237,8 +276,10 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
     if (!roleAfterId) return "Pex non applicato: nessun ruolo successivo configurato.";
     if (member.roles.cache.has(roleAfterId)) return "Pex non applicato: utente ha già il ruolo successivo.";
 
-    await member.roles.add(roleAfterId).catch(() => null);
-    await applyPexSideEffects(member, roleAfterId);
+    const roleAdded = await ensureRoleAdded(guild, member, roleAfterId);
+    if (!roleAdded) return "Pex non applicato: impossibile assegnare il ruolo successivo.";
+    const sideEffectsApplied = await applyPexSideEffects(guild, member, roleAfterId);
+    if (!sideEffectsApplied) return "Pex applicato parzialmente: side-effect ruoli non completati.";
     const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
     if (!Array.isArray(staffDoc.rolesHistory)) staffDoc.rolesHistory = [];
     staffDoc.rolesHistory.push({
@@ -256,8 +297,10 @@ async function applyStaffAction(guild, actor, payload, reasonOverride = null) {
     const roleAfterId = ROLE_DOWN[roleBeforeId];
     if (!member.roles.cache.has(roleBeforeId)) return "Depex non applicato: ruolo corrente non presente.";
 
-    await member.roles.remove(roleBeforeId).catch(() => null);
-    await applyDepexSideEffects(member, roleBeforeId);
+    const roleRemoved = await ensureRoleRemoved(guild, member, roleBeforeId);
+    if (!roleRemoved) return "Depex non applicato: impossibile rimuovere il ruolo corrente.";
+    const sideEffectsApplied = await applyDepexSideEffects(guild, member, roleBeforeId);
+    if (!sideEffectsApplied) return "Depex applicato parzialmente: side-effect ruoli non completati.";
     await StaffModel.deleteOne({ guildId: guild.id, userId: payload.userId }).catch(() => null);
     await sendPexDepexLog(guild, "depex", targetUser, roleBeforeId, roleAfterId, reason);
     return "Depex applicato.";
@@ -274,14 +317,18 @@ async function applyPmAction(guild, payload) {
   if (payload.actionKey === "rc") return "Richiamo non applica modifiche automatiche.";
   if (payload.actionKey !== "dp") return "Nessuna operazione eseguita.";
 
-  await member.roles.remove(ROLE_PARTNER_MANAGER).catch(() => null);
+  const partnerRoleRemoved = await ensureRoleRemoved(guild, member, ROLE_PARTNER_MANAGER);
+  if (!partnerRoleRemoved) return "Depex PM non applicato: impossibile rimuovere il ruolo Partner Manager.";
   await member.roles.remove(ROLE_HELPER).catch(() => null);
   await member.roles.remove(ROLE_MODERATOR).catch(() => null);
   await member.roles.remove(ROLE_COORDINATOR).catch(() => null);
   await member.roles.remove(ROLE_SUPERVISOR).catch(() => null);
   await member.roles.remove(ROLE_STAFF).catch(() => null);
   await member.roles.remove(ROLE_HIGH_STAFF).catch(() => null);
-  if (ROLE_MEMBER) await member.roles.add(ROLE_MEMBER).catch(() => null);
+  if (ROLE_MEMBER) {
+    const memberRoleAdded = await ensureRoleAdded(guild, member, ROLE_MEMBER);
+    if (!memberRoleAdded) return "Depex PM applicato parzialmente: impossibile ripristinare il ruolo Member.";
+  }
   const staffDoc = await getOrCreateStaffDoc(guild.id, payload.userId);
   staffDoc.partnerCount = 0;
   staffDoc.managerId = null;
@@ -314,6 +361,20 @@ async function handleResocontoButton(interaction) {
     await interaction
       .reply({
         content: "Questo controllo è riservato all'High Staff.",
+        flags: 1 << 6,
+      })
+      .catch(() => null);
+    return true;
+  }
+  const activeMessage = await fetchActiveResocontoMessage(
+    interaction.guild,
+    interaction.channelId,
+    interaction.message?.id,
+  );
+  if (!activeMessage) {
+    await interaction
+      .reply({
+        content: "Questo controllo è già stato gestito.",
         flags: 1 << 6,
       })
       .catch(() => null);
@@ -360,6 +421,20 @@ async function handleResocontoModal(interaction) {
     await interaction
       .reply({
         content: "Questo modulo è riservato all'High Staff.",
+        flags: 1 << 6,
+      })
+      .catch(() => null);
+    return true;
+  }
+  const activeMessage = await fetchActiveResocontoMessage(
+    interaction.guild,
+    interaction.channelId,
+    parsed.messageId,
+  );
+  if (!activeMessage) {
+    await interaction
+      .reply({
+        content: "Questo controllo è già stato gestito.",
         flags: 1 << 6,
       })
       .catch(() => null);

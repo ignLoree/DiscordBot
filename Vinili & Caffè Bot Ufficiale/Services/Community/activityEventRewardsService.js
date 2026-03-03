@@ -190,7 +190,10 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
       const last = chunk.last?.();
       after = last?.id ?? null;
       if (chunk.size < 100) break;
-      await new Promise((r) => setTimeout(r, 350));
+      await new Promise((r) => {
+        const timer=setTimeout(r, 350);
+        timer.unref?.();
+      });
     } while (true);
     membersToIterate = all.size > 0 ? all : guild.members.cache;
     if (all.size === 0) {

@@ -271,6 +271,10 @@ async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
   for (const member of role.members.values()) {
     if (keepUserId && String(member.id) === String(keepUserId)) continue;
     await member.roles.remove(roleId).catch(() => {});
+    const refreshedMember=await guild.members.fetch(member.id).catch(() => null);
+    if (refreshedMember?.roles?.cache?.has(roleId)) {
+      global.logger?.warn?.("[WEEKLY ACTIVITY WINNERS] failed to remove role from member:", guild.id, member.id, roleId);
+    }
   }
 }
 
@@ -279,7 +283,8 @@ async function assignRoleToUser(guild, userId, roleId) {
   const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
   if (!member) return false;
   await member.roles.add(roleId).catch(() => {});
-  return true;
+  const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+  return Boolean(refreshedMember?.roles?.cache?.has(roleId));
 }
 
 function pickFirstAvailable(ranking, excludedUserIds = new Set()) {

@@ -916,9 +916,10 @@ async function runStartupBlastOnce(client, guild) {
         failCount += 1;
       }
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, STARTUP_BLAST_DM_DELAY_MS),
-      );
+      await new Promise((resolve) => {
+        const timer=setTimeout(resolve, STARTUP_BLAST_DM_DELAY_MS);
+        timer.unref?.();
+      });
     }
 
     entry.reminderHistory = history;
@@ -981,9 +982,10 @@ async function runExternalStartupBlastOnce(client, guild) {
         failCount += 1;
       }
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, EXTERNAL_STARTUP_DM_DELAY_MS),
-      );
+      await new Promise((resolve) => {
+        const timer=setTimeout(resolve, EXTERNAL_STARTUP_DM_DELAY_MS);
+        timer.unref?.();
+      });
     }
 
     entry.externalStartupBlastDone = true;

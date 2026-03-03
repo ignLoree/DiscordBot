@@ -112,6 +112,10 @@ function isTicketClaimedByUser(ticketDoc, userId) {
   return String(ticketDoc?.claimedBy || "") === String(userId || "");
 }
 
+function hasActiveTicketClaimer(ticketDoc) {
+  return String(ticketDoc?.claimedBy || "").trim() !== "";
+}
+
 function canUserHandleCloseRequest(ticketDoc, userId, highStaff) {
   return (
     isTicketOwnedByUser(ticketDoc, userId) ||
@@ -157,7 +161,7 @@ async function ensureClosableTicketOrReply({
     });
     return false;
   }
-  if (requireClaimed && !ticketDoc.claimedBy) {
+  if (requireClaimed && !hasActiveTicketClaimer(ticketDoc)) {
     await safeReply(interaction, {
       embeds: [
         makeErrorEmbed(
@@ -240,6 +244,7 @@ module.exports = {
   getGuildChannelCached,
   getGuildMemberCached,
   getSelectedTicketAction,
+  hasActiveTicketClaimer,
   isHandledTicketInteraction,
   isSponsorGuild,
   isTicketClaimedByUser,

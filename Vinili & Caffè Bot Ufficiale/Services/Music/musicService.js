@@ -563,14 +563,14 @@ async function scheduleInactivityLeave(queue) {
   const guildId = String(queue?.guildId || "");
   if (!guildId) return;
   clearTimer(inactivityTimers, guildId);
-  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;if(current.currentTrack)return;if(current.tracks.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No tracks have been playing for the past 3 minutes, leaving \uD83D\uDC4B");const channel=current.metadata?.channel;if(channel?.isTextBased?.())await channel.send({embeds:[embed]}).catch(() => {});await destroyQueue(guildId,{manual:true});},INACTIVITY_MS);inactivityTimers.set(guildId, timer);
+  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;if(current.currentTrack)return;if(current.tracks.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No tracks have been playing for the past 3 minutes, leaving \uD83D\uDC4B");const channel=current.metadata?.channel;if(channel?.isTextBased?.())await channel.send({embeds:[embed]}).catch(() => {});await destroyQueue(guildId,{manual:true});},INACTIVITY_MS);timer.unref?.();inactivityTimers.set(guildId, timer);
 }
 
 async function scheduleEmptyVoiceLeave(queue) {
   const guildId = String(queue?.guildId || "");
   if (!guildId) return;
   clearTimer(emptyVoiceTimers, guildId);
-  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;const guild=current.guild;const channel=guild?.channels?.cache?.get(current.voiceChannelId)||(current.voiceChannelId?await guild?.channels?.fetch?.(current.voiceChannelId).catch(() => null):null);const humans=channel?.members?Array.from(channel.members.values()).filter((m) => !m.user?.bot):[];if(humans.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No one has been listening for the past 3 minutes, leaving \uD83D\uDC4B");if(current.metadata?.channel?.isTextBased?.()){await current.metadata.channel.send({embeds:[embed]}).catch(() => {});}await destroyQueue(guildId,{manual:true});},EMPTY_VOICE_MS);emptyVoiceTimers.set(guildId, timer);
+  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;const guild=current.guild;const channel=guild?.channels?.cache?.get(current.voiceChannelId)||(current.voiceChannelId?await guild?.channels?.fetch?.(current.voiceChannelId).catch(() => null):null);const humans=channel?.members?Array.from(channel.members.values()).filter((m) => !m.user?.bot):[];if(humans.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No one has been listening for the past 3 minutes, leaving \uD83D\uDC4B");if(current.metadata?.channel?.isTextBased?.()){await current.metadata.channel.send({embeds:[embed]}).catch(() => {});}await destroyQueue(guildId,{manual:true});},EMPTY_VOICE_MS);timer.unref?.();emptyVoiceTimers.set(guildId, timer);
 }
 
 function buildNodeFacade(queue) {

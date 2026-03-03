@@ -4,6 +4,7 @@ const IDs = require("../../Utils/Config/ids");
 const{getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const pauseActionLocks = new Set();
 const STAFF_ROLE_PRIORITY=[IDs.roles.Founder,IDs.roles.CoFounder,IDs.roles.Manager,IDs.roles.Admin,IDs.roles.Supervisor,IDs.roles.Coordinator,IDs.roles.Mod,IDs.roles.Helper,IDs.roles.Staff,IDs.roles.PartnerManager,];
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
@@ -239,7 +240,7 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
   const delayMs = removalAtMs - Date.now();
   if (delayMs <= 0) return;
 
-  setTimeout(async () => {
+  const timer = setTimeout(async () => {
     try {
       const channel=await getGuildChannelCached(guild,String(channelId));
       if (!channel?.isTextBased?.()) return;
@@ -250,6 +251,7 @@ function schedulePauseButtonsRemoval(guild, channelId, messageId, pauseEndRaw) {
       await msg.edit({ content: nextContent, components: [] }).catch(() => null);
     } catch {}
   }, delayMs);
+  if (typeof timer?.unref === "function") timer.unref();
 }
 
 async function handlePauseButton(interaction) {
@@ -376,6 +378,21 @@ async function handlePauseButton(interaction) {
       .catch(() => {});
     return true;
   }
+
+  const lockKey = `${String(interaction.guildId || "dm")}:${String(userId)}:${String(pauseId)}`;
+  if (pauseActionLocks.has(lockKey)) {
+    await interaction
+      .reply({
+        content:
+          "<:attentionfromvega:1443651874032062505> Questa richiesta pausa è già in elaborazione.",
+        flags: 1 << 6,
+      })
+      .catch(() => {});
+    return true;
+  }
+  pauseActionLocks.add(lockKey);
+
+  try {
 
   const targetPause = stafferRecord.pauses?.id?.(pauseId);
   if (!targetPause) {
@@ -563,8 +580,9 @@ async function handlePauseButton(interaction) {
   const hideCancelOnCreate = Boolean(pauseEnd && getTodayUtc() > pauseEnd);
   const pauseTimingText=getPauseTimingText(targetPause.dataRichiesta,targetPause.dataRitorno,);
   const channel = await getGuildChannelCached(interaction.guild, IDs.channels.pause);
+  let pauseMessage = null;
   if (channel) {
-    const pauseMessage=await channel.send({content:`<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>**${pauseTimingText}.\n<:Clock:1330530065133338685>Dal**\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo`,components:[buildAcceptedButtonsRow(userId,pauseId,{hideCancel:hideCancelOnCreate,}),],}).catch(() => {});
+    pauseMessage=await channel.send({content:`<:Calendar:1330530097190404106> **\`${targetPause.ruolo}\`** - **<@${userId}>**${pauseTimingText}.\n<:Clock:1330530065133338685>Dal**\`${targetPause.dataRichiesta}\`** al **\`${targetPause.dataRitorno}\`**\n<:pinnednew:1443670849990430750> __\`${giorniUsati}/${maxGiorni}\`__ giorni utilizzati (\`${giorniRimanenti}\` rimanenti) - __\`${sameRoleActiveCount}\`__ staffer in pausa in quel ruolo`,components:[buildAcceptedButtonsRow(userId,pauseId,{hideCancel:hideCancelOnCreate,}),],}).catch(() => {});
     if (pauseMessage && pauseEnd) {
       schedulePauseButtonsRemoval(
         interaction.guild,
@@ -574,10 +592,29 @@ async function handlePauseButton(interaction) {
       );
     }
   }
+  if (channel && !pauseMessage) {
+    targetPause.status = "pending";
+    targetPause.ruolo = null;
+    targetPause.giorniUsati = undefined;
+    targetPause.giorniAggiuntivi = undefined;
+    targetPause.stafferInPausa = undefined;
+    await stafferRecord.save().catch(() => {});
+    await interaction
+      .reply({
+        content:
+          "<:vegax:1443934876440068179> Non sono riuscito a pubblicare la pausa nel canale dedicato. Riprova.",
+        flags: 1 << 6,
+      })
+      .catch(() => {});
+    return true;
+  }
 
   await interaction.deferUpdate().catch(() => {});
   await interaction.message?.delete().catch(() => {});
   return true;
+  } finally {
+    pauseActionLocks.delete(lockKey);
+  }
 }
 
 module.exports = { handlePauseButton };

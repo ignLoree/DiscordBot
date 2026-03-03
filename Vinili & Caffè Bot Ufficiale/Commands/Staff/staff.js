@@ -48,6 +48,28 @@ async function replySuccess(interaction) {
   });
 }
 
+async function refreshMemberRoles(member) {
+  const guild=member?.guild;
+  const memberId=member?.id;
+  if (!guild || !memberId) return member;
+  return guild.members.fetch(memberId).catch(() => member);
+}
+
+async function ensureRoleState(member, roleId, shouldHaveRole) {
+  const refreshedMember=await refreshMemberRoles(member);
+  const hasRole=Boolean(refreshedMember?.roles?.cache?.has(roleId));
+  return { member: refreshedMember || member, ok: shouldHaveRole ? hasRole : !hasRole };
+}
+
+async function ensureMultipleRoleStates(member, checks) {
+  const refreshedMember=await refreshMemberRoles(member);
+  const ok = (Array.isArray(checks) ? checks : []).every(({ roleId, shouldHaveRole }) => {
+    const hasRole=Boolean(refreshedMember?.roles?.cache?.has(roleId));
+    return shouldHaveRole ? hasRole : !hasRole;
+  });
+  return { member: refreshedMember || member, ok };
+}
+
 async function fetchMember(guild, userId) {
   if (!guild || !userId) return null;
   return guild.members.cache.get(userId) ||
@@ -144,80 +166,126 @@ async function applyPexSideEffects(
 
   if (roleId === ROLE_HELPER) {
     await member.roles.add(ROLE_STAFF);
+    const verification=await ensureRoleState(member, ROLE_STAFF, true);
+    if (!verification.ok) throw new Error("Pex side effect failed: staff role missing after helper promotion.");
     await sendHelperWelcome(staffChannel, user);
+    member = verification.member;
   }
 
   if (roleId === ROLE_MODERATOR) {
     await member.roles.remove(ROLE_HELPER);
+    const verification=await ensureRoleState(member, ROLE_HELPER, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: helper role still present after moderator promotion.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_COORDINATOR) {
     await member.roles.remove(ROLE_MODERATOR);
+    const verification=await ensureRoleState(member, ROLE_MODERATOR, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: moderator role still present after coordinator promotion.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_SUPERVISOR) {
     await member.roles.remove(ROLE_COORDINATOR);
+    const verification=await ensureRoleState(member, ROLE_COORDINATOR, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: coordinator role still present after supervisor promotion.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_ADMIN) {
     await member.roles.remove(ROLE_SUPERVISOR);
     await member.roles.add(ROLE_HIGH_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId: ROLE_SUPERVISOR, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: true }]);
+    if (!verification.ok) throw new Error("Pex side effect failed: admin side effects not applied.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_MANAGER) {
     await member.roles.remove(ROLE_ADMIN);
+    const verification=await ensureRoleState(member, ROLE_ADMIN, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: admin role still present after manager promotion.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_CO_OWNER) {
     await member.roles.remove(ROLE_MANAGER);
+    const verification=await ensureRoleState(member, ROLE_MANAGER, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: manager role still present after co-owner promotion.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_OWNER) {
     await member.roles.remove(ROLE_CO_OWNER);
+    const verification=await ensureRoleState(member, ROLE_CO_OWNER, false);
+    if (!verification.ok) throw new Error("Pex side effect failed: co-owner role still present after owner promotion.");
   }
 }
 
 async function applyDepexSideEffects(member, roleId) {
   if (roleId === ROLE_PARTNER_MANAGER) {
     await member.roles.remove(roleId);
+    const verification=await ensureRoleState(member, roleId, false);
+    if (!verification.ok) throw new Error("Depex side effect failed: partner manager role still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_HELPER) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: helper/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_MODERATOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: moderator/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_COORDINATOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: coordinator/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_SUPERVISOR) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: supervisor/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_ADMIN) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: admin/high staff/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_MANAGER) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: manager/high staff/staff roles still present.");
+    member = verification.member;
   }
 
   if (roleId === ROLE_CO_OWNER) {
     await member.roles.remove(roleId);
     await member.roles.remove(ROLE_STAFF);
     await member.roles.remove(ROLE_HIGH_STAFF);
+    const verification=await ensureMultipleRoleStates(member, [{ roleId, shouldHaveRole: false }, { roleId: ROLE_STAFF, shouldHaveRole: false }, { roleId: ROLE_HIGH_STAFF, shouldHaveRole: false }]);
+    if (!verification.ok) throw new Error("Depex side effect failed: co-owner/high staff/staff roles still present.");
   }
 }
 
@@ -499,8 +567,12 @@ module.exports = {
         }
 
         await member.roles.add(roleAfter.id);
+        const baseRoleVerification=await ensureRoleState(member, roleAfter.id, true);
+        if (!baseRoleVerification.ok) {
+          throw new Error(`Pex failed: role ${roleAfter.id} not applied.`);
+        }
         await applyPexSideEffects(
-          member,
+          baseRoleVerification.member,
           roleAfter.id,
           pmChannel,
           staffChat,
@@ -548,7 +620,11 @@ module.exports = {
         }
 
         await member.roles.remove(oldRole.id);
-        await applyDepexSideEffects(member, oldRole.id);
+        const baseRoleVerification=await ensureRoleState(member, oldRole.id, false);
+        if (!baseRoleVerification.ok) {
+          throw new Error(`Depex failed: role ${oldRole.id} still present.`);
+        }
+        await applyDepexSideEffects(baseRoleVerification.member, oldRole.id);
 
         await StaffModel.deleteOne({
           guildId: interaction.guild.id,
