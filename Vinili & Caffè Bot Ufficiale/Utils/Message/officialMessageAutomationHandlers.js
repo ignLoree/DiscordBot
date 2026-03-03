@@ -28,9 +28,7 @@ function channelAllowsMedia(message) {
   const perms = channel.permissionsFor(member);
   if (!perms) return false;
   const hasAttachment = Boolean(message.attachments?.size);
-  const hasLink =
-    /https?:\/\/\S+/i.test(String(message.content || "")) ||
-    /discord\.gg\/\S+|\.gg\/\S+/i.test(String(message.content || ""));
+  const hasLink=/https?:\/\/\S+/i.test(String(message.content||""))||/discord\.gg\/\S+|\.gg\/\S+/i.test(String(message.content||""));
   if (hasAttachment) return perms.has("AttachFiles");
   if (hasLink) return perms.has("EmbedLinks");
   return perms.has("AttachFiles") || perms.has("EmbedLinks");
@@ -116,9 +114,7 @@ async function getCachedOrFetchMember(guild, userId) {
 
 function extractNameFromText(text) {
   if (!text) return null;
-  const match =
-    text.match(/(?:^|[\r\n])\s*!?\s*([^\s]+)\s+has voted/i) ||
-    text.match(/!?\s*([^\s]+)\s+has voted/i);
+  const match=text.match(/(?:^|[\r\n])\s*!?\s*([^\s]+)\s+has voted/i)||text.match(/!?\s*([^\s]+)\s+has voted/i);
   return match?.[1] || null;
 }
 
@@ -130,9 +126,7 @@ function sanitizeName(name) {
 function flattenEmbedText(embed) {
   if (!embed) return "";
   const parts = [];
-  const push = (value) => {
-    if (typeof value === "string" && value.trim()) parts.push(value);
-  };
+  const push=(value) => {if(typeof value==="string"&&value.trim())parts.push(value);};
   push(embed.title);
   push(embed.description);
   push(embed.url);
@@ -176,12 +170,8 @@ async function resolveUserFromMessage(message) {
   const mentioned = message.mentions?.users?.first();
   if (mentioned) return mentioned;
 
-  const { content, embedText, embedTitle, fieldsText } =
-    getMessageTextParts(message);
-  const idFromContent =
-    extractUserIdFromText(content) ||
-    extractUserIdFromText(embedText) ||
-    extractUserIdFromText(fieldsText);
+  const{content,embedText,embedTitle,fieldsText}=getMessageTextParts(message);
+  const idFromContent=extractUserIdFromText(content)||extractUserIdFromText(embedText)||extractUserIdFromText(fieldsText);
   if (idFromContent) {
     return message.guild.members
       .fetch(idFromContent)
@@ -189,29 +179,15 @@ async function resolveUserFromMessage(message) {
       .catch(() => null);
   }
 
-  const nameRaw =
-    extractNameFromText(content) ||
-    extractNameFromText(embedText) ||
-    extractNameFromText(embedTitle) ||
-    extractNameFromText(fieldsText);
+  const nameRaw=extractNameFromText(content)||extractNameFromText(embedText)||extractNameFromText(embedTitle)||extractNameFromText(fieldsText);
   const nameClean = sanitizeName(nameRaw);
   if (nameClean) {
     const name = nameClean.toLowerCase();
-    const cached = message.guild.members.cache.find(
-      (m) =>
-        m.user.username.toLowerCase() === name ||
-        m.displayName.toLowerCase() === name,
-    );
+    const cached=message.guild.members.cache.find((m) => m.user.username.toLowerCase()===name||m.displayName.toLowerCase()===name,);
     if (cached) return cached.user;
-    const searched = await message.guild.members
-      .fetch({ query: nameClean, limit: 5 })
-      .catch(() => null);
+    const searched=await message.guild.members.fetch({query:nameClean,limit:5}).catch(() => null);
     if (searched?.size) {
-      const exact = searched.find(
-        (m) =>
-          m.user.username.toLowerCase() === name ||
-          m.displayName.toLowerCase() === name,
-      );
+      const exact=searched.find((m) => m.user.username.toLowerCase()===name||m.displayName.toLowerCase()===name,);
       return (exact || searched.first()).user || null;
     }
   }
@@ -235,46 +211,29 @@ function getVoteManagerBotIds(client) {
 async function handleVoteManagerMessage(message, client) {
   if (!message.guild) return false;
   if (message.channel?.id !== VOTE_CHANNEL_ID) return false;
-  const isAutomatedSource = Boolean(
-    message.author?.bot || message.applicationId || message.webhookId,
-  );
+  const isAutomatedSource=Boolean(message.author?.bot||message.applicationId||message.webhookId,);
   if (!isAutomatedSource) return false;
   const allowedBotIds = getVoteManagerBotIds(client);
   const isVoteManagerAuthor = allowedBotIds.has(String(message.author?.id || ""));
   const isVoteManagerApp = allowedBotIds.has(String(message.applicationId || ""));
-  const sourceName = String(
-    `${message.author?.globalName || ""} ${message.author?.username || ""}`,
+  const sourceName=String(`${message.author?.globalName||""}${message.author?.username||""}`,
   ).toLowerCase();
   const hasVoteLikeBotName = /(vote|discadia|disboard)/i.test(sourceName);
   if (!isVoteManagerAuthor && !isVoteManagerApp && !hasVoteLikeBotName) {
     return false;
   }
 
-  const { content, embedText, embedTitle, fieldsText } =
-    getMessageTextParts(message);
-  const voteText =
-    `${content} ${embedText} ${embedTitle} ${fieldsText}`.toLowerCase();
-  const looksLikeVote =
-    /has voted|voted/i.test(voteText) ||
-    /ha votato|votato/i.test(voteText) ||
-    (voteText.includes("discadia") && /(vote|voto|votato)/i.test(voteText));
+  const{content,embedText,embedTitle,fieldsText}=getMessageTextParts(message);
+  const voteText=`${content}${embedText}${embedTitle}${fieldsText}`.toLowerCase();
+  const looksLikeVote=/has voted|voted/i.test(voteText)||/ha votato|votato/i.test(voteText)||(voteText.includes("discadia")&&/(vote|voto|votato)/i.test(voteText));
   if (!looksLikeVote) return false;
 
   const user = await resolveUserFromMessage(message);
-  const nameRaw =
-    extractNameFromText(content) ||
-    extractNameFromText(embedText) ||
-    extractNameFromText(embedTitle) ||
-    extractNameFromText(fieldsText);
+  const nameRaw=extractNameFromText(content)||extractNameFromText(embedText)||extractNameFromText(embedTitle)||extractNameFromText(fieldsText);
   const nameClean = sanitizeName(nameRaw) || "Utente";
 
   const fullText = `${content} ${embedText} ${embedTitle} ${fieldsText}`;
-  const voteCount =
-    extractVoteCountFromText(content) ||
-    extractVoteCountFromText(embedText) ||
-    extractVoteCountFromText(embedTitle) ||
-    extractVoteCountFromText(fieldsText) ||
-    extractVoteCountFromText(fullText);
+  const voteCount=extractVoteCountFromText(content)||extractVoteCountFromText(embedText)||extractVoteCountFromText(embedTitle)||extractVoteCountFromText(fieldsText)||extractVoteCountFromText(fullText);
   if (voteCount === null) {
     global.logger.warn("[VOTE EMBED] Vote count not found. Text:", fullText);
   }
@@ -283,11 +242,7 @@ async function handleVoteManagerMessage(message, client) {
   let resolvedVoteCount = voteCount;
   if (user?.id && message.guild?.id) {
     try {
-      const count = await recordDiscadiaVote(
-        message.client,
-        message.guild.id,
-        user.id,
-      );
+      const count=await recordDiscadiaVote(message.client,message.guild.id,user.id,);
       if (typeof count === "number") {
         resolvedVoteCount = count;
       }
@@ -297,11 +252,7 @@ async function handleVoteManagerMessage(message, client) {
     } catch {}
     try {
       const targetMember = await getCachedOrFetchMember(message.guild, user.id);
-      const ignored = await shouldIgnoreExpForMember({
-        guildId: message.guild.id,
-        member: targetMember,
-        channelId: message.channel?.id || message.channelId || null,
-      });
+      const ignored=await shouldIgnoreExpForMember({guildId:message.guild.id,member:targetMember,channelId:message.channel?.id||message.channelId||null,});
       if (!ignored) {
         await addExpWithLevel(
           message.guild,
@@ -330,31 +281,11 @@ async function handleVoteManagerMessage(message, client) {
     } catch {}
   }
 
-  const dividerUrl =
-    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
-  const voteLabel =
-    typeof resolvedVoteCount === "number" ? `#${resolvedVoteCount}` : "";
-  const voteRoleText = VOTE_ROLE_ID
-    ? `<a:VC_Money:1448671284748746905> - Il ruolo <@&${VOTE_ROLE_ID}> per 24 ore`
+  const dividerUrl="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+  const voteLabel=typeof resolvedVoteCount==="number"?`#${resolvedVoteCount}` : "";
+  const voteRoleText=VOTE_ROLE_ID?`<a:VC_Money:1448671284748746905> - Il ruolo <@&${VOTE_ROLE_ID}>per 24 ore`
     : "<a:VC_Money:1448671284748746905> - Reward voto assegnata per 24 ore";
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>")
-    .setDescription(
-      [
-        `Grazie ${user ? `${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,
-        "",
-        "\`Hai guadagnato:\`",
-        `<a:VC_Events:1448688007438667796> - **${expValue} EXP** per il tuo ${voteLabel ? `**voto ${voteLabel}**` : "**voto**"}`,
-        voteRoleText,
-        "",
-        "<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",
-      ].join("\n"),
-    )
-    .setFooter({
-      text: "Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",
-    })
-    .setImage(dividerUrl);
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Un nuovo voto! <a:VC_StarPink:1330194976440848500>").setDescription([`Grazie ${user?`${user}` : nameClean} per aver votato su [Discadia](<https://discadia.com/server/viniliecaffe/>) il server! <a:VC_WingYellow:1448687141604298822>`,"","\`Hai guadagnato:\`",`<a:VC_Events:1448688007438667796> - **${expValue}EXP**per il tuo ${voteLabel?`**voto ${voteLabel}**` : "**voto**"}`,voteRoleText,"","<:cutesystar:1443651906370142269> Vota di nuovo tra __24 ore__ per ottenere **altri exp** dal **bottone sottostante**.",].join("\n"),).setFooter({text:"Ogni volta che voterai il valore dell'exp guadagnata varierà: a volte sarà più alto, altre volte più basso, mentre altre ancora uguale al precedente",}).setImage(dividerUrl);
 
   const components = [];
   if (VOTE_URL) {
@@ -370,17 +301,7 @@ async function handleVoteManagerMessage(message, client) {
   }
 
   const mention = user ? `${user}` : "";
-  const sent = await message.channel
-    .send({
-      content: mention,
-      embeds: [embed],
-      components,
-    })
-    .catch((error) => {
-      const detail = error?.message || error?.code || error;
-      global.logger?.error?.("[VOTE EMBED] Failed to send embed:", detail);
-      return null;
-    });
+  const sent=await message.channel.send({content:mention,embeds:[embed],components,}).catch((error) => {const detail=error?.message||error?.code||error;global.logger?.error?.("[VOTE EMBED] Failed to send embed:",detail);return null;});
   if (sent) {
     await message.delete().catch(() => {});
   }
@@ -390,19 +311,12 @@ async function handleVoteManagerMessage(message, client) {
 async function handleDisboardBump(message, client) {
   const disboard = client?.config?.disboard;
   if (!disboard || !message.guild) return false;
-  const authorName = String(
-    message.author?.globalName || message.author?.username || "",
-  );
+  const authorName=String(message.author?.globalName||message.author?.username||"",);
   const sourceName = `${authorName} ${String(message.applicationId || "")}`.toLowerCase();
-  const isDisboardSource =
-    message.author?.id === IDs.bots.DISBOARD ||
-    (Boolean(message.author?.bot) && /disboard/i.test(authorName)) ||
-    /disboard/i.test(sourceName);
+  const isDisboardSource=message.author?.id===IDs.bots.DISBOARD||(Boolean(message.author?.bot)&&/disboard/i.test(authorName))||/disboard/i.test(sourceName);
   if (!message.author || !isDisboardSource) return false;
 
-  const patterns = Array.isArray(disboard.bumpSuccessPatterns)
-    ? disboard.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
-    : [];
+  const patterns=Array.isArray(disboard.bumpSuccessPatterns)?disboard.bumpSuccessPatterns.map((p) => String(p).toLowerCase()):[];
   const haystacks = [];
   if (message.content) haystacks.push(message.content);
   if (Array.isArray(message.embeds)) {
@@ -412,24 +326,17 @@ async function handleDisboardBump(message, client) {
     }
   }
   const lowered = haystacks.map((text) => String(text || "").toLowerCase());
-  const isBump = patterns.some((pattern) =>
-    lowered.some((text) => text.includes(pattern)),
-  );
+  const isBump=patterns.some((pattern) => lowered.some((text) => text.includes(pattern)),);
   if (!isBump) return false;
 
   const dedupeKey = `disboard:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
   const bumpUserId = message.interaction?.user?.id;
   const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
-  const thanksMessage =
-    "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**\n" +
-    "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n" +
-    bumpMention;
+  const thanksMessage="<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server!__**\n"+"<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **due ore!**\n"+bumpMention;
 
   await recordBump(client, message.guild.id, bumpUserId || null);
-  const channel =
-    message.channel ||
-    (await message.guild.channels.fetch(message.channelId).catch(() => null));
+  const channel=message.channel||(await message.guild.channels.fetch(message.channelId).catch(() => null));
   if (channel?.isTextBased?.()) {
     try {
       await channel.send({
@@ -446,30 +353,10 @@ async function handleDisboardBump(message, client) {
 async function handleDiscadiaBump(message, client) {
   const discadia = client?.config?.discadia;
   if (!discadia || !message.guild) return false;
-  const authorName = String(
-    message.author?.globalName || message.author?.username || "",
-  );
-  const sourceName = String(
-    [
-      message.author?.globalName || "",
-      message.author?.username || "",
-      message.author?.tag || "",
-      message.author?.id || "",
-      message.applicationId || "",
-    ]
-      .filter(Boolean)
-      .join(" "),
-  );
-  const isAutomatedSource = Boolean(
-    message.author?.bot || message.applicationId || message.webhookId,
-  );
-  const patterns = Array.isArray(discadia.bumpSuccessPatterns)
-    ? discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase())
-    : [
-        "has been successfully bumped",
-        "successfully bumped",
-        "bumped successfully",
-      ];
+  const authorName=String(message.author?.globalName||message.author?.username||"",);
+  const sourceName=String([message.author?.globalName||"",message.author?.username||"",message.author?.tag||"",message.author?.id||"",message.applicationId||"",].filter(Boolean).join(" "),);
+  const isAutomatedSource=Boolean(message.author?.bot||message.applicationId||message.webhookId,);
+  const patterns=Array.isArray(discadia.bumpSuccessPatterns)?discadia.bumpSuccessPatterns.map((p) => String(p).toLowerCase()):["has been successfully bumped","successfully bumped","bumped successfully",];
 
   const haystacks = [];
   if (message.content) haystacks.push(message.content);
@@ -488,78 +375,36 @@ async function handleDiscadiaBump(message, client) {
     }
   }
 
-  const normalized = haystacks
-    .map((text) => String(text).toLowerCase())
-    .map((text) => text.replace(/\s+/g, " ").trim());
+  const normalized=haystacks.map((text) => String(text).toLowerCase()).map((text) => text.replace(/\s+/g," ").trim());
   const joined = normalized.join("\n");
 
   const hasPattern = patterns.some((pattern) => joined.includes(pattern));
-  const hasSuccessWord =
-    /(server has been bumped|has been successfully bumped|bump(?:ed)? successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(
-      joined,
-    );
+  const hasSuccessWord=/(server has been bumped|has been successfully bumped|bump(?:ed)?successfully|successfully bumped|successful bump|bump complete|bump done|thanks for bumping|you can bump again|bump effettuato|bump eseguito|bump completato|bump andato a buon fine|server bumpato con successo|bump riuscito|puoi bumpare di nuovo|potrai bumpare di nuovo)/i.test(joined,);
   const hasBumpWord = /\bbump(?:ed)?\b/i.test(joined);
-  const hasFailureWord =
-    /already bumped|already has been bumped|cannot bump|can't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare|devi aspettare|attendi prima di bumpare|troppo presto per bumpare|bump non riuscito|bump fallito/i.test(
-      joined,
-    );
+  const hasFailureWord=/already bumped|already has been bumped|cannot bump|can 't bump|please wait|too early|wait before|failed to bump|bump failed|errore bump|impossibile bumpare|devi aspettare|attendi prima di bumpare|troppo presto per bumpare|bump non riuscito|bump fallito/i.test( joined,);
   const hasDiscadiaWord = /\bdiscadia\b/i.test(joined);
   const hasDiscadiaDomain = /discadia\.com/i.test(joined);
-  const interactionCommandName = String(
-    message.interaction?.commandName || message.interactionMetadata?.name || "",
-  )
-    .trim()
-    .toLowerCase();
+  const interactionCommandName=String(message.interaction?.commandName||message.interactionMetadata?.name||"",).trim().toLowerCase();
   const isBumpInteraction = interactionCommandName === "bump";
-  const isLikelyCommandChannel =
-    String(message.channelId || "") === String(IDs.channels.commands || "");
+  const isLikelyCommandChannel=String(message.channelId||"")===String(IDs.channels.commands||"");
   const isFromDiscadiaBot = String(message.author?.id) === String(IDs.bots?.Discadia || "");
   const sourceFingerprint = `${authorName} ${sourceName}`.toLowerCase();
-  const looksLikeDiscadiaSource =
-    isFromDiscadiaBot ||
-    /\bdiscadia\b/i.test(sourceFingerprint) ||
-    hasDiscadiaWord ||
-    hasDiscadiaDomain;
+  const looksLikeDiscadiaSource=isFromDiscadiaBot||/\bdiscadia\b/i.test(sourceFingerprint)||hasDiscadiaWord||hasDiscadiaDomain;
   const looksLikeDisboardSource = /\bdisboard\b/i.test(sourceFingerprint);
   const hasBumpSuccessText = hasPattern || hasSuccessWord;
-  const isSuccessInCommandChannel =
-    isLikelyCommandChannel &&
-    !hasFailureWord &&
-    (hasBumpSuccessText || (isBumpInteraction && hasBumpWord));
-  const isBumpFromDiscadiaInCommands =
-    isFromDiscadiaBot &&
-    isLikelyCommandChannel &&
-    (isBumpInteraction || hasBumpWord) &&
-    !hasFailureWord;
-  const isBump =
-    !hasFailureWord &&
-    (
-      isBumpFromDiscadiaInCommands ||
-      isSuccessInCommandChannel ||
-      (looksLikeDiscadiaSource && (hasBumpSuccessText || (isBumpInteraction && hasBumpWord))) ||
-      (isAutomatedSource && !looksLikeDisboardSource && hasBumpSuccessText)
-    );
+  const isSuccessInCommandChannel=isLikelyCommandChannel&&!hasFailureWord&&(hasBumpSuccessText||(isBumpInteraction&&hasBumpWord));
+  const isBumpFromDiscadiaInCommands=isFromDiscadiaBot&&isLikelyCommandChannel&&(isBumpInteraction||hasBumpWord)&&!hasFailureWord;
+  const isBump=!hasFailureWord&&(isBumpFromDiscadiaInCommands||isSuccessInCommandChannel||(looksLikeDiscadiaSource&&(hasBumpSuccessText||(isBumpInteraction&&hasBumpWord)))||(isAutomatedSource&&!looksLikeDisboardSource&&hasBumpSuccessText));
   if (!isBump) return false;
 
   const dedupeKey = `discadia:${message.guild.id}:${message.id}`;
   if (shouldSkipProcessedBump(dedupeKey)) return true;
-  const bumpUserId =
-    message.interaction?.user?.id ||
-    message.interactionMetadata?.user?.id ||
-    extractUserIdFromText(message.content) ||
-    extractUserIdFromText(joined);
+  const bumpUserId=message.interaction?.user?.id||message.interactionMetadata?.user?.id||extractUserIdFromText(message.content)||extractUserIdFromText(joined);
   const bumpMention = bumpUserId ? `<@${bumpUserId}>` : "";
-  const thanksMessage =
-    "<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n" +
-    "<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n" +
-    bumpMention;
+  const thanksMessage="<a:VC_ThankYou:1330186319673950401> **__Grazie per aver `bumpato` il server su Discadia!__**\n"+"<:VC_HelloKittyGun:1329447880150220883> Ci __vediamo__ nuovamente tra **24 ore!**\n"+bumpMention;
 
   await recordDiscadiaBump(client, message.guild.id, bumpUserId || null);
-  const channel =
-    message.channel ||
-    (message.channelId
-      ? await message.guild.channels.fetch(message.channelId).catch(() => null)
-      : null);
+  const channel=message.channel||(message.channelId?await message.guild.channels.fetch(message.channelId).catch(() => null):null);
   if (channel?.isTextBased?.()) {
     try {
       await channel.send({
@@ -572,9 +417,7 @@ async function handleDiscadiaBump(message, client) {
       } catch {
         const fallbackChannelId = IDs.channels.commands || null;
         if (fallbackChannelId) {
-          const fallbackChannel =
-            message.guild.channels.cache.get(fallbackChannelId) ||
-            (await message.guild.channels.fetch(fallbackChannelId).catch(() => null));
+          const fallbackChannel=message.guild.channels.cache.get(fallbackChannelId)||(await message.guild.channels.fetch(fallbackChannelId).catch(() => null));
           if (fallbackChannel?.isTextBased?.()) {
             await fallbackChannel.send({ content: thanksMessage.trim() }).catch(() => {});
           }
@@ -589,40 +432,17 @@ async function handleSuggestionChannelMessage(message) {
   if (!message?.guild) return false;
   if (message.author?.bot || message.webhookId || message.system) return false;
 
-  const suggestionsChannelId = String(
-    IDs.channels.suggestions || "1442569147559973094",
-  );
+  const suggestionsChannelId=String(IDs.channels.suggestions||"1442569147559973094",);
   if (String(message.channelId) !== suggestionsChannelId) return false;
 
   const suggestionText = String(message.content || "").trim();
   if (!suggestionText) return false;
 
-  const counterFilter = {
-    GuildID: message.guild.id,
-    ChannelID: "__counter__",
-    Msg: "__counter__",
-    AuthorID: "__system__",
-  };
-  const counter = await SuggestionCount.findOneAndUpdate(
-    counterFilter,
-    {
-      $inc: { count: 1 },
-      $setOnInsert: {
-        Upmembers: [],
-        Downmembers: [],
-        upvotes: 0,
-        downvotes: 0,
-        sID: "__counter__",
-      },
-    },
-    { new: true, upsert: true, setDefaultsOnInsert: true },
-  );
+  const counterFilter={GuildID:message.guild.id,ChannelID:"__counter__",Msg:"__counter__",AuthorID:"__system__",};
+  const counter=await SuggestionCount.findOneAndUpdate(counterFilter,{$inc:{count:1},$setOnInsert:{Upmembers:[],Downmembers:[],upvotes:0,downvotes:0,sID:"__counter__",},},{new:true,upsert:true,setDefaultsOnInsert:true},);
   const suggestionId = String(counter?.count || 1);
 
-  const suggestionEmbed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setDescription(
-      `**<a:VC_CrownYellow:1330194103564238930> Mandato da:**\n${message.author.username}\n\n**<:pinnednew:1443670849990430750> Suggerimento:**\n\n${suggestionText}\n\n**<:infoglowingdot:1443660296823767110> Numero voti:**\n\n`,
+  const suggestionEmbed=new EmbedBuilder().setColor("#6f4e37").setDescription(`**<a:VC_CrownYellow:1330194103564238930> Mandato da:**\n${message.author.username}\n\n**<:pinnednew:1443670849990430750>Suggerimento:**\n\n${suggestionText}\n\n**<:infoglowingdot:1443660296823767110>Numero voti:**\n\n`,
     )
     .setFields(
       { name: "<:thumbsup:1471292172145004768>", value: "0", inline: true },
@@ -630,39 +450,13 @@ async function handleSuggestionChannelMessage(message) {
     )
     .setTimestamp()
     .setFooter({
-      text: `User ID: ${message.author.id} | sID: ${suggestionId}`,
+      text: `User ID:${message.author.id}|sID:${suggestionId}`,
     });
 
-  const voteRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("upv")
-      .setEmoji("<:thumbsup:1471292172145004768>")
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId("downv")
-      .setEmoji("<:thumbsdown:1471292163957457013>")
-      .setStyle(ButtonStyle.Secondary),
-  );
-  const staffRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("suggestion_staff_accept")
-      .setLabel("Accetta")
-      .setEmoji("<:vegacheckmark:1443666279058772028>")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId("suggestion_staff_reject")
-      .setLabel("Rifiuta")
-      .setEmoji("<:vegax:1443934876440068179>")
-      .setStyle(ButtonStyle.Danger),
-  );
+  const voteRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("upv").setEmoji("<:thumbsup:1471292172145004768>").setStyle(ButtonStyle.Secondary),new ButtonBuilder().setCustomId("downv").setEmoji("<:thumbsdown:1471292163957457013>").setStyle(ButtonStyle.Secondary),);
+  const staffRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("suggestion_staff_accept").setLabel("Accetta").setEmoji("<:vegacheckmark:1443666279058772028>").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("suggestion_staff_reject").setLabel("Rifiuta").setEmoji("<:vegax:1443934876440068179>").setStyle(ButtonStyle.Danger),);
 
-  const posted = await message.channel
-    .send({
-      content: "<@&1442568894349840435>",
-      embeds: [suggestionEmbed],
-      components: [voteRow, staffRow],
-    })
-    .catch(() => null);
+  const posted=await message.channel.send({content:"<@&1442568894349840435>",embeds:[suggestionEmbed],components:[voteRow,staffRow],}).catch(() => null);
   if (!posted) return false;
 
   await SuggestionCount.create({
@@ -677,9 +471,7 @@ async function handleSuggestionChannelMessage(message) {
     sID: suggestionId,
   }).catch(() => {});
 
-  const thread = await posted
-    .startThread({
-      name: `Thread per il suggerimento ${suggestionId}`,
+  const thread=await posted.startThread({name:`Thread per il suggerimento ${suggestionId}`,
       autoArchiveDuration: 10080,
     })
     .catch(() => null);

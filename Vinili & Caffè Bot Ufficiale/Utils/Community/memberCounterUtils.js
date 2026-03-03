@@ -38,8 +38,7 @@ async function updateMemberCounterNow(guild) {
   const channel = await resolveCounterChannel(guild);
   if (!channel) return false;
 
-  const me =
-    guild.members.me || (await guild.members.fetchMe().catch(() => null));
+  const me=guild.members.me||(await guild.members.fetchMe().catch(() => null));
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels))
     return false;
 
@@ -68,18 +67,7 @@ function scheduleMemberCounterRefresh(guild, options = {}) {
 
   clearTimers(guildId);
 
-  const primary = setTimeout(async () => {
-    await updateMemberCounterNow(guild).catch(() => {});
-    if (secondPassMs > 0) {
-      const secondary = setTimeout(async () => {
-        await updateMemberCounterNow(guild).catch(() => {});
-        secondaryTimers.delete(guildId);
-      }, secondPassMs);
-      secondaryTimers.set(guildId, secondary);
-    }
-    primaryTimers.delete(guildId);
-  }, delayMs);
-  primaryTimers.set(guildId, primary);
+  const primary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});if(secondPassMs>0){const secondary=setTimeout(async() => {await updateMemberCounterNow(guild).catch(() => {});secondaryTimers.delete(guildId);},secondPassMs);secondaryTimers.set(guildId,secondary);}primaryTimers.delete(guildId);},delayMs);primaryTimers.set(guildId, primary);
   return true;
 }
 

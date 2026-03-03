@@ -2,11 +2,12 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require(
 const fs = require("fs");
 const path = require("path");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
+const BOT_ROOT = path.resolve(__dirname, "..", "..");
 
 const OPEN_FOR_MS = 24 * 60 * 60 * 1000;
 const INACTIVE_FOR_MS = 2 * 60 * 60 * 1000;
 
-const TRANSCRIPTS_ROOT = path.join(process.cwd(), "local_transcripts");
+const TRANSCRIPTS_ROOT = path.join(BOT_ROOT, "local_transcripts");
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
@@ -39,43 +40,21 @@ async function getLatestHumanMessageTimestamp(channel, fallbackDate) {
 async function processTickets(client) {
   const now = Date.now();
   const openBefore = new Date(now - OPEN_FOR_MS);
-  const tickets = await Ticket.find({
-    open: true,
-    createdAt: { $lte: openBefore },
-    $or: [
-      { autoClosePromptSentAt: { $exists: false } },
-      { autoClosePromptSentAt: null },
-    ],
-  })
-    .limit(100)
-    .catch(() => []);
+  const tickets=await Ticket.find({open:true,createdAt:{$lte:openBefore},$or:[{autoClosePromptSentAt:{$exists:false}},{autoClosePromptSentAt:null},],}).limit(100).catch(() => []);
 
   for (const ticket of tickets) {
     try {
-      const channel =
-        client.channels.cache.get(ticket.channelId) ||
-        (await client.channels.fetch(ticket.channelId).catch(() => null));
+      const channel=client.channels.cache.get(ticket.channelId)||(await client.channels.fetch(ticket.channelId).catch(() => null));
       if (!channel || !channel.isTextBased?.()) continue;
 
-      const lastActiveAt = await getLatestHumanMessageTimestamp(
-        channel,
-        ticket.createdAt,
-      );
+      const lastActiveAt=await getLatestHumanMessageTimestamp(channel,ticket.createdAt,);
       if (!lastActiveAt || now - lastActiveAt < INACTIVE_FOR_MS) continue;
 
-      const mentions = new Set(
-        [ticket.userId, ticket.claimedBy].filter(Boolean),
-      );
-      const mentionText = Array.from(mentions)
-        .map((id) => `<@${id}>`)
+      const mentions=new Set([ticket.userId,ticket.claimedBy].filter(Boolean),);
+      const mentionText=Array.from(mentions).map((id) => `<@${id}>`)
         .join(" ");
 
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle("Richiesta di chiusura")
-        .setDescription(
-          "Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nè stato risolto?",
-        );
+      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Richiesta di chiusura").setDescription("Il ticket è aperto da più di 24 ore e non ci sono messaggi recenti.\nè stato risolto?",);
 
       await channel
         .send({
@@ -101,17 +80,7 @@ async function processTickets(client) {
 
 function startTicketAutoClosePromptLoop(client) {
   if (promptLoopHandle) return promptLoopHandle;
-  const tick = async () => {
-    if (promptLoopRunning) return;
-    promptLoopRunning = true;
-    try {
-      await processTickets(client);
-    } catch (err) {
-      global.logger.error("[TICKET AUTO CLOSE PROMPT] Loop error", err);
-    } finally {
-      promptLoopRunning = false;
-    }
-  };
+  const tick=async() => {if(promptLoopRunning)return;promptLoopRunning=true;try{await processTickets(client);}catch(err){global.logger.error("[TICKET AUTO CLOSE PROMPT] Loop error",err);}finally{promptLoopRunning=false;}};
   tick();
   promptLoopHandle = setInterval(tick, 10 * 60 * 1000);
   return promptLoopHandle;

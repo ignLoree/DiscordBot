@@ -11,134 +11,14 @@ const DEFAULT_WINDOW_START_MINUTE = 0;
 const DEFAULT_WINDOW_END_HOUR = 21;
 const DEFAULT_WINDOW_END_MINUTE = 59;
 const DEFAULT_SOURCES = ["openrouter", "local"];
-const DEFAULT_OPENROUTER_MODELS = [
-  "google/gemma-3-12b-it:free",
-  "google/gemma-3-27b-it:free",
-];
+const DEFAULT_OPENROUTER_MODELS=["google/gemma-3-12b-it:free","google/gemma-3-27b-it:free",];
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MAX_ROUNDS = 2;
 const OPENROUTER_RETRY_DELAY_MS = 1500;
 const OPENROUTER_RATE_LIMIT_COOLDOWN_MS = 15 * 60 * 1000;
 let openRouterCooldownUntil = 0;
 
-const LOCAL_THEME_POLLS = [
-  {
-    question: "Qual è il momento migliore della giornata?",
-    answers: ["Mattina presto", "Tarda mattinata", "Pomeriggio", "Prima serata", "Notte"],
-  },
-  {
-    question: "Quale stagione ti rappresenta di più?",
-    answers: ["Primavera", "Estate", "Autunno", "Inverno"],
-  },
-  {
-    question: "Come preferisci iniziare la giornata?",
-    answers: ["Con calma", "Con una colazione abbondante", "Allenandomi", "Con musica o podcast", "Di corsa ma produttivo"],
-  },
-  {
-    question: "Quale tipo di vacanza sceglieresti?",
-    answers: ["Mare", "Montagna", "Città d'arte", "Road trip", "Relax totale"],
-  },
-  {
-    question: "Cosa conta di più in un film?",
-    answers: ["Trama", "Personaggi", "Colonna sonora", "Finale", "Fotografia"],
-  },
-  {
-    question: "Quale pasto preferisci in assoluto?",
-    answers: ["Colazione", "Pranzo", "Cena", "Spuntino"],
-  },
-  {
-    question: "Che rapporto hai con il freddo?",
-    answers: ["Lo adoro", "Mi piace solo se sono coperto bene", "Lo tollero", "Lo odio"],
-  },
-  {
-    question: "Se potessi vivere in un'altra epoca, quale sceglieresti?",
-    answers: ["Anni 80", "Anni 90", "Primi 2000", "Futuro", "Resto nel presente"],
-  },
-  {
-    question: "Quale qualità apprezzi di più in una persona?",
-    answers: ["Sincerità", "Ironia", "Intelligenza", "Gentilezza", "Determinazione"],
-  },
-  {
-    question: "Come scegli di solito cosa guardare la sera?",
-    answers: ["Consigli degli amici", "Trending", "Vado a caso", "Riguardo qualcosa che conosco", "Recensioni online"],
-  },
-  {
-    question: "Qual è il tuo comfort food ideale?",
-    answers: ["Pizza", "Pasta", "Dolci", "Panino o fast food", "Cibo fatto in casa"],
-  },
-  {
-    question: "Che tipo di weekend preferisci?",
-    answers: ["Pieno di impegni", "Fuori casa", "Chill totale", "Tra amici", "Improvvisato"],
-  },
-  {
-    question: "Quale mezzo di trasporto sopporti meglio?",
-    answers: ["Auto", "Treno", "Aereo", "Moto", "A piedi"],
-  },
-  {
-    question: "Quale app usi più spesso in una giornata normale?",
-    answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Spotify"],
-  },
-  {
-    question: "Che tipo di meteo ti mette più di buon umore?",
-    answers: ["Sole pieno", "Pioggia leggera", "Temporale", "Freddo secco", "Cielo coperto"],
-  },
-  {
-    question: "Se dovessi scegliere un superpotere, quale prenderesti?",
-    answers: ["Teletrasporto", "Leggere nel pensiero", "Invisibilità", "Volare", "Fermare il tempo"],
-  },
-  {
-    question: "Che tipo di contenuto ti intrattiene di più?",
-    answers: ["Video brevi", "Film", "Serie TV", "Podcast", "Streaming live"],
-  },
-  {
-    question: "Quando sei stanco, cosa ti recupera prima?",
-    answers: ["Dormire", "Mangiare", "Uscire", "Musica", "Stare da solo"],
-  },
-  {
-    question: "Quale snack vince sempre?",
-    answers: ["Patatine", "Cioccolato", "Popcorn", "Gelato", "Frutta"],
-  },
-  {
-    question: "Che tipo di persona sei nelle chat di gruppo?",
-    answers: ["Quello che legge e basta", "Quello che manda meme", "Quello che risponde a tutti", "Quello che sparisce", "Quello che organizza"],
-  },
-  {
-    question: "Qual è il miglior modo per passare il tempo da solo?",
-    answers: ["Guardare qualcosa", "Giocare", "Ascoltare musica", "Dormire", "Fare una passeggiata"],
-  },
-  {
-    question: "Cosa non dovrebbe mai mancare in una casa ideale?",
-    answers: ["Spazio", "Silenzio", "Luce naturale", "Una cucina grande", "Una postazione relax"],
-  },
-  {
-    question: "Quale sapore scegli più spesso?",
-    answers: ["Dolce", "Salato", "Piccante", "Amaro", "Aspro"],
-  },
-  {
-    question: "Come reagisci di solito agli imprevisti?",
-    answers: ["Mi adatto subito", "Mi innervosisco", "Cerco un piano B", "Aspetto e vedo", "Dipende dalla situazione"],
-  },
-  {
-    question: "Qual è il miglior periodo dell'anno?",
-    answers: ["Gennaio-Marzo", "Aprile-Giugno", "Luglio-Settembre", "Ottobre-Dicembre"],
-  },
-  {
-    question: "Che tipo di musica metti più spesso in cuffia?",
-    answers: ["Per caricarmi", "Per rilassarmi", "Per concentrarmi", "Per nostalgia", "Dipende dal mood"],
-  },
-  {
-    question: "Sei più tipo da piano o improvvisazione?",
-    answers: ["Programmo tutto", "Organizzo il minimo", "Vado d'istinto", "Cambio idea spesso"],
-  },
-  {
-    question: "Quale posto scegli per rilassarti davvero?",
-    answers: ["Casa", "Mare", "Montagna", "Città", "Ovunque purché in pace"],
-  },
-  {
-    question: "Quanto conta per te il primo impatto?",
-    answers: ["Tantissimo", "Abbastanza", "Il giusto", "Poco"],
-  },
-];
+const LOCAL_THEME_POLLS=[{question:"Qual è il momento migliore della giornata?",answers:["Mattina presto","Tarda mattinata","Pomeriggio","Prima serata","Notte"],},{question:"Quale stagione ti rappresenta di più?",answers:["Primavera","Estate","Autunno","Inverno"],},{question:"Come preferisci iniziare la giornata?",answers:["Con calma","Con una colazione abbondante","Allenandomi","Con musica o podcast","Di corsa ma produttivo"],},{question:"Quale tipo di vacanza sceglieresti?",answers:["Mare","Montagna","Città d'arte","Road trip","Relax totale"],},{question:"Cosa conta di più in un film?",answers:["Trama","Personaggi","Colonna sonora","Finale","Fotografia"],},{question:"Quale pasto preferisci in assoluto?",answers:["Colazione","Pranzo","Cena","Spuntino"],},{question:"Che rapporto hai con il freddo?",answers:["Lo adoro","Mi piace solo se sono coperto bene","Lo tollero","Lo odio"],},{question:"Se potessi vivere in un'altra epoca, quale sceglieresti?",answers:["Anni 80","Anni 90","Primi 2000","Futuro","Resto nel presente"],},{question:"Quale qualità apprezzi di più in una persona?",answers:["Sincerità","Ironia","Intelligenza","Gentilezza","Determinazione"],},{question:"Come scegli di solito cosa guardare la sera?",answers:["Consigli degli amici","Trending","Vado a caso","Riguardo qualcosa che conosco","Recensioni online"],},{question:"Qual è il tuo comfort food ideale?",answers:["Pizza","Pasta","Dolci","Panino o fast food","Cibo fatto in casa"],},{question:"Che tipo di weekend preferisci?",answers:["Pieno di impegni","Fuori casa","Chill totale","Tra amici","Improvvisato"],},{question:"Quale mezzo di trasporto sopporti meglio?",answers:["Auto","Treno","Aereo","Moto","A piedi"],},{question:"Quale app usi più spesso in una giornata normale?",answers:["WhatsApp","Instagram","TikTok","YouTube","Spotify"],},{question:"Che tipo di meteo ti mette più di buon umore?",answers:["Sole pieno","Pioggia leggera","Temporale","Freddo secco","Cielo coperto"],},{question:"Se dovessi scegliere un superpotere, quale prenderesti?",answers:["Teletrasporto","Leggere nel pensiero","Invisibilità","Volare","Fermare il tempo"],},{question:"Che tipo di contenuto ti intrattiene di più?",answers:["Video brevi","Film","Serie TV","Podcast","Streaming live"],},{question:"Quando sei stanco, cosa ti recupera prima?",answers:["Dormire","Mangiare","Uscire","Musica","Stare da solo"],},{question:"Quale snack vince sempre?",answers:["Patatine","Cioccolato","Popcorn","Gelato","Frutta"],},{question:"Che tipo di persona sei nelle chat di gruppo?",answers:["Quello che legge e basta","Quello che manda meme","Quello che risponde a tutti","Quello che sparisce","Quello che organizza"],},{question:"Qual è il miglior modo per passare il tempo da solo?",answers:["Guardare qualcosa","Giocare","Ascoltare musica","Dormire","Fare una passeggiata"],},{question:"Cosa non dovrebbe mai mancare in una casa ideale?",answers:["Spazio","Silenzio","Luce naturale","Una cucina grande","Una postazione relax"],},{question:"Quale sapore scegli più spesso?",answers:["Dolce","Salato","Piccante","Amaro","Aspro"],},{question:"Come reagisci di solito agli imprevisti?",answers:["Mi adatto subito","Mi innervosisco","Cerco un piano B","Aspetto e vedo","Dipende dalla situazione"],},{question:"Qual è il miglior periodo dell'anno?",answers:["Gennaio-Marzo","Aprile-Giugno","Luglio-Settembre","Ottobre-Dicembre"],},{question:"Che tipo di musica metti più spesso in cuffia?",answers:["Per caricarmi","Per rilassarmi","Per concentrarmi","Per nostalgia","Dipende dal mood"],},{question:"Sei più tipo da piano o improvvisazione?",answers:["Programmo tutto","Organizzo il minimo","Vado d'istinto","Cambio idea spesso"],},{question:"Quale posto scegli per rilassarti davvero?",answers:["Casa","Mare","Montagna","Città","Ovunque purché in pace"],},{question:"Quanto conta per te il primo impatto?",answers:["Tantissimo","Abbastanza","Il giusto","Poco"],},];
 
 function normalizeText(value) {
   return String(value || "")
@@ -215,12 +95,8 @@ function applyOptionCount(payload, cfg = {}, forcedTargetOptions = null) {
   if (!payload) return null;
   const minOptions = clampOptionCount(cfg.minOptions, 4);
   const maxOptions = Math.max(minOptions, clampOptionCount(cfg.maxOptions, 6));
-  const targetOptions = Number.isFinite(Number(forcedTargetOptions))
-    ? Math.max(minOptions, Math.min(maxOptions, Math.floor(Number(forcedTargetOptions))))
-    : maxOptions;
-  const answers = Array.isArray(payload.answers)
-    ? payload.answers.map((x) => normalizeText(String(x || ""))).filter(Boolean)
-    : [];
+  const targetOptions=Number.isFinite(Number(forcedTargetOptions))?Math.max(minOptions,Math.min(maxOptions,Math.floor(Number(forcedTargetOptions)))):maxOptions;
+  const answers=Array.isArray(payload.answers)?payload.answers.map((x) => normalizeText(String(x||""))).filter(Boolean):[];
   if (answers.length < minOptions) return null;
   return {
     question: normalizeText(String(payload.question || "")),
@@ -229,16 +105,8 @@ function applyOptionCount(payload, cfg = {}, forcedTargetOptions = null) {
 }
 
 function getRomeDayBounds(now = new Date()) {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const parts = fmt.formatToParts(now).reduce((acc, part) => {
-    if (part.type !== "literal") acc[part.type] = part.value;
-    return acc;
-  }, {});
+  const fmt=new Intl.DateTimeFormat("en-CA",{timeZone:TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit",});
+  const parts=fmt.formatToParts(now).reduce((acc,part) => {if(part.type!=="literal")acc[part.type]=part.value;return acc;},{});
   const year = Number(parts.year || 0);
   const month = Number(parts.month || 1);
   const day = Number(parts.day || 1);
@@ -248,19 +116,10 @@ function getRomeDayBounds(now = new Date()) {
 }
 
 function getRomeTimeParts(date = new Date()) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIMEZONE,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIMEZONE,hour:"2-digit",minute:"2-digit",hour12:false,});
   const parts = formatter.formatToParts(date);
-  const hour = Number(
-    parts.find((part) => part.type === "hour")?.value || 0,
-  );
-  const minute = Number(
-    parts.find((part) => part.type === "minute")?.value || 0,
-  );
+  const hour=Number(parts.find((part) => part.type==="hour")?.value||0,);
+  const minute=Number(parts.find((part) => part.type==="minute")?.value||0,);
   return {
     hour: Number.isFinite(hour) ? hour : 0,
     minute: Number.isFinite(minute) ? minute : 0,
@@ -268,18 +127,10 @@ function getRomeTimeParts(date = new Date()) {
 }
 
 function isWithinAutoPollWindow(now = new Date(), cfg = {}) {
-  const startHour = Number.isFinite(Number(cfg?.windowStartHour))
-    ? Number(cfg.windowStartHour)
-    : DEFAULT_WINDOW_START_HOUR;
-  const startMinute = Number.isFinite(Number(cfg?.windowStartMinute))
-    ? Number(cfg.windowStartMinute)
-    : DEFAULT_WINDOW_START_MINUTE;
-  const endHour = Number.isFinite(Number(cfg?.windowEndHour))
-    ? Number(cfg.windowEndHour)
-    : DEFAULT_WINDOW_END_HOUR;
-  const endMinute = Number.isFinite(Number(cfg?.windowEndMinute))
-    ? Number(cfg.windowEndMinute)
-    : DEFAULT_WINDOW_END_MINUTE;
+  const startHour=Number.isFinite(Number(cfg?.windowStartHour))?Number(cfg.windowStartHour):DEFAULT_WINDOW_START_HOUR;
+  const startMinute=Number.isFinite(Number(cfg?.windowStartMinute))?Number(cfg.windowStartMinute):DEFAULT_WINDOW_START_MINUTE;
+  const endHour=Number.isFinite(Number(cfg?.windowEndHour))?Number(cfg.windowEndHour):DEFAULT_WINDOW_END_HOUR;
+  const endMinute=Number.isFinite(Number(cfg?.windowEndMinute))?Number(cfg.windowEndMinute):DEFAULT_WINDOW_END_MINUTE;
   const { hour, minute } = getRomeTimeParts(now);
   const nowTotal = hour * 60 + minute;
   const startTotal = startHour * 60 + startMinute;
@@ -288,17 +139,9 @@ function isWithinAutoPollWindow(now = new Date(), cfg = {}) {
 }
 
 function getRomeOffsetMs(utcDate) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIMEZONE,
-    timeZoneName: "shortOffset",
-    hour: "2-digit",
-  });
-  const zoneName = formatter
-    .formatToParts(utcDate)
-    .find((part) => part.type === "timeZoneName")?.value;
-  const match = String(zoneName || "GMT+0").match(
-    /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,
-  );
+  const formatter=new Intl.DateTimeFormat("en-US",{timeZone:TIMEZONE,timeZoneName:"shortOffset",hour:"2-digit",});
+  const zoneName=formatter.formatToParts(utcDate).find((part) => part.type==="timeZoneName")?.value;
+  const match=String(zoneName||"GMT+0").match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,);
   if (!match) return 0;
   const sign = match[1] === "-" ? -1 : 1;
   const hours = Number(match[2] || 0);
@@ -330,32 +173,20 @@ function buildLocalThemePoll(cfg = {}, forcedTargetOptions = null) {
 
 function buildPollSignature(question, answers = []) {
   const q = normalizeText(String(question || "")).toLowerCase();
-  const opts = Array.isArray(answers)
-    ? answers.map((a) => normalizeText(String(a || "")).toLowerCase()).filter(Boolean)
-    : [];
+  const opts=Array.isArray(answers)?answers.map((a) => normalizeText(String(a||"")).toLowerCase()).filter(Boolean):[];
   const uniq = Array.from(new Set(opts)).sort();
   return `${q}||${uniq.join("|")}`;
 }
 
 async function hasManualPollToday(guildId) {
   const { startRome, endRome } = getRomeDayBounds();
-  const count = await Poll.countDocuments({
-    guildId: String(guildId),
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-    $or: [{ source: "manual" }, { source: { $exists: false } }],
-    createdAt: { $gte: startRome, $lt: endRome },
-  }).catch(() => 0);
+  const count=await Poll.countDocuments({guildId:String(guildId),domanda:{$ne:COUNTER_FILTER_QUESTION},$or:[{source:"manual"},{source:{$exists:false}}],createdAt:{$gte:startRome,$lt:endRome},}).catch(() => 0);
   return Number(count || 0) > 0;
 }
 
 async function hasAutoPollToday(guildId) {
   const { startRome, endRome } = getRomeDayBounds();
-  const count = await Poll.countDocuments({
-    guildId: String(guildId),
-    domanda: { $ne: COUNTER_FILTER_QUESTION },
-    source: "auto",
-    createdAt: { $gte: startRome, $lt: endRome },
-  }).catch(() => 0);
+  const count=await Poll.countDocuments({guildId:String(guildId),domanda:{$ne:COUNTER_FILTER_QUESTION},source:"auto",createdAt:{$gte:startRome,$lt:endRome},}).catch(() => 0);
   return Number(count || 0) > 0;
 }
 
@@ -363,9 +194,7 @@ async function isDuplicateQuestion(guildId, question) {
   const normalized = normalizeText(question).toLowerCase();
   if (!normalized) return true;
   const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const existing = await Poll.findOne({
-    guildId: String(guildId),
-    domanda: { $regex: new RegExp(`^${escaped}$`, "i") },
+  const existing=await Poll.findOne({guildId:String(guildId),domanda:{$regex:new RegExp(`^${escaped}$`, "i") },
     $or: [{ source: { $in: ["manual", "auto"] } }, { source: { $exists: false } }],
   }).lean().catch(() => null);
   return Boolean(existing);
@@ -374,44 +203,10 @@ async function isDuplicateQuestion(guildId, question) {
 async function isDuplicatePollContent(guildId, payload) {
   const signature = buildPollSignature(payload?.question, payload?.answers);
   if (!signature || signature === "||") return true;
-  const rows = await Poll.find(
-    {
-      guildId: String(guildId),
-      domanda: { $ne: COUNTER_FILTER_QUESTION },
-      $or: [{ source: { $in: ["manual", "auto"] } }, { source: { $exists: false } }],
-    },
-    {
-      domanda: 1,
-      risposta1: 1,
-      risposta2: 1,
-      risposta3: 1,
-      risposta4: 1,
-      risposta5: 1,
-      risposta6: 1,
-      risposta7: 1,
-      risposta8: 1,
-      risposta9: 1,
-      risposta10: 1,
-    },
-  )
-    .sort({ createdAt: -1, _id: -1 })
-    .limit(400)
-    .lean()
-    .catch(() => []);
+  const rows=await Poll.find({guildId:String(guildId),domanda:{$ne:COUNTER_FILTER_QUESTION},$or:[{source:{$in:["manual","auto"]}},{source:{$exists:false}}],},{domanda:1,risposta1:1,risposta2:1,risposta3:1,risposta4:1,risposta5:1,risposta6:1,risposta7:1,risposta8:1,risposta9:1,risposta10:1,},).sort({createdAt:-1,_id:-1}).limit(400).lean().catch(() => []);
 
   for (const row of rows) {
-    const rowAnswers = [
-      row?.risposta1,
-      row?.risposta2,
-      row?.risposta3,
-      row?.risposta4,
-      row?.risposta5,
-      row?.risposta6,
-      row?.risposta7,
-      row?.risposta8,
-      row?.risposta9,
-      row?.risposta10,
-    ];
+    const rowAnswers=[row?.risposta1,row?.risposta2,row?.risposta3,row?.risposta4,row?.risposta5,row?.risposta6,row?.risposta7,row?.risposta8,row?.risposta9,row?.risposta10,];
     if (buildPollSignature(row?.domanda, rowAnswers) === signature) return true;
   }
   return false;
@@ -468,40 +263,14 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
   if (!apiKey) return null;
   if (isOpenRouterCoolingDown()) return null;
 
-  const configuredModels = Array.isArray(cfg.openrouterModels)
-    ? cfg.openrouterModels
-    : String(process.env.OPENROUTER_MODEL || cfg.openrouterModel || "")
-      .split(",")
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-  const models = (
-    configuredModels.length ? configuredModels : DEFAULT_OPENROUTER_MODELS
-  ).map((entry) => String(entry || "").trim()).filter(Boolean);
+  const configuredModels=Array.isArray(cfg.openrouterModels)?cfg.openrouterModels:String(process.env.OPENROUTER_MODEL||cfg.openrouterModel||"").split(",").map((entry) => entry.trim()).filter(Boolean);
+  const models=(configuredModels.length?configuredModels:DEFAULT_OPENROUTER_MODELS).map((entry) => String(entry||"").trim()).filter(Boolean);
   if (!models.length) return null;
   const optionCount = Math.max(4, Math.min(6, Number(forcedTargetOptions || 5)));
   let lastError = null;
 
   for (const model of models) {
-    const payload = {
-      model,
-      messages: [
-        {
-          role: "system",
-          content:
-            "Genera sondaggi generali per utenti italiani. " +
-            "Scrivi solo in italiano naturale. " +
-            "Le domande devono sembrare sondaggi generali, leggeri e coinvolgenti, non interni a un server o community. " +
-            "Evita trivia, domande da enciclopedia. " +
-            "Le risposte devono essere coerenti tra loro, tutte plausibili, corte e senza duplicati. " +
-            "Non usare risposte meta come 'dipende', 'altro', 'non so' salvo se davvero sensate. " +
-            "Non usare mai riferimenti a Discord, community, server, staff, eventi del server o chat di gruppo. " +
-            "Non usare mai il formato 'Qual e la tua opinione su ...'. " +
-            "Restituisci solo JSON valido con le chiavi question e answers.",
-        },
-        {
-          role: "user",
-          content:
-            `Genera un poll con ${optionCount} risposte.` +
+    const payload={model,messages:[{role:"system",content:"Genera sondaggi generali per utenti italiani. "+"Scrivi solo in italiano naturale. "+"Le domande devono sembrare sondaggi generali, leggeri e coinvolgenti, non interni a un server o community. "+"Evita trivia, domande da enciclopedia. "+"Le risposte devono essere coerenti tra loro, tutte plausibili, corte e senza duplicati. "+"Non usare risposte meta come 'dipende', 'altro', 'non so' salvo se davvero sensate. "+"Non usare mai riferimenti a Discord, community, server, staff, eventi del server o chat di gruppo. "+"Non usare mai il formato 'Qual e la tua opinione su ...'. "+"Restituisci solo JSON valido con le chiavi question e answers.",},{role:"user",content:`Genera un poll con ${optionCount}risposte.` +
             " Target: pubblico italiano generalista." +
             " La domanda deve essere breve, chiara, coinvolgente e adatta a ricevere risposte reali da chiunque." +
             " I temi giusti sono abitudini, gusti, preferenze quotidiane, intrattenimento, lifestyle, stagioni, cibo, carattere, tempo libero, gaming, sesso, politica, musica, religione, cronaca." +
@@ -516,10 +285,7 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
     };
 
     try {
-      const response = await axios.post(OPENROUTER_API_URL, payload, {
-        timeout: 20000,
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
+      const response=await axios.post(OPENROUTER_API_URL,payload,{timeout:20000,headers:{Authorization:`Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "https://viniliecaffe.local",
           "X-Title": "Vinili e Caffe Bot",
@@ -528,9 +294,7 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
 
       const choice = response?.data?.choices?.[0] || null;
       const finishReason = String(choice?.finish_reason || "");
-      const content =
-        choice?.message?.content ||
-        extractStructuredText(response?.data);
+      const content=choice?.message?.content||extractStructuredText(response?.data);
       if (!String(content || "").trim()) {
         lastError = new Error(`Empty OpenRouter content for model ${model} (${finishReason || "no_finish_reason"})`);
         continue;
@@ -559,20 +323,11 @@ async function fetchPollFromOpenRouter(cfg = {}, forcedTargetOptions = null) {
 }
 
 async function fetchPollFromOpenRouterWithRetry(cfg = {}, forcedTargetOptions = null) {
-  const maxRounds = Math.max(
-    1,
-    Math.min(10, Math.floor(Number(cfg.openrouterRetryRounds || OPENROUTER_MAX_ROUNDS))),
-  );
-  const retryDelayMs = Math.max(
-    0,
-    Math.min(10000, Math.floor(Number(cfg.openrouterRetryDelayMs || OPENROUTER_RETRY_DELAY_MS))),
-  );
+  const maxRounds=Math.max(1,Math.min(10,Math.floor(Number(cfg.openrouterRetryRounds||OPENROUTER_MAX_ROUNDS))),);
+  const retryDelayMs=Math.max(0,Math.min(10000,Math.floor(Number(cfg.openrouterRetryDelayMs||OPENROUTER_RETRY_DELAY_MS))),);
 
   for (let round = 0; round < maxRounds; round += 1) {
-    const payload = await fetchPollFromOpenRouter(cfg, forcedTargetOptions).catch((error) => {
-      global.logger?.warn?.("[poll.auto] OpenRouter round failed:", error?.message || error);
-      return null;
-    });
+    const payload=await fetchPollFromOpenRouter(cfg,forcedTargetOptions).catch((error) => {global.logger?.warn?.("[poll.auto] OpenRouter round failed:",error?.message||error);return null;});
     if (payload?.question && Array.isArray(payload?.answers) && payload.answers.length >= 4) {
       return payload;
     }
@@ -586,9 +341,7 @@ async function fetchPollFromOpenRouterWithRetry(cfg = {}, forcedTargetOptions = 
 }
 
 async function pickPollCandidate(cfg = {}, forcedTargetOptions = null) {
-  const configuredSources = Array.isArray(cfg.sources) && cfg.sources.length
-    ? cfg.sources.map((v) => String(v || "").trim().toLowerCase()).filter(Boolean)
-    : DEFAULT_SOURCES;
+  const configuredSources=Array.isArray(cfg.sources)&&cfg.sources.length?cfg.sources.map((v) => String(v||"").trim().toLowerCase()).filter(Boolean):DEFAULT_SOURCES;
   const sources = shuffle(configuredSources.length ? configuredSources : DEFAULT_SOURCES);
 
   for (const source of sources) {
@@ -612,9 +365,7 @@ async function pickPollCandidate(cfg = {}, forcedTargetOptions = null) {
 }
 
 async function runAutoPoll(client) {
-  const guild =
-    client.guilds.cache.get(IDs.guilds.main) ||
-    (await client.guilds.fetch(IDs.guilds.main).catch(() => null));
+  const guild=client.guilds.cache.get(IDs.guilds.main)||(await client.guilds.fetch(IDs.guilds.main).catch(() => null));
   if (!guild) return;
 
   if (await hasManualPollToday(guild.id)) return;
@@ -640,11 +391,7 @@ async function runAutoPoll(client) {
 
   if (!payload) return;
 
-  const result = await createPollForGuild(guild, {
-    question: payload.question,
-    answers: payload.answers,
-    source: "auto",
-  });
+  const result=await createPollForGuild(guild,{question:payload.question,answers:payload.answers,source:"auto",});
 
   void result;
 }

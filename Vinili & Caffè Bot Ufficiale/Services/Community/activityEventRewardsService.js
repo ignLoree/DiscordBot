@@ -5,17 +5,9 @@ const { sendEventRewardLog, sendEventRewardSkippedLog, sendEventRewardDm } = req
 const TIME_ZONE_ROME = "Europe/Rome";
 
 function getRomeOffsetMs(utcDate) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE_ROME,
-    timeZoneName: "shortOffset",
-    hour: "2-digit",
-  });
-  const zoneName = formatter
-    .formatToParts(utcDate)
-    .find((part) => part.type === "timeZoneName")?.value;
-  const match = String(zoneName || "GMT+0").match(
-    /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,
-  );
+  const formatter=new Intl.DateTimeFormat("en-US",{timeZone:TIME_ZONE_ROME,timeZoneName:"shortOffset",hour:"2-digit",});
+  const zoneName=formatter.formatToParts(utcDate).find((part) => part.type==="timeZoneName")?.value;
+  const match=String(zoneName||"GMT+0").match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,);
   if (!match) return 0;
   const sign = match[1] === "-" ? -1 : 1;
   const hours = Number(match[2] || 0);
@@ -33,16 +25,8 @@ function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
 }
 
 function getRomeDayBoundsForDate(date = new Date()) {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: TIME_ZONE_ROME,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const parts = fmt.formatToParts(date).reduce((acc, part) => {
-    if (part.type !== "literal") acc[part.type] = part.value;
-    return acc;
-  }, {});
+  const fmt=new Intl.DateTimeFormat("en-CA",{timeZone:TIME_ZONE_ROME,year:"numeric",month:"2-digit",day:"2-digit",});
+  const parts=fmt.formatToParts(date).reduce((acc,part) => {if(part.type!=="literal")acc[part.type]=part.value;return acc;},{});
   const year = Number(parts.year || 0);
   const month = Number(parts.month || 1);
   const day = Number(parts.day || 1);
@@ -69,10 +53,7 @@ async function grantEventLevels(guildId, userId, levels, note = null, member = n
   const currentExp = Math.max(0, Math.floor(Number(doc.totalExp || 0)));
   const currentLevel = getLevelInfo(currentExp).level;
   const targetLevel = currentLevel + Math.floor(Number(levels));
-  const expToAdd = Math.max(
-    0,
-    getTotalExpForLevel(targetLevel) - getTotalExpForLevel(currentLevel),
-  );
+  const expToAdd=Math.max(0,getTotalExpForLevel(targetLevel)-getTotalExpForLevel(currentLevel),);
   if (expToAdd <= 0) return { doc, added: 0 };
 
   const result = await addExp(guildId, userId, expToAdd, false, null);
@@ -120,14 +101,7 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
 
   const rewardTypeStr = String(rewardType);
   const tierVal = tier != null ? tier : null;
-  const labelMap = {
-    supporter: "Ruolo Supporter",
-    verificato: "Ruolo Verificato/Verificata",
-    guilded: "Ruolo Guilded",
-    invite: "Inviti (soglia raggiunta)",
-    voter: "Voto Discadia",
-    recensione: "Recensione DISBOARD",
-  };
+  const labelMap={supporter:"Ruolo Supporter",verificato:"Ruolo Verificato/Verificata",guilded:"Ruolo Guilded",invite:"Inviti (soglia raggiunta)",voter:"Voto Discadia",recensione:"Recensione DISBOARD",};
 
   try {
     await ActivityEventReward.create({
@@ -151,18 +125,7 @@ async function grantEventRewardOnce(guildId, userId, rewardType, options = {}) {
     throw err;
   }
 
-  const result = await grantEventLevels(
-    guildId,
-    userId,
-    levels,
-    `Evento reward: ${rewardType}${tier != null ? ` tier ${tier}` : ""}`,
-    options.member,
-    options.clientOrGuild ?? null,
-    {
-      suppressLog: true,
-      suppressDm: true,
-    },
-  );
+  const result=await grantEventLevels(guildId,userId,levels,`Evento reward: ${rewardType}${tier!=null?` tier ${tier}` : ""}`,options.member,options.clientOrGuild??null,{suppressLog:true,suppressDm:true,},);
   if (!result) {
     await ActivityEventReward.deleteOne({
       guildId,
@@ -280,18 +243,10 @@ async function grantEventRewardsForSameDayReviewAndVote(guild, eventStartDate) {
   if (!guild?.id || !eventStartDate) return;
   const active = await isEventActive(guild.id);
   if (!active) return;
-  const { startRome, endRome } = getRomeDayBoundsForDate(
-    eventStartDate instanceof Date ? eventStartDate : new Date(eventStartDate),
-  );
+  const{startRome,endRome}=getRomeDayBoundsForDate(eventStartDate instanceof Date?eventStartDate:new Date(eventStartDate),);
   await guild.members.fetch().catch(() => null);
 
-  const voteDocs = await VoteRole.find({
-    guildId: guild.id,
-    createdAt: { $gte: startRome, $lt: endRome },
-  })
-    .select("userId")
-    .lean()
-    .catch(() => []);
+  const voteDocs=await VoteRole.find({guildId:guild.id,createdAt:{$gte:startRome,$lt:endRome},}).select("userId").lean().catch(() => []);
   const membersCache = await guild.members.fetch().catch(() => null) || guild.members.cache;
   for (const doc of voteDocs) {
     const userId = String(doc?.userId || "");
@@ -324,21 +279,9 @@ function getEventWeekNumber(settings) {
 async function getTop10ExpDuringEvent(guildId, limit = 10) {
   if (!guildId) return [];
   const cap = Math.max(1, Math.min(100, Number(limit) || 10));
-  const snapshots = await EventUserExpSnapshot.find({ guildId })
-    .select("userId totalExpAtStart")
-    .lean()
-    .then((list) => new Map(list.map((d) => [String(d.userId), Number(d.totalExpAtStart) || 0])))
-    .catch(() => new Map());
-  const users = await ExpUser.find({ guildId })
-    .select("userId totalExp")
-    .lean()
-    .catch(() => []);
-  const withExp = users.map((d) => {
-    const total = Math.max(0, Number(d?.totalExp || 0));
-    const atStart = snapshots.get(String(d?.userId || "")) ?? 0;
-    const during = Math.max(0, total - atStart);
-    return { userId: String(d?.userId || ""), expDuringEvent: during };
-  });
+  const snapshots=await EventUserExpSnapshot.find({guildId}).select("userId totalExpAtStart").lean().then((list) => new Map(list.map((d) => [String(d.userId),Number(d.totalExpAtStart)||0]))).catch(() => new Map());
+  const users=await ExpUser.find({guildId}).select("userId totalExp").lean().catch(() => []);
+  const withExp=users.map((d) => {const total=Math.max(0,Number(d?.totalExp||0));const atStart=snapshots.get(String(d?.userId||""))??0;const during=Math.max(0,total-atStart);return{userId:String(d?.userId||""),expDuringEvent:during};});
   return withExp
     .filter((r) => r.expDuringEvent > 0)
     .sort((a, b) => b.expDuringEvent - a.expDuringEvent)

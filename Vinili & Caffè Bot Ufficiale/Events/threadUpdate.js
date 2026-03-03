@@ -19,11 +19,7 @@ function isHttpUrl(value) {
 
 async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const audit = await resolveResponsible(
-      guild,
-      THREAD_UPDATE_ACTION,
-      (entry) => String(entry?.target?.id || "") === String(threadId || ""),
-    );
+    const audit=await resolveResponsible(guild,THREAD_UPDATE_ACTION,(entry) => String(entry?.target?.id||"")===String(threadId||""),);
     if (audit?.executor || audit?.entry) return audit;
     if (attempt < retries - 1) await sleep(delayMs);
   }
@@ -43,9 +39,7 @@ module.exports = {
       const lockedChanged = Boolean(oldThread?.locked) !== Boolean(newThread?.locked);
       const oldTags = normalizeTagList(oldThread?.appliedTags);
       const newTags = normalizeTagList(newThread?.appliedTags);
-      const tagsChanged =
-        String(oldTags.join(",")) !==
-        String(newTags.join(","));
+      const tagsChanged=String(oldTags.join(","))!==String(newTags.join(","));
       if (!nameChanged && !archivedChanged && !lockedChanged && !tagsChanged) return;
 
       const logChannel = await resolveChannelRolesLogChannel(guild);
@@ -54,10 +48,8 @@ module.exports = {
       const audit = await resolveResponsibleWithRetry(guild, threadId);
       const responsible = formatAuditActor(audit.executor);
 
-      const lines = [
-        `${ARROW} **Responsible:** ${responsible}`,
-        `${ARROW} **Target:** ${newThread || oldThread || "thread"} \`${threadId}\``,
-        `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+      const lines=[`${ARROW}**Responsible:**${responsible}`,
+        `${ARROW}**Target:**${newThread||oldThread||"thread"}\`${threadId}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Changes**",
       ];
@@ -82,10 +74,7 @@ module.exports = {
       }
       lines.push(...buildAuditExtraLines(audit.entry, ["name", "archived", "locked", "applied_tags"]));
 
-      const embed = new EmbedBuilder()
-        .setColor("#F59E0B")
-        .setTitle("Aggiornamento thread")
-        .setDescription(lines.join("\n"));
+      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Aggiornamento thread").setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
       if (isHttpUrl(newThread?.url)) {

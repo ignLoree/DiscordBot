@@ -8,11 +8,7 @@ function sleep(ms) {
 
 async function resolveUnbanAuditEntry(guild, targetUserId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const entry = await fetchRecentAuditEntry(
-      guild,
-      AuditLogEvent.MemberBanRemove,
-      (item) => String(item?.target?.id || "") === String(targetUserId || ""),
-    );
+    const entry=await fetchRecentAuditEntry(guild,AuditLogEvent.MemberBanRemove,(item) => String(item?.target?.id||"")===String(targetUserId||""),);
     if (entry) return entry;
     if (attempt < retries - 1) await sleep(delayMs);
   }
@@ -47,21 +43,16 @@ module.exports = {
       const responsible = formatResponsible(executor);
 
       const targetLabel = ban.user ? `${ban.user}` : "sconosciuto";
-      const embed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Ban Removed")
-        .setDescription(
-          [
-            `${ARROW} **Ban for** ${targetLabel} **has been removed**`,
-            `${ARROW} **Responsible:** ${responsible}`,
-            `${ARROW} ${nowDiscordTs()}`,
-            reason ? `${ARROW} **Reason:** ${reason}` : null,
+      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Ban Removed").setDescription([`${ARROW}**Ban for**${targetLabel}**has been removed**`,
+            `${ARROW}**Responsible:**${responsible}`,
+            `${ARROW}${nowDiscordTs()}`,
+            reason ? `${ARROW}**Reason:**${reason}` : null,
             ...buildAuditExtraLines(auditEntry, ["reason"]),
           ]
             .filter(Boolean)
             .join("\n"),
         )
-        .setFooter({ text: `ID: ${targetId}` })
+        .setFooter({ text: `ID:${targetId}` })
         .setTimestamp();
 
       await logChannel.send({ embeds: [embed] }).catch(() => null);

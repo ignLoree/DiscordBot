@@ -31,7 +31,7 @@ function toMultiValueMap(entries) {
   return map;
 }
 
-const categoriesRaw = `
+const categoriesRaw=`
 ⁰¹・ START ・ -> 1442847153474109500
 ⁰²・ INFO ・ -> 1442569064793903356
 ⁰³・ COMMUNITY ・ -> 1442569067473928243
@@ -49,7 +49,7 @@ const categoriesRaw = `
 ¹⁵・ MID/HIGH ・ -> 1442569091301773312
 ¹⁶・ LOGS ・ -> 1442569092761391178
 `;
-const channelsRaw = `
+const channelsRaw=`
 〝 -> 1442569132406083748
 〝 -> 1442569197019463780
 〝 -> 1442569107923795998
@@ -137,7 +137,7 @@ const channelsRaw = `
 ༄🛃︲join᲼leave᲼logs -> 1442569306608111776
 ༄🆙︲pex᲼depex -> 1442569234004709391
 `;
-const rolesRaw = `
+const rolesRaw=`
 ༄ Wick Premium -> 1443565454260965471
 ༄ Dyno -> 1329483828326174723
 ༄ Xenon -> 1329507234002108500
@@ -277,7 +277,7 @@ const rolesRaw = `
 ༄ Bot Ufficiale -> 1472903558792740956
 ༄ Guilded -> 1471955147692179497
 `;
-const botsRaw = `
+const botsRaw=`
 Xenon -> 416358583220043796
 .fmbot -> 356268235697553409
 Pokétwo -> 716390085896962058
@@ -291,7 +291,7 @@ Wick -> 548410451818708993
 DISBOARD -> 302050872383242240
 Vinili & Caffè Test Bot -> 1466495522474037463
 `;
-const emojisRaw = `
+const emojisRaw=`
 VC_1 -> 1444099819680563200
 VC_10 -> 1469357839066730627
 VC_2 -> 1444099781864722535

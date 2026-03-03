@@ -10,9 +10,7 @@ module.exports = {
     if (!query) return replyError(message, "Uso: +weather <citta>");
 
     try {
-      const data = await fetchJson(
-        "https://wttr.in/" + encodeURIComponent(query) + "?format=j1",
-      );
+      const data=await fetchJson("https://wttr.in/"+encodeURIComponent(query)+"?format=j1",);
       const current = data?.current_condition?.[0];
       if (!current) {
         return replyError(message, "Meteo non disponibile per questa località.");

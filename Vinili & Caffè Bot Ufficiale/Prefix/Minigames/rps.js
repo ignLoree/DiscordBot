@@ -1,19 +1,8 @@
 const { replyError, replyInfo } = require("../../Utils/Minigames/dynoFunUtils");
 
-const MAP = {
-  rock: "sasso",
-  paper: "carta",
-  scissors: "forbici",
-  sasso: "sasso",
-  carta: "carta",
-  forbici: "forbici",
-};
+const MAP={rock:"sasso",paper:"carta",scissors:"forbici",sasso:"sasso",carta:"carta",forbici:"forbici",};
 
-const BEATS = {
-  sasso: "forbici",
-  carta: "sasso",
-  forbici: "carta",
-};
+const BEATS={sasso:"forbici",carta:"sasso",forbici:"carta",};
 
 module.exports = {
   name: "rps",

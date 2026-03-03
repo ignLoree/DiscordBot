@@ -1,8 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, } = require("discord.js");
 
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const DIVIDER_URL =
-  "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
 function normalizeColor(input) {
   const raw = String(input ?? "").trim();
@@ -30,9 +29,7 @@ function buildPreviewEmbed(data = {}) {
 }
 
 function buildRows(userId) {
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`eb:title:${userId}`)
+  const row1=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:title:${userId}`)
       .setLabel("Titolo")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
@@ -53,9 +50,7 @@ function buildRows(userId) {
       .setStyle(ButtonStyle.Secondary),
   );
 
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`eb:thumbnail:${userId}`)
+  const row2=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:thumbnail:${userId}`)
       .setLabel("Thumbnail URL")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
@@ -99,12 +94,7 @@ module.exports = {
     const userId = message.author.id;
     const initial = { color: "#6f4e37" };
 
-    const preview = await message.channel
-      .send({
-        embeds: [buildPreviewEmbed(initial)],
-        components: buildRows(userId),
-      })
-      .catch(() => null);
+    const preview=await message.channel.send({embeds:[buildPreviewEmbed(initial)],components:buildRows(userId),}).catch(() => null);
 
     if (!preview) {
       return safeMessageReply(message, {

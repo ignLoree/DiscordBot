@@ -6,10 +6,7 @@ function resolveTargetUser(message) {
   const mentioned = message.mentions?.users?.first();
   if (mentioned) return mentioned;
 
-  const args = String(message.content || "")
-    .trim()
-    .split(/\s+/)
-    .slice(1);
+  const args=String(message.content||"").trim().split(/\s+/).slice(1);
   const raw = args[0];
   if (!raw) return message.author;
 
@@ -41,34 +38,18 @@ module.exports = {
     await message.channel.sendTyping();
 
     const target = resolveTargetUser(message);
-    const rows = await InviteTrack.find({
-      guildId: message.guild.id,
-      inviterId: target.id,
-    })
-      .select("active")
-      .lean();
+    const rows=await InviteTrack.find({guildId:message.guild.id,inviterId:target.id,}).select("active").lean();
 
     const trackedTotal = rows.length;
     const trackedActive = rows.filter((r) => r.active).length;
     const trackedLeft = Math.max(0, trackedTotal - trackedActive);
-    const currentInviteUses = await getCurrentInviteUsesForUser(
-      message.guild,
-      target.id,
-    );
+    const currentInviteUses=await getCurrentInviteUsesForUser(message.guild,target.id,);
     const totalInvited = Math.max(trackedTotal, currentInviteUses);
     const activeMembers = Math.max(0, Math.min(trackedActive, totalInvited));
-    const leftMembers = Math.max(
-      trackedLeft,
-      Math.max(0, totalInvited - activeMembers),
-    );
-    const retention =
-      totalInvited > 0 ? Math.round((activeMembers / totalInvited) * 100) : 0;
+    const leftMembers=Math.max(trackedLeft,Math.max(0,totalInvited-activeMembers),);
+    const retention=totalInvited>0?Math.round((activeMembers/totalInvited)*100):0;
 
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("Informazioni inviti")
-      .setDescription(
-        `Statistiche sugli inviti effettuati da **${target.username}**`,
+    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Informazioni inviti").setDescription(`Statistiche sugli inviti effettuati da **${target.username}**`,
       )
       .addFields(
         {

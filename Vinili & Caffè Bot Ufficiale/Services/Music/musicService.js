@@ -2,11 +2,7 @@ const axios = require("axios");
 const { EmbedBuilder } = require("discord.js");
 const { leaveTtsGuild } = require("../TTS/ttsService");
 const { resolvePlayableRadioUrl } = require("./radioService");
-const {
-  getVoiceSession,
-  setVoiceSession,
-  clearVoiceSession,
-} = require("../Voice/voiceSessionService");
+const{getVoiceSession,setVoiceSession,clearVoiceSession,}=require("../Voice/voiceSessionService");
 
 let Shoukaku = null;
 let Connectors = null;
@@ -22,24 +18,14 @@ const emptyVoiceTimers = new Map();
 const DEFAULT_VOLUME = 5;
 const INACTIVITY_MS = 3 * 60 * 1000;
 const EMPTY_VOICE_MS = 3 * 60 * 1000;
-const SEARCH_PREFIXES = [
-  { prefix: "spsearch:", source: "spotify", bias: 16 },
-  { prefix: "amsearch:", source: "apple", bias: 14 },
-  { prefix: "dzsearch:", source: "deezer", bias: 15 },
-];
+const SEARCH_PREFIXES=[{prefix:"spsearch:",source:"spotify",bias:16},{prefix:"amsearch:",source:"apple",bias:14},{prefix:"dzsearch:",source:"deezer",bias:15},];
 const PLAYABLE_SOURCE_KEYS = new Set(["spotify", "apple", "deezer", "radio"]);
-const DIRECT_URL_SOURCE_BY_MATCHER = [
-  { fn: isSpotifyUrl, source: "spotify" },
-  { fn: isAppleMusicUrl, source: "apple" },
-  { fn: isDeezerUrl, source: "deezer" },
-];
+const DIRECT_URL_SOURCE_BY_MATCHER=[{fn:isSpotifyUrl,source:"spotify"},{fn:isAppleMusicUrl,source:"apple"},{fn:isDeezerUrl,source:"deezer"},];
 
 function logMusic(event, payload = {}) {
   const logger = global.logger;
   if (!logger?.info && !logger?.warn && !logger?.error) return;
-  const parts = Object.entries(payload)
-    .filter(([, value]) => value !== undefined && value !== null && value !== "")
-    .map(([key, value]) => `${key}=${typeof value === "string" ? value : JSON.stringify(value)}`);
+  const parts=Object.entries(payload).filter(([,value]) => value!==undefined&&value!==null&&value!=="").map(([key,value]) => `${key}=${typeof value==="string"?value:JSON.stringify(value)}`);
   const line = `[MUSIC][${event}]${parts.length ? ` ${parts.join(" | ")}` : ""}`;
   if (logger.info) logger.info(line);
   else if (logger.warn) logger.warn(line);
@@ -107,10 +93,7 @@ function isYouTubeVideoUrl(value) {
 }
 
 function isLikelyPodcast(track) {
-  const haystack = [track?.title, track?.author, track?.url]
-    .map((item) => normalizeText(item))
-    .filter(Boolean)
-    .join(" ");
+  const haystack=[track?.title,track?.author,track?.url].map((item) => normalizeText(item)).filter(Boolean).join(" ");
   return /\b(podcast|episodio|episode|puntata|show|audiobook|audiolibro)\b/.test(haystack);
 }
 
@@ -213,10 +196,7 @@ function getConnectedNode(manager) {
 }
 
 async function fetchYouTubeOEmbed(url) {
-  const response = await axios.get("https://www.youtube.com/oembed", {
-    params: { url, format: "json" },
-    timeout: 12000,
-  }).catch(() => null);
+  const response=await axios.get("https://www.youtube.com/oembed",{params:{url,format:"json"},timeout:12000,}).catch(() => null);
   const data = response?.data;
   if (!data?.title) return null;
   return {
@@ -226,10 +206,7 @@ async function fetchYouTubeOEmbed(url) {
 }
 
 async function fetchSoundCloudOEmbed(url) {
-  const response = await axios.get("https://soundcloud.com/oembed", {
-    params: { url, format: "json" },
-    timeout: 12000,
-  }).catch(() => null);
+  const response=await axios.get("https://soundcloud.com/oembed",{params:{url,format:"json"},timeout:12000,}).catch(() => null);
   const data = response?.data;
   if (!data?.title) return null;
   return {
@@ -275,13 +252,7 @@ async function getSpotifyAccessToken() {
   const clientSecret = String(process.env.SPOTIFY_CLIENT_SECRET || "").trim();
   if (!clientId || !clientSecret) return "";
   const auth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
-  const response = await axios.post(
-    "https://accounts.spotify.com/api/token",
-    new URLSearchParams({ grant_type: "client_credentials" }).toString(),
-    {
-      timeout: 12_000,
-      headers: {
-        Authorization: `Basic ${auth}`,
+  const response=await axios.post("https://accounts.spotify.com/api/token",new URLSearchParams({grant_type:"client_credentials"}).toString(),{timeout:12_000,headers:{Authorization:`Basic ${auth}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
     },
@@ -299,10 +270,7 @@ async function getSpotifyAccessToken() {
 async function fetchSpotifyTracksForQuery(query) {
   const accessToken = await getSpotifyAccessToken();
   if (!accessToken) return [];
-  const response = await axios.get("https://api.spotify.com/v1/search", {
-    timeout: 12_000,
-    params: { q: query, type: "track", limit: 10, market: "IT" },
-    headers: { Authorization: `Bearer ${accessToken}` },
+  const response=await axios.get("https://api.spotify.com/v1/search",{timeout:12_000,params:{q:query,type:"track",limit:10,market:"IT"},headers:{Authorization:`Bearer ${accessToken}` },
   }).catch(() => null);
   const items = Array.isArray(response?.data?.tracks?.items) ? response.data.tracks.items : [];
   return items.map((item) => ({
@@ -319,7 +287,7 @@ async function fetchSpotifyMetadataFromUrl(url) {
   const accessToken = await getSpotifyAccessToken();
   const parts = extractSpotifyUrlParts(url);
   if (!accessToken || !parts?.id || !parts?.type) return null;
-  const response = await axios.get(`https://api.spotify.com/v1/${parts.type}s/${parts.id}`, {
+  const response=await axios.get(`https://api.spotify.com/v1/${parts.type}s/${parts.id}`, {
     timeout: 12_000,
     headers: { Authorization: `Bearer ${accessToken}` },
   }).catch(() => null);
@@ -331,9 +299,7 @@ async function fetchSpotifyMetadataFromUrl(url) {
       source: "spotify",
     };
   }
-  const firstTrack = Array.isArray(data?.tracks?.items)
-    ? data.tracks.items.find((item) => item?.track?.name || item?.name)
-    : null;
+  const firstTrack=Array.isArray(data?.tracks?.items)?data.tracks.items.find((item) => item?.track?.name||item?.name):null;
   const track = firstTrack?.track || firstTrack;
   if (!track?.name) return null;
   return {
@@ -345,10 +311,7 @@ async function fetchSpotifyMetadataFromUrl(url) {
 async function fetchAppleMetadataFromUrl(url) {
   const songId = extractAppleSongId(url);
   if (!songId) return null;
-  const response = await axios.get("https://itunes.apple.com/lookup", {
-    timeout: 12_000,
-    params: { id: songId, entity: "song", country: "IT" },
-  }).catch(() => null);
+  const response=await axios.get("https://itunes.apple.com/lookup",{timeout:12_000,params:{id:songId,entity:"song",country:"IT"},}).catch(() => null);
   const item = Array.isArray(response?.data?.results) ? response.data.results.find((row) => row?.wrapperType === "track") : null;
   if (!item?.trackName) return null;
   return {
@@ -398,10 +361,7 @@ async function fetchDeezerMetadataFromUrl(url) {
 }
 
 async function fetchDeezerCatalogSearch(query) {
-  const response = await axios.get("https://api.deezer.com/search", {
-    timeout: 12_000,
-    params: { q: query, limit: 10 },
-  }).catch(() => null);
+  const response=await axios.get("https://api.deezer.com/search",{timeout:12_000,params:{q:query,limit:10},}).catch(() => null);
   const items = Array.isArray(response?.data?.data) ? response.data.data : [];
   return items.map((item) => ({
     title: String(item?.title || "").trim(),
@@ -414,10 +374,7 @@ async function fetchDeezerCatalogSearch(query) {
 }
 
 async function fetchAppleTracksForQuery(query) {
-  const response = await axios.get("https://itunes.apple.com/search", {
-    timeout: 12_000,
-    params: { term: query, entity: "song", country: "IT", limit: 10 },
-  }).catch(() => null);
+  const response=await axios.get("https://itunes.apple.com/search",{timeout:12_000,params:{term:query,entity:"song",country:"IT",limit:10},}).catch(() => null);
   const items = Array.isArray(response?.data?.results) ? response.data.results : [];
   return items.map((item) => ({
     title: String(item?.trackName || "").trim(),
@@ -436,20 +393,12 @@ async function resolveExternalCandidates(manager, candidates, requestedBy, origi
     if (!exactQuery) continue;
     const identifier = toYouTubeSearchIdentifier(exactQuery);
     const result = await resolveIdentifier(manager, identifier).catch(() => null);
-    const parsed = tracksFromLavalinkResponse(result, requestedBy, {
-      resolverInput: identifier,
-      originalQuery,
-      source: candidate.source,
-      url: candidate.url,
-    }).tracks;
+    const parsed=tracksFromLavalinkResponse(result,requestedBy,{resolverInput:identifier,originalQuery,source:candidate.source,url:candidate.url,}).tracks;
     let bestTrack = null;
     let bestScore = -Infinity;
     for (const track of parsed) {
       if (isLikelyPodcast(track)) continue;
-      const score =
-        scoreTrackCandidate(track, originalQuery) +
-        scoreTrackCandidate(track, exactQuery) +
-        scoreTrackCandidate(candidate, originalQuery);
+      const score=scoreTrackCandidate(track,originalQuery)+scoreTrackCandidate(track,exactQuery)+scoreTrackCandidate(candidate,originalQuery);
       if (score > bestScore) {
         bestScore = score;
         bestTrack = track;
@@ -465,16 +414,8 @@ async function resolveExternalCandidates(manager, candidates, requestedBy, origi
 }
 
 async function runExternalCatalogSearch(manager, query, requestedBy) {
-  const [deezerTracks, appleTracks, spotifyTracks] = await Promise.all([
-    fetchDeezerCatalogSearch(query),
-    fetchAppleTracksForQuery(query),
-    fetchSpotifyTracksForQuery(query),
-  ]);
-  const candidates = dedupeTracks(
-    [...deezerTracks, ...appleTracks, ...spotifyTracks]
-      .filter((track) => !isLikelyPodcast(track))
-      .map((track) => ({ ...track, score: scoreTrackCandidate(track, query) })),
-  ).sort((a, b) => Number(b.score || 0) - Number(a.score || 0));
+  const[deezerTracks,appleTracks,spotifyTracks]=await Promise.all([fetchDeezerCatalogSearch(query),fetchAppleTracksForQuery(query),fetchSpotifyTracksForQuery(query),]);
+  const candidates=dedupeTracks([...deezerTracks,...appleTracks,...spotifyTracks].filter((track) => !isLikelyPodcast(track)).map((track) => ({...track,score:scoreTrackCandidate(track,query)})),).sort((a,b) => Number(b.score||0)-Number(a.score||0));
   if (!candidates.length) return [];
   const resolved = await resolveExternalCandidates(manager, candidates, requestedBy, query);
   logMusic("search_external_catalog", {
@@ -510,22 +451,13 @@ async function runYouTubeOnlySearch(manager, query, requestedBy) {
   const identifier = toYouTubeSearchIdentifier(query);
   if (!identifier) return [];
   const result = await resolveIdentifier(manager, identifier).catch(() => null);
-  const parsed = tracksFromLavalinkResponse(result, requestedBy, {
-    resolverInput: identifier,
-    originalQuery: query,
-    source: "youtube",
-  });
+  const parsed=tracksFromLavalinkResponse(result,requestedBy,{resolverInput:identifier,originalQuery:query,source:"youtube",});
   return parsed.tracks || [];
 }
 
 function tracksFromLavalinkResponse(result, requestedBy, extra = {}) {
   if (!result) return { tracks: [], playlist: null };
-  const loadType = normalizeLoadTypeValue(
-    result.loadType ||
-      result.load_type ||
-      result.type ||
-      result.resultType,
-  );
+  const loadType=normalizeLoadTypeValue(result.loadType||result.load_type||result.type||result.resultType,);
 
   if (loadType === "track" && result.data) {
     return { tracks: [toTrack(result.data, requestedBy, extra)], playlist: null };
@@ -580,9 +512,7 @@ async function runCatalogSearch(manager, query, requestedBy) {
 }
 
 function parseLyricsPayload(item) {
-  const plainLyrics = String(
-    item?.plainLyrics || item?.syncedLyrics || item?.lyrics || "",
-  ).trim();
+  const plainLyrics=String(item?.plainLyrics||item?.syncedLyrics||item?.lyrics||"",).trim();
   if (!plainLyrics) return null;
   return {
     trackName: String(item?.trackName || item?.name || "Unknown"),
@@ -594,11 +524,7 @@ function parseLyricsPayload(item) {
 async function searchLyrics(query) {
   const normalizedQuery = cleanQuery(query);
   if (!normalizedQuery) return [];
-  const response = await axios.get("https://lrclib.net/api/search", {
-    timeout: 12_000,
-    params: { q: normalizedQuery },
-    headers: { "User-Agent": "ViniliCaffeBot/1.0" },
-  }).catch(() => null);
+  const response=await axios.get("https://lrclib.net/api/search",{timeout:12_000,params:{q:normalizedQuery},headers:{"User-Agent":"ViniliCaffeBot/1.0"},}).catch(() => null);
   const rows = Array.isArray(response?.data) ? response.data : [];
   return rows.map(parseLyricsPayload).filter(Boolean).slice(0, 50);
 }
@@ -637,41 +563,14 @@ async function scheduleInactivityLeave(queue) {
   const guildId = String(queue?.guildId || "");
   if (!guildId) return;
   clearTimer(inactivityTimers, guildId);
-  const timer = setTimeout(async () => {
-    const current = queues.get(guildId);
-    if (!current) return;
-    if (current.currentTrack) return;
-    if (current.tracks.length > 0) return;
-    const embed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setDescription("No tracks have been playing for the past 3 minutes, leaving \uD83D\uDC4B");
-    const channel = current.metadata?.channel;
-    if (channel?.isTextBased?.()) await channel.send({ embeds: [embed] }).catch(() => {});
-    await destroyQueue(guildId, { manual: true });
-  }, INACTIVITY_MS);
-  inactivityTimers.set(guildId, timer);
+  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;if(current.currentTrack)return;if(current.tracks.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No tracks have been playing for the past 3 minutes, leaving \uD83D\uDC4B");const channel=current.metadata?.channel;if(channel?.isTextBased?.())await channel.send({embeds:[embed]}).catch(() => {});await destroyQueue(guildId,{manual:true});},INACTIVITY_MS);inactivityTimers.set(guildId, timer);
 }
 
 async function scheduleEmptyVoiceLeave(queue) {
   const guildId = String(queue?.guildId || "");
   if (!guildId) return;
   clearTimer(emptyVoiceTimers, guildId);
-  const timer = setTimeout(async () => {
-    const current = queues.get(guildId);
-    if (!current) return;
-    const guild = current.guild;
-    const channel = guild?.channels?.cache?.get(current.voiceChannelId) || (current.voiceChannelId ? await guild?.channels?.fetch?.(current.voiceChannelId).catch(() => null) : null);
-    const humans = channel?.members ? Array.from(channel.members.values()).filter((m) => !m.user?.bot) : [];
-    if (humans.length > 0) return;
-    const embed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setDescription("No one has been listening for the past 3 minutes, leaving \uD83D\uDC4B");
-    if (current.metadata?.channel?.isTextBased?.()) {
-      await current.metadata.channel.send({ embeds: [embed] }).catch(() => {});
-    }
-    await destroyQueue(guildId, { manual: true });
-  }, EMPTY_VOICE_MS);
-  emptyVoiceTimers.set(guildId, timer);
+  const timer=setTimeout(async() => {const current=queues.get(guildId);if(!current)return;const guild=current.guild;const channel=guild?.channels?.cache?.get(current.voiceChannelId)||(current.voiceChannelId?await guild?.channels?.fetch?.(current.voiceChannelId).catch(() => null):null);const humans=channel?.members?Array.from(channel.members.values()).filter((m) => !m.user?.bot):[];if(humans.length>0)return;const embed=new EmbedBuilder().setColor("#ED4245").setDescription("No one has been listening for the past 3 minutes, leaving \uD83D\uDC4B");if(current.metadata?.channel?.isTextBased?.()){await current.metadata.channel.send({embeds:[embed]}).catch(() => {});}await destroyQueue(guildId,{manual:true});},EMPTY_VOICE_MS);emptyVoiceTimers.set(guildId, timer);
 }
 
 function buildNodeFacade(queue) {
@@ -778,13 +677,7 @@ async function ensureQueue(client, guild, channel, voiceChannel) {
   let queue = queues.get(guildId) || null;
   const manager = client.musicPlayer?.manager || (await getPlayer(client)).manager;
   if (!queue) {
-    const player = await manager.joinVoiceChannel({
-      guildId,
-      channelId: String(voiceChannel.id),
-      shardId: Number(guild?.shardId || 0),
-      deaf: true,
-      mute: false,
-    });
+    const player=await manager.joinVoiceChannel({guildId,channelId:String(voiceChannel.id),shardId:Number(guild?.shardId||0),deaf:true,mute:false,});
     queue = {
       guildId,
       guild,
@@ -841,18 +734,7 @@ async function getPlayer(client) {
   const auth = String(process.env.LAVALINK_PASSWORD || "youshallnotpass").trim();
   const secure = ["1", "true", "yes", "on"].includes(String(process.env.LAVALINK_SECURE || "").toLowerCase());
   const name = String(process.env.LAVALINK_NAME || "main").trim() || "main";
-  const manager = new Shoukaku(
-    new Connectors.DiscordJS(client),
-    [{ name, url: host, auth, secure }],
-    {
-      resume: true,
-      resumeTimeout: 30,
-      reconnectTries: 5,
-      reconnectInterval: 5,
-      restTimeout: 60,
-      voiceConnectionTimeout: 15,
-    },
-  );
+  const manager=new Shoukaku(new Connectors.DiscordJS(client),[{name,url:host,auth,secure}],{resume:true,resumeTimeout:30,reconnectTries:5,reconnectInterval:5,restTimeout:60,voiceConnectionTimeout:15,},);
 
   manager.on("ready", (nodeName) => {
     logMusic("node_ready", { node: nodeName, host });
@@ -904,17 +786,10 @@ async function searchPlayable({ client, input, requestedBy }) {
     const isRadio = /^https?:\/\//i.test(query) && !isSpotifyUrl(query) && !isAppleMusicUrl(query) && !isDeezerUrl(query);
     if (!isRadio) {
       const direct = await resolveIdentifier(manager, query).catch(() => null);
-      const parsed = tracksFromLavalinkResponse(direct, requestedBy, {
-        resolverInput: query,
-        originalQuery: input,
-      });
-      const filtered = parsed.playlist
-        ? parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio")
-        : parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source) || track.source === "radio");
+      const parsed=tracksFromLavalinkResponse(direct,requestedBy,{resolverInput:query,originalQuery:input,});
+      const filtered=parsed.playlist?parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source)||track.source==="radio"):parsed.tracks.filter((track) => PLAYABLE_SOURCE_KEYS.has(track.source)||track.source==="radio");
       const expectedSource = buildDirectUrlExpectedSource(query);
-      const playableTracks = expectedSource
-        ? filtered.filter((track) => track.source === expectedSource)
-        : filtered;
+      const playableTracks=expectedSource?filtered.filter((track) => track.source===expectedSource):filtered;
       if (playableTracks.length > 0) {
         return {
           ok: true,
@@ -924,13 +799,7 @@ async function searchPlayable({ client, input, requestedBy }) {
         };
       }
     }
-    const directFallbackMeta = isSpotifyUrl(query)
-      ? await fetchSpotifyMetadataFromUrl(query)
-      : isAppleMusicUrl(query)
-        ? await fetchAppleMetadataFromUrl(query)
-        : isDeezerUrl(query)
-          ? await fetchDeezerMetadataFromUrl(query)
-          : null;
+    const directFallbackMeta=isSpotifyUrl(query)?await fetchSpotifyMetadataFromUrl(query):isAppleMusicUrl(query)?await fetchAppleMetadataFromUrl(query):isDeezerUrl(query)?await fetchDeezerMetadataFromUrl(query):null;
     if (directFallbackMeta?.query) {
       const fallbackTracks = await runYouTubeOnlySearch(manager, directFallbackMeta.query, requestedBy);
       if (fallbackTracks.length > 0) {
@@ -944,12 +813,7 @@ async function searchPlayable({ client, input, requestedBy }) {
       }
     }
     if (isRadio) {
-      const parsed = tracksFromLavalinkResponse(await resolveIdentifier(manager, query).catch(() => null), requestedBy, {
-        resolverInput: query,
-        originalQuery: input,
-        source: "radio",
-        url: query,
-      });
+      const parsed=tracksFromLavalinkResponse(await resolveIdentifier(manager,query).catch(() => null),requestedBy,{resolverInput:query,originalQuery:input,source:"radio",url:query,});
       const radioTracks = parsed.tracks.filter((t) => t.source === "radio" || t.url);
       if (radioTracks.length > 0) {
         return {
@@ -1062,13 +926,7 @@ async function playRadioStation({ client, guild, channel, voiceChannel, station 
     targetUrl,
     loadType: result?.loadType || "none",
   });
-  const parsed = tracksFromLavalinkResponse(result, null, {
-    resolverInput: targetUrl,
-    originalQuery: station.name,
-    source: "radio",
-    station,
-    url: targetUrl,
-  });
+  const parsed=tracksFromLavalinkResponse(result,null,{resolverInput:targetUrl,originalQuery:station.name,source:"radio",station,url:targetUrl,});
   const track = parsed.tracks[0] || null;
   if (!track) return { ok: false, reason: "not_found" };
 

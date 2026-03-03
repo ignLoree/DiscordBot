@@ -1,75 +1,18 @@
-const {
-  EmbedBuilder,
-  PermissionsBitField,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const{EmbedBuilder,PermissionsBitField,ActionRowBuilder,ButtonBuilder,ButtonStyle,}=require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  getAntiNukeStatusSnapshot,
-  stopAntiNukePanic,
-  triggerAntiNukePanicExternal,
-  setAntiNukeConfigSnapshot,
-} = require("../../Services/Moderation/antiNukeService");
-const {
-  getSecurityStaticsSnapshot,
-  getSecurityProfilesSnapshot,
-  setQuarantineRole,
-  addMainRole,
-  removeMainRole,
-  setLoggingChannel,
-  setModLoggingChannel,
-  setMainChannel,
-  setVerificationChannel,
-  addPartneringChannel,
-  removePartneringChannel,
-  addTrustedAdmin,
-  removeTrustedAdmin,
-  addExtraOwner,
-  removeExtraOwner,
-} = require("../../Services/Moderation/securityProfilesService");
-const {
-  getGuildChannelCached,
-  getGuildRoleCached,
-  getUserCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
-const {
-  getJoinRaidStatusSnapshot,
-  setJoinRaidConfigSnapshot,
-} = require("../../Services/Moderation/joinRaidService");
-const {
-  getJoinGateConfigSnapshot,
-  updateJoinGateConfig,
-} = require("../../Services/Moderation/joinGateService");
-const {
-  getAutoModConfigSnapshot,
-  getAutoModRulesSnapshot,
-  getAutoModPanicSnapshot,
-  triggerAutoModPanicExternal,
-  updateAutoModConfig,
-} = require("../../Services/Moderation/automodService");
+const{getAntiNukeStatusSnapshot,stopAntiNukePanic,triggerAntiNukePanicExternal,setAntiNukeConfigSnapshot,}=require("../../Services/Moderation/antiNukeService");
+const{getSecurityStaticsSnapshot,getSecurityProfilesSnapshot,setQuarantineRole,addMainRole,removeMainRole,setLoggingChannel,setModLoggingChannel,setMainChannel,setVerificationChannel,addPartneringChannel,removePartneringChannel,addTrustedAdmin,removeTrustedAdmin,addExtraOwner,removeExtraOwner,}=require("../../Services/Moderation/securityProfilesService");
+const{getGuildChannelCached,getGuildRoleCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
+const{getJoinRaidStatusSnapshot,setJoinRaidConfigSnapshot,}=require("../../Services/Moderation/joinRaidService");
+const{getJoinGateConfigSnapshot,updateJoinGateConfig,}=require("../../Services/Moderation/joinGateService");
+const{getAutoModConfigSnapshot,getAutoModRulesSnapshot,getAutoModPanicSnapshot,triggerAutoModPanicExternal,updateAutoModConfig,}=require("../../Services/Moderation/automodService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
 const { sendSecurityAuditLog } = require("../../Utils/Logging/securityAuditLog");
 
-const STAFF_ROLE_IDS = [
-  IDs.roles.Founder,
-  IDs.roles.CoFounder,
-  IDs.roles.Manager,
-  IDs.roles.Admin,
-  IDs.roles.HighStaff,
-  IDs.roles.Supervisor,
-  IDs.roles.Coordinator,
-  IDs.roles.Mod,
-  IDs.roles.Helper,
-  IDs.roles.Staff,
-].filter(Boolean);
+const STAFF_ROLE_IDS=[IDs.roles.Founder,IDs.roles.CoFounder,IDs.roles.Manager,IDs.roles.Admin,IDs.roles.HighStaff,IDs.roles.Supervisor,IDs.roles.Coordinator,IDs.roles.Mod,IDs.roles.Helper,IDs.roles.Staff,].filter(Boolean);
 
-const PANIC_CONTROL_ROLE_IDS = [
-  IDs.roles.Founder,
-  IDs.roles.CoFounder,
-].filter(Boolean);
+const PANIC_CONTROL_ROLE_IDS=[IDs.roles.Founder,IDs.roles.CoFounder,].filter(Boolean);
 
 const PAGE_ROLES = 0;
 const PAGE_CHANNELS = 1;
@@ -171,9 +114,7 @@ function buildSecurityStaticsPanelEmbed(guildId, page = PAGE_ROLES) {
   const statics = getSecurityStaticsSnapshot(guildId);
   const profiles = getSecurityProfilesSnapshot(guildId);
   const mainRoles = Array.isArray(statics?.mainRoleIds) ? statics.mainRoleIds : [];
-  const partneringChannels = Array.isArray(statics?.partneringChannelIds)
-    ? statics.partneringChannelIds
-    : [];
+  const partneringChannels=Array.isArray(statics?.partneringChannelIds)?statics.partneringChannelIds:[];
   const trusted = Array.isArray(profiles?.trustedAdmins) ? profiles.trustedAdmins : [];
   const owners = Array.isArray(profiles?.extraOwners) ? profiles.extraOwners : [];
 
@@ -273,11 +214,7 @@ function buildStaticsPaginationRow(customBase, page = PAGE_ROLES) {
 async function openSecurityStaticsPanel(message) {
   let page = PAGE_ROLES;
   const base = `security-statics:${message.author.id}:${Date.now()}`;
-  const sent = await safeMessageReply(message, {
-    embeds: [buildSecurityStaticsPanelEmbed(message.guild.id, page)],
-    components: [buildStaticsPaginationRow(base, page)],
-    allowedMentions: { repliedUser: false },
-  });
+  const sent=await safeMessageReply(message,{embeds:[buildSecurityStaticsPanelEmbed(message.guild.id,page)],components:[buildStaticsPaginationRow(base,page)],allowedMentions:{repliedUser:false},});
   if (!sent) return;
 
   const collector = sent.createMessageComponentCollector({ time: 5 * 60_000 });
@@ -451,14 +388,7 @@ async function executeSecurityStatics(message, args = []) {
       });
       return;
     }
-    const update =
-      slot === 6
-        ? setModLoggingChannel(guild.id, channel.id)
-        : slot === 7
-          ? setLoggingChannel(guild.id, channel.id)
-          : slot === 9
-            ? setMainChannel(guild.id, channel.id)
-            : setVerificationChannel(guild.id, channel.id);
+    const update=slot===6?setModLoggingChannel(guild.id,channel.id):slot===7?setLoggingChannel(guild.id,channel.id):slot===9?setMainChannel(guild.id,channel.id):setVerificationChannel(guild.id,channel.id);
     if (!update?.ok) {
       await safeMessageReply(message, {
         content: "<:vegax:1443934876440068179> Impossibile salvare il canale.",
@@ -635,14 +565,7 @@ function panicUsageEmbed() {
 function parsePanicTarget(raw) {
   const value = String(raw || "").trim().toLowerCase();
   if (!value) return "";
-  const map = {
-    antinuke: "antinuke",
-    automod: "automod",
-    joingate: "joingate",
-    joinraid: "joinraid",
-    lockcommands: "lockcommands",
-    all: "all",
-  };
+  const map={antinuke:"antinuke",automod:"automod",joingate:"joingate",joinraid:"joinraid",lockcommands:"lockcommands",all:"all",};
   return map[value] || "";
 }
 
@@ -658,8 +581,7 @@ async function sendPagedEmbeds(message, embeds, panelKey) {
 
   let pageIndex = 0;
   const nonce = `${panelKey}:${message.id}:${Date.now()}`;
-  const ids = {
-    first: `security:first:${nonce}`,
+  const ids={first:`security:first:${nonce}`,
     prev: `security:prev:${nonce}`,
     next: `security:next:${nonce}`,
     last: `security:last:${nonce}`,
@@ -667,46 +589,12 @@ async function sendPagedEmbeds(message, embeds, panelKey) {
   };
   const allowed = new Set(Object.values(ids));
 
-  const row = (disabled = false) =>
-    new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(ids.first)
-        .setLabel("<<")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(disabled || pageIndex === 0),
-      new ButtonBuilder()
-        .setCustomId(ids.prev)
-        .setLabel("<")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(disabled || pageIndex === 0),
-      new ButtonBuilder()
-        .setCustomId(ids.next)
-        .setLabel(">")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(disabled || pageIndex >= embeds.length - 1),
-      new ButtonBuilder()
-        .setCustomId(ids.last)
-        .setLabel(">>")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(disabled || pageIndex >= embeds.length - 1),
-      new ButtonBuilder()
-        .setCustomId(ids.close)
-        .setLabel("X")
-        .setStyle(ButtonStyle.Danger)
-        .setDisabled(disabled),
-    );
+  const row=(disabled=false) => new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(ids.first).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex===0),new ButtonBuilder().setCustomId(ids.prev).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex===0),new ButtonBuilder().setCustomId(ids.next).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex>=embeds.length-1),new ButtonBuilder().setCustomId(ids.last).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(disabled||pageIndex>=embeds.length-1),new ButtonBuilder().setCustomId(ids.close).setLabel("X").setStyle(ButtonStyle.Danger).setDisabled(disabled),);
 
-  const sent = await safeMessageReply(message, {
-    embeds: [embeds[pageIndex]],
-    components: [row(false)],
-    allowedMentions: { repliedUser: false },
-  });
+  const sent=await safeMessageReply(message,{embeds:[embeds[pageIndex]],components:[row(false)],allowedMentions:{repliedUser:false},});
   if (!sent || typeof sent.createMessageComponentCollector !== "function") return;
 
-  const collector = sent.createMessageComponentCollector({
-    time: 120_000,
-    filter: (i) => i.user?.id === message.author.id && allowed.has(String(i.customId || "")),
-  });
+  const collector=sent.createMessageComponentCollector({time:120_000,filter:(i) => i.user?.id===message.author.id&&allowed.has(String(i.customId||"")),});
 
   collector.on("collect", async (interaction) => {
     const id = String(interaction.customId || "");
@@ -744,18 +632,12 @@ async function buildStatusEmbeds(guild) {
   const panicCfg = antiCfg?.panicMode || {};
   const quarantine = antiCfg?.autoQuarantine || {};
   const backup = panicCfg?.autoBackupSync || {};
-  const warnedRoleIds = Array.isArray(panicCfg.warnedRoleIds)
-    ? panicCfg.warnedRoleIds.filter(Boolean)
-    : [];
-  const warnedRoles = warnedRoleIds.length
-    ? warnedRoleIds.map((id) => `<@&${id}>`).join(", ")
+  const warnedRoleIds=Array.isArray(panicCfg.warnedRoleIds)?panicCfg.warnedRoleIds.filter(Boolean):[];
+  const warnedRoles=warnedRoleIds.length?warnedRoleIds.map((id) => `<@&${id}>`).join(", ")
     : "`No record found.`";
 
-  const raidWarnedRoleIds = Array.isArray(raid?.config?.warnedRoleIds)
-    ? raid.config.warnedRoleIds.filter(Boolean)
-    : [];
-  const raidWarnedRoles = raidWarnedRoleIds.length
-    ? raidWarnedRoleIds.map((id) => `<@&${id}>`).join(", ")
+  const raidWarnedRoleIds=Array.isArray(raid?.config?.warnedRoleIds)?raid.config.warnedRoleIds.filter(Boolean):[];
+  const raidWarnedRoles=raidWarnedRoleIds.length?raidWarnedRoleIds.map((id) => `<@&${id}>`).join(", ")
     : "❌";
   const idFlag = raid?.config?.idFlag || {};
   const ageFlag = raid?.config?.ageFlag || {};
@@ -767,132 +649,20 @@ async function buildStatusEmbeds(guild) {
   const lock = autoCfg?.autoLockdown || {};
   const minAgeDays = Number(joinGate?.newAccounts?.minAgeDays || 3);
 
-  const page1 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Global Anti-Nuke Panel")
-    .setDescription(
-      [
-        "[1] Status:",
-        `- \`${anti?.enabled ? "Enabled" : "Disabled"}\``,
-        "",
-        "[2] Panic Mode:",
-        `- \`+security panic status\``,
-        "",
-        "[3] Backups:",
-        `- [A] Status: \`${backup.enabled ? "Enabled" : "Disabled"}\``,
-        "- [B] Max immagini: `10`",
-        "- [C] Intervallo: `Ogni 3h`",
-        "",
-        "[4] Prune Detection:",
-        `- \`${antiCfg?.detectPrune ? "Enabled" : "Disabled"}\``,
-        "",
-        "[5] Quarantine Hold:",
-        `- [A] Status: \`${quarantine.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Strict Mode: \`${quarantine.strictMode ? "Enabled" : "Disabled"}\``,
-        `- [C] Monitor Public Roles: \`${quarantine.monitorPublicRoles ? "Enabled" : "Disabled"}\``,
-        `- [D] Vanity Protection: \`${antiCfg?.vanityGuard ? "Enabled" : "Disabled"}\``,
-        `- [E] Strict Member Role Addition: \`${quarantine.strictMemberRoleAddition ? "Enabled" : "Disabled"}\``,
-        "",
-        "[6] Runtime:",
-        `- Panic **${anti?.panicActive ? "ON" : "OFF"}**, JoinRaid **${raid?.raidActive ? "ON" : "OFF"}**, AutoMod Panic **${autoPanic.active ? "ON" : "OFF"}**`,
-        `- JoinLock **${sec.joinLockActive ? "ON" : "OFF"}**, CmdLock **${sec.commandLockActive ? "ON" : "OFF"}**`,
-        `- Warned roles: ${warnedRoles}`,
+  const page1=new EmbedBuilder().setColor("#6f4e37").setTitle("Global Anti-Nuke Panel").setDescription(["[1] Status:",`- \`${anti?.enabled?"Enabled":"Disabled"}\``,"","[2] Panic Mode:",`- \`+security panic status\``,"","[3] Backups:",`- [A] Status: \`${backup.enabled?"Enabled":"Disabled"}\``,"- [B] Max immagini: `10`","- [C] Intervallo: `Ogni 3h`","","[4] Prune Detection:",`- \`${antiCfg?.detectPrune?"Enabled":"Disabled"}\``,"","[5] Quarantine Hold:",`- [A] Status: \`${quarantine.enabled?"Enabled":"Disabled"}\``,`- [B] Strict Mode: \`${quarantine.strictMode?"Enabled":"Disabled"}\``,`- [C] Monitor Public Roles: \`${quarantine.monitorPublicRoles?"Enabled":"Disabled"}\``,`- [D] Vanity Protection: \`${antiCfg?.vanityGuard?"Enabled":"Disabled"}\``,`- [E] Strict Member Role Addition: \`${quarantine.strictMemberRoleAddition?"Enabled":"Disabled"}\``,"","[6] Runtime:",`- Panic **${anti?.panicActive?"ON":"OFF"}**,JoinRaid**${raid?.raidActive?"ON":"OFF"}**,AutoMod Panic**${autoPanic.active?"ON":"OFF"}**`,
+        `-JoinLock**${sec.joinLockActive?"ON":"OFF"}**,CmdLock**${sec.commandLockActive?"ON":"OFF"}**`,
+        `-Warned roles:${warnedRoles}`,
       ].join("\n"),
     );
 
-  const page2 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Join Raid")
-    .setDescription(
-      [
-        "[1] Status:        [2] Action:        [3] Warned Roles:",
-        `- \`${raid?.enabled ? "Enabled" : "Disabled"}\`        - \`${formatActionLabel(raid?.config?.triggerAction, "ban")}\`        - ${raidWarnedRoles}`,
+  const page2=new EmbedBuilder().setColor("#6f4e37").setTitle("Join Raid").setDescription(["[1] Status:        [2] Action:        [3] Warned Roles:",`- \`${raid?.enabled?"Enabled":"Disabled"}\`        - \`${formatActionLabel(raid?.config?.triggerAction,"ban")}\`        - ${raidWarnedRoles}`,
         "",
         "[4] Details:",
-        `- [X] Lock Commands While Raid: \`${raid?.config?.lockCommands ? "Enabled" : "Disabled"}\``,
-        `- [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount || 10)} accounts\``,
-        `- [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
-        `- [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs || 0)}\``,
-        "",
-        "[5] Age Flag:",
-        `- [A] Status: \`${ageFlag.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Minimum: \`${toCompactDuration(ageFlag.minimumAgeMs || 0)}\``,
-        "",
-        "[6] NoPFP Flag:",
-        `- \`${noPfpFlag.enabled ? "Enabled" : "Disabled"}\``,
-        "",
-        "[7] ID Flag:",
-        `- [A] Status: \`${idFlag.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Granularity: \`${String(idFlag.categorization || "adaptive")}\``,
-        `- [C] Margin: \`${toCompactDuration(raid?.config?.triggerWindowMs || 0)}\``,
-        `- [D] Minimum Matches: \`${Number(idFlag.minimumMatches || 4)}\``,
-      ].join("\n"),
-    );
+        `-[X]Lock Commands While Raid:\`${raid?.config?.lockCommands?"Enabled":"Disabled"}\``,`- [A] Minimum Trigger: \`${Number(raid?.config?.triggerCount||10)}accounts\``,`- [B] Join History: Past \`${toCompactDuration(raid?.config?.triggerWindowMs||0)}\``,`- [C] Trigger Duration: \`${toCompactDuration(raid?.config?.raidDurationMs||0)}\``,"","[5] Age Flag:",`- [A] Status: \`${ageFlag.enabled?"Enabled":"Disabled"}\``,`- [B] Minimum: \`${toCompactDuration(ageFlag.minimumAgeMs||0)}\``,"","[6] NoPFP Flag:",`- \`${noPfpFlag.enabled?"Enabled":"Disabled"}\``,"","[7] ID Flag:",`- [A] Status: \`${idFlag.enabled?"Enabled":"Disabled"}\``,`- [B] Granularity: \`${String(idFlag.categorization||"adaptive")}\``,`- [C] Margin: \`${toCompactDuration(raid?.config?.triggerWindowMs||0)}\``,`- [D] Minimum Matches: \`${Number(idFlag.minimumMatches||4)}\``,].join("\n"),);
 
-  const page3 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Heat System Panel")
-    .setDescription(
-      [
-        "[1] Status:",
-        `- \`${autoRules?.status?.enabled ? "Enabled" : "Disabled"}\``,
-        "",
-        "[2] Spam Filters:",
-        `- \`${autoRules?.status?.antiSpamEnabled ? "Enabled" : "Disabled"}\``,
-        "",
-        "[3] Max Heat Percentage:",
-        `- \`${Number(hs.maxHeat || 100)}%\``,
-        "",
-        "[4] Heat Degradation:",
-        `- \`${Number(hs.decayPerSec || 0)}% per second\``,
-        "",
-        "[5] Strikes CAP:",
-        `- \`${Number(at.capStrike || 3)}\``,
-        "",
-        "[6] Auto Timeouts:",
-        `- [A] Status: \`${at.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Regular Strike Duration: \`${toCompactDuration(at.regularStrikeDurationMs)}\``,
-        `- [C] CAP Strike Duration: \`${toCompactDuration(at.capStrikeDurationMs)}\``,
-        "",
-        "[7] Heat Panic Mode:",
-        `- [A] Status: \`${panic.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Trigger: \`${Number(panic.triggerCount || 3)} Raiders\``,
-        `- [C] Panic Duration: \`${toCompactDuration(panic.durationMs)}\``,
-        "",
-        "[8] Auto Server Lockdown:",
-        `- [A] Status: \`${lock.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Mentions: \`${Number(lock.mentionTrigger || 50)}\``,
-        `- [C] Under: \`${toCompactDuration(lock.mentionWindowMs)}\``,
-      ].join("\n"),
-    );
+  const page3=new EmbedBuilder().setColor("#6f4e37").setTitle("Heat System Panel").setDescription(["[1] Status:",`- \`${autoRules?.status?.enabled?"Enabled":"Disabled"}\``,"","[2] Spam Filters:",`- \`${autoRules?.status?.antiSpamEnabled?"Enabled":"Disabled"}\``,"","[3] Max Heat Percentage:",`- \`${Number(hs.maxHeat||100)}%\``,"","[4] Heat Degradation:",`- \`${Number(hs.decayPerSec||0)}%per second\``,"","[5] Strikes CAP:",`- \`${Number(at.capStrike||3)}\``,"","[6] Auto Timeouts:",`- [A] Status: \`${at.enabled?"Enabled":"Disabled"}\``,`- [B] Regular Strike Duration: \`${toCompactDuration(at.regularStrikeDurationMs)}\``,`- [C] CAP Strike Duration: \`${toCompactDuration(at.capStrikeDurationMs)}\``,"","[7] Heat Panic Mode:",`- [A] Status: \`${panic.enabled?"Enabled":"Disabled"}\``,`- [B] Trigger: \`${Number(panic.triggerCount||3)}Raiders\``,`- [C] Panic Duration: \`${toCompactDuration(panic.durationMs)}\``,"","[8] Auto Server Lockdown:",`- [A] Status: \`${lock.enabled?"Enabled":"Disabled"}\``,`- [B] Mentions: \`${Number(lock.mentionTrigger||50)}\``,`- [C] Under: \`${toCompactDuration(lock.mentionWindowMs)}\``,].join("\n"),);
 
-  const page4 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("JoinGate Panel")
-    .setDescription(
-      [
-        "[1] General:",
-        `- [A] Status: \`${joinGate?.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] DM Members: \`${joinGate?.dmPunishedMembers ? "Enabled" : "Disabled"}\``,
-        "",
-        "[2] No Avatar Filter:",
-        `- [A] Status: \`${joinGate?.noAvatar?.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Action: \`${formatActionLabel(joinGate?.noAvatar?.action, "log")}\``,
-        "",
-        "[3] Account Age Filter:",
-        `- [A] Status: \`${joinGate?.newAccounts?.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Action: \`${formatActionLabel(joinGate?.newAccounts?.action, "kick")}\``,
-        `- [C] Minimum Age: \`${minAgeDays} days\``,
-        "",
-        "[4] Bot Addition Filter:",
-        `- [A] Status: \`${joinGate?.botAdditions?.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Action: \`${formatActionLabel(joinGate?.botAdditions?.action, "kick")}\``,
-        "",
-        "[5] Suspicious Account Filter:",
-        `- [A] Status: \`${joinGate?.suspiciousAccount?.enabled ? "Enabled" : "Disabled"}\``,
-        `- [B] Action: \`${formatActionLabel(joinGate?.suspiciousAccount?.action, "log")}\``,
-      ].join("\n"),
-    );
+  const page4=new EmbedBuilder().setColor("#6f4e37").setTitle("JoinGate Panel").setDescription(["[1] General:",`- [A] Status: \`${joinGate?.enabled?"Enabled":"Disabled"}\``,`- [B] DM Members: \`${joinGate?.dmPunishedMembers?"Enabled":"Disabled"}\``,"","[2] No Avatar Filter:",`- [A] Status: \`${joinGate?.noAvatar?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.noAvatar?.action,"log")}\``,"","[3] Account Age Filter:",`- [A] Status: \`${joinGate?.newAccounts?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.newAccounts?.action,"kick")}\``,`- [C] Minimum Age: \`${minAgeDays}days\``,"","[4] Bot Addition Filter:",`- [A] Status: \`${joinGate?.botAdditions?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.botAdditions?.action,"kick")}\``,"","[5] Suspicious Account Filter:",`- [A] Status: \`${joinGate?.suspiciousAccount?.enabled?"Enabled":"Disabled"}\``,`- [B] Action: \`${formatActionLabel(joinGate?.suspiciousAccount?.action,"log")}\``,].join("\n"),);
 
   return [page1, page2, page3, page4];
 }
@@ -906,67 +676,45 @@ async function buildPanicStatusEmbeds(guild) {
 
   const panicCfg = anti?.config?.panicMode || {};
   const lockdown = panicCfg?.lockdown || {};
-  const warnedRoleIds = Array.isArray(panicCfg?.warnedRoleIds)
-    ? panicCfg.warnedRoleIds.filter(Boolean)
-    : [];
-  const whitelistCategoryIds = Array.isArray(panicCfg?.whitelistCategoryIds)
-    ? panicCfg.whitelistCategoryIds.filter(Boolean)
-    : [];
-  const warnedRows = warnedRoleIds.length
-    ? warnedRoleIds.slice(0, 3).map((id) => `<@&${id}>`).join(", ")
+  const warnedRoleIds=Array.isArray(panicCfg?.warnedRoleIds)?panicCfg.warnedRoleIds.filter(Boolean):[];
+  const whitelistCategoryIds=Array.isArray(panicCfg?.whitelistCategoryIds)?panicCfg.whitelistCategoryIds.filter(Boolean):[];
+  const warnedRows=warnedRoleIds.length?warnedRoleIds.slice(0,3).map((id) => `<@&${id}>`).join(", ")
     : "`No record found.`";
-  const whitelistRows = whitelistCategoryIds.length
-    ? whitelistCategoryIds.slice(0, 3).map((id) => `<#${id}>`).join(", ")
+  const whitelistRows=whitelistCategoryIds.length?whitelistCategoryIds.slice(0,3).map((id) => `<#${id}>`).join(", ")
     : "`No record found.`";
 
-  const page1 = new EmbedBuilder()
-    .setColor(panicCfg.enabled ? "#6f4e37" : "#57F287")
-    .setTitle("Anti-Nuke Panic Mode")
-    .setDescription(
-      [
-        "[1] Status:",
-        `- *${panicCfg.enabled ? "Enabled" : "Disabled"}*`,
+  const page1=new EmbedBuilder().setColor(panicCfg.enabled?"#6f4e37":"#57F287").setTitle("Anti-Nuke Panic Mode").setDescription(["[1] Status:",`- *${panicCfg.enabled?"Enabled":"Disabled"}*`,
         "",
         "[2] Heat Algorithm:",
-        `- *${panicCfg.useHeatAlgorithm ? "Enabled" : "Disabled"}*`,
+        `-*${panicCfg.useHeatAlgorithm?"Enabled":"Disabled"}*`,
         "",
         "[3] Lockdown Server on trigger:",
-        `- *${lockdown.dangerousRoles || lockdown.channelLockdown || lockdown.lockAllCommands ? "Enabled" : "Disabled"}*`,
+        `-*${lockdown.dangerousRoles||lockdown.channelLockdown||lockdown.lockAllCommands?"Enabled":"Disabled"}*`,
         "",
         "[4] Unlock Server when ending:",
-        `- *${lockdown.unlockDangerousRolesOnFinish ? "Enabled" : "Disabled"}*`,
+        `-*${lockdown.unlockDangerousRolesOnFinish?"Enabled":"Disabled"}*`,
         "",
-        `[5] Warned Roles (${Math.min(warnedRoleIds.length, 3)}/3):`,
+        `[5]Warned Roles(${Math.min(warnedRoleIds.length,3)}/3):`,
         warnedRows,
         "",
-        `[6] Whitelisted Categories (${Math.min(whitelistCategoryIds.length, 3)}/3):`,
+        `[6]Whitelisted Categories(${Math.min(whitelistCategoryIds.length,3)}/3):`,
         whitelistRows,
         "",
         "[7] Lock Mod Cmds on trigger:",
-        `- *${lockdown.lockModerationCommands ? "Enabled" : "Disabled"}*`,
+        `-*${lockdown.lockModerationCommands?"Enabled":"Disabled"}*`,
         "",
-        `Panic attiva ora: **${anti?.panicActive ? "SI" : "NO"}**${anti?.panicActive ? ` (fino a ${toTs(anti?.panicActiveUntil, "F")})` : ""}`,
-      ].join("\n"),
-    );
+        `Panic attiva ora:**${anti?.panicActive?"SI":"NO"}**${anti?.panicActive?` (fino a ${toTs(anti?.panicActiveUntil,"F")})` : ""}`,].join("\n"),);
 
-  const page2 = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Panic Runtime Overview")
-    .setDescription(
-      [
-        "[1] AutoMod Panic:",
-        `- Enabled: **${auto?.enabled ? "ON" : "OFF"}**`,
-        `- Active: **${auto?.active ? "ON" : "OFF"}**${auto?.active ? ` (fino a ${toTs(auto?.activeUntil, "F")})` : ""}`,
-        `- Tracked Accounts: **${Number(auto?.trackedAccounts || 0)}**`,
+  const page2=new EmbedBuilder().setColor("#6f4e37").setTitle("Panic Runtime Overview").setDescription(["[1] AutoMod Panic:",`- Enabled: **${auto?.enabled?"ON":"OFF"}**`,
+        `-Active:**${auto?.active?"ON":"OFF"}**${auto?.active?` (fino a ${toTs(auto?.activeUntil,"F")})` : ""}`,`- Tracked Accounts: **${Number(auto?.trackedAccounts||0)}**`,
         "",
         "[2] JoinRaid Runtime:",
-        `- Enabled: **${raid?.enabled ? "ON" : "OFF"}**`,
-        `- Active: **${raid?.raidActive ? "ON" : "OFF"}**${raid?.raidActive ? ` (fino a ${toTs(raid?.raidUntil, "F")})` : ""}`,
-        `- LockCommands: **${raid?.config?.lockCommands ? "ON" : "OFF"}**`,
+        `-Enabled:**${raid?.enabled?"ON":"OFF"}**`,
+        `-Active:**${raid?.raidActive?"ON":"OFF"}**${raid?.raidActive?` (fino a ${toTs(raid?.raidUntil,"F")})` : ""}`,`- LockCommands: **${raid?.config?.lockCommands?"ON":"OFF"}**`,
         "",
         "[3] Global Locks:",
-        `- Join lock active: **${sec?.joinLockActive ? "ON" : "OFF"}**`,
-        `- Command lock active: **${sec?.commandLockActive ? "ON" : "OFF"}**`,
+        `-Join lock active:**${sec?.joinLockActive?"ON":"OFF"}**`,
+        `-Command lock active:**${sec?.commandLockActive?"ON":"OFF"}**`,
       ].join("\n"),
     );
 
@@ -986,19 +734,7 @@ async function disableAntiNuke(guild, actorId) {
   }
 
   const cfg = snap?.config || {};
-  const setResult = setAntiNukeConfigSnapshot({
-    ...cfg,
-    enabled: false,
-    panicMode: {
-      ...(cfg.panicMode || {}),
-      enabled: false,
-      lockdown: {
-        ...(cfg.panicMode?.lockdown || {}),
-        lockModerationCommands: false,
-        lockAllCommands: false,
-      },
-    },
-  });
+  const setResult=setAntiNukeConfigSnapshot({...cfg,enabled:false,panicMode:{...(cfg.panicMode||{}),enabled:false,lockdown:{...(cfg.panicMode?.lockdown||{}),lockModerationCommands:false,lockAllCommands:false,},},});
 
   return {
     ok: Boolean(setResult?.ok),
@@ -1043,11 +779,7 @@ async function disableJoinRaid(guildId) {
   const wasActive = Boolean(raid?.enabled || raid?.raidActive || raid?.config?.lockCommands);
   if (!wasActive) return { ok: true, changed: false, note: "JoinRaid già spento/inattivo." };
 
-  const next = {
-    ...(raid?.config || {}),
-    enabled: false,
-    lockCommands: false,
-  };
+  const next={...(raid?.config||{}),enabled:false,lockCommands:false,};
   const updated = setJoinRaidConfigSnapshot(next);
   return {
     ok: Boolean(updated?.ok),
@@ -1066,22 +798,9 @@ async function disableLockCommands(guildId) {
   if (!wasActive) return { ok: true, changed: false, note: "LockCommands già disattivati." };
 
   const antiCfg = anti?.config || {};
-  const antiUpdated = setAntiNukeConfigSnapshot({
-    ...antiCfg,
-    panicMode: {
-      ...(antiCfg.panicMode || {}),
-      lockdown: {
-        ...(antiCfg.panicMode?.lockdown || {}),
-        lockModerationCommands: false,
-        lockAllCommands: false,
-      },
-    },
-  });
+  const antiUpdated=setAntiNukeConfigSnapshot({...antiCfg,panicMode:{...(antiCfg.panicMode||{}),lockdown:{...(antiCfg.panicMode?.lockdown||{}),lockModerationCommands:false,lockAllCommands:false,},},});
 
-  const raidUpdated = setJoinRaidConfigSnapshot({
-    ...(raid?.config || {}),
-    lockCommands: false,
-  });
+  const raidUpdated=setJoinRaidConfigSnapshot({...(raid?.config||{}),lockCommands:false,});
 
   const ok = Boolean(antiUpdated?.ok && raidUpdated?.ok);
   return {
@@ -1096,23 +815,10 @@ async function enableAntiNuke(guild, actorId) {
   const snap = getAntiNukeStatusSnapshot(guildId);
   const cfg = snap?.config || {};
 
-  const setResult = setAntiNukeConfigSnapshot({
-    ...cfg,
-    enabled: true,
-    panicMode: {
-      ...(cfg.panicMode || {}),
-      enabled: true,
-      autoBackupSync: {
-        ...(cfg.panicMode?.autoBackupSync || {}),
-        enabled: true,
-      },
-    },
-  });
+  const setResult=setAntiNukeConfigSnapshot({...cfg,enabled:true,panicMode:{...(cfg.panicMode||{}),enabled:true,autoBackupSync:{...(cfg.panicMode?.autoBackupSync||{}),enabled:true,},},});
   if (!setResult?.ok) return { ok: false, changed: false, note: "Errore riabilitazione AntiNuke." };
 
-  const triggered = await triggerAntiNukePanicExternal(
-    guild,
-    `manual security panic enable by ${String(actorId || "unknown")}`,
+  const triggered=await triggerAntiNukePanicExternal(guild,`manual security panic enable by ${String(actorId||"unknown")}`,
     500,
   ).catch(() => ({ ok: false }));
 
@@ -1137,10 +843,7 @@ async function enableAutoMod(guildId, actorId) {
   if (!r1?.ok || !r2?.ok) {
     return { ok: false, changed: false, note: "Errore riabilitazione AutoMod." };
   }
-  const trig = triggerAutoModPanicExternal(guildId, String(actorId || "manual"), {
-    activityBoost: 1,
-    raidBoost: 1,
-  });
+  const trig=triggerAutoModPanicExternal(guildId,String(actorId||"manual"),{activityBoost:1,raidBoost:1,});
 
   return {
     ok: true,
@@ -1165,10 +868,7 @@ async function enableJoinGate() {
 async function enableJoinRaid(guildId) {
   const raid = await getJoinRaidStatusSnapshot(guildId);
   if (raid?.enabled) return { ok: true, changed: false, note: "JoinRaid già attivo." };
-  const updated = setJoinRaidConfigSnapshot({
-    ...(raid?.config || {}),
-    enabled: true,
-  });
+  const updated=setJoinRaidConfigSnapshot({...(raid?.config||{}),enabled:true,});
   return {
     ok: Boolean(updated?.ok),
     changed: true,
@@ -1187,21 +887,8 @@ async function enableLockCommands(guildId) {
   }
 
   const antiCfg = anti?.config || {};
-  const antiUpdated = setAntiNukeConfigSnapshot({
-    ...antiCfg,
-    panicMode: {
-      ...(antiCfg.panicMode || {}),
-      lockdown: {
-        ...(antiCfg.panicMode?.lockdown || {}),
-        lockModerationCommands: true,
-        lockAllCommands: true,
-      },
-    },
-  });
-  const raidUpdated = setJoinRaidConfigSnapshot({
-    ...(raid?.config || {}),
-    lockCommands: true,
-  });
+  const antiUpdated=setAntiNukeConfigSnapshot({...antiCfg,panicMode:{...(antiCfg.panicMode||{}),lockdown:{...(antiCfg.panicMode?.lockdown||{}),lockModerationCommands:true,lockAllCommands:true,},},});
+  const raidUpdated=setJoinRaidConfigSnapshot({...(raid?.config||{}),lockCommands:true,});
   const ok = Boolean(antiUpdated?.ok && raidUpdated?.ok);
   return {
     ok,
@@ -1325,10 +1012,7 @@ module.exports = {
       const results = await runSecurityAction("enable", target, message.guild, message.author.id);
       const okCount = results.filter((r) => r.ok).length;
       const changedCount = results.filter((r) => r.changed).length;
-      const lines = results.map((r) => {
-        const status = r.ok ? "OK" : "ERR";
-        const changed = r.changed ? "changed" : "no-change";
-        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
+      const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
       });
 
       await sendSecurityAuditLog(message.guild, {
@@ -1375,10 +1059,7 @@ module.exports = {
       const results = await runSecurityAction("disable", target, message.guild, message.author.id);
       const okCount = results.filter((r) => r.ok).length;
       const changedCount = results.filter((r) => r.changed).length;
-      const lines = results.map((r) => {
-        const status = r.ok ? "OK" : "ERR";
-        const changed = r.changed ? "changed" : "no-change";
-        return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
+      const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
       });
 
       await sendSecurityAuditLog(message.guild, {
@@ -1450,10 +1131,7 @@ module.exports = {
 
     const okCount = results.filter((r) => r.ok).length;
     const changedCount = results.filter((r) => r.changed).length;
-    const lines = results.map((r) => {
-      const status = r.ok ? "OK" : "ERR";
-      const changed = r.changed ? "changed" : "no-change";
-      return `- **${r.system}**: ${status} (${changed}) - ${r.note}`;
+    const lines=results.map((r) => {const status=r.ok?"OK":"ERR";const changed=r.changed?"changed":"no-change";return`- **${r.system}**:${status}(${changed})-${r.note}`;
     });
 
     await sendSecurityAuditLog(message.guild, {

@@ -44,9 +44,7 @@ async function fetchMembersSafe(guild, userIds) {
     }
   }
   if (missing.length > 0) {
-    const fetched = await guild.members
-      .fetch({ user: missing })
-      .catch(() => null);
+    const fetched=await guild.members.fetch({user:missing}).catch(() => null);
     if (fetched) {
       for (const [id, member] of fetched.entries()) {
         result.set(id, member);
@@ -77,9 +75,7 @@ async function resolveTarget(message, args, index = 0) {
 }
 
 function getReason(args, startIndex) {
-  const reason = Array.isArray(args)
-    ? args.slice(startIndex).join(" ").trim()
-    : "";
+  const reason=Array.isArray(args)?args.slice(startIndex).join(" ").trim():"";
   return reason || "Nessun motivo fornito";
 }
 

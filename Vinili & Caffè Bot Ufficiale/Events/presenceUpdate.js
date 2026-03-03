@@ -33,9 +33,7 @@ function isDbReady() {
 
 function getCustomStatus(presence) {
   if (!presence?.activities?.length) return "";
-  const custom = presence.activities.find(
-    (activity) => activity.type === ActivityType.Custom,
-  );
+  const custom=presence.activities.find((activity) => activity.type===ActivityType.Custom,);
   return String(custom?.state || "");
 }
 
@@ -264,40 +262,7 @@ function scheduleRemovalConfirm(member, channel) {
   const userId = member.id;
   if (hasRemovalState(guildId, userId)) return;
 
-  const timeout = setTimeout(async () => {
-    deleteRemovalState(guildId, userId);
-
-    const freshMember = await refreshMember(member.guild, userId);
-    if (!freshMember) return;
-    const liveChannel = channel?.isTextBased?.()
-      ? channel
-      : await resolveSupportersChannel(member.guild);
-
-    const stillHasInvite = hasInviteNow(freshMember);
-    if (stillHasInvite !== false) return;
-
-    await removeRoleIfPossible(freshMember);
-    try {
-      await freshMember.send(
-        "Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",
-      );
-    } catch {}
-
-    const info = getCachedState(guildId, userId);
-    if (info?.lastMessageId && liveChannel?.isTextBased?.()) {
-      await liveChannel.messages.delete(info.lastMessageId).catch(() => {});
-    }
-
-    setCachedState(guildId, userId, {
-      hasLink: false,
-      lastAnnounced: info?.lastAnnounced || 0,
-      lastMessageId: null,
-      lastSeenOnlineAt: info?.lastSeenOnlineAt || 0,
-    });
-    await clearPersistedStatus(guildId, userId);
-  }, REMOVE_CONFIRM_MS);
-
-  setRemovalState(guildId, userId, { timeout });
+  const timeout=setTimeout(async() => {deleteRemovalState(guildId,userId);const freshMember=await refreshMember(member.guild,userId);if(!freshMember)return;const liveChannel=channel?.isTextBased?.()?channel:await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite!==false)return;await removeRoleIfPossible(freshMember);try{await freshMember.send("Hai rimosso il link dallo status: hai perso i tuoi perks. Per riaverli, rimetti il link nel tuo status.",);}catch{}const info=getCachedState(guildId,userId);if(info?.lastMessageId&&liveChannel?.isTextBased?.()){await liveChannel.messages.delete(info.lastMessageId).catch(() => {});}setCachedState(guildId,userId,{hasLink:false,lastAnnounced:info?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:info?.lastSeenOnlineAt||0,});await clearPersistedStatus(guildId,userId);},REMOVE_CONFIRM_MS);setRemovalState(guildId, userId, { timeout });
 }
 
 async function persistStatus(guildId, userId, payload) {
@@ -332,8 +297,7 @@ async function getPersistedStatus(guildId, userId) {
 }
 
 function buildPendingEmbed(member) {
-  const DIVIDER_URL =
-    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+  const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
@@ -374,41 +338,13 @@ async function startPendingFlow(member, channel) {
     inFlight: true,
   });
 
-  const sent = await channel
-    .send({
-      content: `<@${userId}>`,
+  const sent=await channel.send({content:`<@${userId}>`,
       embeds: [buildPendingEmbed(member)],
     })
     .catch(() => null);
 
   if (sent) {
-    const timeout = setTimeout(async () => {
-      const freshMember = await refreshMember(member.guild, userId);
-      if (!freshMember) {
-        deletePendingState(guildId, userId);
-        return;
-      }
-
-      const liveChannel = await resolveSupportersChannel(member.guild);
-      const stillHasInvite = hasInviteNow(freshMember);
-      if (stillHasInvite === false) {
-        if (liveChannel?.isTextBased?.()) {
-          await liveChannel.messages.delete(sent.id).catch(() => {});
-        }
-        deletePendingState(guildId, userId);
-        const current = getCachedState(guildId, userId);
-        setCachedState(guildId, userId, {
-          hasLink: false,
-          lastAnnounced: current?.lastAnnounced || 0,
-          lastMessageId: null,
-          lastSeenOnlineAt: current?.lastSeenOnlineAt || 0,
-        });
-        return;
-      }
-
-      await addRoleIfPossible(freshMember);
-      deletePendingState(guildId, userId);
-    }, PENDING_MS);
+    const timeout=setTimeout(async() => {const freshMember=await refreshMember(member.guild,userId);if(!freshMember){deletePendingState(guildId,userId);return;}const liveChannel=await resolveSupportersChannel(member.guild);const stillHasInvite=hasInviteNow(freshMember);if(stillHasInvite===false){if(liveChannel?.isTextBased?.()){await liveChannel.messages.delete(sent.id).catch(() => {});}deletePendingState(guildId,userId);const current=getCachedState(guildId,userId);setCachedState(guildId,userId,{hasLink:false,lastAnnounced:current?.lastAnnounced||0,lastMessageId:null,lastSeenOnlineAt:current?.lastSeenOnlineAt||0,});return;}await addRoleIfPossible(freshMember);deletePendingState(guildId,userId);},PENDING_MS);
 
     setPendingState(guildId, userId, {
       timeout,
@@ -484,13 +420,7 @@ function startCleanupClock(client, guildId) {
   if (!client || !guildId) return;
   if (cleanupIntervalsByGuild.has(guildId)) return;
 
-  const interval = setInterval(async () => {
-    const guild = client.guilds.cache.get(guildId);
-    if (!guild) return;
-    const channel = await resolveSupportersChannel(guild);
-
-    for (const [stateKey, info] of statusCache.entries()) {
-      if (!stateKey.startsWith(`${guildId}:`)) continue;
+  const interval=setInterval(async() => {const guild=client.guilds.cache.get(guildId);if(!guild)return;const channel=await resolveSupportersChannel(guild);for(const[stateKey,info]of statusCache.entries()){if(!stateKey.startsWith(`${guildId}:`)) continue;
       const [, userId] = stateKey.split(":");
       const shouldCheck = info?.hasLink || info?.lastMessageId;
       if (!shouldCheck) continue;
@@ -641,10 +571,7 @@ module.exports = {
         }
       }
 
-      const prevHas =
-        typeof prev?.hasLink === "boolean"
-          ? prev.hasLink
-          : resolveInviteState(oldPresence, false);
+      const prevHas=typeof prev?.hasLink==="boolean"?prev.hasLink:resolveInviteState(oldPresence,false);
 
       if (isOfflinePresence(newPresence)) {
         if (!getCachedState(guildId, userId)) {

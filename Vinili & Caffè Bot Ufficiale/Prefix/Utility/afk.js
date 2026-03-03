@@ -25,9 +25,7 @@ module.exports = {
       );
 
     try {
-      const member = await message.guild.members
-        .fetch(userId)
-        .catch(() => null);
+      const member=await message.guild.members.fetch(userId).catch(() => null);
       if (!member)
         return safeMessageReply(
           message,

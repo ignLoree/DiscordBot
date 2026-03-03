@@ -6,32 +6,7 @@ const IDs = require("../../Utils/Config/ids");
 const EPHEMERAL_FLAG = 1 << 6;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-const IT_MONTHS = {
-  gennaio: 1,
-  feb: 2,
-  febbraio: 2,
-  mar: 3,
-  marzo: 3,
-  apr: 4,
-  aprile: 4,
-  mag: 5,
-  maggio: 5,
-  giu: 6,
-  giugno: 6,
-  lug: 7,
-  luglio: 7,
-  ago: 8,
-  agosto: 8,
-  set: 9,
-  sett: 9,
-  settembre: 9,
-  ott: 10,
-  ottobre: 10,
-  nov: 11,
-  novembre: 11,
-  dic: 12,
-  dicembre: 12,
-};
+const IT_MONTHS={gennaio:1,feb:2,febbraio:2,mar:3,marzo:3,apr:4,aprile:4,mag:5,maggio:5,giu:6,giugno:6,lug:7,luglio:7,ago:8,agosto:8,set:9,sett:9,settembre:9,ott:10,ottobre:10,nov:11,novembre:11,dic:12,dicembre:12,};
 
 function parseItalianDate(value) {
   if (!value || typeof value !== "string") return null;
@@ -270,11 +245,7 @@ function computePauseScaledDaysThisYear(pause, todayUtc, yearStart, yearEnd) {
   if (!start || !plannedEnd) return 0;
 
   if (pause.status === "cancelled") {
-    const effectiveEnd = getCancelledPauseEffectiveEnd(
-      pause,
-      start,
-      plannedEnd,
-    );
+    const effectiveEnd=getCancelledPauseEffectiveEnd(pause,start,plannedEnd,);
     return countOverlapDays(start, effectiveEnd, yearStart, yearEnd);
   }
 
@@ -359,9 +330,7 @@ async function handlePauseRequest(interaction, guildId) {
   const createdPause = stafferDoc.pauses[stafferDoc.pauses.length - 1];
   const pauseId = String(createdPause?._id || "");
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`pause_accept:${userId}:${pauseId}`)
+  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`pause_accept:${userId}:${pauseId}`)
       .setLabel("Accetta")
       .setEmoji("<:vegacheckmark:1443666279058772028>")
       .setStyle(ButtonStyle.Success),
@@ -391,9 +360,7 @@ async function handlePauseRequest(interaction, guildId) {
 
 async function handlePauseList(interaction, guildId) {
   const targetUser = interaction.options.getUser("staffer") || interaction.user;
-  const isHighStaff = interaction.member?.roles?.cache?.has(
-    IDs.roles.HighStaff,
-  );
+  const isHighStaff=interaction.member?.roles?.cache?.has(IDs.roles.HighStaff,);
 
   if (!isHighStaff && targetUser.id !== interaction.user.id) {
     return safeEditReply(interaction, {
@@ -402,40 +369,14 @@ async function handlePauseList(interaction, guildId) {
     });
   }
 
-  const stafferRecord = await Staff.findOne(
-    { guildId, userId: targetUser.id },
-    { pauses: 1 },
-  )
-    .lean()
-    .catch(() => null);
+  const stafferRecord=await Staff.findOne({guildId,userId:targetUser.id},{pauses:1},).lean().catch(() => null);
   const pauses = Array.isArray(stafferRecord?.pauses) ? stafferRecord.pauses : [];
 
   const todayUtc = getTodayUtc();
   const { yearStart, yearEnd } = getCurrentYearBoundsUtc();
   const currentYear = yearStart.getUTCFullYear();
 
-  const rows = pauses
-    .map((pause) => {
-      const start = parseItalianDate(pause?.dataRichiesta);
-      const end = parseItalianDate(pause?.dataRitorno);
-      if (!start || !end) return null;
-
-      const overlapsYear = countOverlapDays(start, end, yearStart, yearEnd) > 0;
-      if (!overlapsYear) return null;
-
-      const scaledDays = computePauseScaledDaysThisYear(
-        pause,
-        todayUtc,
-        yearStart,
-        yearEnd,
-      );
-      const statusLabel = getPauseStatusLabel(pause, todayUtc);
-      return `- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}** | Giorni scalati: \`${scaledDays}\``;
-    })
-    .filter(Boolean);
-
-  if (!rows.length) {
-    return safeEditReply(interaction, {
+  const rows=pauses.map((pause) => {const start=parseItalianDate(pause?.dataRichiesta);const end=parseItalianDate(pause?.dataRitorno);if(!start||!end)return null;const overlapsYear=countOverlapDays(start,end,yearStart,yearEnd)>0;if(!overlapsYear)return null;const scaledDays=computePauseScaledDaysThisYear(pause,todayUtc,yearStart,yearEnd,);const statusLabel=getPauseStatusLabel(pause,todayUtc);return`- \`${pause.dataRichiesta}\` -> \`${pause.dataRitorno}\` | **${statusLabel}**|Giorni scalati:\`${scaledDays}\``;}).filter(Boolean);if(!rows.length){return safeEditReply(interaction, {
       embeds: [
         new EmbedBuilder()
           .setColor("#6f4e37")
@@ -450,16 +391,7 @@ async function handlePauseList(interaction, guildId) {
   const totalScaledDays = computeConsumedPauseDays(pauses);
   const chunks = splitRowsForEmbeds(rows);
 
-  const embeds = chunks.map((chunk, index) =>
-    new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle(
-        `Pause ${currentYear} - ${targetUser.username}${chunks.length > 1 ? ` (${index + 1}/${chunks.length})` : ""}`,
-      )
-      .setDescription(
-        `${chunk}\n\nTotale giorni scalati anno corrente: \`${totalScaledDays}\``,
-      ),
-  );
+  const embeds=chunks.map((chunk,index) => new EmbedBuilder().setColor("#6f4e37").setTitle(`Pause ${currentYear}-${targetUser.username}${chunks.length>1?` (${index+1}/${chunks.length})` : ""}`,).setDescription(`${chunk}\n\nTotale giorni scalati anno corrente:\`${totalScaledDays}\``,),);
 
   return safeEditReply(interaction, {
     embeds,

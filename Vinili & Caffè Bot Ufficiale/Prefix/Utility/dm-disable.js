@@ -37,42 +37,15 @@ module.exports = {
     const confirmId = `nodm_confirm_${userId}_${uniqueKey}`;
     const cancelId = `nodm_cancel_${userId}_${uniqueKey}`;
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(confirmId)
-        .setLabel("Conferma")
-        .setStyle(ButtonStyle.Danger),
-      new ButtonBuilder()
-        .setCustomId(cancelId)
-        .setLabel("Rifiuta")
-        .setStyle(ButtonStyle.Secondary),
-    );
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(confirmId).setLabel("Conferma").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId(cancelId).setLabel("Rifiuta").setStyle(ButtonStyle.Secondary),);
 
-    const warningEmbed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("Conferma blocco DM")
-      .setDescription(
-        [
-          "Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.",
-          "Questo include anche eventuali avvisi più importanti.",
-          "",
-          "Vuoi continuare?",
-        ].join("\n"),
-      )
-      .setFooter({ text: "Potrai riattivarli con +dm-enable." });
+    const warningEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle("Conferma blocco DM").setDescription(["Se confermi, non riceverai **nessun tipo di DM automatico** dal bot.","Questo include anche eventuali avvisi più importanti.","","Vuoi continuare?",].join("\n"),).setFooter({text:"Potrai riattivarli con +dm-enable."});
 
-    const promptMessage = await safeMessageReply(message, {
-      embeds: [warningEmbed],
-      components: [row],
-      allowedMentions: { repliedUser: false },
-    });
+    const promptMessage=await safeMessageReply(message,{embeds:[warningEmbed],components:[row],allowedMentions:{repliedUser:false},});
     if (!promptMessage) return;
 
     let decided = false;
-    const collector = promptMessage.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-      time: 60_000,
-    });
+    const collector=promptMessage.createMessageComponentCollector({componentType:ComponentType.Button,time:60_000,});
 
     collector.on("collect", async (interaction) => {
       if (interaction.user.id !== userId) {
@@ -125,10 +98,7 @@ module.exports = {
 
     collector.on("end", async () => {
       if (decided) return;
-      const disabled = new ActionRowBuilder().addComponents(
-        ButtonBuilder.from(row.components[0]).setDisabled(true),
-        ButtonBuilder.from(row.components[1]).setDisabled(true),
-      );
+      const disabled=new ActionRowBuilder().addComponents(ButtonBuilder.from(row.components[0]).setDisabled(true),ButtonBuilder.from(row.components[1]).setDisabled(true),);
       await promptMessage.edit({ components: [disabled] }).catch(() => {});
     });
   },

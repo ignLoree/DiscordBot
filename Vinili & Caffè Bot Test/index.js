@@ -1,16 +1,11 @@
 const discord = require("discord.js");
-const { Client, Collection, IntentsBitField, Options } = discord;
+const { Client, IntentsBitField, Options } = discord;
 const GatewayIntentBits = discord.GatewayIntentBits || IntentsBitField?.Flags || {};
 const Partials = discord.Partials || {};
 const path = require("path");
 const APP_ROOT = __dirname;
-const {
-  acquireSingleInstanceLock,
-  installHandlers,
-  listFoldersIfExists,
-  listJsFilesIfExists,
-  loadEnvFiles,
-} = require("../shared/runtime/fsRuntime");
+const {acquireSingleInstanceLock,installHandlers,listFoldersIfExists,listJsFilesIfExists,loadEnvFiles,}= require("../shared/runtime/fsRuntime");
+const { initializeCommandCollections } = require("../shared/runtime/clientRuntime");
 
 loadEnvFiles(APP_ROOT);
 global.logger = require("./Utils/Moderation/logger");
@@ -21,46 +16,7 @@ if (process.env.RUN_UNDER_LOADER !== "1") {
 const installProcessHandlers = require("./Handlers/processHandler");
 installProcessHandlers();
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.DirectMessages,
-    GatewayIntentBits.GuildMessageReactions,
-    GatewayIntentBits.GuildModeration,
-  ],
-  partials: [
-    Partials.Message,
-    Partials.Channel,
-    Partials.Reaction,
-    Partials.User,
-    Partials.GuildMember,
-  ],
-  presence: { status: "invisible" },
-  rest: {
-    timeout: 12_000,
-    offset: 50,
-    retries: 2,
-  },
-  ...(typeof Options?.cacheWithLimits === "function" && {
-    makeCache: Options.cacheWithLimits({
-      ...(Options.DefaultMakeCacheSettings || {}),
-      MessageManager: 100,
-      GuildMemberManager: 200,
-      PresenceManager: 0,
-      ReactionManager: 50,
-    }),
-  }),
-  ...(typeof Options?.DefaultSweeperSettings === "object" && {
-    sweepers: {
-      ...(Options.DefaultSweeperSettings || {}),
-      messages: { interval: 300, lifetime: 600 },
-    },
-  }),
-});
+const client = new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessages,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildModeration,],partials:[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,],presence:{status:"invisible"},rest:{timeout:12_000,offset:50,retries:2,},...(typeof Options ?. cacheWithLimits === "function" &&{makeCache:Options.cacheWithLimits({...(Options.DefaultMakeCacheSettings ||{}),MessageManager:100,GuildMemberManager:200,PresenceManager:0,ReactionManager:50,}),}),...(typeof Options ?. DefaultSweeperSettings === "object" &&{sweepers:{...(Options.DefaultSweeperSettings ||{}),messages:{interval:300,lifetime:600},},}),});
 
 try {
   client.config = require("./config.json");
@@ -84,10 +40,7 @@ if (!client.config.token) {
 }
 
 client.logs = require("./Utils/Moderation/logs");
-client.commands = new Collection();
-client.pcommands = new Collection();
-client.aliases = new Collection();
-client.buttons = new Collection();
+initializeCommandCollections(client);
 
 installHandlers(APP_ROOT, client);
 

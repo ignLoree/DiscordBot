@@ -49,9 +49,7 @@ module.exports = {
       });
     }
 
-    const targetMessage = await message.channel.messages
-      .fetch(refId)
-      .catch(() => null);
+    const targetMessage=await message.channel.messages.fetch(refId).catch(() => null);
     if (!targetMessage) {
       return safeMessageReply(message, {
         embeds: [
@@ -82,19 +80,9 @@ module.exports = {
     }
 
     try {
-      const privacy = await QuotePrivacy.findOne({
-        guildId: message.guild.id,
-        userId: author.id,
-      }).lean();
+      const privacy=await QuotePrivacy.findOne({guildId:message.guild.id,userId:author.id,}).lean();
       if (privacy?.blocked) {
-        const dateText = new Date().toLocaleString("it-IT", {
-          timeZone: "Europe/Rome",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const dateText=new Date().toLocaleString("it-IT",{timeZone:"Europe/Rome",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",});
         return safeMessageReply(message, {
           embeds: [
             new EmbedBuilder()
@@ -119,9 +107,7 @@ module.exports = {
 
     let buffer;
     try {
-      const footerText = String(message.client?.config?.botServerInvite || "")
-        .replace(/^https?:\/\//i, "")
-        .trim();
+      const footerText = String(message.client?.config?.botServerInvite || "").replace(/^https?:\/\//i, "").trim();
       buffer = await renderQuoteCanvas({
         avatarUrl: author.displayAvatarURL({ extension: "png", size: 512 }),
         message: text,
@@ -149,38 +135,22 @@ module.exports = {
     }
 
     const attachment = new AttachmentBuilder(buffer, { name: "quote.png" });
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setDescription(
-        `<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`,
+    const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`<a:VC_Sparkles:1468546911936974889> Puoi trovare il post creato nel canale: <#${QUOTE_CHANNEL_ID}>!`,
       )
       .addFields({
         name: "📸 Totale immagini generate:",
         value: String(totalPosts),
       });
 
-    const replyMsg = await safeMessageReply(message, {
-      files: [attachment],
-      embeds: [embed],
-      allowedMentions: { repliedUser: false },
-    });
+    const replyMsg=await safeMessageReply(message,{files:[attachment],embeds:[embed],allowedMentions:{repliedUser:false},});
 
     const quoteChannel = message.guild.channels.cache.get(QUOTE_CHANNEL_ID);
     if (quoteChannel) {
-      const postAttachment = new AttachmentBuilder(buffer, {
-        name: "quote.png",
-      });
-      const postEmbed = buildQuotePostEmbed({
-        messageAuthorId: author.id,
-        creatorId: message.author.id,
-        totalPosts,
-      });
+      const postAttachment=new AttachmentBuilder(buffer,{name:"quote.png",});
+      const postEmbed=buildQuotePostEmbed({messageAuthorId:author.id,creatorId:message.author.id,totalPosts,});
       const originChannelId = message.channel.id;
       const originMessageId = replyMsg?.id || "0";
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(
-            `quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`,
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`quote_remove:${message.author.id}:${originChannelId}:${originMessageId}`,
           )
           .setLabel("Rimuovi questa quote")
           .setEmoji("🗑️")

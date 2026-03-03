@@ -5,25 +5,18 @@ const path = require("path");
 const child_process = require("child_process");
 
 const RESTART_FLAG = "restart.json";
+const OFFICIAL_RESTART_NOTIFY_FILE = "restart_notify_official.json";
+const TEST_RESTART_NOTIFY_FILE = "restart_notify_test.json";
 const RESTART_CLEANUP_DELAY_MS = 2000;
 const PROCESS_EXIT_DELAY_MS = 1200;
 const VALID_SCOPES = new Set(["full", "all"]);
 
 function resolveGitRoot() {
-  const candidates = [
-    process.cwd(),
-    path.resolve(process.cwd(), ".."),
-    path.resolve(__dirname, "..", "..", "..", ".."),
-    path.resolve(__dirname, "..", "..", ".."),
-  ];
+  const candidates=[process.cwd(),path.resolve(process.cwd(),".."),path.resolve(__dirname,"..","..","..",".."),path.resolve(__dirname,"..","..",".."),];
   for (const candidate of candidates) {
     try {
       if (!fs.existsSync(candidate)) continue;
-      const probe = child_process.spawnSync(
-        "git",
-        ["rev-parse", "--show-toplevel"],
-        { cwd: candidate, encoding: "utf8" },
-      );
+      const probe=child_process.spawnSync("git",["rev-parse","--show-toplevel"],{cwd:candidate,encoding:"utf8"},);
       const top = String(probe.stdout || "").trim();
       if (probe.status === 0 && top) return top;
     } catch {}
@@ -45,25 +38,13 @@ function pullLatest() {
     const repoRoot = resolveGitRoot();
     if (!repoRoot) return;
     const branch = process.env.GIT_BRANCH || "main";
-    const pull = child_process.spawnSync(
-      "git",
-      ["pull", "origin", branch, "--ff-only"],
-      { cwd: repoRoot, stdio: "inherit" },
-    );
+    const pull=child_process.spawnSync("git",["pull","origin",branch,"--ff-only"],{cwd:repoRoot,stdio:"inherit"},);
 
     if (pull.status !== 0) {
-      child_process.spawnSync("git", ["fetch", "origin", branch], {
-        cwd: repoRoot,
-        stdio: "inherit",
-      });
-      child_process.spawnSync("git", ["reset", "--hard", `origin/${branch}`], {
-        cwd: repoRoot,
-        stdio: "inherit",
-      });
-      child_process.spawnSync("git", ["clean", "-fd"], {
-        cwd: repoRoot,
-        stdio: "inherit",
-      });
+      global.logger?.warn?.(
+        `[restart] git pull origin/${branch} fallito: salto sync automatica per evitare reset distruttivi.`,
+      );
+      return;
     }
 
     child_process.spawnSync(
@@ -72,6 +53,18 @@ function pullLatest() {
       { cwd: repoRoot, stdio: "inherit" },
     );
   } catch {}
+}
+
+function buildRestartPayload(message, notifyMessage, requestedAt, scope) {
+  return {
+    channelId: message.channelId || message.channel?.id || null,
+    guildId: message.guild?.id || null,
+    by: message.author.id,
+    at: requestedAt,
+    scope,
+    commandMessageId: message.id || null,
+    notifyMessageId: notifyMessage?.id || null,
+  };
 }
 function buildUsageEmbed() {
   return new EmbedBuilder()
@@ -91,11 +84,8 @@ function buildUsageEmbed() {
 
 function canUseRestart(message) {
   if (!message?.guild || !message?.member) return false;
-  const isOwner =
-    String(message.guild.ownerId || "") === String(message.author?.id || "");
-  const isAdmin = Boolean(
-    message.member.permissions?.has?.("Administrator"),
-  );
+  const isOwner=String(message.guild.ownerId||"")===String(message.author?.id||"");
+  const isAdmin=Boolean(message.member.permissions?.has?.("Administrator"),);
   return isOwner || isAdmin;
 }
 
@@ -149,45 +139,30 @@ module.exports = {
 
     try {
       const requestedAt = new Date().toISOString();
-      const channelId = message.channelId || message.channel?.id || null;
 
       if (scope === "full") {
-        const notifyMessage = await safeMessageReply(message, {
-          embeds: [
-            new EmbedBuilder()
-              .setColor("#6f4e37")
-              .setDescription(
-                isFullBoth
-                  ? "<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato."
-                  : "<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",
-              ),
-          ],
-          allowedMentions: { repliedUser: false },
-        });
+        const notifyMessage=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("#6f4e37").setDescription(isFullBoth?"<:attentionfromvega:1443651874032062505> Riavvio **entrambi i bot** richiesto. Ti avviso qui quando è completato.":"<:attentionfromvega:1443651874032062505> Riavvio richiesto. Ti avviso qui quando è completato.",),],allowedMentions:{repliedUser:false},});
 
         pullLatest();
 
         const runtimeRoot = resolveRuntimeRoot();
-        const notifyPath = path.resolve(runtimeRoot, "restart_notify.json");
+        const officialNotifyPath=path.resolve(runtimeRoot,OFFICIAL_RESTART_NOTIFY_FILE,);
+        const testNotifyPath=path.resolve(runtimeRoot,TEST_RESTART_NOTIFY_FILE,);
         const flagPath = path.resolve(runtimeRoot, RESTART_FLAG);
         try {
+          const restartPayload=buildRestartPayload(message,notifyMessage,requestedAt,"full",);
           fs.writeFileSync(
-            notifyPath,
-            JSON.stringify(
-              {
-                channelId,
-                guildId: message.guild?.id || null,
-                by: message.author.id,
-                at: requestedAt,
-                scope: "full",
-                commandMessageId: message.id || null,
-                notifyMessageId: notifyMessage?.id || null,
-              },
-              null,
-              2,
-            ),
+            officialNotifyPath,
+            JSON.stringify(restartPayload, null, 2),
             "utf8",
           );
+          if (isFullBoth) {
+            fs.writeFileSync(
+              testNotifyPath,
+              JSON.stringify(restartPayload, null, 2),
+              "utf8",
+            );
+          }
           fs.writeFileSync(
             flagPath,
             JSON.stringify(
@@ -228,12 +203,7 @@ module.exports = {
       await client.reloadScope(scope);
       const elapsed = Math.max(1, Math.round((Date.now() - start) / 1000));
 
-      const doneMsg = await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor("#6f4e37")
-            .setDescription(
-              `<:vegacheckmark:1443666279058772028> Reload \`${scope}\` completato in **${elapsed}s**.`,
+      const doneMsg=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("#6f4e37").setDescription(`<:vegacheckmark:1443666279058772028> Reload \`${scope}\` completato in **${elapsed}s**.`,
             ),
         ],
         allowedMentions: { repliedUser: false },
@@ -245,16 +215,7 @@ module.exports = {
       }, RESTART_CLEANUP_DELAY_MS);
     } catch (error) {
       global.logger.error(error);
-      const failMsg = await safeMessageReply(message, {
-        embeds: [
-          new EmbedBuilder()
-            .setColor("Red")
-            .setDescription(
-              "<:vegax:1443934876440068179> Errore durante restart/reload.",
-            ),
-        ],
-        allowedMentions: { repliedUser: false },
-      });
+      const failMsg=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Errore durante restart/reload.",),],allowedMentions:{repliedUser:false},});
 
       setTimeout(() => {
         message.delete().catch(() => {});

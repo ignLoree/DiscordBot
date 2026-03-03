@@ -19,15 +19,11 @@ module.exports = {
     clearVoiceSession(message.guild.id);
 
     if (!ttsResult.ok && ttsResult.reason === "not_connected" && !musicDisconnected) {
-      const notConnectedEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("Il bot non è connesso a nessun canale vocale.");
+      const notConnectedEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Il bot non è connesso a nessun canale vocale.");
       return safeMessageReply(message, { embeds: [notConnectedEmbed] });
     }
 
-    const okEmbed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setDescription("Grazie per aver usato il servizio.");
+    const okEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Grazie per aver usato il servizio.");
     return safeMessageReply(message, { embeds: [okEmbed] });
   },
 };

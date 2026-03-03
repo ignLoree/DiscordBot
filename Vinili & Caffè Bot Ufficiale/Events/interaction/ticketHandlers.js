@@ -4,35 +4,15 @@ const fs = require("fs");
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { safeReply: safeReplyHelper, safeEditReply: safeEditReplyHelper, } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
-const {
-  canUserHandleCloseRequest: runtimeCanUserHandleCloseRequest,
-  ensureClosableTicketOrReply: runtimeEnsureClosableTicketOrReply,
-  findOpenTicketByUser: runtimeFindOpenTicketByUser,
-  findTicketByChannel: runtimeFindTicketByChannel,
-  getGuildChannelCached: runtimeGetGuildChannelCached,
-  getSelectedTicketAction: runtimeGetSelectedTicketAction,
-  isHandledTicketInteraction: runtimeIsHandledTicketInteraction,
-  isSponsorGuild: runtimeIsSponsorGuild,
-  isTicketRatingButton: runtimeIsTicketRatingButton,
-  isTicketTranscriptButton: runtimeIsTicketTranscriptButton,
-  loadTicketForChannelOrReply: runtimeLoadTicketForChannelOrReply,
-} = require("../../Utils/Ticket/ticketInteractionRuntime");
-const {
-  buildTicketClosedEmbed: runtimeBuildTicketClosedEmbed,
-  buildTicketRatingRows: runtimeBuildTicketRatingRows,
-  closeTicket: runtimeCloseTicket,
-} = require("../../Utils/Ticket/ticketCloseRuntime");
-const {
-  createTicketsCategory: runtimeCreateTicketsCategory,
-  handleSponsorTicketOpen: runtimeHandleSponsorTicketOpen,
-} = require("../../Utils/Ticket/ticketOpenRuntime");
+const{canUserHandleCloseRequest:runtimeCanUserHandleCloseRequest,ensureClosableTicketOrReply:runtimeEnsureClosableTicketOrReply,findOpenTicketByUser:runtimeFindOpenTicketByUser,findTicketByChannel:runtimeFindTicketByChannel,getClientGuildCached:runtimeGetClientGuildCached,getGuildChannelCached:runtimeGetGuildChannelCached,getSelectedTicketAction:runtimeGetSelectedTicketAction,isHandledTicketInteraction:runtimeIsHandledTicketInteraction,isSponsorGuild:runtimeIsSponsorGuild,isTicketRatingButton:runtimeIsTicketRatingButton,isTicketTranscriptButton:runtimeIsTicketTranscriptButton,loadTicketForChannelOrReply:runtimeLoadTicketForChannelOrReply,}=require("../../Utils/Ticket/ticketInteractionRuntime");
+const{buildTicketClosedEmbed:runtimeBuildTicketClosedEmbed,buildTicketRatingRows:runtimeBuildTicketRatingRows,closeTicket:runtimeCloseTicket,}=require("../../Utils/Ticket/ticketCloseRuntime");
+const{createTicketsCategory:runtimeCreateTicketsCategory,handleSponsorTicketOpen:runtimeHandleSponsorTicketOpen,}=require("../../Utils/Ticket/ticketOpenRuntime");
 
 async function handleTicketInteraction(interaction) {
   const selectedTicketAction = runtimeGetSelectedTicketAction(interaction);
   const ticketActionId = selectedTicketAction || interaction.customId;
 
-  const { isTicketButton, isTicketSelect, isTicketModal } =
-    runtimeIsHandledTicketInteraction(interaction);
+  const{isTicketButton,isTicketSelect,isTicketModal}=runtimeIsHandledTicketInteraction(interaction);
   if (!isTicketButton && !isTicketModal && !isTicketSelect) return false;
   if (interaction.guild && runtimeIsSponsorGuild(interaction.guild.id)) {
     if (
@@ -55,14 +35,7 @@ async function handleTicketInteraction(interaction) {
   if (!interaction.client.ticketCloseLocks) {
     interaction.client.ticketCloseLocks = new Set();
   }
-  const TICKET_PERMISSIONS = [
-    PermissionFlagsBits.ViewChannel,
-    PermissionFlagsBits.SendMessages,
-    PermissionFlagsBits.EmbedLinks,
-    PermissionFlagsBits.AttachFiles,
-    PermissionFlagsBits.ReadMessageHistory,
-    PermissionFlagsBits.AddReactions,
-  ];
+  const TICKET_PERMISSIONS=[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AddReactions,];
 
   async function safeReply(target, payload) {
     return safeReplyHelper(target, payload);
@@ -77,6 +50,20 @@ async function handleTicketInteraction(interaction) {
       .setTitle(title)
       .setDescription(description)
       .setColor("#6f4e37");
+  }
+
+  function sanitizeTicketChannelTail(rawValue, fallback = "utente", maxLength = 32) {
+    const safe=String(rawValue||fallback).trim().toLowerCase().replace(/\s+/g,"-").replace(/[\/\\#@:`*?"<>|]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^[.-]+|[.-]+$/g, "")
+      .replace(/[^\p{L}\p{N}._-]/gu, "")
+      .slice(0, maxLength);
+    return safe || fallback;
+  }
+
+  function buildTicketChannelName(config, user) {
+    const safeTail=sanitizeTicketChannelTail(user?.username,user?.id||"utente",);
+    return `༄${String(config?.emoji || "")}︲${String(config?.name || "supporto")}᲼${safeTail}`.slice(0, 100);
   }
 
   function isHighStaffActor() {
@@ -98,7 +85,8 @@ async function pinFirstTicketMessage(channel, message) {
 
   try {
     if (isTicketButton || isTicketSelect) {
-      if (!interaction.guild || !interaction.member) {
+      const isDmSafeTicketAction = runtimeIsTicketRatingButton(interaction.customId) || runtimeIsTicketTranscriptButton(interaction.customId);
+      if ((!interaction.guild || !interaction.member) && !isDmSafeTicketAction) {
         await safeReply(interaction, {
           embeds: [
             makeErrorEmbed(
@@ -127,11 +115,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      const ticketOpenButtons = [
-        "ticket_partnership",
-        "ticket_supporto",
-        "ticket_highstaff",
-      ];
+      const ticketOpenButtons=["ticket_partnership","ticket_supporto","ticket_highstaff",];
       if (
         ticketOpenButtons.includes(ticketActionId) &&
         interaction.member?.roles?.cache?.has(ROLE_TICKET_BLACKLIST)
@@ -148,11 +132,7 @@ async function pinFirstTicketMessage(channel, message) {
         });
         return true;
       }
-      const userOnlyTickets = [
-        "ticket_partnership",
-        "ticket_highstaff",
-        "ticket_supporto",
-      ];
+      const userOnlyTickets=["ticket_partnership","ticket_highstaff","ticket_supporto",];
       if (userOnlyTickets.includes(ticketActionId)) {
         if (!ROLE_USER) {
           await safeReply(interaction, {
@@ -179,53 +159,7 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
       }
-      const ticketConfig = {
-        ticket_supporto: {
-          type: "supporto",
-          emoji: "⭐",
-          name: "supporto",
-          role: ROLE_STAFF,
-          requiredRoles: ROLE_USER ? [ROLE_USER] : [],
-          embed: new EmbedBuilder()
-            .setTitle(
-              "<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",
-            )
-            .setDescription(
-              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
-            )
-            .setColor("#6f4e37"),
-        },
-        ticket_partnership: {
-          type: "partnership",
-          emoji: "🤝",
-          name: "partnership",
-          role: ROLE_PARTNERMANAGER,
-          requiredRoles: [ROLE_USER],
-          embed: new EmbedBuilder()
-            .setTitle(
-              "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
-            )
-            .setDescription(
-              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione `,
-            )
-            .setColor("#6f4e37"),
-        },
-        ticket_highstaff: {
-          type: "high",
-          emoji: "âœ¨",
-          name: "highstaff",
-          role: ROLE_HIGHSTAFF,
-          requiredRoles: [ROLE_USER],
-          embed: new EmbedBuilder()
-            .setTitle(
-              "<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",
-            )
-            .setDescription(
-              `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
-            )
-            .setColor("#6f4e37"),
-        },
-      };
+      const ticketConfig={ticket_supporto:{type:"supporto",emoji:"⭐",name:"supporto",role:ROLE_STAFF,requiredRoles:ROLE_USER?[ROLE_USER]:[],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"),},ticket_partnership:{type:"partnership",emoji:"🤝",name:"partnership",role:ROLE_PARTNERMANAGER,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Invia direttamente qui la tua descrizione `,).setColor("#6f4e37"),},ticket_highstaff:{type:"high",emoji:"âœ¨",name:"highstaff",role:ROLE_HIGHSTAFF,requiredRoles:[ROLE_USER],embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> ➥ Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,).setColor("#6f4e37"),},};
       const config = ticketConfig[ticketActionId];
       if (
         !config &&
@@ -301,9 +235,7 @@ async function pinFirstTicketMessage(channel, message) {
             }
           }
           if (config.requiredRoles?.length > 0) {
-            const hasRole = config.requiredRoles.some((r) =>
-              interaction.member?.roles?.cache?.has(r),
-            );
+            const hasRole=config.requiredRoles.some((r) => interaction.member?.roles?.cache?.has(r),);
             if (!hasRole) {
               await safeReply(interaction, {
                 embeds: [
@@ -317,10 +249,7 @@ async function pinFirstTicketMessage(channel, message) {
               return true;
             }
           }
-          const existing = await runtimeFindOpenTicketByUser(
-            interaction.guild.id,
-            interaction.user.id,
-          );
+          const existing=await runtimeFindOpenTicketByUser(interaction.guild.id,interaction.user.id,);
           if (existing) {
             await safeReply(interaction, {
               embeds: [
@@ -335,10 +264,7 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const ticketsCategory = await runtimeCreateTicketsCategory(
-            interaction,
-            interaction.guild,
-          );
+          const ticketsCategory=await runtimeCreateTicketsCategory(interaction,interaction.guild,);
           if (!ticketsCategory) {
             await safeReply(interaction, {
               embeds: [
@@ -351,79 +277,7 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const channel = await interaction.guild.channels
-            .create({
-              name: `ticket-${config.emoji}-${config.name}-${interaction.user.username}`,
-              type: 0,
-              parent: ticketsCategory.id,
-              permissionOverwrites: [
-                {
-                  id: interaction.guild.roles.everyone,
-                  deny: [PermissionFlagsBits.ViewChannel],
-                },
-                {
-                  id: interaction.user.id,
-                  allow: TICKET_PERMISSIONS,
-                },
-                ...(config.type === "supporto"
-                  ? [
-                      {
-                        id: ROLE_STAFF,
-                        allow: TICKET_PERMISSIONS,
-                      },
-                      {
-                        id: ROLE_HIGHSTAFF,
-                        allow: TICKET_PERMISSIONS,
-                      },
-                      {
-                        id: ROLE_PARTNERMANAGER,
-                        deny: [PermissionFlagsBits.ViewChannel],
-                      },
-                    ]
-                  : []),
-                ...(config.type === "partnership"
-                  ? [
-                      {
-                        id: ROLE_PARTNERMANAGER,
-                        allow: TICKET_PERMISSIONS,
-                      },
-                      {
-                        id: ROLE_HIGHSTAFF,
-                        allow: [
-                          PermissionFlagsBits.ViewChannel,
-                          PermissionFlagsBits.SendMessages,
-                          PermissionFlagsBits.ReadMessageHistory,
-                        ],
-                        deny: [],
-                      },
-                      {
-                        id: ROLE_STAFF,
-                        deny: [PermissionFlagsBits.ViewChannel],
-                      },
-                    ]
-                  : []),
-                ...(config.type === "high"
-                  ? [
-                      {
-                        id: ROLE_HIGHSTAFF,
-                        allow: TICKET_PERMISSIONS,
-                      },
-                      {
-                        id: ROLE_STAFF,
-                        deny: [PermissionFlagsBits.ViewChannel],
-                      },
-                      {
-                        id: ROLE_PARTNERMANAGER,
-                        deny: [PermissionFlagsBits.ViewChannel],
-                      },
-                    ]
-                  : []),
-              ],
-            })
-            .catch((err) => {
-              global.logger.error(err);
-              return null;
-            });
+          const channel=await interaction.guild.channels.create({name:buildTicketChannelName(config,interaction.user),type:0,parent:ticketsCategory.id,permissionOverwrites:[{id:interaction.guild.roles.everyone,deny:[PermissionFlagsBits.ViewChannel],},{id:interaction.user.id,allow:TICKET_PERMISSIONS,},...(config.type==="supporto"?[{id:ROLE_STAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="partnership"?[{id:ROLE_PARTNERMANAGER,allow:TICKET_PERMISSIONS,},{id:ROLE_HIGHSTAFF,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.ReadMessageHistory,],deny:[],},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},]:[]),...(config.type==="high"?[{id:ROLE_HIGHSTAFF,allow:TICKET_PERMISSIONS,},{id:ROLE_STAFF,deny:[PermissionFlagsBits.ViewChannel],},{id:ROLE_PARTNERMANAGER,deny:[PermissionFlagsBits.ViewChannel],},]:[]),],}).catch((err) => {global.logger.error(err);return null;});
           if (!channel) {
             await safeReply(interaction, {
               embeds: [
@@ -436,26 +290,8 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("close_ticket")
-              .setLabel("🔒 Chiudi")
-              .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-              .setCustomId("close_ticket_motivo")
-              .setLabel("📝 Chiudi Con Motivo")
-              .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-              .setCustomId("claim_ticket")
-              .setLabel("âœ… Claim")
-              .setStyle(ButtonStyle.Success),
-          );
-          const mainMsg = await channel
-            .send({ embeds: [config.embed], components: [row] })
-            .catch((err) => {
-              global.logger.error(err);
-              return null;
-            });
+          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("âœ… Claim").setStyle(ButtonStyle.Success),);
+          const mainMsg=await channel.send({embeds:[config.embed],components:[row]}).catch((err) => {global.logger.error(err);return null;});
           if (mainMsg) {
             await pinFirstTicketMessage(channel, mainMsg);
           }
@@ -475,15 +311,10 @@ async function pinFirstTicketMessage(channel, message) {
             });
             ticketCreated = true;
           } catch (err) {
-            const isDuplicate =
-              err?.code === 11000 ||
-              (err?.message && String(err.message).includes("E11000"));
+            const isDuplicate=err?.code===11000||(err?.message&&String(err.message).includes("E11000"));
             if (isDuplicate) {
               await channel.delete().catch(() => {});
-              const other = await runtimeFindOpenTicketByUser(
-                interaction.guild.id,
-                interaction.user.id,
-              );
+              const other=await runtimeFindOpenTicketByUser(interaction.guild.id,interaction.user.id,);
               await safeEditReply(interaction, {
                 embeds: [
                   new EmbedBuilder()
@@ -514,11 +345,7 @@ async function pinFirstTicketMessage(channel, message) {
           }
           let tagRole =
             config.type === "partnership" ? ROLE_PARTNERMANAGER : config.role;
-          const mentionMsg = await channel
-            .send(
-              `<@${interaction.user.id}> ${tagRole ? `<@&${tagRole}>` : ""}`,
-            )
-            .catch(() => null);
+          const mentionMsg=await channel.send(`<@${interaction.user.id}>${tagRole?`<@&${tagRole}>` : ""}`,).catch(() => null);
           if (mentionMsg) {
             setTimeout(() => {
               mentionMsg.delete().catch(() => {});
@@ -579,17 +406,7 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
 
-        const ratedTicket = await Ticket.findOneAndUpdate(
-          { _id: ticketDbId, ratingScore: null },
-          {
-            $set: {
-              ratingScore: score,
-              ratingBy: interaction.user.id,
-              ratingAt: new Date(),
-            },
-          },
-          { new: true },
-        ).catch(() => null);
+        const ratedTicket=await Ticket.findOneAndUpdate({_id:ticketDbId,ratingScore:null},{$set:{ratingScore:score,ratingBy:interaction.user.id,ratingAt:new Date(),},},{new:true},).catch(() => null);
 
         if (!ratedTicket) {
           await safeReply(interaction, {
@@ -605,27 +422,12 @@ async function pinFirstTicketMessage(channel, message) {
         }
 
         if (ratedTicket.closeLogChannelId && ratedTicket.closeLogMessageId) {
-          const logChannel = await runtimeGetGuildChannelCached(
-            interaction.guild,
-            ratedTicket.closeLogChannelId,
-          ) || await runtimeGetGuildChannelCached(
-            interaction.client.guilds.cache.get(ratedTicket.guildId),
-            ratedTicket.closeLogChannelId,
-          );
+          const ticketGuild = interaction.guild || await runtimeGetClientGuildCached(interaction.client, ratedTicket.guildId);
+          const logChannel=await runtimeGetGuildChannelCached(ticketGuild,ratedTicket.closeLogChannelId,)||await runtimeGetGuildChannelCached(interaction.client.guilds.cache.get(ratedTicket.guildId),ratedTicket.closeLogChannelId,);
           if (logChannel?.isTextBased?.()) {
-            const logMessage = await logChannel.messages
-              .fetch(ratedTicket.closeLogMessageId)
-              .catch(() => null);
+            const logMessage=await logChannel.messages.fetch(ratedTicket.closeLogMessageId).catch(() => null);
             if (logMessage) {
-              const updatedEmbed = runtimeBuildTicketClosedEmbed({
-                ...ratedTicket.toObject(),
-                guildName:
-                  interaction.guild?.name ||
-                  interaction.client.guilds.cache.get(ratedTicket.guildId)?.name ||
-                  "Ticket System",
-                guildIconURL:
-                  interaction.guild?.iconURL?.({ size: 128 }) || null,
-              });
+              const updatedEmbed=runtimeBuildTicketClosedEmbed({...ratedTicket.toObject(),guildName:ticketGuild?.name||interaction.client.guilds.cache.get(ratedTicket.guildId)?.name||"Ticket System",guildIconURL:ticketGuild?.iconURL?.({size:128})||null,});
               await logMessage.edit({ embeds: [updatedEmbed] }).catch(() => {});
             }
           }
@@ -667,12 +469,8 @@ async function pinFirstTicketMessage(channel, message) {
           return true;
         }
 
-        const isOwner =
-          String(ticketDoc.userId || "") === String(interaction.user?.id || "");
-        const hasStaffRole =
-          Boolean(interaction.member?.roles?.cache?.has(ROLE_STAFF)) ||
-          Boolean(interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF)) ||
-          Boolean(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER));
+        const isOwner=String(ticketDoc.userId||"")===String(interaction.user?.id||"");
+        const hasStaffRole=Boolean(interaction.member?.roles?.cache?.has(ROLE_STAFF))||Boolean(interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF))||Boolean(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER));
         if (!isOwner && !hasStaffRole) {
           await safeReply(interaction, {
             embeds: [
@@ -733,16 +531,9 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const canClaimSupport =
-          ticket.ticketType === "supporto" &&
-          STAFF_ROLES.some((r) => interaction.member?.roles?.cache?.has(r));
-        const canClaimPartnership =
-          ticket.ticketType === "partnership" &&
-          (interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER) ||
-            interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
-        const canClaimHigh =
-          ticket.ticketType === "high" &&
-          interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
+        const canClaimSupport=ticket.ticketType==="supporto"&&STAFF_ROLES.some((r) => interaction.member?.roles?.cache?.has(r));
+        const canClaimPartnership=ticket.ticketType==="partnership"&&(interaction.member?.roles?.cache?.has(ROLE_PARTNERMANAGER)||interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF));
+        const canClaimHigh=ticket.ticketType==="high"&&interaction.member?.roles?.cache?.has(ROLE_HIGHSTAFF);
         if (!canClaimSupport && !canClaimPartnership && !canClaimHigh) {
           await safeReply(interaction, {
             embeds: [
@@ -767,8 +558,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const claimedByVal =
-          ticket.claimedBy != null ? String(ticket.claimedBy).trim() : "";
+        const claimedByVal=ticket.claimedBy!=null?String(ticket.claimedBy).trim():"";
         if (claimedByVal !== "" && !isHighStaffActor()) {
           await safeReply(interaction, {
             embeds: [
@@ -809,10 +599,7 @@ async function pinFirstTicketMessage(channel, message) {
             });
             return true;
           }
-          const nowClaimed =
-            claimedTicket.claimedBy != null
-              ? String(claimedTicket.claimedBy).trim()
-              : "";
+          const nowClaimed=claimedTicket.claimedBy!=null?String(claimedTicket.claimedBy).trim():"";
           if (nowClaimed !== "" && !isHighStaffActor()) {
             await safeReply(interaction, {
               embeds: [
@@ -917,41 +704,18 @@ async function pinFirstTicketMessage(channel, message) {
             global.logger.error(err);
           }
         }
-        const claimedButtons = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("close_ticket")
-            .setLabel("🔒 Chiudi")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setCustomId("close_ticket_motivo")
-            .setLabel("📝 Chiudi con motivo")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setCustomId("unclaim")
-            .setLabel("🔓 Unclaim")
-            .setStyle(ButtonStyle.Secondary),
-        );
+        const claimedButtons=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("unclaim").setLabel("🔓 Unclaim").setStyle(ButtonStyle.Secondary),);
         try {
           if (interaction.channel && claimedTicket.messageId) {
-            const msg = await interaction.channel.messages
-              .fetch(claimedTicket.messageId)
-              .catch(() => null);
+            const msg=await interaction.channel.messages.fetch(claimedTicket.messageId).catch(() => null);
             if (!msg) {
-              const fallback = new EmbedBuilder()
-                .setTitle("Ticket")
-                .setDescription(`Ticket claimato da <@${interaction.user.id}>`)
+              const fallback=new EmbedBuilder().setTitle("Ticket").setDescription(`Ticket claimato da <@${interaction.user.id}>`)
                 .setColor("#6f4e37");
               await interaction.channel
                 .send({ embeds: [fallback], components: [claimedButtons] })
                 .catch(() => {});
             } else {
-              const embedDaUsare =
-                msg.embeds && msg.embeds[0]
-                  ? EmbedBuilder.from(msg.embeds[0])
-                  : new EmbedBuilder()
-                      .setTitle("Ticket")
-                      .setDescription(
-                        `Ticket claimato da <@${interaction.user.id}>`,
+              const embedDaUsare=msg.embeds&&msg.embeds[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setTitle("Ticket").setDescription(`Ticket claimato da <@${interaction.user.id}>`,
                       )
                       .setColor("#6f4e37");
               await msg
@@ -987,20 +751,7 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketButtonsOriginal = new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId("close_ticket")
-            .setLabel("🔒 Chiudi")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setCustomId("close_ticket_motivo")
-            .setLabel("📝 Chiudi Con Motivo")
-            .setStyle(ButtonStyle.Danger),
-          new ButtonBuilder()
-            .setCustomId("claim_ticket")
-            .setLabel("âœ… Claim")
-            .setStyle(ButtonStyle.Success),
-        );
+        const ticketButtonsOriginal=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("âœ… Claim").setStyle(ButtonStyle.Success),);
         const ticketDoc = await runtimeFindTicketByChannel(interaction.channel.id);
         if (!ticketDoc) {
           await safeReply(interaction, {
@@ -1050,14 +801,8 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const unclaimQuery = isHighStaffActor()
-          ? { channelId: interaction.channel.id }
-          : { channelId: interaction.channel.id, claimedBy: interaction.user.id };
-        const unclaimedTicket = await Ticket.findOneAndUpdate(
-          unclaimQuery,
-          { $set: { claimedBy: null } },
-          { new: true },
-        ).catch(() => null);
+        const unclaimQuery=isHighStaffActor()?{channelId:interaction.channel.id}:{channelId:interaction.channel.id,claimedBy:interaction.user.id};
+        const unclaimedTicket=await Ticket.findOneAndUpdate(unclaimQuery,{$set:{claimedBy:null}},{new:true},).catch(() => null);
         if (!unclaimedTicket) {
           await safeReply(interaction, {
             embeds: [
@@ -1072,14 +817,9 @@ async function pinFirstTicketMessage(channel, message) {
         }
         try {
           if (interaction.channel && unclaimedTicket.messageId) {
-            const msg = await interaction.channel.messages
-              .fetch(unclaimedTicket.messageId)
-              .catch(() => null);
+            const msg=await interaction.channel.messages.fetch(unclaimedTicket.messageId).catch(() => null);
             if (!msg) {
-              const fallback = new EmbedBuilder()
-                .setTitle("Ticket")
-                .setDescription("Ticket non claimato")
-                .setColor("#6f4e37");
+              const fallback=new EmbedBuilder().setTitle("Ticket").setDescription("Ticket non claimato").setColor("#6f4e37");
               await interaction.channel
                 .send({
                   embeds: [fallback],
@@ -1087,13 +827,7 @@ async function pinFirstTicketMessage(channel, message) {
                 })
                 .catch(() => {});
             } else {
-              const embedUsato =
-                msg.embeds && msg.embeds[0]
-                  ? EmbedBuilder.from(msg.embeds[0])
-                  : new EmbedBuilder()
-                      .setTitle("Ticket")
-                      .setDescription("Ticket non claimato")
-                      .setColor("#6f4e37");
+              const embedUsato=msg.embeds&&msg.embeds[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setTitle("Ticket").setDescription("Ticket non claimato").setColor("#6f4e37");
               await msg
                 .edit({
                   embeds: [embedUsato],
@@ -1130,38 +864,15 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          channelId: interaction.channel?.id,
-          missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
-        });
+        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
         if (!ticketDoc) return true;
-        const canClose = await runtimeEnsureClosableTicketOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          ticketDoc,
-          highStaff: isHighStaffActor(),
-        });
+        const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
         if (!canClose) return true;
-        const modal = new ModalBuilder()
-          .setCustomId(`modal_close_ticket:${interaction.user.id}`)
+        const modal=new ModalBuilder().setCustomId(`modal_close_ticket:${interaction.user.id}`)
           .setTitle("Chiudi Ticket con Motivo");
-        const input = new TextInputBuilder()
-          .setCustomId("motivo")
-          .setLabel("Motivo della chiusura")
-          .setStyle(TextInputStyle.Paragraph)
-          .setRequired(true);
+        const input=new TextInputBuilder().setCustomId("motivo").setLabel("Motivo della chiusura").setStyle(TextInputStyle.Paragraph).setRequired(true);
         modal.addComponents(new ActionRowBuilder().addComponents(input));
-        const shown = await interaction
-          .showModal(modal)
-          .then(() => true)
-          .catch((err) => {
-            global.logger.error(err);
-            return false;
-          });
+        const shown=await interaction.showModal(modal).then(() => true).catch((err) => {global.logger.error(err);return false;});
         if (!shown) {
           await safeReply(interaction, {
             embeds: [
@@ -1188,21 +899,9 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          channelId: interaction.channel?.id,
-          missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
-        });
+        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
         if (!ticketDoc) return true;
-        const canClose = await runtimeEnsureClosableTicketOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          ticketDoc,
-          highStaff: isHighStaffActor(),
-        });
+        const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
         if (!canClose) return true;
         try {
           await interaction
@@ -1231,20 +930,9 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          channelId: interaction.channel.id,
-          missingDescription:
-            "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
-        });
+        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi chiudere questo ticket",});
         if (!ticketDoc) return true;
-        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(
-          ticketDoc,
-          interaction.user.id,
-          isHighStaffActor(),
-        );
+        const canHandleCloseRequest=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -1286,20 +974,9 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          channelId: interaction.channel.id,
-          missingDescription:
-            "<:vegax:1443934876440068179> Non puoi chiudere questo ticket",
-        });
+        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi chiudere questo ticket",});
         if (!ticketDoc) return true;
-        const canHandleCloseRequest = runtimeCanUserHandleCloseRequest(
-          ticketDoc,
-          interaction.user.id,
-          isHighStaffActor(),
-        );
+        const canHandleCloseRequest=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
         if (!canHandleCloseRequest) {
           await safeReply(interaction, {
             embeds: [
@@ -1353,20 +1030,9 @@ async function pinFirstTicketMessage(channel, message) {
           });
           return true;
         }
-        const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-          interaction,
-          safeReply,
-          makeErrorEmbed,
-          channelId: interaction.channel.id,
-          missingDescription:
-            "<:vegax:1443934876440068179> Non puoi gestire questo ticket",
-        });
+        const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel.id,missingDescription:"<:vegax:1443934876440068179> Non puoi gestire questo ticket",});
         if (!ticketDoc) return true;
-        const canHandleAutoClosePrompt = runtimeCanUserHandleCloseRequest(
-          ticketDoc,
-          interaction.user.id,
-          isHighStaffActor(),
-        );
+        const canHandleAutoClosePrompt=runtimeCanUserHandleCloseRequest(ticketDoc,interaction.user.id,isHighStaffActor(),);
         if (!canHandleAutoClosePrompt) {
           await safeReply(interaction, {
             embeds: [
@@ -1387,8 +1053,7 @@ async function pinFirstTicketMessage(channel, message) {
               .catch(() => {})
               .catch(() => {});
           } catch {}
-          const motivo =
-            ticketDoc.closeReason || "Chiusura proposta automaticamente dopo 24h.";
+          const motivo=ticketDoc.closeReason||"Chiusura proposta automaticamente dopo 24h.";
           await runtimeCloseTicket(interaction, motivo, {
             safeReply,
             safeEditReply,
@@ -1435,21 +1100,9 @@ async function pinFirstTicketMessage(channel, message) {
           .catch(() => {})
           .catch(() => {});
       } catch {}
-      const ticketDoc = await runtimeLoadTicketForChannelOrReply({
-        interaction,
-        safeReply,
-        makeErrorEmbed,
-        channelId: interaction.channel?.id,
-        missingDescription: "<:vegax:1443934876440068179> Ticket non trovato",
-      });
+      const ticketDoc=await runtimeLoadTicketForChannelOrReply({interaction,safeReply,makeErrorEmbed,channelId:interaction.channel?.id,missingDescription:"<:vegax:1443934876440068179> Ticket non trovato",});
       if (!ticketDoc) return true;
-      const canClose = await runtimeEnsureClosableTicketOrReply({
-        interaction,
-        safeReply,
-        makeErrorEmbed,
-        ticketDoc,
-        highStaff: isHighStaffActor(),
-      });
+      const canClose=await runtimeEnsureClosableTicketOrReply({interaction,safeReply,makeErrorEmbed,ticketDoc,highStaff:isHighStaffActor(),});
       if (!canClose) return true;
       let motivo = null;
       try {

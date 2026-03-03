@@ -1,16 +1,6 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-} = require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  playRadioStation,
-  touchMusicOutputChannel,
-} = require("../../Services/Music/musicService");
+const{playRadioStation,touchMusicOutputChannel,}=require("../../Services/Music/musicService");
 const { getItalianStations } = require("../../Services/Music/radioService");
 
 const PAGE_SIZE = 10;
@@ -67,13 +57,7 @@ function buildRadioSelect(pages, pageIndex, customId) {
 
 function buildRows(pages, pageIndex, ids) {
   const { selectId, firstId, prevId, nextId, lastId, cancelId } = ids;
-  const nav = new ActionRowBuilder().addComponents(
-    new ButtonBuilder().setCustomId(firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
-    new ButtonBuilder().setCustomId(prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex <= 0),
-    new ButtonBuilder().setCustomId(nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
-    new ButtonBuilder().setCustomId(lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex >= pages.length - 1),
-    new ButtonBuilder().setCustomId(cancelId).setLabel("X").setStyle(ButtonStyle.Danger),
-  );
+  const nav=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex<=0),new ButtonBuilder().setCustomId(prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex<=0),new ButtonBuilder().setCustomId(nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex>=pages.length-1),new ButtonBuilder().setCustomId(lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex>=pages.length-1),new ButtonBuilder().setCustomId(cancelId).setLabel("X").setStyle(ButtonStyle.Danger),);
   const select = new ActionRowBuilder().addComponents(buildRadioSelect(pages, pageIndex, selectId));
   return [select, nav];
 }
@@ -112,25 +96,20 @@ module.exports = {
     }
 
     if (!voiceChannel.joinable || !voiceChannel.speakable) {
-      const noPermEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("Non ho i permessi per entrare/parlare in quel canale vocale.");
+      const noPermEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Non ho i permessi per entrare/parlare in quel canale vocale.");
       return safeMessageReply(message, { embeds: [noPermEmbed] });
     }
 
     const stations = await getItalianStations().catch(() => []);
     if (!stations.length) {
-      const errorEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("Nessuna radio italiana disponibile al momento.");
+      const errorEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Nessuna radio italiana disponibile al momento.");
       return safeMessageReply(message, { embeds: [errorEmbed] });
     }
 
     const pages = toPages(stations, PAGE_SIZE);
     let pageIndex = 0;
     const nonce = `${message.id}_${Date.now()}`;
-    const ids = {
-      selectId: `radio_select_${nonce}`,
+    const ids={selectId:`radio_select_${nonce}`,
       firstId: `radio_first_${nonce}`,
       prevId: `radio_prev_${nonce}`,
       nextId: `radio_next_${nonce}`,
@@ -139,19 +118,13 @@ module.exports = {
     };
 
     let rows = buildRows(pages, pageIndex, ids);
-    const sent = await safeMessageReply(message, {
-      embeds: [buildRadioEmbed(pages, pageIndex)],
-      components: rows,
-    });
+    const sent=await safeMessageReply(message,{embeds:[buildRadioEmbed(pages,pageIndex)],components:rows,});
     if (!sent || typeof sent.createMessageComponentCollector !== "function") return;
 
     const buttonCollector = sent.createMessageComponentCollector({ componentType: ComponentType.Button, time: 180_000 });
     const selectCollector = sent.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 180_000 });
 
-    const refreshPanel = async (interaction) => {
-      rows = buildRows(pages, pageIndex, ids);
-      await interaction.update({ embeds: [buildRadioEmbed(pages, pageIndex)], components: rows });
-    };
+    const refreshPanel=async(interaction) => {rows=buildRows(pages,pageIndex,ids);await interaction.update({embeds:[buildRadioEmbed(pages,pageIndex)],components:rows});};
 
     buttonCollector.on("collect", async (interaction) => {
       if (interaction.user.id !== message.author.id) {
@@ -193,13 +166,7 @@ module.exports = {
         return;
       }
 
-      const result = await playRadioStation({
-        client: message.client,
-        guild: message.guild,
-        channel: message.channel,
-        voiceChannel,
-        station,
-      }).catch((error) => ({ ok: false, reason: "internal_error", error }));
+      const result=await playRadioStation({client:message.client,guild:message.guild,channel:message.channel,voiceChannel,station,}).catch((error) => ({ok:false,reason:"internal_error",error}));
 
       if (!result?.ok) {
         await interaction.reply({
@@ -213,16 +180,11 @@ module.exports = {
       selectCollector.stop("selected");
       await interaction.message.delete().catch(() => {});
 
-      const startedEmbed = new EmbedBuilder()
-        .setColor("#1f2328")
-        .setDescription(`Started playing **${station.name}**`);
+      const startedEmbed=new EmbedBuilder().setColor("#1f2328").setDescription(`Started playing **${station.name}**`);
       await message.channel.send({ embeds: [startedEmbed] }).catch(() => {});
     });
 
-    const endAll = async () => {
-      rows = disableRows(rows);
-      await sent.edit({ components: rows }).catch(() => {});
-    };
+    const endAll=async() => {rows=disableRows(rows);await sent.edit({components:rows}).catch(() => {});};
 
     buttonCollector.on("end", async (_, reason) => {
       if (reason === "selected" || reason === "cancel") return;

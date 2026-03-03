@@ -2,9 +2,7 @@ const { dispatchPrefixMessage } = require("../Utils/Prefix/prefixDispatcher");
 const IDs = require("../Utils/Config/ids");
 const { handleTtsMessage } = require("../Services/TTS/ttsService");
 
-const ALLOWED_GUILD_IDS = new Set(
-  [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map((id) => String(id)),
-);
+const ALLOWED_GUILD_IDS = new Set([IDs.guilds ?. main,IDs.guilds ?. test].filter(Boolean).map((id)=>String(id)),);
 
 module.exports = {
   name: "messageCreate",

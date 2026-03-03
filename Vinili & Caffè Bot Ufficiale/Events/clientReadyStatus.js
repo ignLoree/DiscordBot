@@ -2,16 +2,14 @@ const path = require("path");
 const fs = require("fs");
 const cron = require("node-cron");
 const IDs = require("../Utils/Config/ids");
-const {
-  checkAndInstallPackages,
-} = require("../Utils/Moderation/checkPackages");
+const{checkAndInstallPackages,}=require("../Utils/Moderation/checkPackages");
 const { getChannelSafe } = require("../Utils/Logging/commandUsageLogger");
 const { startAutoPollLoop } = require("../Services/Community/autoPollService");
 
 const POLL_REMINDER_ROLE_ID = IDs.roles.HighStaff;
 const POLL_REMINDER_CHANNEL_ID = "1442569285909217301";
 const RESTART_CLEANUP_DELAY_MS = 2000;
-const RESTART_NOTIFY_FILE = "restart_notify.json";
+const RESTART_NOTIFY_FILE = "restart_notify_official.json";
 
 function logError(client, label, error) {
   const detail = error?.stack || error?.message || error;
@@ -55,16 +53,10 @@ function schedulePollReminder(client) {
     "0 19 * * *",
     async () => {
       try {
-        const guild =
-          client.guilds.cache.get(IDs.guilds.main) ||
-          (await client.guilds.fetch(IDs.guilds.main).catch(() => null));
+        const guild=client.guilds.cache.get(IDs.guilds.main)||(await client.guilds.fetch(IDs.guilds.main).catch(() => null));
         if (!guild) return;
 
-        const channel =
-          guild.channels.cache.get(POLL_REMINDER_CHANNEL_ID) ||
-          (await guild.channels
-            .fetch(POLL_REMINDER_CHANNEL_ID)
-            .catch(() => null));
+        const channel=guild.channels.cache.get(POLL_REMINDER_CHANNEL_ID)||(await guild.channels.fetch(POLL_REMINDER_CHANNEL_ID).catch(() => null));
         if (!channel?.isTextBased?.()) return;
         if (!POLL_REMINDER_ROLE_ID) return;
 
@@ -87,10 +79,7 @@ function scheduleDelete(message) {
 }
 
 async function handleRestartNotification(client) {
-  const candidatePaths = [
-    path.resolve(process.cwd(), RESTART_NOTIFY_FILE),
-    path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE),
-  ];
+  const candidatePaths = [path.resolve(process.cwd(), RESTART_NOTIFY_FILE), path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE)];
   const restartNotifyPath = candidatePaths.find((p) => fs.existsSync(p));
   if (!restartNotifyPath) return;
 
@@ -100,35 +89,28 @@ async function handleRestartNotification(client) {
     const channel = await getChannelSafe(client, data?.channelId);
     if (channel) {
       const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
-      const elapsed = Number.isFinite(elapsedMs)
-        ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s`
+      const elapsed=Number.isFinite(elapsedMs)?` in ${Math.max(1,Math.round(elapsedMs/1000))}s`
         : "";
 
-      const restartMsg = await channel
-        .send(
-          `<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`,
+      const restartMsg=await channel.send(`<:vegacheckmark:1443666279058772028> Bot riavviato con successo${elapsed}.`,
         )
         .catch(() => null);
       scheduleDelete(restartMsg);
 
       if (data?.notifyMessageId) {
-        const notifyMsg = await channel.messages
-          .fetch(data.notifyMessageId)
-          .catch(() => null);
+        const notifyMsg=await channel.messages.fetch(data.notifyMessageId).catch(() => null);
         scheduleDelete(notifyMsg);
       }
 
       if (data?.commandMessageId) {
-        const commandMsg = await channel.messages
-          .fetch(data.commandMessageId)
-          .catch(() => null);
+        const commandMsg=await channel.messages.fetch(data.commandMessageId).catch(() => null);
         scheduleDelete(commandMsg);
       }
     }
   } catch (err) {
     logError(
       client,
-      "Errore durante il post-restart (restart_notify.json):",
+      `Errore durante il post-restart (${RESTART_NOTIFY_FILE}):`,
       err,
     );
   } finally {

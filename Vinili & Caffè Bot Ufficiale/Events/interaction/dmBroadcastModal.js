@@ -3,21 +3,14 @@ const { getNoDmSet } = require("../../Utils/noDmList");
 const IDs = require("../../Utils/Config/ids");
 const { getUserCached } = require("../../Utils/Interaction/interactionEntityCache");
 
-const getStaffRoleIds = (client) => {
-  void client;
-  return [IDs.roles.Staff, IDs.roles.PartnerManager, IDs.roles.HighStaff]
-    .map((id) => String(id || "").trim())
-    .filter(Boolean);
-};
+const getStaffRoleIds=(client) => {void client;return[IDs.roles.Staff,IDs.roles.PartnerManager,IDs.roles.HighStaff].map((id) => String(id||"").trim()).filter(Boolean);};
 
 function collectOpenDmRecipientIds(client) {
   const ids = new Set();
   if (!client?.channels?.cache) return ids;
   for (const channel of client.channels.cache.values()) {
     if (!channel?.isDMBased?.()) continue;
-    const recipientId = String(
-      channel?.recipientId || channel?.recipient?.id || "",
-    );
+    const recipientId=String(channel?.recipientId||channel?.recipient?.id||"",);
     if (recipientId) ids.add(recipientId);
   }
   return ids;
@@ -161,8 +154,7 @@ async function handleDmBroadcastModal(interaction, client) {
 
   const content = message.replace(/@everyone|@here/g, "@​everyone");
   const parts = splitMessage(content);
-  const footerText =
-    "Se non vuoi ricevere più questi avvisi tramite DM fai il comando +dm-disable nel server";
+  const footerText="Se non vuoi ricevere più questi avvisi tramite DM fai il comando +dm-disable nel server";
 
   let sent = 0;
   let failed = 0;
@@ -170,8 +162,7 @@ async function handleDmBroadcastModal(interaction, client) {
   let processed = 0;
   const total = targets.length;
 
-  const progressEmbed = (text) =>
-    new EmbedBuilder().setColor("#6f4e37").setDescription(text);
+  const progressEmbed=(text) => new EmbedBuilder().setColor("#6f4e37").setDescription(text);
 
   await interaction.editReply({
     embeds: [
@@ -183,11 +174,7 @@ async function handleDmBroadcastModal(interaction, client) {
     processed += 1;
     try {
       for (const part of parts) {
-        const embed = new EmbedBuilder()
-          .setColor("#6f4e37")
-          .setDescription(part)
-          .setFooter({ text: footerText })
-          .setTimestamp();
+        const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(part).setFooter({text:footerText}).setTimestamp();
         if (title) embed.setTitle(title);
         await target.user.send({
           embeds: [embed],

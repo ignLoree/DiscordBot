@@ -9,10 +9,7 @@ const baseDir = __dirname;
 const ENABLE_LOADER_GIT_PULL = false;
 const ENABLE_LOADER_NPM_INSTALL = false;
 
-const BOTS = [
-    { key: 'official', label: 'Ufficiale', folderSuffix: 'Bot Ufficiale', startupDelayMs: 0 },
-    { key: 'test', label: 'Bot Test', folderSuffix: 'Bot Test', startupDelayMs: 7000 }
-];
+const BOTS=[{key:'official',label:'Ufficiale',folderSuffix:'Bot Ufficiale',startupDelayMs:0},{key:'test',label:'Bot Test',folderSuffix:'Bot Test',startupDelayMs:7000}];
 
 const RESTART_FLAG = path.resolve(baseDir, 'restart.json');
 const POLL_INTERVAL_MS = 5000;
@@ -23,9 +20,7 @@ const processRefs = {};
 const restarting = {};
 let npmInstallInProgress = null;
 
-const silencedEnv = process.env.SHOW_NODE_WARNINGS === '1'
-    ? { ...process.env }
-    : { ...process.env, NODE_NO_WARNINGS: '1' };
+const silencedEnv=process.env.SHOW_NODE_WARNINGS==='1'?{...process.env}:{...process.env,NODE_NO_WARNINGS:'1'};
 
 const WORKSPACES_ENABLED = hasWorkspacesConfig();
 
@@ -41,12 +36,7 @@ function normalizeComparableName(value) {
 
 function resolveBotWorkingDir(bot) {
     const suffix = normalizeComparableName(bot?.folderSuffix || '');
-    const exactCandidates = [
-        `Vinili & CaffÃƒÂ¨ ${bot.folderSuffix}`,
-        `Vinili & Caffe ${bot.folderSuffix}`,
-        `Vinili & CaffÃƒÆ’Ã‚Â¨ ${bot.folderSuffix}`,
-        `Vinili & CaffÃ¯Â¿Â½ ${bot.folderSuffix}`
-    ];
+    const exactCandidates=[`Vinili & CaffÃƒÂ¨ ${bot.folderSuffix}`,`Vinili & Caffe ${bot.folderSuffix}`,`Vinili & CaffÃƒÆ’Ã‚Â¨ ${bot.folderSuffix}`,`Vinili & CaffÃ¯Â¿Â½ ${bot.folderSuffix}`];
 
     for (const folderName of exactCandidates) {
         const fullPath = path.join(baseDir, folderName);
@@ -55,13 +45,8 @@ function resolveBotWorkingDir(bot) {
         }
     }
 
-    const entries = fs.readdirSync(baseDir, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .map((entry) => entry.name);
-    const match = entries.find((name) => {
-        const normalized = normalizeComparableName(name);
-        return normalized.includes('vinili') && normalized.includes('caff') && normalized.includes(suffix);
-    });
+    const entries=fs.readdirSync(baseDir,{withFileTypes:true}).filter((entry)=>entry.isDirectory()).map((entry)=>entry.name);
+    const match=entries.find((name)=>{const normalized=normalizeComparableName(name);return normalized.includes('vinili')&&normalized.includes('caff')&&normalized.includes(suffix);});
     if (!match) {
         throw new Error(`Bot directory not found for ${bot.label}`);
     }
@@ -71,11 +56,7 @@ function resolveBotWorkingDir(bot) {
 function splitStartPath(bot) {
     const workingDir = resolveBotWorkingDir(bot);
     const shardingFlag = String(process.env.ENABLE_SHARDING || process.env.SHARDING || '').trim().toLowerCase();
-    const useSharded =
-        bot.key === 'official' &&
-        shardingFlag !== '0' &&
-        shardingFlag !== 'false' &&
-        fs.existsSync(path.join(workingDir, 'run-sharded.js'));
+    const useSharded=bot.key==='official'&&shardingFlag!=='0'&&shardingFlag!=='false'&&fs.existsSync(path.join(workingDir,'run-sharded.js'));
     console.log(
         `[Loader] ${bot.label} ENABLE_SHARDING=${String(process.env.ENABLE_SHARDING || process.env.SHARDING || '')} -> ${useSharded ? 'run-sharded.js' : 'index.js'}`
     );
@@ -98,14 +79,7 @@ function resolveNodeExecutable() {
     const tmpDir = path.join(os.tmpdir(), '');
     try {
         const entries = fs.readdirSync(tmpDir, { withFileTypes: true });
-        const candidates = entries
-            .filter((entry) => entry.isDirectory() && /^node-v\d+\.\d+\.\d+/.test(entry.name))
-            .map((entry) => ({
-                name: entry.name,
-                fullPath: path.join(tmpDir, entry.name, 'bin', 'node')
-            }))
-            .filter((entry) => fs.existsSync(entry.fullPath))
-            .sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true }));
+        const candidates=entries.filter((entry)=>entry.isDirectory()&&/^node-v\d+\.\d+\.\d+/.test(entry.name)).map((entry)=>({name:entry.name,fullPath:path.join(tmpDir,entry.name,'bin','node')})).filter((entry)=>fs.existsSync(entry.fullPath)).sort((a,b)=>b.name.localeCompare(a.name,undefined,{numeric:true}));
         if (candidates.length > 0) {
             return candidates[0].fullPath;
         }
@@ -144,24 +118,9 @@ function isPidRunning(pid) {
 
 function runNpmInstall(installDir, extraArgs = []) {
     return new Promise((resolveInstall) => {
-        const args = [
-            'install',
-            '--legacy-peer-deps',
-            '--loglevel', 'error',
-            '--no-audit',
-            '--no-fund',
-            '--no-bin-links',
-            '--prefer-offline',
-            '--cache', NPM_CACHE_DIR,
-            '--update-notifier', 'false',
-            ...extraArgs
-        ];
+        const args=['install','--legacy-peer-deps','--loglevel','error','--no-audit','--no-fund','--no-bin-links','--prefer-offline','--cache',NPM_CACHE_DIR,'--update-notifier','false',...extraArgs];
 
-        const npm = child_process.spawn('npm', args, {
-            cwd: installDir,
-            stdio: 'inherit',
-            env: silencedEnv
-        });
+        const npm=child_process.spawn('npm',args,{cwd:installDir,stdio:'inherit',env:silencedEnv});
 
         npm.on('exit', (code) => resolveInstall(code || 0));
     });
@@ -281,12 +240,7 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
     const shardEnv = file === 'run-sharded.js' ? { ENABLE_SHARDING: '1' } : {};
     console.log(`[Loader] Runtime ${bot.label}: ${nodeBin} (loader execPath: ${process.execPath})`);
     const nodeArgs = process.env.SHOW_NODE_WARNINGS === '1' ? [scriptPath] : ['--disable-warning=ExperimentalWarning', scriptPath];
-    const proc = child_process.spawn(nodeBin, nodeArgs, {
-        cwd: workingDir,
-        stdio: 'inherit',
-        env: { ...silencedEnv, RUN_UNDER_LOADER: '1', ...shardEnv },
-        shell: false
-    });
+    const proc=child_process.spawn(nodeBin,nodeArgs,{cwd:workingDir,stdio:'inherit',env:{...silencedEnv,RUN_UNDER_LOADER:'1',...shardEnv},shell:false});
 
     processRefs[bot.key] = proc;
     writePid(bot.key, proc.pid);
@@ -314,23 +268,7 @@ function runfile(bot, options = {}) {
         const bypassDelay = Boolean(options.bypassDelay);
         const useWorkspaces = WORKSPACES_ENABLED;
 
-        const start = () => {
-            cleanupStalePid(bot.key);
-
-            const repoRoot = fs.existsSync(path.join(baseDir, '.git')) ? baseDir : workingDir;
-            if (!skipGitPull && ENABLE_LOADER_GIT_PULL) {
-                updateRepo(repoRoot);
-            }
-
-            const depTask = ENABLE_LOADER_NPM_INSTALL
-                ? ensureDependencies(workingDir, useWorkspaces)
-                : Promise.resolve();
-
-            depTask
-                .finally(() => spawnBotProcess(bot, workingDir, file, resolve));
-        };
-
-        const delay = bypassDelay ? 0 : Number(bot.startupDelayMs || 0);
+        const start=()=>{cleanupStalePid(bot.key);const repoRoot=fs.existsSync(path.join(baseDir,'.git'))?baseDir:workingDir;if(!skipGitPull&&ENABLE_LOADER_GIT_PULL){updateRepo(repoRoot);} const depTask=ENABLE_LOADER_NPM_INSTALL?ensureDependencies(workingDir,useWorkspaces):Promise.resolve();depTask.finally(()=>spawnBotProcess(bot,workingDir,file,resolve));};const delay=bypassDelay?0 : Number(bot.startupDelayMs || 0);
         if (delay > 0) {
             console.log(`[Loader] Ritardo avvio ${bot.label}: ${delay}ms`);
             setTimeout(start, delay);
@@ -352,18 +290,12 @@ function restartBot(botKey, options = {}) {
     const proc = processRefs[botKey];
     const pidFromFile = readPidFile(botKey);
 
-    const startReplacement = () => {
-        if (!restarting[botKey]) return;
-        restarting[botKey] = false;
-        runfile(bot, { bypassDelay: !respectDelay, skipGitPull: true });
-    };
+    const startReplacement=()=>{if(!restarting [botKey])return;restarting [botKey]=false;runfile(bot,{bypassDelay:!respectDelay,skipGitPull:true});};
 
     if (proc && !proc.killed) {
         console.log(`[Loader] Restart ${bot.label}...`);
 
-        const forceTimer = setTimeout(() => {
-            try { killPidTree(proc.pid); } catch { }
-        }, FORCE_KILL_DELAY_MS);
+        const forceTimer=setTimeout(()=>{try {killPidTree(proc.pid);} catch {}},FORCE_KILL_DELAY_MS);
 
         proc.once('exit', () => {
             clearTimeout(forceTimer);
@@ -383,21 +315,7 @@ function restartBot(botKey, options = {}) {
         try { killPidTree(pidFromFile); } catch { }
 
         const startedAt = Date.now();
-        const waitForExit = () => {
-            if (!isPidRunning(pidFromFile)) {
-                try { fs.unlinkSync(pidFile(botKey)); } catch { }
-                startReplacement();
-                return;
-            }
-
-            if (Date.now() - startedAt >= FORCE_KILL_DELAY_MS) {
-                console.log(`[Loader] ${bot.label}: PID ${pidFromFile} still alive after timeout, starting replacement anyway.`);
-                startReplacement();
-                return;
-            }
-
-            setTimeout(waitForExit, 250);
-        };
+        const waitForExit=()=>{if(!isPidRunning(pidFromFile)){try {fs.unlinkSync(pidFile(botKey));} catch {} startReplacement();return;} if(Date.now()-startedAt>=FORCE_KILL_DELAY_MS){console.log(`[Loader] ${bot.label}: PID ${pidFromFile} still alive after timeout, starting replacement anyway.`);startReplacement();return;} setTimeout(waitForExit,250);};
 
         waitForExit();
         return;
@@ -434,6 +352,3 @@ setInterval(() => {
         restartBot(targetBot, { respectDelay });
     }
 }, POLL_INTERVAL_MS);
-
-
-

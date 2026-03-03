@@ -4,10 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
-const {
-  isCommandDeployRequired,
-  markCommandDeployComplete,
-} = require("../../shared/runtime/commandDeployCache");
+const{isCommandDeployRequired,markCommandDeployComplete,}=require("../../shared/runtime/commandDeployCache");
 
 const BOT_DEPLOY_CACHE_KEY = "official";
 
@@ -15,20 +12,9 @@ module.exports = (client) => {
   client.handleCommands = async (commandFolders, basePath) => {
     const statusMap = new Map();
     client.commandArray = [];
+    client.commands.clear();
 
-    const parseCommandMeta = (command) => {
-      const commandJson =
-        typeof command?.data?.toJSON === "function"
-          ? command.data.toJSON()
-          : null;
-      const name =
-        command?.data?.name || commandJson?.name || command?.name || null;
-      const type = command?.data?.type ?? commandJson?.type ?? 1;
-      return { name, type, json: commandJson };
-    };
-
-    for (const folder of commandFolders) {
-      const folderPath = path.join(basePath, folder);
+    const parseCommandMeta=(command) => {const commandJson=typeof command?.data?.toJSON==="function"?command.data.toJSON():null;const name=command?.data?.name||commandJson?.name||command?.name||null;const type=command?.data?.type??commandJson?.type??1;return{name,type,json:commandJson};};for(const folder of commandFolders){const folderPath = path.join(basePath, folder);
       if (!fs.existsSync(folderPath)) continue;
       const commandFiles = fs.readdirSync(folderPath).filter((f) => f.endsWith(".js"));
 
@@ -83,19 +69,9 @@ module.exports = (client) => {
       `[COMMANDS] Loaded ${client.commands.size} SlashCommands.`,
     );
 
-    const token =
-      process.env.DISCORD_TOKEN ||
-      process.env.DISCORD_TOKEN_OFFICIAL ||
-      client?.config?.token;
-    const clientId =
-      process.env.DISCORD_CLIENT_ID ||
-      process.env.DISCORD_CLIENT_ID_OFFICIAL ||
-      IDs.bots.ViniliCaffeBot;
-    const deployCheck = isCommandDeployRequired(
-      BOT_DEPLOY_CACHE_KEY,
-      { clientId },
-      client.commandArray,
-    );
+    const token=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL||client?.config?.token;
+    const clientId=process.env.DISCORD_CLIENT_ID||process.env.DISCORD_CLIENT_ID_OFFICIAL||IDs.bots.ViniliCaffeBot;
+    const deployCheck=isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId},client.commandArray,);
     if (!deployCheck.required) {
       global.logger.info("[COMMANDS] Nessuna modifica ai comandi globali, deploy REST saltato.");
       return;

@@ -1,7 +1,6 @@
 const axios = require("axios");
 
-const RADIO_API =
-  "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/IT";
+const RADIO_API="https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/IT";
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const SUPPORTED_CODECS = new Set(["mp3", "aac", "aac+", "ogg", "opus", "flac", "mpeg"]);
 const PLAYLIST_MIME_RE = /(mpegurl|x-mpegurl|scpls|pls|playlist|mpegurl)/i;
@@ -61,14 +60,7 @@ function compareStations(a, b) {
 }
 
 async function fetchItalianStations() {
-  const response = await axios.get(RADIO_API, {
-    timeout: 20_000,
-    params: {
-      hidebroken: "true",
-      order: "votes",
-      reverse: "true",
-    },
-  });
+  const response=await axios.get(RADIO_API,{timeout:20_000,params:{hidebroken:"true",order:"votes",reverse:"true",},});
   const rows = Array.isArray(response?.data) ? response.data : [];
   const out = [];
   const seen = new Set();
@@ -103,10 +95,7 @@ async function getItalianStations({ force = false } = {}) {
 
 function extractStreamUrlFromPlaylistBody(body = "") {
   const text = String(body || "");
-  const lines = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const lines=text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   for (const line of lines) {
     if (line.startsWith("#")) continue;
     if (/^file\d+=/i.test(line)) {
@@ -122,18 +111,7 @@ async function resolvePlayableRadioUrl(url, depth = 0) {
   const target = String(url || "").trim();
   if (!/^https?:\/\//i.test(target) || depth > 2) return "";
 
-  const response = await axios.get(target, {
-    timeout: 12_000,
-    maxRedirects: 5,
-    responseType: "text",
-    validateStatus: (status) => status >= 200 && status < 400,
-    headers: {
-      "User-Agent": "ViniliCaffeBot/1.0",
-      Accept: "*/*",
-      Range: "bytes=0-4096",
-      "Icy-MetaData": "1",
-    },
-  }).catch(() => null);
+  const response=await axios.get(target,{timeout:12_000,maxRedirects:5,responseType:"text",validateStatus:(status) => status>=200&&status<400,headers:{"User-Agent":"ViniliCaffeBot/1.0",Accept:"*/*",Range:"bytes=0-4096","Icy-MetaData":"1",},}).catch(() => null);
 
   const finalUrl = String(response?.request?.res?.responseUrl || target).trim();
   const contentType = String(response?.headers?.["content-type"] || "").toLowerCase();

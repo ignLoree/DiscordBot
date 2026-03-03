@@ -6,10 +6,7 @@ module.exports = {
   allowEmptyArgs: true,
   async execute(message) {
     try {
-      const [iss, astronauts] = await Promise.all([
-        fetchJson("https://api.wheretheiss.at/v1/satellites/25544"),
-        fetchJson("https://ll.thespacedevs.com/2.2.0/astronaut/?in_space=true&limit=20"),
-      ]);
+      const[iss,astronauts]=await Promise.all([fetchJson("https://api.wheretheiss.at/v1/satellites/25544"),fetchJson("https://ll.thespacedevs.com/2.2.0/astronaut/?in_space=true&limit=20"),]);
 
       const lat = Number(iss?.latitude || 0).toFixed(4);
       const lon = Number(iss?.longitude || 0).toFixed(4);
@@ -18,11 +15,7 @@ module.exports = {
 
       const astroRows = Array.isArray(astronauts?.results) ? astronauts.results : [];
       const people = Number(astronauts?.count || astroRows.length || 0);
-      const names = astroRows
-        .map((p) => p?.name)
-        .filter(Boolean)
-        .slice(0, 10)
-        .join(", ");
+      const names=astroRows.map((p) => p?.name).filter(Boolean).slice(0,10).join(", ");
       const translatedCrew = names ? await translateToItalian(names, { maxLength: 900 }) : "N/D";
 
       return safeMessageReply(message, {

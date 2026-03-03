@@ -4,46 +4,28 @@ const cron = require("node-cron");
 const { restorePendingVoteReminders, restorePendingDiscadiaReminders, restorePendingReminders, } = require("../Services/Bump/bumpService");
 const { bootstrapSupporter } = require("./presenceUpdate");
 const { restoreTtsConnections } = require("../Services/TTS/ttsService");
-const {
-  runDueOneTimeReminders,
-} = require("../Services/Reminders/oneTimeReminderService");
+const{runDueOneTimeReminders,}=require("../Services/Reminders/oneTimeReminderService");
 const { startMinigameLoop, restoreActiveGames, } = require("../Services/Minigames/minigameService");
-const {
-  startHourlyReminderLoop,
-} = require("../Services/Community/chatReminderService");
-const {
-  startWeeklyDmReminderLoop,
-} = require("../Services/Community/weeklyDmReminderService");
+const{startHourlyReminderLoop,}=require("../Services/Community/chatReminderService");
+const{startWeeklyDmReminderLoop,}=require("../Services/Community/weeklyDmReminderService");
 const { startVerificationTenureLoop, backfillVerificationTenure, startVoteRoleCleanupLoop, runAllGuilds: renumberAllCategories, startCategoryNumberingLoop, startSponsorKickLoop, } = require("../Services/Community/communityOpsService");
-const {
-  startWeeklyActivityWinnersLoop,
-} = require("../Services/Community/weeklyActivityWinnersService");
+const{startWeeklyActivityWinnersLoop,}=require("../Services/Community/weeklyActivityWinnersService");
 const { startBirthdayLoop } = require("../Services/Community/birthdayService");
 const { restoreTempBans } = require("../Services/Moderation/joinRaidService");
 const { syncLiveVoiceSessionsFromGateway, startLiveVoiceExpLoop, } = require("../Services/Community/activityService");
 const { removeExpiredTemporaryRoles, startTemporaryRoleCleanupLoop, } = require("../Services/Community/temporaryRoleService");
 const { runExpiredCustomRolesSweep, startCustomRoleExpiryLoop, } = require("../Services/Community/customRoleExpiryService");
-const {
-  startDailyPartnerAuditLoop,
-} = require("../Services/Partner/partnerAuditService");
+const{startDailyPartnerAuditLoop,}=require("../Services/Partner/partnerAuditService");
 const { startTicketAutoClosePromptLoop, startTranscriptCleanupLoop, } = require("../Services/Ticket/ticketMaintenanceService");
 const { startAutoBackupLoop } = require("../Services/Backup/autoBackupService");
 const { startModCaseLifecycleLoop } = require("../Services/Moderation/modCaseLifecycleService");
-const {
-  startWeeklyStaffResocontoLoop,
-} = require("../Services/Staff/weeklyStaffResocontoService");
+const{startWeeklyStaffResocontoLoop,}=require("../Services/Staff/weeklyStaffResocontoService");
 const { retroSyncGuildLevels } = require("../Services/Community/expService");
 const IDs = require("../Utils/Config/ids");
 const startupPanelsTrigger = require("../Triggers/embeds");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const {
-  scheduleMemberCounterRefresh,
-} = require("../Utils/Community/memberCounterUtils");
-const {
-  formatDurationMs,
-  runTaskGroup,
-  runTaskSequence,
-} = require("../Utils/Startup/readyStartupRuntime");
+const{scheduleMemberCounterRefresh,}=require("../Utils/Community/memberCounterUtils");
+const{formatDurationMs,runTaskGroup,runTaskSequence,}=require("../Utils/Startup/readyStartupRuntime");
 
 const STARTUP_PANELS_RETRY_MS = 15000;
 const ENGAGEMENT_INTERVAL_MS = 60 * 1000;
@@ -174,13 +156,7 @@ function buildDeferredStartupTasks(client, primaryScheduler, engagementTick) {
   ];
 }
 
-const getChannelSafe = async (client, channelId) => {
-  if (!channelId) return null;
-  return (
-    client.channels.cache.get(channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null))
-  );
-};
+const getChannelSafe=async(client,channelId) => {if(!channelId)return null;return(client.channels.cache.get(channelId)||(await client.channels.fetch(channelId).catch(() => null)));};
 
 function buildMongoUrl(client) {
   return (
@@ -235,20 +211,7 @@ async function primeInviteCache(client) {
   const guilds = [...client.guilds.cache.values()];
   for (let i = 0; i < guilds.length; i += INVITE_CACHE_CONCURRENCY) {
     const batch = guilds.slice(i, i + INVITE_CACHE_CONCURRENCY);
-    const results = await Promise.all(
-      batch.map(async (guild) => {
-        const invites = await guild.invites.fetch().catch(() => null);
-        if (!invites) return { guildId: guild.id, inviteMap: null };
-        const inviteMap = new Map();
-        for (const invite of invites.values()) {
-          inviteMap.set(invite.code, {
-            uses: invite.uses || 0,
-            inviterId: invite.inviter?.id || null,
-          });
-        }
-        return { guildId: guild.id, inviteMap };
-      }),
-    );
+    const results=await Promise.all(batch.map(async(guild) => {const invites=await guild.invites.fetch().catch(() => null);if(!invites)return{guildId:guild.id,inviteMap:null};const inviteMap=new Map();for(const invite of invites.values()){inviteMap.set(invite.code,{uses:invite.uses||0,inviterId:invite.inviter?.id||null,});}return{guildId:guild.id,inviteMap};}),);
     for (const { guildId, inviteMap } of results) {
       if (inviteMap) client.inviteCache.set(guildId, inviteMap);
     }
@@ -256,11 +219,7 @@ async function primeInviteCache(client) {
 }
 
 async function restoreBumpReminders(client) {
-  const [reminders, discadia, voteReminders] = await Promise.allSettled([
-    restorePendingReminders(client),
-    restorePendingDiscadiaReminders(client),
-    restorePendingVoteReminders(client),
-  ]);
+  const[reminders,discadia,voteReminders]=await Promise.allSettled([restorePendingReminders(client),restorePendingDiscadiaReminders(client),restorePendingVoteReminders(client),]);
 
   if (reminders.status === "rejected")
     global.logger?.error?.("[DISBOARD REMINDER ERROR]", reminders.reason);
@@ -271,17 +230,7 @@ async function restoreBumpReminders(client) {
 }
 
 async function restoreCoreStartupState(client) {
-  const [bootstrap, inviteCache, tts, liveVoiceSync, joinRaidRestore] = await Promise.allSettled([
-    bootstrapSupporter(client),
-    primeInviteCache(client),
-    restoreTtsConnections(client),
-    syncLiveVoiceSessionsFromGateway(client),
-    Promise.allSettled(
-      [...client.guilds.cache.values()].map((guild) =>
-        restoreTempBans(guild, { force: true }),
-      ),
-    ),
-  ]);
+  const[bootstrap,inviteCache,tts,liveVoiceSync,joinRaidRestore]=await Promise.allSettled([bootstrapSupporter(client),primeInviteCache(client),restoreTtsConnections(client),syncLiveVoiceSessionsFromGateway(client),Promise.allSettled([...client.guilds.cache.values()].map((guild) => restoreTempBans(guild,{force:true}),),),]);
 
   if (bootstrap.status === "rejected")
     global.logger?.error?.("[PRESENCE BOOTSTRAP ERROR]", bootstrap.reason);
@@ -315,10 +264,7 @@ async function runStartupPanels(client, label = "immediate") {
 
 async function runPrimaryHeavyTasks(client, engagementTick) {
   const mainGuildId = IDs.guilds.main || null;
-  const mainGuild = mainGuildId
-    ? client.guilds.cache.get(mainGuildId) ||
-    (await client.guilds.fetch(mainGuildId).catch(() => null))
-    : client.guilds.cache.first() || null;
+  const mainGuild=mainGuildId?client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null)):client.guilds.cache.first()||null;
 
   const heavyTasks = buildPrimaryHeavyTasks(client, mainGuild, engagementTick);
   const hooks = createStartupHooks(client);
@@ -333,11 +279,7 @@ async function runPrimaryHeavyTasks(client, engagementTick) {
 }
 
 async function runDeferredStartup(client, primaryScheduler, engagementTick) {
-  const startupTasks = buildDeferredStartupTasks(
-    client,
-    primaryScheduler,
-    engagementTick,
-  );
+  const startupTasks=buildDeferredStartupTasks(client,primaryScheduler,engagementTick,);
   await runTaskSequence(startupTasks, createStartupHooks(client));
 }
 
@@ -348,89 +290,9 @@ function startPrimaryLoops(client, engagementTick) {
   const interval = setInterval(engagementTick, ENGAGEMENT_INTERVAL_MS);
   client._primaryEngagementInterval = interval;
 
-  const startLoopSafely = (label, starter) => {
-    try {
-      starter();
-    } catch (err) {
-      global.logger?.error?.(label, err);
-    }
-  };
+  const startLoopSafely=(label,starter) => {try{starter();}catch(err){global.logger?.error?.(label,err);}};
 
-  const loopStarters = [
-    ["[LIVE VOICE EXP] Failed to start loop", () => startLiveVoiceExpLoop(client)],
-    ["[MINIGAMES] Failed to start loop", () => startMinigameLoop(client)],
-    [
-      "[VOTE ROLE] Failed to start cleanup loop",
-      () => startVoteRoleCleanupLoop(client),
-    ],
-    [
-      "[CHAT REMINDER] Failed to start hourly loop",
-      () => startHourlyReminderLoop(client),
-    ],
-    [
-      "[WEEKLY DM REMINDER] Failed to start loop",
-      () => startWeeklyDmReminderLoop(client),
-    ],
-    [
-      "[VERIFY TENURE] Failed to start loop",
-      () => startVerificationTenureLoop(client),
-    ],
-    [
-      "[CATEGORY NUMBERING] Failed to start loop",
-      () => startCategoryNumberingLoop(client),
-    ],
-    [
-      "[SPONSOR 24H KICK] Failed to start loop",
-      () => startSponsorKickLoop(client),
-    ],
-    [
-      "[WEEKLY ACTIVITY] Failed to start loop",
-      () => startWeeklyActivityWinnersLoop(client),
-    ],
-    ["[BIRTHDAY] Failed to start loop", () => startBirthdayLoop(client)],
-    [
-      "[TEMP ROLE] Failed to start cleanup loop",
-      () => startTemporaryRoleCleanupLoop(client),
-    ],
-    [
-      "[CUSTOM ROLE EXPIRY] Failed to start cleanup loop",
-      () => startCustomRoleExpiryLoop(client),
-    ],
-    [
-      "[MOD CASE LIFECYCLE] Failed to start loop",
-      () => startModCaseLifecycleLoop(client),
-    ],
-    [
-      "[TICKET AUTO CLOSE PROMPT] Failed to start loop",
-      () => startTicketAutoClosePromptLoop(client),
-    ],
-    [
-      "[TRANSCRIPT CLEANUP] Failed to start loop",
-      () => startTranscriptCleanupLoop(),
-    ],
-    [
-      "[WEEKLY STAFF RESOCONTO] Failed to start loop",
-      () => startWeeklyStaffResocontoLoop(client),
-    ],
-    [
-      "[JOIN RAID RESTORE] Failed to start loop",
-      () => {
-        const tick = async () => {
-          const guilds = [...client.guilds.cache.values()];
-          for (const guild of guilds) {
-            await restoreTempBans(guild).catch(() => { });
-          }
-        };
-        tick().catch(() => { });
-        const timer = setInterval(tick, JOIN_RAID_RESTORE_INTERVAL_MS);
-        if (typeof timer.unref === "function") timer.unref();
-        client._joinRaidRestoreInterval = timer;
-      },
-    ],
-  ];
-
-  for (const [label, starter] of loopStarters) {
-    startLoopSafely(label, starter);
+  const loopStarters=[["[LIVE VOICE EXP] Failed to start loop",() => startLiveVoiceExpLoop(client)],["[MINIGAMES] Failed to start loop",() => startMinigameLoop(client)],["[VOTE ROLE] Failed to start cleanup loop",() => startVoteRoleCleanupLoop(client),],["[CHAT REMINDER] Failed to start hourly loop",() => startHourlyReminderLoop(client),],["[WEEKLY DM REMINDER] Failed to start loop",() => startWeeklyDmReminderLoop(client),],["[VERIFY TENURE] Failed to start loop",() => startVerificationTenureLoop(client),],["[CATEGORY NUMBERING] Failed to start loop",() => startCategoryNumberingLoop(client),],["[SPONSOR 24H KICK] Failed to start loop",() => startSponsorKickLoop(client),],["[WEEKLY ACTIVITY] Failed to start loop",() => startWeeklyActivityWinnersLoop(client),],["[BIRTHDAY] Failed to start loop",() => startBirthdayLoop(client)],["[TEMP ROLE] Failed to start cleanup loop",() => startTemporaryRoleCleanupLoop(client),],["[CUSTOM ROLE EXPIRY] Failed to start cleanup loop",() => startCustomRoleExpiryLoop(client),],["[MOD CASE LIFECYCLE] Failed to start loop",() => startModCaseLifecycleLoop(client),],["[TICKET AUTO CLOSE PROMPT] Failed to start loop",() => startTicketAutoClosePromptLoop(client),],["[TRANSCRIPT CLEANUP] Failed to start loop",() => startTranscriptCleanupLoop(),],["[WEEKLY STAFF RESOCONTO] Failed to start loop",() => startWeeklyStaffResocontoLoop(client),],["[JOIN RAID RESTORE] Failed to start loop",() => {const tick=async() => {const guilds=[...client.guilds.cache.values()];for(const guild of guilds){await restoreTempBans(guild).catch(() => {});}};tick().catch(() => {});const timer=setInterval(tick,JOIN_RAID_RESTORE_INTERVAL_MS);if(typeof timer.unref==="function")timer.unref();client._joinRaidRestoreInterval=timer;},],];for(const[label,starter]of loopStarters){startLoopSafely(label, starter);
   }
 }
 
@@ -441,9 +303,7 @@ async function queueStartupSync(client) {
 
     queueIdsCatalogSync(client, mainGuildId, "startup", { delayMs: 5000 });
 
-    const guild =
-      client.guilds.cache.get(mainGuildId) ||
-      (await client.guilds.fetch(mainGuildId).catch(() => null));
+    const guild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
     if (guild) {
       scheduleMemberCounterRefresh(guild, { delayMs: 800, secondPassMs: 2400 });
     }
@@ -529,17 +389,7 @@ module.exports = {
 
     if (primaryScheduler) {
       let engagementTickRunning = false;
-      const engagementTick = async () => {
-        if (engagementTickRunning) return;
-        engagementTickRunning = true;
-        try {
-          await runDueOneTimeReminders(client);
-        } catch (err) {
-          global.logger?.error?.(err);
-        } finally {
-          engagementTickRunning = false;
-        }
-      };
+      const engagementTick=async() => {if(engagementTickRunning)return;engagementTickRunning=true;try{await runDueOneTimeReminders(client);}catch(err){global.logger?.error?.(err);}finally{engagementTickRunning=false;}};
 
       startPrimaryLoops(client, engagementTick);
       client._engagementTick = engagementTick;

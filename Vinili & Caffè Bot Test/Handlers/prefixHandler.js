@@ -8,8 +8,7 @@ function inferSubcommandsFromExecute(command) {
   const out = new Set();
   let match = null;
 
-  const eqRegex =
-    /\b(?:sub|subcommand|mode|action|type|operation|choice)\s*={2,3}\s*['"`]([a-z0-9._-]+)['"`]/gi;
+  const eqRegex =/\b(?:sub|subcommand|mode|action|type|operation|choice)\s*={2,3}\s*['"`]([a-z0-9._-]+)['"`]/gi;
   while ((match = eqRegex.exec(src)) !== null) {
     out.add(String(match[1] || "").toLowerCase());
   }
@@ -19,8 +18,7 @@ function inferSubcommandsFromExecute(command) {
     out.add(String(match[1] || "").toLowerCase());
   }
 
-  const includesRegex =
-    /\[((?:\s*['"`][a-z0-9._-]+['"`]\s*,?)+)\]\.includes\((?:[^)]*)\)/gi;
+  const includesRegex =/\[((?:\s*['"`][a-z0-9._-]+['"`]\s*,?)+)\]\.includes\((?:[^)]*)\)/gi;
   while ((match = includesRegex.exec(src)) !== null) {
     const block = String(match[1] || "");
     const tokenRegex = /['"`]([a-z0-9._-]+)['"`]/gi;
@@ -34,25 +32,8 @@ function inferSubcommandsFromExecute(command) {
 }
 
 function ensurePrefixSubcommandMetadata(command) {
-  const declared = Array.isArray(command?.subcommands)
-    ? command.subcommands
-        .map((sub) =>
-          String(sub || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
-    : [];
-  const mappedTargets =
-    command?.subcommandAliases && typeof command.subcommandAliases === "object"
-      ? Object.values(command.subcommandAliases)
-          .map((sub) =>
-            String(sub || "")
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean)
-      : [];
+  const declared = Array.isArray(command ?. subcommands)? command.subcommands.map((sub)=>String(sub || "").trim().toLowerCase(),).filter(Boolean):[];
+  const mappedTargets = command ?. subcommandAliases && typeof command.subcommandAliases === "object" ? Object.values(command.subcommandAliases).map((sub)=>String(sub || "").trim().toLowerCase(),).filter(Boolean):[];
   const inferred = inferSubcommandsFromExecute(command);
 
   const known = Array.from(new Set([...declared, ...mappedTargets, ...inferred]));
@@ -71,43 +52,15 @@ function ensurePrefixSubcommandMetadata(command) {
 }
 
 function ensurePrefixUsageMetadata(command, prefix = "-") {
-  const name = String(command?.name || "")
-    .trim()
-    .toLowerCase();
+  const name = String(command ?. name || "").trim().toLowerCase();
   if (!name) return;
 
-  const subs = Array.isArray(command?.subcommands)
-    ? command.subcommands
-        .map((sub) =>
-          String(sub || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
-    : [];
+  const subs = Array.isArray(command ?. subcommands)? command.subcommands.map((sub)=>String(sub || "").trim().toLowerCase(),).filter(Boolean):[];
 
-  const usage =
-    String(command?.usage || "").trim() ||
-    (subs.length
-      ? Boolean(command?.allowEmptyArgs)
-        ? `${prefix}${name} [${subs.slice(0, 8).join("|")}]`
-        : `${prefix}${name} <${subs.slice(0, 8).join("|")}>`
-      : Boolean(command?.args)
-        ? `${prefix}${name} <opzioni>`
-        : `${prefix}${name}`);
+  const usage = String(command ?. usage || "").trim()||(subs.length ? Boolean(command ?. allowEmptyArgs)?`${prefix}${name} [${subs.slice(0,8).join("|")}]`:`${prefix}${name} <${subs.slice(0,8).join("|")}>`:Boolean(command ?. args)?`${prefix}${name} <opzioni>`:`${prefix}${name}`);
   command.usage = usage;
 
-  const examples =
-    Array.isArray(command?.examples) &&
-    command.examples.some((item) => String(item || "").trim())
-      ? command.examples
-      : subs.length >= 2
-        ? [`${prefix}${name} ${subs[0]}`, `${prefix}${name} ${subs[1]}`]
-        : subs.length === 1
-          ? [`${prefix}${name} ${subs[0]}`, `${prefix}${name}`]
-          : Boolean(command?.args)
-            ? [`${prefix}${name} esempio`]
-            : [`${prefix}${name}`];
+  const examples = Array.isArray(command ?. examples)&& command.examples.some((item)=>String(item || "").trim())? command.examples:subs.length >=2?[`${prefix}${name} ${subs[0]}`,`${prefix}${name} ${subs[1]}`]:subs.length ===1?[`${prefix}${name} ${subs[0]}`,`${prefix}${name}`]:Boolean(command ?. args)?[`${prefix}${name} esempio`]:[`${prefix}${name}`];
   command.examples = examples;
 
   if (

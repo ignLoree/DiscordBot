@@ -11,11 +11,7 @@ function sleep(ms) {
 
 async function resolveResponsibleWithRetry(guild, threadId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const audit = await resolveResponsible(
-      guild,
-      THREAD_CREATE_ACTION,
-      (entry) => String(entry?.target?.id || "") === String(threadId || ""),
-    );
+    const audit=await resolveResponsible(guild,THREAD_CREATE_ACTION,(entry) => String(entry?.target?.id||"")===String(threadId||""),);
     if (audit?.executor || audit?.entry) return audit;
     if (attempt < retries - 1) await sleep(delayMs);
   }
@@ -46,18 +42,15 @@ module.exports = {
 
       const logChannel = await resolveChannelRolesLogChannel(thread.guild);
       if (logChannel?.isTextBased?.()) {
-        const lines = [
-          `${ARROW} **Responsible:** ${responsible}`,
-          `${ARROW} **Target:** ${thread} \`${thread.id}\``,
-          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+        const lines=[`${ARROW}**Responsible:**${responsible}`,
+          `${ARROW}**Target:**${thread}\`${thread.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
           "",
           "**Settings**",
-          `${ARROW} **Name:** ${thread.name || "sconosciuto"}`,
-          `${ARROW} **Type:** ${threadTypeLabel(thread.type)}`,
-          `${ARROW} **Archived:** ${yesNo(Boolean(thread.archived))}`,
-          `${ARROW} **Bloccato:** ${yesNo(Boolean(thread.locked))}`,
-          `${ARROW} **Durata auto-archiviazione:** ${Number(thread.autoArchiveDuration || 0) ? `${thread.autoArchiveDuration} minuti` : "Nessuna"}`,
-          `${ARROW} **Slowmode per utente:** ${Number(thread.rateLimitPerUser || 0) || "Nessuna"}`,
+          `${ARROW}**Name:**${thread.name||"sconosciuto"}`,
+          `${ARROW}**Type:**${threadTypeLabel(thread.type)}`,
+          `${ARROW}**Archived:**${yesNo(Boolean(thread.archived))}`,
+          `${ARROW}**Bloccato:**${yesNo(Boolean(thread.locked))}`,
+          `${ARROW}**Durata auto-archiviazione:**${Number(thread.autoArchiveDuration||0)?`${thread.autoArchiveDuration}minuti` : "Nessuna"}`,`${ARROW}**Slowmode per utente:**${Number(thread.rateLimitPerUser||0)||"Nessuna"}`,
         ];
 
         if (Array.isArray(thread.appliedTags) && thread.appliedTags.length) {
@@ -65,10 +58,7 @@ module.exports = {
         }
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "type", "archived", "locked", "auto_archive_duration", "rate_limit_per_user", "applied_tags"]));
 
-        const embed = new EmbedBuilder()
-          .setColor("#57F287")
-          .setTitle("Creazione thread")
-          .setDescription(lines.join("\n"));
+        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Creazione thread").setDescription(lines.join("\n"));
 
         const payload = { embeds: [embed] };
         if (thread.url) {

@@ -10,10 +10,7 @@ function assert(cond, message) {
 }
 
 async function main() {
-  const folders = fs
-    .readdirSync(prefixRoot, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
+  const folders=fs.readdirSync(prefixRoot,{withFileTypes:true}).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 
   const oldLogger = global.logger;
   global.logger = {
@@ -22,11 +19,7 @@ async function main() {
     warn: () => {},
   };
 
-  const client = {
-    pcommands: new Collection(),
-    aliases: new Collection(),
-    logs: { success: () => {} },
-  };
+  const client={pcommands:new Collection(),aliases:new Collection(),logs:{success:() => {}},};
 
   try {
     const loadPrefix = require(path.join(root, "Handlers", "prefixHandler.js"));
@@ -37,9 +30,7 @@ async function main() {
     for (const [name, command] of client.pcommands.entries()) {
       if (!command || command.skipLoad || command.skipPrefix || !command.name) continue;
       const usage = String(command.usage || "").trim();
-      const examples = Array.isArray(command.examples)
-        ? command.examples.filter((x) => String(x || "").trim())
-        : [];
+      const examples=Array.isArray(command.examples)?command.examples.filter((x) => String(x||"").trim()):[];
       if (!usage || !examples.length) bad.push(name);
     }
 

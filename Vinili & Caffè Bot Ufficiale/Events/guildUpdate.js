@@ -61,25 +61,19 @@ module.exports = {
         ]);
       }
       if (!changes.length) return;
-      const vanityChanged =
-        (oldGuild?.vanityURLCode || "") !== (newGuild?.vanityURLCode || "");
+      const vanityChanged=(oldGuild?.vanityURLCode||"")!==(newGuild?.vanityURLCode||"");
 
       const logChannel = await resolveModLogChannel(guild);
       const canLog = Boolean(logChannel?.isTextBased?.());
 
       let executor = null;
-      const auditEntry = await fetchRecentAuditEntry(
-        guild,
-        AuditLogEvent.GuildUpdate,
-        (entry) => String(entry?.target?.id || "") === String(guild.id || ""),
-      );
+      const auditEntry=await fetchRecentAuditEntry(guild,AuditLogEvent.GuildUpdate,(entry) => String(entry?.target?.id||"")===String(guild.id||""),);
       if (auditEntry?.executor) executor = auditEntry.executor;
       const executorId = String(auditEntry?.executor?.id || "");
 
       const responsible = formatResponsible(executor);
-      const lines = [
-        `${ARROW} **Responsible:** ${responsible}`,
-        `${ARROW} ${nowDiscordTs()}`,
+      const lines=[`${ARROW}**Responsible:**${responsible}`,
+        `${ARROW}${nowDiscordTs()}`,
         "",
         "**Changes**",
       ];
@@ -100,10 +94,7 @@ module.exports = {
       );
 
       if (canLog) {
-        const embed = new EmbedBuilder()
-          .setColor("#F59E0B")
-          .setTitle("Guild Update")
-          .setDescription(lines.join("\n"));
+        const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Guild Update").setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => null);
       }

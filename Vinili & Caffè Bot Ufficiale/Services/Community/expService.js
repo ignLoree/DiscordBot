@@ -1,9 +1,7 @@
 const { ExpUser, GlobalSettings, LevelHistory, EventUserExpSnapshot, } = require("../../Schemas/Community/communitySchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
-const EXP_EXCLUDED_CATEGORY_IDS = new Set(
-  [IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),
-);
+const EXP_EXCLUDED_CATEGORY_IDS=new Set([IDs.categories.categoryGames].filter(Boolean).map((id) => String(id)),);
 
 const TIME_ZONE = "Europe/Rome";
 const MESSAGE_EXP = 2;
@@ -15,29 +13,11 @@ const settingsCache = new Map();
 const LEVEL_UP_CHANNEL_ID = IDs.channels.commands;
 const PERKS_CHANNEL_ID = IDs.channels.info;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
-const LEVEL_ROLE_MAP = new Map([
-  [10, IDs.roles.Level10],
-  [20, IDs.roles.Level20],
-  [30, IDs.roles.Level30],
-  [50, IDs.roles.Level50],
-  [70, IDs.roles.Level70],
-  [100, IDs.roles.Level100],
-]);
+const LEVEL_ROLE_MAP=new Map([[10,IDs.roles.Level10],[20,IDs.roles.Level20],[30,IDs.roles.Level30],[50,IDs.roles.Level50],[70,IDs.roles.Level70],[100,IDs.roles.Level100],]);
 const PERK_NEAR_LEVEL_DISTANCE = 2;
-const ROLE_MULTIPLIERS = new Map([
-  [IDs.roles.Donator, 3],
-  [IDs.roles.VIP, 4],
-  [IDs.roles.ServerBooster, 2],
-]);
+const ROLE_MULTIPLIERS=new Map([[IDs.roles.Donator,3],[IDs.roles.VIP,4],[IDs.roles.ServerBooster,2],]);
 
-const EVENT_STAFF_ROLE_IDS = new Set(
-  [
-    IDs.roles.Staff,
-    IDs.roles.HighStaff,
-  ]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
+const EVENT_STAFF_ROLE_IDS=new Set([IDs.roles.Staff,IDs.roles.HighStaff,].filter(Boolean).map((id) => String(id)),);
 
 function isEventStaffMember(member) {
   if (!member?.roles?.cache) return false;
@@ -49,13 +29,7 @@ function pad2(value) {
 }
 
 function getTimeParts(date) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",weekday:"short",});
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
@@ -75,8 +49,7 @@ function getIsoWeekKey(date) {
   const dayNr = (utcDate.getUTCDay() + 6) % 7;
   utcDate.setUTCDate(utcDate.getUTCDate() - dayNr + 3);
   const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
-  const weekNr =
-    1 + Math.round((utcDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+  const weekNr=1+Math.round((utcDate-firstThursday)/(7*24*60*60*1000));
   return `${utcDate.getUTCFullYear()}-W${pad2(weekNr)}`;
 }
 
@@ -115,10 +88,7 @@ function getLevelInfo(totalExp) {
   }
   const remainingToNext = Math.max(0, nextThreshold - exp);
   const span = Math.max(1, nextThreshold - currentLevelExp);
-  const progressPercent = Math.max(
-    0,
-    Math.min(100, Math.round(((exp - currentLevelExp) / span) * 100)),
-  );
+  const progressPercent=Math.max(0,Math.min(100,Math.round(((exp-currentLevelExp)/span)*100)),);
   return {
     level,
     currentLevelExp,
@@ -149,25 +119,12 @@ function getNextPerkLevel(currentLevel) {
 
 function normalizeSettingsDoc(doc) {
   const now = Date.now();
-  const expiresAtValue = doc?.expEventMultiplierExpiresAt
-    ? new Date(doc.expEventMultiplierExpiresAt).getTime()
-    : null;
+  const expiresAtValue=doc?.expEventMultiplierExpiresAt?new Date(doc.expEventMultiplierExpiresAt).getTime():null;
   const eventActive = Number.isFinite(expiresAtValue) && expiresAtValue > now;
   const baseMultiplier = Number(doc?.expMultiplier || DEFAULT_MULTIPLIER);
-  const eventMultiplier = eventActive
-    ? Number(doc?.expEventMultiplier || 1)
-    : 1;
-  const eventRoleOverrides =
-    eventActive &&
-    doc?.expEventRoleOverrides &&
-    typeof doc.expEventRoleOverrides === "object"
-      ? doc.expEventRoleOverrides
-      : null;
-  const eventExtraMultiplierRoleIds = Array.isArray(
-    doc?.expEventExtraMultiplierRoleIds,
-  )
-    ? doc.expEventExtraMultiplierRoleIds.filter(Boolean)
-    : [];
+  const eventMultiplier=eventActive?Number(doc?.expEventMultiplier||1):1;
+  const eventRoleOverrides=eventActive&&doc?.expEventRoleOverrides&&typeof doc.expEventRoleOverrides==="object"?doc.expEventRoleOverrides:null;
+  const eventExtraMultiplierRoleIds=Array.isArray(doc?.expEventExtraMultiplierRoleIds,)?doc.expEventExtraMultiplierRoleIds.filter(Boolean):[];
   return {
     baseMultiplier:
       Number.isFinite(baseMultiplier) && baseMultiplier > 0
@@ -255,34 +212,20 @@ async function getGuildExpSettings(guildId) {
   }
 
   const normalized = normalizeSettingsDoc(doc);
-  const value = {
-    ...normalized,
-    effectiveMultiplier: normalized.baseMultiplier * normalized.eventMultiplier,
-  };
+  const value={...normalized,effectiveMultiplier:normalized.baseMultiplier*normalized.eventMultiplier,};
   settingsCache.set(guildId, { value, at: now });
   return value;
 }
 
 async function setActivityEvent(guildId, options = {}) {
   if (!guildId) return null;
-  const start = options.startDate
-    ? new Date(options.startDate).getTime()
-    : Date.now();
-  const end = options.endDate
-    ? new Date(options.endDate).getTime()
-    : start + 31 * 24 * 60 * 60 * 1000;
+  const start=options.startDate?new Date(options.startDate).getTime():Date.now();
+  const end=options.endDate?new Date(options.endDate).getTime():start+31*24*60*60*1000;
   if (!Number.isFinite(end) || end <= start) return null;
   const globalMulti = Number(options.globalMultiplier);
-  const eventMultiplier = Number.isFinite(globalMulti) && globalMulti > 0
-    ? globalMulti
-    : 3;
-  const roleOverrides =
-    options.roleOverrides && typeof options.roleOverrides === "object"
-      ? options.roleOverrides
-      : null;
-  const extraRoleIds = Array.isArray(options.extraMultiplierRoleIds)
-    ? options.extraMultiplierRoleIds.filter(Boolean)
-    : [];
+  const eventMultiplier=Number.isFinite(globalMulti)&&globalMulti>0?globalMulti:3;
+  const roleOverrides=options.roleOverrides&&typeof options.roleOverrides==="object"?options.roleOverrides:null;
+  const extraRoleIds=Array.isArray(options.extraMultiplierRoleIds)?options.extraMultiplierRoleIds.filter(Boolean):[];
   const startedAt = options.startedAt ? new Date(options.startedAt) : new Date();
   await GlobalSettings.findOneAndUpdate(
     { guildId },
@@ -316,21 +259,10 @@ async function setActivityEvent(guildId, options = {}) {
 
 async function snapshotExpForEvent(guildId) {
   if (!guildId) return;
-  const users = await ExpUser.find({ guildId })
-    .select("userId totalExp")
-    .lean()
-    .catch(() => []);
+  const users=await ExpUser.find({guildId}).select("userId totalExp").lean().catch(() => []);
   if (!users.length) return;
   await EventUserExpSnapshot.deleteMany({ guildId }).catch(() => null);
-  const ops = users.map((doc) => ({
-    insertOne: {
-      document: {
-        guildId,
-        userId: String(doc?.userId || ""),
-        totalExpAtStart: Math.max(0, Number(doc?.totalExp || 0)),
-      },
-    },
-  }));
+  const ops=users.map((doc) => ({insertOne:{document:{guildId,userId:String(doc?.userId||""),totalExpAtStart:Math.max(0,Number(doc?.totalExp||0)),},},}));
   if (ops.length) {
     await EventUserExpSnapshot.bulkWrite(ops, { ordered: false }).catch(() => null);
   }
@@ -438,10 +370,7 @@ async function addExp(
   ensureWeekly(doc, now);
   const multiplier = applyMultiplier ? await getGlobalMultiplier(guildId) : 1;
   const effective = Math.max(0, Math.floor(amount)) * multiplier;
-  const weeklyEffective =
-    weeklyAmountOverride !== null
-      ? Math.max(0, Math.floor(Number(weeklyAmountOverride)))
-      : effective;
+  const weeklyEffective=weeklyAmountOverride!==null?Math.max(0,Math.floor(Number(weeklyAmountOverride))):effective;
   if (effective === 0 && weeklyEffective === 0) return doc;
   const beforeExp = Number(doc.totalExp || 0);
   const prevLevel = getLevelInfo(beforeExp).level;
@@ -461,10 +390,7 @@ async function addExp(
 
 function getRoleMultiplier(member, settings = null) {
   if (!member?.roles?.cache) return 1;
-  const useOverrides =
-    settings?.eventExpiresAt &&
-    settings?.eventRoleOverrides &&
-    typeof settings.eventRoleOverrides === "object";
+  const useOverrides=settings?.eventExpiresAt&&settings?.eventRoleOverrides&&typeof settings.eventRoleOverrides==="object";
   const overrides = useOverrides ? settings.eventRoleOverrides : null;
   let multi = 1;
   if (overrides) {
@@ -574,11 +500,7 @@ async function maybeSendPerkNearReminder(guild, member, result) {
   const roleId = LEVEL_ROLE_MAP.get(nextPerkLevel);
   if (!roleId) return;
 
-  const reminded = Array.isArray(result.doc.perkNearReminderLevels)
-    ? result.doc.perkNearReminderLevels
-        .map((value) => Number(value))
-        .filter(Number.isFinite)
-    : [];
+  const reminded=Array.isArray(result.doc.perkNearReminderLevels)?result.doc.perkNearReminderLevels.map((value) => Number(value)).filter(Number.isFinite):[];
   if (reminded.includes(nextPerkLevel)) return;
 
   const noDmSet = await getNoDmSet(guild.id).catch(() => new Set());
@@ -586,23 +508,14 @@ async function maybeSendPerkNearReminder(guild, member, result) {
 
   const targetExp = getTotalExpForLevel(nextPerkLevel);
   const missingExp = Math.max(0, targetExp - Number(result.afterExp || 0));
-  const role =
-    guild.roles.cache.get(roleId) ||
-    (await guild.roles.fetch(roleId).catch(() => null));
+  const role=guild.roles.cache.get(roleId)||(await guild.roles.fetch(roleId).catch(() => null));
   const roleLabel = role?.name || `ID ${roleId}`;
-  const payload = buildPerkNearDmEmbed(
-    member,
-    nextPerkLevel,
-    roleLabel,
-    missingExp,
-  );
+  const payload=buildPerkNearDmEmbed(member,nextPerkLevel,roleLabel,missingExp,);
 
   const sent = await member.user.send(payload).then(() => true).catch(() => false);
   if (!sent) return;
 
-  const nextReminded = Array.from(
-    new Set([...reminded.filter((level) => level > currentLevel), nextPerkLevel]),
-  );
+  const nextReminded=Array.from(new Set([...reminded.filter((level) => level>currentLevel),nextPerkLevel]),);
   await ExpUser.updateOne(
     { guildId: guild.id, userId: member.id },
     { $set: { perkNearReminderLevels: nextReminded } },
@@ -629,23 +542,7 @@ function scheduleEventLevelUpMessage(clientOrGuild, guildId, userId, level) {
   if (existing) {
     clearTimeout(existing.timeoutId);
   }
-  const timeoutId = setTimeout(async () => {
-    eventLevelUpPending.delete(key);
-    try {
-      const guild =
-        client.guilds.cache.get(guildId) ||
-        (await client.guilds.fetch(guildId).catch(() => null));
-      if (!guild) return;
-      const member =
-        guild.members.cache.get(userId) ||
-        (await guild.members.fetch(userId).catch(() => null));
-      if (!member) return;
-      await sendLevelUpMessage(guild, member, level);
-    } catch (err) {
-      global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:", err);
-    }
-  }, EVENT_LEVEL_UP_DEBOUNCE_MS);
-  eventLevelUpPending.set(key, { timeoutId, level, guildId, client });
+  const timeoutId=setTimeout(async() => {eventLevelUpPending.delete(key);try{const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));if(!guild)return;const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));if(!member)return;await sendLevelUpMessage(guild,member,level);}catch(err){global.logger?.error?.("[expService] scheduleEventLevelUpMessage flush error:",err);}},EVENT_LEVEL_UP_DEBOUNCE_MS);eventLevelUpPending.set(key,{timeoutId, level, guildId, client });
 }
 
 async function sendLevelUpPayload(channel, member, payload) {
@@ -671,9 +568,7 @@ async function addLevelRoleIfPossible(member, roleId) {
   const me = member.guild.members.me;
   if (!me) return false;
   if (!me.permissions.has("ManageRoles")) return false;
-  const role =
-    member.guild.roles.cache.get(roleId) ||
-    (await member.guild.roles.fetch(roleId).catch(() => null));
+  const role=member.guild.roles.cache.get(roleId)||(await member.guild.roles.fetch(roleId).catch(() => null));
   if (!role) return false;
   if (role.position >= me.roles.highest.position) return false;
   if (member.roles.cache.has(roleId)) return true;
@@ -695,14 +590,10 @@ async function addPerkRoleIfPossible(member) {
 async function syncLevelRolesForMember(guild, userId, level) {
   if (!guild || !userId) return [];
   const safeLevel = Math.max(0, Math.floor(Number(level || 0)));
-  const member =
-    guild.members.cache.get(userId) ||
-    (await guild.members.fetch(userId).catch(() => null));
+  const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
   if (!member) return [];
   const awarded = [];
-  const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
-    .filter((perkLevel) => perkLevel <= safeLevel)
-    .sort((a, b) => a - b);
+  const reachedPerkLevels=Array.from(LEVEL_ROLE_MAP.keys()).filter((perkLevel) => perkLevel<=safeLevel).sort((a,b) => a-b);
   for (const perkLevel of reachedPerkLevels) {
     const roleId = LEVEL_ROLE_MAP.get(perkLevel);
     if (!roleId) continue;
@@ -730,18 +621,8 @@ async function addExpWithLevel(
     const globalMulti = settings.effectiveMultiplier;
     const roleMulti = getRoleMultiplier(member, settings);
     const roleBonus = Math.max(0, Number(roleMulti || 1) - 1);
-    const extraBonus =
-      settings?.eventExpiresAt &&
-      Array.isArray(settings.eventExtraMultiplierRoleIds) &&
-      settings.eventExtraMultiplierRoleIds.some((id) =>
-        member?.roles?.cache?.has(id),
-      )
-        ? 1
-        : 0;
-    const combined = Math.min(
-      MAX_COMBINED_MULTIPLIER,
-      Math.max(1, Number(globalMulti || 1) + roleBonus + extraBonus),
-    );
+    const extraBonus=settings?.eventExpiresAt&&Array.isArray(settings.eventExtraMultiplierRoleIds)&&settings.eventExtraMultiplierRoleIds.some((id) => member?.roles?.cache?.has(id),)?1:0;
+    const combined=Math.min(MAX_COMBINED_MULTIPLIER,Math.max(1,Number(globalMulti||1)+roleBonus+extraBonus),);
     effectiveAmount = Number(amount || 0) * combined;
   }
   let weeklyAmount = null;
@@ -750,13 +631,7 @@ async function addExpWithLevel(
   } else if (applyMultiplier) {
     weeklyAmount = Number(amount || 0);
   }
-  const result = await addExp(
-    guild.id,
-    userId,
-    effectiveAmount,
-    false,
-    weeklyAmount,
-  );
+  const result=await addExp(guild.id,userId,effectiveAmount,false,weeklyAmount,);
   if (!result || !result.levelInfo) return result;
   if (result.levelInfo.level > (result.prevLevel ?? 0)) {
     await recordLevelHistory({
@@ -772,12 +647,7 @@ async function addExpWithLevel(
     const member = await fetchGuildMember(guild, userId);
     if (member) {
       const level = result.levelInfo.level;
-      const reachedPerkLevels = Array.from(LEVEL_ROLE_MAP.keys())
-        .filter(
-          (perkLevel) =>
-            perkLevel > (result.prevLevel ?? 0) && perkLevel <= level,
-        )
-        .sort((a, b) => a - b);
+      const reachedPerkLevels=Array.from(LEVEL_ROLE_MAP.keys()).filter((perkLevel) => perkLevel>(result.prevLevel??0)&&perkLevel<=level,).sort((a,b) => a-b);
       for (const perkLevel of reachedPerkLevels) {
         const roleId = LEVEL_ROLE_MAP.get(perkLevel);
         if (!roleId) continue;
@@ -817,11 +687,7 @@ async function setGlobalMultiplier(guildId, multiplier) {
   if (!guildId) return DEFAULT_MULTIPLIER;
   let value = Number(multiplier);
   if (!Number.isFinite(value) || value <= 0) value = DEFAULT_MULTIPLIER;
-  const doc = await GlobalSettings.findOneAndUpdate(
-    { guildId },
-    { $set: { expMultiplier: value } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
+  const doc=await GlobalSettings.findOneAndUpdate({guildId},{$set:{expMultiplier:value}},{upsert:true,new:true,setDefaultsOnInsert:true},);
   invalidateSettingsCache(guildId);
   const settings = normalizeSettingsDoc(doc);
   return settings.baseMultiplier;
@@ -883,9 +749,7 @@ async function resolveMemberVisibilityRoleForExp(guild) {
   if (!guild) return null;
   const configuredId = String(IDs.roles?.Member || "").trim();
   if (configuredId) {
-    const role =
-      guild.roles?.cache?.get(configuredId) ||
-      (await guild.roles?.fetch(configuredId).catch(() => null));
+    const role=guild.roles?.cache?.get(configuredId)||(await guild.roles?.fetch(configuredId).catch(() => null));
     if (role) return role;
   }
   return guild.roles?.everyone || null;
@@ -897,9 +761,7 @@ async function isChannelEligibleForMemberExp(guild, channelId) {
   const role = await resolveMemberVisibilityRoleForExp(guild);
   if (!role) return true;
 
-  const channel =
-    guild.channels?.cache?.get(id) ||
-    (await guild.channels?.fetch(id).catch(() => null));
+  const channel=guild.channels?.cache?.get(id)||(await guild.channels?.fetch(id).catch(() => null));
   if (!channel) return false;
 
   const perms = channel.permissionsFor(role);
@@ -915,9 +777,7 @@ async function shouldIgnoreExpForMember({ guildId, member, channelId = null }) {
   if (channelId && settings.lockedChannelIds.includes(channelId)) return true;
   if (channelId && EXP_EXCLUDED_CATEGORY_IDS.size > 0) {
     const guild = member?.guild || null;
-    const channel =
-      guild?.channels?.cache?.get(channelId) ||
-      (await guild?.channels?.fetch?.(channelId).catch(() => null));
+    const channel=guild?.channels?.cache?.get(channelId)||(await guild?.channels?.fetch?.(channelId).catch(() => null));
     const parentId = String(channel?.parentId || "");
     if (parentId && EXP_EXCLUDED_CATEGORY_IDS.has(parentId)) return true;
   }
@@ -954,12 +814,7 @@ async function getLevelHistoryPage(guildId, userId, page = 1, pageSize = 10) {
   const totalPages = Math.max(1, Math.ceil(totalCount / safePageSize));
   const effectivePage = Math.min(safePage, totalPages);
   const skip = (effectivePage - 1) * safePageSize;
-  const rows = await LevelHistory.find(filter)
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(safePageSize)
-    .lean()
-    .catch(() => []);
+  const rows=await LevelHistory.find(filter).sort({createdAt:-1}).skip(skip).limit(safePageSize).lean().catch(() => []);
   return {
     rows,
     page: effectivePage,
@@ -996,14 +851,7 @@ async function getUserRanks(guildId, userId) {
     return { stats, weeklyRank: null, allTimeRank: null };
   }
   const currentWeekKey = getIsoWeekKey(new Date());
-  const [weeklyHigher, totalHigher] = await Promise.all([
-    ExpUser.countDocuments({
-      guildId,
-      weeklyKey: currentWeekKey,
-      weeklyExp: { $gt: stats.weeklyExp },
-    }),
-    ExpUser.countDocuments({ guildId, totalExp: { $gt: stats.totalExp } }),
-  ]);
+  const[weeklyHigher,totalHigher]=await Promise.all([ExpUser.countDocuments({guildId,weeklyKey:currentWeekKey,weeklyExp:{$gt:stats.weeklyExp},}),ExpUser.countDocuments({guildId,totalExp:{$gt:stats.totalExp}}),]);
   return {
     stats,
     weeklyRank: weeklyHigher + 1,
@@ -1030,10 +878,7 @@ async function retroSyncGuildLevels(guild, { syncRoles = true } = {}) {
   let raised = 0;
   let lowered = 0;
 
-  const cursor = ExpUser.find({ guildId })
-    .select("userId totalExp level")
-    .lean()
-    .cursor();
+  const cursor=ExpUser.find({guildId}).select("userId totalExp level").lean().cursor();
 
   for await (const doc of cursor) {
     scanned += 1;

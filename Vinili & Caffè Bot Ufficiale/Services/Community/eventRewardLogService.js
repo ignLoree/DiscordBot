@@ -16,9 +16,7 @@ const EVENT_REWARD_LOG_CHANNEL_ID = "1477994178230095903";
  */
 async function sendEventRewardLog(client, data) {
   if (!client?.channels) return;
-  const channel =
-    client.channels.cache.get(EVENT_REWARD_LOG_CHANNEL_ID) ||
-    (await client.channels.fetch(EVENT_REWARD_LOG_CHANNEL_ID).catch(() => null));
+  const channel=client.channels.cache.get(EVENT_REWARD_LOG_CHANNEL_ID)||(await client.channels.fetch(EVENT_REWARD_LOG_CHANNEL_ID).catch(() => null));
   if (!channel) return;
 
   const userId = String(data?.userId || "");
@@ -28,10 +26,7 @@ async function sendEventRewardLog(client, data) {
   const roleId = data?.roleId ? String(data.roleId) : null;
   const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato")
-    .setDescription(`**Utente:** <@${userId}>`)
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_EXP:1468714279673925883> Premio evento assegnato").setDescription(`**Utente:** <@${userId}>`)
     .addFields({ name: "Tipo", value: label, inline: true });
 
   if (levels != null && levels > 0) {
@@ -56,18 +51,13 @@ async function sendEventRewardLog(client, data) {
  */
 async function sendEventRewardSkippedLog(client, data) {
   if (!client?.channels) return;
-  const channel =
-    client.channels.cache.get(EVENT_REWARD_LOG_CHANNEL_ID) ||
-    (await client.channels.fetch(EVENT_REWARD_LOG_CHANNEL_ID).catch(() => null));
+  const channel=client.channels.cache.get(EVENT_REWARD_LOG_CHANNEL_ID)||(await client.channels.fetch(EVENT_REWARD_LOG_CHANNEL_ID).catch(() => null));
   if (!channel) return;
 
   const userId = String(data?.userId || "");
   const label = String(data?.label || "Premio evento");
 
-  const embed = new EmbedBuilder()
-    .setColor("#99aab5")
-    .setTitle("⏭ Premio già assegnato (skip)")
-    .setDescription(`**Utente:** <@${userId}>`)
+  const embed=new EmbedBuilder().setColor("#99aab5").setTitle("⏭ Premio già assegnato (skip)").setDescription(`**Utente:** <@${userId}>`)
     .addFields({ name: "Tipo", value: label, inline: true })
     .addFields({ name: "Motivo", value: "Già ricevuto per questo evento", inline: true })
     .setTimestamp();
@@ -85,9 +75,7 @@ async function sendEventRewardSkippedLog(client, data) {
  */
 async function sendEventRewardDm(client, userId, guildId, data) {
   if (!client?.users || !userId || !guildId) return;
-  const user =
-    client.users.cache.get(userId) ||
-    (await client.users.fetch(userId).catch(() => null));
+  const user=client.users.cache.get(userId)||(await client.users.fetch(userId).catch(() => null));
   if (!user?.send) return;
 
   const label = String(data?.label || "Premio evento");
@@ -96,10 +84,7 @@ async function sendEventRewardDm(client, userId, guildId, data) {
   const week = data?.week != null && Number.isFinite(Number(data.week)) ? Number(data.week) : null;
 
   const eventName = "**Activity EXP Event**";
-  const lines = [
-    `<:VC_EXP:1468714279673925883> Per **${label}** nell'${eventName} ti è stato assegnato:`,
-    "",
-  ];
+  const lines=[`<:VC_EXP:1468714279673925883> Per **${label}**nell '${eventName} ti è stato assegnato:`, "",];
   if (levels != null && levels > 0) {
     lines.push(`📈 **+${levels} livelli** al tuo contatore EXP.`, "");
   }
@@ -111,11 +96,7 @@ async function sendEventRewardDm(client, userId, guildId, data) {
   }
   lines.push("Grazie per aver partecipato! <a:VC_HeartsPink:1468685897389052008>");
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Premio Activity EXP Event")
-    .setDescription(lines.join("\n"))
-    .setTimestamp();
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Premio Activity EXP Event").setDescription(lines.join("\n")).setTimestamp();
 
   await sendDm(user, { embeds: [embed] }, { guildId, bypassNoDm: true });
 }

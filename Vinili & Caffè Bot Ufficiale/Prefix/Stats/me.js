@@ -1,12 +1,8 @@
 const { EmbedBuilder, AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getUserOverviewStats,
-} = require("../../Services/Community/activityService");
-const {
-  renderUserActivityCanvas,
-} = require("../../Utils/Render/activityCanvas");
+const{getUserOverviewStats,}=require("../../Services/Community/activityService");
+const{renderUserActivityCanvas,}=require("../../Utils/Render/activityCanvas");
 
 const ME_REFRESH_CUSTOM_ID_PREFIX = "stats_me_refresh";
 const ME_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_me_period_open";
@@ -15,19 +11,13 @@ const ME_PERIOD_BACK_CUSTOM_ID_PREFIX = "stats_me_period_back";
 const VALID_LOOKBACKS = [1, 7, 14, 21, 30];
 
 function parseWindowDays(rawValue) {
-  const parsed = Number(
-    String(rawValue || "14")
-      .toLowerCase()
-      .replace(/d$/i, ""),
-  );
+  const parsed=Number(String(rawValue||"14").toLowerCase().replace(/d$/i,""),);
   if ([1, 7, 14, 21, 30].includes(parsed)) return parsed;
   return 14;
 }
 
 function parseMyActivityArgs(args = []) {
-  const tokens = Array.isArray(args)
-    ? args.map((x) => String(x || "").trim()).filter(Boolean)
-    : [];
+  const tokens=Array.isArray(args)?args.map((x) => String(x||"").trim()).filter(Boolean):[];
   const wantsEmbed = tokens.some((t) => t.toLowerCase() === "embed");
   const dayToken = tokens.find((t) => /^\d+d?$/i.test(t));
   return {
@@ -68,10 +58,7 @@ function buildPeriodControlsRows(ownerId, lookbackDays, wantsEmbed) {
   const mode = wantsEmbed ? "embed" : "image";
   const current = normalizeLookbackDays(lookbackDays);
   const safeOwner = String(ownerId || "0");
-  const topRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(
-        `${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+  const topRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${ME_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
@@ -88,9 +75,7 @@ function buildPeriodControlsRows(ownerId, lookbackDays, wantsEmbed) {
       .setLabel("14d")
       .setStyle(current === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
-  const bottomRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${mode}`)
+  const bottomRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${ME_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${mode}`)
       .setLabel("21d")
       .setStyle(current === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
@@ -116,9 +101,7 @@ function buildMeComponents(
 async function resolveChannelLabel(guild, channelId) {
   const id = String(channelId || "");
   if (!id) return `#${id}`;
-  const channel =
-    guild.channels?.cache?.get(id) ||
-    (await guild.channels?.fetch(id).catch(() => null));
+  const channel=guild.channels?.cache?.get(id)||(await guild.channels?.fetch(id).catch(() => null));
   if (!channel) return `#${id}`;
   return `#${channel.name}`;
 }
@@ -127,9 +110,7 @@ async function resolveMemberVisibilityRole(guild) {
   if (!guild) return null;
   const configuredId = String(IDs.roles?.Member || "").trim();
   if (configuredId) {
-    const role =
-      guild.roles?.cache?.get(configuredId) ||
-      (await guild.roles?.fetch(configuredId).catch(() => null));
+    const role=guild.roles?.cache?.get(configuredId)||(await guild.roles?.fetch(configuredId).catch(() => null));
     if (role) return role;
   }
   return guild.roles?.everyone || null;
@@ -138,9 +119,7 @@ async function resolveMemberVisibilityRole(guild) {
 async function isChannelVisibleToMemberRole(guild, channelId, memberRole) {
   const id = String(channelId || "");
   if (!id || !guild || !memberRole) return false;
-  const channel =
-    guild.channels?.cache?.get(id) ||
-    (await guild.channels?.fetch(id).catch(() => null));
+  const channel=guild.channels?.cache?.get(id)||(await guild.channels?.fetch(id).catch(() => null));
   if (!channel) return false;
   const perms = channel.permissionsFor(memberRole);
   return Boolean(perms?.has("ViewChannel"));
@@ -180,18 +159,12 @@ async function enrichChannels(
   const memberRole = await resolveMemberVisibilityRole(guild);
   const out = [];
   for (const item of items) {
-    const channel =
-      guild.channels?.cache?.get(String(item?.id || "")) ||
-      (await guild.channels?.fetch(String(item?.id || "")).catch(() => null));
+    const channel=guild.channels?.cache?.get(String(item?.id||""))||(await guild.channels?.fetch(String(item?.id||"")).catch(() => null));
     if (!channel) continue;
     if (excludeVoiceCategoryText && isTextChannelUnderVoiceCategory(guild, channel)) {
       continue;
     }
-    const visible = await isChannelVisibleToMemberRole(
-      guild,
-      item?.id,
-      memberRole,
-    );
+    const visible=await isChannelVisibleToMemberRole(guild,item?.id,memberRole,);
     if (!visible) continue;
     out.push({ ...item, label: await resolveChannelLabel(guild, item?.id) });
   }
@@ -209,46 +182,20 @@ async function buildMeOverviewPayload(
   const safeLookback = normalizeLookbackDays(lookbackDays);
   const stats = await getUserOverviewStats(guild.id, user.id, safeLookback);
   const lookbackKey = `d${safeLookback}`;
-  const lookbackWindow = stats?.windows?.[lookbackKey] || stats?.windows?.d14 || {
-    text: 0,
-    voiceSeconds: 0,
-  };
-  const topChannelsText = await enrichChannels(guild, stats.topChannelsText, {
-    excludeVoiceCategoryText: true,
-  });
+  const lookbackWindow=stats?.windows?.[lookbackKey]||stats?.windows?.d14||{text:0,voiceSeconds:0,};
+  const topChannelsText=await enrichChannels(guild,stats.topChannelsText,{excludeVoiceCategoryText:true,});
   const topChannelsVoice = await enrichChannels(guild, stats.topChannelsVoice);
 
   const imageName = `me-overview-${user.id}-${safeLookback}d-${Date.now()}.png`;
   let file = null;
   try {
-    const buffer = await renderUserActivityCanvas({
-      guildName: guild?.name || "Server",
-      userTag: user.tag,
-      displayName: member?.displayName || user.username,
-      avatarUrl: user.displayAvatarURL({
-        extension: "png",
-        size: 256,
-      }),
-      createdOn: user.createdAt || null,
-      joinedOn: member?.joinedAt || null,
-      lookbackDays: safeLookback,
-      windows: stats.windows,
-      ranks: stats.ranks,
-      topChannelsText,
-      topChannelsVoice,
-      chart: stats.chart,
-    });
+    const buffer=await renderUserActivityCanvas({guildName:guild?.name||"Server",userTag:user.tag,displayName:member?.displayName||user.username,avatarUrl:user.displayAvatarURL({extension:"png",size:256,}),createdOn:user.createdAt||null,joinedOn:member?.joinedAt||null,lookbackDays:safeLookback,windows:stats.windows,ranks:stats.ranks,topChannelsText,topChannelsVoice,chart:stats.chart,});
     file = new AttachmentBuilder(buffer, { name: imageName });
   } catch (error) {
     global.logger?.warn?.("[ME] Canvas render failed:", error?.message || error);
   }
 
-  const components = buildMeComponents(
-    user?.id,
-    safeLookback,
-    wantsEmbed,
-    controlsView,
-  );
+  const components=buildMeComponents(user?.id,safeLookback,wantsEmbed,controlsView,);
 
   if (!wantsEmbed) {
     return {
@@ -260,23 +207,7 @@ async function buildMeOverviewPayload(
     };
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setAuthor({
-      name: `${user.tag} - My Activity ${safeLookback}d`,
-      iconURL: user.displayAvatarURL({ size: 128 }),
-    })
-    .setImage(file ? `attachment://${imageName}` : null)
-    .setDescription(
-      [
-        `Messaggi (1d/7d/${safeLookback}d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${lookbackWindow.text}**`,
-        `Ore vocali (1d/7d/${safeLookback}d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(lookbackWindow.voiceSeconds)}**`,
-        `Rank server (${safeLookback}d): **Text #${stats.ranks.text || "-"} - Voice #${stats.ranks.voice || "-"}**`,
-        stats.approximate ? "_Nota: dati retroattivi parziali._" : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
-    );
+  const embed = new EmbedBuilder().setColor("#6f4e37").setAuthor({ name: `${user.tag} - My Activity ${safeLookback}d`, iconURL: user.displayAvatarURL({ size: 128 }) }).setImage(file ? `attachment://${imageName}` : null).setDescription([`Messaggi (1d/7d/${safeLookback}d): **${stats.windows.d1.text} / ${stats.windows.d7.text} / ${lookbackWindow.text}**`, `Ore vocali (1d/7d/${safeLookback}d): **${formatHours(stats.windows.d1.voiceSeconds)} / ${formatHours(stats.windows.d7.voiceSeconds)} / ${formatHours(lookbackWindow.voiceSeconds)}**`, `Rank server (${safeLookback}d): **Text #${stats.ranks.text || "-"} - Voice #${stats.ranks.voice || "-"}**`, stats.approximate ? "_Nota: dati retroattivi parziali._" : null].filter(Boolean).join("\n"));
 
   return {
     embeds: [embed],
@@ -299,14 +230,7 @@ module.exports = {
   async execute(message, args = []) {
     await message.channel.sendTyping();
     const { lookbackDays, wantsEmbed } = parseMyActivityArgs(args);
-    const payload = await buildMeOverviewPayload(
-      message.guild,
-      message.author,
-      message.member,
-      lookbackDays,
-      wantsEmbed,
-      "main",
-    );
+    const payload=await buildMeOverviewPayload(message.guild,message.author,message.member,lookbackDays,wantsEmbed,"main",);
 
     await safeMessageReply(message, {
       ...payload,

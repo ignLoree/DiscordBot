@@ -1,7 +1,5 @@
 function parseFlexibleDuration(input) {
-  const raw = String(input || "")
-    .trim()
-    .toLowerCase();
+  const raw=String(input||"").trim().toLowerCase();
   if (!raw) return null;
 
   const compact = raw.replace(/\s+/g, "");
@@ -22,49 +20,13 @@ function parseFlexibleDuration(input) {
 }
 
 function normalizeUnit(unitRaw) {
-  const unit = String(unitRaw || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\./g, "");
+  const unit=String(unitRaw||"").trim().toLowerCase().replace(/\./g,"");
 
-  const secondAliases = new Set([
-    "s",
-    "sec",
-    "secs",
-    "second",
-    "seconds",
-    "secondo",
-    "secondi",
-  ]);
-  const minuteAliases = new Set([
-    "m",
-    "min",
-    "mins",
-    "minute",
-    "minutes",
-    "minuto",
-    "minuti",
-  ]);
-  const hourAliases = new Set([
-    "h",
-    "hr",
-    "hrs",
-    "hour",
-    "hours",
-    "ora",
-    "ore",
-  ]);
+  const secondAliases=new Set(["s","sec","secs","second","seconds","secondo","secondi",]);
+  const minuteAliases=new Set(["m","min","mins","minute","minutes","minuto","minuti",]);
+  const hourAliases=new Set(["h","hr","hrs","hour","hours","ora","ore",]);
   const dayAliases = new Set(["d", "day", "days", "giorno", "giorni"]);
-  const weekAliases = new Set([
-    "w",
-    "wk",
-    "wks",
-    "week",
-    "weeks",
-    "settimana",
-    "settimane",
-    "sett",
-  ]);
+  const weekAliases=new Set(["w","wk","wks","week","weeks","settimana","settimane","sett",]);
 
   if (secondAliases.has(unit)) return 1000;
   if (minuteAliases.has(unit)) return 60 * 1000;

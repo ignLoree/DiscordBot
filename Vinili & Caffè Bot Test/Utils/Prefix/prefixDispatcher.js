@@ -7,16 +7,8 @@ const { showPrefixUsageGuide } = require("../Moderation/prefixUsageGuide");
 const BOT_MENTION_REGEX = /<@!?\d+>/;
 const OFFICIAL_MAIN_GUILD_ID = IDs.guilds?.main || null;
 const TEST_GUILD_ID = IDs.guilds?.test || null;
-const ALLOWED_GUILD_IDS = new Set(
-  [OFFICIAL_MAIN_GUILD_ID, TEST_GUILD_ID]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
-const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set(
-  [IDs.channels?.commands, IDs.channels?.staffCmds, IDs.channels?.highCmds]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
+const ALLOWED_GUILD_IDS = new Set([OFFICIAL_MAIN_GUILD_ID,TEST_GUILD_ID].filter(Boolean).map((id)=>String(id)),);
+const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set([IDs.channels ?. commands,IDs.channels ?. staffCmds,IDs.channels ?. highCmds].filter(Boolean).map((id)=>String(id)),);
 const TEMPORARY_NOTICE_LIFETIME_MS = 6000;
 
 function deleteMessageLater(message, delayMs = TEMPORARY_NOTICE_LIFETIME_MS) {
@@ -59,9 +51,7 @@ function parseWrongPrefixAttempt(content, validPrefix = "-") {
       token: String(direct[2] || "").toLowerCase(),
     };
   }
-  const nearMiss = text.match(
-    /^([a-z]{1,3})\s*([?!./-])\s*([a-z0-9][\w-]*)/i,
-  );
+  const nearMiss = text.match(/^([a-z]{1,3})\s*([?!./-])\s*([a-z0-9][\w-]*)/i,);
   if (nearMiss) {
     return {
       usedPrefix: `${String(nearMiss[1] || "")}${String(nearMiss[2] || "")}`,
@@ -77,13 +67,7 @@ function shouldSendWrongPrefixHint(message, usedPrefix, commandName) {
   if (!client._wrongPrefixHintCooldown) {
     client._wrongPrefixHintCooldown = new Map();
   }
-  const key = [
-    String(message.guildId || "noguild"),
-    String(message.channelId || "nochannel"),
-    String(message.author?.id || "nouser"),
-    String(usedPrefix || ""),
-    String(commandName || ""),
-  ].join(":");
+  const key =[String(message.guildId || "noguild"),String(message.channelId || "nochannel"),String(message.author ?. id || "nouser"),String(usedPrefix || ""),String(commandName || ""),].join(":");
   const now = Date.now();
   const lastAt = Number(client._wrongPrefixHintCooldown.get(key) || 0);
   if (now - lastAt < 10_000) return false;
@@ -117,20 +101,10 @@ async function logPrefixErrorToChannel(message, client, commandName, error) {
   try {
     const channelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
     if (!channelId) return;
-    const errorChannel =
-      client.channels?.cache?.get(channelId) ||
-      (await client.channels?.fetch?.(channelId).catch(() => null));
+    const errorChannel = client.channels ?. cache ?. get(channelId)||(await client.channels ?. fetch ?.(channelId).catch(()=>null));
     if (!errorChannel?.isTextBased?.()) return;
 
-    const embed = buildErrorLogEmbed({
-      contextLabel: "Comando",
-      contextValue: String(commandName || "unknown"),
-      userTag: message?.author?.tag || "unknown",
-      error,
-      serverName: message?.guild
-        ? `${message.guild.name} [${message.guild.id}]`
-        : null,
-    });
+    const embed = buildErrorLogEmbed({contextLabel:"Comando",contextValue:String(commandName || "unknown"),userTag:message ?. author ?. tag || "unknown",error,serverName:message ?. guild ?`${message.guild.name} [${message.guild.id}]`:null,});
     await errorChannel.send({ embeds: [embed] }).catch(() => null);
   } catch (nestedError) {
     global.logger?.error?.(" Prefix error log failed:", nestedError);
@@ -151,33 +125,21 @@ async function dispatchPrefixMessage(message, client) {
   const safePrefix = String(client?.config?.prefix || "-").trim() || "-";
 
   const startsWithPrefix = content.startsWith(safePrefix);
-  const isMention =
-    client.user &&
-    BOT_MENTION_REGEX.test(content) &&
-    content.replace(BOT_MENTION_REGEX, "").trim().length > 0;
+  const isMention = client.user && BOT_MENTION_REGEX.test(content)&& content.replace(BOT_MENTION_REGEX,"").trim().length >0;
   if (!startsWithPrefix && !isMention) {
     return maybeSendWrongPrefixHint(message, client, safePrefix);
   }
 
   const usedPrefix = startsWithPrefix ? safePrefix : null;
-  const tokens = usedPrefix
-    ? content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean)
-    : [];
+  const tokens = usedPrefix ? content.slice(usedPrefix.length).trim().split(/\s+/).filter(Boolean):[];
   if (!tokens.length) return false;
 
   const invokedName = String(tokens.shift() || "").toLowerCase();
-  const command =
-    client.pcommands.get(invokedName) ||
-    client.pcommands.get(client.aliases.get(invokedName));
+  const command = client.pcommands.get(invokedName)|| client.pcommands.get(client.aliases.get(invokedName));
   const args = tokens;
 
   if (command) {
-    const hasSubcommands = Boolean(
-      (Array.isArray(command?.subcommands) && command.subcommands.length > 0) ||
-      (command?.subcommandAliases &&
-        typeof command.subcommandAliases === "object" &&
-        Object.keys(command.subcommandAliases).length > 0),
-    );
+    const hasSubcommands = Boolean((Array.isArray(command ?. subcommands)&& command.subcommands.length >0)||(command ?. subcommandAliases && typeof command.subcommandAliases === "object" && Object.keys(command.subcommandAliases).length >0),);
     if (!args.length && (Boolean(command?.args) || hasSubcommands)) {
       await showPrefixUsageGuide({
         message,
@@ -187,16 +149,9 @@ async function dispatchPrefixMessage(message, client) {
       return true;
     }
     const subcommandName = args[0] ? String(args[0]).toLowerCase() : null;
-    const allowed = await checkPrefixPermission(
-      message,
-      String(command.name || invokedName).toLowerCase(),
-      subcommandName,
-    );
+    const allowed = await checkPrefixPermission(message,String(command.name || invokedName).toLowerCase(),subcommandName,);
     if (!allowed) {
-      const requiredRoles = getPrefixRequiredRoles(
-        String(command.name || invokedName).toLowerCase(),
-        subcommandName,
-      );
+      const requiredRoles = getPrefixRequiredRoles(String(command.name || invokedName).toLowerCase(),subcommandName,);
       await sendTemporaryReply(message, {
         embeds: [buildGlobalPermissionDeniedEmbed(requiredRoles || [], "comando")],
       });
@@ -204,9 +159,7 @@ async function dispatchPrefixMessage(message, client) {
     }
 
     try {
-      const result = await command.execute(message, args, client, {
-        invokedName,
-      });
+      const result = await command.execute(message,args,client,{invokedName,});
       if (result !== false) return true;
     } catch (err) {
       global.logger?.error?.(" Prefix dispatcher error:", err);
@@ -220,17 +173,9 @@ async function dispatchPrefixMessage(message, client) {
     }
   }
 
-  const availableCommands = Array.from(client.pcommands.keys())
-    .sort((a, b) => a.localeCompare(b))
-    .map((name) => `\`${safePrefix}${name}\``)
-    .join(", ");
+  const availableCommands = Array.from(client.pcommands.keys()).sort((a,b)=>a.localeCompare(b)).map((name)=>`\`${safePrefix}${name}\``).join(", ");
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setDescription(
-      "**Bot Test** \u2013 i comandi principali sono sul **bot ufficiale**.\n" +
-        (availableCommands ? `Comandi disponibili qui: ${availableCommands}` : ""),
-    );
+  const embed = new EmbedBuilder().setColor("#6f4e37").setDescription("**Bot Test** \u2013 i comandi principali sono sul **bot ufficiale**.\n" +(availableCommands ?`Comandi disponibili qui: ${availableCommands}`:""),);
   await sendTemporaryReply(message, { embeds: [embed] });
   return true;
 }

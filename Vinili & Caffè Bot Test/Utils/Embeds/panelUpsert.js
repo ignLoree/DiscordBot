@@ -2,8 +2,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const axios = require("axios");
 
-const CDN_ATTACHMENT_PATTERN =
-  /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
+const CDN_ATTACHMENT_PATTERN =/(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
 
 function normalizeDiscordAttachmentUrl(value) {
   if (typeof value !== "string") return value;
@@ -23,36 +22,11 @@ function normalizeText(value) {
 function simplifyEmbed(embed) {
   const raw = typeof embed?.toJSON === "function" ? embed.toJSON() : embed;
   if (!raw || typeof raw !== "object") return null;
-  const img = raw.image?.url
-    ? normalizeDiscordAttachmentUrl(raw.image.url)
-    : null;
-  const thumb = raw.thumbnail?.url
-    ? normalizeDiscordAttachmentUrl(raw.thumbnail.url)
-    : null;
-  const author = raw.author
-    ? {
-        name: normalizeText(raw.author.name),
-        icon_url: raw.author.icon_url
-          ? normalizeDiscordAttachmentUrl(raw.author.icon_url)
-          : null,
-        url: raw.author.url ? String(raw.author.url) : null,
-      }
-    : null;
-  const footer = raw.footer
-    ? {
-        text: normalizeText(raw.footer.text),
-        icon_url: raw.footer.icon_url
-          ? normalizeDiscordAttachmentUrl(raw.footer.icon_url)
-          : null,
-      }
-    : null;
-  const fields = Array.isArray(raw.fields)
-    ? raw.fields.map((f) => ({
-        name: normalizeText(f?.name),
-        value: normalizeText(f?.value),
-        inline: Boolean(f?.inline),
-      }))
-    : [];
+  const img = raw.image ?. url ? normalizeDiscordAttachmentUrl(raw.image.url):null;
+  const thumb = raw.thumbnail ?. url ? normalizeDiscordAttachmentUrl(raw.thumbnail.url):null;
+  const author = raw.author ?{name:normalizeText(raw.author.name),icon_url:raw.author.icon_url ? normalizeDiscordAttachmentUrl(raw.author.icon_url):null,url:raw.author.url ? String(raw.author.url):null,}:null;
+  const footer = raw.footer ?{text:normalizeText(raw.footer.text),icon_url:raw.footer.icon_url ? normalizeDiscordAttachmentUrl(raw.footer.icon_url):null,}:null;
+  const fields = Array.isArray(raw.fields)? raw.fields.map((f)=>({name:normalizeText(f ?. name),value:normalizeText(f ?. value),inline:Boolean(f ?. inline),})):[];
   return {
     title: normalizeText(raw.title),
     description: normalizeText(raw.description),
@@ -103,9 +77,7 @@ function extractCustomIdsFromComponents(components = []) {
   const ids = new Set();
   for (const row of components || []) {
     const rowJson = typeof row?.toJSON === "function" ? row.toJSON() : row;
-    const children = Array.isArray(rowJson?.components)
-      ? rowJson.components
-      : [];
+    const children = Array.isArray(rowJson ?. components)? rowJson.components:[];
     for (const component of children) {
       const id = component?.custom_id || component?.customId || null;
       if (id) ids.add(String(id));
@@ -158,26 +130,14 @@ async function upsertPanelMessage(channel, client, payload) {
       return direct;
     }
   }
-  const messages = await channel.messages
-    .fetch({ limit: 15 })
-    .catch(() => null);
-  const botMessages = messages
-    ? [...messages.values()].filter(
-        (msg) => msg.author?.id === client.user?.id && msg.embeds?.length,
-      )
-    : [];
-  const payloadCustomIds = extractCustomIdsFromComponents(
-    payload?.components || [],
-  );
-  const payloadSignature = buildEmbedSignatureFromPayload(
-    payload?.embeds || [],
-  );
+  const messages = await channel.messages.fetch({limit:15}).catch(()=>null);
+  const botMessages = messages ?[...messages.values()].filter((msg)=>msg.author ?. id === client.user ?. id && msg.embeds ?. length,):[];
+  const payloadCustomIds = extractCustomIdsFromComponents(payload ?. components ||[],);
+  const payloadSignature = buildEmbedSignatureFromPayload(payload ?. embeds ||[],);
   let existing =
     payloadCustomIds.size > 0
       ? botMessages.find((msg) => {
-          const msgCustomIds = extractCustomIdsFromComponents(
-            msg.components || [],
-          );
+          const msgCustomIds = extractCustomIdsFromComponents(msg.components ||[],);
           if (!msgCustomIds.size) return false;
           for (const id of payloadCustomIds)
             if (!msgCustomIds.has(id)) return false;

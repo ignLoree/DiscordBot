@@ -125,9 +125,7 @@ module.exports = {
     const amount = interaction.options.getInteger("amount");
     const reason = interaction.options.getString("motivo");
     const messageLink = interaction.options.getString("linkmessaggio");
-    const removedPointsChannel = interaction.guild.channels.cache.get(
-      IDs.channels?.puntiTolti,
-    );
+    const removedPointsChannel=interaction.guild.channels.cache.get(IDs.channels?.puntiTolti,);
 
     if (amount < 0) {
       return safeEditReply(interaction, {
@@ -148,10 +146,7 @@ module.exports = {
     if (sub === "add") {
       const staffData = await addPartnerPoints(guildId, targetUser.id, amount);
 
-      const embed = buildResultEmbed(
-        interaction,
-        `<:vegacheckmark:1443666279058772028> **Successo**: Aggiunti \`${amount}\` punti a <@${targetUser.id}>. Totale Punti: \`${staffData.partnerCount}\``,
-      );
+      const embed=buildResultEmbed(interaction,`<:vegacheckmark:1443666279058772028> **Successo**: Aggiunti \`${amount}\` punti a <@${targetUser.id}>.Totale Punti:\`${staffData.partnerCount}\``,);
 
       return safeEditReply(interaction, { embeds: [embed] });
     }
@@ -159,10 +154,7 @@ module.exports = {
     if (sub === "remove") {
       const staffData = await removePartnerPoints(guildId, targetUser.id, amount);
 
-      const embed = buildResultEmbed(
-        interaction,
-        `<:vegacheckmark:1443666279058772028> **Successo**: Rimossi \`${amount}\` punti a <@${targetUser.id}>. Totale Punti: \`${staffData.partnerCount}\``,
-      );
+      const embed=buildResultEmbed(interaction,`<:vegacheckmark:1443666279058772028> **Successo**: Rimossi \`${amount}\` punti a <@${targetUser.id}>.Totale Punti:\`${staffData.partnerCount}\``,);
 
       if (removedPointsChannel) {
         await removedPointsChannel.send({

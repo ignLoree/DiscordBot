@@ -83,22 +83,10 @@ async function getChannelSnapshotMap(guildId, channelIds = []) {
   const safeGuildId = normalizeId(guildId);
   if (!safeGuildId) return new Map();
 
-  const ids = Array.from(
-    new Set(
-      (Array.isArray(channelIds) ? channelIds : [])
-        .map((value) => normalizeId(value))
-        .filter(Boolean),
-    ),
-  );
+  const ids=Array.from(new Set((Array.isArray(channelIds)?channelIds:[]).map((value) => normalizeId(value)).filter(Boolean),),);
   if (!ids.length) return new Map();
 
-  const rows = await ChannelSnapshot.find({
-    guildId: safeGuildId,
-    channelId: { $in: ids },
-  })
-    .select("channelId name")
-    .lean()
-    .catch(() => []);
+  const rows=await ChannelSnapshot.find({guildId:safeGuildId,channelId:{$in:ids},}).select("channelId name").lean().catch(() => []);
 
   const out = new Map();
   for (const row of Array.isArray(rows) ? rows : []) {

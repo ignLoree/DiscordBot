@@ -20,10 +20,7 @@ function channelDisplay(channel) {
 }
 
 function channelTypeLabel(channelOrType) {
-  const value =
-    typeof channelOrType === "number"
-      ? channelOrType
-      : Number(channelOrType?.type || 0);
+  const value=typeof channelOrType==="number"?channelOrType:Number(channelOrType?.type||0);
   if (value === 0) return "Text";
   if (value === 2) return "Voice";
   if (value === 4) return "Category";
@@ -148,12 +145,9 @@ function buildAuditExtraLines(entry, knownChangeKeys = []) {
 }
 
 async function resolveChannelRolesLogChannel(guild) {
-  const channelId =
-    IDs.channels?.channelRolesLogs || IDs.channels?.logCanaliRuoli || null;
+  const channelId=IDs.channels?.channelRolesLogs||IDs.channels?.logCanaliRuoli||null;
   if (!guild || !channelId) return null;
-  const channel =
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null));
+  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return null;
   return channel;
 }
@@ -166,9 +160,7 @@ async function resolveResponsible(guild, actionType, matcher) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({ type: actionType, limit: 20 })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:actionType,limit:20}).catch(() => null);
     if (!logs?.entries?.size) {
       if (attempt < 2) {
         await new Promise((resolve) => setTimeout(resolve, 700));

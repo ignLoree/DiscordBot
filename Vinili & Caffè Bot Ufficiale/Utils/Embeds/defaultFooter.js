@@ -2,13 +2,8 @@ const { EmbedBuilder } = require("discord.js");
 const DEFAULT_FOOTER_TEXT = "© 2025 Vinili & Caffè. Tutti i diritti riservati.";
 const DEFAULT_COLOR = "#6f4e37";
 
-const ERROR_EMBED_COLORS = new Set([
-  0xed4245, 0xe74c3c, 0xbe3851, 0xff0000,
-]);
-const ERROR_TITLE_SUBSTRINGS = [
-  "errore", "error", "cooldown", "non hai i permessi", "accesso negato",
-  "argomenti mancanti", "comando in esecuzione", "comando scaduto",
-];
+const ERROR_EMBED_COLORS=new Set([0xed4245,0xe74c3c,0xbe3851,0xff0000,]);
+const ERROR_TITLE_SUBSTRINGS=["errore","error","cooldown","non hai i permessi","accesso negato","argomenti mancanti","comando in esecuzione","comando scaduto",];
 
 function hexToInt(hex) {
   if (!hex) return null;

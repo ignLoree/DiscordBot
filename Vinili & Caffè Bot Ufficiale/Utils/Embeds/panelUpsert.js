@@ -2,8 +2,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const axios = require("axios");
 
-const CDN_ATTACHMENT_PATTERN =
-  /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
+const CDN_ATTACHMENT_PATTERN = /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
 
 function normalizeDiscordAttachmentUrl(value) {
   if (typeof value !== "string") return value;
@@ -22,9 +21,7 @@ function normalizeText(value) {
 }
 
 function hashBuffer(bufferLike) {
-  const buffer = Buffer.isBuffer(bufferLike)
-    ? bufferLike
-    : Buffer.from(bufferLike);
+  const buffer=Buffer.isBuffer(bufferLike)?bufferLike:Buffer.from(bufferLike);
   return crypto.createHash("sha256").update(buffer).digest("hex");
 }
 
@@ -58,10 +55,7 @@ function readPayloadFileBuffer(file) {
 async function fetchAttachmentHash(url) {
   if (!url) return null;
   try {
-    const res = await axios.get(url, {
-      responseType: "arraybuffer",
-      timeout: 20000,
-    });
+    const res=await axios.get(url,{responseType:"arraybuffer",timeout:20000,});
     return hashBuffer(Buffer.from(res.data));
   } catch {
     return null;
@@ -72,38 +66,13 @@ function simplifyEmbed(embed) {
   const raw = typeof embed?.toJSON === "function" ? embed.toJSON() : embed;
   if (!raw || typeof raw !== "object") return null;
 
-  const img = raw.image?.url
-    ? normalizeDiscordAttachmentUrl(raw.image.url)
-    : null;
-  const thumb = raw.thumbnail?.url
-    ? normalizeDiscordAttachmentUrl(raw.thumbnail.url)
-    : null;
-  const author = raw.author
-    ? {
-        name: normalizeText(raw.author.name),
-        icon_url: raw.author.icon_url
-          ? normalizeDiscordAttachmentUrl(raw.author.icon_url)
-          : null,
-        url: raw.author.url ? String(raw.author.url) : null,
-      }
-    : null;
+  const img=raw.image?.url?normalizeDiscordAttachmentUrl(raw.image.url):null;
+  const thumb=raw.thumbnail?.url?normalizeDiscordAttachmentUrl(raw.thumbnail.url):null;
+  const author=raw.author?{name:normalizeText(raw.author.name),icon_url:raw.author.icon_url?normalizeDiscordAttachmentUrl(raw.author.icon_url):null,url:raw.author.url?String(raw.author.url):null,}:null;
 
-  const footer = raw.footer
-    ? {
-        text: normalizeText(raw.footer.text),
-        icon_url: raw.footer.icon_url
-          ? normalizeDiscordAttachmentUrl(raw.footer.icon_url)
-          : null,
-      }
-    : null;
+  const footer=raw.footer?{text:normalizeText(raw.footer.text),icon_url:raw.footer.icon_url?normalizeDiscordAttachmentUrl(raw.footer.icon_url):null,}:null;
 
-  const fields = Array.isArray(raw.fields)
-    ? raw.fields.map((f) => ({
-        name: normalizeText(f?.name),
-        value: normalizeText(f?.value),
-        inline: Boolean(f?.inline),
-      }))
-    : [];
+  const fields=Array.isArray(raw.fields)?raw.fields.map((f) => ({name:normalizeText(f?.name),value:normalizeText(f?.value),inline:Boolean(f?.inline),})):[];
 
   return {
     title: normalizeText(raw.title),
@@ -166,9 +135,7 @@ async function fetchBotPanelMessages(channel, client, limit = 1200) {
   const out = [];
   let before = null;
   while (out.length < limit) {
-    const batch = await channel.messages
-      .fetch(before ? { limit: 100, before } : { limit: 100 })
-      .catch(() => null);
+    const batch=await channel.messages.fetch(before?{limit:100,before}:{limit:100}).catch(() => null);
     if (!batch?.size) break;
 
     const values = [...batch.values()];
@@ -186,10 +153,8 @@ async function fetchBotPanelMessages(channel, client, limit = 1200) {
 }
 
 function scoreEmbedSimilarity(message, payload) {
-  const msgFirst =
-    simplifyEmbed(Array.isArray(message?.embeds) ? message.embeds[0] : null) || {};
-  const nextFirst =
-    simplifyEmbed(Array.isArray(payload?.embeds) ? payload.embeds[0] : null) || {};
+  const msgFirst=simplifyEmbed(Array.isArray(message?.embeds)?message.embeds[0]:null)||{};
+  const nextFirst=simplifyEmbed(Array.isArray(payload?.embeds)?payload.embeds[0]:null)||{};
 
   let score = 0;
 
@@ -246,9 +211,7 @@ function extractCustomIdsFromComponents(components = []) {
   const ids = new Set();
   for (const row of components || []) {
     const rowJson = typeof row?.toJSON === "function" ? row.toJSON() : row;
-    const children = Array.isArray(rowJson?.components)
-      ? rowJson.components
-      : [];
+    const children=Array.isArray(rowJson?.components)?rowJson.components:[];
     for (const component of children) {
       const id = component?.custom_id || component?.customId || null;
       if (id) ids.add(String(id));
@@ -263,17 +226,11 @@ function buildStableEmbedIdentity(rawEmbed) {
   const title = normalizeText(rawEmbed.title || "").toLowerCase();
   const author = normalizeText(rawEmbed.author?.name || "").toLowerCase();
   const footer = normalizeText(rawEmbed.footer?.text || "").toLowerCase();
-  const image = normalizeText(
-    normalizeDiscordAttachmentUrl(rawEmbed.image?.url || ""),
-  ).toLowerCase();
-  const thumbnail = normalizeText(
-    normalizeDiscordAttachmentUrl(rawEmbed.thumbnail?.url || ""),
-  ).toLowerCase();
+  const image=normalizeText(normalizeDiscordAttachmentUrl(rawEmbed.image?.url||""),).toLowerCase();
+  const thumbnail=normalizeText(normalizeDiscordAttachmentUrl(rawEmbed.thumbnail?.url||""),).toLowerCase();
   const firstField = normalizeText(rawEmbed.fields?.[0]?.name || "").toLowerCase();
 
-  const parts = [title, author, footer, image, thumbnail, firstField].filter(
-    Boolean,
-  );
+  const parts=[title,author,footer,image,thumbnail,firstField].filter(Boolean,);
   if (!parts.length) return "";
   return parts.join("|").slice(0, 400);
 }
@@ -306,9 +263,7 @@ async function shouldEditMessage(message, payload) {
 
 async function upsertPanelMessage(channel, client, payload) {
   const messageId = payload?.messageId || null;
-  const attachmentName = String(payload?.attachmentName || "")
-    .trim()
-    .toLowerCase();
+  const attachmentName=String(payload?.attachmentName||"").trim().toLowerCase();
   if (messageId) {
     const direct = await channel.messages.fetch(messageId).catch(() => null);
     if (direct) {
@@ -318,20 +273,9 @@ async function upsertPanelMessage(channel, client, payload) {
 
       const needsEdit = await shouldEditMessage(direct, editPayload);
       if (needsEdit) {
-        const edited = await direct.edit(editPayload).catch((error) => {
-          if (error?.code !== 50005) {
-            global.logger?.error?.("[panelUpsert] edit by messageId failed:", error);
-          }
-          return null;
-        });
+        const edited=await direct.edit(editPayload).catch((error) => {if(error?.code!==50005){global.logger?.error?.("[panelUpsert] edit by messageId failed:",error);}return null;});
         if (!edited) {
-          const sent = await channel.send(editPayload).catch((error) => {
-            global.logger?.error?.(
-              "[panelUpsert] send fallback after edit failure failed:",
-              error,
-            );
-            return null;
-          });
+          const sent=await channel.send(editPayload).catch((error) => {global.logger?.error?.("[panelUpsert] send fallback after edit failure failed:",error,);return null;});
           return sent || null;
         }
       }
@@ -341,24 +285,16 @@ async function upsertPanelMessage(channel, client, payload) {
 
   const botMessages = await fetchBotPanelMessages(channel, client, 1200);
 
-  const payloadCustomIds = extractCustomIdsFromComponents(
-    payload?.components || [],
-  );
-  const payloadComponentsComparable = toComparableComponents(
-    payload?.components || [],
-  );
-  const payloadSignature = buildEmbedSignatureFromPayload(
-    payload?.embeds || [],
-  );
+  const payloadCustomIds=extractCustomIdsFromComponents(payload?.components||[],);
+  const payloadComponentsComparable=toComparableComponents(payload?.components||[],);
+  const payloadSignature=buildEmbedSignatureFromPayload(payload?.embeds||[],);
 
   let existing = null;
 
   if (payloadCustomIds.size > 0) {
     existing =
       botMessages.find((msg) => {
-        const msgCustomIds = extractCustomIdsFromComponents(
-          msg.components || [],
-        );
+        const msgCustomIds=extractCustomIdsFromComponents(msg.components||[],);
         if (!msgCustomIds.size) return false;
         for (const id of payloadCustomIds) {
           if (!msgCustomIds.has(id)) return false;
@@ -391,38 +327,16 @@ async function upsertPanelMessage(channel, client, payload) {
   }
 
   if (!existing) {
-    const payloadEmbedsCount = Array.isArray(payload?.embeds)
-      ? payload.embeds.length
-      : 0;
-    const payloadComponentsCount = Array.isArray(payload?.components)
-      ? payload.components.length
-      : 0;
+    const payloadEmbedsCount=Array.isArray(payload?.embeds)?payload.embeds.length:0;
+    const payloadComponentsCount=Array.isArray(payload?.components)?payload.components.length:0;
 
-    const structuralCandidates = botMessages.filter((msg) => {
-      const msgEmbedsCount = Array.isArray(msg?.embeds) ? msg.embeds.length : 0;
-      const msgComponentsCount = Array.isArray(msg?.components)
-        ? msg.components.length
-        : 0;
-      return (
-        msgEmbedsCount === payloadEmbedsCount &&
-        msgComponentsCount === payloadComponentsCount
-      );
-    });
-
-    if (structuralCandidates.length === 1) {
+    const structuralCandidates=botMessages.filter((msg) => {const msgEmbedsCount=Array.isArray(msg?.embeds)?msg.embeds.length:0;const msgComponentsCount=Array.isArray(msg?.components)?msg.components.length:0;return(msgEmbedsCount===payloadEmbedsCount&&msgComponentsCount===payloadComponentsCount);});if(structuralCandidates.length === 1) {
       existing = structuralCandidates[0];
     }
   }
 
   if (!existing && botMessages.length) {
-    const ranked = botMessages
-      .map((msg) => ({ msg, score: scoreEmbedSimilarity(msg, payload) }))
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        const at = Number(a.msg?.createdTimestamp || 0);
-        const bt = Number(b.msg?.createdTimestamp || 0);
-        return bt - at;
-      });
+    const ranked=botMessages.map((msg) => ({msg,score:scoreEmbedSimilarity(msg,payload)})).sort((a,b) => {if(b.score!==a.score)return b.score-a.score;const at=Number(a.msg?.createdTimestamp||0);const bt=Number(b.msg?.createdTimestamp||0);return bt-at;});
     if (ranked[0]?.score >= 3) {
       existing = ranked[0].msg;
     }
@@ -433,27 +347,15 @@ async function upsertPanelMessage(channel, client, payload) {
   delete cleanPayload.attachmentName;
 
   if (!existing) {
-    const sent = await channel.send(cleanPayload).catch((error) => {
-      global.logger?.error?.("[panelUpsert] send failed:", error);
-      return null;
-    });
+    const sent=await channel.send(cleanPayload).catch((error) => {global.logger?.error?.("[panelUpsert] send failed:",error);return null;});
     return sent;
   }
 
   const needsEdit = await shouldEditMessage(existing, cleanPayload);
   if (needsEdit) {
-    const edited = await existing.edit(cleanPayload).catch((error) => {
-      global.logger?.error?.("[panelUpsert] edit failed:", error);
-      return null;
-    });
+    const edited=await existing.edit(cleanPayload).catch((error) => {global.logger?.error?.("[panelUpsert] edit failed:",error);return null;});
     if (!edited) {
-      const sent = await channel.send(cleanPayload).catch((error) => {
-        global.logger?.error?.(
-          "[panelUpsert] send fallback after edit failure failed:",
-          error,
-        );
-        return null;
-      });
+      const sent=await channel.send(cleanPayload).catch((error) => {global.logger?.error?.("[panelUpsert] send fallback after edit failure failed:",error,);return null;});
       return sent || existing;
     }
   }

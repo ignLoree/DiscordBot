@@ -2,19 +2,10 @@ const { SERVER_REFRESH_CUSTOM_ID_PREFIX, buildServerOverviewPayload, } = require
 const { ME_REFRESH_CUSTOM_ID_PREFIX, ME_PERIOD_OPEN_CUSTOM_ID_PREFIX, ME_PERIOD_SET_CUSTOM_ID_PREFIX, ME_PERIOD_BACK_CUSTOM_ID_PREFIX, buildMeOverviewPayload, buildMeComponents, normalizeLookbackDays, } = require("../../Prefix/Stats/me");
 const { USER_REFRESH_CUSTOM_ID_PREFIX, USER_PERIOD_OPEN_CUSTOM_ID_PREFIX, USER_PERIOD_SET_CUSTOM_ID_PREFIX, USER_PERIOD_BACK_CUSTOM_ID_PREFIX, buildUserOverviewPayload, buildUserComponents, } = require("../../Prefix/Stats/user");
 const { TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX, TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX, TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, buildTopChannelPayload, normalizeTopView, normalizeControlsView, normalizePage, resolveRequestedPage, buildTopPageJumpModal, } = require("../../Prefix/Stats/top");
-const {
-  handleBackupLoadInteraction,
-} = require("../../Services/Backup/backupLoadService");
-const {
-  handleBackupInfoInteraction,
-} = require("../../Services/Backup/backupInfoService");
-const {
-  handleBackupListInteraction,
-} = require("../../Services/Backup/backupListService");
-const {
-  EVENTO_CLASSIFICA_PREFIX,
-  buildEventoClassificaPayload,
-} = require("../../Services/Community/eventoClassificaService");
+const{handleBackupLoadInteraction,}=require("../../Services/Backup/backupLoadService");
+const{handleBackupInfoInteraction,}=require("../../Services/Backup/backupInfoService");
+const{handleBackupListInteraction,}=require("../../Services/Backup/backupListService");
+const{EVENTO_CLASSIFICA_PREFIX,buildEventoClassificaPayload,}=require("../../Services/Community/eventoClassificaService");
 const { getGuildExpSettings } = require("../../Services/Community/expService");
 const MAX_COMPONENTS_PER_ROW = 5;
 const MAX_ROWS_PER_MESSAGE = 5;
@@ -41,14 +32,8 @@ function parseServerRefreshCustomId(customId) {
 
 function parseMeCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const prefixes = [
-    ME_REFRESH_CUSTOM_ID_PREFIX,
-    ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-    ME_PERIOD_SET_CUSTOM_ID_PREFIX,
-    ME_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  ];
-  const prefix = prefixes.find(
-    (item) => raw === item || raw.startsWith(`${item}:`),
+  const prefixes=[ME_REFRESH_CUSTOM_ID_PREFIX,ME_PERIOD_OPEN_CUSTOM_ID_PREFIX,ME_PERIOD_SET_CUSTOM_ID_PREFIX,ME_PERIOD_BACK_CUSTOM_ID_PREFIX,];
+  const prefix=prefixes.find((item) => raw===item||raw.startsWith(`${item}:`),
   );
   if (!prefix) return null;
 
@@ -64,23 +49,13 @@ function parseMeCustomId(rawCustomId) {
 
 function parseUserCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const prefixes = [
-    USER_REFRESH_CUSTOM_ID_PREFIX,
-    USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-    USER_PERIOD_SET_CUSTOM_ID_PREFIX,
-    USER_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  ];
-  const prefix = prefixes.find(
-    (item) => raw === item || raw.startsWith(`${item}:`),
+  const prefixes=[USER_REFRESH_CUSTOM_ID_PREFIX,USER_PERIOD_OPEN_CUSTOM_ID_PREFIX,USER_PERIOD_SET_CUSTOM_ID_PREFIX,USER_PERIOD_BACK_CUSTOM_ID_PREFIX,];
+  const prefix=prefixes.find((item) => raw===item||raw.startsWith(`${item}:`),
   );
   if (!prefix) return null;
   const parts = raw.split(":");
-  const ownerId = SNOWFLAKE_RE.test(String(parts[1] || ""))
-    ? String(parts[1])
-    : null;
-  const targetUserId = SNOWFLAKE_RE.test(String(parts[2] || ""))
-    ? String(parts[2])
-    : null;
+  const ownerId=SNOWFLAKE_RE.test(String(parts[1]||""))?String(parts[1]):null;
+  const targetUserId=SNOWFLAKE_RE.test(String(parts[2]||""))?String(parts[2]):null;
   const lookbackDays = normalizeLookbackDays(parts[3] || "14");
   const wantsEmbed = String(parts[4] || "embed").toLowerCase() !== "image";
   return { prefix, ownerId, targetUserId, lookbackDays, wantsEmbed };
@@ -88,14 +63,8 @@ function parseUserCustomId(rawCustomId) {
 
 function parseTopChannelCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const prefixes = [
-    TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,
-    TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,
-    TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,
-    TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,
-  ];
-  const prefix = prefixes.find(
-    (item) => raw === item || raw.startsWith(`${item}:`),
+  const prefixes=[TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX,TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX,TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX,TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX,];
+  const prefix=prefixes.find((item) => raw===item||raw.startsWith(`${item}:`),
   );
   if (!prefix) return null;
   const parts = raw.split(":");
@@ -111,15 +80,8 @@ function parseTopChannelCustomId(rawCustomId) {
 
 function parseTopChannelPageCustomId(rawCustomId) {
   const raw = String(rawCustomId || "");
-  const map = [
-    { prefix: TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX, action: "first" },
-    { prefix: TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX, action: "prev" },
-    { prefix: TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX, action: "next" },
-    { prefix: TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX, action: "last" },
-    { prefix: TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX, action: "open_modal" },
-  ];
-  const item = map.find(
-    (entry) => raw === entry.prefix || raw.startsWith(`${entry.prefix}:`),
+  const map=[{prefix:TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX,action:"first"},{prefix:TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX,action:"prev"},{prefix:TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX,action:"next"},{prefix:TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX,action:"last"},{prefix:TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX,action:"open_modal"},];
+  const item=map.find((entry) => raw===entry.prefix||raw.startsWith(`${entry.prefix}:`),
   );
   if (!item) return null;
 
@@ -175,9 +137,7 @@ function normalizeComponentsForDiscord(components) {
   const normalized = [];
   for (const row of components) {
     const asJson = row?.toJSON ? row.toJSON() : row;
-    const rowComponents = Array.isArray(asJson?.components)
-      ? asJson.components
-      : [];
+    const rowComponents=Array.isArray(asJson?.components)?asJson.components:[];
     if (!rowComponents.length) continue;
 
     const chunks = chunk(rowComponents, MAX_COMPONENTS_PER_ROW);
@@ -198,9 +158,7 @@ function disableComponentsForLoading(components) {
   for (const row of components) {
     const asJson = row?.toJSON ? row.toJSON() : row;
     const rowType = Number(asJson?.type || 1);
-    const rowComponents = Array.isArray(asJson?.components)
-      ? asJson.components
-      : [];
+    const rowComponents=Array.isArray(asJson?.components)?asJson.components:[];
     if (!rowComponents.length) continue;
 
     out.push({
@@ -246,14 +204,7 @@ module.exports = {
           })
           .catch(() => {});
         const selectedValue = normalizeTopView(interaction.values?.[0] || "overview");
-        const payload = await buildTopChannelPayload(
-          { guild: interaction.guild },
-          parsedSelect.lookbackDays,
-          "main",
-          selectedValue,
-          1,
-          parsedSelect.ownerId || interaction.user?.id,
-        );
+        const payload=await buildTopChannelPayload({guild:interaction.guild},parsedSelect.lookbackDays,"main",selectedValue,1,parsedSelect.ownerId||interaction.user?.id,);
         await interaction.message.edit({
           ...payload,
           components: normalizeComponentsForDiscord(payload?.components),
@@ -299,16 +250,8 @@ module.exports = {
           return true;
         }
 
-        const controlsView =
-          parsedMe.prefix === ME_PERIOD_SET_CUSTOM_ID_PREFIX ? "period" : "main";
-        const payload = await buildMeOverviewPayload(
-          interaction.guild,
-          interaction.user,
-          interaction.member,
-          parsedMe.lookbackDays,
-          parsedMe.wantsEmbed,
-          controlsView,
-        );
+        const controlsView=parsedMe.prefix===ME_PERIOD_SET_CUSTOM_ID_PREFIX?"period":"main";
+        const payload=await buildMeOverviewPayload(interaction.guild,interaction.user,interaction.member,parsedMe.lookbackDays,parsedMe.wantsEmbed,controlsView,);
         payload.components = buildMeComponents(
           parsedMe.ownerId || interaction.user?.id,
           parsedMe.lookbackDays,
@@ -371,17 +314,8 @@ module.exports = {
           return true;
         }
 
-        const controlsView =
-          parsedUser.prefix === USER_PERIOD_SET_CUSTOM_ID_PREFIX
-            ? "period"
-            : "main";
-        const payload = await buildUserOverviewPayload(
-          interaction.guild,
-          parsedUser.targetUserId,
-          parsedUser.lookbackDays,
-          parsedUser.wantsEmbed,
-          controlsView,
-        );
+        const controlsView=parsedUser.prefix===USER_PERIOD_SET_CUSTOM_ID_PREFIX?"period":"main";
+        const payload=await buildUserOverviewPayload(interaction.guild,parsedUser.targetUserId,parsedUser.lookbackDays,parsedUser.wantsEmbed,controlsView,);
         payload.components = buildUserComponents(
           parsedUser.ownerId || interaction.user?.id,
           parsedUser.targetUserId,
@@ -407,14 +341,7 @@ module.exports = {
         await interaction.deferUpdate();
 
         if (parsedTopChannel.prefix === TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX) {
-          const payload = await buildTopChannelPayload(
-            { guild: interaction.guild },
-          parsedTopChannel.lookbackDays,
-          "period",
-          parsedTopChannel.selectedView,
-          parsedTopChannel.page,
-          parsedTopChannel.ownerId || interaction.user?.id,
-        );
+          const payload=await buildTopChannelPayload({guild:interaction.guild},parsedTopChannel.lookbackDays,"period",parsedTopChannel.selectedView,parsedTopChannel.page,parsedTopChannel.ownerId||interaction.user?.id,);
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
               payload?.components,
@@ -424,14 +351,7 @@ module.exports = {
         }
 
         if (parsedTopChannel.prefix === TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX) {
-          const payload = await buildTopChannelPayload(
-            { guild: interaction.guild },
-          parsedTopChannel.lookbackDays,
-          "main",
-          parsedTopChannel.selectedView,
-          parsedTopChannel.page,
-          parsedTopChannel.ownerId || interaction.user?.id,
-        );
+          const payload=await buildTopChannelPayload({guild:interaction.guild},parsedTopChannel.lookbackDays,"main",parsedTopChannel.selectedView,parsedTopChannel.page,parsedTopChannel.ownerId||interaction.user?.id,);
           await interaction.message.edit({
             components: normalizeComponentsForDiscord(
               payload?.components,
@@ -440,20 +360,8 @@ module.exports = {
           return true;
         }
 
-        const controlsView =
-          parsedTopChannel.prefix === TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX
-            ? "period"
-            : "main";
-        const payload = await buildTopChannelPayload(
-          {
-            guild: interaction.guild,
-          },
-          parsedTopChannel.lookbackDays,
-          controlsView,
-          parsedTopChannel.selectedView,
-          parsedTopChannel.page,
-          parsedTopChannel.ownerId || interaction.user?.id,
-        );
+        const controlsView=parsedTopChannel.prefix===TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX?"period":"main";
+        const payload=await buildTopChannelPayload({guild:interaction.guild,},parsedTopChannel.lookbackDays,controlsView,parsedTopChannel.selectedView,parsedTopChannel.page,parsedTopChannel.ownerId||interaction.user?.id,);
         await interaction.message.edit({
           ...payload,
           components: normalizeComponentsForDiscord(payload?.components),
@@ -470,32 +378,14 @@ module.exports = {
     if (parsedTopChannelPage) {
       try {
         if (parsedTopChannelPage.action === "open_modal") {
-          const modal = buildTopPageJumpModal(
-            parsedTopChannelPage.ownerId || interaction.user?.id,
-            parsedTopChannelPage.lookbackDays,
-            parsedTopChannelPage.selectedView,
-            parsedTopChannelPage.page,
-            parsedTopChannelPage.totalPages,
-            parsedTopChannelPage.controlsView,
-          );
+          const modal=buildTopPageJumpModal(parsedTopChannelPage.ownerId||interaction.user?.id,parsedTopChannelPage.lookbackDays,parsedTopChannelPage.selectedView,parsedTopChannelPage.page,parsedTopChannelPage.totalPages,parsedTopChannelPage.controlsView,);
           await interaction.showModal(modal);
           return true;
         }
 
         await interaction.deferUpdate();
-        const requestedPage = resolveRequestedPage(
-          parsedTopChannelPage.action,
-          parsedTopChannelPage.page,
-          parsedTopChannelPage.totalPages,
-        );
-        const payload = await buildTopChannelPayload(
-          { guild: interaction.guild },
-          parsedTopChannelPage.lookbackDays,
-          parsedTopChannelPage.controlsView,
-          parsedTopChannelPage.selectedView,
-          requestedPage,
-          parsedTopChannelPage.ownerId || interaction.user?.id,
-        );
+        const requestedPage=resolveRequestedPage(parsedTopChannelPage.action,parsedTopChannelPage.page,parsedTopChannelPage.totalPages,);
+        const payload=await buildTopChannelPayload({guild:interaction.guild},parsedTopChannelPage.lookbackDays,parsedTopChannelPage.controlsView,parsedTopChannelPage.selectedView,requestedPage,parsedTopChannelPage.ownerId||interaction.user?.id,);
         await interaction.message.edit({
           ...payload,
           components: normalizeComponentsForDiscord(payload?.components),
@@ -521,12 +411,7 @@ module.exports = {
           }).catch(() => null);
           return true;
         }
-        const payload = await buildEventoClassificaPayload(
-          interaction.guild,
-          interaction.client,
-          settings,
-          weekNum,
-        );
+        const payload=await buildEventoClassificaPayload(interaction.guild,interaction.client,settings,weekNum,);
         await interaction.message.edit(payload).catch(() => null);
       } catch (error) {
         global.logger?.error?.("[EVENTO CLASSIFICA BUTTON] Failed:", error);
@@ -539,12 +424,7 @@ module.exports = {
 
     try {
       await interaction.deferUpdate();
-      const payload = await buildServerOverviewPayload(
-        interaction.guild,
-        parsed.lookbackDays,
-        parsed.wantsEmbed,
-        parsed.ownerId || interaction.user?.id,
-      );
+      const payload=await buildServerOverviewPayload(interaction.guild,parsed.lookbackDays,parsed.wantsEmbed,parsed.ownerId||interaction.user?.id,);
       await interaction.message.edit({
         ...payload,
         components: normalizeComponentsForDiscord(payload?.components),

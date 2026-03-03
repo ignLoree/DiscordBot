@@ -12,21 +12,8 @@ const AUTO_BACKUP_TIMEZONE = "Europe/Rome";
 const STARTUP_CATCHUP_WINDOW_MINUTES = 10;
 
 function getZonedParts(date = new Date(), timeZone = AUTO_BACKUP_TIMEZONE) {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const parts = formatter
-    .formatToParts(date)
-    .reduce((acc, part) => {
-      if (part.type !== "literal") acc[part.type] = part.value;
-      return acc;
-    }, {});
+  const formatter=new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false,});
+  const parts=formatter.formatToParts(date).reduce((acc,part) => {if(part.type!=="literal")acc[part.type]=part.value;return acc;},{});
   return {
     year: Number(parts.year || 0),
     month: Number(parts.month || 0),
@@ -88,9 +75,7 @@ async function runGuildAutoBackup(guild) {
   if (lastDayKey === currentDayKey) return null;
   if (Date.now() - lastCreatedAt < MIN_BACKUP_GAP_MS) return null;
 
-  const previousAutoId = String(marker?.backupId || "")
-    .trim()
-    .toUpperCase();
+  const previousAutoId=String(marker?.backupId||"").trim().toUpperCase();
 
   const created = await createGuildBackup(guild, { source: "automatic" });
 
@@ -120,17 +105,7 @@ function startAutoBackupLoop(client) {
   if (client._autoBackupLoopStarted) return;
   client._autoBackupLoopStarted = true;
 
-  const runTick = async () => {
-    for (const guild of client.guilds.cache.values()) {
-      try {
-        await validateAndHealGuildBackups(guild.id, { limit: 20 }).catch(() => null);
-        const result = await runGuildAutoBackup(guild);
-        void result;
-      } catch (error) {
-        global.logger?.error?.("[backup.auto] failed:", error);
-      }
-    }
-  };
+  const runTick=async() => {for(const guild of client.guilds.cache.values()){try{await validateAndHealGuildBackups(guild.id,{limit:20}).catch(() => null);const result=await runGuildAutoBackup(guild);void result;}catch(error){global.logger?.error?.("[backup.auto] failed:",error);}}};
 
   if (shouldRunStartupCatchup()) {
     runTick().catch(() => {});

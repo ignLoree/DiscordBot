@@ -1,11 +1,4 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-} = require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -55,8 +48,7 @@ async function pickFromPagedMenu({
   const pages = toPages(items, pageSize);
   let pageIndex = 0;
   const nonce = `${message.id}_${Date.now()}`;
-  const ids = {
-    selectId: `pick_select_${nonce}`,
+  const ids={selectId:`pick_select_${nonce}`,
     firstId: `pick_first_${nonce}`,
     prevId: `pick_prev_${nonce}`,
     nextId: `pick_next_${nonce}`,
@@ -64,89 +56,32 @@ async function pickFromPagedMenu({
     cancelId: `pick_cancel_${nonce}`,
   };
 
-  const buildEmbed = (index) => {
-    const page = pages[index] || [];
-    const start = index * pageSize;
-    const lines = page.map((item, i) => lineBuilder(item, start + i));
-    const embed = new EmbedBuilder()
-      .setColor(color)
-      .setDescription(`Page ${index + 1}/${pages.length}\n\n${lines.join("\n")}`);
+  const buildEmbed=(index) => {const page=pages[index]||[];const start=index*pageSize;const lines=page.map((item,i) => lineBuilder(item,start+i));const embed=new EmbedBuilder().setColor(color).setDescription(`Page ${index+1}/${pages.length}\n\n${lines.join("\n")}`);
     if (title) embed.setTitle(String(title));
     return embed;
   };
 
-  const buildRows = (index) => {
-    const page = pages[index] || [];
-    const start = index * pageSize;
-    const select = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId(ids.selectId)
-        .setPlaceholder("Seleziona")
-        .setMinValues(1)
-        .setMaxValues(1)
-        .addOptions(
-          page.map((item, i) => {
-            const absoluteIndex = start + i;
-            const opt = optionBuilder(item, absoluteIndex) || {};
-            return {
-              label: String(opt.label || `${absoluteIndex + 1}. Risultato`).slice(0, 100),
+  const buildRows=(index) => {const page=pages[index]||[];const start=index*pageSize;const select=new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(ids.selectId).setPlaceholder("Seleziona").setMinValues(1).setMaxValues(1).addOptions(page.map((item,i) => {const absoluteIndex=start+i;const opt=optionBuilder(item,absoluteIndex)||{};return{label:String(opt.label||`${absoluteIndex+1}.Risultato`).slice(0, 100),
               description: String(opt.description || "Seleziona questo risultato").slice(0, 100),
               value: String(absoluteIndex),
             };
           }),
         ),
     );
-    const nav = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(ids.firstId)
-        .setLabel("<<")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(index <= 0),
-      new ButtonBuilder()
-        .setCustomId(ids.prevId)
-        .setLabel("<")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(index <= 0),
-      new ButtonBuilder()
-        .setCustomId(ids.nextId)
-        .setLabel(">")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(index >= pages.length - 1),
-      new ButtonBuilder()
-        .setCustomId(ids.lastId)
-        .setLabel(">>")
-        .setStyle(ButtonStyle.Secondary)
-        .setDisabled(index >= pages.length - 1),
-      new ButtonBuilder()
-        .setCustomId(ids.cancelId)
-        .setLabel("X")
-        .setStyle(ButtonStyle.Danger),
-    );
+    const nav=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(ids.firstId).setLabel("<<").setStyle(ButtonStyle.Secondary).setDisabled(index<=0),new ButtonBuilder().setCustomId(ids.prevId).setLabel("<").setStyle(ButtonStyle.Secondary).setDisabled(index<=0),new ButtonBuilder().setCustomId(ids.nextId).setLabel(">").setStyle(ButtonStyle.Secondary).setDisabled(index>=pages.length-1),new ButtonBuilder().setCustomId(ids.lastId).setLabel(">>").setStyle(ButtonStyle.Secondary).setDisabled(index>=pages.length-1),new ButtonBuilder().setCustomId(ids.cancelId).setLabel("X").setStyle(ButtonStyle.Danger),);
     return [select, nav];
   };
 
   let rows = buildRows(pageIndex);
-  const sent = await safeMessageReply(message, {
-    embeds: [buildEmbed(pageIndex)],
-    components: rows,
-  });
+  const sent=await safeMessageReply(message,{embeds:[buildEmbed(pageIndex)],components:rows,});
   if (!sent || typeof sent.createMessageComponentCollector !== "function") return null;
 
   let resolved = null;
 
-  const buttonCollector = sent.createMessageComponentCollector({
-    componentType: ComponentType.Button,
-    time: timeoutMs,
-  });
-  const selectCollector = sent.createMessageComponentCollector({
-    componentType: ComponentType.StringSelect,
-    time: timeoutMs,
-  });
+  const buttonCollector=sent.createMessageComponentCollector({componentType:ComponentType.Button,time:timeoutMs,});
+  const selectCollector=sent.createMessageComponentCollector({componentType:ComponentType.StringSelect,time:timeoutMs,});
 
-  const stopAll = (reason) => {
-    buttonCollector.stop(reason);
-    selectCollector.stop(reason);
-  };
+  const stopAll=(reason) => {buttonCollector.stop(reason);selectCollector.stop(reason);};
 
   buttonCollector.on("collect", async (interaction) => {
     if (interaction.user.id !== message.author.id) {
@@ -208,20 +143,11 @@ async function pickFromPagedMenu({
     }
   });
 
-  const finalize = async (reason) => {
-    if (reason === "selected" || reason === "cancel" || deleteOnSelect) return;
-    rows = disableRows(rows);
-    await sent.edit({ components: rows }).catch(() => {});
-  };
+  const finalize=async(reason) => {if(reason==="selected"||reason==="cancel"||deleteOnSelect)return;rows=disableRows(rows);await sent.edit({components:rows}).catch(() => {});};
 
   await new Promise((resolve) => {
     let done = false;
-    const complete = async (reason) => {
-      if (done) return;
-      done = true;
-      await finalize(reason);
-      resolve();
-    };
+    const complete=async(reason) => {if(done)return;done=true;await finalize(reason);resolve();};
     buttonCollector.on("end", (_, reason) => complete(reason));
     selectCollector.on("end", (_, reason) => complete(reason));
   });

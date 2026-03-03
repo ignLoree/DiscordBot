@@ -9,19 +9,7 @@ const guildCache = new Map();
 const guildMemberCache = new Map();
 const guildChannelWarmCache = new Map();
 
-const HANDLED_TICKET_BUTTONS = new Set([
-  "ticket_partnership",
-  "ticket_highstaff",
-  "ticket_supporto",
-  "claim_ticket",
-  "close_ticket",
-  "close_ticket_motivo",
-  "accetta",
-  "rifiuta",
-  "ticket_autoclose_accept",
-  "ticket_autoclose_reject",
-  "unclaim",
-]);
+const HANDLED_TICKET_BUTTONS = new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","claim_ticket","close_ticket","close_ticket_motivo","accetta","rifiuta","ticket_autoclose_accept","ticket_autoclose_reject","unclaim",]);
 
 const HANDLED_TICKET_SELECT_MENUS = new Set(["ticket_open_menu"]);
 
@@ -221,20 +209,9 @@ function getSelectedTicketAction(interaction) {
 }
 
 function isHandledTicketInteraction(interaction) {
-  const isTicketButton =
-    interaction.isButton &&
-    interaction.isButton() &&
-    (HANDLED_TICKET_BUTTONS.has(interaction.customId) ||
-      isTicketRatingButton(interaction.customId) ||
-      isTicketTranscriptButton(interaction.customId));
-  const isTicketSelect =
-    interaction.isStringSelectMenu &&
-    interaction.isStringSelectMenu() &&
-    HANDLED_TICKET_SELECT_MENUS.has(interaction.customId);
-  const isTicketModal =
-    interaction.isModalSubmit &&
-    interaction.isModalSubmit() &&
-    isHandledTicketModalId(String(interaction.customId || ""));
+  const isTicketButton = interaction.isButton && interaction.isButton()&&(HANDLED_TICKET_BUTTONS.has(interaction.customId)|| isTicketRatingButton(interaction.customId)|| isTicketTranscriptButton(interaction.customId));
+  const isTicketSelect = interaction.isStringSelectMenu && interaction.isStringSelectMenu()&& HANDLED_TICKET_SELECT_MENUS.has(interaction.customId);
+  const isTicketModal = interaction.isModalSubmit && interaction.isModalSubmit()&& isHandledTicketModalId(String(interaction.customId || ""));
   return { isTicketButton, isTicketSelect, isTicketModal };
 }
 

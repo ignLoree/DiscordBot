@@ -5,9 +5,7 @@ async function resolveTargetUser(message, rawArg) {
   if (!rawArg) return null;
 
   const value = String(rawArg).trim();
-  const id =
-    value.match(/^<@!?(\d+)>$/)?.[1] ||
-    (/^\d{17,20}$/.test(value) ? value : null);
+  const id=value.match(/^<@!?(\d+)>$/)?.[1]||(/^\d{17,20}$/.test(value)?value:null);
   if (!id) return null;
   return message.client.users.fetch(id).catch(() => null);
 }
@@ -19,21 +17,10 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping();
-    const descriptionText = [
-      "_ _",
-      "_ _`` ☕ ``        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢          `` 📀 ``",
-      "_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧ ",
-      "_ _                            **gaming**",
-      "_ _"
-    ].join("\n");
+    const descriptionText=["_ _","_ _`` ☕ ``        𓂃        **[Vinili & Caffè](<https://discord.gg/viniliecaffe>)**      ⟢          `` 📀 ``","_ _     𓎢      **social**       ⊹       **italia** **chill**       ୧ ","_ _                            **gaming**","_ _"].join("\n");
     if (!message.inGuild?.() || !message.guild || !message.member) return;
 
-    const ticketDoc = await Ticket.findOne({
-      channelId: message.channel.id,
-      open: true,
-    })
-      .lean()
-      .catch(() => null);
+    const ticketDoc=await Ticket.findOne({channelId:message.channel.id,open:true,}).lean().catch(() => null);
     if (!ticketDoc) {
       return safeMessageReply(
         message,
@@ -65,13 +52,7 @@ module.exports = {
       return;
     }
 
-    const delivered = await target
-      .send({
-        content: descriptionText,
-        allowedMentions: { parse: [] },
-      })
-      .then(() => true)
-      .catch(() => false);
+    const delivered=await target.send({content:descriptionText,allowedMentions:{parse:[]},}).then(() => true).catch(() => false);
     if (!delivered) {
       await safeMessageReply(message, {
         content: `<:vegax:1443934876440068179> Non riesco a inviare DM a ${target}.`,

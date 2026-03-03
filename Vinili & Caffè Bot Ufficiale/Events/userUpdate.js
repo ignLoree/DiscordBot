@@ -2,35 +2,11 @@ const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
 const { EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { markJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
-const {
-  isSecurityProfileImmune,
-  hasAdminsProfileCapability,
-} = require("../Services/Moderation/securityProfilesService");
+const{isSecurityProfileImmune,hasAdminsProfileCapability,}=require("../Services/Moderation/securityProfilesService");
 
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
-const CORE_EXEMPT_USER_IDS = new Set([
-  "1466495522474037463",
-  "1329118940110127204",
-]);
-const USERNAME_FILTER = {
-  enabled: true,
-  postJoinEnabled: true,
-  strictWords: [
-    "discord staff",
-    "discord support",
-    "nitro free",
-    "steam gift",
-    "free nitro",
-    "airdrop",
-  ],
-  wildcardWords: [
-    "*discord*support*",
-    "*discord*staff*",
-    "*nitro*free*",
-    "*steam*gift*",
-    "*crypto*airdrop*",
-  ],
-};
+const CORE_EXEMPT_USER_IDS=new Set(["1466495522474037463","1329118940110127204",]);
+const USERNAME_FILTER={enabled:true,postJoinEnabled:true,strictWords:["discord staff","discord support","nitro free","steam gift","free nitro","airdrop",],wildcardWords:["*discord*support*","*discord*staff*","*nitro*free*","*steam*gift*","*crypto*airdrop*",],};
 
 function normalizeText(value) {
   return String(value || "")
@@ -40,9 +16,7 @@ function normalizeText(value) {
 }
 
 function wildcardToRegex(pattern) {
-  const escaped = String(pattern || "")
-    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-    .replace(/\*/g, ".*");
+  const escaped=String(pattern||"").replace(/[.+?^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*");
   return new RegExp(`^${escaped}$`, "i");
 }
 
@@ -68,10 +42,7 @@ function matchBlockedUsername(candidate) {
 }
 
 function firstUsernameMatch(newUser) {
-  const checks = [
-    String(newUser?.globalName || "").trim(),
-    String(newUser?.username || "").trim(),
-  ].filter(Boolean);
+  const checks=[String(newUser?.globalName||"").trim(),String(newUser?.username||"").trim(),].filter(Boolean);
 
   for (const value of checks) {
     const match = matchBlockedUsername(value);
@@ -95,15 +66,12 @@ function buildJoinGateTriggeredEmbed(member, reason) {
 
 async function punishUsernameMatch(member, match) {
   const reason = "Username matches blocked pattern (post-join filter).";
-  const dmEmbed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle(`You have been kicked! in ${member.guild.name}!`)
+  const dmEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle(`You have been kicked! in ${member.guild.name}!`)
     .setDescription(
       [
-        `${ARROW} **Member:** ${member.user} [\`${member.user.id}\`]`,
-        `${ARROW} **Reason:** ${reason}`,
-        `${ARROW} **Match Type:** ${match.type}`,
-        `${ARROW} **Match:** ${match.value}`,
+        `${ARROW}**Member:**${member.user}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
+        `${ARROW}**Match Type:**${match.type}`,
+        `${ARROW}**Match:**${match.value}`,
       ].join("\n"),
     );
 
@@ -116,9 +84,7 @@ async function punishUsernameMatch(member, match) {
   }
 
   const me = member.guild.members.me;
-  const canKick =
-    Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.KickMembers)) &&
-    Boolean(member?.kickable);
+  const canKick=Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.KickMembers))&&Boolean(member?.kickable);
   let punished = false;
   if (canKick) {
     try {
@@ -132,27 +98,19 @@ async function punishUsernameMatch(member, match) {
     markJoinGateKick(member.guild.id, member.id, reason);
   }
 
-  const logChannel =
-    IDs.channels.modLogs
-      ? member.guild.channels.cache.get(IDs.channels.modLogs) ||
-        (await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null))
-      : null;
+  const logChannel=IDs.channels.modLogs?member.guild.channels.cache.get(IDs.channels.modLogs)||(await member.guild.channels.fetch(IDs.channels.modLogs).catch(() => null)):null;
   if (logChannel?.isTextBased?.()) {
-    const logEmbed = punished
-      ? new EmbedBuilder()
-          .setColor("#A97142")
-          .setTitle(`${member.user.username} has been kicked!!`)
+    const logEmbed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${member.user.username}has been kicked!!`)
           .setDescription(
             [
-              `${ARROW} **Member:** ${member.user.username} [\`${member.user.id}\`]`,
-              `${ARROW} **Reason:** ${reason}`,
-              `${ARROW} **Rule:** Username Filter (post-join)`,
-              `${ARROW} **Match Type:** ${match.type}`,
-              `${ARROW} **Match:** ${match.value}`,
+              `${ARROW}**Member:**${member.user.username}[\`${member.user.id}\`]`,`${ARROW}**Reason:**${reason}`,
+              `${ARROW}**Rule:**Username Filter(post-join)`,
+              `${ARROW}**Match Type:**${match.type}`,
+              `${ARROW}**Match:**${match.value}`,
               "",
               "**More Details:**",
-              `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
-              `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
+              `${ARROW}**Member Direct Messaged?**${dmSent?"✅":"❌"}`,
+              `${ARROW}**Member Punished?**${punished?"✅":"❌"}`,
             ].join("\n"),
           )
           .setFooter({ text: "© 2025 Vinili & Caffè. Tutti i diritti riservati." })
@@ -186,9 +144,7 @@ module.exports = {
           ) {
             continue;
           }
-          const member =
-            guild.members.cache.get(newUser.id) ||
-            (await guild.members.fetch(newUser.id).catch(() => null));
+          const member=guild.members.cache.get(newUser.id)||(await guild.members.fetch(newUser.id).catch(() => null));
           if (!member || member.user?.bot) continue;
           if (hasAdminsProfileCapability(member, "fullImmunity")) continue;
           await punishUsernameMatch(member, match);

@@ -1,62 +1,11 @@
 const fs = require("fs");
 const path = require("path");
 
-const JOIN_GATE_CONFIG_PATH = path.resolve(
-  __dirname,
-  "../../Utils/Config/joinGateConfig.json",
-);
+const JOIN_GATE_CONFIG_PATH=path.resolve(__dirname,"../../Utils/Config/joinGateConfig.json",);
 
 const VALID_ACTIONS = new Set(["log", "timeout", "kick", "ban"]);
 
-const DEFAULT_JOIN_GATE_CONFIG = {
-  enabled: true,
-  dmPunishedMembers: true,
-  noAvatar: {
-    enabled: true,
-    action: "log",
-  },
-  newAccounts: {
-    enabled: true,
-    minAgeDays: 3,
-    action: "kick",
-  },
-  botAdditions: {
-    enabled: true,
-    action: "kick",
-  },
-  unverifiedBotAdditions: {
-    enabled: true,
-    action: "kick",
-  },
-  suspiciousAccount: {
-    enabled: true,
-    action: "log",
-  },
-  advertisingName: {
-    enabled: true,
-    action: "kick",
-  },
-  usernameFilter: {
-    enabled: true,
-    postJoinEnabled: true,
-    action: "kick",
-    strictWords: [
-      "discord staff",
-      "discord support",
-      "nitro free",
-      "steam gift",
-      "free nitro",
-      "airdrop",
-    ],
-    wildcardWords: [
-      "*discord*support*",
-      "*discord*staff*",
-      "*nitro*free*",
-      "*steam*gift*",
-      "*crypto*airdrop*",
-    ],
-  },
-};
+const DEFAULT_JOIN_GATE_CONFIG={enabled:true,dmPunishedMembers:true,noAvatar:{enabled:true,action:"log",},newAccounts:{enabled:true,minAgeDays:3,action:"kick",},botAdditions:{enabled:true,action:"kick",},unverifiedBotAdditions:{enabled:true,action:"kick",},suspiciousAccount:{enabled:true,action:"log",},advertisingName:{enabled:true,action:"kick",},usernameFilter:{enabled:true,postJoinEnabled:true,action:"kick",strictWords:["discord staff","discord support","nitro free","steam gift","free nitro","airdrop",],wildcardWords:["*discord*support*","*discord*staff*","*nitro*free*","*steam*gift*","*crypto*airdrop*",],},};
 
 function readJsonSafe(filePath, fallback) {
   try {
@@ -101,13 +50,7 @@ function sanitizeJoinGateConfig(rawConfig) {
       ? source.dmPunishedMembers
       : DEFAULT_JOIN_GATE_CONFIG.dmPunishedMembers;
 
-  const mergeRule = (key) => {
-    const srcRule = source?.[key] || {};
-    const dstRule = out[key];
-    dstRule.enabled =
-      typeof srcRule.enabled === "boolean" ? srcRule.enabled : dstRule.enabled;
-    dstRule.action = normalizeAction(srcRule.action, dstRule.action);
-  };
+  const mergeRule=(key) => {const srcRule=source?.[key]||{};const dstRule=out[key];dstRule.enabled=typeof srcRule.enabled==="boolean"?srcRule.enabled:dstRule.enabled;dstRule.action=normalizeAction(srcRule.action,dstRule.action);};
 
   mergeRule("noAvatar");
   mergeRule("newAccounts");
@@ -156,10 +99,7 @@ function setJoinGateConfigSnapshot(rawConfig) {
 }
 
 function setByPath(target, pathExpr, value) {
-  const pathParts = String(pathExpr || "")
-    .split(".")
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const pathParts=String(pathExpr||"").split(".").map((x) => x.trim()).filter(Boolean);
   if (!pathParts.length) return false;
   if (pathParts.some((p) => ["__proto__", "prototype", "constructor"].includes(p))) {
     return false;

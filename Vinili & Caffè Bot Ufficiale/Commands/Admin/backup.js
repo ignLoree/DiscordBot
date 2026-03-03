@@ -5,24 +5,13 @@ const { createLoadSession, buildLoadWarningEmbed, buildLoadComponents, getGuildB
 const { renderList } = require("../../Services/Backup/backupListService");
 
 const EPHEMERAL_FLAG = 1 << 6;
-const CHANNEL_TYPE_LABEL = {
-  0: "#",
-  2: "[VC]",
-  4: "[CAT]",
-  5: "[ANN]",
-  13: "[STAGE]",
-  15: "[FORUM]",
-  16: "[MEDIA]",
-};
+const CHANNEL_TYPE_LABEL={0:"#",2:"[VC]",4:"[CAT]",5:"[ANN]",13:"[STAGE]",15:"[FORUM]",16:"[MEDIA]",};
 
 function formatBytes(bytes) {
   const size = Number(bytes || 0);
   if (size <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
-  const idx = Math.min(
-    Math.floor(Math.log(size) / Math.log(1024)),
-    units.length - 1,
-  );
+  const idx=Math.min(Math.floor(Math.log(size)/Math.log(1024)),units.length-1,);
   const val = size / 1024 ** idx;
   return `${val.toFixed(val >= 100 || idx === 0 ? 0 : 2)} ${units[idx]}`;
 }
@@ -34,9 +23,7 @@ function truncateLines(lines, maxLines = 32) {
 }
 
 function toCodeBlock(lines) {
-  const safe = truncateLines(lines)
-    .join("\n")
-    .slice(0, 950);
+  const safe=truncateLines(lines).join("\n").slice(0,950);
   return `\`\`\`\n${safe || "-"}\n\`\`\``;
 }
 
@@ -84,10 +71,7 @@ function buildSuccessEmbed(interaction, result) {
 }
 
 function buildErrorEmbed(error, title = "Backup non riuscito") {
-  const detail = String(error?.message || error || "Errore sconosciuto").slice(
-    0,
-    400,
-  );
+  const detail=String(error?.message||error||"Errore sconosciuto").slice(0,400,);
   return new EmbedBuilder()
     .setColor("Red")
     .setTitle(title)
@@ -145,23 +129,15 @@ function formatChannelList(channels = []) {
 }
 
 function formatRoleList(roles = []) {
-  const sorted = [...roles].sort(
-    (a, b) => Number(b?.position ?? 0) - Number(a?.position ?? 0),
-  );
+  const sorted=[...roles].sort((a,b) => Number(b?.position??0)-Number(a?.position??0),);
   return sorted.map((role, idx) => `${idx + 1}. ${role.name}`);
 }
 
 function countMessages(payload) {
   const chMap = payload?.messages?.channels || {};
   const thMap = payload?.messages?.threads || {};
-  const channels = Object.values(chMap).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
-  const threads = Object.values(thMap).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
+  const channels=Object.values(chMap).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
+  const threads=Object.values(thMap).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
   return channels + threads;
 }
 
@@ -178,13 +154,9 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
   const roleLines = formatRoleList(roles);
   const createdAt = Math.floor(new Date(payload.createdAt || Date.now()).getTime() / 1000);
 
-  const minimalBackup =
-    totalMessages <= 0 || members.length <= 0 || bans.length <= 0;
+  const minimalBackup=totalMessages<=0||members.length<=0||bans.length<=0;
 
-  const embed = new EmbedBuilder()
-    .setColor("#3498db")
-    .setTitle(
-      `Info Backup - ${guild.name || interaction.guild?.name || "Server sconosciuto"}`,
+  const embed=new EmbedBuilder().setColor("#3498db").setTitle(`Info Backup - ${guild.name||interaction.guild?.name||"Server sconosciuto"}`,
     )
     .setDescription(
       minimalBackup
@@ -204,47 +176,7 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
       },
       {
         name: "Backup ID",
-        value: `\`${backupId}\``,
-        inline: true,
-      },
-      {
-        name: "Canali",
-        value: String(channels.length),
-        inline: true,
-      },
-      {
-        name: "Ruoli",
-        value: String(roles.length),
-        inline: true,
-      },
-      {
-        name: "Thread",
-        value: String(threads.length),
-        inline: true,
-      },
-      {
-        name: "Canali",
-        value: toCodeBlock(channelLines),
-        inline: true,
-      },
-      {
-        name: "Ruoli",
-        value: toCodeBlock(roleLines),
-        inline: true,
-      },
-      {
-        name: "Membri",
-        value: String(members.length),
-        inline: true,
-      },
-      {
-        name: "Ban",
-        value: String(bans.length),
-        inline: true,
-      },
-      {
-        name: "Messaggi",
-        value: `${totalMessages} totali`,
+        value: `\`${backupId}\``,inline:true,},{name:"Canali",value:String(channels.length),inline:true,},{name:"Ruoli",value:String(roles.length),inline:true,},{name:"Thread",value:String(threads.length),inline:true,},{name:"Canali",value:toCodeBlock(channelLines),inline:true,},{name:"Ruoli",value:toCodeBlock(roleLines),inline:true,},{name:"Membri",value:String(members.length),inline:true,},{name:"Ban",value:String(bans.length),inline:true,},{name:"Messaggi",value:`${totalMessages}totali`,
         inline: true,
       },
       {
@@ -255,16 +187,7 @@ function buildInfoEmbed(interaction, backupId, backupData, fileSize, checksum = 
       {
         name: "Integrità",
         value: checksum
-          ? `\`SHA256\` payload: \`${String(checksum.payload || "").slice(0, 12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed || "").slice(0, 12)}...\``
-          : "N/D",
-        inline: false,
-      },
-    ])
-    .setFooter({
-      text: interaction.guild?.name || "Backup",
-      iconURL: interaction.guild?.iconURL?.() || null,
-    })
-    .setTimestamp();
+          ? `\`SHA256\` payload: \`${String(checksum.payload||"").slice(0,12)}...\`\n\`SHA256\` compressed: \`${String(checksum.compressed||"").slice(0,12)}...\``:"N/D",inline:false,},]).setFooter({text:interaction.guild?.name||"Backup",iconURL:interaction.guild?.iconURL?.()||null,}).setTimestamp();
 
   return embed;
 }
@@ -432,15 +355,9 @@ module.exports = {
       }
 
       const query = String(focused.value || "").trim();
-      const metas = await listAllBackupMetas({
-        search: query,
-        limit: 25,
-      });
+      const metas=await listAllBackupMetas({search:query,limit:25,});
 
-      const choices = metas.slice(0, 25).map((meta) => {
-        const name = String(meta.label || meta.backupId).slice(0, 100);
-        const value = String(
-          meta.guildId ? `${meta.guildId}:${meta.backupId}` : meta.backupId || "",
+      const choices=metas.slice(0,25).map((meta) => {const name=String(meta.label||meta.backupId).slice(0,100);const value=String(meta.guildId?`${meta.guildId}:${meta.backupId}` : meta.backupId || "",
         ).slice(0, 100);
         return { name, value };
       });
@@ -509,10 +426,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.info] failed:", error);
-        const notFound =
-          error?.code === "ENOENT"
-            ? `Backup \`${backupRef}\` non trovato.`
-            : error;
+        const notFound=error?.code==="ENOENT"?`Backup \`${backupRef}\` non trovato.`:error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup info non riuscito")],
           flags: EPHEMERAL_FLAG,
@@ -535,13 +449,7 @@ module.exports = {
       try {
         const globalRef = await readBackupByIdGlobal(backupRef);
         const backupId = String(globalRef?.payload?.backupId || "").toUpperCase();
-        const sessionId = createLoadSession({
-          guildId: interaction.guild.id,
-          userId: interaction.user.id,
-          backupId,
-          sourceGuildId: globalRef.guildId,
-          messagesLimit,
-        });
+        const sessionId=createLoadSession({guildId:interaction.guild.id,userId:interaction.user.id,backupId,sourceGuildId:globalRef.guildId,messagesLimit,});
         await safeEditReply(interaction, {
           embeds: [buildLoadWarningEmbed(backupId, messagesLimit)],
           components: buildLoadComponents(sessionId, null, messagesLimit),
@@ -549,10 +457,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.load] failed:", error);
-        const notFound =
-          error?.code === "ENOENT"
-            ? `Backup \`${backupRef}\` non trovato.`
-            : error;
+        const notFound=error?.code==="ENOENT"?`Backup \`${backupRef}\` non trovato.`:error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup load non riuscito")],
           flags: EPHEMERAL_FLAG,
@@ -604,10 +509,7 @@ module.exports = {
         });
       } catch (error) {
         global.logger?.error?.("[backup.delete] failed:", error);
-        const notFound =
-          error?.code === "ENOENT"
-            ? `Backup \`${backupRef}\` non trovato.`
-            : error;
+        const notFound=error?.code==="ENOENT"?`Backup \`${backupRef}\` non trovato.`:error;
         await safeEditReply(interaction, {
           embeds: [buildErrorEmbed(notFound, "Backup delete non riuscito")],
           flags: EPHEMERAL_FLAG,

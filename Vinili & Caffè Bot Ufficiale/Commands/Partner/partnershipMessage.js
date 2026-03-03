@@ -2,9 +2,7 @@
 const { safeReply } = require("../../Utils/Moderation/reply");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
 const IDs = require("../../Utils/Config/ids");
-const {
-  isChannelInTicketCategory,
-} = require("../../Utils/Ticket/ticketCategoryUtils");
+const{isChannelInTicketCategory,}=require("../../Utils/Ticket/ticketCategoryUtils");
 
 const EPHEMERAL_FLAG = 1 << 6;
 
@@ -31,27 +29,16 @@ function extractDescription(message) {
   const source = embedDescription || content;
   if (!source) return "";
 
-  const normalized = source
-    .replace(/^\*\*manager:\*\*\s*<@!?(\d+)>\s*/i, "")
-    .replace(/^\*\*manager partner:\*\*\s*<@!?(\d+)>\s*/i, "")
-    .trim();
+  const normalized=source.replace(/^\*\*manager:\*\*\s*<@!?(\d+)>\s*/i,"").replace(/^\*\*manager partner:\*\*\s*<@!?(\d+)>\s*/i,"").trim();
 
   return stripOuterCodeBlock(normalized).trim();
 }
 
 async function isValidContext(interaction) {
   const channelId = interaction.channel?.id;
-  const isPartnershipChannel =
-    channelId === IDs.channels.partnerships ||
-    channelId === IDs.channels.partnersChat;
+  const isPartnershipChannel=channelId===IDs.channels.partnerships||channelId===IDs.channels.partnersChat;
 
-  const ticketDoc = await Ticket.findOne({
-    guildId: interaction.guild.id,
-    channelId,
-    open: true,
-  })
-    .lean()
-    .catch(() => null);
+  const ticketDoc=await Ticket.findOne({guildId:interaction.guild.id,channelId,open:true,}).lean().catch(() => null);
 
   const isPartnershipTicket = ticketDoc?.ticketType === "partnership";
   const inTicketCategory = isChannelInTicketCategory(interaction.channel);
@@ -92,16 +79,10 @@ module.exports = {
       });
     }
 
-    const modal = new ModalBuilder()
-      .setCustomId(`partnershipModal_ctx_${interaction.user.id}_${managerId}`)
+    const modal=new ModalBuilder().setCustomId(`partnershipModal_ctx_${interaction.user.id}_${managerId}`)
       .setTitle("Invia Partnership");
 
-    const descriptionInput = new TextInputBuilder()
-      .setCustomId("serverDescription")
-      .setLabel("Descrizione del server")
-      .setStyle(TextInputStyle.Paragraph)
-      .setPlaceholder("Inserisci qui la descrizione del server...")
-      .setRequired(true);
+    const descriptionInput=new TextInputBuilder().setCustomId("serverDescription").setLabel("Descrizione del server").setStyle(TextInputStyle.Paragraph).setPlaceholder("Inserisci qui la descrizione del server...").setRequired(true);
 
     const extractedDescription = extractDescription(interaction.targetMessage);
     if (extractedDescription) {

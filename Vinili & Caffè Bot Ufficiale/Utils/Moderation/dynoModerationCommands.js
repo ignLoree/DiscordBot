@@ -1,12 +1,4 @@
-const {
-  EmbedBuilder,
-  PermissionsBitField,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-} = require("discord.js");
+const{EmbedBuilder,PermissionsBitField,ActionRowBuilder,StringSelectMenuBuilder,ButtonBuilder,ButtonStyle,ComponentType,}=require("discord.js");
 const IDs = require("../Config/ids");
 const { ModCase } = require("../../Schemas/Moderation/moderationSchemas");
 const { appendCaseEdit, closeCase, createModCase, getModConfig, logModCase, parseDuration, formatDuration } = require("./moderation");
@@ -78,42 +70,10 @@ async function validateModerationTarget(message, member, actionLabel, targetUser
       };
     }
   }
-  const protectedRoleIds = [
-    IDs?.roles?.Staff,
-    IDs?.roles?.Helper,
-    IDs?.roles?.Mod,
-    IDs?.roles?.Coordinator,
-    IDs?.roles?.Supervisor,
-    IDs?.roles?.HighStaff,
-    IDs?.roles?.Admin,
-    IDs?.roles?.Manager,
-    IDs?.roles?.CoFounder,
-    IDs?.roles?.Founder,
-  ]
-    .map((id) => String(id || "").trim())
-    .filter(Boolean);
-  const actorHighStaffBypass = [
-    IDs?.roles?.HighStaff,
-    IDs?.roles?.Admin,
-    IDs?.roles?.Manager,
-    IDs?.roles?.CoFounder,
-    IDs?.roles?.Founder,
-  ]
-    .map((id) => String(id || "").trim())
-    .filter(Boolean)
-    .some((roleId) => message.member?.roles?.cache?.has(roleId));
-  const targetHasStaffRole = String(IDs?.roles?.Staff || "").trim() &&
-    targetMember.roles?.cache?.has(String(IDs?.roles?.Staff || "").trim());
-  const targetHasCoreProtectedRole = [
-    IDs?.roles?.HighStaff,
-    IDs?.roles?.Admin,
-    IDs?.roles?.Manager,
-    IDs?.roles?.CoFounder,
-    IDs?.roles?.Founder,
-  ]
-    .map((id) => String(id || "").trim())
-    .filter(Boolean)
-    .some((roleId) => targetMember.roles?.cache?.has(roleId));
+  const protectedRoleIds=[IDs?.roles?.Staff,IDs?.roles?.Helper,IDs?.roles?.Mod,IDs?.roles?.Coordinator,IDs?.roles?.Supervisor,IDs?.roles?.HighStaff,IDs?.roles?.Admin,IDs?.roles?.Manager,IDs?.roles?.CoFounder,IDs?.roles?.Founder,].map((id) => String(id||"").trim()).filter(Boolean);
+  const actorHighStaffBypass=[IDs?.roles?.HighStaff,IDs?.roles?.Admin,IDs?.roles?.Manager,IDs?.roles?.CoFounder,IDs?.roles?.Founder,].map((id) => String(id||"").trim()).filter(Boolean).some((roleId) => message.member?.roles?.cache?.has(roleId));
+  const targetHasStaffRole=String(IDs?.roles?.Staff||"").trim()&&targetMember.roles?.cache?.has(String(IDs?.roles?.Staff||"").trim());
+  const targetHasCoreProtectedRole=[IDs?.roles?.HighStaff,IDs?.roles?.Admin,IDs?.roles?.Manager,IDs?.roles?.CoFounder,IDs?.roles?.Founder,].map((id) => String(id||"").trim()).filter(Boolean).some((roleId) => targetMember.roles?.cache?.has(roleId));
 
   // HighStaff (or above) can moderate Staff, but not governance roles.
   if (
@@ -185,11 +145,7 @@ async function sendModerationDm({
   let components = undefined;
   if (actionKey === "unban") {
     const rawInvite = String(IDs?.links?.invite || "").trim();
-    const inviteUrl = /^https?:\/\//i.test(rawInvite)
-      ? rawInvite
-      : rawInvite
-        ? `https://${rawInvite.replace(/^\/+/, "")}`
-        : "";
+    const inviteUrl = /^https?:\/\//i.test(rawInvite) ? rawInvite : rawInvite ? `https://${rawInvite.replace(/^\/+/, "")}` : "";
     if (inviteUrl) {
       components = [
         new ActionRowBuilder().addComponents(
@@ -201,25 +157,13 @@ async function sendModerationDm({
       ];
     }
   }
-  const sent = await sendDm(
-    user,
-    { embeds: [embed], components },
-    { guildId, bypassNoDm: true },
-  );
+  const sent=await sendDm(user,{embeds:[embed],components},{guildId,bypassNoDm:true},);
   return Boolean(sent);
 }
 
 async function makeCase(client, message, action, userId, reason, durationMs = null) {
   const config = await getModConfig(message.guild.id);
-  const { doc } = await createModCase({
-    guildId: message.guild.id,
-    action,
-    userId: String(userId),
-    modId: message.author.id,
-    reason,
-    durationMs,
-    context: { channelId: message.channel.id, messageId: message.id },
-  });
+  const{doc}=await createModCase({guildId:message.guild.id,action,userId:String(userId),modId:message.author.id,reason,durationMs,context:{channelId:message.channel.id,messageId:message.id},});
   await logModCase({ client, guild: message.guild, modCase: doc, config });
   return doc;
 }
@@ -284,15 +228,7 @@ function formatDynoDate(value) {
   if (!value) return "Data sconosciuta";
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return "Data sconosciuta";
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(dt);
+  const formatted=new Intl.DateTimeFormat("en-US",{month:"short",day:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,}).format(dt);
   return formatted.replace(",", "").replace(",", "");
 }
 
@@ -344,50 +280,19 @@ function buildTemproleHelpEmbed(mode = "default") {
 function buildTemproleHelpRow(ownerId, currentValue = "default") {
   const customId = `dyno_temprole_help:${ownerId}`;
   const hidden = String(currentValue || "default").toLowerCase();
-  const options = [
-    {
-      label: "add",
-      description: "Assegna un temprole a un utente.",
-      value: "add",
-    },
-    {
-      label: "remove",
-      description: "Rimuove un temprole da un utente.",
-      value: "remove",
-    },
-  ];
-  const filtered = hidden === "default"
-    ? options
-    : options.filter((item) => String(item.value).toLowerCase() !== hidden);
-  const menu = new StringSelectMenuBuilder()
-    .setCustomId(customId)
-    .setPlaceholder("Vedi sotto-comandi")
-    .addOptions(
-      ...filtered,
-      {
-        label: "Comando principale",
-        description: "Torna all'aiuto principale",
-        value: "default",
-      },
-    );
+  const options=[{label:"add",description:"Assegna un temprole a un utente.",value:"add",},{label:"remove",description:"Rimuove un temprole da un utente.",value:"remove",},];
+  const filtered=hidden==="default"?options:options.filter((item) => String(item.value).toLowerCase()!==hidden);
+  const menu=new StringSelectMenuBuilder().setCustomId(customId).setPlaceholder("Vedi sotto-comandi").addOptions(...filtered,{label:"Comando principale",description:"Torna all'aiuto principale",value:"default",},);
   return new ActionRowBuilder().addComponents(menu);
 }
 
 async function sendTemproleHelpWithMenu(message) {
   let currentValue = "default";
   let row = buildTemproleHelpRow(message.author.id, currentValue);
-  const sent = await message.channel
-    .send({
-      embeds: [buildTemproleHelpEmbed("default")],
-      components: [row],
-    })
-    .catch(() => null);
+  const sent=await message.channel.send({embeds:[buildTemproleHelpEmbed("default")],components:[row],}).catch(() => null);
   if (!sent) return null;
 
-  const collector = sent.createMessageComponentCollector({
-    componentType: ComponentType.StringSelect,
-    time: 10 * 60 * 1000,
-  });
+  const collector=sent.createMessageComponentCollector({componentType:ComponentType.StringSelect,time:10*60*1000,});
 
   collector.on("collect", async (interaction) => {
     if (interaction.user.id !== message.author.id) {
@@ -427,9 +332,7 @@ async function resolveRoleFlexible(message, raw) {
       (await message.guild.roles.fetch(token).catch(() => null))
     );
   }
-  const byName = message.guild.roles.cache.find(
-    (role) => String(role.name || "").toLowerCase() === String(raw || "").toLowerCase(),
-  );
+  const byName=message.guild.roles.cache.find((role) => String(role.name||"").toLowerCase()===String(raw||"").toLowerCase(),);
   if (byName) return byName;
   return null;
 }
@@ -474,24 +377,7 @@ async function runNamed(name, message, args, client) {
     const targetIndex = hasMode ? 1 : 0;
     const { user, member, userId } = await pickUser(message, args, targetIndex);
     if (!userId) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +ban**",
-            "",
-            "**Descrizione:** Banna un utente, con durata opzionale.",
-            "**Cooldown:** 3 secondi",
-            "**Uso:**",
-            "+ban [utente] [durata] [motivo]",
-            "+ban save [utente] [durata] [motivo]",
-            "+ban noappeal [utente] [durata] [motivo]",
-            "**Esempio:**",
-            "+ban @utente 2d Spam",
-            "",
-            "",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +ban**","","**Descrizione:** Banna un utente, con durata opzionale.","**Cooldown:** 3 secondi","**Uso:**","+ban [utente] [durata] [motivo]","+ban save [utente] [durata] [motivo]","+ban noappeal [utente] [durata] [motivo]","**Esempio:**","+ban @utente 2d Spam","","",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "ban", userId);
@@ -502,10 +388,7 @@ async function runNamed(name, message, args, client) {
       return reply(message, client, "Ban", "Il motivo è obbligatorio per il ban. Uso: `+ban [utente] [durata] [motivo]`", "Red");
     }
     const deleteSeconds = mode === "save" ? 0 : 604800;
-    const ok = await message.guild.members
-      .ban(userId, { reason, deleteMessageSeconds: deleteSeconds })
-      .then(() => true)
-      .catch(() => false);
+    const ok=await message.guild.members.ban(userId,{reason,deleteMessageSeconds:deleteSeconds}).then(() => true).catch(() => false);
     if (!ok) return reply(message, client, "Ban", "Operazione fallita.", "Red");
     await sendModerationDm({
       user,
@@ -521,20 +404,7 @@ async function runNamed(name, message, args, client) {
   if (cmd === "kick") {
     const { user, member, userId } = await pickUser(message, args, 0);
     if (!member || !userId) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +kick**",
-            "",
-            "**Descrizione:** Espelle un utente dal server.",
-            "**Cooldown:** 3 secondi",
-            "**Uso:**",
-            "+kick [utente] [motivo]",
-            "**Esempio:**",
-            "+kick @utente Regolamento non rispettato",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +kick**","","**Descrizione:** Espelle un utente dal server.","**Cooldown:** 3 secondi","**Uso:**","+kick [utente] [motivo]","**Esempio:**","+kick @utente Regolamento non rispettato",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "kick", userId);
@@ -559,23 +429,7 @@ async function runNamed(name, message, args, client) {
   if (cmd === "mute") {
     const { user, member, userId } = await pickUser(message, args, 0);
     if (!member || !userId) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +mute**",
-            "",
-            "**Descrizione:** Silenzia un utente per un tempo definito.",
-            "**Cooldown:** 3 secondi",
-            "**Uso:**",
-            "+mute [utente] [durata] [motivo]",
-            "**Esempio:**",
-            "+mute @utente 10m Spam",
-            "+mute @utente 1d Flood",
-            "",
-            "",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +mute**","","**Descrizione:** Silenzia un utente per un tempo definito.","**Cooldown:** 3 secondi","**Uso:**","+mute [utente] [durata] [motivo]","**Esempio:**","+mute @utente 10m Spam","+mute @utente 1d Flood","","",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guard = await validateModerationTarget(message, member, "mute", userId);
@@ -640,12 +494,7 @@ async function runNamed(name, message, args, client) {
       action: "unmute",
       reason,
     });
-    const openMutes = await ModCase.find({
-      guildId: message.guild.id,
-      userId,
-      action: "MUTE",
-      active: true,
-    }).catch(() => []);
+    const openMutes=await ModCase.find({guildId:message.guild.id,userId,action:"MUTE",active:true,}).catch(() => []);
     for (const item of openMutes) {
       closeCase(item, `Unmute manuale da ${message.author.id}`);
       await item.save().catch(() => null);
@@ -657,20 +506,7 @@ async function runNamed(name, message, args, client) {
   if (cmd === "unban") {
     const raw = String(args[0] || "").trim();
     if (!raw) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +unban**",
-            "",
-            "**Descrizione:** Revoca il ban di un utente.",
-            "**Cooldown:** 5 secondi",
-            "**Uso:**",
-            "+unban [id_utente] (motivo opzionale)",
-            "**Esempio:**",
-            "+unban 155037590859284481 Appello accettato",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +unban**","","**Descrizione:** Revoca il ban di un utente.","**Cooldown:** 5 secondi","**Uso:**","+unban [id_utente] (motivo opzionale)","**Esempio:**","+unban 155037590859284481 Appello accettato",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const id = raw.replace(/[<@!>]/g, "").trim();
@@ -697,12 +533,7 @@ async function runNamed(name, message, args, client) {
       action: "unban",
       reason,
     });
-    const openBans = await ModCase.find({
-      guildId: message.guild.id,
-      userId: id,
-      action: "BAN",
-      active: true,
-    }).catch(() => []);
+    const openBans=await ModCase.find({guildId:message.guild.id,userId:id,action:"BAN",active:true,}).catch(() => []);
     for (const item of openBans) {
       closeCase(item, `Unban manuale da ${message.author.id}`);
       await item.save().catch(() => null);
@@ -718,9 +549,7 @@ async function runNamed(name, message, args, client) {
     if (String(userId) === String(message.author.id)) {
       return reply(message, client, "Warn", "Non puoi usare `warn` su te stesso.", "Red");
     }
-    const warnMember =
-      message.guild.members.cache.get(String(userId)) ||
-      (await message.guild.members.fetch(String(userId)).catch(() => null));
+    const warnMember=message.guild.members.cache.get(String(userId))||(await message.guild.members.fetch(String(userId)).catch(() => null));
     const guard = await validateModerationTarget(message, warnMember, "warn", userId);
     if (!guard.ok) return reply(message, client, "Warn", guard.error, "Red");
     const content = String(args.slice(1).join(" ") || "").trim();
@@ -744,11 +573,7 @@ async function runNamed(name, message, args, client) {
   if (cmd === "warnings") {
     const { userId } = await pickUser(message, args, 0);
     if (!userId) return reply(message, client, cmd, `Uso: \`+${cmd} @utente\`.`, "Red");
-    const rows = await ModCase.find({ guildId: message.guild.id, userId, action: "WARN", active: true })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .lean()
-      .catch(() => []);
+    const rows=await ModCase.find({guildId:message.guild.id,userId,action:"WARN",active:true}).sort({createdAt:-1}).limit(20).lean().catch(() => []);
     if (!rows.length) {
       return message.channel
         .send({
@@ -760,8 +585,7 @@ async function runNamed(name, message, args, client) {
         })
         .catch(() => null);
     }
-    const targetUser =
-      (await message.client.users.fetch(userId).catch(() => null)) || null;
+    const targetUser=(await message.client.users.fetch(userId).catch(() => null))||null;
     const titleCount = rows.length === 1 ? "1 warning" : `${rows.length} warning`;
     const lines = [];
     for (const row of rows.slice(0, 10)) {
@@ -770,14 +594,11 @@ async function runNamed(name, message, args, client) {
         const modUser = await message.client.users.fetch(String(row.modId)).catch(() => null);
         if (modUser?.username) moderator = modUser.username;
       }
-      const when = row.createdAt
-        ? `<t:${Math.floor(new Date(row.createdAt).getTime() / 1000)}:R>`
+      const when=row.createdAt?`<t:${Math.floor(new Date(row.createdAt).getTime()/1000)}:R>`
         : "data sconosciuta";
       lines.push(`**Moderatore:** ${moderator}\n${row.reason || "Nessun motivo"} - ${when}`);
     }
-    const warningEmbed = new EmbedBuilder()
-      .setColor("#ED4245")
-      .setTitle(`${titleCount} per ${targetUser?.username || userId} (${userId})`)
+    const warningEmbed=new EmbedBuilder().setColor("#ED4245").setTitle(`${titleCount}per ${targetUser?.username||userId}(${userId})`)
       .setDescription(lines.join("\n\n"))
       .setThumbnail(targetUser?.displayAvatarURL?.({ size: 128 }) || null);
     return message.channel.send({ embeds: [warningEmbed] }).catch(() => null);
@@ -787,39 +608,14 @@ async function runNamed(name, message, args, client) {
     const target = await pickUser(message, args, 0);
     const warningText = String(args.slice(1).join(" ") || "").trim();
     if (!target.userId || !warningText) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +delwarn**",
-            "",
-            "**Alias:** +nwarn",
-            "**Descrizione:** Rimuove un warning.",
-            "**Cooldown:** 3 secondi",
-            "**Uso:**",
-            "+delwarn [utente] [testo warning]",
-            "**Esempio:**",
-            "+delwarn @utente Flood in chat generale",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +delwarn**","","**Alias:** +nwarn","**Descrizione:** Rimuove un warning.","**Cooldown:** 3 secondi","**Uso:**","+delwarn [utente] [testo warning]","**Esempio:**","+delwarn @utente Flood in chat generale",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guardDelwarn = await validateModerationTarget(message, target.member, "delwarn", target.userId);
     if (!guardDelwarn.ok) return reply(message, client, "Delwarn", guardDelwarn.error, "Red");
-    const rows = await ModCase.find({
-      guildId: message.guild.id,
-      userId: target.userId,
-      action: "WARN",
-      active: true,
-    })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .catch(() => []);
+    const rows=await ModCase.find({guildId:message.guild.id,userId:target.userId,action:"WARN",active:true,}).sort({createdAt:-1}).limit(50).catch(() => []);
     const needle = warningText.toLowerCase();
-    const row =
-      rows.find((r) => String(r.reason || "").toLowerCase() === needle) ||
-      rows.find((r) => String(r.reason || "").toLowerCase().includes(needle)) ||
-      null;
+    const row=rows.find((r) => String(r.reason||"").toLowerCase()===needle)||rows.find((r) => String(r.reason||"").toLowerCase().includes(needle))||null;
     if (!row) {
       return message.channel
         .send({
@@ -845,18 +641,13 @@ async function runNamed(name, message, args, client) {
     if (modLogChannel?.isTextBased?.()) {
       const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
       const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
-      const warnRemovedEmbed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Warning Removed")
-        .setDescription(
-          [
-            `<:VC_right_arrow:1473441155055096081> **Warning for** ${targetLabel} **has been removed**`,
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleLabel}`,
-            `<:VC_right_arrow:1473441155055096081> <t:${Math.floor(Date.now() / 1000)}:F>`,
-            `<:VC_right_arrow:1473441155055096081> **Warning text:** ${(warningText || "").slice(0, 200)}${(warningText || "").length > 200 ? "…" : ""}`,
+      const warnRemovedEmbed=new EmbedBuilder().setColor("#57F287").setTitle("Warning Removed").setDescription([`<:VC_right_arrow:1473441155055096081> **Warning for** ${targetLabel}**has been removed**`,
+            `<:VC_right_arrow:1473441155055096081>**Responsible:**${responsibleLabel}`,
+            `<:VC_right_arrow:1473441155055096081><t:${Math.floor(Date.now()/1000)}:F>`,
+            `<:VC_right_arrow:1473441155055096081>**Warning text:**${(warningText||"").slice(0,200)}${(warningText||"").length>200?"…":""}`,
           ].join("\n"),
         )
-        .setFooter({ text: `ID: ${target.userId}` })
+        .setFooter({ text: `ID:${target.userId}` })
         .setTimestamp();
       await modLogChannel.send({ embeds: [warnRemovedEmbed] }).catch(() => null);
     }
@@ -871,31 +662,12 @@ async function runNamed(name, message, args, client) {
   if (cmd === "clearwarn") {
     const target = await pickUser(message, args, 0);
     if (!target.userId) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +clearwarn**",
-            "",
-            "**Descrizione:** Rimuove tutti i warning attivi da un utente.",
-            "**Uso:**",
-            "+clearwarn [utente]",
-            "**Esempio:**",
-            "+clearwarn @utente",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +clearwarn**","","**Descrizione:** Rimuove tutti i warning attivi da un utente.","**Uso:**","+clearwarn [utente]","**Esempio:**","+clearwarn @utente",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     const guardClearwarn = await validateModerationTarget(message, target.member, "clearwarn", target.userId);
     if (!guardClearwarn.ok) return reply(message, client, "Clearwarn", guardClearwarn.error, "Red");
-    const rows = await ModCase.find({
-      guildId: message.guild.id,
-      userId: target.userId,
-      action: "WARN",
-      active: true,
-    })
-      .lean()
-      .catch(() => []);
+    const rows=await ModCase.find({guildId:message.guild.id,userId:target.userId,action:"WARN",active:true,}).lean().catch(() => []);
     if (!rows.length) {
       return message.channel
         .send({
@@ -927,17 +699,12 @@ async function runNamed(name, message, args, client) {
     if (modLogChannel?.isTextBased?.()) {
       const targetLabel = targetUser ? `${targetUser}` : `\`${target.userId}\``;
       const responsibleLabel = message.author?.bot ? `${message.author} [BOT] \`${message.author.id}\`` : `${message.author} \`${message.author.id}\``;
-      const clearWarnEmbed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Warning Cleared")
-        .setDescription(
-          [
-            `<:VC_right_arrow:1473441155055096081> **Tutti i warning per** ${targetLabel} **sono stati rimossi** (${rows.length} ${rows.length === 1 ? "avviso" : "avvisi"})`,
-            `<:VC_right_arrow:1473441155055096081> **Responsabile:** ${responsibleLabel}`,
-            `<:VC_right_arrow:1473441155055096081> <t:${Math.floor(Date.now() / 1000)}:F>`,
+      const clearWarnEmbed=new EmbedBuilder().setColor("#57F287").setTitle("Warning Cleared").setDescription([`<:VC_right_arrow:1473441155055096081> **Tutti i warning per** ${targetLabel}**sono stati rimossi**(${rows.length}${rows.length===1?"avviso":"avvisi"})`,
+            `<:VC_right_arrow:1473441155055096081>**Responsabile:**${responsibleLabel}`,
+            `<:VC_right_arrow:1473441155055096081><t:${Math.floor(Date.now()/1000)}:F>`,
           ].join("\n"),
         )
-        .setFooter({ text: `ID: ${target.userId}` })
+        .setFooter({ text: `ID:${target.userId}` })
         .setTimestamp();
       await modLogChannel.send({ embeds: [clearWarnEmbed] }).catch(() => null);
     }
@@ -952,54 +719,15 @@ async function runNamed(name, message, args, client) {
     const caseId = Number.parseInt(args[0], 10);
     if (!Number.isFinite(caseId) || caseId <= 0) {
       if (cmd === "case") {
-        const helpEmbed = new EmbedBuilder()
-          .setColor("#3498DB")
-          .setDescription(
-            [
-              "**Comando: +case**",
-              "",
-              "**Descrizione:** Mostra un caso moderazione specifico.",
-              "**Cooldown:** 3 secondi",
-              "**Uso:**",
-              "+case [id caso]",
-              "**Esempio:**",
-              "+case 1234",
-            ].join("\n"),
-        );
+        const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +case**","","**Descrizione:** Mostra un caso moderazione specifico.","**Cooldown:** 3 secondi","**Uso:**","+case [id caso]","**Esempio:**","+case 1234",].join("\n"),);
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       if (cmd === "reason") {
-        const helpEmbed = new EmbedBuilder()
-          .setColor("#3498DB")
-          .setDescription(
-            [
-              "**Comando: +reason**",
-              "",
-              "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.",
-              "**Cooldown:** 3 secondi",
-              "**Uso:**",
-              "+reason [case num] [reason]",
-              "**Esempio:**",
-              "+reason 5 Spam in immagini non appropriate",
-            ].join("\n"),
-          );
+        const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +reason**","","**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.","**Cooldown:** 3 secondi","**Uso:**","+reason [case num] [reason]","**Esempio:**","+reason 5 Spam in immagini non appropriate",].join("\n"),);
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       if (cmd === "duration") {
-        const helpEmbed = new EmbedBuilder()
-          .setColor("#3498DB")
-          .setDescription(
-            [
-              "**Comando: +duration**",
-              "",
-              "**Descrizione:** Modifica la durata di un mute/ban.",
-              "**Cooldown:** 60 secondi",
-              "**Uso:**",
-              "+duration [modlog ID] [limit]",
-              "**Esempio:**",
-              "+duration 69 420m",
-            ].join("\n"),
-          );
+        const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +duration**","","**Descrizione:** Modifica la durata di un mute/ban.","**Cooldown:** 60 secondi","**Uso:**","+duration [modlog ID] [limit]","**Esempio:**","+duration 69 420m",].join("\n"),);
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       return reply(message, client, cmd, `Uso: \`+${cmd} <case> [...]\`.`, "Red");
@@ -1009,44 +737,22 @@ async function runNamed(name, message, args, client) {
     if (cmd === "case") {
       const targetUser = await message.client.users.fetch(String(row.userId || "")).catch(() => null);
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);
-      const action = String(row.action || "Sconosciuto")
-        .toLowerCase()
-        .replace(/^\w/, (c) => c.toUpperCase());
-      const hh = new Date(row.createdAt || Date.now()).toLocaleTimeString("it-IT", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      const caseEmbed = new EmbedBuilder()
-        .setColor("#FEE75C")
-        .setTitle(`Case ${caseId} | ${action} | ${targetUser?.username || row.userId}`)
+      const action=String(row.action||"Sconosciuto").toLowerCase().replace(/^\w/,(c) => c.toUpperCase());
+      const hh=new Date(row.createdAt||Date.now()).toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit",hour12:false,});
+      const caseEmbed=new EmbedBuilder().setColor("#FEE75C").setTitle(`Case ${caseId}|${action}|${targetUser?.username||row.userId}`)
         .addFields(
           { name: "Utente", value: targetUser?.username || String(row.userId || "Sconosciuto"), inline: true },
           { name: "Moderatore", value: modUser ? `<@${modUser.id}>` : String(row.modId || "Sconosciuto"), inline: true },
           { name: "Motivo", value: row.reason || "Nessun motivo fornito", inline: true },
         )
         .setFooter({
-          text: `ID: ${row.userId} - Oggi alle ${hh}${Array.isArray(row.edits) && row.edits.length ? ` | Modificato ${row.edits.length} volta/e` : ""}`,
-        });
+          text: `ID:${row.userId}-Oggi alle ${hh}${Array.isArray(row.edits)&&row.edits.length?` | Modificato ${row.edits.length}volta/e` : ""}`,});
       return message.channel.send({ embeds: [caseEmbed] }).catch(() => null);
     }
     if (cmd === "reason") {
       const rawReason = String(args.slice(1).join(" ") || "").trim();
       if (!rawReason) {
-        const helpEmbed = new EmbedBuilder()
-          .setColor("#3498DB")
-          .setDescription(
-            [
-              "**Comando: +reason**",
-              "",
-              "**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.",
-              "**Cooldown:** 3 secondi",
-              "**Uso:**",
-              "+reason [case num] [reason]",
-              "**Esempio:**",
-              "+reason 5 Spam in immagini non appropriate",
-            ].join("\n"),
-          );
+        const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +reason**","","**Descrizione:** Imposta o aggiorna il motivo di un caso moderazione.","**Cooldown:** 3 secondi","**Uso:**","+reason [case num] [reason]","**Esempio:**","+reason 5 Spam in immagini non appropriate",].join("\n"),);
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
       const nextReason = reasonFrom(args, 1);
@@ -1061,20 +767,7 @@ async function runNamed(name, message, args, client) {
       return successReply(message, `case #${caseId}`, "reason was updated");
     }
     if (!String(args[1] || "").trim()) {
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +duration**",
-            "",
-            "**Descrizione:** Modifica la durata di un mute/ban.",
-            "**Cooldown:** 60 secondi",
-            "**Uso:**",
-            "+duration [modlog ID] [limit]",
-            "**Esempio:**",
-            "+duration 69 420m",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +duration**","","**Descrizione:** Modifica la durata di un mute/ban.","**Cooldown:** 60 secondi","**Uso:**","+duration [modlog ID] [limit]","**Esempio:**","+duration 69 420m",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
     if (!["MUTE", "BAN"].includes(String(row.action || "").toUpperCase())) {
@@ -1136,15 +829,9 @@ async function runNamed(name, message, args, client) {
       query.expiresAt = { $gt: new Date() };
       query.action = { $in: ["MUTE", "BAN"] };
       const limit = target.userId ? 10 : 25;
-      const rows = await ModCase.find(query)
-        .sort({ expiresAt: 1 })
-        .limit(limit)
-        .lean()
-        .catch(() => []);
+      const rows=await ModCase.find(query).sort({expiresAt:1}).limit(limit).lean().catch(() => []);
       if (!rows.length) {
-        const msg = target.userId
-          ? "Non ci sono moderazioni attive per questo utente."
-          : "Non ci sono moderazioni attive al momento.";
+        const msg=target.userId?"Non ci sono moderazioni attive per questo utente.":"Non ci sono moderazioni attive al momento.";
         return message.channel
           .send({
             embeds: [
@@ -1157,9 +844,7 @@ async function runNamed(name, message, args, client) {
       }
       const now = Date.now();
       const singleUserId = target.userId ? String(target.userId).trim() : null;
-      const singleUsername = singleUserId
-        ? (message.client.users.cache.get(singleUserId) || (await message.client.users.fetch(singleUserId).catch(() => null)))?.username?.toLowerCase() || singleUserId
-        : null;
+      const singleUsername=singleUserId?(message.client.users.cache.get(singleUserId)||(await message.client.users.fetch(singleUserId).catch(() => null)))?.username?.toLowerCase()||singleUserId:null;
       const lines = [];
       for (let i = 0; i < rows.length; i += 1) {
         const row = rows[i];
@@ -1174,15 +859,9 @@ async function runNamed(name, message, args, client) {
         }
         lines.push(`${i + 1}. **${username}**\n${type} | Tempo rimanente: ${remaining}`);
       }
-      const title = singleUserId
-        ? `Moderazioni attive per ${singleUsername || singleUserId}`
+      const title=singleUserId?`Moderazioni attive per ${singleUsername||singleUserId}`
         : "Moderazioni attive";
-      const activeEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setTitle(title)
-        .setDescription(lines.join("\n\n"))
-        .setFooter({
-          text: rows.length === 1 ? "1 moderazione attiva" : `${rows.length} moderazioni attive`,
+      const activeEmbed=new EmbedBuilder().setColor("#3498DB").setTitle(title).setDescription(lines.join("\n\n")).setFooter({text:rows.length===1?"1 moderazione attiva":`${rows.length}moderazioni attive`,
         });
       return message.channel.send({ embeds: [activeEmbed] }).catch(() => null);
     }
@@ -1215,12 +894,7 @@ async function runNamed(name, message, args, client) {
     const totalPages = Math.max(1, Math.ceil(total / perPage));
     const safePage = Math.min(requestedPage, totalPages);
     const skip = (safePage - 1) * perPage;
-    const rows = await ModCase.find(query)
-      .sort({ createdAt: -1, caseId: -1 })
-      .skip(skip)
-      .limit(perPage)
-      .lean()
-      .catch(() => []);
+    const rows=await ModCase.find(query).sort({createdAt:-1,caseId:-1}).skip(skip).limit(perPage).lean().catch(() => []);
     if (!rows.length) {
       return message.channel
         .send({
@@ -1233,27 +907,22 @@ async function runNamed(name, message, args, client) {
     const lines = [];
     for (const row of rows) {
       const modUser = await message.client.users.fetch(String(row.modId || "")).catch(() => null);
-      const type = String(row.action || "Sconosciuto")
-        .toLowerCase()
-        .replace(/^\w/, (c) => c.toUpperCase());
+      const type=String(row.action||"Sconosciuto").toLowerCase().replace(/^\w/,(c) => c.toUpperCase());
       const createdAt = formatDynoDate(row.createdAt);
       const length = formatDurationWords(row.durationMs);
-      const blockLines = [
-        `**Case ${row.caseId}**`,
-        `**Tipo:** ${type}`,
-        `**Utente:** (${target.userId}) ${targetUser?.username || "Sconosciuto"}`,
-        `**Moderatore:** ${modUser?.username || row.modId || "Sconosciuto"}`,
+      const blockLines=[`**Case ${row.caseId}**`,
+        `**Tipo:**${type}`,
+        `**Utente:**(${target.userId})${targetUser?.username||"Sconosciuto"}`,
+        `**Moderatore:**${modUser?.username||row.modId||"Sconosciuto"}`,
       ];
       if (length) blockLines.push(`**Durata:** ${length}`);
       blockLines.push(`**Motivo:** ${row.reason || "Nessun motivo fornito."} - ${createdAt}`);
       lines.push(blockLines.join("\n"));
     }
 
-    const logsEmbed = new EmbedBuilder()
-      .setColor("#3498DB")
-      .setTitle(`Modlog di ${targetUser?.username || target.userId} (Pagina ${safePage} di ${totalPages})`)
+    const logsEmbed=new EmbedBuilder().setColor("#3498DB").setTitle(`Modlog di ${targetUser?.username||target.userId}(Pagina ${safePage}di ${totalPages})`)
       .setDescription(lines.join("\n\n"))
-      .setFooter({ text: `${total} log totali | Usa +modlogs [utente] [pagina] per vedere un'altra pagina` });
+      .setFooter({ text: `${total}log totali|Usa+modlogs[utente][pagina]per vedere un 'altra pagina` });
 
     return message.channel.send({ embeds: [logsEmbed] }).catch(() => null);
   }
@@ -1266,26 +935,8 @@ async function runNamed(name, message, args, client) {
     const d7 = new Date(now - 7 * 24 * 60 * 60 * 1000);
     const d30 = new Date(now - 30 * 24 * 60 * 60 * 1000);
     const guildId = message.guild.id;
-    const countAction = (action, since = null) => {
-      const q = { guildId, modId, action };
-      if (since) q.createdAt = { $gte: since };
-      return ModCase.countDocuments(q).catch(() => 0);
-    };
-    const [m7, m30, mall, b7, b30, ball, k7, k30, kall, w7, w30, wall] =
-      await Promise.all([
-        countAction("MUTE", d7),
-        countAction("MUTE", d30),
-        countAction("MUTE"),
-        countAction("BAN", d7),
-        countAction("BAN", d30),
-        countAction("BAN"),
-        countAction("KICK", d7),
-        countAction("KICK", d30),
-        countAction("KICK"),
-        countAction("WARN", d7),
-        countAction("WARN", d30),
-        countAction("WARN"),
-      ]);
+    const countAction=(action,since=null) => {const q={guildId,modId,action};if(since)q.createdAt={$gte:since};return ModCase.countDocuments(q).catch(() => 0);};
+    const[m7,m30,mall,b7,b30,ball,k7,k30,kall,w7,w30,wall]=await Promise.all([countAction("MUTE",d7),countAction("MUTE",d30),countAction("MUTE"),countAction("BAN",d7),countAction("BAN",d30),countAction("BAN"),countAction("KICK",d7),countAction("KICK",d30),countAction("KICK"),countAction("WARN",d7),countAction("WARN",d30),countAction("WARN"),]);
     const t7 = Number(m7) + Number(b7) + Number(k7) + Number(w7);
     const t30 = Number(m30) + Number(b30) + Number(k30) + Number(w30);
     const tall = Number(mall) + Number(ball) + Number(kall) + Number(wall);
@@ -1300,37 +951,22 @@ async function runNamed(name, message, args, client) {
         })
         .catch(() => null);
     }
-    const hh = new Date().toLocaleTimeString("it-IT", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    const statsEmbed = new EmbedBuilder()
-      .setColor("#3498DB")
-      .setTitle("Moderation Statistics")
-      .setThumbnail(modUser?.displayAvatarURL({ size: 256 }) || null)
-      .setAuthor({
-        name: modUser?.username || String(modId),
-        iconURL: modUser?.displayAvatarURL({ size: 128 }) || null,
-      })
-      .addFields(
-        {
-          name: "Last 7 days",
-          value: `Mutes: ${m7}\nBans: ${b7}\nKicks: ${k7}\nWarns: ${w7}\n**Total: ${t7}**`,
+    const hh=new Date().toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit",hour12:false,});
+    const statsEmbed=new EmbedBuilder().setColor("#3498DB").setTitle("Moderation Statistics").setThumbnail(modUser?.displayAvatarURL({size:256})||null).setAuthor({name:modUser?.username||String(modId),iconURL:modUser?.displayAvatarURL({size:128})||null,}).addFields({name:"Last 7 days",value:`Mutes: ${m7}\nBans:${b7}\nKicks:${k7}\nWarns:${w7}\n**Total:${t7}**`,
           inline: true,
         },
         {
           name: "Last 30 days",
-          value: `Mutes: ${m30}\nBans: ${b30}\nKicks: ${k30}\nWarns: ${w30}\n**Total: ${t30}**`,
+          value: `Mutes:${m30}\nBans:${b30}\nKicks:${k30}\nWarns:${w30}\n**Total:${t30}**`,
           inline: true,
         },
         {
           name: "All time",
-          value: `Mutes: ${mall}\nBans: ${ball}\nKicks: ${kall}\nWarns: ${wall}\n**Total: ${tall}**`,
+          value: `Mutes:${mall}\nBans:${ball}\nKicks:${kall}\nWarns:${wall}\n**Total:${tall}**`,
           inline: true,
         },
       )
-      .setFooter({ text: `ID: ${modId} • Oggi alle ${hh}` })
+      .setFooter({ text: `ID:${modId}•Oggi alle ${hh}` })
       .setTimestamp();
     return message.channel.send({ embeds: [statsEmbed] }).catch(() => null);
   }
@@ -1338,46 +974,14 @@ async function runNamed(name, message, args, client) {
   if (cmd === "lock" || cmd === "unlock") {
     if (!args.length) {
       if (cmd === "lock") {
-        const helpEmbed = new EmbedBuilder()
-          .setColor("#3498DB")
-          .setDescription(
-            [
-              "**Comando: +lock**",
-              "",
-              "**Descrizione:** Blocca un canale con timer e messaggio opzionali.",
-              "**Cooldown:** 5 secondi",
-              "**Uso:**",
-              "+lock [canale] (durata) (messaggio)",
-              "**Esempio:**",
-              "+lock #general Torniamo subito",
-              "+lock #support 2h Questo canale restera bloccato per due ore.",
-              "+lock #help 4h",
-            ].join("\n"),
-          );
+        const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +lock**","","**Descrizione:** Blocca un canale con timer e messaggio opzionali.","**Cooldown:** 5 secondi","**Uso:**","+lock [canale] (durata) (messaggio)","**Esempio:**","+lock #general Torniamo subito","+lock #support 2h Questo canale restera bloccato per due ore.","+lock #help 4h",].join("\n"),);
         return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
       }
-      const helpEmbed = new EmbedBuilder()
-        .setColor("#3498DB")
-        .setDescription(
-          [
-            "**Comando: +unlock**",
-            "",
-            "**Descrizione:** Sblocca un canale bloccato in precedenza.",
-            "**Cooldown:** 5 secondi",
-            "**Uso:**",
-            "+unlock [canale] (messaggio)",
-            "**Esempio:**",
-            "+unlock #general",
-            "+unlock #support Siamo tornati!",
-          ].join("\n"),
-        );
+      const helpEmbed=new EmbedBuilder().setColor("#3498DB").setDescription(["**Comando: +unlock**","","**Descrizione:** Sblocca un canale bloccato in precedenza.","**Cooldown:** 5 secondi","**Uso:**","+unlock [canale] (messaggio)","**Esempio:**","+unlock #general","+unlock #support Siamo tornati!",].join("\n"),);
       return message.channel.send({ embeds: [helpEmbed] }).catch(() => null);
     }
 
-    const channel =
-      message.mentions?.channels?.first() ||
-      message.guild.channels.cache.get(String(args[0] || "").replace(/[<#>]/g, "")) ||
-      message.channel;
+    const channel=message.mentions?.channels?.first()||message.guild.channels.cache.get(String(args[0]||"").replace(/[<#>]/g,""))||message.channel;
     const start = message.mentions?.channels?.size ? 1 : 0;
     const duration = cmd === "lock" ? parseLockDuration(args[start]) : null;
     const reasonStart = cmd === "lock" && duration ? start + 1 : start;
@@ -1481,13 +1085,7 @@ async function runNamed(name, message, args, client) {
     const role = await resolveRoleFlexible(message, roleArg);
     if (!role) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
 
-    const out = await grantTemporaryRole({
-      guild: message.guild,
-      userId: target.userId,
-      roleId: role.id,
-      grantedBy: message.author.id,
-      durationMs: duration,
-    });
+    const out=await grantTemporaryRole({guild:message.guild,userId:target.userId,roleId:role.id,grantedBy:message.author.id,durationMs:duration,});
     if (!out?.ok) return errorTemprole(message, "Non riesco a trovare quel ruolo.");
     await makeCase(
       client,

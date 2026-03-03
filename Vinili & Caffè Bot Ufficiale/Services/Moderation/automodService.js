@@ -4,15 +4,8 @@ const path = require("path");
 const mongoose = require("mongoose");
 const axios = require("axios");
 const IDs = require("../../Utils/Config/ids");
-const {
-  isSecurityProfileImmune,
-  hasAdminsProfileCapability,
-  hasModeratorsProfileCapability,
-  getSecurityStaticsSnapshot,
-} = require("./securityProfilesService");
-const {
-  isJoinGateSuspiciousAccount,
-} = require("./suspiciousAccountService");
+const{isSecurityProfileImmune,hasAdminsProfileCapability,hasModeratorsProfileCapability,getSecurityStaticsSnapshot,}=require("./securityProfilesService");
+const{isJoinGateSuspiciousAccount,}=require("./suspiciousAccountService");
 const AutoModBadUser = require("../../Schemas/Moderation/autoModBadUserSchema");
 const { isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const { createModCase, getModConfig, logModCase, formatDuration } = require("../../Utils/Moderation/moderation");
@@ -54,269 +47,18 @@ let MENTION_LOCKDOWN_WINDOW_MS = 3_000;
 let AUTOMOD_ENABLED = true;
 let AUTOMOD_ANTISPAM_ENABLED = true;
 let AUTOMOD_MONITOR_UNWHITELISTED_WEBHOOKS = true;
-const PANIC_MODE = {
-  enabled: true,
-  considerActivityHistory: true,
-  useGlobalBadUsersDb: true,
-  triggerCount: 3,
-  triggerWindowMs: 10 * 60_000,
-  durationMs: 10 * 60_000,
-  raidWindowMs: 120_000,
-  raidUserThreshold: 6,
-  raidYoungThreshold: 4,
-};
-const PANIC_TRIGGER_KEYS = new Set([
-  "invite",
-  "scam_pattern",
-  "nsfw_link",
-  "word_blacklist",
-  "link_blacklist",
-  "mention_everyone",
-  "mentions_lockdown",
-  "mention_hour_cap",
-  "unwhitelisted_webhook",
-]);
-const MENTION_RULES = {
-  enabled: true,
-  timeoutMs: 45 * 60_000,
-  hourCap: 20,
-  userMentions: {
-    enabled: true,
-    heat: 15,
-  },
-  roleMentions: {
-    enabled: true,
-    heat: 20,
-  },
-  everyoneMentions: {
-    enabled: true,
-    heat: 100,
-  },
-};
-const ATTACHMENT_RULES = {
-  enabled: true,
-  timeoutMs: 0,
-  embeds: { enabled: true, heat: 15 },
-  images: { enabled: true, heat: 20 },
-  files: { enabled: true, heat: 15 },
-  links: { enabled: true, heat: 10 },
-  stickers: { enabled: true, heat: 15 },
-};
+const PANIC_MODE={enabled:true,considerActivityHistory:true,useGlobalBadUsersDb:true,triggerCount:3,triggerWindowMs:10*60_000,durationMs:10*60_000,raidWindowMs:120_000,raidUserThreshold:6,raidYoungThreshold:4,};
+const PANIC_TRIGGER_KEYS=new Set(["invite","scam_pattern","nsfw_link","word_blacklist","link_blacklist","mention_everyone","mentions_lockdown","mention_hour_cap","unwhitelisted_webhook",]);
+const MENTION_RULES={enabled:true,timeoutMs:45*60_000,hourCap:20,userMentions:{enabled:true,heat:15,},roleMentions:{enabled:true,heat:20,},everyoneMentions:{enabled:true,heat:100,},};
+const ATTACHMENT_RULES={enabled:true,timeoutMs:0,embeds:{enabled:true,heat:15},images:{enabled:true,heat:20},files:{enabled:true,heat:15},links:{enabled:true,heat:10},stickers:{enabled:true,heat:15},};
 
-const TEXT_RULES = {
-  regularMessage: {
-    enabled: true,
-    heat: 15,
-    timeoutMs: 15 * 60_000,
-  },
-  suspiciousAccount: {
-    enabled: true,
-    heat: 7,
-    timeoutMs: 15 * 60_000,
-  },
-  similarMessage: {
-    enabled: true,
-    heat: 22,
-    ratio: 0.8,
-    timeoutMs: 15 * 60_000,
-  },
-  emojis: {
-    enabled: true,
-    heat: 9,
-    minCount: 8,
-    timeoutMs: 15 * 60_000,
-  },
-  newLines: {
-    enabled: true,
-    heat: 5,
-    minCount: 6,
-    timeoutMs: 15 * 60_000,
-  },
-  zalgo: {
-    enabled: true,
-    heat: 1.5,
-    minCount: 6,
-    timeoutMs: 15 * 60_000,
-  },
-  characters: {
-    enabled: true,
-    lowercaseHeat: 0.08,
-    uppercaseHeat: 0.12,
-    minChars: 40,
-    timeoutMs: 15 * 60_000,
-  },
-  inviteLinks: {
-    enabled: true,
-    heat: 100,
-    timeoutMs: 60 * 60_000,
-  },
-  maliciousLinks: {
-    enabled: true,
-    heat: 100,
-    timeoutMs: 60 * 60_000,
-  },
-  nsfwLinks: {
-    enabled: true,
-    crawlShorteners: true,
-    heat: 100,
-    timeoutMs: 30 * 60_000,
-  },
-  wordBlacklist: {
-    enabled: true,
-    useProfaneList: false,
-    useVulgarList: false,
-    useRacistList: true,
-    heat: 100,
-    timeoutMs: 45 * 60_000,
-  },
-  linkBlacklist: {
-    enabled: true,
-    heat: 100,
-    timeoutMs: 45 * 60_000,
-    domains: ["dsc.gg"],
-  },
-};
+const TEXT_RULES={regularMessage:{enabled:true,heat:15,timeoutMs:15*60_000,},suspiciousAccount:{enabled:true,heat:7,timeoutMs:15*60_000,},similarMessage:{enabled:true,heat:22,ratio:0.8,timeoutMs:15*60_000,},emojis:{enabled:true,heat:9,minCount:8,timeoutMs:15*60_000,},newLines:{enabled:true,heat:5,minCount:6,timeoutMs:15*60_000,},zalgo:{enabled:true,heat:1.5,minCount:6,timeoutMs:15*60_000,},characters:{enabled:true,lowercaseHeat:0.08,uppercaseHeat:0.12,minChars:40,timeoutMs:15*60_000,},inviteLinks:{enabled:true,heat:100,timeoutMs:60*60_000,},maliciousLinks:{enabled:true,heat:100,timeoutMs:60*60_000,},nsfwLinks:{enabled:true,crawlShorteners:true,heat:100,timeoutMs:30*60_000,},wordBlacklist:{enabled:true,useProfaneList:false,useVulgarList:false,useRacistList:true,heat:100,timeoutMs:45*60_000,},linkBlacklist:{enabled:true,heat:100,timeoutMs:45*60_000,domains:["dsc.gg"],},};
 
-const AUTOMOD_CONFIG_PATH = path.resolve(
-  __dirname,
-  "../../Utils/Config/automodConfig.json",
-);
-const AUTOMOD_METRICS_PATH = path.resolve(
-  __dirname,
-  "../../Utils/Config/automodMetrics.json",
-);
-const SHORTENER_HOSTS = new Set([
-  "bit.ly",
-  "tinyurl.com",
-  "t.co",
-  "cutt.ly",
-  "is.gd",
-  "rebrand.ly",
-  "tiny.cc",
-  "shorturl.at",
-  "goo.gl",
-  "ow.ly",
-  "buff.ly",
-]);
+const AUTOMOD_CONFIG_PATH=path.resolve(__dirname,"../../Utils/Config/automodConfig.json",);
+const AUTOMOD_METRICS_PATH=path.resolve(__dirname,"../../Utils/Config/automodMetrics.json",);
+const SHORTENER_HOSTS=new Set(["bit.ly","tinyurl.com","t.co","cutt.ly","is.gd","rebrand.ly","tiny.cc","shorturl.at","goo.gl","ow.ly","buff.ly",]);
 
-const DEFAULT_AUTOMOD_RUNTIME = {
-  status: {
-    enabled: true,
-    antiSpamEnabled: true,
-    monitorUnwhitelistedWebhooks: true,
-  },
-  thresholds: {
-    warn: 35,
-    delete: 65,
-    timeout: 100,
-  },
-  heatSystem: {
-    maxHeat: 100,
-    decayPerSec: 2,
-    resetOnPunishment: true,
-  },
-  autoTimeouts: {
-    enabled: true,
-    regularStrikeDurationMs: 60_000,
-    capStrikeDurationMs: 11 * 60_000,
-    capStrike: 3,
-    multiplierEnabled: true,
-    multiplierPercent: 200,
-    profileResetMs: 6 * 60 * 60_000,
-  },
-  autoLockdown: {
-    enabled: true,
-    mentionTrigger: 50,
-    mentionWindowMs: 3_000,
-    mentionHourCap: 20,
-  },
-  heatFilters: {
-    regularMessage: true,
-    suspiciousAccount: true,
-    similarMessage: true,
-    emojis: true,
-    newLines: true,
-    zalgo: true,
-    characters: true,
-    inviteLinks: true,
-    maliciousLinks: true,
-    nsfwLinks: true,
-    wordBlacklist: true,
-    linkBlacklist: true,
-    mentions: true,
-    attachments: true,
-    webhookMessages: true,
-  },
-  heatFactors: {
-    regularMessage: 1,
-    suspiciousAccount: 1,
-    similarMessage: 1,
-    emojis: 1,
-    newLines: 1,
-    zalgo: 1,
-    characters: 1,
-    inviteLinks: 1,
-    maliciousLinks: 1,
-    nsfwLinks: 1,
-    wordBlacklist: 1,
-    linkBlacklist: 1,
-    mentions: 1,
-    attachments: 1,
-  },
-  heatCaps: {
-    maxPerMessage: 85,
-    charactersMax: 40,
-    textClusterMax: 35,
-    attachmentClusterMax: 28,
-    mentionClusterMax: 70,
-  },
-  panic: {
-    enabled: true,
-    considerActivityHistory: true,
-    useGlobalBadUsersDb: true,
-    triggerCount: 3,
-    triggerWindowMs: 10 * 60_000,
-    durationMs: 10 * 60_000,
-    raidWindowMs: 120_000,
-    raidUserThreshold: 6,
-    raidYoungThreshold: 4,
-  },
-  shorteners: {
-    crawl: true,
-    timeoutMs: 2200,
-    maxHops: 3,
-  },
-  profiles: {
-    default: {
-      exempt: false,
-      heatMultiplier: 1,
-      mentionsEnabled: true,
-      attachmentsEnabled: true,
-      inviteLinksEnabled: true,
-    },
-    media: {
-      exempt: false,
-      heatMultiplier: 0.85,
-      mentionsEnabled: true,
-      attachmentsEnabled: false,
-      inviteLinksEnabled: true,
-    },
-    ticket: {
-      exempt: true,
-      heatMultiplier: 0.6,
-      mentionsEnabled: false,
-      attachmentsEnabled: false,
-      inviteLinksEnabled: false,
-    },
-    staff: {
-      exempt: true,
-      heatMultiplier: 0.25,
-      mentionsEnabled: false,
-      attachmentsEnabled: false,
-      inviteLinksEnabled: false,
-    },
-  },
-};
+const DEFAULT_AUTOMOD_RUNTIME={status:{enabled:true,antiSpamEnabled:true,monitorUnwhitelistedWebhooks:true,},thresholds:{warn:35,delete:65,timeout:100,},heatSystem:{maxHeat:100,decayPerSec:2,resetOnPunishment:true,},autoTimeouts:{enabled:true,regularStrikeDurationMs:60_000,capStrikeDurationMs:11*60_000,capStrike:3,multiplierEnabled:true,multiplierPercent:200,profileResetMs:6*60*60_000,},autoLockdown:{enabled:true,mentionTrigger:50,mentionWindowMs:3_000,mentionHourCap:20,},heatFilters:{regularMessage:true,suspiciousAccount:true,similarMessage:true,emojis:true,newLines:true,zalgo:true,characters:true,inviteLinks:true,maliciousLinks:true,nsfwLinks:true,wordBlacklist:true,linkBlacklist:true,mentions:true,attachments:true,webhookMessages:true,},heatFactors:{regularMessage:1,suspiciousAccount:1,similarMessage:1,emojis:1,newLines:1,zalgo:1,characters:1,inviteLinks:1,maliciousLinks:1,nsfwLinks:1,wordBlacklist:1,linkBlacklist:1,mentions:1,attachments:1,},heatCaps:{maxPerMessage:85,charactersMax:40,textClusterMax:35,attachmentClusterMax:28,mentionClusterMax:70,},panic:{enabled:true,considerActivityHistory:true,useGlobalBadUsersDb:true,triggerCount:3,triggerWindowMs:10*60_000,durationMs:10*60_000,raidWindowMs:120_000,raidUserThreshold:6,raidYoungThreshold:4,},shorteners:{crawl:true,timeoutMs:2200,maxHops:3,},profiles:{default:{exempt:false,heatMultiplier:1,mentionsEnabled:true,attachmentsEnabled:true,inviteLinksEnabled:true,},media:{exempt:false,heatMultiplier:0.85,mentionsEnabled:true,attachmentsEnabled:false,inviteLinksEnabled:true,},ticket:{exempt:true,heatMultiplier:0.6,mentionsEnabled:false,attachmentsEnabled:false,inviteLinksEnabled:false,},staff:{exempt:true,heatMultiplier:0.25,mentionsEnabled:false,attachmentsEnabled:false,inviteLinksEnabled:false,},},};
 
 function deepMerge(base, override) {
   if (!override || typeof override !== "object") return base;
@@ -731,30 +473,11 @@ function applyAutomodRuntime() {
 }
 applyAutomodRuntime();
 
-const WICK_EQUIV = {
-  textClusterMultiplier: 1.1875, // 95/80 for emoji/newlines/zalgo family
-  upperCharMultiplier: 9.90575, // 0.12 * 9.90575 ~= 1.18869 heat/char
-  lowerCharMultiplier: 14.866, // 0.08 * 14.866 ~= 1.18928 heat/char
-};
+const WICK_EQUIV={textClusterMultiplier:1.1875,upperCharMultiplier:9.90575,lowerCharMultiplier:14.866,};
 
-const INSTANT_LINK_KEYS = new Set([
-  "invite",
-  "scam_pattern",
-  "nsfw_link",
-  "word_blacklist",
-  "link_blacklist",
-  "mention_everyone",
-  "mention_hour_cap",
-  "mentions_lockdown",
-]);
+const INSTANT_LINK_KEYS=new Set(["invite","scam_pattern","nsfw_link","word_blacklist","link_blacklist","mention_everyone","mention_hour_cap","mentions_lockdown",]);
 
-const RACIST_WORD_PATTERNS = [
-  /\bn[\W_]*[i1l!|][\W_]*g[\W_]*g[\W_]*([e3][\W_]*)?r\b/iu,
-  /\bk[\W_]*i[\W_]*k[\W_]*e\b/iu,
-  /\bc[\W_]*h[\W_]*i[\W_]*n[\W_]*k\b/iu,
-  /\bw[\W_]*e[\W_]*t[\W_]*b[\W_]*a[\W_]*c[\W_]*k\b/iu,
-  /\bp[\W_]*a[\W_]*k[\W_]*i\b/iu,
-];
+const RACIST_WORD_PATTERNS=[/\bn[\W_]*[i1l!|][\W_]*g[\W_]*g[\W_]*([e3][\W_]*)?r\b/iu,/\bk[\W_]*i[\W_]*k[\W_]*e\b/iu,/\bc[\W_]*h[\W_]*i[\W_]*n[\W_]*k\b/iu,/\bw[\W_]*e[\W_]*t[\W_]*b[\W_]*a[\W_]*c[\W_]*k\b/iu,/\bp[\W_]*a[\W_]*k[\W_]*i\b/iu,];
 
 function parseWordArrayFile(filePath) {
   try {
@@ -771,27 +494,13 @@ function parseWordArrayFile(filePath) {
 }
 
 function loadCustomRacistWords() {
-  const singleFile = path.resolve(
-    __dirname,
-    "../../Utils/Config/automodRacistWords.json",
-  );
-  const folderPath = path.resolve(
-    __dirname,
-    "../../Utils/Config/automodRacistWords",
-  );
+  const singleFile=path.resolve(__dirname,"../../Utils/Config/automodRacistWords.json",);
+  const folderPath=path.resolve(__dirname,"../../Utils/Config/automodRacistWords",);
 
   const all = new Set(parseWordArrayFile(singleFile));
   try {
     if (fs.existsSync(folderPath)) {
-      const entries = fs
-        .readdirSync(folderPath, { withFileTypes: true })
-        .filter(
-          (e) =>
-            e.isFile() &&
-            e.name.toLowerCase().endsWith(".json") &&
-            e.name.toLowerCase() !== "sources.json",
-        )
-        .map((e) => path.join(folderPath, e.name));
+      const entries=fs.readdirSync(folderPath,{withFileTypes:true}).filter((e) => e.isFile()&&e.name.toLowerCase().endsWith(".json")&&e.name.toLowerCase()!=="sources.json",).map((e) => path.join(folderPath,e.name));
       for (const file of entries) {
         for (const word of parseWordArrayFile(file)) all.add(word);
       }
@@ -803,21 +512,7 @@ function loadCustomRacistWords() {
 
 const CUSTOM_RACIST_WORDS = loadCustomRacistWords();
 
-const LEET_MAP = new Map([
-  ["0", "o"],
-  ["1", "i"],
-  ["3", "e"],
-  ["4", "a"],
-  ["5", "s"],
-  ["6", "g"],
-  ["7", "t"],
-  ["8", "b"],
-  ["9", "g"],
-  ["@", "a"],
-  ["$", "s"],
-  ["!", "i"],
-  ["|", "i"],
-]);
+const LEET_MAP=new Map([["0","o"],["1","i"],["3","e"],["4","a"],["5","s"],["6","g"],["7","t"],["8","b"],["9","g"],["@","a"],["$","s"],["!","i"],["|","i"],]);
 
 function toLeetNormalized(input) {
   let out = "";
@@ -827,92 +522,20 @@ function toLeetNormalized(input) {
   return out;
 }
 
-const WHITELISTED_WEBHOOK_IDS = new Set(
-  (Array.isArray(IDs.webhooks?.whitelist) ? IDs.webhooks.whitelist : [])
-    .filter(Boolean)
-    .map(String),
-);
-const VERIFIED_BOT_IDS = new Set(
-  Object.values(IDs?.bots || {})
-    .filter(Boolean)
-    .map(String),
-);
-const CORE_EXEMPT_USER_IDS = new Set([
-  "1466495522474037463",
-  "1329118940110127204",
-]);
-const TRUSTED_WEBHOOK_AUTHOR_IDS = new Set(
-  [
-    IDs.bots?.DISBOARD,
-    IDs.bots?.Discadia,
-    IDs.bots?.VoteManager,
-    IDs.bots?.Dyno,
-    IDs.bots?.Wick,
-    ...CORE_EXEMPT_USER_IDS,
-  ]
-    .filter(Boolean)
-    .map(String),
-);
+const WHITELISTED_WEBHOOK_IDS=new Set((Array.isArray(IDs.webhooks?.whitelist)?IDs.webhooks.whitelist:[]).filter(Boolean).map(String),);
+const VERIFIED_BOT_IDS=new Set(Object.values(IDs?.bots||{}).filter(Boolean).map(String),);
+const CORE_EXEMPT_USER_IDS=new Set(["1466495522474037463","1329118940110127204",]);
+const TRUSTED_WEBHOOK_AUTHOR_IDS=new Set([IDs.bots?.DISBOARD,IDs.bots?.Discadia,IDs.bots?.VoteManager,IDs.bots?.Dyno,IDs.bots?.Wick,...CORE_EXEMPT_USER_IDS,].filter(Boolean).map(String),);
 
-const STAFF_ROLE_IDS = new Set(
-  [
-    IDs.roles.Founder,
-    IDs.roles.CoFounder,
-    IDs.roles.Manager,
-    IDs.roles.Admin,
-    IDs.roles.HighStaff,
-  ]
-    .filter(Boolean)
-    .map(String),
-);
+const STAFF_ROLE_IDS=new Set([IDs.roles.Founder,IDs.roles.CoFounder,IDs.roles.Manager,IDs.roles.Admin,IDs.roles.HighStaff,].filter(Boolean).map(String),);
 
-const EXEMPT_CHANNEL_IDS = new Set(
-  [
-    IDs.channels.staffChat,
-    IDs.channels.staffCmds,
-    IDs.channels.highCmds,
-    IDs.channels.modLogs,
-    IDs.channels.activityLogs,
-    IDs.channels.highChat,
-    IDs.channels.midChat,
-  ]
-    .filter(Boolean)
-    .map(String),
-);
+const EXEMPT_CHANNEL_IDS=new Set([IDs.channels.staffChat,IDs.channels.staffCmds,IDs.channels.highCmds,IDs.channels.modLogs,IDs.channels.activityLogs,IDs.channels.highChat,IDs.channels.midChat,].filter(Boolean).map(String),);
 
 const EXEMPT_CATEGORY_IDS = new Set(["1442569074310643845"]);
-const SPAM_WHITELIST_CATEGORY_IDS = new Set(
-  [
-    IDs?.categories?.categoryGames,
-    "1442569074310643845",
-  ]
-    .filter(Boolean)
-    .map(String),
-);
-const INVITE_WHITELIST_CHANNEL_IDS = new Set(
-  [
-    IDs?.channels?.partnerships,
-    "1442569193470824448",
-  ]
-    .filter(Boolean)
-    .map(String),
-);
-const MENTION_WHITELIST_CHANNEL_IDS = new Set(
-  [
-    IDs?.channels?.partnerships,
-    "1442569193470824448",
-  ]
-    .filter(Boolean)
-    .map(String),
-);
-const EVERYONE_WHITELIST_CHANNEL_IDS = new Set(
-  [
-    IDs?.channels?.partnerships,
-    "1442569193470824448",
-  ]
-    .filter(Boolean)
-    .map(String),
-);
+const SPAM_WHITELIST_CATEGORY_IDS=new Set([IDs?.categories?.categoryGames,"1442569074310643845",].filter(Boolean).map(String),);
+const INVITE_WHITELIST_CHANNEL_IDS=new Set([IDs?.channels?.partnerships,"1442569193470824448",].filter(Boolean).map(String),);
+const MENTION_WHITELIST_CHANNEL_IDS=new Set([IDs?.channels?.partnerships,"1442569193470824448",].filter(Boolean).map(String),);
+const EVERYONE_WHITELIST_CHANNEL_IDS=new Set([IDs?.channels?.partnerships,"1442569193470824448",].filter(Boolean).map(String),);
 
 function isTicketLikeCategory(category) {
   const name = String(category?.name || "").toLowerCase().trim();
@@ -929,11 +552,7 @@ function isTicketLikeChannel(channel) {
   if (isChannelInTicketCategory(channel)) return true;
   const channelName = String(channel?.name || "").toLowerCase().trim();
   if (channelName.includes("ticket")) return true;
-  const parent =
-    channel?.parent ||
-    channel?.parentChannel ||
-    channel?.parentThread ||
-    null;
+  const parent=channel?.parent||channel?.parentChannel||channel?.parentThread||null;
   if (parent && isTicketLikeCategory(parent)) return true;
   const grandParent = parent?.parent || parent?.parentChannel || null;
   if (grandParent && isTicketLikeCategory(grandParent)) return true;
@@ -990,10 +609,7 @@ function resolveProfileKey(message) {
 function getProfileConfig(message) {
   const key = resolveProfileKey(message);
   const defaults = DEFAULT_AUTOMOD_RUNTIME.profiles.default;
-  const configured =
-    automodRuntimeConfig?.profiles?.[key] ||
-    automodRuntimeConfig?.profiles?.default ||
-    {};
+  const configured=automodRuntimeConfig?.profiles?.[key]||automodRuntimeConfig?.profiles?.default||{};
   return { key, ...defaults, ...configured };
 }
 
@@ -1053,27 +669,9 @@ function normalizeViolationsForHeat(violations = [], options = {}) {
   }
   const items = Array.from(mergedByKey.values());
   const hasInstant = items.some((v) => INSTANT_LINK_KEYS.has(String(v?.key || "")));
-  const textClusterKeys = new Set([
-    "regular_message",
-    "similar_message",
-    "emoji_spam",
-    "new_lines",
-    "zalgo",
-  ]);
-  const attachmentKeys = new Set([
-    "attachment_embed",
-    "attachment_image",
-    "attachment_file",
-    "attachment_link",
-    "attachment_sticker",
-  ]);
-  const mentionKeys = new Set([
-    "mention_user",
-    "mention_role",
-    "mention_everyone",
-    "mention_hour_cap",
-    "mentions_lockdown",
-  ]);
+  const textClusterKeys=new Set(["regular_message","similar_message","emoji_spam","new_lines","zalgo",]);
+  const attachmentKeys=new Set(["attachment_embed","attachment_image","attachment_file","attachment_link","attachment_sticker",]);
+  const mentionKeys=new Set(["mention_user","mention_role","mention_everyone","mention_hour_cap","mentions_lockdown",]);
 
   let textClusterHeat = 0;
   let attachmentClusterHeat = 0;
@@ -1201,10 +799,7 @@ function getPanicState(guildId) {
   const key = String(guildId || "");
   const existing = GUILD_PANIC_STATE.get(key);
   if (existing) return existing;
-  const initial = {
-    activeUntil: 0,
-    triggerAccounts: new Map(),
-  };
+  const initial={activeUntil:0,triggerAccounts:new Map(),};
   GUILD_PANIC_STATE.set(key, initial);
   return initial;
 }
@@ -1212,8 +807,7 @@ function getPanicState(guildId) {
 function prunePanicAccounts(state, at = nowMs()) {
   const minTs = at - PANIC_MODE.triggerWindowMs;
   for (const [userId, payload] of state.triggerAccounts.entries()) {
-    const ts =
-      typeof payload === "number" ? payload : Number(payload?.ts || 0);
+    const ts=typeof payload==="number"?payload:Number(payload?.ts||0);
     if (ts < minTs) state.triggerAccounts.delete(userId);
   }
 }
@@ -1262,18 +856,9 @@ function triggerAutoModPanicExternal(guildId, sourceUserId = "external", options
 
 function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
   if (!PANIC_MODE.enabled) return { activated: false, active: false, count: 0 };
-  const activityBoost = Math.max(
-    0,
-    Math.min(1, Math.floor(Number(options.activityBoost || 0))),
-  );
-  const dbBoost = Math.max(
-    0,
-    Math.min(1, Math.floor(Number(options.dbBoost || 0))),
-  );
-  const raidBoost = Math.max(
-    0,
-    Math.min(1, Math.floor(Number(options.raidBoost || 0))),
-  );
+  const activityBoost=Math.max(0,Math.min(1,Math.floor(Number(options.activityBoost||0))),);
+  const dbBoost=Math.max(0,Math.min(1,Math.floor(Number(options.dbBoost||0))),);
+  const raidBoost=Math.max(0,Math.min(1,Math.floor(Number(options.raidBoost||0))),);
   const state = getPanicState(guildId);
   prunePanicAccounts(state, at);
   state.triggerAccounts.set(String(userId), {
@@ -1308,9 +893,7 @@ function registerGuildInstantSignal(message, at = nowMs()) {
   });
   GUILD_INSTANT_EVENTS.set(guildId, events);
   const uniqueUsers = new Set(events.map((e) => String(e.userId || ""))).size;
-  const youngUsers = new Set(
-    events.filter((e) => e.young).map((e) => String(e.userId || "")),
-  ).size;
+  const youngUsers=new Set(events.filter((e) => e.young).map((e) => String(e.userId||"")),).size;
   return { uniqueUsers, youngUsers };
 }
 
@@ -1323,12 +906,7 @@ function computeNextAutoTimeoutDuration(message, at = nowMs()) {
   if (!key || key.startsWith(":")) {
     return { durationMs: AUTO_TIMEOUT_REGULAR_MS, strike: 1, capReached: false };
   }
-  const existing = AUTO_TIMEOUT_PROFILE.get(key) || {
-    strikes: 0,
-    currentDurationMs: AUTO_TIMEOUT_REGULAR_MS,
-    lastAt: 0,
-    capReached: false,
-  };
+  const existing=AUTO_TIMEOUT_PROFILE.get(key)||{strikes:0,currentDurationMs:AUTO_TIMEOUT_REGULAR_MS,lastAt:0,capReached:false,};
   if (at - Number(existing.lastAt || 0) > AUTO_TIMEOUT_PROFILE_RESET_MS) {
     existing.strikes = 0;
     existing.currentDurationMs = AUTO_TIMEOUT_REGULAR_MS;
@@ -1343,10 +921,7 @@ function computeNextAutoTimeoutDuration(message, at = nowMs()) {
     durationMs = AUTO_TIMEOUT_CAP_MS;
     existing.capReached = true;
   } else if (AUTO_TIMEOUT_MULTIPLIER_ENABLED) {
-    const base = Math.max(
-      AUTO_TIMEOUT_CAP_MS,
-      Number(existing.currentDurationMs || AUTO_TIMEOUT_CAP_MS),
-    );
+    const base=Math.max(AUTO_TIMEOUT_CAP_MS,Number(existing.currentDurationMs||AUTO_TIMEOUT_CAP_MS),);
     durationMs = Math.round(base * (AUTO_TIMEOUT_MULTIPLIER_PERCENT / 100));
     existing.capReached = true;
   } else {
@@ -1380,9 +955,7 @@ function setCachedBadUser(userId, value, ttlMs = 60_000) {
 }
 
 function isBadUserProfileStale(profile, at = nowMs()) {
-  const lastActionAt = profile?.lastActionAt
-    ? new Date(profile.lastActionAt).getTime()
-    : 0;
+  const lastActionAt=profile?.lastActionAt?new Date(profile.lastActionAt).getTime():0;
   if (!Number.isFinite(lastActionAt) || lastActionAt <= 0) return false;
   return at - lastActionAt > AUTO_TIMEOUT_PROFILE_RESET_MS;
 }
@@ -1397,9 +970,7 @@ function isBadUserSuspicious(profile, at = nowMs()) {
 async function getBadUserProfile(userId, guildId = "") {
   const cached = getCachedBadUser(userId);
   if (cached !== undefined) {
-    const joinGateSuspicious = guildId
-      ? await isJoinGateSuspiciousAccount(guildId, userId)
-      : false;
+    const joinGateSuspicious=guildId?await isJoinGateSuspiciousAccount(guildId,userId):false;
     if (!cached) {
       return joinGateSuspicious
         ? {
@@ -1418,9 +989,7 @@ async function getBadUserProfile(userId, guildId = "") {
     };
   }
   if (!isDbReady()) {
-    const joinGateSuspicious = guildId
-      ? await isJoinGateSuspiciousAccount(guildId, userId)
-      : false;
+    const joinGateSuspicious=guildId?await isJoinGateSuspiciousAccount(guildId,userId):false;
     return joinGateSuspicious
       ? {
           suspicious: true,
@@ -1433,26 +1002,10 @@ async function getBadUserProfile(userId, guildId = "") {
       : null;
   }
   try {
-    const row = await AutoModBadUser.findOne(
-      { userId: String(userId) },
-      {
-        _id: 0,
-        userId: 1,
-        totalTriggers: 1,
-        warnPoints: 1,
-        activeStrikes: 1,
-        timeoutActions: 1,
-        activeStrikeReasons: 1,
-        lastTriggerAt: 1,
-        lastActionAt: 1,
-        lastAction: 1,
-      },
-    ).lean();
+    const row=await AutoModBadUser.findOne({userId:String(userId)},{_id:0,userId:1,totalTriggers:1,warnPoints:1,activeStrikes:1,timeoutActions:1,activeStrikeReasons:1,lastTriggerAt:1,lastActionAt:1,lastAction:1,},).lean();
     if (!row) {
       setCachedBadUser(userId, null, 15_000);
-      const joinGateSuspicious = guildId
-        ? await isJoinGateSuspiciousAccount(guildId, userId)
-        : false;
+      const joinGateSuspicious=guildId?await isJoinGateSuspiciousAccount(guildId,userId):false;
       return joinGateSuspicious
         ? {
             suspicious: true,
@@ -1467,12 +1020,7 @@ async function getBadUserProfile(userId, guildId = "") {
 
     const at = nowMs();
     const stale = isBadUserProfileStale(row, at);
-    const normalized = {
-      ...row,
-      warnPoints: stale ? 0 : Math.max(0, Number(row.warnPoints || 0)),
-      activeStrikes: stale ? 0 : Math.max(0, Number(row.activeStrikes || 0)),
-      activeStrikeReasons: stale ? [] : (Array.isArray(row.activeStrikeReasons) ? row.activeStrikeReasons : []),
-    };
+    const normalized={...row,warnPoints:stale?0:Math.max(0,Number(row.warnPoints||0)),activeStrikes:stale?0:Math.max(0,Number(row.activeStrikes||0)),activeStrikeReasons:stale?[]:(Array.isArray(row.activeStrikeReasons)?row.activeStrikeReasons:[]),};
 
     if (stale && (Number(row.warnPoints || 0) > 0 || Number(row.activeStrikes || 0) > 0)) {
       AutoModBadUser.updateOne(
@@ -1488,9 +1036,7 @@ async function getBadUserProfile(userId, guildId = "") {
     }
 
     setCachedBadUser(userId, normalized, 60_000);
-    const joinGateSuspicious = guildId
-      ? await isJoinGateSuspiciousAccount(guildId, userId)
-      : false;
+    const joinGateSuspicious=guildId?await isJoinGateSuspiciousAccount(guildId,userId):false;
     return {
       ...normalized,
       suspicious: Boolean(joinGateSuspicious),
@@ -1538,17 +1084,8 @@ async function markBadUserAction(message, action, violations = []) {
   ) {
     inc.activeStrikes = 1;
   }
-  const strikeReasons = (Array.isArray(violations) ? violations : [])
-    .map((v) => firstViolationLabel([v]))
-    .filter(Boolean)
-    .slice(0, 5);
-  const update = {
-    $set: {
-      lastActionAt: new Date(),
-      lastAction: normalizedAction || null,
-    },
-    $inc: inc,
-  };
+  const strikeReasons=(Array.isArray(violations)?violations:[]).map((v) => firstViolationLabel([v])).filter(Boolean).slice(0,5);
+  const update={$set:{lastActionAt:new Date(),lastAction:normalizedAction||null,},$inc:inc,};
   if (strikeReasons.length) {
     update.$push = { activeStrikeReasons: { $each: strikeReasons, $slice: -40 } };
   }
@@ -1569,23 +1106,7 @@ async function registerAutoModTimeoutStrike(message) {
   const userId = String(message?.author?.id || "");
   if (!userId) return { ok: false, timeoutActions: 0, escalate1h: false };
   try {
-    const updated = await AutoModBadUser.findOneAndUpdate(
-      { userId },
-      {
-        $inc: { timeoutActions: 1 },
-        $set: {
-          lastActionAt: new Date(),
-          lastAction: "timeout",
-          lastGuildId: String(message?.guildId || ""),
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
-        projection: { _id: 0, timeoutActions: 1 },
-      },
-    ).lean();
+    const updated=await AutoModBadUser.findOneAndUpdate({userId},{$inc:{timeoutActions:1},$set:{lastActionAt:new Date(),lastAction:"timeout",lastGuildId:String(message?.guildId||""),},},{upsert:true,new:true,setDefaultsOnInsert:true,projection:{_id:0,timeoutActions:1},},).lean();
     BAD_USER_CACHE.delete(userId);
     const timeoutActions = Math.max(0, Number(updated?.timeoutActions || 0));
     return {
@@ -1603,10 +1124,7 @@ async function shouldEscalateNextAutoTimeout(message) {
   const userId = String(message?.author?.id || "");
   if (!userId) return false;
   try {
-    const row = await AutoModBadUser.findOne(
-      { userId },
-      { _id: 0, timeoutActions: 1 },
-    ).lean();
+    const row=await AutoModBadUser.findOne({userId},{_id:0,timeoutActions:1},).lean();
     const current = Math.max(0, Number(row?.timeoutActions || 0));
     const next = current + 1;
     return next > 0 && next % 5 === 0;
@@ -1623,15 +1141,7 @@ function getState(message) {
   const key = getUserKey(message);
   const existing = USER_STATE.get(key);
   if (existing) return existing;
-  const initial = {
-    heat: 0,
-    lastAt: nowMs(),
-    msgTimes: [],
-    normHistory: [],
-    mentionTimes: [],
-    mentionHourTimes: [],
-    automodHits: [],
-  };
+  const initial={heat:0,lastAt:nowMs(),msgTimes:[],normHistory:[],mentionTimes:[],mentionHourTimes:[],automodHits:[],};
   USER_STATE.set(key, initial);
   return initial;
 }
@@ -1655,22 +1165,13 @@ function cleanupRuntimeMaps(at = nowMs()) {
       continue;
     }
     const idleFor = at - Number(state.lastAt || 0);
-    const stale =
-      idleFor > 2 * 60 * 60_000 &&
-      Number(state.heat || 0) <= 0 &&
-      (!Array.isArray(state.msgTimes) || state.msgTimes.length === 0) &&
-      (!Array.isArray(state.normHistory) || state.normHistory.length === 0) &&
-      (!Array.isArray(state.mentionTimes) || state.mentionTimes.length === 0) &&
-      (!Array.isArray(state.mentionHourTimes) || state.mentionHourTimes.length === 0) &&
-      (!Array.isArray(state.automodHits) || state.automodHits.length === 0);
+    const stale=idleFor>2*60*60_000&&Number(state.heat||0)<=0&&(!Array.isArray(state.msgTimes)||state.msgTimes.length===0)&&(!Array.isArray(state.normHistory)||state.normHistory.length===0)&&(!Array.isArray(state.mentionTimes)||state.mentionTimes.length===0)&&(!Array.isArray(state.mentionHourTimes)||state.mentionHourTimes.length===0)&&(!Array.isArray(state.automodHits)||state.automodHits.length===0);
     if (stale) USER_STATE.delete(key);
   }
 
   for (const [guildId, events] of GUILD_INSTANT_EVENTS.entries()) {
     const minTs = at - Number(PANIC_MODE.raidWindowMs || 120_000);
-    const next = (Array.isArray(events) ? events : []).filter(
-      (item) => Number(item?.ts || 0) >= minTs,
-    );
+    const next=(Array.isArray(events)?events:[]).filter((item) => Number(item?.ts||0)>=minTs,);
     if (!next.length) GUILD_INSTANT_EVENTS.delete(guildId);
     else GUILD_INSTANT_EVENTS.set(guildId, next);
   }
@@ -1741,15 +1242,9 @@ function normalizeContent(content) {
 }
 
 function countDistinctWords(content) {
-  const text = String(content || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  const text=String(content||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   if (!text) return 0;
-  const words = text
-    .split(/[^\p{L}\p{N}]+/gu)
-    .map((x) => String(x || "").trim())
-    .filter((x) => x.length >= 2);
+  const words=text.split(/[^\p{L}\p{N}]+/gu).map((x) => String(x||"").trim()).filter((x) => x.length>=2);
   return new Set(words).size;
 }
 
@@ -1783,9 +1278,7 @@ function stripQuotedAndCodeText(content) {
 
 function detectInvite(content) {
   const text = String(content || "");
-  const match = text.match(
-    /(?:https?:\/\/)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/([a-zA-Z0-9-]{2,})/i,
-  );
+  const match=text.match(/(?:https?:\/\/)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/([a-zA-Z0-9-]{2,})/i,);
   return match ? String(match[1] || "").toLowerCase() : null;
 }
 
@@ -1802,15 +1295,7 @@ function getAllowedInviteCodes(message) {
 function detectScam(content) {
   const text = String(content || "").toLowerCase();
   if (!text) return false;
-  const patterns = [
-    /(discord|steam|epic)[a-z0-9-]*\.(gift|nitro|airdrop|drop|claim|free)/,
-    /(free|claim).{0,18}(nitro|steam|gift)/,
-    /free\s*nitro/,
-    /steam\s*gift/,
-    /airdrop/,
-    /@everyone.{0,40}(nitro|gift|claim)/,
-    /(verify|login).{0,20}(discord|steam|epic).{0,20}(gift|nitro|reward)/,
-  ];
+  const patterns=[/(discord|steam|epic)[a-z0-9-]*\.(gift|nitro|airdrop|drop|claim|free)/,/(free|claim).{0,18}(nitro|steam|gift)/,/free\s*nitro/,/steam\s*gift/,/airdrop/,/@everyone.{0,40}(nitro|gift|claim)/,/(verify|login).{0,20}(discord|steam|epic).{0,20}(gift|nitro|reward)/,];
   return patterns.some((re) => re.test(text));
 }
 
@@ -1851,16 +1336,8 @@ async function expandShortUrl(url, config) {
 
   for (let i = 0; i < maxHops; i += 1) {
     try {
-      const response = await axios.get(current, {
-        maxRedirects: 0,
-        timeout: timeoutMs,
-        validateStatus: (s) => s >= 200 && s < 400,
-        headers: {
-          "User-Agent": "Mozilla/5.0 (AutoMod URL Guard)",
-        },
-      });
-      const nextLocation =
-        response?.headers?.location || response?.headers?.Location || null;
+      const response=await axios.get(current,{maxRedirects:0,timeout:timeoutMs,validateStatus:(s) => s>=200&&s<400,headers:{"User-Agent":"Mozilla/5.0 (AutoMod URL Guard)",},});
+      const nextLocation=response?.headers?.location||response?.headers?.Location||null;
       const parsed = new URL(current);
       finalHost = String(parsed.hostname || "").toLowerCase();
       if (!nextLocation) break;
@@ -1889,22 +1366,9 @@ function isImageAttachment(att) {
 
 async function isNsfwUrl(content, preExtractedUrls = null) {
   if (!TEXT_RULES.nsfwLinks.enabled) return false;
-  const nsfwTokens = [
-    "porn",
-    "xvideos",
-    "xnxx",
-    "xhamster",
-    "hentai",
-    "nsfw",
-    "rule34",
-    "redtube",
-    "youporn",
-    "onlyfans",
-  ];
+  const nsfwTokens=["porn","xvideos","xnxx","xhamster","hentai","nsfw","rule34","redtube","youporn","onlyfans",];
   const shortenerConfig = automodRuntimeConfig?.shorteners || {};
-  const urls = Array.isArray(preExtractedUrls)
-    ? preExtractedUrls
-    : extractUrls(content);
+  const urls=Array.isArray(preExtractedUrls)?preExtractedUrls:extractUrls(content);
   for (const url of urls) {
     let host = String(url.hostname || "").toLowerCase();
     const path = String(url.pathname || "").toLowerCase();
@@ -1924,13 +1388,9 @@ async function isNsfwUrl(content, preExtractedUrls = null) {
 
 async function hasBlacklistedDomain(content, preExtractedUrls = null) {
   if (!TEXT_RULES.linkBlacklist.enabled) return false;
-  const urls = Array.isArray(preExtractedUrls)
-    ? preExtractedUrls
-    : extractUrls(content);
+  const urls=Array.isArray(preExtractedUrls)?preExtractedUrls:extractUrls(content);
   if (!urls.length) return false;
-  const blockedDomains = (TEXT_RULES.linkBlacklist.domains || [])
-    .map((x) => String(x || "").trim().toLowerCase())
-    .filter(Boolean);
+  const blockedDomains=(TEXT_RULES.linkBlacklist.domains||[]).map((x) => String(x||"").trim().toLowerCase()).filter(Boolean);
   if (!blockedDomains.length) return false;
   const shortenerConfig = automodRuntimeConfig?.shorteners || {};
   for (const url of urls) {
@@ -1950,15 +1410,9 @@ function findBlacklistedWordMatch(content) {
   if (!TEXT_RULES.wordBlacklist.enabled) return null;
   const text = String(content || "");
   if (!text) return null;
-  const normalizedBase = text
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
+  const normalizedBase=text.normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   const normalized = toLeetNormalized(normalizedBase);
-  const normalizedTokens = normalized
-    .split(/[^\p{L}\p{N}]+/gu)
-    .map((x) => String(x || "").trim())
-    .filter(Boolean);
+  const normalizedTokens=normalized.split(/[^\p{L}\p{N}]+/gu).map((x) => String(x||"").trim()).filter(Boolean);
   const tokenSet = new Set(normalizedTokens);
 
   if (TEXT_RULES.wordBlacklist.useRacistList) {
@@ -1972,13 +1426,7 @@ function findBlacklistedWordMatch(content) {
       }
     }
     for (const term of CUSTOM_RACIST_WORDS) {
-      const normalizedTerm = toLeetNormalized(
-        String(term || "")
-          .normalize("NFKD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .trim(),
-      );
+      const normalizedTerm=toLeetNormalized(String(term||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),);
       if (!normalizedTerm) continue;
 
       if (/\s/.test(normalizedTerm)) {
@@ -2035,10 +1483,7 @@ function similarityRatio(a, b) {
 function countEmojiApprox(content) {
   const text = String(content || "");
   const custom = (text.match(/<a?:\w+:\d+>/g) || []).length;
-  const unicode =
-    (text.match(
-      /[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu,
-    ) || []).length;
+  const unicode = (text.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu) || []).length;
   return custom + unicode;
 }
 
@@ -2085,11 +1530,7 @@ async function isVerifiedBotMessage(message) {
   if (applicationId && VERIFIED_BOT_IDS.has(applicationId)) return true;
   if (message.author?.bot) {
     try {
-      const flags =
-        message.author.flags ||
-        (typeof message.author.fetchFlags === "function"
-          ? await message.author.fetchFlags().catch(() => null)
-          : null);
+      const flags=message.author.flags||(typeof message.author.fetchFlags==="function"?await message.author.fetchFlags().catch(() => null):null);
       if (flags?.has?.(UserFlagsBitField.Flags.VerifiedBot)) return true;
     } catch {}
   }
@@ -2105,15 +1546,9 @@ async function isVerifiedBotUserId(client, userId) {
   }
   let verified = false;
   try {
-    const user =
-      client?.users?.cache?.get?.(id) ||
-      (await client?.users?.fetch?.(id).catch(() => null));
+    const user=client?.users?.cache?.get?.(id)||(await client?.users?.fetch?.(id).catch(() => null));
     if (user?.bot) {
-      const flags =
-        user.flags ||
-        (typeof user.fetchFlags === "function"
-          ? await user.fetchFlags().catch(() => null)
-          : null);
+      const flags=user.flags||(typeof user.fetchFlags==="function"?await user.fetchFlags().catch(() => null):null);
       verified = Boolean(flags?.has?.(UserFlagsBitField.Flags.VerifiedBot));
     }
   } catch {
@@ -2199,45 +1634,20 @@ async function detectViolations(message, state, profile) {
   const channelId = String(message.channelId || "");
   const parentChannelId = String(message.channel?.parentId || "");
   const statics = getSecurityStaticsSnapshot(String(message?.guild?.id || ""));
-  const dynamicPartneringChannels = Array.isArray(statics?.partneringChannelIds)
-    ? statics.partneringChannelIds.map((id) => String(id || "").trim()).filter(Boolean)
-    : [];
-  const inviteWhitelistSet = new Set([
-    ...INVITE_WHITELIST_CHANNEL_IDS,
-    ...dynamicPartneringChannels,
-  ]);
-  const mentionWhitelistSet = new Set([
-    ...MENTION_WHITELIST_CHANNEL_IDS,
-    ...dynamicPartneringChannels,
-  ]);
-  const everyoneWhitelistSet = new Set([
-    ...EVERYONE_WHITELIST_CHANNEL_IDS,
-    ...dynamicPartneringChannels,
-  ]);
-  const spamWhitelisted =
-    isWhitelistedByCategory(message.channel, SPAM_WHITELIST_CATEGORY_IDS);
-  const inviteWhitelisted = isWhitelistedByChannel(
-    channelId,
-    parentChannelId,
-    inviteWhitelistSet,
-  );
-  const mentionWhitelisted = isWhitelistedByChannel(
-    channelId,
-    parentChannelId,
-    mentionWhitelistSet,
-  );
-  const everyoneWhitelisted = isWhitelistedByChannel(
-    channelId,
-    parentChannelId,
-    everyoneWhitelistSet,
-  );
+  const dynamicPartneringChannels=Array.isArray(statics?.partneringChannelIds)?statics.partneringChannelIds.map((id) => String(id||"").trim()).filter(Boolean):[];
+  const inviteWhitelistSet=new Set([...INVITE_WHITELIST_CHANNEL_IDS,...dynamicPartneringChannels,]);
+  const mentionWhitelistSet=new Set([...MENTION_WHITELIST_CHANNEL_IDS,...dynamicPartneringChannels,]);
+  const everyoneWhitelistSet=new Set([...EVERYONE_WHITELIST_CHANNEL_IDS,...dynamicPartneringChannels,]);
+  const spamWhitelisted=isWhitelistedByCategory(message.channel,SPAM_WHITELIST_CATEGORY_IDS);
+  const inviteWhitelisted=isWhitelistedByChannel(channelId,parentChannelId,inviteWhitelistSet,);
+  const mentionWhitelisted=isWhitelistedByChannel(channelId,parentChannelId,mentionWhitelistSet,);
+  const everyoneWhitelisted=isWhitelistedByChannel(channelId,parentChannelId,everyoneWhitelistSet,);
   const mentionsEnabled = profile?.mentionsEnabled !== false;
   const attachmentsEnabled = profile?.attachmentsEnabled !== false;
   const inviteLinksEnabled = profile?.inviteLinksEnabled !== false;
   const autoLockdownEnabled = automodRuntimeConfig?.autoLockdown?.enabled !== false;
   const hasMeaningfulTextPayload = String(moderationContent || "").trim().length >= 8;
-  const profileHeat = (value, factorKey = "regularMessage") =>
-    applyProfileHeat(applyHeatFactor(factorKey, value), profile);
+  const profileHeat=(value,factorKey="regularMessage") => applyProfileHeat(applyHeatFactor(factorKey,value),profile);
   const legitConversation = looksLikeLegitConversation(moderationContent || content);
   let suspiciousMessageAuthor = false;
   try {
@@ -2313,20 +1723,12 @@ async function detectViolations(message, state, profile) {
   }
 
   const rawUserMentionCount = message.mentions?.users?.size || 0;
-  const repliedUserId = message.mentions?.repliedUser?.id
-    ? String(message.mentions.repliedUser.id)
-    : null;
-  const replyMentionAdjustment =
-    repliedUserId && message.mentions?.users?.has?.(repliedUserId) ? 1 : 0;
-  const userMentionCount = Math.max(
-    0,
-    rawUserMentionCount - replyMentionAdjustment,
-  );
+  const repliedUserId=message.mentions?.repliedUser?.id?String(message.mentions.repliedUser.id):null;
+  const replyMentionAdjustment=repliedUserId&&message.mentions?.users?.has?.(repliedUserId)?1:0;
+  const userMentionCount=Math.max(0,rawUserMentionCount-replyMentionAdjustment,);
   const roleMentionCount = message.mentions?.roles?.size || 0;
   const everyoneMentionCount = message.mentions?.everyone ? 1 : 0;
-  const effectiveMentionCount =
-    (mentionWhitelisted ? 0 : userMentionCount + roleMentionCount) +
-    (everyoneWhitelisted ? 0 : everyoneMentionCount);
+  const effectiveMentionCount=(mentionWhitelisted?0:userMentionCount+roleMentionCount)+(everyoneWhitelisted?0:everyoneMentionCount);
   if (MENTION_RULES.enabled && mentionsEnabled) {
     if (effectiveMentionCount > 0) {
       const shortCap = Math.max(MENTION_LOCKDOWN_TRIGGER * 2, 100);
@@ -2525,10 +1927,8 @@ async function detectViolations(message, state, profile) {
       } else {
       // lowercaseHeat/uppercaseHeat sono percentuali (es. 0.08 = 0.08%): ogni carattere
       // aggiunge quella % del max heat, così l’UI (“Heat Added 0.08%”) è rispettata.
-      const lowerHeat =
-        lower * (Number(TEXT_RULES.characters.lowercaseHeat) / 100) * MAX_HEAT;
-      const upperHeat =
-        upper * (Number(TEXT_RULES.characters.uppercaseHeat) / 100) * MAX_HEAT;
+      const lowerHeat=lower*(Number(TEXT_RULES.characters.lowercaseHeat)/100)*MAX_HEAT;
+      const upperHeat=upper*(Number(TEXT_RULES.characters.uppercaseHeat)/100)*MAX_HEAT;
       const heat = Number((lowerHeat + upperHeat).toFixed(2));
       if (heat > 0) {
         violations.push({
@@ -2548,14 +1948,7 @@ async function detectViolations(message, state, profile) {
     const imageCount = attachmentList.filter((att) => isImageAttachment(att)).length;
     const fileCount = Math.max(0, attachmentList.length - imageCount);
     const linkCount = extractedUrls.length;
-    const isLightMediaOnlyMessage =
-      hasMeaningfulTextPayload === false &&
-      embedCount === 0 &&
-      stickerCount === 0 &&
-      fileCount === 0 &&
-      linkCount === 0 &&
-      imageCount > 0 &&
-      imageCount <= 2;
+    const isLightMediaOnlyMessage=hasMeaningfulTextPayload===false&&embedCount===0&&stickerCount===0&&fileCount===0&&linkCount===0&&imageCount>0&&imageCount<=2;
     const imageHeatMultiplier = isLightMediaOnlyMessage ? 0.6 : 1;
 
     if (ATTACHMENT_RULES.embeds.enabled && embedCount > 0) {
@@ -2666,32 +2059,7 @@ function truncateText(input, max = 700) {
 
 function firstViolationLabel(violations = []) {
   const key = String(violations?.[0]?.key || "unknown");
-  const labels = {
-    regular_message: "Sending too many messages",
-    suspicious_account: "Suspicious account message",
-    similar_message: "Sending similar messages",
-    emoji_spam: "Using too many emojis",
-    new_lines: "Using too many newlines",
-    zalgo: "Using zalgo characters",
-    characters: "Using too many characters",
-    invite: "Posting Discord Server Invites",
-    scam_pattern: "Posting malicious/scam links",
-    nsfw_link: "Posting NSFW links",
-    word_blacklist: "Using blacklisted words",
-    link_blacklist: "Posting blacklisted links",
-    mention_user: "Mention spam (@user)",
-    mention_role: "Mention spam (@role)",
-    mention_everyone: "Mention spam (@everyone/@here)",
-    mention_hour_cap: "Too many mentions in 1h",
-    mentions_lockdown: "Mentions lockdown trigger",
-    attachment_embed: "Embed spam",
-    attachment_image: "Image spam",
-    attachment_file: "File spam",
-    attachment_link: "Link spam",
-    attachment_sticker: "Sticker spam",
-    unwhitelisted_webhook: "Unwhitelisted webhook message",
-    panic_mode: "Panic mode active",
-  };
+  const labels={regular_message:"Sending too many messages",suspicious_account:"Suspicious account message",similar_message:"Sending similar messages",emoji_spam:"Using too many emojis",new_lines:"Using too many newlines",zalgo:"Using zalgo characters",characters:"Using too many characters",invite:"Posting Discord Server Invites",scam_pattern:"Posting malicious/scam links",nsfw_link:"Posting NSFW links",word_blacklist:"Using blacklisted words",link_blacklist:"Posting blacklisted links",mention_user:"Mention spam (@user)",mention_role:"Mention spam (@role)",mention_everyone:"Mention spam (@everyone/@here)",mention_hour_cap:"Too many mentions in 1h",mentions_lockdown:"Mentions lockdown trigger",attachment_embed:"Embed spam",attachment_image:"Image spam",attachment_file:"File spam",attachment_link:"Link spam",attachment_sticker:"Sticker spam",unwhitelisted_webhook:"Unwhitelisted webhook message",panic_mode:"Panic mode active",};
   return labels[key] || key.replace(/_/g, " ");
 }
 
@@ -2704,41 +2072,24 @@ function formatDurationShort(ms) {
 function buildAutoModDecisionExplain(action, heatValue, violations = [], context = {}) {
   const normalizedAction = String(action || "").toLowerCase();
   const heat = Number(heatValue || 0);
-  const topRules = (Array.isArray(violations) ? violations : [])
-    .map((v) => ({
-      key: String(v?.key || "unknown"),
-      heat: Number(v?.heat || 0),
-    }))
-    .sort((a, b) => b.heat - a.heat)
-    .slice(0, 3)
-    .map((v) =>
-      Number.isFinite(v.heat) && v.heat > 0
-        ? `${v.key}:${v.heat.toFixed(1)}`
+  const topRules=(Array.isArray(violations)?violations:[]).map((v) => ({key:String(v?.key||"unknown"),heat:Number(v?.heat||0),})).sort((a,b) => b.heat-a.heat).slice(0,3).map((v) => Number.isFinite(v.heat)&&v.heat>0?`${v.key}:${v.heat.toFixed(1)}`
         : v.key,
     );
   const topRulesText = topRules.length ? topRules.join(" | ") : "n/a";
   const thresholds = getThresholdsForProfile(context?.profile || null);
-  const reason =
-    normalizedAction === "timeout"
-      ? `heat >= timeout (${heat.toFixed(1)} >= ${Number(thresholds.timeout || 0).toFixed(1)})`
+  const reason=normalizedAction==="timeout"?`heat >= timeout (${heat.toFixed(1)}>=${Number(thresholds.timeout||0).toFixed(1)})`
       : normalizedAction === "delete" || normalizedAction === "delete_webhook"
-        ? `heat >= delete (${heat.toFixed(1)} >= ${Number(thresholds.delete || 0).toFixed(1)})`
+        ? `heat>=delete(${heat.toFixed(1)}>=${Number(thresholds.delete||0).toFixed(1)})`
         : normalizedAction === "warn"
-          ? `heat >= warn (${heat.toFixed(1)} >= ${Number(thresholds.warn || 0).toFixed(1)})`
-          : `action=${normalizedAction || "unknown"} heat=${heat.toFixed(1)}`;
+          ? `heat>=warn(${heat.toFixed(1)}>=${Number(thresholds.warn||0).toFixed(1)})`
+          : `action=${normalizedAction||"unknown"}heat=${heat.toFixed(1)}`;
   return `${reason}; top_rules=${topRulesText}`;
 }
 
 function buildAutoModCaseReason(action, violations = [], context = {}) {
-  const keys = Array.isArray(violations)
-    ? violations
-        .map((v) => String(v?.key || "").trim())
-        .filter(Boolean)
-        .slice(0, 6)
-    : [];
+  const keys=Array.isArray(violations)?violations.map((v) => String(v?.key||"").trim()).filter(Boolean).slice(0,6):[];
   const rules = keys.length ? keys.join(", ") : "unknown";
-  const timeoutText = context?.timeoutMs
-    ? ` | timeout ${formatDuration(context.timeoutMs)}`
+  const timeoutText=context?.timeoutMs?` | timeout ${formatDuration(context.timeoutMs)}`
     : "";
   const snippetRaw = String(context?.content || "").trim();
   const snippet = snippetRaw ? ` | msg: ${truncateText(snippetRaw, 120)}` : "";
@@ -2752,39 +2103,11 @@ async function registerAutoModCase(message, action, violations = [], context = {
     const modId = String(message?.client?.user?.id || "");
     if (!guild?.id || !userId || !modId) return null;
     const normalizedAction = String(action || "").trim().toLowerCase();
-    const mappedAction =
-      normalizedAction === "timeout"
-        ? "MUTE"
-        : normalizedAction === "warn"
-          ? "WARN"
-          : "DELETE";
-    const durationMs =
-      mappedAction === "MUTE" && Number(context?.timeoutMs) > 0
-        ? Number(context.timeoutMs)
-        : null;
-    const reason = buildAutoModCaseReason(action, violations, {
-      timeoutMs: durationMs,
-      content: message?.content || "",
-    });
+    const mappedAction=normalizedAction==="timeout"?"MUTE":normalizedAction==="warn"?"WARN":"DELETE";
+    const durationMs=mappedAction==="MUTE"&&Number(context?.timeoutMs)>0?Number(context.timeoutMs):null;
+    const reason=buildAutoModCaseReason(action,violations,{timeoutMs:durationMs,content:message?.content||"",});
     const config = await getModConfig(guild.id);
-    const { doc, created } = await createModCase({
-      guildId: guild.id,
-      action: mappedAction,
-      userId,
-      modId,
-      reason,
-      durationMs,
-      context: {
-        channelId: String(message?.channelId || message?.channel?.id || ""),
-        messageId: String(message?.id || ""),
-      },
-      dedupe: {
-        enabled: true,
-        byMessageId: true,
-        windowMs: 90_000,
-        matchReason: true,
-      },
-    });
+    const{doc,created}=await createModCase({guildId:guild.id,action:mappedAction,userId,modId,reason,durationMs,context:{channelId:String(message?.channelId||message?.channel?.id||""),messageId:String(message?.id||""),},dedupe:{enabled:true,byMessageId:true,windowMs:90_000,matchReason:true,},});
     if (created) {
       await logModCase({
         client: message.client,
@@ -2807,41 +2130,20 @@ async function sendAutomodActionInChannel(
 ) {
   if (!message?.channel?.isTextBased?.()) return;
   const reason = firstViolationLabel(violations);
-  const cooldownKey = [
-    String(message.guildId || "noguild"),
-    String(message.channelId || "nochannel"),
-    String(message.author?.id || "nouser"),
-    String(action || "action"),
-    reason,
-  ].join(":");
+  const cooldownKey=[String(message.guildId||"noguild"),String(message.channelId||"nochannel"),String(message.author?.id||"nouser"),String(action||"action"),reason,].join(":");
   const lastSentAt = ACTION_CHANNEL_LOG_COOLDOWN.get(cooldownKey) || 0;
   if (nowMs() - lastSentAt < ACTION_CHANNEL_LOG_COOLDOWN_MS) return;
   ACTION_CHANNEL_LOG_COOLDOWN.set(cooldownKey, nowMs());
-  const durationLabel = context.timeoutMs
-    ? ` for ${formatDurationShort(context.timeoutMs)}`
+  const durationLabel=context.timeoutMs?` for ${formatDurationShort(context.timeoutMs)}`
     : "";
-  const title =
-    action === "timeout"
-      ? `${message.author.username} has been timed out${durationLabel}`
+  const title=action==="timeout"?`${message.author.username}has been timed out${durationLabel}`
       : action === "delete" || action === "delete_webhook"
-        ? `${message.author.username}'s message has been removed`
-        : `${message.author.username} has been warned`;
+        ? `${message.author.username}'s message has been removed`:`${message.author.username}has been warned`;
 
-  const embed = new EmbedBuilder()
-    .setColor(
-      action === "timeout"
-        ? "#f4d35e"
-        : action === "delete" || action === "delete_webhook"
-          ? "#f59e0b"
-          : "#5865f2",
-    )
-    .setTitle(title)
-    .setDescription(
-      [
-        `${ARROW} **Reason:** ${reason}`,
+  const embed=new EmbedBuilder().setColor(action==="timeout"?"#f4d35e":action==="delete"||action==="delete_webhook"?"#f59e0b":"#5865f2",).setTitle(title).setDescription([`${ARROW}**Reason:**${reason}`,
       ].join("\n"),
     )
-    .setFooter({ text: `${message.author.username} | ${message.author.id}`})
+    .setFooter({ text: `${message.author.username}|${message.author.id}`})
 
   const sent = await message.channel.send({ embeds: [embed] }).catch(() => null);
   if (sent) {
@@ -2864,56 +2166,26 @@ async function sendAutomodLog(
   const primaryFilter = firstViolationLabel(violations);
   const preview = truncateText(message.content, 160);
   const fullMessage = truncateText(message.content, 800);
-  const shouldShowFullMessage =
-    Boolean(fullMessage) &&
-    String(fullMessage) !== String(preview) &&
-    String(message.content || "").trim().length > 160;
-  const timeoutLabel = context.timeoutMs
-    ? ` for ${formatDurationShort(context.timeoutMs)}`
+  const shouldShowFullMessage=Boolean(fullMessage)&&String(fullMessage)!==String(preview)&&String(message.content||"").trim().length>160;
+  const timeoutLabel=context.timeoutMs?` for ${formatDurationShort(context.timeoutMs)}`
     : "";
-  const actionHeadline =
-    action === "timeout"
-      ? `${message.author.username} has been timed out${timeoutLabel}!`
+  const actionHeadline=action==="timeout"?`${message.author.username}has been timed out${timeoutLabel}!`
       : action === "delete" || action === "delete_webhook"
-        ? `${message.author.username}'s message has been removed!`
-        : `${message.author.username} triggered AutoMod!`;
+        ? `${message.author.username}'s message has been removed!`:`${message.author.username}triggered AutoMod!`;
 
-  const embed = new EmbedBuilder()
-    .setColor(
-      action === "timeout"
-        ? "#ED4245"
-        : action === "delete" || action === "delete_webhook"
-          ? "#F59E0B"
-          : "#5865F2",
-    )
-    .setTitle(actionHeadline)
-    .setDescription(
-      [
-        `<:VC_right_arrow:1473441155055096081> **Automod Filter:** ${primaryFilter}`,
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel} [\`${message.channelId}\`]`,
-        preview
-          ? `<:VC_right_arrow:1473441155055096081> **Message:** ${preview}`
+  const embed=new EmbedBuilder().setColor(action==="timeout"?"#ED4245":action==="delete"||action==="delete_webhook"?"#F59E0B":"#5865F2",).setTitle(actionHeadline).setDescription([`<:VC_right_arrow:1473441155055096081> **Automod Filter:** ${primaryFilter}`,
+        `<:VC_right_arrow:1473441155055096081>**Channel:**${message.channel}[\`${message.channelId}\`]`,preview?`<:VC_right_arrow:1473441155055096081> **Message:** ${preview}`
           : null,
         "",
         shouldShowFullMessage ? `*${fullMessage}*` : null,
         "",
-        `<:VC_right_arrow:1473441155055096081> **Member:** ${message.author} [\`${message.author.id}\`]`,
-        `<:VC_right_arrow:1473441155055096081> **Heat:** ${Number(heatValue || 0).toFixed(1)}`,
+        `<:VC_right_arrow:1473441155055096081>**Member:**${message.author}[\`${message.author.id}\`]`,`<:VC_right_arrow:1473441155055096081> **Heat:** ${Number(heatValue||0).toFixed(1)}`,
         context.timeoutMs
-          ? `<:VC_right_arrow:1473441155055096081> **Timeout:** ${formatDurationShort(
-              context.timeoutMs,
-            )}`
+          ? `<:VC_right_arrow:1473441155055096081>**Timeout:**${formatDurationShort(context.timeoutMs,)}`
           : null,
-        `<:VC_right_arrow:1473441155055096081> **Decision:** ${buildAutoModDecisionExplain(
-          action,
-          heatValue,
-          violations,
-          context,
-        )}`,
+        `<:VC_right_arrow:1473441155055096081>**Decision:**${buildAutoModDecisionExplain(action,heatValue,violations,context,)}`,
         violations?.length
-          ? `<:VC_right_arrow:1473441155055096081> **Rules:** ${violations
-              .map((v) => `\`${v.key}\`${v.info ? ` (${v.info})` : ""}`)
-              .join(", ")}`
+          ? `<:VC_right_arrow:1473441155055096081>**Rules:**${violations.map((v) => `\`${v.key}\`${v.info?` (${v.info})` : ""}`).join(", ")}`
           : null,
       ]
         .filter(Boolean)
@@ -2928,28 +2200,14 @@ async function sendPanicModeLog(message, event, count, activeUntil) {
   if (!channel?.isTextBased?.()) return;
   const when = Math.floor(activeUntil / 1000);
   const state = getPanicState(message.guildId);
-  const triggerAccountIds = Array.from(state?.triggerAccounts?.keys?.() || [])
-    .filter(Boolean)
-    .slice(-10);
-  const embed = new EmbedBuilder()
-    .setColor(event === "panic_enabled" ? "#ED4245" : "#5865F2")
-    .setTitle(
-      event === "panic_enabled"
-        ? "AutoMod Panic Mode enabled!"
-        : "AutoMod Panic Mode update",
-    )
-    .setDescription(
-      [
-        `<:VC_right_arrow:1473441155055096081> **Automod Filter:** Panic Mode`,
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel} [\`${message.channelId}\`]`,
-        `<:VC_right_arrow:1473441155055096081> **Member:** ${message.author} [\`${message.author.id}\`]`,
-        `<:VC_right_arrow:1473441155055096081> **Event:** ${event}`,
-        `<:VC_right_arrow:1473441155055096081> **Trigger Accounts:** ${count}/${PANIC_MODE.triggerCount}`,
+  const triggerAccountIds=Array.from(state?.triggerAccounts?.keys?.()||[]).filter(Boolean).slice(-10);
+  const embed=new EmbedBuilder().setColor(event==="panic_enabled"?"#ED4245":"#5865F2").setTitle(event==="panic_enabled"?"AutoMod Panic Mode enabled!":"AutoMod Panic Mode update",).setDescription([`<:VC_right_arrow:1473441155055096081> **Automod Filter:** Panic Mode`,`<:VC_right_arrow:1473441155055096081> **Channel:** ${message.channel}[\`${message.channelId}\`]`,`<:VC_right_arrow:1473441155055096081> **Member:** ${message.author}[\`${message.author.id}\`]`,`<:VC_right_arrow:1473441155055096081> **Event:** ${event}`,
+        `<:VC_right_arrow:1473441155055096081>**Trigger Accounts:**${count}/${PANIC_MODE.triggerCount}`,
         triggerAccountIds.length
-          ? `<:VC_right_arrow:1473441155055096081> **Trigger IDs:** ${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
+          ? `<:VC_right_arrow:1473441155055096081>**Trigger IDs:**${triggerAccountIds.map((id) => `\`${id}\``).join(", ")}`
           : null,
-        `<:VC_right_arrow:1473441155055096081> **Duration:** ${Math.round(PANIC_MODE.durationMs / 60_000)} minutes`,
-        `<:VC_right_arrow:1473441155055096081> **Active Until:** <t:${when}:F>`,
+        `<:VC_right_arrow:1473441155055096081>**Duration:**${Math.round(PANIC_MODE.durationMs/60_000)}minutes`,
+        `<:VC_right_arrow:1473441155055096081>**Active Until:**<t:${when}:F>`,
       ].join("\n"),
     )
     .setTimestamp();
@@ -3003,8 +2261,7 @@ async function timeoutMember(message, state, violations, options = {}) {
   if (!me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) {
     return false;
   }
-  const timedOut = await member
-    .timeout(durationMs, `AutoMod heat ${state.heat.toFixed(1)}`)
+  const timedOut=await member.timeout(durationMs,`AutoMod heat ${state.heat.toFixed(1)}`)
     .then(() => true)
     .catch(() => false);
   if (!timedOut) return false;
@@ -3153,9 +2410,7 @@ async function runAutoModMessage(message) {
     return { blocked: true, action: "delete_webhook", heat: 0 };
   }
   if (!message?.member && message?.guild?.members?.fetch) {
-    const fetchedMember = await message.guild.members
-      .fetch(message.author.id)
-      .catch(() => null);
+    const fetchedMember=await message.guild.members.fetch(message.author.id).catch(() => null);
     if (fetchedMember) {
       try {
         message.member = fetchedMember;
@@ -3176,16 +2431,12 @@ async function runAutoModMessage(message) {
   const state = getState(message);
   decayHeat(state);
   const rawViolations = await detectViolations(message, state, profile);
-  const legitConversation = looksLikeLegitConversation(
-    stripQuotedAndCodeText(String(message.content || "")) || String(message.content || ""),
-  );
+  const legitConversation=looksLikeLegitConversation(stripQuotedAndCodeText(String(message.content||""))||String(message.content||""),);
   const violations = normalizeViolationsForHeat(rawViolations, { legitConversation });
   if (!violations.length) return { blocked: false };
 
   const at = nowMs();
-  const shouldCountForPanic = violations.some((v) =>
-    PANIC_TRIGGER_KEYS.has(String(v?.key || "")),
-  );
+  const shouldCountForPanic=violations.some((v) => PANIC_TRIGGER_KEYS.has(String(v?.key||"")),);
   if (shouldCountForPanic) {
     state.automodHits.push(at);
     trimWindow(state.automodHits, PANIC_MODE.triggerWindowMs, at);
@@ -3213,12 +2464,7 @@ async function runAutoModMessage(message) {
       raidBoost += 1;
     }
 
-    const panic = registerPanicTrigger(
-      message.guildId,
-      message.author.id,
-      { activityBoost, dbBoost, raidBoost },
-      at,
-    );
+    const panic=registerPanicTrigger(message.guildId,message.author.id,{activityBoost,dbBoost,raidBoost},at,);
 
     if (panic.activated) {
       const activeUntil = getPanicState(message.guildId).activeUntil;
@@ -3239,15 +2485,9 @@ async function runAutoModMessage(message) {
     state.heat = MAX_HEAT;
     await markBadUserTrigger(message, violations, state.heat);
     const instantOverrideMs = resolveInstantTimeoutOverrideMs(violations);
-    const done = await timeoutMember(message, state, [
-      ...violations,
-      { key: "panic_mode", heat: 0, info: "raider during panic" },
-    ], { ignoreCooldown: true, forceDurationMs: instantOverrideMs });
+    const done=await timeoutMember(message,state,[...violations,{key:"panic_mode",heat:0,info:"raider during panic"},],{ignoreCooldown:true,forceDurationMs:instantOverrideMs});
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    const deleted = await deleteMessage(message, state, [
-      ...violations,
-      { key: "panic_mode", heat: 0, info: "timeout fallback -> delete" },
-    ]);
+    const deleted=await deleteMessage(message,state,[...violations,{key:"panic_mode",heat:0,info:"timeout fallback -> delete"},]);
     return {
       blocked: Boolean(deleted),
       action: deleted ? "delete" : "enforcement_failed",
@@ -3255,22 +2495,14 @@ async function runAutoModMessage(message) {
     };
   }
 
-  const hasInstantLinkViolation = violations.some((v) =>
-    INSTANT_LINK_KEYS.has(v.key),
-  );
+  const hasInstantLinkViolation=violations.some((v) => INSTANT_LINK_KEYS.has(v.key),);
   if (hasInstantLinkViolation) {
     state.heat = MAX_HEAT;
     await markBadUserTrigger(message, violations, state.heat);
     const instantOverrideMs = resolveInstantTimeoutOverrideMs(violations);
-    const done = await timeoutMember(message, state, violations, {
-      ignoreCooldown: true,
-      forceDurationMs: instantOverrideMs,
-    });
+    const done=await timeoutMember(message,state,violations,{ignoreCooldown:true,forceDurationMs:instantOverrideMs,});
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    const deleted = await deleteMessage(message, state, [
-      ...violations,
-      { key: "link_blacklist", heat: 0, info: "timeout fallback -> delete" },
-    ]);
+    const deleted=await deleteMessage(message,state,[...violations,{key:"link_blacklist",heat:0,info:"timeout fallback -> delete"},]);
     return {
       blocked: Boolean(deleted),
       action: deleted ? "delete" : "enforcement_failed",
@@ -3284,14 +2516,9 @@ async function runAutoModMessage(message) {
 
   if (state.heat >= thresholds.timeout) {
     const timeoutOverrideMs = resolveInstantTimeoutOverrideMs(violations);
-    const done = await timeoutMember(message, state, violations, {
-      forceDurationMs: timeoutOverrideMs,
-    });
+    const done=await timeoutMember(message,state,violations,{forceDurationMs:timeoutOverrideMs,});
     if (done) return { blocked: true, action: "timeout", heat: state.heat };
-    const deleted = await deleteMessage(message, state, [
-      ...violations,
-      { key: "regular_message", heat: 0, info: "timeout fallback -> delete" },
-    ]);
+    const deleted=await deleteMessage(message,state,[...violations,{key:"regular_message",heat:0,info:"timeout fallback -> delete"},]);
     return {
       blocked: Boolean(deleted),
       action: deleted ? "delete" : "enforcement_failed",
@@ -3321,10 +2548,7 @@ async function runAutoModMessage(message) {
 }
 
 function summarizeMapEntries(source, limit = 10) {
-  const entries = Object.entries(source || {}).map(([key, value]) => [
-    key,
-    Number(value || 0),
-  ]);
+  const entries=Object.entries(source||{}).map(([key,value]) => [key,Number(value||0),]);
   entries.sort((a, b) => b[1] - a[1]);
   return entries.slice(0, Math.max(1, Number(limit || 10)));
 }
@@ -3335,13 +2559,7 @@ function getAutoModDashboardData(guildId, options = {}) {
   const limit = Math.max(1, Math.min(20, Number(options.limit || 10)));
   const now = Date.now();
   const guildData = automodMetrics?.guilds?.[gid]?.days || {};
-  const aggregate = {
-    actions: {},
-    rules: {},
-    channels: {},
-    users: {},
-    panicEnabled: 0,
-  };
+  const aggregate={actions:{},rules:{},channels:{},users:{},panicEnabled:0,};
   for (let i = 0; i < days; i += 1) {
     const dayKey = dayKeyFromMs(now - i * 24 * 60 * 60_000);
     const row = guildData[dayKey];
@@ -3390,10 +2608,7 @@ function getAutoModRulesSnapshot() {
 }
 
 function setByPath(target, pathExpr, value) {
-  const path = String(pathExpr || "")
-    .split(".")
-    .map((x) => x.trim())
-    .filter(Boolean);
+  const path=String(pathExpr||"").split(".").map((x) => x.trim()).filter(Boolean);
   if (!path.length) return false;
   if (path.some((key) => ["__proto__", "prototype", "constructor"].includes(key))) {
     return false;
@@ -3444,23 +2659,14 @@ function validateAutoModRuntimeConfig(cfg) {
   ) {
     return { ok: false, reason: "invalid_status_toggles" };
   }
-  const heatChecks = [
-    ["maxHeat", hs.maxHeat, 50, 200],
-    ["decayPerSec", hs.decayPerSec, 0, 10],
-  ];
+  const heatChecks=[["maxHeat",hs.maxHeat,50,200],["decayPerSec",hs.decayPerSec,0,10],];
   for (const [key, value, min, max] of heatChecks) {
     const n = Number(value);
     if (!Number.isFinite(n) || n < min || n > max) {
       return { ok: false, reason: `invalid_heat_${key}` };
     }
   }
-  const autoTimeoutChecks = [
-    ["regularStrikeDurationMs", at.regularStrikeDurationMs, 30_000, 24 * 60 * 60_000],
-    ["capStrikeDurationMs", at.capStrikeDurationMs, 30_000, 28 * 24 * 60 * 60_000],
-    ["capStrike", at.capStrike, 2, 20],
-    ["multiplierPercent", at.multiplierPercent, 100, 500],
-    ["profileResetMs", at.profileResetMs, 60_000, 7 * 24 * 60 * 60_000],
-  ];
+  const autoTimeoutChecks=[["regularStrikeDurationMs",at.regularStrikeDurationMs,30_000,24*60*60_000],["capStrikeDurationMs",at.capStrikeDurationMs,30_000,28*24*60*60_000],["capStrike",at.capStrike,2,20],["multiplierPercent",at.multiplierPercent,100,500],["profileResetMs",at.profileResetMs,60_000,7*24*60*60_000],];
   for (const [key, value, min, max] of autoTimeoutChecks) {
     const n = Number(value);
     if (!Number.isFinite(n) || n < min || n > max) {
@@ -3470,11 +2676,7 @@ function validateAutoModRuntimeConfig(cfg) {
   if (Number(at.capStrikeDurationMs) < Number(at.regularStrikeDurationMs)) {
     return { ok: false, reason: "invalid_autotimeout_cap_duration" };
   }
-  const autoLockdownChecks = [
-    ["mentionTrigger", al.mentionTrigger, 5, 200],
-    ["mentionWindowMs", al.mentionWindowMs, 1_000, 60_000],
-    ["mentionHourCap", al.mentionHourCap, 5, 400],
-  ];
+  const autoLockdownChecks=[["mentionTrigger",al.mentionTrigger,5,200],["mentionWindowMs",al.mentionWindowMs,1_000,60_000],["mentionHourCap",al.mentionHourCap,5,400],];
   for (const [key, value, min, max] of autoLockdownChecks) {
     const n = Number(value);
     if (!Number.isFinite(n) || n < min || n > max) {
@@ -3487,13 +2689,7 @@ function validateAutoModRuntimeConfig(cfg) {
       return { ok: false, reason: `invalid_heatfactor_${key}` };
     }
   }
-  const heatCapChecks = [
-    ["maxPerMessage", hc.maxPerMessage, 20, 200],
-    ["charactersMax", hc.charactersMax, 5, 150],
-    ["textClusterMax", hc.textClusterMax, 5, 150],
-    ["attachmentClusterMax", hc.attachmentClusterMax, 5, 150],
-    ["mentionClusterMax", hc.mentionClusterMax, 5, 200],
-  ];
+  const heatCapChecks=[["maxPerMessage",hc.maxPerMessage,20,200],["charactersMax",hc.charactersMax,5,150],["textClusterMax",hc.textClusterMax,5,150],["attachmentClusterMax",hc.attachmentClusterMax,5,150],["mentionClusterMax",hc.mentionClusterMax,5,200],];
   for (const [key, value, min, max] of heatCapChecks) {
     const n = Number(value);
     if (!Number.isFinite(n) || n < min || n > max) {
@@ -3501,14 +2697,7 @@ function validateAutoModRuntimeConfig(cfg) {
     }
   }
 
-  const panicChecks = [
-    ["triggerCount", 1, 30],
-    ["triggerWindowMs", 10_000, 24 * 60 * 60_000],
-    ["durationMs", 30_000, 24 * 60 * 60_000],
-    ["raidWindowMs", 10_000, 60 * 60_000],
-    ["raidUserThreshold", 1, 100],
-    ["raidYoungThreshold", 1, 100],
-  ];
+  const panicChecks=[["triggerCount",1,30],["triggerWindowMs",10_000,24*60*60_000],["durationMs",30_000,24*60*60_000],["raidWindowMs",10_000,60*60_000],["raidUserThreshold",1,100],["raidYoungThreshold",1,100],];
   for (const [key, min, max] of panicChecks) {
     const value = Number(p[key]);
     if (!Number.isFinite(value) || value < min || value > max) {

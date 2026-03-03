@@ -1,19 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const{ModalBuilder,TextInputBuilder,TextInputStyle,ActionRowBuilder,EmbedBuilder,ButtonBuilder,ButtonStyle,}=require("discord.js");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getGuildChannelCached,
-  getGuildMemberCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
+const BOT_ROOT = path.resolve(__dirname, "..", "..");
 
 const APPLY_HELPER_BUTTON = "apply_helper";
 const APPLY_PM_BUTTON = "apply_partnermanager";
@@ -27,154 +17,24 @@ const APPLY_PEX_REASON_INPUT_ID = "apply_pex_reason";
 const STATE_TTL_MS = 30 * 60 * 1000;
 const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const APPLICATION_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
-const APPLICATION_REACTIONS = [
-  "<:thumbsup:1471292172145004768>",
-  "<:thumbsdown:1471292163957457013>",
-];
+const APPLICATION_REACTIONS=["<:thumbsup:1471292172145004768>","<:thumbsdown:1471292163957457013>",];
 
 const NOMODULI_ROLE_ID = IDs.roles.blacklistModuli;
 const MEMBER_ROLE_ID = IDs.roles.Member;
 const HELPER_ROLE_ID = IDs.roles.Helper;
 const PARTNER_MANAGER_ROLE_ID = IDs.roles.PartnerManager;
-const HELPER_REAPPLY_BLOCK_ROLE_IDS = [
-  IDs.roles.Staff,
-  IDs.roles.Helper,
-  IDs.roles.Mod,
-  IDs.roles.Coordinator,
-  IDs.roles.Supervisor,
-  IDs.roles.HighStaff,
-  IDs.roles.Admin,
-  IDs.roles.Manager,
-  IDs.roles.CoFounder,
-  IDs.roles.Founder,
-].filter(Boolean);
+const HELPER_REAPPLY_BLOCK_ROLE_IDS=[IDs.roles.Staff,IDs.roles.Helper,IDs.roles.Mod,IDs.roles.Coordinator,IDs.roles.Supervisor,IDs.roles.HighStaff,IDs.roles.Admin,IDs.roles.Manager,IDs.roles.CoFounder,IDs.roles.Founder,].filter(Boolean);
 
-const APPLICATION_COOLDOWN_PATH = path.join(
-  process.cwd(),
-  "Data",
-  "applicationCooldowns.json",
-);
-const APPLICATION_COUNTERS_PATH = path.join(
-  process.cwd(),
-  "Data",
-  "applicationCounters.json",
-);
-const APPLICATION_DRAFTS_PATH = path.join(
-  process.cwd(),
-  "Data",
-  "applicationDrafts.json",
-);
+const APPLICATION_COOLDOWN_PATH=path.join(BOT_ROOT,"Data","applicationCooldowns.json",);
+const APPLICATION_COUNTERS_PATH=path.join(BOT_ROOT,"Data","applicationCounters.json",);
+const APPLICATION_DRAFTS_PATH=path.join(BOT_ROOT,"Data","applicationDrafts.json",);
 
 const pendingApplications = new Map();
 const cooldownByUser = new Map();
 const draftByStateKey = new Map();
-const applicationCounters = {
-  helper: 0,
-  partnermanager: 0,
-};
+const applicationCounters={helper:0,partnermanager:0,};
 
-const APPLICATIONS = {
-  helper: {
-    label: "Helper",
-    questions: [
-      {
-        id: "id_discord",
-        text: "1. ID",
-        modalLabel: "1. ID",
-        placeholder: "Copia e incolla il tuo ID di Discord",
-        style: TextInputStyle.Short,
-      },
-      {
-        id: "eta",
-        text: "2. Età",
-        modalLabel: "2. Età",
-        placeholder: "Scrivi la tua età",
-        style: TextInputStyle.Short,
-      },
-      {
-        id: "staff_server",
-        text: "3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi",
-        modalLabel: "3. Esperienze staff",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "motivo_candidatura",
-        text: "4. Come mai ti sei voluto candidare su Vinili & Caffè?",
-        modalLabel: "4. Motivo candidatura",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "aiuto_economico",
-        text: "5. Saresti disposto ad aiutare il server economicamente?",
-        modalLabel: "5. Aiuto economico",
-        placeholder: "Si / No",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "flame_testuale",
-        text: "6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)",
-        modalLabel: "6. Gestione flame",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "comandi_dyno",
-        text: "7. Elenca i comandi di moderazioni più importanti di Dyno",
-        modalLabel: "7. Comandi Dyno",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "critica_staff",
-        text: "8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?",
-        modalLabel: "8. Gestione critica",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "vocale",
-        text: "9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?",
-        modalLabel: "9. Disponibilità vocale",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "definizione_flame",
-        text: "10. Definizione di flame",
-        modalLabel: "10. Definizione flame",
-        style: TextInputStyle.Paragraph,
-      },
-      {
-        id: "troll_pubblico",
-        text: "11. Se due utenti iniziassero a trollare in pubblico, come agiresti?",
-        modalLabel: "11. Gestione troll",
-        style: TextInputStyle.Paragraph,
-      },
-    ],
-  },
-  partnermanager: {
-    label: "Partner Manager",
-    questions: [
-      {
-        id: "id_discord",
-        text: "1. ID",
-        modalLabel: "1. ID",
-        placeholder: "Scrivi il tuo ID di Discord",
-        style: TextInputStyle.Short,
-      },
-      {
-        id: "luminous_nova",
-        text: "2. Conosci il bot Luminous Nova/SkyForce?",
-        modalLabel: "2. Luminous Nova/SkyForce",
-        placeholder: "Si / No",
-        style: TextInputStyle.Short,
-      },
-      {
-        id: "partner_giorno",
-        text: "3. Quante partner fai al giorno?",
-        modalLabel: "3. Partner al giorno",
-        placeholder: "<15 / 15+",
-        style: TextInputStyle.Short,
-      },
-    ],
-  },
-};
+const APPLICATIONS={helper:{label:"Helper",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Copia e incolla il tuo ID di Discord",style:TextInputStyle.Short,},{id:"eta",text:"2. Età",modalLabel:"2. Età",placeholder:"Scrivi la tua età",style:TextInputStyle.Short,},{id:"staff_server",text:"3. Nomina tutti i server dove sei stato staff, per quanto tempo e che ruolo avevi",modalLabel:"3. Esperienze staff",style:TextInputStyle.Paragraph,},{id:"motivo_candidatura",text:"4. Come mai ti sei voluto candidare su Vinili & Caffè?",modalLabel:"4. Motivo candidatura",style:TextInputStyle.Paragraph,},{id:"aiuto_economico",text:"5. Saresti disposto ad aiutare il server economicamente?",modalLabel:"5. Aiuto economico",placeholder:"Si / No",style:TextInputStyle.Paragraph,},{id:"flame_testuale",text:"6. Se due utenti si flammano a vicenda su un determinato argomento, come ti comporti? (in testuale)",modalLabel:"6. Gestione flame",style:TextInputStyle.Paragraph,},{id:"comandi_dyno",text:"7. Elenca i comandi di moderazioni più importanti di Dyno",modalLabel:"7. Comandi Dyno",style:TextInputStyle.Paragraph,},{id:"critica_staff",text:"8. Se una persona critica il server o lo staff in maniera non idonea, come ti comporti?",modalLabel:"8. Gestione critica",style:TextInputStyle.Paragraph,},{id:"vocale",text:"9. Potrai stare in vocale? In caso di risposta positiva, potrai parlare?",modalLabel:"9. Disponibilità vocale",style:TextInputStyle.Paragraph,},{id:"definizione_flame",text:"10. Definizione di flame",modalLabel:"10. Definizione flame",style:TextInputStyle.Paragraph,},{id:"troll_pubblico",text:"11. Se due utenti iniziassero a trollare in pubblico, come agiresti?",modalLabel:"11. Gestione troll",style:TextInputStyle.Paragraph,},],},partnermanager:{label:"Partner Manager",questions:[{id:"id_discord",text:"1. ID",modalLabel:"1. ID",placeholder:"Scrivi il tuo ID di Discord",style:TextInputStyle.Short,},{id:"luminous_nova",text:"2. Conosci il bot Luminous Nova/SkyForce?",modalLabel:"2. Luminous Nova/SkyForce",placeholder:"Si / No",style:TextInputStyle.Short,},{id:"partner_giorno",text:"3. Quante partner fai al giorno?",modalLabel:"3. Partner al giorno",placeholder:"<15 / 15+",style:TextInputStyle.Short,},],},};
 
 function loadCooldownMap() {
   try {
@@ -365,10 +225,7 @@ function hasAnyRole(interaction, roleIds) {
 function getHighestRoleId(interaction, roleIds) {
   const cache = getRoleCache(interaction);
   if (!cache || !Array.isArray(roleIds) || roleIds.length === 0) return null;
-  const roles = roleIds
-    .map((id) => cache.get(id))
-    .filter(Boolean)
-    .sort((a, b) => Number(b.position || 0) - Number(a.position || 0));
+  const roles=roleIds.map((id) => cache.get(id)).filter(Boolean).sort((a,b) => Number(b.position||0)-Number(a.position||0));
   return roles[0]?.id || null;
 }
 
@@ -383,9 +240,7 @@ function hasNoModuliRole(interaction) {
 }
 
 function hasHighStaffRole(interaction) {
-  const highStaffRoleId = IDs?.roles?.HighStaff
-    ? String(IDs.roles.HighStaff)
-    : null;
+  const highStaffRoleId=IDs?.roles?.HighStaff?String(IDs.roles.HighStaff):null;
   if (!highStaffRoleId) return false;
   return Boolean(interaction?.member?.roles?.cache?.has(highStaffRoleId));
 }
@@ -520,9 +375,7 @@ async function enforceEligibility(interaction, type) {
     return false;
   }
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
-    const highestRoleId =
-      getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) ||
-      HELPER_ROLE_ID;
+    const highestRoleId=getHighestRoleId(interaction,HELPER_REAPPLY_BLOCK_ROLE_IDS)||HELPER_ROLE_ID;
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
@@ -547,19 +400,10 @@ function buildModal(type, step, prefillAnswers = {}) {
   const selected = chunks[step - 1];
   if (!selected) return null;
 
-  const modal = new ModalBuilder()
-    .setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
-    .setTitle(`${cfg.label} - Modulo ${step}/${chunks.length}`);
+  const modal=new ModalBuilder().setCustomId(`${MODAL_PREFIX}:${type}:${step}`)
+    .setTitle(`${cfg.label}-Modulo ${step}/${chunks.length}`);
 
-  const rows = selected.map((q) => {
-    const maxLen = q.style === TextInputStyle.Short ? 120 : 1000;
-    const input = new TextInputBuilder()
-      .setCustomId(q.id)
-      .setLabel(String(q.modalLabel || q.text || "Domanda").replace(/\s+/g, " ").trim().slice(0, 45))
-      .setStyle(q.style || TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setPlaceholder(
-        `${String(q.text || q.modalLabel || "Domanda").replace(/\s+/g, " ").trim()} | ${String(q.placeholder || "Rispondi qui").replace(/\s+/g, " ").trim()}`
+  const rows=selected.map((q) => {const maxLen=q.style===TextInputStyle.Short?120:1000;const input=new TextInputBuilder().setCustomId(q.id).setLabel(String(q.modalLabel||q.text||"Domanda").replace(/\s+/g," ").trim().slice(0,45)).setStyle(q.style||TextInputStyle.Paragraph).setRequired(true).setPlaceholder(`${String(q.text||q.modalLabel||"Domanda").replace(/\s+/g," ").trim()}|${String(q.placeholder||"Rispondi qui").replace(/\s+/g," ").trim()}`
           .replace(/\s+/g, " ")
           .trim()
           .slice(0, 100),
@@ -593,14 +437,8 @@ function formatApplicationDescription(type, answers) {
   const cfg = APPLICATIONS[type];
   const blocks = [];
   for (const q of cfg.questions) {
-    const answer =
-      String(answers?.[q.id] || "Nessuna risposta")
-        .replace(/\r/g, "")
-        .replace(/\n{3,}/g, "\n\n")
-        .trim() || "Nessuna risposta";
-    const question = String(q.text || "")
-      .replace(/^(\d+)\./, "$1\\.")
-      .trim();
+    const answer=String(answers?.[q.id]||"Nessuna risposta").replace(/\r/g,"").replace(/\n{3,}/g,"\n\n").trim()||"Nessuna risposta";
+    const question=String(q.text||"").replace(/^(\d+)\./,"$1\\.").trim();
     blocks.push(`**${question}**\n${answer}`);
   }
   return blocks.join("\n\n").trim();
@@ -619,9 +457,7 @@ async function resolveSubmissionChannel(interaction) {
 async function sendIntro(interaction, type) {
   const userId = String(interaction.user?.id || "");
   const embed = buildIntroEmbed(type);
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`${APPLY_START_PREFIX}:${type}:${userId}`)
+  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${userId}`)
       .setLabel("Inizia modulo")
       .setStyle(ButtonStyle.Primary),
   );
@@ -639,9 +475,7 @@ async function handleStartButton(interaction, type, step = 1, forceStep = false)
     const draft = getDraftState(stateKey);
     if (draft?.nextStep > 1) {
       const totalSteps = splitQuestions(APPLICATIONS[type]?.questions || [], 4).length || 1;
-      const row1 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
+      const row1=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${draft.nextStep}`)
           .setLabel(`Riprendi dalla pagina ${draft.nextStep}`)
           .setStyle(ButtonStyle.Primary),
       );
@@ -698,39 +532,26 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
 
   const user = interaction.user;
   const applicationNumber = nextApplicationNumber(type);
-  const embed = new EmbedBuilder()
-    .setColor("#3498DB")
-    .setAuthor({
-      name: user.username,
-      iconURL: user.displayAvatarURL({ size: 128 }),
-    })
-    .setTitle(`CANDIDATURA ${cfg.label.toUpperCase()} (#${applicationNumber})`)
+  const embed=new EmbedBuilder().setColor("#3498DB").setAuthor({name:user.username,iconURL:user.displayAvatarURL({size:128}),}).setTitle(`CANDIDATURA ${cfg.label.toUpperCase()}(#${applicationNumber})`)
     .setDescription(formatApplicationDescription(type, state.answers))
     .setFooter({
-      text: `User ID: ${user.id} • ${new Date().toLocaleString("it-IT")}`,
+      text: `User ID:${user.id}•${new Date().toLocaleString("it-IT")}`,
     })
     .setTimestamp();
 
   const highStaffRoleId = IDs.roles.HighStaff;
   const mention = highStaffRoleId ? `<@&${highStaffRoleId}>` : null;
-  const sent = await channel.send({
-    content: mention || undefined,
-    embeds: [embed],
-    components: [buildCandidatePexRow(type, user.id)],
-  }).catch(() => null);
+  const sent=await channel.send({content:mention||undefined,embeds:[embed],components:[buildCandidatePexRow(type,user.id)],}).catch(() => null);
   if (!sent) return null;
 
   if (typeof sent.startThread === "function") {
-    const threadUserLabel = String(user.globalName || user.username || user.id)
-      .replace(/[\r\n#:@<>`]/g, " ")
+    const threadUserLabel=String(user.globalName||user.username||user.id).replace(/[\r\n#:@<>`]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 70) || user.id;
-    const thread = await sent
-      .startThread({
-        name: `Candidatura ${threadUserLabel}`,
+    const thread=await sent.startThread({name:`Candidatura ${threadUserLabel}`,
         autoArchiveDuration: 1440,
-        reason: `Thread candidatura ${cfg.label} per ${user.tag}`,
+        reason: `Thread candidatura ${cfg.label}per ${user.tag}`,
       })
       .catch(() => null);
     if (thread?.isTextBased?.() && highStaffRoleId) {
@@ -794,9 +615,7 @@ __Per qualsiasi cosa l'High Staff e disponibile__ <a:BL_crown_yellow:13301941035
 async function deleteThreadForStarterMessage(guild, starterMessage) {
   const starterId = String(starterMessage?.id || "");
   if (!/^\d{16,20}$/.test(starterId)) return;
-  const thread =
-    guild.channels.cache.get(starterId) ||
-    (await getGuildChannelCached(guild, starterId));
+  const thread=guild.channels.cache.get(starterId)||(await getGuildChannelCached(guild,starterId));
   if (thread?.isThread?.()) {
     await thread.delete().catch(() => null);
   }
@@ -806,24 +625,18 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
   const targetRoleId = type === "partnermanager" ? PARTNER_MANAGER_ROLE_ID : HELPER_ROLE_ID;
   if (!targetRoleId) return "Ruolo target non configurato.";
 
-  const member =
-    guild.members.cache.get(String(userId)) ||
-    (await getGuildMemberCached(guild, String(userId)));
+  const member=guild.members.cache.get(String(userId))||(await getGuildMemberCached(guild,String(userId)));
   if (!member) return "Utente non trovato nel server.";
   if (member.roles.cache.has(String(targetRoleId))) return "Utente già pexato su quel ruolo.";
 
   await member.roles.add(String(targetRoleId)).catch(() => null);
   if (String(targetRoleId) === String(HELPER_ROLE_ID)) {
     await member.roles.add(String(IDs.roles.Staff)).catch(() => null);
-    const staffChat =
-      guild.channels.cache.get(IDs.channels.staffChat) ||
-      (await getGuildChannelCached(guild, IDs.channels.staffChat));
+    const staffChat=guild.channels.cache.get(IDs.channels.staffChat)||(await getGuildChannelCached(guild,IDs.channels.staffChat));
     await sendHelperWelcome(staffChat, member.user);
   }
   if (String(targetRoleId) === String(PARTNER_MANAGER_ROLE_ID)) {
-    const pmChannel =
-      guild.channels.cache.get(IDs.channels.partnersChat) ||
-      (await getGuildChannelCached(guild, IDs.channels.partnersChat));
+    const pmChannel=guild.channels.cache.get(IDs.channels.partnersChat)||(await getGuildChannelCached(guild,IDs.channels.partnersChat));
     await sendPartnerManagerWelcome(pmChannel, member.user);
   }
 
@@ -838,9 +651,7 @@ async function applyCandidatePex(guild, actor, type, userId, reason, sourceMessa
   });
   await staffDoc.save();
 
-  const pexDepexChannel =
-    guild.channels.cache.get(IDs.channels.pexDepex) ||
-    (await getGuildChannelCached(guild, IDs.channels.pexDepex));
+  const pexDepexChannel=guild.channels.cache.get(IDs.channels.pexDepex)||(await getGuildChannelCached(guild,IDs.channels.pexDepex));
   if (pexDepexChannel?.isTextBased?.()) {
     const oldRole = guild.roles.cache.get(roleBeforeId);
     const newRole = guild.roles.cache.get(String(targetRoleId));
@@ -911,9 +722,7 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   if (type === "helper" && hasAnyRole(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS)) {
     pendingApplications.delete(stateKey);
     clearDraftState(stateKey);
-    const highestRoleId =
-      getHighestRoleId(interaction, HELPER_REAPPLY_BLOCK_ROLE_IDS) ||
-      HELPER_ROLE_ID;
+    const highestRoleId=getHighestRoleId(interaction,HELPER_REAPPLY_BLOCK_ROLE_IDS)||HELPER_ROLE_ID;
     await interaction.reply({
       embeds: [buildAlreadyRoleEmbed(highestRoleId)],
       flags: 1 << 6,
@@ -957,10 +766,8 @@ async function handleModalSubmit(interaction, type, stepRaw) {
   if (nextStep <= chunks.length) {
     pendingApplications.set(stateKey, activeState);
     setDraftState(stateKey, activeState.answers, nextStep);
-    const controls = [
-      new ButtonBuilder()
-        .setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
-        .setLabel(`Continua modulo (${nextStep}/${chunks.length})`)
+    const controls=[new ButtonBuilder().setCustomId(`${APPLY_START_PREFIX}:${type}:${interaction.user.id}:${nextStep}`)
+        .setLabel(`Continua modulo(${nextStep}/${chunks.length})`)
         .setStyle(ButtonStyle.Primary),
     ];
     if (step >= 1) {
@@ -997,16 +804,9 @@ async function handleCandidatureApplicationInteraction(interaction) {
         }).catch(() => null);
         return true;
       }
-      const modal = new ModalBuilder()
-        .setCustomId(`${APPLY_PEX_MODAL_PREFIX}:${parsed.type}:${parsed.userId}:${interaction.message.id}`)
+      const modal=new ModalBuilder().setCustomId(`${APPLY_PEX_MODAL_PREFIX}:${parsed.type}:${parsed.userId}:${interaction.message.id}`)
         .setTitle("Motivo Pex Candidatura");
-      const reasonInput = new TextInputBuilder()
-        .setCustomId(APPLY_PEX_REASON_INPUT_ID)
-        .setLabel("Motivo")
-        .setStyle(TextInputStyle.Paragraph)
-        .setRequired(true)
-        .setMinLength(3)
-        .setMaxLength(500);
+      const reasonInput=new TextInputBuilder().setCustomId(APPLY_PEX_REASON_INPUT_ID).setLabel("Motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(3).setMaxLength(500);
       modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
       await interaction.showModal(modal).catch(() => null);
       return true;
@@ -1090,9 +890,7 @@ async function handleCandidatureApplicationInteraction(interaction) {
       }).catch(() => null);
       return true;
     }
-    const reason = String(
-      interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID) || "",
-    ).trim();
+    const reason=String(interaction.fields.getTextInputValue(APPLY_PEX_REASON_INPUT_ID)||"",).trim();
     if (!reason) {
       await interaction.reply({
         content: "<:vegax:1443934876440068179> Devi inserire un motivo valido.",
@@ -1100,17 +898,8 @@ async function handleCandidatureApplicationInteraction(interaction) {
       }).catch(() => null);
       return true;
     }
-    const srcMessage = await interaction.channel?.messages
-      ?.fetch(parsed.messageId)
-      .catch(() => null);
-    const status = await applyCandidatePex(
-      interaction.guild,
-      interaction.user,
-      parsed.type,
-      parsed.userId,
-      reason,
-      srcMessage,
-    );
+    const srcMessage=await interaction.channel?.messages?.fetch(parsed.messageId).catch(() => null);
+    const status=await applyCandidatePex(interaction.guild,interaction.user,parsed.type,parsed.userId,reason,srcMessage,);
     await interaction.reply({
       content: status,
       flags: 1 << 6,

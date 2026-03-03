@@ -18,11 +18,7 @@ function normalizeData(raw) {
   const out = {};
   for (const [guildId, list] of Object.entries(raw)) {
     if (!Array.isArray(list)) continue;
-    const unique = new Set(
-      list
-        .map((id) => String(id))
-        .filter((id) => id && id !== "undefined" && id !== "null"),
-    );
+    const unique=new Set(list.map((id) => String(id)).filter((id) => id&&id!=="undefined"&&id!=="null"),);
     out[String(guildId)] = [...unique];
   }
   return out;
@@ -138,10 +134,7 @@ async function getNoDmSet(guildId) {
 
   if (isDbReady()) {
     await migrateFileToDbOnce();
-    const rows = await NoDmPreference.find(
-      { guildId: key },
-      { _id: 0, userId: 1 },
-    ).lean();
+    const rows=await NoDmPreference.find({guildId:key},{_id:0,userId:1},).lean();
     return new Set(rows.map((row) => String(row.userId)));
   }
 

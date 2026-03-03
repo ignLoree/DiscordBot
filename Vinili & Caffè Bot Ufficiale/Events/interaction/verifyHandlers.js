@@ -3,30 +3,13 @@ const PImage = require("pureimage");
 const { PassThrough } = require("stream");
 const path = require("path");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getClientGuildCached,
-  getGuildChannelCached,
-  getGuildMemberCached,
-  getGuildRoleCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getClientGuildCached,getGuildChannelCached,getGuildMemberCached,getGuildRoleCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const VERIFY_CODE_TTL_MS = 5 * 60 * 1000;
 const VERIFY_MAX_ATTEMPTS = 3;
 const CENTRAL_VERIFY_LOG_CHANNEL_ID = IDs.channels.verifyLogs || IDs.channels.modLogs || "1442569294796820541";
 const VERIFY_PING_CHANNEL_ID = IDs.channels.news;
-const VERIFY_CAPTCHA = {
-  width: 300,
-  height: 100,
-  fontSize: 40,
-  fontColor: "#33d17a",
-  codeLength: 6,
-  charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-  decoys: {
-    trace: true,
-    mixedUnderEach: true,
-    spreadAround: true,
-  },
-};
+const VERIFY_CAPTCHA={width:300,height:100,fontSize:40,fontColor:"#33d17a",codeLength:6,charset:"ABCDEFGHIJKLMNOPQRSTUVWXYZ",decoys:{trace:true,mixedUnderEach:true,spreadAround:true,},};
 
 const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
 function isSponsorGuildVerify(guildId) {
@@ -61,20 +44,11 @@ async function isUserVerifiedInMainGuild(client, userId) {
 }
 
 const { upsertVerifiedMember, applyTenureForMember, } = require("../../Services/Community/communityOpsService");
-const {
-  VerificationTenure,
-} = require("../../Schemas/Community/communitySchemas");
+const{VerificationTenure,}=require("../../Schemas/Community/communitySchemas");
 
 const verifyState = new Map();
 
-const fontPath = path.join(
-  __dirname,
-  "..",
-  "..",
-  "UI",
-  "Fonts",
-  "Mojangles.ttf",
-);
+const fontPath=path.join(__dirname,"..","..","UI","Fonts","Mojangles.ttf",);
 let captchaFontFamily = "captcha";
 
 try {
@@ -382,9 +356,7 @@ async function finalizeVerification(interaction, member) {
     return true;
   }
 
-  const freshMember =
-    member?.id &&
-    (await getGuildMemberCached(guild, member.id, { preferFresh: true }));
+  const freshMember=member?.id&&(await getGuildMemberCached(guild,member.id,{preferFresh:true}));
   const targetMember = freshMember || member;
   if (!targetMember?.roles?.cache) {
     await safeReply(interaction, {
@@ -415,9 +387,7 @@ async function finalizeVerification(interaction, member) {
     return true;
   }
 
-  const rolesToAdd = validRoleIds.filter(
-    (id) => !targetMember.roles.cache.has(id),
-  );
+  const rolesToAdd=validRoleIds.filter((id) => !targetMember.roles.cache.has(id),);
   await safeDeferReply(interaction, { flags: 1 << 6 });
 
   if (rolesToAdd.length > 0) {
@@ -427,38 +397,24 @@ async function finalizeVerification(interaction, member) {
   }
 
   try {
-    const record = await upsertVerifiedMember(
-      guildId,
-      targetMember.id,
-      new Date(),
-    );
+    const record=await upsertVerifiedMember(guildId,targetMember.id,new Date(),);
     await applyTenureForMember(targetMember, record);
   } catch (err) {
     global.logger?.warn?.("[VERIFY] upsertVerifiedMember/applyTenureForMember:", err);
   }
 
   const mainGuild = await getMainGuild(interaction.client);
-  const logChannel = mainGuild
-    ? await getGuildChannelCached(mainGuild, CENTRAL_VERIFY_LOG_CHANNEL_ID)
-    : null;
+  const logChannel=mainGuild?await getGuildChannelCached(mainGuild,CENTRAL_VERIFY_LOG_CHANNEL_ID):null;
   if (logChannel?.isTextBased?.()) {
     const createdAtUnix = Math.floor(interaction.user.createdTimestamp / 1000);
     const createdAtText = `<t:${createdAtUnix}:F>`;
     const safeUsername = sanitizeEmbedText(interaction.user.username);
     const serverName = guild?.name || "Unknown";
 
-    const logEmbed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle(`**${safeUsername}'s Verification Result**`)
-      .setDescription(
-        `<:profile:1461732907508039834> **Member**: ${safeUsername} **[${interaction.user.id}]**\n` +
-          `<:creation:1461732905016492220> Creation: ${createdAtText}\n` +
-          `**Server**: ${sanitizeEmbedText(serverName)}\n\n` +
+    const logEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle(`**${safeUsername}'s Verification Result**`).setDescription(`<:profile:1461732907508039834> **Member**: ${safeUsername}**[${interaction.user.id}]**\n` +`<:creation:1461732905016492220>Creation:${createdAtText}\n` +
+          `**Server**:${sanitizeEmbedText(serverName)}\n\n` +
           "Status:\n" +
-          `<:space:1461733157840621608><:success:1461731530333229226> \`${safeUsername}\` has passed verification successfully.\n` +
-          "<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",
-      )
-      .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true }));
+          `<:space:1461733157840621608><:success:1461731530333229226>\`${safeUsername}\` has passed verification successfully.\n`+"<:space:1461733157840621608><:space:1461733157840621608><:rightSort:1461726104422453298> Auto roles have been assigned as well.",).setThumbnail(interaction.user.displayAvatarURL({dynamic:true}));
 
     await logChannel.send({ embeds: [logEmbed] }).catch((err) => {
       global.logger?.warn?.("[VERIFY] Failed to send verification log:", err);
@@ -467,12 +423,9 @@ async function finalizeVerification(interaction, member) {
     global.logger?.warn?.("[VERIFY] Central verify log channel not found:", CENTRAL_VERIFY_LOG_CHANNEL_ID);
   }
 
-  const pingChannel = VERIFY_PING_CHANNEL_ID
-    ? await getGuildChannelCached(guild, VERIFY_PING_CHANNEL_ID)
-    : null;
+  const pingChannel=VERIFY_PING_CHANNEL_ID?await getGuildChannelCached(guild,VERIFY_PING_CHANNEL_ID):null;
   if (pingChannel) {
-    const pingMsg = await pingChannel
-      .send({ content: `<@${interaction.user.id}>` })
+    const pingMsg=await pingChannel.send({content:`<@${interaction.user.id}>` })
       .catch(() => null);
     if (pingMsg) setTimeout(() => pingMsg.delete().catch(() => {}), 1);
   }
@@ -536,9 +489,7 @@ async function handleVerifyInteraction(interaction) {
 
       const code = makeCode(VERIFY_CAPTCHA.codeLength);
       const captchaPng = await makeCaptchaPng(code);
-      const captchaFile = new AttachmentBuilder(captchaPng, {
-        name: "captcha.png",
-      });
+      const captchaFile=new AttachmentBuilder(captchaPng,{name:"captcha.png",});
 
       verifyState.set(interaction.user.id, {
         code,
@@ -546,25 +497,9 @@ async function handleVerifyInteraction(interaction) {
         attemptsLeft: VERIFY_MAX_ATTEMPTS,
       });
 
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n` +
-            "`Please type the captcha below to be able to access this server!`\n\n" +
-            "**Additional Notes:**\n" +
-            "<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n" +
-            "<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n" +
-            "<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n",
-        )
-        .setFooter({ text: "Verification Period: 5 minutes" })
-        .setImage("attachment://captcha.png");
+      const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`<:verification:1461725843125571758> Hello! Are you human? Let's find out!\n`+"`Please type the captcha below to be able to access this server!`\n\n"+"**Additional Notes:**\n"+"<:tracedColored:1461728858955976805> Type out the traced colored characters from left to right.\n"+"<:decoy:1461728857114546421> Ignore the decoy characters spread-around.\n"+"<:nocases:1461728855642341509> You do not have to respect characters cases (upper/lower case)!\n\n",).setFooter({text:"Verification Period: 5 minutes"}).setImage("attachment://captcha.png");
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("verify_enter")
-          .setLabel("Answer")
-          .setStyle(ButtonStyle.Primary),
-      );
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("verify_enter").setLabel("Answer").setStyle(ButtonStyle.Primary),);
 
       await safeEditReply(interaction, {
         embeds: [embed],
@@ -615,16 +550,9 @@ async function handleVerifyInteraction(interaction) {
       state.promptMessage = interaction.message;
       verifyState.set(interaction.user.id, state);
 
-      const modal = new ModalBuilder()
-        .setCustomId(`verify_code:${interaction.user.id}`)
+      const modal=new ModalBuilder().setCustomId(`verify_code:${interaction.user.id}`)
         .setTitle("Captcha Answer");
-      const input = new TextInputBuilder()
-        .setCustomId("verify_input")
-        .setLabel("Answer")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true)
-        .setPlaceholder("Type the captcha text here")
-        .setMaxLength(VERIFY_CAPTCHA.codeLength);
+      const input=new TextInputBuilder().setCustomId("verify_input").setLabel("Answer").setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder("Type the captcha text here").setMaxLength(VERIFY_CAPTCHA.codeLength);
 
       const row = new ActionRowBuilder().addComponents(input);
       modal.addComponents(row);

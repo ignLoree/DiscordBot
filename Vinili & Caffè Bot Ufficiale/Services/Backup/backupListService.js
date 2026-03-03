@@ -2,15 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, 
 const { listAllBackupMetasPaginated, readBackupByIdGlobal } = require("./serverBackupService");
 
 const PAGE_SIZE = 10;
-const CHANNEL_TYPE_LABEL = {
-  0: "#",
-  2: "🔊",
-  4: "▾",
-  5: "📢",
-  13: "🎙",
-  15: "🧵",
-  16: "🧵",
-};
+const CHANNEL_TYPE_LABEL={0:"#",2:"🔊",4:"▾",5:"📢",13:"🎙",15:"🧵",16:"🧵",};
 
 function splitCustomId(customId) {
   return String(customId || "").split(":");
@@ -37,9 +29,7 @@ function truncateLines(lines, maxLines = 32) {
 }
 
 function toCodeBlock(lines) {
-  const safe = truncateLines(lines)
-    .join("\n")
-    .slice(0, 950);
+  const safe=truncateLines(lines).join("\n").slice(0,950);
   return `\`\`\`\n${safe || "-"}\n\`\`\``;
 }
 
@@ -94,23 +84,15 @@ function formatChannelList(channels = []) {
 }
 
 function formatRoleList(roles = []) {
-  const sorted = [...roles].sort(
-    (a, b) => Number(b?.position ?? 0) - Number(a?.position ?? 0),
-  );
+  const sorted=[...roles].sort((a,b) => Number(b?.position??0)-Number(a?.position??0),);
   return sorted.map((role, idx) => `${idx + 1}. ${role.name}`);
 }
 
 function countMessages(payload) {
   const chMap = payload?.messages?.channels || {};
   const thMap = payload?.messages?.threads || {};
-  const channels = Object.values(chMap).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
-  const threads = Object.values(thMap).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
+  const channels=Object.values(chMap).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
+  const threads=Object.values(thMap).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
   return channels + threads;
 }
 
@@ -138,9 +120,7 @@ function buildInfoButtons(backupId, ownerId, sourceGuildId = null) {
 
 function buildListSelectionInfoEmbed(backupId, payload, sizeBytes) {
   const guild = payload?.guild || {};
-  const createdAtTs = Math.floor(
-    new Date(payload?.createdAt || Date.now()).getTime() / 1000,
-  );
+  const createdAtTs=Math.floor(new Date(payload?.createdAt||Date.now()).getTime()/1000,);
   const roleList = Array.isArray(payload?.roles) ? payload.roles : [];
   const channelList = Array.isArray(payload?.channels) ? payload.channels : [];
   const roles = roleList.length;
@@ -209,31 +189,27 @@ function buildListComponents({ ownerId, pageData }) {
   const page = Number(pageData?.page || 1);
   const totalPages = Number(pageData?.totalPages || 1);
 
-  const select = new StringSelectMenuBuilder()
-    .setCustomId(`backup_list_select:${ownerId}:${page}`)
+  const select=new StringSelectMenuBuilder().setCustomId(`backup_list_select:${ownerId}:${page}`)
     .setPlaceholder("Select a backup")
     .setMinValues(1)
     .setMaxValues(1)
     .addOptions(
       items.map((item) => {
         const backupId = String(item?.backupId || "").toUpperCase();
-        const backupRef = String(
-          item?.guildId ? `${item.guildId}:${backupId}` : backupId,
+        const backupRef=String(item?.guildId?`${item.guildId}:${backupId}` : backupId,
         ).slice(0, 100);
         const guildName = truncate(item?.guildName || "Server sconosciuto", 70);
         const ts = toUnix(item?.createdAt);
         return {
           label: backupId.slice(0, 100),
           value: backupRef,
-          description: truncate(`${guildName} | ${new Date(ts * 1000).toLocaleString("it-IT")}`, 100),
+          description: truncate(`${guildName}|${new Date(ts*1000).toLocaleString("it-IT")}`, 100),
         };
       }),
     );
 
   const selectRow = new ActionRowBuilder().addComponents(select);
-  const buttons = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`backup_list_prev:${ownerId}:${page}`)
+  const buttons=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`backup_list_prev:${ownerId}:${page}`)
       .setLabel("Previous Page")
       .setStyle(ButtonStyle.Primary)
       .setDisabled(page <= 1),
@@ -248,10 +224,7 @@ function buildListComponents({ ownerId, pageData }) {
 }
 
 async function renderList(interaction, ownerId, page) {
-  const pageData = await listAllBackupMetasPaginated({
-    page,
-    pageSize: PAGE_SIZE,
-  });
+  const pageData=await listAllBackupMetasPaginated({page,pageSize:PAGE_SIZE,});
 
   if (!pageData.items.length) {
     return {
@@ -276,10 +249,7 @@ async function handleBackupListInteraction(interaction) {
   const isButton = interaction?.isButton?.();
   const isSelect = interaction?.isStringSelectMenu?.();
 
-  const isTarget =
-    customId.startsWith("backup_list_prev:") ||
-    customId.startsWith("backup_list_next:") ||
-    customId.startsWith("backup_list_select:");
+  const isTarget=customId.startsWith("backup_list_prev:")||customId.startsWith("backup_list_next:")||customId.startsWith("backup_list_select:");
   if (!isTarget) return false;
 
   const [, ownerId, pageRaw] = splitCustomId(customId);

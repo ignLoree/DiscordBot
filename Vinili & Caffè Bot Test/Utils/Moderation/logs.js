@@ -1,16 +1,6 @@
 const { inspect } = require("node:util");
 
-const color = {
-  red: "\x1b[31m",
-  orange: "\x1b[38;5;202m",
-  yellow: "\x1b[33m",
-  green: "\x1b[32m",
-  blue: "\x1b[34m",
-  pink: "\x1b[38;5;213m",
-  torquise: "\x1b[38;5;45m",
-  purple: "\x1b[38;5;57m",
-  reset: "\x1b[0m",
-};
+const color ={red:"\x1b[31m",orange:"\x1b[38;5;202m",yellow:"\x1b[33m",green:"\x1b[32m",blue:"\x1b[34m",pink:"\x1b[38;5;213m",torquise:"\x1b[38;5;45m",purple:"\x1b[38;5;57m",reset:"\x1b[0m",};
 
 function getTimestamp() {
   const date = new Date();
@@ -38,10 +28,7 @@ function write(message = "", prefix = "", colors = true) {
     return;
   }
 
-  const properties = inspect(message, {
-    depth: 3,
-    colors: Boolean(colors && typeof message !== "string"),
-  });
+  const properties = inspect(message,{depth:3,colors:Boolean(colors && typeof message !== "string"),});
   const regex = /^\s*["'`](.*)["'`]\s*\+?$/gm;
   const lines = properties.split("\n");
   for (let i = 0; i < lines.length; i += 1) {

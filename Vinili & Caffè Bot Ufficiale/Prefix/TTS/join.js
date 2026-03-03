@@ -11,21 +11,14 @@ module.exports = {
     const voiceChannel = message.member?.voice?.channel;
 
     if (!voiceChannel) {
-      const warnEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("Devi essere in un canale vocale.");
-      const warn = await safeMessageReply(
-        message,
-        { embeds: [warnEmbed] },
-      );
+      const warnEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Devi essere in un canale vocale.");
+      const warn=await safeMessageReply(message,{embeds:[warnEmbed]},);
       if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
       return;
     }
 
     if (!voiceChannel.joinable) {
-      const noPermEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("Non ho i permessi per entrare in quel canale vocale.");
+      const noPermEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("Non ho i permessi per entrare in quel canale vocale.");
       return safeMessageReply(
         message,
         { embeds: [noPermEmbed] },
@@ -39,10 +32,7 @@ module.exports = {
       botVoiceChannel &&
       botVoiceChannel.id !== voiceChannel.id
     ) {
-      const inUseEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription(
-          `You already own a session in ${botVoiceChannel}, use the join command if you want it here instead!`,
+      const inUseEmbed=new EmbedBuilder().setColor("#ED4245").setDescription(`You already own a session in ${botVoiceChannel},use the join command if you want it here instead!`,
         );
       return safeMessageReply(message, { embeds: [inUseEmbed] });
     }
@@ -54,9 +44,7 @@ module.exports = {
       channelId: voiceChannel.id,
     });
 
-    const okEmbed = new EmbedBuilder()
-      .setColor("#57F287")
-      .setDescription("Connesso al canale vocale.");
+    const okEmbed=new EmbedBuilder().setColor("#57F287").setDescription("Connesso al canale vocale.");
     return safeMessageReply(
       message,
       { embeds: [okEmbed] },

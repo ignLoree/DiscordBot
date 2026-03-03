@@ -4,9 +4,7 @@ const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth, maxLines = Infinity) {
   const lines = [];
-  const words = String(text || "")
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = String(text || "").split(/\s+/).filter(Boolean);
   let line = "";
   for (const word of words) {
     const test = line ? `${line} ${word}` : word;

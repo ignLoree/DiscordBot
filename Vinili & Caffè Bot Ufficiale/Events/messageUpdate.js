@@ -3,9 +3,7 @@ const IDs = require("../Utils/Config/ids");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 
 const MAX_EMBED_DIFF_LENGTH = 900;
-const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
-  [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
-);
+const VERIFICATION_EXCLUDED_CHANNEL_IDS=new Set([IDs.channels.verify,IDs.channels.clickMe].filter(Boolean).map(String),);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -47,11 +45,9 @@ function attachmentsChanged(beforeNames, afterNames) {
 }
 
 function formatAttachmentsChange(beforeNames, afterNames) {
-  const oldLabel = beforeNames.length
-    ? `[ ${beforeNames.join(", ")} ]`
+  const oldLabel=beforeNames.length?`[ ${beforeNames.join(", ")}]`
     : "[ nessuno ]";
-  const newLabel = afterNames.length
-    ? `[ ${afterNames.join(", ")} ]`
+  const newLabel=afterNames.length?`[ ${afterNames.join(", ")}]`
     : "[ nessuno ]";
   return `${oldLabel} -> ${newLabel}`;
 }
@@ -59,12 +55,8 @@ function formatAttachmentsChange(beforeNames, afterNames) {
 function buildEditLogText(previous, updated, beforeNames, afterNames) {
   const oldContent = String(previous?.content || "");
   const newContent = String(updated?.content || "");
-  const oldAttachments = beforeNames.length
-    ? beforeNames.join(", ")
-    : "nessuno";
-  const newAttachments = afterNames.length
-    ? afterNames.join(", ")
-    : "nessuno";
+  const oldAttachments=beforeNames.length?beforeNames.join(", "):"nessuno";
+  const newAttachments=afterNames.length?afterNames.join(", "):"nessuno";
 
   return [
     "------ MESSAGE EDIT LOG ------",
@@ -148,10 +140,7 @@ async function sendMessageEditLog(previous, updated) {
   if (updated?.webhookId) actorFlags.push("WEBHOOK");
   const actorSuffix = actorFlags.length ? ` [${actorFlags.join("/")}]` : "";
 
-  const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Autore:** ${updated.author}${actorSuffix} \`${updated.author.id}\``,
-    `<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel || "#sconosciuto"} • \`${updated.id}\``,
-    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const lines=[`<:VC_right_arrow:1473441155055096081> **Autore:** ${updated.author}${actorSuffix}\`${updated.author.id}\``,`<:VC_right_arrow:1473441155055096081> **Target:** ${updated.channel||"#sconosciuto"}•\`${updated.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
     "",
     "**Changes**",
   ];
@@ -177,10 +166,7 @@ async function sendMessageEditLog(previous, updated) {
     lines.push(formatAttachmentsChange(beforeNames, afterNames));
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle("Message Edited")
-    .setDescription(lines.join("\n"));
+  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Message Edited").setDescription(lines.join("\n"));
 
   const preview = firstImageAttachment(updated);
   if (preview?.url) {
@@ -189,12 +175,7 @@ async function sendMessageEditLog(previous, updated) {
 
   const payload = { embeds: [embed], files };
   if (isHttpUrl(updated.url)) {
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setLabel("Go to Message")
-        .setURL(updated.url),
-    );
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Go to Message").setURL(updated.url),);
     payload.components = [row];
   }
 

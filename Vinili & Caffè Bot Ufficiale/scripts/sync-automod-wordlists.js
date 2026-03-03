@@ -5,35 +5,10 @@ const path = require("path");
 const axios = require("axios");
 
 const ROOT = path.resolve(__dirname, "..");
-const SOURCES_PATH = path.resolve(
-  ROOT,
-  "Utils/Config/automodRacistWords/sources.json",
-);
-const OUTPUT_PATH = path.resolve(
-  ROOT,
-  "Utils/Config/automodRacistWords/auto.multilang.json",
-);
+const SOURCES_PATH=path.resolve(ROOT,"Utils/Config/automodRacistWords/sources.json",);
+const OUTPUT_PATH=path.resolve(ROOT,"Utils/Config/automodRacistWords/auto.multilang.json",);
 const MANUAL_BASE_PATH = path.resolve(ROOT, "Utils/Config/automodRacistWords.json");
-const EXTRA_ALLOWED_STEMS = [
-  "beaner",
-  "chink",
-  "chingchong",
-  "cingen",
-  "chernozhopy",
-  "coon",
-  "dago",
-  "gook",
-  "honky",
-  "kike",
-  "nigg",
-  "paki",
-  "porchmonkey",
-  "raghead",
-  "sandnigger",
-  "spic",
-  "wetback",
-  "zingar",
-];
+const EXTRA_ALLOWED_STEMS=["beaner","chink","chingchong","cingen","chernozhopy","coon","dago","gook","honky","kike","nigg","paki","porchmonkey","raghead","sandnigger","spic","wetback","zingar",];
 
 function ensureDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -93,12 +68,7 @@ function isAllowedRacistCandidate(word, allowedStems) {
 }
 
 async function fetchSource(url) {
-  const res = await axios.get(url, {
-    timeout: 20_000,
-    maxContentLength: 4 * 1024 * 1024,
-    responseType: "text",
-    validateStatus: (s) => s >= 200 && s < 300,
-  });
+  const res=await axios.get(url,{timeout:20_000,maxContentLength:4*1024*1024,responseType:"text",validateStatus:(s) => s>=200&&s<300,});
   return parseRawList(res.data);
 }
 

@@ -1,23 +1,15 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField, } = require("discord.js");
-const {
-  queueCategoryRenumber,
-} = require("../Services/Community/communityOpsService");
+const{queueCategoryRenumber,}=require("../Services/Community/communityOpsService");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const {
-  upsertChannelSnapshot,
-} = require("../Utils/Community/channelSnapshotUtils");
+const{upsertChannelSnapshot,}=require("../Utils/Community/channelSnapshotUtils");
 const { ARROW, toDiscordTimestamp, channelDisplay, channelTypeLabel, yesNo, formatAuditActor, buildAuditExtraLines, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
-const {
-  handleChannelCreationAction: antiNukeHandleChannelCreationAction,
-} = require("../Services/Moderation/antiNukeService");
+const{handleChannelCreationAction:antiNukeHandleChannelCreationAction,}=require("../Services/Moderation/antiNukeService");
 const IDs = require("../Utils/Config/ids");
 
 const CHANNEL_CREATE_ACTION = AuditLogEvent?.ChannelCreate ?? 10;
 const AUDIT_RETRY_ATTEMPTS = 3;
 const AUDIT_RETRY_DELAY_MS = 700;
-const QUARANTINE_ROLE_ID = String(
-  IDs.roles?.Muted || "1442568884833095832",
-);
+const QUARANTINE_ROLE_ID=String(IDs.roles?.Muted||"1442568884833095832",);
 
 async function forceQuarantineOverwrite(channel) {
   if (!channel?.guild || !QUARANTINE_ROLE_ID) return;
@@ -27,9 +19,7 @@ async function forceQuarantineOverwrite(channel) {
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageChannels)) return;
   if (!channel.permissionsFor?.(me)?.has(PermissionsBitField.Flags.ManageChannels)) return;
 
-  const role =
-    channel.guild.roles.cache.get(QUARANTINE_ROLE_ID) ||
-    (await channel.guild.roles.fetch(QUARANTINE_ROLE_ID).catch(() => null));
+  const role=channel.guild.roles.cache.get(QUARANTINE_ROLE_ID)||(await channel.guild.roles.fetch(QUARANTINE_ROLE_ID).catch(() => null));
   if (!role) return;
 
   await channel.permissionOverwrites
@@ -54,11 +44,7 @@ function wait(ms) {
 
 async function resolveCreateAuditWithRetry(guild, channelId) {
   for (let attempt = 0; attempt < AUDIT_RETRY_ATTEMPTS; attempt += 1) {
-    const audit = await resolveResponsible(
-      guild,
-      CHANNEL_CREATE_ACTION,
-      (entry) => String(entry?.target?.id || "") === String(channelId || ""),
-    );
+    const audit=await resolveResponsible(guild,CHANNEL_CREATE_ACTION,(entry) => String(entry?.target?.id||"")===String(channelId||""),);
     if (audit?.entry || audit?.executor) return audit;
     if (attempt < AUDIT_RETRY_ATTEMPTS - 1) {
       await wait(AUDIT_RETRY_DELAY_MS);
@@ -83,16 +69,14 @@ module.exports = {
       const logChannel = await resolveChannelRolesLogChannel(channel.guild);
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit?.executor || null);
-        const lines = [
-          `${ARROW} **Responsible:** ${responsible}`,
-          `${ARROW} **Target:** ${channelDisplay(channel)} \`${channel.id}\``,
-          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+        const lines=[`${ARROW}**Responsible:**${responsible}`,
+          `${ARROW}**Target:**${channelDisplay(channel)}\`${channel.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
           "",
           "**Settings**",
-          `${ARROW} **Name:** ${channel.name || "sconosciuto"}`,
-          `${ARROW} **Type:** ${channelTypeLabel(channel)}`,
-          `${ARROW} **Nsfw:** ${yesNo(Boolean(channel.nsfw))}`,
-          `${ARROW} **Rate Limit Per User:** ${Number(channel.rateLimitPerUser || 0) || "Nessuno"}`,
+          `${ARROW}**Name:**${channel.name||"sconosciuto"}`,
+          `${ARROW}**Type:**${channelTypeLabel(channel)}`,
+          `${ARROW}**Nsfw:**${yesNo(Boolean(channel.nsfw))}`,
+          `${ARROW}**Rate Limit Per User:**${Number(channel.rateLimitPerUser||0)||"Nessuno"}`,
         ];
         lines.push(
           ...buildAuditExtraLines(audit?.entry, [
@@ -103,10 +87,7 @@ module.exports = {
           ]),
         );
 
-        const embed = new EmbedBuilder()
-          .setColor("#57F287")
-          .setTitle("Channel Create")
-          .setDescription(lines.join("\n"));
+        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Channel Create").setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

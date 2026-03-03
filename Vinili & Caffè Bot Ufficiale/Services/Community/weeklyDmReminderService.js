@@ -5,54 +5,23 @@ const { EmbedBuilder } = require("discord.js");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
 const { ActivityUser } = require("../../Schemas/Community/communitySchemas");
-const {
-  getClientGuildCached,
-  getUserCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getClientGuildCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
-const STATE_PATH = path.join(
-  __dirname,
-  "..",
-  "..",
-  "Data",
-  "weeklyDmReminderState.json",
-);
+const STATE_PATH=path.join(__dirname,"..","..","Data","weeklyDmReminderState.json",);
 const TICK_EVERY_MS = 60 * 1000;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const MIN_RETRY_DELAY_MS = 6 * 60 * 60 * 1000;
 const STARTUP_BLAST_DM_DELAY_MS = 450;
 const EXTERNAL_STARTUP_DM_DELAY_MS = 600;
-const DM_FOOTER =
-  "Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel server.";
+const DM_FOOTER="Se non vuoi ricevere questi avvisi in DM usa +dm-disable nel server.";
 const DEFAULT_TZ = "Europe/Rome";
-const STAFF_ROLE_IDS = [
-  IDs.roles.Staff,
-  IDs.roles.PartnerManager,
-  IDs.roles.HighStaff,
-  IDs.roles.Admin,
-  IDs.roles.Manager,
-  IDs.roles.Coordinator,
-  IDs.roles.Supervisor,
-  IDs.roles.Mod,
-  IDs.roles.Helper,
-  IDs.roles.Founder,
-  IDs.roles.CoFounder,
-].map((id) => String(id || "").trim()).filter(Boolean);
-const channelMention = (channelId, fallback) =>
-  channelId ? `<#${channelId}>` : fallback;
-const defaultPool = [
-  {
-    title: "Ruoli e vantaggi del server",
-    description:
-      "Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",
-  },
-  {
-    title: "Comandi utili del bot",
-    description: `Con +help trovi rapidamente i comandi principali del bot. Provali in ${channelMention(IDs.channels.commands, "chat comandi")}.`,
+const STAFF_ROLE_IDS=[IDs.roles.Staff,IDs.roles.PartnerManager,IDs.roles.HighStaff,IDs.roles.Admin,IDs.roles.Manager,IDs.roles.Coordinator,IDs.roles.Supervisor,IDs.roles.Mod,IDs.roles.Helper,IDs.roles.Founder,IDs.roles.CoFounder,].map((id) => String(id||"").trim()).filter(Boolean);
+const channelMention=(channelId,fallback) => channelId?`<#${channelId}>` : fallback;
+const defaultPool=[{title:"Ruoli e vantaggi del server",description:"Hai già controllato i ruoli sbloccabili con livelli, boost e voti? Dai un'occhiata al canale info del server.",},{title:"Comandi utili del bot",description:`Con +help trovi rapidamente i comandi principali del bot. Provali in ${channelMention(IDs.channels.commands,"chat comandi")}.`,
   },
   {
     title: "Forum e discussioni",
-    description: `Se hai un tema interessante, aprilo nel forum del server (${channelMention(IDs.channels.forum, "canale forum")}): aiuta a tenere la community attiva e ordinata.`,
+    description: `Se hai un tema interessante,aprilo nel forum del server(${channelMention(IDs.channels.forum,"canale forum")}):aiuta a tenere la community attiva e ordinata.`,
   },
   {
     title: "Livelli e progressione",
@@ -61,7 +30,7 @@ const defaultPool = [
   },
   {
     title: "Ticket e supporto",
-    description: `Se ti serve supporto, usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}: è il modo più veloce per ricevere assistenza dallo staff.`,
+    description: `Se ti serve supporto,usa i ticket in ${channelMention(IDs.channels.ticket,"canale ticket")}:è il modo più veloce per ricevere assistenza dallo staff.`,
   },
   {
     title: "Gestione DM",
@@ -80,95 +49,43 @@ const defaultPool = [
   },
   {
     title: "Canale suggerimenti",
-    description: `Hai un'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,
-  },
-  {
-    title: "News e aggiornamenti",
-    description: `Controlla ${channelMention(IDs.channels.news, "canale news")} per novità, cambi e annunci importanti del server.`,
-  },
-  {
-    title: "Ruoli colori e badge",
-    description: `Dai un'occhiata a ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} per colori e vantaggi sbloccabili.`,
-  },
-  {
-    title: "Quote della community",
-    description: `Se trovi un messaggio memorabile, usa i comandi quote: poi lo trovi in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+    description: `Hai un 'idea per migliorare il server? Scrivila in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")}.`,},{title:"News e aggiornamenti",description:`Controlla ${channelMention(IDs.channels.news,"canale news")}per novità,cambi e annunci importanti del server.`,},{title:"Ruoli colori e badge",description:`Dai un 'occhiata a ${channelMention(IDs.channels.ruoliColori,"canale ruoli")}per colori e vantaggi sbloccabili.`,},{title:"Quote della community",description:`Se trovi un messaggio memorabile,usa i comandi quote:poi lo trovi in ${channelMention(IDs.channels.quotes,"canale quotes")}.`,
   },
   {
     title: "Verifica e onboarding",
-    description: `Se inviti amici, ricordagli di completare la verifica in ${channelMention(IDs.channels.verify, "canale verify")}.`,
+    description: `Se inviti amici,ricordagli di completare la verifica in ${channelMention(IDs.channels.verify,"canale verify")}.`,
   },
   {
     title: "Eventi e sondaggi",
-    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls, "canale polls")}: aiuti la comunità e resti aggiornato.`,
+    description: `Partecipa a eventi e poll in ${channelMention(IDs.channels.polls,"canale polls")}:aiuti la comunità e resti aggiornato.`,
   },
   {
     title: "Contatore e mini-attività",
-    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting, "canale counting")} e dai un'occhiata ai canali community.`,
-  },
-  {
-    title: "Media e contenuti",
-    description: `Passa da ${channelMention(IDs.channels.media, "canale media")} per condividere contenuti interessanti in linea con il regolamento.`,
-  },
-  {
-    title: "Canale comandi",
-    description: `Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+    description: `Per attività leggere passa da ${channelMention(IDs.channels.counting,"canale counting")}e dai un 'occhiata ai canali community.`,},{title:"Media e contenuti",description:`Passa da ${channelMention(IDs.channels.media,"canale media")}per condividere contenuti interessanti in linea con il regolamento.`,},{title:"Canale comandi",description:`Per usare i comandi del bot in modo ordinato usa ${channelMention(IDs.channels.commands,"canale comandi")}.`,
   },
   {
     title: "Top settimanale",
-    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser, "top weekly")} per vedere chi sta spingendo di più questa settimana.`,
+    description: `Controlla ${channelMention(IDs.channels.topWeeklyUser,"top weekly")}per vedere chi sta spingendo di più questa settimana.`,
   },
   {
     title: "Canale role info",
-    description: `In ${channelMention(IDs.channels.info, "canale info")} trovi molte informazioni utili su ruoli, vantaggi e funzioni del server.`,
+    description: `In ${channelMention(IDs.channels.info,"canale info")}trovi molte informazioni utili su ruoli,vantaggi e funzioni del server.`,
   },
   {
     title: "Canale partnership",
-    description: `Se ti interessano le collaborazioni, tieni d'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,
-  },
-  {
-    title: "Supporter e badge",
-    description: `Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`,
-  },
-  {
-    title: "Classifica personale",
-    description: "Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.",
-  },
-  {
-    title: "Classifica globale",
-    description: "Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.",
-  },
-  {
-    title: "Obiettivo settimanale",
-    description: "Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",
-  },
-  {
-    title: "Sfrutta il forum",
-    description: `Nel ${channelMention(IDs.channels.forum, "forum")} puoi creare discussioni ordinate invece di disperdere messaggi in chat.`,
-  },
-  {
-    title: "Canale quote",
-    description: `Le quote migliori finiscono in ${channelMention(IDs.channels.quotes, "canale quotes")}: ottimo per salvare momenti top della community.`,
+    description: `Se ti interessano le collaborazioni,tieni d 'occhio ${channelMention(IDs.channels.partnerships, "canale partnerships")} e le regole dedicate.`,},{title:"Supporter e badge",description:`Molti badge e ruoli speciali hanno vantaggi concreti: scopri i requisiti e punta a sbloccarne almeno uno.`,},{title:"Classifica personale",description:"Usa +rank per controllare rapidamente il tuo stato e pianificare il prossimo obiettivo.",},{title:"Classifica globale",description:"Con +classifica alltime puoi vedere chi è più costante nel lungo periodo.",},{title:"Obiettivo settimanale",description:"Impostati un mini-obiettivo: più costanza in chat, più presenza in vocale o più partecipazione ai poll.",},{title:"Sfrutta il forum",description:`Nel ${channelMention(IDs.channels.forum,"forum")}puoi creare discussioni ordinate invece di disperdere messaggi in chat.`,},{title:"Canale quote",description:`Le quote migliori finiscono in ${channelMention(IDs.channels.quotes,"canale quotes")}:ottimo per salvare momenti top della community.`,
   },
   {
     title: "Canale suggestions",
-    description: `Quando proponi un'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,
-  },
-  {
-    title: "Canale polls",
-    description: `Votare nei poll in ${channelMention(IDs.channels.polls, "polls")} aiuta a prendere decisioni più utili per tutti.`,
-  },
-  {
-    title: "Canale news",
-    description: `Controlla periodicamente ${channelMention(IDs.channels.news, "news")} per non perderti novità su eventi, regole e aggiornamenti.`,
+    description: `Quando proponi un 'idea in ${channelMention(IDs.channels.suggestions, "suggestions")}, spiega sempre anche il motivo e il vantaggio.`,},{title:"Canale polls",description:`Votare nei poll in ${channelMention(IDs.channels.polls,"polls")}aiuta a prendere decisioni più utili per tutti.`,},{title:"Canale news",description:`Controlla periodicamente ${channelMention(IDs.channels.news,"news")}per non perderti novità su eventi,regole e aggiornamenti.`,
   },
   {
     title: "Canale ruoli",
-    description: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
+    description: `In ${channelMention(IDs.channels.ruoliColori,"canale ruoli")}puoi personalizzare il profilo e sbloccare opzioni interessanti.`,
   },
   {
     title: "Canale counting",
-    description: `In ${channelMention(IDs.channels.counting, "counting")} conta con attenzione: è una piccola attività ma tiene viva la community.`,
+    description: `In ${channelMention(IDs.channels.counting,"counting")}conta con attenzione:è una piccola attività ma tiene viva la community.`,
   },
   {
     title: "Comando help",
@@ -244,7 +161,7 @@ const defaultPool = [
   },
   {
     title: "Candidati con criterio",
-    description: `Prima di candidarti, leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")} e prepara una richiesta chiara.`,
+    description: `Prima di candidarti,leggi con attenzione le info in ${channelMention(IDs.channels.candidatureStaff,"canale candidature")}e prepara una richiesta chiara.`,
   },
   {
     title: "Percorso staff",
@@ -252,7 +169,7 @@ const defaultPool = [
   },
   {
     title: "Partner Manager",
-    description: `Se ti interessa il percorso Partner Manager, consulta indicazioni e canali dedicati prima di candidarti.`,
+    description: `Se ti interessa il percorso Partner Manager,consulta indicazioni e canali dedicati prima di candidarti.`,
   },
   {
     title: "Candidatura efficace",
@@ -264,7 +181,7 @@ const defaultPool = [
   },
   {
     title: "Staff pagato: informazioni",
-    description: `Se ti interessa il percorso staff pagato, consulta ${channelMention(IDs.channels.staffPagato, "canale staff pagato")} per dettagli e requisiti.`,
+    description: `Se ti interessa il percorso staff pagato,consulta ${channelMention(IDs.channels.staffPagato,"canale staff pagato")}per dettagli e requisiti.`,
   },
   {
     title: "Staff pagato: requisiti",
@@ -279,14 +196,11 @@ const defaultPool = [
     description: "Se vuoi proporti per percorsi pagati, prepara una candidatura ordinata e basata su contributi reali.",
   },
 ];
-const MASSIVE_REMINDER_TOPICS = [
-  {
-    title: "Panoramica server",
-    line: `Resta aggiornato passando da ${channelMention(IDs.channels.info, "canale info")} e ${channelMention(IDs.channels.news, "canale news")}.`,
+const MASSIVE_REMINDER_TOPICS=[{title:"Panoramica server",line:`Resta aggiornato passando da ${channelMention(IDs.channels.info,"canale info")}e ${channelMention(IDs.channels.news,"canale news")}.`,
   },
   {
     title: "Comandi bot",
-    line: `Per usare bene il bot parti da +help e prova i comandi in ${channelMention(IDs.channels.commands, "canale comandi")}.`,
+    line: `Per usare bene il bot parti da+help e prova i comandi in ${channelMention(IDs.channels.commands,"canale comandi")}.`,
   },
   {
     title: "Crescita livelli",
@@ -294,39 +208,39 @@ const MASSIVE_REMINDER_TOPICS = [
   },
   {
     title: "Forum community",
-    line: `Nel forum ${channelMention(IDs.channels.forum, "forum")} puoi aprire discussioni ordinate e utili.`,
+    line: `Nel forum ${channelMention(IDs.channels.forum,"forum")}puoi aprire discussioni ordinate e utili.`,
   },
   {
     title: "Suggerimenti utili",
-    line: `Le idee più chiare in ${channelMention(IDs.channels.suggestions, "canale suggerimenti")} vengono valutate meglio.`,
+    line: `Le idee più chiare in ${channelMention(IDs.channels.suggestions,"canale suggerimenti")}vengono valutate meglio.`,
   },
   {
     title: "Ticket supporto",
-    line: `Per problemi o dubbi usa i ticket in ${channelMention(IDs.channels.ticket, "canale ticket")}.`,
+    line: `Per problemi o dubbi usa i ticket in ${channelMention(IDs.channels.ticket,"canale ticket")}.`,
   },
   {
     title: "News e avvisi",
-    line: `Controlla ${channelMention(IDs.channels.news, "canale news")} per non perdere novità importanti.`,
+    line: `Controlla ${channelMention(IDs.channels.news,"canale news")}per non perdere novità importanti.`,
   },
   {
     title: "Quote e contenuti",
-    line: `Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in ${channelMention(IDs.channels.quotes, "canale quotes")}.`,
+    line: `Puoi salvare messaggi memorabili nei contenuti della community e ritrovarli in ${channelMention(IDs.channels.quotes,"canale quotes")}.`,
   },
   {
     title: "Poll ed eventi",
-    line: `Partecipare in ${channelMention(IDs.channels.polls, "canale polls")} aiuta il server a scegliere meglio.`,
+    line: `Partecipare in ${channelMention(IDs.channels.polls,"canale polls")}aiuta il server a scegliere meglio.`,
   },
   {
     title: "Counting e attività leggere",
-    line: `Un passaggio in ${channelMention(IDs.channels.counting, "canale counting")} mantiene il server vivo anche nei momenti lenti.`,
+    line: `Un passaggio in ${channelMention(IDs.channels.counting,"canale counting")}mantiene il server vivo anche nei momenti lenti.`,
   },
   {
     title: "Ruoli e colori",
-    line: `In ${channelMention(IDs.channels.ruoliColori, "canale ruoli")} trovi personalizzazione e vantaggi.`,
+    line: `In ${channelMention(IDs.channels.ruoliColori,"canale ruoli")}trovi personalizzazione e vantaggi.`,
   },
   {
     title: "Media e condivisioni",
-    line: `In ${channelMention(IDs.channels.media, "canale media")} punta sempre su contenuti puliti e utili.`,
+    line: `In ${channelMention(IDs.channels.media,"canale media")}punta sempre su contenuti puliti e utili.`,
   },
   {
     title: "Classifiche bot",
@@ -334,39 +248,22 @@ const MASSIVE_REMINDER_TOPICS = [
   },
   {
     title: "Candidature",
-    line: `Se vuoi candidarti, prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff, "canale candidature")}.`,
+    line: `Se vuoi candidarti,prepara bene i dettagli in ${channelMention(IDs.channels.candidatureStaff,"canale candidature")}.`,
   },
   {
     title: "Staff pagato",
-    line: `Per il percorso staff pagato leggi i requisiti in ${channelMention(IDs.channels.staffPagato, "canale staff pagato")}.`,
+    line: `Per il percorso staff pagato leggi i requisiti in ${channelMention(IDs.channels.staffPagato,"canale staff pagato")}.`,
   },
 ];
-const MASSIVE_REMINDER_ANGLES = [
-  "Obiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.",
-  "Suggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.",
-  "Focus utile: qualità prima della quantità nelle interazioni.",
-  "Promemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.",
-  "Consiglio: una presenza costante vale più di attività casuale concentrata in un giorno.",
-  "Tip operativo: controlla periodicamente aggiornamenti e funzioni nuove.",
-  "Azione consigliata: contribuisci con un messaggio utile o un feedback concreto.",
-];
-const MASSIVE_REMINDER_CLOSINGS = [
-  "Se vuoi, questa settimana prova a seguire questo punto per primo.",
-  "Piccoli miglioramenti continui portano risultati reali.",
-  "Contribuire in modo ordinato aiuta davvero tutta la community.",
-  "Un uso corretto di canali e comandi rende tutto più semplice.",
-  "Anche un solo contributo utile al giorno fa differenza.",
-];
+const MASSIVE_REMINDER_ANGLES=["Obiettivo del giorno: leggi tutto con attenzione e scegli un'azione concreta.","Suggerimento rapido: evita il caos e usa il canale giusto per ogni contenuto.","Focus utile: qualità prima della quantità nelle interazioni.","Promemoria pratico: cinque minuti ben usati migliorano molto la tua esperienza.","Consiglio: una presenza costante vale più di attività casuale concentrata in un giorno.","Tip operativo: controlla periodicamente aggiornamenti e funzioni nuove.","Azione consigliata: contribuisci con un messaggio utile o un feedback concreto.",];
+const MASSIVE_REMINDER_CLOSINGS=["Se vuoi, questa settimana prova a seguire questo punto per primo.","Piccoli miglioramenti continui portano risultati reali.","Contribuire in modo ordinato aiuta davvero tutta la community.","Un uso corretto di canali e comandi rende tutto più semplice.","Anche un solo contributo utile al giorno fa differenza.",];
 
 function buildMassiveReminderPool() {
   const pool = [];
   const titleUsage = new Map();
   for (const topic of MASSIVE_REMINDER_TOPICS) {
     for (const angle of MASSIVE_REMINDER_ANGLES) {
-      const closing =
-        MASSIVE_REMINDER_CLOSINGS[
-          pool.length % MASSIVE_REMINDER_CLOSINGS.length
-        ];
+      const closing=MASSIVE_REMINDER_CLOSINGS[pool.length%MASSIVE_REMINDER_CLOSINGS.length];
       const baseTitle = String(topic.title || "Reminder");
       const used = Number(titleUsage.get(baseTitle) || 0) + 1;
       titleUsage.set(baseTitle, used);
@@ -594,11 +491,7 @@ function clamp(value, min, max) {
 }
 
 function getHourInTz(date, timeZone) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hour: "2-digit",
-    hour12: false,
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone,hour:"2-digit",hour12:false,});
   const parts = formatter.formatToParts(date);
   const hour = parts.find((part) => part.type === "hour")?.value || "0";
   return Number(hour);
@@ -636,16 +529,9 @@ function pickRandomDistinct(arr, count) {
 }
 
 function buildUniqueReminderVariants(pool, count) {
-  const normalizedPool = (Array.isArray(pool) ? pool : [])
-    .map((item) => ({
-      title: String(item?.title || "Reminder settimanale").trim(),
-      description: String(item?.description || "").trim(),
-    }))
-    .filter((item) => item.title || item.description);
+  const normalizedPool=(Array.isArray(pool)?pool:[]).map((item) => ({title:String(item?.title||"Reminder settimanale").trim(),description:String(item?.description||"").trim(),})).filter((item) => item.title||item.description);
 
-  const basePool = normalizedPool.length
-    ? normalizedPool
-    : [{ title: "Reminder settimanale", description: "Dai un'occhiata al server." }];
+  const basePool=normalizedPool.length?normalizedPool:[{title:"Reminder settimanale",description:"Dai un'occhiata al server."}];
 
   if (!basePool.length) return [];
   const picked = pickRandomDistinct(basePool, Math.min(count, basePool.length));
@@ -674,10 +560,7 @@ function pickVariantIndexForUser(
   lastSignature,
   forbiddenSignatures = new Set(),
 ) {
-  const candidates = availableIndexes.filter((idx) => {
-    const sig = reminderSignature(variants[idx]);
-    return sig !== lastSignature && !forbiddenSignatures.has(sig);
-  });
+  const candidates=availableIndexes.filter((idx) => {const sig=reminderSignature(variants[idx]);return sig!==lastSignature&&!forbiddenSignatures.has(sig);});
   const source = candidates.length ? candidates : availableIndexes;
   if (!source.length) return -1;
   const pick = source[randomInt(0, source.length)];
@@ -697,9 +580,7 @@ function pickRandomDayOffset(existing = []) {
   }
   if (!candidates.length) return randomInt(0, 7);
   if (!existing.length) return candidates[randomInt(0, candidates.length)];
-  const withGap = candidates.filter((day) =>
-    existing.every((ex) => Math.abs(day - ex) >= 2),
-  );
+  const withGap=candidates.filter((day) => existing.every((ex) => Math.abs(day-ex)>=2),);
   const source = withGap.length ? withGap : candidates;
   return source[randomInt(0, source.length)];
 }
@@ -747,9 +628,7 @@ function collectOpenDmRecipientIds(client) {
   if (!client?.channels?.cache) return ids;
   for (const channel of client.channels.cache.values()) {
     if (!channel?.isDMBased?.()) continue;
-    const recipientId = String(
-      channel?.recipientId || channel?.recipient?.id || "",
-    );
+    const recipientId=String(channel?.recipientId||channel?.recipient?.id||"",);
     if (recipientId) ids.add(recipientId);
   }
   return ids;
@@ -770,16 +649,9 @@ function isMemberOldEnough(member, minAgeDays) {
 
 async function getActivityMapForUsers(guildId, userIds) {
   const map = new Map();
-  const ids = Array.isArray(userIds)
-    ? [...new Set(userIds.map((id) => String(id || "")).filter(Boolean))]
-    : [];
+  const ids=Array.isArray(userIds)?[...new Set(userIds.map((id) => String(id||"")).filter(Boolean))]:[];
   if (!ids.length) return map;
-  const rows = await ActivityUser.find(
-    { guildId: String(guildId), userId: { $in: ids } },
-    { _id: 0, userId: 1, messages: 1, voice: 1 },
-  )
-    .lean()
-    .catch(() => []);
+  const rows=await ActivityUser.find({guildId:String(guildId),userId:{$in:ids}},{_id:0,userId:1,messages:1,voice:1},).lean().catch(() => []);
   for (const row of rows) {
     map.set(String(row.userId), row);
   }
@@ -790,17 +662,11 @@ function getCooldownDaysForUser(client, activityRow) {
   const messagesWeekly = Number(activityRow?.messages?.weekly || 0);
   const voiceWeeklySeconds = Number(activityRow?.voice?.weeklySeconds || 0);
   const voiceWeeklyHours = voiceWeeklySeconds / 3600;
-  const low =
-    messagesWeekly <= getLowWeeklyMessages(client) &&
-    voiceWeeklyHours <= getLowWeeklyVoiceHours(client);
+  const low=messagesWeekly<=getLowWeeklyMessages(client)&&voiceWeeklyHours<=getLowWeeklyVoiceHours(client);
   if (low) return getLowCooldownDays(client);
-  const high =
-    messagesWeekly >= getHighWeeklyMessages(client) ||
-    voiceWeeklyHours >= getHighWeeklyVoiceHours(client);
+  const high=messagesWeekly>=getHighWeeklyMessages(client)||voiceWeeklyHours>=getHighWeeklyVoiceHours(client);
   if (high) return getHighCooldownDays(client);
-  const medium =
-    messagesWeekly >= getMidWeeklyMessages(client) ||
-    voiceWeeklyHours >= getMidWeeklyVoiceHours(client);
+  const medium=messagesWeekly>=getMidWeeklyMessages(client)||voiceWeeklyHours>=getMidWeeklyVoiceHours(client);
   if (medium) return getMidCooldownDays(client);
   return getBaseCooldownDays(client);
 }
@@ -873,10 +739,7 @@ async function buildWeeklyJobs(client, guild) {
     candidates.push(member);
   }
 
-  const activityMap = await getActivityMapForUsers(
-    guild.id,
-    candidates.map((member) => String(member.id)),
-  );
+  const activityMap=await getActivityMapForUsers(guild.id,candidates.map((member) => String(member.id)),);
 
   for (const member of candidates) {
     const id = String(member.id);
@@ -888,24 +751,12 @@ async function buildWeeklyJobs(client, guild) {
 
   if (!recipients.length) return [];
 
-  const targetCount = clamp(
-    Math.round(recipients.length * ratio),
-    minRecipients,
-    maxRecipients,
-  );
+  const targetCount=clamp(Math.round(recipients.length*ratio),minRecipients,maxRecipients,);
   const selected = pickRandomDistinct(recipients, targetCount);
-  const lowCandidates = selected.filter(
-    (userId) => getActivityTier(client, activityMap.get(userId)) === "low",
-  );
-  const secondReminderUsers = pickRandomDistinct(
-    lowCandidates,
-    Math.min(lowCandidates.length, getLowSecondReminderCap(client)),
-  );
+  const lowCandidates=selected.filter((userId) => getActivityTier(client,activityMap.get(userId))==="low",);
+  const secondReminderUsers=pickRandomDistinct(lowCandidates,Math.min(lowCandidates.length,getLowSecondReminderCap(client)),);
   const recipientSlots = [...selected, ...secondReminderUsers];
-  const pool =
-    Array.isArray(cfg.pool) && cfg.pool.length
-      ? cfg.pool
-      : [...defaultPool, ...MASSIVE_REMINDER_POOL];
+  const pool=Array.isArray(cfg.pool)&&cfg.pool.length?cfg.pool:[...defaultPool,...MASSIVE_REMINDER_POOL];
   const variants = buildUniqueReminderVariants(pool, recipientSlots.length);
   const availableVariantIndexes = variants.map((_, idx) => idx);
   const jobs = [];
@@ -927,10 +778,7 @@ async function buildWeeklyJobs(client, guild) {
     if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
     let reminder = variants[variantIndex] || pool[idx % pool.length];
     if (!hasHistory && isDmManagementReminder(reminder)) {
-      const alternative = availableVariantIndexes.find((candidateIdx) => {
-        const candidate = variants[candidateIdx];
-        return !isDmManagementReminder(candidate);
-      });
+      const alternative=availableVariantIndexes.find((candidateIdx) => {const candidate=variants[candidateIdx];return!isDmManagementReminder(candidate);});
       if (Number.isInteger(alternative)) {
         variantIndex = Number(alternative);
         reminder = variants[variantIndex] || reminder;
@@ -982,9 +830,7 @@ async function maybePlanWeeklyBatch(client, guild) {
   const entry = getGuildEntry(guild.id);
   if (!entry) return;
   const now = Date.now();
-  const hasPending = entry.jobs.some(
-    (job) => !job?.sentAt && !job?.skipped && Number(job?.sendAt || 0) >= now,
-  );
+  const hasPending=entry.jobs.some((job) => !job?.sentAt&&!job?.skipped&&Number(job?.sendAt||0)>=now,);
   if (hasPending && now - Number(entry.plannedAt || 0) < WEEK_MS) return;
   if (now - Number(entry.plannedAt || 0) < WEEK_MS) return;
 
@@ -1045,10 +891,7 @@ async function runStartupBlastOnce(client, guild) {
       if (variantIndex === -1) variantIndex = idx % Math.max(1, variants.length);
       let reminder = variants[variantIndex] || pool[idx % pool.length];
       if (!hasHistory && isDmManagementReminder(reminder)) {
-        const alternative = availableVariantIndexes.find((candidateIdx) => {
-          const candidate = variants[candidateIdx];
-          return !isDmManagementReminder(candidate);
-        });
+        const alternative=availableVariantIndexes.find((candidateIdx) => {const candidate=variants[candidateIdx];return!isDmManagementReminder(candidate);});
         if (Number.isInteger(alternative)) {
           variantIndex = Number(alternative);
           reminder = variants[variantIndex] || reminder;
@@ -1295,9 +1138,7 @@ async function sendDueJobs(client, guild) {
       continue;
     }
 
-    const user =
-      member.user ||
-      (await getUserCached(client, userId, { ttlMs: 30_000 }));
+    const user=member.user||(await getUserCached(client,userId,{ttlMs:30_000}));
     if (!user || user.bot) {
       job.skipped = "user-unavailable";
       continue;
@@ -1357,13 +1198,7 @@ async function weeklyTick(client) {
 
 function startWeeklyDmReminderLoop(client) {
   if (loopHandle) return;
-  const runTick = () => {
-    if (tickInFlight) return tickInFlight;
-    tickInFlight = weeklyTick(client).finally(() => {
-      tickInFlight = null;
-    });
-    return tickInFlight;
-  };
+  const runTick=() => {if(tickInFlight)return tickInFlight;tickInFlight=weeklyTick(client).finally(() => {tickInFlight=null;});return tickInFlight;};
 
   runTick().catch(() => {});
   loopHandle = setInterval(() => {

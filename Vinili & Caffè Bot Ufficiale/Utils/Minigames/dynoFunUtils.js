@@ -25,20 +25,12 @@ async function replyInfo(message, text, title = null) {
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await axios.get(url, {
-    timeout: 15000,
-    responseType: "json",
-    ...options,
-  });
+  const response=await axios.get(url,{timeout:15000,responseType:"json",...options,});
   return response.data;
 }
 
 async function fetchText(url, options = {}) {
-  const response = await axios.get(url, {
-    timeout: 15000,
-    responseType: "text",
-    ...options,
-  });
+  const response=await axios.get(url,{timeout:15000,responseType:"text",...options,});
   return String(response.data || "");
 }
 
@@ -54,26 +46,10 @@ async function translateToItalian(text, options = {}) {
   }
 
   try {
-    const response = await axios.get(
-      "https://translate.googleapis.com/translate_a/single",
-      {
-        timeout: 7000,
-        responseType: "json",
-        params: {
-          client: "gtx",
-          sl: "auto",
-          tl: "it",
-          dt: "t",
-          q: source,
-        },
-      },
-    );
+    const response=await axios.get("https://translate.googleapis.com/translate_a/single",{timeout:7000,responseType:"json",params:{client:"gtx",sl:"auto",tl:"it",dt:"t",q:source,},},);
 
     const chunks = Array.isArray(response?.data?.[0]) ? response.data[0] : [];
-    const translated = chunks
-      .map((chunk) => String(chunk?.[0] || ""))
-      .join("")
-      .trim();
+    const translated=chunks.map((chunk) => String(chunk?.[0]||"")).join("").trim();
 
     const value = translated || source;
     TRANSLATE_CACHE.set(cacheKey, { value, at: Date.now() });

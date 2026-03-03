@@ -25,9 +25,7 @@ async function tryUnban(guild, userId, reason) {
 
 async function tryUnlockChannel(guild, channelId) {
   if (!guild || !channelId) return false;
-  const channel =
-    guild.channels.cache.get(String(channelId)) ||
-    (await guild.channels.fetch(String(channelId)).catch(() => null));
+  const channel=guild.channels.cache.get(String(channelId))||(await guild.channels.fetch(String(channelId)).catch(() => null));
   if (!channel?.permissionOverwrites?.edit) return false;
   try {
     await channel.permissionOverwrites.edit(
@@ -42,19 +40,10 @@ async function tryUnlockChannel(guild, channelId) {
 }
 
 async function closeExpiredMuteCases(client, now) {
-  const rows = await ModCase.find({
-    action: "MUTE",
-    active: true,
-    expiresAt: { $lte: now },
-  })
-    .sort({ expiresAt: 1 })
-    .limit(BATCH_SIZE)
-    .exec();
+  const rows=await ModCase.find({action:"MUTE",active:true,expiresAt:{$lte:now},}).sort({expiresAt:1}).limit(BATCH_SIZE).exec();
 
   for (const row of rows) {
-    const guild =
-      client.guilds.cache.get(String(row.guildId || "")) ||
-      (await client.guilds.fetch(String(row.guildId || "")).catch(() => null));
+    const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
       closeCase(row, "Mute scaduto (guild non disponibile)");
       await row.save().catch(() => null);
@@ -81,28 +70,16 @@ async function closeExpiredMuteCases(client, now) {
 }
 
 async function closeExpiredBanCases(client, now) {
-  const rows = await ModCase.find({
-    action: "BAN",
-    active: true,
-    expiresAt: { $lte: now },
-  })
-    .sort({ expiresAt: 1 })
-    .limit(BATCH_SIZE)
-    .exec();
+  const rows=await ModCase.find({action:"BAN",active:true,expiresAt:{$lte:now},}).sort({expiresAt:1}).limit(BATCH_SIZE).exec();
 
   for (const row of rows) {
-    const guild =
-      client.guilds.cache.get(String(row.guildId || "")) ||
-      (await client.guilds.fetch(String(row.guildId || "")).catch(() => null));
+    const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
       closeCase(row, "Ban temporaneo scaduto (guild non disponibile)");
       await row.save().catch(() => null);
       continue;
     }
-    const unbanned = await tryUnban(
-      guild,
-      row.userId,
-      `Timed ban expired (case #${row.caseId})`,
+    const unbanned=await tryUnban(guild,row.userId,`Timed ban expired (case #${row.caseId})`,
     );
     if (!unbanned) continue;
     closeCase(row, "Ban temporaneo scaduto: utente sbannato automaticamente");
@@ -111,20 +88,10 @@ async function closeExpiredBanCases(client, now) {
 }
 
 async function closeExpiredLockCases(client, now) {
-  const rows = await ModCase.find({
-    action: "LOCK",
-    active: true,
-    expiresAt: { $lte: now },
-    userId: { $regex: /^CHANNEL:/ },
-  })
-    .sort({ expiresAt: 1 })
-    .limit(BATCH_SIZE)
-    .exec();
+  const rows=await ModCase.find({action:"LOCK",active:true,expiresAt:{$lte:now},userId:{$regex:/^CHANNEL:/},}).sort({expiresAt:1}).limit(BATCH_SIZE).exec();
 
   for (const row of rows) {
-    const guild =
-      client.guilds.cache.get(String(row.guildId || "")) ||
-      (await client.guilds.fetch(String(row.guildId || "")).catch(() => null));
+    const guild=client.guilds.cache.get(String(row.guildId||""))||(await client.guilds.fetch(String(row.guildId||"")).catch(() => null));
     if (!guild) {
       closeCase(row, "Lock temporaneo scaduto (guild non disponibile)");
       await row.save().catch(() => null);
@@ -148,11 +115,7 @@ async function runModCaseLifecycleTick(client) {
 
 function startModCaseLifecycleLoop(client) {
   if (loopHandle) return loopHandle;
-  const runner = async () => {
-    await runModCaseLifecycleTick(client).catch((error) => {
-      global.logger?.error?.("[MOD CASE LIFECYCLE] Tick failed", error);
-    });
-  };
+  const runner=async() => {await runModCaseLifecycleTick(client).catch((error) => {global.logger?.error?.("[MOD CASE LIFECYCLE] Tick failed",error);});};
   runner().catch(() => {});
   loopHandle = setInterval(runner, LOOP_MS);
   if (typeof loopHandle.unref === "function") loopHandle.unref();

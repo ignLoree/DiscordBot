@@ -7,10 +7,7 @@ const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 const PRESENCE_STATE = "☕📀 discord.gg/viniliecaffe";
 const PRESENCE_TYPE_CUSTOM = 4;
 const RESTART_CLEANUP_DELAY_MS = 2000;
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const RESTART_NOTIFY_FILE = "restart_notify_test.json";
 
 async function setPresence(client) {
   try {
@@ -49,10 +46,6 @@ async function connectMongo(client) {
   }
 }
 
-async function refreshLists(client) {
-  return client;
-}
-
 async function restoreTtsState(client) {
   await restoreTtsConnections(client);
 }
@@ -66,31 +59,19 @@ async function cleanupMessage(channel, messageId) {
 }
 
 async function handleRestartNotification(client) {
-  const restartNotifyPath = path.resolve(
-    process.cwd(),
-    "..",
-    "restart_notify.json",
-  );
+  const restartNotifyPath = path.resolve(process.cwd(), "..", RESTART_NOTIFY_FILE);
   if (!fs.existsSync(restartNotifyPath)) return;
 
   try {
     const raw = fs.readFileSync(restartNotifyPath, "utf8");
     const data = JSON.parse(raw);
 
-    const channel = await getClientChannelCached(client, data?.channelId, {
-      ttlMs: 30_000,
-    });
+    const channel = await getClientChannelCached(client,data ?. channelId,{ttlMs:30_000,});
     if (channel) {
       const elapsedMs = data?.at ? Date.now() - Date.parse(data.at) : null;
-      const elapsed = Number.isFinite(elapsedMs)
-        ? ` in ${Math.max(1, Math.round(elapsedMs / 1000))}s`
-        : "";
+      const elapsed = Number.isFinite(elapsedMs)?` in ${Math.max(1,Math.round(elapsedMs /1000))}s`:"";
 
-      const restartMsg = await channel
-        .send(
-          `<:vegacheckmark:1472992042203349084> Bot Test riavviato con successo${elapsed}.`,
-        )
-        .catch(() => null);
+      const restartMsg = await channel.send(`<:vegacheckmark:1472992042203349084> Bot Test riavviato con successo${elapsed}.`,).catch(()=>null);
 
       if (restartMsg) {
         setTimeout(
@@ -106,7 +87,7 @@ async function handleRestartNotification(client) {
     fs.unlinkSync(restartNotifyPath);
   } catch (err) {
     global.logger.error(
-      " Errore post-restart (restart_notify.json):",
+      " Errore post-restart (restart notify):",
       err?.message || err,
     );
   }
@@ -121,7 +102,6 @@ module.exports = {
 
     await setPresence(activeClient);
     await connectMongo(activeClient);
-    await refreshLists(activeClient);
     await restoreTtsState(activeClient);
     await handleRestartNotification(activeClient);
   },

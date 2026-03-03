@@ -6,11 +6,7 @@ const { getGuildMemberCached } = require("../../Utils/Interaction/interactionEnt
 
 function extractInviteCode(text) {
   if (!text) return null;
-  const patterns = [
-    /discord\.gg\/([a-zA-Z0-9-]+)/i,
-    /discord\.com\/invite\/([a-zA-Z0-9-]+)/i,
-    /discordapp\.com\/invite\/([a-zA-Z0-9-]+)/i,
-  ];
+  const patterns=[/discord\.gg\/([a-zA-Z0-9-]+)/i,/discord\.com\/invite\/([a-zA-Z0-9-]+)/i,/discordapp\.com\/invite\/([a-zA-Z0-9-]+)/i,];
   for (const pattern of patterns) {
     const match = String(text).match(pattern);
     if (match && match[1]) return match[1];
@@ -85,8 +81,7 @@ async function handlePartnerModal(interaction) {
     });
     return true;
   }
-  const rawDescription =
-    interaction.fields.getTextInputValue("serverDescription");
+  const rawDescription=interaction.fields.getTextInputValue("serverDescription");
   const description = stripOuterCodeBlock(String(rawDescription || "").trim());
   const { managerId } = parsePartnershipModalId(interaction.customId);
   const PARTNER_BLACKLIST_ROLE = IDs.roles.blackilistPartner;
@@ -116,10 +111,7 @@ async function handlePartnerModal(interaction) {
     });
     return true;
   }
-  const isVerifiedMember = Boolean(
-    managerMember.roles?.cache?.has(IDs.roles.Member) ||
-    managerMember.roles?.cache?.has(IDs.roles.Verificato),
-  );
+  const isVerifiedMember=Boolean(managerMember.roles?.cache?.has(IDs.roles.Member)||managerMember.roles?.cache?.has(IDs.roles.Verificato),);
   if (!isVerifiedMember) {
     await interaction.editReply({
       embeds: [
@@ -164,8 +156,7 @@ async function handlePartnerModal(interaction) {
   let serverIcon = null;
   const inviteUrl = `https://discord.gg/${inviteCode}`;
   try {
-    const res = await axios.get(
-      `https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`,
+    const res=await axios.get(`https://discord.com/api/v10/invites/${inviteCode}?with_counts=true`,
       {
         timeout: 15000,
         headers: { Accept: "application/json" },
@@ -184,16 +175,10 @@ async function handlePartnerModal(interaction) {
     serverName = "Server Sconosciuto";
   }
   if (inviteCode.toLowerCase().includes("viniliecaffe")) {
-    const embed = new EmbedBuilder()
-      .setAuthor({
-        name: interaction.user.username,
-        iconURL: interaction.user.displayAvatarURL(),
-      })
-      .setTitle(
-        `**<:partneredserverowner:1443651871125409812> Partnership con ${serverName} da ${interaction.user.username}**`,
+    const embed=new EmbedBuilder().setAuthor({name:interaction.user.username,iconURL:interaction.user.displayAvatarURL(),}).setTitle(`**<:partneredserverowner:1443651871125409812> Partnership con ${serverName}da ${interaction.user.username}**`,
       )
       .setDescription(
-        `<:vegax:1443934876440068179> Non puoi fare partner con il tuo server`,
+        `<:vegax:1443934876440068179>Non puoi fare partner con il tuo server`,
       )
       .setFooter({ text: serverName, iconURL: serverIcon })
       .setColor("Red")
@@ -203,13 +188,7 @@ async function handlePartnerModal(interaction) {
     return true;
   }
 
-  const filteredDescription = description
-    .replace(/<@!?\d+>/g, "")
-    .replace(/<@&\d+>/g, "")
-    .replace(/<#\d+>/g, "")
-    .replace(/@everyone/g, "")
-    .replace(/@here/g, "")
-    .trim();
+  const filteredDescription=description.replace(/<@!?\d+>/g,"").replace(/<@&\d+>/g,"").replace(/<#\d+>/g,"").replace(/@everyone/g,"").replace(/@here/g,"").trim();
   const sanitizedDescription = stripLinksFromDescription(filteredDescription);
   if (!sanitizedDescription) {
     await interaction.editReply({
@@ -226,64 +205,31 @@ async function handlePartnerModal(interaction) {
 
   try {
     const guildId = interaction.guild.id;
-    const staffDoc = await getOrCreateStaffPartnerDoc(
-      guildId,
-      interaction.user.id,
-    );
+    const staffDoc=await getOrCreateStaffPartnerDoc(guildId,interaction.user.id,);
 
     staffDoc.partnerCount++;
     staffDoc.managerId = managerId;
-    const actionEntry = {
-      action: "create",
-      partner: serverName,
-      invite: inviteUrl,
-      managerId,
-      partnershipChannelId: IDs.channels.partnerships,
-      partnerMessageIds: [],
-    };
+    const actionEntry={action:"create",partner:serverName,invite:inviteUrl,managerId,partnershipChannelId:IDs.channels.partnerships,partnerMessageIds:[],};
     staffDoc.partnerActions.push(actionEntry);
     const actionIndex = Math.max(0, staffDoc.partnerActions.length - 1);
 
     await staffDoc.save();
     const totalPartners = staffDoc.partnerCount;
-    const partnershipChannel = interaction.guild.channels.cache.get(
-      IDs.channels.partnerships,
-    );
+    const partnershipChannel=interaction.guild.channels.cache.get(IDs.channels.partnerships,);
 
-    const embed = new EmbedBuilder()
-      .setAuthor({
-        name: interaction.user.username,
-        iconURL: interaction.user.displayAvatarURL(),
-      })
-      .setTitle(
-        `**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,
-      )
-      .setDescription(
-        `<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
+    const embed=new EmbedBuilder().setAuthor({name:interaction.user.username,iconURL:interaction.user.displayAvatarURL(),}).setTitle(`**<:partneredserverowner:1443651871125409812> __PARTNER EFFETTUATA__**`,).setDescription(`<a:ThankYou:1329504268369002507> Grazie per aver _effettuato_ una **partner** con \`${interaction.guild.name}\`
 <:mariolevelup:1443679595084910634> Ora sei a **\`${totalPartners}\`** partner!
-<:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442579412280410194>`,
-      )
-      .setFooter({ text: serverName, iconURL: serverIcon })
-      .setColor("#6f4e37")
-      .setTimestamp()
-      .setThumbnail(interaction.guild.iconURL());
+<:Money:1330544713463500970> Continua ad __effettuare__ partner per riscattare i **premi** in <#1442579412280410194>`,).setFooter({text:serverName,iconURL:serverIcon}).setColor("#6f4e37").setTimestamp().setThumbnail(interaction.guild.iconURL());
 
     if (partnershipChannel) {
       const sentMessageIds = [];
-      const contentWithManager = normalizeManagerLine(
-        sanitizedDescription,
-        managerId,
-      );
+      const contentWithManager=normalizeManagerLine(sanitizedDescription,managerId,);
       const parts = splitMessage(contentWithManager);
       for (const part of parts) {
-        const sent = await partnershipChannel
-          .send({ content: part })
-          .catch(() => null);
+        const sent=await partnershipChannel.send({content:part}).catch(() => null);
         if (sent?.id) sentMessageIds.push(sent.id);
       }
-      const thankYouMessage = await partnershipChannel
-        .send({ embeds: [embed] })
-        .catch(() => null);
+      const thankYouMessage=await partnershipChannel.send({embeds:[embed]}).catch(() => null);
       if (thankYouMessage?.id) sentMessageIds.push(thankYouMessage.id);
 
       if (staffDoc.partnerActions?.[actionIndex]) {
@@ -294,9 +240,7 @@ async function handlePartnerModal(interaction) {
       }
     }
 
-    const doneEmbed = new EmbedBuilder()
-      .setDescription(
-        `<:vegacheckmark:1443666279058772028> Partner inviata in ${partnershipChannel}`,
+    const doneEmbed=new EmbedBuilder().setDescription(`<:vegacheckmark:1443666279058772028> Partner inviata in ${partnershipChannel}`,
       )
       .setColor("#6f4e37");
 
@@ -318,9 +262,7 @@ async function handlePartnerModal(interaction) {
 
 function parsePartnershipModalId(customId) {
   const raw = String(customId || "");
-  const newFormat = raw.match(
-    /^partnershipModal_(cmd|ctx)_(\d{16,20})_(\d{16,20})$/,
-  );
+  const newFormat=raw.match(/^partnershipModal_(cmd|ctx)_(\d{16,20})_(\d{16,20})$/,);
   if (newFormat) {
     return {
       source: newFormat[1],
@@ -367,13 +309,7 @@ function splitMessage(message, maxLength = 2000) {
 }
 
 function normalizeManagerLine(text, managerId) {
-  const content = String(text || "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .trim()
-    .replace(/\n*Manager:\s*(<@!?\d+>)?\s*$/gi, "")
-    .replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/gi, "")
-    .trim();
+  const content=String(text||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().replace(/\n*Manager:\s*(<@!?\d+>)?\s*$/gi,"").replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/gi,"").trim();
   return `${content}\n\nManager: <@${managerId}>`;
 }
 

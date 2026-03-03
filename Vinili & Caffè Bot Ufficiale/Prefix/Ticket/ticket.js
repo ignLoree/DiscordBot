@@ -5,25 +5,14 @@ const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require(
 const { getNextTicketId } = require("../../Utils/Ticket/ticketIdUtils");
 const { TICKETS_CATEGORY_NAME, isChannelInTicketCategory } = require("../../Utils/Ticket/ticketCategoryUtils");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getClientGuildCached,
-  getGuildChannelCached,
-  getUserCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getClientGuildCached,getGuildChannelCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
 const LOG_CHANNEL_ID = IDs.channels.ticketLogs;
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGHSTAFF_ROLE_ID = IDs.roles.HighStaff;
 const PARTNERMANAGER_ROLE_ID = IDs.roles.PartnerManager;
 const STAFF_ROLE_IDS = [STAFF_ROLE_ID, HIGHSTAFF_ROLE_ID].filter(Boolean);
 const NO_REPLY_MENTIONS = { repliedUser: false };
-const SPONSOR_GUILD_IDS = [
-  IDs.guilds.luna,
-  IDs.guilds.cash,
-  IDs.guilds.porn,
-  IDs.guilds[69],
-  IDs.guilds.weed,
-  IDs.guilds.figa,
-].filter(Boolean);
+const SPONSOR_GUILD_IDS=[IDs.guilds.luna,IDs.guilds.cash,IDs.guilds.porn,IDs.guilds[69],IDs.guilds.weed,IDs.guilds.figa,].filter(Boolean);
 
 function hasAnyRole(member, roleIds = []) {
   return roleIds.some((roleId) => member?.roles?.cache?.has(roleId));
@@ -44,14 +33,9 @@ function canClaimTicket(member, ticketType, guildId = null) {
   if (guildId && isSponsorGuild(guildId)) {
     return (ticketType === "supporto" || ticketType === "sponsor_supporto") && hasSponsorStaffRole(member, guildId);
   }
-  const isSupport =
-    ticketType === "supporto" && hasAnyRole(member, STAFF_ROLE_IDS);
-  const isPartnership =
-    ticketType === "partnership" &&
-    (member.roles.cache.has(PARTNERMANAGER_ROLE_ID) ||
-      member.roles.cache.has(HIGHSTAFF_ROLE_ID));
-  const isHigh =
-    ticketType === "high" && member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+  const isSupport=ticketType==="supporto"&&hasAnyRole(member,STAFF_ROLE_IDS);
+  const isPartnership=ticketType==="partnership"&&(member.roles.cache.has(PARTNERMANAGER_ROLE_ID)||member.roles.cache.has(HIGHSTAFF_ROLE_ID));
+  const isHigh=ticketType==="high"&&member.roles.cache.has(HIGHSTAFF_ROLE_ID);
   return isSupport || isPartnership || isHigh;
 }
 
@@ -60,14 +44,9 @@ function canCloseTicket(member, ticketType, guildId = null) {
   if (guildId && isSponsorGuild(guildId)) {
     return (ticketType === "supporto" || ticketType === "sponsor_supporto") && hasSponsorStaffRole(member, guildId);
   }
-  const canCloseSupport =
-    ticketType === "supporto" && hasAnyRole(member, STAFF_ROLE_IDS);
-  const canClosePartnership =
-    ticketType === "partnership" &&
-    (member.roles.cache.has(PARTNERMANAGER_ROLE_ID) ||
-      member.roles.cache.has(HIGHSTAFF_ROLE_ID));
-  const canCloseHigh =
-    ticketType === "high" && member.roles.cache.has(HIGHSTAFF_ROLE_ID);
+  const canCloseSupport=ticketType==="supporto"&&hasAnyRole(member,STAFF_ROLE_IDS);
+  const canClosePartnership=ticketType==="partnership"&&(member.roles.cache.has(PARTNERMANAGER_ROLE_ID)||member.roles.cache.has(HIGHSTAFF_ROLE_ID));
+  const canCloseHigh=ticketType==="high"&&member.roles.cache.has(HIGHSTAFF_ROLE_ID);
   return canCloseSupport || canClosePartnership || canCloseHigh;
 }
 
@@ -80,13 +59,10 @@ async function sendTranscriptWithBrowserLink(
   if (!target?.send) return null;
   const sent = await target.send(payload).catch(() => null);
   if (!sent) return sent;
-  const safeExtraRows = Array.isArray(extraRows)
-    ? extraRows.filter(Boolean)
-    : [];
+  const safeExtraRows=Array.isArray(extraRows)?extraRows.filter(Boolean):[];
   if (!hasHtml) {
     if (safeExtraRows.length > 0) {
-      const baseContent =
-        typeof payload?.content === "string" ? payload.content.trim() : "";
+      const baseContent=typeof payload?.content==="string"?payload.content.trim():"";
       await sent
         .edit({
           content: baseContent || undefined,
@@ -96,19 +72,10 @@ async function sendTranscriptWithBrowserLink(
     }
     return sent;
   }
-  const attachment = sent.attachments?.find((att) => {
-    const name = String(att?.name || "").toLowerCase();
-    const url = String(att?.url || "").toLowerCase();
-    return name.endsWith(".html") || url.includes(".html");
-  });
+  const attachment=sent.attachments?.find((att) => {const name=String(att?.name||"").toLowerCase();const url=String(att?.url||"").toLowerCase();return name.endsWith(".html")||url.includes(".html");});
   if (attachment?.url) {
-    const baseContent =
-      typeof payload?.content === "string" ? payload.content.trim() : "";
-    const transcriptButton = new ButtonBuilder()
-      .setStyle(ButtonStyle.Link)
-      .setURL(attachment.url)
-      .setLabel("View Transcript")
-      .setEmoji("📁");
+    const baseContent=typeof payload?.content==="string"?payload.content.trim():"";
+    const transcriptButton=new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(attachment.url).setLabel("View Transcript").setEmoji("📁");
     const row = new ActionRowBuilder().addComponents(transcriptButton);
     await sent
       .edit({
@@ -117,8 +84,7 @@ async function sendTranscriptWithBrowserLink(
       })
       .catch(() => {});
   } else if (safeExtraRows.length > 0) {
-    const baseContent =
-      typeof payload?.content === "string" ? payload.content.trim() : "";
+    const baseContent=typeof payload?.content==="string"?payload.content.trim():"";
     await sent
       .edit({
         content: baseContent || undefined,
@@ -130,17 +96,8 @@ async function sendTranscriptWithBrowserLink(
 }
 
 function buildTicketRatingRows(ticketId) {
-  const stylesByScore = {
-    1: ButtonStyle.Danger,
-    2: ButtonStyle.Danger,
-    3: ButtonStyle.Primary,
-    4: ButtonStyle.Success,
-    5: ButtonStyle.Success,
-  };
-  const row = new ActionRowBuilder().addComponents(
-    ...[1, 2, 3, 4, 5].map((score) =>
-      new ButtonBuilder()
-        .setCustomId(`ticket_rate:${ticketId}:${score}`)
+  const stylesByScore={1:ButtonStyle.Danger,2:ButtonStyle.Danger,3:ButtonStyle.Primary,4:ButtonStyle.Success,5:ButtonStyle.Success,};
+  const row=new ActionRowBuilder().addComponents(...[1,2,3,4,5].map((score) => new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`)
         .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
         .setLabel(String(score))
         .setEmoji("⭐"),
@@ -150,33 +107,13 @@ function buildTicketRatingRows(ticketId) {
 }
 
 function buildTicketClosedEmbed(data) {
-  const openedAt = data?.createdAt
-    ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>`
+  const openedAt=data?.createdAt?`<t:${Math.floor(new Date(data.createdAt).getTime()/1000)}:F>`
     : "Sconosciuto";
-  const closedAt = data?.closedAt
-    ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>`
-    : `<t:${Math.floor(Date.now() / 1000)}:F>`;
-  const reasonText =
-    data?.closeReason && String(data.closeReason).trim()
-      ? String(data.closeReason).trim()
-      : "No reason specified";
+  const closedAt=data?.closedAt?`<t:${Math.floor(new Date(data.closedAt).getTime()/1000)}:F>`
+    : `<t:${Math.floor(Date.now()/1000)}:F>`;
+  const reasonText=data?.closeReason&&String(data.closeReason).trim()?String(data.closeReason).trim():"No reason specified";
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: data?.guildName || "Ticket System",
-      iconURL: data?.guildIconURL || undefined,
-    })
-    .setTitle("Ticket Closed")
-    .setColor("#6f4e37")
-    .addFields(
-      {
-        name: "🆔 Ticket ID",
-        value: String(data?.ticketNumber || "N/A"),
-        inline: true,
-      },
-      {
-        name: "✅ Opened By",
-        value: data?.userId ? `<@${data.userId}>` : "Sconosciuto",
+  const embed=new EmbedBuilder().setAuthor({name:data?.guildName||"Ticket System",iconURL:data?.guildIconURL||undefined,}).setTitle("Ticket Closed").setColor("#6f4e37").addFields({name:"🆔 Ticket ID",value:String(data?.ticketNumber||"N/A"),inline:true,},{name:"✅ Opened By",value:data?.userId?`<@${data.userId}>` : "Sconosciuto",
         inline: true,
       },
       {
@@ -194,15 +131,7 @@ function buildTicketClosedEmbed(data) {
       { name: "ℹ️ Reason", value: reasonText, inline: false },
     );
 
-  const reordered = [
-    embed.data.fields?.[0],
-    embed.data.fields?.[1],
-    embed.data.fields?.[2],
-    embed.data.fields?.[3],
-    embed.data.fields?.[5],
-    embed.data.fields?.[4],
-    embed.data.fields?.[6],
-  ].filter(Boolean);
+  const reordered=[embed.data.fields?.[0],embed.data.fields?.[1],embed.data.fields?.[2],embed.data.fields?.[3],embed.data.fields?.[5],embed.data.fields?.[4],embed.data.fields?.[6],].filter(Boolean);
   embed.setFields(reordered);
 
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
@@ -239,9 +168,7 @@ async function resolveUserFromArg(message, rawArg) {
   if (fromMention) return fromMention;
   if (!rawArg) return null;
 
-  const id =
-    String(rawArg).match(/^<@!?(\d+)>$/)?.[1] ||
-    (String(rawArg).match(/^\d{17,20}$/) ? String(rawArg) : null);
+  const id=String(rawArg).match(/^<@!?(\d+)>$/)?.[1]||(String(rawArg).match(/^\d{17,20}$/)?String(rawArg):null);
   if (!id) return null;
   return getUserCached(message.client, id);
 }
@@ -257,86 +184,14 @@ async function fetchTicketMessage(channel, messageId) {
 
 function getTicketPanelConfig(raw) {
   const key = String(raw || "").toLowerCase();
-  const configs = {
-    supporto: {
-      type: "supporto",
-      emoji: "⭐",
-      name: "supporto",
-      label: "Supporto",
-      embed: new EmbedBuilder()
-        .setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**")
-        .setDescription(
-          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,
-        )
-        .setColor("#6f4e37"),
-    },
-    partnership: {
-      type: "partnership",
-      emoji: "🤝",
-      name: "partnership",
-      label: "Partnership",
-      embed: new EmbedBuilder()
-        .setTitle(
-          "<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",
-        )
-        .setDescription(
-          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,
-        )
-        .setColor("#6f4e37"),
-    },
-    highstaff: {
-      type: "high",
-      emoji: "✨",
-      name: "highstaff",
-      label: "High Staff",
-      embed: new EmbedBuilder()
-        .setTitle(
-          "<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",
-        )
-        .setDescription(
-          `<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,
-        )
-        .setColor("#6f4e37"),
-    },
-  };
-  const aliases = {
-    supporto: "supporto",
-    prima: "supporto",
-    1: "supporto",
-    first: "supporto",
-    partnership: "partnership",
-    partner: "partnership",
-    seconda: "partnership",
-    2: "partnership",
-    second: "partnership",
-    highstaff: "highstaff",
-    high: "highstaff",
-    terza: "highstaff",
-    3: "highstaff",
-    third: "highstaff",
-  };
+  const configs={supporto:{type:"supporto",emoji:"⭐",name:"supporto",label:"Supporto",embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET SUPPORTO__**").setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un membro dello **__\`STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Descrivi supporto, segnalazione o problema in modo chiaro.`,).setColor("#6f4e37"),},partnership:{type:"partnership",emoji:"🤝",name:"partnership",label:"Partnership",embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET PARTNERSHIP__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`PARTNER MANAGER\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Manda la descrizione del tuo server/catena tramite il bottone qui in basso.`,).setColor("#6f4e37"),},highstaff:{type:"high",emoji:"✨",name:"highstaff",label:"High Staff",embed:new EmbedBuilder().setTitle("<:vsl_ticket:1329520261053022208> • **__TICKET HIGH STAFF__**",).setDescription(`<a:ThankYou:1329504268369002507> • __Grazie per aver aperto un ticket!__\n\n<a:loading:1443934440614264924> 🠆 Attendi un **__\`HIGH STAFF\`__**.\n\n<:reportmessage:1443670575376765130> ➥ Specifica se riguarda Verifica Selfie, Donazioni, Sponsor o HighStaff.`,).setColor("#6f4e37"),},};
+  const aliases={supporto:"supporto",prima:"supporto",1:"supporto",first:"supporto",partnership:"partnership",partner:"partnership",seconda:"partnership",2:"partnership",second:"partnership",highstaff:"highstaff",high:"highstaff",terza:"highstaff",3:"highstaff",third:"highstaff",};
   const resolved = aliases[key] || key;
   return configs[resolved] || null;
 }
 
 function getTicketChannelPermissionOverwrites(guild, userId, ticketType) {
-  const base = [
-    {
-      id: guild.roles.everyone.id,
-      deny: [PermissionFlagsBits.ViewChannel],
-    },
-    {
-      id: userId,
-      allow: [
-        PermissionFlagsBits.ViewChannel,
-        PermissionFlagsBits.SendMessages,
-        PermissionFlagsBits.EmbedLinks,
-        PermissionFlagsBits.AttachFiles,
-        PermissionFlagsBits.ReadMessageHistory,
-        PermissionFlagsBits.AddReactions,
-      ],
-    },
-  ];
+  const base=[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.ViewChannel],},{id:userId,allow:[PermissionFlagsBits.ViewChannel,PermissionFlagsBits.SendMessages,PermissionFlagsBits.EmbedLinks,PermissionFlagsBits.AttachFiles,PermissionFlagsBits.ReadMessageHistory,PermissionFlagsBits.AddReactions,],},];
 
   if (ticketType === "supporto") {
     base.push(
@@ -420,29 +275,49 @@ function getTicketChannelPermissionOverwrites(guild, userId, ticketType) {
   return base.filter((entry) => Boolean(entry?.id));
 }
 
+function sanitizeTicketChannelTail(rawValue, fallback = "utente", maxLength = 32) {
+  const safe=String(rawValue||fallback).trim().toLowerCase().replace(/\s+/g,"-").replace(/[\/\\#@:`*?"<>|]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^[.-]+|[.-]+$/g, "")
+    .replace(/[^\p{L}\p{N}._-]/gu, "")
+    .slice(0, maxLength);
+  return safe || fallback;
+}
+
+function buildTicketChannelName(panelConfig, rawValue, fallbackValue = "utente") {
+  const safeTail = sanitizeTicketChannelTail(rawValue, fallbackValue);
+  return `༄${String(panelConfig?.emoji || "")}︲${String(panelConfig?.name || "supporto")}᲼${safeTail}`.slice(0, 100);
+}
+
+function resolveTicketRenamePrefix(currentName, ticketDoc) {
+  const current = String(currentName || "");
+  const unicodeSeparatorIndex = current.lastIndexOf("᲼");
+  if (unicodeSeparatorIndex !== -1) {
+    return current.slice(0, unicodeSeparatorIndex + 1);
+  }
+
+  const hyphenIndex = current.lastIndexOf("-");
+  if (hyphenIndex !== -1) {
+    return current.slice(0, hyphenIndex + 1);
+  }
+
+  const panelConfig=getTicketPanelConfig(ticketDoc?.ticketType)||getTicketPanelConfig("supporto");
+  if (panelConfig) {
+    return `༄${String(panelConfig.emoji || "")}︲${String(panelConfig.name || "supporto")}᲼`;
+  }
+  return null;
+}
+
 async function ensureTicketsCategory(guild) {
   await guild.channels.fetch().catch(() => null);
-  const categories = guild.channels.cache
-    .filter((ch) => ch.type === 4 && String(ch.name || "").toLowerCase().includes("tickets"))
-    .sort((a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id));
+  const categories=guild.channels.cache.filter((ch) => ch.type===4&&String(ch.name||"").toLowerCase().includes("tickets")).sort((a,b) => a.rawPosition-b.rawPosition||a.id.localeCompare(b.id));
 
   if (categories.size > 0) {
     const exact = categories.find((c) => c.name === TICKETS_CATEGORY_NAME);
     return exact || categories.first();
   }
 
-  const created = await guild.channels
-    .create({
-      name: TICKETS_CATEGORY_NAME,
-      type: 4,
-      permissionOverwrites: [
-        {
-          id: guild.roles.everyone.id,
-          deny: [PermissionFlagsBits.SendMessages],
-        },
-      ],
-    })
-    .catch(() => null);
+  const created=await guild.channels.create({name:TICKETS_CATEGORY_NAME,type:4,permissionOverwrites:[{id:guild.roles.everyone.id,deny:[PermissionFlagsBits.SendMessages],},],}).catch(() => null);
 
   if (created) {
     await created.setPosition(0).catch(() => {});
@@ -524,35 +399,15 @@ module.exports = {
 
     const defaultPrefix = "+";
     const rawContent = String(message.content || "").trim();
-    const invokedToken = rawContent.startsWith(defaultPrefix)
-      ? rawContent
-          .slice(defaultPrefix.length)
-          .trim()
-          .split(/\s+/)[0]
-          ?.toLowerCase()
-      : "";
-    const directAliasSub =
-      invokedToken && this.subcommandAliases
-        ? this.subcommandAliases[invokedToken]
-        : null;
+    const invokedToken=rawContent.startsWith(defaultPrefix)?rawContent.slice(defaultPrefix.length).trim().split(/\s+/)[0]?.toLowerCase():"";
+    const directAliasSub=invokedToken&&this.subcommandAliases?this.subcommandAliases[invokedToken]:null;
 
     const subcommand = String(directAliasSub || args[0] || "").toLowerCase();
     const rest = directAliasSub ? args : args.slice(1);
-    const normalizedRest = Array.isArray(rest)
-      ? (() => {
-          if (!rest.length) return rest;
-          const first = String(rest[0] || "").toLowerCase();
-          if (first === subcommand) return rest.slice(1);
-          return rest;
-        })()
-      : [];
+    const normalizedRest=Array.isArray(rest)?(() => {if(!rest.length)return rest;const first=String(rest[0]||"").toLowerCase();if(first===subcommand)return rest.slice(1);return rest;})():[];
     const inTicketCategory = Boolean(message.channel && isChannelInTicketCategory(message.channel));
-    const effectiveChannelId = message.channel?.isThread?.()
-      ? message.channel?.parentId || message.channel?.id
-      : message.channel?.id;
-    const activeTicketInChannel = effectiveChannelId
-      ? await Ticket.findOne({ channelId: effectiveChannelId, open: true }).catch(() => null)
-      : null;
+    const effectiveChannelId=message.channel?.isThread?.()?message.channel?.parentId||message.channel?.id:message.channel?.id;
+    const activeTicketInChannel=effectiveChannelId?await Ticket.findOne({channelId:effectiveChannelId,open:true}).catch(() => null):null;
 
     if (!subcommand) {
       await safeMessageReply(message, {
@@ -583,8 +438,7 @@ module.exports = {
 
     const isHighStaffBypass = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
     const isTicketHighStaff = message.member.roles.cache.has(HIGHSTAFF_ROLE_ID);
-    const isSponsorStaffHere =
-      message.guild?.id && hasSponsorStaffRole(message.member, message.guild.id);
+    const isSponsorStaffHere=message.guild?.id&&hasSponsorStaffRole(message.member,message.guild.id);
 
     if (subcommand === "reopen") {
       if (!isTicketHighStaff && !isSponsorStaffHere) {
@@ -614,10 +468,7 @@ module.exports = {
         return;
       }
 
-      const ticketDoc = await Ticket.findOne({
-        guildId: message.guild.id,
-        ticketNumber,
-      }).catch(() => null);
+      const ticketDoc=await Ticket.findOne({guildId:message.guild.id,ticketNumber,}).catch(() => null);
 
       if (!ticketDoc) {
         await safeMessageReply(message, {
@@ -645,11 +496,7 @@ module.exports = {
         return;
       }
 
-      const existingOpen = await Ticket.findOne({
-        guildId: message.guild.id,
-        userId: ticketDoc.userId,
-        open: true,
-      }).catch(() => null);
+      const existingOpen=await Ticket.findOne({guildId:message.guild.id,userId:ticketDoc.userId,open:true,}).catch(() => null);
 
       if (existingOpen) {
         await safeMessageReply(message, {
@@ -664,9 +511,7 @@ module.exports = {
         return;
       }
 
-      const ticketMember = await message.guild.members
-        .fetch(ticketDoc.userId)
-        .catch(() => null);
+      const ticketMember=await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
       if (!ticketMember) {
         await safeMessageReply(message, {
           embeds: [
@@ -680,9 +525,7 @@ module.exports = {
         return;
       }
 
-      const config =
-        getTicketPanelConfig(ticketDoc.ticketType) ||
-        getTicketPanelConfig("supporto");
+      const config=getTicketPanelConfig(ticketDoc.ticketType)||getTicketPanelConfig("supporto");
       if (!config) {
         await safeMessageReply(message, {
           embeds: [makeErrorEmbed("Errore", "Configurazione ticket non valida.")],
@@ -705,24 +548,9 @@ module.exports = {
         return;
       }
 
-      const usernamePart = String(ticketMember.user.username || "utente")
-        .toLowerCase()
-        .replace(/[^a-z0-9_-]/g, "")
-        .slice(0, 32);
-      const channelName = `ticket-${config.name}-${usernamePart || ticketMember.id}`;
+      const channelName=buildTicketChannelName(config,ticketMember.user.username,ticketMember.id,);
 
-      const channel = await message.guild.channels
-        .create({
-          name: channelName,
-          type: 0,
-          parent: category.id,
-          permissionOverwrites: getTicketChannelPermissionOverwrites(
-            message.guild,
-            ticketDoc.userId,
-            config.type,
-          ),
-        })
-        .catch(() => null);
+      const channel=await message.guild.channels.create({name:channelName,type:0,parent:category.id,permissionOverwrites:getTicketChannelPermissionOverwrites(message.guild,ticketDoc.userId,config.type,),}).catch(() => null);
 
       if (!channel) {
         await safeMessageReply(message, {
@@ -737,24 +565,9 @@ module.exports = {
         return;
       }
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("close_ticket")
-          .setLabel("🔒 Chiudi")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("close_ticket_motivo")
-          .setLabel("📝 Chiudi Con Motivo")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("claim_ticket")
-          .setLabel("✅ Claim")
-          .setStyle(ButtonStyle.Success),
-      );
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
 
-      const mainMsg = await channel
-        .send({ embeds: [config.embed], components: [row] })
-        .catch(() => null);
+      const mainMsg=await channel.send({embeds:[config.embed],components:[row]}).catch(() => null);
       if (mainMsg) {
         await pinFirstTicketMessage(channel, mainMsg);
       }
@@ -784,11 +597,8 @@ module.exports = {
         },
       ).catch(() => {});
 
-      const tagRole =
-        config.type === "partnership" ? PARTNERMANAGER_ROLE_ID : STAFF_ROLE_ID;
-      const mentionMsg = await channel
-        .send(`<@${ticketDoc.userId}> ${tagRole ? `<@&${tagRole}>` : ""}`)
-        .catch(() => null);
+      const tagRole=config.type==="partnership"?PARTNERMANAGER_ROLE_ID:STAFF_ROLE_ID;
+      const mentionMsg=await channel.send(`<@${ticketDoc.userId}>${tagRole?`<@&${tagRole}>` : ""}`).catch(() => null);
       if (mentionMsg) {
         setTimeout(() => mentionMsg.delete().catch(() => {}), 150);
       }
@@ -890,8 +700,7 @@ module.exports = {
         });
         return;
       }
-      const canRequestClose =
-        message.author.id === ticketDoc.claimedBy || isHighStaffBypass;
+      const canRequestClose=message.author.id===ticketDoc.claimedBy||isHighStaffBypass;
       if (!canRequestClose) {
         await safeMessageReply(message, {
           embeds: [
@@ -916,18 +725,7 @@ module.exports = {
           },
         },
       ).catch(() => {});
-      const closeButton = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("accetta")
-          .setEmoji("<:vegacheckmark:1443666279058772028>")
-          .setLabel("Accetta e chiudi")
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId("rifiuta")
-          .setEmoji("<:vegax:1443934876440068179>")
-          .setLabel("Rifiuta e mantieni aperto")
-          .setStyle(ButtonStyle.Secondary),
-      );
+      const closeButton=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("accetta").setEmoji("<:vegacheckmark:1443666279058772028>").setLabel("Accetta e chiudi").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("rifiuta").setEmoji("<:vegax:1443934876440068179>").setLabel("Rifiuta e mantieni aperto").setStyle(ButtonStyle.Secondary),);
 
       await message.channel.send({
         content: `<@${ticketDoc.userId}>`,
@@ -994,17 +792,7 @@ module.exports = {
         allowedMentions: { repliedUser: false },
       });
 
-      const claimed = await Ticket.findOneAndUpdate(
-        { channelId: effectiveChannelId, open: true },
-        {
-          $set: {
-            open: false,
-            closedAt: new Date(),
-            closedBy: message.author.id,
-          },
-        },
-        { new: true },
-      );
+      const claimed=await Ticket.findOneAndUpdate({channelId:effectiveChannelId,open:true},{$set:{open:false,closedAt:new Date(),closedBy:message.author.id,},},{new:true},);
       if (!claimed) {
         await safeMessageReply(message, {
           embeds: [
@@ -1022,17 +810,9 @@ module.exports = {
       const closeReason = null;
       let ticketNumber = Number(claimed.ticketNumber || 0);
       if (!ticketNumber) ticketNumber = await getNextTicketId();
-      const transcriptTXT = await createTranscript(message.channel).catch(
-        () => "",
-      );
-      const transcriptHTML = await createTranscriptHtml(message.channel).catch(
-        () => "",
-      );
-      const transcriptHtmlPath = transcriptHTML
-        ? await saveTranscriptHtml(message.channel, transcriptHTML).catch(
-            () => null,
-          )
-        : null;
+      const transcriptTXT=await createTranscript(message.channel).catch(() => "",);
+      const transcriptHTML=await createTranscriptHtml(message.channel).catch(() => "",);
+      const transcriptHtmlPath=transcriptHTML?await saveTranscriptHtml(message.channel,transcriptHTML).catch(() => null,):null;
       await Ticket.updateOne(
         { channelId: effectiveChannelId },
         {
@@ -1052,31 +832,13 @@ module.exports = {
       const mainGuildId = IDs?.guilds?.main || null;
       const centralTicketLogChannelId = IDs?.channels?.ticketLogs || "1442569290682208296";
 
-      const mainGuild = mainGuildId
-        ? await getClientGuildCached(client, mainGuildId)
-        : null;
+      const mainGuild=mainGuildId?await getClientGuildCached(client,mainGuildId):null;
 
-      const logChannel =
-        mainGuild?.channels?.cache?.get(centralTicketLogChannelId) ||
-        (mainGuild
-          ? await getGuildChannelCached(mainGuild, centralTicketLogChannelId)
-          : null);
+      const logChannel=mainGuild?.channels?.cache?.get(centralTicketLogChannelId)||(mainGuild?await getGuildChannelCached(mainGuild,centralTicketLogChannelId):null);
 
-      const closeEmbed = buildTicketClosedEmbed({
-        ...claimed.toObject(),
-        ticketNumber,
-        closeReason,
-        closedBy: message.author.id,
-        closedAt: new Date(),
-        guildName: message.guild?.name || "Ticket System",
-        guildIconURL: message.guild?.iconURL?.({ size: 128 }) || null,
-      });
+      const closeEmbed=buildTicketClosedEmbed({...claimed.toObject(),ticketNumber,closeReason,closedBy:message.author.id,closedAt:new Date(),guildName:message.guild?.name||"Ticket System",guildIconURL:message.guild?.iconURL?.({size:128})||null,});
       const ratingRows = buildTicketRatingRows(String(claimed._id));
-      const transcriptRows = transcriptHtmlPath
-        ? [
-            new ActionRowBuilder().addComponents(
-              new ButtonBuilder()
-                .setCustomId(`ticket_transcript:${claimed._id}`)
+      const transcriptRows=transcriptHtmlPath?[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${claimed._id}`)
                 .setLabel("View Transcript")
                 .setStyle(ButtonStyle.Secondary)
                 .setEmoji("📁"),
@@ -1097,9 +859,7 @@ module.exports = {
         );
       }
 
-      const member = await message.guild.members
-        .fetch(claimed.userId)
-        .catch(() => null);
+      const member=await message.guild.members.fetch(claimed.userId).catch(() => null);
       if (member) {
         try {
           await sendTranscriptWithBrowserLink(
@@ -1202,10 +962,7 @@ module.exports = {
         SendMessages: true,
       });
 
-      const msg = await fetchTicketMessage(
-        message.channel,
-        ticketDoc.messageId,
-      );
+      const msg=await fetchTicketMessage(message.channel,ticketDoc.messageId,);
       if (!msg) {
         await safeMessageReply(message, {
           embeds: [
@@ -1221,23 +978,8 @@ module.exports = {
         return;
       }
 
-      const updatedEmbed = msg.embeds?.[0]
-        ? EmbedBuilder.from(msg.embeds[0])
-        : new EmbedBuilder().setColor("#6f4e37");
-      const updatedButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("close_ticket")
-          .setLabel("🔒Chiudi")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("close_ticket_motivo")
-          .setLabel("📝 Chiudi con motivo")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("unclaim")
-          .setLabel("🗕 Unclaim")
-          .setStyle(ButtonStyle.Secondary),
-      );
+      const updatedEmbed=msg.embeds?.[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setColor("#6f4e37");
+      const updatedButtons=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi con motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("unclaim").setLabel("🗕 Unclaim").setStyle(ButtonStyle.Secondary),);
 
       await msg.edit({ embeds: [updatedEmbed], components: [updatedButtons] });
       await safeMessageReply(message, {
@@ -1306,10 +1048,7 @@ module.exports = {
         .delete(oldClaimer)
         .catch(() => {});
 
-      const msg = await fetchTicketMessage(
-        message.channel,
-        ticketDoc.messageId,
-      );
+      const msg=await fetchTicketMessage(message.channel,ticketDoc.messageId,);
       if (!msg) {
         await safeMessageReply(message, {
           embeds: [
@@ -1325,23 +1064,8 @@ module.exports = {
         return;
       }
 
-      const originalEmbed = msg.embeds?.[0]
-        ? EmbedBuilder.from(msg.embeds[0])
-        : new EmbedBuilder().setColor("#6f4e37");
-      const originalButtons = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("close_ticket")
-          .setLabel("🔒 Chiudi")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("close_ticket_motivo")
-          .setLabel("📝 Chiudi Con Motivo")
-          .setStyle(ButtonStyle.Danger),
-        new ButtonBuilder()
-          .setCustomId("claim_ticket")
-          .setLabel("✅ Claim")
-          .setStyle(ButtonStyle.Success),
-      );
+      const originalEmbed=msg.embeds?.[0]?EmbedBuilder.from(msg.embeds[0]):new EmbedBuilder().setColor("#6f4e37");
+      const originalButtons=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
 
       await msg.edit({
         embeds: [originalEmbed],
@@ -1408,9 +1132,7 @@ module.exports = {
       if (!message.client.ticketSwitchCooldowns)
         message.client.ticketSwitchCooldowns = new Map();
       const switchKey = `${message.guild.id}:${targetChannel.id}`;
-      const lastSwitchAt = Number(
-        message.client.ticketSwitchCooldowns.get(switchKey) || 0,
-      );
+      const lastSwitchAt=Number(message.client.ticketSwitchCooldowns.get(switchKey)||0,);
 
       if (message.client.ticketSwitchLocks.has(switchKey)) {
         await safeMessageReply(message, {
@@ -1468,14 +1190,9 @@ module.exports = {
           return;
         }
 
-        const openerMember = await message.guild.members
-          .fetch(ticketDoc.userId)
-          .catch(() => null);
+        const openerMember=await message.guild.members.fetch(ticketDoc.userId).catch(() => null);
         const openerName = openerMember?.user?.username || "utente";
-        const safeOpenerName =
-          String(openerName)
-            .replace(/[^\w.-]/g, "")
-            .slice(0, 20) || "utente";
+        const safeOpenerName=String(openerName).replace(/[^\w.-]/g,"").slice(0,20)||"utente";
         const newChannelName = `༄${panelConfig.emoji}︲${panelConfig.name}᲼${safeOpenerName}`;
         if (targetChannel.name !== newChannelName) {
           await targetChannel.setName(newChannelName).catch(() => {});
@@ -1495,19 +1212,8 @@ module.exports = {
           })
           .catch(() => {});
 
-        const applyReadOnly = {
-          ViewChannel: true,
-          SendMessages: false,
-          ReadMessageHistory: true,
-        };
-        const applyFull = {
-          ViewChannel: true,
-          SendMessages: true,
-          EmbedLinks: true,
-          AttachFiles: true,
-          ReadMessageHistory: true,
-          AddReactions: true,
-        };
+        const applyReadOnly={ViewChannel:true,SendMessages:false,ReadMessageHistory:true,};
+        const applyFull={ViewChannel:true,SendMessages:true,EmbedLinks:true,AttachFiles:true,ReadMessageHistory:true,AddReactions:true,};
         const denyView = { ViewChannel: false };
 
         if (panelConfig.type === "supporto") {
@@ -1590,9 +1296,7 @@ module.exports = {
           panelConfig.type !== "partnership"
         ) {
           if (ticketDoc.descriptionPromptMessageId) {
-            const oldPrompt = await targetChannel.messages
-              .fetch(ticketDoc.descriptionPromptMessageId)
-              .catch(() => null);
+            const oldPrompt=await targetChannel.messages.fetch(ticketDoc.descriptionPromptMessageId).catch(() => null);
             if (oldPrompt) await oldPrompt.delete().catch(() => {});
           }
           ticketDoc.descriptionPromptMessageId = null;
@@ -1600,30 +1304,9 @@ module.exports = {
 
         await ticketDoc.save().catch(() => {});
 
-        const msg = await fetchTicketMessage(
-          targetChannel,
-          ticketDoc.messageId,
-        );
+        const msg=await fetchTicketMessage(targetChannel,ticketDoc.messageId,);
         if (msg) {
-          const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("close_ticket")
-              .setLabel("🔒 Chiudi")
-              .setStyle(ButtonStyle.Danger),
-            new ButtonBuilder()
-              .setCustomId("close_ticket_motivo")
-              .setLabel("📝 Chiudi Con Motivo")
-              .setStyle(ButtonStyle.Danger),
-            ticketDoc.claimedBy
-              ? new ButtonBuilder()
-                  .setCustomId("unclaim")
-                  .setLabel("🗕 Unclaim")
-                  .setStyle(ButtonStyle.Secondary)
-              : new ButtonBuilder()
-                  .setCustomId("claim_ticket")
-                  .setLabel("✅ Claim")
-                  .setStyle(ButtonStyle.Success),
-          );
+          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Chiudi").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId("close_ticket_motivo").setLabel("📝 Chiudi Con Motivo").setStyle(ButtonStyle.Danger),ticketDoc.claimedBy?new ButtonBuilder().setCustomId("unclaim").setLabel("🗕 Unclaim").setStyle(ButtonStyle.Secondary):new ButtonBuilder().setCustomId("claim_ticket").setLabel("✅ Claim").setStyle(ButtonStyle.Success),);
           await msg
             .edit({ embeds: [panelConfig.embed], components: [row] })
             .catch(() => {});
@@ -1678,27 +1361,22 @@ module.exports = {
       }
 
       const currentName = String(message.channel.name || "");
-      const firstSeparatorIndex = currentName.indexOf("-");
-      if (firstSeparatorIndex === -1) {
+      const ticketPrefix=resolveTicketRenamePrefix(currentName,activeTicketInChannel,);
+      if (!ticketPrefix) {
         await safeMessageReply(message, {
           embeds: [
             makeErrorEmbed(
               "Errore",
-              "<:vegax:1443934876440068179> Nome canale ticket non valido: manca il separatore `-`.",
+              "<:vegax:1443934876440068179> Nome canale ticket non valido: non riesco a ricostruire il prefisso.",
             ),
           ],
           allowedMentions: { repliedUser: false },
         });
         return;
       }
-
-      const ticketPrefix = currentName.slice(0, firstSeparatorIndex + 1);
-      const words = rawNewName
-        .replace(/-/g, " ")
-        .split(/\s+/)
-        .map((word) => word.replace(/[\/\\#@:`*?"<>|]/g, "").trim())
+      const words=rawNewName.replace(/-/g," ").split(/\s+/).map((word) => word.replace(/[\/\\#@:`*?"<>|]/g, "").trim())
         .filter(Boolean);
-      const normalizedTail = words.join("á²¼");
+      const normalizedTail = sanitizeTicketChannelTail(words.join(" "), "");
 
       if (!normalizedTail) {
         await safeMessageReply(message, {

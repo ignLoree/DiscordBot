@@ -11,40 +11,11 @@ const CORE_EVENTS = new Set(["ready", "clientready", "clienterror"]);
 const CONTROL_MODES = new Set(["enabled", "disabled", "maintenance"]);
 const MAX_ACTIVITY_ROWS = 220;
 
-const DEFAULT_STATE = {
-  version: 2,
-  updatedAt: 0,
-  global: {
-    modules: {},
-    commands: { prefix: {}, slash: {} },
-    events: {},
-    routes: {},
-    routeGroups: {},
-  },
-  guilds: {},
-};
+const DEFAULT_STATE={version:2,updatedAt:0,global:{modules:{},commands:{prefix:{},slash:{}},events:{},routes:{},routeGroups:{},},guilds:{},};
 
-const BYPASS_ROLE_IDS = [IDs.roles?.Founder, IDs.roles?.CoFounder]
-  .filter(Boolean)
-  .map((id) => String(id));
+const BYPASS_ROLE_IDS=[IDs.roles?.Founder,IDs.roles?.CoFounder].filter(Boolean).map((id) => String(id));
 
-const EVENT_GROUP_RULES = [
-  { key: "messages", match: /^message/i },
-  { key: "members", match: /^guildmember/i },
-  { key: "channels", match: /^channel/i },
-  { key: "roles", match: /^role/i },
-  { key: "threads", match: /^thread/i },
-  { key: "reactions", match: /^messagereaction/i },
-  { key: "invites", match: /^invite/i },
-  { key: "webhooks", match: /^webhook/i },
-  { key: "voice", match: /^voicestate/i },
-  { key: "stickers", match: /^sticker/i },
-  { key: "emojis", match: /^emoji/i },
-  { key: "presence", match: /^(presence|userupdate)/i },
-  { key: "guild", match: /^guild/i },
-  { key: "interaction", match: /^interaction/i },
-  { key: "system", match: /^(ready|clientready|clienterror)$/i },
-];
+const EVENT_GROUP_RULES=[{key:"messages",match:/^message/i},{key:"members",match:/^guildmember/i},{key:"channels",match:/^channel/i},{key:"roles",match:/^role/i},{key:"threads",match:/^thread/i},{key:"reactions",match:/^messagereaction/i},{key:"invites",match:/^invite/i},{key:"webhooks",match:/^webhook/i},{key:"voice",match:/^voicestate/i},{key:"stickers",match:/^sticker/i},{key:"emojis",match:/^emoji/i},{key:"presence",match:/^(presence|userupdate)/i},{key:"guild",match:/^guild/i},{key:"interaction",match:/^interaction/i},{key:"system",match:/^(ready|clientready|clienterror)$/i},];
 
 let state = loadState();
 let dmPingCache = { value: -1, at: 0 };
@@ -423,10 +394,7 @@ function getAllSlashCommands(client) {
 }
 
 function getModuleCatalog(client) {
-  const dynamic = new Set([
-    "moderation", "security", "automod", "antinuke", "joinraid", "joingate", "welcome", "events",
-    "birthday", "chatreminder", "tickets", "leveling", "minigames", "tts", "backup", "community", "utility", "vip", "partner",
-  ]);
+  const dynamic=new Set(["moderation","security","automod","antinuke","joinraid","joingate","welcome","events","birthday","chatreminder","tickets","leveling","minigames","tts","backup","community","utility","vip","partner",]);
   for (const row of getAllPrefixCommands(client)) dynamic.add(row.module);
   for (const row of getAllSlashCommands(client)) dynamic.add(row.module);
   return Array.from(dynamic).filter(Boolean).sort((a, b) => a.localeCompare(b));

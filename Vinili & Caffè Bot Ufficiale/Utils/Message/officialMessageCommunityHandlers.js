@@ -45,9 +45,7 @@ async function handleAfk(message) {
       await member.setNickname(afkData.originalName).catch(() => {});
     }
     await AFK.deleteOne({ guildId, userId });
-    const msg = await safeMessageReply(
-      message,
-      `<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>! Ho rimosso il tuo stato AFK.`,
+    const msg=await safeMessageReply(message,`<:VC_PepeWave:1331589315175907412> Bentornato <@${userId}>!Ho rimosso il tuo stato AFK.`,
     );
     if (msg) {
       setTimeout(() => {
@@ -61,18 +59,11 @@ async function handleAfk(message) {
 
   for (const [mentionedId, mentionedUser] of mentions) {
     if (mentionedUser.bot) continue;
-    const targetAfk = await AFK.findOne({
-      guildId,
-      userId: mentionedId,
-    }).lean();
+    const targetAfk=await AFK.findOne({guildId,userId:mentionedId,}).lean();
     if (!targetAfk) continue;
 
     const reason = targetAfk.reason ? `\nMotivo: ${targetAfk.reason}` : "";
-    const msg = await safeMessageReply(
-      message,
-      `**${mentionedUser.username}** è AFK dal <t:${Math.floor(
-        new Date(targetAfk.since || targetAfk.createdAt || Date.now()).getTime() / 1000,
-      )}:R>.${reason}`,
+    const msg=await safeMessageReply(message,`**${mentionedUser.username}**è AFK dal<t:${Math.floor(new Date(targetAfk.since||targetAfk.createdAt||Date.now()).getTime()/1000,)}:R>.${reason}`,
     );
     if (msg) {
       setTimeout(() => {
@@ -103,29 +94,8 @@ async function getGuildAutoResponders(guildId) {
   if (!guildId) return [];
   const cached = getGuildAutoResponderCache(guildId);
   if (cached) return cached;
-  const docs = await AutoResponder.find({ guildId, enabled: true })
-    .lean()
-    .catch(() => []);
-  const rules = Array.isArray(docs)
-    ? docs
-        .map((doc) => ({
-          triggerLower: String(doc?.triggerLower || "")
-            .trim()
-            .toLowerCase(),
-          triggerLoose: normalizeForTriggerMatch(
-            doc?.triggerLower || doc?.trigger || "",
-          ),
-          triggerTokens: normalizeForTriggerMatch(
-            doc?.triggerLower || doc?.trigger || "",
-          )
-            .split(/\s+/)
-            .filter((token) => token.length >= 3),
-          response: String(doc?.response || ""),
-          reactions: Array.isArray(doc?.reactions) ? doc.reactions : [],
-        }))
-        .filter((doc) => Boolean(doc.triggerLower))
-        .sort((a, b) => b.triggerLower.length - a.triggerLower.length)
-    : [];
+  const docs=await AutoResponder.find({guildId,enabled:true}).lean().catch(() => []);
+  const rules=Array.isArray(docs)?docs.map((doc) => ({triggerLower:String(doc?.triggerLower||"").trim().toLowerCase(),triggerLoose:normalizeForTriggerMatch(doc?.triggerLower||doc?.trigger||"",),triggerTokens:normalizeForTriggerMatch(doc?.triggerLower||doc?.trigger||"",).split(/\s+/).filter((token) => token.length>=3),response:String(doc?.response||""),reactions:Array.isArray(doc?.reactions)?doc.reactions:[],})).filter((doc) => Boolean(doc.triggerLower)).sort((a,b) => b.triggerLower.length-a.triggerLower.length):[];
   setGuildAutoResponderCache(guildId, rules);
   return rules;
 }
@@ -150,9 +120,7 @@ function ruleMatchesMessage(normalizedText, normalizedLoose, rule) {
 async function handleAutoResponders(message) {
   const guildId = message.guild?.id;
   if (!guildId) return;
-  const normalized = String(message.content || "")
-    .toLowerCase()
-    .trim();
+  const normalized=String(message.content||"").toLowerCase().trim();
   if (!normalized) return;
   if (normalized.startsWith("+")) return;
   const normalizedLoose = normalizeForTriggerMatch(message.content || "");
@@ -160,9 +128,7 @@ async function handleAutoResponders(message) {
   const rules = await getGuildAutoResponders(guildId);
   if (!Array.isArray(rules) || !rules.length) return;
 
-  const matched = rules.find((rule) =>
-    ruleMatchesMessage(normalized, normalizedLoose, rule),
-  );
+  const matched=rules.find((rule) => ruleMatchesMessage(normalized,normalizedLoose,rule),);
   if (!matched) return;
 
   const response = String(matched.response || "").trim();
@@ -196,20 +162,9 @@ async function handleMentionAutoReactions(message) {
     explicitMentionIds.add(String(match[1]));
   }
   if (!explicitMentionIds.size) return;
-  const targetIds = Array.from(
-    new Set(
-      mentionedUsers
-        .filter((user) => !user.bot && explicitMentionIds.has(user.id))
-        .map((user) => user.id),
-    ),
-  );
+  const targetIds=Array.from(new Set(mentionedUsers.filter((user) => !user.bot&&explicitMentionIds.has(user.id)).map((user) => user.id),),);
   if (!targetIds.length) return;
-  const docs = await MentionReaction.find({
-    guildId: message.guild.id,
-    userId: { $in: targetIds },
-  })
-    .lean()
-    .catch(() => []);
+  const docs=await MentionReaction.find({guildId:message.guild.id,userId:{$in:targetIds},}).lean().catch(() => []);
   if (!Array.isArray(docs) || !docs.length) return;
   const uniqueTokens = new Set();
   for (const doc of docs) {
@@ -228,18 +183,7 @@ async function handleMentionAutoReactions(message) {
 }
 
 function logEventError(client, label, error) {
-  const normalizeErrorText = (value) => {
-    if (value instanceof Error) {
-      return value.stack || value.message || String(value);
-    }
-    if (typeof value === "string") return value;
-    if (typeof value === "undefined") return "Unknown error";
-    try {
-      return inspect(value, { depth: 3, colors: false });
-    } catch {
-      return String(value);
-    }
-  };
+  const normalizeErrorText=(value) => {if(value instanceof Error){return value.stack||value.message||String(value);}if(typeof value==="string")return value;if(typeof value==="undefined")return "Unknown error";try{return inspect(value,{depth:3,colors:false});}catch{return String(value);}};
 
   const payload = `[${label}] ${normalizeErrorText(error)}`;
   setImmediate(() => {
@@ -272,10 +216,7 @@ async function handleCounting(message, client) {
   let messageValue;
   try {
     const math = require("mathjs");
-    const expression = message.content
-      .replace(/\s+/g, "")
-      .replace(/x/g, "*")
-      .replace(/:/g, "/");
+    const expression=message.content.replace(/\s+/g,"").replace(/x/g,"*").replace(/:/g,"/");
     messageValue = math.evaluate(expression);
   } catch {
     return message.delete().catch(() => {});

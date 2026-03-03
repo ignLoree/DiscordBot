@@ -10,24 +10,13 @@ module.exports = {
     if (!code) return replyError(message, "Uso: +country <codice paese (es. ITA, IT)>");
 
     try {
-      const data = await fetchJson(
-        "https://restcountries.com/v3.1/alpha/" +
-          encodeURIComponent(code) +
-          "?fields=name,capital,population,region,subregion,currencies,flags,cca2,cca3",
-      );
+      const data=await fetchJson("https://restcountries.com/v3.1/alpha/"+encodeURIComponent(code)+"?fields=name,capital,population,region,subregion,currencies,flags,cca2,cca3",);
       const row = Array.isArray(data) ? data[0] : data;
       if (!row) return replyError(message, "Paese non trovato.");
 
-      const currencies = row.currencies
-        ? Object.values(row.currencies)
-            .map((c) => c?.name)
-            .filter(Boolean)
-            .join(", ")
-        : "N/D";
+      const currencies=row.currencies?Object.values(row.currencies).map((c) => c?.name).filter(Boolean).join(", "):"N/D";
       const capital = Array.isArray(row.capital) ? row.capital.join(", ") : "N/D";
-      const regionLabel = await translateToItalian(
-        String((row.region || "N/D") + (row.subregion ? " / " + row.subregion : "")),
-      );
+      const regionLabel=await translateToItalian(String((row.region||"N/D")+(row.subregion?" / "+row.subregion:"")),);
 
       return safeMessageReply(message, {
         embeds: [

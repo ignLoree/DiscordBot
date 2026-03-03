@@ -4,15 +4,8 @@ const path = require("path");
 const dotenv = require("dotenv");
 
 function loadEnvFiles(appRoot = process.cwd()) {
-  const safeAppRoot =
-    typeof appRoot === "string" && appRoot.trim().length > 0
-      ? appRoot
-      : process.cwd();
-  const envCandidates = [
-    path.join(safeAppRoot, "..", ".env"),
-    path.join(process.cwd(), ".env"),
-    path.join(safeAppRoot, ".env"),
-  ];
+  const safeAppRoot=typeof appRoot==="string"&&appRoot.trim().length>0?appRoot:process.cwd();
+  const envCandidates=[path.join(safeAppRoot,"..",".env"),path.join(process.cwd(),".env"),path.join(safeAppRoot,".env"),];
 
   for (const envPath of envCandidates) {
     if (!fs.existsSync(envPath)) continue;
@@ -79,8 +72,7 @@ function acquireSingleInstanceLock(lockName) {
   const lockPath = path.join(os.tmpdir(), `${lockName}.lock`);
   const pid = process.pid;
 
-  const writeLock = () =>
-    fs.writeFileSync(lockPath, String(pid), { flag: "wx", encoding: "utf8" });
+  const writeLock=()=>fs.writeFileSync(lockPath,String(pid),{flag:"wx",encoding:"utf8"});
 
   try {
     writeLock();
@@ -106,12 +98,7 @@ function acquireSingleInstanceLock(lockName) {
     writeLock();
   }
 
-  const release = () => {
-    try {
-      const current = Number.parseInt(fs.readFileSync(lockPath, "utf8"), 10);
-      if (current === pid) fs.unlinkSync(lockPath);
-    } catch {}
-  };
+  const release=()=>{try {const current=Number.parseInt(fs.readFileSync(lockPath,"utf8"),10);if(current===pid)fs.unlinkSync(lockPath);} catch {}};
 
   process.on("exit", release);
   process.on("SIGINT", () => {

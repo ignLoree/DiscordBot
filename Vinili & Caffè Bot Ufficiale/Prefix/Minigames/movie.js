@@ -10,19 +10,13 @@ module.exports = {
     if (!query) return replyError(message, "Uso: +movie <titolo>");
 
     try {
-      const data = await fetchJson(
-        "https://www.omdbapi.com/?apikey=thewdb&t=" + encodeURIComponent(query),
-      );
+      const data=await fetchJson("https://www.omdbapi.com/?apikey=thewdb&t="+encodeURIComponent(query),);
       if (!data || data.Response === "False") {
         return replyError(message, "Film non trovato.");
       }
 
-      const translatedPlot = clamp(
-        await translateToItalian(data.Plot || "Trama non disponibile."),
-      );
-      const translatedGenre = data.Genre
-        ? await translateToItalian(String(data.Genre))
-        : "N/D";
+      const translatedPlot=clamp(await translateToItalian(data.Plot||"Trama non disponibile."),);
+      const translatedGenre=data.Genre?await translateToItalian(String(data.Genre)):"N/D";
 
       return safeMessageReply(message, {
         embeds: [

@@ -62,16 +62,10 @@ async function resolveResponsible(guild, code) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({ type: INVITE_CREATE_ACTION, limit: AUDIT_FETCH_LIMIT })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:INVITE_CREATE_ACTION,limit:AUDIT_FETCH_LIMIT}).catch(() => null);
     if (logs?.entries?.size) {
       const now = Date.now();
-      const entry = logs.entries.find((item) => {
-        const created = Number(item?.createdTimestamp || 0);
-        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-        return within && String(item?.target?.code || "") === String(code || "");
-      });
+      const entry=logs.entries.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.code||"")===String(code||"");});
       if (entry?.executor) return entry.executor;
     }
 
@@ -101,10 +95,7 @@ module.exports = {
 
       const logChannel = await resolveLogChannel(guild);
 
-      const responsible =
-        (await resolveResponsible(guild, code)) ||
-        invite?.inviter ||
-        null;
+      const responsible=(await resolveResponsible(guild,code))||invite?.inviter||null;
       const executorId = String(responsible?.id || invite?.inviter?.id || "");
 
       await antiNukeHandleInviteCreationAction({
@@ -114,9 +105,7 @@ module.exports = {
         channelId: String(invite?.channel?.id || ""),
       }).catch(() => {});
 
-      const securityState = await getSecurityLockState(guild).catch(() => ({
-        commandLockActive: false,
-      }));
+      const securityState=await getSecurityLockState(guild).catch(() => ({commandLockActive:false,}));
       if (
         (isAntiNukePanicActive(guild.id) || securityState.commandLockActive) &&
         !(executorId && (await isWhitelistedExecutorAsync(guild, executorId)))
@@ -131,21 +120,16 @@ module.exports = {
         const channelText = invite.channel ? `${invite.channel}` : "#sconosciuto";
         const inviteUrl = invite?.url || (code ? `https://discord.gg/${code}` : null);
 
-        const embed = new EmbedBuilder()
-          .setColor("#57F287")
-          .setTitle("Invite Create")
-          .setDescription(
-            [
-              `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-              `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Invite Create").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+              `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
               "",
               "**Settings**",
-              `<:VC_right_arrow:1473441155055096081> **Code:** ${code}`,
-              inviteUrl ? `<:VC_right_arrow:1473441155055096081> **URL:** ${inviteUrl}` : null,
-              `<:VC_right_arrow:1473441155055096081> **Channel:** ${channelText}`,
-              `<:VC_right_arrow:1473441155055096081> **Max Uses:** ${normalizeCount(invite.maxUses, 0)}`,
-              `<:VC_right_arrow:1473441155055096081> **Max Age:** ${formatMaxAge(invite.maxAge)}`,
-              `<:VC_right_arrow:1473441155055096081> **Temporary:** ${yesNo(Boolean(invite.temporary))}`,
+              `<:VC_right_arrow:1473441155055096081>**Code:**${code}`,
+              inviteUrl ? `<:VC_right_arrow:1473441155055096081>**URL:**${inviteUrl}` : null,
+              `<:VC_right_arrow:1473441155055096081>**Channel:**${channelText}`,
+              `<:VC_right_arrow:1473441155055096081>**Max Uses:**${normalizeCount(invite.maxUses,0)}`,
+              `<:VC_right_arrow:1473441155055096081>**Max Age:**${formatMaxAge(invite.maxAge)}`,
+              `<:VC_right_arrow:1473441155055096081>**Temporary:**${yesNo(Boolean(invite.temporary))}`,
             ]
               .filter(Boolean)
               .join("\n"),

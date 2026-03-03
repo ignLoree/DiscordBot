@@ -20,23 +20,16 @@ module.exports = {
       const membersRemoved = Number.isFinite(rawMembersRemoved) ? Math.max(0, rawMembersRemoved) : 0;
       const deleteDays = Number.isFinite(rawDeleteDays) ? Math.max(0, rawDeleteDays) : 0;
       const extraLines = buildAuditExtraLines(entry, ["removed", "members_removed", "delete_member_days", "days"]);
-      const cleanedExtraLines = extraLines.filter(
-        (line, index) => !(index === 0 && line === "") && line !== "**Additional Information**",
-      );
+      const cleanedExtraLines=extraLines.filter((line,index) => !(index===0&&line==="")&&line!=="**Additional Information**",);
 
       if (logChannel?.isTextBased?.()) {
-        const embed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setTitle("Member Prune")
-          .setDescription(
-            [
-              `${ARROW} **Responsible:** ${responsible}`,
-              `${ARROW} ${nowDiscordTs()}`,
-              entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
+        const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Prune").setDescription([`${ARROW}**Responsible:**${responsible}`,
+              `${ARROW}${nowDiscordTs()}`,
+              entry.reason ? `${ARROW}**Reason:**${entry.reason}` : null,
               "",
               "**Additional Information**",
-              `${ARROW} **Count:** ${membersRemoved}`,
-              `${ARROW} **Days:** ${deleteDays}`,
+              `${ARROW}**Count:**${membersRemoved}`,
+              `${ARROW}**Days:**${deleteDays}`,
               ...(cleanedExtraLines.length ? ["", "**Audit Details**", ...cleanedExtraLines] : []),
             ]
               .filter(Boolean)

@@ -70,9 +70,7 @@ async function handleBackupInfoInteraction(interaction) {
   const customId = String(interaction?.customId || "");
   if (!interaction?.isButton?.()) return false;
 
-  const isBackupDeleteFromCommand =
-    customId.startsWith("backup_delete_confirm:") ||
-    customId.startsWith("backup_delete_cancel:");
+  const isBackupDeleteFromCommand=customId.startsWith("backup_delete_confirm:")||customId.startsWith("backup_delete_cancel:");
 
   if (customId.startsWith("backup_info_load:")) {
     const [, backupToken, ownerId] = splitCustomId(customId);
@@ -87,15 +85,9 @@ async function handleBackupInfoInteraction(interaction) {
     }
 
     try {
-      const source = await readBackupByIdGlobal(
-        parsed.sourceGuildId ? `${parsed.sourceGuildId}:${backupId}` : backupId,
+      const source=await readBackupByIdGlobal(parsed.sourceGuildId?`${parsed.sourceGuildId}:${backupId}` : backupId,
       );
-      const sessionId = createLoadSession({
-        guildId: interaction.guildId,
-        userId: interaction.user.id,
-        backupId: String(source?.payload?.backupId || backupId).toUpperCase(),
-        sourceGuildId: source.guildId,
-      });
+      const sessionId=createLoadSession({guildId:interaction.guildId,userId:interaction.user.id,backupId:String(source?.payload?.backupId||backupId).toUpperCase(),sourceGuildId:source.guildId,});
       await interaction
         .update({
           embeds: [buildLoadWarningEmbed(backupId)],
@@ -103,10 +95,7 @@ async function handleBackupInfoInteraction(interaction) {
         })
         .catch(() => {});
     } catch (error) {
-      const notFound =
-        error?.code === "ENOENT"
-          ? `Backup \`${String(backupId || "").toUpperCase()}\` non trovato.`
-          : error;
+      const notFound=error?.code==="ENOENT"?`Backup \`${String(backupId||"").toUpperCase()}\` non trovato.`:error;
       await interaction
         .update({
           embeds: [buildDeleteErrorEmbed(notFound)],
@@ -204,10 +193,7 @@ async function handleBackupInfoInteraction(interaction) {
         })
         .catch(() => {});
     } catch (error) {
-      const notFound =
-        error?.code === "ENOENT"
-          ? `Backup \`${String(backupId || "").toUpperCase()}\` non trovato.`
-          : error;
+      const notFound=error?.code==="ENOENT"?`Backup \`${String(backupId||"").toUpperCase()}\` non trovato.`:error;
       await interaction
         .update({
           embeds: [buildDeleteErrorEmbed(notFound)],

@@ -11,11 +11,7 @@ function sleep(ms) {
 
 async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const audit = await resolveResponsible(
-      guild,
-      ROLE_CREATE_ACTION,
-      (entry) => String(entry?.target?.id || "") === String(roleId || ""),
-    );
+    const audit=await resolveResponsible(guild,ROLE_CREATE_ACTION,(entry) => String(entry?.target?.id||"")===String(roleId||""),);
     if (audit?.executor || audit?.entry) return audit;
     if (attempt < retries - 1) await sleep(delayMs);
   }
@@ -29,10 +25,7 @@ module.exports = {
     if (!guildId) return;
 
     try {
-      const guild =
-        role?.guild ||
-        client?.guilds?.cache?.get?.(guildId) ||
-        (await client?.guilds?.fetch?.(guildId).catch(() => null));
+      const guild=role?.guild||client?.guilds?.cache?.get?.(guildId)||(await client?.guilds?.fetch?.(guildId).catch(() => null));
       if (!guild) return;
 
       let executorId = "";
@@ -42,23 +35,18 @@ module.exports = {
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit.executor);
 
-        const lines = [
-          `${ARROW} **Responsible:** ${responsible}`,
-          `${ARROW} **Target:** ${role} \`${role.id}\``,
-          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+        const lines=[`${ARROW}**Responsible:**${responsible}`,
+          `${ARROW}**Target:**${role}\`${role.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
           "",
           "**Settings**",
-          `${ARROW} **Name:** ${role.name || "sconosciuto"}`,
-          `${ARROW} **Color:** ${role.hexColor || "#000000"}`,
-          `${ARROW} **Hoist:** ${yesNo(Boolean(role.hoist))}`,
-          `${ARROW} **Mentionable:** ${yesNo(Boolean(role.mentionable))}`,
+          `${ARROW}**Name:**${role.name||"sconosciuto"}`,
+          `${ARROW}**Color:**${role.hexColor||"#000000"}`,
+          `${ARROW}**Hoist:**${yesNo(Boolean(role.hoist))}`,
+          `${ARROW}**Mentionable:**${yesNo(Boolean(role.mentionable))}`,
         ];
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "color", "hoist", "mentionable"]));
 
-        const embed = new EmbedBuilder()
-          .setColor("#57F287")
-          .setTitle("Role Create")
-          .setDescription(lines.join("\n"));
+        const embed=new EmbedBuilder().setColor("#57F287").setTitle("Role Create").setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

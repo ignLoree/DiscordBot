@@ -9,10 +9,7 @@ module.exports = {
     const voiceChannel = message.member?.voice?.channel;
 
     if (!voiceChannel) {
-      const warn = await safeMessageReply(
-        message,
-        "<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",
-      );
+      const warn=await safeMessageReply(message,"<:vegax:1443934876440068179> Devi essere in un canale vocale per usare il TTS.",);
       if (warn?.delete) setTimeout(() => warn.delete().catch(() => {}), 5000);
       return;
     }

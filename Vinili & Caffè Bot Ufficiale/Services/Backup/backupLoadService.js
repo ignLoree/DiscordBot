@@ -1,117 +1,13 @@
 const { ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, PermissionFlagsBits, } = require("discord.js");
 const { readBackupByIdGlobal, createGuildBackup } = require("./serverBackupService");
 
-const LOAD_ACTIONS = [
-  {
-    key: "delete_roles",
-    label: "Delete Roles",
-    description: "All existing roles will be deleted",
-    emoji: "🗑️",
-  },
-  {
-    key: "delete_channels",
-    label: "Delete Channels",
-    description: "All existing channels will be deleted",
-    emoji: "🧹",
-  },
-  {
-    key: "load_roles",
-    label: "Load Roles",
-    description: "New roles will be loaded",
-    emoji: "🧩",
-  },
-  {
-    key: "load_channels",
-    label: "Load Channels",
-    description: "New channels will be loaded",
-    emoji: "📂",
-  },
-  {
-    key: "load_settings",
-    label: "Load Settings",
-    description: "Server settings will be updated",
-    emoji: "⚙️",
-  },
-  {
-    key: "load_threads",
-    label: "Load Threads",
-    description: "Threads and forum posts will be loaded",
-    emoji: "🧵",
-  },
-  {
-    key: "load_member_info",
-    label: "Load Member Info",
-    description: "Member roles and nicknames will be loaded",
-    emoji: "👥",
-  },
-  {
-    key: "load_bans",
-    label: "Load Bans",
-    description: "Banned members will be loaded",
-    emoji: "🔨",
-  },
-  {
-    key: "load_messages",
-    label: "Load Messages",
-    description: "Messages will be loaded",
-    emoji: "💬",
-  },
-  {
-    key: "load_pinned_messages",
-    label: "Pinned Messages",
-    description: "Pinned messages will be loaded",
-    emoji: "📌",
-  },
-  {
-    key: "load_emojis",
-    label: "Load Emojis",
-    description: "Custom emojis will be loaded",
-    emoji: "😀",
-  },
-  {
-    key: "load_stickers",
-    label: "Load Stickers",
-    description: "Stickers will be loaded",
-    emoji: "🏷️",
-  },
-  {
-    key: "load_webhooks",
-    label: "Load Webhooks",
-    description: "Webhooks will be restored",
-    emoji: "🪝",
-  },
-  {
-    key: "load_invites",
-    label: "Load Invites",
-    description: "Invites will be recreated",
-    emoji: "🔗",
-  },
-  {
-    key: "load_events",
-    label: "Load Events",
-    description: "Scheduled events will be loaded",
-    emoji: "📅",
-  },
-  {
-    key: "load_automod_rules",
-    label: "Load AutoMod Rules",
-    description: "AutoMod rules will be loaded",
-    emoji: "🛡️",
-  },
-];
+const LOAD_ACTIONS=[{key:"delete_roles",label:"Delete Roles",description:"All existing roles will be deleted",emoji:"🗑️",},{key:"delete_channels",label:"Delete Channels",description:"All existing channels will be deleted",emoji:"🧹",},{key:"load_roles",label:"Load Roles",description:"New roles will be loaded",emoji:"🧩",},{key:"load_channels",label:"Load Channels",description:"New channels will be loaded",emoji:"📂",},{key:"load_settings",label:"Load Settings",description:"Server settings will be updated",emoji:"⚙️",},{key:"load_threads",label:"Load Threads",description:"Threads and forum posts will be loaded",emoji:"🧵",},{key:"load_member_info",label:"Load Member Info",description:"Member roles and nicknames will be loaded",emoji:"👥",},{key:"load_bans",label:"Load Bans",description:"Banned members will be loaded",emoji:"🔨",},{key:"load_messages",label:"Load Messages",description:"Messages will be loaded",emoji:"💬",},{key:"load_pinned_messages",label:"Pinned Messages",description:"Pinned messages will be loaded",emoji:"📌",},{key:"load_emojis",label:"Load Emojis",description:"Custom emojis will be loaded",emoji:"😀",},{key:"load_stickers",label:"Load Stickers",description:"Stickers will be loaded",emoji:"🏷️",},{key:"load_webhooks",label:"Load Webhooks",description:"Webhooks will be restored",emoji:"🪝",},{key:"load_invites",label:"Load Invites",description:"Invites will be recreated",emoji:"🔗",},{key:"load_events",label:"Load Events",description:"Scheduled events will be loaded",emoji:"📅",},{key:"load_automod_rules",label:"Load AutoMod Rules",description:"AutoMod rules will be loaded",emoji:"🛡️",},];
 
 const ACTION_KEYS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_ACTIONS = new Set(LOAD_ACTIONS.map((a) => a.key));
 const DEFAULT_MESSAGES_LIMIT = 1000;
 const MAX_MESSAGES_LIMIT = 50000;
-const MESSAGE_LIMIT_PRESETS = [
-  { label: "100 messages", value: "100", description: "Ripristina max 100 messaggi" },
-  { label: "500 messages", value: "500", description: "Ripristina max 500 messaggi" },
-  { label: "1,000 messages", value: "1000", description: "Ripristina max 1000 messaggi" },
-  { label: "5,000 messages", value: "5000", description: "Ripristina max 5000 messaggi" },
-  { label: "10,000 messages", value: "10000", description: "Ripristina max 10000 messaggi" },
-  { label: "All available", value: "ALL", description: "Ripristina tutti i messaggi nel backup" },
-];
+const MESSAGE_LIMIT_PRESETS=[{label:"100 messages",value:"100",description:"Ripristina max 100 messaggi"},{label:"500 messages",value:"500",description:"Ripristina max 500 messaggi"},{label:"1,000 messages",value:"1000",description:"Ripristina max 1000 messaggi"},{label:"5,000 messages",value:"5000",description:"Ripristina max 5000 messaggi"},{label:"10,000 messages",value:"10000",description:"Ripristina max 10000 messaggi"},{label:"All available",value:"ALL",description:"Ripristina tutti i messaggi nel backup"},];
 const SESSION_TTL_MS = 1000 * 60 * 20;
 const ACTIVE_LOAD_STALE_MS = 1000 * 60 * 60 * 6;
 const sessions = new Map();
@@ -248,18 +144,7 @@ function getActiveLoadState(guildId) {
 function startActiveLoad({ guildId, userId, backupId, actions, messagesLimit }) {
   const key = String(guildId || "");
   if (!key) return null;
-  const state = {
-    guildId: key,
-    userId: String(userId || ""),
-    backupId: String(backupId || "").toUpperCase(),
-    actions: Array.from(sanitizeActions(actions)),
-    messagesLimit: normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT),
-    startedAtMs: Date.now(),
-    updatedAtMs: Date.now(),
-    cancelRequested: false,
-    phase: "starting",
-    processed: 0,
-  };
+  const state={guildId:key,userId:String(userId||""),backupId:String(backupId||"").toUpperCase(),actions:Array.from(sanitizeActions(actions)),messagesLimit:normalizeMessagesLimit(messagesLimit,DEFAULT_MESSAGES_LIMIT),startedAtMs:Date.now(),updatedAtMs:Date.now(),cancelRequested:false,phase:"starting",processed:0,};
   activeLoadsByGuild.set(key, state);
   return state;
 }
@@ -364,14 +249,8 @@ function buildLoadStartComponents(sessionId) {
 function countBackupMessages(payload) {
   const channels = payload?.messages?.channels || {};
   const threads = payload?.messages?.threads || {};
-  const chCount = Object.values(channels).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
-  const thCount = Object.values(threads).reduce(
-    (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
-    0,
-  );
+  const chCount=Object.values(channels).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
+  const thCount=Object.values(threads).reduce((sum,list) => sum+(Array.isArray(list)?list.length:0),0,);
   return chCount + thCount;
 }
 
@@ -396,9 +275,7 @@ function buildPreflightWarningEmbed({
 }) {
   const safeActions = sanitizeActions(actions);
   const lines = [];
-  const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : []).filter(
-    (r) => String(r?.name || "").trim() !== "@everyone",
-  );
+  const backupRoles=(Array.isArray(payload?.roles)?payload.roles:[]).filter((r) => String(r?.name||"").trim()!=="@everyone",);
   const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
   const backupThreads = Array.isArray(payload?.threads) ? payload.threads : [];
   const backupMembers = Array.isArray(payload?.members) ? payload.members : [];
@@ -407,25 +284,18 @@ function buildPreflightWarningEmbed({
   const backupStickers = Array.isArray(payload?.stickers) ? payload.stickers : [];
   const backupWebhooks = Array.isArray(payload?.webhooks) ? payload.webhooks : [];
   const backupInvites = Array.isArray(payload?.invites) ? payload.invites : [];
-  const backupEvents = Array.isArray(payload?.scheduledEvents)
-    ? payload.scheduledEvents
-    : [];
-  const backupAutomodRules = Array.isArray(payload?.autoModerationRules)
-    ? payload.autoModerationRules
-    : [];
+  const backupEvents=Array.isArray(payload?.scheduledEvents)?payload.scheduledEvents:[];
+  const backupAutomodRules=Array.isArray(payload?.autoModerationRules)?payload.autoModerationRules:[];
   const totalMessages = countBackupMessages(payload);
   const effectiveLimit = normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT);
-  const loadableMessages =
-    effectiveLimit == null ? totalMessages : Math.min(totalMessages, effectiveLimit);
+  const loadableMessages=effectiveLimit==null?totalMessages:Math.min(totalMessages,effectiveLimit);
   const pinnedMessages = countBackupPinnedMessages(payload);
 
   if (safeActions.has("load_roles")) {
     lines.push(`• **${backupRoles.length}** roles will be created`);
   }
   if (safeActions.has("delete_roles")) {
-    const rolesToDelete = [...guild.roles.cache.values()].filter(
-      (r) => r.editable && !r.managed && r.id !== guild.id,
-    ).length;
+    const rolesToDelete=[...guild.roles.cache.values()].filter((r) => r.editable&&!r.managed&&r.id!==guild.id,).length;
     lines.push(`• **${rolesToDelete}** roles will be deleted`);
   }
   if (safeActions.has("load_channels")) {
@@ -555,26 +425,16 @@ function buildLoadComponents(
 ) {
   const selected = sanitizeActions(selectedActions);
   const limitValue = formatMessagesLimit(normalizeMessagesLimit(messagesLimit));
-  const options = LOAD_ACTIONS.map((action) => ({
-    label: action.label,
-    description: action.description,
-    value: action.key,
-    emoji: action.emoji,
-    default: selected.has(action.key),
-  }));
+  const options=LOAD_ACTIONS.map((action) => ({label:action.label,description:action.description,value:action.key,emoji:action.emoji,default:selected.has(action.key),}));
 
-  const selectRow = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`backup_load_actions:${sessionId}`)
+  const selectRow=new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`backup_load_actions:${sessionId}`)
       .setPlaceholder("Select load actions")
       .setMinValues(1)
       .setMaxValues(options.length)
       .addOptions(options),
   );
 
-  const buttonRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`backup_load_continue:${sessionId}`)
+  const buttonRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`backup_load_continue:${sessionId}`)
       .setLabel("Continue")
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
@@ -583,9 +443,7 @@ function buildLoadComponents(
       .setStyle(ButtonStyle.Danger),
   );
 
-  const limitRow = new ActionRowBuilder().addComponents(
-    new StringSelectMenuBuilder()
-      .setCustomId(`backup_load_messages_limit:${sessionId}`)
+  const limitRow=new ActionRowBuilder().addComponents(new StringSelectMenuBuilder().setCustomId(`backup_load_messages_limit:${sessionId}`)
       .setPlaceholder("Select messages limit")
       .setMinValues(1)
       .setMaxValues(1)
@@ -648,9 +506,7 @@ async function syncLoadedRoles({
   throwIfCancelledFn,
   bumpProcessedFn,
 }) {
-  const roles = (Array.isArray(backupRoles) ? backupRoles : [])
-    .filter((r) => String(r?.name || "").trim() !== "@everyone")
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+  const roles=(Array.isArray(backupRoles)?backupRoles:[]).filter((r) => String(r?.name||"").trim()!=="@everyone").sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
 
   for (const backupRole of roles) {
     throwIfCancelledFn();
@@ -702,12 +558,8 @@ async function syncLoadedChannels({
   bumpProcessedFn,
 }) {
   const channels = Array.isArray(backupChannels) ? backupChannels : [];
-  const categories = channels
-    .filter((c) => Number(c?.type) === 4)
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
-  const others = channels
-    .filter((c) => Number(c?.type) !== 4)
-    .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+  const categories=channels.filter((c) => Number(c?.type)===4).sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
+  const others=channels.filter((c) => Number(c?.type)!==4).sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
 
   for (const backupChannel of [...categories, ...others]) {
     throwIfCancelledFn();
@@ -716,18 +568,8 @@ async function syncLoadedChannels({
     const channel = guild.channels.cache.get(mappedChannelId);
     if (!channel || !channel.manageable) continue;
 
-    const parentMapped = backupChannel.parentId
-      ? channelMap.get(String(backupChannel.parentId)) || null
-      : null;
-    const patch = {
-      name: String(backupChannel.name || channel.name),
-      position: Number(backupChannel.position ?? channel.position),
-      permissionOverwrites: buildPermissionOverwrites(
-        backupChannel.permissionOverwrites,
-        roleMap,
-        guild,
-      ),
-      reason: `Backup load ${backupId}`,
+    const parentMapped=backupChannel.parentId?channelMap.get(String(backupChannel.parentId))||null:null;
+    const patch={name:String(backupChannel.name||channel.name),position:Number(backupChannel.position??channel.position),permissionOverwrites:buildPermissionOverwrites(backupChannel.permissionOverwrites,roleMap,guild,),reason:`Backup load ${backupId}`,
     };
 
     if (Number(backupChannel.type) !== 4) {
@@ -791,16 +633,7 @@ function normalizeMessagePayload(message, backupId) {
   const content = contentRaw ? `${header}\n${contentRaw}` : header;
 
   const embedList = Array.isArray(message?.embeds) ? message.embeds.slice(0, 10) : [];
-  const embeds = embedList
-    .map((emb) => {
-      if (!emb || typeof emb !== "object") return null;
-      const clone = { ...emb };
-      if (Array.isArray(clone.fields) && clone.fields.length > 25) {
-        clone.fields = clone.fields.slice(0, 25);
-      }
-      return clone;
-    })
-    .filter(Boolean);
+  const embeds=embedList.map((emb) => {if(!emb||typeof emb!=="object")return null;const clone={...emb};if(Array.isArray(clone.fields)&&clone.fields.length>25){clone.fields=clone.fields.slice(0,25);}return clone;}).filter(Boolean);
 
   return {
     content: content.slice(0, 1990),
@@ -842,49 +675,21 @@ async function applyBackupToGuild(
   const actions = sanitizeActions(selectedActions);
   const ref = sourceGuildId ? `${sourceGuildId}:${backupId}` : backupId;
   const { payload } = await readBackupByIdGlobal(ref);
-  const effectiveMessagesLimit = normalizeMessagesLimit(
-    messagesLimit,
-    DEFAULT_MESSAGES_LIMIT,
-  );
+  const effectiveMessagesLimit=normalizeMessagesLimit(messagesLimit,DEFAULT_MESSAGES_LIMIT,);
   const markPhase = (phase) => updateActiveLoad(guildKey, { phase });
-  const bumpProcessed = (delta = 1) => {
-    const state = getActiveLoadState(guildKey);
-    if (!state) return;
-    state.processed = Number(state.processed || 0) + Number(delta || 0);
-    state.updatedAtMs = Date.now();
-  };
+  const bumpProcessed=(delta=1) => {const state=getActiveLoadState(guildKey);if(!state)return;state.processed=Number(state.processed||0)+Number(delta||0);state.updatedAtMs=Date.now();};
 
-  const stats = {
-    deletedRoles: 0,
-    deletedChannels: 0,
-    createdRoles: 0,
-    createdChannels: 0,
-    createdThreads: 0,
-    updatedMembers: 0,
-    loadedBans: 0,
-    loadedMessages: 0,
-    loadedPinnedMessages: 0,
-    loadedEmojis: 0,
-    loadedStickers: 0,
-    loadedWebhooks: 0,
-    loadedInvites: 0,
-    loadedEvents: 0,
-    loadedAutomodRules: 0,
-  };
+  const stats={deletedRoles:0,deletedChannels:0,createdRoles:0,createdChannels:0,createdThreads:0,updatedMembers:0,loadedBans:0,loadedMessages:0,loadedPinnedMessages:0,loadedEmojis:0,loadedStickers:0,loadedWebhooks:0,loadedInvites:0,loadedEvents:0,loadedAutomodRules:0,};
 
   const roleMap = new Map();
   roleMap.set(String(guild.id), String(guild.id));
 
   if (actions.has("delete_roles")) {
     markPhase("delete_roles");
-    const candidateRoles = [...guild.roles.cache.values()]
-      .filter((r) => !r.managed && r.id !== guild.id)
-      .sort((a, b) => a.position - b.position);
+    const candidateRoles=[...guild.roles.cache.values()].filter((r) => !r.managed&&r.id!==guild.id).sort((a,b) => a.position-b.position);
     const undeletable = candidateRoles.filter((r) => !r.editable);
     if (undeletable.length > 0) {
-      const preview = undeletable
-        .slice(0, 8)
-        .map((r) => `@${r.name}`)
+      const preview=undeletable.slice(0,8).map((r) => `@${r.name}`)
         .join(", ");
       throw new Error(
         `Impossibile eliminare tutti i ruoli: alza il ruolo del bot sopra i ruoli target. Bloccanti: ${preview}${undeletable.length > 8 ? ", ..." : ""}`,
@@ -902,24 +707,11 @@ async function applyBackupToGuild(
 
   if (actions.has("load_roles")) {
     markPhase("load_roles");
-    const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : [])
-      .filter((r) => String(r?.name || "").trim() !== "@everyone")
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    const backupRoles=(Array.isArray(payload?.roles)?payload.roles:[]).filter((r) => String(r?.name||"").trim()!=="@everyone").sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
 
     for (const role of backupRoles) {
       throwIfCancelled(guildKey);
-      const created = await guild.roles
-        .create({
-          name: String(role.name || "ruolo"),
-          color: Number(role.color || 0),
-          hoist: Boolean(role.hoist),
-          mentionable: Boolean(role.mentionable),
-          permissions: BigInt(String(role.permissions || "0")),
-          icon:
-            (await resolveAssetInput(role.iconData || role.iconURL || null)) ||
-            undefined,
-          unicodeEmoji: role.unicodeEmoji || undefined,
-          reason: `Backup load ${backupId}`,
+      const created=await guild.roles.create({name:String(role.name||"ruolo"),color:Number(role.color||0),hoist:Boolean(role.hoist),mentionable:Boolean(role.mentionable),permissions:BigInt(String(role.permissions||"0")),icon:(await resolveAssetInput(role.iconData||role.iconURL||null))||undefined,unicodeEmoji:role.unicodeEmoji||undefined,reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -970,19 +762,11 @@ async function applyBackupToGuild(
   if (actions.has("load_channels")) {
     markPhase("load_channels");
     const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
-    const categories = backupChannels
-      .filter((c) => Number(c?.type) === 4)
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    const categories=backupChannels.filter((c) => Number(c?.type)===4).sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
 
     for (const cat of categories) {
       throwIfCancelled(guildKey);
-      const created = await guild.channels
-        .create({
-          name: String(cat.name || "categoria"),
-          type: 4,
-          position: Number(cat.position ?? 0),
-          permissionOverwrites: buildPermissionOverwrites(cat.permissionOverwrites, roleMap, guild),
-          reason: `Backup load ${backupId}`,
+      const created=await guild.channels.create({name:String(cat.name||"categoria"),type:4,position:Number(cat.position??0),permissionOverwrites:buildPermissionOverwrites(cat.permissionOverwrites,roleMap,guild),reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -992,9 +776,7 @@ async function applyBackupToGuild(
       await sleep(250);
     }
 
-    const others = backupChannels
-      .filter((c) => Number(c?.type) !== 4)
-      .sort((a, b) => Number(a?.position ?? 0) - Number(b?.position ?? 0));
+    const others=backupChannels.filter((c) => Number(c?.type)!==4).sort((a,b) => Number(a?.position??0)-Number(b?.position??0));
 
     for (const ch of others) {
       throwIfCancelled(guildKey);
@@ -1002,28 +784,7 @@ async function applyBackupToGuild(
       if (![0, 2, 5, 13, 15, 16].includes(type)) continue;
 
       const parentId = ch.parentId ? channelMap.get(String(ch.parentId)) || null : null;
-      const created = await guild.channels
-        .create({
-          name: String(ch.name || "canale"),
-          type,
-          topic: ch.topic || undefined,
-          nsfw: Boolean(ch.nsfw),
-          rateLimitPerUser: Number(ch.rateLimitPerUser ?? 0),
-          bitrate: Number(ch.bitrate ?? 0) || undefined,
-          userLimit: Number(ch.userLimit ?? 0) || undefined,
-          rtcRegion: ch.rtcRegion || null,
-          videoQualityMode: ch.videoQualityMode ?? undefined,
-          defaultAutoArchiveDuration: ch.defaultAutoArchiveDuration ?? undefined,
-          defaultThreadRateLimitPerUser:
-            ch.defaultThreadRateLimitPerUser ?? undefined,
-          defaultForumLayout: ch.defaultForumLayout ?? undefined,
-          defaultSortOrder: ch.defaultSortOrder ?? undefined,
-          availableTags: Array.isArray(ch.availableTags) ? ch.availableTags : undefined,
-          defaultReactionEmoji: ch.defaultReactionEmoji || undefined,
-          parent: parentId || undefined,
-          position: Number(ch.position ?? 0),
-          permissionOverwrites: buildPermissionOverwrites(ch.permissionOverwrites, roleMap, guild),
-          reason: `Backup load ${backupId}`,
+      const created=await guild.channels.create({name:String(ch.name||"canale"),type,topic:ch.topic||undefined,nsfw:Boolean(ch.nsfw),rateLimitPerUser:Number(ch.rateLimitPerUser??0),bitrate:Number(ch.bitrate??0)||undefined,userLimit:Number(ch.userLimit??0)||undefined,rtcRegion:ch.rtcRegion||null,videoQualityMode:ch.videoQualityMode??undefined,defaultAutoArchiveDuration:ch.defaultAutoArchiveDuration??undefined,defaultThreadRateLimitPerUser:ch.defaultThreadRateLimitPerUser??undefined,defaultForumLayout:ch.defaultForumLayout??undefined,defaultSortOrder:ch.defaultSortOrder??undefined,availableTags:Array.isArray(ch.availableTags)?ch.availableTags:undefined,defaultReactionEmoji:ch.defaultReactionEmoji||undefined,parent:parentId||undefined,position:Number(ch.position??0),permissionOverwrites:buildPermissionOverwrites(ch.permissionOverwrites,roleMap,guild),reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1058,15 +819,9 @@ async function applyBackupToGuild(
     throwIfCancelled(guildKey);
     const g = payload?.guild || {};
     const iconInput = await resolveAssetInput(g.iconData || g.iconURL || null);
-    const bannerInput = await resolveAssetInput(
-      g.bannerData || g.bannerURL || null,
-    );
-    const splashInput = await resolveAssetInput(
-      g.splashData || g.splashURL || null,
-    );
-    const discoverySplashInput = await resolveAssetInput(
-      g.discoverySplashData || g.discoverySplashURL || null,
-    );
+    const bannerInput=await resolveAssetInput(g.bannerData||g.bannerURL||null,);
+    const splashInput=await resolveAssetInput(g.splashData||g.splashURL||null,);
+    const discoverySplashInput=await resolveAssetInput(g.discoverySplashData||g.discoverySplashURL||null,);
     await guild
       .edit({
         name: g.name || guild.name,
@@ -1109,13 +864,7 @@ async function applyBackupToGuild(
       const parent = guild.channels.cache.get(mappedParent);
       if (!parent || !parent.threads || typeof parent.threads.create !== "function") continue;
 
-      const created = await parent.threads
-        .create({
-          name: String(thread.name || "thread"),
-          autoArchiveDuration: Number(thread.autoArchiveDuration || 1440),
-          rateLimitPerUser: Number(thread.rateLimitPerUser || 0),
-          invitable: Boolean(thread.invitable),
-          reason: `Backup load ${backupId}`,
+      const created=await parent.threads.create({name:String(thread.name||"thread"),autoArchiveDuration:Number(thread.autoArchiveDuration||1440),rateLimitPerUser:Number(thread.rateLimitPerUser||0),invitable:Boolean(thread.invitable),reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1148,10 +897,7 @@ async function applyBackupToGuild(
       const member = await guild.members.fetch(String(memberData.id || "")).catch(() => null);
       if (!member) continue;
 
-      const targetRoles = (Array.isArray(memberData.roles) ? memberData.roles : [])
-        .map((oldId) => roleMap.get(String(oldId)))
-        .filter(Boolean)
-        .filter((id) => id !== guild.id && guild.roles.cache.has(id));
+      const targetRoles=(Array.isArray(memberData.roles)?memberData.roles:[]).map((oldId) => roleMap.get(String(oldId))).filter(Boolean).filter((id) => id!==guild.id&&guild.roles.cache.has(id));
 
       await member.roles.set(targetRoles, `Backup load ${backupId}`).catch(() => null);
       if (typeof memberData.nickname === "string") {
@@ -1170,8 +916,7 @@ async function applyBackupToGuild(
       throwIfCancelled(guildKey);
       const userId = String(ban?.user?.id || "").trim();
       if (!userId) continue;
-      const ok = await guild.bans
-        .create(userId, { reason: ban?.reason || `Backup load ${backupId}` })
+      const ok=await guild.bans.create(userId,{reason:ban?.reason||`Backup load ${backupId}` })
         .catch(() => null);
       if (ok) stats.loadedBans += 1;
       bumpProcessed();
@@ -1254,15 +999,8 @@ async function applyBackupToGuild(
       if (guild.emojis.cache.some((e) => String(e.name) === String(emoji.name))) continue;
       const attachment = await resolveAssetInput(emoji.url);
       if (!attachment) continue;
-      const mappedRoles = (Array.isArray(emoji.roles) ? emoji.roles : [])
-        .map((oldId) => roleMap.get(String(oldId)))
-        .filter(Boolean);
-      const created = await guild.emojis
-        .create({
-          attachment,
-          name: String(emoji.name),
-          roles: mappedRoles,
-          reason: `Backup load ${backupId}`,
+      const mappedRoles=(Array.isArray(emoji.roles)?emoji.roles:[]).map((oldId) => roleMap.get(String(oldId))).filter(Boolean);
+      const created=await guild.emojis.create({attachment,name:String(emoji.name),roles:mappedRoles,reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1281,13 +1019,7 @@ async function applyBackupToGuild(
       if (guild.stickers.cache.some((s) => String(s.name) === String(sticker.name))) continue;
       const file = await resolveAssetInput(sticker.url);
       if (!file) continue;
-      const created = await guild.stickers
-        .create({
-          file,
-          name: String(sticker.name || "sticker"),
-          description: sticker.description || undefined,
-          tags: String(sticker.tags || "backup"),
-          reason: `Backup load ${backupId}`,
+      const created=await guild.stickers.create({file,name:String(sticker.name||"sticker"),description:sticker.description||undefined,tags:String(sticker.tags||"backup"),reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1307,11 +1039,7 @@ async function applyBackupToGuild(
       const channel = guild.channels.cache.get(mappedChannelId);
       if (!channel || typeof channel.createWebhook !== "function") continue;
       const avatar = await resolveAssetInput(hook?.avatar ? `https://cdn.discordapp.com/avatars/${hook.id}/${hook.avatar}.png` : null);
-      const created = await channel
-        .createWebhook({
-          name: String(hook?.name || "backup-webhook"),
-          avatar: avatar || undefined,
-          reason: `Backup load ${backupId}`,
+      const created=await channel.createWebhook({name:String(hook?.name||"backup-webhook"),avatar:avatar||undefined,reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1330,12 +1058,7 @@ async function applyBackupToGuild(
       if (!mappedChannelId) continue;
       const channel = guild.channels.cache.get(mappedChannelId);
       if (!channel || typeof channel.createInvite !== "function") continue;
-      const created = await channel
-        .createInvite({
-          maxAge: Number(invite?.maxAge || 0),
-          maxUses: Number(invite?.maxUses || 0),
-          temporary: Boolean(invite?.temporary),
-          reason: `Backup load ${backupId}`,
+      const created=await channel.createInvite({maxAge:Number(invite?.maxAge||0),maxUses:Number(invite?.maxUses||0),temporary:Boolean(invite?.temporary),reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1347,25 +1070,11 @@ async function applyBackupToGuild(
 
   if (actions.has("load_events")) {
     markPhase("load_events");
-    const events = Array.isArray(payload?.scheduledEvents)
-      ? payload.scheduledEvents
-      : [];
+    const events=Array.isArray(payload?.scheduledEvents)?payload.scheduledEvents:[];
     for (const ev of events) {
       throwIfCancelled(guildKey);
-      const mappedChannelId = ev?.channelId
-        ? channelMap.get(String(ev.channelId)) || null
-        : null;
-      const created = await guild.scheduledEvents
-        .create({
-          name: String(ev?.name || "Backup Event"),
-          description: ev?.description || undefined,
-          scheduledStartTime: ev?.scheduledStartAt || new Date(Date.now() + 3600000),
-          scheduledEndTime: ev?.scheduledEndAt || undefined,
-          privacyLevel: Number(ev?.privacyLevel || 2),
-          entityType: Number(ev?.entityType || 3),
-          channel: mappedChannelId || undefined,
-          entityMetadata: ev?.entityMetadata || undefined,
-          reason: `Backup load ${backupId}`,
+      const mappedChannelId=ev?.channelId?channelMap.get(String(ev.channelId))||null:null;
+      const created=await guild.scheduledEvents.create({name:String(ev?.name||"Backup Event"),description:ev?.description||undefined,scheduledStartTime:ev?.scheduledStartAt||new Date(Date.now()+3600000),scheduledEndTime:ev?.scheduledEndAt||undefined,privacyLevel:Number(ev?.privacyLevel||2),entityType:Number(ev?.entityType||3),channel:mappedChannelId||undefined,entityMetadata:ev?.entityMetadata||undefined,reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1377,30 +1086,12 @@ async function applyBackupToGuild(
 
   if (actions.has("load_automod_rules")) {
     markPhase("load_automod_rules");
-    const rules = Array.isArray(payload?.autoModerationRules)
-      ? payload.autoModerationRules
-      : [];
+    const rules=Array.isArray(payload?.autoModerationRules)?payload.autoModerationRules:[];
     for (const rule of rules) {
       throwIfCancelled(guildKey);
-      const exemptChannels = (Array.isArray(rule?.exemptChannels)
-        ? rule.exemptChannels
-        : [])
-        .map((oldId) => channelMap.get(String(oldId)))
-        .filter(Boolean);
-      const exemptRoles = (Array.isArray(rule?.exemptRoles) ? rule.exemptRoles : [])
-        .map((oldId) => roleMap.get(String(oldId)))
-        .filter(Boolean);
-      const created = await guild.autoModerationRules
-        .create({
-          name: String(rule?.name || "backup-rule"),
-          eventType: Number(rule?.eventType || 1),
-          triggerType: Number(rule?.triggerType || 1),
-          triggerMetadata: rule?.triggerMetadata || undefined,
-          actions: Array.isArray(rule?.actions) ? rule.actions : [],
-          enabled: Boolean(rule?.enabled),
-          exemptChannels,
-          exemptRoles,
-          reason: `Backup load ${backupId}`,
+      const exemptChannels=(Array.isArray(rule?.exemptChannels)?rule.exemptChannels:[]).map((oldId) => channelMap.get(String(oldId))).filter(Boolean);
+      const exemptRoles=(Array.isArray(rule?.exemptRoles)?rule.exemptRoles:[]).map((oldId) => roleMap.get(String(oldId))).filter(Boolean);
+      const created=await guild.autoModerationRules.create({name:String(rule?.name||"backup-rule"),eventType:Number(rule?.eventType||1),triggerType:Number(rule?.triggerType||1),triggerMetadata:rule?.triggerMetadata||undefined,actions:Array.isArray(rule?.actions)?rule.actions:[],enabled:Boolean(rule?.enabled),exemptChannels,exemptRoles,reason:`Backup load ${backupId}`,
         })
         .catch(() => null);
       if (!created) continue;
@@ -1421,16 +1112,9 @@ function compareBigIntString(left, right) {
 }
 
 function computePermissionDiffs(guild, payload) {
-  const diffs = {
-    rolePermissionMismatches: 0,
-    channelOverwriteMismatches: 0,
-    roleMissing: 0,
-    channelMissing: 0,
-  };
+  const diffs={rolePermissionMismatches:0,channelOverwriteMismatches:0,roleMissing:0,channelMissing:0,};
 
-  const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : []).filter(
-    (r) => String(r?.name || "").trim() !== "@everyone",
-  );
+  const backupRoles=(Array.isArray(payload?.roles)?payload.roles:[]).filter((r) => String(r?.name||"").trim()!=="@everyone",);
   for (const role of backupRoles) {
     const live = guild.roles.cache.find((r) => String(r.name) === String(role?.name || ""));
     if (!live) {
@@ -1449,9 +1133,7 @@ function computePermissionDiffs(guild, payload) {
 
   const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
   for (const ch of backupChannels) {
-    const live = guild.channels.cache.find(
-      (c) => Number(c?.type ?? -1) === Number(ch?.type ?? -2) && String(c?.name || "") === String(ch?.name || ""),
-    );
+    const live=guild.channels.cache.find((c) => Number(c?.type??-1)===Number(ch?.type??-2)&&String(c?.name||"")===String(ch?.name||""),);
     if (!live) {
       diffs.channelMissing += 1;
       continue;
@@ -1471,14 +1153,8 @@ function computePermissionDiffs(guild, payload) {
         mismatch = true;
         break;
       }
-      const allowOk = compareBigIntString(
-        current.allow?.bitfield ?? 0n,
-        ow?.allow ?? "0",
-      );
-      const denyOk = compareBigIntString(
-        current.deny?.bitfield ?? 0n,
-        ow?.deny ?? "0",
-      );
+      const allowOk=compareBigIntString(current.allow?.bitfield??0n,ow?.allow??"0",);
+      const denyOk=compareBigIntString(current.deny?.bitfield??0n,ow?.deny??"0",);
       if (!allowOk || !denyOk) {
         mismatch = true;
         break;
@@ -1503,41 +1179,18 @@ async function runBackupDryRun(
   const totalMessages = countBackupMessages(payload);
   const effectiveLimit = normalizeMessagesLimit(messagesLimit, DEFAULT_MESSAGES_LIMIT);
 
-  const backupRoles = (Array.isArray(payload?.roles) ? payload.roles : []).filter(
-    (r) => String(r?.name || "").trim() !== "@everyone",
-  );
+  const backupRoles=(Array.isArray(payload?.roles)?payload.roles:[]).filter((r) => String(r?.name||"").trim()!=="@everyone",);
   const backupChannels = Array.isArray(payload?.channels) ? payload.channels : [];
   const backupThreads = Array.isArray(payload?.threads) ? payload.threads : [];
   const backupMembers = Array.isArray(payload?.members) ? payload.members : [];
 
-  const summary = {
-    backupId: String(backupId || "").toUpperCase(),
-    sourceGuildId: String(sourceGuildId || ""),
-    actions: [...actions],
-    canDeleteRoles: [...guild.roles.cache.values()].every((r) => r.id === guild.id || r.managed || r.editable),
-    canDeleteChannels: [...guild.channels.cache.values()].every((c) => c.deletable),
-    expected: {
-      createRoles: backupRoles.length,
-      createChannels: backupChannels.length,
-      createThreads: backupThreads.length,
-      updateMembers: backupMembers.length,
-      loadMessages: effectiveLimit == null ? totalMessages : Math.min(totalMessages, effectiveLimit),
-      loadPinnedMessages: countBackupPinnedMessages(payload),
-      messagesLimit: effectiveLimit,
-    },
-    permissions: diff,
-  };
+  const summary={backupId:String(backupId||"").toUpperCase(),sourceGuildId:String(sourceGuildId||""),actions:[...actions],canDeleteRoles:[...guild.roles.cache.values()].every((r) => r.id===guild.id||r.managed||r.editable),canDeleteChannels:[...guild.channels.cache.values()].every((c) => c.deletable),expected:{createRoles:backupRoles.length,createChannels:backupChannels.length,createThreads:backupThreads.length,updateMembers:backupMembers.length,loadMessages:effectiveLimit==null?totalMessages:Math.min(totalMessages,effectiveLimit),loadPinnedMessages:countBackupPinnedMessages(payload),messagesLimit:effectiveLimit,},permissions:diff,};
 
   return summary;
 }
 
 function buildDryRunEmbed(result) {
-  const actionLines = Array.isArray(result?.actions)
-    ? result.actions
-      .map((a) => String(a || "").trim())
-      .filter(Boolean)
-      .map((a) => `• \`${a}\``)
-    : [];
+  const actionLines=Array.isArray(result?.actions)?result.actions.map((a) => String(a||"").trim()).filter(Boolean).map((a) => `• \`${a}\``):[];
   return new EmbedBuilder()
     .setColor("#3498db")
     .setTitle("Backup Dry Run")
@@ -1575,13 +1228,7 @@ async function handleBackupLoadInteraction(interaction) {
   const isSelect = interaction?.isStringSelectMenu?.();
   const isButton = interaction?.isButton?.();
 
-  const isTarget =
-    customId.startsWith("backup_load_actions:") ||
-    customId.startsWith("backup_load_messages_limit:") ||
-    customId.startsWith("backup_load_confirm:") ||
-    customId.startsWith("backup_load_continue:") ||
-    customId.startsWith("backup_load_cancel:") ||
-    customId.startsWith("backup_load_status:");
+  const isTarget=customId.startsWith("backup_load_actions:")||customId.startsWith("backup_load_messages_limit:")||customId.startsWith("backup_load_confirm:")||customId.startsWith("backup_load_continue:")||customId.startsWith("backup_load_cancel:")||customId.startsWith("backup_load_status:");
   if (!isTarget) return false;
 
   const sessionId = String(customId || "").split(":")[1] || "";
@@ -1662,8 +1309,7 @@ async function handleBackupLoadInteraction(interaction) {
 
   if (isButton && customId.startsWith("backup_load_continue:")) {
     try {
-      const ref = session.sourceGuildId
-        ? `${session.sourceGuildId}:${session.backupId}`
+      const ref=session.sourceGuildId?`${session.sourceGuildId}:${session.backupId}`
         : session.backupId;
       const { payload } = await readBackupByIdGlobal(ref);
       await interaction
@@ -1724,9 +1370,7 @@ async function handleBackupLoadInteraction(interaction) {
       try {
         let checkpointId = null;
         try {
-          const checkpoint = await createGuildBackup(interaction.guild, {
-            source: "automatic",
-          });
+          const checkpoint=await createGuildBackup(interaction.guild,{source:"automatic",});
           checkpointId = String(checkpoint?.backupId || "").toUpperCase() || null;
           updateActiveLoad(interaction.guildId, { checkpointId });
           if (checkpointId) {
@@ -1741,13 +1385,7 @@ async function handleBackupLoadInteraction(interaction) {
           global.logger?.warn?.("[backup.load] checkpoint failed:", checkpointError);
         }
 
-        const stats = await applyBackupToGuild(
-          interaction.guild,
-          session.backupId,
-          [...session.actions],
-          session.sourceGuildId,
-          session.messagesLimit,
-        );
+        const stats=await applyBackupToGuild(interaction.guild,session.backupId,[...session.actions],session.sourceGuildId,session.messagesLimit,);
         await interaction.message
           .edit({
             embeds: [buildLoadDoneEmbed(session.backupId, stats)],

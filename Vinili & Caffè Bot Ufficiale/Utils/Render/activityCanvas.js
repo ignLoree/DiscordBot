@@ -68,17 +68,8 @@ function fitText(ctx, text, maxWidth, size = 16, weight = "600") {
 
 function prepareVisibleText(value) {
   const raw = String(value || "");
-  const protectedMap = new Map([
-    ["\u00B9", "__VC_KEEP_SUP_1__"],
-    ["\u00B2", "__VC_KEEP_SUP_2__"],
-    ["\u00B3", "__VC_KEEP_SUP_3__"],
-  ]);
-  const compatibilityMap = new Map([
-    // Hard fallback for hosts where U+0F04 (༄) is not rendered by canvas/font stack
-    ["\u0F04", "\u2736"],
-    ["\uFE32", "\u2502"],
-    ["\u1CBC", "\u00B7"],
-  ]);
+  const protectedMap = new Map([["\u00B9","__VC_KEEP_SUP_1__"],["\u00B2","__VC_KEEP_SUP_2__"],["\u00B3","__VC_KEEP_SUP_3__"],]);
+  const compatibilityMap = new Map([["\u0F04","\u2736"],["\uFE32","\u2502"],["\u1CBC","\u00B7"],]);
 
   let out = raw;
   for (const [char, token] of protectedMap.entries()) {
@@ -151,16 +142,8 @@ function tokenizeEmojiText(text) {
   let buffer = "";
   let emoji = "";
 
-  const flushText = () => {
-    if (!buffer) return;
-    tokens.push({ type: "text", value: buffer });
-    buffer = "";
-  };
-  const flushEmoji = () => {
-    if (!emoji) return;
-    tokens.push({ type: "emoji", value: emoji });
-    emoji = "";
-  };
+  const flushText =()=>{if(! buffer)return ;tokens.push({type:"text",value:buffer});buffer = "";};
+  const flushEmoji =()=>{if(! emoji)return ;tokens.push({type:"emoji",value:emoji});emoji = "";};
 
   for (let i = 0; i < chars.length; i += 1) {
     const rest = chars.slice(i).join("");
@@ -214,10 +197,7 @@ function tokenizeEmojiText(text) {
 }
 
 function emojiToTwemojiUrl(emoji) {
-  const codepoints = Array.from(emoji)
-    .map((ch) => ch.codePointAt(0).toString(16))
-    .filter((cp) => cp !== "fe0f")
-    .join("-");
+  const codepoints = Array.from(emoji).map((ch)=>ch.codePointAt(0).toString(16)).filter((cp)=>cp !== "fe0f").join("-");
   return `https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/${codepoints}.png`;
 }
 
@@ -227,15 +207,9 @@ function customEmojiUrl(id, animated = false) {
 }
 
 async function getEmojiImage(token) {
-  const key =
-    typeof token === "string"
-      ? token
-      : `custom:${token.id}:${token.animated ? 1 : 0}`;
+  const key = typeof token === "string" ? token:`custom:${token.id}:${token.animated ?1:0}`;
   if (emojiImageCache.has(key)) return emojiImageCache.get(key);
-  const sourceUrl =
-    typeof token === "string"
-      ? emojiToTwemojiUrl(token)
-      : customEmojiUrl(token.id, false);
+  const sourceUrl = typeof token === "string" ? emojiToTwemojiUrl(token):customEmojiUrl(token.id,false);
   const promise = getCanvasModule().loadImage(sourceUrl).catch(() => null);
   emojiImageCache.set(key, promise);
   return promise;
@@ -260,18 +234,13 @@ async function drawLabelWithEmoji(
   } = {},
 ) {
   const tokens = tokenizeEmojiText(text);
-  const hasEmoji = tokens.some(
-    (t) => t.type === "emoji" || t.type === "custom_emoji",
-  );
+  const hasEmoji = tokens.some((t)=>t.type === "emoji" || t.type === "custom_emoji",);
   if (!hasEmoji) {
     drawLabel(ctx, text, x, y, { size, weight, color, align, baseline });
     return;
   }
 
-  const total = tokens.reduce(
-    (sum, token) => sum + tokenWidth(ctx, token, size, weight),
-    0,
-  );
+  const total = tokens.reduce((sum,token)=>sum + tokenWidth(ctx,token,size,weight),0,);
   let cursorX = x;
   if (align === "center") cursorX = x - total / 2;
   else if (align === "right") cursorX = x - total;
@@ -291,10 +260,7 @@ async function drawLabelWithEmoji(
       continue;
     }
 
-    const img =
-      token.type === "custom_emoji"
-        ? await getEmojiImage(token)
-        : await getEmojiImage(token.value);
+    const img = token.type === "custom_emoji" ? await getEmojiImage(token):await getEmojiImage(token.value);
     if (img) {
       const drawSize = size + 1;
       const topY = y - drawSize / 2;
@@ -327,14 +293,7 @@ function drawBackground(ctx, width, height) {
   ctx.fillStyle = glowA;
   ctx.fillRect(0, 0, width, height);
 
-  const glowB = ctx.createRadialGradient(
-    width - 110,
-    height - 120,
-    20,
-    width - 110,
-    height - 120,
-    300,
-  );
+  const glowB = ctx.createRadialGradient(width -110,height -120,20,width -110,height -120,300,);
   glowB.addColorStop(0, "rgba(62, 196, 85, 0.16)");
   glowB.addColorStop(1, "rgba(62, 196, 85, 0)");
   ctx.fillStyle = glowB;
@@ -539,8 +498,7 @@ function drawChart(ctx, chart, x, y, w, h) {
   }
 
   const projectX = (idx) => px + idx * (pw / (points.length - 1));
-  const projectY = (value, seriesMax) =>
-    py + ph - (value / Math.max(1, seriesMax)) * (ph - 16) - 8;
+  const projectY =(value,seriesMax)=>py + ph -(value / Math.max(1,seriesMax))*(ph -16)-8;
 
   ctx.lineWidth = 2.5;
   ctx.strokeStyle = "#3ec455";
@@ -600,10 +558,7 @@ async function drawTopListCard(ctx, title, rows, x, y, w, h, options = {}) {
     );
 
     const valueText = unit ? `${row.value} ${unit}` : String(row.value ?? 0);
-    const valueWidth = Math.min(
-      w - 260,
-      Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),
-    );
+    const valueWidth = Math.min(w -260,Math.max(110,textWidth(ctx,valueText,24,"800")+26),);
     fillRoundRect(
       ctx,
       x + w - 14 - valueWidth,
@@ -649,9 +604,7 @@ async function renderUserActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
-    ? Number(lookbackDays)
-    : 14;
+  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
   const lookbackKey = `d${safeLookback}`;
   const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
 
@@ -775,9 +728,7 @@ async function renderServerActivityCanvas({
   chart,
 }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
-    ? Number(lookbackDays)
-    : 14;
+  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
   const lookbackKey = `d${safeLookback}`;
   const lookbackWindow = windows?.[lookbackKey] || windows?.d14 || {};
 
@@ -933,9 +884,7 @@ async function renderTopStatisticsCanvas({
   topChannelsVoice = [],
 }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
-    ? Number(lookbackDays)
-    : 14;
+  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
 
   const width = 1280;
   const height = 860;
@@ -1054,9 +1003,7 @@ async function renderTopStatisticsSingleCanvas({
   mode = "messages",
 }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
-    ? Number(lookbackDays)
-    : 14;
+  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
 
   const width = 1280;
   const height = 860;
@@ -1088,15 +1035,7 @@ async function renderTopStatisticsSingleCanvas({
     color: "#e2e7ef",
   });
 
-  const normalizedRows = Array.isArray(rows)
-    ? rows.map((x) => ({
-        label: x?.label || "N/A",
-        value:
-          mode === "voice"
-            ? formatHours(x?.value || 0)
-            : compactNumber(x?.value || 0),
-      }))
-    : [];
+  const normalizedRows = Array.isArray(rows)? rows.map((x)=>({label:x ?. label || "N/A",value:mode === "voice" ? formatHours(x ?. value ||0):compactNumber(x ?. value ||0),})):[];
 
   await drawTopListCard(
     ctx,
@@ -1163,10 +1102,7 @@ async function drawTopRowsColumn(
     );
 
     const valueText = `${row.value} ${unit}`;
-    const valueWidth = Math.min(
-      w - 240,
-      Math.max(110, textWidth(ctx, valueText, 24, "800") + 26),
-    );
+    const valueWidth = Math.min(w -240,Math.max(110,textWidth(ctx,valueText,24,"800")+26),);
     fillRoundRect(
       ctx,
       x + w - valueWidth - 10,
@@ -1197,30 +1133,17 @@ async function renderTopLeaderboardPageCanvas({
   mode = "messages",
 }) {
   registerCanvasFonts(getCanvasModule());
-  const safeLookback = [1, 7, 14, 21, 30].includes(Number(lookbackDays))
-    ? Number(lookbackDays)
-    : 14;
+  const safeLookback =[1,7,14,21,30].includes(Number(lookbackDays))? Number(lookbackDays):14;
   const safePage = Math.max(1, Number(page || 1));
   const safeTotalPages = Math.max(1, Number(totalPages || 1));
 
-  const mappedRows = (Array.isArray(rows) ? rows : []).map((row) => ({
-    label: row?.label || "N/A",
-    value:
-      mode === "voice"
-        ? formatHours(row?.value || 0)
-        : compactNumber(row?.value || 0),
-  }));
+  const mappedRows =(Array.isArray(rows)? rows:[]).map((row)=>({label:row ?. label || "N/A",value:mode === "voice" ? formatHours(row ?. value ||0):compactNumber(row ?. value ||0),}));
 
   const totalRows = mappedRows.length;
-  const forceSingleWideColumn =
-    safePage === safeTotalPages && totalRows > 0 && totalRows < 5;
+  const forceSingleWideColumn = safePage === safeTotalPages && totalRows >0&& totalRows <5;
   const splitAt = totalRows > 5 ? 5 : Math.ceil(totalRows / 2);
-  const leftRows = forceSingleWideColumn
-    ? mappedRows
-    : mappedRows.slice(0, splitAt);
-  const rightRows = forceSingleWideColumn
-    ? []
-    : mappedRows.slice(splitAt, 10);
+  const leftRows = forceSingleWideColumn ? mappedRows:mappedRows.slice(0,splitAt);
+  const rightRows = forceSingleWideColumn ?[]:mappedRows.slice(splitAt,10);
   const panelHeight = 560;
   const panelY = 216;
   const footerY = 824;
@@ -1261,17 +1184,7 @@ async function renderTopLeaderboardPageCanvas({
   const panelInnerTop = 236;
   const panelInnerBottom = panelY + panelHeight - 20;
   const panelInnerHeight = panelInnerBottom - panelInnerTop;
-  const computeColumnLayout = (count) => {
-    const safeCount = Math.max(1, Number(count || 0));
-    const rowGap = safeCount > 1 ? 10 : 0;
-    const rowHeight = Math.max(
-      48,
-      Math.floor((panelInnerHeight - rowGap * (safeCount - 1)) / safeCount),
-    );
-    return { rowHeight, rowGap };
-  };
-
-  if (forceSingleWideColumn) {
+  const computeColumnLayout =(count)=>{const safeCount = Math.max(1,Number(count ||0));const rowGap = safeCount >1?10:0;const rowHeight = Math.max(48,Math.floor((panelInnerHeight - rowGap *(safeCount -1))/ safeCount),);return {rowHeight,rowGap};};if(forceSingleWideColumn) {
     const singleLayout = computeColumnLayout(leftRows.length);
     await drawTopRowsColumn(ctx, leftRows, {
       x: 34,

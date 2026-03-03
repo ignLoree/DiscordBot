@@ -54,18 +54,14 @@ async function runIdsCatalogSync(client, guildId) {
   runningGuilds.add(gid);
   try {
     const reasons = consumeReasons(gid);
-    const guild =
-      client.guilds.cache.get(gid) ||
-      (await client.guilds.fetch(gid).catch(() => null));
+    const guild=client.guilds.cache.get(gid)||(await client.guilds.fetch(gid).catch(() => null));
     if (!guild) return { changed: false, reason: "guild-not-found" };
 
     const IDs = require("./ids");
     const payload = await collectGuildCatalog(guild, IDs);
     const baseDir = path.resolve(process.cwd());
     const catalogPath = getCatalogPath(baseDir);
-    const previous = fs.existsSync(catalogPath)
-      ? fs.readFileSync(catalogPath, "utf8")
-      : "";
+    const previous=fs.existsSync(catalogPath)?fs.readFileSync(catalogPath,"utf8"):"";
 
     if (previous === payload.catalogSource) {
       return { changed: false, reason: "no-diff", triggers: reasons };
@@ -94,16 +90,11 @@ function queueIdsCatalogSync(client, guildId, reason = "event", options = {}) {
   if (!gid) return;
   addReason(gid, reason);
 
-  const delayMs = Number.isFinite(options.delayMs)
-    ? Math.max(0, options.delayMs)
-    : DEFAULT_DELAY_MS;
+  const delayMs=Number.isFinite(options.delayMs)?Math.max(0,options.delayMs):DEFAULT_DELAY_MS;
   const existing = timers.get(gid);
   if (existing) clearTimeout(existing);
 
-  const timer = setTimeout(async () => {
-    timers.delete(gid);
-    await runIdsCatalogSync(client, gid);
-  }, delayMs);
+  const timer=setTimeout(async() => {timers.delete(gid);await runIdsCatalogSync(client,gid);},delayMs);
 
   timers.set(gid, timer);
 }

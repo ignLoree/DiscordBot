@@ -1,82 +1,25 @@
-const {
-  EmbedBuilder,
-  ButtonBuilder,
-  ActionRowBuilder,
-  ButtonStyle,
-} = require("discord.js");
+const {EmbedBuilder,ButtonBuilder,ActionRowBuilder,ButtonStyle,}= require("discord.js");
 const Ticket = require("../../Schemas/Ticket/ticketSchema");
-const {
-  createTranscript,
-  createTranscriptHtml,
-  saveTranscriptHtml,
-} = require("./transcriptUtils");
+const {createTranscript,createTranscriptHtml,saveTranscriptHtml,}= require("./transcriptUtils");
 const { getNextTicketId } = require("./ticketIdUtils");
 const { sendDm } = require("../noDmList");
 const IDs = require("../Config/ids");
-const {
-  getClientGuildCached,
-  getGuildChannelCached,
-  getGuildMemberCached,
-} = require("./ticketInteractionRuntime");
+const {getClientGuildCached,getGuildChannelCached,getGuildMemberCached,}= require("./ticketInteractionRuntime");
 
 function buildTicketRatingRows(ticketId) {
-  const stylesByScore = {
-    1: ButtonStyle.Danger,
-    2: ButtonStyle.Danger,
-    3: ButtonStyle.Primary,
-    4: ButtonStyle.Success,
-    5: ButtonStyle.Success,
-  };
-  const row = new ActionRowBuilder().addComponents(
-    ...[1, 2, 3, 4, 5].map((score) =>
-      new ButtonBuilder()
-        .setCustomId(`ticket_rate:${ticketId}:${score}`)
-        .setStyle(stylesByScore[score] || ButtonStyle.Secondary)
-        .setLabel(String(score))
-        .setEmoji("⭐"),
-    ),
-  );
+  const stylesByScore ={1:ButtonStyle.Danger,2:ButtonStyle.Danger,3:ButtonStyle.Primary,4:ButtonStyle.Success,5:ButtonStyle.Success,};
+  const row = new ActionRowBuilder().addComponents(...[1,2,3,4,5].map((score)=>new ButtonBuilder().setCustomId(`ticket_rate:${ticketId}:${score}`).setStyle(stylesByScore[score]|| ButtonStyle.Secondary).setLabel(String(score)).setEmoji("⭐"),),);
   return [row];
 }
 
 function buildTicketClosedEmbed(data) {
-  const openedAt = data?.createdAt
-    ? `<t:${Math.floor(new Date(data.createdAt).getTime() / 1000)}:F>`
-    : "Sconosciuto";
-  const closedAt = data?.closedAt
-    ? `<t:${Math.floor(new Date(data.closedAt).getTime() / 1000)}:F>`
-    : `<t:${Math.floor(Date.now() / 1000)}:F>`;
-  const reasonText =
-    data?.closeReason && String(data.closeReason).trim()
-      ? String(data.closeReason).trim()
-      : "No reason specified";
+  const openedAt = data ?. createdAt ?`<t:${Math.floor(new Date(data.createdAt).getTime()/1000)}:F>`:"Sconosciuto";
+  const closedAt = data ?. closedAt ?`<t:${Math.floor(new Date(data.closedAt).getTime()/1000)}:F>`:`<t:${Math.floor(Date.now()/1000)}:F>`;
+  const reasonText = data ?. closeReason && String(data.closeReason).trim()? String(data.closeReason).trim():"No reason specified";
 
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: data?.guildName || "Ticket System",
-      iconURL: data?.guildIconURL || undefined,
-    })
-    .setTitle("Ticket Closed")
-    .setColor("#6f4e37")
-    .addFields(
-      { name: "🆔 Ticket ID", value: String(data?.ticketNumber || "N/A"), inline: true },
-      { name: "✅ Opened By", value: data?.userId ? `<@${data.userId}>` : "Sconosciuto", inline: true },
-      { name: "🛑 Closed By", value: data?.closedBy ? `<@${data.closedBy}>` : "Sconosciuto", inline: true },
-      { name: "🕒 Open Time", value: openedAt, inline: true },
-      { name: "🙋 Claimed By", value: data?.claimedBy ? `<@${data.claimedBy}>` : "Not claimed", inline: true },
-      { name: "⏹️ Close Time", value: closedAt, inline: true },
-      { name: "ℹ️ Reason", value: reasonText, inline: false },
-    );
+  const embed = new EmbedBuilder().setAuthor({name:data ?. guildName || "Ticket System",iconURL:data ?. guildIconURL || undefined,}).setTitle("Ticket Closed").setColor("#6f4e37").addFields({name:"🆔 Ticket ID",value:String(data ?. ticketNumber || "N/A"),inline:true},{name:"✅ Opened By",value:data ?. userId ?`<@${data.userId}>`:"Sconosciuto",inline:true},{name:"🛑 Closed By",value:data ?. closedBy ?`<@${data.closedBy}>`:"Sconosciuto",inline:true},{name:"🕒 Open Time",value:openedAt,inline:true},{name:"🙋 Claimed By",value:data ?. claimedBy ?`<@${data.claimedBy}>`:"Not claimed",inline:true},{name:"⏹️ Close Time",value:closedAt,inline:true},{name:"ℹ️ Reason",value:reasonText,inline:false},);
 
-  const reordered = [
-    embed.data.fields?.[0],
-    embed.data.fields?.[1],
-    embed.data.fields?.[2],
-    embed.data.fields?.[3],
-    embed.data.fields?.[5],
-    embed.data.fields?.[4],
-    embed.data.fields?.[6],
-  ].filter(Boolean);
+  const reordered =[embed.data.fields ?.[0],embed.data.fields ?.[1],embed.data.fields ?.[2],embed.data.fields ?.[3],embed.data.fields ?.[5],embed.data.fields ?.[4],embed.data.fields ?.[6],].filter(Boolean);
   embed.setFields(reordered);
 
   if (Number.isFinite(data?.ratingScore) && data.ratingScore >= 1) {
@@ -100,9 +43,7 @@ async function sendTranscriptWithBrowserLink(
   if (!target?.send) return null;
   const { guildId, bypassNoDm } = options;
   const isUserDm = Boolean(bypassNoDm && guildId && (target.user || target.id));
-  const sent = isUserDm
-    ? await sendDm(target.user || target, payload, { guildId, bypassNoDm: true })
-    : await target.send(payload).catch(() => null);
+  const sent = isUserDm ? await sendDm(target.user || target,payload,{guildId,bypassNoDm:true}):await target.send(payload).catch(()=>null);
   if (!sent) return sent;
 
   const safeExtraRows = Array.isArray(extraRows) ? extraRows.filter(Boolean) : [];
@@ -119,19 +60,11 @@ async function sendTranscriptWithBrowserLink(
     return sent;
   }
 
-  const attachment = sent.attachments?.find((att) => {
-    const name = String(att?.name || "").toLowerCase();
-    const url = String(att?.url || "").toLowerCase();
-    return name.endsWith(".html") || url.includes(".html");
-  });
+  const attachment = sent.attachments ?. find((att)=>{const name = String(att ?. name || "").toLowerCase();const url = String(att ?. url || "").toLowerCase();return name.endsWith(".html")|| url.includes(".html");});
 
   if (attachment?.url) {
     const baseContent = typeof payload?.content === "string" ? payload.content.trim() : "";
-    const transcriptButton = new ButtonBuilder()
-      .setStyle(ButtonStyle.Link)
-      .setURL(attachment.url)
-      .setLabel("View Transcript")
-      .setEmoji("📁");
+    const transcriptButton = new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(attachment.url).setLabel("View Transcript").setEmoji("📁");
     const row = new ActionRowBuilder().addComponents(transcriptButton);
     await sent
       .edit({
@@ -153,15 +86,8 @@ async function sendTranscriptWithBrowserLink(
 }
 
 async function closeTicket(targetInteraction, motivo, helpers) {
-  const {
-    safeReply,
-    safeEditReply,
-    makeErrorEmbed,
-    LOG_CHANNEL,
-    closedById = null,
-  } = helpers;
-  const closedByUserId =
-    String(closedById || "").trim() || targetInteraction.user?.id || null;
+  const {safeReply,safeEditReply,makeErrorEmbed,LOG_CHANNEL,closedById = null,}= helpers;
+  const closedByUserId = String(closedById || "").trim()|| targetInteraction.user ?. id || null;
   const closeLockKey = `${targetInteraction?.guildId || "noguild"}:${targetInteraction?.channelId || targetInteraction?.channel?.id || "nochannel"}`;
 
   if (targetInteraction.client.ticketCloseLocks.has(closeLockKey)) {
@@ -189,17 +115,7 @@ async function closeTicket(targetInteraction, motivo, helpers) {
       return;
     }
 
-    const ticket = await Ticket.findOneAndUpdate(
-      { channelId: targetInteraction.channel.id, open: true },
-      {
-        $set: {
-          open: false,
-          closedAt: new Date(),
-          closedBy: closedByUserId,
-        },
-      },
-      { new: true },
-    );
+    const ticket = await Ticket.findOneAndUpdate({channelId:targetInteraction.channel.id,open:true},{$set:{open:false,closedAt:new Date(),closedBy:closedByUserId,},},{new :true},);
 
     if (!ticket) {
       await safeReply(targetInteraction, {
@@ -216,9 +132,7 @@ async function closeTicket(targetInteraction, motivo, helpers) {
 
     const transcriptTXT = await createTranscript(targetInteraction.channel).catch(() => "");
     const transcriptHTML = await createTranscriptHtml(targetInteraction.channel).catch(() => "");
-    const transcriptHtmlPath = transcriptHTML
-      ? await saveTranscriptHtml(targetInteraction.channel, transcriptHTML).catch(() => null)
-      : null;
+    const transcriptHtmlPath = transcriptHTML ? await saveTranscriptHtml(targetInteraction.channel,transcriptHTML).catch(()=>null):null;
 
     let ticketNumber = Number(ticket.ticketNumber || 0);
     if (!ticketNumber) {
@@ -243,35 +157,13 @@ async function closeTicket(targetInteraction, motivo, helpers) {
 
     const mainGuildId = IDs?.guilds?.main || null;
     const centralTicketLogChannelId = LOG_CHANNEL || IDs?.channels?.ticketLogs || "1442569290682208296";
-    const mainGuild = mainGuildId
-      ? await getClientGuildCached(targetInteraction.client, mainGuildId)
-      : null;
-    const logChannel = mainGuild
-      ? await getGuildChannelCached(mainGuild, centralTicketLogChannelId)
-      : null;
+    const mainGuild = mainGuildId ? await getClientGuildCached(targetInteraction.client,mainGuildId):null;
+    const logChannel = mainGuild ? await getGuildChannelCached(mainGuild,centralTicketLogChannelId):null;
 
-    const closeEmbedData = {
-      ...ticket.toObject(),
-      ticketNumber,
-      closeReason: motivo || null,
-      closedBy: closedByUserId,
-      closedAt: new Date(),
-      guildName: targetInteraction.guild?.name || "Ticket System",
-      guildIconURL: targetInteraction.guild?.iconURL?.({ size: 128 }) || null,
-    };
+    const closeEmbedData ={...ticket.toObject(),ticketNumber,closeReason:motivo || null,closedBy:closedByUserId,closedAt:new Date(),guildName:targetInteraction.guild ?. name || "Ticket System",guildIconURL:targetInteraction.guild ?. iconURL ?.({size:128})|| null,};
     const closeEmbed = buildTicketClosedEmbed(closeEmbedData);
     const ratingRows = buildTicketRatingRows(String(ticket._id));
-    const transcriptRows = transcriptHtmlPath
-      ? [
-          new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`ticket_transcript:${ticket._id}`)
-              .setLabel("View Transcript")
-              .setStyle(ButtonStyle.Secondary)
-              .setEmoji("📁"),
-          ),
-        ]
-      : [];
+    const transcriptRows = transcriptHtmlPath ?[new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`ticket_transcript:${ticket._id}`).setLabel("View Transcript").setStyle(ButtonStyle.Secondary).setEmoji("📁"),),]:[];
 
     let logSentMessage = null;
     if (logChannel?.isTextBased?.()) {

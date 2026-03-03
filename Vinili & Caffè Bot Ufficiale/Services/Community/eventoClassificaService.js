@@ -43,16 +43,10 @@ async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
   const week = Math.max(1, Math.min(MAX_WEEKS, Number(weekNum) || 1));
   const eventStart = settings?.eventStartedAt ? new Date(settings.eventStartedAt) : null;
   const dateKeys = eventStart ? getEventWeekDateKeys(eventStart, week) : [];
-  const rows = dateKeys.length
-    ? await loadActivityRowsFromDateKeys(guild, dateKeys)
-    : [];
+  const rows=dateKeys.length?await loadActivityRowsFromDateKeys(guild,dateKeys):[];
 
-  const sortedMessages = [...rows]
-    .sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0))
-    .slice(0, 25);
-  const sortedVoice = [...rows]
-    .sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0))
-    .slice(0, 25);
+  const sortedMessages=[...rows].sort((a,b) => (b.messageCount||0)-(a.messageCount||0)).slice(0,25);
+  const sortedVoice=[...rows].sort((a,b) => (b.voiceSeconds||0)-(a.voiceSeconds||0)).slice(0,25);
   const top10Messages = await filterNonStaffTop(guild, sortedMessages, 10);
   const top10Voice = await filterNonStaffTop(guild, sortedVoice, 10);
   const expCandidates = await getTop10ExpDuringEvent(guild.id, 25);
@@ -79,9 +73,7 @@ async function buildEventoClassificaPayload(guild, client, settings, weekNum) {
   }
   if (linesExp.length === 0) linesExp.push("*Nessun dato*");
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle(`<:VC_Leaderboard:1469659357678669958> Classifica evento — Settimana ${week}`)
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`<:VC_Leaderboard:1469659357678669958> Classifica evento — Settimana ${week}`)
     .setDescription(
       [
         "**Top 10 messaggi** (settimana)",

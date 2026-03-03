@@ -52,10 +52,7 @@ function walkJsFiles(dir, out = []) {
     if (!mod || typeof mod !== "object") continue;
     const commandName = String(mod.name || "").toLowerCase();
     if (!commandName) continue;
-    const aliasMap =
-      mod.subcommandAliases && typeof mod.subcommandAliases === "object"
-        ? mod.subcommandAliases
-        : null;
+    const aliasMap=mod.subcommandAliases&&typeof mod.subcommandAliases==="object"?mod.subcommandAliases:null;
     if (!aliasMap) continue;
     const commandPerm = prefixPerms?.[commandName];
     const subcommands = commandPerm?.subcommands;

@@ -68,9 +68,7 @@ function createMemberResolver(guild) {
       return pendingMembers.get(key);
     }
 
-    const fetchPromise = fetchMember(guild, key).finally(() => {
-      pendingMembers.delete(key);
-    });
+    const fetchPromise=fetchMember(guild,key).finally(() => {pendingMembers.delete(key);});
     pendingMembers.set(key, fetchPromise);
     return fetchPromise;
   };
@@ -474,15 +472,9 @@ module.exports = {
 
     await interaction.deferReply({ flags: PRIVATE_FLAG }).catch(() => {});
 
-    const pexDepexChannel = interaction.guild.channels.cache.get(
-      IDs.channels?.pexDepex,
-    );
-    const pmChannel = interaction.guild.channels.cache.get(
-      IDs.channels?.partnersChat,
-    );
-    const staffChat = interaction.guild.channels.cache.get(
-      IDs.channels?.staffChat,
-    );
+    const pexDepexChannel=interaction.guild.channels.cache.get(IDs.channels?.pexDepex,);
+    const pmChannel=interaction.guild.channels.cache.get(IDs.channels?.partnersChat,);
+    const staffChat=interaction.guild.channels.cache.get(IDs.channels?.staffChat,);
     const resolveMember = createMemberResolver(interaction.guild);
 
     if (sub === "pex") {
@@ -497,10 +489,7 @@ module.exports = {
 
         if (!(await ensureNotSelf(interaction, targetUser))) return;
 
-        const staffDoc = await getOrCreateStaffDoc(
-          interaction.guild.id,
-          targetUser.id,
-        );
+        const staffDoc=await getOrCreateStaffDoc(interaction.guild.id,targetUser.id,);
 
         if (member.roles.cache.has(roleAfter.id)) {
           return replyError(
@@ -584,14 +573,9 @@ module.exports = {
       try {
         const targetUser = interaction.options.getUser("staffer");
         const reason = interaction.options.getString("motivo");
-        const warnChannel = interaction.guild.channels.cache.get(
-          IDs.channels?.warnStaff,
-        );
+        const warnChannel=interaction.guild.channels.cache.get(IDs.channels?.warnStaff,);
 
-        const staffDoc = await getOrCreateStaffDoc(
-          interaction.guild.id,
-          targetUser.id,
-        );
+        const staffDoc=await getOrCreateStaffDoc(interaction.guild.id,targetUser.id,);
         if (!staffDoc.idCount) staffDoc.idCount = 0;
         if (!staffDoc.warnCount) staffDoc.warnCount = 0;
         if (!staffDoc.warnReasons) staffDoc.warnReasons = [];
@@ -601,21 +585,11 @@ module.exports = {
         staffDoc.warnReasons.push(reason);
         await staffDoc.save();
 
-        const warnEmbed = new EmbedBuilder()
-          .setAuthor({
-            name: `Warn eseguito da ${interaction.user.username}`,
+        const warnEmbed=new EmbedBuilder().setAuthor({name:`Warn eseguito da ${interaction.user.username}`,
             iconURL: interaction.user.displayAvatarURL(),
           })
           .setTitle(
-            `<a:laydowntorest:1444006796661358673> • **__WARN STAFF__** \`#${staffDoc.warnCount}\``,
-          )
-          .setThumbnail(targetUser.displayAvatarURL())
-          .setDescription(
-            `<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${targetUser}
-                        <:pinnednew:1443670849990430750> __${reason}__
-                        <a:loading:1443934440614264924> **ID Valutazione** __\`${staffDoc.idCount}\`__`,
-          )
-          .setColor(SUCCESS_COLOR);
+            `<a:laydowntorest:1444006796661358673>•**__WARN STAFF__**\`#${staffDoc.warnCount}\``,).setThumbnail(targetUser.displayAvatarURL()).setDescription(`<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> ${targetUser}<:pinnednew:1443670849990430750>__${reason}__<a:loading:1443934440614264924>**ID Valutazione**__\`${staffDoc.idCount}\`__`,).setColor(SUCCESS_COLOR);
 
         if (warnChannel) {
           await warnChannel.send({
@@ -633,9 +607,7 @@ module.exports = {
 
     if (group === "resoconto" && sub === "staffer") {
       try {
-        const resocontoChannel = interaction.guild.channels.cache.get(
-          IDs.channels?.resocontiStaff,
-        );
+        const resocontoChannel=interaction.guild.channels.cache.get(IDs.channels?.resocontiStaff,);
         const staffer = interaction.options.getUser("staffer");
         const role = interaction.options.getRole("ruolo");
         const action = interaction.options.getString("azione");
@@ -671,9 +643,7 @@ module.exports = {
 
     if (group === "resoconto" && sub === "pm") {
       try {
-        const resocontoChannel = interaction.guild.channels.cache.get(
-          IDs.channels?.resocontiStaff,
-        );
+        const resocontoChannel=interaction.guild.channels.cache.get(IDs.channels?.resocontiStaff,);
         const staffer = interaction.options.getUser("staffer");
         const action = interaction.options.getString("azione");
         const partners = interaction.options.getString("partner");

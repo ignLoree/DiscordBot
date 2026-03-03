@@ -37,11 +37,7 @@ async function resolveAudit(guild, stickerId) {
     const logs = await guild.fetchAuditLogs({ type: STICKER_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
     if (logs?.entries?.size) {
       const now = Date.now();
-      const entry = logs.entries.find((item) => {
-        const created = Number(item?.createdTimestamp || 0);
-        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-        return within && String(item?.target?.id || "") === String(stickerId || "");
-      });
+      const entry=logs.entries.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.id||"")===String(stickerId||"");});
       if (entry) {
         return {
           executor: entry.executor || null,
@@ -73,15 +69,12 @@ module.exports = {
 
       const nameChange = getChange(changes, "name");
       const tagsChange = getChange(changes, "tags");
-      const fallbackNameChanged =
-        String(oldSticker?.name || "") !== String(newSticker?.name || "");
-      const fallbackTagsChanged =
-        String(oldSticker?.tags || "") !== String(newSticker?.tags || "");
+      const fallbackNameChanged=String(oldSticker?.name||"")!==String(newSticker?.name||"");
+      const fallbackTagsChanged=String(oldSticker?.tags||"")!==String(newSticker?.tags||"");
       if (!nameChange && !tagsChange && !fallbackNameChanged && !fallbackTagsChanged) return;
 
-      const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Changes**",
       ];
@@ -95,10 +88,7 @@ module.exports = {
         lines.push(`  ${String(tagsChange?.old ?? oldSticker?.tags ?? "-")} <:VC_right_arrow:1473441155055096081> ${String(tagsChange?.new ?? newSticker?.tags ?? "-")}`);
       }
 
-      const embed = new EmbedBuilder()
-        .setColor("#F59E0B")
-        .setTitle("Sticker Update")
-        .setDescription(lines.join("\n"));
+      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Sticker Update").setDescription(lines.join("\n"));
 
       if (newSticker?.url) embed.setThumbnail(newSticker.url);
       await logChannel.send({ embeds: [embed] }).catch(() => null);

@@ -4,18 +4,8 @@ const IDs = require("../../Utils/Config/ids");
 const STAFF_ROLE_ID = IDs.roles.Staff;
 const HIGH_STAFF_ROLE_ID = IDs.roles.HighStaff;
 const PARTNER_MANAGER_ROLE_ID = IDs.roles.PartnerManager;
-const STAFF_ACTIVITY_LIMITS = {
-  [String(IDs.roles.Helper)]: { messages: 400, hours: 3.5 },
-  [String(IDs.roles.Mod)]: { messages: 500, hours: 5 },
-  [String(IDs.roles.Coordinator)]: { messages: 500, hours: 4.5 },
-  [String(IDs.roles.Supervisor)]: { messages: 450, hours: 4 },
-};
-const STAFF_ROLE_PRIORITY = [
-  String(IDs.roles.Supervisor),
-  String(IDs.roles.Coordinator),
-  String(IDs.roles.Mod),
-  String(IDs.roles.Helper),
-];
+const STAFF_ACTIVITY_LIMITS={[String(IDs.roles.Helper)]:{messages:400,hours:3.5},[String(IDs.roles.Mod)]:{messages:500,hours:5},[String(IDs.roles.Coordinator)]:{messages:500,hours:4.5},[String(IDs.roles.Supervisor)]:{messages:450,hours:4},};
+const STAFF_ROLE_PRIORITY=[String(IDs.roles.Supervisor),String(IDs.roles.Coordinator),String(IDs.roles.Mod),String(IDs.roles.Helper),];
 const OVER_LIMIT_MSG = 150;
 const OVER_LIMIT_HOURS = 1.5;
 
@@ -53,11 +43,7 @@ async function addStaffEventPoints(guildId, userId, points, note = null) {
 
 async function getStaffEventLeaderboard(guildId) {
   if (!guildId) return [];
-  const list = await StaffEventPoints.find({ guildId })
-    .select("userId points")
-    .sort({ points: -1 })
-    .lean()
-    .catch(() => []);
+  const list=await StaffEventPoints.find({guildId}).select("userId points").sort({points:-1}).lean().catch(() => []);
   return list.map((d) => ({ userId: String(d.userId), points: Number(d.points || 0) }));
 }
 
@@ -72,17 +58,9 @@ async function giveExistingInvitesPointsAtStart(guild) {
   }
   if (!staffIds.length) return;
   for (const inviterId of staffIds) {
-    const alreadyGiven = await StaffEventRewardGiven.findOne({
-      guildId: guild.id,
-      userId: inviterId,
-      rewardType: "existing_invites",
-    }).lean().catch(() => null);
+    const alreadyGiven=await StaffEventRewardGiven.findOne({guildId:guild.id,userId:inviterId,rewardType:"existing_invites",}).lean().catch(() => null);
     if (alreadyGiven) continue;
-    const count = await InviteTrack.countDocuments({
-      guildId: guild.id,
-      inviterId,
-      active: true,
-    }).catch(() => 0);
+    const count=await InviteTrack.countDocuments({guildId:guild.id,inviterId,active:true,}).catch(() => 0);
     if (count <= 0) {
       await StaffEventRewardGiven.create({
         guildId: guild.id,
@@ -108,11 +86,7 @@ async function givePmStaff15PointsAtStart(guild) {
   for (const [, member] of guild.members.cache) {
     if (!member?.user?.id) continue;
     if (!hasPartnerManagerAndStaff(member)) continue;
-    const existing = await StaffEventRewardGiven.findOne({
-      guildId: guild.id,
-      userId: member.id,
-      rewardType: "pm_staff",
-    }).lean().catch(() => null);
+    const existing=await StaffEventRewardGiven.findOne({guildId:guild.id,userId:member.id,rewardType:"pm_staff",}).lean().catch(() => null);
     if (existing) continue;
     await addStaffEventPoints(guild.id, member.id, 15, "pm_staff");
     await StaffEventRewardGiven.create({
@@ -153,11 +127,7 @@ async function giveWeekly20PointsIfEligible(guild, eventWeekNum, _settings) {
     const minMsg = limits.messages + OVER_LIMIT_MSG;
     const minHours = limits.hours + OVER_LIMIT_HOURS;
     if (msg < minMsg || voiceHours < minHours) continue;
-    const existing = await StaffEventWeeklyReward.findOne({
-      guildId: guild.id,
-      userId: member.id,
-      week: eventWeekNum,
-    }).lean().catch(() => null);
+    const existing=await StaffEventWeeklyReward.findOne({guildId:guild.id,userId:member.id,week:eventWeekNum,}).lean().catch(() => null);
     if (existing) continue;
     await addStaffEventPoints(guild.id, member.id, 20, `weekly_${eventWeekNum}`);
     await StaffEventWeeklyReward.create({

@@ -7,26 +7,13 @@ const CHECK_INTERVAL_MS = 60 * 1000;
 const ROLE_STAGE_1 = IDs.roles.NuovoUtente;
 const ROLE_STAGE_2 = IDs.roles.Veterano;
 const ROLE_STAGE_3 = IDs.roles.OG;
-const VERIFIED_ROLE_IDS = [
-  IDs.roles.Member,
-].filter(Boolean);
+const VERIFIED_ROLE_IDS=[IDs.roles.Member,].filter(Boolean);
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SPONSOR_VERIFY_NICKNAME = ".gg/viniliecaffe";
 const STAGE_1_DAYS = 30;
 const STAGE_2_DAYS = 365;
 
-const SUPERSCRIPT_MAP = {
-  0: "⁰",
-  1: "¹",
-  2: "²",
-  3: "³",
-  4: "⁴",
-  5: "⁵",
-  6: "⁶",
-  7: "⁷",
-  8: "⁸",
-  9: "⁹",
-};
+const SUPERSCRIPT_MAP={0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹",};
 const INDEX_PREFIX_RE = /^[⁰¹²³⁴⁵⁶⁷⁸⁹]+/;
 const guildTimers = new Map();
 let numberingLoopHandle = null;
@@ -34,8 +21,7 @@ let voteCleanupLoopHandle = null;
 let verificationTenureLoopHandle = null;
 let sponsorKickLoopHandle = null;
 
-const SPONSOR_KICK_REASON =
-  "Non sei più nel server principale da 24 ore. Rientra nel server principale per accedere di nuovo agli server sponsor.";
+const SPONSOR_KICK_REASON="Non sei più nel server principale da 24 ore. Rientra nel server principale per accedere di nuovo agli server sponsor.";
 const SPONSOR_KICK_INTERVAL_MS = 15 * 60 * 1000;
 
 async function upsertVoteRole(guildId, userId, expiresAt) {
@@ -53,16 +39,12 @@ async function removeExpiredVoteRoles(client) {
   if (!expired.length) return;
 
   for (const item of expired) {
-    const guild =
-      client.guilds.cache.get(item.guildId) ||
-      (await client.guilds.fetch(item.guildId).catch(() => null));
+    const guild=client.guilds.cache.get(item.guildId)||(await client.guilds.fetch(item.guildId).catch(() => null));
     if (!guild) {
       await VoteRole.deleteOne({ guildId: item.guildId, userId: item.userId });
       continue;
     }
-    const member =
-      guild.members.cache.get(item.userId) ||
-      (await guild.members.fetch(item.userId).catch(() => null));
+    const member=guild.members.cache.get(item.userId)||(await guild.members.fetch(item.userId).catch(() => null));
     if (member?.roles?.cache?.has(VOTE_ROLE_ID)) {
       await member.roles.remove(VOTE_ROLE_ID).catch(() => {});
     }
@@ -91,17 +73,11 @@ async function applyTenureForMember(member, record) {
   if (!member || !record) return;
   const guildId = member.guild?.id;
   const sponsorVerifyRoleId = IDs.verificatoRoleIds?.[guildId];
-  const me =
-    member.guild?.members?.me ||
-    (await member.guild?.members?.fetchMe?.().catch(() => null));
+  const me=member.guild?.members?.me||(await member.guild?.members?.fetchMe?.().catch(() => null));
   const canManageRoles = Boolean(me?.permissions?.has?.(PermissionsBitField.Flags.ManageRoles));
   if (sponsorVerifyRoleId) {
-    const sponsorVerifyRole =
-      member.guild.roles.cache.get(sponsorVerifyRoleId) ||
-      (await member.guild.roles.fetch(sponsorVerifyRoleId).catch(() => null));
-    const canReachSponsorRole = Boolean(
-      sponsorVerifyRole && me && sponsorVerifyRole.position < me.roles.highest.position,
-    );
+    const sponsorVerifyRole=member.guild.roles.cache.get(sponsorVerifyRoleId)||(await member.guild.roles.fetch(sponsorVerifyRoleId).catch(() => null));
+    const canReachSponsorRole=Boolean(sponsorVerifyRole&&me&&sponsorVerifyRole.position<me.roles.highest.position,);
     if (
       canManageRoles &&
       canReachSponsorRole &&
@@ -115,12 +91,8 @@ async function applyTenureForMember(member, record) {
     return;
   }
   const now = new Date();
-  const stage1At = new Date(
-    record.verifiedAt.getTime() + STAGE_1_DAYS * DAY_MS,
-  );
-  const stage2At = new Date(
-    record.verifiedAt.getTime() + STAGE_2_DAYS * DAY_MS,
-  );
+  const stage1At=new Date(record.verifiedAt.getTime()+STAGE_1_DAYS*DAY_MS,);
+  const stage2At=new Date(record.verifiedAt.getTime()+STAGE_2_DAYS*DAY_MS,);
 
   const has1 = member.roles.cache.has(ROLE_STAGE_1);
   const has2 = member.roles.cache.has(ROLE_STAGE_2);
@@ -166,18 +138,12 @@ async function applyTenureForMember(member, record) {
 }
 
 async function runTenureSweep(client) {
-  const docs = await VerificationTenure.find({})
-    .lean()
-    .catch(() => []);
+  const docs=await VerificationTenure.find({}).lean().catch(() => []);
   if (!docs.length) return;
   for (const doc of docs) {
-    const guild =
-      client.guilds.cache.get(doc.guildId) ||
-      (await client.guilds.fetch(doc.guildId).catch(() => null));
+    const guild=client.guilds.cache.get(doc.guildId)||(await client.guilds.fetch(doc.guildId).catch(() => null));
     if (!guild) continue;
-    const member =
-      guild.members.cache.get(doc.userId) ||
-      (await guild.members.fetch(doc.userId).catch(() => null));
+    const member=guild.members.cache.get(doc.userId)||(await guild.members.fetch(doc.userId).catch(() => null));
     if (!member) continue;
     await applyTenureForMember(member, doc);
   }
@@ -203,19 +169,11 @@ async function backfillVerificationTenure(client) {
     if (!verifiedRoleIds.length) continue;
 
     await guild.members.fetch().catch(() => null);
-    const verifiedMembers = guild.members.cache.filter(
-      (m) =>
-        !m.user?.bot &&
-        verifiedRoleIds.some((roleId) => m.roles.cache.has(roleId)),
-    );
+    const verifiedMembers=guild.members.cache.filter((m) => !m.user?.bot&&verifiedRoleIds.some((roleId) => m.roles.cache.has(roleId)),);
 
     for (const member of verifiedMembers.values()) {
       const verifiedAt = member.joinedAt || new Date();
-      const record = await VerificationTenure.findOneAndUpdate(
-        { guildId: guild.id, userId: member.id },
-        { $setOnInsert: { verifiedAt, stage: 1 } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      ).catch(() => null);
+      const record=await VerificationTenure.findOneAndUpdate({guildId:guild.id,userId:member.id},{$setOnInsert:{verifiedAt,stage:1}},{upsert:true,new:true,setDefaultsOnInsert:true},).catch(() => null);
       if (!record) continue;
       await applyTenureForMember(member, record);
     }
@@ -234,9 +192,7 @@ function getCategorySettings(client) {
 }
 
 function toSuperscriptNumber(value, minDigits) {
-  const normalized = Math.max(1, Number(value) || 1)
-    .toString()
-    .padStart(minDigits, "0");
+  const normalized=Math.max(1,Number(value)||1).toString().padStart(minDigits,"0");
   return normalized
     .split("")
     .map((digit) => SUPERSCRIPT_MAP[digit] || digit)
@@ -263,10 +219,7 @@ async function renumberGuildCategories(guild, options) {
   if (!me || !me.permissions.has(PermissionsBitField.Flags.ManageChannels))
     return;
 
-  const categories = guild.channels.cache
-    .filter((channel) => channel.type === ChannelType.GuildCategory)
-    .sort((a, b) => a.rawPosition - b.rawPosition || a.id.localeCompare(b.id))
-    .map((channel) => channel);
+  const categories=guild.channels.cache.filter((channel) => channel.type===ChannelType.GuildCategory).sort((a,b) => a.rawPosition-b.rawPosition||a.id.localeCompare(b.id)).map((channel) => channel);
 
   let nonTicketIndex = 1;
   for (let index = 0; index < categories.length; index += 1) {
@@ -275,11 +228,7 @@ async function renumberGuildCategories(guild, options) {
     if (isTicketsCategoryName(category.name)) continue;
 
     const nextNumber = toSuperscriptNumber(nonTicketIndex++, options.minDigits);
-    const expectedName = replaceNumberPrefixOnly(
-      category.name,
-      nextNumber,
-      options.separator,
-    );
+    const expectedName=replaceNumberPrefixOnly(category.name,nextNumber,options.separator,);
     if (category.name === expectedName) continue;
     await category.setName(expectedName).catch(() => {});
   }
@@ -293,20 +242,7 @@ function queueCategoryRenumber(client, guildId, delayMs = null) {
   const pending = guildTimers.get(guildId);
   if (pending) clearTimeout(pending);
 
-  const timeout = setTimeout(
-    async () => {
-      guildTimers.delete(guildId);
-      const guild =
-        client.guilds.cache.get(guildId) ||
-        (await client.guilds.fetch(guildId).catch(() => null));
-      if (!guild) return;
-      await guild.channels.fetch().catch(() => {});
-      await renumberGuildCategories(guild, options);
-    },
-    delayMs == null ? options.debounceMs : delayMs,
-  );
-
-  guildTimers.set(guildId, timeout);
+  const timeout=setTimeout(async() => {guildTimers.delete(guildId);const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));if(!guild)return;await guild.channels.fetch().catch(() => {});await renumberGuildCategories(guild,options);},delayMs==null?options.debounceMs:delayMs,);guildTimers.set(guildId, timeout);
 }
 
 async function runAllGuilds(client) {
@@ -331,20 +267,14 @@ function startCategoryNumberingLoop(client) {
 async function runSponsorKickAfter24h(client) {
   if (!client) return;
   const mainGuildId = IDs.guilds?.main;
-  const sponsorGuildIds = Array.isArray(IDs.guilds?.sponsorGuildIds)
-    ? IDs.guilds.sponsorGuildIds
-    : [];
+  const sponsorGuildIds=Array.isArray(IDs.guilds?.sponsorGuildIds)?IDs.guilds.sponsorGuildIds:[];
   if (!mainGuildId || !sponsorGuildIds.length) return;
 
   const now = new Date();
-  const toProcess = await SponsorMainLeave.find({ kickAt: { $lte: now } })
-    .lean()
-    .catch(() => []);
+  const toProcess=await SponsorMainLeave.find({kickAt:{$lte:now}}).lean().catch(() => []);
   if (!toProcess.length) return;
 
-  const mainGuild =
-    client.guilds.cache.get(mainGuildId) ||
-    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  const mainGuild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
   if (!mainGuild) return;
 
   for (const doc of toProcess) {
@@ -353,21 +283,15 @@ async function runSponsorKickAfter24h(client) {
       await SponsorMainLeave.deleteOne({ _id: doc._id }).catch(() => {});
       continue;
     }
-    const inMain =
-      mainGuild.members.cache.has(userId) ||
-      (await mainGuild.members.fetch(userId).catch(() => null));
+    const inMain=mainGuild.members.cache.has(userId)||(await mainGuild.members.fetch(userId).catch(() => null));
     if (inMain) {
       await SponsorMainLeave.deleteOne({ userId }).catch(() => {});
       continue;
     }
     for (const guildId of sponsorGuildIds) {
-      const guild =
-        client.guilds.cache.get(guildId) ||
-        (await client.guilds.fetch(guildId).catch(() => null));
+      const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));
       if (!guild) continue;
-      const member =
-        guild.members.cache.get(userId) ||
-        (await guild.members.fetch(userId).catch(() => null));
+      const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
       if (member && guild.members.me?.permissions?.has?.(PermissionsBitField.Flags.KickMembers)) {
         await member.kick(SPONSOR_KICK_REASON).catch((err) => {
           global.logger?.error?.("[SPONSOR KICK] kick failed", guildId, userId, err?.message || err);

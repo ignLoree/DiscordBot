@@ -50,46 +50,17 @@ module.exports = {
     const totalLabel = String(timestamp?.total?.label || current.duration || "00:00");
     const bar = renderProgressBar(currentMs, totalMs, 18);
 
-    const requestedByUser =
-      current?.requestedBy?.username ||
-      message.guild?.members?.cache?.get(current?.metadata?.requestedById || "")?.user?.username ||
-      "unknown";
+    const requestedByUser=current?.requestedBy?.username||message.guild?.members?.cache?.get(current?.metadata?.requestedById||"")?.user?.username||"unknown";
     const requestedAt = formatDateTime(current?.metadata?.requestedAt || Date.now());
 
-    const embed = new EmbedBuilder()
-      .setColor("#1f2328")
-      .setTitle("\uD83C\uDF08 Now Playing \u266A")
-      .setDescription(
-        [
-          "**Playing**",
-          `[${current.title}](${current.url}) by **${current.author || "Unknown"}**`,
+    const embed=new EmbedBuilder().setColor("#1f2328").setTitle("\uD83C\uDF08 Now Playing \u266A").setDescription(["**Playing**",`[${current.title}](${current.url})by**${current.author||"Unknown"}**`,
         ].join("\n"),
       )
       .setThumbnail(current?.thumbnail || null)
       .addFields(
         {
           name: "Position",
-          value: `\`${bar}\``,
-          inline: true,
-        },
-        {
-          name: "Position in queue",
-          value: "1",
-          inline: true,
-        },
-        {
-          name: "Position",
-          value: currentLabel,
-          inline: true,
-        },
-        {
-          name: "Length",
-          value: totalLabel,
-          inline: true,
-        },
-      )
-      .setFooter({
-        text: `Requested by ${requestedByUser}  ${requestedAt}`,
+          value: `\`${bar}\``,inline:true,},{name:"Position in queue",value:"1",inline:true,},{name:"Position",value:currentLabel,inline:true,},{name:"Length",value:totalLabel,inline:true,},).setFooter({text:`Requested by ${requestedByUser}${requestedAt}`,
       });
 
     return safeMessageReply(message, { embeds: [embed] });

@@ -11,11 +11,7 @@ function sleep(ms) {
 
 async function resolveResponsibleWithRetry(guild, roleId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const audit = await resolveResponsible(
-      guild,
-      ROLE_DELETE_ACTION,
-      (entry) => String(entry?.target?.id || "") === String(roleId || ""),
-    );
+    const audit=await resolveResponsible(guild,ROLE_DELETE_ACTION,(entry) => String(entry?.target?.id||"")===String(roleId||""),);
     if (audit?.executor || audit?.entry) return audit;
     if (attempt < retries - 1) await sleep(delayMs);
   }
@@ -29,10 +25,7 @@ module.exports = {
     if (!guildId) return;
 
     try {
-      const guild =
-        role?.guild ||
-        client?.guilds?.cache?.get?.(guildId) ||
-        (await client?.guilds?.fetch?.(guildId).catch(() => null));
+      const guild=role?.guild||client?.guilds?.cache?.get?.(guildId)||(await client?.guilds?.fetch?.(guildId).catch(() => null));
       if (!guild) return;
       let executorId = "";
       const audit = await resolveResponsibleWithRetry(guild, role?.id);
@@ -41,9 +34,8 @@ module.exports = {
       if (logChannel?.isTextBased?.()) {
         const responsible = formatAuditActor(audit.executor);
 
-        const lines = [
-          `${ARROW} **Responsible:** ${responsible}`,
-          `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+        const lines=[`${ARROW}**Responsible:**${responsible}`,
+          `${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
         ];
         if (audit.reason) lines.push(`${ARROW} **Reason:** ${audit.reason}`);
         lines.push(
@@ -56,10 +48,7 @@ module.exports = {
         );
         lines.push(...buildAuditExtraLines(audit.entry, ["name", "color", "hoist", "mentionable"]));
 
-        const embed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setTitle("Role Delete")
-          .setDescription(lines.join("\n"));
+        const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Role Delete").setDescription(lines.join("\n"));
 
         await logChannel.send({ embeds: [embed] }).catch(() => {});
       }

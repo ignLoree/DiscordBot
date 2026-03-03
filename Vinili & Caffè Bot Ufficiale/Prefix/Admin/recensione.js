@@ -4,10 +4,7 @@ const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
 const { ReviewReward } = require("../../Schemas/Community/communitySchemas");
 const { getLevelInfo, addExpWithLevel, } = require("../../Services/Community/expService");
-const {
-  getGuildChannelCached,
-  getUserCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getGuildChannelCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const REVIEW_CHANNEL_ID = IDs.channels.supporters;
 const LEVELS_TO_ADD = 5;
@@ -61,11 +58,7 @@ module.exports = {
 
     const target = await resolveTargetUser(message, args[0]);
     if (!target) {
-      const help = new EmbedBuilder()
-        .setColor("Red")
-        .setDescription(
-          "<:vegax:1443934876440068179> Uso corretto: `+recensione <@utente|id>`",
-        );
+      const help=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Uso corretto: `+recensione <@utente|id>`",);
       await safeMessageReply(message, {
         embeds: [help],
         allowedMentions: { repliedUser: false },
@@ -76,19 +69,9 @@ module.exports = {
     const guildId = message.guild?.id;
     if (!guildId) return;
 
-    const alreadyRewarded = await ReviewReward.findOne({
-      guildId,
-      userId: target.id,
-    })
-      .lean()
-      .catch(() => null);
+    const alreadyRewarded=await ReviewReward.findOne({guildId,userId:target.id,}).lean().catch(() => null);
     if (alreadyRewarded) {
-      const blocked = new EmbedBuilder()
-        .setColor("Red")
-        .setTitle("Recensione già riscattata")
-        .setDescription(
-          "<:vegax:1443934876440068179> Su questo utente la ricompensa recensione è già stata assegnata.",
-        );
+      const blocked=new EmbedBuilder().setColor("Red").setTitle("Recensione già riscattata").setDescription("<:vegax:1443934876440068179> Su questo utente la ricompensa recensione è già stata assegnata.",);
       await safeMessageReply(message, {
         embeds: [blocked],
         allowedMentions: { repliedUser: false },
@@ -109,11 +92,7 @@ module.exports = {
     const addedExp = Math.max(0, finalExp - currentExp);
 
     if (addedExp <= 0) {
-      const nothing = new EmbedBuilder()
-        .setColor("Red")
-        .setDescription(
-          "<:vegax:1443934876440068179> Non posso assegnare livelli: il target ha già una soglia EXP superiore.",
-        );
+      const nothing=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Non posso assegnare livelli: il target ha già una soglia EXP superiore.",);
       await safeMessageReply(message, {
         embeds: [nothing],
         allowedMentions: { repliedUser: false },
@@ -121,16 +100,8 @@ module.exports = {
       return;
     }
 
-    const levelResult = await addExpWithLevel(
-      message.guild,
-      target.id,
-      addedExp,
-      false,
-      false,
-    );
-    const finalLevel = Number(
-      levelResult?.levelInfo?.level ?? getLevelInfo(finalExp).level,
-    );
+    const levelResult=await addExpWithLevel(message.guild,target.id,addedExp,false,false,);
+    const finalLevel=Number(levelResult?.levelInfo?.level??getLevelInfo(finalExp).level,);
     await ReviewReward.create({
       guildId,
       userId: target.id,
@@ -138,22 +109,9 @@ module.exports = {
       rewardedAt: new Date(),
     }).catch(() => {});
 
-    const reviewChannel =
-      message.guild.channels.cache.get(REVIEW_CHANNEL_ID) ||
-      (await getGuildChannelCached(message.guild, REVIEW_CHANNEL_ID));
+    const reviewChannel=message.guild.channels.cache.get(REVIEW_CHANNEL_ID)||(await getGuildChannelCached(message.guild,REVIEW_CHANNEL_ID));
     if (reviewChannel) {
-      const reviewEmbed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setAuthor({
-          name: message.guild.name,
-          iconURL: message.guild.iconURL({ size: 128 }) || undefined,
-        })
-        .setTitle(
-          "Grazie per la recensione su Disboard! <a:VC_StarPink:1330194976440848500>",
-        )
-        .setDescription(
-          [
-            `<a:VC_ThankYou:1330186319673950401> Grazie ${target} per aver lasciato una recensione su **Disboard**.`,
+      const reviewEmbed=new EmbedBuilder().setColor("#6f4e37").setAuthor({name:message.guild.name,iconURL:message.guild.iconURL({size:128})||undefined,}).setTitle("Grazie per la recensione su Disboard! <a:VC_StarPink:1330194976440848500>",).setDescription([`<a:VC_ThankYou:1330186319673950401> Grazie ${target}per aver lasciato una recensione su**Disboard**.`,
             "",
             "<:VC_LevelUp2:1443701876892762243> Ricompensa assegnata: **+5 livelli**",
           ].join("\n"),
@@ -165,24 +123,11 @@ module.exports = {
         .catch(() => {});
     }
 
-    const done = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("<:vegacheckmark:1443666279058772028> Recensione Registrata")
-      .setDescription(`Ho assegnato la ricompensa recensione a ${target}.`)
+    const done=new EmbedBuilder().setColor("#6f4e37").setTitle("<:vegacheckmark:1443666279058772028> Recensione Registrata").setDescription(`Ho assegnato la ricompensa recensione a ${target}.`)
       .addFields(
         {
           name: "Livello",
-          value: `\`${currentLevel}\` -> \`${finalLevel}\``,
-          inline: true,
-        },
-        { name: "EXP Aggiunta", value: `\`+${addedExp}\``, inline: true },
-        {
-          name: "Ricompensa",
-          value: `\`+${LEVELS_TO_ADD} livelli\``,
-          inline: true,
-        },
-      )
-      .setThumbnail(target.displayAvatarURL({ size: 256 }));
+          value: `\`${currentLevel}\` -> \`${finalLevel}\``,inline:true,},{name:"EXP Aggiunta",value:`\`+${addedExp}\``,inline:true},{name:"Ricompensa",value:`\`+${LEVELS_TO_ADD}livelli\``,inline:true,},).setThumbnail(target.displayAvatarURL({size:256}));
 
     await safeMessageReply(message, {
       embeds: [done],

@@ -34,9 +34,7 @@ function walkJsFiles(dir, out = []) {
     securityCmd = require(path.join(root, "Prefix", "Staff", "security.js"));
   }
 
-  const requiredSecuritySubs = Array.isArray(securityCmd?.subcommands)
-    ? [...new Set(securityCmd.subcommands.map((sub) => String(sub || "").trim().split(/\s+/)[0]).filter(Boolean))]
-    : [];
+  const requiredSecuritySubs=Array.isArray(securityCmd?.subcommands)?[...new Set(securityCmd.subcommands.map((sub) => String(sub||"").trim().split(/\s+/)[0]).filter(Boolean))]:[];
   assert(requiredSecuritySubs.length > 0, "security.subcommands mancante");
   for (const sub of requiredSecuritySubs) {
     assert(Array.isArray(securityPerms[sub]), `permissions.security.${sub} mancante`);
@@ -65,10 +63,7 @@ function walkJsFiles(dir, out = []) {
     if (!mod || typeof mod !== "object") continue;
     const commandName = String(mod.name || "").toLowerCase();
     if (!commandName) continue;
-    const aliasMap =
-      mod.subcommandAliases && typeof mod.subcommandAliases === "object"
-        ? mod.subcommandAliases
-        : null;
+    const aliasMap=mod.subcommandAliases&&typeof mod.subcommandAliases==="object"?mod.subcommandAliases:null;
     if (!aliasMap) continue;
     const commandPerm = prefix?.[commandName];
     const subcommands = commandPerm?.subcommands;
@@ -94,22 +89,10 @@ function walkJsFiles(dir, out = []) {
   assert(joinRaidCfg && typeof joinRaidCfg.lockCommands === "boolean", "joinRaid.lockCommands mancante");
 
   const orchestrator = require(path.join(root, "Services", "Moderation", "securityOrchestratorService.js"));
-  const lockDecisionA = orchestrator.buildSecurityLockDecision?.({
-    antiNukePanic: false,
-    autoModPanic: false,
-    joinRaid: true,
-    lockAllCommands: true,
-    joinRaidLockCommands: false,
-  });
+  const lockDecisionA=orchestrator.buildSecurityLockDecision?.({antiNukePanic:false,autoModPanic:false,joinRaid:true,lockAllCommands:true,joinRaidLockCommands:false,});
   assert(lockDecisionA && lockDecisionA.joinLockActive === true, "security decision A join lock errato");
   assert(lockDecisionA.commandLockActive === false, "security decision A command lock errato");
-  const lockDecisionB = orchestrator.buildSecurityLockDecision?.({
-    antiNukePanic: false,
-    autoModPanic: false,
-    joinRaid: true,
-    lockAllCommands: true,
-    joinRaidLockCommands: true,
-  });
+  const lockDecisionB=orchestrator.buildSecurityLockDecision?.({antiNukePanic:false,autoModPanic:false,joinRaid:true,lockAllCommands:true,joinRaidLockCommands:true,});
   assert(lockDecisionB && lockDecisionB.commandLockActive === true, "security decision B command lock errato");
 
   const automodService = require(path.join(root, "Services", "Moderation", "automodService.js"));
@@ -125,10 +108,7 @@ function walkJsFiles(dir, out = []) {
   );
   const explainDecision = automodService?.__test?.buildAutoModDecisionExplain;
   assert(typeof explainDecision === "function", "automod __test buildAutoModDecisionExplain mancante");
-  const explainText = explainDecision("timeout", 120, [
-    { key: "link_blacklist", heat: 100 },
-    { key: "attachment_image", heat: 20 },
-  ]);
+  const explainText=explainDecision("timeout",120,[{key:"link_blacklist",heat:100},{key:"attachment_image",heat:20},]);
   assert(
     typeof explainText === "string" && explainText.includes("timeout") && explainText.includes("top_rules="),
     "automod decision explain non valido",

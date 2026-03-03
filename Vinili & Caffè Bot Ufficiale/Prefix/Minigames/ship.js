@@ -11,27 +11,21 @@ function extractId(raw) {
 async function resolveUser(guild, token) {
   const id = extractId(token);
   if (!id) return null;
-  const member =
-    guild.members.cache.get(id) ||
-    (await guild.members.fetch(id).catch(() => null));
+  const member=guild.members.cache.get(id)||(await guild.members.fetch(id).catch(() => null));
   return member?.user || null;
 }
 
 async function resolveReplyUser(message) {
   const ref = message.reference?.messageId;
   if (!ref) return null;
-  const replied =
-    message.channel?.messages?.cache?.get(ref) ||
-    (await message.channel.messages.fetch(ref).catch(() => null));
+  const replied=message.channel?.messages?.cache?.get(ref)||(await message.channel.messages.fetch(ref).catch(() => null));
   return replied?.author || null;
 }
 
 async function resolveRandomGuildUser(guild, excludedIds = []) {
   if (!guild) return null;
   const excluded = new Set(excludedIds.filter(Boolean));
-  const pool = guild.members.cache.filter(
-    (m) => !m.user?.bot && !excluded.has(m.user.id),
-  );
+  const pool=guild.members.cache.filter((m) => !m.user?.bot&&!excluded.has(m.user.id),);
   if (!pool.size) return null;
   const values = Array.from(pool.values());
   const member = values[Math.floor(Math.random() * values.length)];
@@ -88,11 +82,7 @@ module.exports = {
     }
 
     if (!right) {
-      const warn = new EmbedBuilder()
-        .setColor("Red")
-        .setDescription(
-          "<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.",
-        );
+      const warn=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Non ho trovato un utente valido per la ship.",);
       await safeMessageReply(message, {
         embeds: [warn],
         allowedMentions: { repliedUser: false },
@@ -101,11 +91,7 @@ module.exports = {
     }
 
     if (left.id === right.id) {
-      const warn = new EmbedBuilder()
-        .setColor("Red")
-        .setDescription(
-          "<:vegax:1443934876440068179> Scegli due utenti diversi.",
-        );
+      const warn=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Scegli due utenti diversi.",);
       await safeMessageReply(message, {
         embeds: [warn],
         allowedMentions: { repliedUser: false },
@@ -115,15 +101,7 @@ module.exports = {
 
     try {
       const percent = randomPercent();
-      const image = await renderShipCanvas({
-        leftAvatarUrl: left.displayAvatarURL({ extension: "png", size: 512 }),
-        rightAvatarUrl: right.displayAvatarURL({ extension: "png", size: 512 }),
-        leftName: trimName(left.username),
-        rightName: trimName(right.username),
-        leftId: left.id,
-        rightId: right.id,
-        percent,
-      });
+      const image=await renderShipCanvas({leftAvatarUrl:left.displayAvatarURL({extension:"png",size:512}),rightAvatarUrl:right.displayAvatarURL({extension:"png",size:512}),leftName:trimName(left.username),rightName:trimName(right.username),leftId:left.id,rightId:right.id,percent,});
 
       const file = new AttachmentBuilder(image, { name: "ship.png" });
       await safeMessageReply(message, {
@@ -133,11 +111,7 @@ module.exports = {
       });
     } catch (error) {
       global.logger.error("[SHIP COMMAND] Render error:", error);
-      const fail = new EmbedBuilder()
-        .setColor("Red")
-        .setDescription(
-          "<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine della ship.",
-        );
+      const fail=new EmbedBuilder().setColor("Red").setDescription("<:vegax:1443934876440068179> Non sono riuscito a generare l'immagine della ship.",);
       await safeMessageReply(message, {
         embeds: [fail],
         allowedMentions: { repliedUser: false },

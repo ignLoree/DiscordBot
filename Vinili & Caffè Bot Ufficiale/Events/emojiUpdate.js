@@ -33,11 +33,7 @@ async function fetchAuditWithRetry(guild, emojiId, retries = 3, delayMs = 700) {
   for (let attempt = 0; attempt < retries; attempt += 1) {
     const logs = await guild.fetchAuditLogs({ type: EMOJI_UPDATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
     const now = Date.now();
-    const entry = logs?.entries?.find((item) => {
-      const created = Number(item?.createdTimestamp || 0);
-      const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-      return within && String(item?.target?.id || "") === String(emojiId || "");
-    });
+    const entry=logs?.entries?.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.id||"")===String(emojiId||"");});
 
     if (entry) return entry;
     if (attempt < retries - 1) await sleep(delayMs);
@@ -60,9 +56,7 @@ async function resolveAuditChange(guild, emojiId) {
   const entry = await fetchAuditWithRetry(guild, emojiId);
   if (!entry) return { executor: null, oldName: null, newName: null };
 
-  const nameChange = Array.isArray(entry?.changes)
-    ? entry.changes.find((c) => String(c?.key || "") === "name")
-    : null;
+  const nameChange=Array.isArray(entry?.changes)?entry.changes.find((c) => String(c?.key||"")==="name"):null;
 
   return {
     executor: entry?.executor || null,
@@ -116,14 +110,8 @@ module.exports = {
         }
       }
 
-      const embed = new EmbedBuilder()
-        .setColor("#F59E0B")
-        .setTitle("Emoji Update")
-        .setDescription(
-          [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${newEmoji?.name || oldEmoji?.name || "emoji"} \`${emojiId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Emoji Update").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1473441155055096081>**Target:**${newEmoji?.name||oldEmoji?.name||"emoji"}\`${emojiId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
             "",
             "**Changes**",
             ...changeLines,

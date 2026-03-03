@@ -71,10 +71,7 @@ function setToken(token) {
 
 async function api(path, options = {}) {
   const token = getToken();
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
+  const headers={"Content-Type":"application/json",...(options.headers||{}),};
   if (token) headers["x-dashboard-token"] = token;
 
   const response = await fetch(path, { ...options, headers, credentials: "include" });
@@ -130,17 +127,8 @@ function formatSeconds(total) {
 }
 
 function renderOverview(overview) {
-  const cards = [
-    ["WS Ping", `${overview.wsPingEmoji} ${overview.wsPing} ms`],
-    ["DM Ping", `${overview.dmPingEmoji} ${overview.dmPing >= 0 ? `${overview.dmPing} ms` : "N/A"}`],
-    ["Uptime", formatSeconds(overview.uptimeSec)],
-    ["DB", overview.dbState],
-    ["Host", overview.host],
-    ["IP", (overview.ips || []).join(", ") || "N/A"],
-    ["Guild", String(overview.guilds)],
-    ["Utenti", String(overview.users)],
-    ["Canali", String(overview.channels)],
-    ["RAM RSS", `${overview.memoryMb} MB`],
+  const cards=[["WS Ping",`${overview.wsPingEmoji}${overview.wsPing}ms`],
+    ["DM Ping", `${overview.dmPingEmoji}${overview.dmPing>=0?`${overview.dmPing}ms` : "N/A"}`],["Uptime",formatSeconds(overview.uptimeSec)],["DB",overview.dbState],["Host",overview.host],["IP",(overview.ips||[]).join(", ")||"N/A"],["Guild",String(overview.guilds)],["Utenti",String(overview.users)],["Canali",String(overview.channels)],["RAM RSS",`${overview.memoryMb}MB`],
     ["Node", overview.node],
     ["PID", String(overview.pid)],
   ];
@@ -230,19 +218,8 @@ async function runUserAction(userId, action) {
     alert("Seleziona prima un server specifico, non lo scope globale.");
     return;
   }
-  const body = {
-    guildId,
-    userId,
-    action,
-    roleId: String(usersRoleSelect.value || ""),
-    nickname: String(usersNicknameInput.value || ""),
-    reason: String(usersReasonInput.value || "Dashboard utenti"),
-    durationMinutes: 60,
-  };
-  const out = await api("/api/dashboard/user-action", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  const body={guildId,userId,action,roleId:String(usersRoleSelect.value||""),nickname:String(usersNicknameInput.value||""),reason:String(usersReasonInput.value||"Dashboard utenti"),durationMinutes:60,};
+  const out=await api("/api/dashboard/user-action",{method:"POST",body:JSON.stringify(body),});
   processStatus.textContent = `Process: ${out.message || "azione utente eseguita"}`;
   await refreshUsers();
 }
@@ -281,8 +258,7 @@ async function refreshUsers() {
     usersRoleSelect.innerHTML = '<option value="">Seleziona ruolo</option>';
     return;
   }
-  const data = await api(
-    `/api/dashboard/users?guildId=${encodeURIComponent(guildId)}&page=${usersPage}&limit=35&q=${encodeURIComponent(usersQuery)}`,
+  const data=await api(`/api/dashboard/users?guildId=${encodeURIComponent(guildId)}&page=${usersPage}&limit=35&q=${encodeURIComponent(usersQuery)}`,
   );
   usersPage = Number(data.page || 1);
   usersTotalPages = Number(data.totalPages || 1);
@@ -483,10 +459,7 @@ async function refreshAll() {
 async function processAction(action) {
   processStatus.textContent = `Process: ${action} in corso...`;
   try {
-    const data = await api("/api/dashboard/process", {
-      method: "POST",
-      body: JSON.stringify({ action }),
-    });
+    const data=await api("/api/dashboard/process",{method:"POST",body:JSON.stringify({action}),});
     processStatus.textContent = `Process: ${data.message || "ok"}`;
   } catch (error) {
     processStatus.textContent = `Process: errore (${error.message})`;

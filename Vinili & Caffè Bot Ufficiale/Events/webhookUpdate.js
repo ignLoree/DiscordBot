@@ -1,10 +1,6 @@
 const { AuditLogEvent, EmbedBuilder, PermissionsBitField } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const {
-  handleWebhookCreationAction: antiNukeHandleWebhookCreationAction,
-  handleWebhookUpdateAction: antiNukeHandleWebhookUpdateAction,
-  handleWebhookDeletionAction: antiNukeHandleWebhookDeletionAction,
-} = require("../Services/Moderation/antiNukeService");
+const{handleWebhookCreationAction:antiNukeHandleWebhookCreationAction,handleWebhookUpdateAction:antiNukeHandleWebhookUpdateAction,handleWebhookDeletionAction:antiNukeHandleWebhookDeletionAction,}=require("../Services/Moderation/antiNukeService");
 
 const WEBHOOK_CREATE_ACTION = AuditLogEvent?.WebhookCreate ?? 50;
 const WEBHOOK_UPDATE_ACTION = AuditLogEvent?.WebhookUpdate ?? 51;
@@ -44,9 +40,7 @@ async function shouldMonitorExecutor(guild, executor) {
   const highStaffRoleId = String(IDs?.roles?.HighStaff || "").trim();
   if (!highStaffRoleId) return true;
 
-  const member =
-    guild.members.cache.get(String(executor.id)) ||
-    (await guild.members.fetch(String(executor.id)).catch(() => null));
+  const member=guild.members.cache.get(String(executor.id))||(await guild.members.fetch(String(executor.id)).catch(() => null));
   if (!member) return true;
   return !member.roles.cache.has(highStaffRoleId);
 }
@@ -58,9 +52,7 @@ async function resolveLogChannel(guild) {
 }
 
 function getStore(client) {
-  const store = client
-    ? (client._webhookAuditDedupe || (client._webhookAuditDedupe = new Map()))
-    : localWebhookDedupeStore;
+  const store=client?(client._webhookAuditDedupe||(client._webhookAuditDedupe=new Map())):localWebhookDedupeStore;
   const now = Date.now();
   for (const [key, ts] of store.entries()) {
     if (now - Number(ts || 0) > DEDUPE_TTL_MS) store.delete(key);
@@ -88,9 +80,7 @@ async function getLatestWebhookEntry(guild, channelId) {
 
     let score = 0;
     if (targetChannelId) {
-      const matchesChannel =
-        (extraChannelId && extraChannelId === targetChannelId) ||
-        (targetWebhookChannelId && targetWebhookChannelId === targetChannelId);
+      const matchesChannel=(extraChannelId&&extraChannelId===targetChannelId)||(targetWebhookChannelId&&targetWebhookChannelId===targetChannelId);
       if (!matchesChannel && (extraChannelId || targetWebhookChannelId)) {
         return;
       }
@@ -165,18 +155,15 @@ module.exports = {
         sectionTitle = "**Previous Settings**";
       }
 
-      const channelText = entry?.extra?.channel
-        ? `${entry.extra.channel}`
+      const channelText=entry?.extra?.channel?`${entry.extra.channel}`
         : channel
           ? `${channel}`
           : "#sconosciuto";
       const appId = String(entry?.target?.applicationId || "").trim();
       const typeText = webhookTypeLabel(entry?.target?.type);
 
-      const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
-        `<:VC_right_arrow:1473441155055096081> **Target:** ${targetName} \`${targetId}\``,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsible}`,
+        `<:VC_right_arrow:1473441155055096081>**Target:**${targetName}\`${targetId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
         "",
         sectionTitle,
       ];

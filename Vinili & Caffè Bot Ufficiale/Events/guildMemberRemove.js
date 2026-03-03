@@ -6,32 +6,16 @@ const { createTranscript, createTranscriptHtml, saveTranscriptHtml, } = require(
 const { InviteTrack, ExpUser, ActivityUser, LevelHistory, } = require("../Schemas/Community/communitySchemas");
 const { MinigameUser } = require("../Schemas/Minigames/minigameSchema");
 const IDs = require("../Utils/Config/ids");
-const {
-  scheduleStaffListRefresh,
-  memberHasStaffRole,
-} = require("../Utils/Community/staffListUtils");
+const{scheduleStaffListRefresh,memberHasStaffRole,}=require("../Utils/Community/staffListUtils");
 const { queueIdsCatalogSync } = require("../Utils/Config/idsAutoSync");
-const {
-  scheduleMemberCounterRefresh,
-} = require("../Utils/Community/memberCounterUtils");
+const{scheduleMemberCounterRefresh,}=require("../Utils/Community/memberCounterUtils");
 const { buildAuditExtraLines } = require("../Utils/Logging/channelRolesLogUtils");
 const { handleKickBanAction: antiNukeHandleKickBanAction } = require("../Services/Moderation/antiNukeService");
 const { consumeRecentJoinGateKick } = require("../Utils/Moderation/joinGateKickCache");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
-const STAFF_TRACKED_ROLE_IDS = new Set([
-  IDs.roles.PartnerManager,
-  IDs.roles.Staff,
-  IDs.roles.Helper,
-  IDs.roles.Mod,
-  IDs.roles.Coordinator,
-  IDs.roles.Supervisor,
-  IDs.roles.Admin,
-  IDs.roles.Manager,
-  IDs.roles.CoFounder,
-  IDs.roles.Founder,
-]);
+const STAFF_TRACKED_ROLE_IDS=new Set([IDs.roles.PartnerManager,IDs.roles.Staff,IDs.roles.Helper,IDs.roles.Mod,IDs.roles.Coordinator,IDs.roles.Supervisor,IDs.roles.Admin,IDs.roles.Manager,IDs.roles.CoFounder,IDs.roles.Founder,]);
 
 const JOIN_LEAVE_LOG_CHANNEL_ID = IDs.channels.joinLeaveLogs;
 const ARROW = "<:VC_right_arrow:1473441155055096081>";
@@ -39,15 +23,7 @@ const MAIN_GUILD_ID = IDs.guilds?.main || "1329080093599076474";
 const SPONSOR_GUILD_IDS = IDs.guilds?.sponsorGuildIds || [];
 const OFFICIAL_INVITE_URL = "https://discord.gg/viniliecaffe";
 const REJOIN_DEADLINE_MS = 24 * 60 * 60 * 1000;
-const JOIN_GATE_KICK_REASON_PATTERNS = [
-  "account is too young to be allowed",
-  "account too young to be allowed",
-  "unverified bot addition",
-  "bot added by unauthorized member",
-  "advertising invite link in username",
-  "username matches blocked pattern",
-  "post-join filter",
-];
+const JOIN_GATE_KICK_REASON_PATTERNS=["account is too young to be allowed","account too young to be allowed","unverified bot addition","bot added by unauthorized member","advertising invite link in username","username matches blocked pattern","post-join filter",];
 
 function formatActor(actor) {
   if (!actor) return "sconosciuto";
@@ -115,22 +91,14 @@ async function resolveGuildChannel(guild, channelId) {
 }
 
 async function sendLeaveLog(member) {
-  const channel = await resolveGuildChannel(
-    member.guild,
-    JOIN_LEAVE_LOG_CHANNEL_ID,
-  );
+  const channel=await resolveGuildChannel(member.guild,JOIN_LEAVE_LOG_CHANNEL_ID,);
   if (!channel?.isTextBased?.()) return;
 
-  const embed = new EmbedBuilder()
-    .setColor("#ED4245")
-    .setTitle("Member Left")
-    .setDescription(
-      [
-        `${member.user} ${member.user.tag}.`,
+  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Left").setDescription([`${member.user}${member.user.tag}.`,
         "",
       ].join("\n"),
     )
-    .setFooter({ text: `ID: ${member.user.id}` })
+    .setFooter({ text: `ID:${member.user.id}` })
     .setTimestamp()
     .setThumbnail(member.user.displayAvatarURL({ extension: "png", size: 256 }));
 
@@ -149,27 +117,16 @@ async function markInviteInactive(member) {
 async function closeOpenTicketsForMember(member) {
   const guild = member.guild;
   const client = member.client;
-  const openTickets = await Ticket.find({
-    userId: member.id,
-    open: true,
-  }).catch(() => []);
+  const openTickets=await Ticket.find({userId:member.id,open:true,}).catch(() => []);
   if (!openTickets.length) return;
 
   const centralTicketLogChannelId = IDs.channels.ticketLogs || "1442569290682208296";
   const mainGuildId = IDs.guilds?.main || null;
-  const mainGuild = mainGuildId
-    ? client.guilds.cache.get(mainGuildId) ||
-      (await client.guilds.fetch(mainGuildId).catch(() => null))
-    : null;
-  const logChannel = mainGuild
-    ? mainGuild.channels.cache.get(centralTicketLogChannelId) ||
-      (await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null))
-    : null;
+  const mainGuild=mainGuildId?client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null)):null;
+  const logChannel=mainGuild?mainGuild.channels.cache.get(centralTicketLogChannelId)||(await mainGuild.channels.fetch(centralTicketLogChannelId).catch(() => null)):null;
 
   for (const ticket of openTickets) {
-    const channel =
-      guild.channels.cache.get(ticket.channelId) ||
-      (await guild.channels.fetch(ticket.channelId).catch(() => null));
+    const channel=guild.channels.cache.get(ticket.channelId)||(await guild.channels.fetch(ticket.channelId).catch(() => null));
 
     if (!channel) {
       await Ticket.updateOne(
@@ -188,9 +145,7 @@ async function closeOpenTicketsForMember(member) {
 
     const transcriptTXT = await createTranscript(channel).catch(() => "");
     const transcriptHTML = await createTranscriptHtml(channel).catch(() => "");
-    const transcriptHtmlPath = transcriptHTML
-      ? await saveTranscriptHtml(channel, transcriptHTML).catch(() => null)
-      : null;
+    const transcriptHtmlPath=transcriptHTML?await saveTranscriptHtml(channel,transcriptHTML).catch(() => null):null;
     ticket.open = false;
     ticket.transcript = transcriptTXT;
     ticket.transcriptHtmlPath = transcriptHtmlPath || null;
@@ -200,30 +155,13 @@ async function closeOpenTicketsForMember(member) {
     await ticket.save().catch(() => { });
 
     if (logChannel?.isTextBased?.()) {
-      const openedAt = ticket.createdAt
-        ? `<t:${Math.floor(new Date(ticket.createdAt).getTime() / 1000)}:F>`
+      const openedAt=ticket.createdAt?`<t:${Math.floor(new Date(ticket.createdAt).getTime()/1000)}:F>`
         : "Sconosciuto";
-      const closedAt = ticket.closedAt
-        ? `<t:${Math.floor(new Date(ticket.closedAt).getTime() / 1000)}:F>`
-        : `<t:${Math.floor(Date.now() / 1000)}:F>`;
+      const closedAt=ticket.closedAt?`<t:${Math.floor(new Date(ticket.closedAt).getTime()/1000)}:F>`
+        : `<t:${Math.floor(Date.now()/1000)}:F>`;
       const reasonText = "Utente uscito dal server";
 
-      const closeEmbed = new EmbedBuilder()
-        .setAuthor({
-          name: guild?.name || "Ticket System",
-          iconURL: guild?.iconURL?.({ size: 128 }) || undefined,
-        })
-        .setTitle("Ticket Closed")
-        .setColor("#6f4e37")
-        .addFields(
-          {
-            name: "🆔 Ticket ID",
-            value: String(ticket.ticketNumber || "N/A"),
-            inline: true,
-          },
-          {
-            name: "✅ Opened By",
-            value: ticket.userId ? `<@${ticket.userId}>` : "Sconosciuto",
+      const closeEmbed=new EmbedBuilder().setAuthor({name:guild?.name||"Ticket System",iconURL:guild?.iconURL?.({size:128})||undefined,}).setTitle("Ticket Closed").setColor("#6f4e37").addFields({name:"🆔 Ticket ID",value:String(ticket.ticketNumber||"N/A"),inline:true,},{name:"✅ Opened By",value:ticket.userId?`<@${ticket.userId}>` : "Sconosciuto",
             inline: true,
           },
           {
@@ -243,22 +181,10 @@ async function closeOpenTicketsForMember(member) {
           { name: "ℹ️ Reason", value: reasonText, inline: false },
         );
 
-      const reordered = [
-        closeEmbed.data.fields?.[0],
-        closeEmbed.data.fields?.[1],
-        closeEmbed.data.fields?.[2],
-        closeEmbed.data.fields?.[3],
-        closeEmbed.data.fields?.[5],
-        closeEmbed.data.fields?.[4],
-        closeEmbed.data.fields?.[6],
-      ].filter(Boolean);
+      const reordered=[closeEmbed.data.fields?.[0],closeEmbed.data.fields?.[1],closeEmbed.data.fields?.[2],closeEmbed.data.fields?.[3],closeEmbed.data.fields?.[5],closeEmbed.data.fields?.[4],closeEmbed.data.fields?.[6],].filter(Boolean);
       closeEmbed.setFields(reordered);
 
-      const htmlAttachment = transcriptHtmlPath
-        ? [
-            {
-              attachment: transcriptHtmlPath,
-              name: `transcript_ticket_${ticket.ticketNumber || ticket._id}.html`,
+      const htmlAttachment=transcriptHtmlPath?[{attachment:transcriptHtmlPath,name:`transcript_ticket_${ticket.ticketNumber||ticket._id}.html`,
             },
           ]
         : [];
@@ -273,19 +199,9 @@ async function closeOpenTicketsForMember(member) {
         .catch(() => { });
 
       if (logSentMessage && transcriptHtmlPath) {
-        const attachment = logSentMessage.attachments?.find((att) => {
-          const name = String(att?.name || "").toLowerCase();
-          const url = String(att?.url || "").toLowerCase();
-          return name.endsWith(".html") || url.includes(".html");
-        });
+        const attachment=logSentMessage.attachments?.find((att) => {const name=String(att?.name||"").toLowerCase();const url=String(att?.url||"").toLowerCase();return name.endsWith(".html")||url.includes(".html");});
         if (attachment?.url) {
-          const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setStyle(ButtonStyle.Link)
-              .setURL(attachment.url)
-              .setLabel("View Transcript")
-              .setEmoji("📁"),
-          );
+          const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setURL(attachment.url).setLabel("View Transcript").setEmoji("📁"),);
           await logSentMessage.edit({ components: [row] }).catch(() => {});
         }
       }
@@ -315,11 +231,7 @@ function getHighestTrackedRole(member) {
 }
 
 async function handleTrackedStaffLeave(member) {
-  const hadTrackedStaffRole = member.roles?.cache
-    ? [...STAFF_TRACKED_ROLE_IDS].some((roleId) =>
-      member.roles.cache.has(roleId),
-    )
-    : false;
+  const hadTrackedStaffRole=member.roles?.cache?[...STAFF_TRACKED_ROLE_IDS].some((roleId) => member.roles.cache.has(roleId),):false;
   if (!hadTrackedStaffRole) return;
 
   const guild = member.guild;
@@ -329,8 +241,7 @@ async function handleTrackedStaffLeave(member) {
     const roleLabel = highestTrackedRole?.name || "Staff/PM";
     const userRole = guild.roles.cache.get(IDs.roles.Member);
     const userRoleLabel = userRole?.name || "? User";
-    const content = `**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}
-<:member_role_icon:1330530086792728618> \`${roleLabel}\` <a:vegarightarrow:1443673039156936837> \`${userRoleLabel}\`
+    const content=`**<a:laydowntorest:1444006796661358673> DEPEX** ${member.user}<:member_role_icon:1330530086792728618>\`${roleLabel}\` <a:vegarightarrow:1443673039156936837> \`${userRoleLabel}\`
 <:discordstaff:1443651872258003005> __Dimissioni (Esce dal server)__`;
     await resignChannel.send({ content }).catch(() => { });
   }
@@ -357,11 +268,7 @@ function collectManagerActions(partnerships, managerId) {
 }
 
 async function logManagerLeave(mainGuild, member, partnerships) {
-  const partnerLogChannel =
-    mainGuild.channels.cache.get(IDs.channels.partnerLogs) ||
-    (await mainGuild.channels
-      .fetch(IDs.channels.partnerLogs)
-      .catch(() => null));
+  const partnerLogChannel=mainGuild.channels.cache.get(IDs.channels.partnerLogs)||(await mainGuild.channels.fetch(IDs.channels.partnerLogs).catch(() => null));
   if (!partnerLogChannel) return;
 
   const allWithThisManager = collectManagerActions(partnerships, member.id);
@@ -372,19 +279,13 @@ async function logManagerLeave(mainGuild, member, partnerships) {
   const partnerName = lastPartner?.partner || "Partner sconosciuta";
   const inviteLink = lastPartner?.invite || "Link non disponibile";
   const lastPartnerDate = lastPartner?.date ? new Date(lastPartner.date) : null;
-  const hasValidDate =
-    lastPartnerDate && !Number.isNaN(lastPartnerDate.getTime());
-  const lastPartnerTimestamp = hasValidDate
-    ? Math.floor(lastPartnerDate.getTime() / 1000)
-    : null;
-  const lastPartnerWhenText = lastPartnerTimestamp
-    ? `<t:${lastPartnerTimestamp}:F> (<t:${lastPartnerTimestamp}:R>)`
+  const hasValidDate=lastPartnerDate&&!Number.isNaN(lastPartnerDate.getTime());
+  const lastPartnerTimestamp=hasValidDate?Math.floor(lastPartnerDate.getTime()/1000):null;
+  const lastPartnerWhenText=lastPartnerTimestamp?`<t:${lastPartnerTimestamp}:F>(<t:${lastPartnerTimestamp}:R>)`
     : "Non disponibile";
 
   const totalCount = allWithThisManager.length;
-  const extraLine =
-    totalCount > 1
-      ? `\n**Partnership totali con questo manager:** ${totalCount} (mostrata la più recente)`
+  const extraLine=totalCount>1?`\n**Partnership totali con questo manager:** ${totalCount}(mostrata la più recente)`
       : "";
 
   await partnerLogChannel.send({
@@ -407,12 +308,7 @@ async function sendRejoinDm(member) {
   const dmChannel = await member.user.createDM().catch(() => null);
   if (!dmChannel) return;
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setLabel("Rientra nel server")
-      .setStyle(ButtonStyle.Link)
-      .setURL(IDs.links.invite),
-  );
+  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("Rientra nel server").setStyle(ButtonStyle.Link).setURL(IDs.links.invite),);
 
   await dmChannel
     .send({
@@ -431,35 +327,22 @@ function schedulePartnershipRollback(member, partnerships) {
   const guild = member.guild;
   setTimeout(
     async () => {
-      const stillInGuild = await guild.members
-        .fetch(member.id)
-        .catch(() => null);
+      const stillInGuild=await guild.members.fetch(member.id).catch(() => null);
       if (stillInGuild) return;
 
       for (const doc of partnerships) {
-        const actions = Array.isArray(doc.partnerActions)
-          ? doc.partnerActions
-          : [];
-        const toRollback = actions.filter(
-          (action) => action?.managerId === member.id,
-        );
+        const actions=Array.isArray(doc.partnerActions)?doc.partnerActions:[];
+        const toRollback=actions.filter((action) => action?.managerId===member.id,);
 
         for (const action of toRollback) {
-          const channelId =
-            action?.partnershipChannelId || IDs.channels.partnerships;
-          const channel =
-            guild.channels.cache.get(channelId) ||
-            (await guild.channels.fetch(channelId).catch(() => null));
+          const channelId=action?.partnershipChannelId||IDs.channels.partnerships;
+          const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
           if (!channel?.isTextBased?.()) continue;
 
-          const messageIds = Array.isArray(action?.partnerMessageIds)
-            ? action.partnerMessageIds
-            : [];
+          const messageIds=Array.isArray(action?.partnerMessageIds)?action.partnerMessageIds:[];
           for (const messageId of messageIds) {
             if (!messageId) continue;
-            const msg = await channel.messages
-              .fetch(messageId)
-              .catch(() => null);
+            const msg=await channel.messages.fetch(messageId).catch(() => null);
             if (msg) await msg.delete().catch(() => { });
           }
         }
@@ -479,17 +362,12 @@ function schedulePartnershipRollback(member, partnerships) {
 
 async function handlePartnershipOnLeave(member, client) {
   const mainGuildId = IDs.guilds.main;
-  const partnerships = await Staff.find({
-    guildId: mainGuildId,
-    $or: [{ managerId: member.id }, { "partnerActions.managerId": member.id }],
-  }).catch(() => []);
+  const partnerships=await Staff.find({guildId:mainGuildId,$or:[{managerId:member.id},{"partnerActions.managerId":member.id}],}).catch(() => []);
 
   if (!partnerships.length) return;
 
   try {
-    const mainGuild =
-      client.guilds.cache.get(mainGuildId) ||
-      (await client.guilds.fetch(mainGuildId).catch(() => null));
+    const mainGuild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
     if (!mainGuild) return;
 
     await logManagerLeave(mainGuild, member, partnerships);
@@ -517,12 +395,7 @@ async function sendMemberKickLog(member) {
 
   let entry = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.MemberKick,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.MemberKick,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const now = Date.now();
       entry =
@@ -542,29 +415,17 @@ async function sendMemberKickLog(member) {
   const executorId = String(entry?.executor?.id || "");
   const botUserId = String(guild?.members?.me?.id || guild?.client?.user?.id || "");
   const reasonText = String(entry?.reason || "").trim().toLowerCase();
-  const isJoinGateKickByBot =
-    botUserId &&
-    executorId &&
-    executorId === botUserId &&
-    JOIN_GATE_KICK_REASON_PATTERNS.some((value) => reasonText.includes(value));
+  const isJoinGateKickByBot=botUserId&&executorId&&executorId===botUserId&&JOIN_GATE_KICK_REASON_PATTERNS.some((value) => reasonText.includes(value));
   if (isJoinGateKickByBot) return;
 
-  const logChannel =
-    guild.channels.cache.get(IDs.channels.modLogs) ||
-    (await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
+  const logChannel=guild.channels.cache.get(IDs.channels.modLogs)||(await guild.channels.fetch(IDs.channels.modLogs).catch(() => null));
   if (!logChannel?.isTextBased?.()) return;
 
   const responsible = formatActor(entry.executor);
   const nowTs = Math.floor(Date.now() / 1000);
-  const embed = new EmbedBuilder()
-    .setColor("#ED4245")
-    .setTitle("Member Kick")
-    .setDescription(
-      [
-        `${ARROW} **Responsible:** ${responsible}`,
-        `${ARROW} **Target:** ${member.user} \`${member.user.id}\``,
-        `${ARROW} <t:${nowTs}:F>`,
-        entry.reason ? `${ARROW} **Reason:** ${entry.reason}` : null,
+  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Kick").setDescription([`${ARROW}**Responsible:**${responsible}`,
+        `${ARROW}**Target:**${member.user}\`${member.user.id}\``,`${ARROW}<t:${nowTs}:F>`,
+        entry.reason ? `${ARROW}**Reason:**${entry.reason}` : null,
         ...buildAuditExtraLines(entry, ["reason"]),
       ]
         .filter(Boolean)
@@ -609,21 +470,12 @@ module.exports = {
         SPONSOR_GUILD_IDS.length > 0
       ) {
         const activeClient = client || member.client;
-        const inSponsorGuild = await isUserInAnySponsorGuild(
-          activeClient,
-          member.user.id,
-        );
+        const inSponsorGuild=await isUserInAnySponsorGuild(activeClient,member.user.id,);
         if (inSponsorGuild) {
           const leftAt = new Date();
           const kickAt = new Date(Date.now() + REJOIN_DEADLINE_MS);
           await upsertSponsorLeaveRecord(member.user.id, leftAt, kickAt);
-          const dmOk = await member.user
-            .send({
-              embeds: [makeSponsorRejoinEmbed()],
-              components: [makeSponsorRejoinRow()],
-            })
-            .then(() => true)
-            .catch(() => false);
+          const dmOk=await member.user.send({embeds:[makeSponsorRejoinEmbed()],components:[makeSponsorRejoinRow()],}).then(() => true).catch(() => false);
           await markSponsorDmResult(member.user.id, dmOk);
         }
       }

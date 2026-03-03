@@ -1,9 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  buildMeOverviewPayload,
-  normalizeLookbackDays,
-} = require("./me");
+const{buildMeOverviewPayload,normalizeLookbackDays,}=require("./me");
 
 const USER_REFRESH_CUSTOM_ID_PREFIX = "stats_user_refresh";
 const USER_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_user_period_open";
@@ -11,11 +8,7 @@ const USER_PERIOD_SET_CUSTOM_ID_PREFIX = "stats_user_period_set";
 const USER_PERIOD_BACK_CUSTOM_ID_PREFIX = "stats_user_period_back";
 
 function parseWindowDays(rawValue) {
-  const parsed = Number(
-    String(rawValue || "14")
-      .toLowerCase()
-      .replace(/d$/i, ""),
-  );
+  const parsed=Number(String(rawValue||"14").toLowerCase().replace(/d$/i,""),);
   if ([1, 7, 14, 21, 30].includes(parsed)) return parsed;
   return 14;
 }
@@ -29,9 +22,7 @@ function extractUserId(rawValue) {
 }
 
 function parseUserActivityArgs(args = []) {
-  const tokens = Array.isArray(args)
-    ? args.map((x) => String(x || "").trim()).filter(Boolean)
-    : [];
+  const tokens=Array.isArray(args)?args.map((x) => String(x||"").trim()).filter(Boolean):[];
   const targetId = extractUserId(tokens[0] || "");
   const wantsEmbed = tokens.some((t, idx) => idx > 0 && t.toLowerCase() === "embed");
   const dayToken = tokens.find((t, idx) => idx > 0 && /^\d+d?$/i.test(t));
@@ -67,10 +58,7 @@ function buildPeriodControlsRows(ownerId, targetId, lookbackDays, wantsEmbed) {
   const current = normalizeLookbackDays(lookbackDays);
   const safeOwner = String(ownerId || "0");
   const safeTarget = String(targetId || "0");
-  const topRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(
-        `${USER_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${safeTarget}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
+  const topRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${USER_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${safeTarget}:${normalizeLookbackDays(lookbackDays)}:${mode}`,
       )
       .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
@@ -87,9 +75,7 @@ function buildPeriodControlsRows(ownerId, targetId, lookbackDays, wantsEmbed) {
       .setLabel("14d")
       .setStyle(current === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
-  const bottomRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`${USER_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:${safeTarget}:21:${mode}`)
+  const bottomRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${USER_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:${safeTarget}:21:${mode}`)
       .setLabel("21d")
       .setStyle(current === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
@@ -116,13 +102,8 @@ function buildUserComponents(
 async function resolveTarget(guild, targetId) {
   const safeId = String(targetId || "").trim();
   if (!safeId) return { user: null, member: null };
-  const member =
-    guild.members?.cache?.get(safeId) ||
-    (await guild.members?.fetch(safeId).catch(() => null));
-  const user =
-    member?.user ||
-    guild.client?.users?.cache?.get(safeId) ||
-    (await guild.client?.users?.fetch(safeId).catch(() => null));
+  const member=guild.members?.cache?.get(safeId)||(await guild.members?.fetch(safeId).catch(() => null));
+  const user=member?.user||guild.client?.users?.cache?.get(safeId)||(await guild.client?.users?.fetch(safeId).catch(() => null));
   return { user: user || null, member: member || null };
 }
 
@@ -177,13 +158,7 @@ module.exports = {
       return;
     }
 
-    const payload = await buildUserOverviewPayload(
-      message.guild,
-      targetId,
-      lookbackDays,
-      wantsEmbed,
-      "main",
-    );
+    const payload=await buildUserOverviewPayload(message.guild,targetId,lookbackDays,wantsEmbed,"main",);
     if (Array.isArray(payload.components) && payload.components.length) {
       payload.components = buildUserComponents(
         message.author.id,

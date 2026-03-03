@@ -127,25 +127,13 @@ module.exports = {
     await guild.members.fetch().catch(() => null);
 
     const members = guild.members.cache.filter((member) => !member.user.bot);
-    const targets = members.filter((member) =>
-      action === "add"
-        ? !member.roles.cache.has(role.id)
-        : member.roles.cache.has(role.id),
-    );
+    const targets=members.filter((member) => action==="add"?!member.roles.cache.has(role.id):member.roles.cache.has(role.id),);
 
-    const progressEmbed = ({ title, processed, total, success, failed, skipped }) =>
-      new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle(title)
-        .setDescription(
-          [
-            `Ruolo: ${role}`,
-            `Azione: \`${action}\``,
-            "",
-            `Processati: **${processed}/${total}**`,
-            `Aggiornati: **${success}**`,
-            `Saltati: **${skipped}**`,
-            `Falliti: **${failed}**`,
+    const progressEmbed=({title,processed,total,success,failed,skipped}) => new EmbedBuilder().setColor("#6f4e37").setTitle(title).setDescription([`Ruolo: ${role}`,
+            `Azione:\`${action}\``,"",`Processati: **${processed}/${total}**`,
+            `Aggiornati:**${success}**`,
+            `Saltati:**${skipped}**`,
+            `Falliti:**${failed}**`,
           ].join("\n"),
         )
         .setTimestamp();

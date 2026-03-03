@@ -2,18 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const IDs = require("../Config/ids");
 
-const EMPTY_PERMISSIONS = {
-  slash: {},
-  prefix: {},
-  channels: {},
-  buttons: {},
-  selectMenus: {},
-  modals: {},
-};
-const PERMISSIONS_CANDIDATES = [
-  path.join(process.cwd(), "permissions.json"),
-  path.resolve(__dirname, "../../permissions.json"),
-];
+const EMPTY_PERMISSIONS ={slash:{},prefix:{},channels:{},buttons:{},selectMenus:{},modals:{},};
+const PERMISSIONS_CANDIDATES =[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../../permissions.json"),];
 const PERMISSIONS_CACHE_TTL_MS = 30_000;
 
 let cache = {
@@ -57,8 +47,7 @@ function loadPermissions() {
     const now = Date.now();
     if (cache.data && cache.expiresAt > now) return cache.data;
 
-    const permissionsPath =
-      PERMISSIONS_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || null;
+    const permissionsPath = PERMISSIONS_CANDIDATES.find((candidate)=>fs.existsSync(candidate))|| null;
     if (!permissionsPath) return EMPTY_PERMISSIONS;
 
     const stat = fs.statSync(permissionsPath);
@@ -73,14 +62,7 @@ function loadPermissions() {
 
     const raw = fs.readFileSync(permissionsPath, "utf8");
     const parsed = JSON.parse(raw) || {};
-    const normalized = {
-      slash: normalizePermissionTree(parsed?.slash || {}),
-      prefix: normalizePermissionTree(parsed?.prefix || {}),
-      channels: parsed?.channels || {},
-      buttons: parsed?.buttons || {},
-      selectMenus: parsed?.selectMenus || {},
-      modals: parsed?.modals || {},
-    };
+    const normalized ={slash:normalizePermissionTree(parsed ?. slash ||{}),prefix:normalizePermissionTree(parsed ?. prefix ||{}),channels:parsed ?. channels ||{},buttons:parsed ?. buttons ||{},selectMenus:parsed ?. selectMenus ||{},modals:parsed ?. modals ||{},};
     cache = {
       filePath: permissionsPath,
       mtimeMs: stat.mtimeMs,

@@ -1,14 +1,7 @@
 ﻿const baseLogs = require("./logs");
 const config = require("../../config.json");
 
-const levels = {
-  debug: 0,
-  info: 1,
-  success: 1,
-  logging: 1,
-  warn: 2,
-  error: 3,
-};
+const levels ={debug:0,info:1,success:1,logging:1,warn:2,error:3,};
 function getMinLevel() {
   const configured = (config.logLevel || "info").toLowerCase();
   if (configured === "silent") return Infinity;
@@ -42,14 +35,6 @@ function write(level, clientOrMessage, ...rest) {
   }
   return baseLogs.info(payload);
 }
-const logger = {
-  info: (...args) => write("info", ...args),
-  log: (...args) => write("info", ...args),
-  warn: (...args) => write("warn", ...args),
-  error: (...args) => write("error", ...args),
-  debug: (...args) => write("debug", ...args),
-  success: (...args) => write("success", ...args),
-  logging: (...args) => write("logging", ...args),
-};
+const logger ={info:(...args)=>write("info",...args),log:(...args)=>write("info",...args),warn:(...args)=>write("warn",...args),error:(...args)=>write("error",...args),debug:(...args)=>write("debug",...args),success:(...args)=>write("success",...args),logging:(...args)=>write("logging",...args),};
 
 module.exports = logger;

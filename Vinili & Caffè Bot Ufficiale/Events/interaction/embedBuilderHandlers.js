@@ -19,9 +19,7 @@ function buildPreviewEmbed(data = {}) {
 
 function buildRows(ownerId) {
   const { ButtonBuilder, ButtonStyle, ActionRowBuilder, } = require("discord.js");
-  const row1 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`eb:title:${ownerId}`)
+  const row1=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:title:${ownerId}`)
       .setLabel("Titolo")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
@@ -41,9 +39,7 @@ function buildRows(ownerId) {
       .setLabel("Autore")
       .setStyle(ButtonStyle.Secondary),
   );
-  const row2 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`eb:content:${ownerId}`)
+  const row2=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`eb:content:${ownerId}`)
       .setLabel("Testo")
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
@@ -63,8 +59,7 @@ function buildRows(ownerId) {
 }
 
 function buildEditModal(kind, ownerId, messageId, currentValue) {
-  const modal = new ModalBuilder()
-    .setCustomId(`ebm:${kind}:${ownerId}:${messageId}`)
+  const modal=new ModalBuilder().setCustomId(`ebm:${kind}:${ownerId}:${messageId}`)
     .setTitle("Modifica embed");
   const input = new TextInputBuilder().setCustomId("value");
 
@@ -116,14 +111,9 @@ function buildEditModal(kind, ownerId, messageId, currentValue) {
 }
 
 function buildSendModal(ownerId, messageId) {
-  const modal = new ModalBuilder()
-    .setCustomId(`ebm:send:${ownerId}:${messageId}`)
+  const modal=new ModalBuilder().setCustomId(`ebm:send:${ownerId}:${messageId}`)
     .setTitle("Invia embed");
-  const input = new TextInputBuilder()
-    .setCustomId("channelId")
-    .setLabel("ID canale dove inviare l'embed")
-    .setStyle(TextInputStyle.Short)
-    .setRequired(true);
+  const input=new TextInputBuilder().setCustomId("channelId").setLabel("ID canale dove inviare l'embed").setStyle(TextInputStyle.Short).setRequired(true);
   modal.addComponents(new ActionRowBuilder().addComponents(input));
   return modal;
 }
@@ -138,15 +128,10 @@ function isValidUrl(url) {
 }
 
 async function updatePreview(interaction, session) {
-  const msg =
-    interaction.message ||
-    (await interaction.channel.messages
-      .fetch(interaction.message?.id)
-      .catch(() => null));
+  const msg=interaction.message||(await interaction.channel.messages.fetch(interaction.message?.id).catch(() => null));
   if (!msg) return;
   const outside = String(session?.content || "").trim();
-  const outsidePreview = outside
-    ? `\n\n ${outside.length > 300 ? outside.slice(0, 300) + "…" : outside}`
+  const outsidePreview=outside?`\n\n ${outside.length>300?outside.slice(0,300)+"…":outside}`
     : "";
   await msg
     .edit({
@@ -199,10 +184,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
       return true;
     }
 
-    const current =
-      kind === "content"
-        ? session.content || null
-        : session.embed?.[kind] || null;
+    const current=kind==="content"?session.content||null:session.embed?.[kind]||null;
     await interaction
       .showModal(buildEditModal(kind, ownerId, messageId, current))
       .catch(() => {});
@@ -239,12 +221,8 @@ async function handleEmbedBuilderInteraction(interaction, client) {
     }
 
     if (kind === "send") {
-      const rawChannelId = String(
-        interaction.fields.getTextInputValue("channelId") || "",
-      ).trim();
-      const channel = await client.channels
-        .fetch(rawChannelId)
-        .catch(() => null);
+      const rawChannelId=String(interaction.fields.getTextInputValue("channelId")||"",).trim();
+      const channel=await client.channels.fetch(rawChannelId).catch(() => null);
       if (!channel?.isTextBased?.()) {
         await interaction
           .reply({
@@ -255,11 +233,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
         return true;
       }
 
-      const me =
-        channel.guild?.members?.me ||
-        (channel.guild
-          ? await channel.guild.members.fetchMe().catch(() => null)
-          : null);
+      const me=channel.guild?.members?.me||(channel.guild?await channel.guild.members.fetchMe().catch(() => null):null);
       if (me) {
         const perms = channel.permissionsFor(me);
         if (!perms?.has(PermissionsBitField.Flags.SendMessages)) {
@@ -299,8 +273,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
       if (kind === "color") session.embed.color = "#6f4e37";
       else delete session.embed[kind];
     } else if (kind === "color") {
-      const normalized = (() => {
-        const hex = value.startsWith("#") ? value : `#${value}`;
+      const normalized=(() => {const hex=value.startsWith("#")?value:`#${value}`;
         return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toUpperCase() : null;
       })();
       if (!normalized) {
@@ -327,8 +300,7 @@ async function handleEmbedBuilderInteraction(interaction, client) {
         .catch(() => {});
       return true;
     } else {
-      const maxLen =
-        kind === "description" ? 4096 : kind === "footer" ? 2048 : 256;
+      const maxLen=kind==="description"?4096:kind==="footer"?2048:256;
       session.embed[kind] = value.slice(0, maxLen);
     }
 

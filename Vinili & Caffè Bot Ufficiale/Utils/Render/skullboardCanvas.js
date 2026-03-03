@@ -4,9 +4,7 @@ const { createCanvas, loadImage } = canvasModule;
 
 function wrapLines(ctx, text, maxWidth) {
   const lines = [];
-  const words = String(text || "")
-    .split(/\s+/)
-    .filter(Boolean);
+  const words = String(text || "").split(/\s+/).filter(Boolean);
   let line = "";
   for (const word of words) {
     const test = line ? `${line} ${word}` : word;
@@ -93,9 +91,7 @@ module.exports = async function renderSkullboardCanvas({
 
   const probe = createCanvas(width, 10).getContext("2d");
   probe.font = fontStack(16, "500");
-  const messageLines = hasEmbedOnly
-    ? []
-    : wrapLines(probe, message || "", textMaxWidth);
+  const messageLines = hasEmbedOnly ?[]:wrapLines(probe,message || "",textMaxWidth);
   const hasReply = Boolean(reply && (reply.content || reply.author));
 
   let mediaImage = null;

@@ -7,19 +7,9 @@ module.exports = {
   async execute(message, args) {
     const query = String(args?.[0] || "pikachu").trim().toLowerCase();
     try {
-      const data = await fetchJson(
-        "https://pokeapi.co/api/v2/pokemon/" + encodeURIComponent(query),
-      );
-      const rawTypes = Array.isArray(data?.types)
-        ? data.types.map((t) => t?.type?.name).filter(Boolean).join(", ")
-        : "N/D";
-      const rawAbilities = Array.isArray(data?.abilities)
-        ? data.abilities
-            .map((a) => a?.ability?.name)
-            .filter(Boolean)
-            .slice(0, 4)
-            .join(", ")
-        : "N/D";
+      const data=await fetchJson("https://pokeapi.co/api/v2/pokemon/"+encodeURIComponent(query),);
+      const rawTypes=Array.isArray(data?.types)?data.types.map((t) => t?.type?.name).filter(Boolean).join(", "):"N/D";
+      const rawAbilities=Array.isArray(data?.abilities)?data.abilities.map((a) => a?.ability?.name).filter(Boolean).slice(0,4).join(", "):"N/D";
 
       const types = await translateToItalian(rawTypes);
       const abilities = await translateToItalian(rawAbilities);

@@ -4,26 +4,18 @@ const { createCanvas, loadImage } = require("canvas");
 const IDs = require("../../Utils/Config/ids");
 
 const POKETWO_BOT_ID = String(IDs?.bots?.Poketwo || "716390085896962058");
-const MONITORED_CHANNEL_IDS = new Set(
-  [IDs?.channels?.poketwo].filter(Boolean).map((id) => String(id)),
-);
+const MONITORED_CHANNEL_IDS=new Set([IDs?.channels?.poketwo].filter(Boolean).map((id) => String(id)),);
 const PENDING_BY_CHANNEL = new Map();
 const PENDING_TTL_MS = 90_000;
 const NAME_CACHE_TTL_MS = 24 * 60 * 60_000;
 
-const nameCache = {
-  names: null,
-  fetchedAt: 0,
-  pending: null,
-};
+const nameCache={names:null,fetchedAt:0,pending:null,};
 const pokemonMetaCache = new Map();
 
 function flattenEmbedText(embed) {
   if (!embed) return "";
   const parts = [];
-  const push = (v) => {
-    if (typeof v === "string" && v.trim()) parts.push(v);
-  };
+  const push=(v) => {if(typeof v==="string"&&v.trim())parts.push(v);};
   push(embed.title);
   push(embed.description);
   if (Array.isArray(embed.fields)) {
@@ -102,9 +94,7 @@ async function fetchPokemonNames() {
   nameCache.pending = axios
     .get("https://pokeapi.co/api/v2/pokemon?limit=2000", { timeout: 12_000 })
     .then((res) => {
-      const list = Array.isArray(res?.data?.results)
-        ? res.data.results.map((x) => normalizeName(x?.name || "")).filter(Boolean)
-        : [];
+      const list=Array.isArray(res?.data?.results)?res.data.results.map((x) => normalizeName(x?.name||"")).filter(Boolean):[];
       const unique = Array.from(new Set(list));
       nameCache.names = unique;
       nameCache.fetchedAt = Date.now();
@@ -124,17 +114,12 @@ async function getPokemonMetaByName(name) {
   if (!key) return null;
   if (pokemonMetaCache.has(key)) return pokemonMetaCache.get(key);
 
-  const payload = await axios
-    .get(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(key)}`, { timeout: 12_000 })
+  const payload=await axios.get(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(key)}`, { timeout: 12_000 })
     .then((res) => res?.data || null)
     .catch(() => null);
   if (!payload?.id) return null;
 
-  const meta = {
-    id: Number(payload.id),
-    name: key,
-    display: displayName(key),
-    spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${Number(payload.id)}.png`,
+  const meta={id:Number(payload.id),name:key,display:displayName(key),spriteUrl:`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${Number(payload.id)}.png`,
   };
   pokemonMetaCache.set(key, meta);
   return meta;
@@ -151,9 +136,7 @@ function isSpawnMessage(text) {
 }
 
 function extractHintPattern(text) {
-  const m =
-    text.match(/the pok[eé]mon is\s+`?([a-z0-9_\-.' ]+)`?/i) ||
-    text.match(/pok[eé]mon is\s+`?([a-z0-9_\-.' ]+)`?/i);
+  const m=text.match(/the pok[eé]mon is\s+`?([a-z0-9_\-.' ]+)`?/i)||text.match(/pok[eé]mon is\s+`?([a-z0-9_\-.' ]+)`?/i);
   if (!m) return "";
   return String(m[1] || "").trim();
 }
@@ -235,18 +218,14 @@ async function sendPokemonCard(message, matches) {
   const firstName = normalizeName(matches[0] || "");
   const meta = firstName ? await getPokemonMetaByName(firstName) : null;
 
-  const buffer = await buildPokemonCardBuffer({
-    title: one ? "Pokemon Found" : "Possible Pokemon",
-    subtitle: one ? `Use: <@${POKETWO_BOT_ID}> catch ${firstName}` : `Candidates: ${matches.length}`,
+  const buffer=await buildPokemonCardBuffer({title:one?"Pokemon Found":"Possible Pokemon",subtitle:one?`Use: <@${POKETWO_BOT_ID}>catch ${firstName}` : `Candidates:${matches.length}`,
     mainName: one ? displayName(firstName) : "",
     candidates: one ? [] : matches,
     spriteUrl: meta?.spriteUrl || "",
   });
 
   const file = new AttachmentBuilder(buffer, { name: "poketwo-card.png" });
-  const caption = one
-    ? `\`<@${POKETWO_BOT_ID}> catch ${firstName}\``
-    : `Possibili: ${matches.map((x) => `\`${x}\``).join(", ")}`;
+  const caption=one?`\`<@${POKETWO_BOT_ID}>catch ${firstName}\``:`Possibili: ${matches.map((x) => `\`${x}\``).join(", ")}`;
   await message.channel.send({ content: caption, files: [file] }).catch(() => null);
 }
 

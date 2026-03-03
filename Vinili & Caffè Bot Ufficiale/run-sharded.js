@@ -26,26 +26,14 @@ if (!enableSharding) {
 
 const { ShardingManager } = require("discord.js");
 const workerPath = path.join(APP_ROOT, "index.js");
-const token =
-  process.env.DISCORD_TOKEN ||
-  process.env.DISCORD_TOKEN_OFFICIAL ||
-  (function () {
-    try {
-      return require("./config.json").token;
-    } catch {
-      return null;
-    }
-  })();
+const token=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL||(function(){try{return require("./config.json").token;}catch{return null;}})();
 
 if (!token) {
   console.error("[SHARD] Missing token. Set DISCORD_TOKEN o DISCORD_TOKEN_OFFICIAL.");
   process.exit(1);
 }
 
-const manager = new ShardingManager(workerPath, {
-  totalShards: "auto",
-  token,
-});
+const manager=new ShardingManager(workerPath,{totalShards:"auto",token,});
 
 manager.on("shardCreate", (shard) => {
   if (global.logger?.info) {

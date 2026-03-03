@@ -72,19 +72,10 @@ async function resolveResponsible(guild, eventId) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.GuildScheduledEventCreate,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.GuildScheduledEventCreate,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const now = Date.now();
-      const entry = logs.entries.find((item) => {
-        const created = Number(item?.createdTimestamp || 0);
-        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-        return within && String(item?.target?.id || "") === String(eventId || "");
-      });
+      const entry=logs.entries.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.id||"")===String(eventId||"");});
       if (entry?.executor) return entry.executor;
     }
     if (attempt < 2) await sleep(700);
@@ -107,24 +98,19 @@ module.exports = {
       const responsible = await resolveResponsible(guild, eventId);
       const responsibleText = formatAuditActor(responsible);
       const eventUrl = toEventUrl(guild.id, eventId);
-      const startTime = toEventTimeLabel(
-        scheduledEvent.scheduledStartAt || scheduledEvent.scheduledStartTimestamp,
-      );
-      const endTime = toEventTimeLabel(
-        scheduledEvent.scheduledEndAt || scheduledEvent.scheduledEndTimestamp,
-      );
+      const startTime=toEventTimeLabel(scheduledEvent.scheduledStartAt||scheduledEvent.scheduledStartTimestamp,);
+      const endTime=toEventTimeLabel(scheduledEvent.scheduledEndAt||scheduledEvent.scheduledEndTimestamp,);
 
-      const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Settings**",
-        `<:VC_right_arrow:1473441155055096081> **Name:** ${scheduledEvent.name || "sconosciuto"}`,
-        `<:VC_right_arrow:1473441155055096081> **Privacy Level:** ${privacyLabel(scheduledEvent.privacyLevel)}`,
-        `<:VC_right_arrow:1473441155055096081> **Status:** ${statusLabel(scheduledEvent.status)}`,
-        `<:VC_right_arrow:1473441155055096081> **Entity Type:** ${entityTypeLabel(scheduledEvent.entityType)}`,
-        startTime ? `<:VC_right_arrow:1473441155055096081> **Start Time:** ${startTime}` : null,
-        endTime ? `<:VC_right_arrow:1473441155055096081> **End Time:** ${endTime}` : null,
+        `<:VC_right_arrow:1473441155055096081>**Name:**${scheduledEvent.name||"sconosciuto"}`,
+        `<:VC_right_arrow:1473441155055096081>**Privacy Level:**${privacyLabel(scheduledEvent.privacyLevel)}`,
+        `<:VC_right_arrow:1473441155055096081>**Status:**${statusLabel(scheduledEvent.status)}`,
+        `<:VC_right_arrow:1473441155055096081>**Entity Type:**${entityTypeLabel(scheduledEvent.entityType)}`,
+        startTime ? `<:VC_right_arrow:1473441155055096081>**Start Time:**${startTime}` : null,
+        endTime ? `<:VC_right_arrow:1473441155055096081>**End Time:**${endTime}` : null,
       ];
 
       if (scheduledEvent.entityMetadata?.location) {
@@ -137,10 +123,7 @@ module.exports = {
         );
       }
 
-      const embed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Guild Scheduled Event Create")
-        .setDescription(lines.join("\n"));
+      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Guild Scheduled Event Create").setDescription(lines.join("\n"));
 
       const cover = scheduledEvent.coverImageURL?.({ size: 1024 });
       if (cover) embed.setImage(cover);

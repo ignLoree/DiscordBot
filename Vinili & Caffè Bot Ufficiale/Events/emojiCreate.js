@@ -34,11 +34,7 @@ async function resolveResponsible(guild, emojiId) {
   const logs = await guild.fetchAuditLogs({ type: EMOJI_CREATE_ACTION, limit: AUDIT_FETCH_LIMIT }).catch(() => null);
   if (!logs?.entries?.size) return null;
   const now = Date.now();
-  const entry = logs.entries.find((item) => {
-    const created = Number(item?.createdTimestamp || 0);
-    const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-    return within && String(item?.target?.id || "") === String(emojiId || "");
-  });
+  const entry=logs.entries.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.id||"")===String(emojiId||"");});
   return entry?.executor || null;
 }
 
@@ -70,18 +66,12 @@ module.exports = {
       const responsible = await resolveResponsibleWithRetry(guild, emojiId);
       const responsibleText = formatAuditActor(responsible);
 
-      const embed = new EmbedBuilder()
-        .setColor("#57F287")
-        .setTitle("Emoji Create")
-        .setDescription(
-          [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${emoji.name || "emoji"} \`${emojiId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const embed=new EmbedBuilder().setColor("#57F287").setTitle("Emoji Create").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+            `<:VC_right_arrow:1473441155055096081>**Target:**${emoji.name||"emoji"}\`${emojiId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
             "",
             "**Settings**",
-            `<:VC_right_arrow:1473441155055096081> **Name:** ${emoji.name || "sconosciuto"}`,
-            `<:VC_right_arrow:1473441155055096081> **Animated:** ${emoji?.animated ? "Yes" : "No"}`,
+            `<:VC_right_arrow:1473441155055096081>**Name:**${emoji.name||"sconosciuto"}`,
+            `<:VC_right_arrow:1473441155055096081>**Animated:**${emoji?.animated?"Yes":"No"}`,
           ].join("\n"),
         );
 

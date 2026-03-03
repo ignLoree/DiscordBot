@@ -10,95 +10,20 @@ const EMOJI_FONT = "Mojangles";
 const FRAKTUR_FONT = "UnifrakturMaguntia";
 const MATH_FONT = "Noto Sans Math";
 const FALLBACK_FONT = "Yu Gothic";
-const BASE_STACK = [
-  `"${COLOR_EMOJI_FONT}"`,
-  '"Noto Sans CJK JP"',
-  '"Noto Sans CJK SC"',
-  '"Noto Sans CJK TC"',
-  '"Noto Sans JP"',
-  '"Noto Sans KR"',
-  '"Noto Sans SC"',
-  '"Noto Sans TC"',
-  '"Arial Unicode MS"',
-  '"DejaVu Sans"',
-  '"Segoe UI"',
-  '"Calibri"',
-  '"Tahoma"',
-  '"Segoe UI Emoji"',
-  '"Apple Color Emoji"',
-  '"Noto Emoji"',
-  `"${SYMBOLS_FONT}"`,
-  '"Segoe UI Symbol"',
-  `"${MATH_FONT}"`,
-  `"${TIBETAN_FONT}"`,
-  `"${FRAKTUR_FONT}"`,
-  `"${EMOJI_FONT}"`,
-  `"${FALLBACK_FONT}"`,
-  '"Arial"',
-  "sans-serif",
-];
+const BASE_STACK =[`"${COLOR_EMOJI_FONT}"`,'"Noto Sans CJK JP"','"Noto Sans CJK SC"','"Noto Sans CJK TC"','"Noto Sans JP"','"Noto Sans KR"','"Noto Sans SC"','"Noto Sans TC"','"Arial Unicode MS"','"DejaVu Sans"','"Segoe UI"','"Calibri"','"Tahoma"','"Segoe UI Emoji"','"Apple Color Emoji"','"Noto Emoji"',`"${SYMBOLS_FONT}"`,'"Segoe UI Symbol"',`"${MATH_FONT}"`,`"${TIBETAN_FONT}"`,`"${FRAKTUR_FONT}"`,`"${EMOJI_FONT}"`,`"${FALLBACK_FONT}"`,'"Arial"',"sans-serif",];
 const FONT_STACK = [`"${PRIMARY_FONT}"`, ...BASE_STACK].join(", ");
 
 let registered = false;
 
 function registerCanvasFonts(canvasModule) {
   if (registered || !canvasModule?.registerFont) return;
-  const notoPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "NotoSans-Regular.ttf",
-  );
-  const tibetanPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "NotoSerifTibetan-Regular.ttf",
-  );
-  const symbolsPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "NotoSansSymbols2-Regular.ttf",
-  );
-  const colorEmojiPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "NotoColorEmoji_WindowsCompatible.ttf",
-  );
-  const mojanglesPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "Mojangles.ttf",
-  );
-  const frakturPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "UnifrakturMaguntia-Regular.ttf",
-  );
-  const mathPath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "UI",
-    "Fonts",
-    "NotoSansMath-Regular.ttf",
-  );
+  const notoPath = path.join(__dirname,"..","..","UI","Fonts","NotoSans-Regular.ttf",);
+  const tibetanPath = path.join(__dirname,"..","..","UI","Fonts","NotoSerifTibetan-Regular.ttf",);
+  const symbolsPath = path.join(__dirname,"..","..","UI","Fonts","NotoSansSymbols2-Regular.ttf",);
+  const colorEmojiPath = path.join(__dirname,"..","..","UI","Fonts","NotoColorEmoji_WindowsCompatible.ttf",);
+  const mojanglesPath = path.join(__dirname,"..","..","UI","Fonts","Mojangles.ttf",);
+  const frakturPath = path.join(__dirname,"..","..","UI","Fonts","UnifrakturMaguntia-Regular.ttf",);
+  const mathPath = path.join(__dirname,"..","..","UI","Fonts","NotoSansMath-Regular.ttf",);
   const yuPath = path.join(__dirname, "..", "..", "UI", "Fonts", "YuGothR.ttc");
   if (fs.existsSync(notoPath)) {
     try {
@@ -186,8 +111,7 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
     // when Tibetan font coverage differs across environments.
     const isTibetanBlock = cp >= 0x0f00 && cp <= 0x0fff;
     const forceNormalForTibetanMark = cp === 0x0f04;
-    const nextFont =
-      isTibetanBlock && !forceNormalForTibetanMark ? tibetanFont : normalFont;
+    const nextFont = isTibetanBlock && ! forceNormalForTibetanMark ? tibetanFont:normalFont;
     if (nextFont !== currentFont && current) {
       runs.push({ text: current, font: currentFont });
       current = "";

@@ -2,9 +2,7 @@ const { EmbedBuilder, AuditLogEvent, PermissionsBitField, } = require("discord.j
 const { leaveTtsGuild } = require("../Services/TTS/ttsService");
 const { handleMusicVoiceStateUpdate } = require("../Services/Music/musicService");
 const { getVoiceSession } = require("../Services/Voice/voiceSessionService");
-const {
-  handleVoiceActivity,
-} = require("../Services/Community/activityService");
+const{handleVoiceActivity,}=require("../Services/Community/activityService");
 const IDs = require("../Utils/Config/ids");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
@@ -43,20 +41,10 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.MemberUpdate,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.MemberUpdate,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const nowMs = Date.now();
-      const entry = logs.entries.find((item) => {
-        const createdMs = Number(item?.createdTimestamp || 0);
-        const targetId = String(item?.target?.id || "");
-        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-        return withinWindow && targetId === String(targetUserId || "");
-      });
+      const entry=logs.entries.find((item) => {const createdMs=Number(item?.createdTimestamp||0);const targetId=String(item?.target?.id||"");const withinWindow=createdMs>0&&nowMs-createdMs<=AUDIT_LOOKBACK_MS;return withinWindow&&targetId===String(targetUserId||"");});
       if (entry) {
         return {
           executor: entry.executor || null,
@@ -80,20 +68,10 @@ async function resolveMemberMoveAuditInfo(guild, targetUserId) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.MemberMove,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.MemberMove,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const nowMs = Date.now();
-      const entry = logs.entries.find((item) => {
-        const createdMs = Number(item?.createdTimestamp || 0);
-        const targetId = String(item?.target?.id || "");
-        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-        return withinWindow && targetId === String(targetUserId || "");
-      });
+      const entry=logs.entries.find((item) => {const createdMs=Number(item?.createdTimestamp||0);const targetId=String(item?.target?.id||"");const withinWindow=createdMs>0&&nowMs-createdMs<=AUDIT_LOOKBACK_MS;return withinWindow&&targetId===String(targetUserId||"");});
       if (entry) {
         return {
           executor: entry.executor || null,
@@ -122,20 +100,10 @@ async function resolveMemberDisconnectAuditInfo(guild, targetUserId) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: actionType,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:actionType,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const nowMs = Date.now();
-      const entry = logs.entries.find((item) => {
-        const createdMs = Number(item?.createdTimestamp || 0);
-        const targetId = String(item?.target?.id || "");
-        const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
-        return withinWindow && targetId === String(targetUserId || "");
-      });
+      const entry=logs.entries.find((item) => {const createdMs=Number(item?.createdTimestamp||0);const targetId=String(item?.target?.id||"");const withinWindow=createdMs>0&&nowMs-createdMs<=AUDIT_LOOKBACK_MS;return withinWindow&&targetId===String(targetUserId||"");});
       if (entry) {
         return {
           executor: entry.executor || null,
@@ -164,18 +132,11 @@ async function sendMemberDisconnectLog(oldState, newState) {
   const oldChannelId = String(oldState?.channelId || "");
   const fromChannel = oldState?.channel || (oldChannelId ? `<#${oldChannelId}>` : "#sconosciuto");
 
-  const embed = new EmbedBuilder()
-    .setColor("#ED4245")
-    .setTitle("Member Disconnect")
-    .setDescription(
-      [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
-        `<:VC_right_arrow:1473441155055096081> **Target:** ${user} \`${user.id}\``,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Member Disconnect").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatActor(audit.executor)}`,
+        `<:VC_right_arrow:1473441155055096081>**Target:**${user}\`${user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${fromChannel} \`${oldChannelId || "sconosciuto"}\``,
-        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit?.count || 1))}`,
+        `<:VC_right_arrow:1473441155055096081>**Channel:**${fromChannel}\`${oldChannelId||"sconosciuto"}\``,`<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1,Number(audit?.count||1))}`,
       ].join("\n"),
     );
 
@@ -201,17 +162,11 @@ async function sendMemberMoveLog(oldState, newState) {
   const responsibleText = formatActor(audit.executor);
   const destination = newState?.channel || `<#${newChannelId}>`;
 
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle("Member Move")
-    .setDescription(
-      [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Move").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Additional Information**",
-        `<:VC_right_arrow:1473441155055096081> **Channel:** ${destination} \`${newChannelId}\``,
-        `<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1, Number(audit.count || 1))}`,
+        `<:VC_right_arrow:1473441155055096081>**Channel:**${destination}\`${newChannelId}\``,`<:VC_right_arrow:1473441155055096081> **Count:** ${Math.max(1,Number(audit.count||1))}`,
       ].join("\n"),
     );
 
@@ -240,10 +195,8 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
   const audit = await resolveMemberUpdateAuditInfo(guild, user.id);
   const responsibleText = formatActor(audit.executor);
 
-  const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081> **Target:** ${user} \`${user.id}\``,
-    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081>**Target:**${user}\`${user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
   ];
   if (audit.reason) {
     lines.push(`<:VC_right_arrow:1473441155055096081> **Reason:** ${audit.reason}`);
@@ -259,10 +212,7 @@ async function sendMemberVoiceFlagsUpdateLog(oldState, newState) {
     lines.push(`  ${yesNo(Boolean(oldState?.serverDeaf))} <:VC_right_arrow:1473441155055096081> ${yesNo(Boolean(newState?.serverDeaf))}`);
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle("Member Update")
-    .setDescription(lines.join("\n"));
+  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Update").setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.warn?.("[voiceStateUpdate] sendMemberVoiceFlagsUpdateLog failed:", err?.message || err);

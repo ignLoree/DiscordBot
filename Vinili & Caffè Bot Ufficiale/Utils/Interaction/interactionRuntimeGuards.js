@@ -1,22 +1,10 @@
-const {
-  checkButtonPermission,
-  checkStringSelectPermission,
-  checkModalPermission,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-} = require("../Moderation/commandPermissions");
+const{checkButtonPermission,checkStringSelectPermission,checkModalPermission,buildGlobalPermissionDeniedEmbed,buildGlobalNotYourControlEmbed,}=require("../Moderation/commandPermissions");
 
 const PRIVATE_FLAG = 1 << 6;
 const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
-const MONO_GUILD_DENIED =
-  "Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
-const TICKET_OPEN_CONTROLS = new Set([
-  "ticket_partnership",
-  "ticket_highstaff",
-  "ticket_supporto",
-  "ticket_open_menu",
-]);
+const MONO_GUILD_DENIED="Questo bot è utilizzabile solo sul server principale e sul server test di Vinili & Caffè.";
+const TICKET_OPEN_CONTROLS=new Set(["ticket_partnership","ticket_highstaff","ticket_supporto","ticket_open_menu",]);
 
 function isAckError(error) {
   const code = error?.code || error?.rawError?.code;

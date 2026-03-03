@@ -3,50 +3,24 @@ const suggestion = require("../../Schemas/Suggestion/suggestionSchema.js");
 const IDs = require("../../Utils/Config/ids");
 const { addExpWithLevel, getLevelInfo, getTotalExpForLevel, } = require("../../Services/Community/expService");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
-const {
-  getGuildChannelCached,
-  getUserCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getGuildChannelCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const STAFF_ACCEPT_BUTTON_ID = "suggestion_staff_accept";
 const STAFF_REJECT_BUTTON_ID = "suggestion_staff_reject";
 const STAFF_MODAL_PREFIX = "suggestion_staff_modal";
 const STAFF_REASON_INPUT_ID = "staff_reason";
-const DIVIDER_URL =
-  "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
 function hasSuggestionStaffAccess(interaction) {
-  const highStaffRoleId = IDs?.roles?.HighStaff
-    ? String(IDs.roles.HighStaff)
-    : null;
+  const highStaffRoleId=IDs?.roles?.HighStaff?String(IDs.roles.HighStaff):null;
   if (!highStaffRoleId) return false;
   return interaction?.member?.roles?.cache?.has(highStaffRoleId);
 }
 
 function buildSuggestionRows() {
-  const voteRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId("upv")
-      .setEmoji("<:thumbsup:1471292172145004768>")
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId("downv")
-      .setEmoji("<:thumbsdown:1471292163957457013>")
-      .setStyle(ButtonStyle.Secondary),
-  );
+  const voteRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("upv").setEmoji("<:thumbsup:1471292172145004768>").setStyle(ButtonStyle.Secondary),new ButtonBuilder().setCustomId("downv").setEmoji("<:thumbsdown:1471292163957457013>").setStyle(ButtonStyle.Secondary),);
 
-  const staffRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(STAFF_ACCEPT_BUTTON_ID)
-      .setLabel("Accetta")
-      .setEmoji("<:vegacheckmark:1443666279058772028>")
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
-      .setCustomId(STAFF_REJECT_BUTTON_ID)
-      .setLabel("Rifiuta")
-      .setEmoji("<:vegax:1443934876440068179>")
-      .setStyle(ButtonStyle.Danger),
-  );
+  const staffRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(STAFF_ACCEPT_BUTTON_ID).setLabel("Accetta").setEmoji("<:vegacheckmark:1443666279058772028>").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId(STAFF_REJECT_BUTTON_ID).setLabel("Rifiuta").setEmoji("<:vegax:1443934876440068179>").setStyle(ButtonStyle.Danger),);
 
   return [voteRow, staffRow];
 }
@@ -54,10 +28,7 @@ function buildSuggestionRows() {
 function isSuggestionClosed(message) {
   const rows = Array.isArray(message?.components) ? message.components : [];
   if (rows.length === 0) return true;
-  const ids = rows
-    .flatMap((row) => (Array.isArray(row?.components) ? row.components : []))
-    .map((component) => String(component?.customId || ""))
-    .filter(Boolean);
+  const ids=rows.flatMap((row) => (Array.isArray(row?.components)?row.components:[])).map((component) => String(component?.customId||"")).filter(Boolean);
   return !(ids.includes("upv") && ids.includes("downv"));
 }
 
@@ -74,18 +45,10 @@ async function handleSuggestionVote(interaction) {
   if (interaction.isButton && interaction.isButton()) {
     if (!interaction.message) return false;
     const customId = String(interaction.customId || "");
-    const isSuggestionControl = [
-      "upv",
-      "downv",
-      STAFF_ACCEPT_BUTTON_ID,
-      STAFF_REJECT_BUTTON_ID,
-    ].includes(customId);
+    const isSuggestionControl=["upv","downv",STAFF_ACCEPT_BUTTON_ID,STAFF_REJECT_BUTTON_ID,].includes(customId);
     if (!isSuggestionControl) return false;
 
-    const data = await suggestion.findOne({
-      GuildID: interaction.guild.id,
-      Msg: interaction.message.id,
-    });
+    const data=await suggestion.findOne({GuildID:interaction.guild.id,Msg:interaction.message.id,});
     if (!data) {
       await interaction
         .reply({
@@ -102,9 +65,7 @@ async function handleSuggestionVote(interaction) {
       return true;
     }
 
-    const message = await interaction.channel.messages
-      .fetch(data.Msg)
-      .catch(() => null);
+    const message=await interaction.channel.messages.fetch(data.Msg).catch(() => null);
     if (
       !message ||
       !Array.isArray(message.embeds) ||
@@ -165,20 +126,12 @@ async function handleSuggestionVote(interaction) {
       }
 
       const action = customId === STAFF_ACCEPT_BUTTON_ID ? "accept" : "reject";
-      const modal = new ModalBuilder()
-        .setCustomId(`${STAFF_MODAL_PREFIX}:${action}:${message.id}`)
+      const modal=new ModalBuilder().setCustomId(`${STAFF_MODAL_PREFIX}:${action}:${message.id}`)
         .setTitle(
           action === "accept" ? "Accetta suggerimento" : "Rifiuta suggerimento",
         );
 
-      const reasonInput = new TextInputBuilder()
-        .setCustomId(STAFF_REASON_INPUT_ID)
-        .setLabel("Motivo")
-        .setStyle(TextInputStyle.Paragraph)
-        .setRequired(true)
-        .setMinLength(3)
-        .setMaxLength(1000)
-        .setPlaceholder("Inserisci il motivo...");
+      const reasonInput=new TextInputBuilder().setCustomId(STAFF_REASON_INPUT_ID).setLabel("Motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(3).setMaxLength(1000).setPlaceholder("Inserisci il motivo...");
 
       modal.addComponents(new ActionRowBuilder().addComponents(reasonInput));
       await interaction.showModal(modal).catch(() => {});
@@ -226,12 +179,7 @@ async function handleSuggestionVote(interaction) {
       data.Upmembers.push(interaction.user.id);
       data.Downmembers.pull(interaction.user.id);
 
-      const newEmbed = EmbedBuilder.from(message.embeds[0]).setImage(
-        DIVIDER_URL,
-      ).setFields(
-        {
-          name: "<:thumbsup:1471292172145004768>",
-          value: `**${data.upvotes + 1}**`,
+      const newEmbed=EmbedBuilder.from(message.embeds[0]).setImage(DIVIDER_URL,).setFields({name:"<:thumbsup:1471292172145004768>",value:`**${data.upvotes+1}**`,
           inline: true,
         },
         {
@@ -290,17 +238,12 @@ async function handleSuggestionVote(interaction) {
       data.Downmembers.push(interaction.user.id);
       data.Upmembers.pull(interaction.user.id);
 
-      const newEmbed = EmbedBuilder.from(message.embeds[0]).setImage(
-        DIVIDER_URL,
-      ).setFields(
-        {
-          name: "<:thumbsup:1471292172145004768>",
-          value: `**${upvotes}**`,
+      const newEmbed=EmbedBuilder.from(message.embeds[0]).setImage(DIVIDER_URL,).setFields({name:"<:thumbsup:1471292172145004768>",value:`**${upvotes}**`,
           inline: true,
         },
         {
           name: "<:thumbsdown:1471292163957457013>",
-          value: `**${data.downvotes + 1}**`,
+          value: `**${data.downvotes+1}**`,
           inline: true,
         },
       );
@@ -353,9 +296,7 @@ async function handleSuggestionVote(interaction) {
       return true;
     }
 
-    const reason = String(
-      interaction.fields.getTextInputValue(STAFF_REASON_INPUT_ID) || "",
-    ).trim();
+    const reason=String(interaction.fields.getTextInputValue(STAFF_REASON_INPUT_ID)||"",).trim();
     if (!reason) {
       await interaction
         .reply({
@@ -372,10 +313,7 @@ async function handleSuggestionVote(interaction) {
       return true;
     }
 
-    const suggestionData = await suggestion.findOne({
-      GuildID: interaction.guild.id,
-      Msg: messageId,
-    });
+    const suggestionData=await suggestion.findOne({GuildID:interaction.guild.id,Msg:messageId,});
     if (!suggestionData) {
       await interaction
         .reply({
@@ -392,13 +330,8 @@ async function handleSuggestionVote(interaction) {
       return true;
     }
 
-    const suggestionChannel = await getGuildChannelCached(
-      interaction.guild,
-      IDs.channels.suggestions,
-    );
-    const suggestionMessage = await suggestionChannel?.messages
-      ?.fetch(suggestionData.Msg)
-      .catch(() => null);
+    const suggestionChannel=await getGuildChannelCached(interaction.guild,IDs.channels.suggestions,);
+    const suggestionMessage=await suggestionChannel?.messages?.fetch(suggestionData.Msg).catch(() => null);
     const oldEmbed = suggestionMessage?.embeds?.[0] || null;
     if (!suggestionMessage || !oldEmbed) {
       await interaction
@@ -435,23 +368,7 @@ async function handleSuggestionVote(interaction) {
     }
 
     const isAccept = action === "accept";
-    const resultEmbed = new EmbedBuilder()
-      .setColor(isAccept ? "Green" : "Red")
-      .setTitle(
-        isAccept
-          ? "<:pinnednew:1443670849990430750> Suggerimento Accettato!"
-          : "<:pinnednew:1443670849990430750> Suggerimento Rifiutato!",
-      )
-      .setDescription(oldEmbed.description || null)
-      .setTimestamp()
-      .setFooter(oldEmbed.footer || null)
-      .setFields(Array.isArray(oldEmbed.fields) ? oldEmbed.fields : [])
-      .addFields({
-        name: isAccept
-          ? "<:pinnednew:1443670849990430750> Motivo:"
-          : "<:attentionfromvega:1443651874032062505> Motivo del rifiuto:",
-        value: reason,
-      });
+    const resultEmbed=new EmbedBuilder().setColor(isAccept?"Green":"Red").setTitle(isAccept?"<:pinnednew:1443670849990430750> Suggerimento Accettato!":"<:pinnednew:1443670849990430750> Suggerimento Rifiutato!",).setDescription(oldEmbed.description||null).setTimestamp().setFooter(oldEmbed.footer||null).setFields(Array.isArray(oldEmbed.fields)?oldEmbed.fields:[]).addFields({name:isAccept?"<:pinnednew:1443670849990430750> Motivo:":"<:attentionfromvega:1443651874032062505> Motivo del rifiuto:",value:reason,});
 
     await suggestionMessage
       .edit({ embeds: [resultEmbed], components: [] })
@@ -463,16 +380,12 @@ async function handleSuggestionVote(interaction) {
       const userId = suggestionData.AuthorID;
       let levelsAwarded = 0;
       try {
-        const expDoc = await ExpUser.findOne({ guildId, userId })
-          .lean()
-          .catch(() => null);
+        const expDoc=await ExpUser.findOne({guildId,userId}).lean().catch(() => null);
 
         const currentExp = Number(expDoc?.totalExp || 0);
         const currentLevel = Number(getLevelInfo(currentExp).level || 0);
         const targetLevel = Math.max(0, currentLevel + 5);
-        const targetExp = Number(
-          getTotalExpForLevel(targetLevel) || currentExp,
-        );
+        const targetExp=Number(getTotalExpForLevel(targetLevel)||currentExp,);
         const expToAdd = Math.max(0, targetExp - currentExp);
 
         if (expToAdd > 0) {
@@ -490,22 +403,15 @@ async function handleSuggestionVote(interaction) {
       }
 
       const supportersChannelId = IDs?.channels?.supporters;
-      const supportersChannel = supportersChannelId
-        ? await getGuildChannelCached(interaction.guild, supportersChannelId)
-        : null;
+      const supportersChannel=supportersChannelId?await getGuildChannelCached(interaction.guild,supportersChannelId):null;
       if (supportersChannel) {
-        const thanksText =
-          levelsAwarded > 0
-            ? `<a:VC_PandaClap:1331620157398712330> Grazie <@${userId}> per il suggerimento accettato! Ti abbiamo assegnato **+5 livelli**.`
-            : `<a:VC_PandaClap:1331620157398712330> Grazie <@${userId}> per il suggerimento accettato!`;
+        const thanksText=levelsAwarded>0?`<a:VC_PandaClap:1331620157398712330> Grazie <@${userId}>per il suggerimento accettato!Ti abbiamo assegnato**+5 livelli**.`
+            : `<a:VC_PandaClap:1331620157398712330>Grazie<@${userId}>per il suggerimento accettato!`;
         await supportersChannel.send({ content: thanksText }).catch(() => {});
       }
     }
 
-    const suggestionAuthor = await getUserCached(
-      interaction.client,
-      suggestionData.AuthorID,
-    );
+    const suggestionAuthor=await getUserCached(interaction.client,suggestionData.AuthorID,);
     if (suggestionAuthor) {
       await suggestionAuthor
         .send({

@@ -1,8 +1,6 @@
 const { EmbedBuilder, AttachmentBuilder, AuditLogEvent, PermissionsBitField, MessageFlagsBitField, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const VERIFICATION_EXCLUDED_CHANNEL_IDS = new Set(
-  [IDs.channels.verify, IDs.channels.clickMe].filter(Boolean).map(String),
-);
+const VERIFICATION_EXCLUDED_CHANNEL_IDS=new Set([IDs.channels.verify,IDs.channels.clickMe].filter(Boolean).map(String),);
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
@@ -67,11 +65,7 @@ function isMeaningfulDeletedMessage(msg) {
 
 function buildPurgeLogText(messages, channelId) {
   const rows = [];
-  const ordered = Array.from(messages?.values?.() || []).sort((a, b) => {
-    const at = Number(a?.createdTimestamp || 0);
-    const bt = Number(b?.createdTimestamp || 0);
-    return at - bt;
-  });
+  const ordered=Array.from(messages?.values?.()||[]).sort((a,b) => {const at=Number(a?.createdTimestamp||0);const bt=Number(b?.createdTimestamp||0);return at-bt;});
 
   rows.push(`------ ${channelId || "unknown"}`);
   rows.push("");
@@ -87,10 +81,7 @@ function buildPurgeLogText(messages, channelId) {
 
     const attachments = msg?.attachments ? Array.from(msg.attachments.values()) : [];
     if (attachments.length) {
-      const list = attachments
-        .map((a) => String(a?.url || a?.name || ""))
-        .filter(Boolean)
-        .join(", ");
+      const list=attachments.map((a) => String(a?.url||a?.name||"")).filter(Boolean).join(", ");
       if (list) rows.push(`attachments: ${list}`);
     }
     rows.push("");
@@ -155,9 +146,7 @@ async function resolvePurgeResponsible(guild, channelId, deletedCount, fallbackU
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({ type: AuditLogEvent.MessageBulkDelete, limit: 12 })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.MessageBulkDelete,limit:12}).catch(() => null);
     if (!logs?.entries?.size) {
       if (attempt < 2) await sleep(700);
       continue;
@@ -170,17 +159,14 @@ async function resolvePurgeResponsible(guild, channelId, deletedCount, fallbackU
       const withinWindow = createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
       if (!withinWindow) return;
 
-      const sameChannelByExtra =
-        String(item?.extra?.channel?.id || "") === String(channelId || "");
-      const sameChannelByTarget =
-        String(item?.target?.id || "") === String(channelId || "");
+      const sameChannelByExtra=String(item?.extra?.channel?.id||"")===String(channelId||"");
+      const sameChannelByTarget=String(item?.target?.id||"")===String(channelId||"");
       const sameChannel = sameChannelByExtra || sameChannelByTarget;
 
       const count = Number(item?.extra?.count || 0);
       const wantedCount = Number(deletedCount || 0);
       const exactCount = count > 0 && count === wantedCount;
-      const nearCount =
-        count > 0 && wantedCount > 0 && Math.abs(count - wantedCount) <= 2;
+      const nearCount=count>0&&wantedCount>0&&Math.abs(count-wantedCount)<=2;
 
       let score = 0;
       if (sameChannel) score += 5;
@@ -228,33 +214,21 @@ module.exports = {
       const count = Number(meaningful.size || 0);
       if (count <= 0) return;
 
-      const responsible = await resolvePurgeResponsible(
-        guild,
-        channelId,
-        count,
-        null,
-      );
+      const responsible=await resolvePurgeResponsible(guild,channelId,count,null,);
 
-      const embed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setTitle("Messaggi eliminati")
-        .setDescription(
-          [
-            `<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
-            `<:VC_right_arrow:1473441155055096081> **Target:** ${channelText} \`${channelId}\``,
-            `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Messaggi eliminati").setDescription([`<:VC_right_arrow:1473441155055096081> **Responsible:** ${formatAuditActor(responsible)}`,
+            `<:VC_right_arrow:1473441155055096081>**Target:**${channelText}\`${channelId}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
             "",
             "**Additional Information**",
-            `<:VC_right_arrow:1473441155055096081> **Count:** ${count}`,
+            `<:VC_right_arrow:1473441155055096081>**Count:**${count}`,
           ].join("\n"),
         );
 
       const txt = buildPurgeLogText(meaningful, channelId);
       const chunks = splitTextToChunks(txt);
       const cappedChunks = chunks.slice(0, 10);
-      const files = cappedChunks.map((chunk, index) => {
-        const suffix = chunks.length > 1 ? `_p${index + 1}` : "";
-        const fileName = `${channelId}_${sample?.id || Date.now()}${suffix}.txt`;
+      const files=cappedChunks.map((chunk,index) => {const suffix=chunks.length>1?`_p${index+1}` : "";
+        const fileName = `${channelId}_${sample?.id||Date.now()}${suffix}.txt`;
         return new AttachmentBuilder(Buffer.from(chunk, "utf8"), {
           name: fileName,
         });

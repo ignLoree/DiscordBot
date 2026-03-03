@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const RESTART_FLAG = "restart.json";
-const RESTART_NOTIFY_FILE = "restart_notify.json";
+const RESTART_NOTIFY_FILE = "restart_notify_test.json";
 const PROCESS_EXIT_DELAY_MS = 1200;
 
 function errorEmbed(description) {
@@ -25,11 +25,8 @@ async function sendPermissionError(message) {
 
 function canUseRestart(message) {
   if (!message?.guild || !message?.member) return false;
-  const isOwner =
-    String(message.guild.ownerId || "") === String(message.author?.id || "");
-  const isAdmin = Boolean(
-    message.member.permissions?.has?.("Administrator"),
-  );
+  const isOwner=String(message.guild.ownerId||"")===String(message.author?.id||"");
+  const isAdmin=Boolean(message.member.permissions?.has?.("Administrator"),);
   return isOwner || isAdmin;
 }
 

@@ -8,17 +8,13 @@ function isDbReady() {
 }
 
 function normalizeToken(raw) {
-  const input = String(raw || "")
-    .trim()
-    .toLowerCase();
+  const input=String(raw||"").trim().toLowerCase();
   if (!input) return null;
 
   const typed = input.match(/^(prefix|slash|any):(.+)$/);
   if (typed) {
     const type = typed[1];
-    const key = String(typed[2] || "")
-      .trim()
-      .replace(/\s+/g, "");
+    const key=String(typed[2]||"").trim().replace(/\s+/g,"");
     if (!key) return null;
     return `${type}:${key}`;
   }
@@ -29,10 +25,7 @@ function normalizeToken(raw) {
 }
 
 function parseCommandTokenList(rawText) {
-  const parts = String(rawText || "")
-    .split(/[,\s]+/g)
-    .map((chunk) => normalizeToken(chunk))
-    .filter(Boolean);
+  const parts=String(rawText||"").split(/[,\s]+/g).map((chunk) => normalizeToken(chunk)).filter(Boolean);
   return Array.from(new Set(parts));
 }
 
@@ -46,22 +39,15 @@ function expandRevokeToken(token) {
 }
 
 function parseRevokeTokenList(rawText) {
-  const chunks = String(rawText || "")
-    .split(/[,\s]+/g)
-    .map((value) => String(value || "").trim())
-    .filter(Boolean);
+  const chunks=String(rawText||"").split(/[,\s]+/g).map((value) => String(value||"").trim()).filter(Boolean);
   const keys = chunks.flatMap((token) => expandRevokeToken(token));
   return Array.from(new Set(keys));
 }
 
 function buildPrefixLookupKeys(commandName, subcommandName = null) {
-  const command = String(commandName || "")
-    .trim()
-    .toLowerCase();
+  const command=String(commandName||"").trim().toLowerCase();
   if (!command) return [];
-  const sub = String(subcommandName || "")
-    .trim()
-    .toLowerCase();
+  const sub=String(subcommandName||"").trim().toLowerCase();
   const keys = [];
   if (sub) {
     keys.push(`prefix:${command}.${sub}`, `any:${command}.${sub}`);
@@ -75,16 +61,10 @@ function buildSlashLookupKeys(
   groupName = null,
   subcommandName = null,
 ) {
-  const command = String(commandName || "")
-    .trim()
-    .toLowerCase();
+  const command=String(commandName||"").trim().toLowerCase();
   if (!command) return [];
-  const group = String(groupName || "")
-    .trim()
-    .toLowerCase();
-  const sub = String(subcommandName || "")
-    .trim()
-    .toLowerCase();
+  const group=String(groupName||"").trim().toLowerCase();
+  const sub=String(subcommandName||"").trim().toLowerCase();
   const keys = [];
 
   if (group && sub) {
@@ -106,14 +86,7 @@ async function hasTemporaryCommandPermission({ guildId, userId, keys }) {
   if (!isDbReady()) return false;
   const now = new Date();
   try {
-    const row = await TemporaryCommandPermission.findOne({
-      guildId: String(guildId),
-      userId: String(userId),
-      commandKey: { $in: keys.map((key) => String(key).toLowerCase()) },
-      expiresAt: { $gt: now },
-    })
-      .select("_id")
-      .lean();
+    const row=await TemporaryCommandPermission.findOne({guildId:String(guildId),userId:String(userId),commandKey:{$in:keys.map((key) => String(key).toLowerCase())},expiresAt:{$gt:now},}).select("_id").lean();
     return Boolean(row?._id);
   } catch {
     return false;
@@ -145,35 +118,11 @@ async function grantTemporaryCommandPermissions({
     return { upserted: 0, modified: 0, expiresAt: null };
   }
 
-  const expiresAt = permanentGrant
-    ? new Date(Date.now() + PERMANENT_EXPIRY_MS)
-    : new Date(Date.now() + safeDuration);
-  const ops = commandKeys.map((rawKey) => ({
-    updateOne: {
-      filter: {
-        guildId: String(guildId),
-        userId: String(userId),
-        commandKey: String(rawKey).toLowerCase(),
-      },
-      update: {
-        $set: {
-          grantedBy: grantedBy ? String(grantedBy) : null,
-          expiresAt,
-        },
-        $setOnInsert: {
-          guildId: String(guildId),
-          userId: String(userId),
-          commandKey: String(rawKey).toLowerCase(),
-        },
-      },
-      upsert: true,
-    },
-  }));
+  const expiresAt=permanentGrant?new Date(Date.now()+PERMANENT_EXPIRY_MS):new Date(Date.now()+safeDuration);
+  const ops=commandKeys.map((rawKey) => ({updateOne:{filter:{guildId:String(guildId),userId:String(userId),commandKey:String(rawKey).toLowerCase(),},update:{$set:{grantedBy:grantedBy?String(grantedBy):null,expiresAt,},$setOnInsert:{guildId:String(guildId),userId:String(userId),commandKey:String(rawKey).toLowerCase(),},},upsert:true,},}));
 
   try {
-    const result = await TemporaryCommandPermission.bulkWrite(ops, {
-      ordered: false,
-    });
+    const result=await TemporaryCommandPermission.bulkWrite(ops,{ordered:false,});
     return {
       upserted: Number(result?.upsertedCount || 0),
       modified: Number(result?.modifiedCount || 0),
@@ -193,11 +142,7 @@ async function revokeTemporaryCommandPermissions({
     return 0;
   if (!isDbReady()) return 0;
   try {
-    const result = await TemporaryCommandPermission.deleteMany({
-      guildId: String(guildId),
-      userId: String(userId),
-      commandKey: { $in: commandKeys.map((key) => String(key).toLowerCase()) },
-    });
+    const result=await TemporaryCommandPermission.deleteMany({guildId:String(guildId),userId:String(userId),commandKey:{$in:commandKeys.map((key) => String(key).toLowerCase())},});
     return Number(result?.deletedCount || 0);
   } catch {
     return 0;
@@ -208,10 +153,7 @@ async function clearTemporaryCommandPermissionsForUser({ guildId, userId }) {
   if (!guildId || !userId) return 0;
   if (!isDbReady()) return 0;
   try {
-    const result = await TemporaryCommandPermission.deleteMany({
-      guildId: String(guildId),
-      userId: String(userId),
-    });
+    const result=await TemporaryCommandPermission.deleteMany({guildId:String(guildId),userId:String(userId),});
     return Number(result?.deletedCount || 0);
   } catch {
     return 0;

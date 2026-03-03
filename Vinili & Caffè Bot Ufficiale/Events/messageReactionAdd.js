@@ -6,12 +6,7 @@ const renderSkullboardCanvas = require("../Utils/Render/skullboardCanvas");
 const { cacheRoleIcon } = require("../Utils/Cache/roleIconCache");
 const SKULL_EMOJI = "\u{1F480}";
 const SKULLBOARD_CHANNEL_ID = IDs.channels.quotes;
-const SKULL_SOURCE_WHITELIST_CHANNEL_IDS = new Set([
-  "1442569130573303898",
-  "1442569136067575809",
-  "1442569138114662490",
-  "1442569141717438495",
-]);
+const SKULL_SOURCE_WHITELIST_CHANNEL_IDS=new Set(["1442569130573303898","1442569136067575809","1442569138114662490","1442569141717438495",]);
 const MAX_REPLY_CONTENT_LENGTH = 100;
 const MAX_DISPLAY_NAME_LENGTH = 80;
 
@@ -83,10 +78,7 @@ function buildBaseContent(message) {
   if (message?.embeds?.length > 0) {
     const embed = message.embeds[0];
     if (embed.title || embed.description) {
-      const embedText = [embed.title, embed.description]
-        .filter(Boolean)
-        .join(" - ")
-        .slice(0, 100);
+      const embedText=[embed.title,embed.description].filter(Boolean).join(" - ").slice(0,100);
       return `[Embed] ${embedText}`;
     }
     return "[Embed]";
@@ -103,9 +95,7 @@ function getNameColor(member) {
 
 async function getRoleIcon(member) {
   if (!member?.roles) return null;
-  const hoistedRole = member.roles.cache.find(
-    (role) => role.hoist && role.iconURL(),
-  );
+  const hoistedRole=member.roles.cache.find((role) => role.hoist&&role.iconURL(),);
   const iconUrl = hoistedRole?.iconURL({ extension: "png", size: 64 }) || null;
   if (!iconUrl) return null;
   return cacheRoleIcon(iconUrl);
@@ -114,14 +104,10 @@ async function getRoleIcon(member) {
 async function prepareReplyData(message) {
   if (!message.reference?.messageId) return null;
 
-  const replied = await message.channel.messages
-    .fetch(message.reference.messageId)
-    .catch(() => null);
+  const replied=await message.channel.messages.fetch(message.reference.messageId).catch(() => null);
   if (!replied || !replied.author) return null;
 
-  const repliedMember =
-    replied.member ||
-    (await message.guild?.members?.fetch?.(replied.author.id).catch(() => null));
+  const repliedMember=replied.member||(await message.guild?.members?.fetch?.(replied.author.id).catch(() => null));
 
   return {
     content: String(replied.content || "").slice(0, MAX_REPLY_CONTENT_LENGTH),
@@ -136,9 +122,7 @@ async function resolveReactionMessage(reaction) {
   if (reaction.partial) {
     await reaction.fetch().catch(() => null);
   }
-  const message = reaction.message?.partial
-    ? await reaction.message.fetch().catch(() => null)
-    : reaction.message;
+  const message=reaction.message?.partial?await reaction.message.fetch().catch(() => null):reaction.message;
   return message || null;
 }
 
@@ -182,15 +166,7 @@ async function renderSkullCanvas(
 
 function buildSkullEmbed(user, message, postImageName) {
   const messageLink = `https://discord.com/channels/${message.guild.id}/${message.channel.id}/${message.id}`;
-  const formattedDate = new Intl.DateTimeFormat("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(message.createdAt);
+  const formattedDate=new Intl.DateTimeFormat("it-IT",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,}).format(message.createdAt);
 
   return new EmbedBuilder()
     .setColor("#6f4e37")
@@ -214,17 +190,10 @@ function buildSkullEmbed(user, message, postImageName) {
 async function maybeBuildReplyReference(message, skullboardChannel) {
   if (!message.reference?.messageId) return null;
 
-  const mirroredReply = await SkullboardPost.findOne({
-    guildId: message.guild.id,
-    messageId: message.reference.messageId,
-  })
-    .lean()
-    .catch(() => null);
+  const mirroredReply=await SkullboardPost.findOne({guildId:message.guild.id,messageId:message.reference.messageId,}).lean().catch(() => null);
   if (!mirroredReply?.postMessageId) return null;
 
-  const mirroredMsg = await skullboardChannel.messages
-    .fetch(mirroredReply.postMessageId)
-    .catch(() => null);
+  const mirroredMsg=await skullboardChannel.messages.fetch(mirroredReply.postMessageId).catch(() => null);
   if (!mirroredMsg) return null;
 
   return { messageReference: mirroredMsg.id, failIfNotExists: false };
@@ -258,12 +227,7 @@ module.exports = {
         inFlightSet.add(inFlightKey);
       }
 
-      const existing = await SkullboardPost.findOne({
-        guildId: message.guild.id,
-        messageId: message.id,
-      })
-        .lean()
-        .catch(() => null);
+      const existing=await SkullboardPost.findOne({guildId:message.guild.id,messageId:message.id,}).lean().catch(() => null);
       if (existing?.postMessageId) return;
 
       const skullboardChannel = await findSkullboardChannel(message.guild);
@@ -277,10 +241,7 @@ module.exports = {
       const firstAttachment = files[0];
       const mediaUrl = firstAttachment?.attachment || null;
       const hasMedia = Boolean(mediaUrl);
-      const hasEmbedOnly =
-        !String(message.content || "").trim() &&
-        !(message.attachments?.size > 0) &&
-        (message.embeds?.length || 0) > 0;
+      const hasEmbedOnly=!String(message.content||"").trim()&&!(message.attachments?.size>0)&&(message.embeds?.length||0)>0;
 
       let canvasBuffer;
       try {
@@ -299,28 +260,17 @@ module.exports = {
       }
 
       const imageName = "skullboard.png";
-      const imageAttachment = new AttachmentBuilder(canvasBuffer, {
-        name: imageName,
-      });
+      const imageAttachment=new AttachmentBuilder(canvasBuffer,{name:imageName,});
       const skullEmbed = buildSkullEmbed(user, message, imageName);
 
-      const payload = {
-        embeds: [skullEmbed],
-        files: [imageAttachment],
-        allowedMentions: { parse: [] },
-      };
+      const payload={embeds:[skullEmbed],files:[imageAttachment],allowedMentions:{parse:[]},};
 
-      const replyRef = await maybeBuildReplyReference(
-        message,
-        skullboardChannel,
-      );
+      const replyRef=await maybeBuildReplyReference(message,skullboardChannel,);
       if (replyRef) {
         payload.reply = replyRef;
       }
 
-      const postMessage = await skullboardChannel
-        .send(payload)
-        .catch(() => null);
+      const postMessage=await skullboardChannel.send(payload).catch(() => null);
       if (!postMessage) return;
 
       await postMessage.react(SKULL_EMOJI).catch(() => {});
@@ -331,19 +281,10 @@ module.exports = {
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );
 
-      const confirmEmbed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`,
+      const confirmEmbed=new EmbedBuilder().setColor("#6f4e37").setDescription(`Il messaggio è stato pubblicato nella <#${SKULLBOARD_CHANNEL_ID}>.`,
         );
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setStyle(ButtonStyle.Link)
-          .setLabel("Vai al Post")
-          .setEmoji(SKULL_EMOJI)
-          .setURL(postMessage.url),
-      );
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Vai al Post").setEmoji(SKULL_EMOJI).setURL(postMessage.url),);
 
       await message.channel
         .send({

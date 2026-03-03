@@ -6,9 +6,7 @@ module.exports = {
   name: "slots",
   allowEmptyArgs: true,
   async execute(message) {
-    const spin = Array.from({ length: 3 }, () =>
-      EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-    );
+    const spin=Array.from({length:3},() => EMOJIS[Math.floor(Math.random()*EMOJIS.length)],);
     const allSame = spin[0] === spin[1] && spin[1] === spin[2];
     const twoSame = new Set(spin).size === 2;
     const result = allSame ? "Jackpot!" : twoSame ? "Quasi!" : "Riprova";

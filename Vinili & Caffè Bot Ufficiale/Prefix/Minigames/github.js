@@ -13,18 +13,12 @@ module.exports = {
       if (/^[^\s\/]+\/[^\s\/]+$/.test(query)) {
         repo = await fetchJson("https://api.github.com/repos/" + query);
       } else {
-        const search = await fetchJson(
-          "https://api.github.com/search/repositories?q=" +
-            encodeURIComponent(query) +
-            "&sort=stars&order=desc&per_page=1",
-        );
+        const search=await fetchJson("https://api.github.com/search/repositories?q="+encodeURIComponent(query)+"&sort=stars&order=desc&per_page=1",);
         repo = search?.items?.[0] || null;
       }
       if (!repo) return replyError(message, "Repository non trovato.");
 
-      const translatedDescription = clamp(
-        await translateToItalian(repo.description || "Nessuna descrizione."),
-      );
+      const translatedDescription=clamp(await translateToItalian(repo.description||"Nessuna descrizione."),);
 
       return safeMessageReply(message, {
         embeds: [

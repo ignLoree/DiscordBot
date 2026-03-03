@@ -1,14 +1,7 @@
 const { InteractionType, EmbedBuilder } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
 const { buildErrorLogEmbed } = require("../Utils/Logging/errorLogEmbed");
-const {
-  checkButtonPermission,
-  checkStringSelectPermission,
-  checkModalPermission,
-  checkSlashPermission,
-  buildGlobalPermissionDeniedEmbed,
-  buildGlobalNotYourControlEmbed,
-} = require("../Utils/Moderation/commandPermissions");
+const {checkButtonPermission,checkStringSelectPermission,checkModalPermission,checkSlashPermission,buildGlobalPermissionDeniedEmbed,buildGlobalNotYourControlEmbed,}= require("../Utils/Moderation/commandPermissions");
 const { getClientChannelCached } = require("../Utils/Interaction/entityCache");
 
 const PRIVATE_FLAG = 1 << 6;
@@ -16,9 +9,7 @@ const BUTTON_SPAM_COOLDOWN_MS = 1200;
 const BUTTON_INFLIGHT_TTL_MS = 15000;
 const MONO_GUILD_DENIED = "Questo bot e utilizzabile solo nei server autorizzati.";
 const INTERACTION_DEDUPE_TTL_MS = 30 * 1000;
-const ALLOWED_GUILD_IDS = new Set(
-  [IDs.guilds?.main, IDs.guilds?.test].filter(Boolean).map((id) => String(id)),
-);
+const ALLOWED_GUILD_IDS = new Set([IDs.guilds ?. main,IDs.guilds ?. test].filter(Boolean).map((id)=>String(id)),);
 
 function markInteractionSeen(client, interactionId) {
   if (!interactionId) return false;
@@ -145,21 +136,11 @@ async function runPermissionGate(interaction) {
 async function logInteractionError(interaction, client, err) {
   try {
     const errorChannelId = IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-    const errorChannel = errorChannelId
-      ? await getClientChannelCached(client, errorChannelId, { ttlMs: 30_000 })
-      : null;
+    const errorChannel = errorChannelId ? await getClientChannelCached(client,errorChannelId,{ttlMs:30_000}):null;
 
     if (errorChannel?.isTextBased?.()) {
       const contextValue = interaction?.commandName || interaction?.customId || "unknown";
-      const embed = buildErrorLogEmbed({
-        contextLabel: "Contesto",
-        contextValue,
-        userTag: interaction?.user?.tag || "unknown",
-        error: err,
-        serverName: interaction?.guild
-          ? `${interaction.guild.name} [${interaction.guild.id}]`
-          : null,
-      });
+      const embed = buildErrorLogEmbed({contextLabel:"Contesto",contextValue,userTag:interaction ?. user ?. tag || "unknown",error:err,serverName:interaction ?. guild ?`${interaction.guild.name} [${interaction.guild.id}]`:null,});
       await errorChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
@@ -221,9 +202,7 @@ module.exports = {
       }
 
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
-        const cmd = client.commands.get(
-          `${interaction.commandName}:${interaction.commandType || 1}`,
-        );
+        const cmd = client.commands.get(`${interaction.commandName}:${interaction.commandType ||1}`,);
         if (cmd?.autocomplete) {
           await cmd.autocomplete(interaction, client);
         } else {
@@ -233,9 +212,7 @@ module.exports = {
       }
 
       if (interaction.isChatInputCommand?.()) {
-        const command = client.commands.get(
-          `${interaction.commandName}:${interaction.commandType || 1}`,
-        );
+        const command = client.commands.get(`${interaction.commandName}:${interaction.commandType ||1}`,);
         if (!command) return;
 
         const allowed = await checkSlashPermission(interaction);

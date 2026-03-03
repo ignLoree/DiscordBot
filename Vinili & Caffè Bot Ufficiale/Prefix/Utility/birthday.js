@@ -1,20 +1,8 @@
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const{EmbedBuilder,ActionRowBuilder,ButtonBuilder,ButtonStyle,ComponentType,ModalBuilder,TextInputBuilder,TextInputStyle,}=require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
 const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema");
-const {
-  inferBirthYearFromAge,
-  getRomeDateParts,
-} = require("../../Services/Community/birthdayService");
+const{inferBirthYearFromAge,getRomeDateParts,}=require("../../Services/Community/birthdayService");
 
 const PRIVATE_FLAG = 1 << 6;
 const PANEL_TIMEOUT_MS = 10 * 60 * 1000;
@@ -65,8 +53,7 @@ function formatAgeLabel(age) {
 
 function computeAgeNow(day, month, birthYear) {
   const today = getRomeDateParts(new Date());
-  const hasBirthdayPassed =
-    today.month > month || (today.month === month && today.day >= day);
+  const hasBirthdayPassed=today.month>month||(today.month===month&&today.day>=day);
   const raw = today.year - Number(birthYear) - (hasBirthdayPassed ? 0 : 1);
   return Math.max(1, raw);
 }
@@ -107,8 +94,7 @@ function buildPanelEmbed(user, state, mode = "set") {
 }
 
 function buildSavedEmbed(state) {
-  const ageSummary = state.showAge
-    ? `Età visibile: **${state.age}**`
+  const ageSummary=state.showAge?`Età visibile: **${state.age}**`
     : "Età salvata con privacy attiva.";
 
   return new EmbedBuilder()
@@ -123,19 +109,15 @@ function buildSavedEmbed(state) {
 }
 
 function buildRegistrationEmbed(user, state, isEdit = false) {
-  const ageLine =
-    state.showAge && Number.isInteger(state.age)
-      ? `Età impostata: **${state.age} anni**`
+  const ageLine=state.showAge&&Number.isInteger(state.age)?`Età impostata: **${state.age}anni**`
       : "Età impostata con privacy nascosta";
 
   const title = isEdit ? "Compleanno aggiornato" : "Compleanno registrato";
-  const description = isEdit
-    ? [
-        `${user} hai aggiornato la tua data di nascita.`,
+  const description=isEdit?[`${user}hai aggiornato la tua data di nascita.`,
         "Ricorderò a tutti il giorno del tuo compleanno.",
       ].join("\n")
     : [
-        `${user} hai impostato la tua data di nascita.`,
+        `${user}hai impostato la tua data di nascita.`,
         "Ricorderò a tutti il giorno del tuo compleanno.",
       ].join("\n");
 
@@ -194,9 +176,7 @@ async function sendBirthSaveEmbed(client, guild, user, state, options = {}) {
   const channelId = IDs.channels.birthday;
   if (!guild || !channelId) return null;
 
-  const channel =
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null));
+  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) return null;
 
   const embed = buildRegistrationEmbed(user, state, isEdit);
@@ -213,26 +193,13 @@ async function sendBirthSaveEmbed(client, guild, user, state, options = {}) {
 async function openBirthdayPanel(message, client, initialState = null, mode = "set") {
   const nonce = `${Date.now()}${Math.floor(Math.random() * 9999)}`;
   const ownerId = message.author.id;
-  const state = {
-    day: Number.isInteger(initialState?.day) ? initialState.day : null,
-    month: Number.isInteger(initialState?.month) ? initialState.month : null,
-    age: Number.isInteger(initialState?.age) ? initialState.age : null,
-    showAge:
-      typeof initialState?.showAge === "boolean" ? initialState.showAge : true,
-  };
+  const state={day:Number.isInteger(initialState?.day)?initialState.day:null,month:Number.isInteger(initialState?.month)?initialState.month:null,age:Number.isInteger(initialState?.age)?initialState.age:null,showAge:typeof initialState?.showAge==="boolean"?initialState.showAge:true,};
 
-  const panelMessage = await safeMessageReply(message, {
-    embeds: [buildPanelEmbed(message.author, state, mode)],
-    components: buildPanelRows(ownerId, nonce, state.showAge, false),
-    allowedMentions: { repliedUser: false },
-  });
+  const panelMessage=await safeMessageReply(message,{embeds:[buildPanelEmbed(message.author,state,mode)],components:buildPanelRows(ownerId,nonce,state.showAge,false),allowedMentions:{repliedUser:false},});
   if (!panelMessage) return;
 
   let finished = false;
-  const collector = panelMessage.createMessageComponentCollector({
-    componentType: ComponentType.Button,
-    time: PANEL_TIMEOUT_MS,
-  });
+  const collector=panelMessage.createMessageComponentCollector({componentType:ComponentType.Button,time:PANEL_TIMEOUT_MS,});
 
   collector.on("collect", async (interaction) => {
     try {
@@ -248,19 +215,7 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
 
       if (interaction.customId === `bh_date:${ownerId}:${nonce}`) {
         const modalId = `bh_modal_date:${ownerId}:${nonce}:${Date.now()}`;
-        const modal = new ModalBuilder()
-          .setCustomId(modalId)
-          .setTitle("Imposta data compleanno")
-          .addComponents(
-            new ActionRowBuilder().addComponents(
-              new TextInputBuilder()
-                .setCustomId("bh_date_input")
-                .setLabel("Data (gg/mm)")
-                .setPlaceholder("21/02")
-                .setRequired(true)
-                .setStyle(TextInputStyle.Short),
-            ),
-          );
+        const modal=new ModalBuilder().setCustomId(modalId).setTitle("Imposta data compleanno").addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("bh_date_input").setLabel("Data (gg/mm)").setPlaceholder("21/02").setRequired(true).setStyle(TextInputStyle.Short),),);
 
         await interaction.showModal(modal).catch(async () => {
           await interaction
@@ -271,14 +226,7 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
             .catch(() => {});
         });
 
-        const modalSubmit = await interaction
-          .awaitModalSubmit({
-            time: INPUT_TIMEOUT_MS,
-            filter: (i) =>
-              i.customId === modalId &&
-              String(i.user?.id || "") === String(ownerId),
-          })
-          .catch(() => null);
+        const modalSubmit=await interaction.awaitModalSubmit({time:INPUT_TIMEOUT_MS,filter:(i) => i.customId===modalId&&String(i.user?.id||"")===String(ownerId),}).catch(() => null);
         if (!modalSubmit) return;
 
         const rawDate = modalSubmit.fields.getTextInputValue("bh_date_input");
@@ -314,19 +262,7 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
 
       if (interaction.customId === `bh_age:${ownerId}:${nonce}`) {
         const modalId = `bh_modal_age:${ownerId}:${nonce}:${Date.now()}`;
-        const modal = new ModalBuilder()
-          .setCustomId(modalId)
-          .setTitle("Imposta età")
-          .addComponents(
-            new ActionRowBuilder().addComponents(
-              new TextInputBuilder()
-                .setCustomId("bh_age_input")
-                .setLabel("Età attuale (1-120)")
-                .setPlaceholder("18")
-                .setRequired(true)
-                .setStyle(TextInputStyle.Short),
-            ),
-          );
+        const modal=new ModalBuilder().setCustomId(modalId).setTitle("Imposta età").addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId("bh_age_input").setLabel("Età attuale (1-120)").setPlaceholder("18").setRequired(true).setStyle(TextInputStyle.Short),),);
 
         await interaction.showModal(modal).catch(async () => {
           await interaction
@@ -337,14 +273,7 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
             .catch(() => {});
         });
 
-        const modalSubmit = await interaction
-          .awaitModalSubmit({
-            time: INPUT_TIMEOUT_MS,
-            filter: (i) =>
-              i.customId === modalId &&
-              String(i.user?.id || "") === String(ownerId),
-          })
-          .catch(() => null);
+        const modalSubmit=await interaction.awaitModalSubmit({time:INPUT_TIMEOUT_MS,filter:(i) => i.customId===modalId&&String(i.user?.id||"")===String(ownerId),}).catch(() => null);
         if (!modalSubmit) return;
 
         const rawAge = modalSubmit.fields.getTextInputValue("bh_age_input");
@@ -430,42 +359,20 @@ async function openBirthdayPanel(message, client, initialState = null, mode = "s
 
         let messageToEdit = null;
         if (isEdit) {
-          const existingProfile = await BirthdayProfile.findOne({
-            guildId: message.guild.id,
-            userId: ownerId,
-          })
-            .lean()
-            .catch(() => null);
-          const regChannelId =
-            existingProfile?.registrationChannelId || IDs.channels.birthday;
+          const existingProfile=await BirthdayProfile.findOne({guildId:message.guild.id,userId:ownerId,}).lean().catch(() => null);
+          const regChannelId=existingProfile?.registrationChannelId||IDs.channels.birthday;
           const regMessageId = existingProfile?.registrationMessageId;
           if (regMessageId && regChannelId) {
-            const ch =
-              message.guild.channels.cache.get(regChannelId) ||
-              (await message.guild.channels.fetch(regChannelId).catch(() => null));
+            const ch=message.guild.channels.cache.get(regChannelId)||(await message.guild.channels.fetch(regChannelId).catch(() => null));
             if (ch?.isTextBased?.()) {
               messageToEdit = await ch.messages.fetch(regMessageId).catch(() => null);
             }
           }
         }
 
-        const registrationMessage = await sendBirthSaveEmbed(
-          client || message.client,
-          message.guild,
-          message.author,
-          state,
-          {
-            messageToEdit: messageToEdit || null,
-            isEdit,
-          },
-        );
+        const registrationMessage=await sendBirthSaveEmbed(client||message.client,message.guild,message.author,state,{messageToEdit:messageToEdit||null,isEdit,},);
 
-        const updatePayload = {
-          day: state.day,
-          month: state.month,
-          birthYear,
-          showAge: state.showAge,
-        };
+        const updatePayload={day:state.day,month:state.month,birthYear,showAge:state.showAge,};
         if (registrationMessage?.id && registrationMessage?.channelId) {
           updatePayload.registrationMessageId = registrationMessage.id;
           updatePayload.registrationChannelId = registrationMessage.channelId;
@@ -505,37 +412,13 @@ async function handleRemoveBirthday(message) {
   const yesId = `bh_remove_yes:${ownerId}:${nonce}`;
   const noId = `bh_remove_no:${ownerId}:${nonce}`;
 
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(yesId)
-      .setLabel("Conferma rimozione")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId(noId)
-      .setLabel("Annulla")
-      .setStyle(ButtonStyle.Secondary),
-  );
+  const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(yesId).setLabel("Conferma rimozione").setStyle(ButtonStyle.Danger),new ButtonBuilder().setCustomId(noId).setLabel("Annulla").setStyle(ButtonStyle.Secondary),);
 
-  const prompt = await safeMessageReply(message, {
-    embeds: [
-      new EmbedBuilder()
-        .setColor(BRAND_COLOR)
-        .setTitle("Rimuovi profilo compleanno")
-        .setDescription(
-          "Confermando, il tuo compleanno verrà rimosso dal database e non sarà più annunciato in chat.",
-        )
-        .setFooter({ text: "Questa azione è reversibile solo impostando di nuovo il profilo con +bh set." }),
-    ],
-    components: [row],
-    allowedMentions: { repliedUser: false },
-  });
+  const prompt=await safeMessageReply(message,{embeds:[new EmbedBuilder().setColor(BRAND_COLOR).setTitle("Rimuovi profilo compleanno").setDescription("Confermando, il tuo compleanno verrà rimosso dal database e non sarà più annunciato in chat.",).setFooter({text:"Questa azione è reversibile solo impostando di nuovo il profilo con +bh set."}),],components:[row],allowedMentions:{repliedUser:false},});
   if (!prompt) return;
 
   let decided = false;
-  const collector = prompt.createMessageComponentCollector({
-    componentType: ComponentType.Button,
-    time: REMOVE_CONFIRM_TIMEOUT_MS,
-  });
+  const collector=prompt.createMessageComponentCollector({componentType:ComponentType.Button,time:REMOVE_CONFIRM_TIMEOUT_MS,});
 
   collector.on("collect", async (interaction) => {
     if (String(interaction.user?.id || "") !== ownerId) {
@@ -590,10 +473,7 @@ async function handleRemoveBirthday(message) {
 
   collector.on("end", async () => {
     if (decided) return;
-    const disabled = new ActionRowBuilder().addComponents(
-      ButtonBuilder.from(row.components[0]).setDisabled(true),
-      ButtonBuilder.from(row.components[1]).setDisabled(true),
-    );
+    const disabled=new ActionRowBuilder().addComponents(ButtonBuilder.from(row.components[0]).setDisabled(true),ButtonBuilder.from(row.components[1]).setDisabled(true),);
     await prompt.edit({ components: [disabled] }).catch(() => {});
   });
 }
@@ -625,12 +505,7 @@ module.exports = {
       return;
     }
 
-    const existing = await BirthdayProfile.findOne({
-      guildId: message.guild.id,
-      userId: message.author.id,
-    })
-      .lean()
-      .catch(() => null);
+    const existing=await BirthdayProfile.findOne({guildId:message.guild.id,userId:message.author.id,}).lean().catch(() => null);
 
     if (sub === "edit") {
       if (!existing) {

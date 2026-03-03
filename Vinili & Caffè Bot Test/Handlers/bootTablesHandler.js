@@ -4,21 +4,12 @@ const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
 
 module.exports = (client) => {
   client.logBootTables = () => {
-    const categories = [
-      "Handlers",
-      "Triggers",
-      "Services",
-      "Schemas",
-      "Prefix",
-      "Events",
-    ];
+    const categories =["Handlers","Triggers","Services","Schemas","Prefix","Events",];
     const table = new ascii().setHeading("Folder", "File", "Status");
 
     for (const category of categories) {
       const absBase = path.resolve(process.cwd(), category);
-      const files = listJsFilesRecursive(absBase).map((file) =>
-        path.relative(absBase, file).replace(/\\/g, "/"),
-      );
+      const files = listJsFilesRecursive(absBase).map((file)=>path.relative(absBase,file).replace(/\\/g,"/"),);
       for (const rel of files) {
         const folder = path.dirname(rel).replace(/\\/g, "/");
         const file = path.basename(rel);

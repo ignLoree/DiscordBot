@@ -3,18 +3,7 @@ const IDs = require("../Utils/Config/ids");
 const AUDIT_FETCH_LIMIT = 20;
 const AUDIT_LOOKBACK_MS = 120 * 1000;
 
-const CHANGE_LABELS = new Map([
-  ["name", "Name"],
-  ["description", "Description"],
-  ["scheduled_start_time", "Start Time"],
-  ["scheduled_end_time", "End Time"],
-  ["privacy_level", "Privacy Level"],
-  ["status", "Status"],
-  ["entity_type", "Entity Type"],
-  ["channel_id", "Channel"],
-  ["location", "Location"],
-  ["entity_metadata.location", "Location"],
-]);
+const CHANGE_LABELS=new Map([["name","Name"],["description","Description"],["scheduled_start_time","Start Time"],["scheduled_end_time","End Time"],["privacy_level","Privacy Level"],["status","Status"],["entity_type","Entity Type"],["channel_id","Channel"],["location","Location"],["entity_metadata.location","Location"],]);
 
 function toDiscordTimestamp(value = new Date(), style = "F") {
   const ms = new Date(value).getTime();
@@ -140,19 +129,10 @@ async function resolveAudit(guild, eventId) {
   }
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.GuildScheduledEventUpdate,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.GuildScheduledEventUpdate,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
     if (logs?.entries?.size) {
       const now = Date.now();
-      const entry = logs.entries.find((item) => {
-        const created = Number(item?.createdTimestamp || 0);
-        const within = created > 0 && now - created <= AUDIT_LOOKBACK_MS;
-        return within && String(item?.target?.id || "") === String(eventId || "");
-      });
+      const entry=logs.entries.find((item) => {const created=Number(item?.createdTimestamp||0);const within=created>0&&now-created<=AUDIT_LOOKBACK_MS;return within&&String(item?.target?.id||"")===String(eventId||"");});
       if (entry) {
         return {
           executor: entry.executor || null,
@@ -189,9 +169,8 @@ module.exports = {
       }
       if (!tracked.length) return;
 
-      const lines = [
-        `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-        `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+      const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+        `<:VC_right_arrow:1473441155055096081>${toDiscordTimestamp(new Date(),"F")}`,
         "",
         "**Changes**",
       ];
@@ -205,10 +184,7 @@ module.exports = {
         );
       }
 
-      const embed = new EmbedBuilder()
-        .setColor("#F59E0B")
-        .setTitle("Guild Scheduled Event Update")
-        .setDescription(lines.join("\n"));
+      const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Guild Scheduled Event Update").setDescription(lines.join("\n"));
 
       const payload = { embeds: [embed] };
       if (eventUrl) {

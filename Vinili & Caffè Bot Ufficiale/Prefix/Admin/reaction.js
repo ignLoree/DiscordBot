@@ -1,9 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { MentionReaction, AutoResponder, } = require("../../Schemas/Community/autoInteractionSchemas");
-const {
-  invalidateGuildAutoResponderCache,
-} = require("../../Utils/Community/autoResponderCache");
+const{invalidateGuildAutoResponderCache,}=require("../../Utils/Community/autoResponderCache");
 
 const MAX_REACTIONS = 6;
 const MAX_RULES = 50;
@@ -39,9 +37,7 @@ function toDisplay(token) {
 }
 
 function splitRulePayload(raw) {
-  const parts = String(raw || "")
-    .split("|")
-    .map((part) => part.trim());
+  const parts=String(raw||"").split("|").map((part) => part.trim());
   return {
     trigger: parts[0] || "",
     response: parts[1] || "",
@@ -52,10 +48,7 @@ function splitRulePayload(raw) {
 function parseTriggerList(raw) {
   const source = String(raw || "").trim();
   if (!source) return [];
-  const list = source
-    .split(",")
-    .map((item) => String(item || "").trim())
-    .filter(Boolean);
+  const list=source.split(",").map((item) => String(item||"").trim()).filter(Boolean);
   return Array.from(new Set(list));
 }
 
@@ -66,18 +59,11 @@ async function handleMentionReactions(message, args) {
 
   const sub = String(args[0] || "").toLowerCase();
   const rest = args.slice(1).join(" ");
-  const doc = await MentionReaction.findOne({ guildId, userId }).catch(
-    () => null,
-  );
+  const doc=await MentionReaction.findOne({guildId,userId}).catch(() => null,);
   const current = Array.isArray(doc?.reactions) ? doc.reactions : [];
 
   if (!sub || sub === "show") {
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("Reaction menzioni")
-      .setDescription(
-        current.length
-          ? `Le tue reaction attive: ${current.map(toDisplay).join(" ")}`
+    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Reaction menzioni").setDescription(current.length?`Le tue reaction attive: ${current.map(toDisplay).join(" ")}`
           : "Non hai reaction configurate.",
       )
       .setFooter({ text: "Usa: +reaction mention set/add/remove/clear" });
@@ -90,11 +76,7 @@ async function handleMentionReactions(message, args) {
 
   if (sub === "clear" || sub === "off" || sub === "reset") {
     await MentionReaction.deleteOne({ guildId, userId }).catch(() => {});
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setDescription(
-        "<:vegacheckmark:1443666279058772028> Reaction automatiche disattivate.",
-      );
+    const embed=new EmbedBuilder().setColor("#6f4e37").setDescription("<:vegacheckmark:1443666279058772028> Reaction automatiche disattivate.",);
     await safeMessageReply(message, {
       embeds: [embed],
       allowedMentions: { repliedUser: false },
@@ -103,18 +85,7 @@ async function handleMentionReactions(message, args) {
   }
 
   if (!["set", "add", "remove", "del", "rm"].includes(sub)) {
-    const help = new EmbedBuilder()
-      .setColor("Red")
-      .setDescription(
-        [
-          "<:vegax:1443934876440068179> Uso corretto:",
-          "`+reaction mention show`",
-          "`+reaction mention set 😀 <:emoji:123...>`",
-          "`+reaction mention add 😀`",
-          "`+reaction mention remove 😀`",
-          "`+reaction mention clear`",
-        ].join("\n"),
-      );
+    const help=new EmbedBuilder().setColor("Red").setDescription(["<:vegax:1443934876440068179> Uso corretto:","`+reaction mention show`","`+reaction mention set 😀 <:emoji:123...>`","`+reaction mention add 😀`","`+reaction mention remove 😀`","`+reaction mention clear`",].join("\n"),);
     await safeMessageReply(message, {
       embeds: [help],
       allowedMentions: { repliedUser: false },
@@ -152,15 +123,10 @@ async function handleMentionReactions(message, args) {
     ).catch(() => {});
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("Reaction menzioni aggiornate")
-    .setDescription(
-      next.length
-        ? `Nuove reaction: ${next.map(toDisplay).join(" ")}`
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Reaction menzioni aggiornate").setDescription(next.length?`Nuove reaction: ${next.map(toDisplay).join(" ")}`
         : "Nessuna reaction attiva.",
     )
-    .setFooter({ text: `Massimo ${MAX_REACTIONS} reaction.` });
+    .setFooter({ text: `Massimo ${MAX_REACTIONS}reaction.` });
   await safeMessageReply(message, {
     embeds: [embed],
     allowedMentions: { repliedUser: false },
@@ -175,20 +141,8 @@ async function handleAutoResponders(message, args) {
   const rest = args.slice(1).join(" ").trim();
 
   if (!sub || sub === "help") {
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("Reaction AutoResponder")
-      .setDescription(
-        [
-          "`+reaction auto list`",
-          "`+reaction auto add trigger | risposta | 😀 <:emoji:123...>`",
-          "`+reaction auto add ciao, salve, buongiorno | risposta | 😀`",
-          "`+reaction auto remove trigger`",
-          "`+reaction auto clear`",
-          "",
-          "Note:",
-          `- Massimo ${MAX_RULES} regole`,
-          `- Massimo ${MAX_REACTIONS} reaction per regola`,
+    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Reaction AutoResponder").setDescription(["`+reaction auto list`","`+reaction auto add trigger | risposta | 😀 <:emoji:123...>`","`+reaction auto add ciao, salve, buongiorno | risposta | 😀`","`+reaction auto remove trigger`","`+reaction auto clear`","","Note:",`- Massimo ${MAX_RULES}regole`,
+          `-Massimo ${MAX_REACTIONS}reaction per regola`,
           "- Trigger multipli con separatore virgola",
         ].join("\n"),
       );
@@ -200,10 +154,7 @@ async function handleAutoResponders(message, args) {
   }
 
   if (sub === "list" || sub === "show") {
-    const docs = await AutoResponder.find({ guildId, enabled: true })
-      .sort({ triggerLower: 1 })
-      .lean()
-      .catch(() => []);
+    const docs=await AutoResponder.find({guildId,enabled:true}).sort({triggerLower:1}).lean().catch(() => []);
     if (!Array.isArray(docs) || !docs.length) {
       await safeMessageReply(message, {
         embeds: [
@@ -218,17 +169,9 @@ async function handleAutoResponders(message, args) {
       return;
     }
 
-    const lines = docs.slice(0, 20).map((doc, idx) => {
-      const trigger = String(doc?.trigger || "").trim() || "-";
-      const response = String(doc?.response || "").trim();
-      const reacts = Array.isArray(doc?.reactions) ? doc.reactions : [];
-      const reactionLabel = reacts.length
-        ? reacts.map(toDisplay).join(" ")
-        : "nessuna";
-      const responseLabel = response
-        ? `risposta: ${response.slice(0, 80)}${response.length > 80 ? "..." : ""}`
+    const lines=docs.slice(0,20).map((doc,idx) => {const trigger=String(doc?.trigger||"").trim()||"-";const response=String(doc?.response||"").trim();const reacts=Array.isArray(doc?.reactions)?doc.reactions:[];const reactionLabel=reacts.length?reacts.map(toDisplay).join(" "):"nessuna";const responseLabel=response?`risposta: ${response.slice(0,80)}${response.length>80?"...":""}`
         : "risposta: nessuna";
-      return `\`${idx + 1}.\` **${trigger}** -> ${responseLabel} | reaction: ${reactionLabel}`;
+      return `\`${idx+1}.\` **${trigger}**->${responseLabel}|reaction:${reactionLabel}`;
     });
     const hiddenCount = docs.length - lines.length;
     if (hiddenCount > 0) lines.push(`...e altre ${hiddenCount} regole`);
@@ -272,12 +215,7 @@ async function handleAutoResponders(message, args) {
       return;
     }
     const triggerLowerList = triggerList.map((item) => item.toLowerCase());
-    const removedDocs = await AutoResponder.find({
-      guildId,
-      triggerLower: { $in: triggerLowerList },
-    })
-      .lean()
-      .catch(() => []);
+    const removedDocs=await AutoResponder.find({guildId,triggerLower:{$in:triggerLowerList},}).lean().catch(() => []);
     await AutoResponder.deleteMany({
       guildId,
       triggerLower: { $in: triggerLowerList },
@@ -291,9 +229,7 @@ async function handleAutoResponders(message, args) {
       });
       return;
     }
-    const removedLabel = removedDocs
-      .map((doc) => `\`${doc.trigger}\``)
-      .join(", ");
+    const removedLabel=removedDocs.map((doc) => `\`${doc.trigger}\``).join(", ");
     await safeMessageReply(message, {
       embeds: [
         new EmbedBuilder()
@@ -344,25 +280,11 @@ async function handleAutoResponders(message, args) {
       return;
     }
 
-    const currentCount = await AutoResponder.countDocuments({ guildId }).catch(
-      () => 0,
-    );
+    const currentCount=await AutoResponder.countDocuments({guildId}).catch(() => 0,);
     const triggerLowerList = triggerList.map((item) => item.toLowerCase());
-    const existingDocs = await AutoResponder.find({
-      guildId,
-      triggerLower: { $in: triggerLowerList },
-    })
-      .select("triggerLower")
-      .lean()
-      .catch(() => []);
-    const existingSet = new Set(
-      (Array.isArray(existingDocs) ? existingDocs : []).map((doc) =>
-        String(doc.triggerLower),
-      ),
-    );
-    const newNeeded = triggerLowerList.filter(
-      (item) => !existingSet.has(item),
-    ).length;
+    const existingDocs=await AutoResponder.find({guildId,triggerLower:{$in:triggerLowerList},}).select("triggerLower").lean().catch(() => []);
+    const existingSet=new Set((Array.isArray(existingDocs)?existingDocs:[]).map((doc) => String(doc.triggerLower),),);
+    const newNeeded=triggerLowerList.filter((item) => !existingSet.has(item),).length;
     if (currentCount + newNeeded > MAX_RULES) {
       await safeMessageReply(message, {
         content: `<:vegax:1443934876440068179> Hai raggiunto il limite massimo di ${MAX_RULES} regole.`,
@@ -374,26 +296,7 @@ async function handleAutoResponders(message, args) {
     const savedTriggers = [];
     for (const normalizedTrigger of triggerList) {
       const triggerLower = normalizedTrigger.toLowerCase();
-      const nextDoc = await AutoResponder.findOneAndUpdate(
-        { guildId, triggerLower },
-        {
-          $set: {
-            guildId,
-            trigger: normalizedTrigger,
-            triggerLower,
-            response: normalizedResponse,
-            reactions,
-            enabled: true,
-            updatedBy: message.author.id,
-          },
-          $setOnInsert: {
-            createdBy: message.author.id,
-          },
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      )
-        .lean()
-        .catch(() => null);
+      const nextDoc=await AutoResponder.findOneAndUpdate({guildId,triggerLower},{$set:{guildId,trigger:normalizedTrigger,triggerLower,response:normalizedResponse,reactions,enabled:true,updatedBy:message.author.id,},$setOnInsert:{createdBy:message.author.id,},},{upsert:true,new:true,setDefaultsOnInsert:true},).lean().catch(() => null);
       if (nextDoc?.trigger) savedTriggers.push(nextDoc.trigger);
     }
     if (!savedTriggers.length) {
@@ -407,24 +310,7 @@ async function handleAutoResponders(message, args) {
     invalidateGuildAutoResponderCache(guildId);
     const triggerLabel = savedTriggers.map((item) => `\`${item}\``).join(", ");
 
-    const resultEmbed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("AutoResponder aggiornato")
-      .addFields(
-        { name: "Trigger", value: triggerLabel.slice(0, 1024) || "Nessuno" },
-        {
-          name: "Risposta",
-          value: normalizedResponse
-            ? normalizedResponse.slice(0, 1024)
-            : "Nessuna",
-        },
-        {
-          name: "Reaction",
-          value: reactions.length
-            ? reactions.map(toDisplay).join(" ")
-            : "Nessuna",
-        },
-      );
+    const resultEmbed=new EmbedBuilder().setColor("#6f4e37").setTitle("AutoResponder aggiornato").addFields({name:"Trigger",value:triggerLabel.slice(0,1024)||"Nessuno"},{name:"Risposta",value:normalizedResponse?normalizedResponse.slice(0,1024):"Nessuna",},{name:"Reaction",value:reactions.length?reactions.map(toDisplay).join(" "):"Nessuna",},);
     await safeMessageReply(message, {
       embeds: [resultEmbed],
       allowedMentions: { repliedUser: false },

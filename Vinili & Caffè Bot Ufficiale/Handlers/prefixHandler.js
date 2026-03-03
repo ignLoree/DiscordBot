@@ -2,16 +2,12 @@ const ascii = require("ascii-table");
 const fs = require("fs");
 const path = require("path");
 
-const PERMISSIONS_CANDIDATES = [
-  path.join(process.cwd(), "permissions.json"),
-  path.resolve(__dirname, "../permissions.json"),
-];
+const PERMISSIONS_CANDIDATES=[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../permissions.json"),];
 let prefixPermissionsCache = { filePath: null, mtimeMs: 0, data: {} };
 
 function loadPrefixPermissions() {
   try {
-    const permissionsPath =
-      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
+    const permissionsPath=PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p))||null;
     if (!permissionsPath) return {};
     const stat = fs.statSync(permissionsPath);
     if (
@@ -22,9 +18,7 @@ function loadPrefixPermissions() {
     }
     const raw = fs.readFileSync(permissionsPath, "utf8");
     const parsed = JSON.parse(raw) || {};
-    const prefix = parsed.prefix && typeof parsed.prefix === "object"
-      ? parsed.prefix
-      : {};
+    const prefix=parsed.prefix&&typeof parsed.prefix==="object"?parsed.prefix:{};
     prefixPermissionsCache = {
       filePath: permissionsPath,
       mtimeMs: stat.mtimeMs,
@@ -37,16 +31,11 @@ function loadPrefixPermissions() {
 }
 
 function getPermissionSubcommands(commandName) {
-  const safeName = String(commandName || "")
-    .trim()
-    .toLowerCase();
+  const safeName=String(commandName||"").trim().toLowerCase();
   if (!safeName) return [];
   const prefixPerms = loadPrefixPermissions();
   const cfg = prefixPerms?.[safeName];
-  const subMap =
-    cfg?.subcommands && typeof cfg.subcommands === "object"
-      ? cfg.subcommands
-      : null;
+  const subMap=cfg?.subcommands&&typeof cfg.subcommands==="object"?cfg.subcommands:null;
   if (!subMap) return [];
   return Object.keys(subMap)
     .map((sub) =>
@@ -63,8 +52,7 @@ function inferSubcommandsFromExecute(command) {
   const out = new Set();
   let match = null;
 
-  const eqRegex =
-    /\b(?:sub|subcommand|mode|action|type|operation|choice)\s*={2,3}\s*['"`]([a-z0-9._-]+)['"`]/gi;
+  const eqRegex=/\b(?:sub|subcommand|mode|action|type|operation|choice)\s*={2,3}\s*['"`]([a-z0-9._-]+)[' "`]/gi;
   while ((match = eqRegex.exec(src)) !== null) {
     out.add(String(match[1] || "").toLowerCase());
   }
@@ -74,8 +62,7 @@ function inferSubcommandsFromExecute(command) {
     out.add(String(match[1] || "").toLowerCase());
   }
 
-  const includesRegex =
-    /\[((?:\s*['"`][a-z0-9._-]+['"`]\s*,?)+)\]\.includes\((?:[^)]*)\)/gi;
+  const includesRegex=/\[((?:\s*['"`][a-z0-9._-]+[' "`]\s*,?)+)\]\.includes\((?:[^)]*)\)/gi;
   while ((match = includesRegex.exec(src)) !== null) {
     const block = String(match[1] || "");
     const tokenRegex = /['"`]([a-z0-9._-]+)['"`]/gi;
@@ -89,31 +76,12 @@ function inferSubcommandsFromExecute(command) {
 }
 
 function ensurePrefixSubcommandMetadata(command) {
-  const declared = Array.isArray(command?.subcommands)
-    ? command.subcommands
-        .map((sub) =>
-          String(sub || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
-    : [];
-  const mappedTargets =
-    command?.subcommandAliases && typeof command.subcommandAliases === "object"
-      ? Object.values(command.subcommandAliases)
-          .map((sub) =>
-            String(sub || "")
-              .trim()
-              .toLowerCase(),
-          )
-          .filter(Boolean)
-      : [];
+  const declared=Array.isArray(command?.subcommands)?command.subcommands.map((sub) => String(sub||"").trim().toLowerCase(),).filter(Boolean):[];
+  const mappedTargets=command?.subcommandAliases&&typeof command.subcommandAliases==="object"?Object.values(command.subcommandAliases).map((sub) => String(sub||"").trim().toLowerCase(),).filter(Boolean):[];
   const fromPermissions = getPermissionSubcommands(command?.name);
   const inferred = inferSubcommandsFromExecute(command);
 
-  const known = Array.from(
-    new Set([...declared, ...mappedTargets, ...fromPermissions, ...inferred]),
-  );
+  const known=Array.from(new Set([...declared,...mappedTargets,...fromPermissions,...inferred]),);
 
   if (!known.length) return;
 
@@ -134,42 +102,23 @@ function ensurePrefixSubcommandMetadata(command) {
 
 function ensurePrefixUsageMetadata(command) {
   const prefix = "+";
-  const name = String(command?.name || "")
-    .trim()
-    .toLowerCase();
+  const name=String(command?.name||"").trim().toLowerCase();
   if (!name) return;
 
-  const subs = Array.isArray(command?.subcommands)
-    ? command.subcommands
-        .map((sub) =>
-          String(sub || "")
-            .trim()
-            .toLowerCase(),
-        )
-        .filter(Boolean)
-    : [];
+  const subs=Array.isArray(command?.subcommands)?command.subcommands.map((sub) => String(sub||"").trim().toLowerCase(),).filter(Boolean):[];
 
-  const usage =
-    String(command?.usage || "").trim() ||
-    (subs.length
-      ? Boolean(command?.allowEmptyArgs)
-        ? `${prefix}${name} [${subs.slice(0, 8).join("|")}]`
-        : `${prefix}${name} <${subs.slice(0, 8).join("|")}>`
+  const usage=String(command?.usage||"").trim()||(subs.length?Boolean(command?.allowEmptyArgs)?`${prefix}${name}[${subs.slice(0,8).join("|")}]`
+        : `${prefix}${name}<${subs.slice(0,8).join("|")}>`
       : Boolean(command?.args)
-        ? `${prefix}${name} <opzioni>`
+        ? `${prefix}${name}<opzioni>`
         : `${prefix}${name}`);
   command.usage = usage;
 
-  const examples =
-    Array.isArray(command?.examples) &&
-    command.examples.some((item) => String(item || "").trim())
-      ? command.examples
-      : subs.length >= 2
-        ? [`${prefix}${name} ${subs[0]}`, `${prefix}${name} ${subs[1]}`]
+  const examples=Array.isArray(command?.examples)&&command.examples.some((item) => String(item||"").trim())?command.examples:subs.length>=2?[`${prefix}${name}${subs[0]}`, `${prefix}${name}${subs[1]}`]
         : subs.length === 1
-          ? [`${prefix}${name} ${subs[0]}`, `${prefix}${name}`]
+          ? [`${prefix}${name}${subs[0]}`, `${prefix}${name}`]
           : Boolean(command?.args)
-            ? [`${prefix}${name} esempio`]
+            ? [`${prefix}${name}esempio`]
             : [`${prefix}${name}`];
   command.examples = examples;
 

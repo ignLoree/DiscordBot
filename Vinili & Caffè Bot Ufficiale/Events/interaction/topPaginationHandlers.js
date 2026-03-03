@@ -17,10 +17,7 @@ function parseTopPageModalCustomId(rawCustomId) {
   const lookbackDays = normalizeLookbackDays(parts[1 + offset] || "14");
   const selectedView = normalizeTopView(parts[2 + offset] || "overview");
   const currentPage = normalizePage(parts[3 + offset] || "1", 1);
-  const totalPages = Math.max(
-    1,
-    normalizePage(parts[4 + offset] || "1", 1),
-  );
+  const totalPages=Math.max(1,normalizePage(parts[4+offset]||"1",1),);
   const controlsView = normalizeControlsView(parts[5 + offset] || "main");
 
   return {
@@ -41,9 +38,7 @@ module.exports = {
     if (!parsed) return false;
 
     try {
-      const rawInput = interaction.fields?.getTextInputValue(
-        TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,
-      );
+      const rawInput=interaction.fields?.getTextInputValue(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID,);
       const inputPage = normalizePage(rawInput || parsed.currentPage, parsed.currentPage);
       const requestedPage = Math.min(Math.max(1, inputPage), parsed.totalPages);
 
@@ -57,14 +52,7 @@ module.exports = {
       }
 
       await interaction.deferUpdate();
-      const payload = await buildTopChannelPayload(
-        { guild: interaction.guild },
-        parsed.lookbackDays,
-        parsed.controlsView,
-        parsed.selectedView,
-        requestedPage,
-        parsed.ownerId || interaction.user?.id,
-      );
+      const payload=await buildTopChannelPayload({guild:interaction.guild},parsed.lookbackDays,parsed.controlsView,parsed.selectedView,requestedPage,parsed.ownerId||interaction.user?.id,);
 
       await interaction.message.edit({
         ...payload,

@@ -112,12 +112,7 @@ function hasAnyRole(member, roleIds) {
 
 async function fetchLiveMember(entity) {
   const guild = entity?.guild || entity?.member?.guild || null;
-  const userId =
-    entity?.user?.id ||
-    entity?.author?.id ||
-    entity?.member?.id ||
-    entity?.member?.user?.id ||
-    null;
+  const userId = entity ?. user ?. id || entity ?. author ?. id || entity ?. member ?. id || entity ?. member ?. user ?. id || null;
   if (!guild || !userId || typeof guild.members?.fetch !== "function") return null;
   return getGuildMemberCached(guild, userId, {
     ttlMs: 15_000,
@@ -183,9 +178,7 @@ function resolveComponentPolicy(map, customId) {
   if (!map || typeof map !== "object") return null;
   if (Object.prototype.hasOwnProperty.call(map, customId)) return map[customId];
 
-  const wildcardKeys = Object.keys(map)
-    .filter((key) => key.endsWith("*"))
-    .sort((a, b) => b.length - a.length);
+  const wildcardKeys = Object.keys(map).filter((key)=>key.endsWith("*")).sort((a,b)=>b.length - a.length);
 
   for (const key of wildcardKeys) {
     const prefix = key.slice(0, -1);
@@ -212,9 +205,7 @@ function normalizeComponentPolicy(policy) {
       roles = resolved ? [resolved] : [];
     }
 
-    const ownerSegment = Number.isFinite(Number.parseInt(policy.ownerSegment, 10))
-      ? Number.parseInt(policy.ownerSegment, 10)
-      : null;
+    const ownerSegment = Number.isFinite(Number.parseInt(policy.ownerSegment,10))? Number.parseInt(policy.ownerSegment,10):null;
 
     return {
       roles,
@@ -289,10 +280,7 @@ async function checkSlashPermission(interaction) {
   const data = loadPermissions();
   const group = interaction.options?.getSubcommandGroup?.(false) || null;
   const sub = interaction.options?.getSubcommand?.(false) || null;
-  const channelPolicy = resolveCommandChannelPolicy(
-    data,
-    buildSlashLookupKeys(interaction.commandName, group, sub),
-  );
+  const channelPolicy = resolveCommandChannelPolicy(data,buildSlashLookupKeys(interaction.commandName,group,sub),);
   if (isOfficialMainGuild(guildId) && Array.isArray(channelPolicy)) {
     const channelId = interaction?.channelId || interaction?.channel?.id || null;
     if (!channelId || !channelPolicy.includes(String(channelId))) return false;
@@ -323,10 +311,7 @@ async function checkPrefixPermission(message, commandName, subcommandName = null
   }
 
   const data = loadPermissions();
-  const channelPolicy = resolveCommandChannelPolicy(
-    data,
-    buildPrefixLookupKeys(commandName, subcommandName),
-  );
+  const channelPolicy = resolveCommandChannelPolicy(data,buildPrefixLookupKeys(commandName,subcommandName),);
   if (isOfficialMainGuild(guildId) && Array.isArray(channelPolicy)) {
     const channelId = message?.channelId || message?.channel?.id || null;
     if (!channelId || !channelPolicy.includes(String(channelId))) return false;
@@ -343,10 +328,7 @@ function evaluateComponentPolicy(interaction, policy) {
   }
 
   if (Number.isInteger(policy.ownerSegment) && policy.ownerSegment >= 0) {
-    const ownerId =
-      String(interaction?.customId || "").split(policy.ownerSeparator || ":")[
-        policy.ownerSegment
-      ] || null;
+    const ownerId = String(interaction ?. customId || "").split(policy.ownerSeparator || ":")[policy.ownerSegment]|| null;
     if (ownerId && interaction?.user?.id && interaction.user.id !== ownerId) {
       return {
         allowed: false,
@@ -385,9 +367,7 @@ async function checkButtonPermission(interaction) {
   }
   if (guildId && !isTestMainScopeGuild(guildId)) {
     const member = interaction?.member || (await fetchLiveMember(interaction));
-    const allowed = Boolean(
-      member?.permissions?.has?.(PermissionFlagsBits.Administrator),
-    );
+    const allowed = Boolean(member ?. permissions ?. has ?.(PermissionFlagsBits.Administrator),);
     if (allowed) {
       return {
         allowed: true,
@@ -458,9 +438,7 @@ async function checkStringSelectPermission(interaction) {
   }
 
   const data = loadPermissions();
-  const rawPolicy =
-    resolveComponentPolicy(data?.selectMenus, customId) ||
-    resolveComponentPolicy(data?.buttons, customId);
+  const rawPolicy = resolveComponentPolicy(data ?. selectMenus,customId)|| resolveComponentPolicy(data ?. buttons,customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
   if (precheck) return precheck;
@@ -513,9 +491,7 @@ async function checkModalPermission(interaction) {
   }
 
   const data = loadPermissions();
-  const rawPolicy =
-    resolveComponentPolicy(data?.modals, customId) ||
-    resolveComponentPolicy(data?.buttons, customId);
+  const rawPolicy = resolveComponentPolicy(data ?. modals,customId)|| resolveComponentPolicy(data ?. buttons,customId);
   const policy = normalizeComponentPolicy(rawPolicy);
   const precheck = evaluateComponentPolicy(interaction, policy);
   if (precheck) return precheck;
@@ -564,21 +540,11 @@ function buildGlobalPermissionDeniedEmbed(
   entityLabel = "comando",
   customDescription = null,
 ) {
-  const roles = Array.isArray(requiredRoleIds)
-    ? requiredRoleIds.filter(Boolean)
-    : [];
-  const rolesText = roles.length
-    ? roles.map((id) => `<@&${id}>`).join(", ")
-    : "Nessun ruolo configurato.";
-  const description =
-    customDescription != null
-      ? customDescription
-      : `Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
+  const roles = Array.isArray(requiredRoleIds)? requiredRoleIds.filter(Boolean):[];
+  const rolesText = roles.length ? roles.map((id)=>`<@&${id}>`).join(", "):"Nessun ruolo configurato.";
+  const description = customDescription != null ? customDescription:`Questo ${entityLabel} è riservato ad una categoria di utenti specifici.`;
 
-  const embed = new EmbedBuilder()
-    .setColor("Red")
-    .setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**")
-    .setDescription(description);
+  const embed = new EmbedBuilder().setColor("Red").setTitle("<:VC_Lock:1468544444113617063> **Non hai i permessi**").setDescription(description);
 
   if (roles.length > 0) {
     embed.addFields({

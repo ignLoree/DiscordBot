@@ -1,16 +1,7 @@
-const {
-  EmbedBuilder,
-  ModalBuilder,
-  ActionRowBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-} = require("discord.js");
+const{EmbedBuilder,ModalBuilder,ActionRowBuilder,TextInputBuilder,TextInputStyle,}=require("discord.js");
 const StaffModel = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getGuildChannelCached,
-  getGuildMemberCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getGuildChannelCached,getGuildMemberCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
 const RESOCONTO_APPLY_PREFIX = "resoconto_apply";
 const RESOCONTO_REJECT_PREFIX = "resoconto_reject";
@@ -19,17 +10,8 @@ const RESOCONTO_REASON_INPUT_ID = "reason";
 
 const STAFF_ACTIONS = new Set(["px", "dp", "vp", "vn", "nl"]);
 const PM_ACTIONS = new Set(["dp", "rc", "nl"]);
-const ROLE_UP = {
-  [String(IDs.roles.Helper)]: String(IDs.roles.Mod),
-  [String(IDs.roles.Mod)]: String(IDs.roles.Coordinator),
-  [String(IDs.roles.Coordinator)]: String(IDs.roles.Supervisor),
-};
-const ROLE_DOWN = {
-  [String(IDs.roles.Supervisor)]: String(IDs.roles.Coordinator),
-  [String(IDs.roles.Coordinator)]: String(IDs.roles.Mod),
-  [String(IDs.roles.Mod)]: String(IDs.roles.Member || ""),
-  [String(IDs.roles.Helper)]: String(IDs.roles.Member || ""),
-};
+const ROLE_UP={[String(IDs.roles.Helper)]:String(IDs.roles.Mod),[String(IDs.roles.Mod)]:String(IDs.roles.Coordinator),[String(IDs.roles.Coordinator)]:String(IDs.roles.Supervisor),};
+const ROLE_DOWN={[String(IDs.roles.Supervisor)]:String(IDs.roles.Coordinator),[String(IDs.roles.Coordinator)]:String(IDs.roles.Mod),[String(IDs.roles.Mod)]:String(IDs.roles.Member||""),[String(IDs.roles.Helper)]:String(IDs.roles.Member||""),};
 
 const ROLE_PARTNER_MANAGER = String(IDs.roles.PartnerManager);
 const ROLE_MEMBER = String(IDs.roles.Member || "");
@@ -122,18 +104,14 @@ async function sendValutazioneLogEmbed(guild, actor, targetUser, reason, positiv
   const channel = await getGuildChannelCached(guild, IDs.channels.valutazioniStaff);
   if (!channel?.isTextBased?.()) return;
 
-  const title = positive
-    ? "<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__**"
-    : "<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__**";
-  const embed = new EmbedBuilder()
-    .setAuthor({
-      name: `Valutazione eseguita da ${actor.username}`,
+  const title=positive?"<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__**":"<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__**";
+  const embed=new EmbedBuilder().setAuthor({name:`Valutazione eseguita da ${actor.username}`,
       iconURL: actor.displayAvatarURL(),
     })
     .setTitle(title)
     .setThumbnail(targetUser.displayAvatarURL())
     .setDescription(
-      `<:discordstaff:1443651872258003005> <a:vegarightarrow:1443673039156936837> <@${targetUser.id}> <:pinnednew:1443670849990430750> __${reason}__`,
+      `<:discordstaff:1443651872258003005><a:vegarightarrow:1443673039156936837><@${targetUser.id}><:pinnednew:1443670849990430750>__${reason}__`,
     )
     .setColor("#6f4e37");
 
@@ -189,9 +167,7 @@ async function sendPexDepexLog(guild, type, targetUser, oldRoleId, newRoleId, re
   if (!channel?.isTextBased?.()) return;
   const oldRole = guild.roles.cache.get(String(oldRoleId || ""));
   const newRole = guild.roles.cache.get(String(newRoleId || ""));
-  const typeLabel = type === "pex"
-    ? "**<a:everythingisstable:1444006799643508778> PEX**"
-    : "**<a:laydowntorest:1444006796661358673> DEPEX**";
+  const typeLabel=type==="pex"?"**<a:everythingisstable:1444006799643508778> PEX**":"**<a:laydowntorest:1444006796661358673> DEPEX**";
   await channel
     .send({
       content: `${typeLabel} <@${targetUser.id}>
@@ -214,9 +190,8 @@ async function appendOutcomeToMessage(guild, channelId, messageId, actorId, acce
   const message = await channel.messages.fetch(messageId).catch(() => null);
   if (!message) return;
   const existingContent = String(message.content || "");
-  const line = accepted
-    ? `\n\n✅ Azione confermata da <@${actorId}>: ${statusText}`
-    : `\n\n❌ Azione negata da <@${actorId}>`;
+  const line=accepted?`\n\n✅ Azione confermata da <@${actorId}>:${statusText}`
+    : `\n\n❌Azione negata da<@${actorId}>`;
   const content = `${existingContent}${line}`.slice(0, 1900);
   await message.edit({ content, components: [] }).catch(() => null);
   await deleteThreadForMessage(guild, messageId);
@@ -316,30 +291,11 @@ async function applyPmAction(guild, payload) {
 }
 
 async function showReasonModal(interaction, payload) {
-  const modalId = [
-    RESOCONTO_REASON_MODAL_PREFIX,
-    payload.kind,
-    payload.userId,
-    payload.roleId,
-    payload.actionKey,
-    interaction.message.id,
-  ].join(":");
+  const modalId=[RESOCONTO_REASON_MODAL_PREFIX,payload.kind,payload.userId,payload.roleId,payload.actionKey,interaction.message.id,].join(":");
 
-  const titleByAction = {
-    px: "Motivo Pex",
-    dp: "Motivo Depex",
-    vp: "Motivo Valutazione Positiva",
-    vn: "Motivo Valutazione Negativa",
-  };
-  const modal = new ModalBuilder()
-    .setCustomId(modalId)
-    .setTitle(titleByAction[payload.actionKey] || "Motivo Azione");
-  const input = new TextInputBuilder()
-    .setCustomId(RESOCONTO_REASON_INPUT_ID)
-    .setLabel("Inserisci il motivo")
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true)
-    .setMaxLength(500);
+  const titleByAction={px:"Motivo Pex",dp:"Motivo Depex",vp:"Motivo Valutazione Positiva",vn:"Motivo Valutazione Negativa",};
+  const modal=new ModalBuilder().setCustomId(modalId).setTitle(titleByAction[payload.actionKey]||"Motivo Azione");
+  const input=new TextInputBuilder().setCustomId(RESOCONTO_REASON_INPUT_ID).setLabel("Inserisci il motivo").setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(500);
   if (payload.actionKey === "vp") {
     input.setPlaceholder("Es: Limiti settimanali rispettati");
   }
@@ -382,10 +338,7 @@ async function handleResocontoButton(interaction) {
     return true;
   }
 
-  const statusText =
-    parsed.kind === "s"
-      ? await applyStaffAction(interaction.guild, interaction.user, parsed, null)
-      : await applyPmAction(interaction.guild, parsed);
+  const statusText=parsed.kind==="s"?await applyStaffAction(interaction.guild,interaction.user,parsed,null):await applyPmAction(interaction.guild,parsed);
 
   await appendOutcomeToMessage(
     interaction.guild,
@@ -412,11 +365,7 @@ async function handleResocontoModal(interaction) {
       .catch(() => null);
     return true;
   }
-  const reason = String(
-    interaction.fields?.getTextInputValue(RESOCONTO_REASON_INPUT_ID) || "",
-  )
-    .trim()
-    .slice(0, 500);
+  const reason=String(interaction.fields?.getTextInputValue(RESOCONTO_REASON_INPUT_ID)||"",).trim().slice(0,500);
   if (!reason) {
     await interaction
       .reply({

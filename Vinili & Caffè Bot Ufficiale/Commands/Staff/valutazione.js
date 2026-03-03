@@ -95,13 +95,7 @@ async function handlePositiveAdd(
   staffDoc.positiveReasons.push(reason);
   await staffDoc.save();
 
-  const embed = makeLogEmbed(
-    interaction,
-    staffUser,
-    `<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__** #${staffDoc.positiveCount}\``,
-    reason,
-    staffDoc.valutazioniCount,
-  );
+  const embed=makeLogEmbed(interaction,staffUser,`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE POSITIVA__** #${staffDoc.positiveCount}\``,reason,staffDoc.valutazioniCount,);
 
   await sendChannelEmbed(channel, { content: `${staffUser}`, embeds: [embed] });
   return safeEditReply(interaction, {
@@ -137,15 +131,7 @@ async function handlePositiveRemove(
   staffDoc.valutazioniCount = Math.max(0, staffDoc.valutazioniCount - 1);
   await staffDoc.save();
 
-  const embed = makeRemovalEmbed(
-    interaction,
-    staffUser,
-    "**__VALUTAZIONE POSITIVA RIMOSSA__**",
-    "<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Positiva!_",
-    reason,
-    "__Numero Valutazioni Positive Aggiornato__",
-    `Ora sei a \`${staffDoc.positiveCount}\` valutazioni!`,
-  );
+  const embed=makeRemovalEmbed(interaction,staffUser,"**__VALUTAZIONE POSITIVA RIMOSSA__**","<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Positiva!_",reason,"__Numero Valutazioni Positive Aggiornato__",`Ora sei a \`${staffDoc.positiveCount}\` valutazioni!`,);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -170,13 +156,7 @@ async function handleNegativeAdd(
   staffDoc.negativeReasons.push(reason);
   await staffDoc.save();
 
-  const embed = makeLogEmbed(
-    interaction,
-    staffUser,
-    `<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__** #${staffDoc.negativeCount}\``,
-    reason,
-    staffDoc.valutazioniCount,
-  );
+  const embed=makeLogEmbed(interaction,staffUser,`<a:laydowntorest:1444006796661358673> **__VALUTAZIONE NEGATIVA__** #${staffDoc.negativeCount}\``,reason,staffDoc.valutazioniCount,);
 
   await sendChannelEmbed(channel, { content: `${staffUser}`, embeds: [embed] });
   return safeEditReply(interaction, {
@@ -212,15 +192,7 @@ async function handleNegativeRemove(
   staffDoc.valutazioniCount = Math.max(0, staffDoc.valutazioniCount - 1);
   await staffDoc.save();
 
-  const embed = makeRemovalEmbed(
-    interaction,
-    staffUser,
-    "**__VALUTAZIONE NEGATIVA RIMOSSA__**",
-    "<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Negativa!_",
-    reason,
-    "__Numero Valutazioni Negativa Aggiornato__",
-    `Ora sei a \`${staffDoc.negativeCount}\` valutazioni!`,
-  );
+  const embed=makeRemovalEmbed(interaction,staffUser,"**__VALUTAZIONE NEGATIVA RIMOSSA__**","<:reportmessage:1443670575376765130> A __{user}__ è stata **rimossa** una _Valutazione Negativa!_",reason,"__Numero Valutazioni Negativa Aggiornato__",`Ora sei a \`${staffDoc.negativeCount}\` valutazioni!`,);
 
   await sendChannelEmbed(channel, { embeds: [embed] });
   return safeEditReply(interaction, {
@@ -242,15 +214,14 @@ async function handleMedia(interaction, staffUser, doc) {
     });
   }
 
-  const embed = new EmbedBuilder()
-    .setTitle(`Valutazioni di ${staffUser.username}`)
+  const embed=new EmbedBuilder().setTitle(`Valutazioni di ${staffUser.username}`)
     .setColor("#6f4e37")
     .addFields(
       {
         name: "Positive",
         value:
           (doc.positiveReasons || [])
-            .map((entry, index) => `\`${index + 1}\` " ${entry}`)
+            .map((entry, index) => `\`${index+1}\` " ${entry}`)
             .join("\n") || "Nessuna",
         inline: false,
       },
@@ -258,13 +229,13 @@ async function handleMedia(interaction, staffUser, doc) {
         name: "Negative",
         value:
           (doc.negativeReasons || [])
-            .map((entry, index) => `\`${index + 1}\` " ${entry}`)
+            .map((entry, index) => `\`${index+1}\` " ${entry}`)
             .join("\n") || "Nessuna",
         inline: false,
       },
       {
         name: "Totale",
-        value: `Totali: ${doc.valutazioniCount}`,
+        value: `Totali:${doc.valutazioniCount}`,
         inline: false,
       },
     );
@@ -381,24 +352,17 @@ module.exports = {
     const staffUser = interaction.options.getUser("staffer");
     const reason = interaction.options.getString("motivo");
     const guildId = interaction.guild.id;
-    const channel = interaction.guild.channels.cache.get(
-      IDs.channels?.valutazioniStaff,
-    );
+    const channel=interaction.guild.channels.cache.get(IDs.channels?.valutazioniStaff,);
 
     await interaction.deferReply({ flags: EPHEMERAL_FLAG }).catch(() => {});
 
     try {
-      const existingStaffDoc =
-        sub === "media" ? await getStaffDoc(guildId, staffUser.id) : null;
+      const existingStaffDoc=sub==="media"?await getStaffDoc(guildId,staffUser.id):null;
       if (sub === "media") {
         return handleMedia(interaction, staffUser, existingStaffDoc);
       }
 
-      const staffDoc = ensureStaffDoc(
-        existingStaffDoc || (await getStaffDoc(guildId, staffUser.id)),
-        guildId,
-        staffUser.id,
-      );
+      const staffDoc=ensureStaffDoc(existingStaffDoc||(await getStaffDoc(guildId,staffUser.id)),guildId,staffUser.id,);
 
       if (group === "positiva" && sub === "add") {
         return handlePositiveAdd(

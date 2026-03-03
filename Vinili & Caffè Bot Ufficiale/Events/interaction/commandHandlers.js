@@ -1,8 +1,6 @@
 const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, PermissionFlagsBits, } = require("discord.js");
 const { safeReply: safeReplyHelper } = require("../../Utils/Moderation/reply");
-const {
-  applyDefaultFooterToEmbeds,
-} = require("../../Utils/Embeds/defaultFooter");
+const{applyDefaultFooterToEmbeds,}=require("../../Utils/Embeds/defaultFooter");
 const { checkSlashPermission, getSlashRequiredRoles, buildGlobalPermissionDeniedEmbed, buildGlobalChannelDeniedEmbed, } = require("../../Utils/Moderation/commandPermissions");
 const { getUserCommandCooldownSeconds, consumeUserCooldown, } = require("../../Utils/Moderation/commandCooldown");
 const { buildCooldownErrorEmbed, buildBusyCommandErrorEmbed, buildInternalCommandErrorEmbed, } = require("../../Utils/Moderation/commandErrorEmbeds");
@@ -11,21 +9,10 @@ const { getCentralChannel } = require("../../Utils/Logging/commandUsageLogger");
 const IDs = require("../../Utils/Config/ids");
 const { shouldBlockModerationCommands } = require("../../Services/Moderation/antiNukeService");
 const { getSecurityLockState } = require("../../Services/Moderation/securityOrchestratorService");
-const {
-  getCommandExecutionGate,
-  inferModuleKeyFromSlashCommand,
-} = require("../../Services/Dashboard/controlCenterService");
+const{getCommandExecutionGate,inferModuleKeyFromSlashCommand,}=require("../../Services/Dashboard/controlCenterService");
 const SLASH_COOLDOWN_BYPASS_ROLE_ID = IDs.roles?.Staff || null;
-const STAFF_BYPASS_PERMISSIONS = [
-  PermissionFlagsBits.Administrator,
-  PermissionFlagsBits.ManageGuild,
-  PermissionFlagsBits.ManageChannels,
-  PermissionFlagsBits.ManageRoles,
-  PermissionFlagsBits.ManageMessages,
-  PermissionFlagsBits.KickMembers,
-  PermissionFlagsBits.BanMembers,
-  PermissionFlagsBits.ModerateMembers,
-];
+const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
+const SLASH_EXECUTION_TIMEOUT_MS=Math.max(15_000,Number(process.env.SLASH_EXECUTION_TIMEOUT_MS||120_000),);
 
 const getCommandKey = (name, type) => `${name}:${type || 1}`;
 
@@ -44,9 +31,7 @@ function hasAnyStaffBypassPermission(permissions) {
 }
 
 async function handleAutocomplete(interaction, client) {
-  const cmd = client.commands.get(
-    getCommandKey(interaction.commandName, interaction.commandType),
-  );
+  const cmd=client.commands.get(getCommandKey(interaction.commandName,interaction.commandType),);
   if (!cmd?.autocomplete) return;
   try {
     await cmd.autocomplete(interaction, client);
@@ -56,18 +41,9 @@ async function handleAutocomplete(interaction, client) {
 }
 
 async function handleSlashCommand(interaction, client) {
-  const command = client.commands.get(
-    getCommandKey(interaction.commandName, interaction.commandType),
-  );
+  const command=client.commands.get(getCommandKey(interaction.commandName,interaction.commandType),);
   if (!command) return;
-  const dashboardGate = getCommandExecutionGate({
-    guildId: interaction.guildId,
-    commandType: "slash",
-    commandName: command?.name || interaction.commandName,
-    moduleKey: inferModuleKeyFromSlashCommand(command),
-    member: interaction.member,
-    guildOwnerId: interaction.guild?.ownerId,
-  });
+  const dashboardGate=getCommandExecutionGate({guildId:interaction.guildId,commandType:"slash",commandName:command?.name||interaction.commandName,moduleKey:inferModuleKeyFromSlashCommand(command),member:interaction.member,guildOwnerId:interaction.guild?.ownerId,});
   if (!dashboardGate.allowed) {
     return interaction.reply({
       content:
@@ -77,10 +53,7 @@ async function handleSlashCommand(interaction, client) {
       flags: 1 << 6,
     });
   }
-  const isAntiNukeRecoveryCommand =
-    ["antinuke", "security"].includes(
-      String(command?.name || "").toLowerCase(),
-    );
+  const isAntiNukeRecoveryCommand=["antinuke","security"].includes(String(command?.name||"").toLowerCase(),);
   const securityLockState = await getSecurityLockState(interaction.guild);
   if (
     !isAntiNukeRecoveryCommand &&
@@ -92,9 +65,7 @@ async function handleSlashCommand(interaction, client) {
       flags: 1 << 6,
     });
   }
-  const isModerationSlashCommand = ["staff", "admin"].includes(
-    String(command?.category || "").toLowerCase(),
-  );
+  const isModerationSlashCommand=["staff","admin"].includes(String(command?.category||"").toLowerCase(),);
   if (
     isModerationSlashCommand &&
     !isAntiNukeRecoveryCommand &&
@@ -110,38 +81,25 @@ async function handleSlashCommand(interaction, client) {
     });
   }
   const expectsModal = command?.expectsModal === true;
-  const isAdminCommand =
-    String(command?.category || "").toLowerCase() === "admin";
+  const isAdminCommand=String(command?.category||"").toLowerCase()==="admin";
   if (!client.interactionCommandLocks)
     client.interactionCommandLocks = new Set();
   const interactionLockId = `${interaction.guildId || "dm"}:${interaction.user.id}`;
 
-  const slashPermission = await checkSlashPermission(interaction, {
-    returnDetails: true,
-  });
+  const slashPermission=await checkSlashPermission(interaction,{returnDetails:true,});
   if (!slashPermission?.allowed) {
     if (
       slashPermission?.reason === "channel" &&
       Array.isArray(slashPermission.channels)
     ) {
-      const embed = buildGlobalChannelDeniedEmbed(
-        slashPermission.channels,
-        "comando",
-      );
+      const embed=buildGlobalChannelDeniedEmbed(slashPermission.channels,"comando",);
       return interaction.reply({
         embeds: [embed],
         flags: 1 << 6,
       });
     }
     const requiredRoles = getSlashRequiredRoles(interaction);
-    const embed =
-      interaction.commandName === "dmbroadcast"
-        ? buildGlobalPermissionDeniedEmbed(
-            [],
-            "comando",
-            "Solo i developer del bot possono usare questo comando.",
-          )
-        : buildGlobalPermissionDeniedEmbed(requiredRoles);
+    const embed=interaction.commandName==="dmbroadcast"?buildGlobalPermissionDeniedEmbed([],"comando","Solo i developer del bot possono usare questo comando.",):buildGlobalPermissionDeniedEmbed(requiredRoles);
     return interaction.reply({
       embeds: [embed],
       flags: 1 << 6,
@@ -149,39 +107,16 @@ async function handleSlashCommand(interaction, client) {
   }
   const memberRoleCache = interaction.member?.roles?.cache;
   const memberRoleArray = interaction.member?.roles;
-  const isGuildOwner =
-    String(interaction.guild?.ownerId || "") === String(interaction.user?.id || "");
-  const hasStaffPermissionBypass = hasAnyStaffBypassPermission(
-    interaction.memberPermissions,
-  );
-  const hasStaffRoleBypass = Boolean(
-    (memberRoleCache &&
-      typeof memberRoleCache.has === "function" &&
-      memberRoleCache.has(SLASH_COOLDOWN_BYPASS_ROLE_ID)) ||
-      (Array.isArray(memberRoleArray) &&
-        memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID)),
-  );
-  const hasSlashCooldownBypass = Boolean(
-    hasStaffRoleBypass || hasStaffPermissionBypass || isGuildOwner,
-  );
+  const isGuildOwner=String(interaction.guild?.ownerId||"")===String(interaction.user?.id||"");
+  const hasStaffPermissionBypass=hasAnyStaffBypassPermission(interaction.memberPermissions,);
+  const hasStaffRoleBypass=Boolean((memberRoleCache&&typeof memberRoleCache.has==="function"&&memberRoleCache.has(SLASH_COOLDOWN_BYPASS_ROLE_ID))||(Array.isArray(memberRoleArray)&&memberRoleArray.includes(SLASH_COOLDOWN_BYPASS_ROLE_ID)),);
+  const hasSlashCooldownBypass=Boolean(hasStaffRoleBypass||hasStaffPermissionBypass||isGuildOwner,);
 
   if (!hasSlashCooldownBypass && !expectsModal) {
-    const cooldownSeconds = await getUserCommandCooldownSeconds({
-      guildId: interaction.guildId,
-      userId: interaction.user.id,
-      member: interaction.member,
-    });
-    const cooldownResult = consumeUserCooldown({
-      client,
-      guildId: interaction.guildId,
-      userId: interaction.user.id,
-      cooldownSeconds,
-    });
+    const cooldownSeconds=await getUserCommandCooldownSeconds({guildId:interaction.guildId,userId:interaction.user.id,member:interaction.member,});
+    const cooldownResult=consumeUserCooldown({client,guildId:interaction.guildId,userId:interaction.user.id,cooldownSeconds,});
     if (!cooldownResult.ok) {
-      const remaining = Math.max(
-        1,
-        Math.ceil(cooldownResult.remainingMs / 1000),
-      );
+      const remaining=Math.max(1,Math.ceil(cooldownResult.remainingMs/1000),);
       return interaction.reply({
         embeds: [buildCooldownErrorEmbed(remaining)],
         flags: 1 << 6,
@@ -199,9 +134,7 @@ async function handleSlashCommand(interaction, client) {
   const originalReply = interaction.reply.bind(interaction);
   const originalFollowUp = interaction.followUp?.bind(interaction);
   const originalEditReply = interaction.editReply.bind(interaction);
-  const originalChannelSend = interaction.channel?.send?.bind(
-    interaction.channel,
-  );
+  const originalChannelSend=interaction.channel?.send?.bind(interaction.channel,);
   const wrappedInteraction = Object.create(interaction);
   wrappedInteraction.deferReply = (...args) => {
     if (isAdminCommand) return interaction.deferReply(...args);
@@ -261,10 +194,7 @@ async function handleSlashCommand(interaction, client) {
     wrappedInteraction.channel = wrappedChannel;
   }
 
-  const getTimestamp = () => {
-    const d = new Date();
-    return d.toISOString().replace("T", " ").split(".")[0];
-  };
+  const getTimestamp=() => {const d=new Date();return d.toISOString().replace("T"," ").split(".")[0];};
 
   const safeReply = async (payload) => safeReplyHelper(interaction, payload);
 
@@ -279,40 +209,27 @@ async function handleSlashCommand(interaction, client) {
         }
       }, 1500);
     }
-    await Promise.resolve(command.execute(wrappedInteraction, client));
+    await Promise.race([
+      Promise.resolve(command.execute(wrappedInteraction, client)),
+      new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              `Slash command "${String(command?.name || interaction.commandName || "unknown")}" timed out after ${SLASH_EXECUTION_TIMEOUT_MS}ms`,
+            ),
+          );
+        }, SLASH_EXECUTION_TIMEOUT_MS);
+      }),
+    ]);
   } catch (error) {
     commandFailed = true;
-    const errorChannelId =
-      IDs.channels.errorLogChannel || IDs.channels.serverBotLogs;
-    const errorChannel = errorChannelId
-      ? await getCentralChannel(client, errorChannelId)
-      : null;
-    const staffEmbed = buildErrorLogEmbed({
-      contextLabel: "Comando",
-      contextValue: interaction.commandName || "unknown",
-      userTag: interaction.user?.tag || interaction.user?.id || "-",
-      error,
-      serverName: interaction.guild
-        ? `${interaction.guild.name} [${interaction.guild.id}]`
+    const errorChannelId=IDs.channels.errorLogChannel||IDs.channels.serverBotLogs;
+    const errorChannel=errorChannelId?await getCentralChannel(client,errorChannelId):null;
+    const staffEmbed=buildErrorLogEmbed({contextLabel:"Comando",contextValue:interaction.commandName||"unknown",userTag:interaction.user?.tag||interaction.user?.id||"-",error,serverName:interaction.guild?`${interaction.guild.name}[${interaction.guild.id}]`
         : null,
     });
-    const errorText =
-      (error?.stack || error?.message || String(error))?.slice(0, 1000) ||
-      "<:vegax:1443934876440068179> Errore sconosciuto";
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("error_pending")
-        .setLabel("In risoluzione")
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId("error_solved")
-        .setLabel("Risolto")
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId("error_unsolved")
-        .setLabel("Irrisolto")
-        .setStyle(ButtonStyle.Danger),
-    );
+    const errorText=(error?.stack||error?.message||String(error))?.slice(0,1000)||"<:vegax:1443934876440068179> Errore sconosciuto";
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("error_pending").setLabel("In risoluzione").setStyle(ButtonStyle.Primary),new ButtonBuilder().setCustomId("error_solved").setLabel("Risolto").setStyle(ButtonStyle.Success),new ButtonBuilder().setCustomId("error_unsolved").setLabel("Irrisolto").setStyle(ButtonStyle.Danger),);
     let msg;
     if (errorChannel) {
       try {
@@ -328,10 +245,7 @@ async function handleSlashCommand(interaction, client) {
       }
     }
     if (msg) {
-      const collector = msg.createMessageComponentCollector({
-        time: 1000 * 60 * 60 * 24,
-        filter: (i) => i.isButton(),
-      });
+      const collector=msg.createMessageComponentCollector({time:1000*60*60*24,filter:(i) => i.isButton(),});
       collector.on("collect", async (btn) => {
         try {
           if (!btn.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
@@ -370,13 +284,16 @@ async function handleSlashCommand(interaction, client) {
     });
   } finally {
     if (!expectsModal && interaction.deferred && !interaction.replied) {
-      const fallbackPayload = commandFailed
-        ? {
+      if (commandFailed) {
+        await interaction
+          .editReply({
             content:
               "<:vegax:1443934876440068179> Comando terminato con errore.",
-          }
-        : { content: "<:vegacheckmark:1443666279058772028> Comando eseguito." };
-      await interaction.editReply(fallbackPayload).catch(() => {});
+          })
+          .catch(() => {});
+      } else {
+        await interaction.deleteReply().catch(() => {});
+      }
     }
     if (deferTimer) clearTimeout(deferTimer);
     client.interactionCommandLocks.delete(interactionLockId);

@@ -23,21 +23,11 @@ module.exports = {
       });
     }
     const rawContent = String(snipe.content || "").trim();
-    const safeContent = rawContent
-      ? rawContent.replace(/```/g, "\\`\\`\\`")
-      : "*<:vegax:1443934876440068179> Nessun contenuto*";
+    const safeContent=rawContent?rawContent.replace(/```/g, "\\`\\`\\`"):"*<:vegax:1443934876440068179> Nessun contenuto*";
     const maxFieldPayload = 980;
-    const clippedContent =
-      safeContent.length > maxFieldPayload
-        ? `${safeContent.slice(0, maxFieldPayload)}...`
+    const clippedContent=safeContent.length>maxFieldPayload?`${safeContent.slice(0,maxFieldPayload)}...`
         : safeContent;
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .addFields(
-        {
-          name: "<:member_role_icon:1330530086792728618> Messaggio inviato da:",
-          value: snipe.authorId
-            ? `<@${snipe.authorId}> (${snipe.authorTag})`
+    const embed=new EmbedBuilder().setColor("#6f4e37").addFields({name:"<:member_role_icon:1330530086792728618> Messaggio inviato da:",value:snipe.authorId?`<@${snipe.authorId}>(${snipe.authorTag})`
             : "Sconosciuto",
           inline: true,
         },
@@ -48,10 +38,7 @@ module.exports = {
         },
         {
           name: "<:VC_Chat:1448694742237053061> Contenuto:",
-          value: `\`\`\`${clippedContent}\`\`\``,
-        },
-      )
-      .setTimestamp();
+          value: `\`\`\`${clippedContent}\`\`\``,},).setTimestamp();
     if (snipe.attachment) {
       embed.setImage(snipe.attachment);
     }

@@ -1,23 +1,13 @@
 const { AttachmentBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ChannelType, ModalBuilder, TextInputBuilder, TextInputStyle, } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const IDs = require("../../Utils/Config/ids");
-const {
-  getServerOverviewStats,
-} = require("../../Services/Community/activityService");
+const{getServerOverviewStats,}=require("../../Services/Community/activityService");
 const { InviteTrack } = require("../../Schemas/Community/communitySchemas");
 const { renderTopStatisticsCanvas, renderTopLeaderboardPageCanvas, } = require("../../Utils/Render/activityCanvas");
 const { upsertChannelSnapshot, syncGuildChannelSnapshots, getChannelSnapshotMap, } = require("../../Utils/Community/channelSnapshotUtils");
-const {
-  getGuildMemberCached,
-  getUserCached,
-  getGuildChannelCached,
-} = require("../../Utils/Interaction/interactionEntityCache");
+const{getGuildMemberCached,getUserCached,getGuildChannelCached,}=require("../../Utils/Interaction/interactionEntityCache");
 
-const TOP_CHANNEL_DIRECT_CHANNEL_IDS = new Set(
-  [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
-    .filter(Boolean)
-    .map(String),
-);
+const TOP_CHANNEL_DIRECT_CHANNEL_IDS=new Set([IDs.channels.commands,IDs.channels.staffCmds,IDs.channels.highCmds].filter(Boolean).map(String),);
 
 const TOP_CHANNEL_REFRESH_CUSTOM_ID_PREFIX = "stats_top_channel_refresh";
 const TOP_CHANNEL_PERIOD_OPEN_CUSTOM_ID_PREFIX = "stats_top_channel_period_open";
@@ -27,22 +17,14 @@ const TOP_CHANNEL_VIEW_SELECT_CUSTOM_ID_PREFIX = "stats_top_channel_view_select"
 
 const TOP_CHANNEL_PAGE_FIRST_CUSTOM_ID_PREFIX = "stats_top_channel_page_first";
 const TOP_CHANNEL_PAGE_PREV_CUSTOM_ID_PREFIX = "stats_top_channel_page_prev";
-const TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX =
-  "stats_top_channel_page_modal_open";
+const TOP_CHANNEL_PAGE_MODAL_OPEN_CUSTOM_ID_PREFIX="stats_top_channel_page_modal_open";
 const TOP_CHANNEL_PAGE_NEXT_CUSTOM_ID_PREFIX = "stats_top_channel_page_next";
 const TOP_CHANNEL_PAGE_LAST_CUSTOM_ID_PREFIX = "stats_top_channel_page_last";
 
 const TOP_CHANNEL_PAGE_MODAL_CUSTOM_ID_PREFIX = "stats_top_channel_page_modal";
 const TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID = "stats_top_channel_page_modal_input";
 
-const TOP_VIEWS = [
-  "overview",
-  "message_users",
-  "voice_users",
-  "message_channels",
-  "voice_channels",
-  "invites_users",
-];
+const TOP_VIEWS=["overview","message_users","voice_users","message_channels","voice_channels","invites_users",];
 const TOP_PAGE_DATA_LIMIT = 100;
 const TOP_SOURCE_CACHE_TTL_MS = 15 * 1000;
 const SNAPSHOT_SYNC_INTERVAL_MS = 10 * 60 * 1000;
@@ -50,18 +32,12 @@ const topSourceCache = new Map();
 const snapshotSyncByGuild = new Map();
 
 function normalizeLookbackDays(raw) {
-  const parsed = Number(
-    String(raw || "14")
-      .toLowerCase()
-      .replace(/d$/i, ""),
-  );
+  const parsed=Number(String(raw||"14").toLowerCase().replace(/d$/i,""),);
   return [1, 7, 14, 21, 30].includes(parsed) ? parsed : 14;
 }
 
 function normalizeTopView(raw) {
-  const value = String(raw || "overview")
-    .trim()
-    .toLowerCase();
+  const value=String(raw||"overview").trim().toLowerCase();
   return TOP_VIEWS.includes(value) ? value : "overview";
 }
 
@@ -80,9 +56,7 @@ function normalizePage(value, fallback = 1) {
 }
 
 function normalizeCanvasLabel(value, fallback) {
-  const text = String(value || "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const text=String(value||"").replace(/\s+/g," ").trim();
   if (!text) return fallback;
   if (/^<@!?\d+>$/.test(text)) return fallback;
   if (/^<#\d+>$/.test(text)) return fallback;
@@ -203,10 +177,7 @@ async function resolveTopInviteEntries(
     }
   }
 
-  const inviterIds = new Set([
-    ...trackedByInviter.keys(),
-    ...liveUsesByInviter.keys(),
-  ]);
+  const inviterIds=new Set([...trackedByInviter.keys(),...liveUsesByInviter.keys(),]);
 
   const out = [];
   for (const userId of inviterIds) {
@@ -232,11 +203,7 @@ async function resolveTopInviteEntries(
 }
 
 async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new Map()) {
-  const afkIds = new Set(
-    [guild?.afkChannelId, IDs.channels?.vocaleAFK]
-      .filter(Boolean)
-      .map((x) => String(x)),
-  );
+  const afkIds=new Set([guild?.afkChannelId,IDs.channels?.vocaleAFK].filter(Boolean).map((x) => String(x)),);
 
   const out = [];
   for (const item of entries) {
@@ -248,8 +215,7 @@ async function resolveTopChannelEntries(guild, entries = [], snapshotMap = new M
       upsertChannelSnapshot(channel).catch(() => {});
     }
     const snapshotName = String(snapshotMap.get(channelId) || "").trim();
-    const rawLabel = channel
-      ? `#${channel.name}`
+    const rawLabel=channel?`#${channel.name}`
       : snapshotName
         ? `#${snapshotName}`
         : "#canale-eliminato";
@@ -306,45 +272,17 @@ async function getTopSource(guild, lookbackDays) {
 
   scheduleSnapshotSync(guild);
 
-  const stats = await getServerOverviewStats(
-    guild.id,
-    safeLookback,
-    TOP_PAGE_DATA_LIMIT,
-  );
-  const channelIds = Array.from(
-    new Set(
-      [...(stats.topChannelsText || []), ...(stats.topChannelsVoice || [])]
-        .map((item) => String(item?.id || "").trim())
-        .filter(Boolean),
-    ),
-  );
+  const stats=await getServerOverviewStats(guild.id,safeLookback,TOP_PAGE_DATA_LIMIT,);
+  const channelIds=Array.from(new Set([...(stats.topChannelsText||[]),...(stats.topChannelsVoice||[])].map((item) => String(item?.id||"").trim()).filter(Boolean),),);
   const snapshotMap = await getChannelSnapshotMap(guild.id, channelIds);
 
   const topUsersText = await resolveTopUserEntries(guild, stats.topUsersText || []);
-  const topChannelsText = await resolveTopTextChannelEntries(
-    guild,
-    stats.topChannelsText || [],
-    snapshotMap,
-  );
+  const topChannelsText=await resolveTopTextChannelEntries(guild,stats.topChannelsText||[],snapshotMap,);
   const topUsersVoice = await resolveTopUserEntries(guild, stats.topUsersVoice || []);
-  const topUsersInvites = await resolveTopInviteEntries(
-    guild,
-    guild.id,
-    TOP_PAGE_DATA_LIMIT,
-  );
-  const topChannelsVoice = await resolveTopChannelEntries(
-    guild,
-    stats.topChannelsVoice || [],
-    snapshotMap,
-  );
+  const topUsersInvites=await resolveTopInviteEntries(guild,guild.id,TOP_PAGE_DATA_LIMIT,);
+  const topChannelsVoice=await resolveTopChannelEntries(guild,stats.topChannelsVoice||[],snapshotMap,);
 
-  const value = {
-    topUsersText,
-    topChannelsText,
-    topUsersVoice,
-    topUsersInvites,
-    topChannelsVoice,
-  };
+  const value={topUsersText,topChannelsText,topUsersVoice,topUsersInvites,topChannelsVoice,};
   topSourceCache.set(cacheKey, { expiresAt: now + TOP_SOURCE_CACHE_TTL_MS, value });
   return value;
 }
@@ -479,10 +417,7 @@ function buildTopChannelPeriodControlsRows(
   const safeView = normalizeTopView(selectedView);
   const safePage = normalizePage(page, 1);
 
-  const topRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(
-        `${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`,
+  const topRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${TOP_CHANNEL_PERIOD_BACK_CUSTOM_ID_PREFIX}:${safeOwner}:${safeLookback}:${safeView}:${safePage}`,
       )
       .setEmoji({ id: "1462914743416131816", name: "vegaleftarrow", animated: true })
       .setStyle(ButtonStyle.Secondary),
@@ -500,9 +435,7 @@ function buildTopChannelPeriodControlsRows(
       .setStyle(safeLookback === 14 ? ButtonStyle.Success : ButtonStyle.Primary),
   );
 
-  const bottomRow = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${safeView}:${safePage}`)
+  const bottomRow=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`${TOP_CHANNEL_PERIOD_SET_CUSTOM_ID_PREFIX}:${safeOwner}:21:${safeView}:${safePage}`)
       .setLabel("21d")
       .setStyle(safeLookback === 21 ? ButtonStyle.Success : ButtonStyle.Primary),
     new ButtonBuilder()
@@ -615,9 +548,7 @@ function buildTopPageJumpModal(
   const safeTotal = Math.max(1, normalizePage(totalPages, 1));
   const controls = normalizeControlsView(controlsView);
 
-  const input = new TextInputBuilder()
-    .setCustomId(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID)
-    .setLabel(`Pagina (1-${safeTotal})`)
+  const input=new TextInputBuilder().setCustomId(TOP_CHANNEL_PAGE_MODAL_INPUT_CUSTOM_ID).setLabel(`Pagina (1-${safeTotal})`)
     .setPlaceholder(String(safeCurrent))
     .setStyle(TextInputStyle.Short)
     .setRequired(true)
@@ -662,9 +593,7 @@ async function buildTopChannelPayload(
   const totalItems = viewConfig ? viewConfig.rows.length : 0;
   const totalPages = isOverview ? 1 : Math.max(1, Math.ceil(totalItems / 10));
   const safePage = Math.min(Math.max(1, normalizePage(page, 1)), totalPages);
-  const pageRows = isOverview
-    ? []
-    : viewConfig.rows.slice((safePage - 1) * 10, safePage * 10);
+  const pageRows=isOverview?[]:viewConfig.rows.slice((safePage-1)*10,safePage*10);
 
   const imageName = `top-channel-${safeView}-${message.guild.id}-${safeLookback}d-p${safePage}-${Date.now()}.png`;
 
@@ -747,9 +676,7 @@ async function sendTopPayload(message, payload) {
     return;
   }
 
-  const targetChannel =
-    message.guild.channels.cache.get(IDs.channels.commands) ||
-    (await message.guild.channels.fetch(IDs.channels.commands).catch(() => null));
+  const targetChannel=message.guild.channels.cache.get(IDs.channels.commands)||(await message.guild.channels.fetch(IDs.channels.commands).catch(() => null));
 
   if (!targetChannel || !targetChannel.isTextBased()) {
     await safeMessageReply(message, {
@@ -802,18 +729,9 @@ module.exports = {
 
   async execute(message, args = []) {
     await message.channel.sendTyping().catch(() => {});
-    const dayToken = Array.isArray(args)
-      ? args.find((x) => /^\d+d?$/i.test(String(x || "").trim()))
-      : null;
+    const dayToken=Array.isArray(args)?args.find((x) => /^\d+d?$/i.test(String(x||"").trim())):null;
 
-    const payload = await buildTopChannelPayload(
-      message,
-      dayToken || "14",
-      "main",
-      "overview",
-      1,
-      message.author?.id,
-    );
+    const payload=await buildTopChannelPayload(message,dayToken||"14","main","overview",1,message.author?.id,);
     await sendTopPayload(message, payload);
   },
 };

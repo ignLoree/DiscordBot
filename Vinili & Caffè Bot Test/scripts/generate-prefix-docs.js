@@ -10,11 +10,7 @@ if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
 global.logger = { info: () => {}, error: () => {} };
 
 const handlerFactory = require(path.join(root, "Handlers", "prefixHandler.js"));
-const client = {
-  pcommands: new Map(),
-  aliases: new Map(),
-  logs: { success: () => {} },
-};
+const client={pcommands:new Map(),aliases:new Map(),logs:{success:() => {}},};
 handlerFactory(client);
 
 function listFolders(dir) {
@@ -31,9 +27,7 @@ function asList(value) {
   const prefixDir = path.join(root, "Prefix");
   await client.prefixCommands(listFolders(prefixDir), prefixDir);
 
-  const cmds = Array.from(client.pcommands.values())
-    .filter((cmd) => cmd && cmd.name)
-    .sort((a, b) => String(a.name).localeCompare(String(b.name), "it"));
+  const cmds=Array.from(client.pcommands.values()).filter((cmd) => cmd&&cmd.name).sort((a,b) => String(a.name).localeCompare(String(b.name),"it"));
 
   const lines = [];
   lines.push("# Prefix Commands");

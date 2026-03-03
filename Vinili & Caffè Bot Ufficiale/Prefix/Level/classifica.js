@@ -32,9 +32,7 @@ function escapeInlineMarkdown(value) {
 
 function formatUserLabel(member, userId) {
   if (member) {
-    const username = escapeInlineMarkdown(
-      member.user?.username || member.user?.tag || member.displayName || "utente",
-    );
+    const username=escapeInlineMarkdown(member.user?.username||member.user?.tag||member.displayName||"utente",);
     return `${member} (${username})`;
   }
   return `<@${userId}>`;
@@ -50,9 +48,7 @@ async function fetchMembers(guild, userIds) {
     if (cached) out.set(id, cached);
     else missingIds.push(id);
   }
-  const fetchedMembers = await Promise.all(
-    missingIds.map((id) => guild.members.fetch(id).catch(() => null)),
-  );
+  const fetchedMembers=await Promise.all(missingIds.map((id) => guild.members.fetch(id).catch(() => null)),);
   for (let index = 0; index < missingIds.length; index += 1) {
     const member = fetchedMembers[index];
     if (member) out.set(missingIds[index], member);
@@ -65,13 +61,7 @@ function pad2(value) {
 }
 
 function getRomeDayParts(date) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",weekday:"short",});
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
@@ -107,9 +97,7 @@ async function resolveMemberRole(guild) {
   if (!guild) return null;
   const configuredId = String(IDs.roles?.Member || "").trim();
   if (configuredId) {
-    const role =
-      guild.roles?.cache?.get(configuredId) ||
-      (await guild.roles?.fetch(configuredId).catch(() => null));
+    const role=guild.roles?.cache?.get(configuredId)||(await guild.roles?.fetch(configuredId).catch(() => null));
     if (role) return role;
   }
   return guild.roles?.everyone || null;
@@ -151,10 +139,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
   }
 
   const perUser = new Map();
-  const cursor = ActivityDaily.find(filter)
-    .select("userId textChannels voiceChannels")
-    .lean()
-    .cursor();
+  const cursor=ActivityDaily.find(filter).select("userId textChannels voiceChannels").lean().cursor();
 
   for await (const row of cursor) {
     const userId = String(row?.userId || "");
@@ -179,34 +164,10 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
     perUser.set(userId, current);
   }
 
-  const rows = Array.from(perUser.values())
-    .map((entry) => {
-      const baseExpFromText = entry.textCount * MESSAGE_EXP;
-      const baseExpFromVoice = Math.floor(
-        (entry.voiceSeconds * VOICE_EXP_PER_MINUTE) / 60,
-      );
-      const exp = Math.max(0, Math.floor(baseExpFromText + baseExpFromVoice));
-      return {
-        userId: entry.userId,
-        exp,
-        level: getLevelInfo(exp).level,
-      };
-    })
-    .filter((entry) => entry.exp > 0)
-    .sort((a, b) => b.exp - a.exp)
-    .slice(0, TOP_LIMIT);
-
-  if (mode === "alltime" && rows.length > 0) {
+  const rows=Array.from(perUser.values()).map((entry) => {const baseExpFromText=entry.textCount*MESSAGE_EXP;const baseExpFromVoice=Math.floor((entry.voiceSeconds*VOICE_EXP_PER_MINUTE)/60,);const exp=Math.max(0,Math.floor(baseExpFromText+baseExpFromVoice));return{userId:entry.userId,exp,level:getLevelInfo(exp).level,};}).filter((entry) => entry.exp>0).sort((a,b) => b.exp-a.exp).slice(0,TOP_LIMIT);if(mode==="alltime" && rows.length > 0) {
     const userIds = rows.map((r) => r.userId);
-    const expUsers = await ExpUser.find({
-      guildId: guild.id,
-      userId: { $in: userIds },
-    })
-      .select("userId totalExp level")
-      .lean();
-    const expByUser = new Map(
-      expUsers.map((d) => [String(d.userId), { totalExp: Number(d.totalExp || 0), level: Number(d.level || 0) }]),
-    );
+    const expUsers=await ExpUser.find({guildId:guild.id,userId:{$in:userIds},}).select("userId totalExp level").lean();
+    const expByUser=new Map(expUsers.map((d) => [String(d.userId),{totalExp:Number(d.totalExp||0),level:Number(d.level||0)}]),);
     for (const row of rows) {
       const eu = expByUser.get(row.userId);
       if (eu != null) {
@@ -224,10 +185,7 @@ async function computeLeaderboardRows(guild, mode = "alltime") {
 
 async function buildWeeklyEmbed(message) {
   const rows = await computeLeaderboardRows(message.guild, "weekly");
-  const members = await fetchMembers(
-    message.guild,
-    rows.map((r) => r.userId),
-  );
+  const members=await fetchMembers(message.guild,rows.map((r) => r.userId),);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -263,10 +221,7 @@ async function buildWeeklyEmbed(message) {
 
 async function buildAllTimeEmbed(message) {
   const rows = await computeLeaderboardRows(message.guild, "alltime");
-  const members = await fetchMembers(
-    message.guild,
-    rows.map((r) => r.userId),
-  );
+  const members=await fetchMembers(message.guild,rows.map((r) => r.userId),);
   const lines = [];
   rows.forEach((row, index) => {
     const member = members.get(row.userId);
@@ -314,20 +269,8 @@ module.exports = {
     await message.channel.sendTyping();
     const invoked = getInvokedCommand(message);
     const rawMode = String(args[0] || "").toLowerCase();
-    const normalizedMode = ["weekly", "settimanale", "week", "w"].includes(
-      rawMode,
-    )
-      ? "weekly"
-      : ["alltime", "all", "totale", "general", "generale", "a"].includes(
-            rawMode,
-          )
-        ? "alltime"
-        : null;
-    const mode =
-      normalizedMode ||
-      (invoked === "cs" || invoked === "classificasettimanale"
-        ? "weekly"
-        : "alltime");
+    const normalizedMode=["weekly","settimanale","week","w"].includes(rawMode,)?"weekly":["alltime","all","totale","general","generale","a"].includes(rawMode,)?"alltime":null;
+    const mode=normalizedMode||(invoked==="cs"||invoked==="classificasettimanale"?"weekly":"alltime");
     const isWeekly = mode === "weekly";
 
     if (rawMode && !normalizedMode) {
@@ -339,9 +282,7 @@ module.exports = {
       return;
     }
 
-    const embed = isWeekly
-      ? await buildWeeklyEmbed(message)
-      : await buildAllTimeEmbed(message);
+    const embed=isWeekly?await buildWeeklyEmbed(message):await buildAllTimeEmbed(message);
 
     const shouldRedirect = message.channel.id !== LEADERBOARD_CHANNEL_ID;
     if (!shouldRedirect) {
@@ -352,11 +293,7 @@ module.exports = {
       return;
     }
 
-    const leaderboardChannel =
-      message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID) ||
-      (await message.guild.channels
-        .fetch(LEADERBOARD_CHANNEL_ID)
-        .catch(() => null));
+    const leaderboardChannel=message.guild.channels.cache.get(LEADERBOARD_CHANNEL_ID)||(await message.guild.channels.fetch(LEADERBOARD_CHANNEL_ID).catch(() => null));
 
     if (!leaderboardChannel || !leaderboardChannel.isTextBased()) {
       await safeMessageReply(message, {
@@ -375,23 +312,13 @@ module.exports = {
       return;
     }
 
-    const label = isWeekly
-      ? "Vai alla classifica settimanale"
-      : "Vai alla classifica generale";
-    const redirectEmbed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setDescription(
-        `Per evitare di intasare la chat, la classifica ${isWeekly ? "settimanale" : "generale"} ` +
-          `è stata generata nel canale <#${LEADERBOARD_CHANNEL_ID}>. ` +
-          `[Clicca qui per vederla](${sent.url}) o utilizza il bottone sottostante.`,
+    const label=isWeekly?"Vai alla classifica settimanale":"Vai alla classifica generale";
+    const redirectEmbed=new EmbedBuilder().setColor("#6f4e37").setDescription(`Per evitare di intasare la chat, la classifica ${isWeekly?"settimanale":"generale"}` +
+          `è stata generata nel canale<#${LEADERBOARD_CHANNEL_ID}>.` +
+          `[Clicca qui per vederla](${sent.url})o utilizza il bottone sottostante.`,
       );
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setStyle(ButtonStyle.Link)
-        .setLabel(label)
-        .setURL(sent.url),
-    );
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel(label).setURL(sent.url),);
 
     await safeMessageReply(message, {
       embeds: [redirectEmbed],

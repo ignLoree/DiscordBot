@@ -1,37 +1,6 @@
 const ascii = require("ascii-table");
-const fs = require("fs");
 const path = require("path");
-const { listJsFilesRecursive } = require("../../shared/runtime/fsRuntime");
-
-const LEGACY_READY_EVENT = "ready";
-const READY_EVENT_ALIAS = "clientReady";
-
-function listTriggerFiles(root) {
-  const triggersRoot = path.join(root, "Triggers");
-  if (!fs.existsSync(triggersRoot)) return [];
-
-  return listJsFilesRecursive(triggersRoot).map((fullPath) =>
-    path.relative(triggersRoot, fullPath).replace(/\\/g, "/"),
-  );
-}
-
-function normalizeEventName(eventName) {
-  return eventName === LEGACY_READY_EVENT ? READY_EVENT_ALIAS : eventName;
-}
-
-function clearBoundHandlers(client, mapKey) {
-  if (!client[mapKey]?.size) return;
-
-  for (const [eventName, handlers] of client[mapKey].entries()) {
-    for (const handler of handlers) client.removeListener(eventName, handler);
-  }
-  client[mapKey].clear();
-}
-
-function trackBoundHandler(client, mapKey, eventName, handler) {
-  if (!client[mapKey].has(eventName)) client[mapKey].set(eventName, []);
-  client[mapKey].get(eventName).push(handler);
-}
+const { READY_EVENT_ALIAS, clearBoundHandlers, listRelativeJsFiles, normalizeLifecycleEventName, trackBoundHandler, } = require("../../shared/runtime/loaderRuntime");
 
 module.exports = (client) => {
   if (!client._triggerHandlers) client._triggerHandlers = new Map();
@@ -40,8 +9,8 @@ module.exports = (client) => {
     clearBoundHandlers(client, "_triggerHandlers");
 
     const root = basePath || process.cwd();
-    const files = listTriggerFiles(root);
     const triggersRoot = path.join(root, "Triggers");
+    const files = listRelativeJsFiles(triggersRoot);
     const statusMap = new Map();
     let loaded = 0;
 
@@ -55,7 +24,7 @@ module.exports = (client) => {
           continue;
         }
 
-        const eventName = normalizeEventName(trigger.name);
+        const eventName = normalizeLifecycleEventName(trigger.name);
         const handler = (...args) => trigger.execute(...args, client);
 
         if (trigger.once) {
@@ -71,10 +40,7 @@ module.exports = (client) => {
         }
 
         trackBoundHandler(client, "_triggerHandlers", eventName, handler);
-        statusMap.set(
-          rel,
-          eventName === trigger.name ? "Loaded" : `Loaded as ${eventName}`,
-        );
+        statusMap.set(rel, eventName === trigger.name ? "Loaded" : `Loaded as ${eventName}`);
         loaded += 1;
       } catch (err) {
         statusMap.set(rel, "Error loading");
@@ -84,9 +50,7 @@ module.exports = (client) => {
 
     if (statusMap.size > 0) {
       const table = new ascii().setHeading("Folder", "File", "Status");
-      for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) =>
-        a[0].localeCompare(b[0]),
-      )) {
+      for (const [rel, status] of Array.from(statusMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))) {
         const folder = path.dirname(rel).replace(/\\/g, "/");
         const file = path.basename(rel);
         const folderLabel = folder === "." ? "Triggers" : `Triggers/${folder}`;

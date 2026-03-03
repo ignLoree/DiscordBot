@@ -5,51 +5,16 @@ const { handlePoketwoHelperMessage } = require("../Services/Minigames/poketwoHel
 const { recordReminderActivity } = require("../Services/Community/chatReminderService");
 const { recordMessageActivity } = require("../Services/Community/activityService");
 const { handleOfficialPrefixMessage } = require("../Utils/Prefix/officialPrefixDispatcher");
-const {
-  channelAllowsMedia,
-  getCachedOrFetchMember,
-  handleDisboardBump,
-  handleDiscadiaBump,
-  handleSuggestionChannelMessage,
-  handleVoteManagerMessage,
-  hasMediaPermission,
-  isDiscordInviteLinkMessage,
-  isMediaMessage,
-} = require("../Utils/Message/officialMessageAutomationHandlers");
-const {
-  handleAfk,
-  handleAutoResponders,
-  handleCounting,
-  handleMentionAutoReactions,
-  logEventError,
-} = require("../Utils/Message/officialMessageCommunityHandlers");
+const{channelAllowsMedia,getCachedOrFetchMember,handleDisboardBump,handleDiscadiaBump,handleSuggestionChannelMessage,handleVoteManagerMessage,hasMediaPermission,isDiscordInviteLinkMessage,isMediaMessage,}=require("../Utils/Message/officialMessageAutomationHandlers");
+const{handleAfk,handleAutoResponders,handleCounting,handleMentionAutoReactions,logEventError,}=require("../Utils/Message/officialMessageCommunityHandlers");
 const { runAutoModMessage } = require("../Services/Moderation/automodService");
 const IDs = require("../Utils/Config/ids");
 
-const STAFF_BYPASS_PERMISSIONS = [
-  PermissionFlagsBits.Administrator,
-  PermissionFlagsBits.ManageGuild,
-  PermissionFlagsBits.ManageChannels,
-  PermissionFlagsBits.ManageRoles,
-  PermissionFlagsBits.ManageMessages,
-  PermissionFlagsBits.KickMembers,
-  PermissionFlagsBits.BanMembers,
-  PermissionFlagsBits.ModerateMembers,
-];
-const FORCE_DELETE_CHANNEL_IDS = new Set(
-  [IDs.channels.separator7].filter(Boolean).map((id) => String(id)),
-);
+const STAFF_BYPASS_PERMISSIONS=[PermissionFlagsBits.Administrator,PermissionFlagsBits.ManageGuild,PermissionFlagsBits.ManageChannels,PermissionFlagsBits.ManageRoles,PermissionFlagsBits.ManageMessages,PermissionFlagsBits.KickMembers,PermissionFlagsBits.BanMembers,PermissionFlagsBits.ModerateMembers,];
+const FORCE_DELETE_CHANNEL_IDS=new Set([IDs.channels.separator7].filter(Boolean).map((id) => String(id)),);
 const MEDIA_BLOCK_EXEMPT_CATEGORY_ID = IDs.categories.categorChat;
-const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS = new Set(
-  [IDs.channels.media, IDs.channels.musicCommands]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
-const WRONG_PREFIX_HINT_CHANNEL_IDS = new Set(
-  [IDs.channels.commands, IDs.channels.staffCmds, IDs.channels.highCmds]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
+const MEDIA_BLOCK_EXEMPT_CHANNEL_IDS=new Set([IDs.channels.media,IDs.channels.musicCommands].filter(Boolean).map((id) => String(id)),);
+const WRONG_PREFIX_HINT_CHANNEL_IDS=new Set([IDs.channels.commands,IDs.channels.staffCmds,IDs.channels.highCmds].filter(Boolean).map((id) => String(id)),);
 
 function hasAnyStaffBypassPermission(permissions) {
   if (!permissions || typeof permissions.has !== "function") return false;
@@ -93,13 +58,7 @@ function shouldSendWrongPrefixHint(message, usedPrefix, commandName) {
   if (!client._wrongPrefixHintCooldown) {
     client._wrongPrefixHintCooldown = new Map();
   }
-  const key = [
-    String(message.guildId || "noguild"),
-    String(message.channelId || "nochannel"),
-    String(message.author?.id || "nouser"),
-    String(usedPrefix || ""),
-    String(commandName || ""),
-  ].join(":");
+  const key=[String(message.guildId||"noguild"),String(message.channelId||"nochannel"),String(message.author?.id||"nouser"),String(usedPrefix||""),String(commandName||""),].join(":");
   const now = Date.now();
   const lastAt = Number(client._wrongPrefixHintCooldown.get(key) || 0);
   if (now - lastAt < 10_000) return false;
@@ -122,11 +81,7 @@ async function maybeSendWrongPrefixHint(message, resolvedClient, validPrefix = "
   if (!shouldSendWrongPrefixHint(message, attempt.usedPrefix, command.name)) {
     return true;
   }
-  const hint = await message.channel
-    .send({
-      content: `\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`,
-    })
-    .catch(() => null);
+  const hint=await message.channel.send({content:`\`${attempt.usedPrefix}${attempt.token}\` non è valido. Usa \`${safePrefix}${command.name}\`.`,}).catch(() => null);
   if (hint) setTimeout(() => hint.delete().catch(() => {}), 6000);
   return true;
 }
@@ -138,21 +93,13 @@ module.exports = {
     const resolvedClient = client || message.client;
     if (!resolvedClient) return;
 
-    const isAutomatedMessage = Boolean(
-      message.author?.bot || message.webhookId || message.applicationId,
-    );
-    const isOwnBotMessage =
-      String(message.author?.id || "") === String(resolvedClient.user?.id || "");
+    const isAutomatedMessage=Boolean(message.author?.bot||message.webhookId||message.applicationId,);
+    const isOwnBotMessage=String(message.author?.id||"")===String(resolvedClient.user?.id||"");
     const isEditedPrefixExecution = Boolean(message?.__fromMessageUpdatePrefix);
     const defaultPrefix = String(resolvedClient?.config?.prefix || "+");
     let automodProcessed = false;
 
-    const runAutomodOnce = async () => {
-      if (automodProcessed) return { blocked: false, skipped: true };
-      automodProcessed = true;
-      if (isAutomatedMessage) return { blocked: false, skipped: true };
-      return runAutoModMessage(message);
-    };
+    const runAutomodOnce=async() => {if(automodProcessed)return{blocked:false,skipped:true};automodProcessed=true;if(isAutomatedMessage)return{blocked:false,skipped:true};return runAutoModMessage(message);};
 
     if (!isEditedPrefixExecution && message?.guild) {
       try {
@@ -210,14 +157,7 @@ module.exports = {
           !MEDIA_BLOCK_EXEMPT_CHANNEL_IDS.has(message.channel?.id)
         ) {
           await message.delete().catch(() => {});
-          const embed = new EmbedBuilder()
-            .setColor("#6f4e37")
-            .setDescription(
-              [
-                `<:attentionfromvega:1443651874032062505> Ciao ${message.author}, __non hai i permessi__ per inviare \`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,
-                "",
-                "<a:VC_StarPink:1330194976440848500> ➥ **__Sblocca il permesso:__**",
-                `<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
+          const embed=new EmbedBuilder().setColor("#6f4e37").setDescription([`<:attentionfromvega:1443651874032062505> Ciao ${message.author},__non hai i permessi__ per inviare\`FOTO, GIF, LINK, VIDEO O AUDIO\` in chat.`,"","<a:VC_StarPink:1330194976440848500> ➥ **__Sblocca il permesso:__**",`<a:VC_Arrow:1448672967721615452> Ottieni il ruolo: <@&${IDs.roles.PicPerms}>.`,
               ].join("\n"),
             );
           await message.channel
@@ -254,14 +194,7 @@ module.exports = {
         );
       });
 
-      const [minigameResult, afkResult, mentionsResult, autoRespondersResult, countingResult] =
-        await Promise.allSettled([
-          handleMinigameMessage(message, resolvedClient),
-          handleAfk(message),
-          handleMentionAutoReactions(message),
-          handleAutoResponders(message),
-          handleCounting(message, resolvedClient),
-        ]);
+      const[minigameResult,afkResult,mentionsResult,autoRespondersResult,countingResult]=await Promise.allSettled([handleMinigameMessage(message,resolvedClient),handleAfk(message),handleMentionAutoReactions(message),handleAutoResponders(message),handleCounting(message,resolvedClient),]);
       if (minigameResult.status === "rejected") {
         logEventError(resolvedClient, "MINIGAME ERROR", minigameResult.reason);
       }

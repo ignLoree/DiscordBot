@@ -12,34 +12,18 @@ const TARGET_CHANNEL_ID = IDs.channels.topWeeklyUser;
 const NEWS_CHANNEL_ID = IDs.channels.news;
 const NEWS_STAFF_CHANNEL_ID = IDs.channels.staffNews;
 const INFO_CHANNEL_ID = IDs.channels.info;
-const TROPHY_LABELS = [
-  "<:VC_Podio1:1469659449974329598>",
-  "<:VC_Podio2:1469659512863592500>",
-  "<:VC_Podio3:1469659557696504024>",
-];
+const TROPHY_LABELS=["<:VC_Podio1:1469659449974329598>","<:VC_Podio2:1469659512863592500>","<:VC_Podio3:1469659557696504024>",];
 const MESSAGE_WINNER_ROLE_ID = IDs.roles.TopWeeklyText;
 const VOICE_WINNER_ROLE_ID = IDs.roles.TopWeeklyVoc;
 const REQUIRED_MEMBER_ROLE_ID = String(IDs.roles.Member || "");
-const EXCLUDED_ROLE_IDS = new Set(
-  [
-    IDs.roles.Staff,
-    IDs.roles.HighStaff,
-  ]
-    .filter(Boolean)
-    .map((id) => String(id)),
-);
+const EXCLUDED_ROLE_IDS=new Set([IDs.roles.Staff,IDs.roles.HighStaff,].filter(Boolean).map((id) => String(id)),);
 
 function pad2(value) {
   return String(value).padStart(2, "0");
 }
 
 function getTimeParts(date) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",});
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
@@ -58,8 +42,7 @@ function getWeekKey(date) {
   const dayNr = (utcDate.getUTCDay() + 6) % 7;
   utcDate.setUTCDate(utcDate.getUTCDate() - dayNr + 3);
   const firstThursday = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 4));
-  const weekNr =
-    1 + Math.round((utcDate - firstThursday) / (7 * 24 * 60 * 60 * 1000));
+  const weekNr=1+Math.round((utcDate-firstThursday)/(7*24*60*60*1000));
   return `${utcDate.getUTCFullYear()}-W${pad2(weekNr)}`;
 }
 
@@ -69,10 +52,7 @@ function getNextWeekKey(date) {
 }
 
 function getWeekdayRome(date) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
-    weekday: "short",
-  });
+  const formatter=new Intl.DateTimeFormat("en-US",{timeZone:TIME_ZONE,weekday:"short",});
   return formatter.format(date);
 }
 
@@ -89,8 +69,7 @@ function getDateKeysForWeekKey(weekKey) {
   const jan4 = new Date(jan4Utc);
   const jan4Day = (jan4.getUTCDay() + 6) % 7;
   const mondayWeek1Utc = jan4Utc - jan4Day * 24 * 60 * 60 * 1000;
-  const mondayTargetUtc =
-    mondayWeek1Utc + (isoWeek - 1) * 7 * 24 * 60 * 60 * 1000;
+  const mondayTargetUtc=mondayWeek1Utc+(isoWeek-1)*7*24*60*60*1000;
 
   const out = [];
   for (let i = 0; i < 7; i += 1) {
@@ -120,13 +99,7 @@ async function loadActivityRowsFromDateKeys(guild, dateKeys) {
   const eligible = await getEligibleChannelSets(guild);
   if (!eligible.text.size && !eligible.voice.size) return [];
   const perUser = new Map();
-  const cursor = ActivityDaily.find({
-    guildId: guild.id,
-    dateKey: { $in: dateKeys },
-  })
-    .select("userId textChannels voiceChannels")
-    .lean()
-    .cursor();
+  const cursor=ActivityDaily.find({guildId:guild.id,dateKey:{$in:dateKeys},}).select("userId textChannels voiceChannels").lean().cursor();
   for await (const row of cursor) {
     const userId = String(row?.userId || "");
     if (!userId) continue;
@@ -161,12 +134,8 @@ async function getEventWeekTopThreeTextAndVoice(guild, eventWeekNum) {
   const dateKeys = getEventWeekDateKeys(settings.eventStartedAt, eventWeekNum);
   if (!dateKeys.length) return { topMessages: [], topVoice: [] };
   const rows = await loadActivityRowsFromDateKeys(guild, dateKeys);
-  const sortedMessages = [...rows]
-    .filter((r) => Number(r?.messageCount || 0) > 0)
-    .sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
-  const sortedVoice = [...rows]
-    .filter((r) => Number(r?.voiceSeconds || 0) > 0)
-    .sort((a, b) => (b.voiceSeconds || 0) - (a.voiceSeconds || 0));
+  const sortedMessages=[...rows].filter((r) => Number(r?.messageCount||0)>0).sort((a,b) => (b.messageCount||0)-(a.messageCount||0));
+  const sortedVoice=[...rows].filter((r) => Number(r?.voiceSeconds||0)>0).sort((a,b) => (b.voiceSeconds||0)-(a.voiceSeconds||0));
   const topMessages = [];
   const topVoice = [];
   for (const row of sortedMessages) {
@@ -203,9 +172,7 @@ function extractMapEntries(raw) {
 async function resolveMemberRole(guild) {
   if (!guild) return null;
   if (REQUIRED_MEMBER_ROLE_ID) {
-    const role =
-      guild.roles.cache.get(REQUIRED_MEMBER_ROLE_ID) ||
-      (await guild.roles.fetch(REQUIRED_MEMBER_ROLE_ID).catch(() => null));
+    const role=guild.roles.cache.get(REQUIRED_MEMBER_ROLE_ID)||(await guild.roles.fetch(REQUIRED_MEMBER_ROLE_ID).catch(() => null));
     if (role) return role;
   }
   return guild.roles.everyone || null;
@@ -234,13 +201,7 @@ async function loadWeeklyRowsFromDaily(guild, weekKey) {
   if (!eligible.text.size && !eligible.voice.size) return [];
 
   const perUser = new Map();
-  const cursor = ActivityDaily.find({
-    guildId: guild.id,
-    dateKey: { $in: dateKeys },
-  })
-    .select("userId textChannels voiceChannels")
-    .lean()
-    .cursor();
+  const cursor=ActivityDaily.find({guildId:guild.id,dateKey:{$in:dateKeys},}).select("userId textChannels voiceChannels").lean().cursor();
 
   for await (const row of cursor) {
     const userId = String(row?.userId || "");
@@ -259,11 +220,7 @@ async function loadWeeklyRowsFromDaily(guild, weekKey) {
     }
 
     if (messageCount <= 0 && voiceSeconds <= 0) continue;
-    const current = perUser.get(userId) || {
-      userId,
-      messageCount: 0,
-      voiceSeconds: 0,
-    };
+    const current=perUser.get(userId)||{userId,messageCount:0,voiceSeconds:0,};
     current.messageCount += messageCount;
     current.voiceSeconds += voiceSeconds;
     perUser.set(userId, current);
@@ -290,16 +247,12 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
     if (!user) user = await client.users.fetch(userId).catch(() => null);
     if (!user || user.bot) continue;
 
-    const member =
-      guild.members.cache.get(userId) ||
-      (await guild.members.fetch(userId).catch(() => null));
+    const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
     if (!member) continue;
     if (REQUIRED_MEMBER_ROLE_ID && !member.roles.cache.has(REQUIRED_MEMBER_ROLE_ID))
       continue;
 
-    const hasExcludedRole = Array.from(EXCLUDED_ROLE_IDS).some((roleId) =>
-      member.roles.cache.has(roleId),
-    );
+    const hasExcludedRole=Array.from(EXCLUDED_ROLE_IDS).some((roleId) => member.roles.cache.has(roleId),);
     if (hasExcludedRole) continue;
 
     const value = Math.max(0, Math.floor(Number(valueGetter(doc) || 0)));
@@ -312,9 +265,7 @@ async function resolveTopThreeUsers(client, guild, docs, valueGetter) {
 async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
   if (!roleId) return;
   await guild.members.fetch().catch(() => null);
-  const role =
-    guild.roles.cache.get(roleId) ||
-    (await guild.roles.fetch(roleId).catch(() => null));
+  const role=guild.roles.cache.get(roleId)||(await guild.roles.fetch(roleId).catch(() => null));
   if (!role) return;
 
   for (const member of role.members.values()) {
@@ -325,9 +276,7 @@ async function removeRoleFromAllMembers(guild, roleId, keepUserId = "") {
 
 async function assignRoleToUser(guild, userId, roleId) {
   if (!userId || !roleId) return false;
-  const member =
-    guild.members.cache.get(userId) ||
-    (await guild.members.fetch(userId).catch(() => null));
+  const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
   if (!member) return false;
   await member.roles.add(roleId).catch(() => {});
   return true;
@@ -372,25 +321,15 @@ function formatVoiceDuration(seconds) {
 }
 
 async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMessages, topVoice) {
-  const newsChannel =
-    client.channels.cache.get(NEWS_CHANNEL_ID) ||
-    (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+  const newsChannel=client.channels.cache.get(NEWS_CHANNEL_ID)||(await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
-  const msgLines = topMessages.length
-    ? topMessages.map((item, i) => {
-        const medal = TROPHY_LABELS[i] || "";
-        return `${medal} <@${item.userId}> — **${item.messageCount}** messaggi`;
+  const msgLines=topMessages.length?topMessages.map((item,i) => {const medal=TROPHY_LABELS[i]||"";return`${medal}<@${item.userId}>—**${item.messageCount}**messaggi`;
       })
     : [" - Nessun dato per la classifica testuale."];
-  const voiceLines = topVoice.length
-    ? topVoice.map((item, i) => {
-        const medal = TROPHY_LABELS[i] || "";
-        return `${medal} <@${item.userId}> — **${formatVoiceDuration(item.voiceSeconds)}**`;
+  const voiceLines=topVoice.length?topVoice.map((item,i) => {const medal=TROPHY_LABELS[i]||"";return`${medal}<@${item.userId}>—**${formatVoiceDuration(item.voiceSeconds)}**`;
       })
     : [" - Nessun dato per la classifica vocale."];
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle(`<:VC_Leaderboard:1469659357678669958> Evento Activity EXP — Settimana ${eventWeek}`)
     .setDescription(
       [
         "<a:VC_HeartsPink:1468685897389052008> **Top 3 testuale** (settimana evento):",
@@ -401,52 +340,31 @@ async function sendEventWeekAnnouncementToNews(client, guild, eventWeek, topMess
       ].join("\n"),
     )
     .setThumbnail(guild.iconURL({ size: 256 }) || null)
-    .setFooter({ text: `Settimana ${eventWeek} dell'evento • Premi assegnati ai vincitori` })
-    .setTimestamp();
+    .setFooter({ text: `Settimana ${eventWeek}dell 'evento • Premi assegnati ai vincitori` }).setTimestamp();
   await newsChannel.send({ embeds: [embed] }).catch((err) => {
     global.logger?.error?.("[WEEKLY ACTIVITY] Event week announcement to news failed:", err);
   });
 }
 
-const EVENT_END_ANNOUNCEMENT_MESSAGE = [
-  "<:VC_Calendar:1448670320180592724> **L'evento Activity EXP è terminato.**",
-  "",
-  "> <a:VC_HeartsPink:1468685897389052008> Grazie a tutti per aver partecipato! Di seguito la **top 3 per EXP totale** guadagnata durante l'evento.",
-  "",
-].join("\n");
+const EVENT_END_ANNOUNCEMENT_MESSAGE=["<:VC_Calendar:1448670320180592724> **L'evento Activity EXP è terminato.**","","> <a:VC_HeartsPink:1468685897389052008> Grazie a tutti per aver partecipato! Di seguito la **top 3 per EXP totale** guadagnata durante l'evento.","",].join("\n");
 
 async function trySendEventEndAnnouncementToNews(client) {
   const mainGuildId = IDs.guilds?.main;
   if (!mainGuildId || !NEWS_CHANNEL_ID) return;
-  const guild =
-    client.guilds.cache.get(mainGuildId) ||
-    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  const guild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
   if (!guild) return;
   const doc = await GlobalSettings.findOne({ guildId: mainGuildId }).lean().catch(() => null);
   if (!doc?.expEventMultiplierExpiresAt) return;
   const expiresAt = new Date(doc.expEventMultiplierExpiresAt).getTime();
   if (expiresAt > Date.now()) return;
-  const sentFor = doc.expEventEndAnnouncementSentForExpiresAt
-    ? new Date(doc.expEventEndAnnouncementSentForExpiresAt).getTime()
-    : null;
+  const sentFor=doc.expEventEndAnnouncementSentForExpiresAt?new Date(doc.expEventEndAnnouncementSentForExpiresAt).getTime():null;
   if (sentFor !== null && sentFor === expiresAt) return;
   const top3 = await getTop3ExpDuringEventExcludingStaff(guild);
-  const lines = top3.length
-    ? top3.map((item, i) => {
-        const medal = TROPHY_LABELS[i] || "";
-        return `${medal} <@${item.userId}> — **${item.expDuringEvent.toLocaleString("it-IT")}** EXP`;
+  const lines=top3.length?top3.map((item,i) => {const medal=TROPHY_LABELS[i]||"";return`${medal}<@${item.userId}>—**${item.expDuringEvent.toLocaleString("it-IT")}**EXP`;
       })
     : [" - Nessun dato."];
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP")
-    .setDescription(["**Classifica per EXP guadagnata durante l'evento:**", "", ...lines].join("\n"))
-    .setThumbnail(guild.iconURL({ size: 256 }) || null)
-    .setFooter({ text: "Evento terminato • Grazie per la partecipazione!" })
-    .setTimestamp();
-  const newsChannel =
-    client.channels.cache.get(NEWS_CHANNEL_ID) ||
-    (await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
+  const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("<:VC_Leaderboard:1469659357678669958> Top 3 EXP totale — Evento Activity EXP").setDescription(["**Classifica per EXP guadagnata durante l'evento:**","",...lines].join("\n")).setThumbnail(guild.iconURL({size:256})||null).setFooter({text:"Evento terminato • Grazie per la partecipazione!"}).setTimestamp();
+  const newsChannel=client.channels.cache.get(NEWS_CHANNEL_ID)||(await client.channels.fetch(NEWS_CHANNEL_ID).catch(() => null));
   if (!newsChannel?.guild) return;
   await newsChannel.send({
     content: `${EVENT_END_ANNOUNCEMENT_MESSAGE}\n\n<a:VC_Ping:1448670620412809298>︲<@&1442569012063109151>`,
@@ -474,18 +392,9 @@ async function trySendEventEndAnnouncementToNews(client) {
     const staffEndLines = [];
     if (first) staffEndLines.push(`<:VC_Podio1:1469659449974329598> **Miglior punteggio:** <@${first.userId}> — **${first.points}** punti`);
     if (last && last.userId !== first?.userId) staffEndLines.push(`**Peggior punteggio:** <@${last.userId}> — **${last.points}** punti`);
-    const staffEndContent = [
-      "## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**",
-      "",
-      "<:VC_Attention:1443933073438675016> Risultati evento staff:",
-      ...(staffEndLines.length ? staffEndLines : [" - Nessun dato."]),
-      "",
-      `<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
+    const staffEndContent=["## <a:VC_Announce:1448687280381235443> **EVENTO STAFF — Terminato**","","<:VC_Attention:1443933073438675016> Risultati evento staff:",...(staffEndLines.length?staffEndLines:[" - Nessun dato."]),"",`<:VC_Mention:1443994358201323681>︲<@&${IDs.roles.Staff}>`,
     ].join("\n");
-    const newsStaffChannel =
-      NEWS_STAFF_CHANNEL_ID &&
-      (client.channels.cache.get(NEWS_STAFF_CHANNEL_ID) ||
-        (await client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null)));
+    const newsStaffChannel=NEWS_STAFF_CHANNEL_ID&&(client.channels.cache.get(NEWS_STAFF_CHANNEL_ID)||(await client.channels.fetch(NEWS_STAFF_CHANNEL_ID).catch(() => null)));
     if (newsStaffChannel?.guild) {
       await newsStaffChannel.send({
         content: staffEndContent,
@@ -498,15 +407,12 @@ async function trySendEventEndAnnouncementToNews(client) {
 }
 
 async function publishWeeklyActivityWinners(client, options = {}) {
-  const channel =
-    client.channels.cache.get(TARGET_CHANNEL_ID) ||
-    (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
+  const channel=client.channels.cache.get(TARGET_CHANNEL_ID)||(await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
   if (!channel || !channel.guild) return;
 
   const guild = channel.guild;
   const now = new Date();
-  const currentWeekKey =
-    options.weekKey != null ? options.weekKey : getWeekKey(now);
+  const currentWeekKey=options.weekKey!=null?options.weekKey:getWeekKey(now);
 
   const settings = await getGuildExpSettings(guild.id).catch(() => null);
   const eventWeek = settings ? getEventWeekNumber(settings) : 0;
@@ -520,49 +426,22 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const weeklyRows = await loadWeeklyRowsFromDaily(guild, currentWeekKey);
 
-  const messageDocs = weeklyRows
-    .filter((row) => Number(row?.messageCount || 0) > 0)
-    .sort((a, b) => Number(b.messageCount || 0) - Number(a.messageCount || 0))
-    .slice(0, 200);
-  const voiceDocs = weeklyRows
-    .filter((row) => Number(row?.voiceExp || 0) > 0)
-    .sort((a, b) => Number(b.voiceExp || 0) - Number(a.voiceExp || 0))
-    .slice(0, 200);
+  const messageDocs=weeklyRows.filter((row) => Number(row?.messageCount||0)>0).sort((a,b) => Number(b.messageCount||0)-Number(a.messageCount||0)).slice(0,200);
+  const voiceDocs=weeklyRows.filter((row) => Number(row?.voiceExp||0)>0).sort((a,b) => Number(b.voiceExp||0)-Number(a.voiceExp||0)).slice(0,200);
 
-  const topMessages = await resolveTopThreeUsers(
-    client,
-    guild,
-    messageDocs,
-    (doc) => Number(doc?.messageCount || 0),
-  );
+  const topMessages=await resolveTopThreeUsers(client,guild,messageDocs,(doc) => Number(doc?.messageCount||0),);
 
-  const topVoice = await resolveTopThreeUsers(
-    client,
-    guild,
-    voiceDocs,
-    (doc) => Number(doc?.voiceExp || 0),
-  );
+  const topVoice=await resolveTopThreeUsers(client,guild,voiceDocs,(doc) => Number(doc?.voiceExp||0),);
 
   const useEventTop = eventWeek >= 1 && eventWeek <= 4;
-  const displayTopMessages = useEventTop
-    ? eventTopMessages.map((item) => ({ userId: item.userId, value: Number(item.messageCount || 0) }))
-    : topMessages;
-  const displayTopVoice = useEventTop
-    ? eventTopVoice.map((item) => ({
-        userId: item.userId,
-        value: Math.floor((Math.max(0, Number(item.voiceSeconds || 0)) / 60) * VOICE_EXP_PER_MINUTE),
-      }))
-    : topVoice;
+  const displayTopMessages=useEventTop?eventTopMessages.map((item) => ({userId:item.userId,value:Number(item.messageCount||0)})):topMessages;
+  const displayTopVoice=useEventTop?eventTopVoice.map((item) => ({userId:item.userId,value:Math.floor((Math.max(0,Number(item.voiceSeconds||0))/60)*VOICE_EXP_PER_MINUTE),})):topVoice;
 
-  const messageRows = displayTopMessages.length
-    ? displayTopMessages.map((item, index) =>
-        formatRankLine(index, `<@${item.userId}>`, item.value, "messaggi"),
+  const messageRows=displayTopMessages.length?displayTopMessages.map((item,index) => formatRankLine(index,`<@${item.userId}>`, item.value, "messaggi"),
       )
     : [buildEmptyLine("messaggi")];
 
-  const voiceRows = displayTopVoice.length
-    ? displayTopVoice.map((item, index) =>
-        formatRankLine(index, `<@${item.userId}>`, item.value, "exp"),
+  const voiceRows=displayTopVoice.length?displayTopVoice.map((item,index) => formatRankLine(index,`<@${item.userId}>`, item.value, "exp"),
       )
     : [buildEmptyLine("exp vocale")];
 
@@ -646,16 +525,12 @@ async function publishWeeklyActivityWinners(client, options = {}) {
     });
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setDescription(
-      [
-        `<:VC_Leaderboard:1469659357678669958> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setDescription([`<:VC_Leaderboard:1469659357678669958> // I vantaggi che avete sbloccato sono in "badge" nel canale <#${INFO_CHANNEL_ID}>`,
         "",
-        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica testuale:**`,
+        `<a:VC_HeartsBlue:1468686100045369404>•**Classifica testuale:**`,
         ...messageRows,
         "",
-        `<a:VC_HeartsBlue:1468686100045369404> • **Classifica vocale:**`,
+        `<a:VC_HeartsBlue:1468686100045369404>•**Classifica vocale:**`,
         ...voiceRows,
       ].join("\n"),
     )
@@ -663,25 +538,12 @@ async function publishWeeklyActivityWinners(client, options = {}) {
 
   const messageWinnerTotal = Number(awarded?.messageWinner?.value || 0);
   const voiceWinnerTotal = Number(awarded?.voiceWinner?.value || 0);
-  const messageWinnerMention = awarded?.messageWinner?.userId
-    ? `<@${awarded.messageWinner.userId}>`
+  const messageWinnerMention=awarded?.messageWinner?.userId?`<@${awarded.messageWinner.userId}>`
     : "Nessun vincitore";
-  const voiceWinnerMention = awarded?.voiceWinner?.userId
-    ? `<@${awarded.voiceWinner.userId}>`
+  const voiceWinnerMention=awarded?.voiceWinner?.userId?`<@${awarded.voiceWinner.userId}>`
     : "Nessun vincitore";
 
-  const button = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setLabel("Chat")
-      .setStyle(ButtonStyle.Link)
-      .setEmoji("<:VC_FrogCute:1331620415185096746>")
-      .setURL("https://discord.com/channels/1329080093599076474/1442569130573303898"),
-    new ButtonBuilder()
-      .setLabel("Vocal")
-      .setStyle(ButtonStyle.Link)
-      .setEmoji("<:VC_FrogJuice:1331620486517358613>")
-      .setURL("https://discord.com/channels/1329080093599076474/1442569101225496819"),
-  );
+  const button=new ActionRowBuilder().addComponents(new ButtonBuilder().setLabel("Chat").setStyle(ButtonStyle.Link).setEmoji("<:VC_FrogCute:1331620415185096746>").setURL("https://discord.com/channels/1329080093599076474/1442569130573303898"),new ButtonBuilder().setLabel("Vocal").setStyle(ButtonStyle.Link).setEmoji("<:VC_FrogJuice:1331620486517358613>").setURL("https://discord.com/channels/1329080093599076474/1442569101225496819"),);
 
   await channel
     .send({
@@ -703,15 +565,12 @@ _ _`,
 }
 
 async function resetWeeklyActivityCounters(client, options = {}) {
-  const channel =
-    client.channels.cache.get(TARGET_CHANNEL_ID) ||
-    (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
+  const channel=client.channels.cache.get(TARGET_CHANNEL_ID)||(await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
   const guildId = channel?.guild?.id;
   if (!guildId) return;
 
   const now = new Date();
-  const nextWeekKey =
-    options.nextWeekKey != null ? options.nextWeekKey : getNextWeekKey(now);
+  const nextWeekKey=options.nextWeekKey!=null?options.nextWeekKey:getNextWeekKey(now);
 
   await Promise.all([
     ActivityUser.updateMany(
@@ -768,41 +627,7 @@ function startWeeklyActivityWinnersLoop(client) {
     { timezone: TIME_ZONE },
   );
 
-  const runRecoveryIfNeeded = async () => {
-    const now = new Date();
-    const weekday = getWeekdayRome(now);
-    if (weekday !== "Mon" && weekday !== "Tue") return;
-    const channel =
-      client.channels.cache.get(TARGET_CHANNEL_ID) ||
-      (await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));
-    const guildId = channel?.guild?.id;
-    if (!guildId) return;
-    const currentWeekKey = getWeekKey(now);
-    const alreadyReset = await ActivityUser.exists({
-      guildId,
-      "messages.weeklyKey": currentWeekKey,
-    }).catch(() => false);
-    if (alreadyReset) return;
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const previousWeekKey = getWeekKey(yesterday);
-    if (previousWeekKey === currentWeekKey) return;
-    try {
-      global.logger.info(
-        "[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",
-      );
-      await publishWeeklyActivityWinners(client, { weekKey: previousWeekKey });
-      await resetWeeklyActivityCounters(client, {
-        nextWeekKey: currentWeekKey,
-      });
-    } catch (error) {
-      global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:", error);
-    }
-  };
-
-  runRecoveryIfNeeded();
-}
-
-module.exports = {
+  const runRecoveryIfNeeded=async() => {const now=new Date();const weekday=getWeekdayRome(now);if(weekday!=="Mon"&&weekday!=="Tue")return;const channel=client.channels.cache.get(TARGET_CHANNEL_ID)||(await client.channels.fetch(TARGET_CHANNEL_ID).catch(() => null));const guildId=channel?.guild?.id;if(!guildId)return;const currentWeekKey=getWeekKey(now);const alreadyReset=await ActivityUser.exists({guildId,"messages.weeklyKey":currentWeekKey,}).catch(() => false);if(alreadyReset)return;const yesterday=new Date(now.getTime()-24*60*60*1000);const previousWeekKey=getWeekKey(yesterday);if(previousWeekKey===currentWeekKey)return;try{global.logger.info("[WEEKLY ACTIVITY] Recovery: running missed weekly winners (bot was likely offline Sunday 21:00).",);await publishWeeklyActivityWinners(client,{weekKey:previousWeekKey});await resetWeeklyActivityCounters(client,{nextWeekKey:currentWeekKey,});}catch(error){global.logger.error("[WEEKLY ACTIVITY] Recovery run failed:",error);}};runRecoveryIfNeeded();}module.exports = {
   startWeeklyActivityWinnersLoop,
   publishWeeklyActivityWinners,
   resetWeeklyActivityCounters,

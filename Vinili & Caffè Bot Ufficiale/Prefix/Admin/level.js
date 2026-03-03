@@ -1,17 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
 const { ExpUser } = require("../../Schemas/Community/communitySchemas");
-const {
-  getLevelInfo,
-  getTotalExpForLevel,
-  recordLevelHistory,
-  setLevelChannelLocked,
-  setRoleIgnored,
-  getGuildExpSettings,
-  setTemporaryEventMultiplier,
-  setGlobalMultiplier,
-  syncLevelRolesForMember,
-} = require("../../Services/Community/expService");
+const{getLevelInfo,getTotalExpForLevel,recordLevelHistory,setLevelChannelLocked,setRoleIgnored,getGuildExpSettings,setTemporaryEventMultiplier,setGlobalMultiplier,syncLevelRolesForMember,}=require("../../Services/Community/expService");
 
 async function resolveTargetUser(message, raw) {
   const fromMention = message.mentions?.users?.first();
@@ -71,24 +61,7 @@ module.exports = {
     if (!guildId) return;
 
     if (!sub) {
-      const usage = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle("Comando level")
-        .setDescription(
-          [
-            "`+level set <@utente|id> <exp|level> <valore>`",
-            "`+level add <@utente|id> <livelli>`",
-            "`+level remove <@utente|id> <livelli>`",
-            "`+level reset <@utente|id>`",
-            "`+level lock <#canale|id>`",
-            "`+level unlock <#canale|id>`",
-            "`+level multiplier <valore> [minuti]`",
-            "`+level gmulti <valore>`",
-            "`+level ignore <@ruolo|id>`",
-            "`+level unignore <@ruolo|id>`",
-            "`+level config`",
-          ].join("\n"),
-        );
+      const usage=new EmbedBuilder().setColor("#6f4e37").setTitle("Comando level").setDescription(["`+level set <@utente|id> <exp|level> <valore>`","`+level add <@utente|id> <livelli>`","`+level remove <@utente|id> <livelli>`","`+level reset <@utente|id>`","`+level lock <#canale|id>`","`+level unlock <#canale|id>`","`+level multiplier <valore> [minuti]`","`+level gmulti <valore>`","`+level ignore <@ruolo|id>`","`+level unignore <@ruolo|id>`","`+level config`",].join("\n"),);
       await safeMessageReply(message, {
         embeds: [usage],
         allowedMentions: { repliedUser: false },
@@ -98,23 +71,16 @@ module.exports = {
 
     if (sub === "config") {
       const settings = await getGuildExpSettings(guildId);
-      const lockList = settings.lockedChannelIds.length
-        ? settings.lockedChannelIds.map((id) => `<#${id}>`).join(", ")
+      const lockList=settings.lockedChannelIds.length?settings.lockedChannelIds.map((id) => `<#${id}>`).join(", ")
         : "Nessuno";
-      const ignoreList = settings.ignoredRoleIds.length
-        ? settings.ignoredRoleIds.map((id) => `<@&${id}>`).join(", ")
+      const ignoreList=settings.ignoredRoleIds.length?settings.ignoredRoleIds.map((id) => `<@&${id}>`).join(", ")
         : "Nessuno";
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setTitle("Configurazione Level")
-        .setDescription(
-          [
-            `- Moltiplicatore base: **${settings.baseMultiplier}x**`,
-            `- Evento attivo: **${settings.eventMultiplier}x**`,
-            `- Scadenza evento: **${settings.eventExpiresAt ? fmtDate(settings.eventExpiresAt) : "Nessuna"}**`,
-            `- Moltiplicatore effettivo: **${settings.effectiveMultiplier}x**`,
-            `- Canali lock EXP: ${lockList}`,
-            `- Ruoli ignorati EXP: ${ignoreList}`,
+      const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Configurazione Level").setDescription([`- Moltiplicatore base: **${settings.baseMultiplier}x**`,
+            `-Evento attivo:**${settings.eventMultiplier}x**`,
+            `-Scadenza evento:**${settings.eventExpiresAt?fmtDate(settings.eventExpiresAt):"Nessuna"}**`,
+            `-Moltiplicatore effettivo:**${settings.effectiveMultiplier}x**`,
+            `-Canali lock EXP:${lockList}`,
+            `-Ruoli ignorati EXP:${ignoreList}`,
           ].join("\n"),
         );
       await safeMessageReply(message, {
@@ -137,10 +103,7 @@ module.exports = {
       }
       const locked = sub === "lock";
       const next = await setLevelChannelLocked(guildId, channelId, locked);
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `${locked ? "Canale bloccato" : "Canale sbloccato"} per EXP: <#${channelId}>. Totale canali lock: **${next.length}**`,
+      const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`${locked?"Canale bloccato":"Canale sbloccato"}per EXP:<#${channelId}>.Totale canali lock:**${next.length}**`,
         );
       await safeMessageReply(message, {
         embeds: [embed],
@@ -150,12 +113,7 @@ module.exports = {
     }
 
     if (sub === "ignore" || sub === "unignore") {
-      const role =
-        message.mentions?.roles?.first() ||
-        message.guild.roles.cache.get(
-          String(args[1] || "").replace(/[<@&>]/g, ""),
-        ) ||
-        null;
+      const role=message.mentions?.roles?.first()||message.guild.roles.cache.get(String(args[1]||"").replace(/[<@&>]/g,""),)||null;
       if (!role) {
         await safeMessageReply(message, {
           content:
@@ -166,10 +124,7 @@ module.exports = {
       }
       const ignored = sub === "ignore";
       const next = await setRoleIgnored(guildId, role.id, ignored);
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `${ignored ? "Ruolo ignorato" : "Ruolo riabilitato"} per EXP: ${role}. Totale ruoli ignorati: **${next.length}**`,
+      const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`${ignored?"Ruolo ignorato":"Ruolo riabilitato"}per EXP:${role}.Totale ruoli ignorati:**${next.length}**`,
         );
       await safeMessageReply(message, {
         embeds: [embed],
@@ -194,15 +149,8 @@ module.exports = {
         });
         return;
       }
-      const result = await setTemporaryEventMultiplier(
-        guildId,
-        value,
-        minutes * 60 * 1000,
-      );
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `Evento EXP impostato a **${result.multiplier}x** fino al **${fmtDate(result.expiresAt)}**.`,
+      const result=await setTemporaryEventMultiplier(guildId,value,minutes*60*1000,);
+      const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`Evento EXP impostato a **${result.multiplier}x**fino al**${fmtDate(result.expiresAt)}**.`,
         );
       await safeMessageReply(message, {
         embeds: [embed],
@@ -222,10 +170,7 @@ module.exports = {
         return;
       }
       const stored = await setGlobalMultiplier(guildId, value);
-      const embed = new EmbedBuilder()
-        .setColor("#6f4e37")
-        .setDescription(
-          `<:vegacheckmark:1443666279058772028> Moltiplicatore globale impostato a **${stored}x**.`,
+      const embed=new EmbedBuilder().setColor("#6f4e37").setDescription(`<:vegacheckmark:1443666279058772028> Moltiplicatore globale impostato a **${stored}x**.`,
         );
       await safeMessageReply(message, {
         embeds: [embed],
@@ -316,16 +261,12 @@ module.exports = {
       note: `Comando +level ${sub}`,
     });
 
-    const lines = [
-      `- Utente: <@${target.id}>`,
-      `- Azione: **${sub}**`,
-      `- Livello: **${beforeLevel} -> ${doc.level}**`,
-      `- EXP: **${beforeExp} -> ${doc.totalExp}**`,
+    const lines=[`- Utente: <@${target.id}>`,
+      `-Azione:**${sub}**`,
+      `-Livello:**${beforeLevel}->${doc.level}**`,
+      `-EXP:**${beforeExp}->${doc.totalExp}**`,
     ];
-    const embed = new EmbedBuilder()
-      .setColor("#6f4e37")
-      .setTitle("Aggiornamento Level")
-      .setDescription(lines.join("\n"));
+    const embed=new EmbedBuilder().setColor("#6f4e37").setTitle("Aggiornamento Level").setDescription(lines.join("\n"));
     await safeMessageReply(message, {
       embeds: [embed],
       allowedMentions: { repliedUser: false },

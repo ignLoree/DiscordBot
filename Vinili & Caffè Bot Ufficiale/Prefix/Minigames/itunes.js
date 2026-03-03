@@ -9,10 +9,7 @@ module.exports = {
     if (!query) return replyError(message, "Uso: +itunes <titolo o artista>");
 
     try {
-      const data = await fetchJson(
-        "https://itunes.apple.com/search?media=music&limit=1&term=" +
-          encodeURIComponent(query),
-      );
+      const data=await fetchJson("https://itunes.apple.com/search?media=music&limit=1&term="+encodeURIComponent(query),);
       const track = Array.isArray(data?.results) ? data.results[0] : null;
       if (!track) return replyError(message, "Nessun risultato trovato su iTunes.");
 

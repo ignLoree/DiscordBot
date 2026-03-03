@@ -32,8 +32,7 @@ function resolveCommandFromContent(message, client) {
     const raw = content.slice(matchedOverridePrefix.length).trim();
     const commandToken = String(raw.split(/\s+/)[0] || "").toLowerCase();
     if (!commandToken) return null;
-    const resolved =
-      overrideMap.get(matchedOverridePrefix)?.get(commandToken) || null;
+    const resolved=overrideMap.get(matchedOverridePrefix)?.get(commandToken)||null;
     if (!resolved) return null;
     return { command: resolved, usedPrefix: matchedOverridePrefix };
   }
@@ -46,10 +45,7 @@ function resolveCommandFromContent(message, client) {
   const commandToken = String(raw.split(/\s+/)[0] || "").toLowerCase();
   if (!commandToken) return null;
 
-  const resolved =
-    client?.pcommands?.get?.(commandToken) ||
-    client?.pcommands?.get?.(client?.aliases?.get?.(commandToken)) ||
-    null;
+  const resolved=client?.pcommands?.get?.(commandToken)||client?.pcommands?.get?.(client?.aliases?.get?.(commandToken))||null;
   if (!resolved) return null;
 
   return { command: resolved, usedPrefix: matchedPrefix };

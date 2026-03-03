@@ -54,12 +54,8 @@ module.exports = {
     }
 
     const subRaw = args[0] ? String(args[0]).toLowerCase() : "";
-    const sub = ["server", "user", "guild"].includes(subRaw)
-      ? subRaw
-      : "user";
-    const query = ["server", "user", "guild"].includes(subRaw)
-      ? args.slice(1).join(" ")
-      : args.join(" ");
+    const sub=["server","user","guild"].includes(subRaw)?subRaw:"user";
+    const query=["server","user","guild"].includes(subRaw)?args.slice(1).join(" "):args.join(" ");
 
     if (sub === "guild") {
       const iconUrl = message.guild.iconURL({ size: 4096 });
@@ -74,11 +70,7 @@ module.exports = {
           ],
         });
       }
-      const embed = new EmbedBuilder()
-        .setTitle("Icona del server")
-        .setImage(iconUrl)
-        .setAuthor({ name: message.guild.name, iconURL: iconUrl })
-        .setColor("#6f4e37");
+      const embed=new EmbedBuilder().setTitle("Icona del server").setImage(iconUrl).setAuthor({name:message.guild.name,iconURL:iconUrl}).setColor("#6f4e37");
       return safeChannelSend(message.channel, { embeds: [embed] });
     }
 
@@ -95,19 +87,9 @@ module.exports = {
     } catch {}
 
     if (Boolean(privacyDoc?.blocked)) {
-      const blockedEmbed = new EmbedBuilder()
-        .setColor("#e74c3c")
-        .setTitle("<:vegax:1443934876440068179> Avatar Bloccato")
-        .setThumbnail(
-          "https://images-ext-1.discordapp.net/external/qZp8C7dthauZs3SMmWIVqoxSjwXkKvmCXhZpro2lLzI/%3Fformat%3Dwebp%26quality%3Dlossless%26width%3D640%26height%3D640/https/images-ext-1.discordapp.net/external/fRgXgmNV39-c_gorTdDdWPSyx2fFy_i4t01cYEF-DKY/https/i.imgur.com/7OnTq5S.png?format=webp&quality=lossless&width=640&height=640",
-        )
-        .setDescription(
-          "Questo utente ha bloccato la visualizzazione del proprio avatar.",
-        );
+      const blockedEmbed=new EmbedBuilder().setColor("#e74c3c").setTitle("<:vegax:1443934876440068179> Avatar Bloccato").setThumbnail("https://images-ext-1.discordapp.net/external/qZp8C7dthauZs3SMmWIVqoxSjwXkKvmCXhZpro2lLzI/%3Fformat%3Dwebp%26quality%3Dlossless%26width%3D640%26height%3D640/https/images-ext-1.discordapp.net/external/fRgXgmNV39-c_gorTdDdWPSyx2fFy_i4t01cYEF-DKY/https/i.imgur.com/7OnTq5S.png?format=webp&quality=lossless&width=640&height=640",).setDescription("Questo utente ha bloccato la visualizzazione del proprio avatar.",);
 
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`avatar_unblock:${user.id}`)
+      const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`avatar_unblock:${user.id}`)
           .setLabel("Sblocca")
           .setEmoji("<a:VC_Unlock:1470011538432852108>")
           .setStyle(ButtonStyle.Secondary),
@@ -147,28 +129,13 @@ module.exports = {
     const totalViews = Number(privacyCount?.views || 0);
     const isUser = sub === "user";
     const title = isUser ? "User Avatar" : "Server Avatar";
-    const imageUrl = isUser
-      ? user.displayAvatarURL({ size: 4096 })
-      : member.displayAvatarURL({ size: 4096 });
-    const authorLabel =
-      member?.displayName || member?.user?.username || user.tag;
+    const imageUrl=isUser?user.displayAvatarURL({size:4096}):member.displayAvatarURL({size:4096});
+    const authorLabel=member?.displayName||member?.user?.username||user.tag;
 
-    const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setImage(imageUrl)
-      .setAuthor({ name: authorLabel, iconURL: user.displayAvatarURL() })
-      .setColor("#6f4e37")
-      .setFooter({
-        text: `Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews} Views 👁️`,
+    const embed=new EmbedBuilder().setTitle(title).setImage(imageUrl).setAuthor({name:authorLabel,iconURL:user.displayAvatarURL()}).setColor("#6f4e37").setFooter({text:`Puoi disabilitare la visualizzazione del tuo avatar tramite il comando ?blockav.\n${totalViews}Views👁️`,
       });
 
-    const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId("avatar_views")
-        .setLabel("Classifica Views")
-        .setEmoji("📊")
-        .setStyle(ButtonStyle.Secondary),
-    );
+    const row=new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId("avatar_views").setLabel("Classifica Views").setEmoji("📊").setStyle(ButtonStyle.Secondary),);
 
     return safeChannelSend(message.channel, {
       embeds: [embed],

@@ -1,16 +1,8 @@
 const { EmbedBuilder, PermissionsBitField, AuditLogEvent, } = require("discord.js");
 const IDs = require("../Utils/Config/ids");
-const {
-  scheduleStaffListRefresh,
-  didStaffMembershipChange,
-} = require("../Utils/Community/staffListUtils");
-const {
-  getJoinGateConfigSnapshot,
-} = require("../Services/Moderation/joinGateService");
-const {
-  isSecurityProfileImmune,
-  hasAdminsProfileCapability,
-} = require("../Services/Moderation/securityProfilesService");
+const{scheduleStaffListRefresh,didStaffMembershipChange,}=require("../Utils/Community/staffListUtils");
+const{getJoinGateConfigSnapshot,}=require("../Services/Moderation/joinGateService");
+const{isSecurityProfileImmune,hasAdminsProfileCapability,}=require("../Services/Moderation/securityProfilesService");
 const { ARROW, formatAuditActor, resolveChannelRolesLogChannel, resolveResponsible, } = require("../Utils/Logging/channelRolesLogUtils");
 const { resolveModLogChannel, formatResponsible, nowDiscordTs } = require("../Utils/Logging/modAuditLogUtils");
 const { handleMemberRoleAddition: antiNukeHandleMemberRoleAddition } = require("../Services/Moderation/antiNukeService");
@@ -25,31 +17,13 @@ const ROLE_UPDATE_LOG_DEDUPE_TTL_MS = 5_000;
 const PERK_ROLE_ID = IDs.roles.PicPerms;
 const BOOST_FOLLOWUP_DELAY_MS = 5000;
 
-const PLUS_COLOR_REQUIRED_ROLE_IDS = [
-  IDs.roles.ServerBooster,
-  IDs.roles.Level50,
-].filter(Boolean);
-const PLUS_COLOR_ROLE_IDS = [
-  IDs.roles.redPlus,
-  IDs.roles.orangePlus,
-  IDs.roles.yellowPlus,
-  IDs.roles.greenPlus,
-  IDs.roles.bluePlus,
-  IDs.roles.purplePlus,
-  IDs.roles.pinkPlus,
-  IDs.roles.blackPlus,
-  IDs.roles.grayPlus,
-  IDs.roles.whitePlus,
-  IDs.roles.YinYangPlus,
-].filter(Boolean);
+const PLUS_COLOR_REQUIRED_ROLE_IDS=[IDs.roles.ServerBooster,IDs.roles.Level50,].filter(Boolean);
+const PLUS_COLOR_ROLE_IDS=[IDs.roles.redPlus,IDs.roles.orangePlus,IDs.roles.yellowPlus,IDs.roles.greenPlus,IDs.roles.bluePlus,IDs.roles.purplePlus,IDs.roles.pinkPlus,IDs.roles.blackPlus,IDs.roles.grayPlus,IDs.roles.whitePlus,IDs.roles.YinYangPlus,].filter(Boolean);
 
 const boostCountCache = new Map();
 const boostAnnounceCache = new Map();
 const boostFollowupLocks = new Map();
-const CORE_EXEMPT_USER_IDS = new Set([
-  "1466495522474037463",
-  "1329118940110127204",
-]);
+const CORE_EXEMPT_USER_IDS=new Set(["1466495522474037463","1329118940110127204",]);
 
 function buildJoinGateTriggeredEmbed(member, reason) {
   return new EmbedBuilder()
@@ -92,12 +66,7 @@ function cleanupRoleUpdateLogDedupe(now = Date.now()) {
 function shouldSkipRoleUpdateLog(guildId, userId, additions = [], removals = []) {
   const now = Date.now();
   cleanupRoleUpdateLogDedupe(now);
-  const signature = [
-    String(guildId || ""),
-    String(userId || ""),
-    additions.map((role) => String(role?.id || "")).sort().join(","),
-    removals.map((role) => String(role?.id || "")).sort().join(","),
-  ].join(":");
+  const signature=[String(guildId||""),String(userId||""),additions.map((role) => String(role?.id||"")).sort().join(","),removals.map((role) => String(role?.id||"")).sort().join(","),].join(":");
   const lastTs = Number(ROLE_UPDATE_LOG_DEDUPE.get(signature) || 0);
   ROLE_UPDATE_LOG_DEDUPE.set(signature, now);
   return now - lastTs <= ROLE_UPDATE_LOG_DEDUPE_TTL_MS;
@@ -147,12 +116,7 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
 
   let entry = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const logs = await guild
-      .fetchAuditLogs({
-        type: AuditLogEvent.MemberUpdate,
-        limit: AUDIT_FETCH_LIMIT,
-      })
-      .catch(() => null);
+    const logs=await guild.fetchAuditLogs({type:AuditLogEvent.MemberUpdate,limit:AUDIT_FETCH_LIMIT,}).catch(() => null);
 
     if (logs?.entries?.size) {
       const nowMs = Date.now();
@@ -160,8 +124,7 @@ async function resolveMemberUpdateAuditInfo(guild, targetUserId) {
         logs.entries.find((item) => {
           const createdMs = Number(item?.createdTimestamp || 0);
           const targetId = String(item?.target?.id || "");
-          const withinWindow =
-            createdMs > 0 && nowMs - createdMs <= AUDIT_LOOKBACK_MS;
+          const withinWindow=createdMs>0&&nowMs-createdMs<=AUDIT_LOOKBACK_MS;
           return withinWindow && targetId === String(targetUserId || "");
         }) || null;
     }
@@ -189,20 +152,15 @@ async function sendTimeoutRemovedModLog(oldMember, newMember) {
   const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
   const responsible = formatResponsible(audit.executor);
 
-  const embed = new EmbedBuilder()
-    .setColor("#57F287")
-    .setTitle("Timeout Removed")
-    .setDescription(
-      [
-        `${ARROW} **Timeout for** ${newMember.user} **has been removed**`,
-        `${ARROW} **Responsible:** ${responsible}`,
-        `${ARROW} ${nowDiscordTs()}`,
-        audit.reason ? `${ARROW} **Reason:** ${audit.reason}` : null,
+  const embed=new EmbedBuilder().setColor("#57F287").setTitle("Timeout Removed").setDescription([`${ARROW}**Timeout for**${newMember.user}**has been removed**`,
+        `${ARROW}**Responsible:**${responsible}`,
+        `${ARROW}${nowDiscordTs()}`,
+        audit.reason ? `${ARROW}**Reason:**${audit.reason}` : null,
       ]
         .filter(Boolean)
         .join("\n"),
     )
-    .setFooter({ text: `ID: ${newMember.user.id}` })
+    .setFooter({ text: `ID:${newMember.user.id}` })
     .setTimestamp();
 
   await modLogChannel.send({ embeds: [embed] }).catch(() => null);
@@ -228,10 +186,8 @@ async function sendMemberUpdateLog(oldMember, newMember) {
   const audit = await resolveMemberUpdateAuditInfo(guild, newMember.user.id);
   const responsibleText = formatAuditActor(audit.executor);
 
-  const lines = [
-    `<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
-    `<:VC_right_arrow:1473441155055096081> **Target:** ${newMember.user} \`${newMember.user.id}\``,
-    `<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(), "F")}`,
+  const lines=[`<:VC_right_arrow:1473441155055096081> **Responsible:** ${responsibleText}`,
+    `<:VC_right_arrow:1473441155055096081>**Target:**${newMember.user}\`${newMember.user.id}\``,`<:VC_right_arrow:1473441155055096081> ${toDiscordTimestamp(new Date(),"F")}`,
   ];
 
   if (audit.reason) {
@@ -250,10 +206,7 @@ async function sendMemberUpdateLog(oldMember, newMember) {
     lines.push(`  ${buildNickChangeLine(oldMember, newMember)}`);
   }
 
-  const embed = new EmbedBuilder()
-    .setColor("#F59E0B")
-    .setTitle("Member Update")
-    .setDescription(lines.join("\n"));
+  const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Update").setDescription(lines.join("\n"));
 
   await logChannel.send({ embeds: [embed] }).catch(() => null);
 }
@@ -281,68 +234,18 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
 
   const expectedAddedIds = new Set(cacheAdditions.map((role) => String(role?.id || "")).filter(Boolean));
   const expectedRemovedIds = new Set(cacheRemovals.map((role) => String(role?.id || "")).filter(Boolean));
-  const audit = await resolveResponsible(
-    guild,
-    actionType,
-    (entry) => {
-      if (String(entry?.target?.id || "") !== String(newMember?.id || "")) return 0;
-      let score = 3;
-      const changes = Array.isArray(entry?.changes) ? entry.changes : [];
-      const auditAddedIds = new Set();
-      const auditRemovedIds = new Set();
-
-      for (const change of changes) {
-        const key = String(change?.key || "");
-        const raw = Array.isArray(change?.new)
-          ? change.new
-          : Array.isArray(change?.old)
-            ? change.old
-            : [];
-        if (key !== "$add" && key !== "$remove") continue;
-        for (const item of raw) {
-          const id = String(item?.id || item?.role_id || "").trim();
-          if (!id) continue;
-          if (key === "$add") auditAddedIds.add(id);
-          if (key === "$remove") auditRemovedIds.add(id);
-        }
-      }
-
-      if (!auditAddedIds.size && !auditRemovedIds.size) return score;
-      for (const id of auditAddedIds) {
-        if (expectedAddedIds.has(id)) score += 4;
-      }
-      for (const id of auditRemovedIds) {
-        if (expectedRemovedIds.has(id)) score += 4;
-      }
-      if (
-        auditAddedIds.size === expectedAddedIds.size &&
-        auditRemovedIds.size === expectedRemovedIds.size
-      ) {
-        score += 6;
-      }
-      return score;
-    },
-  );
-
-  const auditAdditions = [];
-  const auditRemovals = [];
+  const audit=await resolveResponsible(guild,actionType,(entry) => {if(String(entry?.target?.id||"")!==String(newMember?.id||""))return 0;let score=3;const changes=Array.isArray(entry?.changes)?entry.changes:[];const auditAddedIds=new Set();const auditRemovedIds=new Set();for(const change of changes){const key=String(change?.key||"");const raw=Array.isArray(change?.new)?change.new:Array.isArray(change?.old)?change.old:[];if(key!=="$add"&&key!=="$remove")continue;for(const item of raw){const id=String(item?.id||item?.role_id||"").trim();if(!id)continue;if(key==="$add")auditAddedIds.add(id);if(key==="$remove")auditRemovedIds.add(id);}}if(!auditAddedIds.size&&!auditRemovedIds.size)return score;for(const id of auditAddedIds){if(expectedAddedIds.has(id))score+=4;}for(const id of auditRemovedIds){if(expectedRemovedIds.has(id))score+=4;}if(auditAddedIds.size===expectedAddedIds.size&&auditRemovedIds.size===expectedRemovedIds.size){score+=6;}return score;},);const auditAdditions=[];const auditRemovals= [];
   const auditChanges = Array.isArray(audit?.entry?.changes) ? audit.entry.changes : [];
   for (const change of auditChanges) {
     const key = String(change?.key || "");
-    const raw = Array.isArray(change?.new)
-      ? change.new
-      : Array.isArray(change?.old)
-        ? change.old
-        : [];
+    const raw=Array.isArray(change?.new)?change.new:Array.isArray(change?.old)?change.old:[];
     if (key !== "$add" && key !== "$remove") continue;
 
     for (const item of raw) {
       const roleId = String(item?.id || item?.role_id || "").trim();
       if (!roleId || roleId === guild.id) continue;
       const role = guild.roles.cache.get(roleId);
-      const fallback = {
-        id: roleId,
-        toString: () => `<@&${roleId}>`,
+      const fallback={id:roleId,toString:() => `<@&${roleId}>`,
       };
       if (key === "$add") auditAdditions.push(role || fallback);
       if (key === "$remove") auditRemovals.push(role || fallback);
@@ -375,10 +278,8 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
 
   const logChannel = await resolveChannelRolesLogChannel(guild);
   if (logChannel?.isTextBased?.()) {
-    const lines = [
-      `${ARROW} **Responsible:** ${responsible}`,
-      `${ARROW} **Target:** ${newMember.user} \`${newMember.user.id}\``,
-      `${ARROW} ${toDiscordTimestamp(new Date(), "F")}`,
+    const lines=[`${ARROW}**Responsible:**${responsible}`,
+      `${ARROW}**Target:**${newMember.user}\`${newMember.user.id}\``,`${ARROW}${toDiscordTimestamp(new Date(),"F")}`,
       "",
       "**Changes**",
     ];
@@ -397,10 +298,7 @@ async function sendMemberRoleUpdateLog(oldMember, newMember) {
       }
     }
 
-    const embed = new EmbedBuilder()
-      .setColor("#F59E0B")
-      .setTitle("Member Role Update")
-      .setDescription(lines.join("\n"));
+    const embed=new EmbedBuilder().setColor("#F59E0B").setTitle("Member Role Update").setDescription(lines.join("\n"));
 
     await logChannel.send({ embeds: [embed] }).catch(() => null);
   }
@@ -449,28 +347,20 @@ async function removePlusColorsIfNotEligible(member) {
   if (!me) return;
   if (!hasManageRolesPermission(member)) return;
 
-  const hasRequiredRole = PLUS_COLOR_REQUIRED_ROLE_IDS.some((roleId) =>
-    member.roles.cache.has(roleId),
-  );
+  const hasRequiredRole=PLUS_COLOR_REQUIRED_ROLE_IDS.some((roleId) => member.roles.cache.has(roleId),);
   if (hasRequiredRole) return;
 
-  const heldPlusRoles = PLUS_COLOR_ROLE_IDS.filter((roleId) =>
-    member.roles.cache.has(roleId),
-  );
+  const heldPlusRoles=PLUS_COLOR_ROLE_IDS.filter((roleId) => member.roles.cache.has(roleId),);
   if (!heldPlusRoles.length) return;
 
-  const removableRoleIds = heldPlusRoles.filter((roleId) => {
-    const role = member.guild.roles.cache.get(roleId);
-    return role && role.position < me.roles.highest.position;
-  });
+  const removableRoleIds=heldPlusRoles.filter((roleId) => {const role=member.guild.roles.cache.get(roleId);return role&&role.position<me.roles.highest.position;});
   if (!removableRoleIds.length) return;
 
   await member.roles.remove(removableRoleIds).catch(() => { });
 }
 
 function buildBoostEmbed(member, boostCount) {
-  const DIVIDER_URL =
-    "https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
+  const DIVIDER_URL="https://cdn.discordapp.com/attachments/1467927329140641936/1467927368034422959/image.png?ex=69876f65&is=69861de5&hm=02f439283952389d1b23bb2793b6d57d0f8e6518e5a209cb9e84e625075627db";
 
   return new EmbedBuilder()
     .setAuthor({ name: member.user.username })
@@ -529,9 +419,7 @@ function normalizeText(value) {
 }
 
 function wildcardToRegex(wildcard) {
-  const escaped = String(wildcard || "")
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-    .replace(/\*/g, ".*");
+  const escaped=String(wildcard||"").replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*");
   return new RegExp(`^${escaped}$`, "i");
 }
 
@@ -549,9 +437,7 @@ function matchUsernameFilters(candidate, rules) {
     }
   }
 
-  const wildcardWords = Array.isArray(rules?.wildcardWords)
-    ? rules.wildcardWords
-    : [];
+  const wildcardWords=Array.isArray(rules?.wildcardWords)?rules.wildcardWords:[];
   for (const wildcard of wildcardWords) {
     const regex = wildcardToRegex(normalizeText(wildcard));
     if (regex.test(normalized)) {
@@ -563,13 +449,8 @@ function matchUsernameFilters(candidate, rules) {
 }
 
 async function sendJoinGatePostJoinDm(member, reason, extraLines = []) {
-  const embed = new EmbedBuilder()
-    .setColor("#ED4245")
-    .setTitle("Join Gate")
-    .setDescription(
-      [
-        `${ARROW} **Azione applicata dopo il join**`,
-        `${ARROW} **Motivo:** ${reason}`,
+  const embed=new EmbedBuilder().setColor("#ED4245").setTitle("Join Gate").setDescription([`${ARROW}**Azione applicata dopo il join**`,
+        `${ARROW}**Motivo:**${reason}`,
         ...extraLines.filter(Boolean),
       ].join("\n"),
     );
@@ -610,15 +491,9 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
 
   const action = String(cfg?.usernameFilter?.action || "kick").toLowerCase();
   const me = newMember.guild.members.me;
-  const canKick =
-    Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers)) &&
-    Boolean(newMember?.kickable);
-  const canBan =
-    Boolean(me?.permissions?.has(PermissionsBitField.Flags.BanMembers)) &&
-    Boolean(newMember?.bannable);
-  const canTimeout =
-    Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) &&
-    Boolean(newMember?.moderatable);
+  const canKick=Boolean(me?.permissions?.has(PermissionsBitField.Flags.KickMembers))&&Boolean(newMember?.kickable);
+  const canBan=Boolean(me?.permissions?.has(PermissionsBitField.Flags.BanMembers))&&Boolean(newMember?.bannable);
+  const canTimeout=Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers))&&Boolean(newMember?.moderatable);
 
   let punished = false;
   let appliedAction = action;
@@ -662,22 +537,12 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
   }
 
   if (punished && appliedAction !== "log" && newMember.guild?.client) {
-    const modAction =
-      appliedAction === "timeout" ? "MUTE" : appliedAction === "ban" ? "BAN" : "KICK";
+    const modAction=appliedAction==="timeout"?"MUTE":appliedAction==="ban"?"BAN":"KICK";
     const durationMs = appliedAction === "timeout" ? 6 * 60 * 60_000 : null;
     const caseReason = `JoinGate post-join: ${reason}`;
     try {
       const config = await getModConfig(newMember.guild.id);
-      const { doc, created } = await createModCase({
-        guildId: newMember.guild.id,
-        action: modAction,
-        userId: newMember.id,
-        modId: newMember.client.user.id,
-        reason: caseReason,
-        durationMs,
-        context: {},
-        dedupe: { enabled: true, windowMs: 15_000, matchReason: true },
-      });
+      const{doc,created}=await createModCase({guildId:newMember.guild.id,action:modAction,userId:newMember.id,modId:newMember.client.user.id,reason:caseReason,durationMs,context:{},dedupe:{enabled:true,windowMs:15_000,matchReason:true},});
       if (created) {
         await logModCase({ client: newMember.client, guild: newMember.guild, modCase: doc, config });
       }
@@ -687,32 +552,24 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
   }
 
   const modLogId = IDs.channels?.modLogs;
-  const logChannel = modLogId
-    ? (newMember.guild.channels.cache.get(modLogId) ||
-        (await newMember.guild.channels.fetch(modLogId).catch(() => null)))
-    : null;
+  const logChannel=modLogId?(newMember.guild.channels.cache.get(modLogId)||(await newMember.guild.channels.fetch(modLogId).catch(() => null))):null;
   if (!logChannel?.isTextBased?.()) return;
 
-  const embed = punished
-    ? new EmbedBuilder()
-        .setColor("#A97142")
-        .setTitle(
-          `${newMember.user.username} has been ${String(appliedAction || "kick").toLowerCase() === "timeout" ? "timed out" : String(appliedAction || "kick").toLowerCase() === "ban" ? "banned" : "kicked"}!!`,
+  const embed=punished?new EmbedBuilder().setColor("#A97142").setTitle(`${newMember.user.username}has been ${String(appliedAction||"kick").toLowerCase()==="timeout"?"timed out":String(appliedAction||"kick").toLowerCase()==="ban"?"banned":"kicked"}!!`,
         )
         .setDescription(
           [
-            `${ARROW} **Member:** ${newMember.user.username} [\`${newMember.user.id}\`]`,
-            `${ARROW} **Reason:** Username matches blocked pattern (post-join filter).`,
-            `${ARROW} **Rule:** Username Filter (Post Join)`,
-            `${ARROW} **Action:** ${String(appliedAction || "log").toUpperCase()}`,
-            `${ARROW} **Match Type:** ${match.type}`,
-            `${ARROW} **Match:** ${match.value}`,
-            `${ARROW} **Old Name:** ${oldCandidate || "N/A"}`,
-            `${ARROW} **New Name:** ${newCandidate || "N/A"}`,
+            `${ARROW}**Member:**${newMember.user.username}[\`${newMember.user.id}\`]`,`${ARROW}**Reason:**Username matches blocked pattern(post-join filter).`,
+            `${ARROW}**Rule:**Username Filter(Post Join)`,
+            `${ARROW}**Action:**${String(appliedAction||"log").toUpperCase()}`,
+            `${ARROW}**Match Type:**${match.type}`,
+            `${ARROW}**Match:**${match.value}`,
+            `${ARROW}**Old Name:**${oldCandidate||"N/A"}`,
+            `${ARROW}**New Name:**${newCandidate||"N/A"}`,
             "",
             "**More Details:**",
-            `${ARROW} **Member Direct Messaged?** ${dmSent ? "✅" : "❌"}`,
-            `${ARROW} **Member Punished?** ${punished ? "✅" : "❌"}`,
+            `${ARROW}**Member Direct Messaged?**${dmSent?"✅":"❌"}`,
+            `${ARROW}**Member Punished?**${punished?"✅":"❌"}`,
           ].join("\n"),
         )
         .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))
@@ -727,18 +584,11 @@ async function enforceJoinGatePostJoinUsername(oldMember, newMember) {
 
 function computeBoostDelta(oldMember, newMember, guildId) {
   const currentCount = Number(newMember.guild.premiumSubscriptionCount || 0);
-  const oldCountFromEvent = Number(
-    oldMember?.guild?.premiumSubscriptionCount || 0,
-  );
-  const prevCount =
-    typeof boostCountCache.get(guildId) === "number"
-      ? boostCountCache.get(guildId)
-      : oldCountFromEvent;
+  const oldCountFromEvent=Number(oldMember?.guild?.premiumSubscriptionCount||0,);
+  const prevCount=typeof boostCountCache.get(guildId)==="number"?boostCountCache.get(guildId):oldCountFromEvent;
   const effectivePrev = oldCountFromEvent > 0 ? oldCountFromEvent : prevCount;
   const countIncreased = currentCount > effectivePrev;
-  const boostDelta = countIncreased
-    ? Math.max(1, currentCount - effectivePrev)
-    : 0;
+  const boostDelta=countIncreased?Math.max(1,currentCount-effectivePrev):0;
 
   return { currentCount, countIncreased, boostDelta };
 }
@@ -756,11 +606,7 @@ function scheduleBoostFollowup(
   setTimeout(async () => {
     try {
       const freshGuild = await newMember.guild.fetch().catch(() => null);
-      const latestCount = Number(
-        freshGuild?.premiumSubscriptionCount ||
-        newMember.guild.premiumSubscriptionCount ||
-        0,
-      );
+      const latestCount=Number(freshGuild?.premiumSubscriptionCount||newMember.guild.premiumSubscriptionCount||0,);
       const knownCount = Number(boostCountCache.get(guildId) || currentCount);
       const missing = Math.max(0, latestCount - knownCount);
 
@@ -785,9 +631,7 @@ function scheduleBoostFollowup(
 async function handleBoostUpdate(oldMember, newMember) {
   const boostChannelId = IDs.channels.supporters;
   if (!boostChannelId) return;
-  const boostAnnounceChannel =
-    newMember.guild.channels.cache.get(boostChannelId) ||
-    (await newMember.guild.channels.fetch(boostChannelId).catch(() => null));
+  const boostAnnounceChannel=newMember.guild.channels.cache.get(boostChannelId)||(await newMember.guild.channels.fetch(boostChannelId).catch(() => null));
   if (!boostAnnounceChannel?.isTextBased?.()) return;
 
   const oldBoostTs = oldMember.premiumSinceTimestamp || 0;
@@ -795,11 +639,7 @@ async function handleBoostUpdate(oldMember, newMember) {
   const guildId = newMember.guild.id;
   const boostKey = `${guildId}:${newMember.id}`;
 
-  const { currentCount, countIncreased, boostDelta } = computeBoostDelta(
-    oldMember,
-    newMember,
-    guildId,
-  );
+  const{currentCount,countIncreased,boostDelta}=computeBoostDelta(oldMember,newMember,guildId,);
   if (!(newBoostTs && (newBoostTs !== oldBoostTs || countIncreased))) {
     boostCountCache.set(guildId, currentCount);
     return;

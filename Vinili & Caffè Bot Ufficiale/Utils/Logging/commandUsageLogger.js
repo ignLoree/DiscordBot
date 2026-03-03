@@ -29,10 +29,7 @@ async function getChannelSafe(client, channelId) {
   const cacheKey = getCacheKey("channel", client?.user?.id, channelId);
   const cached = getCachedValue(cacheKey);
   if (cached) return cached;
-  const channel = (
-    client.channels.cache.get(channelId) ||
-    (await client.channels.fetch(channelId).catch(() => null))
-  );
+  const channel=(client.channels.cache.get(channelId)||(await client.channels.fetch(channelId).catch(() => null)));
   return setCachedValue(cacheKey, channel);
 }
 
@@ -44,14 +41,9 @@ async function getCentralChannel(client, channelId) {
   if (cached) return cached;
   const mainGuildId = IDs?.guilds?.main || null;
   if (!mainGuildId) return getChannelSafe(client, channelId);
-  const guild =
-    client.guilds.cache.get(mainGuildId) ||
-    (await client.guilds.fetch(mainGuildId).catch(() => null));
+  const guild=client.guilds.cache.get(mainGuildId)||(await client.guilds.fetch(mainGuildId).catch(() => null));
   if (!guild) return getChannelSafe(client, channelId);
-  const centralChannel = (
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null))
-  );
+  const centralChannel=(guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null)));
   if (centralChannel) return setCachedValue(cacheKey, centralChannel);
   return getChannelSafe(client, channelId);
 }
@@ -63,17 +55,13 @@ async function logCommandUsage(
   if (!channelId) return;
   const channel = await getCentralChannel(client, channelId);
   if (!channel) return;
-  const embed = new EmbedBuilder()
-    .setColor("#6f4e37")
-    .setAuthor({
-      name: `${user} ha usato un comando.`,
+  const embed=new EmbedBuilder().setColor("#6f4e37").setAuthor({name:`${user}ha usato un comando.`,
       iconURL: client.user.displayAvatarURL({ size: 64 }),
     })
-    .setTitle(`${client.user.username} Log Comandi`)
+    .setTitle(`${client.user.username}Log Comandi`)
     .addFields(
       { name: "Nome Server", value: `${serverName}` },
-      { name: "Comando", value: `\`\`\`${content}\`\`\`` },
-      { name: "Utente", value: `${user} | ${userId}` },
+      { name: "Comando", value: `\`\`\`${content}\`\`\``},{name:"Utente",value:`${user}|${userId}` },
     )
     .setTimestamp();
   await channel.send({ embeds: [embed] }).catch((err) => {

@@ -2,37 +2,14 @@ const fs = require("fs");
 const path = require("path");
 const IDs = require("../Utils/Config/ids");
 
-const STICKY_CONFIG = Object.fromEntries(
-  [
-    [
-      IDs.channels.mudae,
-      "**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)__**",
-    ],
-    [
-      IDs.channels.poketwo,
-      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**",
-    ],
-    [
-      IDs.channels.ship,
-      "**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1476550416656498930)__**",
-    ],
-  ].filter(([channelId, text]) => Boolean(channelId && text)),
-);
+const STICKY_CONFIG=Object.fromEntries([[IDs.channels.mudae,"**__[Clicca qui per leggere i comandi del bot](<https://discord.com/channels/1329080093599076474/1442569182825681077/1442897267681132616>)__**",],[IDs.channels.poketwo,"**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1442569184281362552/1470197148674162932)__**",],[IDs.channels.ship,"**__[Clicca qui per leggere i comandi del bot](https://discord.com/channels/1329080093599076474/1469685688814407726/1476550416656498930)__**",],].filter(([channelId,text]) => Boolean(channelId&&text)),);
 
 const lastStickyMessageByChannel = new Map();
 const stickyProcessingChannels = new Set();
 const stickyPendingChannels = new Set();
-const STICKY_STATE_PATH = path.resolve(
-  __dirname,
-  "../Data/stickyMessageState.json",
-);
-const STICKY_SETTINGS_PATH = path.resolve(
-  __dirname,
-  "../Data/stickyMessageSettings.json",
-);
-const DEFAULT_STICKY_SETTINGS = {
-  enabled: false,
-};
+const STICKY_STATE_PATH=path.resolve(__dirname,"../Data/stickyMessageState.json",);
+const STICKY_SETTINGS_PATH=path.resolve(__dirname,"../Data/stickyMessageSettings.json",);
+const DEFAULT_STICKY_SETTINGS={enabled:false,};
 let stickySettingsCache = { mtimeMs: -1, data: DEFAULT_STICKY_SETTINGS };
 
 function logError(...args) {
@@ -65,9 +42,7 @@ function loadStickySettings() {
     }
     const raw = fs.readFileSync(STICKY_SETTINGS_PATH, "utf8");
     const parsed = JSON.parse(raw);
-    const data = {
-      enabled: parsed?.enabled === true,
-    };
+    const data={enabled:parsed?.enabled===true,};
     stickySettingsCache = { mtimeMs: stat.mtimeMs, data };
     return data;
   } catch (error) {
@@ -121,11 +96,7 @@ async function deletePreviousSticky(channel, stickyText, clientUserId) {
 
   const recent = await channel.messages.fetch({ limit: 20 }).catch(() => null);
   if (!recent?.size) return;
-  const oldSticky = recent.find(
-    (msg) =>
-      msg.author?.id === clientUserId &&
-      String(msg.content || "").trim() === stickyText,
-  );
+  const oldSticky=recent.find((msg) => msg.author?.id===clientUserId&&String(msg.content||"").trim()===stickyText,);
   if (oldSticky) {
     await oldSticky.delete().catch((error) => {
       logError("delete old sticky failed:", error);
@@ -142,13 +113,7 @@ async function collapseStickyMessages(
 ) {
   const recent = await channel.messages.fetch({ limit: 50 }).catch(() => null);
   if (!recent?.size) return;
-  const matching = recent
-    .filter(
-      (msg) =>
-        msg.author?.id === clientUserId &&
-        String(msg.content || "").trim() === stickyText,
-    )
-    .sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+  const matching=recent.filter((msg) => msg.author?.id===clientUserId&&String(msg.content||"").trim()===stickyText,).sort((a,b) => b.createdTimestamp-a.createdTimestamp);
   if (!matching.size) return;
 
   let keepId = keepMessageId;
@@ -166,9 +131,7 @@ async function collapseStickyMessages(
 async function processStickyChannel(channel, stickyText, clientUserId) {
   await deletePreviousSticky(channel, stickyText, clientUserId);
 
-  const latest = await channel.messages
-    .fetch({ limit: 1 })
-    .catch(() => null);
+  const latest=await channel.messages.fetch({limit:1}).catch(() => null);
   const latestMessage = latest?.first();
   if (
     latestMessage &&
@@ -185,12 +148,7 @@ async function processStickyChannel(channel, stickyText, clientUserId) {
     return;
   }
 
-  const sent = await channel
-    .send({ content: stickyText })
-    .catch((error) => {
-      logError("send sticky failed:", error);
-      return null;
-    });
+  const sent=await channel.send({content:stickyText}).catch((error) => {logError("send sticky failed:",error);return null;});
   if (sent) {
     setStickyMessage(channel.id, sent.id);
     await collapseStickyMessages(
@@ -234,13 +192,7 @@ module.exports = {
       if (stickyPendingChannels.has(channelId)) {
         stickyPendingChannels.delete(channelId);
         setTimeout(() => {
-          const fakeMessage = {
-            guild: message.guild,
-            channelId,
-            channel,
-            author: { id: "sticky-retry" },
-            client: resolvedClient,
-          };
+          const fakeMessage={guild:message.guild,channelId,channel,author:{id:"sticky-retry"},client:resolvedClient,};
           module.exports.execute(fakeMessage, resolvedClient).catch((error) => {
             logError("deferred retry failed:", error);
           });

@@ -48,9 +48,7 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
   let level = 0;
   if (guildId && userId && isDbReady()) {
     try {
-      const user = await ExpUser.findOne({ guildId, userId })
-        .select("level")
-        .lean();
+      const user=await ExpUser.findOne({guildId,userId}).select("level").lean();
       level = Number(user?.level || 0);
     } catch {
       level = 0;

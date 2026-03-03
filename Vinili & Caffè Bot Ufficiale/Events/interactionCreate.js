@@ -1,40 +1,20 @@
 const { InteractionType } = require("discord.js");
-const {
-  handleAutocomplete,
-  handleSlashCommand,
-} = require("./interaction/commandHandlers");
+const{handleAutocomplete,handleSlashCommand,}=require("./interaction/commandHandlers");
 const { handleButtonInteraction } = require("./interaction/buttonHandlers");
 const { handlePartnerModal } = require("./interaction/partnerModal");
 const { handleSuggestionVote } = require("./interaction/suggestionHandlers");
 const { handleTicketInteraction } = require("./interaction/ticketHandlers");
 const { handleDmBroadcastModal } = require("./interaction/dmBroadcastModal");
 const { handleVerifyInteraction } = require("./interaction/verifyHandlers");
-const {
-  handleCustomRoleInteraction,
-} = require("./interaction/customRoleHandlers");
+const{handleCustomRoleInteraction,}=require("./interaction/customRoleHandlers");
 const { handlePauseButton } = require("./interaction/pauseHandlers");
-const {
-  handleTopPaginationModal,
-} = require("./interaction/topPaginationHandlers");
-const {
-  handleEmbedBuilderInteraction,
-} = require("./interaction/embedBuilderHandlers");
-const {
-  handleCandidatureApplicationInteraction,
-} = require("./interaction/candidatureApplicationHandlers");
-const {
-  handleResocontoActionInteraction,
-} = require("./interaction/resocontoHandlers");
-const {
-  handleMinigameButton,
-} = require("../Services/Minigames/minigameService");
-const {
-  acquireButtonSpamGuard,
-  runPermissionGate,
-} = require("../Utils/Interaction/interactionRuntimeGuards");
-const {
-  logInteractionError,
-} = require("../Utils/Interaction/interactionErrorHandler");
+const{handleTopPaginationModal,}=require("./interaction/topPaginationHandlers");
+const{handleEmbedBuilderInteraction,}=require("./interaction/embedBuilderHandlers");
+const{handleCandidatureApplicationInteraction,}=require("./interaction/candidatureApplicationHandlers");
+const{handleResocontoActionInteraction,}=require("./interaction/resocontoHandlers");
+const{handleMinigameButton,}=require("../Services/Minigames/minigameService");
+const{acquireButtonSpamGuard,runPermissionGate,}=require("../Utils/Interaction/interactionRuntimeGuards");
+const{logInteractionError,}=require("../Utils/Interaction/interactionErrorHandler");
 
 module.exports = {
   name: "interactionCreate",

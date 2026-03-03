@@ -1,19 +1,9 @@
 const { EmbedBuilder } = require("discord.js");
 const { safeMessageReply } = require("../../Utils/Moderation/reply");
-const {
-  playRequest,
-  touchMusicOutputChannel,
-  searchPlayable,
-} = require("../../Services/Music/musicService");
+const{playRequest,touchMusicOutputChannel,searchPlayable,}=require("../../Services/Music/musicService");
 const { pickFromPagedMenu } = require("../../Services/Music/pagedPickerService");
 
-const SOURCE_EMOJIS = {
-  spotify: "<:VC_Spotify:1462941253803970571>",
-  apple: "<:VC_AppleMusic:1466061111781752872>",
-  youtube: "<:VC_YouTube:1476933074301485259>",
-  soundcloud: "<:VC_SoundCloud:1476933157906419866>",
-  deezer: "<:VC_Deezer:1476933250835288167>",
-};
+const SOURCE_EMOJIS={spotify:"<:VC_Spotify:1462941253803970571>",apple:"<:VC_AppleMusic:1466061111781752872>",youtube:"<:VC_YouTube:1476933074301485259>",soundcloud:"<:VC_SoundCloud:1476933157906419866>",deezer:"<:VC_Deezer:1476933250835288167>",};
 
 function getTrackSourceKey(track) {
   const source = String(track?.source || track?.queryType || track?.extractor?.identifier || "").toLowerCase();
@@ -52,14 +42,7 @@ function chooseStrongDirectMatch(input, tracks = []) {
   const inputTokens = normalizedInput.split(" ").filter(Boolean);
   if (inputTokens.length < 2) return null;
 
-  const scored = tracks.map((track) => {
-    const title = normalizeText(track?.title);
-    const author = normalizeText(track?.author);
-    const combined = [title, author].filter(Boolean).join(" ");
-    let score = 0;
-
-    if (combined === normalizedInput) score += 220;
-    if (`${title} ${author}`.trim() === normalizedInput) score += 180;
+  const scored=tracks.map((track) => {const title=normalizeText(track?.title);const author=normalizeText(track?.author);const combined=[title,author].filter(Boolean).join(" ");let score=0;if(combined===normalizedInput)score+=220;if(`${title}${author}`.trim() === normalizedInput) score += 180;
     if (title && normalizedInput.includes(title)) score += 80;
     if (author && normalizedInput.includes(author)) score += 65;
     if (combined.includes(normalizedInput)) score += 50;
@@ -138,9 +121,7 @@ module.exports = {
 
     const voiceChannel = message.member?.voice?.channel;
     if (!voiceChannel) {
-      const notInVoiceEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("You are not in a voice channel");
+      const notInVoiceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("You are not in a voice channel");
       return safeMessageReply(message, { embeds: [notInVoiceEmbed] });
     }
 
@@ -169,29 +150,19 @@ module.exports = {
     let finalInput = input;
     let finalSearchResult = null;
     let finalResolved = null;
-    const search = await searchPlayable({
-      client: message.client,
-      input,
-      requestedBy: message.member,
-    }).catch((error) => ({ ok: false, reason: "internal_error", error }));
+    const search=await searchPlayable({client:message.client,input,requestedBy:message.member,}).catch((error) => ({ok:false,reason:"internal_error",error}));
 
     if (!search?.ok) {
       if (search?.reason === "blocked_source" && search?.source === "soundcloud") {
-        const blockedSourceEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("SoundCloud tracks are not supported");
+        const blockedSourceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("SoundCloud tracks are not supported");
         return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
       }
       if (search?.reason === "youtube_not_supported") {
-        const unsupportedYoutubeEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("YouTube videos are not supported");
+        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube videos are not supported");
         return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
       }
       if (search?.reason === "not_found") {
-        const noResultsEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("No results \u26D4");
+        const noResultsEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("No results \u26D4");
         return safeMessageReply(message, { embeds: [noResultsEmbed] });
       }
       global.logger?.error?.("[MUSIC] play search failed:", search?.error || search?.reason);
@@ -201,18 +172,12 @@ module.exports = {
       );
     }
 
-    const searchTracks = Array.isArray(search.searchResult?.tracks)
-      ? search.searchResult.tracks.filter(isSupportedPickerTrack)
-      : [];
+    const searchTracks=Array.isArray(search.searchResult?.tracks)?search.searchResult.tracks.filter(isSupportedPickerTrack):[];
     if (!search.searchResult?.playlist && searchTracks.length === 0) {
-      const noResultsEmbed = new EmbedBuilder()
-        .setColor("#ED4245")
-        .setDescription("No results \u26D4");
+      const noResultsEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("No results \u26D4");
       return safeMessageReply(message, { embeds: [noResultsEmbed] });
     }
-    const strongDirectMatch = !search.searchResult?.playlist
-      ? chooseStrongDirectMatch(input, searchTracks)
-      : null;
+    const strongDirectMatch=!search.searchResult?.playlist?chooseStrongDirectMatch(input,searchTracks):null;
     if (strongDirectMatch) {
       finalInput = String(
         strongDirectMatch?.resolverInput || `${strongDirectMatch?.title || ""} ${strongDirectMatch?.author || ""}`.trim(),
@@ -220,16 +185,10 @@ module.exports = {
       finalSearchResult = { tracks: [strongDirectMatch], playlist: null };
       finalResolved = search.resolved;
     } else if (!search.searchResult?.playlist && searchTracks.length > 1) {
-      const picked = await pickFromPagedMenu({
-        message,
-        items: searchTracks.slice(0, 100),
-        pageSize: 10,
-        deleteOnSelect: true,
-        lineBuilder: (item, index) =>
-          `${index + 1}. **${item?.title || "Sconosciuto"}** by ${item?.author || "Unknown"}`,
+      const picked=await pickFromPagedMenu({message,items:searchTracks.slice(0,100),pageSize:10,deleteOnSelect:true,lineBuilder:(item,index) => `${index+1}.**${item?.title||"Sconosciuto"}**by ${item?.author||"Unknown"}`,
         optionBuilder: (item, index) => ({
-          label: `${index + 1}. ${String(item?.title || "Sconosciuto")}`.slice(0, 100),
-          description: String(`by ${item?.author || "Unknown"}`).slice(0, 100),
+          label: `${index+1}.${String(item?.title||"Sconosciuto")}`.slice(0, 100),
+          description: String(`by ${item?.author||"Unknown"}`).slice(0, 100),
         }),
       });
       if (!picked) return;
@@ -253,34 +212,19 @@ module.exports = {
       finalResolved = search.resolved;
     }
 
-    const result = await playRequest({
-      client: message.client,
-      guild: message.guild,
-      channel: message.channel,
-      voiceChannel,
-      requestedBy: message.member,
-      input: finalInput,
-      preResolved: finalResolved,
-      preSearchResult: finalSearchResult,
-    }).catch((error) => ({ ok: false, reason: "internal_error", error }));
+    const result=await playRequest({client:message.client,guild:message.guild,channel:message.channel,voiceChannel,requestedBy:message.member,input:finalInput,preResolved:finalResolved,preSearchResult:finalSearchResult,}).catch((error) => ({ok:false,reason:"internal_error",error}));
 
     if (!result?.ok) {
       if (result?.reason === "blocked_source" && result?.source === "soundcloud") {
-        const blockedSourceEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("SoundCloud tracks are not supported");
+        const blockedSourceEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("SoundCloud tracks are not supported");
         return safeMessageReply(message, { embeds: [blockedSourceEmbed] });
       }
       if (result?.reason === "youtube_not_supported") {
-        const unsupportedYoutubeEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("YouTube videos are not supported");
+        const unsupportedYoutubeEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("YouTube videos are not supported");
         return safeMessageReply(message, { embeds: [unsupportedYoutubeEmbed] });
       }
       if (result?.reason === "not_found") {
-        const noResultsEmbed = new EmbedBuilder()
-          .setColor("#ED4245")
-          .setDescription("No results \u26D4");
+        const noResultsEmbed=new EmbedBuilder().setColor("#ED4245").setDescription("No results \u26D4");
         return safeMessageReply(message, { embeds: [noResultsEmbed] });
       }
       global.logger?.error?.("[MUSIC] play failed:", result?.error || result?.reason);
@@ -291,35 +235,18 @@ module.exports = {
     }
 
     const track = result.track;
-    const songLine = track?.url
-      ? `[${track.title}](${track.url})`
+    const songLine=track?.url?`[${track.title}](${track.url})`
       : String(track?.title || "Traccia sconosciuta");
     const artist = String(track?.author || "Sconosciuto");
 
     if (result.mode === "queued") {
       const queuePosition = Math.max(1, Number(result.queuePosition || 1));
-      const queueTotalCount = Math.max(
-        queuePosition,
-        Number(result.queueTotalCount || queuePosition),
-      );
+      const queueTotalCount=Math.max(queuePosition,Number(result.queueTotalCount||queuePosition),);
       const etaText = formatDurationMs(result.etaMs);
-      const lengthText =
-        Number(track?.durationMS || 0) > 0
-          ? formatDurationMs(track.durationMS)
-          : String(track?.duration || "00:00");
-      const requestedBy =
-        message.member?.displayName ||
-        message.author?.globalName ||
-        message.author?.username ||
-        "unknown";
+      const lengthText=Number(track?.durationMS||0)>0?formatDurationMs(track.durationMS):String(track?.duration||"00:00");
+      const requestedBy=message.member?.displayName||message.author?.globalName||message.author?.username||"unknown";
 
-      const queuedEmbed = new EmbedBuilder()
-        .setColor("#1f2328")
-        .setTitle("\uD83C\uDF08 Added Track")
-        .setDescription(
-          [
-            "**Track**",
-            `${songLine} by **${artist}**`,
+      const queuedEmbed=new EmbedBuilder().setColor("#1f2328").setTitle("\uD83C\uDF08 Added Track").setDescription(["**Track**",`${songLine}by**${artist}**`,
           ].join("\n"),
         )
         .setThumbnail(track?.thumbnail || null)
@@ -354,14 +281,11 @@ module.exports = {
       return safeMessageReply(message, { embeds: [queuedEmbed] });
     }
 
-    const suffix = result.playlist
-      ? `\nPlaylist: **${result.playlist.title}** (${result.playlist.tracks.length} tracce)`
+    const suffix=result.playlist?`\nPlaylist: **${result.playlist.title}**(${result.playlist.tracks.length}tracce)`
       : "";
     const via = result.translated ? "\nFonte link convertita in ricerca compatibile." : "";
     const sourceEmoji = getTrackSourceEmoji(track);
-    const embed = new EmbedBuilder()
-      .setColor("#1f2328")
-      .setDescription(`${sourceEmoji ? `${sourceEmoji} ` : ""}Started playing ${songLine} by **${artist}**${suffix}${via}`);
+    const embed=new EmbedBuilder().setColor("#1f2328").setDescription(`${sourceEmoji?`${sourceEmoji}` : ""}Started playing ${songLine}by**${artist}**${suffix}${via}`);
 
     return safeMessageReply(message, { embeds: [embed] });
   },

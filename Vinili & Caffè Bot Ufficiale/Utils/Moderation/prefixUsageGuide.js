@@ -1,24 +1,15 @@
-﻿const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
-  ComponentType,
-} = require("discord.js");
+﻿const{EmbedBuilder,ActionRowBuilder,StringSelectMenuBuilder,ComponentType,}=require("discord.js");
 const fs = require("fs");
 const path = require("path");
 
 const GUIDE_COLOR = "#3498DB";
 const GUIDE_LIFETIME_MS = 10 * 60 * 1000;
-const PERMISSIONS_CANDIDATES = [
-  path.join(process.cwd(), "permissions.json"),
-  path.resolve(__dirname, "../../permissions.json"),
-];
+const PERMISSIONS_CANDIDATES=[path.join(process.cwd(),"permissions.json"),path.resolve(__dirname,"../../permissions.json"),];
 let permissionsCache = { filePath: null, mtimeMs: 0, data: {} };
 
 function loadPrefixPermissions() {
   try {
-    const permissionsPath =
-      PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p)) || null;
+    const permissionsPath=PERMISSIONS_CANDIDATES.find((p) => fs.existsSync(p))||null;
     if (!permissionsPath) return {};
     const stat = fs.statSync(permissionsPath);
     if (
@@ -29,9 +20,7 @@ function loadPrefixPermissions() {
     }
     const raw = fs.readFileSync(permissionsPath, "utf8");
     const parsed = JSON.parse(raw) || {};
-    const prefix = parsed.prefix && typeof parsed.prefix === "object"
-      ? parsed.prefix
-      : {};
+    const prefix=parsed.prefix&&typeof parsed.prefix==="object"?parsed.prefix:{};
     permissionsCache = {
       filePath: permissionsPath,
       mtimeMs: stat.mtimeMs,
@@ -48,10 +37,7 @@ function getPermissionSubcommands(commandName) {
   if (!safeName) return [];
   const prefixPerms = loadPrefixPermissions();
   const cfg = prefixPerms?.[safeName];
-  const subMap =
-    cfg?.subcommands && typeof cfg.subcommands === "object"
-      ? cfg.subcommands
-      : null;
+  const subMap=cfg?.subcommands&&typeof cfg.subcommands==="object"?cfg.subcommands:null;
   if (!subMap) return [];
   return Object.keys(subMap)
     .map((s) => String(s || "").trim().toLowerCase())
@@ -59,9 +45,7 @@ function getPermissionSubcommands(commandName) {
 }
 
 function normalizeSubcommands(command) {
-  const direct = Array.isArray(command?.subcommands)
-    ? command.subcommands
-    : [];
+  const direct=Array.isArray(command?.subcommands)?command.subcommands:[];
   const aliases = command?.subcommandAliases || {};
   const mapped = Object.values(aliases || {});
   const fromPermissions = getPermissionSubcommands(command?.name);
@@ -75,31 +59,20 @@ function normalizeSubcommands(command) {
 }
 
 function getSubDescription(command, sub) {
-  const meta =
-    command?.subcommandDescriptions ||
-    command?.subcommandsDescriptions ||
-    command?.subcommandHelp ||
-    command?.subcommandsHelp ||
-    {};
+  const meta=command?.subcommandDescriptions||command?.subcommandsDescriptions||command?.subcommandHelp||command?.subcommandsHelp||{};
   const value = meta?.[sub];
   if (String(value || "").trim()) return String(value).trim();
   return `Mostra come usare il sotto-comando \`${sub}\`.`;
 }
 
 function getSubUsage(command, prefix, sub) {
-  const usageMap =
-    command?.subcommandUsages ||
-    command?.subcommandsUsages ||
-    command?.subcommandUsage ||
-    command?.subcommandsUsage ||
-    {};
+  const usageMap=command?.subcommandUsages||command?.subcommandsUsages||command?.subcommandUsage||command?.subcommandsUsage||{};
   if (String(usageMap?.[sub] || "").trim()) return String(usageMap[sub]).trim();
   return `${prefix}${command.name} ${sub} ...`;
 }
 
 function buildDefaultGuideEmbed(command, prefix) {
-  const aliases = Array.isArray(command?.aliases)
-    ? command.aliases.map((a) => `${prefix}${a}`).join(", ")
+  const aliases=Array.isArray(command?.aliases)?command.aliases.map((a) => `${prefix}${a}`).join(", ")
     : `${prefix}undefined`;
   const description = String(command?.description || "").trim() || "Nessuna descrizione disponibile.";
   const usage = String(command?.usage || "").trim() || `${prefix}${command?.name} ...`;
@@ -137,13 +110,9 @@ function buildSubcommandRow(command, ownerId, currentValue = "__default") {
   const subs = normalizeSubcommands(command);
   if (!subs.length) return null;
   const hidden = String(currentValue || "__default").toLowerCase();
-  const filteredSubs =
-    hidden === "__default"
-      ? subs
-      : subs.filter((sub) => String(sub).toLowerCase() !== hidden);
+  const filteredSubs=hidden==="__default"?subs:subs.filter((sub) => String(sub).toLowerCase()!==hidden);
 
-  const menu = new StringSelectMenuBuilder()
-    .setCustomId(`usage_guide:${command.name}:${ownerId}`)
+  const menu=new StringSelectMenuBuilder().setCustomId(`usage_guide:${command.name}:${ownerId}`)
     .setPlaceholder("Vedi sotto-comandi")
     .addOptions(
       ...filteredSubs.slice(0, 24).map((sub) => ({
@@ -170,19 +139,11 @@ async function showPrefixUsageGuide({ message, command, prefix = "+", deleteComm
     await deleteCommandMessage().catch(() => {});
   }
 
-  const sent = await message.channel
-    .send({
-      embeds: [defaultEmbed],
-      ...(row ? { components: [row] } : {}),
-    })
-    .catch(() => null);
+  const sent=await message.channel.send({embeds:[defaultEmbed],...(row?{components:[row]}:{}),}).catch(() => null);
   if (!sent) return false;
   if (!row) return true;
 
-  const collector = sent.createMessageComponentCollector({
-    componentType: ComponentType.StringSelect,
-    time: GUIDE_LIFETIME_MS,
-  });
+  const collector=sent.createMessageComponentCollector({componentType:ComponentType.StringSelect,time:GUIDE_LIFETIME_MS,});
 
   collector.on("collect", async (interaction) => {
     if (interaction.user.id !== message.author.id) {
@@ -196,10 +157,7 @@ async function showPrefixUsageGuide({ message, command, prefix = "+", deleteComm
     currentValue = picked;
     row = buildSubcommandRow(command, message.author.id, currentValue);
 
-    const nextEmbed =
-      picked === "__default"
-        ? defaultEmbed
-        : buildSubGuideEmbed(command, prefix, picked);
+    const nextEmbed=picked==="__default"?defaultEmbed:buildSubGuideEmbed(command,prefix,picked);
 
     await interaction
       .update({

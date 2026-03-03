@@ -4,10 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const ascii = require("ascii-table");
 const IDs = require("../Utils/Config/ids");
-const {
-  isCommandDeployRequired,
-  markCommandDeployComplete,
-} = require("../../shared/runtime/commandDeployCache");
+const {isCommandDeployRequired,markCommandDeployComplete,}= require("../../shared/runtime/commandDeployCache");
 
 function toArrayUnique(values = []) {
   return Array.from(new Set(values.filter(Boolean).map((x) => String(x))));
@@ -21,23 +18,10 @@ module.exports = (client) => {
     client.commandArray = [];
     client.commands.clear();
 
-    const parseCommandMeta = (command) => {
-      const commandJson =
-        typeof command?.data?.toJSON === "function"
-          ? command.data.toJSON()
-          : null;
-      const name =
-        command?.data?.name || commandJson?.name || command?.name || null;
-      const type = command?.data?.type ?? commandJson?.type ?? 1;
-      return { name, type, json: commandJson };
-    };
-
-    for (const folder of commandFolders) {
+    const parseCommandMeta =(command)=>{const commandJson = typeof command ?. data ?. toJSON === "function" ? command.data.toJSON():null;const name = command ?. data ?. name || commandJson ?. name || command ?. name || null;const type = command ?. data ?. type ?? commandJson ?. type ??1;return {name,type,json:commandJson};};for(const folder of commandFolders) {
       const folderPath = path.join(basePath, folder);
       if (!fs.existsSync(folderPath)) continue;
-      const commandFiles = fs
-        .readdirSync(folderPath)
-        .filter((f) => f.endsWith(".js"));
+      const commandFiles = fs.readdirSync(folderPath).filter((f)=>f.endsWith(".js"));
 
       for (const file of commandFiles) {
         const fullPath = path.join(folderPath, file);
@@ -116,11 +100,7 @@ module.exports = (client) => {
 
     const allowedGuildIds = toArrayUnique([IDs?.guilds?.main, IDs?.guilds?.test]);
     for (const guildId of allowedGuildIds) {
-      const deployCheck = isCommandDeployRequired(
-        BOT_DEPLOY_CACHE_KEY,
-        { clientId, guildId },
-        client.commandArray,
-      );
+      const deployCheck = isCommandDeployRequired(BOT_DEPLOY_CACHE_KEY,{clientId,guildId},client.commandArray,);
       if (!deployCheck.required) {
         global.logger?.info?.(
           `[COMMANDS] Nessuna modifica ai comandi per guild ${guildId}, deploy REST saltato.`,

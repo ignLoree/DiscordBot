@@ -3,38 +3,24 @@ const Staff = require("../../Schemas/Staff/staffSchema");
 const IDs = require("../../Utils/Config/ids");
 
 let dailyPartnerAuditTask = null;
-const SAME_DAY_DUPLICATE_REASON =
-  "Non fare la stessa partnership più di una volta al giorno";
-const SELF_PARTNERSHIP_DAILY_REASON =
-  "Non fare partnership con se stessi più di una volta al giorno";
-const SAME_MANAGER_DAILY_CAP_REASON =
-  "Non mettere più di 5 partnership con lo stesso utente";
+const SAME_DAY_DUPLICATE_REASON="Non fare la stessa partnership più di una volta al giorno";
+const SELF_PARTNERSHIP_DAILY_REASON="Non fare partnership con se stessi più di una volta al giorno";
+const SAME_MANAGER_DAILY_CAP_REASON="Non mettere più di 5 partnership con lo stesso utente";
 
 function getRomeDateKey(date) {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Rome",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const fmt=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Rome",year:"numeric",month:"2-digit",day:"2-digit",});
   return fmt.format(date);
 }
 
 function getPreviousRomeDateKey(baseDate = new Date()) {
-  const romeNow = new Date(
-    baseDate.toLocaleString("en-US", { timeZone: "Europe/Rome" }),
-  );
+  const romeNow=new Date(baseDate.toLocaleString("en-US",{timeZone:"Europe/Rome"}),);
   romeNow.setDate(romeNow.getDate() - 1);
   return getRomeDateKey(romeNow);
 }
 
 function extractInviteCode(text) {
   if (!text) return null;
-  const patterns = [
-    /discord\.gg\/([a-zA-Z0-9_-]+)/i,
-    /discord\.com\/invite\/([a-zA-Z0-9_-]+)/i,
-    /discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/i,
-  ];
+  const patterns=[/discord\.gg\/([a-zA-Z0-9_-]+)/i,/discord\.com\/invite\/([a-zA-Z0-9_-]+)/i,/discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/i,];
   for (const pattern of patterns) {
     const match = String(text).match(pattern);
     if (match?.[1]) return match[1];
@@ -45,11 +31,7 @@ function extractInviteCode(text) {
 function extractInviteCodes(text) {
   if (!text) return [];
   const source = String(text || "");
-  const patterns = [
-    /discord\.gg\/([a-zA-Z0-9_-]+)/gi,
-    /discord\.com\/invite\/([a-zA-Z0-9_-]+)/gi,
-    /discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/gi,
-  ];
+  const patterns=[/discord\.gg\/([a-zA-Z0-9_-]+)/gi,/discord\.com\/invite\/([a-zA-Z0-9_-]+)/gi,/discordapp\.com\/invite\/([a-zA-Z0-9_-]+)/gi,];
   const out = new Set();
   for (const pattern of patterns) {
     let match = null;
@@ -61,12 +43,7 @@ function extractInviteCodes(text) {
 }
 
 function buildDescriptionFingerprint(rawText) {
-  const text = String(rawText || "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/\n*Manager:\s*<@!?\d+>\s*$/i, "")
-    .replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/i, "")
-    .trim();
+  const text=String(rawText||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n").replace(/\n*Manager:\s*<@!?\d+>\s*$/i,"").replace(/\n*Partner effettuata con\s*\*\*<@!?\d+>\*\*\s*$/i,"").trim();
   return text;
 }
 
@@ -79,19 +56,11 @@ function normalizeFingerprint(rawText) {
 
 function extractManagerMentions(sourceText) {
   const text = String(sourceText || "");
-  const managerLineMatches = Array.from(
-    text.matchAll(/Manager:\s*<@!?(\d+)>/gi),
-  );
-  const ids = managerLineMatches
-    .map((m) => m?.[1])
-    .filter(Boolean)
-    .map((id) => String(id));
+  const managerLineMatches=Array.from(text.matchAll(/Manager:\s*<@!?(\d+)>/gi),);
+  const ids=managerLineMatches.map((m) => m?.[1]).filter(Boolean).map((id) => String(id));
   if (ids.length) return Array.from(new Set(ids));
 
-  const genericMentions = Array.from(text.matchAll(/<@!?(\d+)>/g))
-    .map((m) => m?.[1])
-    .filter(Boolean)
-    .map((id) => String(id));
+  const genericMentions=Array.from(text.matchAll(/<@!?(\d+)>/g)).map((m) => m?.[1]).filter(Boolean).map((id) => String(id));
   return Array.from(new Set(genericMentions));
 }
 
@@ -102,9 +71,7 @@ async function fetchPartnerActionText(guild, action) {
     return "";
   }
 
-  const channel =
-    guild.channels.cache.get(channelId) ||
-    (await guild.channels.fetch(channelId).catch(() => null));
+  const channel=guild.channels.cache.get(channelId)||(await guild.channels.fetch(channelId).catch(() => null));
   if (!channel?.isTextBased?.()) {
     global.logger?.warn?.(
       "[PARTNER AUDIT] Channel not found or not text-based:",
@@ -113,15 +80,11 @@ async function fetchPartnerActionText(guild, action) {
     return "";
   }
 
-  const ids = Array.isArray(action?.partnerMessageIds)
-    ? action.partnerMessageIds
-    : [];
+  const ids=Array.isArray(action?.partnerMessageIds)?action.partnerMessageIds:[];
   const chunks = [];
 
   for (const messageId of ids) {
-    const msg = await channel.messages.fetch(messageId).catch((err) => {
-      global.logger?.warn?.(
-        `[PARTNER AUDIT] Failed to fetch message ${messageId}:`,
+    const msg=await channel.messages.fetch(messageId).catch((err) => {global.logger?.warn?.(`[PARTNER AUDIT] Failed to fetch message ${messageId}:`,
         err.message,
       );
       return null;
@@ -136,21 +99,9 @@ async function fetchPartnerActionText(guild, action) {
       const title = String(e?.title || "").trim();
       const desc = String(e?.description || "").trim();
       const url = String(e?.url || "").trim();
-      const fields = Array.isArray(e?.fields)
-        ? e.fields
-            .map((f) => {
-              const n = String(f?.name || "").trim();
-              const v = String(f?.value || "").trim();
-              return [n, v].filter(Boolean).join("\n");
-            })
-            .filter(Boolean)
-            .join("\n")
-        : "";
+      const fields=Array.isArray(e?.fields)?e.fields.map((f) => {const n=String(f?.name||"").trim();const v=String(f?.value||"").trim();return[n,v].filter(Boolean).join("\n");}).filter(Boolean).join("\n"):"";
 
-      const embedText = [title, desc, fields, url]
-        .filter(Boolean)
-        .join("\n")
-        .trim();
+      const embedText=[title,desc,fields,url].filter(Boolean).join("\n").trim();
       if (embedText) chunks.push(embedText);
     }
   }
@@ -162,14 +113,10 @@ async function logPointRemoval(guild, staffUserId, reason, action) {
   const puntiToltiId = IDs.channels.puntiTolti;
   if (!puntiToltiId) return;
 
-  const channel =
-    guild.channels.cache.get(puntiToltiId) ||
-    (await guild.channels.fetch(puntiToltiId).catch(() => null));
+  const channel=guild.channels.cache.get(puntiToltiId)||(await guild.channels.fetch(puntiToltiId).catch(() => null));
   if (!channel?.isTextBased?.()) return;
 
-  const msgRef =
-    Array.isArray(action?.partnerMessageIds) && action.partnerMessageIds.length
-      ? `https://discord.com/channels/${guild.id}/${action.partnershipChannelId || IDs.channels.partnerships}/${action.partnerMessageIds[0]}`
+  const msgRef=Array.isArray(action?.partnerMessageIds)&&action.partnerMessageIds.length?`https://discord.com/channels/${guild.id}/${action.partnershipChannelId||IDs.channels.partnerships}/${action.partnerMessageIds[0]}`
       : "N/D";
 
   const inviteDb = action?.invite ? String(action.invite).slice(0, 300) : "N/D";
@@ -187,77 +134,31 @@ Invite (DB): ${inviteDb}`,
 async function runDailyPartnerAudit(client, opts = {}) {
   const guildId = IDs.guilds.main || client.guilds.cache.first()?.id;
   if (!guildId) return;
-  const guild =
-    client.guilds.cache.get(guildId) ||
-    (await client.guilds.fetch(guildId).catch(() => null));
+  const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));
   if (!guild) return;
 
   const targetDateKey = opts.dateKey || getPreviousRomeDateKey(new Date());
-  const docs = await Staff.find({
-    guildId: guild.id,
-    partnerActions: { $exists: true, $ne: [] },
-  }).catch(() => []);
+  const docs=await Staff.find({guildId:guild.id,partnerActions:{$exists:true,$ne:[]},}).catch(() => []);
 
   let totalChecked = 0;
   let totalRemoved = 0;
 
   for (const doc of docs) {
     const actions = Array.isArray(doc.partnerActions) ? doc.partnerActions : [];
-    const allCreates = actions
-      .map((action, index) => ({ action, index }))
-      .filter(({ action }) => String(action?.action || "create") === "create")
-      .map(({ action, index }) => {
-        const dateMs = new Date(action?.date || 0).getTime();
-        return { action, index, dateMs, inviteCodes: [] };
-      })
-      .sort((a, b) => a.dateMs - b.dateMs);
+    const allCreates=actions.map((action,index) => ({action,index})).filter(({action}) => String(action?.action||"create")==="create").map(({action,index}) => {const dateMs=new Date(action?.date||0).getTime();return{action,index,dateMs,inviteCodes:[]};}).sort((a,b) => a.dateMs-b.dateMs);
 
-    const dayCreates = allCreates
-      .filter(
-        ({ action }) =>
-          getRomeDateKey(new Date(action?.date || Date.now())) ===
-          targetDateKey,
-      )
-      .sort((a, b) => a.dateMs - b.dateMs);
+    const dayCreates=allCreates.filter(({action}) => getRomeDateKey(new Date(action?.date||Date.now()))===targetDateKey,).sort((a,b) => a.dateMs-b.dateMs);
 
     if (!dayCreates.length) continue;
     totalChecked += dayCreates.length;
 
-    const rowsForAudit = allCreates
-      .filter((row) => {
-        const rowKey = getRomeDateKey(new Date(row?.action?.date || Date.now()));
-        return rowKey === targetDateKey;
-      })
-      .sort((a, b) => a.dateMs - b.dateMs);
+    const rowsForAudit=allCreates.filter((row) => {const rowKey=getRomeDateKey(new Date(row?.action?.date||Date.now()));return rowKey===targetDateKey;}).sort((a,b) => a.dateMs-b.dateMs);
 
     const actionTextCache = new Map();
     // Invite API validation removed on purpose:
     // it generated false positives at midnight and caused unjust penalties.
-    const getActionTextCached = async (row) => {
-      if (!row?.action) return "";
-      if (actionTextCache.has(row.index)) return actionTextCache.get(row.index);
-      const text = await fetchPartnerActionText(guild, row.action);
-      actionTextCache.set(row.index, text || "");
-      return actionTextCache.get(row.index);
-    };
-    const enrichInviteCodes = async (row) => {
-      if (!row?.action) {
-        row.inviteCodes = [];
-        return row.inviteCodes;
-      }
-      const fromInviteField = extractInviteCodes(row.action?.invite || "");
-      const actionText = await getActionTextCached(row);
-      const fromText = extractInviteCodes(actionText);
-      const combined = Array.from(new Set([...fromInviteField, ...fromText]));
-
-      if (!combined.length && row.action?.invite) {
-        const singleCode = extractInviteCode(row.action.invite);
-        if (singleCode) combined.push(singleCode);
-      }
-
-      row.inviteCodes = combined;
-      return row.inviteCodes;
-    };
+    const getActionTextCached=async(row) => {if(!row?.action)return "";if(actionTextCache.has(row.index))return actionTextCache.get(row.index);const text=await fetchPartnerActionText(guild,row.action);actionTextCache.set(row.index,text||"");return actionTextCache.get(row.index);};
+    const enrichInviteCodes=async(row) => {if(!row?.action){row.inviteCodes=[];return row.inviteCodes;}const fromInviteField=extractInviteCodes(row.action?.invite||"");const actionText=await getActionTextCached(row);const fromText=extractInviteCodes(actionText);const combined=Array.from(new Set([...fromInviteField,...fromText]));if(!combined.length&&row.action?.invite){const singleCode=extractInviteCode(row.action.invite);if(singleCode)combined.push(singleCode);}row.inviteCodes=combined;return row.inviteCodes;};
 
     await Promise.all(rowsForAudit.map((row) => enrichInviteCodes(row)));
 
@@ -266,14 +167,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
     const selfDailyCounter = new Map();
     const invalidIndices = new Set();
     const invalidReasonsByIndex = new Map();
-    const addInvalidReason = (index, reason) => {
-      if (!reason) return;
-      if (!invalidReasonsByIndex.has(index)) {
-        invalidReasonsByIndex.set(index, []);
-      }
-      const current = invalidReasonsByIndex.get(index);
-      if (!current.includes(reason)) current.push(reason);
-    };
+    const addInvalidReason=(index,reason) => {if(!reason)return;if(!invalidReasonsByIndex.has(index)){invalidReasonsByIndex.set(index,[]);}const current=invalidReasonsByIndex.get(index);if(!current.includes(reason))current.push(reason);};
 
     for (const item of dayCreates) {
       const { index } = item;
@@ -324,9 +218,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
       const reasons = invalidReasonsByIndex.get(keepIndex);
       if (!Array.isArray(reasons) || !reasons.length) continue;
 
-      const filteredReasons = reasons.filter(
-        (reason) => reason !== SAME_DAY_DUPLICATE_REASON,
-      );
+      const filteredReasons=reasons.filter((reason) => reason!==SAME_DAY_DUPLICATE_REASON,);
 
       if (filteredReasons.length) {
         invalidReasonsByIndex.set(keepIndex, filteredReasons);
@@ -343,9 +235,7 @@ async function runDailyPartnerAudit(client, opts = {}) {
     for (const index of invalidIndices) {
       const action = actions[index];
       if (!action) continue;
-      const alreadyPenalized =
-        Array.isArray(action.auditPenaltyDates) &&
-        action.auditPenaltyDates.includes(targetDateKey);
+      const alreadyPenalized=Array.isArray(action.auditPenaltyDates)&&action.auditPenaltyDates.includes(targetDateKey);
       if (alreadyPenalized) continue;
 
       await logPointRemoval(

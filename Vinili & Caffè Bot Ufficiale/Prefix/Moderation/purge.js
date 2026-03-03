@@ -62,34 +62,15 @@ module.exports = {
   async execute(message, args, client) {
     await message.channel.sendTyping();
 
-    const userArgIndex = Array.isArray(args)
-      ? args.findIndex((arg) =>
-          Boolean(extractUserId(String(arg || ""), message)),
-        )
-      : -1;
-    const { user } = await resolveTarget(
-      message,
-      args,
-      userArgIndex >= 0 ? userArgIndex : 0,
-    );
-    const deleteLater = (msg) =>
-      setTimeout(() => msg.delete().catch(() => {}), 5000);
-    const replyTemp = async (payload) => {
-      const msg = await message.channel.send({
-        ...payload,
-        allowedMentions: { repliedUser: false },
-      });
-      deleteLater(msg);
-      return msg;
-    };
-
-    await message.delete().catch(() => {});
+    const userArgIndex=Array.isArray(args)?args.findIndex((arg) => Boolean(extractUserId(String(arg||""),message)),):-1;
+    const{user}=await resolveTarget(message,args,userArgIndex>=0?userArgIndex:0,);
+    const deleteLater=(msg) => setTimeout(() => msg.delete().catch(() => {}),5000);
+    const replyTemp=async(payload) => {const msg=await message.channel.send({...payload,allowedMentions:{repliedUser:false},});deleteLater(msg);return msg;};await message.delete().catch(() => {});
 
     const { token: amountToken, invalidToken } = pickAmountToken(args);
     const requestedRaw = normalizeArgToken(amountToken);
     const requestedAmount = Number(requestedRaw);
-    const hasNumericAmount =
-      Number.isFinite(requestedAmount) && requestedAmount > 0;
+    const hasNumericAmount=Number.isFinite(requestedAmount)&&requestedAmount>0;
 
     if (
       (requestedRaw && requestedRaw !== "all" && !hasNumericAmount) ||
@@ -102,9 +83,7 @@ module.exports = {
       return;
     }
 
-    const targetCount = hasNumericAmount
-      ? requestedAmount
-      : Number.POSITIVE_INFINITY;
+    const targetCount=hasNumericAmount?requestedAmount:Number.POSITIVE_INFINITY;
 
     let scanned = 0;
     let cursor = null;
@@ -112,12 +91,7 @@ module.exports = {
     const candidates = [];
 
     while (candidates.length < targetCount) {
-      const batch = await message.channel.messages
-        .fetch({
-          limit: DISCORD_BULK_DELETE_MAX,
-          ...(cursor ? { before: cursor } : {}),
-        })
-        .catch(() => null);
+      const batch=await message.channel.messages.fetch({limit:DISCORD_BULK_DELETE_MAX,...(cursor?{before:cursor}:{}),}).catch(() => null);
 
       if (!batch?.size) break;
 
@@ -125,12 +99,7 @@ module.exports = {
       scanned += batch.size;
       cursor = batch.last()?.id || null;
 
-      const filtered = batch.filter((m) => {
-        if (m.id === message.id) return false;
-        if (m.pinned) return false;
-        if (user && m.author?.id !== user.id) return false;
-        return true;
-      });
+      const filtered=batch.filter((m) => {if(m.id===message.id)return false;if(m.pinned)return false;if(user&&m.author?.id!==user.id)return false;return true;});
 
       for (const msg of filtered.values()) {
         candidates.push(msg);
@@ -166,31 +135,23 @@ module.exports = {
 
     const recentChunks = chunkArray(recent, DISCORD_BULK_DELETE_MAX);
     for (const chunk of recentChunks) {
-      const deleted = await message.channel
-        .bulkDelete(chunk, true)
-        .catch(() => null);
+      const deleted=await message.channel.bulkDelete(chunk,true).catch(() => null);
       if (deleted?.size) deletedCount += deleted.size;
       await sleep(250);
     }
 
     for (const msg of old) {
-      const ok = await msg
-        .delete()
-        .then(() => true)
-        .catch(() => false);
+      const ok=await msg.delete().then(() => true).catch(() => false);
       if (ok) deletedCount += 1;
       await sleep(400);
     }
 
-    const summary = new EmbedBuilder()
-      .setColor(client.config?.embedModLight || "#6f4e37")
-      .setDescription(
-        `#️⃣ **Channel:** <#${message.channel.id}>\n` +
-          `👤 **Moderator:** <@${message.author.id}>\n` +
-          `🗂️ **Messages Fetched:** ${scanned}\n` +
-          `💬 **Purge Request:** ${Number.isFinite(targetCount) ? targetCount : "ALL"}\n` +
-          `🧭 **Messages Identified:** ${candidates.length}\n` +
-          `🗑️ **Messages Purged:** ${deletedCount}`,
+    const summary=new EmbedBuilder().setColor(client.config?.embedModLight||"#6f4e37").setDescription(`#️⃣ **Channel:** <#${message.channel.id}>\n` +
+          `👤**Moderator:**<@${message.author.id}>\n` +
+          `🗂️**Messages Fetched:**${scanned}\n` +
+          `💬**Purge Request:**${Number.isFinite(targetCount)?targetCount:"ALL"}\n` +
+          `🧭**Messages Identified:**${candidates.length}\n` +
+          `🗑️**Messages Purged:**${deletedCount}`,
       );
 
     await replyTemp({ embeds: [summary] });

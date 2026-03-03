@@ -8,12 +8,7 @@ const TIME_ZONE = "Europe/Rome";
 const UNKNOWN_USERNAME = "Utente sconosciuto";
 
 function getRomeDateParts(date) {
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",});
   const parts = formatter.formatToParts(date);
   const out = {};
   for (const part of parts) {
@@ -27,18 +22,10 @@ function getRomeDateParts(date) {
 }
 
 function getRomeOffsetMs(utcDate) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
-    timeZoneName: "shortOffset",
-    hour: "2-digit",
-  });
-  const timeZoneName = formatter
-    .formatToParts(utcDate)
-    .find((part) => part.type === "timeZoneName")?.value;
+  const formatter=new Intl.DateTimeFormat("en-US",{timeZone:TIME_ZONE,timeZoneName:"shortOffset",hour:"2-digit",});
+  const timeZoneName=formatter.formatToParts(utcDate).find((part) => part.type==="timeZoneName")?.value;
 
-  const match = String(timeZoneName || "GMT+0").match(
-    /^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,
-  );
+  const match=String(timeZoneName||"GMT+0").match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/i,);
   if (!match) return 0;
 
   const sign = match[1] === "-" ? -1 : 1;
@@ -60,41 +47,21 @@ function createUtcFromRomeLocal(year, month, day, hour, minute, second) {
 
 function getCurrentWeekWindow(now = new Date()) {
   const romeToday = getRomeDateParts(now);
-  const romeTodayNoonUtc = new Date(
-    Date.UTC(romeToday.year, romeToday.month - 1, romeToday.day, 12, 0, 0),
-  );
+  const romeTodayNoonUtc=new Date(Date.UTC(romeToday.year,romeToday.month-1,romeToday.day,12,0,0),);
   const dayFromMonday = (romeTodayNoonUtc.getUTCDay() + 6) % 7;
 
-  const mondayNoonUtc = new Date(
-    romeTodayNoonUtc.getTime() - dayFromMonday * 24 * 60 * 60 * 1000,
-  );
+  const mondayNoonUtc=new Date(romeTodayNoonUtc.getTime()-dayFromMonday*24*60*60*1000,);
   const mondayY = mondayNoonUtc.getUTCFullYear();
   const mondayM = mondayNoonUtc.getUTCMonth() + 1;
   const mondayD = mondayNoonUtc.getUTCDate();
 
-  const sundayNoonUtc = new Date(
-    mondayNoonUtc.getTime() + 6 * 24 * 60 * 60 * 1000,
-  );
+  const sundayNoonUtc=new Date(mondayNoonUtc.getTime()+6*24*60*60*1000,);
   const sundayY = sundayNoonUtc.getUTCFullYear();
   const sundayM = sundayNoonUtc.getUTCMonth() + 1;
   const sundayD = sundayNoonUtc.getUTCDate();
 
-  const weekStart = createUtcFromRomeLocal(
-    mondayY,
-    mondayM,
-    mondayD,
-    0,
-    0,
-    0,
-  );
-  const scheduledWeekEnd = createUtcFromRomeLocal(
-    sundayY,
-    sundayM,
-    sundayD,
-    23,
-    59,
-    59,
-  );
+  const weekStart=createUtcFromRomeLocal(mondayY,mondayM,mondayD,0,0,0,);
+  const scheduledWeekEnd=createUtcFromRomeLocal(sundayY,sundayM,sundayD,23,59,59,);
   const weekEnd = now.getTime() < scheduledWeekEnd.getTime() ? now : scheduledWeekEnd;
 
   return { weekStart, weekEnd };
@@ -137,17 +104,10 @@ async function buildLeaderboardEmbed(
   resolveUsername,
 ) {
   const startIndex = (currentPage - 1) * PARTNERS_PER_PAGE;
-  const currentPartners = partners.slice(
-    startIndex,
-    startIndex + PARTNERS_PER_PAGE,
-  );
+  const currentPartners=partners.slice(startIndex,startIndex+PARTNERS_PER_PAGE,);
 
-  const usernames = await Promise.all(
-    currentPartners.map((partner) => resolveUsername(partner.userId)),
-  );
-  const rows = currentPartners.map(
-    (partner, index) =>
-      `**${startIndex + index + 1}.** ${usernames[index] || UNKNOWN_USERNAME} - <:VC_Partner:1443933014835986473> ${partner.score} partnership`,
+  const usernames=await Promise.all(currentPartners.map((partner) => resolveUsername(partner.userId)),);
+  const rows=currentPartners.map((partner,index) => `**${startIndex+index+1}.**${usernames[index]||UNKNOWN_USERNAME}-<:VC_Partner:1443933014835986473>${partner.score}partnership`,
   );
 
   return new EmbedBuilder()
@@ -182,19 +142,7 @@ function createUsernameResolver(client) {
       return pendingFetches.get(key);
     }
 
-    const fetchPromise = client.users
-      .fetch(key)
-      .then((user) => {
-        const username = user?.username || UNKNOWN_USERNAME;
-        usernameCache.set(key, username);
-        pendingFetches.delete(key);
-        return username;
-      })
-      .catch(() => {
-        pendingFetches.delete(key);
-        usernameCache.set(key, UNKNOWN_USERNAME);
-        return UNKNOWN_USERNAME;
-      });
+    const fetchPromise=client.users.fetch(key).then((user) => {const username=user?.username||UNKNOWN_USERNAME;usernameCache.set(key,username);pendingFetches.delete(key);return username;}).catch(() => {pendingFetches.delete(key);usernameCache.set(key,UNKNOWN_USERNAME);return UNKNOWN_USERNAME;});
 
     pendingFetches.set(key, fetchPromise);
     return fetchPromise;
@@ -237,59 +185,14 @@ module.exports = {
     const isWeekly = tipo === "settimanale";
     const weekWindow = getCurrentWeekWindow(new Date());
 
-    const allStaff = await PartnershipCount.find({
-      guildId: interaction.guild.id,
-    }).lean();
-    const partners = allStaff
-      .map((staff) => {
-        if (!isWeekly) {
-          const actions = Array.isArray(staff.partnerActions)
-            ? staff.partnerActions
-            : [];
-          return { userId: staff.userId, score: countValidAllTimePartners(actions) };
-        }
-
-        const actions = Array.isArray(staff.partnerActions)
-          ? staff.partnerActions
-          : [];
-        const weeklyCount = actions.reduce(
-          (total, action) =>
-            isActionInWeeklyWindow(
-              action,
-              weekWindow.weekStart,
-              weekWindow.weekEnd,
-            )
-              ? total + 1
-              : total,
-          0,
-        );
-        return { userId: staff.userId, score: weeklyCount };
-      })
-      .filter((staff) => staff.score > 0)
-      .sort((a, b) => b.score - a.score);
-
-    if (!partners.length) {
-      return safeEditReply(interaction, {
-        embeds: [buildNoDataEmbed(isWeekly)],
-      });
-    }
-
-    const totalPages = Math.ceil(partners.length / PARTNERS_PER_PAGE);
+    const allStaff=await PartnershipCount.find({guildId:interaction.guild.id,}).lean();
+    const partners=allStaff.map((staff) => {if(!isWeekly){const actions=Array.isArray(staff.partnerActions)?staff.partnerActions:[];return{userId:staff.userId,score:countValidAllTimePartners(actions)};}const actions=Array.isArray(staff.partnerActions)?staff.partnerActions:[];const weeklyCount=actions.reduce((total,action) => isActionInWeeklyWindow(action,weekWindow.weekStart,weekWindow.weekEnd,)?total+1:total,0,);return{userId:staff.userId,score:weeklyCount};}).filter((staff) => staff.score>0).sort((a,b) => b.score-a.score);if(!partners.length){return safeEditReply(interaction,{embeds:[buildNoDataEmbed(isWeekly)],});}const totalPages=Math.ceil(partners.length/PARTNERS_PER_PAGE);
     let currentPage = 1;
     let row = buildPaginationRow(currentPage, totalPages);
     const resolveUsername = createUsernameResolver(interaction.client);
 
-    const firstEmbed = await buildLeaderboardEmbed(
-      partners,
-      currentPage,
-      totalPages,
-      isWeekly,
-      resolveUsername,
-    );
-    const message = await safeEditReply(interaction, {
-      embeds: [firstEmbed],
-      components: [row],
-    });
+    const firstEmbed=await buildLeaderboardEmbed(partners,currentPage,totalPages,isWeekly,resolveUsername,);
+    const message=await safeEditReply(interaction,{embeds:[firstEmbed],components:[row],});
     if (!message) return;
 
     const collector = message.createMessageComponentCollector({ time: 60000 });
@@ -312,13 +215,7 @@ module.exports = {
         currentPage += 1;
       }
 
-      const embed = await buildLeaderboardEmbed(
-        partners,
-        currentPage,
-        totalPages,
-        isWeekly,
-        resolveUsername,
-      );
+      const embed=await buildLeaderboardEmbed(partners,currentPage,totalPages,isWeekly,resolveUsername,);
       row = buildPaginationRow(currentPage, totalPages);
       await buttonInteraction.update({ embeds: [embed], components: [row] });
     });

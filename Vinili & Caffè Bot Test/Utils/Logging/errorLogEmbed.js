@@ -24,10 +24,7 @@ function buildErrorLogEmbed({
   serverName = null,
 }) {
   const fullError = getFullErrorText(error);
-  const errorInBlock =
-    fullError.length > ERROR_TEXT_MAX
-      ? `${fullError.slice(0, ERROR_TEXT_MAX)}...`
-      : fullError;
+  const errorInBlock = fullError.length > ERROR_TEXT_MAX ?`${fullError.slice(0,ERROR_TEXT_MAX)}...`:fullError;
 
   const safeContext = truncateFieldValue(contextValue || "—", EMBED_FIELD_VALUE_MAX - 6);
   const safeUserTag = truncateFieldValue(userTag || "—", EMBED_FIELD_VALUE_MAX - 6);

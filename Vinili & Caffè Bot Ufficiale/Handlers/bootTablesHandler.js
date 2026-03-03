@@ -9,9 +9,7 @@ module.exports = (client) => {
 
     for (const category of categories) {
       const absBase = path.resolve(process.cwd(), category);
-      const files = listJsFilesRecursive(absBase).map((file) =>
-        path.relative(absBase, file).replace(/\\/g, "/"),
-      );
+      const files=listJsFilesRecursive(absBase).map((file) => path.relative(absBase,file).replace(/\\/g,"/"),);
       for (const rel of files) {
         const folder = path.dirname(rel).replace(/\\/g, "/");
         const file = path.basename(rel);
