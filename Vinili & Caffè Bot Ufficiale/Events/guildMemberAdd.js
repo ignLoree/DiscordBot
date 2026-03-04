@@ -760,7 +760,6 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
   const dmPunishedMembers=typeof joinGateCfg?.dmPunishedMembers==="boolean"?joinGateCfg.dmPunishedMembers:true;
   let dmSent = false;
   if (normalizedAction !== "log" && dmPunishedMembers) {
-    // Try DM while we still share a guild with the user.
     dmSent = await sendJoinGatePunishDm(member, reason, extraLines);
   }
 
@@ -821,7 +820,6 @@ async function kickForJoinGate(member, reason, extraLines = [], action = "kick")
     if (appliedAction === "kick") {
       markJoinGateKick(member.guild.id, member.id, reason);
     }
-    // Join Gate → only feed Join Raid; do not trigger AntiNuke or AutoMod panic.
     await registerJoinRaidSecuritySignal(member, {
       reason: `Join Gate action: ${reason}`,
       enableAntiNuke: false,
@@ -1074,7 +1072,6 @@ module.exports = {
         return;
       }
 
-      // Come Wick: Join Raid gira per ogni join (regardless of Join Gate). Se Join Gate fa match si passa joinGateFeedOnly per non doppia escalation.
       if (!isCoreExempt) {
         trackRecentJoinSignal(member);
         let joinGateMatch = null;

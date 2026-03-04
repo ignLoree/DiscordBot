@@ -1021,7 +1021,6 @@ async function sendExternalReturnReminders(client, guild) {
   const now = Date.now();
   const { secondDelayMs, finalDelayMs } = getExternalTimelineMs(client);
 
-  // If user returns at least once, stop external reminders forever for that user.
   for (const userId of Object.keys(entry.externalReminderHistory || {})) {
     if (guild.members.cache.has(userId)) {
       const prev = entry.externalReminderHistory[userId] || {};

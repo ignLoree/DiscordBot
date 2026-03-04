@@ -177,7 +177,6 @@ async function grantEventRewardsForExistingRoleMembers(guild) {
   if (full && full.size >= 2) {
     membersToIterate = full;
   } else {
-    // Fallback senza Server Members Intent: fetch a blocchi da 100 via REST
     const all = new Map();
     let after = null;
     let chunk;

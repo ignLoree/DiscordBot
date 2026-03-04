@@ -168,7 +168,6 @@ module.exports = {
         return;
       }
 
-      // Bot profile updates can affect IDs catalog references in every guild.
       for (const guild of resolvedClient.guilds.cache.values()) {
         queueIdsCatalogSync(resolvedClient, guild.id, "botUserUpdate");
       }

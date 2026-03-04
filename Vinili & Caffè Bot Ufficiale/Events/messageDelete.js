@@ -48,7 +48,6 @@ function hasMessageFlag(message, flag) {
       return Boolean(message.flags.has(flag));
     }
   } catch {
-    // fallback below
   }
   const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
   try {

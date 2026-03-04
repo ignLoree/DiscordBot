@@ -60,7 +60,6 @@ async function getUserCommandCooldownSeconds({ guildId, userId, member }) {
       const { hasEventWeekWinnerGrant } = require("../../Services/Community/activityEventRewardsService");
       if (await hasEventWeekWinnerGrant(guildId, userId, 2)) seconds = 5;
     } catch {
-      // ignore
     }
   }
   return seconds;

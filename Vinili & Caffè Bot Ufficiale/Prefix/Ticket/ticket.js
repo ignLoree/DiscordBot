@@ -858,7 +858,6 @@ module.exports = {
         ).catch(() => {});
       }
 
-
       const timer=setTimeout(() => {
         if (message.channel) message.channel.delete().catch(() => {});
       }, 2000);

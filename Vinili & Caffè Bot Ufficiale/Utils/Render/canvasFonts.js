@@ -107,8 +107,6 @@ function drawTextWithSpecialFallback(ctx, text, x, y, options = {}) {
   let currentFont = null;
   for (const ch of Array.from(value)) {
     const cp = ch.codePointAt(0);
-    // Keep U+0F04 (༄) on the normal stack so Symbol fallbacks can render it
-    // when Tibetan font coverage differs across environments.
     const isTibetanBlock = cp >= 0x0f00 && cp <= 0x0fff;
     const forceNormalForTibetanMark = cp === 0x0f04;
     const nextFont = isTibetanBlock && ! forceNormalForTibetanMark ? tibetanFont:normalFont;

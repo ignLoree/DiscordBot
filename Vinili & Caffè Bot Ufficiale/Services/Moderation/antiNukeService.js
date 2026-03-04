@@ -815,7 +815,6 @@ async function lockDangerousRolesForPanic(guild, state) {
   const dangerMask = getDangerMask(DANGEROUS_PERMS);
   for (const role of guild.roles.cache.values()) {
     if (!role || role.managed || role.id === guild.id) continue;
-    // If allowlist has values, treat them as explicit lockdown exclusions.
     if (allowlist?.size && allowlist.has(String(role.id))) continue;
     if (role.position >= me.roles.highest.position) continue;
     const current = BigInt(role.permissions?.bitfield || 0n);
@@ -1343,7 +1342,6 @@ async function triggerAntiNukePanicExternal(
   addedHeat = 100,
 ) {
   if (!guild?.id) return { ok: false, reason: "missing_guild" };
-  // addedHeat è in percentuale (es. 100 = 100%); enableAntiNukePanic converte con percentToHeat
   const panic = await enableAntiNukePanic(guild, String(reason || "External security signal"), Number(addedHeat || 0));
   return { ok: true, ...panic };
 }
@@ -2208,7 +2206,6 @@ async function handleWebhookCreationAction({
   if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const normalizedWebhookId = String(webhookId || "").trim();
-  // Keep processing even without webhook id (audit can omit target details).
   const panicActive = isAntiNukePanicActive(guild.id);
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, normalizedWebhookId, "webhook:create", now,);
@@ -2412,7 +2409,6 @@ async function handleWebhookDeletionAction({ guild, executorId, webhookId = "" }
   if (isUnknownExecutorId(actorId)) { /* keep tracking even when audit is missing */ }
   if (await isWhitelistedExecutorAsync(guild, actorId)) return;
   const normalizedWebhookId = String(webhookId || "").trim();
-  // Keep processing even without webhook id (audit can omit target details).
   const panicActive = isAntiNukePanicActive(guild.id);
   const now = Date.now();
   const trackerId = getTrackerExecutorId(actorId, normalizedWebhookId, "webhook:delete", now,);
@@ -2734,7 +2730,6 @@ async function handleVanityGuard({ oldGuild, newGuild, executorId }) {
   if (oldVanity) {
     await newGuild.setVanityCode(oldVanity, "AntiNuke: restore vanity url").catch(() => { });
   } else {
-    // Revert unauthorized vanity set when previous code was empty.
     await newGuild.setVanityCode(null, "AntiNuke: clear unauthorized vanity url").catch(() => { });
   }
   const quarantine = await quarantineExecutor(guild, actorId, "AntiNuke: unauthorized vanity update",);

@@ -38,7 +38,6 @@ function hasMessageFlag(message, flag) {
       return Boolean(message.flags.has(flag));
     }
   } catch {
-    // fallback below
   }
   const raw = message?.flags?.bitfield ?? message?.flags ?? 0;
   try {
@@ -62,7 +61,6 @@ function isMeaningfulDeletedMessage(msg) {
   if (isTransientInteractionMessage(msg)) return false;
   const hasContent = sanitizeText(msg.content || "").length > 0;
   const hasAttachments = Boolean(msg.attachments?.size);
-  // Skip embeds entirely: embed payload is often not reliably visible after delete.
   return hasContent || hasAttachments;
 }
 
@@ -112,7 +110,6 @@ function splitTextToChunks(text, maxBytes = 1_800_000) {
       current = line;
       continue;
     }
-    // Single line too large: hard-split by characters.
     let remaining = line;
     while (Buffer.byteLength(remaining, "utf8") > maxBytes) {
       let take = Math.floor((maxBytes * 0.9));

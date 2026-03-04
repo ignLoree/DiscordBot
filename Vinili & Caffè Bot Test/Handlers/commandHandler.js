@@ -117,7 +117,6 @@ module.exports = (client) => {
         `[COMMANDS] Deploy slash richiesto. scope=${deployCheck.scopeKey} prev=${deployCheck.previousHash || "none"} next=${deployCheck.hash}${forceDeploy ? " force=true" : ""}`,
       );
       try {
-        // eslint-disable-next-line no-await-in-loop
         await rest.put(Routes.applicationGuildCommands(clientId, guildId), {
           body: client.commandArray,
         });

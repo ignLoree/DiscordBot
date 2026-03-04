@@ -1,16 +1,3 @@
-/**
- * Avvio del bot con sharding (opzionale).
- * Usa quando il bot è in molti server (es. 1000+ guild) per distribuire carico e memoria.
- *
- * --- AVVIO SHARDATO ---
- * Con loader.js (root progetto): ENABLE_SHARDING=1 node loader.js
- *   → il loader avvia automaticamente run-sharded.js per il bot Ufficiale.
- * Senza loader: ENABLE_SHARDING=1 node run-sharded.js (da cartella Bot Ufficiale)
- * Oppure: in .env metti ENABLE_SHARDING=1 poi npm run start:sharded
- *
- * --- AVVIO NORMALE ---
- * node run-sharded.js (senza env) = esegue index.js in un unico processo (come prima).
- */
 const path = require("path");
 const APP_ROOT = __dirname;
 

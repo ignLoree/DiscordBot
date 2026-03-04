@@ -155,8 +155,6 @@ async function runDailyPartnerAudit(client, opts = {}) {
     const rowsForAudit=allCreates.filter((row) => {const rowKey=getRomeDateKey(new Date(row?.action?.date||Date.now()));return rowKey===targetDateKey;}).sort((a,b) => a.dateMs-b.dateMs);
 
     const actionTextCache = new Map();
-    // Invite API validation removed on purpose:
-    // it generated false positives at midnight and caused unjust penalties.
     const getActionTextCached=async(row) => {if(!row?.action)return "";if(actionTextCache.has(row.index))return actionTextCache.get(row.index);const text=await fetchPartnerActionText(guild,row.action);actionTextCache.set(row.index,text||"");return actionTextCache.get(row.index);};
     const enrichInviteCodes=async(row) => {if(!row?.action){row.inviteCodes=[];return row.inviteCodes;}const fromInviteField=extractInviteCodes(row.action?.invite||"");const actionText=await getActionTextCached(row);const fromText=extractInviteCodes(actionText);const combined=Array.from(new Set([...fromInviteField,...fromText]));if(!combined.length&&row.action?.invite){const singleCode=extractInviteCode(row.action.invite);if(singleCode)combined.push(singleCode);}row.inviteCodes=combined;return row.inviteCodes;};
 

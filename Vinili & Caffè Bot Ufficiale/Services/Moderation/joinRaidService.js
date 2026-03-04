@@ -482,8 +482,6 @@ function matchJoinRaidAccountType(member, reasons = []) {
 function isHighRiskJoinRaidReasons(reasons = []) {
   const keys = new Set((Array.isArray(reasons) ? reasons : []).map((x) => String(x?.key || "")));
   if (!keys.size) return false;
-  // Treat adaptive ID correlation and JoinGate suspicious marks as high-risk.
-  // "young account" and "no pfp" alone are too noisy and can trigger false positives.
   return keys.has("id_flag") || keys.has("join_gate_suspicious");
 }
 
@@ -639,7 +637,6 @@ async function applyPunishment(member, reasons) {
   const canTimeout = Boolean(me?.permissions?.has(PermissionsBitField.Flags.ModerateMembers)) && Boolean(member?.moderatable);
   let dmSent = false;
   if (action !== "log") {
-    // Try DM while we still share a guild with the user.
     dmSent = await sendPunishDm(member, action, reasons);
   }
 
@@ -952,7 +949,6 @@ async function activateJoinRaidWindow(
 async function registerJoinRaidSecuritySignal(member, options = {}) {
   if (!member?.guild?.id || !member?.id) return { ok: false, reason: "missing_member" };
   void options;
-  // JoinRaid remains isolated from AutoMod/AntiNuke escalations.
   return { ok: true, panic: { activated: false, active: false, count: 0 } };
 }
 

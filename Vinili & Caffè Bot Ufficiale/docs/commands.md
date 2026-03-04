@@ -1,6 +1,6 @@
 # Prefix Commands
 
-Generato automaticamente il 2026-03-02T18:20:38.224Z.
+Generato automaticamente il 2026-03-04T11:14:06.939Z.
 
 ## +adorable
 - Categoria: `Minigames`
@@ -21,11 +21,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +avatar
 - Categoria: `Utility`
 - Alias: `av`
-- Uso: `+avatar [server|user|guild]`
+- Uso: `+avatar[server|user|guild]`
 - Subcommand: `server`, `user`, `guild`
 - Esempi:
-- `+avatar server`
-- `+avatar user`
+- `+avatarserver`
+- `+avataruser`
 
 ## +ban
 - Categoria: `Moderation`
@@ -38,11 +38,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +banner
 - Categoria: `Utility`
 - Alias: `bn`
-- Uso: `+banner [user|server|guild]`
+- Uso: `+banner[user|server|guild]`
 - Subcommand: `user`, `server`, `guild`
 - Esempi:
-- `+banner user`
-- `+banner server`
+- `+banneruser`
+- `+bannerserver`
 
 ## +birb
 - Categoria: `Minigames`
@@ -55,20 +55,20 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +birthday
 - Categoria: `Utility`
 - Alias: `bh`
-- Uso: `+birthday <set|edit|remove>`
+- Uso: `+birthday<set|edit|remove>`
 - Subcommand: `set`, `edit`, `remove`
 - Esempi:
-- `+birthday set`
-- `+birthday edit`
+- `+birthdayset`
+- `+birthdayedit`
 
 ## +block
 - Categoria: `Utility`
 - Alias: `blockav`, `blockbn`, `blockquotes`
-- Uso: `+block [avatar|banner|quotes|av|bn|quote|q]`
+- Uso: `+block[avatar|banner|quotes|av|bn|quote|q]`
 - Subcommand: `avatar`, `banner`, `quotes`, `av`, `bn`, `quote`, `q`
 - Esempi:
-- `+block avatar`
-- `+block banner`
+- `+blockavatar`
+- `+blockbanner`
 
 ## +case
 - Categoria: `Moderation`
@@ -105,11 +105,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +classifica
 - Categoria: `Level`
 - Alias: `c`, `cs`, `classificasettimanale`
-- Uso: `+classifica [alltime|weekly|cs|classificasettimanale|settimanale|week|w|all]`
+- Uso: `+classifica[alltime|weekly|cs|classificasettimanale|settimanale|week|w|all]`
 - Subcommand: `alltime`, `weekly`, `cs`, `classificasettimanale`, `settimanale`, `week`, `w`, `all`, `totale`, `general`, `generale`, `a`
 - Esempi:
-- `+classifica alltime`
-- `+classifica weekly`
+- `+classificaalltime`
+- `+classificaweekly`
 
 ## +clearwarn
 - Categoria: `Moderation`
@@ -130,11 +130,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +customrole
 - Categoria: `VIP`
 - Alias: -
-- Uso: `+customrole [create|modify|add|remove]`
+- Uso: `+customrole[create|modify|add|remove]`
 - Subcommand: `create`, `modify`, `add`, `remove`
 - Esempi:
-- `+customrole create`
-- `+customrole modify`
+- `+customrolecreate`
+- `+customrolemodify`
 
 ## +customvoc
 - Categoria: `VIP`
@@ -171,11 +171,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +description
 - Categoria: `Partner`
 - Alias: `desc`
-- Uso: `+description [user|utente|id]`
+- Uso: `+description[user|utente|id]`
 - Subcommand: `user`, `utente`, `id`
 - Esempi:
-- `+description user`
-- `+description utente`
+- `+descriptionuser`
+- `+descriptionutente`
 
 ## +dm-disable
 - Categoria: `Utility`
@@ -220,20 +220,20 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +embed
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+embed [create]`
+- Uso: `+embed[create]`
 - Subcommand: `create`
 - Esempi:
-- `+embed create`
+- `+embedcreate`
 - `+embed`
 
 ## +evento
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+evento <start|stop|info|classifica|staff|assegna-ruoli|reset-premi|addpoints>`
+- Uso: `+evento<start|stop|info|classifica|staff|assegna-ruoli|reset-premi|addpoints>`
 - Subcommand: `start`, `stop`, `info`, `classifica`, `staff`, `assegna-ruoli`, `reset-premi`, `addpoints`
 - Esempi:
-- `+evento start`
-- `+evento stop`
+- `+eventostart`
+- `+eventostop`
 
 ## +flip
 - Categoria: `Minigames`
@@ -286,10 +286,10 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +join
 - Categoria: `TTS`
 - Alias: -
-- Uso: `+join [music]`
+- Uso: `+join[music]`
 - Subcommand: `music`
 - Esempi:
-- `+join music`
+- `+joinmusic`
 - `+join`
 
 ## +joke
@@ -319,11 +319,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +level
 - Categoria: `Admin`
 - Alias: `gmulti`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`
-- Uso: `+level <gmulti|set|add|remove|reset|lock|unlock|multiplier>`
+- Uso: `+level<gmulti|set|add|remove|reset|lock|unlock|multiplier>`
 - Subcommand: `gmulti`, `set`, `add`, `remove`, `reset`, `lock`, `unlock`, `multiplier`, `ignore`, `unignore`, `config`, `levelset`, `leveladdexp`, `levelremoveexp`, `levelreset`, `levellock`, `levelunlock`, `levelmultiplier`, `levelignore`, `levelunignore`, `levelconfig`, `levelgmulti`, `exp`, `level`
 - Esempi:
-- `+level gmulti`
-- `+level set`
+- `+levelgmulti`
+- `+levelset`
 
 ## +lock
 - Categoria: `Moderation`
@@ -430,14 +430,23 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 - Esempi:
 - `+np`
 
+## +pause
+- Categoria: `Staff`
+- Alias: `pausa`
+- Uso: `+pause list [@staffer|id|username]`
+- Subcommand: `list`
+- Esempi:
+- `+pauselist`
+- `+pause`
+
 ## +perms
 - Categoria: `Admin`
 - Alias: `perm`
-- Uso: `+perms <grant|revoke|list|clear|permgrant|permrevoke|permlist|permclear>`
+- Uso: `+perms<grant|revoke|list|clear|permgrant|permrevoke|permlist|permclear>`
 - Subcommand: `grant`, `revoke`, `list`, `clear`, `permgrant`, `permrevoke`, `permlist`, `permclear`
 - Esempi:
-- `+perms grant`
-- `+perms revoke`
+- `+permsgrant`
+- `+permsrevoke`
 
 ## +ping
 - Categoria: `Utility`
@@ -515,11 +524,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +reaction
 - Categoria: `Admin`
 - Alias: `autoreaction`, `autoresponder`
-- Uso: `+reaction <mention|auto|mentions|me|mine|autoresponder|ar>`
+- Uso: `+reaction<mention|auto|mentions|me|mine|autoresponder|ar>`
 - Subcommand: `mention`, `auto`, `mentions`, `me`, `mine`, `autoresponder`, `ar`
 - Esempi:
-- `+reaction mention`
-- `+reaction auto`
+- `+reactionmention`
+- `+reactionauto`
 
 ## +reason
 - Categoria: `Moderation`
@@ -564,11 +573,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +security
 - Categoria: `Admin`
 - Alias: -
-- Uso: `+security [status|statics|enable|disable|panic|panic status|panic enable|panic disable]`
+- Uso: `+security[status|statics|enable|disable|panic|panic status|panic enable|panic disable]`
 - Subcommand: `status`, `statics`, `enable`, `disable`, `panic`, `panic status`, `panic enable`, `panic disable`
 - Esempi:
-- `+security status`
-- `+security statics`
+- `+securitystatus`
+- `+securitystatics`
 
 ## +server
 - Categoria: `Stats`
@@ -584,8 +593,8 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 - Uso: `+set <voice|autojoin> <valore>`
 - Subcommand: `voice`, `autojoin`, `reset`, `default`, `off`, `none`
 - Esempi:
-- `+set voice`
-- `+set autojoin`
+- `+setvoice`
+- `+setautojoin`
 
 ## +ship
 - Categoria: `Minigames`
@@ -633,17 +642,17 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 - Uso: `+temprole [user] [time] [role], [optional reason]`
 - Subcommand: `add`, `remove`
 - Esempi:
-- `+temprole add`
-- `+temprole remove`
+- `+temproleadd`
+- `+temproleremove`
 
 ## +ticket
 - Categoria: `Ticket`
 - Alias: `add`, `remove`, `claim`, `unclaim`, `close`, `closerequest`, `switchpanel`, `rename`, `reopen`, `ticketadd`, `ticketremove`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `ticketreopen`, `ticketrename`, `ticketswitchpanel`, `ticketcloserequest`, `tadd`, `tremove`, `trename`
-- Uso: `+ticket [add|remove|closerequest|close|claim|unclaim|switchpanel|rename]`
+- Uso: `+ticket[add|remove|closerequest|close|claim|unclaim|switchpanel|rename]`
 - Subcommand: `add`, `remove`, `closerequest`, `close`, `claim`, `unclaim`, `switchpanel`, `rename`, `reopen`, `ticketswitchpanel`, `ticketrename`, `ticketreopen`, `trename`, `ticketclose`, `ticketclaim`, `ticketunclaim`, `tadd`, `tremove`, `ticketadd`, `ticketremove`, `ticketcloserequest`, `partnership`, `supporto`, `high`
 - Esempi:
-- `+ticket add`
-- `+ticket remove`
+- `+ticketadd`
+- `+ticketremove`
 
 ## +top
 - Categoria: `Stats`
@@ -664,11 +673,11 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 ## +unblock
 - Categoria: `Utility`
 - Alias: `unblockav`, `unblockbn`, `unblockquotes`
-- Uso: `+unblock [avatar|banner|quotes|av|bn|quote|q]`
+- Uso: `+unblock[avatar|banner|quotes|av|bn|quote|q]`
 - Subcommand: `avatar`, `banner`, `quotes`, `av`, `bn`, `quote`, `q`
 - Esempi:
-- `+unblock avatar`
-- `+unblock banner`
+- `+unblockavatar`
+- `+unblockbanner`
 
 ## +unlock
 - Categoria: `Moderation`
@@ -734,3 +743,4 @@ Generato automaticamente il 2026-03-02T18:20:38.224Z.
 - Subcommand: -
 - Esempi:
 - `+weather`
+

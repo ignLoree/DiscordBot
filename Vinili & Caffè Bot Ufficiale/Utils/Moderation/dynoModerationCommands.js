@@ -75,7 +75,6 @@ async function validateModerationTarget(message, member, actionLabel, targetUser
   const targetHasStaffRole=String(IDs?.roles?.Staff||"").trim()&&targetMember.roles?.cache?.has(String(IDs?.roles?.Staff||"").trim());
   const targetHasCoreProtectedRole=[IDs?.roles?.HighStaff,IDs?.roles?.Admin,IDs?.roles?.Manager,IDs?.roles?.CoFounder,IDs?.roles?.Founder,].map((id) => String(id||"").trim()).filter(Boolean).some((roleId) => targetMember.roles?.cache?.has(roleId));
 
-  // HighStaff (or above) can moderate Staff, but not governance roles.
   if (
     actorHighStaffBypass &&
     targetHasStaffRole &&

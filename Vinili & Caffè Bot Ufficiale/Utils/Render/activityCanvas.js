@@ -85,8 +85,6 @@ function prepareVisibleText(value) {
     .normalize("NFC")
     .trim();
 
-  // Fallback for hosts/font stacks that cannot render Mathematical Alphanumeric Symbols
-  // (e.g. styled nicknames like "𝕯𝖎𝖚𝖓𝕶"): convert only those codepoints to readable ASCII.
   out = out.replace(/[\u{1D400}-\u{1D7FF}]/gu, (ch) => ch.normalize("NFKC"));
 
   for (const [char, token] of protectedMap.entries()) {

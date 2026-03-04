@@ -867,8 +867,6 @@ function registerPanicTrigger(guildId, userId, options = {}, at = nowMs()) {
     dbBoost,
     raidBoost,
   });
-  // Panic trigger must be based on distinct accounts, not weighted boosts.
-  // Boost fields are kept for diagnostics/future use but do not alter threshold count.
   const count = Number(state.triggerAccounts.size || 0);
   const alreadyActive = state.activeUntil > at;
   if (count >= PANIC_MODE.triggerCount) {
@@ -1066,7 +1064,6 @@ async function markBadUserTrigger(message, violations, heatValue) {
     );
     BAD_USER_CACHE.delete(userId);
   } catch {
-    // Do not break automod flow on DB issues.
   }
 }
 
@@ -1097,7 +1094,6 @@ async function markBadUserAction(message, action, violations = []) {
     );
     BAD_USER_CACHE.delete(userId);
   } catch {
-    // Do not break automod flow on DB issues.
   }
 }
 
@@ -1923,10 +1919,7 @@ async function detectViolations(message, state, profile) {
       const repeatedCharBurst = /(.)\1{10,}/.test(content);
       const noisyShape = upperRatio >= 0.45 || repeatedCharBurst;
       if (legitConversation && !noisyShape) {
-        // Skip character-based punishment for long, normal conversation messages.
       } else {
-        // lowercaseHeat/uppercaseHeat sono percentuali (es. 0.08 = 0.08%): ogni carattere
-        // aggiunge quella % del max heat, così l’UI (“Heat Added 0.08%”) è rispettata.
         const lowerHeat = lower * (Number(TEXT_RULES.characters.lowercaseHeat) / 100) * MAX_HEAT;
         const upperHeat = upper * (Number(TEXT_RULES.characters.uppercaseHeat) / 100) * MAX_HEAT;
         const heat = Number((lowerHeat + upperHeat).toFixed(2));
@@ -2469,7 +2462,6 @@ async function runAutoModMessage(message) {
 
     if (panic.activated) {
       const activeUntil = getPanicState(message.guildId).activeUntil;
-      // Intentionally isolated: AutoMod panic must not escalate AntiNuke/JoinRaid.
       await sendPanicModeLog(
         message,
         "panic_enabled",
@@ -2479,7 +2471,6 @@ async function runAutoModMessage(message) {
     }
   }
 
-  // Come Wick: in panic solo i raider (account che hanno contribuito al trigger) ricevono timeout istantaneo; i membri normali seguono i filtri heat.
   const panicActive = isPanicModeActive(message.guildId);
   const isRaider = isRaiderInPanic(message.guildId, message.author?.id, at);
   if (panicActive && isRaider) {
@@ -2511,7 +2502,6 @@ async function runAutoModMessage(message) {
     };
   }
 
-  // Le regole si sommano tra loro: si aggiunge l'heat di ogni violazione.
   for (const v of violations) addHeat(state, v.heat);
   await markBadUserTrigger(message, violations, state.heat);
 
