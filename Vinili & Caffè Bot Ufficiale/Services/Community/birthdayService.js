@@ -4,12 +4,12 @@ const BirthdayProfile = require("../../Schemas/Community/birthdayProfileSchema")
 
 const DEFAULT_TIME_ZONE = "Europe/Rome";
 const BIRTHDAY_ROLE_ID = "1474729085719548048";
-const BIRTHDAY_REACTIONS=["<a:VC_Events:1448688007438667796>","<a:VC_HelloKittyGift:1329447876857958471>",];
+const BIRTHDAY_REACTIONS = ["<a:VC_Events:1448688007438667796>", "<a:VC_HelloKittyGift:1329447876857958471>",];
 let birthdayLoopHandle = null;
 let birthdayTickRunning = false;
 
 function getRomeDateParts(date = new Date()) {
-  const formatter=new Intl.DateTimeFormat("en-GB",{timeZone:DEFAULT_TIME_ZONE,year:"numeric",month:"2-digit",day:"2-digit",});
+  const formatter = new Intl.DateTimeFormat("en-GB", { timeZone: DEFAULT_TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", });
   const parts = formatter.formatToParts(date);
   const map = {};
   for (const part of parts) {
@@ -25,7 +25,7 @@ function getRomeDateParts(date = new Date()) {
 function inferBirthYearFromAge(day, month, age, now = new Date()) {
   const safeAge = Math.max(1, Number(age || 0));
   const today = getRomeDateParts(now);
-  const birthdayAlreadyPassed=today.month>month||(today.month===month&&today.day>=day);
+  const birthdayAlreadyPassed = today.month > month || (today.month === month && today.day >= day);
   const birthYear = today.year - safeAge - (birthdayAlreadyPassed ? 0 : 1);
   return Math.max(1900, birthYear);
 }
@@ -42,7 +42,7 @@ function buildBirthdayAnnouncement(docs, currentYear) {
   const who = joinMentionsNicely(mentions);
   const intro = `Oggi è il compleanno di ${who}.`;
 
-  const visibleAges=docs.filter((doc) => doc.showAge&&Number.isFinite(Number(doc.birthYear))).map((doc) => Math.max(1,currentYear-Number(doc.birthYear)));
+  const visibleAges = docs.filter((doc) => doc.showAge && Number.isFinite(Number(doc.birthYear))).map((doc) => Math.max(1, currentYear - Number(doc.birthYear)));
 
   if (!visibleAges.length) {
     return `${intro}\nFate gli auguri.`;
@@ -55,11 +55,11 @@ function buildBirthdayAnnouncement(docs, currentYear) {
 
 async function assignBirthdayRole(guild, userId) {
   if (!guild || !userId || !BIRTHDAY_ROLE_ID) return;
-  const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
+  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
   if (!member) return;
   if (member.roles.cache.has(BIRTHDAY_ROLE_ID)) return;
-  await member.roles.add(BIRTHDAY_ROLE_ID).catch(() => {});
-  const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+  await member.roles.add(BIRTHDAY_ROLE_ID).catch(() => { });
+  const refreshedMember = await guild.members.fetch(userId).catch(() => null);
   if (!refreshedMember?.roles?.cache?.has(BIRTHDAY_ROLE_ID)) {
     global.logger?.warn?.("[BIRTHDAY] role assign failed:", guild.id, userId, BIRTHDAY_ROLE_ID);
   }
@@ -72,7 +72,7 @@ async function runBirthdayTick(client) {
     const channelId = IDs.channels.chat || null;
 
     const today = getRomeDateParts(new Date());
-    const docs=await BirthdayProfile.find({day:today.day,month:today.month,$or:[{lastCelebratedYear:{$exists:false}},{lastCelebratedYear:{$ne:today.year}},],}).lean().catch(() => []);
+    const docs = await BirthdayProfile.find({ day: today.day, month: today.month, $or: [{ lastCelebratedYear: { $exists: false } }, { lastCelebratedYear: { $ne: today.year } },], }).lean().catch(() => []);
 
     if (!docs.length) return;
 
@@ -86,13 +86,13 @@ async function runBirthdayTick(client) {
     }
 
     for (const [guildId, guildDocs] of byGuild.entries()) {
-      const guild=client.guilds.cache.get(guildId)||(await client.guilds.fetch(guildId).catch(() => null));
+      const guild = client.guilds.cache.get(guildId) || (await client.guilds.fetch(guildId).catch(() => null));
       if (!guild) continue;
 
       let channel =
         (channelId
           ? guild.channels.cache.get(channelId) ||
-            (await guild.channels.fetch(channelId).catch(() => null))
+          (await guild.channels.fetch(channelId).catch(() => null))
           : null) || null;
       if (!channel?.isTextBased?.()) {
         channel =
@@ -106,7 +106,7 @@ async function runBirthdayTick(client) {
       const sent = await channel.send({ content }).catch(() => null);
       if (sent) {
         for (const reaction of BIRTHDAY_REACTIONS) {
-          await sent.react(reaction).catch(() => {});
+          await sent.react(reaction).catch(() => { });
         }
       }
 
@@ -119,7 +119,7 @@ async function runBirthdayTick(client) {
         await BirthdayProfile.updateMany(
           { _id: { $in: ids } },
           { $set: { lastCelebratedYear: today.year } },
-        ).catch(() => {});
+        ).catch(() => { });
       }
     }
   } catch (error) {

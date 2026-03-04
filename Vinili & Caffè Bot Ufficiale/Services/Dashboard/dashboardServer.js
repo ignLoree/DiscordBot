@@ -7,8 +7,7 @@ const https = require("https");
 const IDs = require("../../Utils/Config/ids");
 const logsApi = require("../../Utils/Moderation/logs");
 const { getModConfig, createModCase, logModCase } = require("../../Utils/Moderation/moderation");
-
-const{CONTROL_MODES,getControlCenterSnapshot,getOverviewPayload,setModuleMode,setCommandMode,setEventMode,setEventRouteChannel,setEventGroupRouteChannel,getEventActivity,}=require("./controlCenterService");
+const { CONTROL_MODES, getControlCenterSnapshot, getOverviewPayload, setModuleMode, setCommandMode, setEventMode, setEventRouteChannel, setEventGroupRouteChannel, getEventActivity, } = require("./controlCenterService");
 
 let dashboardServer = null;
 const SESSION_TTL_HOURS = Math.max(1, Number(process.env.DASHBOARD_SESSION_TTL_HOURS || 24 * 30));
@@ -62,7 +61,7 @@ function getRequestBaseUrl(req) {
 function getOauthConfig(client, req = null) {
   const clientId = process.env.DASHBOARD_OAUTH_CLIENT_ID || process.env.DISCORD_CLIENT_ID || IDs.bots.ViniliCaffeBot;
   const clientSecret = process.env.DASHBOARD_OAUTH_CLIENT_SECRET || process.env.DISCORD_CLIENT_SECRET || "";
-  const redirectUri=process.env.DASHBOARD_OAUTH_REDIRECT_URI||`${getRequestBaseUrl(req)}/api/auth/callback`;
+  const redirectUri = process.env.DASHBOARD_OAUTH_REDIRECT_URI || `${getRequestBaseUrl(req)}/api/auth/callback`;
   const enabled = Boolean(clientId && clientSecret);
   return { enabled, clientId, clientSecret, redirectUri };
 }
@@ -80,7 +79,7 @@ function parseCookies(req) {
 }
 
 function setCookie(res, name, value, maxAgeSec = 0) {
-  const attrs=[`${name}=${encodeURIComponent(value||"")}`,
+  const attrs = [`${name}=${encodeURIComponent(value || "")}`,
     "Path=/",
     "HttpOnly",
     "SameSite=Lax",
@@ -143,13 +142,13 @@ function buildDiscordAuthorizeUrl(oauth) {
     expiresAt: Date.now() + 10 * 60_000,
     redirectUri: String(oauth.redirectUri || ""),
   });
-  const params=new URLSearchParams({client_id:oauth.clientId,redirect_uri:oauth.redirectUri,response_type:"code",scope:"identify guilds",state,prompt:"consent",});
+  const params = new URLSearchParams({ client_id: oauth.clientId, redirect_uri: oauth.redirectUri, response_type: "code", scope: "identify guilds", state, prompt: "consent", });
   return `https://discord.com/api/oauth2/authorize?${params.toString()}`;
 }
 
 function httpsRequest({ method = "GET", hostname, path: reqPath, headers = {}, body = null }) {
   return new Promise((resolve, reject) => {
-    const req=https.request({method,hostname,path:reqPath,headers},(res) => {let raw="";res.on("data",(chunk) => {raw+=String(chunk||"");});res.on("end",() => {const status=Number(res.statusCode||0);let parsed=null;try{parsed=raw?JSON.parse(raw):{};}catch{parsed={raw};}resolve({status,data:parsed});});},);
+    const req = https.request({ method, hostname, path: reqPath, headers }, (res) => { let raw = ""; res.on("data", (chunk) => { raw += String(chunk || ""); }); res.on("end", () => { const status = Number(res.statusCode || 0); let parsed = null; try { parsed = raw ? JSON.parse(raw) : {}; } catch { parsed = { raw }; } resolve({ status, data: parsed }); }); },);
     req.on("error", reject);
     if (body) req.write(body);
     req.end();
@@ -157,9 +156,9 @@ function httpsRequest({ method = "GET", hostname, path: reqPath, headers = {}, b
 }
 
 async function exchangeCodeForToken(oauth, code) {
-  const body=new URLSearchParams({client_id:oauth.clientId,client_secret:oauth.clientSecret,grant_type:"authorization_code",code,redirect_uri:oauth.redirectUri,}).toString();
+  const body = new URLSearchParams({ client_id: oauth.clientId, client_secret: oauth.clientSecret, grant_type: "authorization_code", code, redirect_uri: oauth.redirectUri, }).toString();
 
-  const result=await httpsRequest({method:"POST",hostname:"discord.com",path:"/api/oauth2/token",headers:{"Content-Type":"application/x-www-form-urlencoded","Content-Length":Buffer.byteLength(body),},body,});
+  const result = await httpsRequest({ method: "POST", hostname: "discord.com", path: "/api/oauth2/token", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(body), }, body, });
 
   if (result.status < 200 || result.status >= 300) {
     throw new Error(`oauth_token_failed_${result.status}`);
@@ -183,7 +182,7 @@ function loadSessionsFromDisk() {
         expiresAt,
       });
     }
-  } catch {}
+  } catch { }
 }
 
 function persistSessionsNow() {
@@ -201,7 +200,7 @@ function persistSessionsNow() {
       });
     }
     fs.writeFileSync(SESSION_STORE_PATH, `${JSON.stringify({ rows }, null, 2)}\n`, "utf8");
-  } catch {}
+  } catch { }
 }
 
 function schedulePersistSessions() {
@@ -214,11 +213,13 @@ function schedulePersistSessions() {
 }
 
 async function fetchDiscordUser(accessToken) {
-  const me=await httpsRequest({method:"GET",hostname:"discord.com",path:"/api/users/@me",headers:{Authorization:`Bearer ${accessToken}` },
+  const me = await httpsRequest({
+    method: "GET", hostname: "discord.com", path: "/api/users/@me", headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (me.status < 200 || me.status >= 300) throw new Error(`oauth_me_failed_${me.status}`);
 
-  const guilds=await httpsRequest({method:"GET",hostname:"discord.com",path:"/api/users/@me/guilds",headers:{Authorization:`Bearer ${accessToken}` },
+  const guilds = await httpsRequest({
+    method: "GET", hostname: "discord.com", path: "/api/users/@me/guilds", headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (guilds.status < 200 || guilds.status >= 300) throw new Error(`oauth_guilds_failed_${guilds.status}`);
 
@@ -316,7 +317,7 @@ async function fetchFreshGuildMembers(guild) {
   const now = Date.now();
   const cached = guildUsersCache.get(cacheKey);
   if (cached?.inFlight) {
-    await cached.inFlight.catch(() => {});
+    await cached.inFlight.catch(() => { });
     return;
   }
   if (cached && now - Number(cached.fetchedAt || 0) < USERS_CACHE_TTL_MS) {
@@ -341,18 +342,20 @@ async function getGuildUsersPage(client, guildId, query = "") {
   await fetchFreshGuildMembers(guild);
 
   const q = String(query || "").trim().toLowerCase();
-  const users=guild.members.cache.map((member) => {const user=member.user;return{id:user.id,username:user.username,tag:user.tag||`${user.username}`,
-        displayName: member.displayName || user.username,
-        bot: Boolean(user.bot),
-        joinedAt: Number(member.joinedTimestamp || 0),
-        createdAt: Number(user.createdTimestamp || 0),
-        timedOutUntil: Number(member.communicationDisabledUntilTimestamp || 0),
-        roles: member.roles.cache
-          .filter((role) => role.id !== guild.id)
-          .sort((a, b) => b.position - a.position)
-          .map((role) => ({ id: role.id, name: role.name })),
-      };
-    })
+  const users = guild.members.cache.map((member) => {
+    const user = member.user; return {
+      id: user.id, username: user.username, tag: user.tag || `${user.username}`,
+      displayName: member.displayName || user.username,
+      bot: Boolean(user.bot),
+      joinedAt: Number(member.joinedTimestamp || 0),
+      createdAt: Number(user.createdTimestamp || 0),
+      timedOutUntil: Number(member.communicationDisabledUntilTimestamp || 0),
+      roles: member.roles.cache
+        .filter((role) => role.id !== guild.id)
+        .sort((a, b) => b.position - a.position)
+        .map((role) => ({ id: role.id, name: role.name })),
+    };
+  })
     .filter((row) => {
       if (!q) return true;
       return (
@@ -376,7 +379,7 @@ async function runUserAction(client, payload = {}) {
 
   const guild = client?.guilds?.cache?.get(guildId) || (await client?.guilds?.fetch?.(guildId).catch(() => null));
   if (!guild) return { ok: false, reason: "guild_not_found" };
-  const member=guild.members.cache.get(userId)||(await guild.members.fetch(userId).catch(() => null));
+  const member = guild.members.cache.get(userId) || (await guild.members.fetch(userId).catch(() => null));
   const roleId = String(payload.roleId || "").trim();
   const nicknameRaw = String(payload.nickname ?? "").trim();
   const durationMinutes = Math.max(1, Math.min(28 * 24 * 60, Number(payload.durationMinutes || 60)));
@@ -387,7 +390,8 @@ async function runUserAction(client, payload = {}) {
     await member.timeout(durationMs, reason);
     try {
       const config = await getModConfig(guild.id);
-      const{doc}=await createModCase({guildId:guild.id,action:"MUTE",userId,modId:client.user?.id||guild.client?.user?.id,reason:`[Dashboard] ${reason}`,
+      const { doc } = await createModCase({
+        guildId: guild.id, action: "MUTE", userId, modId: client.user?.id || guild.client?.user?.id, reason: `[Dashboard] ${reason}`,
         durationMs,
         context: null,
       });
@@ -405,11 +409,12 @@ async function runUserAction(client, payload = {}) {
   if (action === "kick") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.kick(reason);
-    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    const refreshedMember = await guild.members.fetch(userId).catch(() => null);
     if (refreshedMember) return { ok: false, reason: "member_not_kicked" };
     try {
       const config = await getModConfig(guild.id);
-      const{doc}=await createModCase({guildId:guild.id,action:"KICK",userId,modId:client.user?.id||guild.client?.user?.id,reason:`[Dashboard] ${reason}`,
+      const { doc } = await createModCase({
+        guildId: guild.id, action: "KICK", userId, modId: client.user?.id || guild.client?.user?.id, reason: `[Dashboard] ${reason}`,
         durationMs: null,
         context: null,
       });
@@ -421,11 +426,12 @@ async function runUserAction(client, payload = {}) {
   }
   if (action === "ban") {
     await guild.members.ban(userId, { reason, deleteMessageSeconds: 604800 });
-    const bannedUser=await guild.bans.fetch(userId).catch(() => null);
+    const bannedUser = await guild.bans.fetch(userId).catch(() => null);
     if (!bannedUser) return { ok: false, reason: "member_not_banned" };
     try {
       const config = await getModConfig(guild.id);
-      const{doc}=await createModCase({guildId:guild.id,action:"BAN",userId,modId:client.user?.id||guild.client?.user?.id,reason:`[Dashboard] ${reason}`,
+      const { doc } = await createModCase({
+        guildId: guild.id, action: "BAN", userId, modId: client.user?.id || guild.client?.user?.id, reason: `[Dashboard] ${reason}`,
         durationMs: null,
         context: null,
       });
@@ -443,7 +449,7 @@ async function runUserAction(client, payload = {}) {
     if (!member) return { ok: false, reason: "member_not_found" };
     if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
     await member.roles.add(roleId, reason);
-    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    const refreshedMember = await guild.members.fetch(userId).catch(() => null);
     if (!refreshedMember?.roles?.cache?.has(roleId)) return { ok: false, reason: "role_not_applied" };
     return { ok: true, message: "Ruolo aggiunto." };
   }
@@ -451,14 +457,14 @@ async function runUserAction(client, payload = {}) {
     if (!member) return { ok: false, reason: "member_not_found" };
     if (!/^\d{16,20}$/.test(roleId)) return { ok: false, reason: "invalid_role" };
     await member.roles.remove(roleId, reason);
-    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    const refreshedMember = await guild.members.fetch(userId).catch(() => null);
     if (refreshedMember?.roles?.cache?.has(roleId)) return { ok: false, reason: "role_not_removed" };
     return { ok: true, message: "Ruolo rimosso." };
   }
   if (action === "set_nickname") {
     if (!member) return { ok: false, reason: "member_not_found" };
     await member.setNickname(nicknameRaw || null, reason);
-    const refreshedMember=await guild.members.fetch(userId).catch(() => null);
+    const refreshedMember = await guild.members.fetch(userId).catch(() => null);
     if ((refreshedMember?.nickname || null) !== (nicknameRaw || null)) return { ok: false, reason: "nickname_not_applied" };
     return { ok: true, message: "Nickname aggiornato." };
   }
@@ -526,7 +532,7 @@ function createDashboardServer(client) {
         return text(res, 400, "OAuth state non valido o scaduto");
       }
       try {
-        const callbackOauth={...oauth,redirectUri:String(stateRow.redirectUri||oauth.redirectUri||""),};
+        const callbackOauth = { ...oauth, redirectUri: String(stateRow.redirectUri || oauth.redirectUri || ""), };
         const tokenPayload = await exchangeCodeForToken(callbackOauth, code);
         const user = await fetchDiscordUser(String(tokenPayload.access_token || ""));
         createSession(res, user);
@@ -583,13 +589,13 @@ function createDashboardServer(client) {
 
     if (pathname === "/api/dashboard/errors" && req.method === "GET") {
       const limit = Number(parsedUrl.query?.limit || 80);
-      const rows=typeof logsApi?.getRecentErrors==="function"?logsApi.getRecentErrors(limit):[];
+      const rows = typeof logsApi?.getRecentErrors === "function" ? logsApi.getRecentErrors(limit) : [];
       return json(res, 200, { ok: true, rows });
     }
 
     if (pathname === "/api/dashboard/console" && req.method === "GET") {
       const limit = Number(parsedUrl.query?.limit || 220);
-      const rows=typeof logsApi?.getRecentConsole==="function"?logsApi.getRecentConsole(limit):[];
+      const rows = typeof logsApi?.getRecentConsole === "function" ? logsApi.getRecentConsole(limit) : [];
       return json(res, 200, { ok: true, rows });
     }
 
@@ -597,7 +603,7 @@ function createDashboardServer(client) {
       if (!isTokenAdmin(client, req, parsedUrl)) {
         return json(res, 403, { ok: false, reason: "token_required" });
       }
-      const body=await new Promise((resolve) => {let raw="";req.on("data",(chunk) => {raw+=String(chunk||"");if(raw.length>1_000_000)req.destroy();});req.on("end",() => {try{resolve(raw?JSON.parse(raw):{});}catch{resolve({});}});req.on("error",() => resolve({}));});
+      const body = await new Promise((resolve) => { let raw = ""; req.on("data", (chunk) => { raw += String(chunk || ""); if (raw.length > 1_000_000) req.destroy(); }); req.on("end", () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve({}); } }); req.on("error", () => resolve({})); });
       const action = String(body.action || "").trim().toLowerCase();
       if (action === "start") {
         return json(res, 200, {
@@ -607,13 +613,13 @@ function createDashboardServer(client) {
       }
       if (action === "restart") {
         json(res, 200, { ok: true, message: "Riavvio avviato." });
-        const timer=setTimeout(() => process.exit(0), 600);
+        const timer = setTimeout(() => process.exit(0), 600);
         timer.unref?.();
         return;
       }
       if (action === "stop") {
         json(res, 200, { ok: true, message: "Spegnimento avviato." });
-        const timer=setTimeout(() => process.exit(0), 600);
+        const timer = setTimeout(() => process.exit(0), 600);
         timer.unref?.();
         return;
       }
@@ -687,7 +693,7 @@ function createDashboardServer(client) {
         const allowed = await canManageScope(client, auth.session, guildId);
         if (!allowed) return json(res, 403, { ok: false, reason: "missing_founder_or_cofounder" });
       }
-      const out=await runUserAction(client,body).catch((error) => ({ok:false,reason:String(error?.message||"action_failed"),}));
+      const out = await runUserAction(client, body).catch((error) => ({ ok: false, reason: String(error?.message || "action_failed"), }));
       return json(res, out.ok ? 200 : 400, out);
     }
 

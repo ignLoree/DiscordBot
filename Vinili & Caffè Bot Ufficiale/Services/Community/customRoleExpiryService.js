@@ -42,7 +42,7 @@ async function resolveVoiceChannel(guild, doc) {
 
 async function canManageRole(guild, role) {
   if (!guild || !role) return false;
-  const me=guild.members.me||(await guild.members.fetchMe().catch(() => null));
+  const me = guild.members.me || (await guild.members.fetchMe().catch(() => null));
   if (!me?.permissions?.has(PermissionsBitField.Flags.ManageRoles))
     return false;
   return role.position < me.roles.highest.position;
@@ -50,7 +50,7 @@ async function canManageRole(guild, role) {
 
 async function canManageChannels(guild) {
   if (!guild) return false;
-  const me=guild.members.me||(await guild.members.fetchMe().catch(() => null));
+  const me = guild.members.me || (await guild.members.fetchMe().catch(() => null));
   return Boolean(
     me?.permissions?.has(PermissionsBitField.Flags.ManageChannels),
   );
@@ -59,9 +59,9 @@ async function canManageChannels(guild) {
 async function processExpiredCustomRole(client, doc) {
   if (!client || !doc?._id) return false;
 
-  const guild=client.guilds.cache.get(doc.guildId)||(await client.guilds.fetch(doc.guildId).catch(() => null));
+  const guild = client.guilds.cache.get(doc.guildId) || (await client.guilds.fetch(doc.guildId).catch(() => null));
   if (!guild) {
-    await CustomRole.deleteOne({ _id: doc._id }).catch(() => {});
+    await CustomRole.deleteOne({ _id: doc._id }).catch(() => { });
     return true;
   }
 
@@ -76,7 +76,7 @@ async function processExpiredCustomRole(client, doc) {
     if (await canManageRole(guild, role)) {
       await role
         .delete(`Custom role expired for user ${doc.userId}`)
-        .catch(() => {});
+        .catch(() => { });
       role =
         guild.roles.cache.get(doc.roleId) ||
         (await guild.roles.fetch(doc.roleId).catch(() => null));
@@ -88,15 +88,15 @@ async function processExpiredCustomRole(client, doc) {
     if (await canManageChannels(guild)) {
       await voiceChannel
         .delete(`Custom private voice expired for user ${doc.userId}`)
-        .catch(() => {});
-      const stillExists=guild.channels.cache.get(voiceChannel.id)||(await guild.channels.fetch(voiceChannel.id).catch(() => null));
+        .catch(() => { });
+      const stillExists = guild.channels.cache.get(voiceChannel.id) || (await guild.channels.fetch(voiceChannel.id).catch(() => null));
       channelHandled = !stillExists;
       voiceChannel = stillExists;
     }
   }
 
   if (roleHandled && channelHandled) {
-    await CustomRole.deleteOne({ _id: doc._id }).catch(() => {});
+    await CustomRole.deleteOne({ _id: doc._id }).catch(() => { });
     return true;
   }
 
@@ -104,7 +104,7 @@ async function processExpiredCustomRole(client, doc) {
     await CustomRole.updateOne(
       { _id: doc._id },
       { $set: { customVocChannelId: null } },
-    ).catch(() => {});
+    ).catch(() => { });
   }
 
   return false;
@@ -113,10 +113,10 @@ async function processExpiredCustomRole(client, doc) {
 async function runExpiredCustomRolesSweep(client) {
   if (!client) return;
   const now = new Date();
-  const rows=await CustomRole.find({expiresAt:{$ne:null,$lte:now},}).lean().catch(() => []);
+  const rows = await CustomRole.find({ expiresAt: { $ne: null, $lte: now }, }).lean().catch(() => []);
 
   for (const row of rows) {
-    await processExpiredCustomRole(client, row).catch(() => {});
+    await processExpiredCustomRole(client, row).catch(() => { });
   }
 }
 
@@ -124,7 +124,7 @@ function startCustomRoleExpiryLoop(client) {
   if (!client) return null;
   if (expiryLoopHandle) return expiryLoopHandle;
   expiryLoopHandle = setInterval(() => {
-    runExpiredCustomRolesSweep(client).catch(() => {});
+    runExpiredCustomRolesSweep(client).catch(() => { });
   }, CHECK_INTERVAL_MS);
   expiryLoopHandle.unref?.();
   return expiryLoopHandle;

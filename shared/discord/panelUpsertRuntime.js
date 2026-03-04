@@ -99,7 +99,7 @@ function messageHasAttachmentName(message, expectedName) {
   return false;
 }
 
-async function fetchBotPanelMessages(channel, client, limit = 1200) {
+async function fetchBotPanelMessages(channel, client, limit = 200) {
   const out = [];
   let before = null;
   while (out.length < limit) {
@@ -116,6 +116,51 @@ async function fetchBotPanelMessages(channel, client, limit = 1200) {
     if (!before || values.length < 100) break;
   }
   return out;
+}
+
+function getPanelMessageCacheStore(client) {
+  if (!client) return null;
+  if (!(client._panelUpsertMessageCache instanceof Map)) {
+    client._panelUpsertMessageCache = new Map();
+  }
+  return client._panelUpsertMessageCache;
+}
+
+function readCachedBotPanelMessages(channel, client, limit) {
+  const store = getPanelMessageCacheStore(client);
+  if (!store || !channel?.id) return null;
+  const entry = store.get(channel.id);
+  if (!entry) return null;
+  const messages = Array.isArray(entry.messages) ? entry.messages : [];
+  if (Number(entry.limit || 0) < Number(limit || 0)) return null;
+  return messages;
+}
+
+function writeCachedBotPanelMessages(channel, client, limit, messages) {
+  const store = getPanelMessageCacheStore(client);
+  if (!store || !channel?.id) return;
+  const nextMessages = Array.isArray(messages) ? messages.filter(Boolean) : [];
+  store.set(channel.id, { limit, messages: nextMessages });
+}
+
+function upsertCachedBotPanelMessage(channel, client, message) {
+  const store = getPanelMessageCacheStore(client);
+  if (!store || !channel?.id || !message?.id) return;
+  const entry = store.get(channel.id);
+  if (!entry) return;
+  const current = Array.isArray(entry.messages) ? entry.messages.filter(Boolean) : [];
+  const filtered = current.filter((item) => item?.id !== message.id);
+  filtered.unshift(message);
+  entry.messages = filtered;
+  store.set(channel.id, entry);
+}
+
+function resolvePanelHistoryLimit(client) {
+  const envLimit = Number(process.env.PANEL_UPSERT_HISTORY_LIMIT || "");
+  const configLimit = Number(client?.config?.panelUpsertHistoryLimit || "");
+  const raw = Number.isFinite(envLimit) && envLimit > 0 ? envLimit : configLimit;
+  if (!Number.isFinite(raw) || raw <= 0) return 200;
+  return Math.max(25, Math.min(400, Math.floor(raw)));
 }
 
 function scoreEmbedSimilarity(message, payload) {
@@ -205,7 +250,12 @@ async function upsertPanelMessage(channel, client, payload) {
     }
   }
 
-  const botMessages = await fetchBotPanelMessages(channel, client, 1200);
+  const historyLimit = resolvePanelHistoryLimit(client);
+  let botMessages = readCachedBotPanelMessages(channel, client, historyLimit);
+  if (!botMessages) {
+    botMessages = await fetchBotPanelMessages(channel, client, historyLimit);
+    writeCachedBotPanelMessages(channel, client, historyLimit, botMessages);
+  }
   const payloadCustomIds = extractCustomIdsFromComponents(payload?.components || []);
   const payloadComponentsComparable = toComparableComponents(payload?.components || []);
   const payloadSignature = buildEmbedSignatureFromPayload(payload?.embeds || []);
@@ -246,14 +296,17 @@ async function upsertPanelMessage(channel, client, payload) {
 
   if (!existing) {
     const sent = await channel.send(cleanPayload).catch((error) => { global.logger?.error?.("[panelUpsert] send failed:", error); return null; });
+    if (sent) upsertCachedBotPanelMessage(channel, client, sent);
     return sent;
   }
 
   const needsEdit = await shouldEditMessage(existing, cleanPayload);
   if (needsEdit) {
     const edited = await existing.edit(cleanPayload).catch((error) => { global.logger?.error?.("[panelUpsert] edit failed:", error); return null; });
+    if (edited) upsertCachedBotPanelMessage(channel, client, edited);
     if (!edited) {
       const sent = await channel.send(cleanPayload).catch((error) => { global.logger?.error?.("[panelUpsert] send fallback after edit failure failed:", error); return null; });
+      if (sent) upsertCachedBotPanelMessage(channel, client, sent);
       return sent || existing;
     }
   }

@@ -536,7 +536,7 @@ async function finalizeApplication(interaction, type, state, stateKey = null) {
   const embed=new EmbedBuilder().setColor("#3498DB").setAuthor({name:user.username,iconURL:user.displayAvatarURL({size:128}),}).setTitle(`CANDIDATURA ${cfg.label.toUpperCase()}(#${applicationNumber})`)
     .setDescription(formatApplicationDescription(type, state.answers))
     .setFooter({
-      text: `User ID:${user.id}•${new Date().toLocaleString("it-IT")}`,
+      text: `User ID:${user.id}\u2022${new Date().toLocaleString("it-IT")}`,
     })
     .setTimestamp();
 
@@ -603,7 +603,7 @@ ${user}
 # Benvenutx nei Partner Manager <:partneredserverowner:1443651871125409812>
 > **Per iniziare al meglio controlla:** <:discordchannelwhite:1443308552536985810>
 <:dot:1443660294596329582> <#1442569199229730836>
-__Per qualsiasi cosa l'High Staff e disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
   }).catch(() => null);
 }
 
@@ -617,7 +617,7 @@ ${user}
 <:dot:1443660294596329582> <#1442569237142044773>
 <:dot:1443660294596329582> <#1442569239063167139>
 <:dot:1443660294596329582> <#1442569243626307634>
-__Per qualsiasi cosa l'High Staff e disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
+__Per qualsiasi cosa l'High Staff è disponibile__ <a:BL_crown_yellow:1330194103564238930>`,
   }).catch(() => null);
 }
 

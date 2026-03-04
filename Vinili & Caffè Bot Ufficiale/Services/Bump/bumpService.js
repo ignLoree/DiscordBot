@@ -3,19 +3,19 @@ const DisboardBump = require("../../Schemas/Disboard/disboardBumpSchema");
 const { DiscadiaBump, DiscadiaVoter, } = require("../../Schemas/Discadia/discadiaSchemas");
 const IDs = require("../../Utils/Config/ids");
 const { getNoDmSet } = require("../../Utils/noDmList");
-const{getClientGuildCached,getGuildMemberCached,getUserCached,}=require("../../Utils/Interaction/interactionEntityCache");
+const { getClientGuildCached, getGuildMemberCached, getUserCached, } = require("../../Utils/Interaction/interactionEntityCache");
 const discadiaVoteTimers = new Map();
-const STAFF_BYPASS_ROLE_IDS=new Set([IDs.roles.Staff,IDs.roles.Helper,IDs.roles.Mod,IDs.roles.PartnerManager,IDs.roles.Coordinator,IDs.roles.Supervisor,IDs.roles.HighStaff,IDs.roles.Admin,IDs.roles.Manager,IDs.roles.CoFounder,IDs.roles.Founder,].filter(Boolean),);
+const STAFF_BYPASS_ROLE_IDS = new Set([IDs.roles.Staff, IDs.roles.Helper, IDs.roles.Mod, IDs.roles.PartnerManager, IDs.roles.Coordinator, IDs.roles.Supervisor, IDs.roles.HighStaff, IDs.roles.Admin, IDs.roles.Manager, IDs.roles.CoFounder, IDs.roles.Founder,].filter(Boolean),);
 
-const BUMP_REMINDER_CHANNEL_BY_KEY={disboard:IDs.channels.commands,discadia:IDs.channels.commands,};
+const BUMP_REMINDER_CHANNEL_BY_KEY = { disboard: IDs.channels.commands, discadia: IDs.channels.commands, };
 
 function createBumpReminderService(options) {
-  const{model,configKey,defaultCooldownMinutes,mentionContent,title,url,description,errorTag,logTag=errorTag,suppressInfoLogs=false,}=options;
+  const { model, configKey, defaultCooldownMinutes, mentionContent, title, url, description, errorTag, logTag = errorTag, suppressInfoLogs = false, } = options;
 
   const bumpTimers = new Map();
 
   function getCooldownMs(client) {
-    const minutes=client?.config?.[configKey]?.cooldownMinutes||defaultCooldownMinutes;
+    const minutes = client?.config?.[configKey]?.cooldownMinutes || defaultCooldownMinutes;
     return minutes * 60 * 1000;
   }
 
@@ -31,7 +31,7 @@ function createBumpReminderService(options) {
       );
       return;
     }
-    const channel=client.channels.cache.get(reminderChannelId)||(await client.channels.fetch(reminderChannelId).catch(() => null));
+    const channel = client.channels.cache.get(reminderChannelId) || (await client.channels.fetch(reminderChannelId).catch(() => null));
     if (!channel) {
       global.logger?.warn?.(
         `${errorTag} reminder channel not found (${reminderChannelId}) for guild ${guildId}`,
@@ -96,7 +96,10 @@ function createBumpReminderService(options) {
       );
     }
 
-    const timeout=setTimeout(async() => {try{if(!suppressInfoLogs){global.logger?.info?.(`${logTag}firing reminder for guild=${guildId}`);
+    const timeout = setTimeout(async () => {
+      try {
+        if (!suppressInfoLogs) {
+          global.logger?.info?.(`${logTag}firing reminder for guild=${guildId}`);
         }
         await sendReminder(client, guildId);
       } catch (error) {
@@ -139,7 +142,7 @@ function createBumpReminderService(options) {
   }
 
   async function restorePendingReminders(client) {
-    const docs=await model.find({reminderSentAt:null,lastBumpAt:{$exists:true},});
+    const docs = await model.find({ reminderSentAt: null, lastBumpAt: { $exists: true }, });
     if (docs.length > 0 && !suppressInfoLogs) {
       global.logger?.info?.(
         `${logTag} restoring ${docs.length} pending reminder(s)`,
@@ -157,9 +160,9 @@ function createBumpReminderService(options) {
   };
 }
 
-const disboardService=createBumpReminderService({model:DisboardBump,configKey:"disboard",defaultCooldownMinutes:120,mentionContent:"<@&1442569013074071644>",title:"<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**",url:"https://disboard.org/it/server/1329080093599076474",description:"<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",errorTag:"[DISBOARD REMINDER ERROR]",logTag:"[DISBOARD REMINDER]",suppressInfoLogs:true,});
+const disboardService = createBumpReminderService({ model: DisboardBump, configKey: "disboard", defaultCooldownMinutes: 120, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP`!**", url: "https://disboard.org/it/server/1329080093599076474", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "[DISBOARD REMINDER ERROR]", logTag: "[DISBOARD REMINDER]", suppressInfoLogs: true, });
 
-const discadiaBumpService=createBumpReminderService({model:DiscadiaBump,configKey:"discadia",defaultCooldownMinutes:1440,mentionContent:"<@&1442569013074071644>",title:"<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**",url:"https://discadia.com/server/viniliecaffe/",description:"<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!",errorTag:"[DISCADIA REMINDER ERROR]",logTag:"[DISCADIA REMINDER]",suppressInfoLogs:true,});
+const discadiaBumpService = createBumpReminderService({ model: DiscadiaBump, configKey: "discadia", defaultCooldownMinutes: 1440, mentionContent: "<@&1442569013074071644>", title: "<:VC_Eye:1331619214410383381> **È L'ORA DEL `BUMP` SU DISCADIA!**", url: "https://discadia.com/server/viniliecaffe/", description: "<:VC_bump:1330185435401424896> **Per bumpare scrivi __`/bump` in chat__**!", errorTag: "[DISCADIA REMINDER ERROR]", logTag: "[DISCADIA REMINDER]", suppressInfoLogs: true, });
 let discadiaVoteReminderLoopHandle = null;
 
 function getVoteCooldownMs(client) {
@@ -172,7 +175,7 @@ function getVoteCooldownMs(client) {
 }
 
 function getVoteCheckIntervalMs(client) {
-  const minutes=client?.config?.discadiaVoteReminder?.checkIntervalMinutes||30;
+  const minutes = client?.config?.discadiaVoteReminder?.checkIntervalMinutes || 30;
   return minutes * 60 * 1000;
 }
 
@@ -232,12 +235,12 @@ async function sendVoteFallbackChannelReminder(client, guildId, userId) {
     now - lastVoteFallbackSentAt.get(key) < VOTE_FALLBACK_COOLDOWN_MS
   )
     return;
-  const channel=client.channels.cache.get(fallbackId)||(await client.channels.fetch(fallbackId).catch(() => null));
+  const channel = client.channels.cache.get(fallbackId) || (await client.channels.fetch(fallbackId).catch(() => null));
   if (!channel) return;
   const embed = buildVoteReminderEmbed(client);
   await channel
     .send({ content: `<@${userId}>`, embeds: [embed] })
-    .catch(() => {});
+    .catch(() => { });
   lastVoteFallbackSentAt.set(key, now);
 }
 
@@ -245,7 +248,7 @@ async function recordDiscadiaVote(client, guildId, userId) {
   const now = new Date();
   const mainGuildId = IDs.guilds.main;
   guildId = mainGuildId;
-  const doc=await DiscadiaVoter.findOneAndUpdate({guildId:IDs.guilds.main,userId},{$set:{lastVoteAt:now},$setOnInsert:{lastRemindedAt:null,voteMilestoneGranted:[],voteMilestoneNearReminded:[],},$inc:{voteCount:1},},{upsert:true,new:true,setDefaultsOnInsert:true},);
+  const doc = await DiscadiaVoter.findOneAndUpdate({ guildId: IDs.guilds.main, userId }, { $set: { lastVoteAt: now }, $setOnInsert: { lastRemindedAt: null, voteMilestoneGranted: [], voteMilestoneNearReminded: [], }, $inc: { voteCount: 1 }, }, { upsert: true, new: true, setDefaultsOnInsert: true },);
 
   scheduleDiscadiaVoteReminder(client, mainGuildId, userId, now);
   return doc?.voteCount || 1;
@@ -263,14 +266,14 @@ function scheduleDiscadiaVoteReminder(client, guildId, userId, lastVoteAt) {
   const targetTime = new Date(lastVoteAt).getTime() + cooldownMs;
   const delay = targetTime - Date.now();
 
-  const run=async() => {try{const doc=await DiscadiaVoter.findOne({guildId,userId}).lean();if(!doc?.lastVoteAt)return;const cooldownMsRun=getVoteCooldownMs(client);if(Date.now()-new Date(doc.lastVoteAt).getTime()<cooldownMsRun)return;if(doc.lastRemindedAt&&new Date(doc.lastRemindedAt).getTime()>=new Date(doc.lastVoteAt).getTime())return;if(await shouldSkipVoteDmByNoDm(client,guildId,userId))return;const user=await getUserCached(client,userId);if(!user)return;const embed=buildVoteReminderEmbed(client);try{await user.send({embeds:[embed]});}catch{await sendVoteFallbackChannelReminder(client,guildId,userId);}await DiscadiaVoter.updateOne({guildId,userId},{$set:{lastRemindedAt:new Date()}},).catch(() => {});}finally{discadiaVoteTimers.delete(key);}};
+  const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; const cooldownMsRun = getVoteCooldownMs(client); if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMsRun) return; if (doc.lastRemindedAt && new Date(doc.lastRemindedAt).getTime() >= new Date(doc.lastVoteAt).getTime()) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const user = await getUserCached(client, userId); if (!user) return; const embed = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed] }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
 
   if (delay <= 0) {
     void run();
     return;
   }
 
-  const timer=setTimeout(() => run().catch(() => {}), delay);
+  const timer = setTimeout(() => run().catch(() => { }), delay);
   timer.unref?.();
   discadiaVoteTimers.set(key, timer);
 }
@@ -287,14 +290,14 @@ function scheduleVoteReminder(client, guildId, userId, lastVoteAt) {
   const target = new Date(lastVoteAt).getTime() + cooldownMs;
   const delay = target - Date.now();
 
-  const run=async() => {try{const doc=await DiscadiaVoter.findOne({guildId,userId}).lean();if(!doc?.lastVoteAt)return;if(Date.now()-new Date(doc.lastVoteAt).getTime()<cooldownMs)return;if(doc.lastRemindedAt&&Date.now()-new Date(doc.lastRemindedAt).getTime()<cooldownMs-60_000)return;if(await shouldSkipVoteDmByNoDm(client,guildId,userId))return;const user=await getUserCached(client,userId);if(!user)return;const embed=buildVoteReminderEmbed(client);try{await user.send({embeds:[embed]});}catch{await sendVoteFallbackChannelReminder(client,guildId,userId);}await DiscadiaVoter.updateOne({guildId,userId},{$set:{lastRemindedAt:new Date()}},).catch(() => {});}finally{discadiaVoteTimers.delete(key);}};
+  const run = async () => { try { const doc = await DiscadiaVoter.findOne({ guildId, userId }).lean(); if (!doc?.lastVoteAt) return; if (Date.now() - new Date(doc.lastVoteAt).getTime() < cooldownMs) return; if (doc.lastRemindedAt && Date.now() - new Date(doc.lastRemindedAt).getTime() < cooldownMs - 60_000) return; if (await shouldSkipVoteDmByNoDm(client, guildId, userId)) return; const user = await getUserCached(client, userId); if (!user) return; const embed = buildVoteReminderEmbed(client); try { await user.send({ embeds: [embed] }); } catch { await sendVoteFallbackChannelReminder(client, guildId, userId); } await DiscadiaVoter.updateOne({ guildId, userId }, { $set: { lastRemindedAt: new Date() } },).catch(() => { }); } finally { discadiaVoteTimers.delete(key); } };
 
   if (delay <= 0) {
     void run();
     return;
   }
 
-  const timer=setTimeout(() => run().catch(() => {}), delay);
+  const timer = setTimeout(() => run().catch(() => { }), delay);
   timer.unref?.();
   discadiaVoteTimers.set(key, timer);
 }

@@ -249,6 +249,7 @@ async function runStartupPanels(client, label = "immediate") {
 
   client._startupPanelsRefreshRunning = true;
   try {
+    client._panelUpsertMessageCache = new Map();
     if (typeof startupPanelsTrigger?.execute === "function") {
       await startupPanelsTrigger.execute(client);
     }
@@ -258,6 +259,7 @@ async function runStartupPanels(client, label = "immediate") {
       err,
     );
   } finally {
+    client._panelUpsertMessageCache = new Map();
     client._startupPanelsRefreshRunning = false;
   }
 }

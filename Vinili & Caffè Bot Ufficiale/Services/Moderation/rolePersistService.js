@@ -45,12 +45,12 @@ async function applyRolePersistForMember(member) {
   const me = member.guild.members.me;
   if (!me?.permissions?.has?.("ManageRoles")) return;
   for (const row of rows) {
-    const role=member.guild.roles.cache.get(row.roleId)||(await member.guild.roles.fetch(String(row.roleId)).catch(() => null));
+    const role = member.guild.roles.cache.get(row.roleId) || (await member.guild.roles.fetch(String(row.roleId)).catch(() => null));
     if (!role) continue;
     if (role.position >= me.roles.highest.position) continue;
     if (member.roles.cache.has(role.id)) continue;
-    await member.roles.add(role.id, "Rolepersist rejoin restore").catch(() => {});
-    const refreshedMember=await member.guild.members.fetch(member.id).catch(() => null);
+    await member.roles.add(role.id, "Rolepersist rejoin restore").catch(() => { });
+    const refreshedMember = await member.guild.members.fetch(member.id).catch(() => null);
     if (!refreshedMember?.roles?.cache?.has(role.id)) {
       global.logger?.warn?.("[ROLEPERSIST] restore failed:", member.guild.id, member.id, role.id);
     }

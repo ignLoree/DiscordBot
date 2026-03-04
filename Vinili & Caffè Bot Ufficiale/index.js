@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const APP_ROOT = __dirname;
 const { startDashboardServer } = require("./Services/Dashboard/dashboardServer");
-const{acquireSingleInstanceLock,installHandlers,listFoldersIfExists,loadEnvFiles,}=require("../shared/runtime/fsRuntime");
+const { acquireSingleInstanceLock, installHandlers, listFoldersIfExists, loadEnvFiles, } = require("../shared/runtime/fsRuntime");
 const { initializeCommandCollections } = require("../shared/runtime/clientRuntime");
 
 loadEnvFiles(APP_ROOT);
@@ -27,8 +27,8 @@ function shouldStartDashboard(currentClient) {
 
 try {
   installEmbedFooterPatch();
-  const baseIntents=[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent,GatewayIntentBits.GuildMembers,GatewayIntentBits.DirectMessageTyping,GatewayIntentBits.GuildEmojisAndStickers,GatewayIntentBits.DirectMessages,GatewayIntentBits.GuildIntegrations,GatewayIntentBits.GuildMessageReactions,GatewayIntentBits.GuildModeration,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessageReactions,GatewayIntentBits.GuildBans,GatewayIntentBits.GuildInvites,GatewayIntentBits.GuildMessageTyping,GatewayIntentBits.GuildPresences,GatewayIntentBits.GuildWebhooks,GatewayIntentBits.AutoModerationExecution,GatewayIntentBits.AutoModerationConfiguration,];
-  const basePartials=[Partials.Message,Partials.Channel,Partials.Reaction,Partials.User,Partials.GuildMember,Partials.ThreadMember,];
+  const baseIntents = [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.DirectMessageTyping, GatewayIntentBits.GuildEmojisAndStickers, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildIntegrations, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildModeration, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.GuildBans, GatewayIntentBits.GuildInvites, GatewayIntentBits.GuildMessageTyping, GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildWebhooks, GatewayIntentBits.AutoModerationExecution, GatewayIntentBits.AutoModerationConfiguration,];
+  const basePartials = [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User, Partials.GuildMember, Partials.ThreadMember,];
 
   client = new Client({
     intents: baseIntents,
@@ -62,7 +62,7 @@ try {
 client.logs = require("./Utils/Moderation/logs");
 client.config = require("./config.json");
 
-const envToken=process.env.DISCORD_TOKEN||process.env.DISCORD_TOKEN_OFFICIAL;
+const envToken = process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN_OFFICIAL;
 const envMongoUrl = process.env.MONGO_URL || process.env.MONGODB_URI;
 client.config.token = envToken || client.config.token;
 client.config.mongoURL = envMongoUrl || client.config.mongoURL;
@@ -77,15 +77,15 @@ if (!client.config.token) {
 global.botClient = client;
 
 client.reloadScope = async (scope) => {
-  const clearCacheByDir=(dirName) => {const abs=path.join(APP_ROOT,dirName);if(!fs.existsSync(abs))return;for(const key of Object.keys(require.cache)){if(!key.startsWith(abs))continue;delete require.cache[key];}};
+  const clearCacheByDir = (dirName) => { const abs = path.join(APP_ROOT, dirName); if (!fs.existsSync(abs)) return; for (const key of Object.keys(require.cache)) { if (!key.startsWith(abs)) continue; delete require.cache[key]; } };
 
-  const reloadCommands=async() => {clearCacheByDir("Commands");const folders=listFoldersIfExists(path.join(APP_ROOT,"Commands"));await client.handleCommands(folders,path.join(APP_ROOT,"Commands"));};
+  const reloadCommands = async () => { clearCacheByDir("Commands"); const folders = listFoldersIfExists(path.join(APP_ROOT, "Commands")); await client.handleCommands(folders, path.join(APP_ROOT, "Commands")); };
 
-  const reloadPrefix=async() => {clearCacheByDir("Prefix");const folders=listFoldersIfExists(path.join(APP_ROOT,"Prefix"));await client.prefixCommands(folders,path.join(APP_ROOT,"Prefix"));};
+  const reloadPrefix = async () => { clearCacheByDir("Prefix"); const folders = listFoldersIfExists(path.join(APP_ROOT, "Prefix")); await client.prefixCommands(folders, path.join(APP_ROOT, "Prefix")); };
 
-  const reloadEvents=() => {clearCacheByDir("Events");client.handleEvents(path.join(APP_ROOT,"Events"));};
+  const reloadEvents = () => { clearCacheByDir("Events"); client.handleEvents(path.join(APP_ROOT, "Events")); };
 
-  const reloadTriggers=() => {clearCacheByDir("Triggers");client.handleTriggers(APP_ROOT);};
+  const reloadTriggers = () => { clearCacheByDir("Triggers"); client.handleTriggers(APP_ROOT); };
 
   if (scope === "commands") return reloadCommands();
   if (scope === "prefix") return reloadPrefix();
