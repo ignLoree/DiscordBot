@@ -49,7 +49,7 @@ function resolveBotWorkingDir(bot) {
 function splitStartPath(bot) {
     const workingDir = resolveBotWorkingDir(bot);
     const shardingFlag = String(process.env.ENABLE_SHARDING || process.env.SHARDING || '').trim().toLowerCase();
-    const useSharded=bot.key==='official'&&shardingFlag!=='0'&&shardingFlag!=='false'&&fs.existsSync(path.join(workingDir,'run-sharded.js'));
+    const useSharded=bot.key==='vinyls'&&shardingFlag!=='0'&&shardingFlag!=='false'&&fs.existsSync(path.join(workingDir,'run-sharded.js'));
     console.log(
         `[Loader] ${bot.label} ENABLE_SHARDING=${String(process.env.ENABLE_SHARDING || process.env.SHARDING || '')} -> ${useSharded ? 'run-sharded.js' : 'index.js'}`
     );
@@ -219,7 +219,7 @@ function ensureDependencies(workingDir, useWorkspaces) {
             npmInstallInProgress = null;
         });
     } else {
-        console.log('[Loader] npm install giÃƒÆ’Ã‚Â  in corso, attendo completamento...');
+        console.log('[Loader] npm install già in corso, attendo completamento...');
     }
 
     return npmInstallInProgress;
@@ -256,7 +256,6 @@ function spawnBotProcess(bot, workingDir, file, resolve) {
 function runfile(bot, options = {}) {
     return new Promise((resolve) => {
         const { workingDir, file } = splitStartPath(bot);
-        // Force-disable git pull on runtime to avoid merge conflicts on hosted panels.
         const skipGitPull = true;
         const bypassDelay = Boolean(options.bypassDelay);
         const useWorkspaces = WORKSPACES_ENABLED;
@@ -336,7 +335,7 @@ setInterval(() => {
     const payload = readRestartPayload();
     if (!payload) return;
 
-    const targetBot = payload?.bot || 'official';
+    const targetBot = payload?.bot || 'vinyls';
     const respectDelay = Boolean(payload?.respectDelay);
 
     if (targetBot === 'all') {
