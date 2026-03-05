@@ -1,7 +1,7 @@
 {
-  "name": "vinili-caffe-test-bot",
+  "name": "coffee",
   "version": "1.0.0",
-  "description": "Bot di test (ticket, verify, panel)",
+  "description": "Bot ufficiale del server",
   "main": "index.js",
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning index.js",
