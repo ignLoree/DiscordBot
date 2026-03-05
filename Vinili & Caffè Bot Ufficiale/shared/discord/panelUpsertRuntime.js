@@ -1,7 +1,6 @@
 const fs = require("fs");
 const crypto = require("crypto");
 const axios = require("axios");
-
 const CDN_ATTACHMENT_PATTERN = /(cdn\.discordapp\.com|media\.discordapp\.net)\/attachments\//i;
 
 function normalizeDiscordAttachmentUrl(value) {
@@ -314,11 +313,4 @@ async function upsertPanelMessage(channel, client, payload) {
   return existing;
 }
 
-module.exports = {
-  shouldEditMessage,
-  upsertPanelMessage,
-  normalizeDiscordAttachmentUrl,
-  resolvePayloadFileName,
-  readPayloadFileBuffer,
-  fetchAttachmentHash,
-};
+module.exports = { shouldEditMessage, upsertPanelMessage, normalizeDiscordAttachmentUrl, resolvePayloadFileName, readPayloadFileBuffer, fetchAttachmentHash };

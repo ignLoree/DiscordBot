@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const { listJsFilesRecursive } = require("./fsRuntime");
-
 const READY_EVENT_ALIAS = "clientReady";
 
 function normalizeLifecycleEventName(eventName) {
@@ -26,10 +25,4 @@ function listRelativeJsFiles(rootDir) {
   return listJsFilesRecursive(rootDir).map((fullPath) => path.relative(rootDir, fullPath).replace(/\\/g, "/"));
 }
 
-module.exports = {
-  READY_EVENT_ALIAS,
-  clearBoundHandlers,
-  listRelativeJsFiles,
-  normalizeLifecycleEventName,
-  trackBoundHandler,
-};
+module.exports = { READY_EVENT_ALIAS, clearBoundHandlers, listRelativeJsFiles, normalizeLifecycleEventName, trackBoundHandler };

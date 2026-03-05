@@ -119,11 +119,4 @@ function installHandlers(appRoot, client) {
   }
 }
 
-module.exports = {
-  acquireSingleInstanceLock,
-  installHandlers,
-  listFoldersIfExists,
-  listJsFilesIfExists,
-  listJsFilesRecursive,
-  loadEnvFiles,
-};
+module.exports = { acquireSingleInstanceLock, installHandlers, listFoldersIfExists, listJsFilesIfExists, listJsFilesRecursive, loadEnvFiles };

@@ -186,10 +186,4 @@ async function safeChannelSend(channel, payload) {
   return null;
 }
 
-module.exports = {
-  safeReply,
-  safeEditReply,
-  safeDeferReply,
-  safeMessageReply,
-  safeChannelSend,
-};
+module.exports = { safeReply, safeEditReply, safeDeferReply, safeMessageReply, safeChannelSend };

@@ -2,7 +2,6 @@ const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-
 const CACHE_DIR = path.join(os.tmpdir(), "vinili-caffe-command-cache");
 
 function ensureCacheDir() {
@@ -58,7 +57,4 @@ function markCommandDeployComplete(botKey, scope, hash) {
   fs.writeFileSync(getStatePath(botKey), JSON.stringify(state, null, 2), "utf8");
 }
 
-module.exports = {
-  isCommandDeployRequired,
-  markCommandDeployComplete,
-};
+module.exports = { isCommandDeployRequired, markCommandDeployComplete };

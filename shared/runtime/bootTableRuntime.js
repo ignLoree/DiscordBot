@@ -20,6 +20,4 @@ function logBootTable(categories = [], baseDir = process.cwd()) {
   global.logger.info(table.toString());
 }
 
-module.exports = {
-  logBootTable,
-};
+module.exports = { logBootTable };
